@@ -31,7 +31,7 @@
           "match",
           "wl_svid"
         ],
-        "note": "With its Node SVID, the Agent checks the caller's Pod metadata and UID/GID, matches registration entries, and issues a Workload SVID."
+        "note": "The workload does not use the agent SVID. The agent attests the caller and delivers an authorized workload SVID."
       }
     ],
     "legend": {
@@ -49,7 +49,8 @@
           "label": "Workload"
         }
       }
-    }
+    },
+    "output": "en-security-12-spiffe-spire-2.html"
   },
   "lanes": [
     {
@@ -137,7 +138,7 @@
       "lane": "agent",
       "col": 2,
       "type": "security",
-      "label": "Node SVID issued",
+      "label": "Agent SVID acquired",
       "sublabel": "Agent identity established",
       "width": 190
     },
@@ -183,7 +184,7 @@
       "col": 5,
       "type": "backend",
       "label": "Match selectors",
-      "sublabel": "Compare with registration entries",
+      "sublabel": "Synchronized agent entries",
       "width": 190
     },
     {
@@ -191,8 +192,8 @@
       "lane": "k8s",
       "col": 5,
       "type": "security",
-      "label": "Workload SVID issued",
-      "sublabel": "X.509 / JWT",
+      "label": "Deliver Workload SVID",
+      "sublabel": "Cache / server renewal",
       "width": 190
     }
   ],
@@ -229,7 +230,7 @@
       "id": "nodesvid-wlcall",
       "from": "node_svid",
       "to": "wl_call",
-      "label": "Uses Node SVID",
+      "label": "Agent ready",
       "variant": "emphasis"
     },
     {

@@ -30,7 +30,7 @@
           "match",
           "wl_svid"
         ],
-        "note": "Node SVID를 가진 Agent가 Workload API를 호출한 프로세스의 Pod 메타데이터와 UID/GID를 확인해 등록 엔트리와 매칭하고 Workload SVID를 발급한다."
+        "note": "워크로드는 Agent의 Node SVID를 사용하는 것이 아니다. Agent가 호출 프로세스를 검증하고 허용된 workload SVID를 전달한다."
       }
     ],
     "legend": {
@@ -48,7 +48,8 @@
           "label": "워크로드"
         }
       }
-    }
+    },
+    "output": "ko-security-12-spiffe-spire-2.html"
   },
   "lanes": [
     {
@@ -136,7 +137,7 @@
       "lane": "agent",
       "col": 2,
       "type": "security",
-      "label": "Node SVID 발급",
+      "label": "Agent SVID 확보",
       "sublabel": "Agent 신원 확보",
       "width": 190
     },
@@ -182,7 +183,7 @@
       "col": 5,
       "type": "backend",
       "label": "셀렉터 매칭",
-      "sublabel": "등록 엔트리와 비교",
+      "sublabel": "Agent의 동기화된 등록 엔트리",
       "width": 190
     },
     {
@@ -190,8 +191,8 @@
       "lane": "k8s",
       "col": 5,
       "type": "security",
-      "label": "Workload SVID 발급",
-      "sublabel": "X.509 / JWT",
+      "label": "Workload SVID 전달",
+      "sublabel": "캐시 / Server 갱신",
       "width": 190
     }
   ],
@@ -228,7 +229,7 @@
       "id": "nodesvid-wlcall",
       "from": "node_svid",
       "to": "wl_call",
-      "label": "Node SVID 사용",
+      "label": "Agent 준비 완료",
       "variant": "emphasis"
     },
     {

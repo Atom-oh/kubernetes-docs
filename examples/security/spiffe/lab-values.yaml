@@ -1,0 +1,44 @@
+global:
+  spire:
+    trustDomain: example.org
+    clusterName: documentation
+    caSubject:
+      organization: Documentation Lab
+      country: KR
+    namespaces:
+      server:
+        name: spire-system
+      system:
+        name: spire-system
+  installAndUpgradeHooks:
+    enabled: false
+  deleteHooks:
+    enabled: false
+spire-server:
+  replicaCount: 1
+  controllerManager:
+    enabled: true
+    identities:
+      clusterSPIFFEIDs:
+        default:
+          enabled: false
+        oidc-discovery-provider:
+          enabled: false
+        test-keys:
+          enabled: false
+  externalControllerManagers:
+    enabled: false
+  persistence:
+    enabled: true
+    size: 1Gi
+spire-agent:
+  workloadAttestors:
+    k8s:
+      verification:
+        type: apiServerCA
+    unix:
+      enabled: true
+spiffe-oidc-discovery-provider:
+  enabled: false
+spiffe-csi-driver:
+  enabled: true

@@ -1,0 +1,107 @@
+{
+  "status": "passed",
+  "http": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T04:34:15.922359+00:00",
+    "deploymentRun": 34737470958,
+    "mergeCommit": "2ec22bdd8b79b9c5a0d93f0a5daafde5c5999cdd",
+    "includedPRs": [
+      257
+    ],
+    "pages": [
+      {
+        "path": "ko/security/08-runtime-security.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/security/08-runtime-security",
+        "status": 200,
+        "sha256": "04c1f7bd0b16f3d374e4f6c65105cafe275c520800b1e699273accc640d18f7f",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 511051,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "en/security/08-runtime-security.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/security/08-runtime-security",
+        "status": 200,
+        "sha256": "bc58d1433870d93734037d7b85d0ca7526a8a1e76a6e23491d7cd06de2e912ab",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 505513,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "ko/quizzes/security/08-runtime-security-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/security/08-runtime-security-quiz",
+        "status": 200,
+        "sha256": "1848104fc1e2df41ea8ffab1f4da8e5a985794845b49eedbd8cdbd0ae5f0da1f",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 430678,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "en/quizzes/security/08-runtime-security-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/security/08-runtime-security-quiz",
+        "status": 200,
+        "sha256": "14700d0430b8b7fa12c462ad40b7a666de3dcbd1b5aaf39440b54ce1d1d728f5",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 427375,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      }
+    ],
+    "viewers": [],
+    "scope": "HTTP source and exact hashed PNG comparison; no analytics events or real application execution."
+  },
+  "contentChecks": [
+    {
+      "path": "ko/security/08-runtime-security.md",
+      "terms": [
+        "security_file_permission",
+        "falcosecurity_falcosidekick_falco_events_total",
+        "examples/security/runtime-security",
+        "json_output"
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/security/08-runtime-security.md",
+      "terms": [
+        "security_file_permission",
+        "falcosecurity_falcosidekick_falco_events_total",
+        "examples/security/runtime-security",
+        "json_output"
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/security/08-runtime-security-quiz.md",
+      "terms": [
+        "ERRNO",
+        "RuntimeDefault"
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/security/08-runtime-security-quiz.md",
+      "terms": [
+        "ERRNO",
+        "RuntimeDefault"
+      ],
+      "passed": true
+    }
+  ],
+  "scope": "Fourliveguide/quizpagesverifiedatdeployment34737470958;runtimecohorthasnoimageassets;noanalyticsorclusteroperations"
+}

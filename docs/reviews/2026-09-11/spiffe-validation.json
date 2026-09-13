@@ -1,0 +1,2247 @@
+{
+  "status": "passed-scoped-audit",
+  "reviewedAt": "2026-09-13T05:00:16.542462+00:00",
+  "scope": {
+    "documents": 4,
+    "originalLines": 3477,
+    "quizQuestions": 20,
+    "exampleFiles": 8,
+    "diagrams": 8,
+    "legacyAnchors": 111,
+    "additionalMainAliases": 11
+  },
+  "originalFiles": [
+    {
+      "path": "ko/security/12-spiffe-spire.md",
+      "sha256": "f98699bf1d566ac2fcf28891a022af2984975fe6c10f753249a62071064ff65a",
+      "lines": 1126
+    },
+    {
+      "path": "ko/quizzes/security/12-spiffe-spire-quiz.md",
+      "sha256": "8b367b32b4a5e42d03617163bd3ec58a72bbef57b5c3f43707d855f802718bb9",
+      "lines": 430
+    },
+    {
+      "path": "en/security/12-spiffe-spire.md",
+      "sha256": "0788d5d347e15bf7775bb91196b2946e98088eba08ced73c27b9c8e7d4376f5f",
+      "lines": 1474
+    },
+    {
+      "path": "en/quizzes/security/12-spiffe-spire-quiz.md",
+      "sha256": "41280ddc09672feacc5d02dd13bc47a6f5f4c70c9cece91f6a4cfc04b74f3894",
+      "lines": 447
+    }
+  ],
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/security/12-spiffe-spire.md",
+        "sha256": "a8d4ef5dd6a5b7b40826e83157ef9425512733003e4d77e1f85e45022686687b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "spiffe-spire를-활용한-워크로드-아이덴티티"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-핵심-개념"
+          },
+          {
+            "tag": "h3",
+            "id": "spiffe-id"
+          },
+          {
+            "tag": "h3",
+            "id": "svid와-검증"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-spire-아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-설치-및-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "단일-서버-실습"
+          },
+          {
+            "tag": "h3",
+            "id": "고가용성-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-노드-어테스테이션"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-워크로드-어테스테이션"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-kubernetes-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "csi는-api-소켓을-연결"
+          },
+          {
+            "tag": "h3",
+            "id": "envoy-sds"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-서비스-메시-연동"
+          },
+          {
+            "tag": "h3",
+            "id": "istio"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium"
+          },
+          {
+            "tag": "h3",
+            "id": "linkerd"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-페더레이션"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-eks-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-private-ca"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-모범-사례"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-요약-및-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "목차",
+          "spiffe-spire를-활용한-워크로드-아이덴티티",
+          "왜-spiffe-spire가-필요한가",
+          "개요",
+          "svid-spiffe-verifiable-identity-document",
+          "x-509-svid-vs-jwt-svid-비교",
+          "trust-bundle",
+          "1-핵심-개념",
+          "_1-핵심-개념",
+          "spiffe-id",
+          "svid와-검증",
+          "컴포넌트-개요",
+          "spire-server",
+          "spire-agent",
+          "svid-발급-플로우",
+          "2-spire-아키텍처",
+          "_2-spire-아키텍처",
+          "helm-차트를-이용한-설치",
+          "프로덕션-구성",
+          "설치-확인",
+          "3-설치-및-구성",
+          "_3-설치-및-구성",
+          "단일-서버-실습",
+          "고가용성-구성",
+          "어테스테이션-방식-비교",
+          "노드-및-워크로드-어테스테이션-플로우",
+          "kubernetes-psat-어테스테이션-구성",
+          "aws-iid-어테스테이션-구성",
+          "4-노드-어테스테이션",
+          "_4-노드-어테스테이션",
+          "kubernetes-워크로드-어테스터",
+          "spire-agent-구성-워크로드-어테스터",
+          "등록-엔트리-생성",
+          "5-워크로드-어테스테이션",
+          "_5-워크로드-어테스테이션",
+          "spiffe-csi-driver",
+          "spire-controller-manager-자동-등록",
+          "envoy-sds-연동",
+          "6-kubernetes-통합",
+          "_6-kubernetes-통합",
+          "csi는-api-소켓을-연결",
+          "envoy-sds",
+          "istio-spire",
+          "cilium-spire",
+          "linkerd-spire",
+          "7-서비스-메시-연동",
+          "_7-서비스-메시-연동",
+          "istio",
+          "cilium",
+          "linkerd",
+          "페더레이션-아키텍처",
+          "페더레이션-구성",
+          "크로스-클러스터-워크로드-등록",
+          "페더레이션-상태-확인",
+          "8-페더레이션",
+          "_8-페더레이션",
+          "irsa-vs-spiffe-비교",
+          "eks-pod-identity-vs-spire-비교",
+          "하이브리드-사용-사례",
+          "aws-private-ca-통합",
+          "9-eks-통합",
+          "_9-eks-통합",
+          "aws-private-ca",
+          "trust-domain-네이밍-전략",
+          "svid-ttl-튜닝",
+          "고가용성-배포",
+          "키-로테이션",
+          "보안-강화-체크리스트",
+          "10-모범-사례",
+          "_10-모범-사례",
+          "핵심-요약",
+          "구현-로드맵",
+          "참고-자료",
+          "11-요약-및-참고-자료",
+          "_11-요약-및-참고-자료"
+        ]
+      },
+      {
+        "path": "en/security/12-spiffe-spire.md",
+        "sha256": "c1b213ee40d6ab4cf25ea817df72a8399bdc4bf038ee711b73b51a6b915b4d5c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "workload-identity-with-spiffe-spire"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h2",
+            "id": "core-concepts"
+          },
+          {
+            "tag": "h3",
+            "id": "spiffe-id"
+          },
+          {
+            "tag": "h3",
+            "id": "svids-and-validation"
+          },
+          {
+            "tag": "h2",
+            "id": "spire-architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "installation"
+          },
+          {
+            "tag": "h3",
+            "id": "single-server-lab"
+          },
+          {
+            "tag": "h3",
+            "id": "high-availability"
+          },
+          {
+            "tag": "h2",
+            "id": "node-attestation"
+          },
+          {
+            "tag": "h2",
+            "id": "workload-attestation"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "csi-mounts-the-api-socket"
+          },
+          {
+            "tag": "h3",
+            "id": "envoy-sds"
+          },
+          {
+            "tag": "h2",
+            "id": "service-mesh-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "istio"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium"
+          },
+          {
+            "tag": "h3",
+            "id": "linkerd"
+          },
+          {
+            "tag": "h2",
+            "id": "federation"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-private-ca"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices-and-troubleshooting"
+          },
+          {
+            "tag": "h2",
+            "id": "summary-and-references"
+          }
+        ],
+        "renderedIds": [
+          "workload-identity-with-spiffe-spire",
+          "overview",
+          "svid-spiffe-verifiable-identity-document",
+          "x-509-svid-vs-jwt-svid-comparison",
+          "trust-bundle",
+          "trust-domain",
+          "core-concepts",
+          "spiffe-id",
+          "svids-and-validation",
+          "spire-server",
+          "spire-agent",
+          "svid-issuance-flow",
+          "spire-architecture",
+          "prerequisites",
+          "helm-installation-recommended",
+          "namespace-layout",
+          "high-availability-configuration",
+          "verify-installation",
+          "installation",
+          "single-server-lab",
+          "high-availability",
+          "attestation-flow",
+          "kubernetes-psat-projected-service-account-token",
+          "aws-instance-identity-document-iid",
+          "join-token-bootstrap",
+          "node-attestor-comparison",
+          "node-attestation",
+          "kubernetes-workload-attestor",
+          "registration-entry-examples",
+          "unix-workload-attestor",
+          "workload-attestation",
+          "spiffe-csi-driver",
+          "spire-controller-manager",
+          "envoy-sds-integration",
+          "kubernetes-integration",
+          "csi-mounts-the-api-socket",
+          "envoy-sds",
+          "istio-spire-integration",
+          "cilium-spire-mutual-authentication",
+          "linkerd-identity-trust-anchors",
+          "service-mesh-integration",
+          "istio",
+          "cilium",
+          "linkerd",
+          "federation-trust-establishment",
+          "configuring-federation",
+          "federated-registration-entries",
+          "multi-cloud-federation-example",
+          "federation",
+          "irsa-vs-spiffe-comparison",
+          "pod-identity-vs-spire",
+          "hybrid-use-cases",
+          "eks-specific-node-attestation",
+          "eks-integration",
+          "aws-private-ca",
+          "best-practices-and-troubleshooting",
+          "table-of-contents",
+          "the-zero-trust-identity-problem",
+          "spiffe-specification-overview",
+          "cncf-graduation-status",
+          "best-practices",
+          "trust-domain-naming",
+          "svid-ttl-tuning",
+          "high-availability-deployment",
+          "key-rotation",
+          "security-hardening",
+          "troubleshooting",
+          "common-issues",
+          "health-checks",
+          "key-takeaways",
+          "architecture-decision-guide",
+          "references",
+          "summary-and-references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/security/12-spiffe-spire-quiz.md",
+        "sha256": "36195c5ff8ecf8fa61940b281217214e5d593ce2a5b722a359ffcf86c2ff7822",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "spiffe-spire-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "문제"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-올바른-spiffe-id-형식은"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-x-509-svid와-jwt-svid-검증에-대한-올바른-설명은"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-spire-server의-역할은"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-workload-api를-호출한-앱의-신원을-확인하는-주체는"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-k8s-psat의-토큰을-server가-검증하는-경로는"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-k8s-container-image-nginx-selector의-해석은"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-spiffe-csi-0-2-13이-pod에-mount하는-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-https-spiffe-페더레이션-bootstrap에-필요한-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-irsa와-spiffe-spire를-함께-설명한-올바른-내용은"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-trust-domain과-ca-키-교체에-대한-올바른-설명은"
+          },
+          {
+            "tag": "h2",
+            "id": "점수-계산"
+          },
+          {
+            "tag": "h2",
+            "id": "관련-문서"
+          }
+        ],
+        "renderedIds": [
+          "spiffe-spire-퀴즈",
+          "문제",
+          "_1-spiffe-id의-올바른-형식은",
+          "_1-올바른-spiffe-id-형식은",
+          "_2-x-509-svid와-jwt-svid의-주요-차이점은",
+          "_2-x-509-svid와-jwt-svid-검증에-대한-올바른-설명은",
+          "_3-spire-server의-주요-역할은",
+          "_3-spire-server의-역할은",
+          "_4-spire-agent의-주요-역할은",
+          "_4-workload-api를-호출한-앱의-신원을-확인하는-주체는",
+          "_5-eks-환경에서-spire-노드-어테스테이션에-권장되는-방식은",
+          "_5-k8s-psat의-토큰을-server가-검증하는-경로는",
+          "_6-kubernetes-워크로드-어테스테이션에서-사용되는-셀렉터-형식은",
+          "_6-k8s-container-image-nginx-selector의-해석은",
+          "_7-spiffe-csi-driver의-주요-목적은",
+          "_7-spiffe-csi-0-2-13이-pod에-mount하는-것은",
+          "_8-spiffe-페더레이션의-주요-기능은",
+          "_8-https-spiffe-페더레이션-bootstrap에-필요한-것은",
+          "_9-spiffe-spire와-aws-irsa-iam-roles-for-service-accounts-비교-시-spiffe의-장점은",
+          "_9-irsa와-spiffe-spire를-함께-설명한-올바른-내용은",
+          "_10-spiffe-trust-domain-네이밍-모범-사례는",
+          "_10-trust-domain과-ca-키-교체에-대한-올바른-설명은",
+          "점수-계산",
+          "관련-문서"
+        ]
+      },
+      {
+        "path": "en/quizzes/security/12-spiffe-spire-quiz.md",
+        "sha256": "8426f4c83e75c9f785e992f5c10ef715fa807e5213d76c35dbd93d8f5499de34",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "spiffe-spire-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "questions"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-which-is-a-valid-spiffe-id"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-which-statement-correctly-describes-x-509-jwt-svid-validation"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-what-is-the-role-of-spire-server"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-who-identifies-the-application-calling-the-workload-api"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-how-does-the-server-validate-a-k8s-psat-token"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-how-should-k8s-container-image-nginx-be-interpreted"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-what-does-spiffe-csi-0-2-13-mount-into-a-pod"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-what-is-required-to-bootstrap-https-spiffe-federation"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-which-statement-correctly-compares-irsa-and-spiffe-spire"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-which-statement-about-trust-domains-and-ca-rotation-is-correct"
+          },
+          {
+            "tag": "h2",
+            "id": "score-calculation"
+          },
+          {
+            "tag": "h2",
+            "id": "related-documentation"
+          }
+        ],
+        "renderedIds": [
+          "spiffe-spire-quiz",
+          "questions",
+          "_1-what-is-the-correct-format-for-a-spiffe-id",
+          "_1-which-is-a-valid-spiffe-id",
+          "_2-what-is-the-key-difference-between-x-509-svid-and-jwt-svid",
+          "_2-which-statement-correctly-describes-x-509-jwt-svid-validation",
+          "_3-what-is-the-primary-role-of-the-spire-server",
+          "_3-what-is-the-role-of-spire-server",
+          "_4-what-is-the-primary-role-of-the-spire-agent",
+          "_4-who-identifies-the-application-calling-the-workload-api",
+          "_5-which-node-attestation-method-is-recommended-for-amazon-eks",
+          "_5-how-does-the-server-validate-a-k8s-psat-token",
+          "_6-what-selector-types-does-k8s-workload-attestation-support",
+          "_6-how-should-k8s-container-image-nginx-be-interpreted",
+          "_7-what-is-the-purpose-of-the-spiffe-csi-driver",
+          "_7-what-does-spiffe-csi-0-2-13-mount-into-a-pod",
+          "_8-what-does-spiffe-federation-enable",
+          "_8-what-is-required-to-bootstrap-https-spiffe-federation",
+          "_9-how-does-spiffe-spire-compare-to-iam-roles-for-service-accounts-irsa",
+          "_9-which-statement-correctly-compares-irsa-and-spiffe-spire",
+          "_10-what-are-best-practices-for-naming-trust-domains-in-spiffe",
+          "_10-which-statement-about-trust-domains-and-ca-rotation-is-correct",
+          "score-calculation",
+          "related-documentation"
+        ]
+      }
+    ]
+  },
+  "examples": [
+    {
+      "path": "examples/security/spiffe/README.md",
+      "sha256": "2a8f06d4a05301806db65d36794bb7ce63dbfa29d90fe2193a4096e69b41a09f",
+      "bytes": 3165
+    },
+    {
+      "path": "examples/security/spiffe/aws-pca-plugin.conf",
+      "sha256": "7d0d2ef578a9be953d68b81e3f41969d9268477a54502ee1e7dff1f9c1af07d4",
+      "bytes": 361
+    },
+    {
+      "path": "examples/security/spiffe/aws-pca-policy.json",
+      "sha256": "277dbf2a0b00d8173dfb073bbce42ad8ccfef6bf84903cb335996ffe5b1d4600",
+      "bytes": 333
+    },
+    {
+      "path": "examples/security/spiffe/envoy.yaml",
+      "sha256": "2f70e152fb8421ad3d4d5d732014154e12da0b9e0e0d8a58aaac85f5a0a1de5b",
+      "bytes": 2667
+    },
+    {
+      "path": "examples/security/spiffe/federation-https-web.yaml",
+      "sha256": "c41216a8fcea5fd3f0107fd107ca90e479c5ad91e28b743df68821ddcf6d27c0",
+      "bytes": 246
+    },
+    {
+      "path": "examples/security/spiffe/ha-values.yaml",
+      "sha256": "2d3c22b3dff867be1317b8c853a7290673a323f0496d90ac7d14b1014efc22d6",
+      "bytes": 1639
+    },
+    {
+      "path": "examples/security/spiffe/lab-values.yaml",
+      "sha256": "95139ee6a54992a5eef5c0721a3f79fe98580ed8d9988aeab1b4ff13405ef24c",
+      "bytes": 879
+    },
+    {
+      "path": "examples/security/spiffe/workload.yaml",
+      "sha256": "bc5e40b22e5e4cfb276be338e55d5bf22fc8aef98f893660e8fd223967460da9",
+      "bytes": 1290
+    }
+  ],
+  "assets": [
+    {
+      "path": "assets/diagrams/archify/en-security-12-spiffe-spire-0.architecture.json",
+      "sha256": "7c41fde55507237eb469c26202626a7b969b7fa8f53930ec04c2aa4a48ef9214",
+      "bytes": 6469
+    },
+    {
+      "path": "public/archmaps/en-security-12-spiffe-spire-0.html",
+      "sha256": "72fb0d8bdf1fab49ee0233661fd8131f6174a4b30004c8c57787db13fd68dad9",
+      "bytes": 716226
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-12-spiffe-spire-0.png",
+      "sha256": "c04a65fb539129b5af9f3e3f4697e968a5d99cb4827ac6f241ab37f0692f0e2c",
+      "bytes": 160000
+    },
+    {
+      "path": "assets/diagrams/archify/en-security-12-spiffe-spire-1.sequence.json",
+      "sha256": "f5153d5d6f3a112e1da81327a9ecb6da29718ccdfa90f5a4fff18c8d5f5917f2",
+      "bytes": 4541
+    },
+    {
+      "path": "public/archmaps/en-security-12-spiffe-spire-1.html",
+      "sha256": "12fb66b44c4b5a46823bedfbb65ab0f9d9d3dde31051f1b7b388d40cf63ca5ba",
+      "bytes": 715475
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-12-spiffe-spire-1.png",
+      "sha256": "eacb8d3cf51fffd7d8ce05d72e224ee7dc8d9b782f845e4aad670357683e3dcb",
+      "bytes": 167639
+    },
+    {
+      "path": "assets/diagrams/archify/en-security-12-spiffe-spire-2.workflow.json",
+      "sha256": "94e5052504738294fdd7cd1686d0f0b2eab3804ca3f7a22ea67ec465a4310c7c",
+      "bytes": 5571
+    },
+    {
+      "path": "public/archmaps/en-security-12-spiffe-spire-2.html",
+      "sha256": "7f781efa8d528615020a9ae911cb8347906bbcad12990f6e2c6b4856d76b1e5e",
+      "bytes": 715918
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-12-spiffe-spire-2.png",
+      "sha256": "453b00bac394f9ba602599d997139db075c5bb34fab35dacff8a9558e79239f8",
+      "bytes": 159391
+    },
+    {
+      "path": "assets/diagrams/archify/en-security-12-spiffe-spire-3.architecture.json",
+      "sha256": "47366255690f471bb6feb54872d8cf26cf9d65308545092e897359920a40185e",
+      "bytes": 5351
+    },
+    {
+      "path": "public/archmaps/en-security-12-spiffe-spire-3.html",
+      "sha256": "0167976d72e8790e1da38e5afa1957dca8cc64072173f8b75372caca81a61099",
+      "bytes": 714469
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-12-spiffe-spire-3.png",
+      "sha256": "8fa07508e0bae96f6c4a2157201c1cc89f8c9a62bb2e06291a43a41ba0dd30d5",
+      "bytes": 170678
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-12-spiffe-spire-0.architecture.json",
+      "sha256": "6f3e374e6a752d0a208c2e427746376dc1d300aab8d293c74f3ea7ae6c527096",
+      "bytes": 6581
+    },
+    {
+      "path": "public/archmaps/ko-security-12-spiffe-spire-0.html",
+      "sha256": "577621dde9f30b6dd237433cec62f6bab94165d36d3e34913f5b3df7d055dd0e",
+      "bytes": 716293
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-12-spiffe-spire-0.png",
+      "sha256": "ef9f23d8c936e5ee9a20a717e9235e2382e549efce07781f52eeeec6c5a87a44",
+      "bytes": 154742
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-12-spiffe-spire-1.sequence.json",
+      "sha256": "4b17ae4607a04b35fd2f9fdfbfd6722aa2411706552fbefff3f484a60e76685b",
+      "bytes": 4701
+    },
+    {
+      "path": "public/archmaps/ko-security-12-spiffe-spire-1.html",
+      "sha256": "c3be825cdad7c1d399e918b13f8c4c3a1efe297d90dfe415b5f19c1b33b3d209",
+      "bytes": 715803
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-12-spiffe-spire-1.png",
+      "sha256": "d167e07e224530bf8fe75622cd905f4e7c7be35840330ae712420ee30088fcac",
+      "bytes": 161038
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-12-spiffe-spire-2.workflow.json",
+      "sha256": "5f269e3215610cd81e62377c85416f3045135575c2a8824650ee6b07554ed5f5",
+      "bytes": 5723
+    },
+    {
+      "path": "public/archmaps/ko-security-12-spiffe-spire-2.html",
+      "sha256": "f93348d621b43192958609393f11707395928f2ce620440d20b1894c933a44e0",
+      "bytes": 716678
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-12-spiffe-spire-2.png",
+      "sha256": "0bfa17187a21b0e950e8177dc71ac5b2493cbe7fbf52f69d625084661e50ed67",
+      "bytes": 153481
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-12-spiffe-spire-3.architecture.json",
+      "sha256": "96e90b00253df9474df44e3ed409b6cdffcd690a8762cafa540e654a1e490288",
+      "bytes": 5766
+    },
+    {
+      "path": "public/archmaps/ko-security-12-spiffe-spire-3.html",
+      "sha256": "9d347b47d63bc350efbcf246cc76b3d3ff6ea7983be76a03ea04d4437d8d82ab",
+      "bytes": 714847
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-12-spiffe-spire-3.png",
+      "sha256": "1e6d9a62dc736fe111e6f10e027050ac6ea90106ae45b80b77a4648fedaac844",
+      "bytes": 161057
+    }
+  ],
+  "releases": [
+    {
+      "repo": "spiffe/spire",
+      "tag": "v1.15.3",
+      "publishedAt": "2026-08-21T14:26:18Z",
+      "url": "https://github.com/spiffe/spire/releases/tag/v1.15.3",
+      "assets": [
+        {
+          "name": "spire-1.15.3-linux-amd64-musl.tar.gz",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-1.15.3-linux-amd64-musl.tar.gz",
+          "size": 63759403
+        },
+        {
+          "name": "spire-1.15.3-linux-amd64-musl_sha256sum.txt",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-1.15.3-linux-amd64-musl_sha256sum.txt",
+          "size": 103
+        },
+        {
+          "name": "spire-1.15.3-linux-arm64-musl.tar.gz",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-1.15.3-linux-arm64-musl.tar.gz",
+          "size": 56165397
+        },
+        {
+          "name": "spire-1.15.3-linux-arm64-musl_sha256sum.txt",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-1.15.3-linux-arm64-musl_sha256sum.txt",
+          "size": 103
+        },
+        {
+          "name": "spire-1.15.3-windows-amd64.zip",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-1.15.3-windows-amd64.zip",
+          "size": 64665564
+        },
+        {
+          "name": "spire-1.15.3-windows-amd64_sha256sum.txt",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-1.15.3-windows-amd64_sha256sum.txt",
+          "size": 167
+        },
+        {
+          "name": "spire-extras-1.15.3-linux-amd64-musl.tar.gz",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-extras-1.15.3-linux-amd64-musl.tar.gz",
+          "size": 5942821
+        },
+        {
+          "name": "spire-extras-1.15.3-linux-amd64-musl_sha256sum.txt",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-extras-1.15.3-linux-amd64-musl_sha256sum.txt",
+          "size": 110
+        },
+        {
+          "name": "spire-extras-1.15.3-linux-arm64-musl.tar.gz",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-extras-1.15.3-linux-arm64-musl.tar.gz",
+          "size": 5380264
+        },
+        {
+          "name": "spire-extras-1.15.3-linux-arm64-musl_sha256sum.txt",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-extras-1.15.3-linux-arm64-musl_sha256sum.txt",
+          "size": 110
+        },
+        {
+          "name": "spire-extras-1.15.3-windows-amd64.zip",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-extras-1.15.3-windows-amd64.zip",
+          "size": 6016733
+        },
+        {
+          "name": "spire-extras-1.15.3-windows-amd64_sha256sum.txt",
+          "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-extras-1.15.3-windows-amd64_sha256sum.txt",
+          "size": 174
+        }
+      ]
+    },
+    {
+      "repo": "spiffe/spire-controller-manager",
+      "tag": "v0.7.0",
+      "publishedAt": "2026-07-27T16:32:41Z",
+      "url": "https://github.com/spiffe/spire-controller-manager/releases/tag/v0.7.0",
+      "assets": []
+    },
+    {
+      "repo": "spiffe/spiffe-csi",
+      "tag": "v0.2.13",
+      "publishedAt": "2026-07-10T13:32:43Z",
+      "url": "https://github.com/spiffe/spiffe-csi/releases/tag/v0.2.13",
+      "assets": []
+    },
+    {
+      "repo": "spiffe/go-spiffe",
+      "tag": "v2.8.1",
+      "publishedAt": "2026-06-19T15:20:50Z",
+      "url": "https://github.com/spiffe/go-spiffe/releases/tag/v2.8.1",
+      "assets": []
+    },
+    {
+      "repo": "spiffe/helm-charts-hardened",
+      "tag": "spire-nested-0.30.2",
+      "publishedAt": "2026-09-09T17:00:03Z",
+      "url": "https://github.com/spiffe/helm-charts-hardened/releases/tag/spire-nested-0.30.2",
+      "assets": [
+        {
+          "name": "spire-nested-0.30.2.tgz",
+          "url": "https://github.com/spiffe/helm-charts-hardened/releases/download/spire-nested-0.30.2/spire-nested-0.30.2.tgz",
+          "size": 207481
+        }
+      ]
+    }
+  ],
+  "binary": {
+    "version": "1.15.3",
+    "url": "https://github.com/spiffe/spire/releases/download/v1.15.3/spire-1.15.3-linux-arm64-musl.tar.gz",
+    "sha256": "a9982b3ca7de489def22265fd4586d8e13091ecb6fddf6adcea9291313b18886",
+    "checksumVerified": true
+  },
+  "primarySources": [
+    {
+      "url": "https://spiffe.io/docs/latest/spiffe-specs/spiffe-id/",
+      "status": 200,
+      "finalURL": "https://spiffe.io/docs/latest/spiffe-specs/spiffe-id/",
+      "path": ".vitepress/cache/content-review-spiffe/sources/88225c650ce2.html",
+      "sha256": "febd41d8247902017eff3aa3d5fa862c500b9e4e52c56db48bc976c7ccbc12dc",
+      "bytes": 42689
+    },
+    {
+      "url": "https://spiffe.io/docs/latest/spiffe-specs/x509-svid/",
+      "status": 200,
+      "finalURL": "https://spiffe.io/docs/latest/spiffe-specs/x509-svid/",
+      "path": ".vitepress/cache/content-review-spiffe/sources/0ece97d2d178.html",
+      "sha256": "02070c2f70d5754929b4869d5d08bb46f761722bd1d7c532f8fa2f5836acaf94",
+      "bytes": 36801
+    },
+    {
+      "url": "https://spiffe.io/docs/latest/spiffe-specs/jwt-svid/",
+      "status": 200,
+      "finalURL": "https://spiffe.io/docs/latest/spiffe-specs/jwt-svid/",
+      "path": ".vitepress/cache/content-review-spiffe/sources/0e6c4d7f3ca0.html",
+      "sha256": "014cff76decc89aaf13a203874fb732a0fc71406fa815889fbdee942091c2fe8",
+      "bytes": 34739
+    },
+    {
+      "url": "https://spiffe.io/docs/latest/spiffe-specs/wit-svid/",
+      "status": 200,
+      "finalURL": "https://spiffe.io/docs/latest/spiffe-specs/wit-svid/",
+      "path": ".vitepress/cache/content-review-spiffe/sources/29a829ef4a07.html",
+      "sha256": "6927471ab3fc51961f59ec592bb669d7730ca66cfe06775e66759edb409e2106",
+      "bytes": 55789
+    },
+    {
+      "url": "https://spiffe.io/docs/latest/spiffe-specs/spiffe-federation/",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "url": "https://spiffe.github.io/helm-charts-hardened/index.yaml",
+      "status": 200,
+      "finalURL": "https://spiffe.github.io/helm-charts-hardened/index.yaml",
+      "path": ".vitepress/cache/content-review-spiffe/sources/517b486c5173.yaml",
+      "sha256": "9e7296dec7f0c880edfd7510da75da20143bf44b81ff2247529e3800d331801c",
+      "bytes": 286914
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spiffe/spiffe-csi/v0.2.13/README.md",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/spiffe/spiffe-csi/v0.2.13/README.md",
+      "path": ".vitepress/cache/content-review-spiffe/sources/859627bd178c.txt",
+      "sha256": "0045235f687f0da26a10b7ae93a80817b577c4e0e7ab1b8f40f2c0435025a6d8",
+      "bytes": 4382
+    },
+    {
+      "url": "https://istio.io/latest/docs/ops/integrations/spire/",
+      "status": 200,
+      "finalURL": "https://istio.io/latest/docs/ops/integrations/spire/",
+      "path": ".vitepress/cache/content-review-spiffe/sources/f666a236e72f.html",
+      "sha256": "0012f6e8a11e7e987f0229def01aae822ecf593426ea6e601f94b621c9b3e154",
+      "bytes": 130375
+    },
+    {
+      "url": "https://docs.cilium.io/en/stable/network/servicemesh/mutual-authentication/mutual-authentication/",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "url": "https://spiffe.io/docs/latest/spiffe-specs/spiffe_federation/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-spiffe/sources/extra-5d270ea0cb.html",
+      "sha256": "14ca37ce41047d2164745f11564225907f629841c001d46f6952ccabc29466c8"
+    },
+    {
+      "url": "https://spiffe.io/docs/latest/spiffe-specs/spiffe_trust_domain_and_bundle/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-spiffe/sources/extra-dee4b4abd8.html",
+      "sha256": "3cb85806b398333d51f8f7cdb51ed117fba29af136f7cf205a1a6659cf2dfe67"
+    },
+    {
+      "url": "https://www.cncf.io/projects/spiffe/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-spiffe/sources/extra-aa8880efaf.html",
+      "sha256": "9e4a45771cae5d2a4b3acf9b1e67322c24c7389f727b3873ffc17d436149c193"
+    },
+    {
+      "url": "https://www.cncf.io/projects/spire/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-spiffe/sources/extra-91df962895.html",
+      "sha256": "2dba3c570ec33aeb57404978ab2c545d821f72fa99b9f9c622e73b844a6e7bcf"
+    },
+    {
+      "url": "https://spiffe.io/docs/latest/spire-helm-charts-hardened-advanced/federation/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-spiffe/sources/extra-9cd0748b87.html",
+      "sha256": "c94ecec9c7bb96c621d0f788e6592647522eee9fec3c05c0ba243cc0cde23461"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spiffe/spire/v1.15.3/doc/plugin_agent_nodeattestor_aws_iid.md",
+      "path": ".vitepress/cache/content-review-spiffe/sources/plugin_agent_nodeattestor_aws_iid.md"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spiffe/spire/v1.15.3/doc/plugin_agent_nodeattestor_k8s_psat.md",
+      "path": ".vitepress/cache/content-review-spiffe/sources/plugin_agent_nodeattestor_k8s_psat.md"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spiffe/spire/v1.15.3/doc/plugin_agent_workloadattestor_k8s.md",
+      "path": ".vitepress/cache/content-review-spiffe/sources/plugin_agent_workloadattestor_k8s.md"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spiffe/spire/v1.15.3/doc/plugin_agent_workloadattestor_unix.md",
+      "path": ".vitepress/cache/content-review-spiffe/sources/plugin_agent_workloadattestor_unix.md"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spiffe/spire/v1.15.3/doc/plugin_server_keymanager_aws_kms.md",
+      "path": ".vitepress/cache/content-review-spiffe/sources/plugin_server_keymanager_aws_kms.md"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spiffe/spire/v1.15.3/doc/plugin_server_nodeattestor_aws_iid.md",
+      "path": ".vitepress/cache/content-review-spiffe/sources/plugin_server_nodeattestor_aws_iid.md"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spiffe/spire/v1.15.3/doc/plugin_server_nodeattestor_k8s_psat.md",
+      "path": ".vitepress/cache/content-review-spiffe/sources/plugin_server_nodeattestor_k8s_psat.md"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spiffe/spire/v1.15.3/doc/plugin_server_upstreamauthority_aws_pca.md",
+      "path": ".vitepress/cache/content-review-spiffe/sources/plugin_server_upstreamauthority_aws_pca.md"
+    }
+  ],
+  "changes": [
+    "SPIFFECSI0.2.13mountsWorkloadAPIunixsocketdirectory,notcertificate/keyfiles",
+    "CurrentWIT-SVIDspecexistsStabilityIncubating;chapterfocusX509/JWTnotclaimonlytwoSPIFFEformats",
+    "Cilium1.20.1mutualauthbeta/out-of-band;encryptionseparate;canonicaldocspathincludesmutual-authentication/mutual-authentication/403fromnetworknotmissing",
+    "spire0.30.2umbrellaapp1.15.3;componentsnotstandaloneindexcharts;spire-crds0.6.1",
+    "PSATTokenReviewaudienceallowlist;nodeUIDdefaultoroptionalpodUIDagentID;donotinventparentIDs",
+    "AWSPrivateCAupstreamsignsSPIREintermediate;localSPIREkeymanagerstillneeded;supplementalbundleisextraPEMnotbackupregion",
+    "Chartkubeletverificationdefaultskip;explicitapiServerCAusedwithdocumentedCAassumption",
+    "Chartdefaultidentityselectorsemptybroad;disabledefault/testkeys/OIDCidentitiesinminimalprofile",
+    "ChartkeynodeAttestor.k8sPSATisuppercasePSAT;chartidentityjwtTTLvsCRDjwtTtl;federatesWithbaretrustdomainnames",
+    "Lab1SQLitevsHA3sharedPostgres,DBpasswordexistingSecret/verify-fullCAvolume/actualPodlabelsverified",
+    "Actualchart0.30.2CSIimage0.2.7(notlateststandalone0.2.13);bothpinnedREADMEsconfirmsocketdelivery;guidesversiondistinctionupdated"
+  ],
+  "validation": {
+    "config": {
+      "status": "passed",
+      "version": "1.15.3",
+      "server": "validatepassedwithPSAT/SQLite/diskkeymanager",
+      "agent": "validatepassedwithPSAT/WorkloadAPItrustbundle",
+      "scope": "Configurationvalidationonly;noServer.run/Agent.run,attestation,cloudorK8srequests;syntheticpublicCAfile"
+    },
+    "idsAndX509": {
+      "cases": [
+        {
+          "name": "spiffe://example.org/ns/demo/sa/app",
+          "expected": true,
+          "accepted": true
+        },
+        {
+          "name": "https://example.org/ns/demo",
+          "expected": false,
+          "accepted": false,
+          "error": "scheme is missing or invalid"
+        },
+        {
+          "name": "spiffe://example.org/path?role=admin",
+          "expected": false,
+          "accepted": false,
+          "error": "path segment characters are limited to letters, numbers, dots, dashes, and underscores"
+        },
+        {
+          "name": "spiffe://example.org/path#admin",
+          "expected": false,
+          "accepted": false,
+          "error": "path segment characters are limited to letters, numbers, dots, dashes, and underscores"
+        },
+        {
+          "name": "spiffe://example.org:8443/app",
+          "expected": false,
+          "accepted": false,
+          "error": "trust domain characters are limited to lowercase letters, numbers, dots, dashes, and underscores"
+        },
+        {
+          "name": "spiffe://192.0.2.1/app",
+          "expected": true,
+          "accepted": true
+        },
+        {
+          "name": "spiffe://example.org",
+          "expected": true,
+          "accepted": true
+        },
+        {
+          "name": "spiffe://example.org/a/../b",
+          "expected": false,
+          "accepted": false,
+          "error": "path cannot contain dot segments"
+        },
+        {
+          "name": "spiffe://example.org/a%2Fb",
+          "expected": false,
+          "accepted": false,
+          "error": "path segment characters are limited to letters, numbers, dots, dashes, and underscores"
+        },
+        {
+          "name": "valid-uri-svid",
+          "expected": true,
+          "accepted": true
+        },
+        {
+          "name": "CN-only-not-identity",
+          "expected": false,
+          "accepted": false,
+          "error": "x509svid: could not get leaf SPIFFE ID: certificate contains no URI SAN"
+        },
+        {
+          "name": "two-SPIFFE-URIs",
+          "expected": false,
+          "accepted": false,
+          "error": "x509svid: could not get leaf SPIFFE ID: certificate contains more than one URI SAN"
+        },
+        {
+          "name": "wrong-trust-domain",
+          "expected": false,
+          "accepted": false,
+          "error": "x509svid: could not get X509 bundle: x509bundle: no X.509 bundle found for trust domain: \"other.example\""
+        },
+        {
+          "name": "expired",
+          "expected": false,
+          "accepted": false,
+          "error": "x509svid: could not verify leaf certificate: x509: certificate has expired or is not yet valid: current time 2026-09-13T04:37:23Z is after 2026-09-13T03:37:23Z"
+        }
+      ],
+      "scope": "SyntheticlocalURIparsing/X509CAleafverification;keysinmemoryonly;nocluster/network/realSPIREservice",
+      "status": "passed",
+      "version": "go-spiffe2.8.1"
+    },
+    "jwt": {
+      "cases": [
+        {
+          "accepted": true,
+          "expected": true,
+          "name": "valid"
+        },
+        {
+          "accepted": false,
+          "error": "jwtsvid: expected audience in [\"doc-service\"] (audience=[\"other\"])",
+          "expected": false,
+          "name": "wrong-audience"
+        },
+        {
+          "accepted": false,
+          "error": "jwtsvid: token has expired",
+          "expected": false,
+          "name": "expired"
+        },
+        {
+          "accepted": false,
+          "error": "jwtsvid: no bundle found for trust domain \"other.example\"",
+          "expected": false,
+          "name": "wrong-domain"
+        },
+        {
+          "accepted": false,
+          "error": "jwtsvid: token has an invalid subject claim: scheme is missing or invalid",
+          "expected": false,
+          "name": "invalid-subject"
+        },
+        {
+          "accepted": true,
+          "meaning": "Audience/expiry/signaturechecks alone do not provide replay detection",
+          "name": "same-valid-bearer-token-replayed"
+        }
+      ],
+      "scope": "go-spiffe2.8.1withgo-jose4syntheticJWTinmemory;noexternalissuerorWorkloadAPIcalls",
+      "status": "passed"
+    },
+    "helm": {
+      "status": "passed",
+      "charts": [
+        {
+          "name": "spire",
+          "version": "0.30.2",
+          "appVersion": "1.15.3",
+          "url": "https://github.com/spiffe/helm-charts-hardened/releases/download/spire-0.30.2/spire-0.30.2.tgz",
+          "sha256": "aadaeabe1dfecbcd803d541580ab41c229d99c0075ace3b6e050b0ceef36aa8d"
+        },
+        {
+          "name": "spire-crds",
+          "version": "0.6.1",
+          "appVersion": "0.0.1",
+          "url": "https://github.com/spiffe/helm-charts-hardened/releases/download/spire-crds-0.6.1/spire-crds-0.6.1.tgz",
+          "sha256": "ce982e63fc375e392b014fc99e621a55442ab886052413e9bb052f72d66580a8"
+        }
+      ],
+      "profiles": [
+        {
+          "profile": "lab",
+          "resources": 24,
+          "serverReplicas": 1,
+          "kubeletVerification": true,
+          "broadDefaultIdentities": 0,
+          "images": [
+            "ghcr.io/spiffe/spiffe-csi-driver:0.2.7",
+            "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0",
+            "ghcr.io/spiffe/spire-agent:1.15.3",
+            "ghcr.io/spiffe/spire-server:1.15.3",
+            "ghcr.io/spiffe/spire-controller-manager:0.7.0"
+          ],
+          "renderedSha256": "2c46f49b0c3b0bb70eeff99e76a11cf52db480c5cee4e558db83531845d74325"
+        },
+        {
+          "profile": "ha",
+          "resources": 24,
+          "serverReplicas": 3,
+          "kubeletVerification": true,
+          "broadDefaultIdentities": 0,
+          "images": [
+            "ghcr.io/spiffe/spiffe-csi-driver:0.2.7",
+            "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0",
+            "ghcr.io/spiffe/spire-agent:1.15.3",
+            "ghcr.io/spiffe/spire-server:1.15.3",
+            "ghcr.io/spiffe/spire-controller-manager:0.7.0"
+          ],
+          "renderedSha256": "c60fec10f497cfb5f0bd537f418cde8954e23c2a8d87e708f625d62777ee0226"
+        }
+      ],
+      "scope": "Pinnedchartlocalrender;HASecret/CAvolume/labelsverified;noDBconnectionorclusterinstallation"
+    },
+    "resources": {
+      "status": "passed",
+      "resources": [
+        {
+          "kind": "Namespace",
+          "name": "payments",
+          "passed": true
+        },
+        {
+          "kind": "ServiceAccount",
+          "name": "payment-processor",
+          "passed": true
+        },
+        {
+          "kind": "ClusterSPIFFEID",
+          "name": "payments-workload",
+          "passed": true
+        },
+        {
+          "kind": "Pod",
+          "name": "payment-processor",
+          "passed": true
+        }
+      ],
+      "federation": "https_webClusterFederatedTrustDomainpassed",
+      "scope": "K8s1.36/CRD0.6.1OpenAPI;noCEL/controller/realclusterorTLSendpointcalls"
+    },
+    "envoy": [
+      {
+        "path": "envoy.yaml"
+      }
+    ],
+    "browser": {
+      "status": "passed",
+      "cases": [
+        {
+          "file": "en-security-12-spiffe-spire-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1194,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1194,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1194,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 58753,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 845,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 845,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 845,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 59109,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 860,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 860,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 860,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 59387,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1093,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1093,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-12-spiffe-spire-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1093,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 57048,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 864,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 864,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 864,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 57939,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 649,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 649,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 649,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 58803,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 634,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 634,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 634,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 58418,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 890,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 890,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-12-spiffe-spire-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 890,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 56779,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        }
+      ],
+      "scope": "24caseson8production-normalizedSPIFFE-viewers; motion/reduced-motion/visibility/theme/guided controls and8SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+    },
+    "legacyAnchors": [
+      {
+        "path": "ko/security/12-spiffe-spire.md",
+        "preserved": 41,
+        "anchors": [
+          {
+            "id": "왜-spiffe-spire가-필요한가",
+            "oldHeading": "왜 SPIFFE/SPIRE가 필요한가?",
+            "newHeading": "개요"
+          },
+          {
+            "id": "목차",
+            "oldHeading": "목차",
+            "newHeading": "SPIFFE/SPIRE를 활용한 워크로드 아이덴티티"
+          },
+          {
+            "id": "svid-spiffe-verifiable-identity-document",
+            "oldHeading": "SVID (SPIFFE Verifiable Identity Document)",
+            "newHeading": "1. 핵심 개념"
+          },
+          {
+            "id": "x-509-svid-vs-jwt-svid-비교",
+            "oldHeading": "X.509-SVID vs JWT-SVID 비교",
+            "newHeading": "1. 핵심 개념"
+          },
+          {
+            "id": "trust-bundle",
+            "oldHeading": "Trust Bundle",
+            "newHeading": "1. 핵심 개념"
+          },
+          {
+            "id": "컴포넌트-개요",
+            "oldHeading": "컴포넌트 개요",
+            "newHeading": "2. SPIRE 아키텍처"
+          },
+          {
+            "id": "spire-server",
+            "oldHeading": "SPIRE Server",
+            "newHeading": "2. SPIRE 아키텍처"
+          },
+          {
+            "id": "spire-agent",
+            "oldHeading": "SPIRE Agent",
+            "newHeading": "2. SPIRE 아키텍처"
+          },
+          {
+            "id": "svid-발급-플로우",
+            "oldHeading": "SVID 발급 플로우",
+            "newHeading": "2. SPIRE 아키텍처"
+          },
+          {
+            "id": "helm-차트를-이용한-설치",
+            "oldHeading": "Helm 차트를 이용한 설치",
+            "newHeading": "3. 설치 및 구성"
+          },
+          {
+            "id": "프로덕션-구성",
+            "oldHeading": "프로덕션 구성",
+            "newHeading": "3. 설치 및 구성"
+          },
+          {
+            "id": "설치-확인",
+            "oldHeading": "설치 확인",
+            "newHeading": "3. 설치 및 구성"
+          },
+          {
+            "id": "어테스테이션-방식-비교",
+            "oldHeading": "어테스테이션 방식 비교",
+            "newHeading": "4. 노드 어테스테이션"
+          },
+          {
+            "id": "노드-및-워크로드-어테스테이션-플로우",
+            "oldHeading": "노드 및 워크로드 어테스테이션 플로우",
+            "newHeading": "4. 노드 어테스테이션"
+          },
+          {
+            "id": "kubernetes-psat-어테스테이션-구성",
+            "oldHeading": "Kubernetes PSAT 어테스테이션 구성",
+            "newHeading": "4. 노드 어테스테이션"
+          },
+          {
+            "id": "aws-iid-어테스테이션-구성",
+            "oldHeading": "AWS IID 어테스테이션 구성",
+            "newHeading": "4. 노드 어테스테이션"
+          },
+          {
+            "id": "kubernetes-워크로드-어테스터",
+            "oldHeading": "Kubernetes 워크로드 어테스터",
+            "newHeading": "5. 워크로드 어테스테이션"
+          },
+          {
+            "id": "spire-agent-구성-워크로드-어테스터",
+            "oldHeading": "SPIRE Agent 구성 - 워크로드 어테스터",
+            "newHeading": "5. 워크로드 어테스테이션"
+          },
+          {
+            "id": "등록-엔트리-생성",
+            "oldHeading": "등록 엔트리 생성",
+            "newHeading": "5. 워크로드 어테스테이션"
+          },
+          {
+            "id": "spiffe-csi-driver",
+            "oldHeading": "SPIFFE CSI Driver",
+            "newHeading": "6. Kubernetes 통합"
+          },
+          {
+            "id": "spire-controller-manager-자동-등록",
+            "oldHeading": "SPIRE Controller Manager (자동 등록)",
+            "newHeading": "6. Kubernetes 통합"
+          },
+          {
+            "id": "envoy-sds-연동",
+            "oldHeading": "Envoy SDS 연동",
+            "newHeading": "6. Kubernetes 통합"
+          },
+          {
+            "id": "istio-spire",
+            "oldHeading": "Istio + SPIRE",
+            "newHeading": "7. 서비스 메시 연동"
+          },
+          {
+            "id": "cilium-spire",
+            "oldHeading": "Cilium + SPIRE",
+            "newHeading": "7. 서비스 메시 연동"
+          },
+          {
+            "id": "linkerd-spire",
+            "oldHeading": "Linkerd + SPIRE",
+            "newHeading": "7. 서비스 메시 연동"
+          },
+          {
+            "id": "페더레이션-아키텍처",
+            "oldHeading": "페더레이션 아키텍처",
+            "newHeading": "8. 페더레이션"
+          },
+          {
+            "id": "페더레이션-구성",
+            "oldHeading": "페더레이션 구성",
+            "newHeading": "8. 페더레이션"
+          },
+          {
+            "id": "크로스-클러스터-워크로드-등록",
+            "oldHeading": "크로스 클러스터 워크로드 등록",
+            "newHeading": "8. 페더레이션"
+          },
+          {
+            "id": "페더레이션-상태-확인",
+            "oldHeading": "페더레이션 상태 확인",
+            "newHeading": "8. 페더레이션"
+          },
+          {
+            "id": "irsa-vs-spiffe-비교",
+            "oldHeading": "IRSA vs SPIFFE 비교",
+            "newHeading": "9. EKS 통합"
+          },
+          {
+            "id": "eks-pod-identity-vs-spire-비교",
+            "oldHeading": "EKS Pod Identity vs SPIRE 비교",
+            "newHeading": "9. EKS 통합"
+          },
+          {
+            "id": "하이브리드-사용-사례",
+            "oldHeading": "하이브리드 사용 사례",
+            "newHeading": "9. EKS 통합"
+          },
+          {
+            "id": "aws-private-ca-통합",
+            "oldHeading": "AWS Private CA 통합",
+            "newHeading": "9. EKS 통합"
+          },
+          {
+            "id": "trust-domain-네이밍-전략",
+            "oldHeading": "Trust Domain 네이밍 전략",
+            "newHeading": "10. 모범 사례"
+          },
+          {
+            "id": "svid-ttl-튜닝",
+            "oldHeading": "SVID TTL 튜닝",
+            "newHeading": "10. 모범 사례"
+          },
+          {
+            "id": "고가용성-배포",
+            "oldHeading": "고가용성 배포",
+            "newHeading": "10. 모범 사례"
+          },
+          {
+            "id": "키-로테이션",
+            "oldHeading": "키 로테이션",
+            "newHeading": "10. 모범 사례"
+          },
+          {
+            "id": "보안-강화-체크리스트",
+            "oldHeading": "보안 강화 체크리스트",
+            "newHeading": "10. 모범 사례"
+          },
+          {
+            "id": "핵심-요약",
+            "oldHeading": "핵심 요약",
+            "newHeading": "11. 요약 및 참고 자료"
+          },
+          {
+            "id": "구현-로드맵",
+            "oldHeading": "구현 로드맵",
+            "newHeading": "11. 요약 및 참고 자료"
+          },
+          {
+            "id": "참고-자료",
+            "oldHeading": "참고 자료",
+            "newHeading": "11. 요약 및 참고 자료"
+          }
+        ]
+      },
+      {
+        "path": "ko/quizzes/security/12-spiffe-spire-quiz.md",
+        "preserved": 10,
+        "anchors": [
+          {
+            "id": "_1-spiffe-id의-올바른-형식은",
+            "oldHeading": "1. SPIFFE ID의 올바른 형식은?",
+            "newHeading": "1. 올바른 SPIFFE ID 형식은?"
+          },
+          {
+            "id": "_2-x-509-svid와-jwt-svid의-주요-차이점은",
+            "oldHeading": "2. X.509-SVID와 JWT-SVID의 주요 차이점은?",
+            "newHeading": "2. X.509-SVID와 JWT-SVID 검증에 대한 올바른 설명은?"
+          },
+          {
+            "id": "_3-spire-server의-주요-역할은",
+            "oldHeading": "3. SPIRE Server의 주요 역할은?",
+            "newHeading": "3. SPIRE Server의 역할은?"
+          },
+          {
+            "id": "_4-spire-agent의-주요-역할은",
+            "oldHeading": "4. SPIRE Agent의 주요 역할은?",
+            "newHeading": "4. Workload API를 호출한 앱의 신원을 확인하는 주체는?"
+          },
+          {
+            "id": "_5-eks-환경에서-spire-노드-어테스테이션에-권장되는-방식은",
+            "oldHeading": "5. EKS 환경에서 SPIRE 노드 어테스테이션에 권장되는 방식은?",
+            "newHeading": "5. k8s_psat의 토큰을 Server가 검증하는 경로는?"
+          },
+          {
+            "id": "_6-kubernetes-워크로드-어테스테이션에서-사용되는-셀렉터-형식은",
+            "oldHeading": "6. Kubernetes 워크로드 어테스테이션에서 사용되는 셀렉터 형식은?",
+            "newHeading": "6. k8s:container-image:nginx:* selector의 해석은?"
+          },
+          {
+            "id": "_7-spiffe-csi-driver의-주요-목적은",
+            "oldHeading": "7. SPIFFE CSI Driver의 주요 목적은?",
+            "newHeading": "7. SPIFFE CSI 0.2.13이 Pod에 mount하는 것은?"
+          },
+          {
+            "id": "_8-spiffe-페더레이션의-주요-기능은",
+            "oldHeading": "8. SPIFFE 페더레이션의 주요 기능은?",
+            "newHeading": "8. https_spiffe 페더레이션 bootstrap에 필요한 것은?"
+          },
+          {
+            "id": "_9-spiffe-spire와-aws-irsa-iam-roles-for-service-accounts-비교-시-spiffe의-장점은",
+            "oldHeading": "9. SPIFFE/SPIRE와 AWS IRSA(IAM Roles for Service Accounts) 비교 시 SPIFFE의 장점은?",
+            "newHeading": "9. IRSA와 SPIFFE/SPIRE를 함께 설명한 올바른 내용은?"
+          },
+          {
+            "id": "_10-spiffe-trust-domain-네이밍-모범-사례는",
+            "oldHeading": "10. SPIFFE Trust Domain 네이밍 모범 사례는?",
+            "newHeading": "10. Trust domain과 CA 키 교체에 대한 올바른 설명은?"
+          }
+        ]
+      },
+      {
+        "path": "en/security/12-spiffe-spire.md",
+        "preserved": 50,
+        "anchors": [
+          {
+            "id": "table-of-contents",
+            "oldHeading": "Table of Contents",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "the-zero-trust-identity-problem",
+            "oldHeading": "The Zero Trust Identity Problem",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "spiffe-specification-overview",
+            "oldHeading": "SPIFFE Specification Overview",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "cncf-graduation-status",
+            "oldHeading": "CNCF Graduation Status",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "svid-spiffe-verifiable-identity-document",
+            "oldHeading": "SVID (SPIFFE Verifiable Identity Document)",
+            "newHeading": "Core Concepts"
+          },
+          {
+            "id": "x-509-svid-vs-jwt-svid-comparison",
+            "oldHeading": "X.509-SVID vs JWT-SVID Comparison",
+            "newHeading": "Core Concepts"
+          },
+          {
+            "id": "trust-bundle",
+            "oldHeading": "Trust Bundle",
+            "newHeading": "Core Concepts"
+          },
+          {
+            "id": "trust-domain",
+            "oldHeading": "Trust Domain",
+            "newHeading": "Core Concepts"
+          },
+          {
+            "id": "spire-server",
+            "oldHeading": "SPIRE Server",
+            "newHeading": "SPIRE Architecture"
+          },
+          {
+            "id": "spire-agent",
+            "oldHeading": "SPIRE Agent",
+            "newHeading": "SPIRE Architecture"
+          },
+          {
+            "id": "svid-issuance-flow",
+            "oldHeading": "SVID Issuance Flow",
+            "newHeading": "SPIRE Architecture"
+          },
+          {
+            "id": "prerequisites",
+            "oldHeading": "Prerequisites",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "helm-installation-recommended",
+            "oldHeading": "Helm Installation (Recommended)",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "namespace-layout",
+            "oldHeading": "Namespace Layout",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "high-availability-configuration",
+            "oldHeading": "High Availability Configuration",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "verify-installation",
+            "oldHeading": "Verify Installation",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "attestation-flow",
+            "oldHeading": "Attestation Flow",
+            "newHeading": "Node Attestation"
+          },
+          {
+            "id": "kubernetes-psat-projected-service-account-token",
+            "oldHeading": "Kubernetes PSAT (Projected Service Account Token)",
+            "newHeading": "Node Attestation"
+          },
+          {
+            "id": "aws-instance-identity-document-iid",
+            "oldHeading": "AWS Instance Identity Document (IID)",
+            "newHeading": "Node Attestation"
+          },
+          {
+            "id": "join-token-bootstrap",
+            "oldHeading": "Join Token (Bootstrap)",
+            "newHeading": "Node Attestation"
+          },
+          {
+            "id": "node-attestor-comparison",
+            "oldHeading": "Node Attestor Comparison",
+            "newHeading": "Node Attestation"
+          },
+          {
+            "id": "kubernetes-workload-attestor",
+            "oldHeading": "Kubernetes Workload Attestor",
+            "newHeading": "Workload Attestation"
+          },
+          {
+            "id": "registration-entry-examples",
+            "oldHeading": "Registration Entry Examples",
+            "newHeading": "Workload Attestation"
+          },
+          {
+            "id": "unix-workload-attestor",
+            "oldHeading": "Unix Workload Attestor",
+            "newHeading": "Workload Attestation"
+          },
+          {
+            "id": "spiffe-csi-driver",
+            "oldHeading": "SPIFFE CSI Driver",
+            "newHeading": "Kubernetes Integration"
+          },
+          {
+            "id": "spire-controller-manager",
+            "oldHeading": "SPIRE Controller Manager",
+            "newHeading": "Kubernetes Integration"
+          },
+          {
+            "id": "envoy-sds-integration",
+            "oldHeading": "Envoy SDS Integration",
+            "newHeading": "Kubernetes Integration"
+          },
+          {
+            "id": "istio-spire-integration",
+            "oldHeading": "Istio + SPIRE Integration",
+            "newHeading": "Service Mesh Integration"
+          },
+          {
+            "id": "cilium-spire-mutual-authentication",
+            "oldHeading": "Cilium + SPIRE Mutual Authentication",
+            "newHeading": "Service Mesh Integration"
+          },
+          {
+            "id": "linkerd-identity-trust-anchors",
+            "oldHeading": "Linkerd Identity Trust Anchors",
+            "newHeading": "Service Mesh Integration"
+          },
+          {
+            "id": "federation-trust-establishment",
+            "oldHeading": "Federation Trust Establishment",
+            "newHeading": "Federation"
+          },
+          {
+            "id": "configuring-federation",
+            "oldHeading": "Configuring Federation",
+            "newHeading": "Federation"
+          },
+          {
+            "id": "federated-registration-entries",
+            "oldHeading": "Federated Registration Entries",
+            "newHeading": "Federation"
+          },
+          {
+            "id": "multi-cloud-federation-example",
+            "oldHeading": "Multi-Cloud Federation Example",
+            "newHeading": "Federation"
+          },
+          {
+            "id": "irsa-vs-spiffe-comparison",
+            "oldHeading": "IRSA vs SPIFFE Comparison",
+            "newHeading": "EKS Integration"
+          },
+          {
+            "id": "pod-identity-vs-spire",
+            "oldHeading": "Pod Identity vs SPIRE",
+            "newHeading": "EKS Integration"
+          },
+          {
+            "id": "hybrid-use-cases",
+            "oldHeading": "Hybrid Use Cases",
+            "newHeading": "EKS Integration"
+          },
+          {
+            "id": "eks-specific-node-attestation",
+            "oldHeading": "EKS-Specific Node Attestation",
+            "newHeading": "EKS Integration"
+          },
+          {
+            "id": "best-practices",
+            "oldHeading": "Best Practices",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "trust-domain-naming",
+            "oldHeading": "Trust Domain Naming",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "svid-ttl-tuning",
+            "oldHeading": "SVID TTL Tuning",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "high-availability-deployment",
+            "oldHeading": "High Availability Deployment",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "key-rotation",
+            "oldHeading": "Key Rotation",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "security-hardening",
+            "oldHeading": "Security Hardening",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "troubleshooting",
+            "oldHeading": "Troubleshooting",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "common-issues",
+            "oldHeading": "Common Issues",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "health-checks",
+            "oldHeading": "Health Checks",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "key-takeaways",
+            "oldHeading": "Key Takeaways",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "architecture-decision-guide",
+            "oldHeading": "Architecture Decision Guide",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "references",
+            "oldHeading": "References",
+            "newHeading": "Summary and References"
+          }
+        ]
+      },
+      {
+        "path": "en/quizzes/security/12-spiffe-spire-quiz.md",
+        "preserved": 10,
+        "anchors": [
+          {
+            "id": "_1-what-is-the-correct-format-for-a-spiffe-id",
+            "oldHeading": "1. What is the correct format for a SPIFFE ID?",
+            "newHeading": "1. Which is a valid SPIFFE ID?"
+          },
+          {
+            "id": "_2-what-is-the-key-difference-between-x-509-svid-and-jwt-svid",
+            "oldHeading": "2. What is the key difference between X.509-SVID and JWT-SVID?",
+            "newHeading": "2. Which statement correctly describes X.509/JWT-SVID validation?"
+          },
+          {
+            "id": "_3-what-is-the-primary-role-of-the-spire-server",
+            "oldHeading": "3. What is the primary role of the SPIRE Server?",
+            "newHeading": "3. What is the role of SPIRE Server?"
+          },
+          {
+            "id": "_4-what-is-the-primary-role-of-the-spire-agent",
+            "oldHeading": "4. What is the primary role of the SPIRE Agent?",
+            "newHeading": "4. Who identifies the application calling the Workload API?"
+          },
+          {
+            "id": "_5-which-node-attestation-method-is-recommended-for-amazon-eks",
+            "oldHeading": "5. Which node attestation method is recommended for Amazon EKS?",
+            "newHeading": "5. How does the server validate a k8s_psat token?"
+          },
+          {
+            "id": "_6-what-selector-types-does-k8s-workload-attestation-support",
+            "oldHeading": "6. What selector types does k8s workload attestation support?",
+            "newHeading": "6. How should k8s:container-image:nginx:* be interpreted?"
+          },
+          {
+            "id": "_7-what-is-the-purpose-of-the-spiffe-csi-driver",
+            "oldHeading": "7. What is the purpose of the SPIFFE CSI Driver?",
+            "newHeading": "7. What does SPIFFE CSI 0.2.13 mount into a Pod?"
+          },
+          {
+            "id": "_8-what-does-spiffe-federation-enable",
+            "oldHeading": "8. What does SPIFFE Federation enable?",
+            "newHeading": "8. What is required to bootstrap https_spiffe federation?"
+          },
+          {
+            "id": "_9-how-does-spiffe-spire-compare-to-iam-roles-for-service-accounts-irsa",
+            "oldHeading": "9. How does SPIFFE/SPIRE compare to IAM Roles for Service Accounts (IRSA)?",
+            "newHeading": "9. Which statement correctly compares IRSA and SPIFFE/SPIRE?"
+          },
+          {
+            "id": "_10-what-are-best-practices-for-naming-trust-domains-in-spiffe",
+            "oldHeading": "10. What are best practices for naming trust domains in SPIFFE?",
+            "newHeading": "10. Which statement about trust domains and CA rotation is correct?"
+          }
+        ]
+      }
+    ]
+  },
+  "limits": [
+    "No real SPIRE server/agent run, node/workload attestation, cluster installation, DB connection, AWS CA issuance, federation endpoint exchange or mTLS traffic was executed.",
+    "Native server/agent validate and go-spiffe tests use synthetic local inputs; privatekeysremaininmemory/privatefixtures.",
+    "Envoy1.37generatedprotobufvalidationandsourcereviewverifyconfiguration/URImatcher,notliveSDSorTLS.",
+    "Helm/CRDOpenAPIvalidationdoesnotexecutecontrolleradmission/CEL/RBAC orruntimecapabilities.",
+    "ChartCSIimageis0.2.7;standalone0.2.13docsareadditionalreference,bothmountAPIsocketratherthancertificatefiles.",
+    "EightPNGsvisuallyreviewed;24browsercasesat375/768/1920withlocalfontfallbackpassed."
+  ]
+}
