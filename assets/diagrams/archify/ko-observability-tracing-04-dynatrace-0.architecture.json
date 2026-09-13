@@ -2,262 +2,223 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Dynatrace EKS 아키텍처",
-    "output": "ko-observability-tracing-04-dynatrace-0.html",
+    "title": "Dynatrace EKS: 주입과 텔레메트리",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1120,
-      580
+      1360,
+      720
     ],
     "views": [
       {
         "id": "instrumentation",
-        "label": "자동 계측",
+        "label": "주입 제어",
         "focus": [
-          "svc-a",
-          "svc-b",
-          "svc-c",
-          "oneagent"
+          "operator",
+          "webhook",
+          "csi",
+          "apps"
         ],
-        "note": "OneAgent DaemonSet이 코드 변경 없이 Service A/B/C를 자동 계측한다."
+        "note": "새로운 지원 Pod의 주입과 코드 모듈 마운트를 구분합니다."
       },
       {
-        "id": "telemetry-path",
-        "label": "텔레메트리 경로",
+        "id": "telemetry",
+        "label": "데이터 경로",
         "focus": [
+          "apps",
           "oneagent",
           "activegate",
+          "api",
           "saas"
         ],
-        "note": "메트릭/트레이스/로그가 ActiveGate를 거쳐 암호화된 연결로 Dynatrace SaaS에 전송된다."
-      },
-      {
-        "id": "platform",
-        "label": "Dynatrace Platform",
-        "focus": [
-          "saas",
-          "davis",
-          "grail"
-        ],
-        "note": "SaaS로 들어온 데이터를 Davis AI 엔진과 Grail 데이터 레이크하우스가 사용한다."
+        "note": "호스트·애플리케이션 데이터와 Kubernetes API 조회는 서로 다른 경로입니다."
       }
     ]
   },
   "components": [
     {
-      "id": "svc-a",
-      "type": "backend",
-      "label": "Service A",
-      "sublabel": "애플리케이션",
-      "pos": [
-        100,
-        60
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "svc-b",
-      "type": "backend",
-      "label": "Service B",
-      "sublabel": "애플리케이션",
-      "pos": [
-        285,
-        60
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "svc-c",
-      "type": "backend",
-      "label": "Service C",
-      "sublabel": "애플리케이션",
-      "pos": [
-        470,
-        60
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
       "id": "operator",
       "type": "security",
       "label": "Dynatrace Operator",
-      "sublabel": "Operator Pod + Webhook",
       "pos": [
-        40,
-        280
+        30,
+        60
       ],
       "size": [
-        170,
+        190,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Admission webhook",
+      "pos": [
+        330,
         60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "database",
+      "label": "CSI Driver",
+      "pos": [
+        330,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sublabel": "승인된 노드"
+    },
+    {
+      "id": "apps",
+      "type": "backend",
+      "label": "지원 애플리케이션",
+      "pos": [
+        680,
+        145
+      ],
+      "size": [
+        190,
+        64
       ]
     },
     {
       "id": "oneagent",
       "type": "backend",
-      "label": "OneAgent",
-      "sublabel": "DaemonSet (워커 노드)",
+      "label": "호스트 OneAgent",
       "pos": [
-        290,
-        280
+        330,
+        520
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ],
-      "tag": "자동 계측"
+      "sublabel": "DaemonSet"
     },
     {
       "id": "activegate",
       "type": "backend",
       "label": "ActiveGate",
-      "sublabel": "StatefulSet",
       "pos": [
-        570,
-        280
+        1000,
+        400
       ],
       "size": [
-        150,
-        60
+        190,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "Kubernetes API",
+      "pos": [
+        680,
+        590
+      ],
+      "size": [
+        190,
+        64
       ]
     },
     {
       "id": "saas",
       "type": "cloud",
-      "label": "Dynatrace SaaS",
-      "sublabel": "테넌트",
+      "label": "Dynatrace 환경",
       "pos": [
-        870,
-        280
+        1000,
+        145
       ],
       "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "davis",
-      "type": "backend",
-      "label": "Davis AI Engine",
-      "sublabel": "근본 원인 분석",
-      "pos": [
-        870,
-        100
-      ],
-      "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "grail",
-      "type": "database",
-      "label": "Grail Data Lakehouse",
-      "sublabel": "데이터 레이크하우스",
-      "pos": [
-        870,
-        460
-      ],
-      "size": [
-        170,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Amazon EKS 클러스터",
-      "wraps": [
-        "svc-a",
-        "svc-b",
-        "svc-c",
-        "operator",
-        "oneagent",
-        "activegate"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Dynatrace Platform",
-      "wraps": [
-        "saas",
-        "davis",
-        "grail"
+        220,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "a-to-oneagent",
-      "from": "svc-a",
-      "to": "oneagent",
-      "label": "자동 계측",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "id": "operator-webhook",
+      "from": "operator",
+      "to": "webhook",
+      "label": "관리",
+      "variant": "dashed"
     },
     {
-      "id": "b-to-oneagent",
-      "from": "svc-b",
-      "to": "oneagent",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "id": "webhook-apps",
+      "from": "webhook",
+      "to": "apps",
+      "label": "새 Pod 주입",
+      "variant": "dashed"
     },
     {
-      "id": "c-to-oneagent",
-      "from": "svc-c",
-      "to": "oneagent",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "operator-to-oneagent",
+      "id": "operator-host",
       "from": "operator",
       "to": "oneagent",
-      "label": "배포 / 관리",
-      "variant": "dashed",
-      "labelDy": -38
+      "label": "관리",
+      "variant": "dashed"
     },
     {
-      "id": "oneagent-to-activegate",
+      "id": "csi-apps",
+      "from": "csi",
+      "to": "apps",
+      "label": "코드 모듈 마운트",
+      "variant": "dashed"
+    },
+    {
+      "id": "app-data",
+      "from": "apps",
+      "to": "activegate",
+      "label": "앱 텔레메트리",
+      "variant": "default"
+    },
+    {
+      "id": "host-data",
       "from": "oneagent",
       "to": "activegate",
-      "label": "메트릭 / 트레이스 / 로그",
-      "variant": "emphasis",
-      "labelDy": -31
+      "label": "호스트 텔레메트리",
+      "variant": "default"
     },
     {
-      "id": "activegate-to-saas",
+      "id": "api-query",
+      "from": "activegate",
+      "to": "api",
+      "label": "조회",
+      "variant": "default"
+    },
+    {
+      "id": "api-response",
+      "from": "api",
+      "to": "activegate",
+      "label": "클러스터 데이터",
+      "variant": "default",
+      "fromSide": "top"
+    },
+    {
+      "id": "export",
       "from": "activegate",
       "to": "saas",
-      "label": "암호화된 연결",
-      "variant": "security"
-    },
+      "label": "TLS",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
     {
-      "id": "saas-to-davis",
-      "from": "saas",
-      "to": "davis",
-      "label": "분석",
-      "labelDy": -30
-    },
-    {
-      "id": "saas-to-grail",
-      "from": "saas",
-      "to": "grail",
-      "label": "저장 / 조회",
-      "labelDy": 40
+      "dot": "amber",
+      "title": "구성 범위",
+      "items": [
+        "Cloud-native full-stack 예시; 지원 노드·런타임·권한을 별도 확인",
+        "namespaceSelector는 주입 범위이며 호스트·클러스터 수집 경계가 아님"
+      ]
     }
   ]
 }

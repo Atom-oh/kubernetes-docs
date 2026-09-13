@@ -1,0 +1,250 @@
+{
+  "status": "passed",
+  "verifiedAt": "2026-09-13T13:43:09.450865+00:00",
+  "source": "Validated paired Dynatrace cloud-native full-stack Mermaid topology in the rewritten guides",
+  "change": "Two old architecture viewers/PNGs now separate Operator/webhook/CSI injection control from app/host/cluster telemetry. ExistingpublicURLsandforeignreferencepathsretained.",
+  "delivery": [
+    {
+      "stem": "en-observability-tracing-04-dynatrace-0",
+      "spec": "assets/diagrams/archify/en-observability-tracing-04-dynatrace-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-tracing-04-dynatrace-0",
+      "spec": "assets/diagrams/archify/ko-observability-tracing-04-dynatrace-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 694,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 694,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 694,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54973,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 504,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 504,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 504,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54664,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "retryNote": "InitialKOfile-load timedout at30seconds;freshbrowserKOretry45secondnavigationlimit passed all3cases. InitialEN3retained."
+  },
+  "desktop": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      }
+    ],
+    "hashes": [
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "sha256": "4027be140cfd0aef72d6aa669640d0d322cdae9ae4d9507e24e9d7954891cb08"
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "sha256": "952f041a70fe9ac43874e835689941a4e7f732cb4062144fab2534463e1e803b"
+      }
+    ]
+  },
+  "individualPNGInspection": {
+    "count": 2,
+    "status": "viewed",
+    "findings": []
+  },
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/en-observability-tracing-04-dynatrace-0.architecture.json",
+      "sha256": "721811c7bea287ad13c56069fbc584494fa0ffa527fc5ed654d0142e0d4b5a2d"
+    },
+    {
+      "path": "public/archmaps/en-observability-tracing-04-dynatrace-0.html",
+      "sha256": "b3091619a4594aecf38b82346219bcc6e3a4521dd12ba1e7535120a749b7bd35"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-tracing-04-dynatrace-0.png",
+      "sha256": "3d296dfd1c299450cba3556b7bb52b5ecc6dd2041280bee97b00882169a09219"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-tracing-04-dynatrace-0.architecture.json",
+      "sha256": "11469542b3716a66ab1ee1b0454fe2102fededa992ba47c6a65194f3a6f83488"
+    },
+    {
+      "path": "public/archmaps/ko-observability-tracing-04-dynatrace-0.html",
+      "sha256": "4047009a0077ed7cadaf731e863c5c5cc90f4f9cdb13c5a613ee80898b0999c3"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-tracing-04-dynatrace-0.png",
+      "sha256": "a6a2a0c340ecd0f9cf7e5adf1d704a02fa2afed02402074b3b73b9c531d8538e"
+    }
+  ],
+  "limits": [
+    "No Dynatrace tenant, Kubernetes installation or telemetry ingestion tested.",
+    "Originalnativeguide/fixtureevidenceremainsintheDynatracereport;assetchecksverifyrendering/controlsandtopologyonly."
+  ]
+}
