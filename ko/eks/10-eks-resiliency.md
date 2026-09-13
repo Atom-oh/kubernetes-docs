@@ -721,6 +721,8 @@ data:
 
 ---
 
+<span id="multi-clustermulti-region-level-4"></span>
+
 ## Multi-Cluster/Multi-Region (Level 4)
 
 사용자 흐름·data consistency 요구별 패턴을 선택합니다. 두 번째 cluster·region만으로 near-zero RTO·RPO가 보장되지는 않습니다. 아래 기존 시간·비용 수치는 검증하지 못한 설계 예시이며 실측·AWS 약정이 아닙니다.

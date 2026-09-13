@@ -767,6 +767,8 @@ spec:
 
 This ServiceProfile defines routes and retry policies for the `nginx` service.
 
+<span id="cnicontainer-network-interface"></span>
+
 ## CNI(Container Network Interface)
 
 CNI plugins configure Pod network interfaces and IP addressing. NetworkPolicy enforcement is optional and depends on the plugin.

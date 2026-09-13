@@ -207,6 +207,8 @@ RequestAuthentication alone accepts requests without a token. The ALLOW example 
 - Separate ServiceAccounts granularly
 - Utilize namespace isolation
 
+<span id="3-security-monitoring"></span>
+
 ### 3. Security Monitoring
 
 - Enable Istio Access Logs

@@ -120,6 +120,8 @@ spec:
 }
 ```
 
+<span id="3-certificate-management-citadel-기능"></span>
+
 #### 3. Certificate Management (Citadel 기능)
 
 Istio 에이전트가 키와 CSR을 생성하고 istiod에 인증해 서명된 인증서를 받습니다. Envoy는 로컬 에이전트의 SDS에서 인증서와 키를 받습니다. 유효 기간은 설정 가능하며 만료 전에 갱신됩니다.

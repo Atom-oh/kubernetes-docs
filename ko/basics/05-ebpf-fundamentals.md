@@ -47,6 +47,8 @@ sudo bpftool feature probe kernel
 
 ---
 
+<span id="1-ebpf-소개"></span>
+
 ## 1. eBPF 소개
 
 ### 1.1 eBPF란 무엇인가?
@@ -111,6 +113,8 @@ eBPF는 다음과 같은 이유로 혁신적입니다:
 | **개발 난이도** | 상대적으로 쉬움 | 높은 전문성 필요 |
 
 ---
+
+<span id="2-ebpf-아키텍처"></span>
 
 ## 2. eBPF 아키텍처
 
@@ -236,6 +240,8 @@ long bpf_get_current_comm(void *buf, u32 size);  // 프로세스 이름
 ---
 
 C 예제는 별도 프로그램/조각입니다. vmlinux.h 또는 필요한 UAPI 타입과 libbpf의 bpf_helpers.h, bpf_endian.h, bpf_tracing.h, bpf_core_read.h를 용도에 맞게 포함합니다. BPF_KPROBE/BPF_UPROBE는 올바른 대상 아키텍처 정의와 실제 attach 지점/ABI가 필요합니다. 로드/attach는 격리된 테스트 환경에서 검증해야 하며 이 감사에서는 수행하지 않았습니다. 경로 기반 LSM 예제는 읽기 오류에 fail-open하고 별칭/하드링크/다른 프로토콜까지 방어하지 않는 교육용입니다.
+
+<span id="3-ebpf-프로그램-유형"></span>
 
 ## 3. eBPF 프로그램 유형
 
@@ -438,6 +444,8 @@ int restrict_connect(struct bpf_sock_addr *ctx) {
 
 ---
 
+<span id="4-ebpf-개발-도구"></span>
+
 ## 4. eBPF 개발 도구
 
 ### 4.1 bpftool
@@ -591,6 +599,8 @@ bpftool prog show id <ID> --pretty
 
 ---
 
+<span id="5-ebpf와-kubernetes-네트워킹"></span>
+
 ## 5. eBPF와 Kubernetes 네트워킹
 
 ### 5.1 Cilium: eBPF 기반 CNI
@@ -734,6 +744,8 @@ kubectl get ciliumnetworkpolicies,ciliumclusterwidenetworkpolicies -A
 ```
 
 ---
+
+<span id="6-ebpf-기반-관찰성"></span>
 
 ## 6. eBPF 기반 관찰성 (Observability)
 
@@ -892,6 +904,8 @@ kubectl port-forward -n kepler service/kepler 28282:28282
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-7.html)
 
 ---
+
+<span id="7-ebpf-기반-보안"></span>
 
 ## 7. eBPF 기반 보안
 
@@ -1112,6 +1126,8 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
 
 ---
 
+<span id="8-ebpf-실전-활용-예제"></span>
+
 ## 8. eBPF 실전 활용 예제
 
 ### 8.1 bpftrace로 시스템 성능 분석하기
@@ -1291,6 +1307,8 @@ END {
 ```
 
 ---
+
+<span id="9-ebpf-제한-사항과-주의점"></span>
 
 ## 9. eBPF 제한 사항과 주의점
 
@@ -1492,6 +1510,8 @@ sysctl net.core.bpf_jit_harden
 ```
 
 ---
+
+<span id="10-다음-단계"></span>
 
 ## 10. 다음 단계
 

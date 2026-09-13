@@ -24,6 +24,8 @@ EC2 리소스 쿼터는 일반적으로 **계정과 리전** 기준이므로 다
 
 EKS에서는 데이터 파이프라인/추론 API의 일반 IP 접근과 GPU 집단 통신을 구분해야 합니다. CPU 인스턴스의 요청/응답 벤치마크는 NCCL, 처리량이나 RDMA 성능을 증명하지 않습니다. **EFA OS-bypass 트래픽은 VPC나 가용 영역을 넘을 수 없으며**, ENA 인터페이스의 일반 IP 트래픽은 라우팅할 수 있습니다.
 
+<span id="5가지-연결-옵션-비교"></span>
+
 ## 5가지 연결 옵션 비교
 
 PrivateLink와 Lattice 열은 **시험한 NLB 기반 엔드포인트 서비스와 HTTP 서비스 패턴**을 설명합니다. PrivateLink에는 리소스·서비스 네트워크 엔드포인트도 있고 Lattice에는 TCP 리소스 구성도 있습니다. 제품 전체가 각각 “NLB 필수”, “L7 전용”인 것은 아닙니다.
@@ -48,6 +50,8 @@ PrivateLink와 Lattice 열은 **시험한 NLB 기반 엔드포인트 서비스�
 [인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-05-cross-org-vpc-connectivity-0.html)
 
 그림은 원 관측값을 유지합니다. Lattice 값은 **HTTP KA**, 나머지 표시 값은 **TCP_RR**이므로 동일 지표의 직접 비교가 아닙니다. “GPU”는 제안된 환경을 나타내며 GPU 벤치마크를 뜻하지 않습니다.
+
+<span id="latency-실측-m1m7"></span>
 
 ## Latency 실측 (M1~M7)
 

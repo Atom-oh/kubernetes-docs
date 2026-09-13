@@ -22,6 +22,8 @@ Kubernetes는 연 3회 릴리스 주기를 통해 빠르게 진화하고 있으�
 
 ---
 
+<span id="1-개요-및-학습-목표"></span>
+
 ## 1. 개요 및 학습 목표
 
 ### 이 문서의 목적
@@ -59,6 +61,8 @@ Kubernetes 생태계는 빠르게 변화하고 있으며, 매 릴리스마다 �
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-0.html)
 
 ---
+
+<span id="2-kubernetes-릴리스-사이클"></span>
 
 ## 2. Kubernetes 릴리스 사이클
 
@@ -119,6 +123,8 @@ SIG는 관련 영역을 담당합니다. Node는 runtime·lifecycle, Auth는 인
 [Upstream patch policy](https://kubernetes.io/releases/patch-releases/) · [Feature gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) · [Deprecation policy](https://kubernetes.io/docs/reference/deprecation-policy/) · [Kubernetes 1.36.2 gate implementation](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go)
 
 ---
+
+<span id="3-eks-버전-지원-매트릭스"></span>
 
 ## 3. EKS 버전 지원 매트릭스
 
@@ -183,6 +189,8 @@ Managed node group·self-managed node·Fargate Pod·Hybrid Node는 각각의 업
 -->
 
 ---
+
+<span id="4-버전별-주요-기능-가이드"></span>
 
 ## 4. 버전별 주요 기능 가이드
 
@@ -2231,6 +2239,8 @@ RESIZED resize-demo/demo-sts-0 [StatefulSet] trigger=StartupProbePassed patch={"
 
 ---
 
+<span id="5-주요-기능-졸업-타임라인"></span>
+
 ## 5. 주요 기능 졸업 타임라인
 
 출시된 1.36.2 gate 정의와 공식 제거된 gate 이력을 중심으로 **Kubernetes 1.36까지**의 주요 upstream 이력을 정리합니다. Beta는 첫 beta 릴리스이며 기본 활성화를 의미하지 않습니다. 대시는 향후 일정을 약속하지 않으며 API 제공 여부·runtime/driver 조건·EKS 지원은 별도 확인합니다.
@@ -2285,6 +2295,8 @@ Gateway API는 별도 버전의 API/CRD 프로젝트입니다. 해당 channel·k
 [Released Kubernetes 1.36.2 feature history](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go) · [Feature gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) · [Removed gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates-removed/) · [KYAML history](https://github.com/kubernetes/enhancements/tree/master/keps/sig-cli/5295-kyaml)
 
 ---
+
+<span id="6-deprecation-및-제거-사항"></span>
 
 ## 6. Deprecation 및 제거 사항
 
@@ -2521,6 +2533,8 @@ Kubent도 원래 manifest를 활용하는 탐지기이며 API server의 모든 �
 
 ---
 
+<span id="7-eks-특화-고려사항"></span>
+
 ## 7. EKS 특화 고려사항
 
 ### 릴리스와 기능 제공 여부
@@ -2607,6 +2621,8 @@ Fleet 수는 계획 기준 하나입니다. 중요한 클러스터 하나가 단
 
 ---
 
+<span id="8-버전-업그레이드-계획"></span>
+
 ## 8. 버전 업그레이드 계획
 
 ### 한 번의 minor-version 단계에 대한 실행 계획
@@ -2691,6 +2707,8 @@ resolve_conflicts_on_update = "PRESERVE"
 
 ---
 
+<span id="9-향후-전망"></span>
+
 ## 9. 향후 전망
 
 ### 출시된 upstream 변화와 EKS 제공 여부를 구분합니다
@@ -2761,6 +2779,8 @@ historical_planning_example:
 ```
 
 ---
+
+<span id="10-참고-자료"></span>
 
 ## 10. 참고 자료
 

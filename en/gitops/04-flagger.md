@@ -557,6 +557,8 @@ spec:
 
 Supporting providers can mirror as a Canary pre-stage or for Blue-Green. Verify RequestMirror support for Gateway API. Discarding responses does not prevent database writes, payments, messages, or load; use verified read-only requests or isolation. Mirroring is not database replication or rollback.
 
+<span id="ab-testing-strategy"></span>
+
 ## A/B Testing Strategy
 
 ```yaml
@@ -965,6 +967,8 @@ Do not treat flagger.app/rollback, flagger.app/suspend, or flagger.app/skipAnaly
 spec:
   suspend: true
 ```
+
+<span id="gitops-integration-flux--flagger"></span>
 
 ## GitOps Integration (Flux + Flagger)
 

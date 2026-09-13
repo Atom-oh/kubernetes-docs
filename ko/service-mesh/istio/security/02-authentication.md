@@ -96,6 +96,8 @@ spec:
       prefix: "Bearer "
 ```
 
+<span id="oauthoidc-통합"></span>
+
 ## OAuth/OIDC 통합
 
 ### AWS Cognito

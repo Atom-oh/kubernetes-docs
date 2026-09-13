@@ -897,6 +897,8 @@ spec:
 
 ---
 
+<span id="siemsoar-통합"></span>
+
 ## SIEM/SOAR 통합
 
 ### Falco → Elasticsearch

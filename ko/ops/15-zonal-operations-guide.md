@@ -38,6 +38,8 @@ AWS의 [Cell-Based Architecture for Amazon EKS 가이드](https://aws.amazon.com
 
 ***
 
+<span id="트래픽-계층-target-group--targetgroupbinding--weight-전환"></span>
+
 ## 트래픽 계층: Target Group + TargetGroupBinding + Weight 전환
 
 ![하나의 로드밸런서 리스너가 두 타겟 그룹으로 새 트래픽을 분배하고, 각 클러스터의 TargetGroupBinding이 파드 타겟을 등록하는 구조.](../.gitbook/assets/ko-ops-15-zonal-operations-guide-0.png)

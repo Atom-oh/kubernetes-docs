@@ -1049,6 +1049,8 @@ spec:
             podTemplateHashValue: Latest
 ```
 
+<span id="bluegreen-deployment"></span>
+
 ## Blue/Green Deployment
 
 Blue/Green deployment maintains two identical production environments and switches traffic instantly. Using Argo Rollouts with Istio enables safe switching and automatic rollback.
@@ -1407,6 +1409,8 @@ kubectl argo rollouts undo reviews
 # Rollback to specific revision
 kubectl argo rollouts undo reviews --to-revision=3
 ```
+
+<span id="ab-testing"></span>
 
 ## A/B Testing
 
