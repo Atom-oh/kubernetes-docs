@@ -1,30 +1,32 @@
 # Pod Security Standards (PSS)
 
-> **サポート対象バージョン**: Kubernetes 1.31, 1.32, 1.33
-> **最終更新**: February 22, 2026
+> **検証ベースライン**: Kubernetes PSA library v1.36.2; example PSS policy v1.35
+> **最終更新**: September 13, 2026
 
-Pod Security Standards (PSS) は、Kubernetes における Pod security のための標準化された policy framework です。このドキュメントでは、PSS の概念、設定方法、および EKS 環境での実装について説明します。
+Pod Security Standards (PSS) は、Kubernetes における Pod セキュリティの標準化されたポリシーフレームワークです。このドキュメントでは、PSS の概念、設定方法、および EKS 環境での実装について説明します。
 
-## Table of Contents
+PSS はポリシーを定義し、PSA はそれを適用する組み込みの admission 実装です。特に記載がない限り、このガイドでは**ユーザー名前空間を使用しない通常の Linux Pod**を前提としています。ローカルの upstream ポリシー評価および schema/command チェックは Deployment とは異なります。ライブクラスター、EKS、またはコンテナの実行はテストしていません。例の `v1.35` は固定されたポリシー定義であり、Kubernetes/EKS の最新サポートバージョンに関する主張ではありません。API server がアップグレードされると、`latest` の意味は変わります。
 
-1. [Evolution from PSP to PSS](#evolution-from-psp-to-pss)
+## 目次
+
+1. [PSP から PSS への進化](#evolution-from-psp-to-pss)
 2. [Pod Security Admission (PSA) Controller](#pod-security-admission-psa-controller)
-3. [Security Levels](#security-levels)
-4. [Enforcement Modes](#enforcement-modes)
-5. [Namespace-Level Configuration](#namespace-level-configuration)
-6. [Migration from PSP to PSS](#migration-from-psp-to-pss)
-7. [EKS Defaults and Configuration](#eks-defaults-and-configuration)
-8. [Security Profile Details](#security-profile-details)
-9. [Exemptions Configuration](#exemptions-configuration)
-10. [Best Practices for Gradual Adoption](#best-practices-for-gradual-adoption)
+3. [セキュリティレベル](#security-levels)
+4. [適用モード](#enforcement-modes)
+5. [Namespace レベルの設定](#namespace-level-configuration)
+6. [PSP から PSS への移行](#migration-from-psp-to-pss)
+7. [EKS のデフォルトと設定](#eks-defaults-and-configuration)
+8. [セキュリティプロファイルの詳細](#security-profile-details)
+9. [例外設定](#exemptions-configuration)
+10. [段階的導入のベストプラクティス](#best-practices-for-gradual-adoption)
 
 ---
 
-## Evolution from PSP to PSS
+## PSP から PSS への進化
 
-### History of PodSecurityPolicy (PSP)
+### PodSecurityPolicy (PSP) の歴史
 
-PodSecurityPolicy (PSP) は、Pod security mechanism として Kubernetes 1.3 で初めて導入されました。しかし、以下の問題により Kubernetes 1.21 で deprecated となり、1.25 で完全に削除されました。
+PodSecurityPolicy (PSP) は Pod セキュリティメカニズムとして Kubernetes 1.3 で初めて導入されました。しかし、以下の問題により Kubernetes 1.21 で非推奨となり、1.25 で完全に削除されました。
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -33,123 +35,85 @@ PodSecurityPolicy (PSP) は、Pod security mechanism として Kubernetes 1.3 �
 │ 1. Complex RBAC binding requirements                             │
 │ 2. Implicit policy application (unclear which policy applies)    │
 │ 3. User vs workload permission confusion                         │
-│ 4. No dry-run mode                                               │
+│ 4. No warn/audit rollout modes                                               │
 │ 5. Limited audit capabilities                                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Introduction of PSS
+### PSS の導入
 
-Pod Security Standards (PSS) と Pod Security Admission (PSA) は Kubernetes 1.22 で alpha として導入され、1.23 で beta になり、1.25 で GA (Generally Available) に到達しました。
+Pod Security Standards (PSS) と Pod Security Admission (PSA) は Kubernetes 1.22 で alpha として導入され、1.23 で beta となり、1.25 で GA（Generally Available）に到達しました。
 
-```mermaid
-timeline
-    title PSP to PSS Transition Timeline
-    section Kubernetes Versions
-        1.21 : PSP Deprecation Announced
-        1.22 : PSA Alpha
-        1.23 : PSA Beta
-        1.25 : PSP Removed, PSA GA
-        1.28+ : PSS/PSA Stabilized
-```
+![PSP の非推奨化、PSP の削除、1.25 での PSA GA、およびその後のバージョン化されたポリシーの進化を区別するロードマップ。](../.gitbook/assets/en-security-03-pod-security-standards-0.png)
 
-### PSP vs PSS Comparison
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-0.html)
 
-| Feature | PodSecurityPolicy (PSP) | Pod Security Standards (PSS) |
+> 図の解釈: PSA は 1.25 で GA に到達しました。1.28 は別個の安定化マイルストーンではありません。
+
+### PSP と PSS の比較
+
+| 機能 | PodSecurityPolicy (PSP) | Pod Security Standards (PSS) |
 |---------|------------------------|------------------------------|
-| **Activation** | Admission Controller plugin | Built-in (enabled by default) |
-| **Policy Definition** | Custom PSP resources | Three pre-defined profiles |
-| **Policy Binding** | Complex RBAC binding | Simple namespace labels |
-| **Scope** | Cluster-wide or namespace | Namespace level |
-| **Dry-run** | Not supported | warn/audit modes supported |
-| **Auditing** | Limited | Built-in audit support |
-| **Flexibility** | High (fine-grained control) | Medium (standardized profiles) |
-| **Complexity** | High | Low |
+| **有効化** | 以前の admission plugin | 組み込み PSA plugin によって適用される PSS 定義 |
+| **ポリシー定義** | カスタム PSP リソース | 事前定義された 3 つのプロファイル |
+| **ポリシーバインディング** | 複雑な RBAC バインディング | 単純な Namespace ラベル |
+| **スコープ** | クラスター全体または Namespace | Namespace レベル |
+| **ポリシープレビュー** | PSA 形式の warn/audit モードなし。API dry-run は別 | warn/audit モードと API dry-run |
+| **監査** | 限定的 | 組み込みの監査サポート |
+| **柔軟性** | 高い（きめ細かい制御） | 中程度（標準化されたプロファイル） |
+| **複雑さ** | 高い | 低い |
 
 ---
 
 ## Pod Security Admission (PSA) Controller
 
-### PSA Architecture
+### PSA アーキテクチャ
 
-Pod Security Admission (PSA) は Kubernetes API server に組み込まれた Admission Controller で、Pod の作成および更新リクエストをインターセプトし、Pod Security Standards に従って検証します。
+PSA は mutating admission の後、validating admission 中に **API server 内部**で実行されます。認証、認可、schema 検証、その他の admission チェックも適用されます。これは外部 webhook ではなく、この図は PSA と他のすべての validator の間に普遍的な順序があることを示すものではありません。
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         Kubernetes API Server                            │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                    Admission Controllers                         │    │
-│  │  ┌───────────┐  ┌───────────┐  ┌─────────────────────────────┐  │    │
-│  │  │ Mutating  │──▶│Validating │──▶│  Pod Security Admission    │  │    │
-│  │  │ Webhooks  │  │ Webhooks  │  │  (PSA Controller)           │  │    │
-│  │  └───────────┘  └───────────┘  │  ┌───────────────────────┐  │  │    │
-│  │                                 │  │ Security Standards    │  │  │    │
-│  │                                 │  │ • Privileged          │  │  │    │
-│  │                                 │  │ • Baseline            │  │  │    │
-│  │                                 │  │ • Restricted          │  │  │    │
-│  │                                 │  └───────────────────────┘  │  │    │
-│  │                                 └─────────────────────────────┘  │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────┘
+```text
+Request → authentication / authorization → mutating admission
+        → validating admission (PSA + other checks) → persistence if accepted
 ```
 
-### How PSA Works
+### PSA の仕組み
 
-```mermaid
-sequenceDiagram
-    participant User as User/Controller
-    participant API as API Server
-    participant PSA as PSA Controller
-    participant NS as Namespace Labels
-    participant etcd as etcd
+![認証・認可済みの Pod CREATE を簡略化。PSA は API server 内部にあり、201 には他の admission チェックとストレージの成功も必要です。](../.gitbook/assets/en-security-03-pod-security-standards-1.png)
 
-    User->>API: Pod Creation Request
-    API->>PSA: Admission Validation Request
-    PSA->>NS: Check Namespace Labels
-    NS-->>PSA: enforce=restricted, audit=restricted
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-1.html)
 
-    alt Pod Complies with Policy
-        PSA-->>API: Approved
-        API->>etcd: Store Pod
-        API-->>User: 201 Created
-    else Pod Violates Policy
-        PSA-->>API: Denied (enforce mode)
-        API-->>User: 403 Forbidden
-    end
-```
+> 図の範囲: PSA は API server 内部にあります。Pod CREATE の成功は、適用対象のすべてのチェックに合格した後にのみ永続化されます。PSA の承認だけでは 201 Created は保証されません。
 
-### Verifying PSA Status
+### PSA ステータスの確認
 
-Kubernetes 1.25 以降では、PSA はデフォルトで有効です。
+PSA は Kubernetes 1.23 で beta となりデフォルトで有効化され、その後 1.25 で GA に到達しました。明示的な `--enable-admission-plugins=PodSecurity` フラグがないことは、無効化されていることを意味しません。self-managed API server の設定に明示的な無効化がないか確認してください。EKS ではその設定は公開されません。metrics は feature-gate の設定ではなく評価を示します。`/metrics` へのアクセスには認可が必要で、未使用の series は存在しない可能性があります。
 
 ```bash
-# Check API server configuration (not directly accessible in EKS managed control plane)
-# For local clusters:
-kubectl get pods -n kube-system -l component=kube-apiserver -o yaml | grep -A5 "enable-admission-plugins"
-
-# Check PSA feature gate
-kubectl get --raw /metrics | grep pod_security
+kubectl --context "$PSS_CONTEXT" get namespace "$PSS_NAMESPACE" -o yaml
+kubectl --context "$PSS_CONTEXT" get --raw /metrics
 ```
+
+実際の admission パスをテストするには、以下の positive/negative Pod dry-run controls を使用してください。Deployment の dry-run が成功しただけでコンプライアンスを推測してはいけません。
 
 ---
 
-## Security Levels
+## セキュリティレベル
 
-PSS は 3 つの security level (profile) を定義しています。各 level は段階的に厳格な security constraints を適用します。
+PSS は 3 つのセキュリティレベル（プロファイル）を定義します。各レベルでは、段階的に厳しくなるセキュリティ制約が適用されます。
 
 ### 1. Privileged
 
-制限のない最も寛容な policy です。system および infrastructure-level workloads に適しています。
+このプロファイルでは PSS の制限は追加されません。コンテナ権限を自動的に有効化することも、RBAC、API 検証、その他の admission ポリシーをバイパスすることもありません。
 
 ```yaml
-# Privileged level: Everything is allowed
+# Privileged profile: PSS imposes no controls; API/RBAC/other policies still apply
 # Use cases: System daemons, CNI plugins, monitoring agents
 
 apiVersion: v1
 kind: Pod
 metadata:
   name: privileged-pod
-  namespace: kube-system
+  namespace: pss-privileged-lab
 spec:
   hostNetwork: true      # Allowed
   hostPID: true          # Allowed
@@ -159,19 +123,19 @@ spec:
     image: nginx
     securityContext:
       privileged: true   # Allowed
-      runAsRoot: true    # Allowed
+      runAsUser: 0    # Allowed
 ```
 
-**Privileged level では以下が許可されます:**
-- Host network、PID、IPC namespaces
-- Privileged containers
-- すべての capabilities
-- HostPath mounts
-- 任意の user/group IDs
+**Privileged レベルで許可されるもの:**
+- Host network、PID、IPC namespace
+- Privileged コンテナ
+- すべての capability
+- HostPath mount
+- 任意の user/group ID
 
 ### 2. Baseline
 
-既知の privilege escalations を防ぐために最小限の制限を適用します。ほとんどの一般的な workloads に適しています。
+既知の権限昇格を防ぐための最小限の制約を適用します。ほとんどの一般的な workload に適しています。
 
 ```yaml
 # Baseline level: Prevents known privilege escalations
@@ -188,7 +152,7 @@ spec:
     securityContext:
       # The following are prohibited in Baseline:
       # privileged: true        ❌
-      # allowPrivilegeEscalation: true (under certain conditions)  ❌
+      # allowPrivilegeEscalation is not constrained by Baseline
 
       # The following are allowed in Baseline:
       runAsNonRoot: false      # ✓ (allowed but not recommended)
@@ -197,67 +161,81 @@ spec:
     - containerPort: 80
 ```
 
-**Baseline Level Restrictions:**
+**Baseline レベルの制約:**
 
-| Field | Restriction |
+| フィールド | 制約 |
 |-------|------------|
-| HostProcess | Windows HostProcess containers prohibited |
-| Host Namespaces | hostNetwork, hostPID, hostIPC prohibited |
-| Privileged Containers | privileged: true prohibited |
-| Capabilities | Additional capabilities beyond NET_RAW prohibited |
-| HostPath Volumes | hostPath volumes prohibited |
-| Host Ports | Host port usage prohibited |
-| AppArmor | Only default profile or localhost/* allowed |
-| SELinux | Only restricted type values, user/role setting prohibited |
-| /proc Mount Type | Only default value allowed |
-| Seccomp | Only RuntimeDefault, Localhost allowed |
-| Sysctls | Only safe sysctls allowed |
+| HostProcess | Windows HostProcess コンテナは禁止 |
+| Host Namespaces | hostNetwork、hostPID、hostIPC は禁止 |
+| Privileged Containers | privileged: true は禁止 |
+| Capabilities | 明示的な追加は、一覧の Baseline allowlist に限定。`NET_RAW` は含まれない |
+| HostPath Volumes | hostPath volume は禁止 |
+| Host Ports | 組み込み PSA は未設定/0 を許可。カスタム port allowlist はない |
+| AppArmor | 未設定または RuntimeDefault/Localhost。legacy annotation では runtime/default または localhost/* |
+| SELinux | 制限された type 値のみ。user/role の設定は禁止 |
+| /proc Mount Type | デフォルト値のみ許可 |
+| Seccomp | 未設定は許可。指定時は RuntimeDefault または Localhost（Unconfined ではない） |
+| Sysctls | PSS バージョンの明示的な sysctl allowlist のみ。すべての kubelet-safe sysctl ではない |
 
 ### 3. Restricted
 
-Pod security hardening の best practices を適用する最も厳格な policy です。security-sensitive workloads に適しています。
+Pod セキュリティ強化のベストプラクティスを適用する、最も制限の厳しいポリシーです。セキュリティに敏感な workload に適しています。
 
 ```yaml
-# Restricted level: Apply security best practices
-# Use cases: Security-sensitive apps, multi-tenant environments
-
 apiVersion: v1
 kind: Pod
 metadata:
   name: restricted-pod
 spec:
+  automountServiceAccountToken: false
   securityContext:
-    runAsNonRoot: true           # Required
-    seccompProfile:              # Required
+    runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    fsGroup: 101
+    seccompProfile:
       type: RuntimeDefault
   containers:
   - name: app
-    image: nginx
+    image: ghcr.io/nginx/nginx-unprivileged@sha256:442753882674b49ae2c1de83ed67896131c0777f56df5005e356e62bc3f7e7ce
     securityContext:
-      allowPrivilegeEscalation: false  # Required
-      readOnlyRootFilesystem: true     # Recommended
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
       capabilities:
-        drop:
-          - ALL                  # Required
-      runAsNonRoot: true         # Required
+        drop: [ALL]
+    ports:
+    - containerPort: 8080
     resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
       limits:
-        memory: "128Mi"
-        cpu: "500m"
+        cpu: 500m
+        memory: 128Mi
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir: {}
 ```
 
-**Restricted Level Additional Restrictions:**
+**Restricted レベルの追加制約:**
 
-| Field | Restriction |
+| フィールド | 制約 |
 |-------|------------|
-| Volume Types | Only configMap, csi, downwardAPI, emptyDir, ephemeral, persistentVolumeClaim, projected, secret allowed |
-| Privilege Escalation | allowPrivilegeEscalation: false required |
-| Running as Non-root | runAsNonRoot: true required |
-| Running as Non-root user | runAsUser must be non-zero (v1.23+) |
-| Seccomp | RuntimeDefault or Localhost required |
-| Capabilities | Must drop all capabilities, only NET_BIND_SERVICE can be added |
+| Volume Types | configMap、csi、downwardAPI、emptyDir、ephemeral、persistentVolumeClaim、projected、secret のみ許可 |
+| Privilege Escalation | allowPrivilegeEscalation: false が必要 |
+| Running as Non-root | runAsNonRoot: true が必要 |
+| Running as Non-root user | 明示的な runAsUser: 0 は禁止（v1.23+）。フィールドは省略可能 |
+| Seccomp | RuntimeDefault または Localhost が必要 |
+| Capabilities | すべての capability を drop する必要があり、追加できるのは NET_BIND_SERVICE のみ |
 
-### Security Level Comparison Chart
+
+
+制御は、該当する通常、init、ephemeral コンテナに適用されます。Pod レベルの non-root/seccomp 値は継承できますが、競合するコンテナの override は準拠しません。ポリシー v1.34+ では、HTTP/TCP probe と lifecycle hook の空でない `host` も禁止されます。v1.35 では、`hostUsers: false` により non-root チェックが緩和されます。Baseline でも `procMount` が緩和されますが、Restricted では依然として `Unmasked` が禁止されます。これには単なるラベルではなく、実際の user-namespace サポートが必要です。privilege escalation、seccomp、Linux capability に関する Windows 固有の緩和は、この Linux の例とは別です。
+
+### セキュリティレベル比較表
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -287,13 +265,13 @@ spec:
 
 ---
 
-## Enforcement Modes
+## 適用モード
 
-PSA は 3 つの enforcement mode を提供します。これらの mode は個別に、または組み合わせて使用できます。
+PSA は 3 つの適用モードを提供します。これらのモードは、個別にも組み合わせても使用できます。
 
 ### 1. enforce
 
-policy に違反した場合に Pod の作成をブロックします。
+違反する Pod の作成と関連する Pod 更新を拒否します。workload template は warn/audit チェックを受けます。適用は生成された Pod に対して行われます。Namespace の再ラベル付けによって、すでに実行中の Pod が退避されることはありません。
 
 ```yaml
 # enforce mode: Block Pod creation on violation
@@ -303,15 +281,15 @@ metadata:
   name: production
   labels:
     pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: v1.31
+    pod-security.kubernetes.io/enforce-version: v1.35
 ```
 
-**動作例:**
-```bash
+**説明用の応答抜粋（記録されたクラスター実行ではありません）:**
+```text
 # Attempting to create a policy-violating Pod
-$ kubectl apply -f privileged-pod.yaml -n production
+$ kubectl apply --dry-run=server -f privileged-pod.yaml -n production
 Error from server (Forbidden): error when creating "privileged-pod.yaml":
-pods "privileged-pod" is forbidden: violates PodSecurity "restricted:v1.31":
+pods "privileged-pod" is forbidden: violates PodSecurity "restricted:v1.35":
 privileged (container "app" must not set securityContext.privileged=true),
 allowPrivilegeEscalation != false (container "app" must set
 securityContext.allowPrivilegeEscalation=false)
@@ -319,7 +297,7 @@ securityContext.allowPrivilegeEscalation=false)
 
 ### 2. audit
 
-policy violations を audit logs に記録しますが、Pod の作成は許可します。
+違反 annotation を audit event に追加します。このモード自体はリクエストを拒否しません。これらの event を保持するかどうかは、audit-policy/log-delivery 設定によって決まります。他のモードや admission チェックによっては、依然として拒否される可能性があります。
 
 ```yaml
 # audit mode: Record violations in audit logs
@@ -329,16 +307,16 @@ metadata:
   name: staging
   labels:
     pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/audit-version: v1.31
+    pod-security.kubernetes.io/audit-version: v1.35
 ```
 
-**Audit Log Example:**
+**合成された audit-event 抜粋（完全なキャプチャ event ではありません）:**
 ```json
 {
   "kind": "Event",
   "apiVersion": "audit.k8s.io/v1",
   "level": "Metadata",
-  "auditID": "abc123",
+  "auditID": "00000000-0000-4000-8000-000000000001",
   "stage": "ResponseComplete",
   "requestURI": "/api/v1/namespaces/staging/pods",
   "verb": "create",
@@ -358,7 +336,7 @@ metadata:
 
 ### 3. warn
 
-users に warning messages を表示しますが、Pod の作成は許可します。
+リクエスト自体を拒否せず、クライアントに表示される warning を返します。enforce または他の admission チェックによっては、依然として拒否される可能性があります。
 
 ```yaml
 # warn mode: Display warning messages on violation
@@ -368,23 +346,25 @@ metadata:
   name: development
   labels:
     pod-security.kubernetes.io/warn: restricted
-    pod-security.kubernetes.io/warn-version: v1.31
+    pod-security.kubernetes.io/warn-version: v1.35
 ```
 
-**Warning Message Example:**
-```bash
-$ kubectl apply -f non-compliant-pod.yaml -n development
-Warning: would violate PodSecurity "restricted:v1.31":
+**説明用の warning 抜粋（記録された実行ではありません）:**
+```text
+$ kubectl apply --dry-run=server -f non-compliant-pod.yaml -n development
+Warning: would violate PodSecurity "restricted:v1.35":
 allowPrivilegeEscalation != false (container "app" must set
 securityContext.allowPrivilegeEscalation=false),
 unrestricted capabilities (container "app" must set
 securityContext.capabilities.drop=["ALL"])
-pod/my-pod created
+pod/my-pod created (server dry run)
 ```
 
-### Mode Combination Strategy
+### モード組み合わせ戦略
 
-production environments では、複数の mode を組み合わせることをお勧めします。
+最初の Privileged 段階は、より強力な既存ポリシーがない Namespace 専用です。この図に従うために Baseline/Restricted の enforcement を下げてはいけません。
+
+本番環境では、複数のモードを組み合わせることを推奨します。
 
 ```yaml
 # Recommended configuration: Use mode combinations
@@ -395,13 +375,13 @@ metadata:
   labels:
     # Current enforcement level
     pod-security.kubernetes.io/enforce: baseline
-    pod-security.kubernetes.io/enforce-version: v1.31
+    pod-security.kubernetes.io/enforce-version: v1.35
     # Audit next level
     pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/audit-version: v1.31
+    pod-security.kubernetes.io/audit-version: v1.35
     # Warn next level
     pod-security.kubernetes.io/warn: restricted
-    pod-security.kubernetes.io/warn-version: v1.31
+    pod-security.kubernetes.io/warn-version: v1.35
 ```
 
 ```
@@ -437,11 +417,11 @@ metadata:
 
 ---
 
-## Namespace-Level Configuration
+## Namespace レベルの設定
 
-### Basic Label Configuration
+### 基本的なラベル設定
 
-PSS は namespace labels を通じて設定します。
+PSS は Namespace ラベルで設定します。
 
 ```yaml
 apiVersion: v1
@@ -451,16 +431,16 @@ metadata:
   labels:
     # Format: pod-security.kubernetes.io/<MODE>: <LEVEL>
     pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: v1.31
+    pod-security.kubernetes.io/enforce-version: v1.35
     pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/audit-version: v1.31
+    pod-security.kubernetes.io/audit-version: v1.35
     pod-security.kubernetes.io/warn: restricted
-    pod-security.kubernetes.io/warn-version: v1.31
+    pod-security.kubernetes.io/warn-version: v1.35
 ```
 
-### Version Specification
+### バージョン指定
 
-特定の Kubernetes version の PSS definitions を使用できます。
+特定の Kubernetes バージョンの PSS 定義を使用できます。
 
 ```yaml
 apiVersion: v1
@@ -470,13 +450,13 @@ metadata:
   labels:
     # Use PSS definitions from a specific version
     pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: v1.31  # Specific version
+    pod-security.kubernetes.io/enforce-version: v1.35  # Specific version
 
     # Using 'latest' applies PSS from current cluster version
     # pod-security.kubernetes.io/enforce-version: latest
 ```
 
-### Environment-Specific Configuration Examples
+### 環境別設定の例
 
 ```yaml
 ---
@@ -513,13 +493,13 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-### Adding Labels to Existing Namespaces
+### 既存 Namespace へのラベル追加
 
 ```bash
 # Add labels using kubectl
 kubectl label namespace my-namespace \
   pod-security.kubernetes.io/enforce=restricted \
-  pod-security.kubernetes.io/enforce-version=v1.31 \
+  pod-security.kubernetes.io/enforce-version=v1.35 \
   pod-security.kubernetes.io/audit=restricted \
   pod-security.kubernetes.io/warn=restricted
 
@@ -529,23 +509,21 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 ---
 
-## Migration from PSP to PSS
+## PSP から PSS への移行
 
-### Migration Overview
+### 移行の概要
 
-PSP から PSS への migration は慎重に計画し、段階的に実施する必要があります。
+PSP から PSS への移行は慎重に計画し、段階的に実施する必要があります。
 
-```mermaid
-flowchart TD
-    A[Step 1: Analyze Current State] --> B[Step 2: Map to PSS Profiles]
-    B --> C[Step 3: Validate in Test Environment]
-    C --> D[Step 4: Apply with warn/audit Mode]
-    D --> E[Step 5: Modify Workloads]
-    E --> F[Step 6: Switch to enforce Mode]
-    F --> G[Step 7: Remove PSP]
-```
+![移行では、既存の enforcement を維持しながらギャップを評価し、warn/audit を観察し、修復して対象ポリシーを検証します。PSP API のクリーンアップは、過去の 1.24 以前の環境にのみ適用されます。](../.gitbook/assets/en-security-03-pod-security-standards-2.png)
 
-### Step 1: Analyze Current PSP
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-2.html)
+
+> 図の範囲: PSP の分析/削除は過去のものです。観察のために既存のより強力な enforce ポリシーを下げてはいけません。readOnlyRootFilesystem は推奨であり、Restricted の必須要件ではありません。
+
+### ステップ 1: 現在の PSP を分析する
+
+**過去の手順のみ:** 以下の PSP コマンド/リソースは、`policy/v1beta1` がまだ提供されていた古いクラスター（Kubernetes 1.24 まで）、または保存済みの manifest に適用されます。現在のクラスターにはこの PSP を適用しないでください。また、PSP により以前に default/mutate されていたフィールドも棚卸ししてください。PSA はそれらを補完しません。
 
 ```bash
 # List current PSPs
@@ -558,7 +536,7 @@ kubectl get psp <psp-name> -o yaml
 kubectl get pods --all-namespaces -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}: {.metadata.annotations.kubernetes\.io/psp}{"\n"}{end}'
 ```
 
-### Step 2: Map PSP to PSS Profiles
+### ステップ 2: PSP を PSS プロファイルにマッピングする
 
 ```yaml
 # Example: Existing PSP
@@ -591,17 +569,17 @@ spec:
     rule: RunAsAny
 ```
 
-**Mapping Result:** 上記の PSP は `restricted` profile に対応します。
+**マッピング結果:** Restricted は候補となる対象であり、同等のポリシーではありません。この PSP には必須の seccomp 制御がなく、PSS が拒否する可能性のある SELinux 設定を許可しています。すべての制御と生成されるすべての Pod を比較してください。選択した 3 つのフィールドでは同等性を確立できません。
 
-### PSP to PSS Mapping Table
+### PSP から PSS へのマッピング表
 
-| PSP Setting | PSS Profile | Notes |
-|-------------|-------------|-------|
-| `privileged: true` | Privileged | - |
-| `privileged: false`, `allowPrivilegeEscalation: true` | Baseline | - |
-| `privileged: false`, `allowPrivilegeEscalation: false`, `runAsUser.rule: MustRunAsNonRoot` | Restricted | All capabilities must be dropped |
+| Workload 要件 | 候補の PSS プロファイル | 必要なレビュー |
+|---|---|---|
+| Host namespace、privileged コンテナ、または hostPath | Privileged | 例外を分離し、追加の制御を適用する |
+| Host アクセスなしだが root process が必要 | Baseline | capability と seccomp を含むすべての Baseline 制御を確認する |
+| Non-root、権限昇格なし、ALL を drop | Restricted | volume、seccomp、override、バージョン固有の制御も確認する |
 
-### Step 3: Validate in Test Environment
+### ステップ 3: テスト環境で検証する
 
 ```bash
 # Create test namespace
@@ -610,7 +588,7 @@ kubectl create namespace pss-test
 # Apply restricted in warn mode
 kubectl label namespace pss-test \
   pod-security.kubernetes.io/warn=restricted \
-  pod-security.kubernetes.io/warn-version=v1.31
+  pod-security.kubernetes.io/warn-version=v1.35
 
 # Test existing workload deployment
 kubectl apply -f my-deployment.yaml -n pss-test
@@ -618,7 +596,7 @@ kubectl apply -f my-deployment.yaml -n pss-test
 # Check warnings and modify workloads
 ```
 
-### Step 4: Gradual Application
+### ステップ 4: 段階的な適用
 
 ```yaml
 # Staged migration namespace configuration
@@ -627,7 +605,7 @@ kind: Namespace
 metadata:
   name: migrating-namespace
   labels:
-    # Phase 1: Monitoring only (maintain existing behavior)
+    # Phase 1: New namespace without a previous stronger enforce policy
     pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/audit: baseline
     pod-security.kubernetes.io/warn: baseline
@@ -641,83 +619,95 @@ metadata:
     # pod-security.kubernetes.io/enforce: restricted
 ```
 
-### Step 5: Modify Workloads
+### ステップ 5: Workload を修正する
+
+変更前: security context のない通常の `nginx` Pod は Restricted チェックに失敗します。`runAsNonRoot` の追加だけでは不十分です。image user、listener、書き込み可能なパスにも互換性が必要です。修正後の Pod では、upstream の unprivileged image（UID/GID 101）、port 8080、read-only root filesystem と書き込み可能な `/tmp` を使用しています。
 
 ```yaml
-# Before: PSS-violating Pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: old-pod
-spec:
-  containers:
-  - name: app
-    image: nginx
-    # No securityContext
-
----
-# After: Restricted-compliant Pod
 apiVersion: v1
 kind: Pod
 metadata:
   name: new-pod
 spec:
+  automountServiceAccountToken: false
   securityContext:
     runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    fsGroup: 101
     seccompProfile:
       type: RuntimeDefault
   containers:
   - name: app
-    image: nginx
+    image: ghcr.io/nginx/nginx-unprivileged@sha256:442753882674b49ae2c1de83ed67896131c0777f56df5005e356e62bc3f7e7ce
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-          - ALL
-      runAsNonRoot: true
       readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    ports:
+    - containerPort: 8080
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir: {}
 ```
 
-### Migration Automation Script
+### 移行自動化スクリプト
 
-```bash
-#!/bin/bash
-# psp-to-pss-migration.sh
+これは意図的に**レビュー済みの 1 つの Namespace**を対象とし、以前は存在しなかった warn/audit ラベルのみを追加し、enforce を維持し、観測した resource version を使用して同時編集を拒否します。実行すると実際に Namespace を変更します。最初に対象を確認してください。既存のラベルがある場合は、自動的に downgrade するのではなく、手動比較のために失敗させます。warning は以降のリクエストで表示され、実行中のすべての Pod に対する遡及的スキャンとして表示されるものではありません。
 
-# Apply warn mode baseline to all namespaces
-for ns in $(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}'); do
-  # Exclude system namespaces
-  if [[ "$ns" != "kube-system" && "$ns" != "kube-public" && "$ns" != "kube-node-lease" ]]; then
-    echo "Applying warn mode to namespace: $ns"
-    kubectl label namespace "$ns" \
-      pod-security.kubernetes.io/warn=baseline \
-      pod-security.kubernetes.io/warn-version=v1.31 \
-      --overwrite
-  fi
-done
+```python
+#!/usr/bin/env python3
+# add-pss-observation.py CONTEXT NAMESPACE
+import json, subprocess, sys
 
-# Monitor for violations
-echo "Monitoring for violations..."
-kubectl get events --all-namespaces --field-selector reason=FailedCreate | grep -i "pod security"
+if len(sys.argv) != 3:
+    raise SystemExit("Usage: add-pss-observation.py CONTEXT NAMESPACE")
+context, namespace = sys.argv[1:]
+if namespace in {"kube-system", "kube-public", "kube-node-lease"}:
+    raise SystemExit("Refusing system namespace; review its workload requirements separately")
+base = ["kubectl", "--context", context, "--request-timeout=30s"]
+obj = json.loads(subprocess.run(
+    base + ["get", "namespace", namespace, "-o", "json"],
+    check=True, text=True, capture_output=True).stdout)
+labels = obj["metadata"].get("labels", {})
+new = {
+    "pod-security.kubernetes.io/warn": "restricted",
+    "pod-security.kubernetes.io/warn-version": "v1.35",
+    "pod-security.kubernetes.io/audit": "restricted",
+    "pod-security.kubernetes.io/audit-version": "v1.35",
+}
+if any(key in labels for key in new):
+    raise SystemExit("Existing observation policy: review it; do not overwrite automatically")
+subprocess.run(base + [
+    "label", "namespace", namespace,
+    "--resource-version=" + obj["metadata"]["resourceVersion"],
+] + [key + "=" + value for key, value in new.items()], check=True)
 ```
 
 ---
 
-## EKS Defaults and Configuration
+## EKS のデフォルトと設定
 
-### PSA Default Settings in EKS
+### EKS の PSA デフォルト設定
 
-Amazon EKS は Kubernetes 1.23 以降で PSA をデフォルトで有効にします。ただし、デフォルトではどの namespace にも PSS labels は適用されません。
+AWS は、EKS 1.23 から PSA がデフォルトで有効化され、すべてのモードのクラスター default は `privileged/latest`、static exemption はないと文書化しています。これらの寛容な default は workload hardening ポリシーではありません。platform tool または administrator により作成された Namespace ラベルが default を override する可能性があります。すべての Namespace が unlabeled であると想定せず、実際の Namespace を確認してください。
 
 ```bash
-# Check PSA status in EKS cluster
-kubectl get namespaces -o yaml | grep pod-security
-
-# Check system namespaces
-kubectl get namespace kube-system -o yaml
+kubectl --context "$PSS_CONTEXT" get namespace "$PSS_NAMESPACE" -o yaml
 ```
 
-### Configuring PSS in EKS
+### EKS での PSS の設定
 
 ```yaml
 # Apply PSS to EKS namespace
@@ -726,9 +716,9 @@ kind: Namespace
 metadata:
   name: eks-app-namespace
   labels:
-    # EKS recommended configuration
+    # Example rollout choice, not a universal AWS requirement
     pod-security.kubernetes.io/enforce: baseline
-    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/enforce-version: v1.35
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
 
@@ -736,84 +726,63 @@ metadata:
     app.kubernetes.io/managed-by: eks
 ```
 
-### EKS System Namespace Considerations
+### EKS システム Namespace に関する考慮事項
+
+Host-access agent は Baseline を満たせませんが、`kube-system` 内のすべての Pod が完全な権限を必要とするわけではありません。正確な add-on version とレンダリングされた Pod spec をレビューしてください。システム Namespace 全体の warn/audit を無効にする一括上書きは避けてください。可能であれば、承認済み host agent を通常の application から分離し、そこに Deployment できるユーザーを制限してください。以下は専用の例示 Namespace であり、既存のシステム Namespace を再ラベル付けする指示ではありません。
 
 ```yaml
-# kube-system namespace requires privileged
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kube-system
+  name: host-agents
   labels:
     pod-security.kubernetes.io/enforce: privileged
-    pod-security.kubernetes.io/audit: privileged
-    pod-security.kubernetes.io/warn: privileged
----
-# AWS system components like aws-for-fluent-bit
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: amazon-cloudwatch
-  labels:
-    pod-security.kubernetes.io/enforce: privileged  # Requires host access
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.35
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.35
 ```
 
-### EKS Add-ons and PSS Compatibility
+### EKS Add-on と PSS の互換性
 
-| EKS Add-on | Recommended PSS Level | Notes |
-|------------|----------------------|-------|
-| VPC CNI (aws-node) | Privileged | Requires host networking |
-| CoreDNS | Baseline | - |
-| kube-proxy | Privileged | Requires host networking |
-| EBS CSI Driver | Privileged | Requires host volume access |
-| EFS CSI Driver | Privileged | Requires host volume access |
-| CloudWatch Agent | Privileged | Requires host access |
-| Fluent Bit | Privileged | Requires host log access |
-| ALB Controller | Baseline | - |
-| Cluster Autoscaler | Baseline | - |
+| コンポーネント / 典型的な Deployment | PSS レビューポイント |
+|---|---|
+| VPC CNI `aws-node`、kube-proxy | Host networking または privileged node 操作は Baseline を超過する可能性がある |
+| EBS/EFS CSI node DaemonSet | Host mount は Baseline を超過する可能性がある。controller Pod には異なる要件がある |
+| Node-level CloudWatch Agent / Fluent Bit | Host log/filesystem アクセスは実際の設定に依存する |
+| CoreDNS、AWS Load Balancer Controller、Cluster Autoscaler | レンダリングされた spec を Baseline/Restricted と照合して評価する。コンポーネント名だけでは準拠を証明できない |
 
-### EKS Terraform Example
+EKS Auto Mode の組み込み node component は self-managed add-on とは異なります。この表はレビュー補助であり、テスト済みの互換性 matrix でも、記載されたすべての add-on のインストール要件でもありません。
+
+### EKS Terraform の例
+
+この fragment は 1 つの application Namespace を管理します。Kubernetes provider とその対象 context は別途設定・レビューしてください。provider の初期化、plan、apply は実行していません。既存の Namespace は、競合する Terraform/GitOps 所有権を作成するのではなく、その owner を介して adopt/import してください。ポリシーは意図的に固定され、system-namespace ラベルは変更しません。
 
 ```hcl
-# Configure EKS namespaces and PSS with Terraform
-resource "kubernetes_namespace" "app" {
+# Provider authentication/context and ownership must be configured separately.
+resource "kubernetes_namespace_v1" "app" {
   metadata {
     name = "my-app"
-
     labels = {
       "pod-security.kubernetes.io/enforce"         = "restricted"
-      "pod-security.kubernetes.io/enforce-version" = "latest"
+      "pod-security.kubernetes.io/enforce-version" = "v1.35"
       "pod-security.kubernetes.io/audit"           = "restricted"
+      "pod-security.kubernetes.io/audit-version"   = "v1.35"
       "pod-security.kubernetes.io/warn"            = "restricted"
-      "environment"                                = "production"
+      "pod-security.kubernetes.io/warn-version"    = "v1.35"
+      "environment"                              = "production"
     }
   }
 }
-
-# Exception for system namespaces
-resource "kubernetes_labels" "kube_system_pss" {
-  api_version = "v1"
-  kind        = "Namespace"
-
-  metadata {
-    name = "kube-system"
-  }
-
-  labels = {
-    "pod-security.kubernetes.io/enforce" = "privileged"
-    "pod-security.kubernetes.io/audit"   = "privileged"
-    "pod-security.kubernetes.io/warn"    = "privileged"
-  }
-}
 ```
 
 ---
 
-## Security Profile Details
+## セキュリティプロファイルの詳細
 
-### Privileged Profile Details
+### Privileged プロファイルの詳細
 
-Privileged profile は、制限なしですべての privileges を許可します。
+Privileged プロファイルは PSS の制限を課しません。API 検証、RBAC、その他の admission チェックは引き続き有効です。以下の host-root の例はポリシー分析専用であり、Deployment を推奨する workload ではありません。
 
 ```yaml
 # All options allowed in Privileged profile
@@ -845,10 +814,10 @@ spec:
       type: Directory
 ```
 
-### Baseline Profile Details
+### Baseline プロファイルの詳細
 
 ```yaml
-# Baseline profile restrictions (v1.31)
+# Baseline profile restrictions (v1.35)
 #
 # Prohibited fields and values:
 #
@@ -863,7 +832,7 @@ spec:
 # spec.containers[*].securityContext.capabilities.add restricted
 #   - Allowed: NET_BIND_SERVICE (only this in Restricted)
 #   - Additionally allowed in Baseline: AUDIT_WRITE, CHOWN, DAC_OVERRIDE,
-#     FOWNER, FSETID, KILL, MKNOD, NET_BIND_SERVICE, NET_RAW,
+#     FOWNER, FSETID, KILL, MKNOD, NET_BIND_SERVICE,
 #     SETFCAP, SETGID, SETPCAP, SETUID, SYS_CHROOT
 #
 # spec.volumes[*].hostPath prohibited
@@ -871,7 +840,7 @@ spec:
 # spec.containers[*].ports[*].hostPort prohibited (except 0)
 #
 # spec.securityContext.appArmorProfile.type restricted
-#   - Allowed: RuntimeDefault, Localhost, "" (empty)
+#   - Allowed: profile omitted, or type RuntimeDefault/Localhost
 #   - Prohibited: Unconfined
 #
 # spec.securityContext.seLinuxOptions.type restricted
@@ -881,104 +850,70 @@ spec:
 #   - Prohibited: Unconfined
 #
 # spec.securityContext.sysctls restricted
-#   - Only safe sysctls allowed
+#   - Only the explicit versioned PSS sysctl allowlist
 
 apiVersion: v1
 kind: Pod
 metadata:
   name: baseline-compliant
 spec:
+  automountServiceAccountToken: false
   containers:
   - name: app
-    image: nginx:latest
+    image: ghcr.io/nginx/nginx-unprivileged@sha256:442753882674b49ae2c1de83ed67896131c0777f56df5005e356e62bc3f7e7ce
     ports:
-    - containerPort: 80  # No hostPort
+    - containerPort: 8080
     securityContext:
-      # No privileged setting or false
       capabilities:
-        add:
-          - NET_BIND_SERVICE  # Allowed
-        drop:
-          - ALL
-    volumeMounts:
-    - name: config
-      mountPath: /etc/nginx/conf.d
-  volumes:
-  - name: config
-    configMap:  # Use configMap instead of hostPath
-      name: nginx-config
+        drop: [ALL]
 ```
 
-### Restricted Profile Details
+### Restricted プロファイルの詳細
+
+Restricted は Baseline に、volume allowlist、non-root 実行、明示的な seccomp、権限昇格の禁止、すべての capability の drop を追加します。`NET_BIND_SERVICE` は許可される唯一の追加ですが、この 8080 listener には不要です。`readOnlyRootFilesystem` は推奨される hardening であり、PSS の要件ではありません。`containerPort` の設定は metadata であり、Nginx を再設定するものではありません。
 
 ```yaml
-# Restricted profile: Strictest security
-#
-# All Baseline restrictions + additional:
-#
-# 1. Volume type restrictions
-#    Allowed: configMap, csi, downwardAPI, emptyDir, ephemeral,
-#             persistentVolumeClaim, projected, secret
-#
-# 2. allowPrivilegeEscalation required
-#    spec.containers[*].securityContext.allowPrivilegeEscalation: false required
-#    spec.initContainers[*].securityContext.allowPrivilegeEscalation: false required
-#
-# 3. runAsNonRoot required
-#    spec.securityContext.runAsNonRoot: true required
-#    Or set individually on all containers
-#
-# 4. Seccomp profile required
-#    spec.securityContext.seccompProfile.type: RuntimeDefault or Localhost
-#
-# 5. Capabilities restrictions
-#    Must drop all capabilities
-#    Only NET_BIND_SERVICE can be added
-
 apiVersion: v1
 kind: Pod
 metadata:
   name: restricted-compliant
 spec:
+  automountServiceAccountToken: false
   securityContext:
     runAsNonRoot: true
-    runAsUser: 1000
-    runAsGroup: 1000
-    fsGroup: 1000
+    runAsUser: 101
+    runAsGroup: 101
+    fsGroup: 101
     seccompProfile:
       type: RuntimeDefault
   containers:
   - name: app
-    image: nginx:latest
+    image: ghcr.io/nginx/nginx-unprivileged@sha256:442753882674b49ae2c1de83ed67896131c0777f56df5005e356e62bc3f7e7ce
     securityContext:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
-      runAsNonRoot: true
-      runAsUser: 1000
       capabilities:
-        drop:
-          - ALL
-        add:
-          - NET_BIND_SERVICE  # Needed for binding ports below 1024
+        drop: [ALL]
     ports:
     - containerPort: 8080
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
     volumeMounts:
     - name: tmp
       mountPath: /tmp
-    - name: cache
-      mountPath: /var/cache/nginx
-    - name: run
-      mountPath: /var/run
   volumes:
   - name: tmp
     emptyDir: {}
-  - name: cache
-    emptyDir: {}
-  - name: run
-    emptyDir: {}
 ```
 
-### Complete Restricted-Compliant Nginx Example
+### Restricted 準拠 Nginx の完全な例
+
+digest は、Linux amd64/arm64 用の upstream OCI metadata（Nginx 1.30.4、user 101）に照らして確認しました。image layer の pull もコンテナ実行も行っていません。upstream では、port 8080、`/tmp/nginx.pid`、および `/tmp` 配下の一時パスを文書化しています。以下の ConfigMap は、一致する listener と health endpoint を提供します。Deployment より先に同じ Namespace に作成してください。rollout 前に、承認済み環境で startup/readiness を検証してください。
 
 ```yaml
 apiVersion: apps/v1
@@ -996,6 +931,7 @@ spec:
       labels:
         app: nginx
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 101  # nginx user
@@ -1005,7 +941,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: nginx
-        image: nginxinc/nginx-unprivileged:latest  # Unprivileged nginx image
+        image: ghcr.io/nginx/nginx-unprivileged@sha256:442753882674b49ae2c1de83ed67896131c0777f56df5005e356e62bc3f7e7ce
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -1026,10 +962,6 @@ spec:
         volumeMounts:
         - name: tmp
           mountPath: /tmp
-        - name: cache
-          mountPath: /var/cache/nginx
-        - name: run
-          mountPath: /var/run
         - name: config
           mountPath: /etc/nginx/conf.d
           readOnly: true
@@ -1047,10 +979,6 @@ spec:
           periodSeconds: 5
       volumes:
       - name: tmp
-        emptyDir: {}
-      - name: cache
-        emptyDir: {}
-      - name: run
         emptyDir: {}
       - name: config
         configMap:
@@ -1081,14 +1009,14 @@ data:
 
 ---
 
-## Exemptions Configuration
+## 例外設定
 
-### Cluster-Level Exemptions Configuration
+### クラスターレベルの例外設定
 
-PSA は AdmissionConfiguration を通じて cluster-level exemptions を設定できます。
+self-managed API server は、この設定を `--admission-control-config-file` 経由で読み込めます。この例ではすべての exemption list を空にしています。exemption は**すべての PSA モード**をスキップします。`usernames` は group、wildcard、将来の Pod の ServiceAccount ではなく、認証済みリクエストの完全一致 username に一致します。controller account を exempt すると、多数の user に代わって作成する Pod のチェックをバイパスしてしまいます。Namespace 名と RuntimeClass 名も完全一致します。例外は、それを使用できるユーザーを別途制約した後にのみ設定してください。
 
 ```yaml
-# /etc/kubernetes/admission/admission-config.yaml
+# Self-managed API server configuration; not an EKS control-plane setting
 apiVersion: apiserver.config.k8s.io/v1
 kind: AdmissionConfiguration
 plugins:
@@ -1096,164 +1024,82 @@ plugins:
   configuration:
     apiVersion: pod-security.admission.config.k8s.io/v1
     kind: PodSecurityConfiguration
-
-    # Default settings (applied to namespaces without labels)
     defaults:
-      enforce: "baseline"
-      enforce-version: "latest"
-      audit: "restricted"
-      audit-version: "latest"
-      warn: "restricted"
-      warn-version: "latest"
-
-    # Exemptions configuration
+      enforce: baseline
+      enforce-version: v1.35
+      audit: restricted
+      audit-version: v1.35
+      warn: restricted
+      warn-version: v1.35
     exemptions:
-      # User exemptions: Exemptions for specific users/groups
-      usernames:
-        - "system:serviceaccount:kube-system:*"
-
-      # RuntimeClass exemptions
-      runtimeClasses:
-        - "gvisor"
-        - "kata"
-
-      # Namespace exemptions
-      namespaces:
-        - "kube-system"
-        - "kube-public"
-        - "kube-node-lease"
-        - "amazon-cloudwatch"
-        - "amazon-vpc-cni"
+      usernames: []
+      runtimeClasses: []
+      namespaces: []
 ```
 
-### Exemptions Configuration in EKS
+### EKS での例外設定
 
-EKS は managed control plane を使用するため、AdmissionConfiguration を直接変更することはできません。代わりに、namespace labels を通じて exemptions を設定します。
+EKS では、managed API server の AdmissionConfiguration を編集できません。Namespace の `enforce: privileged` は寛容なプロファイルであり、**static exemption ではありません**。warn/audit は依然としてリクエストを評価できます。Namespace への書き込み/Deployment 権限を制限し、host agent を通常の application から分離してください。たとえば、hostNetwork/hostPID/hostPath を設定した node-exporter は Baseline に合格できません。Baseline を設定しても、それらの host access が安全または許可されるわけではありません。
 
 ```yaml
-# Apply privileged to system namespaces
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kube-system
+  name: host-agents
   labels:
     pod-security.kubernetes.io/enforce: privileged
-    pod-security.kubernetes.io/audit: privileged
-    pod-security.kubernetes.io/warn: privileged
----
-# CNI namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: amazon-vpc-cni
-  labels:
-    pod-security.kubernetes.io/enforce: privileged
----
-# Monitoring namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: monitoring
-  labels:
-    # Prometheus node-exporter requires hostNetwork
-    pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.35
     pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.35
 ```
 
-### RuntimeClass-Based Exemptions
+### RuntimeClass ベースの例外
+
+RuntimeClass は設定済みの CRI runtime handler を選択します。リソースを作成しても gVisor/Kata がインストールされるわけでも、PSA 例外が付与されるわけでもありません。対象となるすべての node が handler をサポートする必要があります（または適切な scheduling constraint を使用します）。この定義だけでは PSA は完全に適用されたままです。
 
 ```yaml
-# RuntimeClass definition
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
 metadata:
   name: gvisor
 handler: runsc
----
-# Pods using gVisor can have more permissive policies
-apiVersion: v1
-kind: Pod
-metadata:
-  name: sandboxed-pod
-spec:
-  runtimeClassName: gvisor
-  containers:
-  - name: app
-    image: nginx
 ```
 
-### Fine-Grained Exemptions with Kyverno
+self-managed API server で別途設定された `runtimeClasses: ["gvisor"]` exemption のみが PSA をスキップします。その class を選択できるすべてのリクエストが PSA をバイパスできる可能性があります。runtime isolation は admission authorization の代替ではありません。この managed-control-plane 設定は EKS では利用できません。
 
-PSS だけでは exemption requirements に対応できない場合は、Kyverno を使用できます。
+### Kyverno を使用したきめ細かい例外
 
-```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: pss-exception-for-monitoring
-spec:
-  validationFailureAction: enforce
-  background: true
-  rules:
-  - name: allow-hostpath-for-prometheus
-    match:
-      any:
-      - resources:
-          kinds:
-            - Pod
-          namespaces:
-            - monitoring
-          selector:
-            matchLabels:
-              app: prometheus-node-exporter
-    validate:
-      podSecurity:
-        level: baseline
-        version: latest
-        exclude:
-        - controlName: HostPath Volumes
-          images:
-          - 'quay.io/prometheus/node-exporter:*'
-```
+Kyverno は PSA による拒否を許可へ変更できません。host agent に例外が必要な場合は、最初に Namespace の PSA プロファイルと Deployment 権限を設計し、その後、狭いスコープの例外を持つ独立して enforcement するポリシーを追加してください。HostPath のみの除外では hostNetwork/hostPID チェックは除外されません。image tag または mutable Pod label だけに基づく一致は authorization ではありません。
+
+レビュー済みのポリシー API とバージョン/非推奨の制限については、[Kyverno policy management](./01-kyverno-policy-management.md) を参照してください。小文字の `validationFailureAction: enforce` を含む legacy `ClusterPolicy` はコピーしないでください。有効な値ではなく、ClusterPolicy は Kyverno 1.19 で非推奨です。置き換えは通常の workload と例外 workload の両方でテストする必要があります。
 
 ---
 
-## Best Practices for Gradual Adoption
+## 段階的導入のベストプラクティス
 
-### Step 1: Analyze Current State
+### ステップ 1: 現在の状態を分析する
+
+warn ではなく **enforce** への変更を preview してください。既存 Pod のチェックをトリガーするのは enforce-level/version の変更だけです。この server dry-run はラベルを保存せず、Pod を退避させません。有効な enforce ポリシーが変わらない場合、新たなスキャンはトリガーされません。スキャンは best effort であり、warning を制限/重複排除する可能性があります。何も出力されないことは、完全な workload audit を意味しません。command/authentication の失敗も失敗のままです。
 
 ```bash
-#!/bin/bash
-# analyze-pss-compliance.sh
-
-echo "=== Pod Security Standards Compliance Analysis ==="
-
-# Analyze Pods in all namespaces
-for ns in $(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}'); do
-  echo ""
-  echo "=== Namespace: $ns ==="
-
-  # Check restricted violations
-  kubectl label namespace "$ns" \
-    pod-security.kubernetes.io/warn=restricted \
-    pod-security.kubernetes.io/warn-version=v1.31 \
-    --overwrite --dry-run=server 2>&1 | head -20
-
-  # Per-Pod analysis
-  for pod in $(kubectl get pods -n "$ns" -o jsonpath='{.items[*].metadata.name}'); do
-    echo "  Pod: $pod"
-
-    # Check privileged containers
-    kubectl get pod "$pod" -n "$ns" -o jsonpath='{range .spec.containers[*]}{.name}: privileged={.securityContext.privileged}{"\n"}{end}' 2>/dev/null
-
-    # Check hostNetwork/hostPID
-    kubectl get pod "$pod" -n "$ns" -o jsonpath='hostNetwork={.spec.hostNetwork}, hostPID={.spec.hostPID}{"\n"}' 2>/dev/null
-  done
-done
+#!/usr/bin/env bash
+# preview-pss.sh: no namespace mutation
+set -euo pipefail
+: "${PSS_CONTEXT:?Set the approved test context}"
+: "${PSS_NAMESPACE:?Set one namespace to inspect}"
+kubectl --context "$PSS_CONTEXT" --request-timeout=30s \
+  get namespace "$PSS_NAMESPACE" -o yaml
+kubectl --context "$PSS_CONTEXT" --request-timeout=30s \
+  label namespace "$PSS_NAMESPACE" \
+  pod-security.kubernetes.io/enforce=restricted \
+  pod-security.kubernetes.io/enforce-version=v1.35 \
+  --overwrite --dry-run=server
 ```
 
-### Step 2: Gradual Rollout Strategy
+### ステップ 2: 段階的 rollout 戦略
+
+日数範囲は、測定された移行期間ではなく、説明用の計画スケジュールです。明示的な Namespace inventory を使用し、既存のより強力なポリシーを downgrade せず、replacement Pod と rollback capacity のテスト後にのみ進めてください。
 
 ```yaml
 # Gradual rollout using GitOps
@@ -1279,10 +1125,11 @@ done
 # - Gradually migrate existing namespaces
 ```
 
-### Step 3: Set Up Monitoring and Alerts
+### ステップ 3: Monitoring と Alert を設定する
+
+これらの rule には Prometheus Operator CRD、この PrometheusRule を含む selector、および `pod_security_evaluations_total` を公開する認可済み API-server scrape が必要です。組み込み PSA は `pod-security-webhook` という名前の webhook ではありません。評価 label には decision、policy_level、policy_version、mode、request_operation、resource、subresource が含まれます。**namespace label はありません**。Namespace/request の詳細は、保持された audit event と関連付けてください。metrics が存在しないことは違反がゼロである証拠にはなりません。audit-mode の denial は違反評価を意味し、必ずしも API リクエストの拒否を意味しません。
 
 ```yaml
-# Prometheus alerting rules
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -1294,73 +1141,104 @@ spec:
     rules:
     - alert: PSSViolationDetected
       expr: |
-        increase(apiserver_admission_webhook_rejection_count{
-          name="pod-security-webhook",
-          error_type="no_error"
-        }[5m]) > 0
-      for: 1m
+        sum by (policy_level, policy_version, mode) (
+          increase(pod_security_evaluations_total{mode="enforce",decision="deny"}[5m])
+        ) > 0
       labels:
         severity: warning
       annotations:
-        summary: "Pod Security Standards violation detected"
-        description: "PSS violation detected in namespace {{ $labels.namespace }}."
-
+        summary: "PSA denied a Pod request"
+        description: "Policy {{ $labels.policy_level }}:{{ $labels.policy_version }}. Correlate audit logs for namespace and request identity."
     - alert: PSSAuditViolation
       expr: |
-        increase(pod_security_evaluations_total{
-          mode="audit",
-          decision="deny"
-        }[5m]) > 10
+        sum by (policy_level, policy_version, mode) (
+          increase(pod_security_evaluations_total{mode="audit",decision="deny"}[5m])
+        ) > 10
       for: 5m
       labels:
         severity: info
       annotations:
-        summary: "PSS Audit mode violations increasing"
-        description: "{{ $value }} PSS audit violations detected."
+        summary: "PSA audit violations increasing"
+        description: "{{ $value }} violating evaluations over five minutes; not a count of unique Pods."
 ```
 
-### Step 4: Automated Compliance Checks
+### ステップ 4: 自動コンプライアンスチェック
 
-```yaml
-# PSS compliance checks in CI/CD pipeline
-# .gitlab-ci.yml or GitHub Actions
+これを workload を所有するプロジェクトに `check-pss.py` として保存してください。前提条件: PyYAML を含む Python 3、互換性のある kubectl、承認済みのクラスター認証情報、ポリシー v1.35 をサポートする Kubernetes API server、および `restricted:v1.35` を明示的に enforce する既存の test Namespace。呼び出し元には、server dry-run であっても Namespace read と Pod create の認可が必要です。クラスター認証情報を信頼できない pull-request code に公開しないでください。
 
-name: PSS Compliance Check
+```python
+#!/usr/bin/env python3
+# check-pss.py CONTEXT NAMESPACE pod.yaml [pod2.yaml ...]
+# Requires Python 3 + PyYAML and a preconfigured, authorized kubectl.
+import copy, json, subprocess, sys
+from pathlib import Path
+import yaml
 
-on:
-  pull_request:
-    paths:
-      - 'k8s/**'
+if len(sys.argv) < 4:
+    raise SystemExit("Usage: check-pss.py CONTEXT NAMESPACE pod.yaml [...]")
+context, namespace, *files = sys.argv[1:]
+pods = []
+for filename in files:
+    docs = list(yaml.safe_load_all(Path(filename).read_text()))
+    if not docs or any(not isinstance(p, dict) for p in docs):
+        raise SystemExit(f"{filename}: empty/non-object YAML")
+    for pod in docs:
+        if (pod.get("apiVersion"), pod.get("kind")) != ("v1", "Pod"):
+            raise SystemExit(f"{filename}: only explicit v1 Pod test inputs are supported")
+        meta = pod.setdefault("metadata", {})
+        if meta.get("namespace", namespace) != namespace:
+            raise SystemExit(f"{filename}: namespace mismatch")
+        meta["namespace"] = namespace
+        pods.append(pod)
+base = ["kubectl", "--context", context, "--request-timeout=30s"]
+ns = json.loads(subprocess.run(
+    base + ["get", "namespace", namespace, "-o", "json"],
+    check=True, text=True, capture_output=True).stdout)
+labels = ns["metadata"].get("labels", {})
+if (labels.get("pod-security.kubernetes.io/enforce"),
+    labels.get("pod-security.kubernetes.io/enforce-version")) != ("restricted", "v1.35"):
+    raise SystemExit("Test namespace must explicitly enforce restricted:v1.35")
 
-jobs:
-  pss-check:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
+def dry_run(pod):
+    return subprocess.run(
+        base + ["create", "--dry-run=server", "--validate=strict",
+                "--namespace", namespace, "-f", "-"],
+        input=json.dumps(pod), text=True, capture_output=True)
 
-    - name: Install kubeconform
-      run: |
-        wget https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
-        tar xzf kubeconform-linux-amd64.tar.gz
-        sudo mv kubeconform /usr/local/bin/
-
-    - name: Install kubectl
-      uses: azure/setup-kubectl@v3
-
-    - name: Check PSS compliance
-      run: |
-        for file in k8s/*.yaml; do
-          echo "Checking $file..."
-
-          # Extract Pod resources and check PSS
-          if grep -q "kind: Pod\|kind: Deployment\|kind: StatefulSet\|kind: DaemonSet" "$file"; then
-            kubectl apply --dry-run=server -f "$file" 2>&1 | grep -i "pod security" && exit 1
-          fi
-        done
-        echo "All files are PSS compliant!"
+control = {
+    "apiVersion": "v1", "kind": "Pod",
+    "metadata": {"generateName": "pss-control-", "namespace": namespace},
+    "spec": {
+        "automountServiceAccountToken": False,
+        "securityContext": {"runAsNonRoot": True, "runAsUser": 65532,
+                            "seccompProfile": {"type": "RuntimeDefault"}},
+        "containers": [{"name": "probe", "image": "registry.k8s.io/pause:3.10",
+                        "securityContext": {"allowPrivilegeEscalation": False,
+                                            "capabilities": {"drop": ["ALL"]}}}],
+    },
+}
+good = dry_run(control)
+if good.returncode:
+    raise SystemExit("Positive control failed; no compliance result:\n" + good.stderr)
+bad = copy.deepcopy(control)
+bad["spec"]["hostPID"] = True
+denied = dry_run(bad)
+if denied.returncode == 0 or 'violates PodSecurity "restricted:v1.35"' not in denied.stderr:
+    raise SystemExit("Negative control did not confirm PSA rejection:\n" + denied.stderr)
+for pod in pods:
+    result = dry_run(pod)
+    if result.returncode:
+        raise SystemExit("Pod dry-run failed:\n" + result.stderr)
+print(f"{len(pods)} explicit Pod inputs passed server dry-run in {namespace}")
 ```
 
-### Step 5: Documentation and Training
+```bash
+python3 check-pss.py "$PSS_CONTEXT" "$PSS_NAMESPACE" ./pss-inputs/web-pod.yaml
+```
+
+明示的な input list は、init container を含む各 workload の Pod template をカバーする必要があります。この例では、Deployment、空ファイル、誤った Namespace、query failure、enforcement 不足、および exempt/inactive negative-control path を拒否します。template extraction、mutating webhook、scheduling、image startup、将来の runtime behavior には、別のチェックが必要です。negative control は PSA によって拒否される必要があります。その他の error は結論を出せないため、チェックは失敗します。候補の Pod によって選択される別の exemption（たとえば exempt RuntimeClass）も、test-cluster owner が禁止するか別途テストする必要があります。
+
+### ステップ 5: ドキュメントとトレーニング
 
 ```markdown
 # Pod Security Standards Guidelines
@@ -1391,18 +1269,19 @@ jobs:
 
 ---
 
-## Troubleshooting
+## トラブルシューティング
 
-### Common Errors and Solutions
+### よくあるエラーと解決策
 
-#### 1. "allowPrivilegeEscalation != false" Error
+#### 1. "allowPrivilegeEscalation != false" エラー
+
+説明用のエラー抜粋です。YAML は**部分的な Pod-spec 修正**であり、単独で使用できる manifest ではありません。既存のコンテナ image/configuration を保持してください。該当するコンテナ単位の制御は、init および ephemeral コンテナにも適用してください。
+
+```text
+allowPrivilegeEscalation != false
+```
 
 ```yaml
-# Error message
-Error: pods "my-pod" is forbidden: violates PodSecurity "restricted:v1.31":
-allowPrivilegeEscalation != false
-
-# Solution: Add setting to all containers
 spec:
   containers:
   - name: app
@@ -1410,60 +1289,56 @@ spec:
       allowPrivilegeEscalation: false
 ```
 
-#### 2. "unrestricted capabilities" Error
+#### 2. "unrestricted capabilities" エラー
+
+説明用のエラー抜粋です。YAML は**部分的な Pod-spec 修正**であり、単独で使用できる manifest ではありません。既存のコンテナ image/configuration を保持してください。該当するコンテナ単位の制御は、init および ephemeral コンテナにも適用してください。
+
+```text
+unrestricted capabilities
+```
 
 ```yaml
-# Error message
-Error: violates PodSecurity "restricted:v1.31":
-unrestricted capabilities (container "app" must set securityContext.capabilities.drop=["ALL"])
-
-# Solution: Set capabilities drop
 spec:
   containers:
   - name: app
     securityContext:
       capabilities:
-        drop:
-          - ALL
+        drop: [ALL]
 ```
 
-#### 3. "runAsNonRoot != true" Error
+#### 3. "runAsNonRoot != true" エラー
+
+説明用のエラー抜粋です。YAML は**部分的な Pod-spec 修正**であり、単独で使用できる manifest ではありません。既存のコンテナ image/configuration を保持してください。該当するコンテナ単位の制御は、init および ephemeral コンテナにも適用してください。
+
+```text
+runAsNonRoot != true
+```
 
 ```yaml
-# Error message
-Error: violates PodSecurity "restricted:v1.31":
-runAsNonRoot != true
-
-# Solution 1: Set at Pod level
 spec:
   securityContext:
     runAsNonRoot: true
-    runAsUser: 1000
-
-# Solution 2: Set at container level
-spec:
-  containers:
-  - name: app
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
+    runAsUser: 101
 ```
 
-#### 4. "seccompProfile" Error
+#### 4. "seccompProfile" エラー
+
+説明用のエラー抜粋です。YAML は**部分的な Pod-spec 修正**であり、単独で使用できる manifest ではありません。既存のコンテナ image/configuration を保持してください。該当するコンテナ単位の制御は、init および ephemeral コンテナにも適用してください。
+
+```text
+seccompProfile must be RuntimeDefault or Localhost
+```
 
 ```yaml
-# Error message
-Error: violates PodSecurity "restricted:v1.31":
-seccompProfile (pod or container "app" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
-
-# Solution: Set seccompProfile
 spec:
   securityContext:
     seccompProfile:
       type: RuntimeDefault
 ```
 
-### PSS Violation Checking Tools
+### PSS 違反チェックツール
+
+Polaris、kube-score、Trivy は追加の static check を提供しますが、クラスターのバージョン化された PSA ポリシー、exemption、mutation の正確な代替ではありません。レビュー済みのバージョンをインストールし、その CLI help を参照してください。server dry-run の成功は、そのリクエスト、identity、Namespace、時点に限定されます。上記の明示的な Pod control を使用してください。
 
 ```bash
 # Dry-run check with kubectl
@@ -1481,27 +1356,31 @@ trivy config ./k8s/
 
 ---
 
-## Summary
+## まとめ
 
-Pod Security Standards (PSS) は、Kubernetes における Pod security の管理に標準化されたアプローチを提供します。
+Pod Security Standards (PSS) は、Kubernetes で Pod セキュリティを管理するための標準化されたアプローチを提供します。
 
-1. **3 つの Security Levels**: Privileged (すべての privileges)、Baseline (既知の escalations を防止)、Restricted (least privilege)
-2. **3 つの Enforcement Modes**: enforce (block)、audit (log)、warn (warning)
-3. **Namespace Labels によるシンプルな設定**: RBAC binding は不要で、labels のみで policies を適用
-4. **段階的導入のサポート**: warn/audit modes による安全な migration
+1. **3 つのセキュリティレベル**: Privileged（すべての権限）、Baseline（既知の昇格を防止）、Restricted（最小権限）
+2. **3 つの適用モード**: enforce（ブロック）、audit（ログ）、warn（警告）
+3. **Namespace ラベル**: PSP 形式の use binding はなし。RBAC では引き続き Namespace ラベルと workload 作成を制限する必要がある
+4. **段階的導入のサポート**: warn/audit モードによる安全な移行
 
-### Recommendations
+### 推奨事項
 
-- 新しい clusters では最初から PSS を有効にします。
-- 既存 clusters では warn mode から開始し、段階的に harden します。
-- production environments では少なくとも baseline level を適用します。
-- sensitive workloads には restricted level を適用します。
+- 新しいクラスターでは最初から PSS を有効化する
+- 既存クラスターでは warn モードから開始し、段階的に hardening する
+- 本番環境では少なくとも Baseline レベルを適用する
+- 機密性の高い workload には Restricted レベルを適用する
 
 ---
 
-## References
+## 参考資料
 
 - [Kubernetes Pod Security Standards 公式ドキュメント](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Pod Security Admission 公式ドキュメント](https://kubernetes.io/docs/concepts/security/pod-security-admission/)
-- [EKS Best Practices Guide - Pod Security](https://aws.github.io/aws-eks-best-practices/security/docs/pods/)
-- [PSP から PSS への Migration Guide](https://kubernetes.io/docs/tasks/configure-pod-container/migrate-from-psp/)
+- [EKS ベストプラクティスガイド - Pod Security](https://docs.aws.amazon.com/eks/latest/best-practices/pod-security.html)
+- [PSP から PSS への移行ガイド](https://kubernetes.io/docs/tasks/configure-pod-container/migrate-from-psp/)
+
+- [PSA Namespace ラベルのプレビューと既存 Pod チェック](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/)
+- [PSA の設定と例外](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-admission-controller/)
+- [Nginx unprivileged image と書き込み可能なパス](https://github.com/nginx/docker-nginx-unprivileged)

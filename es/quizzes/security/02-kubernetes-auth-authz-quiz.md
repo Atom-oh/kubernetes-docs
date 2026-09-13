@@ -1,10 +1,12 @@
-# Cuestionario sobre autenticación y autorización de Kubernetes
+# Cuestionario de autenticación y autorización de Kubernetes
 
-> **Documento relacionado**: [Sistema de autenticación y autorización de Kubernetes](../../security/02-kubernetes-auth-authz.md)
+> **Documento relacionado**: [Kubernetes Authentication and Authorization System](../../security/02-kubernetes-auth-authz.md)
+
+> **Última actualización**: September 13, 2026
 
 ## Preguntas de opción múltiple
 
-### 1. En la autenticación con certificados X.509 de Kubernetes, ¿de qué campo se extrae el nombre de usuario?
+### 1. En la autenticación mediante certificados X.509 de Kubernetes, ¿de qué campo se extrae el nombre de usuario?
 
 - A) Subject Alternative Name (SAN)
 - B) Common Name (CN)
@@ -17,28 +19,28 @@
 **Respuesta: B) Common Name (CN)**
 
 **Explicación:**
-En los certificados X.509, el Common Name (CN) se asigna al nombre de usuario, y la Organization (O) se asigna a los grupos.
+En los certificados X.509, el Common Name (CN) se asigna al nombre de usuario y la Organization (O) se asigna a los grupos.
 
 </details>
 
-### 2. ¿Cuál es la principal diferencia entre ClusterRole y Role en RBAC?
+### 2. ¿Cuál es la diferencia principal entre ClusterRole y Role en RBAC?
 
 - A) ClusterRole es de solo lectura, Role es de lectura/escritura
-- B) ClusterRole tiene alcance de todo el cluster, Role tiene alcance de namespace
-- C) ClusterRole es solo para administradores, Role es para usuarios normales
-- D) ClusterRole se aplica solo a nodes, Role se aplica solo a pods
+- B) ClusterRole es una definición con ámbito de clúster; Role es una definición con ámbito de namespace
+- C) ClusterRole es solo para administradores, Role es para usuarios regulares
+- D) ClusterRole se aplica solo a nodos, Role se aplica solo a pods
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) ClusterRole tiene alcance de todo el cluster, Role tiene alcance de namespace**
+**Respuesta: B) ClusterRole es una definición con ámbito de clúster; Role es una definición con ámbito de namespace**
 
 **Explicación:**
-Role define permisos para recursos dentro de un namespace específico, mientras que ClusterRole define permisos para recursos de todo el cluster o recursos que no pertenecen a un namespace.
+Un ClusterRole también puede definir permisos reutilizables para recursos con ámbito de namespace. Un RoleBinding que lo referencia limita la concesión al namespace de la asociación; un ClusterRoleBinding concede sus permisos en todo el clúster. Una definición por sí sola no concede nada.
 
 </details>
 
-### 3. ¿Cuál es la ruta predeterminada donde los tokens de ServiceAccount se montan automáticamente en pods?
+### 3. ¿Cuál es la ruta predeterminada en la que los tokens de ServiceAccount se montan automáticamente en los pods?
 
 - A) /var/run/secrets/kubernetes.io/token
 - B) /etc/kubernetes/serviceaccount
@@ -51,28 +53,30 @@ Role define permisos para recursos dentro de un namespace específico, mientras 
 **Respuesta: C) /var/run/secrets/kubernetes.io/serviceaccount**
 
 **Explicación:**
-Los tokens de ServiceAccount se montan de forma predeterminada en `/var/run/secrets/kubernetes.io/serviceaccount`.
+Este es el directorio predeterminado en un Pod de Linux con el montaje automático habilitado. El token es el archivo `token` que se encuentra dentro. Los Pods con `automountServiceAccountToken: false` o volúmenes proyectados personalizados pueden tener rutas distintas o no tener token.
 
 </details>
 
 ### 4. ¿Cuál es el orden de ejecución de MutatingAdmissionWebhook y ValidatingAdmissionWebhook?
 
-- A) Primero Validating, luego Mutating
-- B) Primero Mutating, luego Validating
-- C) Se ejecutan en paralelo simultáneamente
+- A) Primero Validating, después Mutating
+- B) Primero Mutating, después Validating
+- C) Se ejecutan simultáneamente en paralelo
 - D) Se ejecutan aleatoriamente sin orden
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Primero Mutating, luego Validating**
+**Respuesta: B) Primero Mutating, después Validating**
 
 **Explicación:**
-Orden de ejecución del admission controller: 1) MutatingAdmissionWebhook (modifica las solicitudes), 2) ValidatingAdmissionWebhook (valida las solicitudes).
+Orden de ejecución del controlador de admisión: 1) MutatingAdmissionWebhook (modifica las solicitudes), 2) ValidatingAdmissionWebhook (valida las solicitudes).
 
 </details>
 
-### 5. ¿Qué ConfigMap asigna usuarios/roles de IAM a Kubernetes RBAC en EKS?
+<span id="_5-what-configmap-maps-iam-users-roles-to-kubernetes-rbac-in-eks"></span>
+
+### 5. ¿Qué ConfigMap almacena las asignaciones de IAM en el modo de autenticación heredado CONFIG_MAP de EKS?
 
 - A) kube-config
 - B) aws-auth
@@ -85,11 +89,13 @@ Orden de ejecución del admission controller: 1) MutatingAdmissionWebhook (modif
 **Respuesta: B) aws-auth**
 
 **Explicación:**
-En Amazon EKS, el ConfigMap `aws-auth` (en el namespace kube-system) asigna usuarios y roles de AWS IAM a usuarios y grupos de Kubernetes.
+`kube-system/aws-auth` es la asignación heredada de IAM. Para la gestión de acceso actual, use entradas de acceso de EKS con RBAC adecuado o políticas de acceso de EKS. Durante la migración en modo dual, una entrada de acceso tiene prioridad para el mismo principal. Reemplazar todo el ConfigMap puede eliminar las asignaciones de nodos.
 
 </details>
 
-### 6. ¿Qué método de autenticación se recomienda para clusters de Kubernetes en producción?
+<span id="_6-which-authentication-method-is-recommended-for-production-kubernetes-clusters"></span>
+
+### 6. ¿Qué método integra el inicio de sesión de usuarios mediante tokens de ID emitidos por un proveedor de identidad externo?
 
 - A) Archivo de token estático
 - B) Autenticación básica
@@ -102,32 +108,32 @@ En Amazon EKS, el ConfigMap `aws-auth` (en el namespace kube-system) asigna usua
 **Respuesta: C) OIDC (OpenID Connect)**
 
 **Explicación:**
-OIDC proporciona autenticación de nivel empresarial con características como expiración de tokens, tokens de renovación e integración con proveedores de identidad como Okta, Azure AD y Google.
+OIDC valida el emisor, la audiencia, la firma y la expiración de los tokens de ID emitidos externamente. El IdP/cliente gestiona el inicio de sesión y la renovación; el servidor de API no emite tokens de renovación. La autenticación de IAM de EKS es otra vía de acceso de usuarios, mientras que IRSA/Pod Identity tienen un propósito distinto: el acceso de Pod a las API de AWS.
 
 </details>
 
 ### 7. ¿Cuál es el propósito del grupo `system:masters` en Kubernetes?
 
-- A) Administrar master nodes
-- B) Proporcionar privilegios de cluster-admin
-- C) Programar pods en master nodes
+- A) Administrar nodos master
+- B) Proporcionar acceso ilimitado a la API que omite la autorización de RBAC/webhook
+- C) Programar pods en nodos master
 - D) Administrar namespaces del sistema
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Proporcionar privilegios de cluster-admin**
+**Respuesta: B) Proporcionar acceso ilimitado a la API que omite la autorización de RBAC/webhook**
 
 **Explicación:**
-El grupo `system:masters` está vinculado al ClusterRole `cluster-admin`, lo que otorga acceso administrativo completo al cluster.
+`system:masters` es un grupo especial que omite la autorización. No equivale a una asociación de rol de administrador ordinaria, y eliminar un ClusterRoleBinding no revoca esa omisión. Evite asignar este grupo a administradores ordinarios.
 
 </details>
 
-### 8. ¿Cómo restringes un ServiceAccount para que solo pueda leer pods en un namespace específico?
+### 8. ¿Cómo restringe una ServiceAccount para que solo lea pods en un namespace específico?
 
 - A) ClusterRole + ClusterRoleBinding
 - B) Role + ClusterRoleBinding
-- C) ClusterRole + RoleBinding
+- C) Solo Role
 - D) Role + RoleBinding
 
 <details>
@@ -136,7 +142,7 @@ El grupo `system:masters` está vinculado al ClusterRole `cluster-admin`, lo que
 **Respuesta: D) Role + RoleBinding**
 
 **Explicación:**
-Para permisos con alcance de namespace, usa un Role (define permisos dentro de un namespace) con un RoleBinding (vincula el rol a un sujeto dentro del mismo namespace).
+Use un Role que permita solo get/list/watch de Pod y un RoleBinding en ese namespace, suponiendo que no existan otras concesiones. **ClusterRole + RoleBinding también es válido** y, por lo tanto, no es una opción de respuesta incorrecta. Un sujeto ServiceAccount puede pertenecer explícitamente a otro namespace; el ámbito del permiso sigue siendo el namespace de la asociación.
 
 </details>
 
@@ -170,27 +176,27 @@ El verbo `impersonate` permite que un usuario realice acciones como si fuera otr
 **Respuesta: C) token**
 
 **Explicación:**
-El montaje de volumen de ServiceAccount contiene tres archivos: `ca.crt` (certificado de CA), `namespace` (namespace actual) y `token` (token JWT para autenticación).
+El volumen predeterminado de ServiceAccount montado automáticamente proporciona estos archivos (las proyecciones personalizadas pueden diferir): `ca.crt` (certificado de CA), `namespace` (namespace actual) y `token` (token JWT para la autenticación).
 
 </details>
 
 ## Preguntas de respuesta corta
 
-### 1. ¿Cuál es la principal diferencia entre cuentas de usuario y cuentas de servicio en Kubernetes?
+### 1. ¿Cuál es la diferencia principal entre las cuentas de usuario y las cuentas de servicio en Kubernetes?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Las cuentas de usuario se administran externamente y no las administra directamente Kubernetes, mientras que las cuentas de servicio son recursos con alcance de namespace administrados mediante la API de Kubernetes.**
+**Respuesta: Las cuentas de usuario se gestionan externamente y no directamente por Kubernetes, mientras que las cuentas de servicio son recursos con ámbito de namespace gestionados mediante la API de Kubernetes.**
 
 </details>
 
-### 2. ¿Cómo deshabilitas el montaje automático de tokens de ServiceAccount?
+### 2. ¿Cómo deshabilita el montaje automático de tokens de ServiceAccount?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Establece `automountServiceAccountToken: false` en la especificación del ServiceAccount o del Pod.**
+**Respuesta: Configure `automountServiceAccountToken: false` en el nivel superior de ServiceAccount o en la especificación del Pod. La configuración del Pod tiene prioridad; los volúmenes de token proyectado declarados explícitamente siguen funcionando.**
 
 </details>
 
@@ -199,22 +205,22 @@ El montaje de volumen de ServiceAccount contiene tres archivos: `ca.crt` (certif
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: `rules` define permisos directamente, mientras que `aggregationRule` combina automáticamente permisos de otros ClusterRoles que coinciden con etiquetas específicas.**
+**Respuesta: `rules` define los permisos directamente, mientras que `aggregationRule` combina automáticamente permisos de otros ClusterRoles que coinciden con etiquetas específicas.**
 
 **Explicación:**
-Los ClusterRoles agregados son útiles para extender roles integrados sin modificarlos directamente.
+El controlador de agregación gestiona las reglas del ClusterRole de destino y puede sobrescribir los cambios manuales de reglas. El permiso para agregar o editar roles seleccionados por etiquetas también afecta al acceso resultante.
 
 </details>
 
-### 4. ¿Qué es la TokenRequest API y por qué se prefiere frente a los tokens estáticos?
+### 4. ¿Qué es la API TokenRequest y por qué se prefiere frente a los tokens estáticos?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: La TokenRequest API crea tokens con límite de tiempo y vinculados a una audiencia que son más seguros que los tokens estáticos de larga duración.**
+**Respuesta: La API TokenRequest crea tokens con duración limitada y vinculados a una audiencia que son más seguros que los tokens estáticos de larga duración.**
 
 **Explicación:**
-Los tokens de la TokenRequest API expiran automáticamente y están vinculados a audiencias específicas, lo que reduce el riesgo de robo y uso indebido de tokens.
+Verifique la expiración real devuelta por el servidor, que puede ajustar la duración solicitada. Kubelet rota los tokens proyectados de Pod, pero la aplicación debe volver a cargar el archivo. Una TokenRequest independiente no proporciona por sí misma rotación automática de archivos. Estos tokens siguen siendo credenciales secretas de portador.
 
 </details>
 
@@ -223,19 +229,19 @@ Los tokens de la TokenRequest API expiran automáticamente y están vinculados a
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Kubernetes prueba cada método de autenticación en secuencia hasta que uno tiene éxito. Se usa la primera autenticación exitosa.**
+**Respuesta: Se usa el primer resultado de autenticación exitoso, pero no se garantiza el orden de evaluación de los autenticadores.**
 
 **Explicación:**
-Los métodos de autenticación se prueban en una cadena. Si todos los métodos fallan, la solicitud se rechaza con un error 401 Unauthorized.
+No suponga un orden fijo X.509 → OIDC → proxy. Las credenciales no válidas pueden producir un 401. El manejo anónimo de solicitudes sin credenciales depende de la configuración del servidor; una identidad anónima aún puede ser denegada por la autorización.
 
 </details>
 
 ## Preguntas prácticas
 
-### 1. Escribe un Role y un RoleBinding que cumplan los siguientes requisitos:
+### 1. Escriba un Role y un RoleBinding que cumplan los siguientes requisitos:
 
 - Namespace: development
-- Permisos: lectura de Pod (get, list, watch), acceso completo a ConfigMap
+- Permisos: lectura de Pod (get, list, watch), lecturas de ConfigMap y create/update/patch/delete de objetos individuales (sin deletecollection)
 - Usuario: developer@example.com
 
 <details>
@@ -272,7 +278,9 @@ roleRef:
 
 </details>
 
-### 2. Crea un ServiceAccount con un tiempo de expiración de token personalizado.
+<span id="_2-create-a-serviceaccount-with-a-custom-token-expiration-time"></span>
+
+### 2. Cree una ServiceAccount y un Pod con un token proyectado que solicite una duración personalizada.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -284,36 +292,40 @@ kind: ServiceAccount
 metadata:
   name: custom-sa
   namespace: default
+automountServiceAccountToken: false
 ---
 # Pod using projected token with custom expiration
 apiVersion: v1
 kind: Pod
 metadata:
   name: app-with-custom-token
+  namespace: default
 spec:
   serviceAccountName: custom-sa
+  automountServiceAccountToken: false
   containers:
   - name: app
-    image: nginx
+    image: registry.k8s.io/pause:3.10
     volumeMounts:
     - name: token
       mountPath: /var/run/secrets/tokens
+      readOnly: true
   volumes:
   - name: token
     projected:
       sources:
       - serviceAccountToken:
           path: token
-          expirationSeconds: 3600  # 1 hour
-          audience: api
+          expirationSeconds: 3600  # requested, not guaranteed
+          audience: https://service.example.com
 ```
 
 **Explicación:**
-Al usar volúmenes proyectados con `serviceAccountToken`, puedes especificar `expirationSeconds` personalizado (mínimo 600 segundos) y `audience` para el token.
+El valor mínimo solicitado de `expirationSeconds` es 600; el servidor determina la expiración real. La audiencia de ejemplo debe estar configurada y validada por el servicio receptor; no es aceptada automáticamente por la API de Kubernetes. Para las llamadas a la API de Kubernetes, use una audiencia que acepte el servidor de API. El montaje automático está deshabilitado y solo el token explícito se monta como de solo lectura. Este Pod pause ilustra el volumen; no usa el token ni sirve HTTP. Una aplicación real debe volver a cargar el archivo después de que Kubelet lo rote.
 
 </details>
 
-### 3. Escribe un comando para comprobar qué permisos tiene un usuario específico.
+### 3. Escriba un comando para comprobar qué permisos tiene un usuario específico.
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -322,33 +334,38 @@ Al usar volúmenes proyectados con `serviceAccountToken`, puedes especificar `ex
 # Check if a user can perform a specific action
 kubectl auth can-i create deployments --as=developer@example.com -n development
 
-# List all permissions for a user in a namespace
+# Request the namespace rule list (see authorizer limitations below)
 kubectl auth can-i --list --as=developer@example.com -n development
 
 # Check permissions for a ServiceAccount
-kubectl auth can-i --list --as=system:serviceaccount:default:my-sa
+kubectl auth can-i get pods -n development \
+  --as=system:serviceaccount:default:my-sa \
+  --as-group=system:serviceaccounts \
+  --as-group=system:serviceaccounts:default \
+  --as-group=system:authenticated
 
 # Impersonate a group
 kubectl auth can-i create pods --as=developer@example.com --as-group=developers -n development
 ```
 
 **Explicación:**
-El comando `kubectl auth can-i` permite comprobar permisos para el usuario actual o suplantar a otros usuarios/grupos para verificar sus niveles de acceso.
+La persona que llama necesita permiso `impersonate` para el usuario/ServiceAccount y cada grupo usado. No suponga que la pertenencia a grupos se reconstruye automáticamente. `--list` no siempre es un inventario completo de permisos efectivos y omite los permisos de políticas de acceso de EKS. La suplantación en EKS fuerza la evaluación de RBAC; pruebe por separado el rol de IAM real. Un resultado positivo de `can-i` no garantiza la admisión, el acceso a la red ni la aceptación de cuotas.
 
 </details>
 
 ## Preguntas avanzadas
 
-### 1. Diseña una estrategia de seguridad para el aislamiento de tenants en un cluster de Kubernetes multi-tenant.
+### 1. Diseñe una estrategia de seguridad para el aislamiento de tenants en un clúster de Kubernetes multi-tenant.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Diseño de Namespace y RBAC:**
-- Crea namespaces separados por tenant
-- Aplica Pod Security Standards
-- Implementa NetworkPolicy para aislamiento de red
-- Establece ResourceQuota para límites de recursos
+
+- Cree namespaces separados por tenant
+- Aplique Pod Security Standards
+- Implemente NetworkPolicy para el aislamiento de red
+- Configure ResourceQuota para los límites de recursos
 
 ```yaml
 apiVersion: v1
@@ -358,6 +375,7 @@ metadata:
   labels:
     tenant: alpha
     pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.35
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -386,80 +404,73 @@ spec:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: tenant-admin
+  name: tenant-workload-editor
   namespace: tenant-alpha
 rules:
-- apiGroups: ["", "apps", "batch"]
-  resources: ["*"]
-  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["networking.k8s.io"]
   resources: ["networkpolicies"]
   verbs: ["get", "list"]  # Read-only for network policies
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-workload-editors
+  namespace: tenant-alpha
+subjects:
+- kind: Group
+  name: tenant-alpha:developers
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: tenant-workload-editor
+  apiGroup: rbac.authorization.k8s.io
 ```
 
+La versión de PSS fijada `v1.35` es una referencia de aprendizaje; seleccione y valide una versión de política compatible con el clúster de destino. La denegación predeterminada también bloquea DNS y dependencias externas, por lo que se deben revisar las excepciones explícitas. El CNI debe aplicar las políticas. Los tenants no deben cambiar las etiquetas de namespace, NetworkPolicy, ResourceQuota ni RBAC, y se deben revisar otras asociaciones existentes.
+
+**La creación/edición de Deployment puede permitir que los Pods usen otras ServiceAccounts o Secrets en el namespace.** Eliminar solo el permiso de get de Secret no cierra esta vía. Separe identidades/secrets con distintos niveles de confianza en diferentes namespaces, restrinja las identidades permitidas mediante admisión cuando sea necesario o use clústeres separados. Este ejemplo no demuestra un aislamiento sólido de tenants.
+
 **Medidas de seguridad adicionales:**
-- Usa ServiceAccounts separados por aplicación
-- Implementa registro de auditoría
-- Usa admission webhooks para aplicar políticas
-- Considera usar Hierarchical Namespaces para la administración de sub-tenants
+
+- Use ServiceAccounts separadas por aplicación
+- Implemente el registro de auditoría
+- Use webhooks de admisión para la aplicación de políticas
+- Defina explícitamente la propiedad de sub-tenants y la propagación de políticas; los namespaces ordinarios de Kubernetes son planos
 
 </details>
 
-### 2. Explica el flujo completo de autenticación y autorización cuando se ejecuta un comando kubectl.
+### 2. Explique el flujo completo de autenticación y autorización cuando se ejecuta un comando kubectl.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Flujo completo:**
+1. **Cliente**: kubectl lee el kubeconfig/context seleccionado y valida el certificado TLS del servidor. El archivo predeterminado es `~/.kube/config`, pero `--kubeconfig` y `KUBECONFIG` pueden cambiarlo. Obtiene credenciales de certificados, tokens o un plugin exec; el acceso de IAM de EKS suele usar `aws eks get-token`.
+2. **Autenticación**: El servidor de API verifica las credenciales para establecer la identidad de usuario/grupo. Usa el primer resultado de autenticación exitoso sin garantizar un orden de evaluación fijo. OIDC, los proxies y los webhooks tienen requisitos de verificación y confianza diferentes.
+3. **Autorización**: Los autorizadores configurados se ejecutan en orden hasta el primer Allow o Deny. NoOpinion continúa; todos los resultados NoOpinion provocan una denegación 403. RBAC agrega permisos de las asociaciones aplicables y no tiene una regla de denegación explícita. La omisión de `system:masters` es un riesgo independiente.
+4. **Manejo de solicitudes**: Las solicitudes ordinarias de recursos CREATE/UPDATE pasan primero por la admisión de mutación y luego por la de validación; ambas pueden rechazar. Los cambios exitosos se almacenan después de la validación del objeto, las comprobaciones de conflictos y otras comprobaciones pertinentes. `get/list/watch` omite la admisión. Las API de ejecución en seco, DELETE, CONNECT y agregadas no se pueden representar todas mediante la misma secuencia de escritura en etcd.
+5. **Respuesta**: El servidor de API devuelve un resultado o error. El éxito de la API no significa que un controlador haya terminado de procesar ni que una aplicación esté lista.
 
-1. **Autenticación del cliente (kubeconfig)**
-   - kubectl lee `~/.kube/config`
-   - Extrae credenciales (certificado, token o plugin exec)
-   - Para EKS: `aws eks get-token` genera un token temporal
+| Solicitud de ejemplo | Diferencia después de la autenticación/autorización |
+|---|---|
+| `kubectl get pods` | Devuelve resultados de lectura; no ejecuta admisión ni almacena un Pod nuevo |
+| CREATE de Pod | Pasa por la admisión de mutación/validación y las comprobaciones de objetos antes del almacenamiento; la programación se realiza después |
+| CREATE de ejecución en seco del servidor | Realiza la validación del servidor, incluida la admisión, sin almacenamiento persistente |
 
-2. **Autenticación del API Server**
-   - El API Server recibe la solicitud con credenciales
-   - Prueba los métodos de autenticación en orden:
-     - Certificados de cliente X.509
-     - Tokens Bearer (ServiceAccount, OIDC)
-     - Proxy de autenticación
-     - Autenticación de token mediante webhook
-   - El primer método exitoso determina la identidad
-
-3. **Autorización**
-   - El API Server comprueba la autorización (normalmente RBAC)
-   - Evalúa todos los Roles/ClusterRoles aplicables
-   - Decisión: Allow o Deny
-   - Si hay varios autorizadores: gana el primero que no deniegue
-
-4. **Admission Control**
-   - **Mutating Admission**: modifica la solicitud
-     - Agrega valores predeterminados, inyecta sidecars
-   - **Validating Admission**: valida la solicitud
-     - Aplica políticas, cuotas
-   - Ambos pueden rechazar la solicitud
-
-5. **Persistencia**
-   - Si todas las comprobaciones pasan, el recurso se almacena en etcd
-   - Se devuelve la respuesta al cliente
-
-```
-kubectl -> kubeconfig -> API Server
-                            |
-                     Authentication
-                            |
-                     Authorization (RBAC)
-                            |
-                   Mutating Admission
-                            |
-                  Validating Admission
-                            |
-                         etcd
-```
-
-**Puntos clave:**
-- La autenticación determina QUIÉN eres
-- La autorización determina QUÉ puedes hacer
-- Los admission controls determinan CÓMO se modifican/validan los recursos
+La autenticación establece la identidad, la autorización permite operaciones de API y la admisión aplica políticas adicionales a los cambios.
 
 </details>
+
+## Referencias oficiales
+
+- [Authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
+- [Authorization](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
+- [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+- [ServiceAccount](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
+- [Admission](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)
+- [EKS access policies](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html)

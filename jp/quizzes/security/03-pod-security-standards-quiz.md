@@ -1,67 +1,72 @@
 # Pod Security Standards クイズ
 
-このクイズでは、Pod Security Standards (PSS)、Pod Security Admission (PSA)、およびセキュリティプロファイルについての理解を確認します。
+> **最終更新**: September 13, 2026
+> **関連ドキュメント**: [Pod Security Standards](../../security/03-pod-security-standards.md)
+
+通常の Linux Pod に対して回答してください。バージョン固有の Windows および user namespace の例外についてはガイドを参照してください。
+
+このクイズでは、Pod Security Standards（PSS）、Pod Security Admission（PSA）、およびセキュリティプロファイルに関する理解を確認します。
 
 ## クイズ問題
 
-### 1. Pod Security Standards (PSS) の3つのセキュリティレベルに含まれないものはどれですか？
+### 1. Pod Security Standards（PSS）の 3 つのセキュリティレベルのうち、該当しないものはどれですか？
 
-A. Privileged
-B. Baseline
-C. Hardened
-D. Restricted
+- A) Privileged
+- B) Baseline
+- C) Hardened
+- D) Restricted
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. Hardened**
+**回答: C) Hardened**
 
 **解説:**
-Pod Security Standards は3つのセキュリティレベルを定義しています:
+Pod Security Standards は 3 つのセキュリティレベルを定義しています。
 - **Privileged**: 制限なし、最大限の権限を許可
-- **Baseline**: 既知の権限昇格を防止し、制限は最小限
+- **Baseline**: 既知の権限昇格を防止し、最小限の制限を適用
 - **Restricted**: 強化されたセキュリティで、Pod のハードニングのベストプラクティスを適用
 
-Hardened は正式な PSS セキュリティレベルではありません。
+Hardened は公式の PSS セキュリティレベルではありません。
 
 </details>
 
-### 2. ポリシー違反が発生したときに Pod の作成をブロックする Pod Security Admission (PSA) モードはどれですか？
+### 2. ポリシー違反が発生したときに Pod の作成をブロックする Pod Security Admission（PSA）モードはどれですか？
 
-A. audit
-B. warn
-C. enforce
-D. deny
+- A) audit
+- B) warn
+- C) enforce
+- D) deny
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. enforce**
+**回答: C) enforce**
 
 **解説:**
-PSA は3つのモードを提供します:
+PSA には 3 つのモードがあります。
 - **enforce**: ポリシー違反時に Pod の作成を拒否
-- **audit**: 違反を監査ログに記録するが許可
-- **warn**: ユーザーに警告メッセージを表示するが許可
+- **audit**: 監査ログに違反を記録するが、許可する
+- **warn**: ユーザーに警告メッセージを表示するが、許可する
 
-deny は有効な PSA モードではありません。
+deny は有効な PSA モードではありません。audit/warn 自体は拒否しませんが、enforce または他のチェックにより同じリクエストが拒否される場合があります。監査ログの保持には適切なログ設定が必要です。
 
 </details>
 
-### 3. PSS を namespace に適用するために使用するラベル形式はどれですか？
+### 3. namespace に PSS を適用するために使用するラベル形式はどれですか？
 
-A. security.kubernetes.io/enforce: restricted
-B. pod-security.kubernetes.io/enforce: restricted
-C. pss.kubernetes.io/level: restricted
-D. admission.kubernetes.io/policy: restricted
+- A) security.kubernetes.io/enforce: restricted
+- B) pod-security.kubernetes.io/enforce: restricted
+- C) pss.kubernetes.io/level: restricted
+- D) admission.kubernetes.io/policy: restricted
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. pod-security.kubernetes.io/enforce: restricted**
+**回答: B) pod-security.kubernetes.io/enforce: restricted**
 
 **解説:**
-PSA は namespace ラベルを通じて設定します:
+PSA は namespace ラベルで設定します。
 ```yaml
 metadata:
   labels:
@@ -77,82 +82,82 @@ metadata:
 
 ### 4. Baseline セキュリティレベルで許可されないものはどれですか？
 
-A. hostNetwork: true
-B. runAsNonRoot: false
-C. allowPrivilegeEscalation: true
-D. readOnlyRootFilesystem: false
+- A) hostNetwork: true
+- B) runAsNonRoot: false
+- C) allowPrivilegeEscalation: true
+- D) readOnlyRootFilesystem: false
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A. hostNetwork: true**
+**回答: A) hostNetwork: true**
 
 **解説:**
-Baseline レベルは既知の権限昇格を防止します。以下は禁止されています:
-- hostNetwork, hostPID, hostIPC
-- privileged containers
-- 危険な capabilities (NET_RAW 以外は追加不可)
-- hostPath volumes (特定のパスを除く)
+Baseline レベルは既知の権限昇格を防止します。以下は禁止されています。
+- hostNetwork、hostPID、hostIPC
+- privileged コンテナ
+- NET_RAW を含む、Baseline の許可リスト外の明示的な capability の追加
+- すべての hostPath volume。組み込みの PSA にはパスの許可リストはありません
 
-runAsNonRoot、allowPrivilegeEscalation、readOnlyRootFilesystem は Baseline では制限されません。これらは Restricted レベルで強制されます。
+Baseline では runAsNonRoot や allowPrivilegeEscalation: false は必須ではありません。Restricted では、想定される Pod タイプに対してこれらの制御が追加されます。readOnlyRootFilesystem は推奨されるハードニングですが、どちらのプロファイルでも要件ではありません。capability のチェックは明示的な追加に関するものであり、runtime のデフォルトセットを削除するものではありません。
 
 </details>
 
 ### 5. Restricted セキュリティレベルの要件ではないものはどれですか？
 
-A. runAsNonRoot: true
-B. allowPrivilegeEscalation: false
-C. readOnlyRootFilesystem: true
-D. capabilities.drop: ["ALL"]
+- A) runAsNonRoot: true
+- B) allowPrivilegeEscalation: false
+- C) readOnlyRootFilesystem: true
+- D) capabilities.drop: ["ALL"]
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. readOnlyRootFilesystem: true**
+**回答: C) readOnlyRootFilesystem: true**
 
 **解説:**
-Restricted レベルでは以下が必要です:
-- runAsNonRoot: true (必須)
-- allowPrivilegeEscalation: false (必須)
-- capabilities.drop: ["ALL"] (必須)
-- seccompProfile.type: RuntimeDefault or Localhost (必須)
+Restricted レベルでは以下が必要です。
+- runAsNonRoot: true（必須）
+- allowPrivilegeEscalation: false（必須）
+- capabilities.drop: ["ALL"]（必須）
+- seccompProfile.type: RuntimeDefault または Localhost（必須）
 
 readOnlyRootFilesystem はセキュリティのベストプラクティスですが、Restricted レベルの必須要件ではありません。
 
 </details>
 
-### 6. PodSecurityPolicy (PSP) が削除されたのはどの Kubernetes バージョンですか？
+### 6. PodSecurityPolicy（PSP）はどの Kubernetes バージョンで削除されましたか？
 
-A. 1.21
-B. 1.23
-C. 1.25
-D. 1.27
+- A) 1.21
+- B) 1.23
+- C) 1.25
+- D) 1.27
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. 1.25**
+**回答: C) 1.25**
 
 **解説:**
 PSP のタイムライン:
-- Kubernetes 1.21: PSP の非推奨化が発表
-- Kubernetes 1.22: PSA alpha が導入
+- Kubernetes 1.21: PSP の非推奨化を発表
+- Kubernetes 1.22: PSA alpha を導入
 - Kubernetes 1.23: PSA beta
-- Kubernetes 1.25: PSP が完全に削除され、PSA GA
+- Kubernetes 1.25: PSP を完全に削除、PSA GA
 
 </details>
 
-### 7. PSA で PSS の特定バージョンを適用するラベルはどれですか？
+### 7. PSA で特定バージョンの PSS を適用するラベルはどれですか？
 
-A. pod-security.kubernetes.io/enforce-version: v1.28
-B. pod-security.kubernetes.io/version: v1.28
-C. pod-security.kubernetes.io/enforce-version: 1.28
-D. pod-security.kubernetes.io/policy-version: 1.28
+- A) pod-security.kubernetes.io/enforce-version: v1.28
+- B) pod-security.kubernetes.io/version: v1.28
+- C) pod-security.kubernetes.io/enforce-version: 1.28
+- D) pod-security.kubernetes.io/policy-version: 1.28
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A. pod-security.kubernetes.io/enforce-version: v1.28**
+**回答: A) pod-security.kubernetes.io/enforce-version: v1.28**
 
 **解説:**
 バージョンラベルの形式:
@@ -160,113 +165,115 @@ D. pod-security.kubernetes.io/policy-version: 1.28
 pod-security.kubernetes.io/<MODE>-version: <VERSION>
 ```
 
-バージョン値は `v1.XX` 形式または `latest` を使用します。バージョンを指定すると、その Kubernetes バージョンの PSS 定義が使用されます。
+値には `v1.XX` または `latest` を使用します。固定指定はポリシー定義を選択するものであり、Kubernetes のアップグレードではありません。v1.28 の選択は構文例であり、後に導入された制御は含まれません。latest は API server のバージョンに追従するため、アップグレード時に変更される可能性があります。
 
 </details>
 
 ### 8. EKS で PSA を有効にするにはどうしますか？
 
-A. EKS add-on をインストールする必要がある
-B. デフォルトで有効
-C. eksctl command で有効化
-D. AWS console で設定
+- A) EKS add-on をインストールする必要がある
+- B) デフォルトで有効
+- C) eksctl コマンドで有効化する
+- D) AWS console で設定する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. デフォルトで有効**
+**回答: B) デフォルトで有効**
 
 **解説:**
-Pod Security Admission は Kubernetes 1.25 以降でデフォルトで有効です。EKS 1.25 以降のバージョンでは、追加設定なしで PSA を使用できます。必要なのは、namespace に適切なラベルを追加することだけです。
+PSA は GA に到達し、upstream Kubernetes 1.25+ ではデフォルトで有効です。AWS は EKS でのデフォルト有効化を 1.23 から文書化しており、permissive な privileged/latest のデフォルトと静的な exemption がないことを示しています。実際の namespace ラベルを確認してください。有効化だけで Baseline/Restricted の enforcement が提供されると想定するのではなく、適切なポリシーを追加してください。
 
 </details>
 
-### 9. PSA exemptions を設定する方法ではないものはどれですか？
+### 9. PSA exemption の設定方法ではないものはどれですか？
 
-A. RuntimeClass exemption
-B. User exemption
-C. Namespace exemption
-D. Pod label exemption
+- A) RuntimeClass exemption
+- B) User exemption
+- C) Namespace exemption
+- D) Pod label exemption
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: D. Pod label exemption**
+**回答: D) Pod label exemption**
 
 **解説:**
-PSA は次の exemption タイプをサポートします:
-- **usernames**: 特定ユーザーの exemptions
-- **runtimeClassNames**: 特定 RuntimeClasses の exemptions
-- **namespaces**: 特定 namespaces の exemptions
+PSA は以下の exemption タイプをサポートしています。
+- **usernames**: 特定のユーザーに対する exemption
+- **runtimeClasses**: 特定の RuntimeClass に対する exemption
+- **namespaces**: 特定の namespace に対する exemption
 
-Pod ラベルベースの exemptions は PSA ではサポートされていません。Exemptions は AdmissionConfiguration を通じて設定されます。
+Pod ラベルによって exemption は作成されません。静的 exemption エントリは完全一致の名前であり、wildcard や group selector ではありません。User exemption は spec.serviceAccountName ではなく、リクエストの identity と照合されます。EKS ではこの control-plane 設定の編集は公開されていません。privileged な namespace enforcement を選択することは、静的 exemption とは異なります。
 
 </details>
 
 ### 10. Restricted レベルで許可される seccompProfile タイプはどれですか？
 
-A. Unconfined
-B. RuntimeDefault
-C. Custom
-D. Disabled
+- A) Unconfined
+- B) RuntimeDefault
+- C) Custom
+- D) Disabled
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. RuntimeDefault**
+**回答: B) RuntimeDefault**
 
 **解説:**
 Restricted レベルで許可される seccompProfile タイプ:
 - **RuntimeDefault**: Container runtime のデフォルトプロファイル
 - **Localhost**: node 上で定義されたカスタムプロファイル
 
-Unconfined は Restricted レベルでは許可されません。これは seccomp フィルタリングを無効にし、セキュリティリスクをもたらします。
+Unconfined は Restricted レベルでは許可されません。seccomp filtering を無効にするため、セキュリティリスクがあります。
 
 </details>
 
-### 11. PSP から PSA に移行する際に推奨される最初のステップは何ですか？
+### 11. PSP から PSA への移行時に推奨される最初の手順は何ですか？
 
-A. PSP をすぐに削除する
-B. すべての namespaces に enforce モードを適用する
-C. 違反を特定するために audit/warn モードから始める
-D. 新しい cluster を作成する
+- A) 直ちに PSP を削除する
+- B) すべての namespace に enforce モードを適用する
+- C) 違反を特定するために audit/warn モードから開始する
+- D) 新しい cluster を作成する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. 違反を特定するために audit/warn モードから始める**
+**回答: C) 違反を特定するために audit/warn モードから開始する**
 
 **解説:**
 推奨される PSA 移行手順:
-1. **audit/warn モードから始める**: 違反を特定
-2. **workloads を修正**: 違反を解消
-3. **enforce モードに切り替える**: 段階的に適用
+1. **audit/warn モードから開始**: 違反を特定する
+2. **workload を修正**: 違反を解決する
+3. **enforce モードに切り替え**: 段階的に適用する
 4. **PSP を削除**: 移行完了後
 
-enforce モードをすぐに適用すると、既存の workloads に影響を与える可能性があります。
+すでに実行中の Pod は、ラベルを再設定しただけでは eviction されません。その置き換えや関連する更新は拒否される可能性があるため、後の rollout が停止することがあります。この PSP 削除シーケンスは、v1.25 より前に PSP を提供していた cluster にとっての歴史的なものです。
 
 </details>
 
-### 12. Privileged レベルでも制限されるものは何ですか？
+<span id="_12-what-is-restricted-even-in-the-privileged-level"></span>
 
-A. hostNetwork usage
-B. privileged containers
-C. なし (すべて許可される)
-D. hostPath volumes
+### 12. PSS Privileged プロファイル自体が禁止しているものはどれですか？
+
+- A) hostNetwork の使用
+- B) privileged コンテナ
+- C) PSS 自体によるこれらのいずれもなし
+- D) hostPath volume
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. なし (すべて許可される)**
+**回答: C) PSS 自体によるこれらのいずれもなし**
 
 **解説:**
-Privileged レベルは完全に制限がありません:
-- すべての security context 設定が許可
-- hostNetwork, hostPID, hostIPC が許可
-- privileged containers が許可
-- すべての capabilities が許可
-- すべての volume タイプが許可
+Privileged は、これらの有効な Pod フィールドに PSS の制限を追加しません。
+- すべての security context 設定を許可
+- hostNetwork、hostPID、hostIPC を許可
+- privileged コンテナを許可
+- すべての capability を許可
+- すべての volume タイプを許可
 
-このレベルは、システムおよびインフラストラクチャ workloads (例: CNI、storage drivers) に使用されます。
+これは IAM/RBAC の権限を付与するものでも、schema validation やその他の admission policy を回避するものでも、privileged: true を強制するものでもありません。そのような namespace は、レビュー済みの host-access component に限定してください。
 
 </details>
