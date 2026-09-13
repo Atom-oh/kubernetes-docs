@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "SRE On-Call Rotation",
+    "title": "Illustrative Four-Week Rotation",
     "locale": "en",
     "animation": "trace",
     "quality_profile": "showcase",
@@ -14,13 +14,14 @@
       "mode": "auto",
       "entries": {
         "frontend": {
-          "label": "Current shift"
+          "label": "First example shift"
         },
         "backend": {
           "label": "Scheduled shift"
         }
       }
-    }
+    },
+    "output": "en-observability-alerting-readme-8.html"
   },
   "lanes": [
     {
@@ -43,26 +44,26 @@
   "phases": [
     {
       "id": "w1",
-      "label": "Feb 17",
+      "label": "Week 1",
       "fromCol": 0,
       "toCol": 0,
       "variant": "emphasis"
     },
     {
       "id": "w2",
-      "label": "Feb 24",
+      "label": "Week 2",
       "fromCol": 1,
       "toCol": 1
     },
     {
       "id": "w3",
-      "label": "Mar 03",
+      "label": "Week 3",
       "fromCol": 2,
       "toCol": 2
     },
     {
       "id": "w4",
-      "label": "Mar 10",
+      "label": "Week 4",
       "fromCol": 3,
       "toCol": 3
     }
@@ -80,8 +81,7 @@
       "col": 0,
       "type": "frontend",
       "label": "On call",
-      "sublabel": "7 days",
-      "tag": "current"
+      "sublabel": "7 days"
     },
     {
       "id": "shift_b",
@@ -137,12 +137,11 @@
     },
     {
       "dot": "cyan",
-      "title": "Recommended Hybrid Stack",
+      "title": "Handoff",
       "items": [
-        "Prometheus + Alertmanager: metric collection and primary alert processing",
-        "CloudWatch: AWS service metric collection",
-        "Grafana OnCall or PagerDuty: on-call management and escalation",
-        "Slack: real-time alerts and collaboration"
+        "Agree on time zones, coverage and backup responders",
+        "Transfer active incidents and expiring silences",
+        "Schedule and compensation depend on organizational policy"
       ]
     }
   ]

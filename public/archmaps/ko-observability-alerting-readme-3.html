@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-preset="classic">
+<html lang="ko" data-theme="dark" data-preset="classic">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5395,7 +5398,7 @@
         <ul>
           <li>&bull; 임계값 조정: 너무 민감하지 않게 설정</li>
           <li>&bull; 알림 그룹화와 억제(Inhibition): 관련 알림을 묶고 상위 알림 발생 시 하위 알림 억제</li>
-          <li>&bull; 정기적 리뷰와 점진적 도입: 불필요한 알림 제거, 새 알림은 낮은 심각도로 시작</li>
+          <li>&bull; 정확도·사용자 영향을 검토하고 비긴급 작업은 티켓으로 분리</li>
         </ul>
       </div>
     </div>
@@ -7191,7 +7194,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

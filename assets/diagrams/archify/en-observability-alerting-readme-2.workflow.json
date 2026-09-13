@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Time-based Alert Escalation",
+    "title": "Illustrative Escalation Policy",
     "locale": "en",
     "animation": "trace",
     "quality_profile": "showcase",
@@ -17,7 +17,7 @@
           "lead",
           "team"
         ],
-        "note": "Each responder has 15 minutes before the alert escalates to the next one, ending with the entire team."
+        "note": "Illustrative 15-minute acknowledgment windows. Configure actual delays, backups and management escalation in the incident service."
       },
       {
         "id": "acted",
@@ -28,7 +28,7 @@
           "lead",
           "action"
         ],
-        "note": "A response at any level stops the escalation and action proceeds."
+        "note": "Acknowledgment may pause escalation according to the selected service policy; Alertmanager does not implement this state."
       }
     ],
     "legend": {
@@ -46,7 +46,8 @@
           "label": "Resolution"
         }
       }
-    }
+    },
+    "output": "en-observability-alerting-readme-2.html"
   },
   "lanes": [
     {
@@ -168,6 +169,24 @@
       "to": "action",
       "role": "branch",
       "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Policy example",
+      "items": [
+        "Timing and final recipients are organization-specific",
+        "This abbreviated flow is not a product guarantee"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Escalation owner",
+      "items": [
+        "Configure schedules and acknowledgments in an on-call service",
+        "repeat_interval is a reminder, not responder escalation"
+      ]
     }
   ]
 }

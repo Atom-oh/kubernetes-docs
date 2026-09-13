@@ -20,7 +20,7 @@
           "etcd",
           "sched-cm"
         ],
-        "note": "Managed EKS control plane components: API server, etcd, scheduler and controller manager."
+        "note": "Use exposed API metrics and selected AWS/EKS metrics. Managed internals are not all directly scrapeable."
       },
       {
         "id": "data-plane",
@@ -250,28 +250,26 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Cluster-level alerts",
+      "title": "Cluster",
       "items": [
-        "EKSAPIServerDown - API server target down for 1m (critical)",
-        "EKSNodeNotReady - node Ready condition false for 5m (critical)",
-        "EKSClusterAutoscalerError - autoscaler errors for 5m (warning)"
+        "up=0: scrape failure, not proof of API outage",
+        "Separate missing targets and recent counter increases"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Workload-level alerts",
+      "title": "Workloads",
       "items": [
-        "PodCrashLooping - more than 3 restarts in 15m",
-        "PodNotReady - Pending/Unknown for 15m",
-        "DeploymentReplicasMismatch - available != desired for 10m"
+        "CrashLoopBackOff, frequent restarts and readiness differ",
+        "Exclude completed Pods; compare desired > available"
       ]
     },
     {
       "dot": "amber",
-      "title": "Reading the map",
+      "title": "Collection limits",
       "items": [
-        "Four alerting areas: control plane, data plane, networking, storage",
-        "Each box is an alert target, not a traffic path"
+        "Verify exporter, CSI and managed-service metric availability",
+        "Boxes show monitoring scope, not direct traffic paths"
       ]
     }
   ]

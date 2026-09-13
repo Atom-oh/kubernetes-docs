@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5395,7 +5398,7 @@
         <ul>
           <li>&bull; Threshold adjustment: do not set overly sensitive thresholds</li>
           <li>&bull; Alert grouping and inhibition: bundle related alerts, suppress child alerts</li>
-          <li>&bull; Regular review and gradual introduction: remove unneeded alerts, start new ones at low severity</li>
+          <li>&bull; Review precision and user impact; send non-urgent work to tickets</li>
         </ul>
       </div>
     </div>
@@ -7191,7 +7194,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

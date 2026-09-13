@@ -1,0 +1,1709 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T10:43:03.701242+00:00",
+  "originalFullRead": {
+    "files": 2,
+    "lines": 960,
+    "noQuizExists": true
+  },
+  "findings": [
+    "SeparatedPrometheusinactive/pending/firingfromincidentacknowledgmentandclosure;missingdataisnotrecovery;dedupisnotexactlyonce.",
+    "CorrectedunsupportedOnCallOSSnewdeploymentrecommendations:archived2026-03-24;OpsgenieEOS2025-06-04andserviceend2027-04-05fromactualofficialproductpage.",
+    "Replaceddeprecatedmatch/match_re,incompleteundefinedreceivers,andphone-before-teamroutingwithcompleteinertmatchersconfigandexplicitcriticalfanout/defaultsemantics;repeat_intervalnotack-basedescalation.",
+    "Correctedcounterincreasevsall-timevalue,API-scrapefailurevsoveralloutage,missingtargets,CrashLoopvsrestarts,activePodreadiness/completedPodexclusion,availablelessthandesired,CFSperiodratio,zero-denominatorhandling.",
+    "RemovedfalseautomaticCloudWatch-to-Alertmanagerbridge;qualifiedselectedEKScontrolplanemetrics,logsactivation,ALBvsNLBmetrics,CSI/exportercoverage,andunlimitedmemory.",
+    "Preservedall76originalrenderedanchorsandtopics,keptall18oldfigureURLs;fixedENrouting/EKS/selectionplacement,replacedobsoletefiguresemantics,andmadepolicydurationsillustrative."
+  ],
+  "sources": [
+    {
+      "name": "prometheus-rules",
+      "url": "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
+      "finalUrl": "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
+      "status": 200,
+      "sha256": "65e3509ab10b54339b508d80c60e0d2c7db8039768d54e7d20cba2ec1734ba6b",
+      "bytes": 175896,
+      "excerpts": [
+        "on for 10 minutes before firing the alert. Elements that are active, but not firing yet, are in the pending state. Alerting rules without the for clause will become active on the first evaluation. There is also an optional keep_firing_for clause that tells Prometheus to keep this alert firing for the specified duration after the firing condition was last ",
+        "alue: {{ $value }}s)\" Inspecting alerts during runtime To manually inspect which alerts are active (pending or firing), navigate to the \"Alerts\" tab of your Prometheus instance. This will show you the exact label sets for which each defined alert is currently active. For pending and firing alerts, Prometheus also stores synthetic time series of the form A",
+        "ance. This will show you the exact label sets for which each defined alert is currently active. For pending and firing alerts, Prometheus also stores synthetic time series of the form ALERTS{alertname=\"<alert name>\", alertstate=\"<pending or firing>\", <additional alert labels>} . The sample value is set to 1 as long as the alert is in the indicated active ",
+        "metheus also stores synthetic time series of the form ALERTS{alertname=\"<alert name>\", alertstate=\"<pending or firing>\", <additional alert labels>} . The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state, and the series is marked stale when this is no longer the case. Sending alert notifications Prometheus'"
+      ]
+    },
+    {
+      "name": "alertmanager-config",
+      "url": "https://prometheus.io/docs/alerting/latest/configuration/",
+      "finalUrl": "https://prometheus.io/docs/alerting/latest/configuration/",
+      "status": 200,
+      "sha256": "477886b856c49d06d79ded27fbbc63ee1123a6dcefa136fb711fef73ae6a92ba",
+      "bytes": 1290313,
+      "excerpts": [
+        "o be clamped. E.g. specifying ['1:31'] during February will clamp the actual end date to 28 or 29 depending on leap years. Inclusive on both ends. month_range : A list of calendar months identified by a case-insensitive name (e.g. 'January') or by number, where January = 1. Ranges are also accepted. For example, ['1:3', 'may:august', 'december'] . Inclusi",
+        "tcher is valid in both parsers, but due to added support for UTF-8, results in different parsings depending on which parser is used. If your Alertmanager configuration has disagreement, Alertmanager will use the classic parser and log a warning. For example: ts=2024-02-11T10:00:00Z caller=parse.go:183 level=warn msg=\"Matchers input has disagreement\" input",
+        "\"\\n\" origin=config Any occurrences of disagreement should be looked at on a case by case basis as depending on the nature of the disagreement, the configuration might not need updating before enabling UTF-8 strict mode. For example \\xf0\\x9f\\x99\\x82 is the byte sequence for the 🙂 emoji. If the intention is to match a literal 🙂 emoji then no change is requi",
+        "de-2\\\",{\\\"children\\\":\\\"['1:31']\\\"}],\\\" during February will clamp the actual end date to 28 or 29 depending on leap years.\\\\nInclusive on both ends.\\\"]}]\\n4e:[\\\"$\\\",\\\"p\\\",\\\"p-23\\\",{\\\"children\\\":[[\\\"$\\\",\\\"code\\\",\\\"code-0\\\",{\\\"children\\\":\\\"month_range\\\"}],\\\": A list of calendar months identified by a case-insensitive name (e.g. 'January') or by number,\\\\nwh",
+        "_interval, # and if they have a notification is sent. If they haven't, Alertmanager checks # if the repeat_interval has elapsed instead. # # Note: group_interval also sets the context timeout for the notification # pipeline for each send. So if sending a notification takes longer than the # group_interval, the notification will get canceled. This can happen with ",
+        "alerts have fired or any firing alerts have resolved # since the last group_interval. # # Since the repeat_interval is checked after each group_interval, it should # be a multiple of the group_interval. If it's not, the repeat_interval # is rounded up to the next multiple of the group_interval. # # In addition, if repeat_interval is longer then `--data.retention`",
+        "hecked after each group_interval, it should # be a multiple of the group_interval. If it's not, the repeat_interval # is rounded up to the next multiple of the group_interval. # # In addition, if repeat_interval is longer then `--data.retention`, the # notification will be repeated at the end of the data retention period # instead. # # If omitted, child routes in",
+        "the repeat_interval # is rounded up to the next multiple of the group_interval. # # In addition, if repeat_interval is longer then `--data.retention`, the # notification will be repeated at the end of the data retention period # instead. # # If omitted, child routes inherit the repeat_interval of the parent route. [ repeat_interval : <duration> | default = 4h ] #",
+        "g tree at the configured top-level route, which must match all alerts (i.e. not have any configured matchers). It then traverses the child nodes. If continue is set to false, it stops after the first matching child. If continue is true on a matching node, the alert will continue matching against subsequent siblings. If an alert does not match any children ",
+        "inue matching subsequent sibling nodes. [ continue: <boolean> | default = false ] # DEPRECATED: Use matchers below. # A set of equality matchers an alert has to fulfill to match the node. match: [ <labelname> : <labelvalue> , ... ] # DEPRECATED: Use matchers below. # A set of regex-matchers an alert has to fulfill to match the node. match_re: [ <labelname>",
+        "es. [ continue: <boolean> | default = false ] # DEPRECATED: Use matchers below. # A set of equality matchers an alert has to fulfill to match the node. match: [ <labelname> : <labelvalue> , ... ] # DEPRECATED: Use matchers below. # A set of regex-matchers an alert has to fulfill to match the node. match_re: [ <labelname> : <regex> , ... ] # A list of match",
+        "ert has to fulfill to match the node. match: [ <labelname> : <labelvalue> , ... ] # DEPRECATED: Use matchers below. # A set of regex-matchers an alert has to fulfill to match the node. match_re: [ <labelname> : <regex> , ... ] # A list of matchers that an alert has to fulfill to match the node. matchers: [ - <matcher> ... ] # A set of labels that are attac"
+      ]
+    },
+    {
+      "name": "oncall",
+      "url": "https://grafana.com/docs/oncall/latest/",
+      "finalUrl": "https://grafana.com/docs/oncall/latest/",
+      "status": 200,
+      "sha256": "bb13c7ea6834856ffcb808b4fc21c81914f72b2d760c6cb78c2f81bfcb9cf1d2",
+      "bytes": 145612,
+      "excerpts": [
+        "rafana.com/llms-full.txt. init()\"> Menu Caution As of 2026-03-24, the Grafana OnCall OSS project is archived. The grafana/oncall repository is read-only, and active development continues in Grafana Cloud IRM. For a fully supported and actively maintained alternative, Grafana Cloud IRM offers a modern approach to incident response and on-call management. ",
+        "po Federal Cloud Viewing: v1.68.x (latest) Find another version OnCall Introduction Schedules Setup Maintenance mode notice Migrate to IRM Get started Configure Integrations Manage integrations Outgoing Webhooks Integration references Alertmanager Elastalert Grafana Alerting Inbound email Inbound Webhooks Kapacitor Manual paging Templates Advanced templates E"
+      ]
+    },
+    {
+      "name": "sre",
+      "url": "https://sre.google/sre-book/monitoring-distributed-systems/",
+      "finalUrl": "https://sre.google/sre-book/monitoring-distributed-systems/",
+      "status": 200,
+      "sha256": "ea5268bca492024a399730734132c7513b4412b10098a207f2e3090eeae1a6fe",
+      "bytes": 50648,
+      "excerpts": [
+        "use. Therefore, white-box monitoring is sometimes symptom-oriented, and sometimes cause-oriented, depending on just how informative your white-box is. When collecting telemetry for debugging, white-box monitoring is essential. If web servers seem slow on database-heavy requests, you need to know both how fast the web server perceives the database to be, a",
+        "give a very early signal of saturation. Finally, saturation is also concerned with predictions of impending saturation, such as \"It looks like your database will fill its hard drive in 4 hours.\" If you measure all four golden signals and page a human when one signal is problematic (or, in the case of saturation, nearly problematic), your service will be a",
+        "ing the 75th percentile request latency. We also disabled email alerts, as there were so many that spending time diagnosing them was infeasible. This strategy gave us enough breathing room to actually fix the longer-term problems in Bigtable and the lower layers of the storage stack, rather than constantly fixing tactical problems. On-call engineers could"
+      ]
+    },
+    {
+      "name": "ksm-pod",
+      "url": "https://raw.githubusercontent.com/kubernetes/kube-state-metrics/main/docs/metrics/workload/pod-metrics.md",
+      "finalUrl": "https://raw.githubusercontent.com/kubernetes/kube-state-metrics/main/docs/metrics/workload/pod-metrics.md",
+      "status": 200,
+      "sha256": "c6b1bbda544ae6d13a48938b86a3fd7ba85ba3e8b3934586165b63bf126ea007",
+      "bytes": 45358,
+      "excerpts": [
+        "ce> `qos_class`=<BestEffort\\|Burstable\\|Guaranteed> `uid`=<pod-uid> | EXPERIMENTAL | - | | kube_pod_status_ready | Gauge | Describes whether the pod is ready to serve requests | | `pod`=<pod-name> `namespace`=<pod-namespace> `condition`=<true\\|false\\|unknown> `uid`=<pod-uid> | STABLE | - | | kube_pod_status_scheduled | Gauge | Describes the status of the sched",
+        "d`=<pod-name> `namespace`=<pod-namespace> `uid`=<pod-uid> | EXPERIMENTAL | - | | kube_pod_container_status_ready | Gauge | Describes whether the containers readiness check succeeded | | `container`=<container-name> `pod`=<pod-name> `namespace`=<pod-namespace> `uid`=<pod-uid> | STABLE | - | | kube_pod_status_initialized_time | Gauge | Time when the pod is initi",
+        "onds | `pod`=<pod-name> `namespace`=<pod-namespace> `uid`=<pod-uid> | EXPERIMENTAL | - | | kube_pod_status_ready_time | Gauge | Time when pod passed readiness probes. | seconds | `pod`=<pod-name> `namespace`=<pod-namespace> `uid`=<pod-uid> | EXPERIMENTAL | - | | kube_pod_status_container_ready_time | Gauge | Time when the container of the pod entered Ready sta",
+        "od-name> `namespace`=<pod-namespace> `uid`=<pod-uid> | EXPERIMENTAL | - | | kube_pod_init_container_status_ready | Gauge | Describes whether the init containers readiness check succeeded | | `container`=<container-name> `pod`=<pod-name> `namespace`=<pod-namespace> `uid`=<pod-uid> | STABLE | - | | kube_pod_init_container_status_restarts_total | Counter | The nu",
+        "`=<pod-name> `namespace`=<pod-namespace> `uid`=<pod-uid> | STABLE | - | | kube_pod_container_status_waiting_reason | Gauge | Describes the reason the container is currently in waiting state | | `container`=<container-name> `pod`=<pod-name> `namespace`=<pod-namespace> `reason`=<container-waiting-reason> `uid`=<pod-uid> | STABLE | - | | kube_pod_container_status_r",
+        "d-name> `namespace`=<pod-namespace> `uid`=<pod-uid> | STABLE | - | | kube_pod_init_container_status_waiting_reason | Gauge | Describes the reason the init container is currently in waiting state | | `container`=<container-name> `pod`=<pod-name> `namespace`=<pod-namespace> `reason`=<container-waiting-reason> `uid`=<pod-uid> | EXPERIMENTAL | - | | kube_pod_init_co"
+      ]
+    },
+    {
+      "name": "cadvisor",
+      "url": "https://raw.githubusercontent.com/google/cadvisor/master/docs/storage/prometheus.md",
+      "finalUrl": "https://raw.githubusercontent.com/google/cadvisor/master/docs/storage/prometheus.md",
+      "status": 200,
+      "sha256": "51b400bcc26b901c25e9951cbb13fcefa2fd812a7948442db3f9bba20cb8281f",
+      "bytes": 14555,
+      "excerpts": [
+        "iods_total` | Counter | Number of elapsed enforcement period intervals | | cpu | `container_cpu_cfs_throttled_periods_total` | Counter | Number of throttled period intervals | | cpu | `container_cpu_cfs_throttled_seconds_total` | Counter | Total time duration the container has been throttled | seconds | cpu | `container_cpu_load_average_10s` | Gauge | Value of container ",
+        "lkio_device_usage_total` | Counter | Blkio device bytes usage | bytes | diskIO | `container_cpu_cfs_periods_total` | Counter | Number of elapsed enforcement period intervals | | cpu | `container_cpu_cfs_throttled_periods_total` | Counter | Number of throttled period intervals | | cpu | `container_cpu_cfs_throttled_seconds_total` | Counter | Total time duration ",
+        "` | Counter | Number of elapsed enforcement period intervals | | cpu | `container_cpu_cfs_throttled_periods_total` | Counter | Number of throttled period intervals | | cpu | `container_cpu_cfs_throttled_seconds_total` | Counter | Total time duration the container has been throttled | seconds | cpu | `container_cpu_load_average_10s` | Gauge | Value of container ",
+        "e of container cpu load average over the last 10 seconds | | cpuLoad | `container_cpu_schedstat_run_periods_total` | Counter | Number of times processes of the cgroup have run on the cpu | | sched | `container_cpu_schedstat_runqueue_seconds_total` | Counter | Time duration processes of the container have been waiting on a runqueue | seconds | sched | `container"
+      ]
+    },
+    {
+      "name": "ca-metrics",
+      "url": "https://raw.githubusercontent.com/kubernetes/autoscaler/cluster-autoscaler-1.35.0/cluster-autoscaler/metrics/metrics.go",
+      "status": 200,
+      "sha256": "a7331b99e0ef71c384c0a76c4b8ec2e0768a15b8e1d9e8740be6eafb4a115efc",
+      "excerpts": [
+        "***/ errorsCount: k8smetrics.NewCounterVec( &k8smetrics.CounterOpts{ Namespace: caNamespace, Name: \"errors_total\", Help: \"The number of CA loops failed due to an error.\", }, []string{\"type\"}, ), scaleUpCount: k8smetrics.NewCounter( &k8smetrics.CounterOpts{ Namespace: caNamespace, Name: \"scaled_up_nodes_total\", Help: \"Number of nodes added by CA.\", }, ), gpuSca"
+      ]
+    },
+    {
+      "name": "eks-metrics",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch.html",
+      "status": 200,
+      "sha256": "6ed7d4bf57daa12dda131d7a62614cd2d04bf319baac08c87a0f6f8d35e2a495",
+      "excerpts": [
+        "sters that are Kubernetes version 1.28 and above, you get CloudWatch vended metrics for free in the AWS/EKS namespace. The following table gives a list of the basic metrics that are available for the supported versions. Every metric listed has a frequency of one minute. Metric name Description apiserver_flowcontrol_current_executing_seats The number of se"
+      ]
+    },
+    {
+      "name": "cw-actions",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html",
+      "status": 200,
+      "sha256": "7781216743549e57f494e6deef96d10157ca15d6284a936ccf8da2677f052d9a",
+      "excerpts": [
+        "to a threshold over a number of time periods. The action can be sending a notification to an Amazon SNS topic, performing an Amazon EC2 action or an Amazon EC2 Auto Scaling action, starting an investigation in CloudWatch investigations operational investigations, or creating an OpsItem or incident in Systems Manager. A PromQL alarm monitors metrics us",
+        " only when all of the underlying metric alarms are in ALARM state. Composite alarms can send Amazon SNS notifications when they change state, and can create investigations, Systems Manager OpsItems, or incidents when they go into ALARM state, but can't perform EC2 actions or Auto Scaling actions. Note You can create as many alarms as you want in your "
+      ]
+    },
+    {
+      "url": "https://www.atlassian.com/software/opsgenie",
+      "status": 200,
+      "sha256": "1dd976cda2f406a9c63943561bf5c93a8f18b84b9da678b5c30f89b186cec0ab",
+      "excerpts": [
+        "and on-call features are now available in Jira Service Management. Move existing Opsgenie data and configurations before April 5, 2027 using our automated process. Learn more → { \"type\":\"imkt.components.ContainerAnnouncementBanner\", \"params\": { \"cookieName\":\"banner-7c14acc1-ee21-4ed5-804c-d7242c3e4958\" } } @media (min-width: 0px) and (max-width: 539px) { [data-container-id=\"fa541035-3278-42c",
+        "ved to Jira Service Management. Existing customers will be able to continue to use Opsgenie without interruption until April 5th, 2027. At that point, Opsgenie will be shut down, and the product will no longer be accessible; any customer data in Opsgenie that has not been moved will also be deleted. Opsgenie customers have until April 5th, 2027 to complete their move to Jira Service Manageme",
+        " accessible; any customer data in Opsgenie that has not been moved will also be deleted. Opsgenie customers have until April 5th, 2027 to complete their move to Jira Service Management. All Opsgenie customers are impacted by this announcement. What are my migration options as an Opsgenie customer? Existing Opsgenie customers will have the option to easily move their data to Jira Service Mana",
+        " Your existing Opsgenie contract will be honored for your subscription term, or until the end of support effective date of Apr 5, 2027. As of the end of sale effective date of Jun 4, 2025, it is no longer possible upgrade or downgrade your Opsgenie edition (Essentials to Premium, or Premium to Enterprise) or add more sites. You will still be able to purchase additional seats of Opsgenie unti",
+        "r add more sites. You will still be able to purchase additional seats of Opsgenie until the end of support effective date, Apr 5, 2027. What happens to the remainder of my Opsgenie subscription term if I move to Jira Service Management? For customers who do not have Jira Service Management on the same site : If you choose to move before the end of your existing Opsgenie subscription, you wil",
+        "sage To maintain continuous coverage, your team can take one of the following migration paths before end of support on April 5th, 2027: Move Jira Service Management Data Center to Cloud, then move Opsgenie Move your existing Opsgenie instance to a new Jira Service Management Cloud site Learn more about migrating to cloud or contact us . If you decide against moving your current Opsgenie to J",
+        "your subscription term, or until the end of support effective date of Apr 5, 2027. As of the end of sale effective date of Jun 4, 2025, it is no longer possible upgrade or downgrade your Opsgenie edition (Essentials to Premium, or Premium to Enterprise) or add more sites. You will still be able to purchase additional seats of Opsgenie until the end of support effective date, Apr 5, 2027. Wha",
+        "icket Learn Partners Training & certification Documentation Developer resources Enterprise services See all resources Copyright © 2025 Atlassian Privacy Policy Terms Impressum Choose language Deutsch English Español Français Italiano 한국어 Nederlands 日本語 Polski Português русский 中文 { \"type\":\"imkt.components.LanguageSelector\", \"params\": { } } { \"type\":\"imkt.components.PageLeaveTracking\", \"param",
+        "ns to my existing Opsgenie subscription? Your existing Opsgenie contract will be honored for your subscription term, or until the end of support effective date of Apr 5, 2027. As of the end of sale effective date of Jun 4, 2025, it is no longer possible upgrade or downgrade your Opsgenie edition (Essentials to Premium, or Premium to Enterprise) or add more sites. You will still be able to purc",
+        "psgenie contract will be honored for your subscription term, or until the end of support effective date of Apr 5, 2027. As of the end of sale effective date of Jun 4, 2025, it is no longer possible upgrade or downgrade your Opsgenie edition (Essentials to Premium, or Premium to Enterprise) or add more sites. You will still be able to purchase additional seats of Opsgenie until the end of suppo",
+        "o Premium, or Premium to Enterprise) or add more sites. You will still be able to purchase additional seats of Opsgenie until the end of support effective date, Apr 5, 2027. What happens to the remainder of my Opsgenie subscription term if I move to Jira Service Management? For customers who do not have Jira Service Management on the same site : If you choose to move before the end of your exi",
+        "ira Service Management? For customers who do not have Jira Service Management on the same site : If you choose to move before the end of your existing Opsgenie subscription, you will receive an extension of your destination product subscription that’s equivalent to the time remaining on your Opsgenie subscription. Please note that this only applies to customers with more than 30 days remaining",
+        "enie subscription. For customers who do have existing Jira Service Management on the same site : If you choose to move before the end of your existing Opsgenie subscription, you may contact support or your account manager to determine if your account is eligible for a refund. What are my options as a Jira Service Management Data Center customer? As part of its cloud-first strategy, Atlassian h",
+        "move, based on their team's usage To maintain continuous coverage, your team can take one of the following migration paths before end of support on April 5th, 2027: Move Jira Service Management Data Center to Cloud, then move Opsgenie Move your existing Opsgenie instance to a new Jira Service Management Cloud site Learn more about migrating to cloud or contact us . If you decide against moving"
+      ]
+    }
+  ],
+  "nativeValidation": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T10:37:21.946600+00:00",
+    "ruleCount": 14,
+    "ruleTestCases": 31,
+    "routingCases": 7,
+    "scope": "Native local promtool/amtool only; no HTTP receiver or Kubernetes/AWS execution",
+    "results": [
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-observability-labs/stack/bin/promtool",
+          "check",
+          "rules",
+          "rules.yaml"
+        ],
+        "exitCode": 0,
+        "stdout": "Checking rules.yaml\n  SUCCESS: 14 rules found\n\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-observability-labs/stack/bin/promtool",
+          "test",
+          "rules",
+          "rules-test.yaml"
+        ],
+        "exitCode": 0,
+        "stdout": "  SUCCESS\n\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-alerts/amtool",
+          "check-config",
+          "alertmanager.yaml"
+        ],
+        "exitCode": 0,
+        "stdout": "Checking 'alertmanager.yaml'  SUCCESS\nFound:\n - global config\n - route\n - 1 inhibit rules\n - 6 receivers\n - 0 templates\n\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-alerts/amtool",
+          "config",
+          "routes",
+          "test",
+          "--config.file=alertmanager.yaml",
+          "--verify.receivers=critical-oncall,sre-team",
+          "severity=critical",
+          "team=sre"
+        ],
+        "exitCode": 0,
+        "stdout": "critical-oncall,sre-team\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-alerts/amtool",
+          "config",
+          "routes",
+          "test",
+          "--config.file=alertmanager.yaml",
+          "--verify.receivers=critical-oncall,dev-team",
+          "severity=critical",
+          "team=app"
+        ],
+        "exitCode": 0,
+        "stdout": "critical-oncall,dev-team\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-alerts/amtool",
+          "config",
+          "routes",
+          "test",
+          "--config.file=alertmanager.yaml",
+          "--verify.receivers=critical-oncall",
+          "severity=critical"
+        ],
+        "exitCode": 0,
+        "stdout": "critical-oncall\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-alerts/amtool",
+          "config",
+          "routes",
+          "test",
+          "--config.file=alertmanager.yaml",
+          "--verify.receivers=dba-team",
+          "severity=warning",
+          "team=database"
+        ],
+        "exitCode": 0,
+        "stdout": "dba-team\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-alerts/amtool",
+          "config",
+          "routes",
+          "test",
+          "--config.file=alertmanager.yaml",
+          "--verify.receivers=security-team",
+          "severity=info",
+          "team=security"
+        ],
+        "exitCode": 0,
+        "stdout": "security-team\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-alerts/amtool",
+          "config",
+          "routes",
+          "test",
+          "--config.file=alertmanager.yaml",
+          "--verify.receivers=default-receiver",
+          "severity=warning",
+          "team=unknown"
+        ],
+        "exitCode": 0,
+        "stdout": "default-receiver\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-alerts/amtool",
+          "config",
+          "routes",
+          "test",
+          "--config.file=alertmanager.yaml",
+          "--verify.receivers=default-receiver"
+        ],
+        "exitCode": 0,
+        "stdout": "default-receiver\n",
+        "stderr": ""
+      }
+    ],
+    "files": [
+      {
+        "path": "examples/observability/alerting-overview/README.md",
+        "sha256": "5040d8cedb1d582995c4be5258f81be40613a81272984ff7cd49ebf702509280"
+      },
+      {
+        "path": "examples/observability/alerting-overview/alertmanager.yaml",
+        "sha256": "255d104baeb17925c143d195d7361488f8f325468642b847cd57b624fb3790d1"
+      },
+      {
+        "path": "examples/observability/alerting-overview/rules-test.yaml",
+        "sha256": "5f8dc2a4599bab46132c88b56fe573af661383dc190624fab6f40a448cefb75e"
+      },
+      {
+        "path": "examples/observability/alerting-overview/rules.yaml",
+        "sha256": "6881ca1dbf1d1a21c13f6adc35bb204d4bb5e22698632960df25d9acb275cdde"
+      }
+    ]
+  },
+  "markdownValidation": {
+    "status": "passed",
+    "rows": [
+      {
+        "path": "en/observability/alerting/README.md",
+        "sha256": "14e313d4da2d08148b66c11ff9da5d4d127a7f926c896f05be63baf92417d0bf",
+        "errors": [],
+        "missingAnchors": [],
+        "originalIds": 38,
+        "images": 9,
+        "lastUpdated": "2026-09-13",
+        "pass": true
+      },
+      {
+        "path": "ko/observability/alerting/README.md",
+        "sha256": "5e370505b5c780c3884a8317c82d9c516ff8dcac2067b502032d83834f908c64",
+        "errors": [],
+        "missingAnchors": [],
+        "originalIds": 38,
+        "images": 9,
+        "lastUpdated": "2026-09-13",
+        "pass": true
+      }
+    ],
+    "scope": "Actual VitePress/Vue compilation and original rendered anchor preservation, without a site build."
+  },
+  "assetValidation": {
+    "delivery": [
+      {
+        "stem": "en-observability-alerting-readme-0",
+        "spec": "assets/diagrams/archify/en-observability-alerting-readme-0.architecture.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "en-observability-alerting-readme-1",
+        "spec": "assets/diagrams/archify/en-observability-alerting-readme-1.lifecycle.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "en-observability-alerting-readme-2",
+        "spec": "assets/diagrams/archify/en-observability-alerting-readme-2.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "en-observability-alerting-readme-3",
+        "spec": "assets/diagrams/archify/en-observability-alerting-readme-3.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "en-observability-alerting-readme-4",
+        "spec": "assets/diagrams/archify/en-observability-alerting-readme-4.architecture.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "en-observability-alerting-readme-5",
+        "spec": "assets/diagrams/archify/en-observability-alerting-readme-5.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "en-observability-alerting-readme-6",
+        "spec": "assets/diagrams/archify/en-observability-alerting-readme-6.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "en-observability-alerting-readme-7",
+        "spec": "assets/diagrams/archify/en-observability-alerting-readme-7.architecture.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "en-observability-alerting-readme-8",
+        "spec": "assets/diagrams/archify/en-observability-alerting-readme-8.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-observability-alerting-readme-0",
+        "spec": "assets/diagrams/archify/ko-observability-alerting-readme-0.architecture.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-observability-alerting-readme-1",
+        "spec": "assets/diagrams/archify/ko-observability-alerting-readme-1.lifecycle.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-observability-alerting-readme-2",
+        "spec": "assets/diagrams/archify/ko-observability-alerting-readme-2.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-observability-alerting-readme-3",
+        "spec": "assets/diagrams/archify/ko-observability-alerting-readme-3.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-observability-alerting-readme-4",
+        "spec": "assets/diagrams/archify/ko-observability-alerting-readme-4.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-observability-alerting-readme-5",
+        "spec": "assets/diagrams/archify/ko-observability-alerting-readme-5.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-observability-alerting-readme-6",
+        "spec": "assets/diagrams/archify/ko-observability-alerting-readme-6.architecture.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-observability-alerting-readme-7",
+        "spec": "assets/diagrams/archify/ko-observability-alerting-readme-7.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-observability-alerting-readme-8",
+        "spec": "assets/diagrams/archify/ko-observability-alerting-readme-8.architecture.json",
+        "ok": true,
+        "diagnostics": []
+      }
+    ],
+    "browser": {
+      "status": "passed",
+      "cases": [
+        {
+          "file": "en-observability-alerting-readme-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 914,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 914,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 914,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 51414,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1010,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1010,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1010,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 54502,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 755,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 755,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 755,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 51233,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1068,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1068,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1068,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 54142,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-4.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 984,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-4.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 984,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-4.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 984,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 54305,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-5.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 664,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-5.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 664,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-5.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 664,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50725,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-6.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 612,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-6.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 612,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-6.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 612,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 47933,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-7.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 606,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-7.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 606,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-7.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 606,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 49043,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-8.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 630,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-8.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 630,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-alerting-readme-8.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 630,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 47805,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 573,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 573,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 573,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 51155,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 619,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 619,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 619,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 53555,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 478,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 478,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 478,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50932,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 617,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 617,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 617,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 52906,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-4.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 455,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-4.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 455,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-4.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 455,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50124,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-5.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 390,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-5.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 390,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-5.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 390,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 47578,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-6.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 679,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-6.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 679,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-6.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 679,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 53785,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-7.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 379,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-7.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 379,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-7.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 379,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 47413,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-8.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 384,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-8.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 384,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-observability-alerting-readme-8.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 384,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 48756,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        }
+      ],
+      "scope": "54 cases on 18locallygeneratedviewers; motion/reduced-motion/visibility/theme/guided controls and 18 SVG exports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild",
+      "refinementNote": "Four changed routing/selection viewers rechecked after removing unused lanes and correcting legend labels; those12cases replace prior cases."
+    },
+    "individualPngVisualInspection": {
+      "count": 18,
+      "status": "passed",
+      "fourRefinedPngsReinspected": true
+    }
+  },
+  "artifacts": [
+    {
+      "path": "en/observability/alerting/README.md",
+      "sha256": "14e313d4da2d08148b66c11ff9da5d4d127a7f926c896f05be63baf92417d0bf"
+    },
+    {
+      "path": "ko/observability/alerting/README.md",
+      "sha256": "5e370505b5c780c3884a8317c82d9c516ff8dcac2067b502032d83834f908c64"
+    },
+    {
+      "path": "examples/observability/alerting-overview/README.md",
+      "sha256": "5040d8cedb1d582995c4be5258f81be40613a81272984ff7cd49ebf702509280"
+    },
+    {
+      "path": "examples/observability/alerting-overview/alertmanager.yaml",
+      "sha256": "255d104baeb17925c143d195d7361488f8f325468642b847cd57b624fb3790d1"
+    },
+    {
+      "path": "examples/observability/alerting-overview/rules-test.yaml",
+      "sha256": "5f8dc2a4599bab46132c88b56fe573af661383dc190624fab6f40a448cefb75e"
+    },
+    {
+      "path": "examples/observability/alerting-overview/rules.yaml",
+      "sha256": "6881ca1dbf1d1a21c13f6adc35bb204d4bb5e22698632960df25d9acb275cdde"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-readme-0.architecture.json",
+      "sha256": "abb4cc6759c55cf9085e62f42b1546db40e2b7f7a1f01e29c4eb01207538332f"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-readme-0.html",
+      "sha256": "813170192f898ce68f7bed644f4f643ef3f62d6864b4e30999a286dec2f63503"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-readme-0.png",
+      "sha256": "c2e1e54683f962a4dc53e24b56f6c6e162daeec97edb785d958fd45400fbdc58"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-readme-1.lifecycle.json",
+      "sha256": "2538e60add2145c084a6a58ad7116a9a0a465b9d71bf42e55ee93f1484ea35ba"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-readme-1.html",
+      "sha256": "21f9d3770d73ae4a4c9e991bcd0f99d5611e6b7d3474a85885e065d501fdf238"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-readme-1.png",
+      "sha256": "379dd2a5992beefa4ab4b4f0a02c602a928c5b7b7bd29ea4dfd953ced66f84c1"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-readme-2.workflow.json",
+      "sha256": "0fb1c00e1e6ae3455725f218bedf9fbab068298870135448f457de3873c239b2"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-readme-2.html",
+      "sha256": "7126d2f22c5f89cf1483c2e8ca3d4933fb3794284ce5035f9c8ab71de59c653f"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-readme-2.png",
+      "sha256": "25fb5653349101b96b82b1d01cda9c908edaf4cf4baa0d7ae603728d209a8e38"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-readme-3.workflow.json",
+      "sha256": "b373d149744712f3070b80e0d11d87043549a90f65a499e6cf097104ac828fdb"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-readme-3.html",
+      "sha256": "3d7d9a55f054b5a6d496b76731a2089320fb725ccbeb9049fc617d5b57ad3ff6"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-readme-3.png",
+      "sha256": "1a8dcd09b143ff545e3c1d2b6fc03c546fbc2293cfaf6ed3bd642be65cbb505c"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-readme-4.architecture.json",
+      "sha256": "fc80f36856ba17aee5ffea72f3aa8d5a8216e0b9746cb786c54c9d5df6812a9b"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-readme-4.html",
+      "sha256": "4ec32a5de997ae3c5ca8300587572cd16956f8006ab39f0fb8248f7e0ef99a30"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-readme-4.png",
+      "sha256": "256075e6f76125226d975f040a2c3b0ae0074570a2df4755f11e942374f74752"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-readme-5.workflow.json",
+      "sha256": "52e94f3e37b86ad35e6e6eaff8de3e26f0eba40386e6d52138baf43a8f946167"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-readme-5.html",
+      "sha256": "7698946d0db303168ee8b400262cfe504d73624d469a5627ac365e5d2ad71e9b"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-readme-5.png",
+      "sha256": "6bc8fb94448a5220be888e7569b36a8744802fe5c443eaa2b39452e322ab80b3"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-readme-6.workflow.json",
+      "sha256": "52130213a6ac91c77ab2e19e66ded3466a16cbe6f83b504709b2172e5911042c"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-readme-6.html",
+      "sha256": "3e50cad384417e4bb3d85a16ddbdf4879c956bf0d00c76dbc75ba60b7028d67a"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-readme-6.png",
+      "sha256": "d28b77e5a1135240d9ceeeb64b0e1032f649a15a7a7eb0d6de640edb01a3f763"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-readme-7.architecture.json",
+      "sha256": "b1b52f025328bd3d384a00c544067f2a13dfb5259cd9e3ab4dc9691a5eb9d17c"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-readme-7.html",
+      "sha256": "03a27e8205ac4524002940763d9e70de739d22ca2c602c6c64be2e6ea319b886"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-readme-7.png",
+      "sha256": "b9fa9a250434fe7f38a7c1f834d031d614f5a9420ed5d154140bb3d8a89ae453"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-readme-8.workflow.json",
+      "sha256": "d3e2a1fbb31cc6705a2307c24df17312987b4868042bee27acf53d0b9f944c42"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-readme-8.html",
+      "sha256": "bd015c73b602c8a50887bcd90c79c4ed0689b51018480a0c1e883fc90fbde1ec"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-readme-8.png",
+      "sha256": "3ddcc06019cfabcde9e7cb630481ef0a38d9a251751b8affc06304eb09728546"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-readme-0.architecture.json",
+      "sha256": "71878dfcf8c65cdff3e1178b2fe75bc98f44dca1de3a8629cbb2aa88f6831e61"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-readme-0.html",
+      "sha256": "abc94850d0cbba1961d0ecd4625334deebee07c34182994d9af9c1ce7cbcdc2a"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-readme-0.png",
+      "sha256": "fbb1bf7c7a0afef204de793206152f63fe077ae6062add5372d48432f052f55a"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-readme-1.lifecycle.json",
+      "sha256": "39c3b552d3e4b3512529ea76be41ba57f8ddb0d78a0b1922f1e899435d43ba4c"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-readme-1.html",
+      "sha256": "1e5b49454ed993d90ac78105b555349edef786b69f8a2d7391cf4952ffb4e2bf"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-readme-1.png",
+      "sha256": "968bdb4751f39105f89ca2d7d6291701eaf1e9ff675d6738ad979e2ece987634"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-readme-2.workflow.json",
+      "sha256": "81e5e2595b58f50b79aa1a9ea2232f3d3c970a218bd52d23c4ddb836ea3a24be"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-readme-2.html",
+      "sha256": "99e6c9926865a97295d99448204465329eb9c62f28da9eee8742426fe53da36d"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-readme-2.png",
+      "sha256": "3c8213619a56b227d05e95ebcf2765ee1b3f73ced03e4c288919b537e570ffe5"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-readme-3.workflow.json",
+      "sha256": "6381eb79d8232fb3b429211d092575d22985ab397b9cbf2e79b113d6c0f787e6"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-readme-3.html",
+      "sha256": "4ab4598e7891c68422dfc3dd8319e187a2aeff9888128e8ed15c5d02ca602a20"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-readme-3.png",
+      "sha256": "5a9d8804ddb4e0011dc1ad82e6c03048892ad717018dc547206485783ba193b8"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-readme-4.workflow.json",
+      "sha256": "761b78ab99ecccc4a524f584589b7f8ee9e3ac1b8cd000cd6c6a7867f2082ead"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-readme-4.html",
+      "sha256": "248fe69816b43f31f9cc6797be08e02eecdfd590594f088904af94dfc20e1a9d"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-readme-4.png",
+      "sha256": "6b2a97ce93104a810b685243438d57e32349200382a9f7eaca41c4c420e73dd9"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-readme-5.workflow.json",
+      "sha256": "ffbb52b81a6b3aee61dc39a98b8291445c730dfc15c74136b6fe27b5d6d0b38b"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-readme-5.html",
+      "sha256": "6298232f1dc45b6d5b6f7bafd174f8ffed0cfa8b39e99106002df255c4d61d09"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-readme-5.png",
+      "sha256": "10fba1b0c6dee4182915f467cddf67026ad6e930d4d566dcfea4f0cb3b1291a1"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-readme-6.architecture.json",
+      "sha256": "48782c361fea59de13c4ab58850d973f868f79eb101cf82c80b3fe3e491e8826"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-readme-6.html",
+      "sha256": "0cb59eb81a25f52f9565a94c54c4975a773b0b79cde2dd801a4493d925938286"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-readme-6.png",
+      "sha256": "14ef6bc6da489a428b1cc0884382356d93d63632a14af759daecc9b7e2c517a3"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-readme-7.workflow.json",
+      "sha256": "3dce37d10d1196bb95f545ea5bf16e651053f591335203e97363fa28e0824e4d"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-readme-7.html",
+      "sha256": "acf9890f1e1e2c63c14b4d6a0c28c8d8441b691c4a1e65d815a720d34ff12536"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-readme-7.png",
+      "sha256": "1b4e57d81be67403c0564b066fdd0a8a42adaaa8409b4f324bb71a8e19c8ecc5"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-readme-8.architecture.json",
+      "sha256": "5251699dae3fefa098f224b08f52f10584e4fa6abe910a91f44c80e611b73487"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-readme-8.html",
+      "sha256": "fa721f6ae11ebee88f3303b0c8cd23dc670205f49dff6376212373f262f62c5f"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-readme-8.png",
+      "sha256": "4191c76b15d475b04818faf0dcf12d21d472790a0c24d6162fc136fc55d43501"
+    }
+  ],
+  "limits": [
+    "NoAWS/Kubernetes/realnotificationserviceexecution,nofullsitebuild.",
+    "IllustrativethresholdsandresponsewindowsnotSLAs;singlecluster/deduplicatedseriesassumption;metricavailabilityandexplicitmemorylimitsmustbechecked.",
+    "OfficialHTTPSsourcesretrievedwithurllib;failedguessedURLsareexcludedfromsupportingevidence."
+  ],
+  "sourcePreservation": "Alloriginalheadingsandtopicsretained,obsoletecomparison/selectionguidancereplacedwithexplicitcurrentlifecycleandoperationalcriteria."
+}

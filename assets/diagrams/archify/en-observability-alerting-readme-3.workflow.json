@@ -40,7 +40,8 @@
           "label": "Improvement step"
         }
       }
-    }
+    },
+    "output": "en-observability-alerting-readme-3.html"
   },
   "lanes": [
     {
@@ -214,7 +215,7 @@
       "items": [
         "Threshold adjustment: do not set overly sensitive thresholds",
         "Alert grouping and inhibition: bundle related alerts, suppress child alerts",
-        "Regular review and gradual introduction: remove unneeded alerts, start new ones at low severity"
+        "Review precision and user impact; send non-urgent work to tickets"
       ]
     }
   ]

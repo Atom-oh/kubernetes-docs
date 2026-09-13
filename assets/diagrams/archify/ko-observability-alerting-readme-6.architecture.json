@@ -19,7 +19,7 @@
           "etcd",
           "sched-cm"
         ],
-        "note": "EKS 관리형 컨트롤 플레인 구성 요소: API Server, etcd, Scheduler와 Controller Manager."
+        "note": "공개 API 지표와 일부 AWS/EKS 지표를 활용합니다. 관리형 내부 전체를 직접 수집할 수는 없습니다."
       },
       {
         "id": "data-plane",
@@ -249,28 +249,26 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "클러스터 수준 알림",
+      "title": "클러스터",
       "items": [
-        "EKSAPIServerDown - API Server 타깃이 1분간 down (critical)",
-        "EKSNodeNotReady - 노드 Ready 조건이 5분간 false (critical)",
-        "EKSClusterAutoscalerError - 오토스케일러 오류가 5분간 지속 (warning)"
+        "up=0: 스크레이프 실패, API 전체 장애 확정 아님",
+        "대상 누락·최근 카운터 증가를 별도로 감시"
       ]
     },
     {
       "dot": "emerald",
-      "title": "워크로드 수준 알림",
+      "title": "워크로드",
       "items": [
-        "PodCrashLooping - 15분 내 3회 이상 재시작",
-        "PodNotReady - Pending/Unknown 상태가 15분간 지속",
-        "DeploymentReplicasMismatch - 가용 레플리카 != 목표 레플리카가 10분간 지속"
+        "CrashLoopBackOff·잦은 재시작·Ready는 서로 다름",
+        "완료 Pod 제외, 목표 > 가용 레플리카 비교"
       ]
     },
     {
       "dot": "amber",
-      "title": "다이어그램 읽는 법",
+      "title": "수집 한계",
       "items": [
-        "네 가지 알림 영역: 컨트롤 플레인, 데이터 플레인, 네트워킹, 스토리지",
-        "각 상자는 트래픽 경로가 아닌 알림 대상을 나타냄"
+        "수집기·CSI·관리형 서비스 지표 노출 확인",
+        "상자는 감시 범위이며 직접 트래픽 경로가 아님"
       ]
     }
   ]
