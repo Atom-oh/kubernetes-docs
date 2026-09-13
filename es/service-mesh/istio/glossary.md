@@ -1466,7 +1466,7 @@ kubectl label namespace default istio.io/dataplane-mode=ambient --overwrite
 
 ---
 
-**Última actualización**: September 11, 2026
+**Última actualización**: September 13, 2026
 
 - [Destination Rule](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
 - [Instalar el agente de nodo Istio CNI](https://istio.io/latest/docs/setup/additional-setup/cni/)
