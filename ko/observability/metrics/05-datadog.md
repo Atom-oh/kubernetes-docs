@@ -73,7 +73,7 @@ Datadog site와 일치해야 합니다. `datadog` namespace의 `datadog`,
 `datadog-cluster-agent` ServiceAccount에는 해당 secret으로 제한한 IRSA role,
 regional STS/Secrets Manager 연결과 필요한 KMS 권한이 있어야 합니다. 예제 role ARN
 두 개를 교체합니다. EC2 metadata credential fallback은 끕니다.
-[전체 전제조건과 재사용 profile](../../../examples/observability/secret-profiles/README.md)을 확인합니다.
+[전체 전제조건과 재사용 profile](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md)을 확인합니다.
 
 Python 3/PyYAML 6.0.3과 해당 repository의 실행 가능한 pinned-chart postrenderer를
 사용합니다. Chart에 고정된 SecretKeyRef 7개를 **`ENC[...]` 문자열 handle**로 바꾸며,

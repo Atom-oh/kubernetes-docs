@@ -301,7 +301,7 @@ spec:
 - Helm·Kubernetes 접근 권한과 충분한 Linux EC2 node 자원
 - 정상적인 기본 block-storage StorageClass/CSI driver 또는 각 PVC에 명시할 검토된 class 이름. `gp3`가 항상 존재하지는 않음
 - 기존 `monitoring` namespace와 Linux EC2 node의 Secrets Store CSI driver·AWS provider(ASCP)가 필요합니다. `ap-northeast-2`의 AWS Secrets Manager에 `observability/grafana-admin`을 준비하고 JSON string key `admin-password`를 저장합니다. Kubernetes Secret 동기화는 사용하지 않습니다.
-- `metrics-demo-grafana` ServiceAccount의 IRSA role을 해당 secret으로 제한합니다. 예제 IAM role ARN을 실제 role로 바꾸고 SecretProviderClass를 적용합니다. [전체 identity·KMS·mount·rotation 전제조건](../../../examples/observability/secret-profiles/README.md)을 확인합니다.
+- `metrics-demo-grafana` ServiceAccount의 IRSA role을 해당 secret으로 제한합니다. 예제 IAM role ARN을 실제 role로 바꾸고 SecretProviderClass를 적용합니다. [전체 identity·KMS·mount·rotation 전제조건](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md)을 확인합니다.
 - 검증한 kubelet TLS 신뢰 경로. Profile은 인증서 검증을 켜므로 다른 issuer를 쓰면 검증을 끄는 대신 올바른 CA를 제공
 
 자원 크기는 예시입니다. Prometheus 복제본마다 PVC가 생기고 retention size는 WAL·head·compaction 사용량을 제한하지 않습니다. Grafana는 PVC의 database를 쓰는 한 복제본입니다. 복제본 수만 늘리는 것은 공유 database 기반 HA가 아닙니다.
@@ -419,7 +419,7 @@ grafana:
 
 Dashboard/datasource init container가 시작 전에 provisioning 파일을 채웁니다. Sidecar는 파일을 계속 감시하지만 `skipReload: true`로 admin credential을 사용하지 않습니다. Grafana는 dashboard 파일을 30초마다 확인하며 **datasource 변경에는 통제된 Pod 재시작이 필요합니다**. `admin_password`는 새 DB를 초기화할 때만 적용됩니다. AWS secret 변경·CSI rotation·재시작으로 기존 PVC/DB의 admin 암호가 바뀌지는 않습니다. 승인된 암호 변경/SSO 절차와 secret 값을 함께 관리하며 PVC는 보존합니다.
 
-`grafana-secret-provider.yaml`을 포함한 [재사용 profile](../../../examples/observability/secret-profiles/README.md)을 사용합니다. 로컬 render/test는 설정·mount 계약을 확인하며 실제 CSI 권한·로그인·rotation 검증은 아닙니다. Primary 문서: [Grafana 설정](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)과 [AWS ASCP](https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/README.md).
+`grafana-secret-provider.yaml`을 포함한 [재사용 profile](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md)을 사용합니다. 로컬 render/test는 설정·mount 계약을 확인하며 실제 CSI 권한·로그인·rotation 검증은 아닙니다. Primary 문서: [Grafana 설정](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)과 [AWS ASCP](https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/README.md).
 
 검토한 values로 한 번 설치합니다.
 

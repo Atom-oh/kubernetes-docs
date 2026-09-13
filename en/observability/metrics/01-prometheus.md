@@ -301,7 +301,7 @@ Prerequisites for this profile:
 - Authorized Helm/Kubernetes access and sufficient Linux EC2 node resources.
 - A working default block-storage StorageClass/CSI driver, or explicit reviewed class names for every PVC. `gp3` is not guaranteed to exist.
 - An existing `monitoring` namespace, Secrets Store CSI driver and AWS provider (ASCP) on the Linux EC2 nodes. Prepare `observability/grafana-admin` in AWS Secrets Manager (`ap-northeast-2`) with the JSON string key `admin-password`; do not synchronize it into a Kubernetes Secret.
-- The `metrics-demo-grafana` service account needs a scoped IRSA role for that secret. Replace the example IAM role ARN below and apply the matching SecretProviderClass. See the [complete identity, KMS, mount and rotation prerequisites](../../../examples/observability/secret-profiles/README.md).
+- The `metrics-demo-grafana` service account needs a scoped IRSA role for that secret. Replace the example IAM role ARN below and apply the matching SecretProviderClass. See the [complete identity, KMS, mount and rotation prerequisites](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md).
 - Verified kubelet TLS trust. This profile enables certificate verification; supply the proper CA if certificates use another issuer rather than bypassing verification.
 
 Sizing is illustrative. Each Prometheus replica gets its own PVC; retention size does not bound WAL/head/compaction use. Grafana remains one replica with a PVC-backed database. Increasing replicas alone is not shared-database HA.
@@ -419,7 +419,7 @@ Grafana receives a **literal file-provider expression**, not a password value, i
 
 The dashboard/datasource init containers populate provisioning files before startup. Sidecars keep watching files but use `skipReload: true`, so none needs admin credentials. Grafana polls dashboard files every 30 seconds; **datasource updates require a controlled Pod restart**. `admin_password` initializes a new database only: changing the AWS secret, CSI rotation or a restart does not reset the administrator password in an existing PVC/database. Use the approved password-change/SSO procedure and reconcile the secret; preserve the PVC.
 
-Use the complete [reusable profile](../../../examples/observability/secret-profiles/README.md), including `grafana-secret-provider.yaml`. Local render/tests cover config and mounts, not live CSI permissions, login or rotation. Primary contracts: [Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/) and [AWS ASCP](https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/README.md).
+Use the complete [reusable profile](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md), including `grafana-secret-provider.yaml`. Local render/tests cover config and mounts, not live CSI permissions, login or rotation. Primary contracts: [Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/) and [AWS ASCP](https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/README.md).
 
 From the repository root, install once after preparing the prerequisites:
 

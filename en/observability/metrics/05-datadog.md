@@ -75,7 +75,7 @@ and `cluster-token`; the token must be cryptographically random and at least
 `datadog` and `datadog-cluster-agent` in namespace `datadog`, require scoped IRSA
 roles, regional STS/Secrets Manager connectivity and KMS permission if applicable.
 Replace the two example role ARNs. EC2 metadata credential fallback is disabled.
-See [complete prerequisites and reusable profiles](../../../examples/observability/secret-profiles/README.md).
+See [complete prerequisites and reusable profiles](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md).
 
 Use Python 3/PyYAML 6.0.3 and the executable pinned-chart postrenderer from that
 repository directory. It replaces exactly seven hardcoded SecretKeyRef entries
