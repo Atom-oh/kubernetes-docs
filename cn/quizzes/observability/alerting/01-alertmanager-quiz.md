@@ -1,10 +1,10 @@
 # Prometheus Alertmanager 测验
 
-用于测试您对 Prometheus Alertmanager 理解程度的测验。
+> **最后更新**: September 13, 2026
 
 ---
 
-1. 在 Alertmanager 中，告警在触发前会经历的中间状态是什么？
+1. 当 Prometheus 告警规则具有正的 `for` 持续时间时，Firing 之前的状态是什么？
    - A) Active
    - B) Pending
    - C) Warning
@@ -15,95 +15,89 @@
 
 **答案：B) Pending**
 
-**说明：**
-Prometheus 告警有三种状态：Inactive、Pending 和 Firing。当告警规则的条件（expr）满足时，告警会先转换为 Pending 状态；如果该条件在 `for` 子句指定的时长内持续满足，告警将转换为 Firing 状态并发送至 Alertmanager。该机制可避免因临时峰值产生不必要的告警。
+Pending 属于 Prometheus 规则评估，而不是 Alertmanager 评估阶段。该条件必须在连续评估中持续存在达到配置的时长。未设置 `for`（或将其设为零）时，它可以在首次匹配的评估中触发。通知分组会增加单独的延迟；`keep_firing_for` 可以在表达式不再匹配后保持 Firing 状态。
 
 </details>
 
 ---
 
-2. 下列哪项正确描述了 Alertmanager 路由配置中 `group_wait`、`group_interval` 和 `repeat_interval` 的作用？
-   - A) group_wait：发送告警组的第一条通知前的等待时间
-   - B) group_interval：重新发送相同告警的间隔
-   - C) repeat_interval：向组中添加新告警时的等待时间
-   - D) 三者执行相同的功能
+2. 关于分组计时器，哪项说法正确？
+   - A) `group_wait` 会延迟新分组的第一条通知。
+   - B) `group_interval` 仅是未变化告警的重复间隔。
+   - C) `repeat_interval` 是新加入告警的首次延迟。
+   - D) 三个计时器完全相同。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：A) group_wait：发送告警组的第一条通知前的等待时间**
+**答案：A) `group_wait` 会延迟新分组的第一条通知。**
 
-**说明：**
-- `group_wait`：创建新的告警组后，发送第一条通知前的等待时间。在此期间，属于同一组的其他告警会被收集并一同发送。
-- `group_interval`：当同一组中添加新告警时，发送下一条通知前的等待时间。
-- `repeat_interval`：同一告警尚未解决时重新发送该告警的间隔。
+`group_interval` 会安排后续的分组检查，其中包括变更和已解决的告警。`repeat_interval` 控制未变化且处于 Firing 状态的告警的重复通知，并在分组间隔时进行检查；应使用 `group_interval` 的倍数。通知日志保留可能导致更早的重复通知。这些计时器独立于 Prometheus 规则的 `for`。
 
 </details>
 
 ---
 
-3. 下列哪项正确描述了 Alertmanager 的 Inhibition 功能？
-   - A) 在特定时间段内忽略所有告警的功能
-   - B) 特定告警触发时抑制相关告警的功能
-   - C) 自动降低告警严重程度的功能
-   - D) 合并重复告警的功能
+3. 抑制（inhibition）的作用是什么？
+   - A) 在一个时间窗口内忽略每条告警。
+   - B) 当匹配的源告警处于活动状态时，抑制匹配目标的通知。
+   - C) 自动更改告警严重级别。
+   - D) 从 Prometheus 中删除重复告警。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 特定告警触发时抑制相关告警的功能**
+**答案：B) 当匹配的源告警处于活动状态时，抑制匹配目标的通知。**
 
-**说明：**
-Inhibition 是一种功能，当特定条件告警（source）触发时，会抑制相关告警（target）。例如，当某个节点宕机时，可以抑制来自该节点的所有与 Pod 相关的告警，以防止告警风暴。Silencing 是一项独立功能，用于在特定时间段内忽略告警。
+抑制改变的是通知资格，而非底层告警条件。源/目标匹配器和相等标签必须表示预期的依赖关系。缺失的相等标签会像空值一样比较，因此应要求使用非空的关联标签，例如 `cluster` 和 `node`，以避免抑制无关告警。规则列表顺序不是优先级系统。
 
 </details>
 
 ---
 
-4. PrometheusRule CRD 中的以下告警规则表示什么含义？
+4. 此规则中的 `for` 表示什么？
+
    ```yaml
    - alert: HighCPU
-     expr: node_cpu_usage > 80
+     expr: 100 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 80
      for: 5m
      labels:
        severity: warning
    ```
-   - A) CPU 使用率超过 80% 时立即触发告警
-   - B) CPU 使用率连续 5 分钟超过 80% 时触发告警
-   - C) 每 5 分钟检查一次 CPU 使用率，若超过 80% 则触发告警
-   - D) CPU 超过 80% 后 5 分钟发送告警通知
+   - A) CPU 超过 80% 时立即通知。
+   - B) 当条件在多次评估中持续五分钟后进入 Firing 状态。
+   - C) 每五分钟才评估一次 CPU。
+   - D) 保证在物理 CPU 使用率升高后的恰好五分钟时送达通知。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) CPU 使用率连续 5 分钟超过 80% 时触发告警**
+**答案：B) 当条件在多次评估中持续五分钟后进入 Firing 状态。**
 
-**说明：**
-`for: 5m` 设置表示，告警条件（expr）必须连续满足 5 分钟，才会转换为 Firing 状态。首次满足条件时，状态会变为 Pending；如果条件持续满足 5 分钟，则转换为 Firing 并发送至 Alertmanager。该机制可避免因临时峰值产生不必要的告警。
+这假定已抓取 node-exporter CPU 计数器，并且评估间隔合适。`for` 不设置抓取/评估间隔，也不保证通知送达期限。变更后的标签集会标识不同的告警；除非应用了单独的 Firing 保留行为，否则恢复会重置 Pending。CrashLoop 示例首先使用五分钟观测窗口，然后使用 `for: 10m`：这可以跨越重试间隙并排除一次性的等待，同时会有与回溯相关的清除延迟。
 
 </details>
 
 ---
 
-5. Alertmanager 的 receiver 配置中的 `send_resolved: true` 表示什么？
-   - A) 同时将已解决的告警发送给 receiver
-   - B) 在告警消息中包含解决方法
-   - C) 自动将告警更改为已解决状态
-   - D) 授予 receiver 解决告警的权限
+5. `send_resolved: true` 启用了什么？
+   - A) 此集成的解决通知。
+   - B) 自动修复说明。
+   - C) 将告警条件更改为健康状态。
+   - D) 授予接收器修复 cluster 的权限。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：A) 同时将已解决的告警发送给 receiver**
+**答案：A) 此集成的解决通知。**
 
-**说明：**
-`send_resolved: true` 设置会在告警解决时（条件不再满足时）向 receiver 发送解决通知。这使响应人员能够知道问题已经解决。默认值因 receiver 类型而异，但通常建议启用此设置。
+它控制所选集成的已解决通知；不同接收器的默认值有所不同。Resolved 是告警生命周期状态，并非 Service 已恢复的独立证据。表达式更改、数据缺失或客户端更新/过期行为也会影响该状态。
 
 </details>
 
 ---
 
-6. 在 Alertmanager 高可用配置中，集群成员之间使用什么协议同步状态？
+6. Alertmanager cluster 状态同步使用哪种协议？
    - A) Raft
    - B) Paxos
    - C) Gossip
@@ -114,106 +108,102 @@ Inhibition 是一种功能，当特定条件告警（source）触发时，会抑
 
 **答案：C) Gossip**
 
-**说明：**
-Alertmanager 集群使用 Gossip 协议在成员之间同步状态。这使 Silence 信息和通知日志（nflog）能够在所有实例之间共享，从而防止重复的告警通知。配置集群时，请使用 `--cluster.peer` 标志指定其他成员。
+Gossip 通过最终一致性共享静默和通知日志状态。应将相同的告警发送到每个副本；Gossip 层不能取代这种扇出。去重是尽力而为的，网络分区可能产生重复通知。这并非恰好一次交付，也不能保证避免所有通知丢失。
 
 </details>
 
 ---
 
-7. 在以下 Alertmanager 路由配置中，`severity=critical` 且 `team=infra` 的告警会发送给哪个 receiver？
+7. 对于 `severity=critical, team=infra`，下面会选择哪个路由？
+
    ```yaml
    route:
-     receiver: 'default'
+     receiver: default
      routes:
-       - match:
-           severity: critical
-         receiver: 'critical-receiver'
-       - match:
-           team: infra
-         receiver: 'infra-team'
+       - matchers: ['severity="critical"']
+         receiver: critical-receiver
+       - matchers: ['team="infra"']
+         receiver: infra-team
    ```
    - A) default
    - B) critical-receiver
    - C) infra-team
-   - D) critical-receiver 和 infra-team 两者
+   - D) 两个子路由
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B) critical-receiver**
 
-**说明：**
-Alertmanager 路由以树形结构运行，默认情况下在第一个匹配的路由处结束处理。在此示例中，`severity=critical` 条件最先匹配，因此告警会发送至 `critical-receiver`。要发送至多个路由，需要使用 `continue: true` 设置。
+默认的 `continue: false` 会使第一个匹配的同级路由停止同级遍历。对其设置 `continue: true` 可继续考虑后续同级路由。此题仅测试标签路由：未激活/被静音的路由仍可能停止遍历，因此时间窗口行为需要单独检查。一个接收器中的多个集成不需要 `continue`。Provider 目标规则仍然适用：Slack incoming-webhook URL 与 channel 绑定，因此普通和关键 channel 需要不同的 webhook 文件/Secret 键，而不是 channel 覆盖。
 
 </details>
 
 ---
 
-8. AlertmanagerConfig CRD 的主要目的是什么？
-   - A) 定义 Alertmanager 的全局配置
-   - B) 按 namespace 分离告警配置
-   - C) 定义 Prometheus 告警规则
-   - D) 配置 Alertmanager 集群
+8. 由 namespace 拥有的 AlertmanagerConfig 能实现什么？
+   - A) 自动绕过所有 namespace 限制。
+   - B) 管理由 Alertmanager 实例选择的结构化路由/接收器。
+   - C) 定义 PromQL 记录和告警规则。
+   - D) 替换 Gossip peer 配置。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 按 namespace 分离告警配置**
+**答案：B) 管理由 Alertmanager 实例选择的结构化路由/接收器。**
 
-**说明：**
-AlertmanagerConfig CRD 是 Prometheus Operator 提供的资源，可按 namespace 分别管理 Alertmanager 配置（receivers、routes、inhibition rules 等）。这样，每个团队都可以在自己的 namespace 中独立管理告警配置。
+Operator 必须选择对象的标签和 namespace，且被引用的 Secret 必须存在于所需 namespace 中。其匹配器策略控制 namespace 强制执行。已审查的 Operator 0.93.1 chart 提供 `v1alpha1`；不要虚构必需的 API 升级。全局配置使用是另一个选项，而 namespace 标签匹配并不是对告警发送方的身份验证。
 
 </details>
 
 ---
 
-9. 以下哪项不是在 Alertmanager 中创建 Silence 的适当使用场景？
-   - A) 在计划维护期间抑制告警
-   - B) 防止已知问题的重复告警
-   - C) 永久禁用特定告警
-   - D) 在 Deployment 期间抑制告警
+9. 哪项不是 Silence 的适当用途？
+   - A) 计划内维护。
+   - B) 有界的调查窗口。
+   - C) 永久禁用一条告警规则。
+   - D) 经审核的 Deployment 窗口。
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 永久禁用特定告警**
+**答案：C) 永久禁用一条告警规则。**
 
-**说明：**
-Silence 是一项临时抑制告警的功能，并且必须始终指定结束时间。要永久禁用告警，需要修改或删除告警规则本身。Silence 的主要使用场景是维护、Deployment 或调查已知问题等临时情况。
+静默必须有有限的结束时间，并且会影响通知。过期会结束抑制；并不会立即从已存储的静默历史中删除。永久性的规则/路由变更需要单独审核。记录负责人、原因和获批范围；到期提醒需要明确配置的工作流。
 
 </details>
 
 ---
 
-10. 以下哪项不是可在 Alertmanager 模板中使用的有效 Go template 语法？
-    - A) <code v-pre>{{ .Labels.alertname }}</code>
-    - B) <code v-pre>{{ if eq .Status "firing" }}Danger{{ end }}</code>
-    - C) <code v-pre>{{ range .Alerts }}{{ .Labels.severity }}{{ end }}</code>
-    - D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>
+10. 哪个表达式是无效的 Go template 语法？
+   - A) `{{ .CommonLabels.alertname }}`
+   - B) `{{ if eq .Status "firing" }}Danger{{ end }}`
+   - C) `{{ range .Alerts }}{{ .Labels.severity }}{{ end }}`
+   - D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>**
+**答案：D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`**
 
-**说明：**
-Go template 不支持三元运算符（`? :`）。应使用 <code v-pre>{{ if }}</code> 语句。正确语法如下：
-```
-{{ if gt (len .Annotations.description) 100 }}
-  {{ slice .Annotations.description 0 100 }}...
-{{ else }}
-  {{ .Annotations.description }}
+Go template 不支持此三元表达式。在根级别，Alertmanager 提供带有 CommonLabels/CommonAnnotations 的 Data；Labels/Annotations/StartsAt 属于 `range .Alerts` 内的单个 Alert。下面的示例会为每个 description 最多格式化 100 个 rune，避免按字节切片而可能拆分韩文文本。这是输出格式化，而不是敏感数据脱敏。
+
+```text
+{{ range .Alerts }}
+{{ printf "%.100s" .Annotations.description }}
 {{ end }}
 ```
-Go template 支持管道（`|`）、条件语句（`if`/`else`）、循环（`range`）、内置函数等。
 
 </details>
 
 ---
 
-## 附加学习资源
+<span id="附加学习资源"></span>
 
-- [Prometheus 告警文档](https://prometheus.io/docs/alerting/latest/alertmanager/)
-- [Alertmanager 配置](https://prometheus.io/docs/alerting/latest/configuration/)
-- [Prometheus Operator - AlertmanagerConfig](https://prometheus-operator.dev/docs/user-guides/alerting/)
+## 补充学习资源
+
+- [Alertmanager 0.34 配置](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
+- [通知模板参考](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/notifications.md)
+- [Prometheus Operator 告警](https://prometheus-operator.dev/docs/developer/alerting/)
+
+[返回指南](../../../observability/alerting/01-alertmanager.md)
