@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-endpoints
+  namespace: monitoring
+data:
+  PROMETHEUS_URL: http://prometheus-operated.monitoring.svc.cluster.local:9090
+  LOKI_URL: http://loki.monitoring.svc.cluster.local:3100
+  TEMPO_URL: http://tempo.monitoring.svc.cluster.local:3200

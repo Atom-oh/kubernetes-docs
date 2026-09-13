@@ -17,7 +17,7 @@
           "postgres",
           "redis"
         ],
-        "note": "사용자 요청이 Frontend와 Backend를 거쳐 메타데이터 DB와 세션 캐시에 기록되는 경로."
+        "note": "공유 DB가 대시보드와 인증 세션을 저장한다. 쿼리 캐시는 선택 기능이다."
       },
       {
         "id": "datasource-path",
@@ -115,7 +115,7 @@
       "id": "postgres",
       "type": "database",
       "label": "PostgreSQL / MySQL",
-      "sublabel": "메타데이터",
+      "sublabel": "설정 · 인증 세션",
       "pos": [
         80,
         400
@@ -128,8 +128,8 @@
     {
       "id": "redis",
       "type": "database",
-      "label": "Redis / Memcached",
-      "sublabel": "세션 캐시",
+      "label": "선택적 쿼리 캐시",
+      "sublabel": "Enterprise / Cloud",
       "pos": [
         320,
         400
@@ -143,7 +143,7 @@
       "id": "datasources",
       "type": "external",
       "label": "데이터 소스",
-      "sublabel": "Prometheus · Loki · Tempo · CloudWatch",
+      "sublabel": "Metrics · logs · traces",
       "pos": [
         560,
         400
@@ -215,7 +215,7 @@
       "id": "backend-to-postgres",
       "from": "backend",
       "to": "postgres",
-      "label": "메타데이터 저장",
+      "label": "DB 저장",
       "fromSide": "bottom",
       "toSide": "top"
     },
@@ -223,11 +223,12 @@
       "id": "backend-to-redis",
       "from": "backend",
       "to": "redis",
-      "label": "세션 캐시",
+      "label": "선택 기능",
       "fromSide": "bottom",
       "toSide": "top",
       "labelDy": 80,
-      "labelDx": 44
+      "labelDx": 44,
+      "variant": "dashed"
     },
     {
       "id": "plugin-to-datasources",
@@ -254,25 +255,25 @@
       "dot": "cyan",
       "title": "Grafana Server",
       "items": [
-        "Frontend(React)가 대시보드 UI를 제공한다",
-        "Backend(Go)가 API 요청을 처리한다",
-        "Plugin System으로 데이터 소스를 확장한다"
+        "UI/API 요청 처리",
+        "공유 DB에 설정·인증 세션 저장",
+        "HA는 DB·알림 peer를 별도로 구성"
       ]
     },
     {
       "dot": "emerald",
       "title": "데이터 소스",
       "items": [
-        "Prometheus, Loki, Tempo, CloudWatch 등 지원",
-        "단일 대시보드에서 메트릭·로그·추적을 통합 조회"
+        "메트릭·로그·추적 저장은 백엔드가 담당",
+        "상관분석은 UID·라벨·trace ID 일치 필요"
       ]
     },
     {
       "dot": "amber",
       "title": "알림",
       "items": [
-        "조건 기반 알림 규칙 평가",
-        "Slack, PagerDuty 등 다양한 알림 채널로 전송"
+        "규칙 평가 후 정책에 따라 알림 전송",
+        "HA 알림 중복 억제는 별도 설정"
       ]
     }
   ]

@@ -1,0 +1,22 @@
+rbac:
+  create: true
+  namespaced: true
+  useExistingRole: grafana-dashboard-reader
+serviceAccount:
+  automountServiceAccountToken: true
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: 'true'
+    resource: configmap
+    searchNamespace: monitoring
+    provider:
+      name: sidecar
+      folder: Sidecar
+      allowUiUpdates: false
+  datasources:
+    enabled: false
+  alerts:
+    enabled: false
+automountServiceAccountToken: true
