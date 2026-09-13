@@ -1,0 +1,676 @@
+{
+  "status": "verified",
+  "source": "GitHublatestHEADindependentAIreviews PR222and223",
+  "reviewScores": {
+    "222": "90/90;19/19files;0issues",
+    "223": "90/90;70/70files;0issues"
+  },
+  "currentMain": "83b42c03cabd953ad8557c0cb4119ac37417574d",
+  "documents": [
+    {
+      "path": "en/ai-ml/08-llm-gateway.md",
+      "sourcePR": 222,
+      "reviewedHead": "f874d1d10df97f36cc4ef41488ec1740db6ebee2",
+      "reviewedSha256": "bec4d6e5eae569b49fadacab58675249c05939ea2a68b1f8229977404270a919",
+      "currentMainSha256": "bec4d6e5eae569b49fadacab58675249c05939ea2a68b1f8229977404270a919",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/blockchain/01-fundamentals.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "9a3bece14e10f62b4a57c272baebbab975999beeabf742bc0d0783977fe10edc",
+      "currentMainSha256": "9a3bece14e10f62b4a57c272baebbab975999beeabf742bc0d0783977fe10edc",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/blockchain/02-nodes-on-eks.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "e596c6d20ba88c64bcc2d6fb3cb928dee3b8167c628827ea629b4b5a280a035d",
+      "currentMainSha256": "e596c6d20ba88c64bcc2d6fb3cb928dee3b8167c628827ea629b4b5a280a035d",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/blockchain/03-managed-blockchain.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "fd81763796d7dc4c1121de62759058d296f716bc074e4f6b27bd0ae6087d6fbb",
+      "currentMainSha256": "fd81763796d7dc4c1121de62759058d296f716bc074e4f6b27bd0ae6087d6fbb",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/blockchain/04-financial-services.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "9c0c262b07896810fdd368a927997e94b704378c0f619b55a1e9f3e7a5d3d1a3",
+      "currentMainSha256": "9c0c262b07896810fdd368a927997e94b704378c0f619b55a1e9f3e7a5d3d1a3",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/blockchain/README.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "39cb24246832115402b8e1ad662a7a5974fb0ce745f396880090262ffdc80e62",
+      "currentMainSha256": "39cb24246832115402b8e1ad662a7a5974fb0ce745f396880090262ffdc80e62",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/kernel/01-container-primitives.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "8dfae015bfc743fc862221edd8a0a340f72250e95c439de739a87c5ad74c820d",
+      "currentMainSha256": "8dfae015bfc743fc862221edd8a0a340f72250e95c439de739a87c5ad74c820d",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/kernel/02-network-stack.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "6e06a50562d74881742c02321d710923881e44f0b087d69484258a71524f9315",
+      "currentMainSha256": "6e06a50562d74881742c02321d710923881e44f0b087d69484258a71524f9315",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/kernel/03-eks-node-tuning.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "6b89310b771ebd3f4d066dba85c2c241e5eeed5a3d26a5be63d94e653aa9c9bc",
+      "currentMainSha256": "6b89310b771ebd3f4d066dba85c2c241e5eeed5a3d26a5be63d94e653aa9c9bc",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/kernel/README.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "aa68846233ca49fe2dcfe7d007fa7ca09190903c3efb4ee1dba7fd7e2cd20f39",
+      "currentMainSha256": "aa68846233ca49fe2dcfe7d007fa7ca09190903c3efb4ee1dba7fd7e2cd20f39",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/ai-ml/08-llm-gateway-quiz.md",
+      "sourcePR": 222,
+      "reviewedHead": "f874d1d10df97f36cc4ef41488ec1740db6ebee2",
+      "reviewedSha256": "11d0a514da1a0c14a2e8facc42664fb2c874a2bb66d1328815d0368d0163a733",
+      "currentMainSha256": "11d0a514da1a0c14a2e8facc42664fb2c874a2bb66d1328815d0368d0163a733",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/blockchain/01-fundamentals-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "81c438bedf7ac6d40ec2bc8aa0b59b559f5dca131d07ec4f4ba8fef656aaa469",
+      "currentMainSha256": "81c438bedf7ac6d40ec2bc8aa0b59b559f5dca131d07ec4f4ba8fef656aaa469",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/blockchain/02-nodes-on-eks-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "a714963e0c101e9266a7769e69acfe60ed435c1403f566439caaedf5775b3f30",
+      "currentMainSha256": "a714963e0c101e9266a7769e69acfe60ed435c1403f566439caaedf5775b3f30",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/blockchain/03-managed-blockchain-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "edb6951346cc91a185dfe426eb9de28a94085f95a8235722d84dd1eef2932769",
+      "currentMainSha256": "edb6951346cc91a185dfe426eb9de28a94085f95a8235722d84dd1eef2932769",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/blockchain/04-financial-services-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "5401dbb1c01365b6c246afba21cce6a9676e4fdd7da6ba4782d6e640e299f4f9",
+      "currentMainSha256": "5401dbb1c01365b6c246afba21cce6a9676e4fdd7da6ba4782d6e640e299f4f9",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/kernel/01-container-primitives-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "c29d5723f2f84591bf61431f4aec322d21db9326ba0c44f057897fa87c5b04a9",
+      "currentMainSha256": "c29d5723f2f84591bf61431f4aec322d21db9326ba0c44f057897fa87c5b04a9",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/kernel/02-network-stack-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "2d6b0ded614cd9286a41f115fc1e3861b4b3a47135bcbd2eaa6b7ce1c78e06d1",
+      "currentMainSha256": "2d6b0ded614cd9286a41f115fc1e3861b4b3a47135bcbd2eaa6b7ce1c78e06d1",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/kernel/03-eks-node-tuning-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "aba3c29c7e50b7538b368b4b8828f7350ddc2b3ec8a2b0f06c14054aeff0cc31",
+      "currentMainSha256": "aba3c29c7e50b7538b368b4b8828f7350ddc2b3ec8a2b0f06c14054aeff0cc31",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "7ca763669776f8d6f9871d1400085926903fd4e0ea4f7b313284941f5b903bcc",
+      "currentMainSha256": "7ca763669776f8d6f9871d1400085926903fd4e0ea4f7b313284941f5b903bcc",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/service-mesh/vpc-lattice/02-latency-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "10dc4a6011dfebe4afe8b4302abbe6e235680819fb9e5c15db79a311f2800b99",
+      "currentMainSha256": "10dc4a6011dfebe4afe8b4302abbe6e235680819fb9e5c15db79a311f2800b99",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "4498892263ae81da745f7956422dfb710f8a8ce01d5d9f4b283740c6c2bd09d2",
+      "currentMainSha256": "4498892263ae81da745f7956422dfb710f8a8ce01d5d9f4b283740c6c2bd09d2",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "b4d2c107868ab903bc5d75098e2208a9b0d0e2f5f4eec7f40580bd569306284a",
+      "currentMainSha256": "b4d2c107868ab903bc5d75098e2208a9b0d0e2f5f4eec7f40580bd569306284a",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "715e4d32693033e4e95f834286ffb80c3268c081e72011526f5640a5385b28bf",
+      "currentMainSha256": "715e4d32693033e4e95f834286ffb80c3268c081e72011526f5640a5385b28bf",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "8366a77f3988341a5940e43a750f78607dd5035d857a34d22f55e770a85ba893",
+      "currentMainSha256": "8366a77f3988341a5940e43a750f78607dd5035d857a34d22f55e770a85ba893",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "a76aba3fd2aa70d980aa23da083b62d869f97e2908951dad761ab48c6464f92c",
+      "currentMainSha256": "a76aba3fd2aa70d980aa23da083b62d869f97e2908951dad761ab48c6464f92c",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/service-mesh/vpc-lattice/01-appmesh-vs-lattice.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "282a3bac5b5cff4a2828c63bd87ae45fa829293f4d57507fbadd5410ba0babda",
+      "currentMainSha256": "282a3bac5b5cff4a2828c63bd87ae45fa829293f4d57507fbadd5410ba0babda",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/service-mesh/vpc-lattice/02-latency.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "a4387e265a2261ca962461d647bccc2566b54288a4fa686007524d2f52b71839",
+      "currentMainSha256": "a4387e265a2261ca962461d647bccc2566b54288a4fa686007524d2f52b71839",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/service-mesh/vpc-lattice/03-auth-flow.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "de6634ee607dd8e152aaacc41b3d76ba48bcd099449a237ee19e195dc3197b79",
+      "currentMainSha256": "de6634ee607dd8e152aaacc41b3d76ba48bcd099449a237ee19e195dc3197b79",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/service-mesh/vpc-lattice/04-networking-basics.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "a84080d9f55803801c8e7c8b8b5ed8383e5ddca74819622db80a490fab88aa94",
+      "currentMainSha256": "a84080d9f55803801c8e7c8b8b5ed8383e5ddca74819622db80a490fab88aa94",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/service-mesh/vpc-lattice/05-spiffe-to-iam.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "da6e894725f5ba595aaacaa9f79d3046dbb11501cba22f3cb3ed92ff10b8300c",
+      "currentMainSha256": "da6e894725f5ba595aaacaa9f79d3046dbb11501cba22f3cb3ed92ff10b8300c",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/service-mesh/vpc-lattice/06-constraints.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "da4798a0ecaac23da406afa307f05f3de9050e4c7a956cb88300ff68f5daaba2",
+      "currentMainSha256": "da4798a0ecaac23da406afa307f05f3de9050e4c7a956cb88300ff68f5daaba2",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/service-mesh/vpc-lattice/07-kernel-datapath.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "a96a8ad399a18d66dc0b2e1805432b7393098cbdb8eda2367ecdfd1c854a8e76",
+      "currentMainSha256": "a96a8ad399a18d66dc0b2e1805432b7393098cbdb8eda2367ecdfd1c854a8e76",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "en/service-mesh/vpc-lattice/README.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "d9ae225c303de0ac48f50721ce8391ce5ae8c5c09fa39c4b58efbda28a501dc7",
+      "currentMainSha256": "d9ae225c303de0ac48f50721ce8391ce5ae8c5c09fa39c4b58efbda28a501dc7",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/ai-ml/08-llm-gateway.md",
+      "sourcePR": 222,
+      "reviewedHead": "f874d1d10df97f36cc4ef41488ec1740db6ebee2",
+      "reviewedSha256": "094fed3443123fccfe5b420366c7f4e7c0fdca2c58b67f46797744557343f04a",
+      "currentMainSha256": "094fed3443123fccfe5b420366c7f4e7c0fdca2c58b67f46797744557343f04a",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/blockchain/01-fundamentals.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "e8385cc0b52d13a4d2831c919c0e508a817f207b7b13d2d7ddea6228c1cec1d9",
+      "currentMainSha256": "e8385cc0b52d13a4d2831c919c0e508a817f207b7b13d2d7ddea6228c1cec1d9",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/blockchain/02-nodes-on-eks.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "b9db68d00d78358c656ad8214f5382141ddd246ec6b8d93ada24dd3bfd95c67b",
+      "currentMainSha256": "b9db68d00d78358c656ad8214f5382141ddd246ec6b8d93ada24dd3bfd95c67b",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/blockchain/03-managed-blockchain.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "720a3259234331fac73cff922416bcf48163f92b3f279394dbb34ee011c94282",
+      "currentMainSha256": "720a3259234331fac73cff922416bcf48163f92b3f279394dbb34ee011c94282",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/blockchain/04-financial-services.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "6758daa4fdffc277406f38a88d0b821560beb5097ad5fc77582a33fa7fff6c8b",
+      "currentMainSha256": "6758daa4fdffc277406f38a88d0b821560beb5097ad5fc77582a33fa7fff6c8b",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/blockchain/README.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "1f6355732f8828d8a247dc7e63291c959f185da708c7d99fcd8f90230480fe90",
+      "currentMainSha256": "1f6355732f8828d8a247dc7e63291c959f185da708c7d99fcd8f90230480fe90",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/kernel/01-container-primitives.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "820e95ad74fcd7fa84bd0e02d52c493e16e177b369e0b551196c614d3348288b",
+      "currentMainSha256": "820e95ad74fcd7fa84bd0e02d52c493e16e177b369e0b551196c614d3348288b",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/kernel/02-network-stack.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "a6b4d618833dbcd85c87df0f665c5cc35dfd924bce916120b4830e47e2aac4c3",
+      "currentMainSha256": "a6b4d618833dbcd85c87df0f665c5cc35dfd924bce916120b4830e47e2aac4c3",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/kernel/03-eks-node-tuning.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "45ec56d58bfa1bac63cd2b4c96064288f03b9f6a04217c1615df36d1690dbd9c",
+      "currentMainSha256": "45ec56d58bfa1bac63cd2b4c96064288f03b9f6a04217c1615df36d1690dbd9c",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/kernel/README.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "f0ed5ad93976acbfea2b4fc8e82332f05f42ca12048b7c7f61b888443c2f2b9c",
+      "currentMainSha256": "f0ed5ad93976acbfea2b4fc8e82332f05f42ca12048b7c7f61b888443c2f2b9c",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/ai-ml/08-llm-gateway-quiz.md",
+      "sourcePR": 222,
+      "reviewedHead": "f874d1d10df97f36cc4ef41488ec1740db6ebee2",
+      "reviewedSha256": "48d1ea39676676910ab4107598b3af305108ab4ef55aa78e5aae6f4e2d018fb3",
+      "currentMainSha256": "48d1ea39676676910ab4107598b3af305108ab4ef55aa78e5aae6f4e2d018fb3",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/blockchain/01-fundamentals-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "ca6314ad3c5b4cd113d6e4286ca733ec1cf36359a411fba7e8d538f7abc7c7cb",
+      "currentMainSha256": "ca6314ad3c5b4cd113d6e4286ca733ec1cf36359a411fba7e8d538f7abc7c7cb",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/blockchain/02-nodes-on-eks-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "f4b0a36e8c8cf9df1959458e32b39be40b5b71d0f17bc7b69dfc309a6bcdab49",
+      "currentMainSha256": "f4b0a36e8c8cf9df1959458e32b39be40b5b71d0f17bc7b69dfc309a6bcdab49",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/blockchain/03-managed-blockchain-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "883bc908e43a1bdbdc09f625aa8c4948959d8f2fecf82d26f80eaa68998ff5a4",
+      "currentMainSha256": "883bc908e43a1bdbdc09f625aa8c4948959d8f2fecf82d26f80eaa68998ff5a4",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/blockchain/04-financial-services-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "b5ef0fb96c500105dd10ac179179392aa8b286c89033296e1cc76f994cf5c2d7",
+      "currentMainSha256": "b5ef0fb96c500105dd10ac179179392aa8b286c89033296e1cc76f994cf5c2d7",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/kernel/01-container-primitives-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "fcd583be7cf926c36f7907ea00a1b3c26c3bb1f0058476596f88b417b965c187",
+      "currentMainSha256": "fcd583be7cf926c36f7907ea00a1b3c26c3bb1f0058476596f88b417b965c187",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/kernel/02-network-stack-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "a9d62ee83be2780a46ec21fa8ec7bad5898aff20129b937dc82423c1ff559e6d",
+      "currentMainSha256": "a9d62ee83be2780a46ec21fa8ec7bad5898aff20129b937dc82423c1ff559e6d",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/kernel/03-eks-node-tuning-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "e6f9a2d9718cbe4e6b596c54c5aa8d4d17753e3199d237b9744edf4c4db14d18",
+      "currentMainSha256": "e6f9a2d9718cbe4e6b596c54c5aa8d4d17753e3199d237b9744edf4c4db14d18",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "091d65e01df5cba13c2134681bb451ea2c970c0629cbc93bdbdfab48ae8ecf68",
+      "currentMainSha256": "091d65e01df5cba13c2134681bb451ea2c970c0629cbc93bdbdfab48ae8ecf68",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/service-mesh/vpc-lattice/02-latency-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "cc3337ca0ae054eeee4a360da6fc8e997acf6410d997810f8f3b5ac5f89b81f1",
+      "currentMainSha256": "cc3337ca0ae054eeee4a360da6fc8e997acf6410d997810f8f3b5ac5f89b81f1",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "493a8c19cf2fd6a70a7203ed9a45e06d79462fd6aa4eac148683a31d29a5e5a7",
+      "currentMainSha256": "493a8c19cf2fd6a70a7203ed9a45e06d79462fd6aa4eac148683a31d29a5e5a7",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "6bc815abf65862734999dbc4de5a88b3b197f197f52dad5a43879716c2f878e8",
+      "currentMainSha256": "6bc815abf65862734999dbc4de5a88b3b197f197f52dad5a43879716c2f878e8",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "49ca69bce2d258cd703aa69406cb4f59dd36d1640120a5c5cbbc4e885a90f326",
+      "currentMainSha256": "49ca69bce2d258cd703aa69406cb4f59dd36d1640120a5c5cbbc4e885a90f326",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "660c66813f5795df384fbe77eaebae7399882239dad186688ee70cb2b7a6c59c",
+      "currentMainSha256": "660c66813f5795df384fbe77eaebae7399882239dad186688ee70cb2b7a6c59c",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "b704d755f7e0c79171fc7e1162ca098c6500e33b32313ee1393b5ac67f070a8d",
+      "currentMainSha256": "b704d755f7e0c79171fc7e1162ca098c6500e33b32313ee1393b5ac67f070a8d",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/service-mesh/vpc-lattice/01-appmesh-vs-lattice.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "93bf6b2a68c9f39d362753e9dc610f146a064db45d7d4f1f6a9da6cba50b7f08",
+      "currentMainSha256": "93bf6b2a68c9f39d362753e9dc610f146a064db45d7d4f1f6a9da6cba50b7f08",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/service-mesh/vpc-lattice/02-latency.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "768e4219084ff99758f311432c17f988ed3404fedd7d3ba92f60006a68c14e6e",
+      "currentMainSha256": "768e4219084ff99758f311432c17f988ed3404fedd7d3ba92f60006a68c14e6e",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/service-mesh/vpc-lattice/03-auth-flow.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "855867052082e834bffa52411465c262e6506b38b0b1e17812dccb7e78f499a5",
+      "currentMainSha256": "855867052082e834bffa52411465c262e6506b38b0b1e17812dccb7e78f499a5",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/service-mesh/vpc-lattice/04-networking-basics.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "d5a711fc09c29b396c37ac9001b425ab94437140d0587538bff2292b86cc5402",
+      "currentMainSha256": "d5a711fc09c29b396c37ac9001b425ab94437140d0587538bff2292b86cc5402",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/service-mesh/vpc-lattice/05-spiffe-to-iam.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "42c5b5fd8757a1b826ad0c66c87e0261e0811b046b3fc9e69c34a3dcb2527a99",
+      "currentMainSha256": "42c5b5fd8757a1b826ad0c66c87e0261e0811b046b3fc9e69c34a3dcb2527a99",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/service-mesh/vpc-lattice/06-constraints.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "0c9d399618568453abfbe97d52e170d130183bc5a263c3bc1193bcaf0e7fdb12",
+      "currentMainSha256": "0c9d399618568453abfbe97d52e170d130183bc5a263c3bc1193bcaf0e7fdb12",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/service-mesh/vpc-lattice/07-kernel-datapath.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "193f8b8f3a667c4a4d24eb809fbc69586fca07d60422232eb16655a7867b0cee",
+      "currentMainSha256": "193f8b8f3a667c4a4d24eb809fbc69586fca07d60422232eb16655a7867b0cee",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    },
+    {
+      "path": "ko/service-mesh/vpc-lattice/README.md",
+      "sourcePR": 223,
+      "reviewedHead": "06c303a236e8d41000bd62b5b437fac946d2e94b",
+      "reviewedSha256": "9beff7f27c7f6c6f3e32be4e62172b1bf39c2c820e9e6170cc13b9bea9e02129",
+      "currentMainSha256": "9beff7f27c7f6c6f3e32be4e62172b1bf39c2c820e9e6170cc13b9bea9e02129",
+      "unchanged": true,
+      "review": "ActualGitHubCOMMENTEDreviewonexactHEAD;90/90;full19/19or70/70scope;zeroissues",
+      "limits": "Existingindependentreview adopted;notnew cloud/runtime validation"
+    }
+  ],
+  "limits": [
+    "Adopts completed independentreviews and compares exact currentmain blobs;doesnotclaim parent reread ofall66documents.",
+    "No new cloud/packet-path/blockchain transaction test.",
+    "QLDB historicalcitationrecovery remains limited asstatedinPR223review."
+  ]
+}

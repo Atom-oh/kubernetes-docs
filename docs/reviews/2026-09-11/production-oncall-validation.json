@@ -1,0 +1,1294 @@
+{
+  "status": "passed",
+  "http": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T13:56:04.963398+00:00",
+    "deploymentRun": 34760465927,
+    "deploymentCommit": "41521abdc7b9bb2feffdea4ada57ac5d7acd5255",
+    "includedPRs": [
+      296
+    ],
+    "pages": [
+      {
+        "pr": 296,
+        "path": "en/observability/alerting/03-grafana-oncall.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/alerting/03-grafana-oncall",
+        "status": 200,
+        "bytes": 498518,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/alerting/03-grafana-oncall",
+        "sha256": "1df9ba961a1371721ded8cd1489d33b8ea19fbf0a13569bfbf8c99facc6f9dc1",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-03-grafana-oncall-0._JZvssnS.png",
+            "status": 200,
+            "sha256": "bec06ae5209d8440b6a5ab9ef59a46008269e47ac534061ad001e58e1b71ac5f"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-03-grafana-oncall-1.CE-wR-Pj.png",
+            "status": 200,
+            "sha256": "0a72dce6a831b96faef2e2f64e343462408ebc355c4942ee37895e533728bcef"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-03-grafana-oncall-2.R6_v2mQ9.png",
+            "status": 200,
+            "sha256": "f14f7034619090e3ed87e76a9d1088c18a9c60c058288baaa8bcf98cbc858ceb"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-03-grafana-oncall-3.BYWRJ_94.png",
+            "status": 200,
+            "sha256": "a47d7a1df2cbb403dd7ba59bfbedd54e33af3a7d7ce4d02f621d162457a03a96"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-03-grafana-oncall-4.C_paxjvY.png",
+            "status": 200,
+            "sha256": "a874f850f38e8fc16cde59e0fe98a3d20dcec8b83903e3a3b4afc242771e0e23"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-03-grafana-oncall-5.BY9WfC6l.png",
+            "status": 200,
+            "sha256": "ceb03a2cdac2a6a60a541c9d792336addb63700d4d590f79e9162a60cfe61201"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-03-grafana-oncall-6.DD4kid3U.png",
+            "status": 200,
+            "sha256": "6b51142a14eb096e4f2e7b0361e78daa10a8fbdfd16e506dca802b1afc26ee24"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-03-grafana-oncall-7.BWR-MDI4.png",
+            "status": 200,
+            "sha256": "edd3d5a4dd304803fc74c8147d83d9e40cfb2b72a1b6dcb0defa0f4aa5123358"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-03-grafana-oncall-8.CI9nrq8u.png",
+            "status": 200,
+            "sha256": "2778ed3c708c22bc9d9b4f0672cd3e9e6699fcbbaeb58d5508214e24d11fa456"
+          }
+        ]
+      },
+      {
+        "pr": 296,
+        "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/alerting/03-grafana-oncall-quiz",
+        "status": 200,
+        "bytes": 449765,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/alerting/03-grafana-oncall-quiz",
+        "sha256": "90fab2f47e448537cfb1e64e29fd88d498439070d5a48dac6f8009cca7123daa",
+        "images": []
+      },
+      {
+        "pr": 296,
+        "path": "ko/observability/alerting/03-grafana-oncall.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/alerting/03-grafana-oncall",
+        "status": 200,
+        "bytes": 505799,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/alerting/03-grafana-oncall",
+        "sha256": "c6bd314f56f9ef9fd9cf792528f948775b3e8ec7561e13d7227d5fcc523c3789",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-03-grafana-oncall-0.BZFFPSXX.png",
+            "status": 200,
+            "sha256": "6877aef8303122a18b54fb4b2c60b97640f2b9adc2c2985d2707adc394d6760b"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-03-grafana-oncall-1.Bfx-vKao.png",
+            "status": 200,
+            "sha256": "a0148ef4f520ddbfdc8a3c90c4e4afe0d3dfbc2f59967f3ac70ca59dfa853972"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-03-grafana-oncall-2.BHe51RX2.png",
+            "status": 200,
+            "sha256": "015f4ad6283167b817cb6fbd1f8d8e1ac83930cefabac4a1c2c1ac51f7bfda1e"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-03-grafana-oncall-3.C6CWRk4X.png",
+            "status": 200,
+            "sha256": "6b9f62152894e80268d94907e1a4305fe20979c61d02c63510e34dabb2d9bfce"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-03-grafana-oncall-4.BzN2xYM6.png",
+            "status": 200,
+            "sha256": "40801768c6f21e222aa599a032fe8b7e33797226b0d6cb407ab789bd01c62dd5"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-03-grafana-oncall-5.DvAkfakY.png",
+            "status": 200,
+            "sha256": "9f96a4af581c23db9b982fc4fd457ad28b9b57013e0ae4d5044d9f68046dbb5c"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-03-grafana-oncall-6.Sb-rhopP.png",
+            "status": 200,
+            "sha256": "f1354004263cfa5f431bc99c3d5569732bd8a12759cc4bf1b8f1ff347c4e6639"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-03-grafana-oncall-7.CakRwlua.png",
+            "status": 200,
+            "sha256": "164aa13dc78cafe5c54c205552a053bcfb62b7c7415621aa333a7715e94a3479"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-03-grafana-oncall-8.CChs9MyC.png",
+            "status": 200,
+            "sha256": "fd3d52fbe7cbf58d5b9f04b8a8b02c067269a3a854c1c158c47ca6ab3494b677"
+          }
+        ]
+      },
+      {
+        "pr": 296,
+        "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/alerting/03-grafana-oncall-quiz",
+        "status": 200,
+        "bytes": 451052,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/alerting/03-grafana-oncall-quiz",
+        "sha256": "739abd81d514bc3be123b5efc0799aa130f1e29cd5b862d747de83146882798f",
+        "images": []
+      }
+    ],
+    "viewers": [
+      {
+        "pr": 296,
+        "name": "en-observability-alerting-03-grafana-oncall-0.html",
+        "status": 200,
+        "sha256": "f3f2b8cc5d65651d0dac6cfbcf63ab60e1beabbd07bd5f1ccbb38d303fb66e99",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 296,
+        "name": "en-observability-alerting-03-grafana-oncall-1.html",
+        "status": 200,
+        "sha256": "1e8351c6658fbe4fda9029c9890978b4b58bdb342d47d82c6bde3192c243e49d",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 296,
+        "name": "en-observability-alerting-03-grafana-oncall-2.html",
+        "status": 200,
+        "sha256": "208e9c4f0bb1ec5b937f32afd8c00a77e4e46c250af80036cc3873f95cf5e930",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 296,
+        "name": "en-observability-alerting-03-grafana-oncall-3.html",
+        "status": 200,
+        "sha256": "05e0cdea3a8a45b7dc11b1a2179b0fe3671b8f1110190c599d6520e0576a3611",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 296,
+        "name": "en-observability-alerting-03-grafana-oncall-4.html",
+        "status": 200,
+        "sha256": "784899d46408ac13c647088947925b641e451f6d86ba7e8eaaf67aa556f3d531",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 296,
+        "name": "en-observability-alerting-03-grafana-oncall-5.html",
+        "status": 200,
+        "sha256": "0bf8d7fb12938c7347c4584301ea9269558268eadb0308905df1f05154d5a8a9",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 296,
+        "name": "en-observability-alerting-03-grafana-oncall-6.html",
+        "status": 200,
+        "sha256": "cb3e4157cc971dd151ff153fa13f5b2abb359a7b401121618fe2360d06a41377",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 296,
+        "name": "en-observability-alerting-03-grafana-oncall-7.html",
+        "status": 200,
+        "sha256": "575e4e01dc2c7d298c3d6b6ce6df7e8cf44904e4c257ad961d52b90c77d6924c",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 296,
+        "name": "en-observability-alerting-03-grafana-oncall-8.html",
+        "status": 200,
+        "sha256": "90b4d611460bcddb2e601e5af87217d18bbc4ab664b80a45464c1e7408efb2c6",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 296,
+        "name": "ko-observability-alerting-03-grafana-oncall-0.html",
+        "status": 200,
+        "sha256": "5ca4f97d3603cf2fbbc771db22cc899959249de68f824d2d2801851650fdab32",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 296,
+        "name": "ko-observability-alerting-03-grafana-oncall-1.html",
+        "status": 200,
+        "sha256": "e2e4080830bd7f55e628bb27d8f5c74de23b1cf3a88bbf36c7c5a253bef792f7",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 296,
+        "name": "ko-observability-alerting-03-grafana-oncall-2.html",
+        "status": 200,
+        "sha256": "b22d00d9ca95a9b7c889f89abdd9d8bb1f0f6d2399b6d4c4658e09dc6931a6ef",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 296,
+        "name": "ko-observability-alerting-03-grafana-oncall-3.html",
+        "status": 200,
+        "sha256": "deea156404575af88243413f17317f85de3758e7afee7cf7efd0de6a39096301",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 296,
+        "name": "ko-observability-alerting-03-grafana-oncall-4.html",
+        "status": 200,
+        "sha256": "42d699010fe90c82b3ef4c81efdab99084a0530020a2d27a86777fc17e577901",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 296,
+        "name": "ko-observability-alerting-03-grafana-oncall-5.html",
+        "status": 200,
+        "sha256": "650805bfbd00c8c80a934c6c911cb6f3ddca7e5dcc3be533aa9b70873aaa2609",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 296,
+        "name": "ko-observability-alerting-03-grafana-oncall-6.html",
+        "status": 200,
+        "sha256": "9f4c1e1924583e667a4e84979545081d1b35da5c1a5cf29ce462e24bd75896d5",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 296,
+        "name": "ko-observability-alerting-03-grafana-oncall-7.html",
+        "status": 200,
+        "sha256": "f3d54396c87f71c20ccf527517d76722c5b267e3bfcb8b88b18cf4dc86266541",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 296,
+        "name": "ko-observability-alerting-03-grafana-oncall-8.html",
+        "status": 200,
+        "sha256": "56a22fe3c372574d73c189e7fc63ecc8602ad9eba3e3c2f04f47a0469c59ba0a",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      }
+    ],
+    "scope": "Production HTTP, metadata and reviewed PNG/SVG comparison. No analytics or cluster execution."
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 718,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 718,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 718,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50641,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 997,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 997,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 997,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58065,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 802,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 802,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 802,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53866,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 898,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 898,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 898,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51617,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 894,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 894,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 894,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58095,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53289,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-6.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-6.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-6.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51257,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-7.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-7.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-7.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48467,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-8.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 644,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-8.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 644,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-8.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 644,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49382,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 438,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 438,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 438,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50275,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 624,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 624,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 624,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57520,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 505,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 505,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 505,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53251,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 536,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 536,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 536,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50689,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 737,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 737,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 737,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57840,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 558,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 558,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 558,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53027,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-6.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 477,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-6.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 477,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-6.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 477,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51040,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-7.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 316,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-7.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 316,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-7.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 316,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47924,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-8.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 347,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-8.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 347,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-8.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 347,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48577,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "54 cases on 18 fetched production viewers; motion/reduced-motion/visibility/theme/guided controls and 18 SVG exports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "limits": [
+    "Four deployedguide/quizpagesand18PNG/SVGviewersmatchreviewedOnCallHEAD5d90c0d4.",
+    "54browsercasesexercisefetchedproductionviewersat375/768/1920;noactualnotification/accountcalls.",
+    "CloudConnectioncutoffisexplicitinthedeployedsource;providersnotdependentonitaredistinguished."
+  ]
+}

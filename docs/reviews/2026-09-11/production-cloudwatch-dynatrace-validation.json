@@ -1,0 +1,1064 @@
+{
+  "status": "passed",
+  "http": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T14:49:44.765226+00:00",
+    "deploymentRun": 34762542690,
+    "deploymentCommit": "0c6314a0df597298d35d3b7b8bba30aa5fa4ac3d",
+    "includedPRs": [
+      302,
+      304
+    ],
+    "pages": [
+      {
+        "pr": 302,
+        "path": "en/observability/alerting/02-cloudwatch-alarms.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/alerting/02-cloudwatch-alarms",
+        "status": 200,
+        "bytes": 612749,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/alerting/02-cloudwatch-alarms",
+        "sha256": "0556b637e3097e2a579d26d03442a2aa6da6da9e49746f3564736985e1125375",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-02-cloudwatch-alarms-0.eMmDn5Xy.png",
+            "status": 200,
+            "sha256": "49e1d100a09b377e355dca0765d6e22dcbcf4b7d742d9d03a51aaf63ee157845"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-02-cloudwatch-alarms-1.VfQAjSae.png",
+            "status": 200,
+            "sha256": "94fbcf343be51f18da4bc7f60064320f546d4c6b3d49d60381cbd11f27f22cac"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-02-cloudwatch-alarms-2.BKoQJiu5.png",
+            "status": 200,
+            "sha256": "f0747eb4049b8db899a87ce239b1f64f0c2c22fb07b9960a1ea53d1409def410"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-02-cloudwatch-alarms-3.J4lUxjt4.png",
+            "status": 200,
+            "sha256": "df7dfb84ec12eacc978afea44234fbad99b0991fe03d2b911ea82f09b65d577c"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-02-cloudwatch-alarms-4.BCqpd_8I.png",
+            "status": 200,
+            "sha256": "ab6052235feb5a9c5f00c2d17e7484f9fdf4ecc7ab0867787982b60ee2dd89e2"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-02-cloudwatch-alarms-5.Cku2IBae.png",
+            "status": 200,
+            "sha256": "ff9022cafeadff7b3a3241ad75d9066c9a3a9f65e235c8c55c1105a6856cb3e0"
+          }
+        ]
+      },
+      {
+        "pr": 302,
+        "path": "en/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/alerting/02-cloudwatch-alarms-quiz",
+        "status": 200,
+        "bytes": 453482,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/alerting/02-cloudwatch-alarms-quiz",
+        "sha256": "7654420a94cf8cbf62c0697becaa85832a15e52306f6b6f75349cbe32e6014a9",
+        "images": []
+      },
+      {
+        "pr": 302,
+        "path": "ko/observability/alerting/02-cloudwatch-alarms.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/alerting/02-cloudwatch-alarms",
+        "status": 200,
+        "bytes": 617253,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/alerting/02-cloudwatch-alarms",
+        "sha256": "5e0852a0f6da1b091797e3751ccc9d0a72cb2c707e30180e5f2017f7766c8961",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-02-cloudwatch-alarms-0.AzFtWbuA.png",
+            "status": 200,
+            "sha256": "3db8a84d49b4b2b381aa8d99c7aaeb7ac3fcd02c74e04366d33da63e8d812680"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-02-cloudwatch-alarms-1.7hxhN2Pf.png",
+            "status": 200,
+            "sha256": "5b243ed95a718da6837a28034057905849021c3ef7aea98c6e484f2b9ff28b86"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-02-cloudwatch-alarms-2.BZaeCp1f.png",
+            "status": 200,
+            "sha256": "7ec1d868b506b9af119f6ea845f858a25eec6a2eaa3ac69bf99be6a785a1dcaa"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-02-cloudwatch-alarms-3.Co9316wa.png",
+            "status": 200,
+            "sha256": "acbb566ab6620635de262bfd651f77f8a5af7ab3da870a541431f1bb8eecf3c0"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-02-cloudwatch-alarms-4.Ct3G1dTX.png",
+            "status": 200,
+            "sha256": "b8a4e5b2e57898134238f9fd2e6ccc68989c202af9aee4c7cd33b0142792345b"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-02-cloudwatch-alarms-5.g0fLfozU.png",
+            "status": 200,
+            "sha256": "35e2b1e88cadb07d1b6c1c532e461085ec3ff27d9596a44d02d03fa60c762285"
+          }
+        ]
+      },
+      {
+        "pr": 302,
+        "path": "ko/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/alerting/02-cloudwatch-alarms-quiz",
+        "status": 200,
+        "bytes": 455074,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/alerting/02-cloudwatch-alarms-quiz",
+        "sha256": "66aa59921b7e2361a99b35b7efb930ae8fe83daeee73dfb9ceb81cd8e7fd94e6",
+        "images": []
+      },
+      {
+        "pr": 304,
+        "path": "en/observability/tracing/04-dynatrace.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/tracing/04-dynatrace",
+        "status": 200,
+        "bytes": 586516,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/tracing/04-dynatrace",
+        "sha256": "fbe20447b93290ebd8312c6bff73d0963c1ffb3255fd9cb58cf02b0fb496899c",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-tracing-04-dynatrace-1.dHOPZzhb.png",
+            "status": 200,
+            "sha256": "730616319ac915e8b10957865e66e394a28c511b847da67c524c0b68c3892688"
+          }
+        ]
+      },
+      {
+        "pr": 304,
+        "path": "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/tracing/04-dynatrace-quiz",
+        "status": 200,
+        "bytes": 447396,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/tracing/04-dynatrace-quiz",
+        "sha256": "f15dc5ee80e40341714606844695966371debc963f88881f2fbcaa68a0a3487a",
+        "images": []
+      },
+      {
+        "pr": 304,
+        "path": "ko/observability/tracing/04-dynatrace.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/tracing/04-dynatrace",
+        "status": 200,
+        "bytes": 591621,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/tracing/04-dynatrace",
+        "sha256": "8b1452c6ba22da3fcba2a05fc8b0ee7eeec2e811d05392f4dd8c4d052c271fd3",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-tracing-04-dynatrace-1.Db0HqR_P.png",
+            "status": 200,
+            "sha256": "371973b8acd11298c6097792e819d3719a60200668819867d5e395876bad898f"
+          }
+        ]
+      },
+      {
+        "pr": 304,
+        "path": "ko/quizzes/observability/tracing/04-dynatrace-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/tracing/04-dynatrace-quiz",
+        "status": 200,
+        "bytes": 448564,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/tracing/04-dynatrace-quiz",
+        "sha256": "9c666b4917147e09b0ec1781096892f5559cf583ea67fa2e2bf794d96af580d5",
+        "images": []
+      }
+    ],
+    "viewers": [
+      {
+        "pr": 302,
+        "name": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "status": 200,
+        "sha256": "49b085e2c3abce28b318ecd8365f56b55ff8409f78d6f018a562f397f362fe5a",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 302,
+        "name": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "status": 200,
+        "sha256": "3166366a2a1203dafe2be04867423b6024a31b6b2678ee1ca7b4f5975edcda3c",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 302,
+        "name": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "status": 200,
+        "sha256": "677c3ffccf5de1b4fa0a4c8df1b6ba3eed0517db0b8fd080edf4f803600c4219",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 302,
+        "name": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "status": 200,
+        "sha256": "1ecc1a97eff972224aad2694d82bedf4e12ca0b691a3e53c0df2a40d27733b19",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 302,
+        "name": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "status": 200,
+        "sha256": "0ae1534c9406bd97d37d7ca48d4715f806365099e402eddeb69cc27832a3e008",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 302,
+        "name": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "status": 200,
+        "sha256": "35ef9b75be770f628b549715b90d888edc530b8924a3c21a0aa3fa3ff2f7e8bd",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 302,
+        "name": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "status": 200,
+        "sha256": "ca175fbb1f1e48a7a0c88d8ad01424a4529f248e7fa736d02129fe38d61fb42c",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 302,
+        "name": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "status": 200,
+        "sha256": "3f3cf0550ed3977cdb283cb299674b5695e7aebc4f7477a8583ad687146c3a4e",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 302,
+        "name": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "status": 200,
+        "sha256": "73876543de050cd881d0539849f491a04b94b44a7dd496663692207f76450bb0",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 302,
+        "name": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "status": 200,
+        "sha256": "f3ccc3f58b11cfad6f93413c1f756622380836f4798b681fb7497224849f270c",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 302,
+        "name": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "status": 200,
+        "sha256": "6ce37bbaf4d71dccc33c89c8006b451327662de26c5638a44ed389dae77ddefb",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 302,
+        "name": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "status": 200,
+        "sha256": "dcad8846fad55b1a6350bd102fde762b731063fd8563abd2c40532a86c7e2416",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 304,
+        "name": "en-observability-tracing-04-dynatrace-0.html",
+        "status": 200,
+        "sha256": "7526d6a9d074501901e68b06ce86ed85d784b492b4741803a76e74bad8cd9343",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 304,
+        "name": "ko-observability-tracing-04-dynatrace-0.html",
+        "status": 200,
+        "sha256": "2c3dfaa2a6e50daf0b40e177af643372f6be32b8a0625de4ec153e2b85dd6f89",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      }
+    ],
+    "scope": "Production HTTP, metadata and reviewed PNG/SVG comparison. No analytics or cluster execution."
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 914,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 914,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 914,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 61449,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 613,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 613,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 613,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48084,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51190,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 994,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 994,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 994,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53273,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 912,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 912,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 912,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53423,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 623,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 623,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 623,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56174,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 694,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 694,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-04-dynatrace-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 694,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54973,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 661,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 60549,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 422,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 422,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 422,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47788,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 606,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 606,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 606,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51110,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 650,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 650,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 650,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52781,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 668,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 668,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 668,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52603,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 425,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 425,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 425,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55614,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 504,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 504,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-04-dynatrace-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 504,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54664,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "42 cases on 14 fetched production viewers; motion/reduced-motion/visibility/theme/guided controls and 14 SVG exports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "limits": [
+    "Eight deployed guides/quizzes and14fetchedviewers verified against reviewed source;14PNG references andall14SVGpayloads match.",
+    "42browsercases at375/768/1920exercisecontrols,exportsandlayout;noCloudWatch/Dynatracetenantornotificationcalls."
+  ]
+}

@@ -1,182 +1,36 @@
-# Full content review — in progress
+# 문서 전수 검토 기록
 
-This is a progress report, not a claim that the full corpus has been semantically reviewed.
+검토 기준일은 2026-09-13입니다. 한·영 원문 1,260개의 내용 검토 근거와 현재 main의 파일 해시를 대조했습니다. 내용·번역·링크 보완의 머지와 최종 배포 검증을 완료했습니다. 검사 대상 커밋과 범위는 JSON 보고서에 기록합니다.
 
-- Initial inventory: 2701 Markdown documents across five languages; the current coverage inventory includes 2707 existing documents after restoration and removal of retired site utilities.
-- Fully read source/quiz/lab files recorded so far: 1039 (1035 fixed, 0 verified, 4 with follow-up).
-- Source files are maintained in Korean and English; translations are checked structurally and repaired through automation.
+| 범위 | 확인 결과 |
+|---|---|
+| 기본 한·영 문서 1,194개 | 문서별 완독 기록이 있으며, 현재 main과 일치하거나 검토한 후속 변경으로 연결됩니다. |
+| 추가 문서 66개 | 독립 리뷰 커밋과 현재 파일 해시가 모두 일치합니다. |
+| 전체 언어 2,795개 | 원문 외 번역본은 링크·이미지·Markdown 구조를 기계적으로 검사했습니다. 모든 번역 문장을 새로 의미 검토했다는 뜻은 아닙니다. |
+| 기록된 위치 링크 검사 | 66,632건에서 대상 누락이 없었습니다. 해당 검사 커밋은 JSON 보고서에 고정되어 있습니다. |
+| 기록된 로컬 이미지 검사 | 2,672개 이미지, 2,764개 참조를 확인했습니다. Raster는 전체 디코딩하고 SVG는 XML을 검사했습니다. |
+| 실제 사이트 AI 원문 | 680개 Markdown의 해시와 바이트 크기가 공개 manifest와 모두 일치했습니다. |
+| 실제 문서 화면 | 1920px 화면에서 본문 952px, 768px에서 704px, 375px에서 327px를 확인했습니다. 검사한 페이지에 가로 넘침이나 깨진 이미지는 없었습니다. |
+| 검색·MCP | 도메인 루트 robots.txt에 문서 sitemap을 추가했습니다. 로컬 stdio MCP의 검색·인용·페이지 분할·허용 경로 검사도 통과했습니다. |
 
-| Batch | Files recorded | Fixed | Verified | Follow-up |
-|---|---:|---:|---:|---:|
-| [agentic-ai-platform](batches/agentic-ai-platform.json) | 4 | 4 | 0 | 0 |
-| [ai-infrastructure](batches/ai-infrastructure.json) | 4 | 4 | 0 | 0 |
-| [ai-ml-best-practices](batches/ai-ml-best-practices.json) | 4 | 4 | 0 | 0 |
-| [ai-ml-workloads](batches/ai-ml-workloads.json) | 4 | 4 | 0 | 0 |
-| [airflow-dag-patterns](batches/airflow-dag-patterns.json) | 4 | 4 | 0 | 0 |
-| [airflow-foundation](batches/airflow-foundation.json) | 6 | 6 | 0 | 0 |
-| [airflow-helm](batches/airflow-helm.json) | 4 | 4 | 0 | 0 |
-| [airflow-mwaa](batches/airflow-mwaa.json) | 4 | 4 | 0 | 0 |
-| [airflow-operations](batches/airflow-operations.json) | 4 | 4 | 0 | 0 |
-| [argocd-applications](batches/argocd-applications.json) | 4 | 4 | 0 | 0 |
-| [argocd-appsets](batches/argocd-appsets.json) | 4 | 4 | 0 | 0 |
-| [argocd-best-practices](batches/argocd-best-practices.json) | 4 | 4 | 0 | 0 |
-| [argocd-experiment](batches/argocd-experiment.json) | 4 | 4 | 0 | 0 |
-| [argocd-foundation](batches/argocd-foundation.json) | 8 | 8 | 0 | 0 |
-| [argocd-notifications](batches/argocd-notifications.json) | 4 | 4 | 0 | 0 |
-| [argocd-projects-rbac](batches/argocd-projects-rbac.json) | 4 | 4 | 0 | 0 |
-| [argocd-security](batches/argocd-security.json) | 4 | 4 | 0 | 0 |
-| [argocd-sync](batches/argocd-sync.json) | 4 | 4 | 0 | 0 |
-| [argocd-traffic](batches/argocd-traffic.json) | 4 | 4 | 0 | 0 |
-| [auto-mode-curriculum](batches/auto-mode-curriculum.json) | 2 | 2 | 0 | 0 |
-| [autoscaling-scheduling](batches/autoscaling-scheduling.json) | 24 | 24 | 0 | 0 |
-| [basics](batches/basics.json) | 36 | 36 | 0 | 0 |
-| [container-registry](batches/container-registry.json) | 18 | 18 | 0 | 0 |
-| [core-foundation](batches/core-foundation.json) | 24 | 24 | 0 | 0 |
-| [core-rest](batches/core-rest.json) | 20 | 20 | 0 | 0 |
-| [data-foundation](batches/data-foundation.json) | 6 | 6 | 0 | 0 |
-| [eks-advanced-debugging](batches/eks-advanced-debugging.json) | 4 | 4 | 0 | 0 |
-| [eks-auto-mode-cost](batches/eks-auto-mode-cost.json) | 4 | 4 | 0 | 0 |
-| [eks-auto-mode-foundation](batches/eks-auto-mode-foundation.json) | 6 | 6 | 0 | 0 |
-| [eks-auto-mode-lifecycle](batches/eks-auto-mode-lifecycle.json) | 4 | 4 | 0 | 0 |
-| [eks-auto-mode-migration](batches/eks-auto-mode-migration.json) | 4 | 4 | 0 | 0 |
-| [eks-auto-mode-nodepools](batches/eks-auto-mode-nodepools.json) | 4 | 4 | 0 | 0 |
-| [eks-auto-mode-operations](batches/eks-auto-mode-operations.json) | 4 | 4 | 0 | 0 |
-| [eks-auto-mode-scaling](batches/eks-auto-mode-scaling.json) | 4 | 4 | 0 | 0 |
-| [eks-auto-mode-spot](batches/eks-auto-mode-spot.json) | 4 | 4 | 0 | 0 |
-| [eks-auto-mode-workloads](batches/eks-auto-mode-workloads.json) | 4 | 4 | 0 | 0 |
-| [eks-cost-optimization](batches/eks-cost-optimization.json) | 4 | 4 | 0 | 0 |
-| [eks-creation-conclusion](batches/eks-creation-conclusion.json) | 2 | 2 | 0 | 0 |
-| [eks-creation-overview](batches/eks-creation-overview.json) | 2 | 2 | 0 | 0 |
-| [eks-creation-part1](batches/eks-creation-part1.json) | 4 | 4 | 0 | 0 |
-| [eks-creation-part2](batches/eks-creation-part2.json) | 4 | 4 | 0 | 0 |
-| [eks-creation-part3](batches/eks-creation-part3.json) | 4 | 4 | 0 | 0 |
-| [eks-creation-part4](batches/eks-creation-part4.json) | 4 | 4 | 0 | 0 |
-| [eks-creation-part5](batches/eks-creation-part5.json) | 4 | 4 | 0 | 0 |
-| [eks-hybrid-bootstrap](batches/eks-hybrid-bootstrap.json) | 4 | 4 | 0 | 0 |
-| [eks-hybrid-foundation](batches/eks-hybrid-foundation.json) | 6 | 6 | 0 | 0 |
-| [eks-hybrid-gpu](batches/eks-hybrid-gpu.json) | 4 | 4 | 0 | 0 |
-| [eks-hybrid-networking](batches/eks-hybrid-networking.json) | 4 | 4 | 0 | 0 |
-| [eks-hybrid-placement](batches/eks-hybrid-placement.json) | 4 | 4 | 0 | 0 |
-| [eks-hybrid-private-setup](batches/eks-hybrid-private-setup.json) | 4 | 4 | 0 | 0 |
-| [eks-introduction](batches/eks-introduction.json) | 4 | 4 | 0 | 0 |
-| [eks-monitoring-logging](batches/eks-monitoring-logging.json) | 4 | 4 | 0 | 0 |
-| [eks-networking-part1](batches/eks-networking-part1.json) | 4 | 4 | 0 | 0 |
-| [eks-networking-part2](batches/eks-networking-part2.json) | 4 | 4 | 0 | 0 |
-| [eks-networking-part3](batches/eks-networking-part3.json) | 4 | 4 | 0 | 0 |
-| [eks-resiliency](batches/eks-resiliency.json) | 4 | 4 | 0 | 0 |
-| [eks-security-chapter](batches/eks-security-chapter.json) | 4 | 4 | 0 | 0 |
-| [eks-storage-part1](batches/eks-storage-part1.json) | 4 | 4 | 0 | 0 |
-| [eks-storage-part2](batches/eks-storage-part2.json) | 4 | 4 | 0 | 0 |
-| [eks-storage-part3](batches/eks-storage-part3.json) | 4 | 4 | 0 | 0 |
-| [eks-troubleshooting](batches/eks-troubleshooting.json) | 4 | 4 | 0 | 0 |
-| [eks-upgrades](batches/eks-upgrades.json) | 4 | 4 | 0 | 0 |
-| [eks-version-roadmap](batches/eks-version-roadmap.json) | 4 | 4 | 0 | 0 |
-| [feature-flags](batches/feature-flags.json) | 4 | 4 | 0 | 0 |
-| [flagger](batches/flagger.json) | 4 | 4 | 0 | 0 |
-| [flink-foundation](batches/flink-foundation.json) | 6 | 6 | 0 | 0 |
-| [flink-operations](batches/flink-operations.json) | 4 | 4 | 0 | 0 |
-| [flink-operator](batches/flink-operator.json) | 4 | 4 | 0 | 0 |
-| [flink-state](batches/flink-state.json) | 4 | 4 | 0 | 0 |
-| [flux](batches/flux.json) | 4 | 4 | 0 | 0 |
-| [gitops-overviews](batches/gitops-overviews.json) | 6 | 6 | 0 | 0 |
-| [governance](batches/governance.json) | 28 | 28 | 0 | 0 |
-| [inference-frameworks](batches/inference-frameworks.json) | 4 | 4 | 0 | 0 |
-| [intro-guides](batches/intro-guides.json) | 10 | 10 | 0 | 0 |
-| [istio-advanced](batches/istio-advanced.json) | 24 | 24 | 0 | 0 |
-| [istio-comparison](batches/istio-comparison.json) | 10 | 10 | 0 | 0 |
-| [istio-foundation](batches/istio-foundation.json) | 16 | 16 | 0 | 0 |
-| [istio-observability](batches/istio-observability.json) | 12 | 12 | 0 | 0 |
-| [istio-resilience](batches/istio-resilience.json) | 10 | 10 | 0 | 0 |
-| [istio-security](batches/istio-security.json) | 10 | 10 | 0 | 0 |
-| [istio-traffic](batches/istio-traffic.json) | 30 | 30 | 0 | 0 |
-| [istio-troubleshooting](batches/istio-troubleshooting.json) | 2 | 2 | 0 | 0 |
-| [kafka-benchmark](batches/kafka-benchmark.json) | 4 | 4 | 0 | 0 |
-| [kafka-best-practices](batches/kafka-best-practices.json) | 4 | 4 | 0 | 0 |
-| [kafka-connect-mirrormaker](batches/kafka-connect-mirrormaker.json) | 4 | 4 | 0 | 0 |
-| [kafka-foundation](batches/kafka-foundation.json) | 6 | 6 | 0 | 0 |
-| [kafka-monitoring](batches/kafka-monitoring.json) | 4 | 4 | 0 | 0 |
-| [kafka-msk-integration](batches/kafka-msk-integration.json) | 4 | 4 | 0 | 0 |
-| [kafka-operations](batches/kafka-operations.json) | 4 | 4 | 0 | 0 |
-| [kafka-schema-registry](batches/kafka-schema-registry.json) | 4 | 4 | 0 | 0 |
-| [kafka-strimzi-operator](batches/kafka-strimzi-operator.json) | 4 | 4 | 0 | 0 |
-| [kubeflow-foundation](batches/kubeflow-foundation.json) | 6 | 6 | 0 | 0 |
-| [kubeflow-katib](batches/kubeflow-katib.json) | 4 | 4 | 0 | 0 |
-| [kubeflow-kserve](batches/kubeflow-kserve.json) | 4 | 4 | 0 | 0 |
-| [kubeflow-notebooks](batches/kubeflow-notebooks.json) | 4 | 4 | 0 | 0 |
-| [kubeflow-pipelines](batches/kubeflow-pipelines.json) | 4 | 4 | 0 | 0 |
-| [kubeflow-trainer](batches/kubeflow-trainer.json) | 4 | 4 | 0 | 0 |
-| [labs-eks-creation](batches/labs-eks-creation.json) | 2 | 2 | 0 | 0 |
-| [labs-foundations](batches/labs-foundations.json) | 14 | 14 | 0 | 0 |
-| [mesh-cilium](batches/mesh-cilium.json) | 24 | 24 | 0 | 0 |
-| [mesh-linkerd](batches/mesh-linkerd.json) | 28 | 28 | 0 | 0 |
-| [mesh-other-istio-overview](batches/mesh-other-istio-overview.json) | 4 | 4 | 0 | 0 |
-| [mlflow-eks](batches/mlflow-eks.json) | 4 | 4 | 0 | 0 |
-| [mlflow-foundation](batches/mlflow-foundation.json) | 6 | 6 | 0 | 0 |
-| [mlflow-registry](batches/mlflow-registry.json) | 4 | 4 | 0 | 0 |
-| [model-training](batches/model-training.json) | 4 | 4 | 0 | 0 |
-| [navigation-index](batches/navigation-index.json) | 4 | 4 | 0 | 0 |
-| [networking-calico](batches/networking-calico.json) | 42 | 42 | 0 | 0 |
-| [networking-cilium](batches/networking-cilium.json) | 38 | 38 | 0 | 0 |
-| [networking-foundation](batches/networking-foundation.json) | 28 | 28 | 0 | 0 |
-| [news-log](batches/news-log.json) | 2 | 2 | 0 | 0 |
-| [observability-foundation](batches/observability-foundation.json) | 2 | 2 | 0 | 0 |
-| [observability-metrics](batches/observability-metrics.json) | 24 | 20 | 0 | 4 |
-| [ops-ci-pipelines](batches/ops-ci-pipelines.json) | 4 | 4 | 0 | 0 |
-| [ops-event-capacity](batches/ops-event-capacity.json) | 4 | 4 | 0 | 0 |
-| [ops-finops-cost-platform](batches/ops-finops-cost-platform.json) | 4 | 4 | 0 | 0 |
-| [ops-gitops-automation](batches/ops-gitops-automation.json) | 4 | 4 | 0 | 0 |
-| [ops-gitops-multicluster](batches/ops-gitops-multicluster.json) | 4 | 4 | 0 | 0 |
-| [ops-infrastructure](batches/ops-infrastructure.json) | 4 | 4 | 0 | 0 |
-| [ops-infrastructure-advanced](batches/ops-infrastructure-advanced.json) | 4 | 4 | 0 | 0 |
-| [ops-observability-alerts](batches/ops-observability-alerts.json) | 4 | 4 | 0 | 0 |
-| [ops-observability-analysis](batches/ops-observability-analysis.json) | 4 | 4 | 0 | 0 |
-| [ops-observability-stack](batches/ops-observability-stack.json) | 4 | 4 | 0 | 0 |
-| [ops-resource-optimization](batches/ops-resource-optimization.json) | 4 | 4 | 0 | 0 |
-| [ops-scaling-strategies](batches/ops-scaling-strategies.json) | 4 | 4 | 0 | 0 |
-| [ops-tekton-pipelines](batches/ops-tekton-pipelines.json) | 4 | 4 | 0 | 0 |
-| [ops-troubleshooting](batches/ops-troubleshooting.json) | 4 | 4 | 0 | 0 |
-| [ops-upgrade-operations](batches/ops-upgrade-operations.json) | 4 | 4 | 0 | 0 |
-| [ops-zonal-foundation](batches/ops-zonal-foundation.json) | 6 | 6 | 0 | 0 |
-| [platform-ack](batches/platform-ack.json) | 10 | 10 | 0 | 0 |
-| [platform-backstage](batches/platform-backstage.json) | 4 | 4 | 0 | 0 |
-| [platform-crossplane](batches/platform-crossplane.json) | 4 | 4 | 0 | 0 |
-| [platform-examplecorp](batches/platform-examplecorp.json) | 2 | 2 | 0 | 0 |
-| [platform-extensions](batches/platform-extensions.json) | 4 | 4 | 0 | 0 |
-| [platform-helm](batches/platform-helm.json) | 4 | 4 | 0 | 0 |
-| [platform-kro](batches/platform-kro.json) | 4 | 4 | 0 | 0 |
-| [platform-overview](batches/platform-overview.json) | 4 | 4 | 0 | 0 |
-| [platform-vcluster](batches/platform-vcluster.json) | 4 | 4 | 0 | 0 |
-| [ray-foundation](batches/ray-foundation.json) | 6 | 6 | 0 | 0 |
-| [ray-operator](batches/ray-operator.json) | 4 | 4 | 0 | 0 |
-| [ray-serve](batches/ray-serve.json) | 4 | 4 | 0 | 0 |
-| [ray-train-tune](batches/ray-train-tune.json) | 4 | 4 | 0 | 0 |
-| [sagemaker-execution](batches/sagemaker-execution.json) | 4 | 4 | 0 | 0 |
-| [sagemaker-foundation](batches/sagemaker-foundation.json) | 7 | 7 | 0 | 0 |
-| [sagemaker-results](batches/sagemaker-results.json) | 4 | 4 | 0 | 0 |
-| [sagemaker-tokenization](batches/sagemaker-tokenization.json) | 4 | 4 | 0 | 0 |
-| [spark-best-practices](batches/spark-best-practices.json) | 4 | 4 | 0 | 0 |
-| [spark-emr](batches/spark-emr.json) | 4 | 4 | 0 | 0 |
-| [spark-foundation](batches/spark-foundation.json) | 6 | 6 | 0 | 0 |
-| [spark-operator](batches/spark-operator.json) | 4 | 4 | 0 | 0 |
-| [spark-performance](batches/spark-performance.json) | 4 | 4 | 0 | 0 |
-| [spot-production-experiments](batches/spot-production-experiments.json) | 4 | 4 | 0 | 0 |
-| [storage-database](batches/storage-database.json) | 12 | 12 | 0 | 0 |
-| [summary-navigation](batches/summary-navigation.json) | 2 | 2 | 0 | 0 |
-| [unified-studio](batches/unified-studio.json) | 6 | 6 | 0 | 0 |
-| [vllm-deployment](batches/vllm-deployment.json) | 4 | 4 | 0 | 0 |
+최종 배포는 `ed82b7e219b29a42229e6b661db96994ce887737` 기준으로 확인했습니다. 원래 확인하신 Istio 설치 페이지, 공개 sitemap·robots.txt·AI manifest가 정상 응답하며 AI 문서 목록은 검토된 원문과 일치합니다. 기존 GA4 태그는 유지하며 별도 사이트 내 방문자 통계는 추가하지 않았습니다.
 
-## Mechanical findings
+## 검증 근거
 
-- All 2,075 initially referenced local image files decoded or parsed successfully.
-- Initial translated sources referenced 514 missing local images. The latest whole-corpus inventory reports zero missing local image references after exact original restores and English-owned asset synchronization; translated prose has not been manually rewritten.
-- 30 unique external image URLs checked: 19 returned 404.
-- 1,118 unique external documentation URLs checked: 128 returned 404/410 and 30 were unverified (access/network restrictions). These need contextual disposition.
-- Same-repository absolute GitHub links are now included in local link checks.
-- Korean manual TOC fragment normalization is corrected at rendering time.
-- Translation sync now restores failed destination files rather than committing deletions.
+- [전체 검증 결과와 파일별 검토 연결](full-audit-verification.json)
+- [추가 교육 문서의 독립 리뷰 근거](new-curricula-review-provenance.json)
+- [기초 관측성·Hybrid Nodes·Gatekeeper 배포 검증](production-observability-foundation-hybrid-gatekeeper.json)
+- [Grafana 배포 검증](production-grafana-validation.json)
+- [로그·알림 개요 배포 검증](production-logging-alerting-overview-validation.json)
+- [보안·관측성 배포 검증](production-security-observability-validation.json)
+- [OnCall 배포 검증](production-oncall-validation.json)
+- [CloudWatch·Dynatrace 배포 검증](production-cloudwatch-dynatrace-validation.json)
+- [Alertmanager 배포 검증](production-alertmanager-validation.json)
 
-## Scope limits
+세부 내용 수정과 실행 범위는 각 주제의 `*-validation.json` 및 `batches/` 기록에 있습니다. 원문 내용 수정, 번역 동기화, 링크·앵커 보완, 실제 배포 확인을 구분해 기록합니다.
 
-- Infrastructure examples have not been executed against AWS accounts.
-- Historical benchmark results must retain the versions actually measured.
-- A reachable URL or valid image file does not prove the surrounding technical claims; those remain pending until their per-document review row is complete.
+## 검증 범위의 한계
+
+실제 AWS 계정·Kubernetes 클러스터·SaaS tenant에 예제 전체를 배포한 것은 아닙니다. 로컬에서 실행한 도구·스키마·프로토콜 검사와 실제 외부 실행을 구분했습니다. 접근을 거부하거나 네트워크가 차단된 외부 문서는 그 응답만으로 삭제된 문서라고 판정하지 않았습니다.
+
+검색봇이 접근할 수 있고 sitemap·원문이 일관되게 제공되는지는 검증했지만, 모든 페이지가 이미 검색엔진 또는 모든 AI에 색인되었다고 보장하지는 않습니다. MCP는 체크아웃을 읽는 stdio 방식이며, 최신 내용을 사용하려면 체크아웃을 갱신하고 서버를 재시작해야 합니다.
