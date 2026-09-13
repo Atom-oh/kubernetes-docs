@@ -20,6 +20,8 @@ Kubernetes evolves rapidly, with three releases per year introducing new feature
 
 ---
 
+<span id="1-overview-and-learning-objectives"></span>
+
 ## 1. Overview and Learning Objectives
 
 ### Purpose of This Document
@@ -55,6 +57,8 @@ After reading this document, you will be able to:
 | **Engineering Managers** | Overview, Support Matrix, Cost implications of Extended Support |
 
 ---
+
+<span id="2-kubernetes-release-cycle"></span>
 
 ## 2. Kubernetes Release Cycle
 
@@ -116,6 +120,8 @@ SIGs own related areas: Node (runtime/lifecycle), Auth (authentication/authoriza
 
 ---
 
+<span id="3-eks-version-support-matrix"></span>
+
 ## 3. EKS Version Support Matrix
 
 ### Support periods and price basis
@@ -175,6 +181,8 @@ Managed node groups, self-managed nodes, Fargate Pods and Hybrid Nodes require t
 -->
 
 ---
+
+<span id="4-version-by-version-feature-guide"></span>
 
 ## 4. Version-by-Version Feature Guide
 
@@ -2229,6 +2237,8 @@ The old `RESIZED` log was emitted after API PATCH success. Stable containerID/re
 
 ---
 
+<span id="5-key-feature-graduation-timeline"></span>
+
 ## 5. Key Feature Graduation Timeline
 
 This table summarizes selected upstream history **through Kubernetes 1.36**, primarily from the released 1.36.2 gate definitions and official removed-gate history. “Beta” means its first beta release, not necessarily default enablement. A dash does not promise a future milestone. API availability, runtime/driver prerequisites and EKS support still require separate checks.
@@ -2283,6 +2293,8 @@ Gateway API is a separately released API/CRD project. Do not assign its channels
 [Released Kubernetes 1.36.2 feature history](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go) · [Feature gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) · [Removed gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates-removed/) · [KYAML history](https://github.com/kubernetes/enhancements/tree/master/keps/sig-cli/5295-kyaml)
 
 ---
+
+<span id="6-deprecations-and-removals"></span>
 
 ## 6. Deprecations and Removals
 
@@ -2513,6 +2525,8 @@ Kubent is another original-manifest detector, not an API-server oracle. The late
 
 ---
 
+<span id="7-eks-specific-considerations"></span>
+
 ## 7. EKS-Specific Considerations
 
 ### Release and feature availability
@@ -2607,6 +2621,8 @@ Fleet size is only one planning dimension: one critical cluster can have more op
 
 ---
 
+<span id="8-version-upgrade-planning"></span>
+
 ## 8. Version Upgrade Planning
 
 ### Build an executable plan for one minor-version step
@@ -2691,6 +2707,8 @@ resolve_conflicts_on_update = "PRESERVE"
 
 ---
 
+<span id="9-future-outlook"></span>
+
 ## 9. Future Outlook
 
 ### Separate released upstream changes from EKS availability
@@ -2757,6 +2775,8 @@ historical_planning_example:
 ```
 
 ---
+
+<span id="10-references"></span>
 
 ## 10. References
 

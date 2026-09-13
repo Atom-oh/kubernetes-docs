@@ -75,6 +75,8 @@ kubectl -n config-demo logs config-test-pod
 5. [구성 모범 사례](#구성-모범-사례)
 6. [Amazon EKS에서의 구성 관리](#amazon-eks에서의-구성-관리)
 
+<span id="컨피그맵configmap"></span>
+
 ## 컨피그맵(ConfigMap)
 
 > **핵심 개념**: 컨피그맵은 키-값 쌍 형태로 구성 데이터를 저장하는 객체로, 애플리케이션 코드와 구성을 분리합니다.
@@ -306,6 +308,8 @@ data:
 ```bash
 kubectl apply -f updated-configmap.yaml
 ```
+
+<span id="시크릿secret"></span>
 
 ## 시크릿(Secret)
 

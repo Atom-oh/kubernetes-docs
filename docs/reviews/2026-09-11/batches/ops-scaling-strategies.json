@@ -45,7 +45,8 @@
       "Promtool3.14.0 passed four expression cases:perPod100/200/900RPS,total1200RPS,absentseriesandobservedzero;namespace isolation included;standardfuzzy comparison handlesfinalfloatingpointbit",
       "Both diagrams pass9/9composition andfourviewport/themechecks;finalscreenshotsmanuallyinspected;PNGfallbacksregenerated withCJKfontfixandcompact1040x420layout"
     ],
-    "reviewedSha256": "c5777d5bf9ef8816af45f8e7dd6599fa78d8eae1a439bc1121d8f828516cde8b"
+    "reviewedSha256": "02373de0794ea0f3ac6f764f62910dc624faa658f3c79898ad7c2b70e06d7fd5",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/ops/06-scaling-strategies-quiz.md",
@@ -141,7 +142,8 @@
       "Promtool3.14.0 passed four expression cases:perPod100/200/900RPS,total1200RPS,absentseriesandobservedzero;namespace isolation included;standardfuzzy comparison handlesfinalfloatingpointbit",
       "Both diagrams pass9/9composition andfourviewport/themechecks;finalscreenshotsmanuallyinspected;PNGfallbacksregenerated withCJKfontfixandcompact1040x420layout"
     ],
-    "reviewedSha256": "6d3cc36f6cf1047fe3ca3597ecc48be6a86df369ef9fd713c7b2f40e87145571"
+    "reviewedSha256": "17c8e829a6c3ea16d03f050376cf4d848a38f72809c51ef0080cdb6ee045b4b6",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/06-scaling-strategies-quiz.md",

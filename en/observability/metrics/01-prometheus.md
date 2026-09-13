@@ -1,6 +1,6 @@
 # Prometheus
 
-> Reviewed: September 13, 2026. Local configuration/query checks are described below; no cluster or cloud deployment was performed.
+> **Last Updated**: September 13, 2026. Local configuration/query checks are described below; no cluster or cloud deployment was performed.
 
 ## Contents
 

@@ -602,6 +602,8 @@ spec:
     image: registry.example.com/team/my-app:REPLACE_WITH_TESTED_TAG
 ```
 
+<span id="alloy--loki-integration"></span>
+
 ## Alloy + Loki Integration
 
 Promtail reached end of life on **March 2, 2026**. Use Alloy or another supported client for new deployments. This example replaces the old Promtail file-tail configuration with Alloy's Kubernetes API log collection; it does not need Docker paths, privileged containers or node filesystem mounts.
@@ -1421,6 +1423,8 @@ spec:
 ```
 
 Single-tenant Loki uses tenant ID `fake`, which is why the local rule file is placed under `fake/`. Local rule storage is read-only through the ruler API. These alerts require the full access-log stream; an errors-only or sampled stream cannot provide an unbiased error fraction or latency quantile. Plan no-data and delivery-failure monitoring separately.
+
+<span id="log-integration-with-metricstraces"></span>
 
 ## Log Integration with Metrics/Traces
 

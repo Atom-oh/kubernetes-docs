@@ -354,6 +354,8 @@ This Gateway uses lab-ca, which ordinary browsers do not trust. Real public issu
 <span id="example-defining-a-certificate-via-ack"></span>
 <span id="comparison-with-cert-manager"></span>
 
+<span id="aws-native-alternative-acm--ack"></span>
+
 ## AWS-Native Alternative: ACM + ACK
 
 ### ACM RequestCertificate and ACK export

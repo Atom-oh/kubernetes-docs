@@ -73,6 +73,8 @@ kubectl -n storage-demo get pvc,pod
 12. [Storage ResourceQuota](#storage-resourcequota)
 13. [EKS에서의 스토리지 옵션](#eks에서의-스토리지-옵션)
 
+<span id="볼륨volume"></span>
+
 ## 볼륨(Volume)
 
 > **핵심 개념**: Kubernetes 볼륨은 포드 내의 컨테이너가 데이터를 저장하고 공유할 수 있는 디렉토리로, 컨테이너의 재시작과 관계없이 데이터를 유지할 수 있습니다.
@@ -285,6 +287,8 @@ spec:
         name: csi-secret
 ```
 
+<span id="퍼시스턴트-볼륨persistentvolume"></span>
+
 ## 퍼시스턴트 볼륨(PersistentVolume)
 
 퍼시스턴트 볼륨(PV)은 관리자가 프로비저닝하거나 스토리지 클래스를 사용하여 동적으로 프로비저닝된 클러스터의 스토리지입니다. PV는 포드와 독립적인 수명 주기를 가지며, 포드가 삭제되어도 PV는 유지됩니다.
@@ -347,6 +351,8 @@ PV는 다음과 같은 상태를 가질 수 있습니다:
 - **Released**: 클레임이 삭제되었지만, 리소스는 아직 클러스터에 의해 회수되지 않았습니다.
 - **Failed**: 자동 회수가 실패했습니다.
 
+<span id="퍼시스턴트-볼륨-클레임persistentvolumeclaim"></span>
+
 ## 퍼시스턴트 볼륨 클레임(PersistentVolumeClaim)
 
 퍼시스턴트 볼륨 클레임(PVC)은 사용자의 스토리지 요청입니다. PVC는 PV와 유사하지만, PVC는 사용자가 스토리지를 요청하는 방법이고, PV는 관리자가 스토리지를 제공하는 방법입니다.
@@ -398,6 +404,8 @@ spec:
       persistentVolumeClaim:
         claimName: myclaim
 ```
+
+<span id="스토리지-클래스storageclass"></span>
 
 ## 스토리지 클래스(StorageClass)
 

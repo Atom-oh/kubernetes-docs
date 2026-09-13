@@ -32,7 +32,8 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures.",
-    "reviewedSha256": "8eb4c25489f6921cabb3f3e230c92a997e69d0f9ff93e2068c243dcefb893b26"
+    "reviewedSha256": "350d6380d67a7d55e2968808dcb82d8cdb11de5e134be4d670cad007c4f4bbd4",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",

@@ -744,6 +744,8 @@ AWS CCM은 AWS 위의 **자체 관리 Kubernetes**를 위한 외부 클라우드
 
 EKS의 AWS 관리 컨트롤 플레인에 이 DaemonSet을 설치하거나 scheduler.conf를 마운트할 수 없습니다. EKS에서는 서비스가 관리하는 클라우드 통합과 지원되는 AWS Load Balancer Controller 또는 Auto Mode 기능을 사용하며 동일 리소스를 여러 컨트롤러가 소유하지 않게 합니다.
 
+<span id="csicontainer-storage-interface"></span>
+
 ## CSI(Container Storage Interface)
 
 CSI는 Kubernetes와 스토리지 시스템 간의 표준 인터페이스를 제공합니다.
@@ -965,6 +967,8 @@ spec:
 4. **Azure Disk CSI 드라이버**: Azure 디스크 관리
 5. **Ceph RBD CSI 드라이버**: Ceph RBD 볼륨 관리
 6. **NFS CSI 드라이버**: NFS 볼륨 관리
+
+<span id="cnicontainer-network-interface"></span>
 
 ## CNI(Container Network Interface)
 

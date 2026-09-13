@@ -32,7 +32,8 @@
       "3diagramspassed9/9artifactchecksand4viewportlight/darkvisualcheckswithproductionCJKfonts;finalscreenshotsinspected,PNGsregenerated",
       "110/110repositorytestsafterRBACcheckpointpassed;finalwhole-sitebuildstillpending"
     ],
-    "reviewedSha256": "ea7a4b8402c65f0ca12686e4ef86e4b29f18d4d3b9ee611fb2643f71e30addaf"
+    "reviewedSha256": "6e1dd258f61c0f76255bf1a80acdf26a984af32380605de3a55beef0fc8244d3",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/gitops/argocd/06-projects-rbac-quiz.md",
@@ -102,7 +103,8 @@
       "3diagramspassed9/9artifactchecksand4viewportlight/darkvisualcheckswithproductionCJKfonts;finalscreenshotsinspected,PNGsregenerated",
       "110/110repositorytestsafterRBACcheckpointpassed;finalwhole-sitebuildstillpending"
     ],
-    "reviewedSha256": "9a2ef4887aa5c697f73ceb346e6feffda7302ab31f64fd64a5a948ce7addf251"
+    "reviewedSha256": "5acfefd47a2fc954f467b9af8f110e407c5ceeabe1e6f1baa709b4dbc4fcb68d",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/gitops/argocd/06-projects-rbac-quiz.md",

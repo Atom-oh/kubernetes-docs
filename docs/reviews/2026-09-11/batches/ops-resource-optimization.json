@@ -144,7 +144,7 @@
       "Go1.25containerawareGOMAXPROCS/updatepolicyvsautomaxprocsrounding;missingruntime/fmtimports,cgroupmax/errorhandling;GOMEMLIMITsoftGoheapnotallRSS,GCcapcanexceed;RustnoGCnotdeterministicmemory/latency,Tokioenvvsbuilderpriorityandblockingthreads,oldjemalloccrate.",
       "PromQLlabelmismatch/crosscluster/denominatorzero/doublescrape,parentcgroup;OOMreasonisgaugeandlatestreasoncannotcounteveryOOM;countPendingcountszerovalues;nodepodcountdividingglobalnodeswrong;deploymentownerregexunreliable;rawutilizationnotconsolidationdecision;dashboardJSONpartialmissingvariables/dataSource/histogramheatmap."
     ],
-    "reviewedSha256": "bca8db3e32f975eb23c1e12bcd3b29e57f7b33257c01ea57cacad5a90b10c35d",
+    "reviewedSha256": "7002088013b14617c12a2bc2751f0d216e05b56e134ffeb8c8915ff8e72fa918",
     "findings": [
       "Reworkedresource/QoS/cgroupv1v2semantics:requestsnotexclusiveallocation;evictionnotabsoluteQoSorder;memoryOOMreactiveandcontainerreasonnotPodphase;removedmemorythresholdlivenessrestart.",
       "Replaceduniversalp70/p99/heap75/workerformulas/languageperformanceclaimswithmeasuredsizingandfailurecapacitymath;20%capacityreserve1000/(200*.8)=7.",
@@ -159,7 +159,8 @@
       "RustnoGCnotdeterministicmemory/latency;Tokio1.53.1testedexplicitENVworkers;builderoverrideandblockingpooldistinction;removeduniversalallocatorperformanceclaims.",
       "PromQL9calculationcasescheckduplicates/crosscluster/zerodenom/oldOOM/recentrestart/Pendingvalues/nodepodcounts. Latestreasonnotcounterorcompleteeventhistory;ownershipregexandrawheatmapclaimsremoved.",
       "CompleteK8sobjectswithimages/selectors;AutoModeNodePoolkarpenter.sh/v1+NodeClasseksgroup/default;actualallocatable/overheadbinpacking;placeholdernotEC2reservation,PriorityNevernotvictimprotection. Pause3.10.2confirmedK8s1.36.2source."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/10-resource-optimization-quiz.md",

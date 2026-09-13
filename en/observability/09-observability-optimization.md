@@ -19,6 +19,8 @@
 
 ---
 
+<span id="1-overview-of-the-three-pillars-of-observability"></span>
+
 ## 1. Overview of the Three Pillars of Observability
 
 In modern cloud-native environments, **observability** is the ability to understand the internal state of a system through its external outputs. To implement effective observability in EKS environments, you need to understand three key pillars.
@@ -44,6 +46,8 @@ In modern cloud-native environments, **observability** is the ability to underst
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-1.html)
 
 ---
+
+<span id="2-logging-solution-comparison"></span>
 
 ## 2. Logging Solution Comparison
 
@@ -210,6 +214,8 @@ helm install loki grafana/loki \
 
 ---
 
+<span id="3-metrics-collection-and-storage"></span>
+
 ## 3. Metrics Collection and Storage
 
 ### 3.1 Metrics Storage Comparison
@@ -347,6 +353,8 @@ spec:
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-2.html)
 
 ---
+
+<span id="4-distributed-tracing"></span>
 
 ## 4. Distributed Tracing
 
@@ -582,6 +590,8 @@ spec:
 
 ---
 
+<span id="5-ebpf-based-no-code-monitoring"></span>
+
 ## 5. eBPF-Based No-Code Monitoring
 
 ### 5.1 Why eBPF Monitoring
@@ -809,6 +819,8 @@ topk(10, sum by (pod_name) (rate(kepler_container_joules_total[5m])))
 
 ---
 
+<span id="6-cost-monitoring"></span>
+
 ## 6. Cost Monitoring
 
 ### 6.1 KubeCost / OpenCost Installation and Configuration
@@ -975,6 +987,8 @@ done
 | **Retention Period Optimization** | Low-priority data | 50-70% |
 
 ---
+
+<span id="7-unified-observability-dashboard"></span>
 
 ## 7. Unified Observability Dashboard
 
@@ -1241,6 +1255,8 @@ spec:
 
 ---
 
+<span id="8-operational-challenges-and-solutions"></span>
+
 ## 8. Operational Challenges and Solutions
 
 ### 8.1 Responding to Exploding Log/Metrics Storage Costs
@@ -1371,6 +1387,8 @@ spec:
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-7.html)
 
 ---
+
+<span id="9-best-practices-and-next-steps"></span>
 
 ## 9. Best Practices and Next Steps
 

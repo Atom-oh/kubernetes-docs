@@ -207,6 +207,8 @@ RequestAuthentication만으로는 토큰 없는 요청을 거부하지 않습니
 - ServiceAccount를 세밀하게 분리
 - Namespace 격리 활용
 
+<span id="3-security-monitoring"></span>
+
 ### 3. Security Monitoring
 
 - Istio Access Log 활성화

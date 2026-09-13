@@ -29,7 +29,8 @@
     "validation": [
       "kafka-best-practices-validation.json"
     ],
-    "reviewedSha256": "a12873fc8f68d8852c40669872fce20336b114b05c22b2195f9f32a0cc6e39af"
+    "reviewedSha256": "3dfd526fce3e59efecdafc655aa5f16940401cee38af90e24f52e10d21ed7c1f",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
@@ -93,7 +94,8 @@
     "validation": [
       "kafka-best-practices-validation.json"
     ],
-    "reviewedSha256": "c25c5dc77076045ed5b529ceaf20eca4915f26608e014ef48ff3b5efab1350da"
+    "reviewedSha256": "8a4c524872227df0954ec19fe337fc39ed4121e9f9ee36ccb3a070b8230d71a1",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",

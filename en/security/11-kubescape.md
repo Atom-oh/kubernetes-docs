@@ -726,6 +726,8 @@ kubescape scan framework nsa --format json | \
 
 ---
 
+<span id="cicd-integration"></span>
+
 ## CI/CD Integration
 
 ### CI/CD Integration Workflow

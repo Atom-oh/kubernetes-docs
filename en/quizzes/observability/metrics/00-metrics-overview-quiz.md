@@ -1,6 +1,6 @@
 # Metrics Overview Quiz
 
-> Reviewed: 2026-09-12
+> **Last Updated**: September 12, 2026
 
 1. Which type represents a cumulative count that may reset?
 

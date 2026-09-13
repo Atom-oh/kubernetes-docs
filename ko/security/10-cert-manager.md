@@ -359,6 +359,8 @@ spec:
 <span id="예시-ack를-통한-certificate-리소스-정의"></span>
 <span id="cert-manager와-비교"></span>
 
+<span id="aws-네이티브-대안-acm--ack"></span>
+
 ## AWS 네이티브 대안: ACM + ACK
 
 ### ACM RequestCertificate와 ACK export

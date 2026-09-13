@@ -28,7 +28,8 @@
     "validation": [
       "spark-foundation-validation.json"
     ],
-    "reviewedSha256": "68ea140f39fb2154dcfcd6dfbe3cdd2bbab3ee319d494597c0d04538d8271100"
+    "reviewedSha256": "42e1cfddcdd920de1087faeea045ca1b47b7f6486d1186a13a112b0f95de2d1f",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/data-on-eks/spark/01-spark-fundamentals.md",
@@ -59,7 +60,8 @@
     "validation": [
       "spark-foundation-validation.json"
     ],
-    "reviewedSha256": "aa18574dc400f49077c48219ccbfadefdcb1289d6d5dfa0f0a1887fc30a583d8"
+    "reviewedSha256": "cb53ceaa5bedb295f485a8bc4d67bcddcee61d2479863a8d762e0fce903f662e",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/data-on-eks/spark/README.md",
@@ -90,7 +92,8 @@
     "validation": [
       "spark-foundation-validation.json"
     ],
-    "reviewedSha256": "ec4068f1ff6158aaa7bc32bedd45034092e098e3118ba0005f7b93a7addd2d8c"
+    "reviewedSha256": "3d5a3b3c5a39b928012d867471767aa8a9d3e8d18e437e303854562c0a7de7cc",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/data-on-eks/spark/01-spark-fundamentals.md",
@@ -121,7 +124,8 @@
     "validation": [
       "spark-foundation-validation.json"
     ],
-    "reviewedSha256": "661ad9fa4e2a8954cb1cebaae63fb26175904d7a44ccd15fd6e338bccbb5c383"
+    "reviewedSha256": "34d8bb81f70d0354056cce72b123adcdbfb021f47cf95f6a17c7276555f2ae6e",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",

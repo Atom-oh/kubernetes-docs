@@ -517,6 +517,8 @@ spec:
     kind: LimitRange
 ```
 
+<span id="jwt-tokens-for-cicd"></span>
+
 ## JWT Tokens for CI/CD
 
 Create project-scoped tokens for automation.

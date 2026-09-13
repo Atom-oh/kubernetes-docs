@@ -47,6 +47,8 @@ sudo bpftool feature probe kernel
 
 ---
 
+<span id="1-introduction-to-ebpf"></span>
+
 ## 1. Introduction to eBPF
 
 ### 1.1 What is eBPF?
@@ -111,6 +113,8 @@ eBPF is revolutionary for the following reasons:
 | **Development difficulty** | Relatively easy | High expertise required |
 
 ---
+
+<span id="2-ebpf-architecture"></span>
 
 ## 2. eBPF Architecture
 
@@ -236,6 +240,8 @@ long bpf_get_current_comm(void *buf, u32 size);  // Process name
 ---
 
 C examples are separate programs/fragments. Supply vmlinux.h or the relevant UAPI types and libbpf bpf_helpers.h, bpf_endian.h, bpf_tracing.h and bpf_core_read.h as needed. BPF_KPROBE/BPF_UPROBE require the correct target architecture and actual attachment ABI. Validate loading/attachment in an isolated environment; neither was performed in this audit. Path-based LSM examples fail open on read errors and do not cover aliases/hardlinks/other protocols; they are educational, not complete access controls.
+
+<span id="3-ebpf-program-types"></span>
 
 ## 3. eBPF Program Types
 
@@ -438,6 +444,8 @@ int restrict_connect(struct bpf_sock_addr *ctx) {
 
 ---
 
+<span id="4-ebpf-development-tools"></span>
+
 ## 4. eBPF Development Tools
 
 ### 4.1 bpftool
@@ -591,6 +599,8 @@ bpftool prog show id <ID> --pretty
 
 ---
 
+<span id="5-ebpf-and-kubernetes-networking"></span>
+
 ## 5. eBPF and Kubernetes Networking
 
 ### 5.1 Cilium: eBPF-based CNI
@@ -734,6 +744,8 @@ kubectl get ciliumnetworkpolicies,ciliumclusterwidenetworkpolicies -A
 ```
 
 ---
+
+<span id="6-ebpf-based-observability"></span>
 
 ## 6. eBPF-based Observability
 
@@ -892,6 +904,8 @@ The 5–15% and <1% values retain the original unsourced claims; they are not ve
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-05-ebpf-fundamentals-7.html)
 
 ---
+
+<span id="7-ebpf-based-security"></span>
 
 ## 7. eBPF-based Security
 
@@ -1112,6 +1126,8 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
 
 ---
 
+<span id="8-practical-ebpf-examples"></span>
+
 ## 8. Practical eBPF Examples
 
 ### 8.1 System Performance Analysis with bpftrace
@@ -1291,6 +1307,8 @@ END {
 ```
 
 ---
+
+<span id="9-ebpf-limitations-and-considerations"></span>
 
 ## 9. eBPF Limitations and Considerations
 
@@ -1492,6 +1510,8 @@ sysctl net.core.bpf_jit_harden
 ```
 
 ---
+
+<span id="10-next-steps"></span>
 
 ## 10. Next Steps
 

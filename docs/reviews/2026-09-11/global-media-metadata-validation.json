@@ -1,0 +1,1354 @@
+{
+  "status": "passed-scoped-audit",
+  "reviewedAt": "2026-09-13T03:14:59.184127+00:00",
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/security/07-image-security.md",
+        "sha256": "a8d4c80a475225b60aa2285388e069fd1fb508b223d60e045e272259e64b8ae7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "컨테이너-이미지-보안"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "이미지-스캐닝-개요"
+          },
+          {
+            "tag": "h2",
+            "id": "trivy"
+          },
+          {
+            "tag": "h3",
+            "id": "설치와-스캔-명령"
+          },
+          {
+            "tag": "h3",
+            "id": "설정-파일과-예외"
+          },
+          {
+            "tag": "h3",
+            "id": "trivy-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "amazon-ecr-이미지-스캐닝"
+          },
+          {
+            "tag": "h3",
+            "id": "inspector-알림과-권한"
+          },
+          {
+            "tag": "h2",
+            "id": "cosign-sigstore를-사용한-이미지-서명"
+          },
+          {
+            "tag": "h3",
+            "id": "서명-순서와-신뢰-기준"
+          },
+          {
+            "tag": "h2",
+            "id": "admission-control에서-이미지-검증"
+          },
+          {
+            "tag": "h3",
+            "id": "registry·digest-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "workflow-서명-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "connaisseur-대안-—-legacy-서명-경로"
+          },
+          {
+            "tag": "h2",
+            "id": "공급망-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "sbom과-attestation"
+          },
+          {
+            "tag": "h3",
+            "id": "slsa-provenance"
+          },
+          {
+            "tag": "h2",
+            "id": "기본-이미지-선택"
+          },
+          {
+            "tag": "h3",
+            "id": "최소-base-image-빌드-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "이미지-레지스트리-모범-사례"
+          },
+          {
+            "tag": "h2",
+            "id": "ci-cd-파이프라인-통합"
+          },
+          {
+            "tag": "h2",
+            "id": "수행한-검증과-한계"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "컨테이너-이미지-보안",
+          "목차",
+          "shift-left-보안",
+          "스캐닝-대상",
+          "이미지-스캐닝-개요",
+          "trivy-개요",
+          "trivy-설치",
+          "이미지-스캐닝",
+          "파일시스템-스캔",
+          "trivy-설정-파일",
+          "trivy",
+          "설치와-스캔-명령",
+          "설정-파일과-예외",
+          "trivy-operator-kubernetes-통합",
+          "trivy-operator",
+          "기본-스캐닝-vs-향상된-스캐닝",
+          "향상된-스캐닝-활성화",
+          "스캔-결과-조회",
+          "eventbridge를-통한-알림",
+          "amazon-ecr-이미지-스캐닝",
+          "inspector-알림과-권한",
+          "cosign-개요",
+          "cosign-설치",
+          "키-기반-서명",
+          "키리스-서명-oidc-기반",
+          "github-actions-통합",
+          "cosign-sigstore를-사용한-이미지-서명",
+          "서명-순서와-신뢰-기준",
+          "kyverno-imageverify",
+          "admission-control에서-이미지-검증",
+          "registry·digest-정책",
+          "workflow-서명-정책",
+          "connaisseur",
+          "connaisseur-대안-—-legacy-서명-경로",
+          "sbom-software-bill-of-materials-생성",
+          "sbom-기반-취약점-검사",
+          "slsa-supply-chain-levels-for-software-artifacts",
+          "공급망-보안",
+          "sbom과-attestation",
+          "slsa-provenance",
+          "이미지-유형-비교",
+          "distroless-이미지-사용",
+          "chainguard-이미지-사용",
+          "alpine-보안-강화",
+          "기본-이미지-선택",
+          "최소-base-image-빌드-예제",
+          "프라이빗-레지스트리-사용",
+          "이미지-풀-정책",
+          "불변-태그-정책-kyverno",
+          "이미지-레지스트리-모범-사례",
+          "완전한-이미지-보안-파이프라인",
+          "ci-cd-파이프라인-통합",
+          "수행한-검증과-한계",
+          "요약",
+          "권장-사항",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/security/07-image-security.md",
+        "sha256": "260d6cee973c94756ea3b0f526bf13de7f6c3fe58b732df8e1354c4f7efd64fe",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "container-image-security"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "image-scanning-overview"
+          },
+          {
+            "tag": "h2",
+            "id": "trivy"
+          },
+          {
+            "tag": "h3",
+            "id": "installation-and-scanning"
+          },
+          {
+            "tag": "h3",
+            "id": "configuration-and-exceptions"
+          },
+          {
+            "tag": "h3",
+            "id": "trivy-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "amazon-ecr-image-scanning"
+          },
+          {
+            "tag": "h3",
+            "id": "inspector-alerts-and-permissions"
+          },
+          {
+            "tag": "h2",
+            "id": "image-signing-with-cosign-sigstore"
+          },
+          {
+            "tag": "h3",
+            "id": "signing-order-and-trust"
+          },
+          {
+            "tag": "h2",
+            "id": "image-verification-in-admission-control"
+          },
+          {
+            "tag": "h3",
+            "id": "registry-and-digest-policy"
+          },
+          {
+            "tag": "h3",
+            "id": "workflow-signature-policy"
+          },
+          {
+            "tag": "h3",
+            "id": "connaisseur-alternative-—-legacy-signature-path"
+          },
+          {
+            "tag": "h2",
+            "id": "supply-chain-security"
+          },
+          {
+            "tag": "h3",
+            "id": "sbom-and-attestations"
+          },
+          {
+            "tag": "h3",
+            "id": "slsa-provenance"
+          },
+          {
+            "tag": "h2",
+            "id": "base-image-selection"
+          },
+          {
+            "tag": "h3",
+            "id": "minimal-base-image-build-examples"
+          },
+          {
+            "tag": "h2",
+            "id": "image-registry-best-practices"
+          },
+          {
+            "tag": "h2",
+            "id": "ci-cd-pipeline-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "checks-performed-and-limits"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "container-image-security",
+          "table-of-contents",
+          "shift-left-security",
+          "scan-targets",
+          "image-scanning-overview",
+          "trivy-installation",
+          "image-scanning",
+          "filesystem-scanning",
+          "trivy-configuration-file",
+          "trivy-operator-kubernetes-integration",
+          "trivy",
+          "installation-and-scanning",
+          "configuration-and-exceptions",
+          "trivy-overview",
+          "trivy-operator",
+          "basic-scanning-vs-enhanced-scanning",
+          "enabling-enhanced-scanning",
+          "retrieving-scan-results",
+          "notifications-via-eventbridge",
+          "amazon-ecr-image-scanning",
+          "inspector-alerts-and-permissions",
+          "cosign-overview",
+          "cosign-installation",
+          "key-based-signing",
+          "keyless-signing-oidc-based",
+          "github-actions-integration",
+          "image-signing-with-cosign-sigstore",
+          "signing-order-and-trust",
+          "kyverno-imageverify",
+          "image-verification-in-admission-control",
+          "registry-and-digest-policy",
+          "workflow-signature-policy",
+          "connaisseur",
+          "connaisseur-alternative-—-legacy-signature-path",
+          "sbom-software-bill-of-materials-generation",
+          "sbom-based-vulnerability-scanning",
+          "slsa-supply-chain-levels-for-software-artifacts",
+          "supply-chain-security",
+          "sbom-and-attestations",
+          "slsa-provenance",
+          "image-type-comparison",
+          "using-distroless-images",
+          "using-chainguard-images",
+          "alpine-security-hardening",
+          "base-image-selection",
+          "minimal-base-image-build-examples",
+          "using-private-registries",
+          "image-pull-policies",
+          "immutable-tag-policy-kyverno",
+          "image-registry-best-practices",
+          "complete-image-security-pipeline",
+          "ci-cd-pipeline-integration",
+          "checks-performed-and-limits",
+          "summary",
+          "recommendations",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+        "sha256": "8b1a768da336d251cc46574c10776b7d9f55a1c9ea61426e04fe4d8eb17abb18",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "sidecar-vs-ambient-모드-선택-가이드-eks-1-36-실험-보고"
+          },
+          {
+            "tag": "h2",
+            "id": "선택-요약"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-mtls-—-실험-결과-eks-1-36-2-istio-1-30-2"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-networkpolicy-—-실험-결과"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-latency-—-실험-결과-t5"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-무중단-롤아웃-—-503-실험-결과-핵심-관측"
+          },
+          {
+            "tag": "h3",
+            "id": "배경"
+          },
+          {
+            "tag": "h3",
+            "id": "결과"
+          },
+          {
+            "tag": "h3",
+            "id": "후속-실험-graceful-shutdown-조정-후"
+          },
+          {
+            "tag": "h3",
+            "id": "retry-완화의-위험-—-실험-결과-t2"
+          },
+          {
+            "tag": "h3",
+            "id": "원시-실패와-retry가-숨긴-실패를-분리해서-측정"
+          },
+          {
+            "tag": "h3",
+            "id": "테스트-격리에-관한-주의"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-권장-요구사항에-따른-계층별-접근"
+          },
+          {
+            "tag": "h3",
+            "id": "l4-only의-한계-—-canary-배포는-가능한가"
+          },
+          {
+            "tag": "h2",
+            "id": "부록-후속-실험-절차"
+          },
+          {
+            "tag": "h3",
+            "id": "a-클러스터-프로비저닝-eksctl"
+          },
+          {
+            "tag": "h3",
+            "id": "b-istio-설치-gateway-api-crd-ambient-profile"
+          },
+          {
+            "tag": "h3",
+            "id": "c-네임스페이스와-워크로드-매니페스트"
+          },
+          {
+            "tag": "h3",
+            "id": "d-mtls-—-peerauthentication-§1"
+          },
+          {
+            "tag": "h3",
+            "id": "e-networkpolicy-§2"
+          },
+          {
+            "tag": "h3",
+            "id": "f-롤아웃-503-실험-t1-§4"
+          },
+          {
+            "tag": "h3",
+            "id": "g-지연-시간-실험-t5-§3"
+          },
+          {
+            "tag": "h3",
+            "id": "h-중복-실행-관측-t2-§4"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료와-검증-경계"
+          }
+        ],
+        "renderedIds": [
+          "sidecar-vs-ambient-모드-선택-가이드-eks-1-36-실험-보고",
+          "선택-요약",
+          "_1-mtls-—-실험-결과-eks-1-36-2-istio-1-30-2",
+          "_2-networkpolicy-—-실험-결과",
+          "_3-latency-—-실험-결과-t5",
+          "_4-무중단-롤아웃-—-503-실험-결과-핵심-관측",
+          "배경",
+          "결과",
+          "후속-실험-graceful-shutdown-조정-후",
+          "retry-완화의-위험-—-실험-결과-t2",
+          "원시-실패와-retry가-숨긴-실패를-분리해서-측정",
+          "테스트-격리에-관한-주의",
+          "_5-권장-요구사항에-따른-계층별-접근",
+          "l4-only의-한계-—-canary-배포는-가능한가",
+          "부록-후속-실험-절차",
+          "a-클러스터-프로비저닝-eksctl",
+          "b-istio-설치-gateway-api-crd-ambient-profile",
+          "c-네임스페이스와-워크로드-매니페스트",
+          "d-mtls-—-peerauthentication-§1",
+          "e-networkpolicy-§2",
+          "f-롤아웃-503-실험-t1-§4",
+          "g-지연-시간-실험-t5-§3",
+          "h-중복-실행-관측-t2-§4",
+          "참고-자료와-검증-경계"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/flink/README.md",
+        "sha256": "2a4a74b647d0ba87b778addbdfef78bd4a4c1b73f7b40b1aafea22e82b668857",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "flink-on-eks-deep-dive"
+          },
+          {
+            "tag": "h2",
+            "id": "who-manages-what-on-kubernetes"
+          },
+          {
+            "tag": "h2",
+            "id": "chapters"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "flink-on-eks-deep-dive",
+          "who-manages-what-on-kubernetes",
+          "chapters",
+          "references"
+        ]
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "sha256": "426289aaee915ae8fdbfa32d9ddd32fc27227bb25c18fc54522e6a7e4fbc865f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "prometheus"
+          },
+          {
+            "tag": "h2",
+            "id": "contents"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction-and-versions"
+          },
+          {
+            "tag": "h3",
+            "id": "historical-july-2026-updates"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture-and-components"
+          },
+          {
+            "tag": "h3",
+            "id": "tsdb-and-configuration-layers"
+          },
+          {
+            "tag": "h2",
+            "id": "promql"
+          },
+          {
+            "tag": "h3",
+            "id": "selectors-ranges-and-rates"
+          },
+          {
+            "tag": "h3",
+            "id": "aggregation-gauges-and-time"
+          },
+          {
+            "tag": "h3",
+            "id": "distributions-and-forecasts"
+          },
+          {
+            "tag": "h3",
+            "id": "operational-examples"
+          },
+          {
+            "tag": "h2",
+            "id": "discovery-and-operator-selectors"
+          },
+          {
+            "tag": "h3",
+            "id": "a-coherent-application-scrape"
+          },
+          {
+            "tag": "h3",
+            "id": "other-discovery-paths"
+          },
+          {
+            "tag": "h2",
+            "id": "kube-prometheus-stack-installation"
+          },
+          {
+            "tag": "h2",
+            "id": "rules-and-alertmanager"
+          },
+          {
+            "tag": "h3",
+            "id": "alertmanagerconfig-and-namespace-boundaries"
+          },
+          {
+            "tag": "h2",
+            "id": "remote-write-and-amp"
+          },
+          {
+            "tag": "h3",
+            "id": "scoped-amp-ingestion"
+          },
+          {
+            "tag": "h3",
+            "id": "other-receivers"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-ha-and-troubleshooting"
+          },
+          {
+            "tag": "h3",
+            "id": "tune-from-measurements"
+          },
+          {
+            "tag": "h3",
+            "id": "ha-boundaries"
+          },
+          {
+            "tag": "h3",
+            "id": "troubleshooting-from-an-owned-release"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-references"
+          }
+        ],
+        "renderedIds": [
+          "prometheus",
+          "contents",
+          "introduction-and-versions",
+          "historical-july-2026-updates",
+          "architecture-and-components",
+          "tsdb-and-configuration-layers",
+          "promql",
+          "selectors-ranges-and-rates",
+          "aggregation-gauges-and-time",
+          "distributions-and-forecasts",
+          "operational-examples",
+          "discovery-and-operator-selectors",
+          "a-coherent-application-scrape",
+          "other-discovery-paths",
+          "kube-prometheus-stack-installation",
+          "rules-and-alertmanager",
+          "alertmanagerconfig-and-namespace-boundaries",
+          "remote-write-and-amp",
+          "scoped-amp-ingestion",
+          "other-receivers",
+          "performance-ha-and-troubleshooting",
+          "tune-from-measurements",
+          "ha-boundaries",
+          "troubleshooting-from-an-owned-release",
+          "validation-and-references"
+        ]
+      },
+      {
+        "path": "en/observability/metrics/04-cloudwatch-metrics.md",
+        "sha256": "ded41c9128e2ec8a1e3411a4ee21d22e495d186ef3c610c5b8543a1d41e34d43",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloudwatch-metrics"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h2",
+            "id": "container-insights-choose-a-metric-model"
+          },
+          {
+            "tag": "h3",
+            "id": "installation-and-platform-scope"
+          },
+          {
+            "tag": "h3",
+            "id": "otel-migration-and-historical-announcements"
+          },
+          {
+            "tag": "h2",
+            "id": "cloudwatch-agent-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "correct-traditional-container-insights-json"
+          },
+          {
+            "tag": "h2",
+            "id": "custom-metric-collection"
+          },
+          {
+            "tag": "h3",
+            "id": "target-selection-and-dimension-labels"
+          },
+          {
+            "tag": "h3",
+            "id": "cloudwatch-agent-prometheus-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-distro-for-opentelemetry-adot"
+          },
+          {
+            "tag": "h3",
+            "id": "send-custom-metrics-via-sdk"
+          },
+          {
+            "tag": "h2",
+            "id": "metric-math-and-anomaly-detection"
+          },
+          {
+            "tag": "h3",
+            "id": "metric-math"
+          },
+          {
+            "tag": "h3",
+            "id": "anomaly-detection"
+          },
+          {
+            "tag": "h3",
+            "id": "anomaly-detection-with-terraform"
+          },
+          {
+            "tag": "h2",
+            "id": "dashboard-creation"
+          },
+          {
+            "tag": "h3",
+            "id": "cloudformation"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform"
+          },
+          {
+            "tag": "h2",
+            "id": "alert-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform-alarms"
+          },
+          {
+            "tag": "h2",
+            "id": "cost-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "match-the-billing-model-to-collection"
+          },
+          {
+            "tag": "h3",
+            "id": "retention-is-a-data-deletion-decision"
+          },
+          {
+            "tag": "h3",
+            "id": "infrequent-access-has-feature-constraints"
+          },
+          {
+            "tag": "h3",
+            "id": "cost-visibility"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h2",
+            "id": "troubleshooting"
+          },
+          {
+            "tag": "h3",
+            "id": "no-metrics-or-unexpected-values"
+          },
+          {
+            "tag": "h3",
+            "id": "high-cost-or-inactive-alarms"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "cloudwatch-metrics",
+          "introduction",
+          "container-insights-choose-a-metric-model",
+          "mermaid-179",
+          "installation-and-platform-scope",
+          "otel-migration-and-historical-announcements",
+          "cloudwatch-agent-configuration",
+          "correct-traditional-container-insights-json",
+          "custom-metric-collection",
+          "target-selection-and-dimension-labels",
+          "cloudwatch-agent-prometheus-configuration",
+          "aws-distro-for-opentelemetry-adot",
+          "send-custom-metrics-via-sdk",
+          "metric-math-and-anomaly-detection",
+          "metric-math",
+          "anomaly-detection",
+          "anomaly-detection-with-terraform",
+          "dashboard-creation",
+          "cloudformation",
+          "terraform",
+          "alert-configuration",
+          "terraform-alarms",
+          "cost-optimization",
+          "match-the-billing-model-to-collection",
+          "retention-is-a-data-deletion-decision",
+          "infrequent-access-has-feature-constraints",
+          "cost-visibility",
+          "best-practices",
+          "troubleshooting",
+          "no-metrics-or-unexpected-values",
+          "high-cost-or-inactive-alarms",
+          "validation-scope",
+          "references"
+        ]
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "sha256": "b7051d30c2570cc8c3d73a61e73054341d74a307ff804cadd32515862187c3cf",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "metrics-overview"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "metrics-fundamentals"
+          },
+          {
+            "tag": "h3",
+            "id": "naming-and-units"
+          },
+          {
+            "tag": "h2",
+            "id": "metric-types"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-counter"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-gauge"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-histogram"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-summary"
+          },
+          {
+            "tag": "h2",
+            "id": "pull-vs-push-model"
+          },
+          {
+            "tag": "h3",
+            "id": "pull-and-kubernetes-discovery"
+          },
+          {
+            "tag": "h3",
+            "id": "push-and-service-level-batch-jobs"
+          },
+          {
+            "tag": "h2",
+            "id": "cardinality-and-metric-design"
+          },
+          {
+            "tag": "h2",
+            "id": "long-term-storage-requirements"
+          },
+          {
+            "tag": "h3",
+            "id": "retention-planning"
+          },
+          {
+            "tag": "h3",
+            "id": "remote-write"
+          },
+          {
+            "tag": "h2",
+            "id": "solution-comparison"
+          },
+          {
+            "tag": "h3",
+            "id": "deployment-and-operational-boundaries"
+          },
+          {
+            "tag": "h3",
+            "id": "cost-inputs-not-unsupported-monthly-totals"
+          },
+          {
+            "tag": "h2",
+            "id": "metrics-collection-architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-references"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          }
+        ],
+        "renderedIds": [
+          "metrics-overview",
+          "table-of-contents",
+          "metrics-fundamentals",
+          "naming-and-units",
+          "metric-types",
+          "_1-counter",
+          "_2-gauge",
+          "_3-histogram",
+          "_4-summary",
+          "metric-collection-models",
+          "pull-vs-push-model",
+          "pull-and-kubernetes-discovery",
+          "push-and-service-level-batch-jobs",
+          "cardinality-and-metric-design",
+          "long-term-storage-requirements",
+          "retention-planning",
+          "remote-write",
+          "solution-comparison",
+          "deployment-and-operational-boundaries",
+          "cost-inputs-not-unsupported-monthly-totals",
+          "metrics-collection-architecture",
+          "primary-references",
+          "next-steps"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+        "sha256": "9451859e0378f76306db5eab8fba7c7523a30701d5e38e774ba2dba5a50bdbde",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "metrics-overview-quiz"
+          }
+        ],
+        "renderedIds": [
+          "metrics-overview-quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+        "sha256": "4f070ec179e54789fa6934a17584209b8ab327f81c7e2ed0a95dbb97bbefacda",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "prometheus-quiz"
+          }
+        ],
+        "renderedIds": [
+          "prometheus-quiz"
+        ]
+      }
+    ]
+  },
+  "metadata": [
+    {
+      "path": "ko/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+      "before": "> **원문 보고일**: 2026년 8월 21일 · **내용 검토일**: 2026년 9월 11일",
+      "after": "> **원문 보고일**: 2026년 8월 21일\n> **마지막 업데이트**: 2026년 9월 11일",
+      "parsed": "2026-09-11"
+    },
+    {
+      "path": "en/data-on-eks/flink/README.md",
+      "before": "> Reviewed: 2026-09-12. Integration baseline: **Flink 2.2.1 / Java 17 / Operator 1.15.0**.",
+      "after": "> **Last Updated**: September 12, 2026\n> Integration baseline: **Flink 2.2.1 / Java 17 / Operator 1.15.0**.",
+      "parsed": "2026-09-12"
+    },
+    {
+      "path": "en/observability/metrics/01-prometheus.md",
+      "before": "> Reviewed: September 13, 2026.",
+      "after": "> **Last Updated**: September 13, 2026. ",
+      "parsed": "2026-09-13"
+    },
+    {
+      "path": "en/observability/metrics/04-cloudwatch-metrics.md",
+      "before": "> Reviewed: 2026-09-13. Helm example:",
+      "after": "> **Last Updated**: September 13, 2026\n> Helm example:",
+      "parsed": "2026-09-13"
+    },
+    {
+      "path": "en/observability/metrics/README.md",
+      "before": "> Reviewed: September 13, 2026.",
+      "after": "> **Last Updated**: September 13, 2026. ",
+      "parsed": "2026-09-13"
+    },
+    {
+      "path": "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+      "before": "> Reviewed: 2026-09-12",
+      "after": "> **Last Updated**: September 12, 2026",
+      "parsed": "2026-09-12"
+    },
+    {
+      "path": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+      "before": "> Reviewed: 2026-09-12",
+      "after": "> **Last Updated**: September 12, 2026",
+      "parsed": "2026-09-12"
+    }
+  ],
+  "linkDelta": {
+    "checkedAt": "2026-09-13T03:10:58.551113+00:00",
+    "results": [
+      {
+        "url": "https://aws.amazon.com/blogs/aws/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/",
+        "status": 200,
+        "finalURL": "https://aws.amazon.com/blogs/aws/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/",
+        "bytesRead": 1273239,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://aws.amazon.com/systems-manager/pricing/",
+        "status": 200,
+        "finalURL": "https://aws.amazon.com/systems-manager/pricing/",
+        "bytesRead": 626180,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html",
+        "bytesRead": 42464,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ModifyDBClusterSnapshotAttribute.html",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ModifyDBClusterSnapshotAttribute.html",
+        "bytesRead": 24632,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html",
+        "bytesRead": 67988,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/sns/latest/dg/sns-key-management.html",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/sns/latest/dg/sns-key-management.html",
+        "bytesRead": 32084,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://docs.datadoghq.com/",
+        "status": 200,
+        "finalURL": "https://docs.datadoghq.com/",
+        "bytesRead": 62557,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://docs.datadoghq.com/agent/guide/secrets-management/",
+        "status": 200,
+        "finalURL": "https://docs.datadoghq.com/agent/configuration/secrets-management/",
+        "bytesRead": 149415,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://docs.datadoghq.com/integrations/kubernetes/",
+        "status": 200,
+        "finalURL": "https://docs.datadoghq.com/integrations/kubernetes/",
+        "bytesRead": 107487,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://docs.datadoghq.com/tracing/",
+        "status": 200,
+        "finalURL": "https://docs.datadoghq.com/tracing/",
+        "bytesRead": 125379,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://docs.sigstore.dev/cosign/verifying/verify/",
+        "status": 200,
+        "finalURL": "https://docs.sigstore.dev/cosign/verifying/verify/",
+        "bytesRead": 73554,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://docs.sigstore.dev/quickstart/quickstart-cosign/",
+        "status": 200,
+        "finalURL": "https://docs.sigstore.dev/quickstart/quickstart-cosign/",
+        "bytesRead": 50311,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://ebpf.io/events/?conference=eBPF%20Summit",
+        "status": 200,
+        "finalURL": "https://ebpf.io/events/?conference=eBPF%20Summit",
+        "bytesRead": 348559,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md",
+        "status": 200,
+        "finalURL": "https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md",
+        "bytesRead": 297689,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh",
+        "status": 200,
+        "finalURL": "https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh",
+        "bytesRead": 243567,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml",
+        "status": 200,
+        "finalURL": "https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml",
+        "bytesRead": 249025,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml",
+        "status": 200,
+        "finalURL": "https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml",
+        "bytesRead": 267799,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/secure-build.yaml",
+        "status": 200,
+        "finalURL": "https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/secure-build.yaml",
+        "bytesRead": 293826,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml",
+        "status": 200,
+        "finalURL": "https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml",
+        "bytesRead": 235340,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/image-security/base-images",
+        "status": 200,
+        "finalURL": "https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/image-security/base-images",
+        "bytesRead": 252762,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/DataDog/helm-charts",
+        "status": 200,
+        "finalURL": "https://github.com/DataDog/helm-charts",
+        "bytesRead": 280984,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/GoogleContainerTools/distroless",
+        "status": 200,
+        "finalURL": "https://github.com/GoogleContainerTools/distroless",
+        "bytesRead": 391380,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/actions/attest/tree/v4.2.2",
+        "status": 200,
+        "finalURL": "https://github.com/actions/attest/tree/v4.2.2",
+        "bytesRead": 405620,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm",
+        "status": 200,
+        "finalURL": "https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm",
+        "bytesRead": 372822,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/aquasecurity/trivy/releases/tag/v0.74.0",
+        "status": 200,
+        "finalURL": "https://github.com/aquasecurity/trivy/releases/tag/v0.74.0",
+        "bytesRead": 215286,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/README.md",
+        "status": 200,
+        "finalURL": "https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/README.md",
+        "bytesRead": 440467,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/traffic-distribution/index.md",
+        "status": 200,
+        "finalURL": "https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/traffic-distribution/index.md",
+        "bytesRead": 297305,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://github.com/org/repo/",
+        "status": 404,
+        "classification": "missing",
+        "error": "HTTP Error 404: Not Found"
+      },
+      {
+        "url": "https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md",
+        "status": 200,
+        "finalURL": "https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md",
+        "bytesRead": 253534,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/",
+        "status": 200,
+        "finalURL": "https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/",
+        "bytesRead": 555439,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://images.chainguard.dev/directory/image/python/overview",
+        "status": 200,
+        "finalURL": "https://images.chainguard.dev/directory/image/python/overview",
+        "bytesRead": 2000000,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://kyverno.io/docs/policy-types/cluster-policy/verify-images/overview/",
+        "status": 200,
+        "finalURL": "https://kyverno.io/docs/policy-types/cluster-policy/verify-images/overview/",
+        "bytesRead": 106634,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://kyverno.io/docs/policy-types/image-validating-policy/",
+        "status": 200,
+        "finalURL": "https://kyverno.io/docs/policy-types/image-validating-policy/",
+        "bytesRead": 201342,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://slack.cilium.io/",
+        "status": 403,
+        "classification": "blocked-or-error",
+        "error": "HTTP Error 403: Forbidden"
+      },
+      {
+        "url": "https://slsa.dev/spec/v1.2/build-requirements",
+        "status": 200,
+        "finalURL": "https://slsa.dev/spec/v1.2/build-requirements",
+        "bytesRead": 32934,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-05-datadog-2.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-05-datadog-2.html",
+        "bytesRead": 715229,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-05-datadog-2.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-05-datadog-2.html",
+        "bytesRead": 715357,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-10.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-10.html",
+        "bytesRead": 718187,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-11.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-11.html",
+        "bytesRead": 712193,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-12.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-12.html",
+        "bytesRead": 714281,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-13.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-13.html",
+        "bytesRead": 712540,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-14.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-14.html",
+        "bytesRead": 715549,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-10.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-10.html",
+        "bytesRead": 718016,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-11.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-11.html",
+        "bytesRead": 712819,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-12.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-12.html",
+        "bytesRead": 713937,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-13.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-13.html",
+        "bytesRead": 712948,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-14.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-14.html",
+        "bytesRead": 715962,
+        "classification": "reachable"
+      },
+      {
+        "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Startup-Files.html",
+        "classification": "unverified",
+        "error": "<urlopen error [Errno 101] Network is unreachable>"
+      },
+      {
+        "url": "https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html",
+        "classification": "unverified",
+        "error": "<urlopen error [Errno 101] Network is unreachable>"
+      }
+    ]
+  },
+  "interpretation": [
+    "Seven existing review dates are exposed through the site dateModified parser without changing their calendar values or experiment dates. Undated Airflow version baseline remains undated.",
+    "Two sample GitHub wildcard expressions are inline code to prevent a fake clickable org/repo link. They are instructional strings, not external references.",
+    "Ten previously unpublished vCluster URLs now return HTTP200.",
+    "Cilium Slack403 is an access restriction, not proof of a broken URL. Two GNU URLs remain unverified due to network reachability.",
+    "The remaining six missing external reference groups and one sample SPIFFE distractor belong to the ongoing observability/security reviews; this report does not close those cohorts.",
+    "1458 local referenced images decoded/parsed; full semantic and visual inspection is tracked separately."
+  ]
+}

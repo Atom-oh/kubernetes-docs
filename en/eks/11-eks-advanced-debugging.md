@@ -20,6 +20,8 @@ For stable operation of Amazon EKS clusters, a systematic incident response fram
 
 ---
 
+<span id="1-incident-response-framework"></span>
+
 ## 1. Incident Response Framework
 
 ### First 5-Minute Checklist (Initial Triage)
@@ -130,6 +132,8 @@ Response times in this severity table are example organizational targets. Classi
 -->
 
 ---
+
+<span id="2-control-plane-debugging"></span>
 
 ## 2. Control Plane Debugging
 
@@ -406,6 +410,8 @@ PRESERVE asks EKS to retain existing custom settings when resolving conflicts; i
 
 ---
 
+<span id="3-node-level-troubleshooting"></span>
+
 ## 3. Node-Level Troubleshooting
 
 <a id="node-join-diagnosis"></a>
@@ -625,6 +631,8 @@ For a bootstrap gate, register new nodes with the matching startup taint before 
 [Release v0.5.0](https://github.com/kubernetes-sigs/node-readiness-controller/releases/tag/v0.5.0) · [Enforcement and dry-run semantics](https://github.com/kubernetes-sigs/node-readiness-controller/blob/v0.5.0/docs/book/src/user-guide/concepts.md) · [Reporter configuration](https://github.com/kubernetes-sigs/node-readiness-controller/blob/v0.5.0/docs/book/src/reference/reporter-configuration.md)
 
 ---
+
+<span id="4-workload-debugging"></span>
 
 ## 4. Workload Debugging
 
@@ -846,6 +854,8 @@ Replace the placeholder image and implement the actual health endpoints; this st
 [Pod lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/) · [Debug running Pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/) · [HPA behavior](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) · [VPA modes](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
 
 ---
+
+<span id="5-networking-diagnostics"></span>
 
 ## 5. Networking Diagnostics
 
@@ -1089,6 +1099,8 @@ Choose a reviewed diagnostic image/tool implementation using the preceding debug
 
 ---
 
+<span id="6-storage-troubleshooting"></span>
+
 ## 6. Storage Troubleshooting
 
 ### Identify the Driver and Permissions
@@ -1240,6 +1252,8 @@ An existing EBS volume cannot attach across AZs simply because the class uses Wa
 [EBS CSI/IAM](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html) · [Managed-policy scopes](https://docs.aws.amazon.com/eks/latest/userguide/security-iam-awsmanpol.html) · [Auto Mode parameters](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html) · [PV lifecycle](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) · [EFS CSI](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
 
 ---
+
+<span id="7-observability-architecture"></span>
 
 ## 7. Observability Architecture
 
@@ -1685,6 +1699,8 @@ Keep application service identity and propagation intact; a Collector alone does
 
 ---
 
+<span id="8-failure-detection-architecture"></span>
+
 ## 8. Failure Detection Architecture
 
 ### Four-Layer Detection Pipeline
@@ -2012,6 +2028,8 @@ This is a routing policy example, not proof that every channel is deployed or wi
 
 ---
 
+<span id="9-quick-reference"></span>
+
 ## 9. Quick Reference
 
 ### Interpret Symptoms Before Choosing a Change
@@ -2103,6 +2121,8 @@ Compare the digest to your independently reviewed artifact record; merely printi
 [Kubeconform](https://github.com/yannh/kubeconform) · [K9s](https://github.com/derailed/k9s) · [eks-node-viewer](https://github.com/awslabs/eks-node-viewer) · [EKS troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)
 
 ---
+
+<span id="10-next-steps"></span>
 
 ## 10. Next Steps
 

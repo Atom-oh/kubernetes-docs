@@ -79,7 +79,7 @@
     "validation": [
       "kafka-operations-validation.json"
     ],
-    "reviewedSha256": "77b30e907f782172d408c75a7ec5d62c90f3535129367e988fc05beda4234c3f",
+    "reviewedSha256": "c6ddaee43b6110608affbd1e67478238ee778b251d01e68dc78f200216ac2510",
     "findings": [
       "Updatedgp3limits/unitsandio2BlockExpressconditions;separateddurabilityfromAFR/capacityplusIOPScosts.",
       "Verifiedoriginal117.936TBadditivemarginmathanddistinguished30percentfreecapacity129.6TB;statedsustainedretainedlograteandextraoverhead/skewlimitations.",
@@ -90,7 +90,8 @@
       "ClarifiedoptionalmetadataVersionpinning/automaticupgradeandcurrent+targetOperatorcompatibilityratherthanalwayslatestfirst;keptrecoverycaveats.",
       "CorrectedPDBoneperKafkacluster/allpoolsandvoluntaryevictionlimits;removedzerodowntime/zerolossguarantees.",
       "Updated34questionsandvalidated52fenceswithnative-v1schemasandfixturecopychecks."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
@@ -110,7 +111,7 @@
     "validation": [
       "kafka-operations-validation.json"
     ],
-    "reviewedSha256": "7c0f03f99512b4fa3e6f326738eca3c95e7fb6da8cb4e9722f6ead8238d7bf7e",
+    "reviewedSha256": "ad9586b613e877bca2b2854c938f6b35934fbbafe6e9cdd6de6ab29a4128647d",
     "findings": [
       "Updatedgp3limits/unitsandio2BlockExpressconditions;separateddurabilityfromAFR/capacityplusIOPScosts.",
       "Verifiedoriginal117.936TBadditivemarginmathanddistinguished30percentfreecapacity129.6TB;statedsustainedretainedlograteandextraoverhead/skewlimitations.",
@@ -121,6 +122,7 @@
       "ClarifiedoptionalmetadataVersionpinning/automaticupgradeandcurrent+targetOperatorcompatibilityratherthanalwayslatestfirst;keptrecoverycaveats.",
       "CorrectedPDBoneperKafkacluster/allpoolsandvoluntaryevictionlimits;removedzerodowntime/zerolossguarantees.",
       "Updated34questionsandvalidated52fenceswithnative-v1schemasandfixturecopychecks."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   }
 ]

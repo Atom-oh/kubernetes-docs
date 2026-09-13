@@ -4,7 +4,8 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed both operator release APIs/chart rendering; fixed namespaces/RBAC, Spark runtime alignment, valid executor SA/volume/timezone fields, admission/identity/metrics/retry/retention claims; 40 questions, 53 schema objects, 3 negative cases, 30 fences, 2 diagrams plus 4 mobile checks. No live cloud submission.",
-    "reviewedSha256": "5dc71eebd91f9c0dd75b989644d62c125471092a528ba15274b75a07f35d97c2"
+    "reviewedSha256": "d566c9fba6df7a4aa694832bfde84dc60a005cddbccead03415bb95cf874b17c",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/data-on-eks/spark/02-spark-operator-quiz.md",
@@ -18,7 +19,8 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed both operator release APIs/chart rendering; fixed namespaces/RBAC, Spark runtime alignment, valid executor SA/volume/timezone fields, admission/identity/metrics/retry/retention claims; 40 questions, 53 schema objects, 3 negative cases, 30 fences, 2 diagrams plus 4 mobile checks. No live cloud submission.",
-    "reviewedSha256": "e22abca6c33a3daf260937d63c2f9db586d049b7a7d38d8b0f1c5c0767dc277c"
+    "reviewedSha256": "b1d804862a6ffe32f2165dcbc1b58995352aece83b231e72c0e4615dd4d2a3a2",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/spark/02-spark-operator-quiz.md",

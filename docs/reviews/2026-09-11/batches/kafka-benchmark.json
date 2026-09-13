@@ -33,7 +33,8 @@
     "validation": [
       "kafka-benchmark-validation.json"
     ],
-    "reviewedSha256": "d9b4a352c5db776ffc3efd112b5f88a8c0e95de674b306e861e41d1361625417"
+    "reviewedSha256": "fb7c8e8b967d531755526d7ccaefa646df2cf77c87f4d8fd42897a3d2835b704",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md",
@@ -105,7 +106,8 @@
     "validation": [
       "kafka-benchmark-validation.json"
     ],
-    "reviewedSha256": "ed85958234f5fa5e1d229a4724be75eea82b5fa18e1b21e06a3c2f6a9a282ae1"
+    "reviewedSha256": "85bc36716a97ec9ee96c4b98b26f8c86368f5ee1021556301b5f672e4065e97d",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md",
