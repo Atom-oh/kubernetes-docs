@@ -1,0 +1,2339 @@
+{
+  "status": "passed",
+  "scope": "4navigationfilesonly;doesnotclaimquizorlabbodysemanticreview",
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/quizzes/README.md",
+        "sha256": "2f7975373e35b7a92e3ecf5fa21f9a5e61fc87031d434f75df8c4c871ba5404f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloud-native-operations-교육-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "전체-퀴즈-목록"
+          },
+          {
+            "tag": "h3",
+            "id": "소개"
+          },
+          {
+            "tag": "h3",
+            "id": "ai-ml"
+          },
+          {
+            "tag": "h3",
+            "id": "오토스케일링"
+          },
+          {
+            "tag": "h3",
+            "id": "기초-개념"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-레지스트리"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-핵심-개념"
+          },
+          {
+            "tag": "h3",
+            "id": "data-on-eks"
+          },
+          {
+            "tag": "h3",
+            "id": "데이터베이스"
+          },
+          {
+            "tag": "h3",
+            "id": "amazon-eks"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-auto-mode"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-hybrid-nodes"
+          },
+          {
+            "tag": "h3",
+            "id": "gitops"
+          },
+          {
+            "tag": "h3",
+            "id": "클라우드-거버넌스"
+          },
+          {
+            "tag": "h3",
+            "id": "네트워킹"
+          },
+          {
+            "tag": "h3",
+            "id": "관측성"
+          },
+          {
+            "tag": "h3",
+            "id": "운영-가이드"
+          },
+          {
+            "tag": "h3",
+            "id": "플랫폼-엔지니어링"
+          },
+          {
+            "tag": "h3",
+            "id": "스케줄링"
+          },
+          {
+            "tag": "h3",
+            "id": "보안과-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "서비스-메시"
+          },
+          {
+            "tag": "h3",
+            "id": "스토리지"
+          }
+        ],
+        "renderedIds": [
+          "cloud-native-operations-교육-퀴즈",
+          "전체-퀴즈-목록",
+          "소개",
+          "ai-ml",
+          "오토스케일링",
+          "기초-개념",
+          "컨테이너-레지스트리",
+          "kubernetes-핵심-개념",
+          "data-on-eks",
+          "데이터베이스",
+          "amazon-eks",
+          "eks-auto-mode",
+          "eks-hybrid-nodes",
+          "gitops",
+          "클라우드-거버넌스",
+          "네트워킹",
+          "관측성",
+          "운영-가이드",
+          "플랫폼-엔지니어링",
+          "스케줄링",
+          "보안과-정책",
+          "서비스-메시",
+          "스토리지"
+        ]
+      },
+      {
+        "path": "en/quizzes/README.md",
+        "sha256": "6e74dc7d2a23cf8ef419383777679c782e087216e5880a6351acec20c19538e2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloud-native-operations-quizzes"
+          },
+          {
+            "tag": "h2",
+            "id": "complete-quiz-index"
+          },
+          {
+            "tag": "h3",
+            "id": "introduction"
+          },
+          {
+            "tag": "h3",
+            "id": "ai-ml"
+          },
+          {
+            "tag": "h3",
+            "id": "autoscaling"
+          },
+          {
+            "tag": "h3",
+            "id": "fundamentals"
+          },
+          {
+            "tag": "h3",
+            "id": "container-registries"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-core"
+          },
+          {
+            "tag": "h3",
+            "id": "data-on-eks"
+          },
+          {
+            "tag": "h3",
+            "id": "databases"
+          },
+          {
+            "tag": "h3",
+            "id": "amazon-eks"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-auto-mode"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-hybrid-nodes"
+          },
+          {
+            "tag": "h3",
+            "id": "gitops"
+          },
+          {
+            "tag": "h3",
+            "id": "cloud-governance"
+          },
+          {
+            "tag": "h3",
+            "id": "networking"
+          },
+          {
+            "tag": "h3",
+            "id": "observability"
+          },
+          {
+            "tag": "h3",
+            "id": "operations"
+          },
+          {
+            "tag": "h3",
+            "id": "platform-engineering"
+          },
+          {
+            "tag": "h3",
+            "id": "scheduling"
+          },
+          {
+            "tag": "h3",
+            "id": "security-and-policy"
+          },
+          {
+            "tag": "h3",
+            "id": "service-mesh"
+          },
+          {
+            "tag": "h3",
+            "id": "storage"
+          }
+        ],
+        "renderedIds": [
+          "cloud-native-operations-quizzes",
+          "complete-quiz-index",
+          "introduction",
+          "ai-ml",
+          "autoscaling",
+          "fundamentals",
+          "container-registries",
+          "kubernetes-core",
+          "data-on-eks",
+          "databases",
+          "amazon-eks",
+          "eks-auto-mode",
+          "eks-hybrid-nodes",
+          "gitops",
+          "cloud-governance",
+          "networking",
+          "observability",
+          "operations",
+          "platform-engineering",
+          "scheduling",
+          "security-and-policy",
+          "service-mesh",
+          "storage"
+        ]
+      },
+      {
+        "path": "ko/lab-guides/labs/observability-end-to-end/README.md",
+        "sha256": "6aba76e395b46ee9b94819046b578cf5206a5800e64a1076d137b3f88f02ed1d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-end-to-end-실습"
+          }
+        ],
+        "renderedIds": [
+          "observability-end-to-end-실습"
+        ]
+      },
+      {
+        "path": "en/lab-guides/labs/observability-end-to-end/README.md",
+        "sha256": "6d68fd106435318432d8ab52e97bcc30022d7c23527237aa4c4d6323c35bcf5c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-end-to-end-labs"
+          }
+        ],
+        "renderedIds": [
+          "observability-end-to-end-labs"
+        ]
+      }
+    ]
+  },
+  "quizInventory": [
+    {
+      "locale": "ko",
+      "quizCount": 253,
+      "links": [
+        {
+          "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+          "title": "AI/ML 워크로드 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/04-inference-frameworks-quiz.md",
+          "title": "추론 프레임워크 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+          "title": "vLLM 배포 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/05-model-training-quiz.md",
+          "title": "EKS 모델 훈련 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/06-ai-infrastructure-quiz.md",
+          "title": "EKS 기반 AI 인프라 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/07-ai-ml-best-practices-quiz.md",
+          "title": "AI/ML 모범 사례 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+          "title": "Agentic AI 플랫폼 on EKS 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md",
+          "title": "Kubeflow 아키텍처와 EKS 설치 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/kubeflow/02-pipelines-quiz.md",
+          "title": "Kubeflow Pipelines 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/kubeflow/03-notebooks-quiz.md",
+          "title": "Kubeflow Notebooks 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/kubeflow/04-katib-quiz.md",
+          "title": "Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/kubeflow/05-training-operator-quiz.md",
+          "title": "Kubeflow Trainer와 분산 학습 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/kubeflow/06-kserve-quiz.md",
+          "title": "KServe 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/mlflow/01-tracking-quiz.md",
+          "title": "MLflow Tracking 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/mlflow/02-model-registry-quiz.md",
+          "title": "MLflow Model Registry 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md",
+          "title": "MLflow EKS 배포 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/ray/01-architecture-quiz.md",
+          "title": "Ray 아키텍처 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/ray/02-kuberay-operator-quiz.md",
+          "title": "KubeRay 오퍼레이터 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/ray/03-ray-train-tune-quiz.md",
+          "title": "Ray Train / Tune 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
+          "title": "Ray Serve 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+          "title": "SageMaker Qwen 플랫폼 아키텍처 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",
+          "title": "합성 PII 데이터와 토큰화 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md",
+          "title": "SageMaker AI와 MLflow 실행 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md",
+          "title": "SageMaker Qwen 실제 검증 결과 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/autoscaling/03-knative-quiz.md",
+          "title": "Knative 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/autoscaling/05-keda-quiz.md",
+          "title": "KEDA 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/autoscaling/06-karpenter-quiz.md",
+          "title": "Karpenter 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/basics/01-linux-basics-quiz.md",
+          "title": "Linux 기초 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/basics/02-linux-advanced-quiz.md",
+          "title": "Linux 운영 기술 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/basics/03-container-technology-quiz.md",
+          "title": "컨테이너 기술 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/basics/04-kubernetes-introduction-quiz.md",
+          "title": "Kubernetes 소개 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/basics/05-ebpf-fundamentals-quiz.md",
+          "title": "eBPF 기초 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/basics/06-network-fundamentals-part1-quiz.md",
+          "title": "네트워크 기초 Part 1 퀴즈 — 계층 모델과 링크·라우팅"
+        },
+        {
+          "path": "ko/quizzes/basics/06-network-fundamentals-part2-quiz.md",
+          "title": "네트워크 기초 Part 2 퀴즈 — 전송 계층과 TLS"
+        },
+        {
+          "path": "ko/quizzes/basics/06-network-fundamentals-part3-quiz.md",
+          "title": "네트워크 기초 Part 3 퀴즈 — 애플리케이션 프로토콜"
+        },
+        {
+          "path": "ko/quizzes/basics/06-network-fundamentals-part4-quiz.md",
+          "title": "네트워크 기초 Part 4 퀴즈 — 요청의 여정과 클라우드"
+        },
+        {
+          "path": "ko/quizzes/container-registry/01-docker-hub-quiz.md",
+          "title": "Docker Hub 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/container-registry/02-amazon-ecr-quiz.md",
+          "title": "Amazon ECR 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/container-registry/03-harbor-quiz.md",
+          "title": "Harbor 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/container-registry/04-best-practices-quiz.md",
+          "title": "컨테이너 레지스트리 모범 사례 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/01-cluster-architecture-quiz.md",
+          "title": "클러스터 아키텍처 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/02-pods-and-workloads-quiz.md",
+          "title": "파드와 워크로드 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/03-services-networking-quiz.md",
+          "title": "서비스와 네트워킹 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/04-storage-quiz.md",
+          "title": "스토리지 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/05-configuration-secrets-quiz.md",
+          "title": "구성 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/06-security-quiz.md",
+          "title": "보안 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/07-policies-quiz.md",
+          "title": "정책 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/08-scheduling-preemption-eviction-quiz.md",
+          "title": "스케줄링, 선점 및 축출 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/09-cluster-administration-quiz.md",
+          "title": "클러스터 관리 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/10-windows-in-kubernetes-quiz.md",
+          "title": "Windows in Kubernetes 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/core/11-extending-kubernetes-quiz.md",
+          "title": "Kubernetes 확장 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md",
+          "title": "모던 데이터 파이프라인 해부 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/airflow/01-architecture-quiz.md",
+          "title": "Airflow 아키텍처 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md",
+          "title": "Helm 배포와 Executor 선택 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+          "title": "DAG 패턴과 KubernetesPodOperator 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",
+          "title": "MWAA 통합 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/airflow/05-operations-quiz.md",
+          "title": "Part 5: 운영과 보안 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/flink/01-architecture-quiz.md",
+          "title": "Kubernetes에서의 Flink 아키텍처 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+          "title": "Flink Kubernetes Operator 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+          "title": "상태·체크포인트·스트리밍 패턴 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
+          "title": "운영·HA·관리형 Flink 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+          "title": "Kafka 핵심 개념 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "title": "Strimzi Operator 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+          "title": "Kafka 운영 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+          "title": "스키마 레지스트리 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md",
+          "title": "Kafka Connect와 MirrorMaker 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",
+          "title": "MSK 통합 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+          "title": "Part 7: 모니터링 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+          "title": "Part 8: 모범 사례 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md",
+          "title": "Part 9: Kafka 벤치마크 검토 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+          "title": "Unified Studio Domain과 Project 거버넌스 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",
+          "title": "Spark on Kubernetes 기초 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/spark/02-spark-operator-quiz.md",
+          "title": "Spark Operator 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md",
+          "title": "Amazon EMR on EKS 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/spark/04-performance-tuning-quiz.md",
+          "title": "Part 4: 성능 및 비용 튜닝 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/spark/05-best-practices-quiz.md",
+          "title": "Part 5: 모범 사례와 보안 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/database/01-clickhouse-on-eks-quiz.md",
+          "title": "ClickHouse on EKS 실측 벤치마크 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-auto-mode/01-getting-started-quiz.md",
+          "title": "EKS Auto Mode 시작하기 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md",
+          "title": "EKS Auto Mode NodePool 구성 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-auto-mode/03-scaling-behavior-quiz.md",
+          "title": "EKS Auto Mode 스케일링 동작 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-auto-mode/04-spot-strategies-quiz.md",
+          "title": "EKS Auto Mode Spot 전략 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-auto-mode/05-operations-quiz.md",
+          "title": "EKS Auto Mode 운영 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-auto-mode/06-cost-management-quiz.md",
+          "title": "EKS Auto Mode 비용 관리 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md",
+          "title": "EKS Auto Mode 노드 수명 주기 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-auto-mode/08-workload-optimization-quiz.md",
+          "title": "EKS Auto Mode 워크로드 최적화 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-auto-mode/09-migration-guide-quiz.md",
+          "title": "EKS Auto Mode 마이그레이션 가이드 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md",
+          "title": "EKS Hybrid Nodes 사전 요구 사항 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md",
+          "title": "EKS Hybrid Nodes 네트워크 구성 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md",
+          "title": "EKS Hybrid Nodes 에어갭 환경 구성 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md",
+          "title": "EKS Hybrid Nodes 노드 부트스트래핑 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md",
+          "title": "EKS Hybrid Nodes GPU 통합 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md",
+          "title": "EKS Hybrid Nodes 워크로드 배치 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
+          "title": "노드 라이프사이클 관리 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/08-operations-quiz.md",
+          "title": "EKS Hybrid Nodes 운영 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md",
+          "title": "베어메탈 서버 OS 설치 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+          "title": "EKS Hybrid Nodes Gateway 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks/01-eks-introduction-quiz.md",
+          "title": "EKS 소개 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+          "title": "EKS 클러스터 생성 퀴즈 - Part 1"
+        },
+        {
+          "path": "ko/quizzes/eks/02-eks-cluster-creation-part2-quiz.md",
+          "title": "EKS 클러스터 생성 퀴즈 - Part 2"
+        },
+        {
+          "path": "ko/quizzes/eks/02-eks-cluster-creation-part3-quiz.md",
+          "title": "EKS 클러스터 생성 퀴즈 - Part 3"
+        },
+        {
+          "path": "ko/quizzes/eks/02-eks-cluster-creation-part4-quiz.md",
+          "title": "EKS 클러스터 생성 퀴즈 - Part 4"
+        },
+        {
+          "path": "ko/quizzes/eks/02-eks-cluster-creation-part5-quiz.md",
+          "title": "EKS 클러스터 생성 퀴즈 - Part 5"
+        },
+        {
+          "path": "ko/quizzes/eks/03-eks-networking-part1-quiz.md",
+          "title": "EKS 네트워킹 퀴즈 - Part 1"
+        },
+        {
+          "path": "ko/quizzes/eks/03-eks-networking-part2-quiz.md",
+          "title": "EKS 네트워킹 퀴즈 - Part 2"
+        },
+        {
+          "path": "ko/quizzes/eks/03-eks-networking-part3-quiz.md",
+          "title": "EKS 네트워킹 퀴즈 - Part 3"
+        },
+        {
+          "path": "ko/quizzes/eks/04-eks-storage-part1-quiz.md",
+          "title": "EKS 스토리지 퀴즈 - Part 1"
+        },
+        {
+          "path": "ko/quizzes/eks/04-eks-storage-part2-quiz.md",
+          "title": "EKS 스토리지 퀴즈 - Part 2"
+        },
+        {
+          "path": "ko/quizzes/eks/04-eks-storage-part3-quiz.md",
+          "title": "EKS 스토리지 Part 3 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks/05-eks-security-quiz.md",
+          "title": "Amazon EKS 보안 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks/06-eks-monitoring-logging-quiz.md",
+          "title": "Amazon EKS 모니터링 및 로깅 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks/07-eks-cost-optimization-quiz.md",
+          "title": "Amazon EKS 비용 최적화 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks/08-eks-upgrades-quiz.md",
+          "title": "Amazon EKS 업그레이드 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks/09-eks-troubleshooting-quiz.md",
+          "title": "Amazon EKS 문제 해결 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks/10-eks-resiliency-quiz.md",
+          "title": "Amazon EKS 고가용성 및 복원력 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks/11-eks-advanced-debugging-quiz.md",
+          "title": "Amazon EKS 고급 디버깅 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/eks/12-kubernetes-version-roadmap-quiz.md",
+          "title": "Kubernetes 버전별 신규 기능과 로드맵 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/01-argocd-quiz.md",
+          "title": "ArgoCD 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/02-fluxcd-quiz.md",
+          "title": "FluxCD 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/03-gitops-comparison-quiz.md",
+          "title": "GitOps 도구 비교 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/04-flagger-quiz.md",
+          "title": "Flagger Progressive Delivery 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/05-feature-flags-quiz.md",
+          "title": "Feature Flags와 OpenFeature 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/argocd/01-installation-quiz.md",
+          "title": "ArgoCD 설치 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/argocd/02-applications-quiz.md",
+          "title": "ArgoCD 애플리케이션 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/argocd/03-sync-strategies-quiz.md",
+          "title": "ArgoCD 동기화 전략 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/argocd/04-applicationsets-quiz.md",
+          "title": "ArgoCD ApplicationSets 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/argocd/05-traffic-management-quiz.md",
+          "title": "ArgoCD 트래픽 관리 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/argocd/06-projects-rbac-quiz.md",
+          "title": "ArgoCD 프로젝트와 RBAC 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/argocd/07-security-quiz.md",
+          "title": "ArgoCD 보안 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/argocd/08-notifications-quiz.md",
+          "title": "ArgoCD 알림 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/argocd/09-best-practices-quiz.md",
+          "title": "ArgoCD 모범 사례 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/gitops/argocd/10-rollouts-experiment-quiz.md",
+          "title": "Argo Rollouts Experiment 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/governance/00-governance-overview-quiz.md",
+          "title": "엔터프라이즈 클라우드 거버넌스 개요 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+          "title": "Landing Zone, OU와 조직 Control 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/governance/02-account-and-iam-quiz.md",
+          "title": "Account 구성과 IAM 경계 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+          "title": "EKS 멀티 계정·멀티 클러스터 아키텍처 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+          "title": "Shared VPC와 Connectivity 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/governance/05-data-security-boundaries-quiz.md",
+          "title": "Data·Security 경계 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+          "title": "의사결정 프레임워크와 POC 설계 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/llm-guide-quiz.md",
+          "title": "LLM과 함께 읽기 — llms.txt 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/00-networking-overview-quiz.md",
+          "title": "Kubernetes 네트워킹 개요 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/01-vpc-cni-quiz.md",
+          "title": "Amazon VPC CNI 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/02-vpc-lattice-quiz.md",
+          "title": "VPC Lattice 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/03-aws-lb-controller-quiz.md",
+          "title": "AWS Load Balancer Controller 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/04-gateway-api-quiz.md",
+          "title": "Gateway API 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+          "title": "Cross-Org VPC 연결 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/06-pod-network-benchmark-quiz.md",
+          "title": "Pod 네트워크 실측 벤치마크 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/calico/01-introduction-quiz.md",
+          "title": "Calico 소개 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/calico/02-architecture-quiz.md",
+          "title": "Calico 아키텍처 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/calico/03-networking-modes-quiz.md",
+          "title": "Calico 네트워킹 모드 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/calico/04-bgp-deep-dive-quiz.md",
+          "title": "Calico BGP 심화 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/calico/05-network-policy-quiz.md",
+          "title": "Calico Network Policy 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/calico/06-ebpf-dataplane-quiz.md",
+          "title": "Calico eBPF 데이터플레인 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/calico/07-advanced-topics-quiz.md",
+          "title": "Calico 고급 주제 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/calico/08-eks-integration-quiz.md",
+          "title": "Calico EKS 통합 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/calico/09-operations-quiz.md",
+          "title": "Calico 운영 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/calico/glossary-quiz.md",
+          "title": "Calico 용어집 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/cilium/01-introduction-quiz.md",
+          "title": "Cilium 소개 및 기본 개념 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/cilium/02-ebpf-quiz.md",
+          "title": "Cilium eBPF 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/cilium/03-networking-quiz.md",
+          "title": "Cilium 네트워킹 검증 실습"
+        },
+        {
+          "path": "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+          "title": "Cilium IPAM 및 네트워크 정책 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
+          "title": "Cilium L2–L7 네트워킹 및 로드 밸런싱 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/cilium/06-security-visibility-quiz.md",
+          "title": "Cilium 보안 및 가시성 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+          "title": "Cilium 고급 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/cilium/glossary-quiz.md",
+          "title": "용어집 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/networking/cilium/networking-concepts-quiz.md",
+          "title": "Cilium 네트워킹 개념 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/09-observability-optimization-quiz.md",
+          "title": "관측성 최적화 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "title": "Prometheus Alertmanager 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+          "title": "CloudWatch Alarms 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+          "title": "Grafana OnCall 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/grafana/grafana-quiz.md",
+          "title": "Grafana 대시보드 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+          "title": "Observability 실습 Part 1: 인프라 구성 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/labs/02-observability-stack-quiz.md",
+          "title": "Observability 실습 Part 2: Observability 스택 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/labs/03-msa-deployment-quiz.md",
+          "title": "Observability 실습 Part 3: MSA 배포 및 카나리 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
+          "title": "Observability 실습 Part 4: 부하 테스트 및 스케일링 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+          "title": "Observability 실습 Part 5: 알림 및 AIOps 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/labs/06-distributed-tracing-quiz.md",
+          "title": "Observability 실습 Part 6: 분산 추적 분석 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/logging/01-loki-quiz.md",
+          "title": "Grafana Loki 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/logging/02-opensearch-quiz.md",
+          "title": "Amazon OpenSearch Service 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+          "title": "CloudWatch Logs 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+          "title": "ClickHouse for Log Analytics 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/logging/05-collectors-quiz.md",
+          "title": "로그 수집기 비교 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/logging/README-quiz.md",
+          "title": "로깅 개요 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+          "title": "메트릭 개요 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/metrics/01-prometheus-quiz.md",
+          "title": "Prometheus 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+          "title": "VictoriaMetrics 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/metrics/03-mimir-quiz.md",
+          "title": "Grafana Mimir 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+          "title": "CloudWatch Metrics 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
+          "title": "Datadog 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/tracing/01-tempo-quiz.md",
+          "title": "Grafana Tempo 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/tracing/02-xray-quiz.md",
+          "title": "AWS X-Ray 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+          "title": "OpenTelemetry 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/observability/tracing/04-dynatrace-quiz.md",
+          "title": "Dynatrace 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/01-infrastructure-setup-quiz.md",
+          "title": "인프라 구성 기초 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/02-infrastructure-advanced-quiz.md",
+          "title": "인프라 구성 고급 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/03-ci-pipelines-quiz.md",
+          "title": "CI 파이프라인 구성 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/04-gitops-multi-cluster-quiz.md",
+          "title": "GitOps 멀티 클러스터 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/05-gitops-automation-quiz.md",
+          "title": "GitOps 자동화 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/06-scaling-strategies-quiz.md",
+          "title": "스케일링 전략 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/07-observability-alerts-quiz.md",
+          "title": "Observability 알림 설정 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/08-observability-analysis-quiz.md",
+          "title": "Observability 분석 방법 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/09-observability-stack-quiz.md",
+          "title": "Observability 스택 구성 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/10-resource-optimization-quiz.md",
+          "title": "리소스 최적화 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/11-upgrade-operations-quiz.md",
+          "title": "EKS 업그레이드 운영 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/12-event-capacity-planning-quiz.md",
+          "title": "이벤트 용량 계획 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/13-finops-cost-platform-quiz.md",
+          "title": "FinOps 비용 가시성 플랫폼 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/14-tekton-pipelines-quiz.md",
+          "title": "Tekton Pipelines 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/15-zonal-operations-guide-quiz.md",
+          "title": "Zonal 클러스터 운영 전략 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/16-troubleshooting-playbook-quiz.md",
+          "title": "트러블슈팅 플레이북 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/ops/17-spot-production-experiments-quiz.md",
+          "title": "EKS Spot 운영 적용 실험 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+          "title": "Platform Engineering 개요 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/platform-engineering/01-helm-quiz.md",
+          "title": "Helm 패키지 매니저 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/platform-engineering/02-ack-quiz.md",
+          "title": "AWS Controllers for Kubernetes (ACK) 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/platform-engineering/03-kro-quiz.md",
+          "title": "KRO Helm 마이그레이션 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+          "title": "Kubernetes 확장 메커니즘 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+          "title": "Backstage IDP 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/platform-engineering/07-crossplane-quiz.md",
+          "title": "Crossplane 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/platform-engineering/08-vcluster-quiz.md",
+          "title": "vCluster 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/roadmap-quiz.md",
+          "title": "가이드북 로드맵 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/scheduling/02-custom-scheduler-part1-quiz.md",
+          "title": "Custom Scheduler 퀴즈 (Part 1)"
+        },
+        {
+          "path": "ko/quizzes/scheduling/02-custom-scheduler-part2-quiz.md",
+          "title": "Custom Scheduler 퀴즈 (Part 2)"
+        },
+        {
+          "path": "ko/quizzes/scheduling/02-custom-scheduler-part3-quiz.md",
+          "title": "Custom Scheduler 퀴즈 (Part 3)"
+        },
+        {
+          "path": "ko/quizzes/security/01-kyverno-policy-management-quiz.md",
+          "title": "Kyverno를 사용한 정책 관리 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/02-kubernetes-auth-authz-quiz.md",
+          "title": "Kubernetes 인증 및 권한 부여 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/03-pod-security-standards-quiz.md",
+          "title": "Pod Security Standards 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/04-network-policies-quiz.md",
+          "title": "네트워크 정책 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/05-secrets-management-quiz.md",
+          "title": "시크릿 관리 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/06-eks-security-best-practices-quiz.md",
+          "title": "EKS 보안 모범 사례 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/07-image-security-quiz.md",
+          "title": "컨테이너 이미지 보안 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/08-runtime-security-quiz.md",
+          "title": "런타임 보안 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+          "title": "OPA Gatekeeper 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/10-cert-manager-quiz.md",
+          "title": "cert-manager 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/11-kubescape-quiz.md",
+          "title": "Kubescape 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/security/12-spiffe-spire-quiz.md",
+          "title": "SPIFFE/SPIRE 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/02-istio-quiz.md",
+          "title": "Istio 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+          "title": "Cilium Service Mesh 아키텍처 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md",
+          "title": "Cilium Service Mesh 인그레스 & 게이트웨이 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/cilium-service-mesh/observability.md",
+          "title": "Cilium Service Mesh 관측성 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/cilium-service-mesh/security.md",
+          "title": "Cilium Service Mesh 보안 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+          "title": "Cilium Service Mesh 트래픽 관리 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/istio/advanced.md",
+          "title": "Istio 고급 주제 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/istio/basic.md",
+          "title": "Basic 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/istio/comparison.md",
+          "title": "Istio Comparison 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/istio/observability.md",
+          "title": "Observability 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/istio/resilience.md",
+          "title": "Resilience 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/istio/security.md",
+          "title": "Security 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/istio/traffic-management.md",
+          "title": "Traffic Management 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/linkerd/architecture.md",
+          "title": "Linkerd 아키텍처 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/linkerd/installation.md",
+          "title": "Linkerd 설치 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/linkerd/multi-cluster.md",
+          "title": "Linkerd 다중 클러스터 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/linkerd/observability.md",
+          "title": "Linkerd 관찰성 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/linkerd/security.md",
+          "title": "Linkerd 보안 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/service-mesh/linkerd/traffic-management.md",
+          "title": "Linkerd 트래픽 관리 퀴즈"
+        },
+        {
+          "path": "ko/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md",
+          "title": "EBS gp2 vs gp3 실측 벤치마크 퀴즈"
+        }
+      ],
+      "indexSha256": "2f7975373e35b7a92e3ecf5fa21f9a5e61fc87031d434f75df8c4c871ba5404f",
+      "source": "Currentorigin/mainquizinventory;currentrootH1usedwhenavailable;noquizbodyedits."
+    },
+    {
+      "locale": "en",
+      "quizCount": 253,
+      "links": [
+        {
+          "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+          "title": "AI/ML Workloads Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/04-inference-frameworks-quiz.md",
+          "title": "Inference Frameworks Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+          "title": "vLLM Deployment Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/05-model-training-quiz.md",
+          "title": "Model Training on EKS Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/06-ai-infrastructure-quiz.md",
+          "title": "AI Infrastructure on EKS Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/07-ai-ml-best-practices-quiz.md",
+          "title": "AI/ML Best Practices Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+          "title": "Agentic AI Platform on EKS Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md",
+          "title": "Kubeflow Architecture and Installation on EKS Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/kubeflow/02-pipelines-quiz.md",
+          "title": "Kubeflow Pipelines Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/kubeflow/03-notebooks-quiz.md",
+          "title": "Kubeflow Notebooks Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/kubeflow/04-katib-quiz.md",
+          "title": "Part 4: Katib — Hyperparameter Tuning and AutoML Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/kubeflow/05-training-operator-quiz.md",
+          "title": "Kubeflow Trainer and Distributed Training Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/kubeflow/06-kserve-quiz.md",
+          "title": "KServe Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/mlflow/01-tracking-quiz.md",
+          "title": "MLflow Tracking Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/mlflow/02-model-registry-quiz.md",
+          "title": "MLflow Model Registry Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md",
+          "title": "MLflow EKS Deployment Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/ray/01-architecture-quiz.md",
+          "title": "Ray Architecture Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/ray/02-kuberay-operator-quiz.md",
+          "title": "KubeRay Operator Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/ray/03-ray-train-tune-quiz.md",
+          "title": "Ray Train / Tune Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
+          "title": "Ray Serve Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+          "title": "SageMaker Qwen Platform Architecture Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",
+          "title": "Synthetic PII Data and Tokenization Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md",
+          "title": "SageMaker AI and MLflow Execution Quiz"
+        },
+        {
+          "path": "en/quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md",
+          "title": "SageMaker Qwen Factual Validation Results Quiz"
+        },
+        {
+          "path": "en/quizzes/autoscaling/03-knative-quiz.md",
+          "title": "Knative Quiz"
+        },
+        {
+          "path": "en/quizzes/autoscaling/05-keda-quiz.md",
+          "title": "KEDA Quiz"
+        },
+        {
+          "path": "en/quizzes/autoscaling/06-karpenter-quiz.md",
+          "title": "Karpenter Quiz"
+        },
+        {
+          "path": "en/quizzes/basics/01-linux-basics-quiz.md",
+          "title": "Linux Basics Quiz"
+        },
+        {
+          "path": "en/quizzes/basics/02-linux-advanced-quiz.md",
+          "title": "Linux Operations Skills Quiz"
+        },
+        {
+          "path": "en/quizzes/basics/03-container-technology-quiz.md",
+          "title": "Container Technology Quiz"
+        },
+        {
+          "path": "en/quizzes/basics/04-kubernetes-introduction-quiz.md",
+          "title": "Kubernetes Introduction Quiz"
+        },
+        {
+          "path": "en/quizzes/basics/05-ebpf-fundamentals-quiz.md",
+          "title": "eBPF Fundamentals Quiz"
+        },
+        {
+          "path": "en/quizzes/basics/06-network-fundamentals-part1-quiz.md",
+          "title": "Network Fundamentals Part 1 Quiz — Layer Model, Link and Routing"
+        },
+        {
+          "path": "en/quizzes/basics/06-network-fundamentals-part2-quiz.md",
+          "title": "Network Fundamentals Part 2 Quiz — Transport and TLS"
+        },
+        {
+          "path": "en/quizzes/basics/06-network-fundamentals-part3-quiz.md",
+          "title": "Network Fundamentals Part 3 Quiz — Application Protocols"
+        },
+        {
+          "path": "en/quizzes/basics/06-network-fundamentals-part4-quiz.md",
+          "title": "Network Fundamentals Part 4 Quiz — The Journey and the Cloud"
+        },
+        {
+          "path": "en/quizzes/container-registry/01-docker-hub-quiz.md",
+          "title": "Docker Hub Quiz"
+        },
+        {
+          "path": "en/quizzes/container-registry/02-amazon-ecr-quiz.md",
+          "title": "Amazon ECR Quiz"
+        },
+        {
+          "path": "en/quizzes/container-registry/03-harbor-quiz.md",
+          "title": "Harbor Quiz"
+        },
+        {
+          "path": "en/quizzes/container-registry/04-best-practices-quiz.md",
+          "title": "Container Registry Best Practices Quiz"
+        },
+        {
+          "path": "en/quizzes/core/01-cluster-architecture-quiz.md",
+          "title": "Cluster Architecture Quiz"
+        },
+        {
+          "path": "en/quizzes/core/02-pods-and-workloads-quiz.md",
+          "title": "Pods and Workloads Quiz"
+        },
+        {
+          "path": "en/quizzes/core/03-services-networking-quiz.md",
+          "title": "Services and Networking Quiz"
+        },
+        {
+          "path": "en/quizzes/core/04-storage-quiz.md",
+          "title": "Storage Quiz"
+        },
+        {
+          "path": "en/quizzes/core/05-configuration-secrets-quiz.md",
+          "title": "Configuration Quiz"
+        },
+        {
+          "path": "en/quizzes/core/06-security-quiz.md",
+          "title": "Security Quiz"
+        },
+        {
+          "path": "en/quizzes/core/07-policies-quiz.md",
+          "title": "Policies Quiz"
+        },
+        {
+          "path": "en/quizzes/core/08-scheduling-preemption-eviction-quiz.md",
+          "title": "Scheduling, Preemption, and Eviction Quiz"
+        },
+        {
+          "path": "en/quizzes/core/09-cluster-administration-quiz.md",
+          "title": "Cluster Administration Quiz"
+        },
+        {
+          "path": "en/quizzes/core/10-windows-in-kubernetes-quiz.md",
+          "title": "Windows in Kubernetes Quiz"
+        },
+        {
+          "path": "en/quizzes/core/11-extending-kubernetes-quiz.md",
+          "title": "Extending Kubernetes Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md",
+          "title": "Anatomy of a Modern Data Pipeline Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/airflow/01-architecture-quiz.md",
+          "title": "Airflow Architecture Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md",
+          "title": "Helm Deployment and Executor Choice Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+          "title": "DAG Patterns and KubernetesPodOperator Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",
+          "title": "MWAA Integration Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/airflow/05-operations-quiz.md",
+          "title": "Part 5: Operations and Security Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/flink/01-architecture-quiz.md",
+          "title": "Flink Architecture on Kubernetes Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+          "title": "Flink Kubernetes Operator Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+          "title": "State, Checkpointing and Streaming Patterns Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
+          "title": "Operations, HA and Managed Flink Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+          "title": "Kafka Fundamentals Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "title": "Strimzi Operator Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+          "title": "Kafka Operations Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+          "title": "Schema Registry Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md",
+          "title": "Kafka Connect and MirrorMaker Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",
+          "title": "MSK Integration Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+          "title": "Part 7: Monitoring Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+          "title": "Part 8: Best Practices Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md",
+          "title": "Part 9: Kafka Benchmark Review Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+          "title": "Unified Studio Domain and Project Governance Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",
+          "title": "Spark on Kubernetes Fundamentals Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/spark/02-spark-operator-quiz.md",
+          "title": "Spark Operator Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md",
+          "title": "Amazon EMR on EKS Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/spark/04-performance-tuning-quiz.md",
+          "title": "Part 4: Performance and Cost Tuning Quiz"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/spark/05-best-practices-quiz.md",
+          "title": "Part 5: Best Practices and Security Quiz"
+        },
+        {
+          "path": "en/quizzes/database/01-clickhouse-on-eks-quiz.md",
+          "title": "ClickHouse on EKS Measured Benchmark Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-auto-mode/01-getting-started-quiz.md",
+          "title": "EKS Auto Mode Getting Started Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md",
+          "title": "EKS Auto Mode NodePool Configuration Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-auto-mode/03-scaling-behavior-quiz.md",
+          "title": "EKS Auto Mode Scaling Behavior Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-auto-mode/04-spot-strategies-quiz.md",
+          "title": "EKS Auto Mode Spot Strategies Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-auto-mode/05-operations-quiz.md",
+          "title": "EKS Auto Mode Operations Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-auto-mode/06-cost-management-quiz.md",
+          "title": "EKS Auto Mode Cost Management Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md",
+          "title": "EKS Auto Mode Node Lifecycle Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-auto-mode/08-workload-optimization-quiz.md",
+          "title": "EKS Auto Mode Workload Optimization Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-auto-mode/09-migration-guide-quiz.md",
+          "title": "EKS Auto Mode Migration Guide Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md",
+          "title": "EKS Hybrid Nodes Prerequisites Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md",
+          "title": "EKS Hybrid Nodes Network Configuration Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md",
+          "title": "EKS Hybrid Nodes Air-Gap Environment Setup Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md",
+          "title": "EKS Hybrid Nodes Node Bootstrapping Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md",
+          "title": "EKS Hybrid Nodes GPU Integration Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md",
+          "title": "EKS Hybrid Nodes Workload Placement Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
+          "title": "Node Lifecycle Management Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/08-operations-quiz.md",
+          "title": "EKS Hybrid Nodes Operations Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md",
+          "title": "Bare Metal Server OS Installation and Migration Quiz"
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+          "title": "EKS Hybrid Nodes Gateway Quiz"
+        },
+        {
+          "path": "en/quizzes/eks/01-eks-introduction-quiz.md",
+          "title": "Introduction to EKS Quiz"
+        },
+        {
+          "path": "en/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+          "title": "EKS Cluster Creation Quiz - Part 1"
+        },
+        {
+          "path": "en/quizzes/eks/02-eks-cluster-creation-part2-quiz.md",
+          "title": "EKS Cluster Creation Quiz - Part 2"
+        },
+        {
+          "path": "en/quizzes/eks/02-eks-cluster-creation-part3-quiz.md",
+          "title": "EKS Cluster Creation Quiz - Part 3"
+        },
+        {
+          "path": "en/quizzes/eks/02-eks-cluster-creation-part4-quiz.md",
+          "title": "EKS Cluster Creation Quiz - Part 4"
+        },
+        {
+          "path": "en/quizzes/eks/02-eks-cluster-creation-part5-quiz.md",
+          "title": "EKS Cluster Creation Quiz - Part 5"
+        },
+        {
+          "path": "en/quizzes/eks/03-eks-networking-part1-quiz.md",
+          "title": "EKS Networking Quiz - Part 1"
+        },
+        {
+          "path": "en/quizzes/eks/03-eks-networking-part2-quiz.md",
+          "title": "EKS Networking Quiz - Part 2"
+        },
+        {
+          "path": "en/quizzes/eks/03-eks-networking-part3-quiz.md",
+          "title": "EKS Networking Quiz - Part 3"
+        },
+        {
+          "path": "en/quizzes/eks/04-eks-storage-part1-quiz.md",
+          "title": "EKS Storage Quiz - Part 1"
+        },
+        {
+          "path": "en/quizzes/eks/04-eks-storage-part2-quiz.md",
+          "title": "EKS Storage Quiz - Part 2"
+        },
+        {
+          "path": "en/quizzes/eks/04-eks-storage-part3-quiz.md",
+          "title": "EKS Storage Part 3 Quiz"
+        },
+        {
+          "path": "en/quizzes/eks/05-eks-security-quiz.md",
+          "title": "Amazon EKS Security Quiz"
+        },
+        {
+          "path": "en/quizzes/eks/06-eks-monitoring-logging-quiz.md",
+          "title": "Amazon EKS Monitoring and Logging Quiz"
+        },
+        {
+          "path": "en/quizzes/eks/07-eks-cost-optimization-quiz.md",
+          "title": "Amazon EKS Cost Optimization Quiz"
+        },
+        {
+          "path": "en/quizzes/eks/08-eks-upgrades-quiz.md",
+          "title": "Amazon EKS Upgrades Quiz"
+        },
+        {
+          "path": "en/quizzes/eks/09-eks-troubleshooting-quiz.md",
+          "title": "Amazon EKS Troubleshooting Quiz"
+        },
+        {
+          "path": "en/quizzes/eks/10-eks-resiliency-quiz.md",
+          "title": "Amazon EKS High Availability and Resiliency Quiz"
+        },
+        {
+          "path": "en/quizzes/eks/11-eks-advanced-debugging-quiz.md",
+          "title": "Amazon EKS Advanced Debugging Quiz"
+        },
+        {
+          "path": "en/quizzes/eks/12-kubernetes-version-roadmap-quiz.md",
+          "title": "Kubernetes Version Features and Roadmap Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/01-argocd-quiz.md",
+          "title": "ArgoCD Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/02-fluxcd-quiz.md",
+          "title": "FluxCD Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/03-gitops-comparison-quiz.md",
+          "title": "GitOps Tools Comparison Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/04-flagger-quiz.md",
+          "title": "Flagger Progressive Delivery Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/05-feature-flags-quiz.md",
+          "title": "Feature Flags and OpenFeature Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/argocd/01-installation-quiz.md",
+          "title": "ArgoCD Installation Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/argocd/02-applications-quiz.md",
+          "title": "ArgoCD Applications Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/argocd/03-sync-strategies-quiz.md",
+          "title": "ArgoCD Sync Strategies Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/argocd/04-applicationsets-quiz.md",
+          "title": "ArgoCD ApplicationSets Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/argocd/05-traffic-management-quiz.md",
+          "title": "ArgoCD Traffic Management Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/argocd/06-projects-rbac-quiz.md",
+          "title": "ArgoCD Projects and RBAC Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/argocd/07-security-quiz.md",
+          "title": "ArgoCD Security Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/argocd/08-notifications-quiz.md",
+          "title": "ArgoCD Notifications Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/argocd/09-best-practices-quiz.md",
+          "title": "ArgoCD Best Practices Quiz"
+        },
+        {
+          "path": "en/quizzes/gitops/argocd/10-rollouts-experiment-quiz.md",
+          "title": "Argo Rollouts Experiments Quiz"
+        },
+        {
+          "path": "en/quizzes/governance/00-governance-overview-quiz.md",
+          "title": "Enterprise Cloud Governance Overview Quiz"
+        },
+        {
+          "path": "en/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+          "title": "Landing Zone, OUs, and Organizational Control Quiz"
+        },
+        {
+          "path": "en/quizzes/governance/02-account-and-iam-quiz.md",
+          "title": "Account Structure and IAM Boundaries Quiz"
+        },
+        {
+          "path": "en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+          "title": "Multi-Account, Multi-Cluster EKS Architecture Quiz"
+        },
+        {
+          "path": "en/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+          "title": "Shared VPC and Connectivity Quiz"
+        },
+        {
+          "path": "en/quizzes/governance/05-data-security-boundaries-quiz.md",
+          "title": "Data and Security Boundaries Quiz"
+        },
+        {
+          "path": "en/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+          "title": "Decision Framework and PoC Design Quiz"
+        },
+        {
+          "path": "en/quizzes/llm-guide-quiz.md",
+          "title": "Reading with LLMs — llms.txt Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/00-networking-overview-quiz.md",
+          "title": "Kubernetes Networking Overview Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/01-vpc-cni-quiz.md",
+          "title": "Amazon VPC CNI Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/02-vpc-lattice-quiz.md",
+          "title": "VPC Lattice Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/03-aws-lb-controller-quiz.md",
+          "title": "AWS Load Balancer Controller Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/04-gateway-api-quiz.md",
+          "title": "Gateway API Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+          "title": "Cross-Org VPC Connectivity Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/06-pod-network-benchmark-quiz.md",
+          "title": "Pod Network Benchmark Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/calico/01-introduction-quiz.md",
+          "title": "Calico Introduction Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/calico/02-architecture-quiz.md",
+          "title": "Calico Architecture Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/calico/03-networking-modes-quiz.md",
+          "title": "Calico Networking Modes Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/calico/04-bgp-deep-dive-quiz.md",
+          "title": "BGP Deep Dive Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/calico/05-network-policy-quiz.md",
+          "title": "Network Policy Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/calico/06-ebpf-dataplane-quiz.md",
+          "title": "eBPF Dataplane Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/calico/07-advanced-topics-quiz.md",
+          "title": "Advanced Topics Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/calico/08-eks-integration-quiz.md",
+          "title": "EKS Integration Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/calico/09-operations-quiz.md",
+          "title": "Operations Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/calico/glossary-quiz.md",
+          "title": "Calico Glossary Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/cilium/01-introduction-quiz.md",
+          "title": "Cilium Introduction and Basic Concepts Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/cilium/02-ebpf-quiz.md",
+          "title": "Cilium eBPF Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/cilium/03-networking-quiz.md",
+          "title": "Cilium Networking Validation Exercises"
+        },
+        {
+          "path": "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+          "title": "Cilium IPAM and Network Policy Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
+          "title": "Cilium L2–L7 Networking and Load Balancing Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/cilium/06-security-visibility-quiz.md",
+          "title": "Cilium Security and Visibility Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+          "title": "Cilium Advanced Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/cilium/glossary-quiz.md",
+          "title": "Glossary Quiz"
+        },
+        {
+          "path": "en/quizzes/networking/cilium/networking-concepts-quiz.md",
+          "title": "Cilium Networking Concepts Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/09-observability-optimization-quiz.md",
+          "title": "Observability Optimization Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "title": "Prometheus Alertmanager Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+          "title": "CloudWatch Alarms Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+          "title": "Grafana OnCall Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/grafana/grafana-quiz.md",
+          "title": "Grafana Dashboard Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+          "title": "Observability Lab Part 1: Infrastructure Setup Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/labs/02-observability-stack-quiz.md",
+          "title": "Observability Lab Part 2: Observability Stack Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/labs/03-msa-deployment-quiz.md",
+          "title": "Observability Lab Part 3: MSA Deployment and Canary Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
+          "title": "Observability Lab Part 4: Load Testing and Autoscaling Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+          "title": "Observability Lab Part 5: Alerting and AIOps Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/labs/06-distributed-tracing-quiz.md",
+          "title": "Observability Lab Part 6: Distributed Tracing Analysis Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/logging/01-loki-quiz.md",
+          "title": "Grafana Loki Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/logging/02-opensearch-quiz.md",
+          "title": "Amazon OpenSearch Service Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+          "title": "CloudWatch Logs Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/logging/04-clickhouse-quiz.md",
+          "title": "ClickHouse for Log Analytics Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/logging/05-collectors-quiz.md",
+          "title": "Log Collectors Comparison Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/logging/README-quiz.md",
+          "title": "Logging Overview Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+          "title": "Metrics Overview Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+          "title": "Prometheus Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+          "title": "VictoriaMetrics Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/metrics/03-mimir-quiz.md",
+          "title": "Grafana Mimir Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+          "title": "CloudWatch Metrics Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/metrics/05-datadog-quiz.md",
+          "title": "Datadog Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/tracing/01-tempo-quiz.md",
+          "title": "Grafana Tempo Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/tracing/02-xray-quiz.md",
+          "title": "AWS X-Ray Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+          "title": "OpenTelemetry Quiz"
+        },
+        {
+          "path": "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
+          "title": "Dynatrace Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/01-infrastructure-setup-quiz.md",
+          "title": "Infrastructure Setup Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/02-infrastructure-advanced-quiz.md",
+          "title": "Infrastructure Advanced Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/03-ci-pipelines-quiz.md",
+          "title": "CI Pipelines Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/04-gitops-multi-cluster-quiz.md",
+          "title": "GitOps Multi-Cluster Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/05-gitops-automation-quiz.md",
+          "title": "GitOps Automation Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/06-scaling-strategies-quiz.md",
+          "title": "Scaling Strategies Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/07-observability-alerts-quiz.md",
+          "title": "Observability Alerts Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/08-observability-analysis-quiz.md",
+          "title": "Observability Analysis Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/09-observability-stack-quiz.md",
+          "title": "Observability stack quiz"
+        },
+        {
+          "path": "en/quizzes/ops/10-resource-optimization-quiz.md",
+          "title": "Resource optimization quiz"
+        },
+        {
+          "path": "en/quizzes/ops/11-upgrade-operations-quiz.md",
+          "title": "EKS upgrade operations quiz"
+        },
+        {
+          "path": "en/quizzes/ops/12-event-capacity-planning-quiz.md",
+          "title": "Event capacity planning quiz"
+        },
+        {
+          "path": "en/quizzes/ops/13-finops-cost-platform-quiz.md",
+          "title": "FinOps Cost Visibility Platform Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/14-tekton-pipelines-quiz.md",
+          "title": "Tekton Pipelines Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/15-zonal-operations-guide-quiz.md",
+          "title": "Zonal Cluster Operations Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/16-troubleshooting-playbook-quiz.md",
+          "title": "Troubleshooting Playbook Quiz"
+        },
+        {
+          "path": "en/quizzes/ops/17-spot-production-experiments-quiz.md",
+          "title": "EKS Spot Production Experiments Quiz"
+        },
+        {
+          "path": "en/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+          "title": "Platform Engineering Overview Quiz"
+        },
+        {
+          "path": "en/quizzes/platform-engineering/01-helm-quiz.md",
+          "title": "Helm Package Manager Quiz"
+        },
+        {
+          "path": "en/quizzes/platform-engineering/02-ack-quiz.md",
+          "title": "AWS Controllers for Kubernetes (ACK) Quiz"
+        },
+        {
+          "path": "en/quizzes/platform-engineering/03-kro-quiz.md",
+          "title": "KRO Helm Migration Quiz"
+        },
+        {
+          "path": "en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+          "title": "Kubernetes Extension Mechanisms Quiz"
+        },
+        {
+          "path": "en/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+          "title": "Backstage IDP Quiz"
+        },
+        {
+          "path": "en/quizzes/platform-engineering/07-crossplane-quiz.md",
+          "title": "Crossplane Quiz"
+        },
+        {
+          "path": "en/quizzes/platform-engineering/08-vcluster-quiz.md",
+          "title": "vCluster Quiz"
+        },
+        {
+          "path": "en/quizzes/roadmap-quiz.md",
+          "title": "Guidebook Roadmap Quiz"
+        },
+        {
+          "path": "en/quizzes/scheduling/02-custom-scheduler-part1-quiz.md",
+          "title": "Custom Scheduler Quiz (Part 1)"
+        },
+        {
+          "path": "en/quizzes/scheduling/02-custom-scheduler-part2-quiz.md",
+          "title": "Custom Scheduler Quiz (Part 2)"
+        },
+        {
+          "path": "en/quizzes/scheduling/02-custom-scheduler-part3-quiz.md",
+          "title": "Custom Scheduler Quiz (Part 3)"
+        },
+        {
+          "path": "en/quizzes/security/01-kyverno-policy-management-quiz.md",
+          "title": "Kyverno Policy Management Quiz"
+        },
+        {
+          "path": "en/quizzes/security/02-kubernetes-auth-authz-quiz.md",
+          "title": "Kubernetes Authentication and Authorization Quiz"
+        },
+        {
+          "path": "en/quizzes/security/03-pod-security-standards-quiz.md",
+          "title": "Pod Security Standards Quiz"
+        },
+        {
+          "path": "en/quizzes/security/04-network-policies-quiz.md",
+          "title": "Network Policies Quiz"
+        },
+        {
+          "path": "en/quizzes/security/05-secrets-management-quiz.md",
+          "title": "Secrets Management Quiz"
+        },
+        {
+          "path": "en/quizzes/security/06-eks-security-best-practices-quiz.md",
+          "title": "EKS Security Best Practices Quiz"
+        },
+        {
+          "path": "en/quizzes/security/07-image-security-quiz.md",
+          "title": "Container Image Security Quiz"
+        },
+        {
+          "path": "en/quizzes/security/08-runtime-security-quiz.md",
+          "title": "Runtime Security Quiz"
+        },
+        {
+          "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+          "title": "OPA Gatekeeper Quiz"
+        },
+        {
+          "path": "en/quizzes/security/10-cert-manager-quiz.md",
+          "title": "cert-manager Quiz"
+        },
+        {
+          "path": "en/quizzes/security/11-kubescape-quiz.md",
+          "title": "Kubescape Quiz"
+        },
+        {
+          "path": "en/quizzes/security/12-spiffe-spire-quiz.md",
+          "title": "SPIFFE/SPIRE Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/02-istio-quiz.md",
+          "title": "Istio Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+          "title": "Cilium Service Mesh Architecture Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md",
+          "title": "Cilium Service Mesh Ingress & Gateway Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/cilium-service-mesh/observability.md",
+          "title": "Cilium Service Mesh Observability Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/cilium-service-mesh/security.md",
+          "title": "Cilium Service Mesh Security Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+          "title": "Cilium Service Mesh Traffic Management Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/istio/advanced.md",
+          "title": "Istio Advanced Topics Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/istio/basic.md",
+          "title": "Basic Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/istio/comparison.md",
+          "title": "Istio Comparison Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/istio/observability.md",
+          "title": "Observability Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/istio/resilience.md",
+          "title": "Resilience Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/istio/security.md",
+          "title": "Security Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/istio/traffic-management.md",
+          "title": "Traffic Management Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/linkerd/architecture.md",
+          "title": "Linkerd Architecture Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/linkerd/installation.md",
+          "title": "Linkerd Installation Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/linkerd/multi-cluster.md",
+          "title": "Linkerd Multi-cluster Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/linkerd/observability.md",
+          "title": "Linkerd Observability Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/linkerd/security.md",
+          "title": "Linkerd Security Quiz"
+        },
+        {
+          "path": "en/quizzes/service-mesh/linkerd/traffic-management.md",
+          "title": "Linkerd Traffic Management Quiz"
+        },
+        {
+          "path": "en/quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md",
+          "title": "EBS gp2 vs gp3 Measured Benchmark Quiz"
+        }
+      ],
+      "indexSha256": "6e74dc7d2a23cf8ef419383777679c782e087216e5880a6351acec20c19538e2",
+      "source": "Currentorigin/mainquizinventory;currentrootH1usedwhenavailable;noquizbodyedits."
+    }
+  ],
+  "mainTargetLinksVerified": true,
+  "mainRef": "510b24c3b751dc25e2959040b551391f8f22d217",
+  "note": "Ops17quizexistsinmainbutnotoldroot;verifiedagainstGitinventory. No local full build."
+}

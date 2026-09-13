@@ -1,6 +1,6 @@
 # EKS 스토리지
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 9월 12일
 
 Amazon EKS에서 애플리케이션을 실행할 때 데이터를 저장하고 관리하기 위한 다양한 스토리지 옵션이 있습니다. 이 문서에서는 EKS 스토리지의 기본 개념과 Amazon EBS(Elastic Block Store) 및 Amazon EFS(Elastic File System)를 사용하는 방법에 대해 알아보겠습니다.
 
@@ -108,7 +108,7 @@ Amazon EBS는 EC2 인스턴스에 연결할 수 있는 블록 수준 스토리�
 
 ### EBS CSI 드라이버 설치
 
-일반 Linux EC2 노드는 인프라 소유 관리 도구로 호환 EBS CSI add-on을 설치합니다. Auto Mode는 `ebs.csi.eks.amazonaws.com`으로 블록 스토리지를 관리하며 기존 `ebs.csi.aws.com` 볼륨과 별개입니다. 이전은 바인딩된 PVC provisioner 수정이 아니라 스냅샷 경로를 사용합니다. Fargate Pod와 Hybrid Node에는 EBS를 마운트할 수 없습니다. 컨트롤러는 Fargate에 실행할 수 있지만 node plugin은 실행할 수 없으며 별도 배포·신원 설계가 필요합니다.
+일반 Linux EC2 노드는 인프라 소유 관리 도구로 호환 EBS CSI add-on을 설치합니다. Auto Mode는 `ebs.csi.eks.amazonaws.com`으로 블록 스토리지를 관리하며 기존 `ebs.csi.aws.com` 볼륨은 다른 provisioner를 사용합니다. 이전은 바인딩된 PVC나 driver의 in-place 수정이 아닙니다. 검증한 backup/snapshot 복원 계획 또는 현재 [AWS 이전 가이드의 workload 중지·Retain·static PV/PVC 재생성 절차](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)로 기존 EBS volume을 재사용할 수 있습니다. 쓰기 재개 전에 backup 복구, volume/AZ/KMS 소유권, IAM/tag 권한, reclaim policy, finalizer와 새 binding을 검증하세요. Fargate Pod와 Hybrid Node에는 EBS를 마운트할 수 없습니다. 컨트롤러는 Fargate에 실행할 수 있지만 node plugin은 실행할 수 없으며 별도 배포·신원 설계가 필요합니다.
 
 아래 공통 절차는 EBS 또는 EFS용입니다. 이 절에서는 `CSI_ADDON_NAME=aws-ebs-csi-driver`로 설정하고 목록에서 정확한 호환 add-on 버전을 선택합니다. AWS API는 버전에 문자열 `latest`를 사용하지 않습니다. `eksctl --version latest`는 AWS API 값이 아닌 별도 도구 편의 기능입니다.
 ```bash

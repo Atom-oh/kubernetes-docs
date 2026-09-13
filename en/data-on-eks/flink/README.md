@@ -7,6 +7,9 @@ have separate requirements. Part 3 examines sources, state and sinks together.
 
 > Reviewed: 2026-09-12. Integration baseline: **Flink 2.2.1 / Java 17 / Operator 1.15.0**.
 
+Part 3's Iceberg example separately uses **Flink 2.1.3 / Iceberg 1.11.0** to match its runtime.
+Check each chapter's limits for S3-plugin SDK support and managed-service differences.
+
 The latest stable Flink release is 2.3.0. These examples use 2.2.1 as the baseline
 to check alongside published Operator and connector compatibility tables.
 Accepting a version string in a CRD enum does not prove integration compatibility.

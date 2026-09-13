@@ -1,0 +1,20 @@
+apiVersion: platform.example.com/v1alpha1
+kind: PostgreSQLDatabase
+metadata:
+  name: orders-db
+  namespace: team-alpha
+spec:
+  crossplane:
+    compositionRef:
+      name: postgresql-aws-reviewed
+  parameters:
+    environment: production
+    dbName: orders
+    storageGB: 200
+    vpcID: vpc-0123456789abcdef0
+    subnetIDs:
+    - subnet-0123456789abcdef0
+    - subnet-0123456789abcdef1
+    clientSecurityGroupID: sg-0123456789abcdef0
+    passwordSecretName: rds-master-password
+    providerConfigName: team-aws

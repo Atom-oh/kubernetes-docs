@@ -1,252 +1,334 @@
 # Cilium Security and Visibility Quiz
 
-> **Supported Version**: Cilium 1.17
-> **Last Updated**: February 22, 2026
+> **Review baseline**: Cilium 1.20.1; Hubble CLI 1.19.4.
+> **Last reviewed**: September 12, 2026.
+
+[Return to the guide](../../../networking/cilium/06-security-visibility.md)
 
 ## Network Policy Basics
 
-1. **What is the main difference between Kubernetes NetworkPolicy and Cilium NetworkPolicy?**
-   - A) Cilium NetworkPolicy does not support L7 policies
-   - B) Kubernetes NetworkPolicy does not support L7 policies
-   - C) Cilium NetworkPolicy can only be applied to specific nodes
-   - D) Kubernetes NetworkPolicy provides higher performance
+1. **How does CiliumNetworkPolicy extend standard Kubernetes NetworkPolicy?**
+
+   - A) It cannot select Pods
+   - B) It can add supported L7 protocol rules
+   - C) It only protects nodes
+   - D) It guarantees lower latency
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: B) Kubernetes NetworkPolicy does not support L7 policies</p>
-   <p><strong>Explanation</strong>: Kubernetes NetworkPolicy only supports L3/L4 level policies, while Cilium NetworkPolicy supports a broader range of policies from L3 to L7.</p>
+
+   **Answer: B) It can add supported L7 protocol rules**
+
+   Standard NetworkPolicy controls L3/L4 connectivity. Cilium adds capabilities such as HTTP and DNS policy; performance is not guaranteed by the API choice.
+
    </details>
 
-2. **What is the API group for Cilium NetworkPolicy?**
-   - A) networking.k8s.io
-   - B) cilium.io
-   - C) policy.cilium.io
-   - D) network.cilium.io
+2. **Which API version is used for CiliumNetworkPolicy?**
+
+   - A) networking.k8s.io/v1
+   - B) cilium.io/v2
+   - C) policy.cilium.io/v1
+   - D) network.cilium.io/v1
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: B) cilium.io</p>
-   <p><strong>Explanation</strong>: Cilium NetworkPolicy uses the cilium.io API group.</p>
+
+   **Answer: B) cilium.io/v2**
+
+   The group is cilium.io and the served policy version used in this chapter is v2.
+
    </details>
 
-3. **What is the role of 'endpointSelector' in Cilium NetworkPolicy?**
-   - A) Selects target Pods to which the policy applies
-   - B) Selects target nodes to which the policy applies
-   - C) Selects target namespaces to which the policy applies
-   - D) Selects target services to which the policy applies
+3. **What does endpointSelector select in a namespaced CiliumNetworkPolicy?**
+
+   - A) Matching endpoints in the policy namespace
+   - B) All Kubernetes nodes
+   - C) The Prometheus server
+   - D) Only LoadBalancer Services
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: A) Selects target Pods to which the policy applies</p>
-   <p><strong>Explanation</strong>: endpointSelector is used to select the target Pods (endpoints) to which the policy applies.</p>
+
+   **Answer: A) Matching endpoints in the policy namespace**
+
+   It identifies the endpoints governed by the policy. Node policies use the separate clusterwide nodeSelector mechanism.
+
    </details>
 
-4. **What does the 'ingress' rule control in Cilium NetworkPolicy?**
-   - A) Incoming traffic to selected Pods
-   - B) Outgoing traffic from selected Pods
-   - C) Internal traffic within selected Pods
-   - D) Traffic to outside the cluster
+4. **For a standard NetworkPolicy with policyTypes: [Ingress], which value contains no ingress allow rules?**
+
+   - A) ingress: [{}]
+   - B) ingress: []
+   - C) ingress: [{from: [{}]}]
+   - D) An allow rule for all source addresses
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: A) Incoming traffic to selected Pods</p>
-   <p><strong>Explanation</strong>: Ingress rules control incoming traffic to the selected Pods.</p>
+
+   **Answer: B) ingress: []**
+
+   An empty list supplies no allow rule; an empty rule object allows all ingress. Other applicable allow policies remain additive.
+
    </details>
 
-5. **What does the 'egress' rule control in Cilium NetworkPolicy?**
-   - A) Incoming traffic to selected Pods
-   - B) Outgoing traffic from selected Pods
-   - C) Internal traffic within selected Pods
-   - D) Traffic from outside the cluster
+5. **Which direction does egress policy control for selected Pods?**
+
+   - A) Incoming connections only
+   - B) Outgoing connections
+   - C) Only traffic inside a process
+   - D) Only the API server's responses
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: B) Outgoing traffic from selected Pods</p>
-   <p><strong>Explanation</strong>: Egress rules control outgoing traffic from the selected Pods.</p>
+
+   **Answer: B) Outgoing connections**
+
+   Egress controls outbound connectivity. An isolated Pod needs explicit allowances for dependencies such as its real DNS resolver.
+
    </details>
 
 ## L7 Policies
 
-6. **Which attribute cannot be filtered in Cilium's L7 HTTP policies?**
+6. **Which is not a request match field in Cilium HTTP policy?**
+
    - A) Path
    - B) Method
    - C) Headers
-   - D) Response Time
+   - D) Response latency
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: D) Response Time</p>
-   <p><strong>Explanation</strong>: Cilium's L7 HTTP policies can filter HTTP request attributes such as path, method, and headers, but response time is not a filtering target.</p>
+
+   **Answer: D) Response latency**
+
+   HTTP policy matches supported request attributes. Observing response duration does not make latency an HTTP allow-rule field.
+
    </details>
 
-7. **Which attribute can be filtered in Cilium's L7 Kafka policies?**
-   - A) Topic
-   - B) Partition
-   - C) Offset
-   - D) All of the above
+7. **What is needed for the illustrated toFQDNs policy to learn DNS answers?**
+
+   - A) Only a TCP 443 rule
+   - B) Only an arbitrary external IP
+   - C) A reachable resolver and matching DNS proxy rules
+   - D) A Kafka topic rule
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: A) Topic</p>
-   <p><strong>Explanation</strong>: Cilium's L7 Kafka policies can filter primarily based on topic, API key, and similar attributes.</p>
+
+   **Answer: C) A reachable resolver and matching DNS proxy rules**
+
+   DNS allowance/proxy observation and subsequent destination-IP allowance are distinct. The example covers UDP and TCP DNS to verified resolver endpoints.
+
    </details>
 
-8. **What does the 'matchPattern' rule allow in Cilium's L7 DNS policies?**
-   - A) Exact domain name matching
-   - B) Domain name pattern matching with wildcards
-   - C) IP address matching
-   - D) Port number matching
+8. **What does DNS matchPattern provide?**
+
+   - A) Port allocation
+   - B) Domain-name wildcard matching
+   - C) JWT signature validation
+   - D) Automatic malicious-domain reputation
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: B) Domain name pattern matching with wildcards</p>
-   <p><strong>Explanation</strong>: The matchPattern rule can match domain name patterns including wildcards (*). Example: *.example.com</p>
+
+   **Answer: B) Domain-name wildcard matching**
+
+   It matches query/domain names with supported wildcard syntax. It does not fetch a threat-intelligence feed.
+
    </details>
 
-9. **What component is required to apply Cilium's L7 policies?**
+9. **Which proxy implements the HTTP rules discussed here?**
+
    - A) kube-proxy
-   - B) Envoy proxy
-   - C) NGINX ingress controller
-   - D) HAProxy
+   - B) Envoy
+   - C) Prometheus
+   - D) Hubble Relay
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: B) Envoy proxy</p>
-   <p><strong>Explanation</strong>: Cilium uses the Envoy proxy to apply L7 policies.</p>
+
+   **Answer: B) Envoy**
+
+   Cilium integrates Envoy for HTTP policy. DNS policy uses the DNS proxy, so not every L7 rule should be described as an Envoy rule.
+
    </details>
 
-10. **Which protocol is NOT supported by Cilium's L7 policies?**
-    - A) HTTP
-    - B) gRPC
-    - C) Kafka
-    - D) SMTP
+10. **Which former Cilium L7 policy capability is absent from the current API?**
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: D) SMTP</p>
-    <p><strong>Explanation</strong>: Cilium supports L7 protocols such as HTTP, gRPC, and Kafka, but SMTP is not supported by default.</p>
-    </details>
+   - A) HTTP method matching
+   - B) HTTP path matching
+   - C) Kafka topic rules
+   - D) DNS name rules
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: C) Kafka topic rules**
+
+   Kafka L7 policy was removed. Do not copy the old kafka rules into current CiliumNetworkPolicy resources.
+
+   </details>
 
 ## Encryption and Security
 
-11. **Which protocols can be used for network traffic encryption in Cilium?**
-    - A) IPsec
-    - B) WireGuard
-    - C) Both A and B
-    - D) TLS
+11. **Which pair names alternative Cilium node transport encryption modes?**
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: C) Both A and B</p>
-    <p><strong>Explanation</strong>: Cilium can encrypt inter-node traffic using both IPsec and WireGuard.</p>
-    </details>
+   - A) IPsec and WireGuard
+   - B) HTTP and DNS
+   - C) Relay and Grafana
+   - D) SYN and ACK
 
-12. **What traffic does Cilium's encryption feature protect?**
-    - A) Inter-node traffic only
-    - B) Inter-pod traffic only
-    - C) Node-to-pod traffic only
-    - D) All cluster traffic
+   <details>
+   <summary>Show Answer</summary>
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: B) Inter-pod traffic only</p>
-    <p><strong>Explanation</strong>: Cilium's encryption feature primarily protects inter-pod traffic.</p>
-    </details>
+   **Answer: A) IPsec and WireGuard**
 
-13. **What does Cilium's Host Firewall feature protect?**
-    - A) Pod network interfaces
-    - B) Host network interfaces
-    - C) Service endpoints
-    - D) Container runtime
+   Select the required mode and its prerequisites. SPIRE mutual authentication and Beta ztunnel workload mTLS are separate features with different scope.
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: B) Host network interfaces</p>
-    <p><strong>Explanation</strong>: Cilium's Host Firewall protects the host's own network interfaces, enhancing host-level security.</p>
-    </details>
+   </details>
 
-14. **Which Cilium security feature matches this description? "Filters traffic based on specific fields or patterns of specific application layer protocols"**
-    - A) Network policies
-    - B) L7 policies
-    - C) Encryption
-    - D) Intrusion detection
+12. **What is covered by the chapter's default WireGuard node-tunnel profile?**
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: B) L7 policies</p>
-    <p><strong>Explanation</strong>: L7 (application layer) policies can filter traffic based on specific fields or patterns in protocols such as HTTP, gRPC, and Kafka.</p>
-    </details>
+   - A) Every packet, including arbitrary external traffic
+   - B) Supported Cilium-managed Pod traffic crossing nodes
+   - C) All same-node Pod traffic through the tunnel
+   - D) All host traffic without exceptions
 
-15. **What is Cilium's Identity-based security model based on?**
-    - A) Pod name
-    - B) Node name
-    - C) Labels
-    - D) IP address
+   <details>
+   <summary>Show Answer</summary>
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: C) Labels</p>
-    <p><strong>Explanation</strong>: Cilium's Identity is based on Pod labels, which allows consistent security policies to be applied even when IP addresses change.</p>
-    </details>
+   **Answer: B) Supported Cilium-managed Pod traffic crossing nodes**
+
+   Same-node traffic does not use these node tunnels. Node-to-node encryption is a separate Beta option with control-plane exclusions; application TLS may still be required.
+
+   </details>
+
+13. **What is Cilium Host Firewall intended to protect?**
+
+   - A) Only browser JavaScript
+   - B) The host's network traffic
+   - C) All container syscalls automatically
+   - D) A Grafana password database
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: B) The host's network traffic**
+
+   Host policy is a network control. Runtime process/syscall enforcement belongs to separate mechanisms such as configured Tetragon policies; encryption compatibility must be checked.
+
+   </details>
+
+14. **Does matching an Authorization header authenticate its bearer?**
+
+   - A) Yes, any present header is a verified JWT
+   - B) Yes, a regex-looking value verifies signatures
+   - C) No; header matching does not validate the token
+   - D) Yes, if HTTP uses port 8443
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: C) No; header matching does not validate the token**
+
+   Use actual authentication/authorization logic. A valued headers string is literal matching, and a TLS port number does not decrypt the payload.
+
+   </details>
+
+15. **What primarily determines a Cilium security identity?**
+
+   - A) A guaranteed unique Pod IP forever
+   - B) The security-relevant label set
+   - C) The user's browser cookie
+   - D) The last observed HTTP response
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: B) The security-relevant label set**
+
+   Endpoints sharing security-relevant labels can share an identity. Identity-based policy alone does not provide end-user authentication or traffic encryption.
+
+   </details>
 
 ## Visibility and Monitoring
 
-16. **What is Hubble?**
-    - A) Cilium's network visibility tool
-    - B) Cilium's load balancer
-    - C) Cilium's encryption protocol
-    - D) Cilium's DNS server
+16. **What is Hubble's main role?**
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: A) Cilium's network visibility tool</p>
-    <p><strong>Explanation</strong>: Hubble is Cilium's network visibility tool that can observe and analyze network flows based on eBPF.</p>
-    </details>
+   - A) Network-flow observability
+   - B) Container image deployment
+   - C) A complete WAF without rules
+   - D) Automatic isolation of every suspicious Pod
 
-17. **Which feature is NOT provided by Hubble UI?**
-    - A) Service dependency map
-    - B) Network flow visualization
-    - C) Policy violation alerts
-    - D) Code deployment management
+   <details>
+   <summary>Show Answer</summary>
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: D) Code deployment management</p>
-    <p><strong>Explanation</strong>: Hubble UI provides service dependency maps, network flow visualization, and policy violation alerts, but does not provide code deployment management.</p>
-    </details>
+   **Answer: A) Network-flow observability**
 
-18. **What is the command to observe network flows for a specific Pod using Hubble CLI?**
-    - A) `hubble observe --pod <pod-name>`
-    - B) `hubble watch --pod <pod-name>`
-    - C) `hubble monitor --pod <pod-name>`
-    - D) `hubble inspect --pod <pod-name>`
+   Hubble exposes flow metadata, verdicts and supported protocol observations. Detection rules and response integrations require separate configuration.
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: A) <code>hubble observe --pod &lt;pod-name&gt;</code></p>
-    <p><strong>Explanation</strong>: The <code>hubble observe --pod &lt;pod-name&gt;</code> command can observe network flows for a specific Pod in real-time.</p>
-    </details>
+   </details>
 
-19. **Which metric is NOT collected by Hubble?**
-    - A) HTTP status codes
-    - B) TCP connection status
-    - C) Dropped packet count
-    - D) Container CPU usage
+17. **Which is a Hubble UI capability?**
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: D) Container CPU usage</p>
-    <p><strong>Explanation</strong>: Hubble collects network-related metrics (HTTP status codes, TCP connection status, dropped packet count, etc.) but does not collect system metrics such as container CPU usage.</p>
-    </details>
+   - A) Rotating application credentials
+   - B) Service dependency maps and flow exploration
+   - C) Automatically sending Slack incidents
+   - D) Installing runtime syscall policies
 
-20. **How do you integrate Cilium with Prometheus?**
-    - A) Add Prometheus annotations to Cilium Operator
-    - B) Install Cilium plugin on Prometheus server
-    - C) Create ServiceMonitor resource for Cilium
-    - D) Import Cilium dashboard to Prometheus
+   <details>
+   <summary>Show Answer</summary>
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: C) Create ServiceMonitor resource for Cilium</p>
-    <p><strong>Explanation</strong>: When using Prometheus Operator, you can collect Cilium metrics by creating a ServiceMonitor resource for Cilium.</p>
-    </details>
+   **Answer: B) Service dependency maps and flow exploration**
+
+   The UI visualizes network observations through Relay. It is not a notification, deployment or runtime-policy controller.
+
+   </details>
+
+18. **Which command follows flow events for either endpoint matching the frontend Pod?**
+
+   - A) `hubble observe --pod cilium-security-demo/frontend --follow`
+   - B) `hubble watch --pod frontend`
+   - C) `cilium hubble status`
+   - D) `hubble observe --pod app=frontend`
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: A) `hubble observe --pod cilium-security-demo/frontend --follow`**
+
+   Use a namespace-qualified Pod name and --follow for a stream. Pod names are not label selectors; directional and label filters are separate flags.
+
+   </details>
+
+19. **Which is not supplied by the illustrated Hubble metric plugins?**
+
+   - A) HTTP response status counts
+   - B) TCP flag counts
+   - C) Observed drop counts
+   - D) Container CPU usage
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: D) Container CPU usage**
+
+   Those plugins observe network/proxy events. The TCP plugin does not provide a general concurrent-connection or RTT metric, and missing/lost observations must be considered.
+
+   </details>
+
+20. **With Prometheus Operator installed, what is needed to scrape Hubble through ServiceMonitor?**
+
+   - A) Only importing a Grafana dashboard
+   - B) A static public hubble-metrics.cilium.io:9091 target
+   - C) Enabled metrics and a ServiceMonitor selected by Prometheus
+   - D) Only creating an unrelated ConfigMap
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: C) Enabled metrics and a ServiceMonitor selected by Prometheus**
+
+   The chart's headless Service exposes the named hubble-metrics port, normally 9965. Prometheus namespace/label selectors and endpoint reachability must match.
+
+   </details>

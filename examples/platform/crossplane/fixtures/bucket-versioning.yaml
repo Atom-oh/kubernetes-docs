@@ -1,0 +1,20 @@
+apiVersion: s3.aws.m.upbound.io/v1beta1
+kind: BucketVersioning
+metadata:
+  name: app-data-versioning
+  namespace: team-alpha
+spec:
+  managementPolicies:
+  - Observe
+  - Create
+  - Update
+  - LateInitialize
+  forProvider:
+    region: us-west-2
+    bucketRef:
+      name: app-data
+    versioningConfiguration:
+      status: Enabled
+  providerConfigRef:
+    kind: ProviderConfig
+    name: team-aws

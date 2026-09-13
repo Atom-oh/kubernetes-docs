@@ -1,851 +1,677 @@
 # 네트워크 구성
 
-< [이전: 사전 요구 사항](01-prerequisites.md) | [목차](./README.md) | [다음: 에어갭 환경 구성](03-airgap-setup.md) >
+> **지원 버전**: EKS 1.36 예제; AWS-maintained Cilium 1.18.3-0 기준, 호환 host/kernel 필요
+> **마지막 업데이트**: 2026년 9월 12일
 
-> **지원 버전**: EKS 1.31+, nodeadm 0.1+ **마지막 업데이트**: 2026년 2월 23일
+Routing·DNS·TLS·credential·앱 트래픽을 별도로 검증합니다. 아래는 Terraform mock provider 등을 사용해 로컬 schema/fixture로 확인한 예제이며 AWS 리소스·router·firewall·실제 cluster를 변경하지 않았습니다. 그림은 AWS 개념을 바탕으로 이 저장소에서 제작했으며 AWS가 이 구성을 검증한 결과물이 아닙니다.
 
-이 문서에서는 EKS Hybrid Nodes 환경에서 필요한 CIDR 요구 사항, 방화벽 포트, AWS 엔드포인트 접근, 보안 그룹 구성, DNS 구성을 다룹니다.
-
-## 네트워크 아키텍처 개요
-
-다음 다이어그램은 VPC 구성, Transit Gateway 라우팅, 원격 CIDR, 방화벽 규칙을 포함한 EKS Hybrid Nodes의 전체 네트워크 토폴로지를 보여줍니다.
-
-![EKS 클러스터의 RemoteNodeNetwork·RemotePodNetwork 설정과 VPC·온프레미스 양쪽 라우팅 테이블이 맞물리는 하이브리드 노드 사전 요구 사항 구조를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-prereq-0.png)
+![Hybrid 사전 조건과 양방향 routing.](../.gitbook/assets/ko-eks-hybrid-nodes-prereq-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-prereq-0.html)
 
-### VPC 네트워크 허브 개념
+## 네트워크 아키텍처 개요
 
-EKS Hybrid Nodes 환경에서 VPC는 하이브리드 노드와 컨트롤 플레인 간의 **네트워크 허브** 역할을 합니다.
+Control-plane→hybrid node와 private Kubernetes API 트래픽은 cluster VPC 경로를 사용합니다. Public API endpoint로 가는 kubelet 트래픽은 설정된 public 경로를 사용하므로 “모든 트래픽이 항상 VPC ENI 경유”라는 설명은 과도했습니다. Direct Connect public VIF·private 연결·public internet 경로를 구분하세요.
 
-* **ENI 배치**: EKS 컨트롤 플레인은 VPC 서브넷에 ENI(Elastic Network Interface)를 배치합니다. 이 ENI들이 컨트롤 플레인과 하이브리드 노드 간의 통신 엔드포인트입니다.
-* **트래픽 경로**: 컨트롤 플레인과 하이브리드 노드 간의 모든 트래픽은 이 ENI를 통해 흐릅니다. API 서버 요청, kubelet 통신, 웹훅 호출 등 모든 제어 평면 트래픽이 VPC ENI를 경유합니다.
-* **ENI IP 변경 가능성**: 클러스터 업데이트(버전 업그레이드 등) 시 ENI가 삭제되고 재생성될 수 있으며, 이때 ENI IP 주소가 변경될 수 있습니다. 방화벽 규칙에서 개별 IP 대신 서브넷 CIDR 범위를 사용하면 이러한 변경에 유연하게 대응할 수 있습니다.
+Control-plane ENI/IP는 바뀔 수 있습니다. 공유 VPC의 모든 `Amazon EKS*` ENI를 이 cluster 것으로 간주하지 말고 실제 소유권·승인된 control-plane subnet 범위를 확인합니다.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         AWS Cloud                                │
-│  ┌──────────────────┐    ┌──────────────────────────────────┐   │
-│  │  EKS Control     │    │              VPC                  │   │
-│  │     Plane        │◄──►│  ┌────────┐  ┌────────┐          │   │
-│  │                  │    │  │  ENI   │  │  ENI   │          │   │
-│  └──────────────────┘    │  │10.0.1.x│  │10.0.2.x│          │   │
-│                          │  └────┬───┘  └────┬───┘          │   │
-│                          └───────┼───────────┼──────────────┘   │
-└──────────────────────────────────┼───────────┼──────────────────┘
-                                   │           │
-                           VPN / Direct Connect
-                                   │           │
-┌──────────────────────────────────┼───────────┼──────────────────┐
-│                          On-Premises                             │
-│                    ┌─────────────┴───────────┴─────────────┐    │
-│                    │         Hybrid Nodes                   │    │
-│                    │   ┌─────────┐    ┌─────────┐          │    │
-│                    │   │  Node   │    │  Node   │          │    │
-│                    │   │ kubelet │    │ kubelet │          │    │
-│                    │   └─────────┘    └─────────┘          │    │
-│                    └───────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
+읽기 전용 진단 전에 계정·Kubernetes context를 확인합니다.
+
+```bash
+set -euo pipefail
+: "${EXPECTED_ACCOUNT_ID:?Set the intended account}"
+: "${AWS_REGION:?Set the cluster Region}"
+: "${CLUSTER_NAME:?Set the reviewed cluster name}"
+: "${KUBECONFIG:?Set the reviewed kubeconfig}"
+export KUBECONFIG KUBE_CONTEXT="${KUBE_CONTEXT:-$CLUSTER_NAME}"
+check_account() {
+  local account
+  account=$(aws sts get-caller-identity --region "$AWS_REGION" --query Account --output text) || return
+  test "$account" = "$EXPECTED_ACCOUNT_ID" || { printf 'Account mismatch.\n' >&2; return 1; }
+}
+check_account
+umask 077
+export WORK_DIR
+WORK_DIR=$(mktemp -d "$PWD/hybrid-network.XXXXXXXX")
+aws eks describe-cluster --region "$AWS_REGION" --name "$CLUSTER_NAME" --output json \
+  > "$WORK_DIR/cluster.json"
+endpoint=$(kubectl --context "$KUBE_CONTEXT" config view --minify \
+  -o jsonpath='{.clusters[0].cluster.server}')
+jq -e --arg endpoint "$endpoint" '
+  .cluster.status=="ACTIVE" and .cluster.endpoint==$endpoint and
+  (.cluster.remoteNetworkConfig.remoteNodeNetworks|length)>0
+' "$WORK_DIR/cluster.json" >/dev/null
+printf 'Private diagnostics: %s\n' "$WORK_DIR"
 ```
 
 ## CIDR 범위 요구 사항
 
-온프레미스 노드 및 파드 CIDR은 다음 조건을 충족해야 합니다:
+Remote node/Pod는 겹치지 않는 IPv4 **RFC1918 또는 CGNAT**이며 VPC·Service CIDR과도 분리합니다. 각 remote 종류는 최대 15개 CIDR을 지원합니다. 현재 EKS API는 기존 cluster의 remote-network 구성도 지원하므로 생성 시점 전용이 아닙니다.
 
-* **RFC-1918 범위** 내에 있어야 합니다: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
-* 다음과 **겹치지 않아야** 합니다:
-  * 서로 다른 CIDR 간 (노드 CIDR ↔ 파드 CIDR)
-  * EKS 클러스터의 VPC CIDR
-  * Kubernetes 서비스 IPv4 CIDR
+| Network 동작 | 의미 |
+|--------------|------|
+| Routable Pod IP | 승인된 route를 통해 cloud/control-plane client가 Pod IP로 연결 시작 가능 |
+| Masqueraded egress | SNAT는 Pod가 시작한 연결의 return path를 제공할 수 있지만 신규 inbound 연결을 자동 허용하지 않음 |
+| Unroutable Pod network | 직접 cloud→Pod 통신에는 다른 지원 경로가 필요; 일반적인 구성에서는 cloud-hosted webhook/API service 사용 |
 
-EKS 클러스터 생성 시 `RemoteNodeNetwork`와 `RemotePodNetwork` 필드에 온프레미스 CIDR을 지정합니다.
-
-### 라우팅 가능 vs 라우팅 불가능 파드 네트워크
-
-| 구성         | 라우팅 가능 (권장)                           | 라우팅 불가능                      |
-| ---------- | ------------------------------------- | ---------------------------- |
-| 설정         | BGP(권장), 정적 라우트 또는 커스텀 라우팅            | CNI egress masquerade/NAT 사용 |
-| 웹훅         | Hybrid 노드에서 실행 가능                     | 클라우드 노드에서만 실행 가능             |
-| Pod↔Pod 통신 | 클라우드↔온프레미스 직접 통신 가능                   | 직접 통신 불가                     |
-| AWS 서비스 연동 | ALB, Prometheus 등이 Hybrid 워크로드와 통신 가능 | 통신 불가                        |
-
-> **권장 사항**: Cilium BGP Control Plane을 사용하여 파드 CIDR을 라우팅 가능하게 구성하세요.
-
-***
+Unroutable이 Pod의 모든 AWS API 호출 불가를 뜻하지는 않습니다. 직접 hybrid/cloud Pod 통신·hybrid webhook에는 실제 Pod route가 필요합니다. Gateway/proxy 대안은 별도 요구 사항을 확인하세요.
 
 ## 필수 방화벽 포트
 
-### 클러스터 통신 포트
+| Flow | Protocol/port |
+|------|---------------|
+| Node/Pod → Kubernetes API | 실제 cluster endpoint TCP443 |
+| Control-plane ENI → kubelet | 인증·권한 검사를 포함한 TCP10250 |
+| Control plane → webhook/aggregated API Pod | 실제 설정 TCP port; 일반적인 “8443+” 범위 아님 |
+| DNS client ↔ 실제 resolver | UDP/TCP53·stateful return traffic |
+| 참여 node 간 Cilium VXLAN | UDP8472 |
+| 선택하고 지원 범위를 검토한 Cilium Geneve | UDP6081 |
+| Cilium health check | TCP4240과 필요한 ICMP/health endpoint 접근 |
+| BGP node↔router | 설정한 active/passive peer의 TCP179 |
+| VPN gateway transport | UDP500/4500 및 해당 IPsec transport 요구 |
+| 앱/AWS credential·registry service | 실제 목적지·port만 |
 
-온프레미스와 AWS 간 통신을 위해 다음 포트를 열어야 합니다:
+Network owner가 connection tracking·기존 rule을 보존하며 변경합니다. 이전의 광범위한 `10.0.0.0/8` INPUT, 무제한 DNS/VXLAN, 전체 ruleset 저장은 재사용할 안전한 정책이 아니었습니다. 인증 없는 kubelet 10255를 현대적인 선택 요구로 열지 마세요.
 
-| 포트    | 프로토콜    | 방향            | 용도                                                      |
-| ----- | ------- | ------------- | ------------------------------------------------------- |
-| 443   | TCP     | On-Prem → AWS | Kubelet에서 Kubernetes API 서버로 통신                         |
-| 443   | TCP     | On-Prem → AWS | 파드에서 Kubernetes API 서버로 통신                              |
-| 10250 | TCP     | AWS → On-Prem | API 서버에서 Kubelet으로 통신                                   |
-| 웹훅 포트 | TCP     | AWS → On-Prem | API 서버에서 웹훅으로 통신 (라우팅 가능 파드 네트워크만)                      |
-| 53    | TCP/UDP | 양방향           | CoreDNS (파드 CIDR ↔ 파드 CIDR, 클라우드 CoreDNS 시 VPC CIDR 포함) |
-| 앱 포트  | 사용자 정의  | 양방향           | Pod-to-Pod 애플리케이션 통신                                    |
+## AWS 엔드포인트 접근
 
-### VPN 포트 (Site-to-Site VPN 사용 시)
+**EKS 관리 API PrivateLink endpoint와 Kubernetes API server endpoint는 다릅니다.**
 
-| 포트   | 프로토콜 | 방향  | 용도                          |
-| ---- | ---- | --- | --------------------------- |
-| 500  | UDP  | 양방향 | IKE (Internet Key Exchange) |
-| 4500 | UDP  | 양방향 | IPSec NAT-T                 |
+| `com.amazonaws.<region>.*` 서비스 suffix | 용도/필요한 경우 |
+|------------------------------------------|------------------|
+| `eks` | DescribeCluster 등 AWS EKS 관리 API |
+| `eks-auth` | EKS Pod Identity 사용 시 |
+| `ecr.api`, `ecr.dkr` | Private ECR API/registry; image layer에는 S3 접근도 필요 |
+| `s3` | Private S3; on-prem은 VPC gateway endpoint를 직접 사용할 수 없음 |
+| `ssm`, 해당 SSM messaging service | SSM credential/management 기능 |
+| `rolesanywhere` | 선택 provider가 IAM Roles Anywhere일 때 |
+| `sts` | 실제 client STS/IRSA/AssumeRole 호출; 로컬 EKS token 서명 자체는 client의 STS network 요청이 아님 |
+| `logs`, `monitoring` 등 선택 서비스 | 해당 agent/workload가 호출할 때 |
+| `oidc-eks` | 지원 리전의 현재 EKS OIDC discovery/JWKS PrivateLink |
+| `eks-proxy` | AWS console resource view용이며 공개 application SDK/API가 아님 |
 
-### Cilium CNI 포트
+대상 리전의 서비스 가용성을 확인합니다. Private ECR endpoint가 **public ECR**, CloudFront, 임의 package repository를 private으로 만들지는 않습니다. AWS Cilium OCI chart의 public ECR도 승인된 접근·mirror 배포 경로가 필요합니다.
 
-Cilium을 CNI로 사용할 때 추가로 필요한 포트:
+OIDC discovery/JWKS는 익명 public-key 데이터입니다. `oidc-eks`는 default full-access endpoint policy만 허용합니다. Reachability는 SG/route, role authorization은 IAM trust의 `aud`/`sub`로 제어하세요. STS의 IRSA 검증은 이 endpoint와 독립적으로 AWS 내부에서 수행됩니다.
 
-| 포트   | 프로토콜 | 방향  | 용도                    |
-| ---- | ---- | --- | --------------------- |
-| 8472 | UDP  | 양방향 | VXLAN 오버레이 (기본 터널 모드) |
-| 4240 | TCP  | 양방향 | 헬스 체크                 |
-
-> **참고**: Cilium 및 Calico의 상세 방화벽 요구 사항은 각 프로젝트의 공식 문서를 참조하세요.
-
-### iptables 규칙 예시
-
-```bash
-# Kubernetes API 서버 통신 허용
-sudo iptables -A INPUT -p tcp --dport 443 -s 10.0.0.0/8 -j ACCEPT
-sudo iptables -A OUTPUT -p tcp --dport 443 -d 10.0.0.0/8 -j ACCEPT
-
-# Kubelet API 허용
-sudo iptables -A INPUT -p tcp --dport 10250 -s 10.0.0.0/8 -j ACCEPT
-
-# Cilium VXLAN 허용
-sudo iptables -A INPUT -p udp --dport 8472 -j ACCEPT
-sudo iptables -A OUTPUT -p udp --dport 8472 -j ACCEPT
-
-# Cilium 헬스 체크 허용
-sudo iptables -A INPUT -p tcp --dport 4240 -j ACCEPT
-sudo iptables -A OUTPUT -p tcp --dport 4240 -j ACCEPT
-
-# DNS 허용
-sudo iptables -A INPUT -p tcp --dport 53 -j ACCEPT
-sudo iptables -A INPUT -p udp --dport 53 -j ACCEPT
-sudo iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
-sudo iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
-
-# 규칙 저장
-sudo iptables-save | sudo tee /etc/iptables/rules.v4
-```
-
-***
-
-## 온프레미스 아웃바운드 접근 요구 사항
-
-### 설치 및 업그레이드 시 필요한 엔드포인트
-
-nodeadm 설치 및 업그레이드를 위해 온프레미스 노드에서 다음 AWS 엔드포인트에 HTTPS(443) 접근이 필요합니다:
-
-| 컴포넌트               | URL                                                     | 비고                      |
-| ------------------ | ------------------------------------------------------- | ----------------------- |
-| EKS 노드 아티팩트 (S3)   | `https://hybrid-assets.eks.amazonaws.com`               | nodeadm 바이너리 및 의존성      |
-| EKS 서비스            | `https://eks.<region>.amazonaws.com`                    | 클러스터 정보 조회              |
-| ECR 서비스            | `https://api.ecr.<region>.amazonaws.com`                | 컨테이너 이미지 풀              |
-| SSM 바이너리           | `https://amazon-ssm-<region>.s3.<region>.amazonaws.com` | SSM 자격 증명 프로바이더 사용 시    |
-| SSM 서비스            | `https://ssm.<region>.amazonaws.com`                    | SSM 자격 증명 프로바이더 사용 시    |
-| IAM Roles Anywhere | `https://rolesanywhere.<region>.amazonaws.com`          | IAM RA 자격 증명 프로바이더 사용 시 |
-| OS 패키지 관리자         | 리전별 엔드포인트                                               | 시스템 패키지 설치              |
-
-### 지속 운영 시 필요한 엔드포인트
-
-| 용도               | 소스      | 대상                 | 비고                |
-| ---------------- | ------- | ------------------ | ----------------- |
-| Kubelet → API 서버 | 노드 CIDR | EKS 클러스터 IP        | 포트 443            |
-| Pod → API 서버     | 파드 CIDR | EKS 클러스터 IP        | 포트 443            |
-| SSM 자격 증명 갱신     | 노드 CIDR | SSM 엔드포인트          | 5분 간격 하트비트        |
-| IAM RA 자격 증명 갱신  | 노드 CIDR | IAM Anywhere 엔드포인트 | 주기적 갱신            |
-| EKS Pod Identity | 노드 CIDR | EKS Auth 엔드포인트     | Pod Identity 사용 시 |
-
-### EKS 클러스터 네트워크 인터페이스 IP 확인
-
-방화벽 규칙에 EKS 클러스터 IP가 필요한 경우 다음 명령으로 확인합니다:
+Roles Anywhere CreateSession endpoint policy의 principal은 인증서 인증 전 평가 때문에 `*`여야 합니다. 문서에 따라 승인된 trust-anchor resource·지원 certificate condition으로 제한합니다. 서로 다른 서비스에 일반 policy 하나를 복사하지 마세요. Endpoint policy는 통과 트래픽의 필터이며 IAM/role trust를 대체하거나 public service endpoint 전체를 끄지 않습니다.
 
 ```bash
-aws ec2 describe-network-interfaces \
-  --filters "Name=vpc-id,Values=<VPC_ID>" "Name=description,Values=Amazon EKS*" \
-  --query 'NetworkInterfaces[].PrivateIpAddress' \
-  --output text
+check_account
+vpc_id=$(jq -er '.cluster.resourcesVpcConfig.vpcId' "$WORK_DIR/cluster.json")
+aws ec2 describe-vpc-endpoints --region "$AWS_REGION" \
+  --filters "Name=vpc-id,Values=$vpc_id" --output json |
+  jq '[.VpcEndpoints[]|{id:.VpcEndpointId,service:.ServiceName,type:.VpcEndpointType,
+      state:.State,privateDNS:.PrivateDnsEnabled,dnsOptions:.DnsOptions,
+      subnets:.SubnetIds,groups:.Groups,dnsEntries:.DnsEntries}]'
 ```
 
-> **참고**: EKS 네트워크 인터페이스는 클러스터 업데이트(예: 버전 업그레이드) 시 삭제 및 재생성될 수 있습니다. 제한된 서브넷 크기를 사용하면 IP 범위를 예측하기 쉬워 방화벽 구성에 유리합니다.
+### S3 Private DNS와 Artifact 배포
 
-***
+S3 **interface endpoint는 private DNS를 지원합니다**. Inbound-Resolver-only 옵션은 on-prem query에 interface를, VPC 내부 트래픽에는 필요한 S3 gateway endpoint를 사용합니다. 옵션을 켠 동안 gateway를 유지하세요. 옵션을 해제하면 해당 S3 트래픽을 interface endpoint로 보낼 수 있습니다.
+
+Private DNS는 TLS rewrite가 아닙니다. `hybrid-assets.eks.amazonaws.com`을 S3 endpoint로 PHZ/CNAME 매핑해도 S3가 CloudFront hostname의 인증서나 object/Host routing을 갖지는 않습니다. TLS 검증을 끄지 마세요. 지원 artifact 준비/client 설정 경로, 자체 hostname/certificate의 승인된 mirror, 검증된 image에 미리 설치한 의존성을 사용합니다.
 
 ## VPC 프라이빗 엔드포인트 (에어갭/프라이빗 환경)
 
-VPN 또는 Direct Connect를 통해 AWS에 연결된 온프레미스 환경에서 인터넷 없이 AWS 서비스에 접근하려면 **VPC Interface Endpoint** (PrivateLink)를 구성해야 합니다.
+여기서 “에어갭”은 필요한 AWS 연결을 유지하며 인터넷 접근을 제한한다는 뜻이지 disconnected cluster가 아닙니다.
 
-### 왜 VPC 엔드포인트가 필요한가
+다음 완전한 Terraform 예제는 기존 VPC·endpoint subnet·TGW를 사용합니다. VPN/DX 회선·TGW attachment·on-prem route·EKS private DNS 구성을 만들지는 않습니다. VPC DNS support/hostnames와 실제 AZ 분리를 확인하세요. 서로 다른 subnet ID 두 개만으로 AZ 다양성이 입증되지는 않습니다.
 
-일반적인 AWS API 호출은 퍼블릭 인터넷을 경유합니다. 하지만 에어갭 또는 프라이빗 전용 환경에서는 인터넷 경로가 없으므로 AWS 서비스에 접근할 수 없습니다. VPC Interface Endpoint는 VPC 내부에 ENI(Elastic Network Interface)를 생성하여, 온프레미스에서 VPN/Direct Connect를 통해 AWS API에 직접 접근할 수 있게 합니다.
-
-```
-온프레미스 노드
-  → VPN / Direct Connect
-    → VPC 내부 Interface Endpoint ENI (프라이빗 IP)
-      → AWS 서비스 (EKS, ECR, STS, SSM 등)
-```
-
-> **핵심**: Gateway 엔드포인트(S3, DynamoDB용)는 VPC 라우트 테이블에 경로만 추가하므로, VPN/Direct Connect로 연결된 온프레미스에서는 접근할 수 없습니다. 온프레미스에서 S3에 접근하려면 반드시 **Interface 타입** S3 엔드포인트를 사용해야 합니다.
-
-### 필수 Interface VPC 엔드포인트
-
-| 서비스          | 엔드포인트 서비스 이름                         | Private DNS | 용도                                       |
-| ------------ | ------------------------------------ | ----------- | ---------------------------------------- |
-| EKS          | `com.amazonaws.<region>.eks`         | Yes         | Kubernetes API 서버 통신                     |
-| EKS Auth     | `com.amazonaws.<region>.eks-auth`    | Yes         | Pod Identity 인증                          |
-| ECR API      | `com.amazonaws.<region>.ecr.api`     | Yes         | 이미지 메타데이터 조회                             |
-| ECR DKR      | `com.amazonaws.<region>.ecr.dkr`     | Yes         | 이미지 Pull (Docker 레지스트리)                  |
-| S3           | `com.amazonaws.<region>.s3`          | —           | 이미지 레이어, nodeadm 아티팩트 (**Interface 타입**) |
-| STS          | `com.amazonaws.<region>.sts`         | Yes         | IAM 자격 증명 교환                             |
-| SSM          | `com.amazonaws.<region>.ssm`         | Yes         | SSM 자격 증명 프로바이더 사용 시                     |
-| SSM Messages | `com.amazonaws.<region>.ssmmessages` | Yes         | SSM 세션 매니저 통신                            |
-
-> **참고**: S3 Interface 엔드포인트는 `private_dns_enabled`를 자동으로 지원하지 않습니다. S3 도메인의 프라이빗 DNS 해석이 필요한 경우 별도의 Private Hosted Zone(PHZ)을 구성해야 합니다. `hybrid-assets.eks.amazonaws.com`의 프라이빗 미러링 구성은 [에어갭 환경 구성 - hybrid-assets 프라이빗 미러링](03-airgap-setup.md#hybrid-assets-프라이빗-미러링-s3--phz-패턴)을 참조하세요.
-
-### Terraform으로 VPC 엔드포인트 생성
-
-#### 보안 그룹
+원 infrastructure owner를 사용하고 기존 리소스를 import/adopt한 뒤 변경을 계획합니다. 기본 endpoint 집합은 SSM 예시이므로 provider/workload에 맞게 바꿉니다. Endpoint/Resolver ENI에는 요금이 발생합니다. Provider account guard·제한된 ingress가 있으며 응답 트래픽은 stateful SG tracking을 사용합니다.
 
 ```hcl
-resource "aws_security_group" "vpc_endpoints" {
-  name_prefix = "vpc-endpoints-"
+terraform {
+  required_version = ">= 1.9, < 2.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 6.64.0"
+    }
+  }
+}
+
+provider "aws" {
+  region              = var.region
+  allowed_account_ids = [var.expected_account_id]
+}
+
+variable "expected_account_id" {
+  type = string
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.expected_account_id))
+    error_message = "Set the reviewed 12-digit account ID."
+  }
+}
+
+variable "region" {
+  type = string
+}
+
+variable "name_prefix" {
+  type    = string
+  default = "hybrid-network"
+}
+
+variable "vpc_id" {
+  type = string
+}
+
+variable "endpoint_subnet_ids" {
+  type = set(string)
+  validation {
+    condition     = length(var.endpoint_subnet_ids) >= 2
+    error_message = "Provide subnets in at least two verified Availability Zones."
+  }
+}
+
+variable "s3_gateway_route_table_ids" {
+  type = set(string)
+  validation {
+    condition     = length(var.s3_gateway_route_table_ids) > 0
+    error_message = "Provide the reviewed VPC route tables for the S3 gateway endpoint."
+  }
+}
+
+variable "client_ipv4_cidrs" {
+  type = set(string)
+  validation {
+    condition = length(var.client_ipv4_cidrs) > 0 && alltrue([
+      for c in var.client_ipv4_cidrs : can(cidrnetmask(c)) && c != "0.0.0.0/0"
+    ])
+    error_message = "Provide scoped IPv4 CIDRs for the actual VPC/on-premises clients."
+  }
+}
+
+variable "onprem_dns_client_cidrs" {
+  type = set(string)
+  validation {
+    condition = length(var.onprem_dns_client_cidrs) > 0 && alltrue([
+      for c in var.onprem_dns_client_cidrs : can(cidrnetmask(c)) && c != "0.0.0.0/0"
+    ])
+    error_message = "Scope inbound DNS to the actual on-premises resolvers."
+  }
+}
+
+variable "onprem_dns_servers" {
+  type = set(string)
+  validation {
+    condition = length(var.onprem_dns_servers) > 0 && alltrue([
+      for ip in var.onprem_dns_servers : can(cidrnetmask("${ip}/32"))
+    ])
+    error_message = "Provide actual IPv4 addresses of the on-premises DNS servers."
+  }
+}
+
+variable "onprem_domain" {
+  type    = string
+  default = "corp.example.internal"
+  validation {
+    condition = length(var.onprem_domain) <= 253 && length(split(".", trimsuffix(var.onprem_domain, "."))) >= 2 && alltrue([
+      for label in split(".", trimsuffix(var.onprem_domain, ".")) :
+      length(label) <= 63 && can(regex("^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$", label))
+    ]) && !can(regex("(^|\\.)(amazonaws\\.com|api\\.aws|cluster\\.local)\\.?$", lower(var.onprem_domain)))
+    error_message = "Use a specific owned DNS suffix; do not forward root, AWS or Kubernetes service zones back to on-premises."
+  }
+}
+
+variable "interface_services" {
+  type    = set(string)
+  default = ["eks", "ecr.api", "ecr.dkr", "ssm", "ssmmessages"]
+  validation {
+    condition     = !contains(var.interface_services, "s3")
+    error_message = "S3 has its own gateway/interface configuration below."
+  }
+}
+
+variable "endpoint_policy_json" {
+  type    = map(string)
+  default = {}
+  validation {
+    condition = !contains(keys(var.endpoint_policy_json), "oidc-eks") && alltrue([
+      for policy in values(var.endpoint_policy_json) : can(jsondecode(policy))
+    ])
+    error_message = "Use valid service-specific JSON policies; oidc-eks supports only its default full-access policy."
+  }
+}
+
+variable "controlplane_route_table_ids" {
+  type = set(string)
+}
+
+variable "remote_ipv4_cidrs" {
+  type = set(string)
+  validation {
+    condition = alltrue([
+      for c in var.remote_ipv4_cidrs : can(cidrnetmask(c)) && c != "0.0.0.0/0"
+    ])
+    error_message = "Use reviewed remote node, Pod and required DNS/service IPv4 CIDRs."
+  }
+}
+
+variable "existing_transit_gateway_id" {
+  type = string
+}
+```
+```hcl
+# Import/adopt existing resources through their owner before using this example.
+# The existing VPC must have DNS support/hostnames and working hybrid routes.
+resource "aws_security_group" "endpoints" {
+  name_prefix = "${var.name_prefix}-vpce-"
+  description = "HTTPS clients for interface endpoints"
   vpc_id      = var.vpc_id
-  description = "Security group for VPC Interface Endpoints"
-
-  ingress {
-    description = "HTTPS from VPC and on-premises"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [
-      var.vpc_cidr,           # VPC 내부 트래픽
-      var.remote_node_cidr,   # 온프레미스 노드 CIDR
-      var.remote_pod_cidr     # 온프레미스 파드 CIDR
-    ]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "vpc-endpoints-sg"
-  }
-}
-```
-
-#### Interface VPC 엔드포인트
-
-```hcl
-# 생성할 Interface 엔드포인트 목록
-locals {
-  interface_endpoints = {
-    eks          = "com.amazonaws.${var.region}.eks"
-    eks-auth     = "com.amazonaws.${var.region}.eks-auth"
-    ecr-api      = "com.amazonaws.${var.region}.ecr.api"
-    ecr-dkr      = "com.amazonaws.${var.region}.ecr.dkr"
-    sts          = "com.amazonaws.${var.region}.sts"
-    ssm          = "com.amazonaws.${var.region}.ssm"
-    ssmmessages  = "com.amazonaws.${var.region}.ssmmessages"
-  }
 }
 
-resource "aws_vpc_endpoint" "interface" {
-  for_each = local.interface_endpoints
+resource "aws_vpc_security_group_ingress_rule" "endpoint_https" {
+  for_each          = var.client_ipv4_cidrs
+  security_group_id = aws_security_group.endpoints.id
+  cidr_ipv4         = each.value
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+}
 
+resource "aws_vpc_endpoint" "service" {
+  for_each            = var.interface_services
   vpc_id              = var.vpc_id
-  service_name        = each.value
+  service_name        = "com.amazonaws.${var.region}.${each.value}"
   vpc_endpoint_type   = "Interface"
   private_dns_enabled = true
-
-  subnet_ids         = var.private_subnet_ids
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
-
-  tags = {
-    Name = "vpce-${each.key}"
-  }
+  subnet_ids          = var.endpoint_subnet_ids
+  security_group_ids  = [aws_security_group.endpoints.id]
+  policy              = lookup(var.endpoint_policy_json, each.key, null)
+  tags                = { Name = "${var.name_prefix}-${each.key}" }
 }
 
-# S3 Interface 엔드포인트 (Gateway가 아닌 Interface 타입)
+# S3 inbound-Resolver-only private DNS requires this gateway endpoint.
+resource "aws_vpc_endpoint" "s3_gateway" {
+  vpc_id            = var.vpc_id
+  service_name      = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = var.s3_gateway_route_table_ids
+  tags             = { Name = "${var.name_prefix}-s3-gateway" }
+}
+
 resource "aws_vpc_endpoint" "s3_interface" {
   vpc_id              = var.vpc_id
   service_name        = "com.amazonaws.${var.region}.s3"
   vpc_endpoint_type   = "Interface"
-  private_dns_enabled = false  # S3는 Interface 타입에서 자동 Private DNS 미지원
-
-  subnet_ids         = var.private_subnet_ids
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
-
-  tags = {
-    Name = "vpce-s3-interface"
+  private_dns_enabled = true
+  subnet_ids          = var.endpoint_subnet_ids
+  security_group_ids  = [aws_security_group.endpoints.id]
+  dns_options {
+    private_dns_only_for_inbound_resolver_endpoint = true
   }
+  depends_on = [aws_vpc_endpoint.s3_gateway]
+  tags       = { Name = "${var.name_prefix}-s3-interface" }
+}
+
+resource "aws_security_group" "dns_inbound" {
+  name_prefix = "${var.name_prefix}-dns-in-"
+  description = "DNS from on-premises resolvers"
+  vpc_id      = var.vpc_id
+}
+
+resource "aws_security_group" "dns_outbound" {
+  name_prefix = "${var.name_prefix}-dns-out-"
+  description = "DNS to reviewed on-premises resolvers"
+  vpc_id      = var.vpc_id
+}
+
+locals {
+  inbound_dns_rules = {
+    for pair in setproduct(var.onprem_dns_client_cidrs, toset(["tcp", "udp"])) :
+    "${pair[0]}-${pair[1]}" => { cidr = pair[0], protocol = pair[1] }
+  }
+  outbound_dns_rules = {
+    for pair in setproduct(var.onprem_dns_servers, toset(["tcp", "udp"])) :
+    "${pair[0]}-${pair[1]}" => { ip = pair[0], protocol = pair[1] }
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "dns" {
+  for_each          = local.inbound_dns_rules
+  security_group_id = aws_security_group.dns_inbound.id
+  cidr_ipv4         = each.value.cidr
+  ip_protocol       = each.value.protocol
+  from_port         = 53
+  to_port           = 53
+}
+
+resource "aws_vpc_security_group_egress_rule" "dns" {
+  for_each          = local.outbound_dns_rules
+  security_group_id = aws_security_group.dns_outbound.id
+  cidr_ipv4         = "${each.value.ip}/32"
+  ip_protocol       = each.value.protocol
+  from_port         = 53
+  to_port           = 53
+}
+
+resource "aws_route53_resolver_endpoint" "inbound" {
+  name                   = "${var.name_prefix}-inbound"
+  direction              = "INBOUND"
+  resolver_endpoint_type = "IPV4"
+  security_group_ids     = [aws_security_group.dns_inbound.id]
+  dynamic "ip_address" {
+    for_each = var.endpoint_subnet_ids
+    content {
+      subnet_id = ip_address.value
+    }
+  }
+}
+
+resource "aws_route53_resolver_endpoint" "outbound" {
+  name                   = "${var.name_prefix}-outbound"
+  direction              = "OUTBOUND"
+  resolver_endpoint_type = "IPV4"
+  security_group_ids     = [aws_security_group.dns_outbound.id]
+  dynamic "ip_address" {
+    for_each = var.endpoint_subnet_ids
+    content {
+      subnet_id = ip_address.value
+    }
+  }
+}
+
+resource "aws_route53_resolver_rule" "onprem" {
+  domain_name          = var.onprem_domain
+  name                 = "${var.name_prefix}-onprem"
+  rule_type            = "FORWARD"
+  resolver_endpoint_id = aws_route53_resolver_endpoint.outbound.id
+  dynamic "target_ip" {
+    for_each = var.onprem_dns_servers
+    content {
+      ip   = target_ip.value
+      port = 53
+    }
+  }
+}
+
+resource "aws_route53_resolver_rule_association" "onprem" {
+  resolver_rule_id = aws_route53_resolver_rule.onprem.id
+  vpc_id           = var.vpc_id
+}
+
+output "inbound_resolver_ips" {
+  value = [for address in aws_route53_resolver_endpoint.inbound.ip_address : address.ip]
+}
+
+# VPC return routes only. Existing TGW attachment routes/propagation and
+# on-premises routing must be managed separately by their infrastructure owner.
+locals {
+  remote_routes = {
+    for pair in setproduct(var.controlplane_route_table_ids, var.remote_ipv4_cidrs) :
+    "${pair[0]}-${pair[1]}" => { table = pair[0], cidr = pair[1] }
+  }
+}
+
+resource "aws_route" "hybrid" {
+  for_each               = local.remote_routes
+  route_table_id         = each.value.table
+  destination_cidr_block = each.value.cidr
+  transit_gateway_id     = var.existing_transit_gateway_id
+  # A VGW topology uses gateway_id instead; do not set both target fields.
 }
 ```
 
-### AWS CLI로 VPC 엔드포인트 생성
-
-```bash
-# 1. VPC 엔드포인트용 보안 그룹 생성
-SG_ID=$(aws ec2 create-security-group \
-  --group-name vpc-endpoints-sg \
-  --description "Security group for VPC Interface Endpoints" \
-  --vpc-id <VPC_ID> \
-  --query 'GroupId' --output text)
-
-# 보안 그룹에 443 포트 허용
-aws ec2 authorize-security-group-ingress \
-  --group-id $SG_ID \
-  --ip-permissions '[
-    {"IpProtocol": "tcp", "FromPort": 443, "ToPort": 443,
-     "IpRanges": [
-       {"CidrIp": "<VPC_CIDR>", "Description": "VPC internal"},
-       {"CidrIp": "<REMOTE_NODE_CIDR>", "Description": "On-prem nodes"},
-       {"CidrIp": "<REMOTE_POD_CIDR>", "Description": "On-prem pods"}
-     ]}
-  ]'
-
-# 2. Interface VPC 엔드포인트 생성 (EKS 예시)
-aws ec2 create-vpc-endpoint \
-  --vpc-id <VPC_ID> \
-  --vpc-endpoint-type Interface \
-  --service-name com.amazonaws.<REGION>.eks \
-  --subnet-ids <SUBNET_ID_1> <SUBNET_ID_2> \
-  --security-group-ids $SG_ID \
-  --private-dns-enabled
-
-# 3. 나머지 서비스도 동일하게 생성
-for SERVICE in eks-auth ecr.api ecr.dkr sts ssm ssmmessages; do
-  echo "Creating endpoint for: $SERVICE"
-  aws ec2 create-vpc-endpoint \
-    --vpc-id <VPC_ID> \
-    --vpc-endpoint-type Interface \
-    --service-name com.amazonaws.<REGION>.$SERVICE \
-    --subnet-ids <SUBNET_ID_1> <SUBNET_ID_2> \
-    --security-group-ids $SG_ID \
-    --private-dns-enabled
-done
-
-# 4. S3 Interface 엔드포인트 (private-dns-enabled 없이)
-aws ec2 create-vpc-endpoint \
-  --vpc-id <VPC_ID> \
-  --vpc-endpoint-type Interface \
-  --service-name com.amazonaws.<REGION>.s3 \
-  --subnet-ids <SUBNET_ID_1> <SUBNET_ID_2> \
-  --security-group-ids $SG_ID
-
-# 5. 생성된 엔드포인트 확인
-aws ec2 describe-vpc-endpoints \
-  --filters "Name=vpc-id,Values=<VPC_ID>" \
-  --query 'VpcEndpoints[].{ID:VpcEndpointId, Service:ServiceName, State:State}' \
-  --output table
-```
-
-### 온프레미스 DNS 확인 흐름
-
-VPC 엔드포인트의 `private_dns_enabled` 옵션은 VPC 내부에서만 작동합니다. 온프레미스에서 AWS 서비스 도메인(예: `eks.ap-northeast-2.amazonaws.com`)을 VPC 엔드포인트의 프라이빗 IP로 해석하려면, Route 53 Resolver Inbound Endpoint를 통해 VPC의 DNS를 쿼리해야 합니다.
-
-```
-온프레미스 노드
-  → 온프레미스 DNS 서버 (조건부 포워딩 설정)
-    → Route 53 Resolver Inbound Endpoint (VPC 내)
-      → Route 53이 Private Hosted Zone / VPC DNS 검색
-        → VPC Endpoint ENI의 프라이빗 IP 반환
-          → 온프레미스 노드가 VPN/DX를 통해 ENI에 직접 접근
-```
-
-#### 온프레미스 DNS 서버 조건부 포워딩 설정
-
-온프레미스 DNS 서버(예: BIND, Windows DNS, dnsmasq)에서 AWS 도메인을 Route 53 Inbound Endpoint로 전달하도록 구성합니다.
-
-```
-# BIND 예시 (/etc/named.conf)
-zone "amazonaws.com" {
-    type forward;
-    forward only;
-    forwarders {
-        10.0.1.10;    # Route 53 Inbound Endpoint IP #1
-        10.0.2.10;    # Route 53 Inbound Endpoint IP #2
-    };
-};
-
-zone "eks.amazonaws.com" {
-    type forward;
-    forward only;
-    forwarders {
-        10.0.1.10;
-        10.0.2.10;
-    };
-};
-```
-
-> **참고**: Route 53 Resolver Inbound Endpoint 생성 방법은 이 문서의 [DNS 구성](02-network-configuration.md#dns-구성) 섹션을 참조하세요. VPC 엔드포인트 구성 후 반드시 `nslookup eks.<region>.amazonaws.com`으로 프라이빗 IP가 반환되는지 확인하세요.
-
-***
-
-## AWS 보안 그룹 구성
-
-EKS는 클러스터 생성 시 보안 그룹을 자동으로 구성하지만, 아웃바운드 규칙은 자동 생성되지 않습니다 (보안 그룹은 기본적으로 모든 아웃바운드를 허용).
-
-### 자동 생성되는 인바운드 규칙
-
-| 프로토콜 | 포트  | 소스         | 용도                                 |
-| ---- | --- | ---------- | ---------------------------------- |
-| TCP  | 443 | 원격 노드 CIDR | Kubelet에서 Kubernetes API로          |
-| TCP  | 443 | 원격 파드 CIDR | 파드에서 Kubernetes API로 (NAT 미사용 CNI) |
-
-### 수동 추가 필요한 아웃바운드 규칙
-
-| 프로토콜 | 포트    | 대상         | 용도                 |
-| ---- | ----- | ---------- | ------------------ |
-| TCP  | 10250 | 원격 노드 CIDR | API 서버에서 Kubelet으로 |
-| TCP  | 웹훅 포트 | 원격 파드 CIDR | API 서버에서 웹훅으로      |
-
-```bash
-# 커스텀 보안 그룹 생성 예시
-aws ec2 create-security-group \
-  --group-name hybrid-nodes-sg \
-  --description "Security group for EKS Hybrid Nodes" \
-  --vpc-id <VPC_ID>
-
-# 인바운드 규칙 추가
-aws ec2 authorize-security-group-ingress \
-  --group-id <SG_ID> \
-  --ip-permissions '[
-    {"IpProtocol": "tcp", "FromPort": 443, "ToPort": 443,
-     "IpRanges": [{"CidrIp": "<REMOTE_NODE_CIDR>"}, {"CidrIp": "<REMOTE_POD_CIDR>"}]}
-  ]'
-```
-
-> **주의**: 보안 그룹당 기본 인바운드 규칙 제한은 60개입니다. 또한 EKS는 원격 네트워크를 제거할 때 규칙을 자동으로 삭제하지 않으므로 수동 정리가 필요합니다.
-
-***
-
-## Pod CIDR 방화벽 전략
-
-Pod 간 통신을 위해 전체 Pod CIDR 범위에 대한 방화벽 규칙을 등록해야 합니다.
-
-```bash
-# Pod CIDR 범위 예시: 10.244.0.0/16
-# 클러스터의 Pod CIDR 확인
-kubectl cluster-info dump | grep -m 1 cluster-cidr
-
-# Pod CIDR에 대한 방화벽 규칙 추가
-sudo iptables -A INPUT -s 10.244.0.0/16 -j ACCEPT
-sudo iptables -A OUTPUT -d 10.244.0.0/16 -j ACCEPT
-sudo iptables -A FORWARD -s 10.244.0.0/16 -j ACCEPT
-sudo iptables -A FORWARD -d 10.244.0.0/16 -j ACCEPT
-
-# Service CIDR도 추가 (예: 172.20.0.0/16)
-sudo iptables -A INPUT -s 172.20.0.0/16 -j ACCEPT
-sudo iptables -A OUTPUT -d 172.20.0.0/16 -j ACCEPT
-```
-
-***
+S3 gateway 의존성이 명시돼 있습니다. `remote_ipv4_cidrs`에는 node/Pod 외에 필요한 on-prem DNS/service 대역도 넣습니다. 예시 DNS `192.168.1.10/11`에는 승인된 `192.168.1.0/24` 또는 해당 host route가 필요합니다. VGW return route에는 `transit_gateway_id` 대신 `gateway_id`를 사용하며 두 target을 동시에 설정하거나 TGW ID를 VGW/gateway 필드에 넣지 마세요. VPC route만으로 TGW/VPN/on-prem 전체 routing이 완성되지는 않습니다.
 
 ## DNS 구성
 
-### Route 53 Resolver Inbound Endpoint
+On-prem resolver에서 선택한 AWS/service·실제 cluster endpoint 이름을 Route 53 Resolver inbound IP로 조건부 전달할 수 있습니다. 실제 endpoint가 반환한 IP를 사용하세요. `amazonaws.com` 전체 전달은 다른 서비스에도 영향을 주므로 zone을 의도적으로 고르고 loop를 피합니다.
 
-온프레미스에서 AWS 도메인을 쿼리할 수 있도록 Inbound Endpoint를 생성합니다.
-
-```bash
-# Inbound Endpoint 생성
-aws route53resolver create-resolver-endpoint \
-  --creator-request-id "hybrid-inbound-$(date +%s)" \
-  --name "hybrid-inbound-endpoint" \
-  --security-group-ids sg-0123456789abcdef0 \
-  --direction INBOUND \
-  --ip-addresses SubnetId=subnet-111111111,Ip=10.0.1.10 SubnetId=subnet-222222222,Ip=10.0.2.10
-
-# Endpoint IP 확인
-aws route53resolver list-resolver-endpoint-ip-addresses \
-  --resolver-endpoint-id rslvr-in-xxxxxxxxxxxxx
+```text
+// Example service zones only. Replace these Resolver IPs with actual outputs.
+zone "eks.ap-northeast-2.amazonaws.com" {
+    type forward;
+    forward only;
+    forwarders { 10.0.1.10; 10.0.2.10; };
+};
+zone "s3.ap-northeast-2.amazonaws.com" {
+    type forward;
+    forward only;
+    forwarders { 10.0.1.10; 10.0.2.10; };
+};
 ```
 
-### Route 53 Resolver Outbound Endpoint
-
-AWS에서 온프레미스 도메인을 쿼리할 수 있도록 Outbound Endpoint와 전달 규칙을 생성합니다.
-
-```bash
-# Outbound Endpoint 생성
-aws route53resolver create-resolver-endpoint \
-  --creator-request-id "hybrid-outbound-$(date +%s)" \
-  --name "hybrid-outbound-endpoint" \
-  --security-group-ids sg-0123456789abcdef0 \
-  --direction OUTBOUND \
-  --ip-addresses SubnetId=subnet-111111111 SubnetId=subnet-222222222
-
-# 전달 규칙 생성 (온프레미스 도메인)
-aws route53resolver create-resolver-rule \
-  --creator-request-id "forward-onprem-$(date +%s)" \
-  --name "forward-to-onprem" \
-  --rule-type FORWARD \
-  --domain-name "internal.company.io" \
-  --resolver-endpoint-id rslvr-out-xxxxxxxxxxxxx \
-  --target-ips "Ip=192.168.1.10,Port=53" "Ip=192.168.1.11,Port=53"
-
-# VPC에 규칙 연결
-aws route53resolver associate-resolver-rule \
-  --resolver-rule-id rslvr-rr-xxxxxxxxxxxxx \
-  --vpc-id vpc-0123456789abcdef0
-```
+이 BIND 조각은 표시한 service zone용이며 Kubernetes API hostname을 자동으로 포함하지 않습니다. 실제 cluster endpoint 이름/suffix와 필요한 서비스 이름을 추가하세요. Resolver outbound의 on-prem zone은 선택 DNS server에서 authoritative/reachable해야 하며 같은 loop로 다시 전달하면 안 됩니다.
 
 ### CoreDNS 커스텀 도메인 구성
 
-온프레미스 도메인에 대한 DNS 쿼리를 온프레미스 DNS 서버로 전달합니다.
+CoreDNS 직접 forwarding을 선택했다면 기존 Corefile에 검토한 server block을 병합합니다. 관리형 ConfigMap 전체를 덮어쓰지 마세요.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: coredns
-  namespace: kube-system
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-            lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-            pods insecure
-            fallthrough in-addr.arpa ip6.arpa
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf {
-            max_concurrent 1000
-        }
-        cache 30
-        loop
-        reload
-        loadbalance
+```text
+# Fragment to merge through the CoreDNS configuration owner.
+corp.example.internal:53 {
+    errors
+    cache 30
+    forward . 192.168.1.10 192.168.1.11 {
+        max_concurrent 1000
     }
-    internal.company.io:53 {
-        errors
-        cache 30
-        forward . 192.168.1.10 192.168.1.11 {
-            max_concurrent 1000
-        }
-    }
+}
 ```
+
+기존 Kubernetes zone·health/readiness·reload 동작을 보존합니다. 실제 resolver file·systemd-resolved/stub 구성을 확인하세요. 자기 자신으로 forwarding하면 loop가 생깁니다. 한 zone에 모순된 경로를 겹치기보다 적절한 VPC forwarding 또는 직접 CoreDNS 경로를 선택합니다.
+
+관리형 EKS add-on은 **설치된 버전**의 schema를 조회하고 관련 없는 기존 설정을 보존한 전체 candidate를 검증합니다.
 
 ```bash
-# CoreDNS ConfigMap 적용
-kubectl apply -f coredns-configmap.yaml
-
-# CoreDNS 재시작
-kubectl rollout restart deployment coredns -n kube-system
-
-# DNS 해석 테스트
-kubectl run dns-test --rm -it --image=busybox --restart=Never -- nslookup internal.company.io
+check_account
+aws eks describe-addon --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME" \
+  --addon-name coredns --output json > "$WORK_DIR/coredns-addon.json"
+addon_version=$(jq -er '.addon.addonVersion' "$WORK_DIR/coredns-addon.json")
+aws eks describe-addon-configuration --region "$AWS_REGION" --addon-name coredns \
+  --addon-version "$addon_version" --output json > "$WORK_DIR/coredns-schema-response.json"
+jq -r '.configurationSchema' "$WORK_DIR/coredns-schema-response.json" \
+  > "$WORK_DIR/coredns-schema.json"
+# Prepare the full intended values, preserving unrelated existing configuration.
+: "${COREDNS_CANDIDATE_JSON:?Set the reviewed full configurationValues JSON file}"
+export COREDNS_CANDIDATE_JSON
+python3 - <<'PY'
+import json, os
+from pathlib import Path
+import jsonschema
+folder = Path(os.environ["WORK_DIR"])
+schema = json.loads((folder / "coredns-schema.json").read_text())
+candidate = json.loads(Path(os.environ["COREDNS_CANDIDATE_JSON"]).read_text())
+validator = jsonschema.validators.validator_for(schema)
+validator.check_schema(schema)
+validator(schema).validate(candidate)
+print("Configuration matches the fetched schema; rollout and DNS behavior are not yet verified")
+PY
 ```
 
-### CoreDNS 이중 배치 구성 (온프레미스 + 클라우드)
+이는 로컬 schema 검사이며 rollout이 아닙니다. Managed add-on/GitOps 소유권·autoscaling·복구를 조율한 뒤 적용하세요.
 
-#### 왜 이중 배치가 필요한가?
+### CoreDNS 배치와 Locality
 
-EKS Hybrid Nodes 환경에서 CoreDNS가 클라우드 노드에만 실행되면, 온프레미스 Pod의 DNS 쿼리가 VPN/Direct Connect를 거쳐 클라우드까지 왕복해야 합니다. 반대로 CoreDNS가 온프레미스 노드에만 실행되면, 클라우드 Pod의 DNS 쿼리가 역방향으로 왕복합니다.
+AWS는 혼합 cluster에서 cloud/hybrid에 각각 최소 한 replica를 권장합니다. 각 위치 두 개는 복원력 선택지이며 네 replica가 보편적인 최소값·보장은 아닙니다.
 
-**양쪽 모두에 CoreDNS Pod가 존재해야** DNS 지연이 최소화되고, 한쪽 네트워크 장애 시에도 DNS 서비스가 유지됩니다.
+모든 DNS 대상 node의 실제 zone label을 확인합니다. Hybrid node에는 owner가 정한 `topology.kubernetes.io/zone: onprem-dc1` 같은 값이 필요합니다. Compute-type label이 zone이나 taint를 자동 생성하지는 않습니다. Pod template `spec` 조각을 병합할 때 기존 affinity/toleration을 지우지 마세요.
 
-#### 레플리카 수 권장
-
-최소 **4개** (클라우드 2개 + 온프레미스 2개)를 권장합니다. 각 위치에 2개 이상의 레플리카를 배치하여 고가용성을 확보합니다.
-
-#### CoreDNS Deployment 패치
-
-`topologySpreadConstraints`와 `tolerations`를 사용하여 CoreDNS Pod를 클라우드와 온프레미스 노드에 균등하게 분산합니다.
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: coredns
-  namespace: kube-system
-spec:
-  replicas: 4
-  template:
-    spec:
-      tolerations:
-        - key: "eks.amazonaws.com/compute-type"
-          value: "hybrid"
-          effect: "NoSchedule"
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: "eks.amazonaws.com/compute-type"
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              k8s-app: kube-dns
-```
-
-#### kubectl patch 명령어
-
-```bash
-kubectl patch deployment coredns -n kube-system --type=strategic -p '{
-  "spec": {
-    "replicas": 4,
-    "template": {
-      "spec": {
-        "tolerations": [
-          {
-            "key": "eks.amazonaws.com/compute-type",
-            "value": "hybrid",
-            "effect": "NoSchedule"
-          }
-        ],
-        "topologySpreadConstraints": [
-          {
-            "maxSkew": 1,
-            "topologyKey": "eks.amazonaws.com/compute-type",
-            "whenUnsatisfiable": "ScheduleAnyway",
+```json
+{
+  "affinity": {
+    "podAntiAffinity": {
+      "preferredDuringSchedulingIgnoredDuringExecution": [
+        {
+          "weight": 100,
+          "podAffinityTerm": {
             "labelSelector": {
               "matchLabels": {
                 "k8s-app": "kube-dns"
               }
-            }
+            },
+            "topologyKey": "kubernetes.io/hostname"
           }
-        ]
-      }
+        },
+        {
+          "weight": 50,
+          "podAffinityTerm": {
+            "labelSelector": {
+              "matchLabels": {
+                "k8s-app": "kube-dns"
+              }
+            },
+            "topologyKey": "topology.kubernetes.io/zone"
+          }
+        }
+      ]
     }
   }
-}'
+}
 ```
 
-#### 배치 확인
+Soft affinity/spread는 선호이며 2+2 배치나 bootstrap 성공 보장이 아닙니다. 배치만으로 client가 가까운 DNS replica를 선택하지도 않습니다.
 
+AWS의 Service Traffic Distribution 예제는 `PreferClose`를 사용합니다. Cilium에는 지원되는 `loadBalancer.serviceTopology` 설정과 owner를 통한 agent rollout이 필요합니다. 실제 dataplane/version·정상 local endpoint를 확인하세요.
+
+```json
+{
+  "spec": {
+    "trafficDistribution": "PreferClose"
+  }
+}
+```
 ```bash
-# CoreDNS Pod가 양쪽 노드에 분산되었는지 확인
-kubectl get pods -n kube-system -l k8s-app=kube-dns -o wide
-
-# 노드별 compute-type 레이블 확인
-kubectl get nodes -L eks.amazonaws.com/compute-type
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
+  get service kube-dns -o json |
+  jq '{name:.metadata.name,uid:.metadata.uid,clusterIP:.spec.clusterIP,
+       clusterIPs:.spec.clusterIPs,ports:.spec.ports,trafficDistribution:.spec.trafficDistribution}'
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
+  get endpointslices -l kubernetes.io/service-name=kube-dns -o json |
+  jq '[.items[]|{name:.metadata.name,addressType,ports,
+       endpoints:[.endpoints[]?|{addresses,nodeName,zone,conditions,hints}]}]'
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
+  get pods -l k8s-app=kube-dns -o json |
+  jq '[.items[]|{name:.metadata.name,node:.spec.nodeName,phase:.status.phase,
+       ready:([.status.conditions[]?|select(.type=="Ready")|.status]|first // "NotReported")}]'
 ```
 
-> **참고**:
->
-> * EKS 관리형 CoreDNS 애드온을 사용하는 경우, 애드온의 `configurationValues`를 통해 동일한 설정을 적용할 수 있습니다.
-> * `whenUnsatisfiable: ScheduleAnyway`를 사용하므로 한쪽에 노드가 없어도 스케줄링이 차단되지 않습니다. 이는 클러스터 초기 부트스트랩 시 CoreDNS가 정상적으로 시작될 수 있도록 보장합니다.
-
-***
+실제 Service IP·EndpointSlice zone/hint·Pod readiness를 확인합니다. `10.100.0.10`은 특정 Service CIDR의 예시이지 보편적인 DNS 주소가 아닙니다. Local replica가 disconnected EKS를 독립적인 DNS/control plane으로 바꾸지는 않습니다.
 
 ## 트래픽 플로우 패턴
 
-AWS와 온프레미스 간의 트래픽 흐름 패턴을 이해하는 것은 방화벽 구성과 문제 해결에 필수적입니다. 다음 섹션에서는 AWS 공식 아키텍처 다이어그램과 함께 각 트래픽 패턴을 상세히 설명합니다.
-
-> **출처**: [AWS EKS Hybrid Nodes Traffic Flows](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-traffic-flows.html)
+그림의 주소·처리 단계는 설명용입니다. 실제 Service dataplane이 kube-proxy iptables, nftables/IPVS, Cilium eBPF replacement 중 무엇인지 확인하세요.
 
 ### 패턴 1: Kubelet → EKS 컨트롤 플레인
 
-Kubelet은 DNS 조회를 통해 API 서버 엔드포인트로 HTTPS 요청을 시작합니다. 퍼블릭 액세스 모드에서는 트래픽이 퍼블릭 인터넷을 통과합니다. 프라이빗 모드에서는 VPN/DX를 통해 VPC ENI로 트래픽이 흐릅니다.
+Kubelet은 설정된 Kubernetes API endpoint를 해석해 연결합니다. Private/public 접근의 route가 다르며 EKS 관리 PrivateLink endpoint와 혼동하면 안 됩니다.
 
-![하이브리드 노드의 Kubelet이 DNS 조회 후 EKS API 서버로 HTTPS 요청을 보낼 때, 퍼블릭 액세스 모드에서는 인터넷을 거치고 프라이빗 모드에서는 VPN/DX 게이트웨이를 통해 VPC의 CP ENI로 도달하는 두 경로를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-10.png)
+![Public/private endpoint 설정에 따른 kubelet API 접근 경로.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-10.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-10.html)
 
 ### 패턴 2: EKS 컨트롤 플레인 → Kubelet
 
-API 서버는 노드 상태 객체에서 노드 IP를 가져옵니다. 트래픽은 VPC를 통해 라우팅된 후 Direct Connect 또는 VPN을 통해 클라우드 경계를 넘어 포트 10250의 kubelet에 도달합니다. 이는 `kubectl logs`, `kubectl exec`, `kubectl port-forward` 등에 사용됩니다.
+Control plane은 보고된 routable node 주소의 TCP10250에 연결합니다. Logs/exec/port-forward에 사용되며 return route·firewall·kubelet 인증이 필요합니다.
 
-![EKS 컨트롤 플레인이 노드 IP를 조회한 뒤 CP ENI와 Cluster VPC 라우터를 거쳐 Direct Connect 또는 VPN으로 클라우드 경계를 넘고 온프레미스 라우터를 통해 하이브리드 노드의 kubelet 포트 10250에 도달하는 순서를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-11.png)
+![Routable kubelet 주소의 TCP10250으로 연결하는 control-plane 경로.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-11.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-11.html)
 
 ### 패턴 3: Pod → EKS 컨트롤 플레인
 
-Pod는 `kubernetes` Service(ClusterIP)를 통해 Kubernetes API와 통신합니다. kube-proxy가 DNAT를 적용하여 서비스 IP를 컨트롤 플레인 ENI IP로 변환한 후, 패킷이 VPN/DX를 통해 VPC로 라우팅됩니다.
+Kubernetes Service IP를 사용하는 Pod에는 선택한 API endpoint로의 Service 변환이 필요합니다. Egress SNAT가 적용되면 응답은 node 주소로 오고 connection tracking이 역변환합니다. SNAT가 없으면 Pod 주소의 return route가 필요합니다.
 
-* **CNI NAT 미사용 시**: Pod가 kubernetes 서비스 IP(예: 172.16.0.1)로 전송하면 kube-proxy가 컨트롤 플레인 ENI IP로 DNAT를 적용합니다. 반환 트래픽은 파드 CIDR을 통한 역방향 라우팅이 필요합니다.
-* **CNI NAT 사용 시**: CNI가 노드 처리 전에 SNAT를 적용하여 반환 라우팅을 단순화합니다(추가 파드 CIDR 라우팅 불필요).
-
-![하이브리드 노드의 Pod가 kubernetes Service IP로 보낸 요청이 kube-proxy DNAT와 VPN/DX를 거쳐 EKS 컨트롤 플레인 ENI에 도달하는 경로와, CNI NAT(SNAT) 사용 여부에 따라 응답이 돌아오는 두 경로를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-12.png)
+![논리적인 Service 변환과 선택적 SNAT. 그림의 순서는 보편적인 hook 순서가 아니다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-12.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-12.html)
 
+그림의 SNAT→DNAT 번호는 보편적인 hook 순서가 아닙니다. Iptables 경로에서는 일반적으로 Service DNAT 다음 routing·해당 POSTROUTING SNAT가 적용됩니다. eBPF 경로는 다르므로 실제 packet/connection 상태를 확인하세요.
+
 ### 패턴 4: EKS 컨트롤 플레인 → Pod (웹훅)
 
-API 서버가 하이브리드 노드에서 실행 중인 웹훅 Pod에 직접 연결을 시작합니다. 트래픽은 원격 파드 CIDR에 대해 VPC를 통해 라우팅되고, 게이트웨이를 통해 경계를 넘습니다. 이는 **라우팅 가능한 파드 CIDR이 필요**합니다.
+API server가 선택한 webhook Pod IP/port에 접근할 수 있어야 합니다. 실제 설정 port를 사용하며 그림의 이전 “8443+”는 유효한 port-range 요구가 아닙니다.
 
-![EKS API 서버가 시작한 웹훅 호출이 CP ENI와 VPC 라우팅 테이블, VPN/DX 게이트웨이를 거쳐 온프레미스 라우터와 하이브리드 노드의 iptables·CNI를 통과해 웹훅 Pod 10.85.1.23에 도달하는 7단계 경로를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-13.png)
+![Control plane에서 webhook Pod로 가는 경로. 실제 설정 TCP port와 dataplane을 적용한다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-13.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-13.html)
 
-> **중요**: 온프레미스 파드 CIDR이 라우팅 불가능한 경우, **모든 웹훅을 클라우드 노드에서 실행**해야 합니다. 아래 [웹훅 구성](02-network-configuration.md#웹훅-구성) 섹션을 참조하세요.
-
 ### 패턴 5: 하이브리드 노드 간 Pod ↔ Pod
 
-서로 다른 하이브리드 노드의 Pod는 [VXLAN 캡슐화](../networking/cilium/03-networking.md#vxlan-기술-심층-분석)(또는 Geneve, IP-in-IP와 같은 유사한 오버레이 프로토콜)를 사용하여 통신합니다. CNI는 소스/대상 노드 IP를 사용하여 외부 헤더로 원본 Pod-to-Pod 패킷을 캡슐화합니다. 수신 노드의 CNI가 캡슐을 해제하고 대상 Pod로 전달합니다.
+지원 VXLAN overlay는 **outer node IP**로 대상 node에 접근합니다. 캡슐화 패킷 운반만을 위해 underlay에 inner destination Pod CIDR route가 필요한 것은 아닙니다.
 
-![서로 다른 하이브리드 노드의 Pod 간 패킷이 송신 노드 CNI에서 노드 IP 외부 헤더로 VXLAN 캡슐화되어 온프레미스 라우터를 거쳐 수신 노드 CNI에서 캡슐 해제된 뒤 대상 Pod에 전달되는 왕복 흐름을 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-14.png)
+![VXLAN Pod 통신. Outer forwarding은 node IP를 사용하며 이전 Pod-CIDR 전달 label은 수정이 필요하다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-14.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-14.html)
 
-#### VXLAN 캡슐화 상세
+그림에서 캡슐화 후 `10.85.x.0/24`를 조회하는 전달 label은 오래된 단순화입니다. 실제 outer packet은 `10.80.0.x`로 routing됩니다. 같은 L2 node끼리는 router hop 없이 직접 통신할 수도 있습니다.
 
-VXLAN(Virtual Extensible LAN)은 L2 프레임을 L3 패킷으로 캡슐화하여 오버레이 네트워크를 구성합니다. 하이브리드 노드 간 Pod 통신에서 패킷 구조가 어떻게 변환되는지 살펴봅니다.
+VXLAN은 inner Ethernet frame을 UDP로 캡슐화합니다. IPv4·추가 encapsulation 없는 예제의 overhead 50바이트는 MTU 1500→1450을 설명하며 추가 tunnel에서는 달라집니다. Cilium VXLAN은 UDP8472, 일반 VXLAN은 흔히 4789, Geneve는 UDP6081입니다. 현재 Cilium tunnel 설정은 VXLAN/Geneve를 구분하며 IP-in-IP를 예전 `--tunnel` 옵션의 동등한 기본 overlay로 취급하면 안 됩니다.
 
-**원본 패킷 (캡슐화 전)**
+VNI는 24비트이며 Cilium은 encapsulation metadata로 security identity를 전달할 수 있습니다. 암호학적 tenant 격리가 아니므로 policy·실제 identity 전파를 별도로 검토합니다.
 
-```
-┌────────────────────────────────────────────────┐
-│  Pod-A IP (src) → Pod-B IP (dst) │   Payload   │
-│    10.85.0.10       10.85.1.20   │   (data)    │
-└────────────────────────────────────────────────┘
-```
+### 패턴 6: 클라우드 Pod ↔ 하이브리드 Pod
 
-**VXLAN 캡슐화 후**
+직접 Pod-IP 트래픽은 VPC·WAN·on-prem Pod route가 필요합니다. 실제 요청이 Service VIP를 대상으로 할 때만 Service 변환이 필요합니다.
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ Outer IP Header │ UDP Header │ VXLAN Header │      Original Packet          │
-│ Node-A → Node-B │ Port 8472  │    (VNI)     │ Pod-A IP → Pod-B IP │ Payload │
-│ 10.80.1.10      │            │              │ 10.85.0.10  10.85.1.20        │
-│   → 10.80.1.11  │            │              │                               │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
-
-**캡슐화 프로세스 (송신 노드)**
-
-1. Pod-A가 Pod-B로 패킷을 전송합니다
-2. 송신 노드의 CNI(Cilium)가 대상 Pod IP를 확인하고 해당 노드를 조회합니다
-3. CNI가 원본 패킷을 VXLAN 헤더와 외부 IP 헤더로 래핑합니다
-4. 외부 헤더의 소스/대상 IP는 노드 IP를 사용합니다
-5. 캡슐화된 패킷이 UDP 포트 8472로 전송됩니다
-
-**역캡슐화 프로세스 (수신 노드)**
-
-1. 수신 노드가 UDP 8472 포트에서 VXLAN 패킷을 수신합니다
-2. CNI가 VXLAN 헤더와 외부 IP 헤더를 제거합니다
-3. 원본 패킷이 대상 Pod로 전달됩니다
-
-**주요 구성 요소**
-
-| 구성 요소                          | 설명                                             |
-| ------------------------------ | ---------------------------------------------- |
-| VNI (VXLAN Network Identifier) | 파드 네트워크 트래픽을 격리하는 24비트 식별자 (기본값: 자동 할당)        |
-| UDP 포트                         | Cilium 기본값: 8472, 표준 VXLAN: 4789               |
-| MTU                            | VXLAN 오버헤드(50바이트)를 고려하여 설정 필요 (예: 1500 → 1450) |
-
-> **참고**: Cilium은 VXLAN 외에도 Geneve, IP-in-IP 등 다른 터널 프로토콜을 지원합니다. `--tunnel` 옵션으로 터널 모드를 선택할 수 있습니다.
-
-### 패턴 6: 클라우드 Pod ↔ 하이브리드 Pod (East-West)
-
-VPC Pod(VPC CNI 사용)가 하이브리드 Pod로 직접 전송합니다. VPC 라우팅이 트래픽을 온프레미스 게이트웨이로 보냅니다. 패킷이 경계를 넘어 하이브리드 노드에 도착합니다. 이는 **라우팅 가능한 파드 CIDR**과 적절한 VPC 라우트 테이블 항목이 필요합니다.
-
-![VPC CNI를 쓰는 클라우드 Pod의 패킷이 ENI, VPC 라우터, 게이트웨이, 온프레미스 라우터를 거쳐 하이브리드 노드의 iptables와 CNI를 통해 하이브리드 Pod에 도달하는 East-West 트래픽 경로와 양쪽 라우트 테이블 항목을 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-15.png)
+![직접 cloud-to-hybrid Pod routing. Pod-IP 목적지에는 kube-proxy Service 변환이 필요하지 않다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-15.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-15.html)
 
-### 트래픽 플로우 요약
+그림의 kube-proxy/iptables block은 dataplane에 따라 다릅니다. 직접 Pod-IP packet에 kube-proxy DNAT가 본질적으로 필요한 것은 아닙니다.
 
-| # | 플로우                     | 방향            | 포트        | 요구 사항                        |
-| - | ----------------------- | ------------- | --------- | ---------------------------- |
-| 1 | Kubelet → API 서버        | On-Prem → AWS | TCP 443   | VPN/DX 또는 인터넷                |
-| 2 | API 서버 → Kubelet        | AWS → On-Prem | TCP 10250 | SG 아웃바운드 규칙                  |
-| 3 | Pod → API 서버            | On-Prem → AWS | TCP 443   | kube-proxy DNAT              |
-| 4 | API 서버 → Webhook Pod    | AWS → On-Prem | TCP 8443+ | **라우팅 가능 파드 CIDR**           |
-| 5 | Hybrid Pod ↔ Hybrid Pod | On-Prem 내부    | UDP 8472  | Cilium VXLAN                 |
-| 6 | Cloud Pod ↔ Hybrid Pod  | AWS ↔ On-Prem | VPC 라우트   | **라우팅 가능 파드 CIDR** + VPC 라우트 |
+### kube-proxy와 kubelet 상세
 
-### kube-proxy iptables 체인 구조
+kube-proxy **iptables 모드**의 대표 chain 경로입니다.
 
-kube-proxy는 Kubernetes Service 트래픽을 실제 Pod로 라우팅하기 위해 iptables 규칙을 사용합니다. 하이브리드 노드에서도 동일한 3단계 체인 구조가 적용됩니다.
-
-```
-KUBE-SERVICES (진입점)
-  └─→ KUBE-SVC-xxxx (서비스별 체인, 로드 밸런싱)
-        └─→ KUBE-SEP-xxxx (엔드포인트별 체인, Pod IP로 DNAT)
+```text
+KUBE-SERVICES → KUBE-SVC-* → KUBE-SEP-* → endpoint DNAT
 ```
 
-**체인별 역할**
+적격 equal-weight endpoint 3개와 별도 affinity/locality 정책이 없다면 조건부 확률 1/3, 남은 packet의 1/2, 나머지 선택이 대략 균등한 분배를 만듭니다. 아래는 설명용이며 실측 출력이나 모든 dataplane의 rule 구조가 아닙니다.
 
-| 체인                | 역할                                | 예시                                   |
-| ----------------- | --------------------------------- | ------------------------------------ |
-| **KUBE-SERVICES** | 모든 ClusterIP 서비스의 목적지 IP:Port를 매칭 | `172.20.0.1:443` → `KUBE-SVC-NPX...` |
-| **KUBE-SVC-xxxx** | 확률 기반 로드 밸런싱으로 엔드포인트 선택           | 3개 Pod → 각각 33% 확률                   |
-| **KUBE-SEP-xxxx** | 특정 Pod IP:Port로 DNAT 수행           | DNAT to `10.85.0.15:8080`            |
-
-**실제 iptables 규칙 예시**
-
-```bash
-# KUBE-SERVICES 체인 (nat 테이블)
+```text
+# KUBE-SERVICES chain (nat table)
 -A KUBE-SERVICES -d 172.20.0.10/32 -p tcp -m tcp --dport 80 -j KUBE-SVC-XXXXXX
 
-# KUBE-SVC 체인 (로드 밸런싱)
+# KUBE-SVC chain (load balancing)
 -A KUBE-SVC-XXXXXX -m statistic --mode random --probability 0.33333 -j KUBE-SEP-AAAAAA
 -A KUBE-SVC-XXXXXX -m statistic --mode random --probability 0.50000 -j KUBE-SEP-BBBBBB
 -A KUBE-SVC-XXXXXX -j KUBE-SEP-CCCCCC
 
-# KUBE-SEP 체인 (DNAT)
+# KUBE-SEP chain (DNAT)
 -A KUBE-SEP-AAAAAA -p tcp -j DNAT --to-destination 10.85.0.15:8080
 -A KUBE-SEP-BBBBBB -p tcp -j DNAT --to-destination 10.85.0.16:8080
 -A KUBE-SEP-CCCCCC -p tcp -j DNAT --to-destination 10.85.1.20:8080
 ```
 
-> **하이브리드 환경에서의 의미**: 위 예시에서 `10.85.1.20`이 다른 하이브리드 노드에 있는 Pod라면, DNAT 후 패킷은 VXLAN 캡슐화를 거쳐 해당 노드로 전송됩니다. kube-proxy가 Service 트래픽을 Pod IP로 변환하고, CNI가 실제 네트워크 라우팅을 담당합니다.
+| Secure kubelet endpoint | 용도 |
+|------------------------|------|
+| `/pods` | Pod 정보 |
+| `/exec/{namespace}/{pod}/{container}` | Container exec stream |
+| `/containerLogs/{namespace}/{pod}/{container}` | Container log; 이전 `/logs/...`가 아님 |
+| `/metrics`, `/healthz` | 권한이 있는 metrics/health 접근 |
 
-### kubelet 엔드포인트
-
-kubelet은 각 노드에서 실행되며 API 서버와의 통신을 위해 REST 엔드포인트를 노출합니다.
-
-**kubelet API 포트 및 엔드포인트**
-
-| 포트    | 엔드포인트                                 | 용도                              |
-| ----- | ------------------------------------- | ------------------------------- |
-| 10250 | `/pods`                               | 노드에서 실행 중인 Pod 목록 조회            |
-| 10250 | `/exec/{namespace}/{pod}/{container}` | 컨테이너에서 명령 실행 (`kubectl exec`)   |
-| 10250 | `/logs/{namespace}/{pod}/{container}` | 컨테이너 로그 스트리밍 (`kubectl logs`)   |
-| 10250 | `/metrics`                            | kubelet 메트릭 노출 (Prometheus 수집용) |
-| 10250 | `/healthz`                            | kubelet 헬스 체크                   |
-
-**노드 등록 및 주소 보고**
-
-kubelet이 클러스터에 노드를 등록할 때 `Node.status.addresses`에 주소 정보를 보고합니다:
-
-```yaml
-status:
-  addresses:
-  - address: 10.80.1.10        # 실제 온프레미스 IP
-    type: InternalIP
-  - address: hybrid-node-001   # 노드 호스트명
-    type: Hostname
-```
-
-* **InternalIP**: 노드의 실제 온프레미스 IP 주소입니다. API 서버는 이 주소를 사용하여 kubelet에 연결합니다.
-* **Hostname**: 노드의 호스트명입니다.
-
-> **방화벽 규칙의 핵심**: API 서버가 kubelet에 연결할 때 `InternalIP`를 사용하므로, **AWS → On-Prem 방향으로 TCP 10250 포트**가 반드시 열려 있어야 합니다. 이 연결이 차단되면 `kubectl exec`, `kubectl logs`, `kubectl port-forward` 등의 명령이 실패합니다.
-
-***
+지원되는 API-server 경유 진단·권한을 사용합니다. 실제 Node `status.addresses`가 중요하며 다른 객체의 첫 주소나 hostname을 임의로 대신 쓰지 마세요.
 
 ## 라우팅 가능한 Pod CIDR 구성
 
-온프레미스 파드 CIDR을 라우팅 가능하게 만드는 것은 웹훅, East-West 트래픽, AWS 서비스 통합(ALB, Prometheus 등)에 필수적입니다.
-
-![두 하이브리드 노드가 각자 Pod CIDR을 갖고 온프레미스 라우터와 게이트웨이를 거쳐 AWS로 연결되는 구조를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-0.png)
+![설명용 remote Pod CIDR과 on-prem router.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-0.html)
 
 ### 옵션 1: BGP (권장)
 
-CNI가 가상 라우터 역할을 하며 노드별 파드 CIDR 라우트를 로컬 온프레미스 라우터에 전파합니다. 가장 동적이고 유지보수하기 쉬운 접근 방식입니다.
-
-![각 하이브리드 노드가 BGP UPDATE로 자기 Pod CIDR을 온프레미스 라우터에 광고하는 구조를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-1.png)
+![설명용 BGP Pod prefix 광고.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-1.html)
 
-#### Cilium BGP Control Plane 구성
+AWS 전용 CNI 지원 페이지는 AWS-maintained Cilium 1.17/1.18을 안내합니다. 여기서는 호환 kernel/OS의 1.18.3-0을 참고하며 upstream 1.19로 무조건 바꾸지 않습니다. 다른 AWS 페이지는 Calico BGP·보존된 예제도 언급합니다. Calico 프로젝트가 deprecated됐다는 증거는 아니므로 기존 배포의 지원 범위를 확인하세요.
+
+**기존 Cilium release의 정확한 버전**을 소유한 관리 도구에서 values를 병합하고 operator/agent rollout을 검토하며 BGP를 활성화합니다.
+
+```yaml
+bgpControlPlane:
+  enabled: true
+operator:
+  rollOutPods: true
+```
+
+AWS 예제의 `v2alpha1`은 검토한 1.18.3 CRD에서 계속 served 상태이며 `v2`도 지원됩니다. 이 예제 때문에 CRD를 교체할 필요는 없습니다.
+
+아래는 hybrid node를 선택하고 peer advertisement selector와 advertisement label을 연결하며 Pod CIDR만 광고합니다.
 
 ```yaml
 apiVersion: cilium.io/v2alpha1
@@ -853,68 +679,73 @@ kind: CiliumBGPClusterConfig
 metadata:
   name: hybrid-bgp-config
 spec:
+  nodeSelector:
+    matchLabels:
+      eks.amazonaws.com/compute-type: hybrid
   bgpInstances:
   - name: hybrid-instance
     localASN: 65001
     peers:
     - name: on-prem-router
       peerASN: 65000
-      peerAddress: 10.80.0.1
+      peerAddress: 10.80.1.1
       peerConfigRef:
         name: on-prem-peer
----
+```
+```yaml
 apiVersion: cilium.io/v2alpha1
 kind: CiliumBGPPeerConfig
 metadata:
   name: on-prem-peer
 spec:
+  timers:
+    holdTimeSeconds: 90
+    keepAliveTimeSeconds: 30
+  gracefulRestart:
+    enabled: true
+    restartTimeSeconds: 120
   families:
   - afi: ipv4
     safi: unicast
-  gracefulRestart:
-    enabled: true
----
+    advertisements:
+      matchLabels:
+        advertise: hybrid-pods
+```
+```yaml
 apiVersion: cilium.io/v2alpha1
 kind: CiliumBGPAdvertisement
 metadata:
-  name: pod-cidr-advert
+  name: hybrid-pod-cidrs
+  labels:
+    advertise: hybrid-pods
 spec:
   advertisements:
   - advertisementType: PodCIDR
-  - advertisementType: Service
-    service:
-      addresses:
-      - ClusterIP
 ```
 
-#### ASN (Autonomous System Number) 이해하기
+선택한 node가 의도한 peering topology로 router `10.80.1.1`에 접근한다는 전제입니다. Rack/loopback이 다르면 겹치지 않는 selector·검토한 multihop 설정이 필요할 수 있습니다. TCP179·ASN·인증·prefix filter·협상 timer·graceful-restart의 stale-route 동작을 network owner와 검토하세요.
 
-위 Cilium BGP 구성에서 `localASN`과 `peerASN`은 **자율 시스템 번호**(Autonomous System Number)입니다. 각 BGP 참여자(라우터, 스위치, 또는 여기서는 각 노드의 Cilium)에게 할당되는 고유 식별자로, BGP 피어링의 양쪽 모두 ASN이 필요합니다.
+BGP Established만으로 의도한 prefix 광고·수락·router forwarding-table 설치가 입증되지는 않습니다. Cilium BGP control plane은 reachability를 광고하며 모든 kernel/underlay routing을 대체하지 않습니다.
 
-**Private vs Public ASN 범위**
+```bash
+cilium --context "$KUBE_CONTEXT" bgp peers
+cilium --context "$KUBE_CONTEXT" bgp routes
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
+  get ciliumbgpclusterconfigs,ciliumbgppeerconfigs,ciliumbgpadvertisements -o json |
+  jq '[.items[]|{kind,name:.metadata.name,status:.status}]'
+```
 
-| 범위                          | 유형           | 사용 사례                                                      |
-| --------------------------- | ------------ | ---------------------------------------------------------- |
-| **64512 – 65534**           | 16비트 Private | 내부 네트워크, 데이터센터, 랩 환경. **EKS Hybrid Nodes에서는 이 범위를 사용합니다.** |
-| **4200000000 – 4294967294** | 32비트 Private | 많은 고유 ASN이 필요한 대규모 내부 배포                                   |
-| 1 – 64511                   | 16비트 Public  | RIR(ARIN, RIPE, APNIC)에 등록된 인터넷 대면 네트워크                    |
+#### ASN과 Router 구성
 
-> **EKS Hybrid Nodes의 경우**: 항상 **Private ASN 범위**(64512–65534)를 사용하세요. Public ASN은 필요하지 않습니다 — 여기서 BGP는 Cilium 노드와 온프레미스 라우터 간의 내부 네트워크에서만 사용됩니다.
+RFC6996 private 범위는 **64512–65534**, **4200000000–4294967294**입니다. 이전의 “16비트 범위만 사용” 규칙은 부정확했습니다. 1–64511 전체를 자유로운 public ASN으로 설명해서도 안 됩니다. Public/reserved/documentation 할당에는 별도 규칙이 있습니다.
 
-**ASN 값 선택 방법**
+조율된 기존 ASN을 사용합니다. 여기서 `localASN=65001`은 Cilium node, `peerASN=65000`은 on-prem router입니다. TGW ASN은 별도 upstream 관계이며 TGW가 존재한다고 Cilium이 자동으로 peer가 되지는 않습니다. Site-to-Site VPN BGP는 설정한 VPN/customer gateway 경로에서 종료되며 TGW Connect도 별도 transport/design입니다.
 
-* **`localASN`** (예: `65001`): 하이브리드 노드에서 실행되는 Cilium에 할당된 ASN. 동일 클러스터의 모든 Cilium 노드는 일반적으로 하나의 ASN을 공유합니다.
-* **`peerASN`** (예: `65000`): Cilium과 피어링하는 온프레미스 라우터의 ASN. 라우터의 BGP 구성에서 이 값을 확인합니다.
-
-환경에 BGP가 아직 구성되어 있지 않다면, Private 범위에서 서로 다른 두 숫자를 선택하면 됩니다 (예: 라우터에 `65000`, Cilium에 `65001`). 네트워크 팀이 이미 내부적으로 BGP를 사용하고 있다면, ASN 충돌을 방지하기 위해 조율이 필요합니다.
-
-**온프레미스 라우터 BGP 구성 예시**
-
-아래는 위 Cilium 구성과 매칭되는 **라우터 측** BGP 피어링 구성 예시입니다. 각 예시에서 라우터는 ASN `65000`을 사용하고, `10.80.1.10`(ASN `65001`)의 Cilium 노드와 피어링합니다.
+아래 vendor 조각은 설명용 출발점이며 장비 실행 검증을 하지 않았습니다. Router owner가 platform/version별 import/export prefix filter·limit·복구를 포함해 병합해야 합니다. Live router의 전역 ASN을 무작정 바꾸지 마세요.
 
 **Cisco IOS / IOS-XE**
 
-```
+```text
 router bgp 65000
  neighbor 10.80.1.10 remote-as 65001
  neighbor 10.80.1.10 description "EKS Hybrid Node - Cilium BGP"
@@ -927,7 +758,7 @@ router bgp 65000
 
 **Cisco NX-OS (Nexus)**
 
-```
+```text
 router bgp 65000
   address-family ipv4 unicast
   neighbor 10.80.1.10
@@ -939,7 +770,7 @@ router bgp 65000
 
 **Juniper Junos (MX / QFX / SRX)**
 
-```
+```text
 set protocols bgp group eks-hybrid type external
 set protocols bgp group eks-hybrid peer-as 65001
 set protocols bgp group eks-hybrid neighbor 10.80.1.10 description "EKS Hybrid Node"
@@ -949,7 +780,7 @@ set routing-options autonomous-system 65000
 
 **Arista EOS**
 
-```
+```text
 router bgp 65000
    neighbor 10.80.1.10 remote-as 65001
    neighbor 10.80.1.10 description EKS-Hybrid-Cilium
@@ -958,246 +789,143 @@ router bgp 65000
       neighbor 10.80.1.10 activate
 ```
 
-**MikroTik RouterOS**
+**MikroTik RouterOS 7.20+**
 
+```text
+/routing/bgp/instance
+add name=hybrid as=65000
+/routing/bgp/connection
+add name=hybrid-node-001 instance=hybrid remote.address=10.80.1.10 remote.as=65001 local.role=ebgp address-families=ip disabled=yes
+# Review input/output filters and routing before enabling the connection.
 ```
-/routing bgp connection
-add name=eks-hybrid remote.address=10.80.1.10 remote.as=65001 \
-    local.role=ebgp as=65000 address-families=ip
-```
 
-**FRRouting (FRR) — 소프트웨어 라우터 (Linux)**
+**FRRouting (FRR), reference 10.7.1**
 
-FRRouting은 Linux 서버 및 VM에서 소프트웨어 BGP 라우터로 널리 사용됩니다:
-
-```
+```text
+ip prefix-list HYBRID_PODS seq 10 permit 10.85.0.0/16 ge 25 le 25
+route-map FROM_HYBRID permit 10
+ match ip address prefix-list HYBRID_PODS
+route-map TO_HYBRID deny 10
 router bgp 65000
+ bgp router-id 10.80.1.1
+ bgp ebgp-requires-policy
  neighbor 10.80.1.10 remote-as 65001
- neighbor 10.80.1.10 description EKS-Hybrid-Cilium
- !
  address-family ipv4 unicast
   neighbor 10.80.1.10 activate
+  neighbor 10.80.1.10 route-map FROM_HYBRID in
+  neighbor 10.80.1.10 route-map TO_HYBRID out
  exit-address-family
 ```
 
-**AWS Transit Gateway (TGW)**
-
-AWS Transit Gateway와 Site-to-Site VPN을 사용하는 경우, TGW 측 ASN은 TGW 생성 시 구성됩니다:
-
-```bash
-# 커스텀 ASN으로 TGW 생성
-aws ec2 create-transit-gateway \
-  --options AmazonSideAsn=65000
-
-# VPN 터널은 TGW ASN으로 자동으로 BGP를 설정합니다
-# 온프레미스 라우터(또는 Cilium)는 자체 ASN을 사용하여 TGW와 피어링합니다
-```
-
-> **참고**: AWS TGW의 기본 ASN은 `64512`입니다. Cilium 노드가 `65001`을 사용하는 경우, Cilium 구성의 피어 ASN은 TGW(또는 VGW)의 ASN과 일치해야 합니다.
-
-**다수의 하이브리드 노드 구성**
-
-여러 하이브리드 노드가 있는 경우, 각 노드는 **동일한 `localASN`** 으로 자체 Cilium BGP 스피커를 실행합니다. 온프레미스 라우터는 각 노드와 개별적으로 피어링합니다:
-
-```
-# 라우터 구성 — 각 하이브리드 노드와 피어링
-router bgp 65000
- neighbor 10.80.1.10 remote-as 65001   ! hybrid-node-001
- neighbor 10.80.1.11 remote-as 65001   ! hybrid-node-002
- neighbor 10.80.1.12 remote-as 65001   ! hybrid-node-003
-```
-
-각 노드는 자신의 파드 CIDR 조각을 광고합니다 (예: node-001은 `10.85.0.0/25`, node-002는 `10.85.0.128/25`를 광고). 이를 통해 라우터는 모든 파드 CIDR에 대한 완전한 라우팅 테이블을 구성합니다.
-
-#### BGP 피어링 확인
-
-```bash
-cilium bgp peers
-cilium bgp routes
-```
-
-하이브리드 노드에서 Session State가 `established`로 표시되어야 합니다.
+RouterOS 7.20+는 BGP instance를 명시합니다. FRR traditional 기본값은 eBGP policy를 요구하므로 filter가 없으면 Established여도 `(Policy)` 상태로 route를 교환하지 않을 수 있습니다. FRR 예제는 검토한 `/25` Pod block만 수신하고 Cilium으로 route를 보내지 않습니다. 실제 IPAM·upstream routing에 맞게 filter를 조정하세요.
 
 ### 옵션 2: 정적 라우트
 
-파드 CIDR을 사용한 수동 라우터 구성입니다. 가장 간단하지만 오류가 발생하기 쉽고 노드가 변경될 때 수동 업데이트가 필요합니다.
-
-![온프레미스 라우터에 Pod CIDR별 정적 라우트를 노드 IP를 다음 홉으로 등록하는 구조를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-2.png)
+![설명용 static Pod prefix route. 실제 next hop은 현재 관측 상태로 확인한다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-2.html)
 
-#### Cluster-Pool IPAM 할당 이해
+Cilium **cluster-pool IPAM**에서는 할당된 `CiliumNode.spec.ipam.podCIDRs`를 모두 읽습니다. 등록 순서대로 할당된다는 보장은 없습니다. `/16`은 산술적으로 `/25` block 512개, 각 block은 주소 128개지만 지원 node 512개·node당 application Pod IP 128개를 보장하지 않습니다. 예약 주소·node/CNI 사용·kubelet/resource 제한도 고려해야 합니다.
 
-Cilium의 `cluster-pool` IPAM 모드에서는 전체 파드 CIDR 풀을 노드별로 고정 크기 블록으로 분할합니다. [04-node-bootstrap.md](04-node-bootstrap.md)의 Cilium values에서 설정하는 두 가지 핵심 파라미터가 있습니다:
+다음은 검토한 새 pool의 Cilium Helm-values 조각이며 kubelet 전체의 `podCIDR` 설정이 아닙니다. 이전을 간단히 하려고 기존 할당 CIDR·block size를 바꾸지 마세요.
 
-| 파라미터                         | 예시 값           | 설명                             |
-| ---------------------------- | -------------- | ------------------------------ |
-| `clusterPoolIPv4PodCIDRList` | `10.85.0.0/16` | 전체 파드 CIDR 풀                   |
-| `clusterPoolIPv4MaskSize`    | `25`           | 노드당 할당되는 서브넷 크기 (/25 = 128 IP) |
+```yaml
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+    - 10.85.0.0/16
+    clusterPoolIPv4MaskSize: 25
+```
 
-예를 들어, 풀이 `10.85.0.0/16`이고 마스크 크기가 `/25`이면 최대 **512개 노드**에 각각 128개의 파드 IP를 할당할 수 있습니다. Cilium Operator가 노드 등록 순서대로 블록을 할당합니다:
-
-| 노드              | 할당된 PodCIDR      | 사용 가능한 파드 IP                  |
-| --------------- | ---------------- | ----------------------------- |
-| hybrid-node-001 | `10.85.0.0/25`   | `10.85.0.1` – `10.85.0.126`   |
-| hybrid-node-002 | `10.85.0.128/25` | `10.85.0.129` – `10.85.0.254` |
-| hybrid-node-003 | `10.85.1.0/25`   | `10.85.1.1` – `10.85.1.126`   |
-
-> **중요**: 이 할당 정보는 **CiliumNode CR**에 기록됩니다. Kubernetes Node 객체의 `spec.podCIDR`과 다를 수 있으므로, 정적 라우트 구성 시 반드시 CiliumNode CR을 참조하세요.
-
-#### 노드별 PodCIDR 조회
-
-정적 라우트를 구성하려면 각 노드에 할당된 PodCIDR과 노드 IP(넥스트 홉)를 확인해야 합니다. CNI별 조회 방법은 다음과 같습니다:
-
-**Cilium** — `CiliumNode` CR의 `spec.ipam.podCIDRs`가 권위 있는 소스입니다:
+`.addresses[0]`은 Cilium-internal 주소일 수 있어 next hop으로 쓰면 안 됩니다. 아래는 Kubernetes Node와 IPv4 InternalIP를 대조하고 모든 Pod prefix를 승인된 remote 범위와 검증합니다. 중첩·누락을 거부하며 실행 shell이 아닌 **JSON candidate**를 생성합니다.
 
 ```bash
-kubectl get ciliumnodes -o custom-columns='\
-NAME:.metadata.name,\
-NODE_IP:.spec.addresses[0].ip,\
-POD_CIDR:.spec.ipam.podCIDRs[0]'
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodes \
+  -l eks.amazonaws.com/compute-type=hybrid -o json |
+  jq '{items:[.items[]|{metadata:{name:.metadata.name,uid:.metadata.uid},
+       status:{addresses:.status.addresses}}]}' > "$WORK_DIR/hybrid-nodes.json"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get ciliumnodes.cilium.io -o json |
+  jq '{items:[.items[]|{metadata:{name:.metadata.name,uid:.metadata.uid},
+       spec:{addresses:.spec.addresses,ipam:{podCIDRs:.spec.ipam.podCIDRs}}}]}' \
+  > "$WORK_DIR/cilium-nodes.json"
 ```
-
-```
-NAME                NODE_IP       POD_CIDR
-hybrid-node-001     10.80.1.10    10.85.0.0/25
-hybrid-node-002     10.80.1.11    10.85.0.128/25
-hybrid-node-003     10.80.1.12    10.85.1.0/25
-```
-
-> CiliumNode CR 구조, 스크립팅 활용 등 자세한 내용은 [Cilium IPAM — CiliumNode CR을 활용한 노드별 PodCIDR 조회](../networking/cilium/04-ipam-policy.md#ciliumnode-cr을-활용한-노드별-podcidr-조회)를 참조하세요.
-
-**Calico** — `BlockAffinity` CR로 노드별 CIDR 블록을 추적합니다:
-
 ```bash
-kubectl get blockaffinities -o custom-columns='\
-NAME:.metadata.name,\
-CIDR:.spec.cidr,\
-NODE:.spec.node'
+python3 - <<'PY'
+import ipaddress, json, os
+from pathlib import Path
+folder = Path(os.environ["WORK_DIR"])
+network = json.loads((folder / "cluster.json").read_text())["cluster"]["remoteNetworkConfig"]
+node_ranges = [ipaddress.ip_network(c, strict=True) for n in network["remoteNodeNetworks"] for c in n["cidrs"]]
+pod_ranges = [ipaddress.ip_network(c, strict=True) for n in network.get("remotePodNetworks", []) for c in n["cidrs"]]
+if not pod_ranges:
+    raise SystemExit("A reviewed routable remote Pod range is required for this route plan")
+nodes = {n["metadata"]["name"]: n for n in json.loads((folder / "hybrid-nodes.json").read_text())["items"]}
+claims = json.loads((folder / "cilium-nodes.json").read_text())["items"]
+rows, seen = [], []
+for item in claims:
+    name = item["metadata"]["name"]
+    if name not in nodes:
+        continue
+    node = nodes[name]
+    ips = [ipaddress.ip_address(a["address"]) for a in node["status"]["addresses"]
+           if a["type"] == "InternalIP" and ":" not in a["address"]]
+    if len(ips) != 1 or not any(ips[0] in n for n in node_ranges):
+        raise SystemExit(f"Review the unique IPv4 InternalIP and remote-node range for {name}")
+    cilium_ips = [ipaddress.ip_address(a["ip"]) for a in item["spec"].get("addresses", [])
+                  if a["type"] == "InternalIP" and ":" not in a["ip"]]
+    if cilium_ips != ips:
+        raise SystemExit(f"Kubernetes/Cilium InternalIP mismatch for {name}")
+    cidrs = item["spec"]["ipam"].get("podCIDRs") or []
+    if not cidrs:
+        raise SystemExit(f"No allocated cluster-pool Pod CIDRs for {name}; do not invent a route")
+    for raw in cidrs:
+        cidr = ipaddress.ip_network(raw, strict=True)
+        if cidr.version != 4 or not any(cidr.subnet_of(p) for p in pod_ranges):
+            raise SystemExit(f"Unapproved Pod CIDR for {name}: {cidr}")
+        if any(cidr.overlaps(previous) for previous in seen):
+            raise SystemExit("Overlapping or duplicate Pod routes require investigation")
+        seen.append(cidr)
+        rows.append({"node": name, "nodeUID": node["metadata"]["uid"],
+                     "ciliumNodeUID": item["metadata"]["uid"], "destination": str(cidr), "nextHop": str(ips[0])})
+if set(nodes) != {row["node"] for row in rows}:
+    raise SystemExit("Some hybrid nodes have no matching Cilium allocation")
+(folder / "reviewed-route-candidates.json").write_text(json.dumps(rows, indent=2) + "\n")
+print(json.dumps(rows, indent=2))
+PY
 ```
 
-> **⚠ Deprecation**: Calico는 EKS Hybrid Nodes에서 공식 지원이 중단되었습니다. 신규 배포에는 Cilium을 사용하세요. BlockAffinity 조회 상세 내용은 [Calico 고급 주제 — BlockAffinity를 활용한 노드별 PodCIDR 조회](../networking/calico/07-advanced-topics.md#blockaffinity를-활용한-노드별-podcidr-조회)를 참조하세요.
+Cluster-pool용 시점 snapshot이며 node identity의 원자적 lease·routing controller가 아닙니다. 변경 전 재확인하세요. Calico BlockAffinity는 다른 모델이므로 state·borrowing/pool·실제 route를 조사하고 이 generator를 그대로 재사용하지 마세요.
 
-#### 정적 라우트 구성
+Owner 검토 후 수동 router syntax는 다음과 같을 수 있습니다.
 
-CiliumNode(또는 Calico BlockAffinity)에서 확인한 정보를 바탕으로 라우터에 정적 라우트를 추가합니다. 공통 패턴은 다음과 같습니다:
-
-```
-목적지(Destination) = 노드의 PodCIDR
-넥스트 홉(Next Hop)  = 노드의 InternalIP
-```
-
-**Linux (ip route)**
-
-```bash
-# 각 노드의 파드 CIDR에 대한 라우트 추가
-ip route add 10.85.0.0/25 via 10.80.1.10    # hybrid-node-001
-ip route add 10.85.0.128/25 via 10.80.1.11  # hybrid-node-002
-ip route add 10.85.1.0/25 via 10.80.1.12    # hybrid-node-003
-```
-
-재부팅 후에도 유지하려면 영구 설정이 필요합니다:
-
-```bash
-# /etc/network/interfaces.d/hybrid-routes (Debian/Ubuntu)
-up ip route add 10.85.0.0/25 via 10.80.1.10
-up ip route add 10.85.0.128/25 via 10.80.1.11
-up ip route add 10.85.1.0/25 via 10.80.1.12
-
-# 또는 NetworkManager (RHEL/Rocky)
-# /etc/NetworkManager/dispatcher.d/99-hybrid-routes
-```
-
-**Cisco IOS / IOS-XE**
-
-```
-ip route 10.85.0.0 255.255.255.128 10.80.1.10 name hybrid-node-001-pods
-ip route 10.85.0.128 255.255.255.128 10.80.1.11 name hybrid-node-002-pods
-ip route 10.85.1.0 255.255.255.128 10.80.1.12 name hybrid-node-003-pods
-```
-
-**FRRouting (FRR)**
-
-```
-ip route 10.85.0.0/25 10.80.1.10
-ip route 10.85.0.128/25 10.80.1.11
-ip route 10.85.1.0/25 10.80.1.12
-```
-
-**AWS VPC 라우트 테이블**
-
-VPN/Direct Connect를 통해 연결된 AWS VPC에서 파드 CIDR에 접근해야 하는 경우, 집계(aggregate) CIDR을 사용합니다:
-
-```bash
-# 집계 CIDR로 VPC 라우트 추가 (VPN Gateway 또는 TGW를 넥스트 홉으로)
-aws ec2 create-route \
-  --route-table-id rtb-0123456789abcdef0 \
-  --destination-cidr-block 10.85.0.0/16 \
-  --gateway-id vgw-0123456789abcdef0
-```
-
-```hcl
-# Terraform
-resource "aws_route" "hybrid_pod_cidr" {
-  route_table_id         = aws_route_table.main.id
-  destination_cidr_block = "10.85.0.0/16"
-  gateway_id             = aws_vpn_gateway.main.id
-}
-```
-
-#### 자동화 및 BGP 비교
-
-CiliumNode CR에서 자동으로 `ip route` 명령을 생성하는 스크립트 예시:
-
-```bash
-#!/bin/bash
-# generate-static-routes.sh — CiliumNode CR에서 정적 라우트 명령 생성
-kubectl get ciliumnodes -o json | jq -r \
-  '.items[] | "ip route add \(.spec.ipam.podCIDRs[0]) via \(.spec.addresses[0].ip)"'
-```
-
-출력 예시:
-
-```
+```text
+# Illustrative syntax after validating the route plan on the intended router:
+# Linux
 ip route add 10.85.0.0/25 via 10.80.1.10
-ip route add 10.85.0.128/25 via 10.80.1.11
-ip route add 10.85.1.0/25 via 10.80.1.12
+# Cisco IOS / IOS-XE
+ip route 10.85.0.0 255.255.255.128 10.80.1.10 name hybrid-node-001-pods
+# FRR
+ip route 10.85.0.0/25 10.80.1.10
 ```
 
-**정적 라우트 vs BGP 비교**
-
-| 항목         | 정적 라우트               | BGP (옵션 1)           |
-| ---------- | -------------------- | -------------------- |
-| 노드 추가 시    | 라우터에 수동으로 라우트 추가 필요  | 자동으로 라우트 전파          |
-| 노드 제거 시    | 라우터에서 수동으로 라우트 삭제 필요 | 자동으로 라우트 철회          |
-| 노드 IP 변경 시 | 모든 라우트 수동 업데이트 필요    | 자동으로 업데이트 전파         |
-| 장애 감지      | 없음 (stale 라우트 남음)    | BGP keepalive로 자동 감지 |
-| 구성 복잡도     | 낮음                   | 중간 (BGP 피어링 설정 필요)   |
-| 확장성        | 1–5 노드에 적합           | 수십\~수백 노드까지 확장 가능    |
-
-> **권장사항**:
->
-> * **PoC / 소규모 환경** (1–5 노드): 정적 라우트로 빠르게 시작할 수 있습니다
-> * **프로덕션 / 5+ 노드**: [BGP (옵션 1)](02-network-configuration.md#옵션-1-bgp-권장)를 사용하세요. 노드 변경에 자동으로 대응하며 운영 부담이 크게 줄어듭니다
-> * **BGP가 정책적으로 허용되지 않는 환경**: 정적 라우트를 사용하되, 위의 자동화 스크립트로 라우트 변경을 관리하세요
+실제 network manager/device 구성으로 영구 저장합니다. `up ip route ...`는 ifupdown stanza용이며 standalone Bash나 모든 현대 Linux network manager용이 아닙니다. Static route에는 drift/failure 추적이 필요하며 이전 “node 1–5개” 기준은 계획 예시이지 기술적 제한이 아닙니다.
 
 ### 옵션 3: ARP 프록시
 
-노드가 호스팅된 파드 IP에 대한 ARP 요청에 응답합니다. 로컬 라우터와 레이어 2 네트워크 근접성이 필요합니다. Cilium에는 프록시 ARP 지원이 내장되어 있습니다. 라우터 BGP나 정적 라우트 구성이 필요 없지만, 파드 CIDR이 다른 네트워크와 겹치면 안 됩니다.
+AWS는 proxy ARP를 가능한 L2 접근으로 설명합니다. 적절한 on-link neighbor discovery·구체적인 CNI/host 설정이 필요하며 일반 Cilium 활성화만으로 이 경로가 준비되지는 않습니다.
 
-![노드가 Pod IP의 ARP 요청에 자기 MAC으로 대신 응답해 라우터가 Pod를 같은 링크의 호스트처럼 다루는 구조를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-3.png)
+![검증한 L2/on-link 구성의 proxy ARP 개념. Upstream route는 계속 필요하다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-3.html)
 
-***
+ARP broadcast는 TGW/VPN/DX L3 routing을 통과하지 않습니다. 이 선택이 VPC/WAN return route를 없애지 않으며 BGP/static 설계를 대체하기 전에 실제 L2·failover를 검증해야 합니다.
 
 ## 네트워크 정책
 
-하이브리드 노드 환경에서 Pod 간 트래픽을 제어하기 위해 네트워크 정책을 사용할 수 있습니다. Cilium CNI를 사용하면 표준 Kubernetes NetworkPolicy와 확장된 CiliumNetworkPolicy 모두 지원됩니다.
+선택 대상·방향·실제 enforcing dataplane을 구분합니다. Kubernetes NetworkPolicy allow는 합집합이므로 다른 일치 policy가 트래픽을 허용할 수 있습니다. Cilium explicit deny·L7은 별도 평가가 필요합니다. 아래는 통제된 namespace에서 시험할 대안이며 모든 allow를 겹치면 더 엄격해진다는 뜻이 아닙니다.
 
 ### Kubernetes NetworkPolicy
-
-표준 Kubernetes NetworkPolicy는 L3/L4 수준의 기본적인 트래픽 필터링을 제공합니다.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1221,11 +949,9 @@ spec:
       port: 9080
 ```
 
-이 정책은 `bookinfo` 네임스페이스에서 `app: productpage` 레이블이 있는 Pod만 `app: reviews` Pod의 9080 포트에 접근할 수 있도록 허용합니다.
+`reviews` ingress를 선택해 같은 namespace의 일치하는 `productpage` Pod에 TCP9080을 허용합니다. 모든 Pod/방향을 격리하거나 다른 모든 policy를 무효화하지는 않습니다.
 
-### CiliumNetworkPolicy
-
-CiliumNetworkPolicy는 Kubernetes NetworkPolicy의 기능을 확장하여 L7 필터링, DNS 인식 정책, 아이덴티티 기반 매칭 등을 제공합니다.
+### CiliumNetworkPolicy와 L7
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -1241,21 +967,17 @@ spec:
   - fromEndpoints:
     - matchLabels:
         app: productpage
+        k8s:io.kubernetes.pod.namespace: bookinfo
     toPorts:
     - ports:
-      - port: "9080"
+      - port: '9080'
         protocol: TCP
 ```
-
-#### CiliumNetworkPolicy 고급 기능
-
-**L7 HTTP 필터링**
-
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: l7-rule
+  name: frontend-http-contract
   namespace: bookinfo
 spec:
   endpointSelector:
@@ -1265,17 +987,22 @@ spec:
   - fromEndpoints:
     - matchLabels:
         app: productpage
+        k8s:io.kubernetes.pod.namespace: bookinfo
     toPorts:
     - ports:
-      - port: "9080"
+      - port: '9080'
         protocol: TCP
       rules:
         http:
-        - method: "GET"
-          path: "/api/v1/.*"
+        - method: GET
+          path: /api/v1/.*
 ```
 
-**DNS 기반 Egress 정책**
+HTTP rule은 무제한 L4 allow의 대안이며 그 위에 자동으로 더하는 제한이 아닙니다. 실제 앱 path를 사용하세요. HTTP inspection에는 적절한 가시성이 필요하며 암호화 mesh/TLS가 자동으로 검사되지는 않습니다.
+
+### DNS 기반 Egress
+
+별도 `external-api-client` 예제는 **Cilium이 식별하는 CoreDNS Pod**의 DNS와 관측한 API 주소의 HTTPS를 허용합니다.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -1286,40 +1013,32 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: productpage
+      app: external-api-client
   egress:
-  - toFQDNs:
-    - matchName: "api.example.com"
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "443"
+      - port: '53'
+        protocol: ANY
+      rules:
+        dns:
+        - matchPattern: '*'
+  - toFQDNs:
+    - matchName: api.example.com
+    toPorts:
+    - ports:
+      - port: '443'
         protocol: TCP
 ```
 
-### 하이브리드 환경에서의 네트워크 정책 고려사항
-
-| 고려사항             | 설명                                                                                         |
-| ---------------- | ------------------------------------------------------------------------------------------ |
-| **기본 동작**        | 네트워크 정책이 없으면 모든 트래픽이 허용됩니다. NetworkPolicy가 적용되면 명시적으로 허용된 트래픽만 통과합니다.                      |
-| **크로스 바운더리 트래픽** | 클라우드 노드의 Pod와 하이브리드 노드의 Pod 간 통신을 정책에 반영해야 합니다.                                            |
-| **CNI 요구 사항**    | Cilium이 CNI로 설정되어 있어야 두 정책 유형 모두 작동합니다.                                                    |
-| **정책 적용 범위**     | CiliumNetworkPolicy는 해당 네임스페이스에만 적용됩니다. 클러스터 전체 정책은 CiliumClusterwideNetworkPolicy를 사용하세요. |
-
-> **권장 사항**: 하이브리드 환경에서는 명시적인 네트워크 정책을 정의하여 의도하지 않은 크로스 바운더리 트래픽을 방지하세요. 특히 민감한 워크로드는 엄격한 Ingress/Egress 정책으로 보호해야 합니다.
-
-***
+실제 resolver/identity 구성을 확인하세요. NodeLocal DNS·host DNS·비 Cilium endpoint에는 다른 지원 rule이 필요할 수 있습니다. FQDN IP 관측은 원격 API 인증이 아니며 DNS cache·공유 주소를 고려합니다. Cilium L7/FQDN 기능은 AWS가 명시한 기본 Kubernetes NetworkPolicy 지원 범위도 넘어섭니다.
 
 ## 웹훅 구성
 
-웹훅은 Kubernetes 애플리케이션과 오픈소스 프로젝트(AWS Load Balancer Controller, CloudWatch Observability Agent)에서 변환(mutating) 및 검증(validation) 기능에 사용됩니다.
-
-### 라우팅 가능한 파드 네트워크 사용 시
-
-온프레미스 파드 CIDR이 라우팅 가능한 경우(BGP, 정적 라우트 또는 ARP 프록시를 통해), 웹훅을 하이브리드 노드에서 실행할 수 있습니다.
-
-### 라우팅 불가능한 파드 네트워크 사용 시
-
-온프레미스 파드 CIDR이 **라우팅 불가능**한 경우, 노드 어피니티를 사용하여 **모든 웹훅을 클라우드 노드에서 실행**하세요:
+일반 direct-routing 설계에서는 control plane이 webhook Pod IP에 접근해야 합니다. 적절한 Pod return path가 없으면 cloud-hosted component를 배치하고 gateway/proxy 대안은 별도로 검증합니다.
 
 ```yaml
 affinity:
@@ -1333,18 +1052,86 @@ affinity:
           - hybrid
 ```
 
-### 웹훅을 사용하는 애드온
+완전한 Deployment가 아닌 Pod-template affinity 조각입니다. `NotIn hybrid`만으로 정상 cloud capacity나 다른 배치 조건이 입증되지는 않습니다.
 
-다음 애드온은 웹훅 배치를 고려해야 합니다:
+AWS Load Balancer Controller·CloudWatch/ADOT operator·cert-manager의 webhook 배치를 검토합니다. Operator와 node collector를 구분하세요. **Metrics Server는 admission webhook이 아닌 aggregated API service**지만 control-plane→Pod 접근은 필요합니다. Pod phase만 보지 말고 실제 API/webhook 호출을 확인하세요.
 
-| 애드온                            | 웹훅 배치 (라우팅 불가능 파드 CIDR) |
-| ------------------------------ | ----------------------- |
-| AWS Load Balancer Controller   | 클라우드 노드만                |
-| CloudWatch Observability Agent | 클라우드 노드만                |
-| ADOT (OpenTelemetry)           | 클라우드 노드만                |
-| cert-manager                   | 클라우드 노드만                |
-| Kubernetes Metrics Server      | 라우팅 가능 파드 CIDR 필요       |
+## 읽기 전용 연결 진단
 
-***
+### Kubernetes API TLS와 시간
 
-< [이전: 사전 요구 사항](01-prerequisites.md) | [목차](./README.md) | [다음: 에어갭 환경 구성](03-airgap-setup.md) >
+```bash
+set -euo pipefail
+endpoint=$(jq -er '.cluster.endpoint' "$WORK_DIR/cluster.json")
+case "$endpoint" in https://*) ;; *) printf 'HTTPS endpoint required.\n' >&2; exit 1;; esac
+jq -er '.cluster.certificateAuthority.data' "$WORK_DIR/cluster.json" |
+  base64 --decode > "$WORK_DIR/cluster-ca.pem"
+openssl x509 -in "$WORK_DIR/cluster-ca.pem" -noout >/dev/null
+curl --silent --show-error --connect-timeout 5 --max-time 15 \
+  --cacert "$WORK_DIR/cluster-ca.pem" --output "$WORK_DIR/api-response.txt" \
+  --write-out '{"httpCode":%{http_code},"remoteIP":"%{remote_ip}","dnsTotalSeconds":%{time_namelookup},"connectTotalSeconds":%{time_connect},"tlsTotalSeconds":%{time_appconnect},"totalSeconds":%{time_total}}\n' \
+  "$endpoint/readyz" > "$WORK_DIR/api-timing.json"
+cat "$WORK_DIR/api-timing.json"
+```
+
+Cluster CA·hostname 검증이 성공해야 합니다. HTTP401/403은 TLS endpoint 도달과 미충족 권한을 보여줄 수 있으나 앱 health 성공은 아닙니다. Curl 시간은 누적 단계이며 순수 RTT가 아닙니다. ICMP ping 무응답만으로 EKS API 장애를 판단하지 마세요.
+
+### VPN 상태와 Metrics
+
+```bash
+: "${VPN_ID:?Select the reviewed VPN connection}"
+: "${TUNNEL_IP:?Select its actual AWS tunnel outside IP}"
+check_account
+# Select telemetry only: do not dump customer gateway configuration or pre-shared keys.
+aws ec2 describe-vpn-connections --region "$AWS_REGION" --vpn-connection-ids "$VPN_ID" \
+  --query 'VpnConnections[].{id:VpnConnectionId,state:State,telemetry:VgwTelemetry}' \
+  --output json > "$WORK_DIR/vpn-state.json"
+jq -e --arg ip "$TUNNEL_IP" 'length==1 and any(.[0].telemetry[]?; .OutsideIpAddress==$ip)' \
+  "$WORK_DIR/vpn-state.json" >/dev/null
+export VPN_ID TUNNEL_IP
+python3 - <<'PY'
+import ipaddress, json, os
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+ipaddress.ip_address(os.environ["TUNNEL_IP"])
+now = datetime.now(timezone.utc)
+end = now.replace(minute=now.minute - now.minute % 5, second=0, microsecond=0)
+body = {"Namespace": "AWS/VPN", "MetricName": "TunnelState",
+        "Dimensions": [{"Name": "VpnId", "Value": os.environ["VPN_ID"]},
+                       {"Name": "TunnelIpAddress", "Value": os.environ["TUNNEL_IP"]}],
+        "StartTime": (end - timedelta(minutes=15)).isoformat(), "EndTime": end.isoformat(),
+        "Period": 300, "Statistics": ["Minimum", "Maximum"]}
+(Path(os.environ["WORK_DIR"]) / "vpn-metric-request.json").write_text(json.dumps(body, indent=2) + "\n")
+PY
+aws cloudwatch get-metric-statistics --region "$AWS_REGION" \
+  --cli-input-json "file://$WORK_DIR/vpn-metric-request.json" --output json \
+  > "$WORK_DIR/vpn-metric-result.json"
+jq '{label:.Label,datapoints:(.Datapoints|sort_by(.Timestamp))}' "$WORK_DIR/vpn-metric-result.json"
+```
+
+`available`은 VPN 리소스 상태이지 tunnel health가 아닙니다. TunnelState 1은 static의 UP/BGP의 ESTABLISHED, 0은 나머지이며 집계값은 소수일 수 있습니다. 데이터 부재와 DOWN을 구분하고 양쪽 tunnel·route·실제 workload를 검증합니다. 이 query는 customer gateway 구성·pre-shared key를 dump하지 않습니다.
+
+AWS의 RTT ≤200ms/100Mbps는 일반 권장입니다. 이전 50/100ms 구간·“Direct Connect는 항상 10ms 미만”은 미검증 기준이며 보장값이 아닙니다.
+
+## 참고 자료
+
+- [Hybrid networking](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
+- [EKS PrivateLink: management, OIDC and console endpoints](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)
+- [S3 interface endpoints and private DNS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
+- [Roles Anywhere endpoint policies](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/vpc-interface-endpoints.html)
+- [Current hybrid CNI support](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [AWS hybrid BGP procedure](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cilium-bgp.html)
+- [Mixed-mode DNS and webhooks](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [Hybrid routing concepts](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-kubernetes.html)
+- [Hybrid traffic-flow reference](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-traffic-flows.html)
+- [Cilium 1.18.3 routing source](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/concepts/routing.rst)
+- [Cilium 1.18.3 DNS-policy source](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/security/dns.rst)
+- [RFC6996 private ASNs](https://www.rfc-editor.org/rfc/rfc6996.html)
+- [RouterOS BGP reference](https://help.mikrotik.com/docs/spaces/ROS/pages/328220/BGP)
+- [FRR 10.7.1 BGP reference source](https://github.com/FRRouting/frr/blob/frr-10.7.1/doc/user/bgp.rst)
+- [VPN metrics](https://docs.aws.amazon.com/vpn/latest/s2svpn/monitoring-cloudwatch-vpn.html)
+- [Kubernetes 1.36.2 kubelet server source](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/server/server.go)
+- [Kubernetes NetworkPolicy semantics](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+
+
+< [이전: 사전 요구 사항](01-prerequisites.md) | [목차](./README.md) | [다음: 제한된 인터넷 환경](03-airgap-setup.md) >

@@ -1,143 +1,77 @@
 # Crossplane 퀴즈
 
-1. Crossplane의 Composition이 해결하는 핵심 문제는?
-   - A) Kubernetes 클러스터의 네트워킹 구성
-   - B) 여러 인프라 리소스를 하나의 추상화된 API로 묶어 셀프서비스 제공
-   - C) 컨테이너 이미지 빌드 자동화
-   - D) Pod의 리소스 요청 최적화
+[Crossplane](../../platform-engineering/07-crossplane.md)
+
+원문의 8개 주제를 Crossplane 2.4 기준으로 검토했습니다.
+
+## 1. Composition은 무엇을 해결하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 여러 인프라 리소스를 하나의 추상화된 API로 묶어 셀프서비스 제공**
-
-**설명:**
-Composition은 RDS 인스턴스, SecurityGroup, SubnetGroup 등 여러 Managed Resource를 하나의 Composite Resource(XR)로 패키징합니다. 개발자는 복잡한 인프라 세부사항을 알 필요 없이, 간단한 Claim으로 필요한 인프라를 프로비저닝할 수 있습니다.
+Function pipeline으로 XR의 입력을 여러 자원의 원하는 상태로 변환합니다. 여러 AWS 작업이 원자적 transaction으로 실행되거나 모두 준비됐다는 보장은 아닙니다.
 
 </details>
 
----
-
-2. Crossplane의 Claim(XC)과 Composite Resource(XR)의 관계는?
-   - A) Claim은 클러스터 범위이고, XR은 네임스페이스 범위
-   - B) Claim은 네임스페이스 범위의 요청이고, XR은 클러스터 범위의 실제 리소스
-   - C) Claim과 XR은 동일한 리소스
-   - D) XR은 Claim의 백업 복사본
+## 2. v2 XR와 기존 Claim의 관계는 무엇인가요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Claim은 네임스페이스 범위의 요청이고, XR은 클러스터 범위의 실제 리소스**
-
-**설명:**
-Claim(XC)은 네임스페이스 범위로, 개발자가 필요한 인프라를 요청하는 인터페이스입니다. Claim이 생성되면 대응하는 Composite Resource(XR)가 클러스터 범위에 생성되고, XR이 Composition에 따라 실제 Managed Resource들을 프로비저닝합니다.
+XRD v2는 기본 Namespaced이며 개발자가 XR을 직접 만들 수 있습니다. 기존 v1 LegacyCluster XRD는 cluster XR과 namespaced Claim의 호환 경로를 유지합니다. 모든 XR/MR이 cluster 범위라는 설명은 현재 API에 맞지 않습니다.
 
 </details>
 
----
-
-3. Crossplane에서 AWS 리소스를 관리할 때 IRSA(IAM Roles for Service Accounts)를 사용하는 이유는?
-   - A) Crossplane 라이선스 비용을 줄이기 위해
-   - B) AWS 자격 증명을 Pod에 안전하게 전달하고, 최소 권한 원칙을 적용하기 위해
-   - C) Crossplane의 성능을 향상시키기 위해
-   - D) 멀티 클러스터 지원을 위해
+## 3. IRSA나 Pod Identity만 선택하면 최소 권한 구성이 끝나나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) AWS 자격 증명을 Pod에 안전하게 전달하고, 최소 권한 원칙을 적용하기 위해**
-
-**설명:**
-IRSA를 사용하면 AWS Access Key를 직접 관리하지 않고, Kubernetes ServiceAccount에 IAM Role을 연결하여 임시 자격 증명을 자동으로 주입합니다. 이를 통해 보안을 강화하고, Provider별로 필요한 최소한의 IAM 권한만 부여할 수 있습니다.
+아닙니다. 실제 ServiceAccount·OIDC audience/subject 또는 association과 role policy를 구성해야 합니다. Provider별 runtime 소유권, ProviderConfig 작성·참조 권한과 AssumeRole 경계도 제한합니다.
 
 </details>
 
----
-
-4. Terraform과 Crossplane의 가장 큰 아키텍처적 차이점은?
-   - A) Terraform은 YAML을 사용하고, Crossplane은 HCL을 사용
-   - B) Terraform은 명령형 실행(apply/destroy)이고, Crossplane은 Kubernetes 컨트롤러로 지속적 조정(reconciliation)
-   - C) Terraform은 클라우드만 지원하고, Crossplane은 온프레미스만 지원
-   - D) Terraform은 무료이고, Crossplane은 유료
+## 4. Terraform과 Crossplane의 주요 차이는 무엇인가요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Terraform은 명령형 실행(apply/destroy)이고, Crossplane은 Kubernetes 컨트롤러로 지속적 조정(reconciliation)**
-
-**설명:**
-Terraform은 `terraform apply`/`destroy` 명령으로 실행하는 워크플로우 기반 도구입니다. Crossplane은 Kubernetes 컨트롤러 패턴으로 동작하여, 선언된 상태와 실제 상태를 지속적으로 비교하고 조정(reconcile)합니다. 이를 통해 드리프트를 자동으로 감지하고 수정합니다.
+둘 다 선언적 상태를 다루지만 Terraform은 plan/apply workflow, Crossplane은 지속적 controller reconciliation을 중심으로 합니다. Terraform 실행도 자동화할 수 있고 Crossplane 조정도 provider·정책·quota·오류의 영향을 받습니다.
 
 </details>
 
----
-
-5. ACK(AWS Controllers for Kubernetes)와 Crossplane을 함께 사용하는 시나리오는?
-   - A) ACK와 Crossplane은 호환되지 않으므로 하나만 사용
-   - B) ACK로 단순 AWS 리소스를 관리하고, Crossplane Composition으로 복잡한 멀티 리소스 패키지를 추상화
-   - C) ACK는 개발 환경, Crossplane은 프로덕션 환경에서만 사용
-   - D) ACK는 네트워킹, Crossplane은 스토리지만 관리
+## 5. ACK와 Crossplane은 어떻게 공존하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) ACK로 단순 AWS 리소스를 관리하고, Crossplane Composition으로 복잡한 멀티 리소스 패키지를 추상화**
-
-**설명:**
-ACK는 AWS API와 1:1 매핑되는 단순한 리소스 관리에 적합하고, Crossplane은 Composition을 통해 여러 리소스를 하나의 추상화된 API로 패키징하는 데 강점이 있습니다. 간단한 S3 버킷은 ACK로, RDS+SecurityGroup+SubnetGroup 패키지는 Crossplane Composition으로 관리할 수 있습니다.
+각 도구가 관리할 외부 리소스의 소유권을 분리합니다. ACK도 namespace CR과 참조를 제공하며 kro로 조합할 수 있습니다. 같은 AWS 리소스를 여러 controller가 경쟁 수정하도록 구성하지 않습니다.
 
 </details>
 
----
-
-6. Crossplane의 Connection Details가 중요한 이유는?
-   - A) 네트워크 연결 상태를 모니터링
-   - B) 프로비저닝된 리소스의 접속 정보(엔드포인트, 비밀번호 등)를 Kubernetes Secret으로 자동 생성
-   - C) Crossplane Provider 간의 연결을 관리
-   - D) 멀티 클러스터 간의 네트워크 연결을 구성
+## 6. v2 Connection Secret은 어떻게 제공하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 프로비저닝된 리소스의 접속 정보(엔드포인트, 비밀번호 등)를 Kubernetes Secret으로 자동 생성**
-
-**설명:**
-Connection Details는 Crossplane이 프로비저닝한 리소스의 접속 정보(데이터베이스 엔드포인트, 포트, 사용자명, 비밀번호 등)를 자동으로 Kubernetes Secret에 저장하는 기능입니다. 애플리케이션은 이 Secret을 마운트하여 프로비저닝된 인프라에 연결할 수 있습니다.
+MR의 writeConnectionSecretToRef는 유지되지만 XR core native publication은 제거됐습니다. Secret을 compose하거나 지원 Function의 집계를 사용합니다. 본문 P&T 예제는 endpoint와 username만 합성하며 password는 사전 준비한 별도 Secret을 사용합니다.
 
 </details>
 
----
-
-7. Backstage + Crossplane 통합에서 개발자 셀프서비스 워크플로우의 순서는?
-   - A) ArgoCD 배포 → Backstage 카탈로그 등록 → Crossplane Claim 생성
-   - B) Backstage Template에서 Crossplane Claim YAML 생성 → Git Push → ArgoCD 동기화 → Crossplane 프로비저닝
-   - C) Crossplane 프로비저닝 → Backstage Template 생성 → Git Push
-   - D) Git Push → Backstage 카탈로그 등록 → ArgoCD 배포
+## 7. Backstage와 GitOps의 올바른 흐름은 무엇인가요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Backstage Template에서 Crossplane Claim YAML 생성 → Git Push → ArgoCD 동기화 → Crossplane 프로비저닝**
-
-**설명:**
-개발자가 Backstage Template에서 파라미터(DB 크기, 환경 등)를 입력하면, Template이 Crossplane Claim YAML을 생성하고 Git 리포지토리에 Push합니다. ArgoCD가 변경을 감지하여 클러스터에 동기화하면, Crossplane이 Claim을 처리하여 실제 인프라를 프로비저닝합니다.
+준비된 skeleton/action으로 XR YAML 생성 → 검토한 PR merge → ArgoCD 적용 → Crossplane/Provider 조정 → 실제 readiness 확인 순서입니다. PR 생성, catalog 등록, AWS 생성 완료는 서로 다른 상태입니다.
 
 </details>
 
----
-
-8. Crossplane의 드리프트 감지(Drift Detection)가 Terraform 대비 우수한 점은?
-   - A) Terraform이 드리프트 감지를 지원하지 않음
-   - B) Crossplane은 컨트롤러가 지속적으로 실제 상태를 감시하여 자동 수정하고, Terraform은 수동 `plan`/`apply` 필요
-   - C) Crossplane이 더 빠른 속도로 프로비저닝
-   - D) Crossplane이 더 많은 클라우드를 지원
+## 8. drift 수정과 삭제 보존은 무엇으로 제어하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Crossplane은 컨트롤러가 지속적으로 실제 상태를 감시하여 자동 수정하고, Terraform은 수동 `plan`/`apply` 필요**
-
-**설명:**
-Crossplane의 컨트롤러는 주기적으로 실제 클라우드 리소스 상태를 확인하고, 선언된 상태와 차이가 있으면 자동으로 수정합니다. Terraform은 `terraform plan`을 수동으로 실행해야 드리프트를 감지할 수 있으며, 수정도 `terraform apply`를 실행해야 합니다.
+Provider의 지원 필드와 managementPolicies, poll 설정 등을 확인합니다. 이 v2 namespace MR에서는 Delete를 제외해 외부 자원을 보존하며 legacy deletionPolicy: Orphan과 구분합니다. 보존해도 backup·credential·비용·후속 소유권 책임은 남습니다.
 
 </details>

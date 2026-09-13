@@ -1,0 +1,139 @@
+[
+  {
+    "path": "en/eks-auto-mode/07-node-lifecycle.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full lifecycle/quiz audit: correct AutoMode expiry/grace/managedOS/drift controls, safe remediation guidance and actual gauge-based age monitoring.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://docs.aws.amazon.com/linux/al2023/ug/relationship-to-fedora.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md",
+      "https://prometheus.io/docs/prometheus/latest/querying/operators/"
+    ],
+    "findings": [
+      "Corrected AutoMode336h default/24hNodeClaimgrace/21dayservicecap; NeverorlargeupstreamdurationnotindefiniteAuto retention.",
+      "Removed invalidAutoAMIselectors/AL2023/metadataOptions/blockDeviceMappings and correctedAL2023Fedora vsRHEL generalcomparison.",
+      "ExpiryforcefulnotNDB-limited/pre-readyguaranteed; no globaldrift-expiry-consolidationpriorityorfirst-conditioncontract.",
+      "DriftedNodeClaimconditionreplaceshashstatus; compatiblewidening/behaviorchangesnotblanketdrift,tagnotguaranteedpatchtrigger.",
+      "Removed unboundbulkdelete/drain-data-lossquizrecipe; evidencefirstsingleclaim/healthchecks and actualpatchavailability.",
+      "Originalbootdurations/environmentexpiry/compliancethresholds retainedas unverifiedexamples; freshnessnotpatch/complianceproof.",
+      "Node/NodeClaim/EC2creationandOSdescription/AMIid distinguished; realquantile/booleanbuckets replacefabricatedhistogram/counterqueries."
+    ],
+    "validation": [
+      "All4originals fullyread1474lines; originalsnapshots saved.",
+      "4NodePools passedKarpenter1.14.1structuralschema; invalidExpiredbudgetreasonrejected.",
+      "8Bash/jq/Pythonfixtures passed:DriftTrue/False/Unknown/NotReported,APIerrors,privatefields,agebucketboundaries,invalid/future/naivetimestamps,emptylist.",
+      "Promtool3.14 nativequeries/rulespassed:duplicatecollectors,realgaugequantile/buckets,nonAuto/missinglabels/futureexclusion,absentdata andalerts.",
+      "Pairedcodefences,8quizkeysCBBBBCCB,Bash/YAMLsyntax,15localrefs,gitdiffcheck passed.",
+      "No live node rotation,API mutation,imagebenchmark,orfullbuild.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-lifecycle/final-validation.json"
+    ]
+  },
+  {
+    "path": "ko/eks-auto-mode/07-node-lifecycle.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full lifecycle/quiz audit: correct AutoMode expiry/grace/managedOS/drift controls, safe remediation guidance and actual gauge-based age monitoring.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://docs.aws.amazon.com/linux/al2023/ug/relationship-to-fedora.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md",
+      "https://prometheus.io/docs/prometheus/latest/querying/operators/"
+    ],
+    "findings": [
+      "Corrected AutoMode336h default/24hNodeClaimgrace/21dayservicecap; NeverorlargeupstreamdurationnotindefiniteAuto retention.",
+      "Removed invalidAutoAMIselectors/AL2023/metadataOptions/blockDeviceMappings and correctedAL2023Fedora vsRHEL generalcomparison.",
+      "ExpiryforcefulnotNDB-limited/pre-readyguaranteed; no globaldrift-expiry-consolidationpriorityorfirst-conditioncontract.",
+      "DriftedNodeClaimconditionreplaceshashstatus; compatiblewidening/behaviorchangesnotblanketdrift,tagnotguaranteedpatchtrigger.",
+      "Removed unboundbulkdelete/drain-data-lossquizrecipe; evidencefirstsingleclaim/healthchecks and actualpatchavailability.",
+      "Originalbootdurations/environmentexpiry/compliancethresholds retainedas unverifiedexamples; freshnessnotpatch/complianceproof.",
+      "Node/NodeClaim/EC2creationandOSdescription/AMIid distinguished; realquantile/booleanbuckets replacefabricatedhistogram/counterqueries.",
+      "Parent asset repair: public/archmaps/ko-eks-auto-mode-07-node-lifecycle-{0,1,2}.html andmatchingPNGs. Diagram1wrongAL2023choice/alwayssequential,diagram2CPUthreshold; diagram0missinggracedeadline/terminationcleanup nuance. Captionsandadjacentprosecorrected; noassetwrites."
+    ],
+    "validation": [
+      "All4originals fullyread1474lines; originalsnapshots saved.",
+      "4NodePools passedKarpenter1.14.1structuralschema; invalidExpiredbudgetreasonrejected.",
+      "8Bash/jq/Pythonfixtures passed:DriftTrue/False/Unknown/NotReported,APIerrors,privatefields,agebucketboundaries,invalid/future/naivetimestamps,emptylist.",
+      "Promtool3.14 nativequeries/rulespassed:duplicatecollectors,realgaugequantile/buckets,nonAuto/missinglabels/futureexclusion,absentdata andalerts.",
+      "Pairedcodefences,8quizkeysCBBBBCCB,Bash/YAMLsyntax,15localrefs,gitdiffcheck passed.",
+      "No live node rotation,API mutation,imagebenchmark,orfullbuild.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-lifecycle/final-validation.json"
+    ]
+  },
+  {
+    "path": "en/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full lifecycle/quiz audit: correct AutoMode expiry/grace/managedOS/drift controls, safe remediation guidance and actual gauge-based age monitoring.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://docs.aws.amazon.com/linux/al2023/ug/relationship-to-fedora.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md",
+      "https://prometheus.io/docs/prometheus/latest/querying/operators/"
+    ],
+    "findings": [
+      "Corrected AutoMode336h default/24hNodeClaimgrace/21dayservicecap; NeverorlargeupstreamdurationnotindefiniteAuto retention.",
+      "Removed invalidAutoAMIselectors/AL2023/metadataOptions/blockDeviceMappings and correctedAL2023Fedora vsRHEL generalcomparison.",
+      "ExpiryforcefulnotNDB-limited/pre-readyguaranteed; no globaldrift-expiry-consolidationpriorityorfirst-conditioncontract.",
+      "DriftedNodeClaimconditionreplaceshashstatus; compatiblewidening/behaviorchangesnotblanketdrift,tagnotguaranteedpatchtrigger.",
+      "Removed unboundbulkdelete/drain-data-lossquizrecipe; evidencefirstsingleclaim/healthchecks and actualpatchavailability.",
+      "Originalbootdurations/environmentexpiry/compliancethresholds retainedas unverifiedexamples; freshnessnotpatch/complianceproof.",
+      "Node/NodeClaim/EC2creationandOSdescription/AMIid distinguished; realquantile/booleanbuckets replacefabricatedhistogram/counterqueries."
+    ],
+    "validation": [
+      "All4originals fullyread1474lines; originalsnapshots saved.",
+      "4NodePools passedKarpenter1.14.1structuralschema; invalidExpiredbudgetreasonrejected.",
+      "8Bash/jq/Pythonfixtures passed:DriftTrue/False/Unknown/NotReported,APIerrors,privatefields,agebucketboundaries,invalid/future/naivetimestamps,emptylist.",
+      "Promtool3.14 nativequeries/rulespassed:duplicatecollectors,realgaugequantile/buckets,nonAuto/missinglabels/futureexclusion,absentdata andalerts.",
+      "Pairedcodefences,8quizkeysCBBBBCCB,Bash/YAMLsyntax,15localrefs,gitdiffcheck passed.",
+      "No live node rotation,API mutation,imagebenchmark,orfullbuild.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-lifecycle/final-validation.json"
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full lifecycle/quiz audit: correct AutoMode expiry/grace/managedOS/drift controls, safe remediation guidance and actual gauge-based age monitoring.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://docs.aws.amazon.com/linux/al2023/ug/relationship-to-fedora.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md",
+      "https://prometheus.io/docs/prometheus/latest/querying/operators/"
+    ],
+    "findings": [
+      "Corrected AutoMode336h default/24hNodeClaimgrace/21dayservicecap; NeverorlargeupstreamdurationnotindefiniteAuto retention.",
+      "Removed invalidAutoAMIselectors/AL2023/metadataOptions/blockDeviceMappings and correctedAL2023Fedora vsRHEL generalcomparison.",
+      "ExpiryforcefulnotNDB-limited/pre-readyguaranteed; no globaldrift-expiry-consolidationpriorityorfirst-conditioncontract.",
+      "DriftedNodeClaimconditionreplaceshashstatus; compatiblewidening/behaviorchangesnotblanketdrift,tagnotguaranteedpatchtrigger.",
+      "Removed unboundbulkdelete/drain-data-lossquizrecipe; evidencefirstsingleclaim/healthchecks and actualpatchavailability.",
+      "Originalbootdurations/environmentexpiry/compliancethresholds retainedas unverifiedexamples; freshnessnotpatch/complianceproof.",
+      "Node/NodeClaim/EC2creationandOSdescription/AMIid distinguished; realquantile/booleanbuckets replacefabricatedhistogram/counterqueries."
+    ],
+    "validation": [
+      "All4originals fullyread1474lines; originalsnapshots saved.",
+      "4NodePools passedKarpenter1.14.1structuralschema; invalidExpiredbudgetreasonrejected.",
+      "8Bash/jq/Pythonfixtures passed:DriftTrue/False/Unknown/NotReported,APIerrors,privatefields,agebucketboundaries,invalid/future/naivetimestamps,emptylist.",
+      "Promtool3.14 nativequeries/rulespassed:duplicatecollectors,realgaugequantile/buckets,nonAuto/missinglabels/futureexclusion,absentdata andalerts.",
+      "Pairedcodefences,8quizkeysCBBBBCCB,Bash/YAMLsyntax,15localrefs,gitdiffcheck passed.",
+      "No live node rotation,API mutation,imagebenchmark,orfullbuild.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-lifecycle/final-validation.json"
+    ]
+  }
+]

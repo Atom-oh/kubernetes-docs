@@ -1,255 +1,219 @@
-# Cilium L2-L7 네트워킹 및 로드 밸런싱 퀴즈
+# Cilium L2–L7 네트워킹 및 로드 밸런싱 퀴즈
 
-이 퀴즈는 Cilium의 L2-L7 네트워킹 기능, 로드 밸런싱 아키텍처, 마스커레이딩, 서비스 메시 통합 등에 대한 이해도를 테스트합니다.
+> **Cilium 1.20.1 · CLI 0.20.0 · 2026-09-12**
 
 ## 객관식 문제
 
-1. OSI 모델에서 HTTP, gRPC, DNS 등의 프로토콜이 작동하는 계층은 무엇인가요?
-   - A) L3 (네트워크 계층)
-   - B) L4 (전송 계층)
-   - C) L5 (세션 계층)
-   - D) L7 (응용 계층)
+1. **HTTP·DNS·gRPC 애플리케이션 동작은 개념적인 OSI 어느 계층에 해당하나요?**
+   - A) L1
+   - B) L2
+   - C) L3
+   - D) L7
 
-<details>
+   <details>
+   <summary>정답 보기</summary>
 
-<summary>정답 보기</summary>
+   **정답: D) L7**
 
-**정답: D) L7 (응용 계층)**
+   애플리케이션 프로토콜은 개념적으로 L7에 해당합니다. 모든 프로토콜에 Cilium 내장 정책 parser가 있다는 뜻은 아니며 Kafka L7 규칙은 제거되었습니다.
 
-**설명:**
-OSI 모델에서 L7(응용 계층)은 사용자와 가장 가까운 계층으로, HTTP, HTTPS, gRPC, DNS, FTP, Kafka 등의 애플리케이션 프로토콜이 작동합니다. Cilium은 L7 계층에서 API 인식 필터링을 제공하여, HTTP 메서드/경로/헤더, gRPC 메서드, Kafka 주제 등을 기반으로 세밀한 네트워크 정책을 적용할 수 있습니다. 이는 마이크로서비스 아키텍처에서 서비스 간 통신을 세밀하게 제어하는 데 필수적입니다.
-</details>
+   </details>
 
-2. Cilium의 DSR(Direct Server Return) 모드의 주요 장점은 무엇인가요?
-   - A) 클라이언트 IP를 숨길 수 있다
-   - B) 응답 트래픽이 로드 밸런서를 거치지 않아 성능이 향상된다
-   - C) 모든 트래픽을 암호화한다
-   - D) L7 정책을 자동으로 적용한다
+2. **DSR의 직접 반환 특성은 무엇인가요?**
+   - A) 모든 응답 암호화
+   - B) 원격 backend가 진입 LB 노드로 돌아가지 않고 응답 가능
+   - C) Client IP 인증
+   - D) 앞단 proxy가 바꾼 client IP 복원
 
-<details>
+   <details>
+   <summary>정답 보기</summary>
 
-<summary>정답 보기</summary>
+   **정답: B) 원격 backend가 진입 LB 노드로 돌아가지 않고 응답 가능**
 
-**정답: B) 응답 트래픽이 로드 밸런서를 거치지 않아 성능이 향상된다**
+   비대칭 반환 경로를 네트워크가 지원해야 합니다. 응답 경로 hop을 줄일 수 있지만 성능·client IP 보존은 실제 topology에 따릅니다.
 
-**설명:**
-DSR(Direct Server Return) 모드에서는 클라이언트의 요청만 로드 밸런서를 통과하고, 서버의 응답은 로드 밸런서를 우회하여 직접 클라이언트로 전송됩니다. 이로 인해 로드 밸런서의 병목 현상이 제거되고, 네트워크 대역폭이 절약되며, 응답 지연 시간이 단축됩니다. 특히 대용량 응답(파일 다운로드, 스트리밍 등)을 처리할 때 효과적입니다. DSR 모드는 외부 로드 밸런서 뒤에서도 클라이언트 IP를 보존합니다.
-</details>
+   </details>
 
-3. Cilium에서 L7 프록시 기능을 제공하는 구성 요소는 무엇인가요?
+3. **지원되는 Cilium HTTP/gRPC 정책을 담당하는 구성 요소는 무엇인가요?**
    - A) kube-proxy
-   - B) Hubble
+   - B) Hubble Relay
    - C) Envoy
    - D) CoreDNS
 
-<details>
+   <details>
+   <summary>정답 보기</summary>
 
-<summary>정답 보기</summary>
+   **정답: C) Envoy**
 
-**정답: C) Envoy**
+   Envoy 배포는 설치 값에 따릅니다. DNS는 Cilium DNS proxy를 사용하며 지원하지 않는 Kafka 규칙을 선언한다고 parser가 설치되지 않습니다.
 
-**설명:**
-Cilium은 L7 프록시 기능을 위해 Envoy 프록시를 통합하고 있습니다. CiliumNetworkPolicy에 L7 규칙(HTTP, gRPC, Kafka, DNS 등)을 정의하면 Cilium은 자동으로 Envoy 프록시를 사이드카 없이 투명하게 배치합니다. Envoy는 HTTP/gRPC 트래픽 처리, 고급 로드 밸런싱, 트래픽 분할, 메트릭 수집 등의 기능을 제공합니다. 이 방식은 별도의 사이드카 프록시를 배포하지 않아도 되므로 리소스 오버헤드가 줄어듭니다.
-</details>
+   </details>
 
-4. Cilium에서 지원하는 로드 밸런싱 알고리즘이 아닌 것은 무엇인가요?
-   - A) Round Robin
-   - B) Maglev Consistent Hashing
-   - C) Source IP Hash
-   - D) Weighted Response Time
+4. **문서화된 Cilium BPF Service backend 선택 알고리즘 쌍은 무엇인가요?**
+   - A) Round Robin과 Least Connection
+   - B) Random과 Maglev
+   - C) Source-IP Hash와 Weighted Response Time
+   - D) 모든 Envoy 알고리즘
 
-<details>
+   <details>
+   <summary>정답 보기</summary>
 
-<summary>정답 보기</summary>
+   **정답: B) Random과 Maglev**
 
-**정답: D) Weighted Response Time**
+   BPF 선택과 Envoy L7 LB는 다른 구성 요소입니다. Maglev는 지정된 외부 경로에 적용되며 일반 socket-LB E–W 트래픽은 대상이 아닙니다.
 
-**설명:**
-Cilium은 Round Robin, Least Connection, Source IP Hash, Random, Maglev Consistent Hashing 등의 로드 밸런싱 알고리즘을 지원합니다. Maglev는 Google에서 개발한 일관된 해싱 알고리즘으로, 백엔드 서버가 추가/제거되어도 연결의 일관성을 유지합니다. Weighted Response Time(가중 응답 시간)은 Cilium에서 직접 지원하지 않는 알고리즘입니다. 그러나 Envoy 프록시를 통해 더 고급 로드 밸런싱 전략을 구현할 수 있습니다.
-</details>
+   </details>
 
-5. Cilium의 마스커레이딩(Masquerading)에서 eBPF 기반 구현의 장점이 아닌 것은 무엇인가요?
-   - A) iptables보다 빠른 처리 속도
-   - B) 더 나은 확장성
-   - C) 모든 Linux 커널 버전에서 지원
-   - D) 커널 공간에서 직접 처리
+5. **마스커레이딩 구현 설명으로 맞는 것은 무엇인가요?**
+   - A) BPF가 모든 workload에서 항상 빠름
+   - B) 모든 Linux kernel이 현재 Cilium 지원
+   - C) 두 구현 모두 커널에서 동작하며 설정·플랫폼 조건이 있음
+   - D) BPF를 선택하면 routing 조건이 없어짐
 
-<details>
+   <details>
+   <summary>정답 보기</summary>
 
-<summary>정답 보기</summary>
+   **정답: C) 두 구현 모두 커널에서 동작하며 설정·플랫폼 조건이 있음**
 
-**정답: C) 모든 Linux 커널 버전에서 지원**
+   제품 이름이나 커널 실행만으로 성능 결과가 결정되지 않습니다. 이 릴리스의 BPF masquerading에는 기능·장치 의존성이 있으며 IPv6는 beta입니다.
 
-**설명:**
-eBPF 기반 마스커레이딩은 iptables보다 빠르고 확장성이 뛰어나며, 커널 공간에서 직접 처리되어 효율적입니다. 그러나 eBPF 기반 마스커레이딩은 최신 Linux 커널(4.19 이상)에서만 완전히 지원됩니다. 구형 커널에서는 iptables 기반 마스커레이딩으로 폴백해야 합니다. Cilium 설정에서 `enable-bpf-masquerade: true` 옵션으로 eBPF 기반 마스커레이딩을 활성화할 수 있습니다.
-</details>
+   </details>
 
-6. Cilium에서 Kubernetes 서비스를 위해 kube-proxy를 완전히 대체하는 모드는 무엇인가요?
-   - A) kube-proxy-replacement: partial
-   - B) kube-proxy-replacement: strict
-   - C) kube-proxy-replacement: hybrid
-   - D) kube-proxy-replacement: disabled
+6. **현재 kube-proxy 대체를 활성화하는 값은 무엇인가요?**
+   - A) kubeProxyReplacement: partial
+   - B) kubeProxyReplacement: true
+   - C) kubeProxyReplacement: strict
+   - D) kubeProxyReplacement: hybrid
 
-<details>
+   <details>
+   <summary>정답 보기</summary>
 
-<summary>정답 보기</summary>
+   **정답: B) kubeProxyReplacement: true**
 
-**정답: B) kube-proxy-replacement: strict**
+   현재 true 값과 API 연결 등 전체 대체 조건을 사용합니다. 이전 strict/partial 표현은 현재 설정 계약이 아닙니다.
 
-**설명:**
-`kube-proxy-replacement: strict` 설정은 Cilium이 kube-proxy의 모든 기능을 완전히 대체하도록 합니다. 이 모드에서 Cilium은 ClusterIP, NodePort, LoadBalancer, ExternalIP 서비스를 모두 처리합니다. strict 모드에서는 kube-proxy를 반드시 제거하거나 비활성화해야 합니다. `partial` 모드는 일부 기능만 대체하고, `disabled`는 kube-proxy 대체를 비활성화합니다. strict 모드는 DSR, Maglev 해싱, 소켓 수준 로드 밸런싱 등의 고급 기능을 사용할 때 필요합니다.
-</details>
+   </details>
 
-7. Cilium L7 정책에서 HTTP 요청을 필터링할 때 사용할 수 있는 조건이 아닌 것은 무엇인가요?
-   - A) HTTP 메서드 (GET, POST 등)
-   - B) URL 경로
-   - C) HTTP 헤더
-   - D) 요청 본문 (Request Body)
+7. **Cilium 내장 HTTP 정책 조건이 아닌 것은 무엇인가요?**
+   - A) Method
+   - B) Path
+   - C) 지원 header 조건
+   - D) 임의 요청 본문 내용
 
-<details>
+   <details>
+   <summary>정답 보기</summary>
 
-<summary>정답 보기</summary>
+   **정답: D) 임의 요청 본문 내용**
 
-**정답: D) 요청 본문 (Request Body)**
+   Method·path와 지원 header 조건은 다릅니다. 값이 있는 headers 문자열은 일반 정규식이 아닌 리터럴입니다. Payload 검사는 별도로 설계한 애플리케이션·proxy 기능이 필요합니다.
 
-**설명:**
-Cilium L7 HTTP 정책에서는 HTTP 메서드(GET, POST, PUT, DELETE 등), URL 경로(정규식 지원), HTTP 헤더(정규식 지원)를 기반으로 필터링할 수 있습니다. 그러나 요청 본문(Request Body)을 검사하는 것은 성능 오버헤드가 크고 복잡하기 때문에 Cilium에서 직접 지원하지 않습니다. 요청 본문 검사가 필요한 경우 WAF(Web Application Firewall)나 별도의 애플리케이션 계층 보안 솔루션을 사용해야 합니다.
-</details>
+   </details>
 
-8. Cilium에서 Istio와 통합할 때의 주요 이점은 무엇인가요?
-   - A) Istio의 모든 기능을 완전히 대체한다
-   - B) eBPF 기반 데이터 플레인으로 사이드카 오버헤드를 줄인다
-   - C) mTLS를 자동으로 비활성화한다
-   - D) Istio 없이 서비스 메시를 구현한다
+8. **가이드에서 의도한 Cilium/Istio 통합 모델은 무엇인가요?**
+   - A) Istio sidecar 자동 우회
+   - B) Istio 경로를 보존하고 Cilium 네트워크 제어와 Istio L7·mTLS 책임을 조합
+   - C) mTLS 자동 비활성화
+   - D) 모든 Cilium HTTP 규칙으로 암호화된 Istio 트래픽 검사
 
-<details>
+   <details>
+   <summary>정답 보기</summary>
 
-<summary>정답 보기</summary>
+   **정답: B) Istio 경로를 보존하고 Cilium 네트워크 제어와 Istio L7·mTLS 책임을 조합**
 
-**정답: B) eBPF 기반 데이터 플레인으로 사이드카 오버헤드를 줄인다**
+   CNI·socket-LB 호환성을 구성하고 topology를 검증합니다. 예제는 Istio mTLS를 유지하고 암호문에 평문 HTTP 검사를 적용하는 대신 Cilium L3/L4 정책을 사용합니다.
 
-**설명:**
-Cilium과 Istio를 통합하면 eBPF 기반 데이터 플레인을 통해 일부 Envoy 사이드카 기능을 대체하여 리소스 오버헤드를 줄일 수 있습니다. Cilium은 L3/L4 트래픽 처리와 네트워크 정책을 eBPF로 처리하고, 필요한 경우에만 L7 트래픽을 Envoy로 전달합니다. 이를 통해 성능이 향상되고 지연 시간이 줄어듭니다. 그러나 Cilium이 Istio의 모든 기능을 대체하는 것은 아니며, mTLS 등 Istio의 고급 기능은 여전히 Istio에서 처리됩니다.
-</details>
+   </details>
 
-9. Cilium에서 소켓 수준 로드 밸런싱(Socket-level LB)의 이점은 무엇인가요?
-   - A) 패킷 처리 전에 커널에서 서비스 IP를 백엔드 IP로 변환한다
-   - B) L7 정책을 자동으로 적용한다
-   - C) 암호화된 트래픽만 처리한다
-   - D) 외부 로드 밸런서가 필요하다
+9. **Socket-level LB가 할 수 있는 것은 무엇인가요?**
+   - A) 지원 socket hook에서 패킷 생성 전 backend 선택
+   - B) HTTP header 자동 인증
+   - C) 모든 트래픽 해독
+   - D) 외부 LB 생성
 
-<details>
+   <details>
+   <summary>정답 보기</summary>
 
-<summary>정답 보기</summary>
+   **정답: A) 지원 socket hook에서 패킷 생성 전 backend 선택**
 
-**정답: A) 패킷 처리 전에 커널에서 서비스 IP를 백엔드 IP로 변환한다**
+   TCP connect와 지원 UDP socket 경로에서 Service를 backend로 먼저 변환할 수 있습니다. 보편적인 지연 보장이 아니며 sidecar interception과 함께 쓰면 별도 설정이 필요할 수 있습니다.
 
-**설명:**
-소켓 수준 로드 밸런싱은 패킷이 전송되기 전에 connect() 시스템 호출 시점에서 서비스 IP를 백엔드 포드 IP로 변환합니다. 이는 기존 패킷 기반 NAT(Network Address Translation)보다 훨씬 효율적입니다. 장점으로는 conntrack(연결 추적) 오버헤드 감소, 소스 IP 보존, 낮은 지연 시간, 더 나은 확장성 등이 있습니다. 소켓 수준 LB는 애플리케이션 관점에서 투명하게 작동하며, 애플리케이션은 백엔드 포드와 직접 통신하는 것처럼 보입니다.
-</details>
+   </details>
 
-10. IPv4 프래그먼트 처리와 관련하여 Cilium에서 권장하는 모범 사례는 무엇인가요?
-    - A) 프래그먼트 추적을 항상 비활성화한다
-    - B) MTU를 일관되게 구성하여 프래그먼테이션을 방지한다
-    - C) 모든 프래그먼트를 차단한다
-    - D) 프래그먼트 크기를 최대로 설정한다
+10. **적절한 fragment 처리 원칙은 무엇인가요?**
+    - A) Tracking이 모든 fragment 공격 차단 보장
+    - B) 유효 path MTU를 계획하고 필요한 오류 신호를 확인
+    - C) 모든 fragment를 항상 폐기
+    - D) Cilium MTU는 항상 최종 Pod payload 크기
 
-<details>
+    <details>
+    <summary>정답 보기</summary>
 
-<summary>정답 보기</summary>
+    **정답: B) 유효 path MTU를 계획하고 필요한 오류 신호를 확인**
 
-**정답: B) MTU를 일관되게 구성하여 프래그먼테이션을 방지한다**
+    Cilium MTU는 기반 네트워크 값의 override입니다. Fragment tracking은 L4 문맥을 보존하며 재조립·공격 차단 보장이 아닙니다. PMTUD도 필요한 신호·경로가 깨지면 실패할 수 있습니다.
 
-**설명:**
-IPv4 프래그먼테이션은 성능 저하와 보안 문제를 일으킬 수 있으므로, 가능한 한 방지하는 것이 좋습니다. 이를 위해 네트워크 전체에서 MTU(Maximum Transmission Unit)를 일관되게 구성하고, 오버레이 네트워크(VXLAN 등)를 사용할 경우 캡슐화 오버헤드(약 50바이트)를 고려하여 MTU를 조정해야 합니다. Path MTU Discovery(PMTUD)를 활성화하면 자동으로 최적의 MTU를 감지할 수 있습니다. 프래그먼트 추적(`enable-ipv4-fragment-tracking`)을 활성화하면 프래그먼트 기반 공격을 방지할 수 있습니다.
-</details>
+    </details>
 
 ## 단답형 문제
 
-11. Cilium에서 L7 네트워크 정책을 적용할 때 지원하는 프로토콜 4가지를 나열하세요.
+11. **현재 내장 L7 정책 그룹과 gRPC의 관계를 설명하세요.**
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답:** HTTP, gRPC, Kafka, DNS
+HTTP와 DNS입니다. 지원 gRPC 제약은 Envoy의 HTTP/2 path·header 매칭을 사용합니다. DNS는 Cilium DNS proxy이고 Kafka L7 규칙은 제거되었습니다. TLS 가시성은 가정하지 말고 구성해야 합니다.
 
-**설명:**
-Cilium L7 정책에서 지원하는 주요 프로토콜은 다음과 같습니다:
-- **HTTP/HTTPS**: REST API 및 웹 트래픽, 메서드/경로/헤더 기반 필터링 지원
-- **gRPC**: 마이크로서비스 간 RPC 통신, 서비스/메서드 기반 필터링 지원
-- **Kafka**: 메시지 큐 프로토콜, 주제/클라이언트ID/API 키 기반 필터링 지원
-- **DNS**: DNS 쿼리 및 응답 필터링, FQDN 기반 정책 지원
-또한 Envoy 필터를 통해 사용자 정의 프로토콜도 지원할 수 있습니다.
 </details>
 
-12. Cilium 로드 밸런서에서 백엔드 서버의 상태를 확인하는 메커니즘의 이름은 무엇인가요?
+12. **Service backend readiness와 일반 active health-check 엔진을 구분하세요.**
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답:** Health Check (상태 확인 또는 헬스 체크)
+Kubernetes endpoint·readiness 상태가 Service·종료 의미와 전파 지연에 따라 backend 선택에 영향을 줍니다. 모든 BPF Service가 별도 TCP/HTTP probe를 수행한다는 뜻은 아닙니다. Cilium 연결 건강 상태, 애플리케이션 probe, proxy health check는 다른 메커니즘입니다.
 
-**설명:**
-Cilium 로드 밸런서는 여러 가지 상태 확인(Health Check) 메커니즘을 지원합니다:
-- **TCP 상태 확인**: 포트 연결 가능성 확인
-- **HTTP 상태 확인**: HTTP 응답 코드 확인 (200 OK 등)
-- **Kubernetes Readiness/Liveness Probe 통합**: 포드의 상태 프로브 결과 활용
-비정상 백엔드는 자동으로 로드 밸런싱 풀에서 제외되며, 복구되면 다시 포함됩니다. 이를 통해 서비스의 고가용성을 보장합니다.
 </details>
 
-13. Cilium에서 클러스터 외부 트래픽의 소스 IP를 내부 IP로 변환하는 기능의 이름은 무엇인가요?
+13. **외부 경로에서 Pod의 outbound source 주소를 바꾸는 동작은 무엇인가요?**
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답:** Masquerading (마스커레이딩) 또는 SNAT (Source NAT)
+Source NAT/masquerading입니다. Service backend로의 목적지 변환과 구분합니다. 선택 인터페이스, 제외 CIDR, 노드 예외와 후단 cloud NAT가 관측 source에 영향을 주며 외부 HTTP 성공만으로 구현이 증명되지 않습니다.
 
-**설명:**
-마스커레이딩(Masquerading)은 클러스터 내부 포드에서 외부로 나가는 트래픽의 소스 IP를 노드의 IP로 변환하는 기능입니다. 이는 SNAT(Source Network Address Translation)의 한 형태입니다. 마스커레이딩의 목적은 클러스터 내부 IP를 외부 네트워크에 숨기고, 클러스터 외부 서비스에 대한 접근을 가능하게 하는 것입니다. Cilium은 iptables 기반과 eBPF 기반 마스커레이딩을 모두 지원하며, eBPF 기반이 더 높은 성능을 제공합니다.
 </details>
 
-14. Cilium에서 kube-proxy를 대체할 때 세션 지속성을 유지하기 위해 사용하는 해싱 알고리즘의 이름은 무엇인가요?
+14. **Maglev와 sessionAffinity: ClientIP가 서로 대체되지 않는 이유를 설명하세요.**
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답:** Maglev (Consistent Hashing)
+Maglev는 지원 경로에서 호환 table·상태·seed로 일관된 backend 선택을 제공합니다. ClientIP affinity는 IP 또는 해당 socket-LB namespace cookie에 따른 별도 client별 Service affinity와 timeout입니다. 실패·제거된 backend의 session을 보존하는 보장은 아닙니다.
 
-**설명:**
-Maglev는 Google에서 개발한 일관된 해싱(Consistent Hashing) 알고리즘입니다. Cilium에서 Maglev를 사용하면 백엔드 서버가 추가되거나 제거되어도 대부분의 기존 연결이 동일한 백엔드로 유지됩니다. 이는 세션 어피니티(Session Affinity)가 필요한 애플리케이션에서 중요합니다. Maglev는 높은 부하 분산 균등성과 낮은 연결 재분배율을 제공하여, 대규모 로드 밸런싱 환경에서 효과적입니다.
 </details>
 
-15. OSI 모델에서 TCP와 UDP 프로토콜이 작동하는 계층의 이름과 번호는 무엇인가요?
+15. **L4와 TCP·UDP의 신뢰성 차이를 설명하세요.**
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답:** L4 (전송 계층, Transport Layer)
+L4는 전송 계층입니다. TCP는 신뢰할 수 있는 순서 있는 byte stream, UDP는 전달·순서 보장이 없는 datagram입니다. 모든 애플리케이션에서 UDP가 더 빠른 것은 아니며 port·protocol 정책이 애플리케이션 인증을 제공하지 않습니다.
 
-**설명:**
-L4(전송 계층)는 OSI 모델의 4번째 계층으로, 엔드-투-엔드 연결과 신뢰성을 담당합니다. 이 계층에서 TCP(Transmission Control Protocol)와 UDP(User Datagram Protocol)가 작동합니다. TCP는 연결 지향적이고 신뢰할 수 있는 통신을 제공하며, UDP는 비연결형으로 빠르지만 신뢰성을 보장하지 않습니다. Cilium L4 정책에서는 포트 번호와 프로토콜(TCP/UDP)을 기반으로 트래픽을 필터링할 수 있습니다.
 </details>
 
 ## 실습 문제
 
-16. HTTP GET 메서드로 `/api/v1/users` 경로에 대한 요청만 허용하고, POST 메서드로 `/api/v1/data` 경로에 대한 요청은 `X-Auth-Token` 헤더가 있는 경우에만 허용하는 CiliumNetworkPolicy를 작성하세요.
+16. **l7-exercise의 TCP8080 API에 frontend GET /api/v1/users를 허용하고 POST /api/v1/data는 X-Auth-Token 존재 시에만 허용하는 정책을 작성하세요.**
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답:**
 ```yaml
-apiVersion: "cilium.io/v2"
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "l7-http-policy"
-  namespace: default
+  name: api-http
+  namespace: l7-exercise
 spec:
   endpointSelector:
     matchLabels:
@@ -257,73 +221,95 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:io.kubernetes.pod.namespace: l7-exercise
+        k8s:app: frontend
     toPorts:
     - ports:
-      - port: "80"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: "GET"
-          path: "/api/v1/users"
-        - method: "POST"
-          path: "/api/v1/data"
-          headers:
-          - "X-Auth-Token: .*"
+        - method: ^GET$
+          path: ^/api/v1/users$
+        - method: ^POST$
+          path: ^/api/v1/data$
+          headerMatches:
+          - name: x-auth-token
 ```
 
-**설명:**
-이 CiliumNetworkPolicy는 L7 HTTP 규칙을 사용하여 세밀한 접근 제어를 구현합니다. `rules.http` 섹션에서 두 가지 규칙을 정의합니다: 첫 번째는 GET 메서드로 `/api/v1/users` 경로 허용, 두 번째는 POST 메서드로 `/api/v1/data` 경로에 대해 `X-Auth-Token` 헤더가 있는 경우에만 허용합니다. 헤더 값은 정규식으로 지정할 수 있어 `.*`는 어떤 값이든 허용합니다. 이 정책이 적용되면 Cilium은 자동으로 Envoy 프록시를 투명하게 배치하여 L7 트래픽을 검사합니다.
+해당 workload label·namespace·listener가 전제입니다. 이름만 있는 headerMatches는 존재를 확인하며 토큰을 검증하지 않습니다. 이전 `X-Auth-Token: .*`는 모든 값이 아니라 리터럴 값 매칭입니다. 다른 적용 정책과 실현 proxy 상태를 확인합니다.
+
 </details>
 
-17. kube-proxy 대체 모드로 Cilium을 설치하고, DSR 모드와 Maglev 해싱을 활성화하는 Helm 명령어를 작성하세요.
+17. **준비된 새 kube-proxy-free IPv4 테스트 클러스터에 문서화된 DSR/Maglev 프로필을 설치하세요.**
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답:**
-```bash
-# Helm repo 추가
-helm repo add cilium https://helm.cilium.io/
-helm repo update
+**lb-values.yaml**
 
-# kube-proxy 대체 + DSR + Maglev 설정으로 Cilium 설치
-helm install cilium cilium/cilium --version 1.18.0 \
-  --namespace kube-system \
-  --set kubeProxyReplacement=true \
-  --set k8sServiceHost=<API_SERVER_IP> \
-  --set k8sServicePort=6443 \
-  --set loadBalancer.mode=dsr \
-  --set loadBalancer.algorithm=maglev \
-  --set maglev.tableSize=65521 \
-  --set bpf.masquerade=true
-
-# 기존 kube-proxy 비활성화 (DaemonSet 삭제 또는 스케일 다운)
-kubectl -n kube-system delete ds kube-proxy
-# 또는 kube-proxy ConfigMap 수정하여 비활성화
-
-# 설치 확인
-cilium status --verbose
-kubectl -n kube-system exec ds/cilium -- cilium status | grep KubeProxyReplacement
-```
-
-**설명:**
-`kubeProxyReplacement=true`는 Cilium이 kube-proxy 기능을 대체하도록 설정합니다. `k8sServiceHost`와 `k8sServicePort`는 API 서버 주소를 지정합니다(kube-proxy 없이 API 서버에 접근하기 위해 필요). `loadBalancer.mode=dsr`은 Direct Server Return 모드를 활성화하고, `loadBalancer.algorithm=maglev`는 Maglev 일관된 해싱을 사용합니다. `maglev.tableSize`는 해시 테이블 크기를 설정합니다(소수 권장). `bpf.masquerade=true`는 eBPF 기반 마스커레이딩을 활성화합니다.
-</details>
-
-18. Cilium에서 Kafka 트래픽에 대한 L7 정책을 적용하여, `orders` 주제에 대한 produce 작업만 허용하고 `payments` 주제는 consume만 허용하는 CiliumNetworkPolicy를 작성하세요.
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답:**
 ```yaml
-apiVersion: "cilium.io/v2"
+kubeProxyReplacement: true
+routingMode: tunnel
+tunnelProtocol: geneve
+ipv4:
+  enabled: true
+ipv6:
+  enabled: false
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+    - 10.244.0.0/16
+    clusterPoolIPv4MaskSize: 24
+loadBalancer:
+  mode: dsr
+  dsrDispatch: geneve
+  algorithm: maglev
+  acceleration: disabled
+maglev:
+  tableSize: 65521
+bpf:
+  masquerade: true
+enableIPv4Masquerade: true
+enableIPv6Masquerade: false
+l7Proxy: true
+envoy:
+  enabled: true
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+```
+
+```bash
+: "${API_SERVER_HOST:?Set the real reachable API server host}"
+: "${API_SERVER_PORT:?Set its actual port}"
+: "${MAGLEV_SEED:?Set the persisted base64 encoding of 12 random bytes}"
+helm repo add cilium https://helm.cilium.io/
+helm repo update cilium
+helm install cilium cilium/cilium --version 1.20.1 --namespace kube-system \
+  --values lb-values.yaml \
+  --set-string k8sServiceHost="$API_SERVER_HOST" \
+  --set k8sServicePort="$API_SERVER_PORT" \
+  --set-string maglev.hashSeed="$MAGLEV_SEED"
+cilium status --wait
+```
+
+Geneve overlay와 Geneve DSR dispatch를 사용합니다. API endpoint, 반환 경로, 보존한 공통 Maglev seed가 준비되어야 합니다. 65521은 허용 크기이지 보편적 필수값이 아닙니다. 임의 설치 후 kube-proxy를 삭제하거나 기능 테스트 편의상 실행 중 전달 모드를 바꾸지 않습니다.
+
+</details>
+
+18. **order-service의 orders produce, payment-processor의 payments consume이 요구사항입니다. 현재 Cilium과 broker가 각각 집행할 부분은 무엇인가요?**
+
+<details>
+<summary>정답 보기</summary>
+
+```yaml
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "kafka-l7-policy"
+  name: broker-connectivity
   namespace: messaging
 spec:
   endpointSelector:
@@ -332,119 +318,76 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: order-service
-    toPorts:
-    - ports:
-      - port: "9092"
-        protocol: TCP
-      rules:
-        kafka:
-        - apiKey: "produce"
-          topic: "orders"
-  - fromEndpoints:
+        k8s:io.kubernetes.pod.namespace: messaging
+        k8s:app: order-service
     - matchLabels:
-        app: payment-processor
+        k8s:io.kubernetes.pod.namespace: messaging
+        k8s:app: payment-processor
     toPorts:
     - ports:
-      - port: "9092"
+      - port: '9092'
         protocol: TCP
-      rules:
-        kafka:
-        - apiKey: "fetch"
-          topic: "payments"
 ```
 
-**설명:**
-이 CiliumNetworkPolicy는 Kafka L7 규칙을 사용하여 세밀한 접근 제어를 구현합니다. 첫 번째 ingress 규칙은 `order-service` 포드가 `orders` 주제에 대해 produce(`apiKey: produce`) 작업만 할 수 있도록 허용합니다. 두 번째 규칙은 `payment-processor` 포드가 `payments` 주제에 대해 consume(`apiKey: fetch`) 작업만 할 수 있도록 허용합니다. Kafka API 키는 `produce`, `fetch`, `metadata`, `offsets` 등이 있으며, `clientID`를 추가하여 특정 클라이언트만 허용할 수도 있습니다.
+두 source workload를 가정한 TCP9092 broker listener에 연결하도록 허용할 뿐입니다. 실제 설정 port로 바꿔야 하며 topic 작업을 집행하지 않습니다. Broker principal을 구분해 인증하고 Kafka에서 produce·consume·consumer-group 인가를 구성합니다. rules.kafka가 제거되었으므로 이전 YAML을 완성된 인가로 제시하면 안 됩니다.
+
 </details>
 
-19. Cilium에서 eBPF 기반 마스커레이딩을 활성화하고, 특정 CIDR 범위(10.0.0.0/8)에 대해서는 마스커레이딩을 제외하는 설정을 작성하세요.
+19. **실제로 라우팅 가능한 10.0.0.0/8 목적지를 제외하는 BPF masquerading 설정 조각을 작성하세요.**
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답:**
 ```yaml
-# ConfigMap 설정
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  enable-ipv4-masquerade: "true"
-  enable-bpf-masquerade: "true"
-  ipv4-native-routing-cidr: "10.0.0.0/8"
-  enable-ipv6-masquerade: "false"
+bpf:
+  masquerade: true
+enableIPv4Masquerade: true
+enableIPv6Masquerade: false
+ipv4NativeRoutingCIDR: 10.0.0.0/8
 ```
 
-```bash
-# Helm을 사용한 설치/업그레이드
-helm upgrade cilium cilium/cilium --version 1.18.0 \
-  --namespace kube-system \
-  --set ipv4NativeRoutingCIDR=10.0.0.0/8 \
-  --set bpf.masquerade=true \
-  --set enableIPv4Masquerade=true
+준비한 설정에 병합합니다. BPF NodePort·장치 조건과 반환 경로가 필요합니다. ipv4NativeRoutingCIDR은 해당 masquerade 제외를 제어하며 route 생성이나 routingMode 전환이 아닙니다. 선택 노드의 cilium-dbg status --verbose, cilium-dbg bpf nat list와 통제된 외부 관측을 함께 확인합니다.
 
-# 설정 확인
-kubectl -n kube-system exec ds/cilium -- cilium status --verbose | grep -i masquerade
-
-# 마스커레이딩 규칙 확인
-kubectl -n kube-system exec ds/cilium -- cilium bpf nat list
-```
-
-**설명:**
-`enable-bpf-masquerade: true`는 eBPF 기반 마스커레이딩을 활성화합니다. `ipv4-native-routing-cidr: 10.0.0.0/8`은 이 CIDR 범위에 대한 트래픽은 마스커레이딩 없이 네이티브 라우팅을 사용하도록 설정합니다. 이는 클러스터 내부 통신이나 VPC 내부 통신에서 소스 IP를 보존해야 할 때 유용합니다. 클러스터 포드 CIDR과 서비스 CIDR이 이 범위에 포함되면 내부 트래픽에 마스커레이딩이 적용되지 않습니다.
 </details>
 
-20. L7 정책이 예상대로 작동하지 않을 때 Cilium에서 문제를 진단하는 명령어들을 작성하세요. Envoy 프록시 상태, 정책 적용 상태, 실시간 트래픽 모니터링을 포함해야 합니다.
+20. **L7 정책의 예상과 다른 동작을 중단 없이 조사하는 순서를 작성하세요.**
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답:**
 ```bash
-# 1. Cilium 전체 상태 확인
 cilium status --verbose
-
-# 2. Envoy 프록시 상태 확인
-kubectl -n kube-system exec ds/cilium -- cilium status | grep -i proxy
-kubectl -n kube-system exec ds/cilium -- cilium bpf proxy list
-
-# 3. 정책 적용 상태 확인
-cilium policy get
-kubectl get cnp -A -o wide
-kubectl get ccnp -A -o wide
-
-# 4. 특정 엔드포인트의 정책 상태 확인
-cilium endpoint list
-cilium endpoint get <endpoint_id> -o json | jq '.status.policy'
-
-# 5. 실시간 트래픽 모니터링 (L7 포함)
-cilium monitor --type l7
-cilium monitor --type policy-verdict
-cilium monitor --type drop
-
-# 6. Hubble을 통한 L7 흐름 관찰
-hubble observe --protocol http
-hubble observe --verdict DROPPED
-hubble observe --pod <namespace>/<pod-name>
-
-# 7. Envoy 로그 확인
-kubectl -n kube-system logs ds/cilium | grep -i envoy
-kubectl -n kube-system logs ds/cilium | grep -i proxy
-
-# 8. 엔드포인트 재생성 (정책 재적용)
-kubectl -n kube-system exec ds/cilium -- cilium endpoint regenerate <endpoint_id>
-
-# 9. 네트워크 정책 트러블슈팅
-cilium policy trace --src-identity <src_id> --dst-identity <dst_id> --dport <port>
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+kubectl -n kube-system get pods -l k8s-app=cilium-envoy -o wide
+kubectl -n cilium-l2l7-demo get pods -o wide
+export APP_POD=REPLACE-WITH-APP1-POD
+export CILIUM_POD=REPLACE-WITH-AGENT-ON-APP-NODE
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- \
+  cilium-dbg endpoint get "pod-name:cilium-l2l7-demo:$APP_POD"
+kubectl -n cilium-l2l7-demo get cnp -o yaml
+kubectl get ccnp -o yaml
+kubectl -n kube-system logs "$CILIUM_POD" -c cilium-agent --tail=100
 ```
 
-**설명:**
-L7 정책 문제 해결 시 단계적 접근이 필요합니다. 먼저 `cilium status`로 전체 시스템 상태를 확인하고, Envoy 프록시가 정상적으로 실행 중인지 확인합니다. `cilium policy get`으로 적용된 정책을 확인하고, `cilium endpoint get`으로 특정 포드에 정책이 올바르게 적용되었는지 확인합니다. `cilium monitor`와 `hubble observe`로 실시간 트래픽과 정책 판정을 모니터링합니다. `policy trace` 명령어는 특정 트래픽 흐름에 대한 정책 결정 과정을 시뮬레이션합니다.
+명시적으로 활성화한 Envoy DaemonSet을 사용하는 경우:
+
+```bash
+export ENVOY_POD=REPLACE-WITH-ENVOY-POD-ON-APP-NODE
+kubectl -n kube-system logs "$ENVOY_POD" --all-containers=true --tail=100
+```
+
+```bash
+cilium hubble port-forward
+```
+
+```bash
+hubble observe --namespace cilium-l2l7-demo --protocol http --last 20
+hubble observe --namespace cilium-l2l7-demo --verdict DROPPED --last 20
+```
+
+임의 DaemonSet Pod가 아닌 workload 노드의 agent·Envoy를 선택합니다. Envoy DaemonSet이면 해당 Pod의 제한된 로그, embedded 방식이면 설정된 agent 로그를 확인합니다. Relay forward는 별도 터미널에 유지합니다. 의도·실현 규칙, 평문·TLS 가시성, 앱 응답·플로우를 비교합니다. HTTP403은 packet drop과 다르며 관측 누락도 필터·유실 때문일 수 있습니다. 제거된 policy trace나 강제 endpoint 재생성이 첫 단계일 필요는 없습니다.
+
 </details>
 
 ---

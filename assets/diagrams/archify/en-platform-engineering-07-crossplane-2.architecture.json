@@ -2,25 +2,24 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Platform Abstraction with Compositions",
-    "locale": "en",
+    "title": "One Composition with environment inputs",
     "output": "en-platform-engineering-07-crossplane-2.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
       {
         "id": "schema",
-        "label": "XRD and Compositions",
+        "label": "Schema",
         "focus": [
           "xrd",
           "comp_dev",
           "comp_prod"
         ],
-        "note": "The platform team defines one XRD and places two Compositions, dev and prod, beneath it."
+        "note": "The same Composition rendered with alternative environment inputs."
       },
       {
         "id": "dev-path",
-        "label": "dev Claim path",
+        "label": "Dev Path",
         "focus": [
           "claim_a",
           "comp_dev",
@@ -28,11 +27,11 @@
           "sg_a",
           "sub_a"
         ],
-        "note": "The my-db Claim references the dev Composition and gets a db.t4g.small, 50GB resource bundle."
+        "note": "The same Composition rendered with alternative environment inputs."
       },
       {
         "id": "prod-path",
-        "label": "prod Claim path",
+        "label": "Prod Path",
         "focus": [
           "claim_b",
           "comp_prod",
@@ -40,20 +39,24 @@
           "sg_b",
           "sub_b"
         ],
-        "note": "The order-db Claim references the prod Composition and gets a db.r6g.large, 200GB Multi-AZ bundle."
+        "note": "The same Composition rendered with alternative environment inputs."
       }
     ],
     "viewBox": [
       1140,
       580
-    ]
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "locale": "en"
   },
   "components": [
     {
       "id": "claim_a",
       "type": "external",
-      "label": "Claim: my-db",
-      "sublabel": "size: small",
+      "label": "XR: dev",
+      "sublabel": "environment: dev",
       "pos": [
         40,
         110
@@ -66,8 +69,8 @@
     {
       "id": "claim_b",
       "type": "external",
-      "label": "Claim: order-db",
-      "sublabel": "size: large",
+      "label": "XR: production",
+      "sublabel": "environment: production",
       "pos": [
         40,
         340
@@ -81,7 +84,7 @@
       "id": "xrd",
       "type": "backend",
       "label": "XRD",
-      "sublabel": "CompositeResourceDefinition · API schema",
+      "sublabel": "API schema",
       "pos": [
         420,
         225
@@ -94,8 +97,8 @@
     {
       "id": "comp_dev",
       "type": "backend",
-      "label": "Composition (dev)",
-      "sublabel": "db.t4g.small · 50GB",
+      "label": "Pipeline: dev input",
+      "sublabel": "db.t4g.medium / 50GB / Single-AZ",
       "pos": [
         420,
         110
@@ -108,8 +111,8 @@
     {
       "id": "comp_prod",
       "type": "backend",
-      "label": "Composition (prod)",
-      "sublabel": "db.r6g.large · 200GB · Multi-AZ",
+      "label": "Pipeline: prod input",
+      "sublabel": "db.r6g.large / 200GB / Multi-AZ",
       "pos": [
         420,
         340
@@ -123,7 +126,7 @@
       "id": "rds_a",
       "type": "database",
       "label": "RDS Instance",
-      "sublabel": "db.t4g.small",
+      "sublabel": "db.t4g.medium",
       "pos": [
         900,
         56
@@ -136,7 +139,7 @@
     {
       "id": "sg_a",
       "type": "security",
-      "label": "SecurityGroup",
+      "label": "SG + ingress rule",
       "pos": [
         900,
         118
@@ -144,7 +147,8 @@
       "size": [
         170,
         48
-      ]
+      ],
+      "sublabel": "Approved client SG only"
     },
     {
       "id": "sub_a",
@@ -176,7 +180,7 @@
     {
       "id": "sg_b",
       "type": "security",
-      "label": "SecurityGroup",
+      "label": "SG + ingress rule",
       "pos": [
         900,
         348
@@ -184,7 +188,8 @@
       "size": [
         170,
         48
-      ]
+      ],
+      "sublabel": "Approved client SG only"
     },
     {
       "id": "sub_b",
@@ -203,7 +208,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Used by development teams",
+      "label": "Kubernetes control plane",
       "wraps": [
         "claim_a",
         "claim_b"
@@ -211,7 +216,7 @@
     },
     {
       "kind": "region",
-      "label": "Defined by the platform team",
+      "label": "Kubernetes control plane",
       "wraps": [
         "xrd",
         "comp_dev",
@@ -220,7 +225,7 @@
     },
     {
       "kind": "region",
-      "label": "Automatically created resources",
+      "label": "Kubernetes control plane",
       "wraps": [
         "rds_a",
         "sg_a",
@@ -246,14 +251,14 @@
       "id": "claim-a-dev",
       "from": "claim_a",
       "to": "comp_dev",
-      "label": "compositionRef: dev",
+      "label": "environment: dev",
       "variant": "emphasis"
     },
     {
       "id": "claim-b-prod",
       "from": "claim_b",
       "to": "comp_prod",
-      "label": "compositionRef: prod",
+      "label": "environment: production",
       "variant": "emphasis"
     },
     {
@@ -285,6 +290,17 @@
       "id": "prod-sub",
       "from": "comp_prod",
       "to": "sub_b"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Validated values",
+      "items": [
+        "Native Functions preserve Boolean and numeric maps",
+        "Production: deletion protection and 30-day backups",
+        "Actual cloud creation, load and HA need separate validation"
+      ]
     }
   ]
 }

@@ -1,0 +1,2960 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T21:52:05.905613+00:00",
+  "scope": [
+    "en/observability/metrics/02-victoriametrics.md",
+    "en/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+    "ko/observability/metrics/02-victoriametrics.md",
+    "ko/quizzes/observability/metrics/02-victoriametrics-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/metrics/02-victoriametrics.md": {
+      "lines": 1178,
+      "sha256": "123def1cb59aca4c2b7e6e7e894bf5e12a756e67353a71d10291d576f71a677d"
+    },
+    "en/quizzes/observability/metrics/02-victoriametrics-quiz.md": {
+      "lines": 185,
+      "sha256": "aae2b59de920033ea79e3f16b6f1c52cbedecf1236c25ec6db1ff733021f738f"
+    },
+    "ko/observability/metrics/02-victoriametrics.md": {
+      "lines": 1178,
+      "sha256": "a556c6a511bfe35117ccb448547ee6cbf34d886834d3c03a176dace5d992f67a"
+    },
+    "ko/quizzes/observability/metrics/02-victoriametrics-quiz.md": {
+      "lines": 183,
+      "sha256": "f78c97d5d5b98f013f87b567c8fddccc6ff79c474031ab1ab1cb65c12b630ef6"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "sha256": "4fb03eb123c05f8c5f270d1949ea841fc8e623be9d675a08f44fcf47cf9cf077",
+        "passed": true,
+        "lines": 982,
+        "fullyReadOriginal": true
+      },
+      {
+        "path": "en/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+        "sha256": "fe50d14966bd0b4b455557ab974e3c981fc5ee3c4c53bccba5a3bba892f052d2",
+        "passed": true,
+        "lines": 175,
+        "fullyReadOriginal": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "sha256": "b36fbea7a1325244796978d14294b0206733c6bfdbf63fbc6a2baed1d30284d1",
+        "passed": true,
+        "lines": 982,
+        "fullyReadOriginal": true
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+        "sha256": "7f739fe872024eb3bc0a1920937fd97d2968dd95a0aa4f6eb1763c45d1efddd5",
+        "passed": true,
+        "lines": 175,
+        "fullyReadOriginal": true
+      }
+    ],
+    "counts": {
+      "yamlFences": 24,
+      "shellFences": 12,
+      "queryOccurrences": 68,
+      "quizQuestions": 20
+    },
+    "links": [
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#introduction",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#architecture-options",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#single-node-mode",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#cluster-mode",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#vmagent",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#vmalert",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#metricsql",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#helm-installation",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#long-term-storage-configuration",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#downsampling",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#performance-optimization",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#best-practices",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "#troubleshooting",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "../../.gitbook/assets/en-observability-metrics-02-victoriametrics-2.png",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-02-victoriametrics-2.html",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "link": "../../quizzes/observability/metrics/02-victoriametrics-quiz.md",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+        "link": "../../../observability/metrics/02-victoriametrics.md",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#소개",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#아키텍처-옵션",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#단일-노드-모드",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#클러스터-모드",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#vmagent",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#vmalert",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#metricsql",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#helm-설치",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#장기-저장소-구성",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#다운샘플링",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#성능-최적화",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#모범-사례",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "#문제-해결",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "../../.gitbook/assets/ko-observability-metrics-02-victoriametrics-2.png",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-02-victoriametrics-2.html",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "link": "../../quizzes/observability/metrics/02-victoriametrics-quiz.md",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+        "link": "../../../observability/metrics/02-victoriametrics.md",
+        "passed": true
+      }
+    ],
+    "bilingual": {
+      "yamlEqual": true,
+      "queryExamplesEqual": true,
+      "answerKeysEqual": true
+    },
+    "nativeMetricsQL": {
+      "version": "v1.151.0",
+      "results": [
+        {
+          "name": "missing5xx_zeroTraffic_missingService",
+          "expression": "(sum by (service) (rate(http_requests_total{status=~\"5..\"}[5m])) or 0 * sum by (service) (rate(http_requests_total[5m]))) / (sum by (service) (rate(http_requests_total[5m])) > 0)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "failed"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            },
+            {
+              "metric": {
+                "service": "healthy"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            },
+            {
+              "metric": {
+                "service": "mixed"
+              },
+              "value": [
+                1789246623,
+                "0.1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "oldLabelMatchedRatioDemonstratesBug",
+          "expression": "rate(http_requests_total{service=\"mixed\",status=~\"5..\"}[5m]) / rate(http_requests_total{service=\"mixed\"}[5m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "mixed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "defaultFillsUnknownWithUnlabeledZero",
+          "expression": "missing_metric default 0",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {},
+              "value": [
+                1789246623,
+                "0"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "lagIsAgeOfLastRawSample",
+          "expression": "lag(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "lifetimeWithinWindow",
+          "expression": "lifetime(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "90"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "scrapeIntervalObserved",
+          "expression": "scrape_interval(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "30"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "range_avgUsesRangeEvaluationPoints",
+          "expression": "range_avg(audit_gauge)",
+          "kind": "range",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "values": [
+                [
+                  1789246533,
+                  "3.75"
+                ],
+                [
+                  1789246563,
+                  "3.75"
+                ],
+                [
+                  1789246593,
+                  "3.75"
+                ],
+                [
+                  1789246623,
+                  "3.75"
+                ]
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "range_sumUsesRangeEvaluationPoints",
+          "expression": "range_sum(audit_gauge)",
+          "kind": "range",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "values": [
+                [
+                  1789246533,
+                  "15"
+                ],
+                [
+                  1789246563,
+                  "15"
+                ],
+                [
+                  1789246593,
+                  "15"
+                ],
+                [
+                  1789246623,
+                  "15"
+                ]
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "range_firstUsesRangeEvaluationPoints",
+          "expression": "range_first(audit_gauge)",
+          "kind": "range",
+          "result": [
+            {
+              "metric": {
+                "__name__": "audit_gauge",
+                "series": "window"
+              },
+              "values": [
+                [
+                  1789246533,
+                  "1"
+                ],
+                [
+                  1789246563,
+                  "1"
+                ],
+                [
+                  1789246593,
+                  "1"
+                ],
+                [
+                  1789246623,
+                  "1"
+                ]
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "range_lastUsesRangeEvaluationPoints",
+          "expression": "range_last(audit_gauge)",
+          "kind": "range",
+          "result": [
+            {
+              "metric": {
+                "__name__": "audit_gauge",
+                "series": "window"
+              },
+              "values": [
+                [
+                  1789246533,
+                  "8"
+                ],
+                [
+                  1789246563,
+                  "8"
+                ],
+                [
+                  1789246593,
+                  "8"
+                ],
+                [
+                  1789246623,
+                  "8"
+                ]
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "range_minUsesRangeEvaluationPoints",
+          "expression": "range_min(audit_gauge)",
+          "kind": "range",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "values": [
+                [
+                  1789246533,
+                  "1"
+                ],
+                [
+                  1789246563,
+                  "1"
+                ],
+                [
+                  1789246593,
+                  "1"
+                ],
+                [
+                  1789246623,
+                  "1"
+                ]
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "range_maxUsesRangeEvaluationPoints",
+          "expression": "range_max(audit_gauge)",
+          "kind": "range",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "values": [
+                [
+                  1789246533,
+                  "8"
+                ],
+                [
+                  1789246563,
+                  "8"
+                ],
+                [
+                  1789246593,
+                  "8"
+                ],
+                [
+                  1789246623,
+                  "8"
+                ]
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "histogramShareRecentWindow",
+          "expression": "histogram_share(0.5, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "api"
+              },
+              "value": [
+                1789246623,
+                "0.9"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "histogramQuantile0.5",
+          "expression": "histogram_quantile(0.5,sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "api"
+              },
+              "value": [
+                1789246623,
+                "0.08333333333333333"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "histogramQuantile0.9",
+          "expression": "histogram_quantile(0.9,sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "api"
+              },
+              "value": [
+                1789246623,
+                "0.5"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "histogramQuantile0.99",
+          "expression": "histogram_quantile(0.99,sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "api"
+              },
+              "value": [
+                1789246623,
+                "0.95"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "oldOrDropsOtherQuantiles",
+          "expression": "histogram_quantile(0.5,sum by (service, le) (rate(http_request_duration_seconds_bucket[5m]))) or histogram_quantile(0.9,sum by (service, le) (rate(http_request_duration_seconds_bucket[5m]))) or histogram_quantile(0.99,sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "api"
+              },
+              "value": [
+                1789246623,
+                "0.08333333333333333"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "rate(http_requests_total)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "failed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "healthy",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "mixed",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3"
+              ]
+            },
+            {
+              "metric": {
+                "service": "mixed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.03333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "zero",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "keep_last_value(up)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "instance": "127.0.0.1:9100",
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "label_set(up, \"env\", \"demo\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "env": "demo",
+                "instance": "127.0.0.1:9100",
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "label_del(up, \"instance\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "label_copy(up, \"instance\", \"node\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "instance": "127.0.0.1:9100",
+                "job": "api",
+                "node": "127.0.0.1:9100"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "label_move(up, \"instance\", \"node\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "job": "api",
+                "node": "127.0.0.1:9100"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "label_join(up, \"dst\", \"-\", \"job\", \"instance\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "dst": "api-127.0.0.1:9100",
+                "instance": "127.0.0.1:9100",
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "label_transform(up, \"job\", \"api\", \"frontend\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "instance": "127.0.0.1:9100",
+                "job": "frontend"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "union(up{job=\"api\"}, up{job=\"web\"})",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "instance": "127.0.0.1:9100",
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "rollup(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "audit_gauge",
+                "rollup": "avg",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "3.75"
+              ]
+            },
+            {
+              "metric": {
+                "__name__": "audit_gauge",
+                "rollup": "max",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "8"
+              ]
+            },
+            {
+              "metric": {
+                "__name__": "audit_gauge",
+                "rollup": "min",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "rollup_rate(http_requests_total[5m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "rollup": "avg",
+                "service": "failed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.33333333333333337"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "service": "failed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "service": "failed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "avg",
+                "service": "healthy",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.33333333333333337"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "service": "healthy",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "service": "healthy",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "avg",
+                "service": "mixed",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.29999999999999993"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "service": "mixed",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "service": "mixed",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "avg",
+                "service": "mixed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.03333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "service": "mixed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.03333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "service": "mixed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.03333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "avg",
+                "service": "zero",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "service": "zero",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "service": "zero",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "rollup_delta(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "rollup": "avg",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "2.75"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "4"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "zscore_over_time(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "1.5852581740085334"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "count(up)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {},
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "documentedFunction",
+          "expression": "count by (job)(up)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "cpuCounterRateRatio",
+          "expression": "1 - avg by (instance)(rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "instance": "n1"
+              },
+              "value": [
+                1789246623,
+                "0.19999999999999996"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "memoryRatio",
+          "expression": "1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "instance": "n1"
+              },
+              "value": [
+                1789246623,
+                "0.95"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "rate(http_requests_total[5m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "failed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "healthy",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "mixed",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3"
+              ]
+            },
+            {
+              "metric": {
+                "service": "mixed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.03333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "zero",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "sum by (service) (rate(http_requests_total[5m]))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "failed"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "healthy"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "mixed"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "zero"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "histogram_quantile(0.95, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "api"
+              },
+              "value": [
+                1789246623,
+                "0.7499999999999998"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "rate(http_requests_total)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "failed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "healthy",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "mixed",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3"
+              ]
+            },
+            {
+              "metric": {
+                "service": "mixed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.03333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "service": "zero",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "keep_last_value(up)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "instance": "127.0.0.1:9100",
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "missing_metric default 0",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {},
+              "value": [
+                1789246623,
+                "0"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "label_set(up, \"env\", \"demo\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "env": "demo",
+                "instance": "127.0.0.1:9100",
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "label_del(up, \"instance\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "label_copy(up, \"instance\", \"node\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "instance": "127.0.0.1:9100",
+                "job": "api",
+                "node": "127.0.0.1:9100"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "label_move(up, \"instance\", \"node\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "job": "api",
+                "node": "127.0.0.1:9100"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "label_join(up, \"dst\", \"-\", \"job\", \"instance\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "dst": "api-127.0.0.1:9100",
+                "instance": "127.0.0.1:9100",
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "label_transform(up, \"job\", \"api\", \"frontend\")",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "instance": "127.0.0.1:9100",
+                "job": "frontend"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "union(up{job=\"api\"}, up{job=\"web\"})",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "up",
+                "instance": "127.0.0.1:9100",
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "lag(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "lifetime(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "90"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "scrape_interval(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "30"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "range_avg(audit_gauge)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "8"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "range_max(audit_gauge)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "8"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "range_min(audit_gauge)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "8"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "range_sum(audit_gauge)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "8"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "range_first(audit_gauge)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "audit_gauge",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "8"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "range_last(audit_gauge)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "audit_gauge",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "8"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "rollup(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "audit_gauge",
+                "rollup": "avg",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "3.75"
+              ]
+            },
+            {
+              "metric": {
+                "__name__": "audit_gauge",
+                "rollup": "max",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "8"
+              ]
+            },
+            {
+              "metric": {
+                "__name__": "audit_gauge",
+                "rollup": "min",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "rollup_rate(http_requests_total[5m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "rollup": "avg",
+                "service": "failed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.33333333333333337"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "service": "failed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "service": "failed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "avg",
+                "service": "healthy",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.33333333333333337"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "service": "healthy",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "service": "healthy",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "avg",
+                "service": "mixed",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.29999999999999993"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "service": "mixed",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "service": "mixed",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0.3"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "avg",
+                "service": "mixed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.03333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "service": "mixed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.03333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "service": "mixed",
+                "status": "500"
+              },
+              "value": [
+                1789246623,
+                "0.03333333333333333"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "avg",
+                "service": "zero",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "service": "zero",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "service": "zero",
+                "status": "200"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "rollup_delta(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "rollup": "avg",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "2.75"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "max",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "4"
+              ]
+            },
+            {
+              "metric": {
+                "rollup": "min",
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "zscore_over_time(audit_gauge[2m])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "series": "window"
+              },
+              "value": [
+                1789246623,
+                "1.5852581740085334"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "(sum by (service) (rate(http_requests_total{status=~\"5..\"}[5m])) or 0 * sum by (service) (rate(http_requests_total[5m]))) / (sum by (service) (rate(http_requests_total[5m])) > 0)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "failed"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            },
+            {
+              "metric": {
+                "service": "healthy"
+              },
+              "value": [
+                1789246623,
+                "0"
+              ]
+            },
+            {
+              "metric": {
+                "service": "mixed"
+              },
+              "value": [
+                1789246623,
+                "0.1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "histogram_share(0.5, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "api"
+              },
+              "value": [
+                1789246623,
+                "0.9"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "count(up)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {},
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "count by (job) (up)",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "job": "api"
+              },
+              "value": [
+                1789246623,
+                "1"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)\n/ node_memory_MemTotal_bytes * 100 > 90\n",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "instance": "n1"
+              },
+              "value": [
+                1789246623,
+                "95"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "increase(kube_pod_container_status_restarts_total[1h]) > 5",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "container": "app",
+                "namespace": "example-app",
+                "pod": "demo"
+              },
+              "value": [
+                1789246623,
+                "12"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "instance": "n1"
+              },
+              "value": [
+                1789246623,
+                "0.19999999999999996"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes\n",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "instance": "n1"
+              },
+              "value": [
+                1789246623,
+                "0.95"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "avg_over_time(instance:node_cpu_utilization:ratio_rate5m[1h])",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "__name__": "instance:node_cpu_utilization:ratio_rate5m",
+                "instance": "n1"
+              },
+              "value": [
+                1789246623,
+                "0.2"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "histogram_quantile(0.5, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "api"
+              },
+              "value": [
+                1789246623,
+                "0.08333333333333333"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "histogram_quantile(0.9, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "api"
+              },
+              "value": [
+                1789246623,
+                "0.5"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "publishedExpression",
+          "expression": "histogram_quantile(0.99, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "kind": "instant",
+          "result": [
+            {
+              "metric": {
+                "service": "api"
+              },
+              "value": [
+                1789246623,
+                "0.95"
+              ]
+            }
+          ],
+          "passed": true
+        },
+        {
+          "name": "inventedAnomalyFunctionRejected",
+          "expression": "anomaly_score(http_requests_total[1h])",
+          "httpStatus": 400,
+          "error": "{\"status\":\"error\",\"errorType\":\"400\",\"error\":\"error when executing query=\\\"anomaly_score(http_requests_total[1h])\\\" for (time=1789246623000, step=300000): unsupported function \\\"anomaly_score\\\"\"}",
+          "passed": true
+        }
+      ],
+      "count": 73,
+      "passed": true,
+      "scope": "Loopback-only single-server process, tiny synthetic series, no cloud/Kubernetes/production load or notification. Raw data retained only in worker-owned cache.",
+      "errorRatioExpression": "(sum by (service) (rate(http_requests_total{status=~\"5..\"}[5m])) or 0 * sum by (service) (rate(http_requests_total[5m]))) / (sum by (service) (rate(http_requests_total[5m])) > 0)"
+    },
+    "selfMetricQueries": [
+      {
+        "expression": "vm_app_version",
+        "parsed": true
+      },
+      {
+        "expression": "rate(vm_rows_inserted_total[5m])",
+        "parsed": true
+      },
+      {
+        "expression": "rate(vm_slow_queries_total[5m])",
+        "parsed": true
+      },
+      {
+        "expression": "process_resident_memory_bytes",
+        "parsed": true
+      }
+    ],
+    "nativeConfig": {
+      "helmProfiles": [
+        {
+          "profile": "single",
+          "passed": true,
+          "resources": 44,
+          "structuralCRDsAvailable": 25,
+          "customResourcesValidated": 3,
+          "selectedScrapeLabelsMatch": true,
+          "noDefaultRules": true,
+          "valuesSha256": "73ac647047b9126f6fac3373a5cbc23f12926774e70088ef8580523fc4fa1fef",
+          "renderedSha256": "dea75b15cbbd55295110ac92c7e57e33a7a91f66f809c6ecbc38e5323f5da843"
+        },
+        {
+          "profile": "cluster",
+          "passed": true,
+          "resources": 44,
+          "structuralCRDsAvailable": 25,
+          "customResourcesValidated": 3,
+          "selectedScrapeLabelsMatch": true,
+          "noDefaultRules": true,
+          "valuesSha256": "0a67d4c580a22447841b7eef8f7d982b59ecb6f6d4dfdf13337d3742876771f3",
+          "renderedSha256": "1681e68f0724c2aef98e86e6e2adfdedf720cf702440816e2cef23b998c05a68"
+        }
+      ],
+      "nativePrometheusParser": [
+        {
+          "kind": "config",
+          "passed": true,
+          "stdout": "Checking /home/atomoh/kubernetes-docs/.vitepress/cache/observability-victoriametrics-audit/vmagent-prometheus.yaml\n SUCCESS: /home/atomoh/kubernetes-docs/.vitepress/cache/observability-victoriametrics-audit/vmagent-prometheus.yaml is valid prometheus config file syntax\n\n",
+          "stderr": ""
+        },
+        {
+          "kind": "rules",
+          "passed": true,
+          "stdout": "Checking /home/atomoh/kubernetes-docs/.vitepress/cache/observability-victoriametrics-audit/published-rules.yaml\n\n",
+          "stderr": "  FAILED:\nlint error 1 duplicate rule(s) found.\nMetric: instance:node_cpu_utilization:ratio_rate5m\nLabel(s):\nMight cause inconsistency while recording expressions\n"
+        }
+      ],
+      "scope": "Helm render/released CRD structural schemas and Prometheus-compatible config/rule parsing. No admission/CEL/controller, discovery API, notifier, cloud backup or cluster failover test."
+    },
+    "vmctlFlagsVerifiedAgainstPrimary": true,
+    "diffCheckPassed": true,
+    "limits": [
+      "No Kubernetes/EKS admission, controller reconciliation, cloud backup/restore, notification, load or HA test.",
+      "Structural CRD checks do not execute CEL/admission. Helm renders CRs rather than operator-created workloads.",
+      "Native queries use tiny synthetic series after local ingestion flush/settlement, not performance measurements.",
+      "The derived recording group replaces the earlier group; do not activate duplicate record names in both.",
+      "Starter Helm values disable unrelated collectors/rules/Grafana/notifications until platform targets, credentials and routing are configured.",
+      "Comparison/selection figures contained unsupported universal numbers and a false100M/day cutoff; parent owns shared/translated standalone artifact follow-up."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/metrics/02-victoriametrics.md",
+        "sha256": "4fb03eb123c05f8c5f270d1949ea841fc8e623be9d675a08f44fcf47cf9cf077",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "victoriametrics"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h3",
+            "id": "comparison-and-measurement"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture-options"
+          },
+          {
+            "tag": "h2",
+            "id": "single-node-mode"
+          },
+          {
+            "tag": "h3",
+            "id": "statefulset-deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "key-endpoints"
+          },
+          {
+            "tag": "h2",
+            "id": "cluster-mode"
+          },
+          {
+            "tag": "h3",
+            "id": "architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "components"
+          },
+          {
+            "tag": "h3",
+            "id": "vmstorage-deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "vminsert-deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "vmselect-deployment"
+          },
+          {
+            "tag": "h2",
+            "id": "vmagent"
+          },
+          {
+            "tag": "h3",
+            "id": "key-features"
+          },
+          {
+            "tag": "h3",
+            "id": "deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "vmagent-sharding"
+          },
+          {
+            "tag": "h2",
+            "id": "vmalert"
+          },
+          {
+            "tag": "h3",
+            "id": "deployment-1"
+          },
+          {
+            "tag": "h2",
+            "id": "metricsql"
+          },
+          {
+            "tag": "h3",
+            "id": "promql-style-queries"
+          },
+          {
+            "tag": "h3",
+            "id": "metricsql-extensions"
+          },
+          {
+            "tag": "h3",
+            "id": "error-rates-missing-data-and-histograms"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-installation"
+          },
+          {
+            "tag": "h3",
+            "id": "values-single-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "cluster-overlay"
+          },
+          {
+            "tag": "h2",
+            "id": "long-term-storage-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "retention-and-disk-capacity"
+          },
+          {
+            "tag": "h3",
+            "id": "snapshot-backup-and-restore"
+          },
+          {
+            "tag": "h2",
+            "id": "downsampling"
+          },
+          {
+            "tag": "h3",
+            "id": "recording-derived-series"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-optimization"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h3",
+            "id": "migration-guide"
+          },
+          {
+            "tag": "h2",
+            "id": "troubleshooting"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "victoriametrics",
+          "table-of-contents",
+          "introduction",
+          "comparison-and-measurement",
+          "architecture-options",
+          "single-node-mode",
+          "statefulset-deployment",
+          "key-endpoints",
+          "cluster-mode",
+          "architecture",
+          "components",
+          "vmstorage-deployment",
+          "vminsert-deployment",
+          "vmselect-deployment",
+          "vmagent",
+          "key-features",
+          "deployment",
+          "vmagent-sharding",
+          "vmalert",
+          "deployment-1",
+          "metricsql",
+          "promql-style-queries",
+          "metricsql-extensions",
+          "error-rates-missing-data-and-histograms",
+          "helm-installation",
+          "values-single-yaml",
+          "cluster-overlay",
+          "long-term-storage-configuration",
+          "retention-and-disk-capacity",
+          "snapshot-backup-and-restore",
+          "downsampling",
+          "recording-derived-series",
+          "performance-optimization",
+          "best-practices",
+          "migration-guide",
+          "troubleshooting",
+          "references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+        "sha256": "fe50d14966bd0b4b455557ab974e3c981fc5ee3c4c53bccba5a3bba892f052d2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "victoriametrics-quiz"
+          }
+        ],
+        "renderedIds": [
+          "victoriametrics-quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/metrics/02-victoriametrics.md",
+        "sha256": "b36fbea7a1325244796978d14294b0206733c6bfdbf63fbc6a2baed1d30284d1",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "victoriametrics"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h3",
+            "id": "비교와-측정"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처-옵션"
+          },
+          {
+            "tag": "h2",
+            "id": "단일-노드-모드"
+          },
+          {
+            "tag": "h3",
+            "id": "statefulset-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "주요-엔드포인트"
+          },
+          {
+            "tag": "h2",
+            "id": "클러스터-모드"
+          },
+          {
+            "tag": "h3",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "구성-요소"
+          },
+          {
+            "tag": "h3",
+            "id": "vmstorage-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "vminsert-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "vmselect-배포"
+          },
+          {
+            "tag": "h2",
+            "id": "vmagent"
+          },
+          {
+            "tag": "h3",
+            "id": "주요-기능"
+          },
+          {
+            "tag": "h3",
+            "id": "배포"
+          },
+          {
+            "tag": "h3",
+            "id": "vmagent-샤딩"
+          },
+          {
+            "tag": "h2",
+            "id": "vmalert"
+          },
+          {
+            "tag": "h3",
+            "id": "배포-1"
+          },
+          {
+            "tag": "h2",
+            "id": "metricsql"
+          },
+          {
+            "tag": "h3",
+            "id": "promql-형태의-쿼리"
+          },
+          {
+            "tag": "h3",
+            "id": "metricsql-확장-기능"
+          },
+          {
+            "tag": "h3",
+            "id": "오류율·누락-데이터·히스토그램"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "values-single-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "cluster-overlay"
+          },
+          {
+            "tag": "h2",
+            "id": "장기-저장소-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "보존-기간과-디스크-용량"
+          },
+          {
+            "tag": "h3",
+            "id": "snapshot-백업과-복원"
+          },
+          {
+            "tag": "h2",
+            "id": "다운샘플링"
+          },
+          {
+            "tag": "h3",
+            "id": "파생-series-기록"
+          },
+          {
+            "tag": "h2",
+            "id": "성능-최적화"
+          },
+          {
+            "tag": "h2",
+            "id": "모범-사례"
+          },
+          {
+            "tag": "h3",
+            "id": "마이그레이션-가이드"
+          },
+          {
+            "tag": "h2",
+            "id": "문제-해결"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "victoriametrics",
+          "목차",
+          "소개",
+          "비교와-측정",
+          "아키텍처-옵션",
+          "단일-노드-모드",
+          "statefulset-배포",
+          "주요-엔드포인트",
+          "클러스터-모드",
+          "아키텍처",
+          "구성-요소",
+          "vmstorage-배포",
+          "vminsert-배포",
+          "vmselect-배포",
+          "vmagent",
+          "주요-기능",
+          "배포",
+          "vmagent-샤딩",
+          "vmalert",
+          "배포-1",
+          "metricsql",
+          "promql-형태의-쿼리",
+          "metricsql-확장-기능",
+          "오류율·누락-데이터·히스토그램",
+          "helm-설치",
+          "values-single-yaml",
+          "cluster-overlay",
+          "장기-저장소-구성",
+          "보존-기간과-디스크-용량",
+          "snapshot-백업과-복원",
+          "다운샘플링",
+          "파생-series-기록",
+          "성능-최적화",
+          "모범-사례",
+          "마이그레이션-가이드",
+          "문제-해결",
+          "참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/02-victoriametrics-quiz.md",
+        "sha256": "7f739fe872024eb3bc0a1920937fd97d2968dd95a0aa4f6eb1763c45d1efddd5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "victoriametrics-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "victoriametrics-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://api.github.com/repos/VictoriaMetrics/VictoriaMetrics/releases/latest",
+      "cacheKey": "9da7ba512403",
+      "fetchedAt": "2026-09-12T20:16:36.925206+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/VictoriaMetrics/VictoriaMetrics/releases/latest",
+      "sha256": "bca7d962e77b43f266a3ec917175c0e9dd4f5ecdd8413f8e7c9f468e7a1e5f3f"
+    },
+    {
+      "url": "https://victoriametrics.github.io/helm-charts/index.yaml",
+      "cacheKey": "e7b382bb8af9",
+      "fetchedAt": "2026-09-12T20:16:36.711483+00:00",
+      "status": 200,
+      "finalURL": "https://victoriametrics.github.io/helm-charts/index.yaml",
+      "sha256": "482e63652c2c9b3b7780621482931d0a987bdc9f1a1b94a04e3b11f74d188b93"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/metricsql/",
+      "cacheKey": "24e7a199cbe8",
+      "fetchedAt": "2026-09-12T20:16:37.248711+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/metricsql/",
+      "sha256": "95710c4bf1aa0a34e0ddbeebed73474bc0b62e4790272385649e53c199a950db"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/vmbackup/",
+      "cacheKey": "db2a461fa938",
+      "fetchedAt": "2026-09-12T20:16:37.619175+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/vmbackup/",
+      "sha256": "1e74700680132b4091e85ce8216fc30e1cfa6ff37e4a38f086603ffeafa5f245"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/vmalert/",
+      "cacheKey": "906c454b5d39",
+      "fetchedAt": "2026-09-12T20:16:37.486870+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/vmalert/",
+      "sha256": "67b3209f8cd1c180a9c8e6851f00870b80244bd83382336c44109d57cae3ccdf"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/VictoriaMetrics/helm-charts/victoria-metrics-k8s-stack-0.92.1/charts/victoria-metrics-k8s-stack/Chart.yaml",
+      "cacheKey": "2173344ba19d",
+      "fetchedAt": "2026-09-12T20:17:59.833096+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/VictoriaMetrics/helm-charts/victoria-metrics-k8s-stack-0.92.1/charts/victoria-metrics-k8s-stack/Chart.yaml",
+      "sha256": "295ab3a191749138a383843cde864bb9d432bfb4c5f92bf8f3faeca078d2bc34"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/VictoriaMetrics/helm-charts/victoria-metrics-k8s-stack-0.92.1/charts/victoria-metrics-k8s-stack/values.yaml",
+      "cacheKey": "7f85dbf2ff04",
+      "fetchedAt": "2026-09-12T20:17:59.917337+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/VictoriaMetrics/helm-charts/victoria-metrics-k8s-stack-0.92.1/charts/victoria-metrics-k8s-stack/values.yaml",
+      "sha256": "689d9a256164618d7633564b69bcfeda2555be015632a1b7d23676ddc6486d5a"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/",
+      "cacheKey": "7968d8e31e18",
+      "fetchedAt": "2026-09-12T20:18:00.045915+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/",
+      "sha256": "820251b0e1d68625950a05f802d5fbc64dd3db070f674f491b2701ddd7a73c3d"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/",
+      "cacheKey": "242594b0e7de",
+      "fetchedAt": "2026-09-12T20:18:00.991203+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/",
+      "sha256": "e74a56ffdb1153494fc13505950af149112967e92eae43d08be62f536e954069"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/vmagent/",
+      "cacheKey": "07b083027c04",
+      "fetchedAt": "2026-09-12T20:38:42.315818+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/vmagent/",
+      "sha256": "f14160e44c22f21011166201f2c2c5320b9bad10e0a1705fd2223b0c48c27122"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/operator/resources/vmagent/",
+      "cacheKey": "184f5988f36d",
+      "fetchedAt": "2026-09-12T20:38:42.696743+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/operator/resources/vmagent/",
+      "sha256": "20d0cb3490ef3375abf91a84aebf1ecde603a58228c74d921356a024f031bede"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/operator/resources/vmcluster/",
+      "cacheKey": "dc3e7aa34303",
+      "fetchedAt": "2026-09-12T20:38:42.942479+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/operator/resources/vmcluster/",
+      "sha256": "a711f5b5c338a114fdb0cf5ad0eeb0806bfa1ab7e85d0c39bcb6f39df9d10b4f"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/vmctl/",
+      "cacheKey": "3f80aab2129f",
+      "fetchedAt": "2026-09-12T20:38:43.166382+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/vmctl/",
+      "sha256": "27a7556dd6ce4bc80a40c5119f728f1d92d38ca8259fd5188edb242966ca3c08"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/v1.151.0/app/vmbackup/main.go",
+      "cacheKey": "1498aefdaf3b",
+      "fetchedAt": "2026-09-12T20:38:43.435763+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/v1.151.0/app/vmbackup/main.go",
+      "sha256": "58003748bd018243de435c1bab9002b02fccb7b8ca47905f04cb94dd9a5042df"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/v1.151.0/go.mod",
+      "cacheKey": "bdea2b832ee1",
+      "fetchedAt": "2026-09-12T20:44:33.205388+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/v1.151.0/go.mod",
+      "sha256": "ab8b01b670006de43c595a8e6cb47a337130bbe439de7983a47ca5a8adc32f04"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/v1.151.0/lib/backup/s3remote/s3.go",
+      "cacheKey": "f09027959e23",
+      "fetchedAt": "2026-09-12T20:49:22.469845+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/v1.151.0/lib/backup/s3remote/s3.go",
+      "sha256": "34cae49135dbdc4c849fc2edf1282b524cb0caba5597d823d730ff6d26ac63b8"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "cacheKey": "e1b3114299a5",
+      "fetchedAt": "2026-09-12T20:49:22.449403+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "sha256": "2d56ee585d488d6be6f994ef26c2dedecad66ce2ee3544eb16b9e9a7535d489b"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-minimum-sdk.html",
+      "cacheKey": "a0ea0821c505",
+      "fetchedAt": "2026-09-12T20:49:22.659696+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-minimum-sdk.html",
+      "sha256": "b03eff0c576ac60e0fc510fc54c977a3b39da4267615f3d373af64fa94ea09c9"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/operator/resources/vmservicescrape/",
+      "cacheKey": "ca7ee3ba9caf",
+      "fetchedAt": "2026-09-12T20:49:23.025348+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/operator/resources/vmservicescrape/",
+      "sha256": "6a784bf96e6f0d6e2673b6590fe0b41098eb855e1f4a480d802bae0378eebe06"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/vmctl/prometheus/",
+      "cacheKey": "c6beda87a08a",
+      "fetchedAt": "2026-09-12T21:01:04.164533+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/vmctl/prometheus/",
+      "sha256": "1aaf24ffe384fc2d8c135335bb61de148723306186f04d84c13f5588305241fd"
+    },
+    {
+      "url": "https://hub.docker.com/v2/repositories/victoriametrics/victoria-metrics/tags/v1.151.0",
+      "cacheKey": "2097a0e788a3",
+      "fetchedAt": "2026-09-12T20:41:45.417771+00:00",
+      "status": 200,
+      "finalURL": "https://hub.docker.com/v2/repositories/victoriametrics/victoria-metrics/tags/v1.151.0",
+      "sha256": "81b88b7ad04fc1a5aa82cb6131c314e4f03e240b5319e9e0781082170132ba9f"
+    },
+    {
+      "url": "https://hub.docker.com/v2/repositories/victoriametrics/vmstorage/tags/v1.151.0-cluster",
+      "cacheKey": "50d96043a420",
+      "fetchedAt": "2026-09-12T20:41:45.626100+00:00",
+      "status": 200,
+      "finalURL": "https://hub.docker.com/v2/repositories/victoriametrics/vmstorage/tags/v1.151.0-cluster",
+      "sha256": "7aad7b76d839f414a02504be064a1cec8a6bb6e54560dcba7d3a988bc12a4341"
+    },
+    {
+      "url": "https://hub.docker.com/v2/repositories/victoriametrics/vminsert/tags/v1.151.0-cluster",
+      "cacheKey": "f628d05a2b1c",
+      "fetchedAt": "2026-09-12T20:41:45.674709+00:00",
+      "status": 200,
+      "finalURL": "https://hub.docker.com/v2/repositories/victoriametrics/vminsert/tags/v1.151.0-cluster",
+      "sha256": "57f5f38c831da82930e62569478a692cd0bba9f19b8a5a1795ece30d4805d0aa"
+    },
+    {
+      "url": "https://hub.docker.com/v2/repositories/victoriametrics/vmselect/tags/v1.151.0-cluster",
+      "cacheKey": "77aefb7c5fde",
+      "fetchedAt": "2026-09-12T20:41:45.871809+00:00",
+      "status": 200,
+      "finalURL": "https://hub.docker.com/v2/repositories/victoriametrics/vmselect/tags/v1.151.0-cluster",
+      "sha256": "c241eaa21695077546cc17ca1f4cc2bb0e44f365cd36a482aa53a572eafccfee"
+    },
+    {
+      "url": "https://hub.docker.com/v2/repositories/victoriametrics/vmagent/tags/v1.151.0",
+      "cacheKey": "6e8412ede72a",
+      "fetchedAt": "2026-09-12T20:41:45.922484+00:00",
+      "status": 200,
+      "finalURL": "https://hub.docker.com/v2/repositories/victoriametrics/vmagent/tags/v1.151.0",
+      "sha256": "7f7931fee6b8b13467b3ebbd08a5b174c4cd886d8d3780d1c5664e96c4734636"
+    },
+    {
+      "url": "https://hub.docker.com/v2/repositories/victoriametrics/vmalert/tags/v1.151.0",
+      "cacheKey": "638d017bf345",
+      "fetchedAt": "2026-09-12T20:41:46.139639+00:00",
+      "status": 200,
+      "finalURL": "https://hub.docker.com/v2/repositories/victoriametrics/vmalert/tags/v1.151.0",
+      "sha256": "88e607ed1468b457520fdba1bd55466bdef4728cdccdfca40e675389b63b8539"
+    }
+  ],
+  "findings": [
+    "Unattributed7x/20x/70percent comparisons, fixed10M/100M cardinality caps, unlimited retention/scaling and100M/day selection threshold were replaced with workload-dependent criteria; historical measured results were not relabelled as current benchmarks.",
+    "Replaced obsolete1.96 image guidance with verified1.151.0 tags. Stack0.92.1 contains operator chart0.67.3/operator0.74.1; chart kubeVersion guard is not an EKS compatibility guarantee.",
+    "Removed full PromQL/every-API equivalence claims. Documented rate/increase, NaN, scalar, name and implicit-window differences.",
+    "A Deployment Pod name cannot provide a stable vmagent shard ordinal. StatefulSet names ending in a valid ordinal are supported; the minimal Deployment now uses one replica without sharding flags.",
+    "Replaced IPv4-only address rewrites and insecure kubelet scraping with namespace-scoped Pod discovery, named TCP metrics port, optional scrape path, and minimal Pod-read RBAC.",
+    "emptyDir queue persistence stops at Pod replacement; queue disk caps drop oldest data. Storage buffering is not backup or lossless delivery.",
+    "Aligned vmselect/vmstorage dedup and replication settings, documented replication history assumptions, partial responses, failure domains and2*N-1 sizing conditions; RF2 is not an unconditional no-loss guarantee.",
+    "Native1.151 rejects anomaly_score; replaced with gauge zscore_over_time and corrected lag/lifetime/scrape_interval/range-function scope and label manipulation caveats.",
+    "The old status-labelled error ratio returned1 for10percent failures. New service aggregation returns0/1/0.1 for healthy/all-failed/mixed and excludes zero or absent traffic; arbitrary default0 is not a remedy.",
+    "Histogram share now uses windowed bucket rates; p50/p90/p99 recorded separately because same-label or loses later quantiles. CPU derivation uses counter rate, not an average of cumulative CPU seconds.",
+    "Recording derived series does not compact/delete raw history. Alternative recording groups must not emit duplicate record names concurrently.",
+    "Corrected operator-stack values from victoria-metrics-single/cluster to vmsingle/vmcluster and verified output CRs. Starter profile opts into owned scrapes and documents disabled monitoring components/production prerequisites.",
+    "Removed duplicate args mappings and nonexistent storage.maxDiskSpace. Retention and free-disk write-stop thresholds are different; memory.allowedPercent controls caches, not total RSS.",
+    "Raw StatefulSet PVC is storage-vmsingle-0. Replaced invalid arbitrary CronJob/static AWS-key setup with matching-storage backup workflow, RWO/co-location constraints, workload identity and distinct member prefixes. Azure support was verified and retained.",
+    "Corrected vmctl flags to --prom-snapshot and --vm-addr; cluster mode requires --vm-account-id. Removing an old remote-write path requires a verified replacement collector, not merely a Grafana datasource change.",
+    "Removed mutating blanket delete/snapshot/force-merge operations from read-only diagnostics. TSDB cardinality status does not report filesystem free space or total memory.",
+    "All20 quiz answers reconciled with the corrected guide; availability gap filling, replication and backup assertions no longer imply guarantees."
+  ],
+  "figures": {
+    "viewed": 6,
+    "retainedPerLocale": [
+      2
+    ],
+    "removedPerLocale": [
+      0,
+      1
+    ],
+    "replacement": "Comparison and selection tables explain measured capacity, retention and HA requirements without unsupported numbers.",
+    "scopeExternal": [
+      "Shared public/archmaps and assets/diagrams/archify versions of en/ko-observability-metrics-02-victoriametrics-{0,1} still contain obsolete comparison/selection statements. Parent owns shared/generated artifact cleanup or regeneration and foreign-source sync. No foreign prose or shared renderer edited."
+    ]
+  },
+  "artifactDirectory": ".vitepress/cache/observability-victoriametrics-audit",
+  "limits": [
+    "No Kubernetes/EKS admission, controller reconciliation, cloud backup/restore, notification, load or HA test.",
+    "Structural CRD checks do not execute CEL/admission. Helm renders CRs rather than operator-created workloads.",
+    "Native queries use tiny synthetic series after local ingestion flush/settlement, not performance measurements.",
+    "The derived recording group replaces the earlier group; do not activate duplicate record names in both.",
+    "Starter Helm values disable unrelated collectors/rules/Grafana/notifications until platform targets, credentials and routing are configured.",
+    "Comparison/selection figures contained unsupported universal numbers and a false100M/day cutoff; parent owns shared/translated standalone artifact follow-up."
+  ],
+  "sourceAccessNotes": [
+    "An initially guessed backup/fss3 source path returned404; repository contents identified the actual lib/backup/s3remote/s3.go source, which was verified and cited.",
+    "Initial synthetic queries ran before ingestion/index settlement. The owned local fixture now flushes ingestion, waits, verifies all input series, then evaluates; no missing-data result was fabricated as a formula pass.",
+    "Verified download archive and disposable owned test databases removed to bound cache growth; binary, hashes, fixtures, source snapshots and result evidence retained.",
+    "One-shot edit scripts are not a safe replay mechanism; final published sources include later vmctl, path, grouping and command-format corrections."
+  ]
+}

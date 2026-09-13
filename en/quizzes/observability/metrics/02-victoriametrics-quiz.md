@@ -1,185 +1,175 @@
 # VictoriaMetrics Quiz
 
-Test your understanding of VictoriaMetrics.
+> Review baseline: VictoriaMetrics 1.151.0 · stack chart 0.92.1
 
----
-
-1. Which is NOT a major advantage of VictoriaMetrics compared to Prometheus?
-   - A) Up to 7x more efficient data compression
-   - B) Up to 20x faster performance on complex queries
-   - C) Requires learning a separate query language
-   - D) Horizontal scaling capability
+1. Which statement is correct when migrating Prometheus queries to VictoriaMetrics?
+   - A) Every workload has exactly 7× better compression
+   - B) All installations have a fixed 100M-series limit
+   - C) Compare actual queries because MetricsQL intentionally differs from PromQL
+   - D) Prometheus cannot retain more than 15 days
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Requires learning a separate query language**
+**Answer: C**
 
-**Explanation:**
-VictoriaMetrics uses MetricsQL query language, which is a superset of PromQL. All existing PromQL queries work, and it only provides additional convenience features. Therefore, there's no need to learn a separate query language.
+Familiar syntax does not establish identical rate/increase, NaN, scalar or API behavior. Benchmarks need actual versions, data and hardware; retention defaults are not maxima.
 
 </details>
 
 ---
 
-2. Which is NOT a component of VictoriaMetrics cluster mode?
+2. Which is not one of the cluster storage/query data-plane components?
    - A) vminsert
    - B) vmstorage
    - C) vmselect
-   - D) vmoperator
+   - D) VictoriaMetrics Operator
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D) vmoperator**
+**Answer: D**
 
-**Explanation:**
-VictoriaMetrics cluster mode consists of three core components: vminsert (write request routing), vmstorage (data storage), vmselect (query processing). vmoperator is a separate Kubernetes Operator, not a core component of cluster mode.
+vminsert routes writes, vmstorage stores data, and vmselect queries it. The Operator reconciles Kubernetes resources; it is a separate control component.
 
 </details>
 
 ---
 
-3. What is the main role of vmagent?
-   - A) Long-term data storage
-   - B) Dashboard rendering
-   - C) Metric collection and Remote Write transmission
-   - D) Alert routing
+3. What does vmagent do?
+   - A) Replaces all durable storage
+   - B) Renders dashboards
+   - C) Collects metrics and forwards them to remote-write destinations
+   - D) Replaces Alertmanager notification routing
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Metric collection and Remote Write transmission**
+**Answer: C**
 
-**Explanation:**
-vmagent is a lightweight agent that collects metrics and sends them to VictoriaMetrics or other remote storage. It's compatible with Prometheus scrape configuration and provides features like data buffering, retransmission, and label relabeling.
+Its queue buffers outages but is finite: the configured disk cap drops oldest queued data, and an emptyDir is lost with Pod replacement. Persistence and monitoring remain separate design choices.
 
 </details>
 
 ---
 
-4. What is the purpose of the `keep_last_value()` function in MetricsQL?
-   - A) Keep maximum value
-   - B) Keep last value (gap filling)
-   - C) Keep first value
-   - D) Keep average value
+4. What does keep_last_value(q) do, and what needs care?
+   - A) Returns the maximum stored value
+   - B) Fills evaluated gaps with an earlier value, which can conceal missing telemetry
+   - C) Restores all lost scrape samples
+   - D) Guarantees healthy availability alerts
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Keep last value (gap filling)**
+**Answer: B**
 
-**Explanation:**
-`keep_last_value()` is a MetricsQL extension function that fills missing values (gaps) in time series data with the last known value. It's useful for preventing gaps in dashboards and alerts when there are scrape failures or temporary data loss.
+Use gap filling only when its meaning is intended. Keeping an old healthy value can hide missing collection; monitor missing data separately.
 
 </details>
 
 ---
 
-5. What is the role of the `--dedup.minScrapeInterval` flag in VictoriaMetrics?
-   - A) Set minimum scrape interval
-   - B) Remove duplicate samples within specified interval
-   - C) Set data compression interval
-   - D) Set alert evaluation interval
+5. What does dedup.minScrapeInterval control?
+   - A) The target scraper scheduling interval
+   - B) Keeping one sample per discrete interval for the same series
+   - C) Lossless generic compression
+   - D) Alert evaluation frequency
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Remove duplicate samples within specified interval**
+**Answer: B**
 
-**Explanation:**
-`--dedup.minScrapeInterval` removes duplicate samples of the same time series within the specified time interval. For example, `--dedup.minScrapeInterval=30s` merges duplicate data points within 30 seconds into one. It's useful in HA configurations where multiple Prometheus instances scrape the same targets.
+The interval can remove legitimate higher-resolution samples, not just byte-identical copies. Align vmstorage/vmselect settings and the chosen storage/scraper replication design.
 
 </details>
 
 ---
 
-6. What is the correct criterion for choosing between vmsingle and vmcluster?
-   - A) Always use vmcluster
-   - B) vmsingle is recommended for under 100M samples/day without high availability requirements
-   - C) vmsingle doesn't support query functionality
-   - D) vmcluster only works on a single node
+6. How should single-node and cluster modes be selected?
+   - A) Always choose cluster mode
+   - B) Measure load, active series/churn, queries, retention and recovery requirements
+   - C) Use 100M samples/day as a universal cutoff
+   - D) Single-node mode has no query API
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) vmsingle is recommended for under 100M samples/day without high availability requirements**
+**Answer: B**
 
-**Explanation:**
-vmsingle (single-node mode) is simple to configure and suitable for small to medium environments. vmsingle is recommended when daily samples are under 100M and high availability is not essential. Use vmcluster for large-scale environments or when high availability is required.
+Assess one-server capacity and the cost of independently scaling insert/storage/select. Replicated storage or two processes alone does not provide tested service HA.
 
 </details>
 
 ---
 
-7. What does the `replicationFactor=2` setting mean in VictoriaMetrics cluster?
-   - A) Use only 2 storage nodes
-   - B) Replicate each data point to 2 storage nodes
-   - C) Execute queries on only 2 nodes
-   - D) Apply 2x compression
+7. What does vminsert replicationFactor=2 request?
+   - A) Exactly two total storage members
+   - B) Two copies on distinct storage members, subject to actual availability and history
+   - C) Queries on exactly two members
+   - D) Twice the compression
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Replicate each data point to 2 storage nodes**
+**Answer: B**
 
-**Explanation:**
-`replicationFactor=2` configures vminsert to replicate each data point to 2 vmstorage nodes. This allows service to continue without data loss even if one storage node fails. This is a recommended setting for high availability.
+Maintaining two copies during one storage failure needs at least three members plus the relevant capacity and failure-domain conditions. Configure vmselect/dedup consistently; the flag does not backfill history, make degraded writes lossless, or replace backups.
 
 </details>
 
 ---
 
-8. What is the purpose of the `default` operator in MetricsQL?
-   - A) Set default labels
-   - B) Return default value when there's no result
-   - C) Set default aggregation function
-   - D) Set default time range
+8. What is the scope of the MetricsQL default operator?
+   - A) It always creates correct service labels
+   - B) It fills missing points from the right-hand expression; missing data is not automatically zero traffic
+   - C) It guarantees that every ratio is meaningful
+   - D) It changes the metric ingestion interval
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Return default value when there's no result**
+**Answer: B**
 
-**Explanation:**
-The `default` operator in MetricsQL returns a default value when the query result is empty or NaN. For example, `rate(http_requests_total[5m]) / rate(http_requests_total[5m]) default 0` returns 0 instead of a division by zero error. In PromQL, complex conditionals are needed for this handling.
+Do not append default 0 as a universal error-rate fix. Aggregate status labels consistently, fill a missing numerator only for known denominator series, and exclude zero traffic. The native fixture yields 0, 1 and 0.1 for healthy, all-failed and 10%-failed traffic; absent/zero-traffic services remain absent.
 
 </details>
 
 ---
 
-9. What is the correct role of vmalert?
-   - A) Metric collection
-   - B) Data storage
-   - C) Alert rule evaluation and alert generation
-   - D) Dashboard creation
+9. What is vmalert responsible for?
+   - A) Collecting every application metric
+   - B) Storing all long-term samples
+   - C) Evaluating alert/recording rules and sending alerts to a configured notifier
+   - D) Rendering Grafana dashboards
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Alert rule evaluation and alert generation**
+**Answer: C**
 
-**Explanation:**
-vmalert evaluates alerting rules and sends alerts to Alertmanager when conditions are met, similar to Prometheus's alerting functionality. It can use VictoriaMetrics or Prometheus as data sources and also supports recording rules.
+Rule inputs/exporters, datasource URLs, state persistence and notifier/routing configuration must exist. A high restart count is not by itself proof of CrashLoopBackOff. Recording derived series does not compact or delete raw data.
 
 </details>
 
 ---
 
-10. What is the main purpose of vmbackup in VictoriaMetrics?
-    - A) Real-time data replication
-    - B) Create backups to object storage
-    - C) Log backup
-    - D) Configuration file backup
+10. What is the correct vmbackup workflow?
+   - A) Back up only vminsert configuration
+   - B) Read a snapshot from the matching storage directory and protect a distinct backup destination
+   - C) Mount any RWO PVC on any node without checking
+   - D) Treat storage replication as a complete backup
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Create backups to object storage**
+**Answer: B**
 
-**Explanation:**
-vmbackup is a tool that backs up VictoriaMetrics data to object storage like S3, GCS, Azure Blob. It creates consistent backups using snapshot functionality and can be restored using vmrestore. It's an essential tool for disaster recovery and data protection.
+Back up every vmstorage member to a separate prefix, or the intended single-node store. S3/GCS/Azure/local destinations are supported. Verify co-location/PVC identity, workload credentials, retention and actual restore; a local snapshot is not an independent copy.
 
 </details>
 
 ---
+
+[Return to learning material](../../../observability/metrics/02-victoriametrics.md)
