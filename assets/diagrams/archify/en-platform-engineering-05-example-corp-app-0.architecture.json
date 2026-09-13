@@ -35,7 +35,7 @@
           "cm",
           "lbc"
         ],
-        "note": "A single WebApp CR creates the Service, TargetGroupBinding, Deployment, and ConfigMap together."
+        "note": "A single OrderApp CR creates the Service, TargetGroupBinding, Deployment, and ConfigMap together."
       },
       {
         "id": "traffic-path",

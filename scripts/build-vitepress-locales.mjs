@@ -20,6 +20,7 @@ import { supportedLocales } from '../.vitepress/site-scope.mjs'
 import { generateLlmsFiles } from './generate-llms-txt.mjs'
 import { normalizeArchmapFontsInDirectory } from './lib/archmap-fonts.mjs'
 import { normalizeArchmapResponsiveLayoutsInDirectory } from './lib/archmap-responsive.mjs'
+import { normalizeArchmapMotionInDirectory } from './lib/archmap-motion.mjs'
 
 const scriptPath = fileURLToPath(import.meta.url)
 const projectRoot = path.resolve(path.dirname(scriptPath), '..')
@@ -217,6 +218,9 @@ export async function mergeLocaleOutputs(localeOutputs, destination) {
 
   const layoutsUpdated = await normalizeArchmapResponsiveLayoutsInDirectory(path.join(destination, 'archmaps'))
   if (layoutsUpdated > 0) console.log(`Updated mobile toolbars in ${layoutsUpdated} archmap viewers`)
+
+  const motionUpdated = await normalizeArchmapMotionInDirectory(path.join(destination, 'archmaps'))
+  if (motionUpdated > 0) console.log(`Updated optional motion controls in ${motionUpdated} archmap viewers`)
 
   const marked = await markArchmapsNoindex(destination)
   if (marked > 0) console.log(`Marked ${marked} archmap pages noindex`)

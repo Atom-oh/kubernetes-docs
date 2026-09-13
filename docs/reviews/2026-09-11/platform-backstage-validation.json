@@ -1153,7 +1153,7 @@
           "bottom": 112,
           "left": 16
         },
-        "sourceSha256": "453ba8d2e150cb273667615faaf0658700ba02bdc44a79b12ad3c969769c3dc6"
+        "sourceSha256": "e7bf5d71cccb6ca28fb41e8ae966db241ee1860ad9371e96d4c2918463a516ed"
       },
       {
         "figure": 2,
@@ -1173,7 +1173,7 @@
           "bottom": 76,
           "left": 32
         },
-        "sourceSha256": "453ba8d2e150cb273667615faaf0658700ba02bdc44a79b12ad3c969769c3dc6"
+        "sourceSha256": "e7bf5d71cccb6ca28fb41e8ae966db241ee1860ad9371e96d4c2918463a516ed"
       },
       {
         "figure": 2,
@@ -1193,7 +1193,7 @@
           "bottom": 60,
           "left": 1417
         },
-        "sourceSha256": "453ba8d2e150cb273667615faaf0658700ba02bdc44a79b12ad3c969769c3dc6"
+        "sourceSha256": "e7bf5d71cccb6ca28fb41e8ae966db241ee1860ad9371e96d4c2918463a516ed"
       },
       {
         "figure": 2,
@@ -1213,7 +1213,7 @@
           "bottom": 112,
           "left": 16
         },
-        "sourceSha256": "71e8ccebe780339ae80ac02bd804ae67007548102b957304fc6cbcde92bcdd09"
+        "sourceSha256": "5189d8535e68db13518afeee1accbcb60ea6be472c0c21fc347d061a601064d7"
       },
       {
         "figure": 2,
@@ -1233,7 +1233,7 @@
           "bottom": 76,
           "left": 32
         },
-        "sourceSha256": "71e8ccebe780339ae80ac02bd804ae67007548102b957304fc6cbcde92bcdd09"
+        "sourceSha256": "5189d8535e68db13518afeee1accbcb60ea6be472c0c21fc347d061a601064d7"
       },
       {
         "figure": 2,
@@ -1253,7 +1253,7 @@
           "bottom": 60,
           "left": 1417
         },
-        "sourceSha256": "71e8ccebe780339ae80ac02bd804ae67007548102b957304fc6cbcde92bcdd09"
+        "sourceSha256": "5189d8535e68db13518afeee1accbcb60ea6be472c0c21fc347d061a601064d7"
       },
       {
         "figure": 3,
@@ -1409,7 +1409,7 @@
     },
     {
       "path": "public/archmaps/ko-platform-engineering-06-backstage-idp-2.html",
-      "sha256": "453ba8d2e150cb273667615faaf0658700ba02bdc44a79b12ad3c969769c3dc6"
+      "sha256": "e7bf5d71cccb6ca28fb41e8ae966db241ee1860ad9371e96d4c2918463a516ed"
     },
     {
       "path": "ko/.gitbook/assets/ko-platform-engineering-06-backstage-idp-2.png",
@@ -1457,7 +1457,7 @@
     },
     {
       "path": "public/archmaps/en-platform-engineering-06-backstage-idp-2.html",
-      "sha256": "71e8ccebe780339ae80ac02bd804ae67007548102b957304fc6cbcde92bcdd09"
+      "sha256": "5189d8535e68db13518afeee1accbcb60ea6be472c0c21fc347d061a601064d7"
     },
     {
       "path": "en/.gitbook/assets/en-platform-engineering-06-backstage-idp-2.png",
@@ -1488,5 +1488,6 @@
     "Referencedimage/placeholdersandoperatorprerequisitesexplicit;oldKubecostnpmnamesreturned404notretainedasinstallcommands.",
     "MkDocsmaterialprintedanupstreaminformationalbanneraboutMkDocs2;installedMkDocs1.xstrictbuildreturned0.",
     "No full local VitePress build;4MDand24standaloneviewerchecks;8PNGsvisuallyinspected."
-  ]
+  ],
+  "viewerMotionFollowup": "platform-viewer-motion-validation.json"
 }

@@ -1,0 +1,700 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T00:55:51.439685+00:00",
+  "base": "c7af73ea6cc01a89858b5ef940c7140179978f26",
+  "fixes": [
+    "PLATFORM-R1-003:OrderAppguided-viewnotes",
+    "PLATFORM-R1-004:guardoptionalplaybackAPI;normalizeallgeneratedviewersduringlocalemerge"
+  ],
+  "tests": {
+    "site": 126,
+    "localLinks": "passed",
+    "referencedPNGs": "passed",
+    "languageParity": "passed",
+    "browser": {
+      "status": "passed",
+      "cases": [
+        {
+          "file": "en-platform-engineering-02-ack-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1006,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-02-ack-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1006,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-02-ack-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1006,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 52839,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-05-example-corp-app-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1352,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-05-example-corp-app-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1352,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-05-example-corp-app-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1352,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 59106,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1162,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1162,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1162,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 61212,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 623,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 623,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 623,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 54545,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 593,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 593,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 593,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 51009,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 837,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 837,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-platform-engineering-06-backstage-idp-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 837,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50937,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-02-ack-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 965,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-02-ack-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 965,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-02-ack-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 965,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 52433,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-05-example-corp-app-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1044,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-05-example-corp-app-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1044,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-05-example-corp-app-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1044,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 58615,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1188,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1188,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1188,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 60869,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 569,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 569,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 569,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 54556,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 489,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 489,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 489,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50771,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 632,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 632,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-platform-engineering-06-backstage-idp-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 632,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50588,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        }
+      ],
+      "scope": "36 offline production-normalized viewers; motion/reduced-motion/visibility/theme/guided controls and12SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+    }
+  },
+  "sourceHashes": {
+    "assets/diagrams/archify/en-platform-engineering-05-example-corp-app-0.architecture.json": "da439654406fea3962b03eb15fd1630bd94f47a1d05b88ec6d876048b171e401",
+    "assets/diagrams/archify/ko-platform-engineering-05-example-corp-app-0.architecture.json": "afa23f02c50faf9d90849594160bc3a3534d5ab811b00f97b6947fcf7811db44",
+    "ko/.gitbook/assets/ko-platform-engineering-05-example-corp-app-0.png": "a70a0ec47eec73e22edf8d98b3dc234ad1600244f10cf2d1c3115e31aee60d92",
+    "public/archmaps/en-platform-engineering-05-example-corp-app-0.html": "218f56eab6d3289c17497e6003723725e33b798d7fa911ad712e49e00c8a903a",
+    "public/archmaps/en-platform-engineering-06-backstage-idp-2.html": "5189d8535e68db13518afeee1accbcb60ea6be472c0c21fc347d061a601064d7",
+    "public/archmaps/ko-platform-engineering-05-example-corp-app-0.html": "d79afac21f1dbf7d5aca6b13f6ff2c5fd3a9a06b6e033f4e974db4d8eed19a04",
+    "public/archmaps/ko-platform-engineering-06-backstage-idp-2.html": "e7bf5d71cccb6ca28fb41e8ae966db241ee1860ad9371e96d4c2918463a516ed",
+    "scripts/__tests__/build-vitepress-locales.test.mjs": "5c90e62a92d7a179b4eb2b988a20f67cf21d9f0f0fa9ea8b30b6568fb3d59848",
+    "scripts/build-vitepress-locales.mjs": "7a78231b977a31139da6f2f00a855d55e176adfacc1ec6759871f4f872320d87",
+    "scripts/lib/archmap-motion.mjs": "e088e5d5829390e20b88b06be47553b6658440db5b4ad76d0904c8ad112c22c5",
+    "scripts/__tests__/archmap-motion.test.mjs": "ffebe192ef1eb1ca664680baaa801304f5fa7fc2b887008f0057ca05ffd0ef8f"
+  },
+  "limits": [
+    "No full local VitePress build; full build delegated to CI.",
+    "Offline cached Chromium with HTTP fonts blocked and local CJK fallback.",
+    "36 cases across12viewers at375,768,1920; motion toggle, reduced-motion, synthetic visibilitychange, guided controls, theme,12SVG exports.",
+    "No AWS/Kubernetes/GCP operations or analytics events."
+  ]
+}
