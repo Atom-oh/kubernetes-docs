@@ -104,7 +104,7 @@ Linux 6.6에서 CFS의 태스크 선택 로직이 **EEVDF**(Earliest Eligible Vi
 
 | 바뀐 것 | 안 바뀐 것 |
 |---|---|
-| 다음에 실행할 태스크를 **고르는 방식** (가상 데드라인 기반) | vruntime машинery, weight 계산 |
+| 다음에 실행할 태스크를 **고르는 방식** (가상 데드라인 기반) | vruntime 메커니즘, weight 계산 |
 | 깨어난 태스크의 선점 판단 — 휴리스틱(`sched_wakeup_granularity_ns`) 대신 **데드라인 비교** | 그룹 스케줄링(cgroup cpu.weight), 로드 밸런싱 |
 
 즉 **CFS를 통째로 갈아낸 것이 아니라 선택 로직을 교체한 진화**로 보는 것이 정확합니다. `fair_sched_class` 안에서의 변경입니다.
