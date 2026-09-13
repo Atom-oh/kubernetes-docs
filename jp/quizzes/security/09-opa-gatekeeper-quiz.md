@@ -1,12 +1,14 @@
 # OPA Gatekeeper クイズ
 
-以下の問題で、OPA Gatekeeper と Rego policy language に関する理解を確認しましょう。
+> **最終更新**: September 13, 2026
+
+以下の質問で、OPA Gatekeeper と Rego ポリシー言語についての理解を確認しましょう。
 
 ***
 
 ## 問題
 
-### 1. OPA Gatekeeper で policy を記述するために使用される言語は何ですか？
+### 1. OPA Gatekeeper でポリシーを記述するために使用される言語は何ですか？
 
 * A) YAML
 * B) JSON
@@ -15,30 +17,32 @@
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: C) Rego**
 
-**解説:** OPA (Open Policy Agent) は Rego と呼ばれる宣言的な policy language を使用します。Rego は JSON/YAML data の照会と policy decision のために最適化されています。
+**解説:** OPA (Open Policy Agent) は、Rego という宣言型ポリシー言語を使用します。Rego は JSON/YAML データのクエリとポリシー判断に最適化されています。
 
 ```rego
-package kubernetes.admission
-
-violation[{"msg": msg}] {
-    input.request.kind.kind == "Pod"
-    container := input.request.object.spec.containers[_]
-    not container.resources.limits.memory
-    msg := sprintf("Container %v has no memory limit", [container.name])
+package docsrequiredlabels
+valid_label(key) if {
+  value := input.review.object.metadata.labels[key]
+  is_string(value)
+  value != ""
+}
+violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
+  some key in input.parameters.labels
+  not valid_label(key)
 }
 ```
 
-Kyverno とは異なり、新しい言語を学ぶ必要がありますが、より複雑な policy logic を表現できます。
+Rego のセット、内包表記、入力コントラクトを学び、その後に要件とテストに照らしてポリシーエンジンを選択してください。
 
 </details>
 
 ***
 
-### 2. Gatekeeper で再利用可能な policy template を定義する CRD は何ですか？
+### 2. Gatekeeper で再利用可能なポリシーテンプレートを定義する CRD はどれですか？
 
 * A) Policy
 * B) ConstraintTemplate
@@ -47,46 +51,60 @@ Kyverno とは異なり、新しい言語を学ぶ必要がありますが、よ
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: B) ConstraintTemplate**
 
-**解説:** ConstraintTemplate は Rego policy logic と parameter schema を定義します。
+**解説:** ConstraintTemplate は Rego ポリシーロジックとパラメータスキーマを定義します。
 
 ```yaml
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
-  name: k8srequiredlabels
+  name: docsrequiredlabels
 spec:
   crd:
     spec:
       names:
-        kind: K8sRequiredLabels
+        kind: DocsRequiredLabels
       validation:
         openAPIV3Schema:
           type: object
           properties:
             labels:
               type: array
+              minItems: 1
               items:
                 type: string
+                minLength: 1
+          required:
+          - labels
   targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package k8srequiredlabels
-        violation[{"msg": msg}] {
-            # Rego policy logic
-        }
+  - target: admission.k8s.gatekeeper.sh
+    code:
+    - engine: Rego
+      source:
+        version: v1
+        rego: |
+          package docsrequiredlabels
+          valid_label(key) if {
+            value := input.review.object.metadata.labels[key]
+            is_string(value)
+            value != ""
+          }
+          violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
+            some key in input.parameters.labels
+            not valid_label(key)
+          }
 ```
 
-ConstraintTemplate に基づいて Constraint が作成され、実際の policy を適用します。
+実際のポリシーを適用するため、Constraint は ConstraintTemplate に基づいて作成されます。
 
 </details>
 
 ***
 
-### 3. Gatekeeper Constraint の enforcementAction field でサポートされていない値はどれですか？
+### 3. Gatekeeper Constraint の enforcementAction フィールドでサポートされていない値はどれですか？
 
 * A) deny
 * B) dryrun
@@ -95,36 +113,43 @@ ConstraintTemplate に基づいて Constraint が作成され、実際の policy
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: D) audit**
 
-**解説:** Gatekeeper がサポートする enforcementAction の値は次のとおりです。
+**解説:** Gatekeeper でサポートされる enforcementAction の値:
 
-* **deny**: policy violation 時に request を拒否する
-* **dryrun**: violation を記録するが request は許可する
-* **warn**: warning message を表示し、request を許可する
+* **deny**: ポリシー違反時にリクエストを拒否する
+* **dryrun**: 違反を記録するが、リクエストは許可する
+* **warn**: 警告メッセージを表示し、リクエストを許可する
 
 ```yaml
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
+kind: DocsRequiredLabels
 metadata:
-  name: require-labels
+  name: required-labels
 spec:
-  enforcementAction: deny  # or dryrun, warn
+  enforcementAction: deny
   match:
     kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
+    - apiGroups:
+      - ''
+      kinds:
+      - Pod
+    namespaces:
+    - policy-lab
+  parameters:
+    labels:
+    - app.kubernetes.io/name
 ```
 
-audit は enforcementAction ではなく、Gatekeeper の background audit 機能です。
+audit は enforcementAction ではなく、Gatekeeper のバックグラウンド監査機能です。
 
 </details>
 
 ***
 
-### 4. Rego で配列のすべての要素を反復処理する構文は何ですか？
+### 4. Rego で配列のすべての要素を反復処理する構文はどれですか？
 
 * A) for item in array
 * B) array.forEach(item)
@@ -133,34 +158,34 @@ audit は enforcementAction ではなく、Gatekeeper の background audit 機�
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: C) item := array\[\_]**
 
-**解説:** Rego では、`[_]` は配列のすべての index を意味します。
+**解説:** Rego では、`[_]` は配列のすべてのインデックスを意味します。
 
 ```rego
 # Iterate all containers
-container := input.request.object.spec.containers[_]
+container := input.review.object.spec.containers[_]
 
 # Iterate all label keys
-label := input.request.object.metadata.labels[_]
+key := object.keys(input.review.object.metadata.labels)[_]
 
 # Specific index
-first_container := input.request.object.spec.containers[0]
+first_container := input.review.object.spec.containers[0]
 
 # When both index and value are needed
 some i
-container := input.request.object.spec.containers[i]
+container := input.review.object.spec.containers[i]
 ```
 
-この構文は、rule 内で複数の値を評価する際に使用される中核的な Rego pattern です。
+この構文は、ルール内で複数の値を評価するときに使用される Rego の中核的なパターンです。
 
 </details>
 
 ***
 
-### 5. Gatekeeper で既存の cluster resource の policy compliance を確認する機能は何ですか？
+### 5. Gatekeeper で既存のクラスターリソースのポリシー準拠を確認する機能は何ですか？
 
 * A) Validation
 * B) Mutation
@@ -169,19 +194,19 @@ container := input.request.object.spec.containers[i]
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: C) Audit**
 
 **解説:** Gatekeeper Audit 機能:
 
-* 既存の resource を定期的に検査する
-* Constraint status に violation を記録する
-* 新規 resource だけでなく、既存の resource も検証する
+* 既存リソースを定期的に検査する
+* Constraint ステータスに違反を記録する
+* 新規リソースだけでなく既存リソースも検証する
 
 ```bash
 # Check violations in Constraint
-kubectl describe k8srequiredlabels require-labels
+kubectl describe docsrequiredlabels required-labels
 
 # Check violations in Status section:
 # Status:
@@ -193,13 +218,15 @@ kubectl describe k8srequiredlabels require-labels
 #       Namespace: default
 ```
 
-これにより、policy を適用する前に影響を把握できます。
+これにより、ポリシーを適用する前に影響を把握できます。
 
 </details>
 
 ***
 
-### 6. Gatekeeper v3.10+ で自動的な resource modification に使用される CRD は何ですか？
+<span id="_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-v3-10"></span>
+
+### 6. Gatekeeper 3.23.1 で自動リソース変更に使用される CRD はどれですか？
 
 * A) MutatingPolicy
 * B) Assign / AssignMetadata
@@ -208,15 +235,15 @@ kubectl describe k8srequiredlabels require-labels
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: B) Assign / AssignMetadata**
 
 **解説:** Gatekeeper の Mutation CRD:
 
-* **AssignMetadata**: metadata (labels, annotations) を追加する
-* **Assign**: spec などの一般的な field を変更する
-* **ModifySet**: 配列から値を追加/削除する
+* **AssignMetadata**: メタデータ（ラベル、アノテーション）を追加する
+* **Assign**: spec のような一般フィールドを変更する
+* **ModifySet**: 配列の値を追加または削除する
 
 ```yaml
 apiVersion: mutations.gatekeeper.sh/v1
@@ -241,7 +268,7 @@ Kyverno の mutate 機能に似ています。
 
 ***
 
-### 7. Rego で 2 つの set の差分を計算する operator は何ですか？
+### 7. Rego で 2 つのセットの差分を計算する演算子はどれですか？
 
 * A) difference()
 * B) subtract()
@@ -250,11 +277,11 @@ Kyverno の mutate 機能に似ています。
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: C) - (minus)**
 
-**解説:** Rego の set operation:
+**解説:** Rego のセット演算:
 
 ```rego
 # Compare required and existing labels
@@ -273,13 +300,13 @@ common := required & provided
 all := required | provided
 ```
 
-これらの operation は、required label validation で頻繁に使用されます。
+これらの演算は、必須ラベルの検証で頻繁に使用されます。
 
 </details>
 
 ***
 
-### 8. Gatekeeper で他の namespace の resource を参照するために必要な設定は何ですか？
+### 8. 他の Namespace のリソースを参照するために Gatekeeper で必要な設定は何ですか？
 
 * A) CrossNamespacePolicy
 * B) Config's sync.syncOnly
@@ -288,11 +315,11 @@ all := required | provided
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: B) Config's sync.syncOnly**
 
-**解説:** Gatekeeper が external data を参照するには、Config resource による sync configuration が必要です。
+**解説:** この例は Kubernetes オブジェクトを inventory に同期します。外部 HTTP プロバイダーや任意のバンドルへ自動的に接続するものではありません。
 
 ```yaml
 apiVersion: config.gatekeeper.sh/v1alpha1
@@ -311,7 +338,7 @@ spec:
         kind: "Ingress"
 ```
 
-同期された resource は Rego で `data.inventory` を介してアクセスできます。
+同期されたリソースには、Rego で `data.inventory` を介してアクセスできます。
 
 ```rego
 other_ingress := data.inventory.namespace[ns]["networking.k8s.io/v1"]["Ingress"][name]
@@ -321,7 +348,7 @@ other_ingress := data.inventory.namespace[ns]["networking.k8s.io/v1"]["Ingress"]
 
 ***
 
-### 9. Gatekeeper policy をテストするための公式 CLI tool は何ですか？
+### 9. Gatekeeper ポリシーをテストする公式 CLI ツールは何ですか？
 
 * A) opa test
 * B) gatekeeper-cli
@@ -330,119 +357,105 @@ other_ingress := data.inventory.namespace[ns]["networking.k8s.io/v1"]["Ingress"]
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: C) gator**
 
-**解説:** Gator は Gatekeeper policy をローカルでテストするための公式 CLI tool です。
+**解説:** Gator は Gatekeeper ポリシーをローカルでテストするための公式 CLI ツールです。
 
 ```bash
 # Install
-go install github.com/open-policy-agent/gatekeeper/cmd/gator@latest
+gator version  # verified 3.23.1 release binary
 
 # Validate policies
-gator verify ./policies/
+gator verify tests/suite.yaml --verbose
 
 # Run test suite
-gator test ./tests/
+gator test -f templates/ -f constraints/ -f tests/fixtures/labels-present.yaml --output=json
 ```
 
-Test suite の例:
+テストスイートの例:
 
 ```yaml
-kind: Suite
 apiVersion: test.gatekeeper.sh/v1alpha1
+kind: Suite
 metadata:
-  name: required-labels-test
+  name: docs-gatekeeper
 tests:
-  - name: "Pod without labels should fail"
-    template: ../templates/k8srequiredlabels.yaml
-    constraint: ../constraints/require-labels.yaml
-    cases:
-      - name: pod-without-labels
-        object: fixtures/pod-no-labels.yaml
-        assertions:
-          - violations: yes
+- name: required-labels
+  template: ../templates/docsrequiredlabels.yaml
+  constraint: ../constraints/required-labels.yaml
+  cases:
+  - name: labels-present
+    object: fixtures/labels-present.yaml
+    assertions:
+    - violations: 0
+  - name: labels-absent
+    object: fixtures/labels-absent.yaml
+    assertions:
+    - violations: 1
 ```
 
 </details>
 
 ***
 
-### 10. Gatekeeper と Kyverno を比較したときの Gatekeeper の利点は何ですか？
+<span id="_10-what-is-gatekeeper-s-advantage-when-comparing-gatekeeper-and-kyverno"></span>
 
-* A) Learning curve が低い
-* B) YAML native policies
-* C) Resource generation feature
-* D) Complex policy logic expressiveness
+### 10. Rego ポリシーを選択する動機となり得る具体的な要件はどれですか？
+
+* A) すべてのポリシーで必ずメモリ使用量が少なくなる
+* B) チェックなしですべてのリソースを自動生成する
+* C) 常に他のエンジンより複雑なロジックを処理する
+* D) JSON 入力にセット演算と内包表記を適用し、テストで検証する
 
 <details>
+<summary>回答を表示</summary>
 
-<summary>答えを表示</summary>
+**回答: D) JSON 入力にセット演算と内包表記を適用し、テストで検証する**
 
-**回答: D) Complex policy logic expressiveness**
-
-**解説:** Gatekeeper (OPA) と Kyverno の比較:
-
-| Feature             | Gatekeeper         | Kyverno   |
-| ------------------- | ------------------ | --------- |
-| Policy Language     | Rego               | YAML      |
-| Learning Curve      | High               | Low       |
-| Complex Logic       | Very Flexible      | Limited   |
-| Resource Generation | Not Supported      | Supported |
-| External Data       | OPA Bundle Support | API Call  |
-
-Gatekeeper は Rego による柔軟性により、次の処理が容易です。
-
-* 複雑な条件の組み合わせ
-* 再帰的な data structure の処理
-* 高度な set operation
-* external data integration
+**解説:** Rego はこの要件に対する宣言型の演算を提供します。普遍的なパフォーマンスや複雑性の優位性を主張するのではなく、実際のポリシー表現、チームのスキル、テスト、運用上のニーズを比較してください。
 
 </details>
 
 ***
 
-### 11. Rego で複数の violation rule が定義されている場合、それらはどのように評価されますか？
+### 11. Rego で複数の violation ルールが定義されている場合、どのように評価されますか？
 
-* A) 最初の rule のみが評価される
-* B) すべての rule が OR として評価される
-* C) すべての rule が AND として評価される
+* A) 最初のルールのみ評価される
+* B) すべてのルールが OR として評価される
+* C) すべてのルールが AND として評価される
 * D) 1 つがランダムに選択される
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) すべての rule が OR として評価される**
+**回答: B) すべてのルールが OR として評価される**
 
-**解説:** Rego では、同じ名前の複数の rule は OR として評価されます。
+**解説:** この部分セット violation ルールの複数の定義は、同じセットに結果を追加します。
 
 ```rego
-# Rule 1: Check privileged containers
-violation[{"msg": msg}] {
-    container := input.request.object.spec.containers[_]
-    container.securityContext.privileged == true
-    msg := "Privileged containers not allowed"
+package examples
+violation contains {"msg": "Privileged container"} if {
+  container := input.review.object.spec.containers[_]
+  container.securityContext.privileged == true
 }
-
-# Rule 2: Check root execution
-violation[{"msg": msg}] {
-    container := input.request.object.spec.containers[_]
-    container.securityContext.runAsUser == 0
-    msg := "Running as root not allowed"
+violation contains {"msg": "Explicit root user"} if {
+  container := input.review.object.spec.containers[_]
+  container.securityContext.runAsUser == 0
 }
-
-# Violation occurs if either rule is violated
 ```
 
-各 violation rule の結果は set に追加され、1 つ以上の violation がある場合、policy 全体が失敗します。
+各 violation ルールの結果はセットに追加され、1 つ以上の違反がある場合、ポリシー全体は失敗します。
+
+これらの部分セット violation ルールは同じセットに寄与します。各本体内の条件は AND です。競合する完全ドキュメントルールが OR によって解決されるわけではありません。この断片は完全な PSS 実装ではありません。
 
 </details>
 
 ***
 
-### 12. Gatekeeper で Constraint を特定の namespace のみに適用するよう設定する field は何ですか？
+### 12. Constraint を特定の Namespace にのみ適用するよう Gatekeeper で設定するフィールドはどれですか？
 
 * A) spec.targetNamespaces
 * B) spec.match.namespaces
@@ -451,37 +464,36 @@ violation[{"msg": msg}] {
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: B) spec.match.namespaces**
 
-**解説:** Constraint の match section は適用範囲を指定します。
+**解説:** Constraint の match セクションは適用範囲を指定します。
 
 ```yaml
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
+kind: DocsRequiredLabels
 metadata:
-  name: require-labels-prod
+  name: required-labels
 spec:
   enforcementAction: deny
   match:
     kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
+    - apiGroups:
+      - ''
+      kinds:
+      - Pod
     namespaces:
-      - production
-      - staging
-    excludedNamespaces:
-      - kube-system
-      - gatekeeper-system
-    namespaceSelector:
-      matchLabels:
-        environment: production
+    - production
+    - staging
+  parameters:
+    labels:
+    - app.kubernetes.io/name
 ```
 
-* `namespaces`: 含める namespace の list
-* `excludedNamespaces`: 除外する namespace の list
-* `namespaceSelector`: label-based selection
+* `namespaces`: 含める Namespace のリスト
+* `excludedNamespaces`: 除外する Namespace のリスト
+* `namespaceSelector`: ラベルベースの選択
 
 </details>
 
@@ -489,19 +501,19 @@ spec:
 
 ## スコア計算
 
-各問題 1 点で計算してください。
+各問題を 1 点として計算します。
 
-| スコア | 評価                                                    |
-| ------ | ------------------------------------------------------- |
-| 11-12  | 優秀 - OPA Gatekeeper expert level                      |
-| 8-10   | 良好 - Basic concepts understood, Rego deep dive needed |
-| 5-7    | 普通 - Additional study recommended                     |
-| 0-4    | 基礎学習が必要                                          |
+| Score | Rating                                                  |
+| ----- | ------------------------------------------------------- |
+| 11-12 | 優秀 - OPA Gatekeeper のエキスパートレベル              |
+| 8-10  | 良好 - 基本概念は理解済み、Rego の詳細学習が必要        |
+| 5-7   | 平均 - 追加学習を推奨                                   |
+| 0-4   | 基本的な学習が必要                                      |
 
 ***
 
 ## 関連ドキュメント
 
-* [OPA Gatekeeper](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/09-opa-gatekeeper.md)
-* [Kyverno Policy Management](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/01-kyverno-policy-management.md)
-* [Pod Security Standards](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/03-pod-security-standards.md)
+* [OPA Gatekeeper](../../security/09-opa-gatekeeper.md)
+* [Kyverno ポリシー管理](01-kyverno-policy-management-quiz.md)
+* [Pod Security Standards](03-pod-security-standards-quiz.md)
