@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Shared Nodes Pod synchronization",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      620
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "virtual-side",
+        "label": "Virtual Side",
+        "focus": [
+          "dev",
+          "vapi",
+          "syncer"
+        ],
+        "note": "Conceptual vCluster0.37 Shared Nodes flow; actual runtime, access and recovery require validation."
+      },
+      {
+        "id": "host-side",
+        "label": "Host Side",
+        "focus": [
+          "syncer",
+          "hostapi",
+          "kubelet"
+        ],
+        "note": "Conceptual vCluster0.37 Shared Nodes flow; actual runtime, access and recovery require validation."
+      },
+      {
+        "id": "status-back",
+        "label": "Status Back",
+        "focus": [
+          "kubelet",
+          "hostapi",
+          "syncer",
+          "vapi",
+          "dev"
+        ],
+        "note": "Conceptual vCluster0.37 Shared Nodes flow; actual runtime, access and recovery require validation."
+      }
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "output": "en-platform-engineering-08-vcluster-11.html",
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "Developer",
+      "sublabel": "kubectl"
+    },
+    {
+      "id": "vapi",
+      "type": "frontend",
+      "label": "Virtual API server",
+      "sublabel": "Tenant control plane"
+    },
+    {
+      "id": "syncer",
+      "type": "backend",
+      "label": "Syncer",
+      "sublabel": "Name/namespace mapping"
+    },
+    {
+      "id": "hostapi",
+      "type": "cloud",
+      "label": "Host API server",
+      "sublabel": "EKS control plane"
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Host kubelet",
+      "sublabel": "Worker node"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 248,
+      "label": "가상 클러스터 내부 — Deployment·ReplicaSet은 여기서만 존재"
+    },
+    {
+      "from": 262,
+      "to": 382,
+      "label": "syncToHost — Pod만 호스트로 동기화"
+    },
+    {
+      "from": 396,
+      "to": 545,
+      "label": "상태 역전파 — 호스트 → 가상"
+    }
+  ],
+  "messages": [
+    {
+      "id": "apply",
+      "from": "dev",
+      "to": "vapi",
+      "y": 184,
+      "label": "kubectl apply",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
+      "from": "vapi",
+      "to": "syncer",
+      "y": 228,
+      "label": "Observe virtual Pod"
+    },
+    {
+      "id": "create-host",
+      "from": "syncer",
+      "to": "hostapi",
+      "y": 300,
+      "label": "Create translated Pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "schedule",
+      "from": "hostapi",
+      "to": "kubelet",
+      "y": 360,
+      "label": "Schedule and execute"
+    },
+    {
+      "id": "status",
+      "from": "kubelet",
+      "to": "hostapi",
+      "y": 416,
+      "label": "Update host Pod status",
+      "variant": "return"
+    },
+    {
+      "id": "status-watch",
+      "from": "hostapi",
+      "to": "syncer",
+      "y": 456,
+      "label": "Observe status change",
+      "variant": "return"
+    },
+    {
+      "id": "vstatus",
+      "from": "syncer",
+      "to": "vapi",
+      "y": 494,
+      "label": "Update virtual Pod status",
+      "variant": "return"
+    },
+    {
+      "id": "get-pods",
+      "from": "vapi",
+      "to": "dev",
+      "y": 532,
+      "label": "Return observed Pod status",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "vapi",
+      "from": 184,
+      "to": 536,
+      "type": "frontend"
+    },
+    {
+      "participant": "syncer",
+      "from": 228,
+      "to": 498,
+      "type": "backend"
+    },
+    {
+      "participant": "hostapi",
+      "from": 300,
+      "to": 460,
+      "type": "cloud"
+    },
+    {
+      "participant": "kubelet",
+      "from": 360,
+      "to": 420,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Virtual resources",
+      "items": [
+        "Higher-level controllers run in the virtual control plane",
+        "Additional sync options change permissions and behavior"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Host execution",
+      "items": [
+        "Syncer translates Pods and selected references",
+        "Names depend on version, mode and length",
+        "Host admission and network policy affect real Pods"
+      ]
+    }
+  ]
+}

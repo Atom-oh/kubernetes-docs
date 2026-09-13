@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: reviewed-vclusters
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/REPLACE_APPROVED_ORG/platform-config
+        revision: main
+        files:
+          - path: vclusters/*/config.yaml
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  template:
+    metadata:
+      name: "vcluster-{{ .name }}"
+    spec:
+      project: vcluster-tenants
+      sources:
+        - repoURL: https://charts.loft.sh
+          chart: vcluster
+          targetRevision: "0.37.0"
+          helm:
+            releaseName: "{{ .name }}"
+            valueFiles:
+              - "$values/vclusters/{{ .name }}/vcluster.yaml"
+        - repoURL: https://github.com/REPLACE_APPROVED_ORG/platform-config
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          selfHeal: true
+          prune: false
+        syncOptions: [CreateNamespace=true]

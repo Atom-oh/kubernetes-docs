@@ -1,0 +1,11 @@
+# Optional configuration: verify product entitlement and workload behavior first.
+sleep:
+  auto:
+    afterInactivity: 30m
+    schedule: "0 20 * * 1-5"
+    timezone: Etc/UTC
+    wakeup:
+      schedule: "0 8 * * 1-5"
+# No automatic deletion is enabled by this example.
+deletion:
+  prevent: true
