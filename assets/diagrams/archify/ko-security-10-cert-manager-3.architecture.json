@@ -9,35 +9,38 @@
     "views": [
       {
         "id": "csr-path",
-        "label": "1-2. CSR 요청",
+        "label": "CSR 요청",
         "focus": [
-          "envoy",
+          "istio-agent",
           "csr-agent",
-          "cm-controller",
           "cert-request"
         ],
-        "note": "Envoy 사이드카가 istio-csr에 CSR을 보내면 istio-csr가 cert-manager에 CertificateRequest를 생성한다."
+        "note": "istio-agent가 CSR을 만들고 istio-csr가 Kubernetes API로 CertificateRequest를 생성한다."
       },
       {
         "id": "issue-path",
-        "label": "3-4. 발급",
+        "label": "발급과 승인",
         "focus": [
           "cert-request",
+          "cm-controller",
           "cluster-issuer",
           "ca-backend",
           "svid"
         ],
-        "note": "CertificateRequest는 ClusterIssuer(istio-ca)를 거쳐 외부 PKI에서 서명되어 SPIFFE SVID 인증서가 된다."
+        "note": "issuer controller는 승인과 발급 정책을 확인하고 PKI에서 서명된 chain을 반환한다."
       },
       {
-        "id": "return-path",
-        "label": "5. 반환과 mTLS",
+        "id": "data-path",
+        "label": "SDS와 mTLS",
         "focus": [
           "svid",
+          "csr-agent",
+          "istio-agent",
           "envoy",
+          "peer-proxy",
           "app"
         ],
-        "note": "발급된 SVID가 Envoy로 돌아오고, Envoy가 이 인증서로 워크로드 간 mTLS를 맺는다."
+        "note": "agent가 SDS로 Envoy에 key/cert를 전달한다. mTLS는 workload proxy 사이이며 로컬 app hop과 구분한다."
       }
     ],
     "legend": {
@@ -63,7 +66,7 @@
       "sublabel": "앱 컨테이너",
       "pos": [
         40,
-        400
+        460
       ],
       "size": [
         160,
@@ -77,7 +80,7 @@
       "sublabel": "워크로드 프록시",
       "pos": [
         40,
-        240
+        260
       ],
       "size": [
         160,
@@ -87,11 +90,11 @@
     {
       "id": "csr-agent",
       "type": "backend",
-      "label": "istio-csr Agent",
+      "label": "istio-csr",
       "sublabel": "gRPC CA 서버",
       "pos": [
-        280,
-        240
+        350,
+        50
       ],
       "size": [
         170,
@@ -102,10 +105,10 @@
       "id": "cm-controller",
       "type": "backend",
       "label": "cert-manager Controller",
-      "sublabel": "CertificateRequest 처리",
+      "sublabel": "승인된 요청 처리",
       "pos": [
-        610,
-        240
+        600,
+        260
       ],
       "size": [
         200,
@@ -114,12 +117,12 @@
     },
     {
       "id": "cert-request",
-      "type": "backend",
+      "type": "cloud",
       "label": "CertificateRequest",
       "sublabel": "cert-manager.io/v1",
       "pos": [
-        610,
-        400
+        600,
+        50
       ],
       "size": [
         200,
@@ -132,8 +135,8 @@
       "label": "ClusterIssuer",
       "sublabel": "istio-ca",
       "pos": [
-        890,
-        400
+        900,
+        260
       ],
       "size": [
         150,
@@ -147,7 +150,7 @@
       "sublabel": "CA / Vault PKI / AWS PCA",
       "pos": [
         1120,
-        400
+        260
       ],
       "size": [
         180,
@@ -160,11 +163,39 @@
       "label": "SVID 인증서",
       "sublabel": "spiffe://cluster.local/ns/.../sa/...",
       "pos": [
-        890,
-        60
+        900,
+        50
       ],
       "size": [
         250,
+        64
+      ]
+    },
+    {
+      "id": "istio-agent",
+      "type": "backend",
+      "label": "istio-agent",
+      "sublabel": "CSR · SDS",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "peer-proxy",
+      "type": "security",
+      "label": "Peer Envoy",
+      "sublabel": "다른 workload Pod",
+      "pos": [
+        900,
+        460
+      ],
+      "size": [
+        190,
         64
       ]
     }
@@ -175,7 +206,8 @@
       "label": "워크로드 Pod",
       "wraps": [
         "app",
-        "envoy"
+        "envoy",
+        "istio-agent"
       ]
     },
     {
@@ -200,70 +232,140 @@
         "cluster-issuer",
         "ca-backend"
       ]
+    },
+    {
+      "kind": "region",
+      "label": "원격 workload",
+      "wraps": [
+        "peer-proxy"
+      ]
     }
   ],
   "connections": [
     {
-      "id": "envoy-to-csr",
-      "from": "envoy",
+      "id": "agent-to-csr",
+      "from": "istio-agent",
       "to": "csr-agent",
-      "label": "1. CSR 요청",
+      "label": "1. CSR · workload identity",
       "variant": "emphasis"
     },
     {
-      "id": "csr-to-cm",
+      "id": "csr-to-cr",
       "from": "csr-agent",
-      "to": "cm-controller",
-      "label": "2. CertificateRequest 생성",
-      "variant": "emphasis"
+      "to": "cert-request",
+      "label": "2. Kubernetes API 생성",
+      "variant": "emphasis",
+      "labelAt": [
+        560,
+        135
+      ]
     },
     {
-      "id": "cm-to-cr",
+      "id": "controller-watches",
       "from": "cm-controller",
       "to": "cert-request",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "cr-to-issuer",
-      "from": "cert-request",
-      "to": "cluster-issuer",
-      "label": "3. 발급 요청",
-      "variant": "emphasis",
-      "labelDy": 54
-    },
-    {
-      "id": "issuer-to-ca",
-      "from": "cluster-issuer",
-      "to": "ca-backend",
-      "label": "서명"
-    },
-    {
-      "id": "ca-to-svid",
-      "from": "ca-backend",
-      "to": "svid",
-      "label": "4. SVID 발급",
+      "label": "감시 · 조정",
+      "variant": "dashed",
       "fromSide": "top",
       "toSide": "bottom"
     },
     {
-      "id": "svid-to-envoy",
+      "id": "controller-issuer",
+      "from": "cm-controller",
+      "to": "cluster-issuer",
+      "label": "3. issuerRef · approval",
+      "variant": "emphasis",
+      "labelAt": [
+        850,
+        345
+      ]
+    },
+    {
+      "id": "issuer-ca",
+      "from": "cluster-issuer",
+      "to": "ca-backend",
+      "label": "서명",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ca-certificate",
+      "from": "ca-backend",
+      "to": "svid",
+      "label": "4. X.509-SVID",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "return-via-csr",
       "from": "svid",
-      "to": "envoy",
-      "label": "5. 인증서 반환",
+      "to": "csr-agent",
+      "label": "5. 인증서 chain 반환",
       "variant": "dashed",
-      "fromSide": "left",
+      "fromSide": "top",
       "toSide": "top"
     },
     {
-      "id": "envoy-to-app",
-      "from": "envoy",
-      "to": "app",
-      "label": "mTLS",
+      "id": "return-to-agent",
+      "from": "csr-agent",
+      "to": "istio-agent",
+      "label": "6. gRPC 응답",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "agent-sds",
+      "from": "istio-agent",
+      "to": "envoy",
+      "label": "SDS: key + certificate",
       "variant": "security",
       "fromSide": "bottom",
       "toSide": "top",
-      "labelDy": 24
+      "labelAt": [
+        125,
+        185
+      ]
+    },
+    {
+      "id": "local-app",
+      "from": "envoy",
+      "to": "app",
+      "label": "로컬 app hop",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        120,
+        390
+      ]
+    },
+    {
+      "id": "peer-mtls",
+      "from": "envoy",
+      "to": "peer-proxy",
+      "label": "workload 간 mTLS",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "신뢰와 갱신",
+      "items": [
+        "istio-csr serving root를 별도 mount/pin",
+        "CA rollover와 workload 인증서 갱신을 분리"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "구성 범위",
+      "items": [
+        "Sidecar 흐름; Ambient 지원은 별도 확인",
+        "Private CA external issuer는 자신의 issuerRef group/kind 사용"
+      ]
     }
   ]
 }

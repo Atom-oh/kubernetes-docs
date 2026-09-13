@@ -1,8 +1,8 @@
 # cert-manager 퀴즈
 
-다음 질문들을 통해 cert-manager와 Kubernetes 인증서 관리에 대한 이해도를 점검해보세요.
+> **마지막 업데이트**: 2026년 9월 13일
 
----
+인증서 발급·갱신·신뢰 배포와 AWS 연동의 경계를 확인하는 10문제입니다.
 
 ## 문제
 
@@ -18,355 +18,173 @@
 
 **정답: C) Graduated**
 
-**설명:**
-cert-manager는 2022년 10월 CNCF Graduated 프로젝트로 승격되었습니다. 이는 프로젝트의 성숙도, 보안성, 거버넌스가 프로덕션 환경에서 사용하기에 충분히 검증되었음을 의미합니다. Kubernetes, Prometheus, Envoy와 같은 수준의 성숙도를 인정받은 것입니다.
+2024년 9월 29일 Graduated로 승격됐습니다. 2022년 9월 19일은 Incubating 승격일입니다. 프로젝트 성숙도와 개별 설치의 보안·가용성 검증은 구분합니다.
 
 </details>
 
----
+<span id="_2-cert-manager의-핵심-구성요소가-아닌-것은"></span>
 
-### 2. cert-manager의 핵심 구성요소가 아닌 것은?
+### 2. Certificate를 감시하고 발급·갱신을 조정하는 구성요소는?
 
-- A) controller
+- A) cainjector
 - B) webhook
-- C) cainjector
+- C) controller
 - D) scheduler
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: D) scheduler**
+**정답: C) controller**
 
-**설명:**
-cert-manager의 핵심 구성요소는 다음과 같습니다:
-
-- **controller**: Certificate 리소스를 감시하고 인증서 발급/갱신을 관리
-- **webhook**: ValidatingWebhook과 MutatingWebhook으로 리소스 유효성 검증
-- **cainjector**: CA 번들을 자동으로 Webhook 설정에 주입
-
-scheduler는 cert-manager의 구성요소가 아닙니다.
+controller가 인증서 수명주기를 조정합니다. webhook은 커스텀 리소스 검증·defaulting·변환, cainjector는 지원되는 API/webhook 설정의 CA bundle 주입을 담당합니다.
 
 </details>
 
----
-
 ### 3. Issuer와 ClusterIssuer의 주요 차이점은?
 
-- A) 지원하는 인증서 종류
-- B) 적용 범위(네임스페이스 vs 클러스터 전체)
-- C) ACME 프로토콜 지원 여부
-- D) 인증서 갱신 주기
+- A) Issuer만 ACME 지원
+- B) Issuer는 namespace 범위, ClusterIssuer는 cluster 범위
+- C) ClusterIssuer만 자동 갱신
+- D) ClusterIssuer를 만들면 SAN 정책이 자동 강제됨
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 적용 범위(네임스페이스 vs 클러스터 전체)**
+**정답: B) Issuer는 namespace 범위, ClusterIssuer는 cluster 범위**
 
-**설명:**
-두 리소스의 차이는 적용 범위입니다:
-
-```yaml
-# Issuer: 특정 네임스페이스 내에서만 사용 가능
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: letsencrypt-staging
-  namespace: my-namespace  # 이 네임스페이스에서만 참조 가능
-
----
-# ClusterIssuer: 모든 네임스페이스에서 사용 가능
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod  # 클러스터 전역에서 참조 가능
-```
-
-멀티테넌트 환경에서는 Issuer로 네임스페이스별 격리를, 단일 팀 환경에서는 ClusterIssuer로 관리 편의성을 높일 수 있습니다.
+Issuer는 같은 namespace에서 참조합니다. ClusterIssuer의 인증·CA Secret은 controller의 cluster-resource namespace(기본 cert-manager)에 있습니다. 범위만으로 요청자의 SAN·issuerRef 권한을 제한하지 않으므로 별도 승인·admission 정책이 필요합니다.
 
 </details>
 
----
+<span id="_4-acme-챌린지-방식-중-와일드카드-인증서를-지원하는-것은"></span>
 
-### 4. ACME 챌린지 방식 중 와일드카드 인증서를 지원하는 것은?
+### 4. 일반적인 Let’s Encrypt ACME 와일드카드 발급에 사용하는 검증 방식은?
 
 - A) HTTP-01
 - B) DNS-01
 - C) TLS-ALPN-01
-- D) 모든 방식이 지원
+- D) 포트 443 연결만 확인
 
 <details>
 <summary>정답 보기</summary>
 
 **정답: B) DNS-01**
 
-**설명:**
-ACME 챌린지 방식별 특징:
-
-| 방식 | 와일드카드 지원 | 요구사항 |
-|------|----------------|----------|
-| HTTP-01 | X | 포트 80 접근 가능 |
-| DNS-01 | O | DNS 레코드 수정 권한 |
-| TLS-ALPN-01 | X | 포트 443 접근 가능 |
-
-```yaml
-# DNS-01 챌린지로 와일드카드 인증서 발급
-apiVersion: cert-manager.io/v1
-kind: Certificate
-spec:
-  dnsNames:
-    - "*.example.com"  # 와일드카드
-    - "example.com"
-  issuerRef:
-    name: letsencrypt-dns01
-    kind: ClusterIssuer
-```
-
-DNS-01은 DNS TXT 레코드를 통해 도메인 소유권을 검증하므로 와일드카드 인증서 발급이 가능합니다.
+DNS-01은 TXT 레코드로 도메인 제어를 검증합니다. HTTP-01은 포트 80 접근이 필요하고 와일드카드를 지원하지 않습니다. DNS API 권한은 지정된 zone·TXT 이름으로 제한합니다. 재사용 authorization이나 ACM 사전 검증에서는 매번 새 Challenge가 필요하지 않을 수 있습니다.
 
 </details>
 
----
+<span id="_5-certificate-리소스의-secretname-필드의-역할은"></span>
 
-### 5. Certificate 리소스의 secretName 필드의 역할은?
+### 5. Certificate.spec.secretName의 역할은?
 
-- A) Issuer의 인증 정보를 저장
-- B) 발급된 인증서와 개인키를 저장할 Secret 이름 지정
-- C) ACME 계정 키를 저장
-- D) CA 번들을 저장
+- A) ACME 계정 키 Secret
+- B) 같은 namespace의 인증서·개인키 출력 Secret
+- C) 항상 root CA를 배포할 ConfigMap
+- D) Issuer 인증 Secret
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 발급된 인증서와 개인키를 저장할 Secret 이름 지정**
+**정답: B) 같은 namespace의 인증서·개인키 출력 Secret**
 
-**설명:**
-secretName은 cert-manager가 발급한 인증서를 저장할 Kubernetes Secret의 이름을 지정합니다:
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: my-app-cert
-  namespace: default
-spec:
-  secretName: my-app-tls  # 이 이름의 Secret이 생성됨
-  issuerRef:
-    name: letsencrypt-prod
-    kind: ClusterIssuer
-  dnsNames:
-    - myapp.example.com
-```
-
-생성되는 Secret 구조:
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-app-tls
-type: kubernetes.io/tls
-data:
-  tls.crt: <base64-encoded-certificate>
-  tls.key: <base64-encoded-private-key>
-  ca.crt: <base64-encoded-ca-certificate>  # 선택적
-```
+출력 Secret의 tls.crt·tls.key를 지정합니다. ca.crt는 발급 경로에 따라 없을 수 있고 클라이언트 신뢰 배포를 대체하지 않습니다. privateKey.rotationPolicy 기본값은 1.18부터 Always이며, Secret 갱신 후 애플리케이션 reload는 별도 확인합니다.
 
 </details>
 
----
+<span id="_6-aws-private-ca-pca-를-kubernetes에서-사용하기-위한-cert-manager-확장은"></span>
 
-### 6. AWS Private CA(PCA)를 Kubernetes에서 사용하기 위한 cert-manager 확장은?
+### 6. AWS Private CA를 cert-manager 외부 Issuer로 연결하는 확장은?
 
 - A) aws-pca-controller
 - B) aws-privateca-issuer
-- C) pca-cert-manager
-- D) aws-ca-plugin
+- C) acmesolver
+- D) trust-manager
 
 <details>
 <summary>정답 보기</summary>
 
 **정답: B) aws-privateca-issuer**
 
-**설명:**
-aws-privateca-issuer는 AWS Private CA를 cert-manager의 외부 Issuer로 사용할 수 있게 해주는 공식 확장입니다:
-
-```yaml
-apiVersion: awspca.cert-manager.io/v1beta1
-kind: AWSPCAIssuer
-metadata:
-  name: aws-pca-issuer
-  namespace: default
-spec:
-  arn: arn:aws:acm-pca:us-east-1:123456789:certificate-authority/abc-123
-  region: us-east-1
-```
-
-주요 사용 사례:
-- 엔터프라이즈 PKI 통합
-- 규정 준수가 필요한 내부 서비스 인증서
-- mTLS를 위한 클라이언트 인증서 발급
-- 하이브리드 환경에서 일관된 CA 사용
+aws-privateca-issuer가 AWSPCAIssuer/AWSPCAClusterIssuer를 처리합니다. CA ARN으로 범위를 제한한 IAM 권한과 workload identity, 요청 승인, CA 모드·template·수명 확인이 필요합니다. 사설 CA 인증서는 일반 브라우저의 공개 신뢰나 무료 발급을 보장하지 않습니다.
 
 </details>
-
----
 
 ### 7. trust-manager의 주요 기능은?
 
-- A) 인증서 발급 자동화
-- B) CA 번들을 ConfigMap/Secret으로 배포
-- C) 인증서 만료 알림
-- D) ACME 챌린지 자동화
+- A) 인증서와 개인키 발급
+- B) 선택한 namespace에 CA bundle 배포
+- C) CA 개인키를 모든 Pod에 복제
+- D) 인증서 자동 폐기
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) CA 번들을 ConfigMap/Secret으로 배포**
+**정답: B) 선택한 namespace에 CA bundle 배포**
 
-**설명:**
-trust-manager는 cert-manager 팀에서 개발한 CA 번들 배포 도구입니다:
-
-```yaml
-apiVersion: trust.cert-manager.io/v1alpha1
-kind: Bundle
-metadata:
-  name: my-ca-bundle
-spec:
-  sources:
-    - useDefaultCAs: true  # 시스템 CA 포함
-    - secret:
-        name: my-internal-ca
-        key: ca.crt
-    - configMap:
-        name: additional-ca
-        key: ca-bundle.crt
-  target:
-    configMap:
-      key: ca-bundle.crt
-    namespaceSelector:
-      matchLabels:
-        inject-ca: "true"
-```
-
-이를 통해 모든 네임스페이스에 일관된 CA 번들을 자동 배포하고 동기화할 수 있습니다.
+기본 0.25.0 chart는 Bundle v1alpha1을 사용합니다. source는 설정된 trust namespace에서 읽고 namespaceSelector로 배포 범위를 제한합니다. ConfigMap target을 사용할 수 있고 Secret target은 별도 활성화·RBAC가 필요합니다. subPath mount는 갱신을 전달하지 않으며 directory mount도 process reload를 보장하지 않습니다.
 
 </details>
 
----
+<span id="_8-certificate-리소스의-renewbefore-필드-설정-시-갱신-동작은"></span>
 
-### 8. Certificate 리소스의 renewBefore 필드 설정 시 갱신 동작은?
+### 8. 요청 duration은 90일이지만 실제 인증서는 45일이고 갱신 설정·ARI가 없다면 기본 갱신 시점은?
 
-- A) 만료일 이전 지정된 기간에 자동 갱신 시작
-- B) 수동 갱신 요청 시점 지정
-- C) 인증서 유효 기간 설정
-- D) 갱신 실패 시 재시도 간격
+- A) 실제 유효기간 시작 후 약 30일
+- B) 요청한 90일 기준 60일
+- C) 항상 만료 30일 전
+- D) 항상 발급 75일 후
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: A) 만료일 이전 지정된 기간에 자동 갱신 시작**
+**정답: A) 실제 유효기간 시작 후 약 30일**
 
-**설명:**
-renewBefore는 인증서 만료 전 갱신을 시작할 시점을 지정합니다:
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: my-cert
-spec:
-  secretName: my-cert-tls
-  duration: 2160h     # 90일 유효
-  renewBefore: 360h   # 만료 15일 전 갱신 시작
-  issuerRef:
-    name: letsencrypt-prod
-    kind: ClusterIssuer
-  dnsNames:
-    - myapp.example.com
-```
-
-위 설정에서:
-- 인증서 유효 기간: 90일
-- 갱신 시작 시점: 만료 15일 전 (75일째)
-- cert-manager가 자동으로 새 인증서를 발급하고 Secret을 업데이트
+기본값은 실제 X.509 수명의 2/3 지점입니다. 실제 90일 인증서에 renewBefore:360h가 적용되면 75일째라는 계산이 맞습니다. renewBefore와 renewBeforePercentage는 동시에 지정하지 않습니다. 1.21의 renewal policy/windows 또는 지원되는 ARI 경로가 있으면 status.renewalTime을 확인해야 합니다.
 
 </details>
 
----
+<span id="_9-istio-서비스-메시와-cert-manager를-연동하는-컴포넌트는"></span>
 
-### 9. Istio 서비스 메시와 cert-manager를 연동하는 컴포넌트는?
+### 9. Istio sidecar 인증서 발급 경로를 올바르게 설명한 것은?
 
-- A) istio-gateway
-- B) istio-csr
-- C) istio-ca
-- D) istio-cert
+- A) Envoy가 CA 개인키로 직접 서명
+- B) istio-agent → istio-csr → CertificateRequest/Issuer, SDS로 Envoy에 전달
+- C) 애플리케이션과 같은 Pod의 모든 통신이 자동 mTLS
+- D) rootCAFile 경로만 있으면 실제 CA mount 불필요
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) istio-csr**
+**정답: B) istio-agent → istio-csr → CertificateRequest/Issuer, SDS로 Envoy에 전달**
 
-**설명:**
-istio-csr(Certificate Signing Request)은 Istio의 워크로드 인증서를 cert-manager를 통해 발급받도록 연동하는 컴포넌트입니다:
-
-```yaml
-# istio-csr 설치
-helm install istio-csr jetstack/cert-manager-istio-csr \
-  --namespace cert-manager \
-  --set "app.tls.rootCAFile=/var/run/secrets/istio-csr/ca.pem" \
-  --set "app.certmanager.issuer.name=istio-ca" \
-  --set "app.certmanager.issuer.kind=ClusterIssuer"
-```
-
-주요 이점:
-- Istio의 기본 CA(istiod) 대신 외부 CA 사용
-- 중앙 집중식 인증서 관리
-- 엔터프라이즈 PKI 통합
-- 인증서 가시성 및 감사
+istio-agent가 CSR을 만들고 istio-csr가 cert-manager 발급 경로에 연결합니다. 프록시 간 mTLS와 로컬 애플리케이션 hop을 구분합니다. 실제 신뢰 root mount·Issuer 준비·Istio external CA 설정이 필요하며 별도 Kubernetes CSR RA 모드를 혼합하지 않습니다.
 
 </details>
 
----
+<span id="_10-cert-manager와-aws-acm-certificate-manager-비교-시-cert-manager의-장점은"></span>
 
-### 10. cert-manager와 AWS ACM(Certificate Manager) 비교 시 cert-manager의 장점은?
+### 10. ACM과 cert-manager의 현재 동작에 대한 올바른 설명은?
 
-- A) AWS 관리형 서비스로 운영 부담 없음
-- B) ALB/NLB와 네이티브 통합
-- C) 인프라 독립적으로 멀티클라우드/온프레미스에서 동일하게 사용
-- D) 무료 인증서 자동 갱신
+- A) ACM 인증서는 Pod·온프레미스에서 절대 사용 불가
+- B) ALB는 Kubernetes TLS Secret을 직접 읽음
+- C) ACM exportable 인증서는 명시적 내보내기로 사용 가능하며 ACM ACME는 별도 lifecycle·제약이 있음
+- D) ACM ACME는 server URL만 바꾸면 등록 완료
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 인프라 독립적으로 멀티클라우드/온프레미스에서 동일하게 사용**
+**정답: C) ACM exportable 인증서는 명시적 내보내기로 사용 가능하며 ACM ACME는 별도 lifecycle·제약이 있음**
 
-**설명:**
-cert-manager vs AWS ACM 비교:
-
-| 특성 | cert-manager | AWS ACM |
-|------|--------------|---------|
-| 인프라 의존성 | 없음 (K8s만 필요) | AWS 전용 |
-| 멀티클라우드 | 지원 | 불가 |
-| 온프레미스 | 지원 | 불가 |
-| 운영 부담 | 직접 관리 필요 | AWS 관리형 |
-| Ingress 통합 | 모든 Ingress Controller | ALB/NLB만 |
-| 비용 | Let's Encrypt 무료 | 퍼블릭 무료, Private 유료 |
-
-cert-manager는:
-- EKS, GKE, AKS, 온프레미스 모두에서 동일하게 작동
-- Kubernetes 네이티브 워크플로우
-- GitOps와 자연스러운 통합
-- 다양한 Issuer 지원 (Let's Encrypt, Vault, Venafi 등)
+ACK ACM export는 options.export:ENABLED, exportTo, 출력 Secret과 별도 도메인 검증이 필요합니다. ACM ACME는 사전 검증 도메인·EAB 등록과 client의 키·갱신 관리가 필요하며 45일 인증서를 직접 ALB/CloudFront/API Gateway 통합에 연결하지 못합니다. cert-manager는 Kubernetes Secret과 여러 Issuer를 조정하지만 controller와 CA 신뢰·비용을 운영해야 합니다.
 
 </details>
-
----
 
 ## 점수 계산
 
-- **9-10개 정답**: 우수 - 해당 주제를 깊이 이해하고 있습니다.
-- **7-8개 정답**: 양호 - 핵심 개념을 잘 파악하고 있습니다.
-- **5-6개 정답**: 보통 - 추가 학습이 필요한 부분이 있습니다.
-- **4개 이하**: 문서를 다시 복습하시기 바랍니다.
+- 9–10개: 핵심 개념을 잘 이해했습니다.
+- 7–8개: 틀린 항목의 발급·신뢰 경로를 다시 확인하세요.
+- 6개 이하: 본문과 예제를 함께 복습하세요.
 
 ## 관련 문서
 

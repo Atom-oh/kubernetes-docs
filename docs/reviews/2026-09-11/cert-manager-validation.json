@@ -1,0 +1,2748 @@
+{
+  "status": "passed-scoped-audit",
+  "reviewedAt": "2026-09-13T03:53:36.730287+00:00",
+  "scope": {
+    "documents": 4,
+    "originalLines": 3602,
+    "originalCodeBlocks": 92,
+    "quizQuestions": 20,
+    "exampleFiles": 23,
+    "diagrams": 8,
+    "legacyAnchors": 130
+  },
+  "originalFiles": [
+    {
+      "path": "ko/security/10-cert-manager.md",
+      "lines": 1399,
+      "sha256": "2d729a535659fcf285783f74076a69b722521cf9c20111cc3d846de166f575b8",
+      "blocks": 41
+    },
+    {
+      "path": "ko/quizzes/security/10-cert-manager-quiz.md",
+      "lines": 373,
+      "sha256": "966102790fd6227e5e76b10c19ef44c22c740035e47249d6f3a215eba9944a93",
+      "blocks": 8
+    },
+    {
+      "path": "en/security/10-cert-manager.md",
+      "lines": 1472,
+      "sha256": "5abf9e5751ae87961a1b4f1577e9959d92f9f2f0aaf437739870003411816790",
+      "blocks": 36
+    },
+    {
+      "path": "en/quizzes/security/10-cert-manager-quiz.md",
+      "lines": 358,
+      "sha256": "380bf9eef8070a9f914384022e4ab204408381360a68f6b873ca329d5948250d",
+      "blocks": 7
+    }
+  ],
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/security/10-cert-manager.md",
+        "sha256": "ff1f09004695ef99c6cb1dd1c129b1c944404649a2720030e8bab4b45bf5ab5e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cert-manager를-활용한-인증서-관리"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "설치"
+          },
+          {
+            "tag": "h2",
+            "id": "핵심-개념"
+          },
+          {
+            "tag": "h3",
+            "id": "certificate와-갱신"
+          },
+          {
+            "tag": "h3",
+            "id": "certificaterequest와-개인키"
+          },
+          {
+            "tag": "h2",
+            "id": "issuer-유형"
+          },
+          {
+            "tag": "h3",
+            "id": "selfsigned와-ca-bootstrap"
+          },
+          {
+            "tag": "h3",
+            "id": "acme-http-01과-dns-01"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-private-ca"
+          },
+          {
+            "tag": "h3",
+            "id": "vault-pki"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-통합-패턴"
+          },
+          {
+            "tag": "h2",
+            "id": "aws-네이티브-대안-acm-ack"
+          },
+          {
+            "tag": "h3",
+            "id": "acm-requestcertificate와-ack-export"
+          },
+          {
+            "tag": "h3",
+            "id": "acm-acme-eab와-사전-도메인-검증"
+          },
+          {
+            "tag": "h2",
+            "id": "서비스-메시-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "istio와-istio-csr"
+          },
+          {
+            "tag": "h3",
+            "id": "linkerd와-trust-manager"
+          },
+          {
+            "tag": "h2",
+            "id": "trust-manager"
+          },
+          {
+            "tag": "h2",
+            "id": "모니터링-및-트러블슈팅"
+          },
+          {
+            "tag": "h2",
+            "id": "모범-사례"
+          },
+          {
+            "tag": "h2",
+            "id": "요약-및-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "목차",
+          "cert-manager를-활용한-인증서-관리",
+          "인증서-자동화의-필요성",
+          "cert-manager의-주요-기능",
+          "cncf-graduated-프로젝트",
+          "개요-1",
+          "개요",
+          "구성요소",
+          "구성요소-상세",
+          "아키텍처",
+          "helm을-사용한-설치",
+          "프로덕션-환경-권장-설정",
+          "설치-확인",
+          "설치-1",
+          "설치",
+          "리소스-관계도",
+          "certificate",
+          "issuer-vs-clusterissuer",
+          "certificaterequest",
+          "핵심-개념",
+          "certificate와-갱신",
+          "certificaterequest와-개인키",
+          "유형별-비교",
+          "selfsigned-issuer",
+          "ca-issuer",
+          "acme-issuer-let-s-encrypt",
+          "인증서-발급-흐름",
+          "http-01-솔버",
+          "dns-01-솔버-route53-irsa",
+          "와일드카드-인증서",
+          "aws-private-ca-issuer",
+          "vault-pki-issuer",
+          "issuer-유형",
+          "selfsigned와-ca-bootstrap",
+          "acme-http-01과-dns-01",
+          "aws-private-ca",
+          "vault-pki",
+          "acm-vs-cert-manager-비교",
+          "alb-ingress-acm",
+          "ingress-nginx-cert-manager",
+          "nlb-tls-종단",
+          "gateway-api-cert-manager",
+          "eks-통합-패턴",
+          "_2026년-7월-업데이트-acm의-acme-프로토콜-지원",
+          "지원-인증서-유형",
+          "적용-시나리오",
+          "예시-ack를-통한-certificate-리소스-정의",
+          "cert-manager와-비교",
+          "aws-네이티브-대안-acm--ack",
+          "aws-네이티브-대안-acm-ack",
+          "acm-requestcertificate와-ack-export",
+          "acm-acme-eab와-사전-도메인-검증",
+          "istio-istio-csr",
+          "istio-csr-아키텍처",
+          "istio-csr-설치",
+          "istio-ca-issuer-설정",
+          "istio-설치-istio-csr-사용",
+          "linkerd-trust-manager",
+          "서비스-메시-통합",
+          "istio와-istio-csr",
+          "linkerd와-trust-manager",
+          "bundle-리소스",
+          "사용-예시",
+          "trust-manager",
+          "prometheus-메트릭",
+          "인증서-상태-확인",
+          "cmctl-cli",
+          "일반적인-문제-해결",
+          "dns-전파-지연-dns-01",
+          "let-s-encrypt-rate-limit",
+          "webhook-타임아웃",
+          "모니터링-및-트러블슈팅",
+          "갱신-버퍼-설정",
+          "백업-ca-전략",
+          "멀티-테넌트-issuer-전략",
+          "개인키-관리",
+          "secret-템플릿",
+          "모범-사례",
+          "핵심-정리",
+          "issuer-선택-가이드",
+          "참고-자료",
+          "요약-및-참고-자료"
+        ]
+      },
+      {
+        "path": "en/security/10-cert-manager.md",
+        "sha256": "818c7b538eb9b9d3c3c897e1ac04d52d143244b7a954d74dc9bf405badabd980",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "certificate-management-with-cert-manager"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "installation"
+          },
+          {
+            "tag": "h2",
+            "id": "core-concepts"
+          },
+          {
+            "tag": "h3",
+            "id": "certificate-and-renewal"
+          },
+          {
+            "tag": "h3",
+            "id": "certificaterequest-and-private-keys"
+          },
+          {
+            "tag": "h2",
+            "id": "issuer-types"
+          },
+          {
+            "tag": "h3",
+            "id": "selfsigned-and-ca-bootstrap"
+          },
+          {
+            "tag": "h3",
+            "id": "acme-http-01-and-dns-01"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-private-ca"
+          },
+          {
+            "tag": "h3",
+            "id": "vault-pki"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-integration-patterns"
+          },
+          {
+            "tag": "h2",
+            "id": "aws-native-alternative-acm-ack"
+          },
+          {
+            "tag": "h3",
+            "id": "acm-requestcertificate-and-ack-export"
+          },
+          {
+            "tag": "h3",
+            "id": "acm-acme-eab-and-prevalidated-domains"
+          },
+          {
+            "tag": "h2",
+            "id": "service-mesh-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "istio-and-istio-csr"
+          },
+          {
+            "tag": "h3",
+            "id": "linkerd-and-trust-manager"
+          },
+          {
+            "tag": "h2",
+            "id": "trust-manager"
+          },
+          {
+            "tag": "h2",
+            "id": "monitoring-and-troubleshooting"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h2",
+            "id": "summary-and-references"
+          }
+        ],
+        "renderedIds": [
+          "certificate-management-with-cert-manager",
+          "what-cert-manager-solves",
+          "project-status",
+          "why-certificate-lifecycle-automation-matters",
+          "overview-1",
+          "overview",
+          "component-overview",
+          "component-responsibilities",
+          "certificate-issuance-flow",
+          "architecture",
+          "prerequisites",
+          "installation-with-helm-recommended",
+          "production-helm-values",
+          "installation-with-kubectl",
+          "verify-installation",
+          "installation",
+          "custom-resource-definitions-crds",
+          "certificate-resource",
+          "issuer-vs-clusterissuer",
+          "certificaterequest-resource",
+          "core-concepts",
+          "certificate-and-renewal",
+          "certificaterequest-and-private-keys",
+          "selfsigned-issuer-development-testing",
+          "ca-issuer-internal-pki",
+          "acme-let-s-encrypt",
+          "acme-challenge-types",
+          "http-01-solver",
+          "dns-01-solver-with-route53-and-irsa",
+          "aws-private-ca-issuer",
+          "hashicorp-vault-pki",
+          "issuer-types",
+          "selfsigned-and-ca-bootstrap",
+          "acme-http-01-and-dns-01",
+          "aws-private-ca",
+          "vault-pki",
+          "tls-termination-comparison",
+          "alb-ingress-with-acm-vs-cert-manager",
+          "nlb-with-tls-termination-at-ingress-controller",
+          "gateway-api-integration",
+          "eks-integration-patterns",
+          "july-2026-update-acm-now-supports-the-acme-protocol",
+          "supported-certificate-types",
+          "applicable-scenarios",
+          "example-defining-a-certificate-via-ack",
+          "comparison-with-cert-manager",
+          "aws-native-alternative-acm--ack",
+          "aws-native-alternative-acm-ack",
+          "acm-requestcertificate-and-ack-export",
+          "acm-acme-eab-and-prevalidated-domains",
+          "istio-with-istio-csr",
+          "installing-istio-csr",
+          "configuring-istio-to-use-istio-csr",
+          "linkerd-trust-anchor-management",
+          "service-mesh-integration",
+          "istio-and-istio-csr",
+          "linkerd-and-trust-manager",
+          "installing-trust-manager",
+          "bundle-resource",
+          "using-trust-bundles-in-applications",
+          "trust-manager",
+          "prometheus-metrics",
+          "key-metrics",
+          "prometheusrule-for-alerting",
+          "certificate-readiness-check",
+          "common-errors-and-solutions",
+          "cmctl-cli-tool",
+          "monitoring-and-troubleshooting",
+          "renewal-buffer-configuration",
+          "backup-ca-strategy",
+          "multi-tenant-issuer-strategy",
+          "rbac-configuration",
+          "private-key-rotation",
+          "best-practices",
+          "table-of-contents",
+          "key-concepts-summary",
+          "issuer-selection-guide",
+          "official-references",
+          "version-compatibility-matrix",
+          "summary-and-references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/security/10-cert-manager-quiz.md",
+        "sha256": "809ae86d5e515620e0901c86af4f999a9f1bd16a4bdebf8854ec842788878a71",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cert-manager-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "문제"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-cert-manager-프로젝트의-cncf-상태는"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-certificate를-감시하고-발급·갱신을-조정하는-구성요소는"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-issuer와-clusterissuer의-주요-차이점은"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-일반적인-let-s-encrypt-acme-와일드카드-발급에-사용하는-검증-방식은"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-certificate-spec-secretname의-역할은"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-aws-private-ca를-cert-manager-외부-issuer로-연결하는-확장은"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-trust-manager의-주요-기능은"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-요청-duration은-90일이지만-실제-인증서는-45일이고-갱신-설정·ari가-없다면-기본-갱신-시점은"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-istio-sidecar-인증서-발급-경로를-올바르게-설명한-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-acm과-cert-manager의-현재-동작에-대한-올바른-설명은"
+          },
+          {
+            "tag": "h2",
+            "id": "점수-계산"
+          },
+          {
+            "tag": "h2",
+            "id": "관련-문서"
+          }
+        ],
+        "renderedIds": [
+          "cert-manager-퀴즈",
+          "문제",
+          "_1-cert-manager-프로젝트의-cncf-상태는",
+          "_2-cert-manager의-핵심-구성요소가-아닌-것은",
+          "_2-certificate를-감시하고-발급·갱신을-조정하는-구성요소는",
+          "_3-issuer와-clusterissuer의-주요-차이점은",
+          "_4-acme-챌린지-방식-중-와일드카드-인증서를-지원하는-것은",
+          "_4-일반적인-let-s-encrypt-acme-와일드카드-발급에-사용하는-검증-방식은",
+          "_5-certificate-리소스의-secretname-필드의-역할은",
+          "_5-certificate-spec-secretname의-역할은",
+          "_6-aws-private-ca-pca-를-kubernetes에서-사용하기-위한-cert-manager-확장은",
+          "_6-aws-private-ca를-cert-manager-외부-issuer로-연결하는-확장은",
+          "_7-trust-manager의-주요-기능은",
+          "_8-certificate-리소스의-renewbefore-필드-설정-시-갱신-동작은",
+          "_8-요청-duration은-90일이지만-실제-인증서는-45일이고-갱신-설정·ari가-없다면-기본-갱신-시점은",
+          "_9-istio-서비스-메시와-cert-manager를-연동하는-컴포넌트는",
+          "_9-istio-sidecar-인증서-발급-경로를-올바르게-설명한-것은",
+          "_10-cert-manager와-aws-acm-certificate-manager-비교-시-cert-manager의-장점은",
+          "_10-acm과-cert-manager의-현재-동작에-대한-올바른-설명은",
+          "점수-계산",
+          "관련-문서"
+        ]
+      },
+      {
+        "path": "en/quizzes/security/10-cert-manager-quiz.md",
+        "sha256": "b842df4feda1a88f0944924b002435bd743027389db1833de8457bdb9f8b74e5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cert-manager-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "questions"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-what-is-cert-manager-s-project-status-in-the-cncf"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-which-component-watches-certificates-and-reconciles-issuance-and-renewal"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-what-is-the-key-difference-between-issuer-and-clusterissuer"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-which-validation-method-supports-ordinary-let-s-encrypt-acme-wildcard-issuance"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-what-does-certificate-spec-secretname-specify"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-which-extension-connects-aws-private-ca-as-a-cert-manager-external-issuer"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-what-is-the-main-role-of-trust-manager"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-a-request-asks-for-90-days-but-receives-a-45-day-certificate-with-no-explicit-renewal-settings-or-ari-when-is-default-renewal-scheduled"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-which-statement-correctly-describes-the-istio-sidecar-issuance-path"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-which-statement-about-current-acm-and-cert-manager-behavior-is-correct"
+          },
+          {
+            "tag": "h2",
+            "id": "score-calculation"
+          },
+          {
+            "tag": "h2",
+            "id": "related-documentation"
+          }
+        ],
+        "renderedIds": [
+          "cert-manager-quiz",
+          "questions",
+          "_1-what-is-cert-manager-s-project-status-in-the-cncf",
+          "_2-which-component-in-cert-manager-watches-certificate-resources-and-triggers-certificate-issuance",
+          "_2-which-component-watches-certificates-and-reconciles-issuance-and-renewal",
+          "_3-what-is-the-key-difference-between-issuer-and-clusterissuer-resources",
+          "_3-what-is-the-key-difference-between-issuer-and-clusterissuer",
+          "_4-which-acme-challenge-type-supports-wildcard-certificate-issuance",
+          "_4-which-validation-method-supports-ordinary-let-s-encrypt-acme-wildcard-issuance",
+          "_5-in-a-certificate-resource-what-does-the-secretname-field-specify",
+          "_5-what-does-certificate-spec-secretname-specify",
+          "_6-what-is-the-primary-use-case-for-the-aws-private-ca-issuer",
+          "_6-which-extension-connects-aws-private-ca-as-a-cert-manager-external-issuer",
+          "_7-what-does-trust-manager-do-in-the-cert-manager-ecosystem",
+          "_7-what-is-the-main-role-of-trust-manager",
+          "_8-what-does-the-renewbefore-field-control-in-a-certificate-resource",
+          "_8-a-request-asks-for-90-days-but-receives-a-45-day-certificate-with-no-explicit-renewal-settings-or-ari-when-is-default-renewal-scheduled",
+          "_9-what-is-the-role-of-istio-csr-in-cert-manager-s-istio-integration",
+          "_9-which-statement-correctly-describes-the-istio-sidecar-issuance-path",
+          "_10-what-is-a-key-difference-between-cert-manager-and-aws-certificate-manager-acm",
+          "_10-which-statement-about-current-acm-and-cert-manager-behavior-is-correct",
+          "score-calculation",
+          "related-documentation"
+        ]
+      }
+    ]
+  },
+  "examples": [
+    {
+      "path": "examples/security/cert-manager/cert-manager-values.yaml",
+      "sha256": "e1340a1e41cbe140340f202eb22d42a0ec3272cd0b665c93e6c76fd143b52487",
+      "bytes": 499
+    },
+    {
+      "path": "examples/security/cert-manager/bootstrap.yaml",
+      "sha256": "c0a436e86d1366595bd565bf451f954003e04ecad52d8c51c1816549c93ed954",
+      "bytes": 1366
+    },
+    {
+      "path": "examples/security/cert-manager/certificate-requester-rbac.yaml",
+      "sha256": "c91b876c83c0b4f11fe61d5108c1ebad5858b40ff41f6eb6d682b83aed9913bf",
+      "bytes": 584
+    },
+    {
+      "path": "examples/security/cert-manager/public-staging.yaml",
+      "sha256": "0a26b2c4abd0736126159ecc94ea331edcb72d574285eda7041a7575d4be6766",
+      "bytes": 890
+    },
+    {
+      "path": "examples/security/cert-manager/route53-issuer.yaml",
+      "sha256": "b94d37d1d318931041bb86ef37e8e6a9f3978e3c9d02d8b5512c0d6807aff313",
+      "bytes": 429
+    },
+    {
+      "path": "examples/security/cert-manager/route53-policy.json",
+      "sha256": "882d53bdd9b4a5afe3b84a03c0303bc3dafca007ecde9a531998b722dbb7b46c",
+      "bytes": 996
+    },
+    {
+      "path": "examples/security/cert-manager/acm-acme-issuer.yaml",
+      "sha256": "d4f21ba28a42127528916b061cfd9b7f8a7f8087850383a729f994c100a75499",
+      "bytes": 388
+    },
+    {
+      "path": "examples/security/cert-manager/pca-issuer.yaml",
+      "sha256": "8c82decd111d2e6ea841745906523e66702f416bf578c90a58ac3b879f76cc79",
+      "bytes": 706
+    },
+    {
+      "path": "examples/security/cert-manager/trust-bundle.yaml",
+      "sha256": "23d9b40df18936e3d320fd01efe4019cc237e2aababd279c39fd5540346d3f44",
+      "bytes": 289
+    },
+    {
+      "path": "examples/security/cert-manager/trust-manager-values.yaml",
+      "sha256": "945353a7dc0c523fd659802e9f6298981be704f49758760e62e5df95e04ebb6e",
+      "bytes": 74
+    },
+    {
+      "path": "examples/security/cert-manager/istio-csr-values.yaml",
+      "sha256": "588cc094bd2221366f4290522e2967c819485a1b72c2702474a13168a33750b0",
+      "bytes": 512
+    },
+    {
+      "path": "examples/security/cert-manager/vault-issuer.yaml",
+      "sha256": "b7c9c24231f83d35e53a214dc3ea136afc735d544b3131abbda8d20d27aa481c",
+      "bytes": 1048
+    },
+    {
+      "path": "examples/security/cert-manager/vault-policy.hcl",
+      "sha256": "95c1d5f76e98837c48de2685a05e1f3babb1bcdaf2f65e81e840e995b657f8f8",
+      "bytes": 61
+    },
+    {
+      "path": "examples/security/cert-manager/vault-setup.sh",
+      "sha256": "b23c84f0bfb9f1e9201a11382aaf5b6b2617219be2c116863a39d6c9d0fd9b19",
+      "bytes": 813
+    },
+    {
+      "path": "examples/security/cert-manager/alb-acm-ingress.yaml",
+      "sha256": "ce4e764c4f69971ee624c3fd3e695b96ef651d49e345045e202e73db719ea75f",
+      "bytes": 667
+    },
+    {
+      "path": "examples/security/cert-manager/gateway-tls.yaml",
+      "sha256": "bd240c06c88317191d19d3622e12f9a282b09347ca01dc8175721123ec91c18f",
+      "bytes": 758
+    },
+    {
+      "path": "examples/security/cert-manager/nlb-tcp-service.yaml",
+      "sha256": "1c9369a0d446d9be44f27390ed50a56cd1dac8b6cdc6f4d854a007e8e32c1562",
+      "bytes": 416
+    },
+    {
+      "path": "examples/security/cert-manager/trust-consumer.yaml",
+      "sha256": "f2d0804799282516faefc0fd77cbaa8baac61dc46e9aca0f65fb93f70f1af0ad",
+      "bytes": 686
+    },
+    {
+      "path": "examples/security/cert-manager/linkerd-values.yaml",
+      "sha256": "1bae3d9625e7c95f49cb685f6132940b969ea5c694c9584d8a18e20fcb5e17c1",
+      "bytes": 69
+    },
+    {
+      "path": "examples/security/cert-manager/linkerd-identity.yaml",
+      "sha256": "7ec231a2105fd70d6e9fa4165168b24cdfae78637fe5b6ab98500444c971b947",
+      "bytes": 887
+    },
+    {
+      "path": "examples/security/cert-manager/alerts.rules.yaml",
+      "sha256": "ab757409f790a3e2f47f4e5fbef0e0e097c94de265172e48ffa0ecd2be02c580",
+      "bytes": 975
+    },
+    {
+      "path": "examples/security/cert-manager/ack-acm.yaml",
+      "sha256": "1e8c53636b794f40c83690ab09f4543ca56c3ea5a5d5e75224f82d77f7db15fa",
+      "bytes": 447
+    },
+    {
+      "path": "examples/security/cert-manager/README.md",
+      "sha256": "099031e88a09ab5ae2df6c9c67d858ada3d2d25a2bfc678c51ba168478b92be4",
+      "bytes": 4525
+    }
+  ],
+  "assets": [
+    {
+      "path": "assets/diagrams/archify/en-security-10-cert-manager-0.architecture.json",
+      "sha256": "10ca92ba78d43ef025c2207a0cc9666a15a21ed743c959256f1f143399cbb6ff",
+      "bytes": 7431
+    },
+    {
+      "path": "public/archmaps/en-security-10-cert-manager-0.html",
+      "sha256": "89870a659a27e99edd1d97e2839c4099b367101c2c4ce3f2820215ad1063c86e",
+      "bytes": 719169
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-10-cert-manager-0.png",
+      "sha256": "61ccfbd7cbc613ce7700f0c6ff1c37f6cbfe0db5dd11ff56d875e3a751760693",
+      "bytes": 175798
+    },
+    {
+      "path": "assets/diagrams/archify/en-security-10-cert-manager-1.architecture.json",
+      "sha256": "8e404dc89196fc8b8f77fdf3d03e3b439ba79363995c9d6789a0ce8370ef245b",
+      "bytes": 5290
+    },
+    {
+      "path": "public/archmaps/en-security-10-cert-manager-1.html",
+      "sha256": "6d6669b3c1a2030d9704fa24c84582c2f1b714076743c63d36f146dbba79d8b9",
+      "bytes": 713176
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-10-cert-manager-1.png",
+      "sha256": "c2b4a446897eb06772cfa26a68a96a8a9a45a685f8a6acf501d7acabf4bcf9f4",
+      "bytes": 144992
+    },
+    {
+      "path": "assets/diagrams/archify/en-security-10-cert-manager-2.workflow.json",
+      "sha256": "480be8df6c63e2a8ab60dadc08ea6e01d5d690987df68bd2664346f65d7c28ae",
+      "bytes": 6580
+    },
+    {
+      "path": "public/archmaps/en-security-10-cert-manager-2.html",
+      "sha256": "d6e8c01c85748660ca791b90d8cd6011f759bad175ab9e3c69d1981e9efa7c71",
+      "bytes": 717114
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-10-cert-manager-2.png",
+      "sha256": "a92fe7fabe8547cf525172cda1cf6ad621cac01633ce03eaf912ad3eb9e57dc2",
+      "bytes": 159099
+    },
+    {
+      "path": "assets/diagrams/archify/en-security-10-cert-manager-3.architecture.json",
+      "sha256": "c504c4547f1f4e9e064a6a0ae4dd543f9fdeb6cf7686c8947e7cdd2c56d93c77",
+      "bytes": 7097
+    },
+    {
+      "path": "public/archmaps/en-security-10-cert-manager-3.html",
+      "sha256": "f6e6db8256dfd54828d6db8173152fd3c738740c7177158bb054a57ba524bdbb",
+      "bytes": 720193
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-10-cert-manager-3.png",
+      "sha256": "84af369a796452fce5ad53331d4076a48a79501f09e125bf7ad528c618ff6c89",
+      "bytes": 179538
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-10-cert-manager-0.architecture.json",
+      "sha256": "da2a0a36c481dd837acf7154f86cf525b8871ed25f6fb860ff331738802805f9",
+      "bytes": 7456
+    },
+    {
+      "path": "public/archmaps/ko-security-10-cert-manager-0.html",
+      "sha256": "22addda82015cb204bc90322564c349a5af28094c67d2f45772866c8830dc1cc",
+      "bytes": 719218
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-10-cert-manager-0.png",
+      "sha256": "536f2ab35121ea2f1264f613512a1826f13fc3f45b3864a4355ffb8f56e426de",
+      "bytes": 168154
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-10-cert-manager-1.architecture.json",
+      "sha256": "fcaea3fcd0854ecb3748ba464c1464505599cb4995def793d0667c85c102e047",
+      "bytes": 5647
+    },
+    {
+      "path": "public/archmaps/ko-security-10-cert-manager-1.html",
+      "sha256": "dbcdf3aae114a2d0e124ab36c8b0b7996dd7455fa681e1979a1d39f4ab84d7fd",
+      "bytes": 713427
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-10-cert-manager-1.png",
+      "sha256": "23bbba2d1a2bf48667abb2541ddf02cfa0eac580b6c94a15e3779b9ba960b793",
+      "bytes": 147075
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-10-cert-manager-2.workflow.json",
+      "sha256": "239e1370badec6adc42720d1c6924ea086e10a8a609327f8cd303979b0875411",
+      "bytes": 6738
+    },
+    {
+      "path": "public/archmaps/ko-security-10-cert-manager-2.html",
+      "sha256": "2733f7cac81be1ce520aafcf517cb902a64dd37d1ad47b23e81c2bc912fa9c9b",
+      "bytes": 717407
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-10-cert-manager-2.png",
+      "sha256": "45840e1669f2acea3225441263ddb2cc3a1ce66dc944c44eb3857dc007654269",
+      "bytes": 159782
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-10-cert-manager-3.architecture.json",
+      "sha256": "f343f83a236a1bb55b0884d5a8564bf2d8b89522881b59eeca8dd0bea7499a31",
+      "bytes": 7383
+    },
+    {
+      "path": "public/archmaps/ko-security-10-cert-manager-3.html",
+      "sha256": "381fa7233803deae11e200908edc65339ce527d9e7be954fb428128ee9057301",
+      "bytes": 720339
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-10-cert-manager-3.png",
+      "sha256": "f989dfcd39a92155635b902ad992a6c3c0b7118672a89555ef511a2e0128eea7",
+      "bytes": 172892
+    }
+  ],
+  "legacyAnchors": [
+    {
+      "path": "ko/security/10-cert-manager.md",
+      "preserved": 58,
+      "anchors": [
+        {
+          "id": "목차",
+          "oldHeading": "목차",
+          "newHeading": "cert-manager를 활용한 인증서 관리"
+        },
+        {
+          "id": "인증서-자동화의-필요성",
+          "oldHeading": "인증서 자동화의 필요성",
+          "newHeading": "개요"
+        },
+        {
+          "id": "cert-manager의-주요-기능",
+          "oldHeading": "cert-manager의 주요 기능",
+          "newHeading": "개요"
+        },
+        {
+          "id": "cncf-graduated-프로젝트",
+          "oldHeading": "CNCF Graduated 프로젝트",
+          "newHeading": "개요"
+        },
+        {
+          "id": "구성요소",
+          "oldHeading": "구성요소",
+          "newHeading": "아키텍처"
+        },
+        {
+          "id": "구성요소-상세",
+          "oldHeading": "구성요소 상세",
+          "newHeading": "아키텍처"
+        },
+        {
+          "id": "helm을-사용한-설치",
+          "oldHeading": "Helm을 사용한 설치",
+          "newHeading": "설치"
+        },
+        {
+          "id": "프로덕션-환경-권장-설정",
+          "oldHeading": "프로덕션 환경 권장 설정",
+          "newHeading": "설치"
+        },
+        {
+          "id": "설치-확인",
+          "oldHeading": "설치 확인",
+          "newHeading": "설치"
+        },
+        {
+          "id": "리소스-관계도",
+          "oldHeading": "리소스 관계도",
+          "newHeading": "핵심 개념"
+        },
+        {
+          "id": "certificate",
+          "oldHeading": "Certificate",
+          "newHeading": "핵심 개념"
+        },
+        {
+          "id": "issuer-vs-clusterissuer",
+          "oldHeading": "Issuer vs ClusterIssuer",
+          "newHeading": "핵심 개념"
+        },
+        {
+          "id": "certificaterequest",
+          "oldHeading": "CertificateRequest",
+          "newHeading": "핵심 개념"
+        },
+        {
+          "id": "유형별-비교",
+          "oldHeading": "유형별 비교",
+          "newHeading": "Issuer 유형"
+        },
+        {
+          "id": "selfsigned-issuer",
+          "oldHeading": "SelfSigned Issuer",
+          "newHeading": "Issuer 유형"
+        },
+        {
+          "id": "ca-issuer",
+          "oldHeading": "CA Issuer",
+          "newHeading": "Issuer 유형"
+        },
+        {
+          "id": "acme-issuer-let-s-encrypt",
+          "oldHeading": "ACME Issuer (Let's Encrypt)",
+          "newHeading": "Issuer 유형"
+        },
+        {
+          "id": "인증서-발급-흐름",
+          "oldHeading": "인증서 발급 흐름",
+          "newHeading": "Issuer 유형"
+        },
+        {
+          "id": "http-01-솔버",
+          "oldHeading": "HTTP-01 솔버",
+          "newHeading": "Issuer 유형"
+        },
+        {
+          "id": "dns-01-솔버-route53-irsa",
+          "oldHeading": "DNS-01 솔버 (Route53 + IRSA)",
+          "newHeading": "Issuer 유형"
+        },
+        {
+          "id": "와일드카드-인증서",
+          "oldHeading": "와일드카드 인증서",
+          "newHeading": "Issuer 유형"
+        },
+        {
+          "id": "aws-private-ca-issuer",
+          "oldHeading": "AWS Private CA Issuer",
+          "newHeading": "Issuer 유형"
+        },
+        {
+          "id": "vault-pki-issuer",
+          "oldHeading": "Vault PKI Issuer",
+          "newHeading": "Issuer 유형"
+        },
+        {
+          "id": "acm-vs-cert-manager-비교",
+          "oldHeading": "ACM vs cert-manager 비교",
+          "newHeading": "EKS 통합 패턴"
+        },
+        {
+          "id": "alb-ingress-acm",
+          "oldHeading": "ALB Ingress + ACM",
+          "newHeading": "EKS 통합 패턴"
+        },
+        {
+          "id": "ingress-nginx-cert-manager",
+          "oldHeading": "Ingress-nginx + cert-manager",
+          "newHeading": "EKS 통합 패턴"
+        },
+        {
+          "id": "nlb-tls-종단",
+          "oldHeading": "NLB + TLS 종단",
+          "newHeading": "EKS 통합 패턴"
+        },
+        {
+          "id": "gateway-api-cert-manager",
+          "oldHeading": "Gateway API + cert-manager",
+          "newHeading": "EKS 통합 패턴"
+        },
+        {
+          "id": "개요-1",
+          "oldHeading": "개요",
+          "newHeading": "개요"
+        },
+        {
+          "id": "_2026년-7월-업데이트-acm의-acme-프로토콜-지원",
+          "oldHeading": "2026년 7월 업데이트: ACM의 ACME 프로토콜 지원",
+          "newHeading": "AWS 네이티브 대안: ACM + ACK"
+        },
+        {
+          "id": "지원-인증서-유형",
+          "oldHeading": "지원 인증서 유형",
+          "newHeading": "AWS 네이티브 대안: ACM + ACK"
+        },
+        {
+          "id": "적용-시나리오",
+          "oldHeading": "적용 시나리오",
+          "newHeading": "AWS 네이티브 대안: ACM + ACK"
+        },
+        {
+          "id": "예시-ack를-통한-certificate-리소스-정의",
+          "oldHeading": "예시: ACK를 통한 Certificate 리소스 정의",
+          "newHeading": "AWS 네이티브 대안: ACM + ACK"
+        },
+        {
+          "id": "cert-manager와-비교",
+          "oldHeading": "cert-manager와 비교",
+          "newHeading": "AWS 네이티브 대안: ACM + ACK"
+        },
+        {
+          "id": "istio-istio-csr",
+          "oldHeading": "Istio + istio-csr",
+          "newHeading": "서비스 메시 통합"
+        },
+        {
+          "id": "istio-csr-아키텍처",
+          "oldHeading": "istio-csr 아키텍처",
+          "newHeading": "서비스 메시 통합"
+        },
+        {
+          "id": "istio-csr-설치",
+          "oldHeading": "istio-csr 설치",
+          "newHeading": "서비스 메시 통합"
+        },
+        {
+          "id": "istio-ca-issuer-설정",
+          "oldHeading": "Istio CA Issuer 설정",
+          "newHeading": "서비스 메시 통합"
+        },
+        {
+          "id": "istio-설치-istio-csr-사용",
+          "oldHeading": "Istio 설치 (istio-csr 사용)",
+          "newHeading": "서비스 메시 통합"
+        },
+        {
+          "id": "linkerd-trust-manager",
+          "oldHeading": "Linkerd + trust-manager",
+          "newHeading": "서비스 메시 통합"
+        },
+        {
+          "id": "설치-1",
+          "oldHeading": "설치",
+          "newHeading": "설치"
+        },
+        {
+          "id": "bundle-리소스",
+          "oldHeading": "Bundle 리소스",
+          "newHeading": "trust-manager"
+        },
+        {
+          "id": "사용-예시",
+          "oldHeading": "사용 예시",
+          "newHeading": "trust-manager"
+        },
+        {
+          "id": "prometheus-메트릭",
+          "oldHeading": "Prometheus 메트릭",
+          "newHeading": "모니터링 및 트러블슈팅"
+        },
+        {
+          "id": "인증서-상태-확인",
+          "oldHeading": "인증서 상태 확인",
+          "newHeading": "모니터링 및 트러블슈팅"
+        },
+        {
+          "id": "cmctl-cli",
+          "oldHeading": "cmctl CLI",
+          "newHeading": "모니터링 및 트러블슈팅"
+        },
+        {
+          "id": "일반적인-문제-해결",
+          "oldHeading": "일반적인 문제 해결",
+          "newHeading": "모니터링 및 트러블슈팅"
+        },
+        {
+          "id": "dns-전파-지연-dns-01",
+          "oldHeading": "DNS 전파 지연 (DNS-01)",
+          "newHeading": "모니터링 및 트러블슈팅"
+        },
+        {
+          "id": "let-s-encrypt-rate-limit",
+          "oldHeading": "Let's Encrypt Rate Limit",
+          "newHeading": "모니터링 및 트러블슈팅"
+        },
+        {
+          "id": "webhook-타임아웃",
+          "oldHeading": "Webhook 타임아웃",
+          "newHeading": "모니터링 및 트러블슈팅"
+        },
+        {
+          "id": "갱신-버퍼-설정",
+          "oldHeading": "갱신 버퍼 설정",
+          "newHeading": "모범 사례"
+        },
+        {
+          "id": "백업-ca-전략",
+          "oldHeading": "백업 CA 전략",
+          "newHeading": "모범 사례"
+        },
+        {
+          "id": "멀티-테넌트-issuer-전략",
+          "oldHeading": "멀티 테넌트 Issuer 전략",
+          "newHeading": "모범 사례"
+        },
+        {
+          "id": "개인키-관리",
+          "oldHeading": "개인키 관리",
+          "newHeading": "모범 사례"
+        },
+        {
+          "id": "secret-템플릿",
+          "oldHeading": "Secret 템플릿",
+          "newHeading": "모범 사례"
+        },
+        {
+          "id": "핵심-정리",
+          "oldHeading": "핵심 정리",
+          "newHeading": "요약 및 참고 자료"
+        },
+        {
+          "id": "issuer-선택-가이드",
+          "oldHeading": "Issuer 선택 가이드",
+          "newHeading": "요약 및 참고 자료"
+        },
+        {
+          "id": "참고-자료",
+          "oldHeading": "참고 자료",
+          "newHeading": "요약 및 참고 자료"
+        }
+      ]
+    },
+    {
+      "path": "ko/quizzes/security/10-cert-manager-quiz.md",
+      "preserved": 7,
+      "anchors": [
+        {
+          "id": "_2-cert-manager의-핵심-구성요소가-아닌-것은",
+          "oldHeading": "2. cert-manager의 핵심 구성요소가 아닌 것은?",
+          "newHeading": "2. Certificate를 감시하고 발급·갱신을 조정하는 구성요소는?"
+        },
+        {
+          "id": "_4-acme-챌린지-방식-중-와일드카드-인증서를-지원하는-것은",
+          "oldHeading": "4. ACME 챌린지 방식 중 와일드카드 인증서를 지원하는 것은?",
+          "newHeading": "4. 일반적인 Let’s Encrypt ACME 와일드카드 발급에 사용하는 검증 방식은?"
+        },
+        {
+          "id": "_5-certificate-리소스의-secretname-필드의-역할은",
+          "oldHeading": "5. Certificate 리소스의 secretName 필드의 역할은?",
+          "newHeading": "5. Certificate.spec.secretName의 역할은?"
+        },
+        {
+          "id": "_6-aws-private-ca-pca-를-kubernetes에서-사용하기-위한-cert-manager-확장은",
+          "oldHeading": "6. AWS Private CA(PCA)를 Kubernetes에서 사용하기 위한 cert-manager 확장은?",
+          "newHeading": "6. AWS Private CA를 cert-manager 외부 Issuer로 연결하는 확장은?"
+        },
+        {
+          "id": "_8-certificate-리소스의-renewbefore-필드-설정-시-갱신-동작은",
+          "oldHeading": "8. Certificate 리소스의 renewBefore 필드 설정 시 갱신 동작은?",
+          "newHeading": "8. 요청 duration은 90일이지만 실제 인증서는 45일이고 갱신 설정·ARI가 없다면 기본 갱신 시점은?"
+        },
+        {
+          "id": "_9-istio-서비스-메시와-cert-manager를-연동하는-컴포넌트는",
+          "oldHeading": "9. Istio 서비스 메시와 cert-manager를 연동하는 컴포넌트는?",
+          "newHeading": "9. Istio sidecar 인증서 발급 경로를 올바르게 설명한 것은?"
+        },
+        {
+          "id": "_10-cert-manager와-aws-acm-certificate-manager-비교-시-cert-manager의-장점은",
+          "oldHeading": "10. cert-manager와 AWS ACM(Certificate Manager) 비교 시 cert-manager의 장점은?",
+          "newHeading": "10. ACM과 cert-manager의 현재 동작에 대한 올바른 설명은?"
+        }
+      ]
+    },
+    {
+      "path": "en/security/10-cert-manager.md",
+      "preserved": 56,
+      "anchors": [
+        {
+          "id": "table-of-contents",
+          "oldHeading": "Table of Contents",
+          "newHeading": "Summary and References"
+        },
+        {
+          "id": "what-cert-manager-solves",
+          "oldHeading": "What cert-manager Solves",
+          "newHeading": "Overview"
+        },
+        {
+          "id": "project-status",
+          "oldHeading": "Project Status",
+          "newHeading": "Overview"
+        },
+        {
+          "id": "why-certificate-lifecycle-automation-matters",
+          "oldHeading": "Why Certificate Lifecycle Automation Matters",
+          "newHeading": "Overview"
+        },
+        {
+          "id": "component-overview",
+          "oldHeading": "Component Overview",
+          "newHeading": "Architecture"
+        },
+        {
+          "id": "component-responsibilities",
+          "oldHeading": "Component Responsibilities",
+          "newHeading": "Architecture"
+        },
+        {
+          "id": "certificate-issuance-flow",
+          "oldHeading": "Certificate Issuance Flow",
+          "newHeading": "Architecture"
+        },
+        {
+          "id": "prerequisites",
+          "oldHeading": "Prerequisites",
+          "newHeading": "Installation"
+        },
+        {
+          "id": "installation-with-helm-recommended",
+          "oldHeading": "Installation with Helm (Recommended)",
+          "newHeading": "Installation"
+        },
+        {
+          "id": "production-helm-values",
+          "oldHeading": "Production Helm Values",
+          "newHeading": "Installation"
+        },
+        {
+          "id": "installation-with-kubectl",
+          "oldHeading": "Installation with kubectl",
+          "newHeading": "Installation"
+        },
+        {
+          "id": "verify-installation",
+          "oldHeading": "Verify Installation",
+          "newHeading": "Installation"
+        },
+        {
+          "id": "custom-resource-definitions-crds",
+          "oldHeading": "Custom Resource Definitions (CRDs)",
+          "newHeading": "Core Concepts"
+        },
+        {
+          "id": "certificate-resource",
+          "oldHeading": "Certificate Resource",
+          "newHeading": "Core Concepts"
+        },
+        {
+          "id": "issuer-vs-clusterissuer",
+          "oldHeading": "Issuer vs ClusterIssuer",
+          "newHeading": "Core Concepts"
+        },
+        {
+          "id": "certificaterequest-resource",
+          "oldHeading": "CertificateRequest Resource",
+          "newHeading": "Core Concepts"
+        },
+        {
+          "id": "selfsigned-issuer-development-testing",
+          "oldHeading": "SelfSigned Issuer (Development/Testing)",
+          "newHeading": "Issuer Types"
+        },
+        {
+          "id": "ca-issuer-internal-pki",
+          "oldHeading": "CA Issuer (Internal PKI)",
+          "newHeading": "Issuer Types"
+        },
+        {
+          "id": "acme-let-s-encrypt",
+          "oldHeading": "ACME / Let's Encrypt",
+          "newHeading": "Issuer Types"
+        },
+        {
+          "id": "acme-challenge-types",
+          "oldHeading": "ACME Challenge Types",
+          "newHeading": "Issuer Types"
+        },
+        {
+          "id": "http-01-solver",
+          "oldHeading": "HTTP-01 Solver",
+          "newHeading": "Issuer Types"
+        },
+        {
+          "id": "dns-01-solver-with-route53-and-irsa",
+          "oldHeading": "DNS-01 Solver with Route53 and IRSA",
+          "newHeading": "Issuer Types"
+        },
+        {
+          "id": "aws-private-ca-issuer",
+          "oldHeading": "AWS Private CA Issuer",
+          "newHeading": "Issuer Types"
+        },
+        {
+          "id": "hashicorp-vault-pki",
+          "oldHeading": "HashiCorp Vault PKI",
+          "newHeading": "Issuer Types"
+        },
+        {
+          "id": "tls-termination-comparison",
+          "oldHeading": "TLS Termination Comparison",
+          "newHeading": "EKS Integration Patterns"
+        },
+        {
+          "id": "alb-ingress-with-acm-vs-cert-manager",
+          "oldHeading": "ALB Ingress with ACM vs cert-manager",
+          "newHeading": "EKS Integration Patterns"
+        },
+        {
+          "id": "nlb-with-tls-termination-at-ingress-controller",
+          "oldHeading": "NLB with TLS Termination at Ingress Controller",
+          "newHeading": "EKS Integration Patterns"
+        },
+        {
+          "id": "gateway-api-integration",
+          "oldHeading": "Gateway API Integration",
+          "newHeading": "EKS Integration Patterns"
+        },
+        {
+          "id": "overview-1",
+          "oldHeading": "Overview",
+          "newHeading": "Overview"
+        },
+        {
+          "id": "july-2026-update-acm-now-supports-the-acme-protocol",
+          "oldHeading": "July 2026 Update: ACM Now Supports the ACME Protocol",
+          "newHeading": "AWS-Native Alternative: ACM + ACK"
+        },
+        {
+          "id": "supported-certificate-types",
+          "oldHeading": "Supported Certificate Types",
+          "newHeading": "AWS-Native Alternative: ACM + ACK"
+        },
+        {
+          "id": "applicable-scenarios",
+          "oldHeading": "Applicable Scenarios",
+          "newHeading": "AWS-Native Alternative: ACM + ACK"
+        },
+        {
+          "id": "example-defining-a-certificate-via-ack",
+          "oldHeading": "Example: Defining a Certificate via ACK",
+          "newHeading": "AWS-Native Alternative: ACM + ACK"
+        },
+        {
+          "id": "comparison-with-cert-manager",
+          "oldHeading": "Comparison with cert-manager",
+          "newHeading": "AWS-Native Alternative: ACM + ACK"
+        },
+        {
+          "id": "istio-with-istio-csr",
+          "oldHeading": "Istio with istio-csr",
+          "newHeading": "Service Mesh Integration"
+        },
+        {
+          "id": "installing-istio-csr",
+          "oldHeading": "Installing istio-csr",
+          "newHeading": "Service Mesh Integration"
+        },
+        {
+          "id": "configuring-istio-to-use-istio-csr",
+          "oldHeading": "Configuring Istio to use istio-csr",
+          "newHeading": "Service Mesh Integration"
+        },
+        {
+          "id": "linkerd-trust-anchor-management",
+          "oldHeading": "Linkerd Trust Anchor Management",
+          "newHeading": "Service Mesh Integration"
+        },
+        {
+          "id": "installing-trust-manager",
+          "oldHeading": "Installing trust-manager",
+          "newHeading": "trust-manager"
+        },
+        {
+          "id": "bundle-resource",
+          "oldHeading": "Bundle Resource",
+          "newHeading": "trust-manager"
+        },
+        {
+          "id": "using-trust-bundles-in-applications",
+          "oldHeading": "Using Trust Bundles in Applications",
+          "newHeading": "trust-manager"
+        },
+        {
+          "id": "prometheus-metrics",
+          "oldHeading": "Prometheus Metrics",
+          "newHeading": "Monitoring and Troubleshooting"
+        },
+        {
+          "id": "key-metrics",
+          "oldHeading": "Key Metrics",
+          "newHeading": "Monitoring and Troubleshooting"
+        },
+        {
+          "id": "prometheusrule-for-alerting",
+          "oldHeading": "PrometheusRule for Alerting",
+          "newHeading": "Monitoring and Troubleshooting"
+        },
+        {
+          "id": "certificate-readiness-check",
+          "oldHeading": "Certificate Readiness Check",
+          "newHeading": "Monitoring and Troubleshooting"
+        },
+        {
+          "id": "common-errors-and-solutions",
+          "oldHeading": "Common Errors and Solutions",
+          "newHeading": "Monitoring and Troubleshooting"
+        },
+        {
+          "id": "cmctl-cli-tool",
+          "oldHeading": "cmctl CLI Tool",
+          "newHeading": "Monitoring and Troubleshooting"
+        },
+        {
+          "id": "renewal-buffer-configuration",
+          "oldHeading": "Renewal Buffer Configuration",
+          "newHeading": "Best Practices"
+        },
+        {
+          "id": "backup-ca-strategy",
+          "oldHeading": "Backup CA Strategy",
+          "newHeading": "Best Practices"
+        },
+        {
+          "id": "multi-tenant-issuer-strategy",
+          "oldHeading": "Multi-Tenant Issuer Strategy",
+          "newHeading": "Best Practices"
+        },
+        {
+          "id": "rbac-configuration",
+          "oldHeading": "RBAC Configuration",
+          "newHeading": "Best Practices"
+        },
+        {
+          "id": "private-key-rotation",
+          "oldHeading": "Private Key Rotation",
+          "newHeading": "Best Practices"
+        },
+        {
+          "id": "key-concepts-summary",
+          "oldHeading": "Key Concepts Summary",
+          "newHeading": "Summary and References"
+        },
+        {
+          "id": "issuer-selection-guide",
+          "oldHeading": "Issuer Selection Guide",
+          "newHeading": "Summary and References"
+        },
+        {
+          "id": "official-references",
+          "oldHeading": "Official References",
+          "newHeading": "Summary and References"
+        },
+        {
+          "id": "version-compatibility-matrix",
+          "oldHeading": "Version Compatibility Matrix",
+          "newHeading": "Summary and References"
+        }
+      ]
+    },
+    {
+      "path": "en/quizzes/security/10-cert-manager-quiz.md",
+      "preserved": 9,
+      "anchors": [
+        {
+          "id": "_2-which-component-in-cert-manager-watches-certificate-resources-and-triggers-certificate-issuance",
+          "oldHeading": "2. Which component in cert-manager watches Certificate resources and triggers certificate issuance?",
+          "newHeading": "2. Which component watches Certificates and reconciles issuance and renewal?"
+        },
+        {
+          "id": "_3-what-is-the-key-difference-between-issuer-and-clusterissuer-resources",
+          "oldHeading": "3. What is the key difference between Issuer and ClusterIssuer resources?",
+          "newHeading": "3. What is the key difference between Issuer and ClusterIssuer?"
+        },
+        {
+          "id": "_4-which-acme-challenge-type-supports-wildcard-certificate-issuance",
+          "oldHeading": "4. Which ACME challenge type supports wildcard certificate issuance?",
+          "newHeading": "4. Which validation method supports ordinary Let’s Encrypt ACME wildcard issuance?"
+        },
+        {
+          "id": "_5-in-a-certificate-resource-what-does-the-secretname-field-specify",
+          "oldHeading": "5. In a Certificate resource, what does the secretName field specify?",
+          "newHeading": "5. What does Certificate.spec.secretName specify?"
+        },
+        {
+          "id": "_6-what-is-the-primary-use-case-for-the-aws-private-ca-issuer",
+          "oldHeading": "6. What is the primary use case for the AWS Private CA Issuer?",
+          "newHeading": "6. Which extension connects AWS Private CA as a cert-manager external issuer?"
+        },
+        {
+          "id": "_7-what-does-trust-manager-do-in-the-cert-manager-ecosystem",
+          "oldHeading": "7. What does trust-manager do in the cert-manager ecosystem?",
+          "newHeading": "7. What is the main role of trust-manager?"
+        },
+        {
+          "id": "_8-what-does-the-renewbefore-field-control-in-a-certificate-resource",
+          "oldHeading": "8. What does the renewBefore field control in a Certificate resource?",
+          "newHeading": "8. A request asks for 90 days but receives a 45-day certificate. With no explicit renewal settings or ARI, when is default renewal scheduled?"
+        },
+        {
+          "id": "_9-what-is-the-role-of-istio-csr-in-cert-manager-s-istio-integration",
+          "oldHeading": "9. What is the role of istio-csr in cert-manager's Istio integration?",
+          "newHeading": "9. Which statement correctly describes the Istio sidecar issuance path?"
+        },
+        {
+          "id": "_10-what-is-a-key-difference-between-cert-manager-and-aws-certificate-manager-acm",
+          "oldHeading": "10. What is a key difference between cert-manager and AWS Certificate Manager (ACM)?",
+          "newHeading": "10. Which statement about current ACM and cert-manager behavior is correct?"
+        }
+      ]
+    }
+  ],
+  "releases": [
+    {
+      "repo": "cert-manager/cert-manager",
+      "tag": "v1.21.2",
+      "publishedAt": "2026-09-11T07:51:11Z",
+      "url": "https://github.com/cert-manager/cert-manager/releases/tag/v1.21.2",
+      "status": 0
+    },
+    {
+      "repo": "cert-manager/cmctl",
+      "tag": "v2.5.0",
+      "publishedAt": "2026-04-30T20:18:57Z",
+      "url": "https://github.com/cert-manager/cmctl/releases/tag/v2.5.0",
+      "status": 0
+    },
+    {
+      "repo": "cert-manager/trust-manager",
+      "tag": "v0.25.0",
+      "publishedAt": "2026-09-11T16:42:03Z",
+      "url": "https://github.com/cert-manager/trust-manager/releases/tag/v0.25.0",
+      "status": 0
+    },
+    {
+      "repo": "cert-manager/istio-csr",
+      "tag": "v0.17.0",
+      "publishedAt": "2026-08-14T14:23:08Z",
+      "url": "https://github.com/cert-manager/istio-csr/releases/tag/v0.17.0",
+      "status": 0
+    },
+    {
+      "repo": "cert-manager/aws-privateca-issuer",
+      "tag": "v1.9.2",
+      "publishedAt": "2026-09-03T16:42:19Z",
+      "url": "https://github.com/cert-manager/aws-privateca-issuer/releases/tag/v1.9.2",
+      "status": 0
+    },
+    {
+      "repo": "aws-controllers-k8s/acm-controller",
+      "tag": "v1.8.1",
+      "publishedAt": "2026-08-13T21:22:13Z",
+      "url": "https://github.com/aws-controllers-k8s/acm-controller/releases/tag/v1.8.1",
+      "status": 0
+    }
+  ],
+  "primarySources": [
+    {
+      "url": "https://cert-manager.io/docs/releases/",
+      "status": 200,
+      "finalUrl": "https://cert-manager.io/docs/releases/",
+      "file": ".vitepress/cache/content-review-cert-manager/sources/d4773457a839.html",
+      "sha256": "da4c32e9fb2eeac995198c2959db11980dee19dc4f4b3147f518edef8c46a021",
+      "bytes": 228397,
+      "textFile": ".vitepress/cache/content-review-cert-manager/sources/d4773457a839.txt"
+    },
+    {
+      "url": "https://cert-manager.io/docs/usage/certificate/",
+      "status": 200,
+      "finalUrl": "https://cert-manager.io/docs/usage/certificate/",
+      "file": ".vitepress/cache/content-review-cert-manager/sources/25e5959292d6.html",
+      "sha256": "b1130922472bf8dff59b720ef47ac1b81322a14c129a963d1369fa1067faaabc",
+      "bytes": 299398,
+      "textFile": ".vitepress/cache/content-review-cert-manager/sources/25e5959292d6.txt"
+    },
+    {
+      "url": "https://cert-manager.io/docs/configuration/ca/",
+      "status": 200,
+      "finalUrl": "https://cert-manager.io/docs/configuration/ca/",
+      "file": ".vitepress/cache/content-review-cert-manager/sources/c71804e7a5c6.html",
+      "sha256": "7722fef476cac5bfd7b226afccb6b832cd70b554bf4fb7f23fe633fdc61c8959",
+      "bytes": 154995,
+      "textFile": ".vitepress/cache/content-review-cert-manager/sources/c71804e7a5c6.txt"
+    },
+    {
+      "url": "https://letsencrypt.org/docs/rate-limits/",
+      "status": 200,
+      "finalUrl": "https://letsencrypt.org/docs/rate-limits/",
+      "file": ".vitepress/cache/content-review-cert-manager/sources/7e186c68ccfb.html",
+      "sha256": "acd01b991a3f325ecfebd14887f2dc20ee71887536bc265b2ccbaa8ce6a0a086",
+      "bytes": 44096,
+      "textFile": ".vitepress/cache/content-review-cert-manager/sources/7e186c68ccfb.txt"
+    },
+    {
+      "url": "https://letsencrypt.org/docs/staging-environment/",
+      "status": 200,
+      "finalUrl": "https://letsencrypt.org/docs/staging-environment/",
+      "file": ".vitepress/cache/content-review-cert-manager/sources/82d02dd253fe.html",
+      "sha256": "1e545202154b19632f4494de253df4dc67c5ebaaeb134a775210c0e1a5ddc0f9",
+      "bytes": 36822,
+      "textFile": ".vitepress/cache/content-review-cert-manager/sources/82d02dd253fe.txt"
+    },
+    {
+      "url": "https://www.cncf.io/projects/cert-manager/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/projects/cert-manager/",
+      "file": ".vitepress/cache/content-review-cert-manager/sources/70b9ed6e32d7.html",
+      "sha256": "9089a4c5f7a16c79dc5e29616d6ca0edf216baba482981c1f1c7954897c11da2",
+      "bytes": 186870,
+      "textFile": ".vitepress/cache/content-review-cert-manager/sources/70b9ed6e32d7.txt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cert-manager/cert-manager/v1.21.2/pkg/util/pki/renewaltime.go",
+      "path": ".vitepress/cache/content-review-cert-manager/sources/cert-manager_pkg_util_pki_renewaltime.go",
+      "bytes": 12135
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cert-manager/cert-manager/v1.21.2/pkg/apis/certmanager/v1/types_certificate.go",
+      "path": ".vitepress/cache/content-review-cert-manager/sources/cert-manager_pkg_apis_certmanager_v1_types_certificate.go",
+      "bytes": 38278
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cert-manager/cert-manager/v1.21.2/pkg/apis/config/controller/v1alpha1/types.go",
+      "path": ".vitepress/cache/content-review-cert-manager/sources/cert-manager_pkg_apis_config_controller_v1alpha1_types.go",
+      "bytes": 14546
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cert-manager/cert-manager/v1.21.2/internal/apis/certmanager/validation/certificate.go",
+      "path": ".vitepress/cache/content-review-cert-manager/sources/cert-manager_internal_apis_certmanager_validation_certificate.go",
+      "bytes": 20632
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cert-manager/cert-manager/v1.21.2/deploy/charts/cert-manager/templates/service.yaml",
+      "path": ".vitepress/cache/content-review-cert-manager/sources/cert-manager_deploy_charts_cert-manager_templates_service.yaml",
+      "bytes": 1163
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/acm-controller/v1.8.1/apis/v1alpha1/certificate.go",
+      "file": ".vitepress/cache/content-review-cert-manager/sources/aws-controllers-k8s_acm-controller_apis_v1alpha1_certificate.go",
+      "bytes": 15641
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/acm-controller/v1.8.1/pkg/resource/certificate/hooks.go",
+      "file": ".vitepress/cache/content-review-cert-manager/sources/aws-controllers-k8s_acm-controller_pkg_resource_certificate_hooks.go",
+      "bytes": 10825
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/acm-controller/v1.8.1/config/crd/bases/acm.services.k8s.aws_certificates.yaml",
+      "file": ".vitepress/cache/content-review-cert-manager/sources/aws-controllers-k8s_acm-controller_config_crd_bases_acm.services.k8s.aws_certificates.yaml",
+      "bytes": 30314
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cert-manager/trust-manager/v0.25.0/config/crd/bases/trust.cert-manager.io_bundles.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "url": "https://cert-manager.io/docs/configuration/acme/",
+      "status": 200,
+      "file": ".vitepress/cache/content-review-cert-manager/sources/final-fcd04c8b42.html",
+      "sha256": "010d91f811ec799a854a14d339e73cd7532c6ac8274d9a86998213da7920320a",
+      "bytes": 260777
+    },
+    {
+      "url": "https://cert-manager.io/docs/configuration/vault/",
+      "status": 200,
+      "file": ".vitepress/cache/content-review-cert-manager/sources/final-1e5a787a6c.html",
+      "sha256": "dd5abae5970b92b45b4098972fca83321f4115cc6a222ade181eb65c5c85f9cd",
+      "bytes": 312827
+    },
+    {
+      "url": "https://cert-manager.io/docs/usage/gateway/",
+      "status": 200,
+      "file": ".vitepress/cache/content-review-cert-manager/sources/final-72bdb97928.html",
+      "sha256": "6013ce62d043b97c23f6b6216ab6c957072dbf8a506ca3c4f2d14f51656a7fd7",
+      "bytes": 342974
+    },
+    {
+      "url": "https://cert-manager.io/docs/usage/istio-csr/",
+      "status": 200,
+      "file": ".vitepress/cache/content-review-cert-manager/sources/final-04ad1e56b9.html",
+      "sha256": "67579b4392fd29546d0a992ee93a5204704cff403b6c7709ad2c39d96b4b0283",
+      "bytes": 139647
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cert-manager/aws-privateca-issuer/v1.9.2/README.md",
+      "status": 200,
+      "file": ".vitepress/cache/content-review-cert-manager/sources/final-4bfe384346.txt",
+      "sha256": "700129702472ba19ef1582e1793a56cdd0d4cfb910f1fb12d8bad4d534fac125",
+      "bytes": 20543
+    },
+    {
+      "url": "https://developer.hashicorp.com/vault/api-docs/auth/kubernetes",
+      "status": 200,
+      "file": ".vitepress/cache/content-review-cert-manager/sources/final-cfa855ec9d.html",
+      "sha256": "a53eb0e2ee1df0e31a00252f634152c3c6c9d7bc3747bcadbe9586307df68717",
+      "bytes": 317181
+    },
+    {
+      "url": "https://developer.hashicorp.com/vault/api-docs/secret/pki",
+      "status": 200,
+      "file": ".vitepress/cache/content-review-cert-manager/sources/final-4238cc0afa.html",
+      "sha256": "f4450f1b1be6e7cf08ba4bb4a3f2cdf7586749d2b6e2a872171af45e11dcbe67",
+      "bytes": 2349313
+    },
+    {
+      "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.36.0-standalone-strict/all.json",
+      "status": 200,
+      "file": ".vitepress/cache/content-review-cert-manager/sources/final-780b903339.json",
+      "sha256": "8688786dfc28f6b6f8ce220b65f691ce522c883f47deb65765cf3d4cfa07c228",
+      "bytes": 81230
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/standard/gateway.networking.k8s.io_gateways.yaml",
+      "status": 200,
+      "file": ".vitepress/cache/content-review-cert-manager/sources/final-3dcb3c9202.yaml",
+      "sha256": "a02ea425fc901f197b668c9ddd56375e1f6896994914c6e6b9b4fdb85cf3ba6e",
+      "bytes": 122317
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml",
+      "status": 200,
+      "file": ".vitepress/cache/content-review-cert-manager/sources/final-74707315b1.yaml",
+      "sha256": "98c6777c22309d319292e9c288ee632006c9ffdd4272383d6f9dffa3fbccaf14",
+      "bytes": 344583
+    }
+  ],
+  "validation": {
+    "helm": [
+      {
+        "chart": "cert-manager",
+        "archive": "cert-manager-v1.21.2.tgz",
+        "code": 0,
+        "stderr": "",
+        "bytes": 1045190,
+        "valuesSha256": "e1340a1e41cbe140340f202eb22d42a0ec3272cd0b665c93e6c76fd143b52487"
+      },
+      {
+        "chart": "trust-manager",
+        "archive": "trust-manager-v0.25.0.tgz",
+        "code": 0,
+        "stderr": "",
+        "bytes": 40290,
+        "valuesSha256": "945353a7dc0c523fd659802e9f6298981be704f49758760e62e5df95e04ebb6e"
+      },
+      {
+        "chart": "cert-manager-istio-csr",
+        "archive": "cert-manager-istio-csr-v0.17.0.tgz",
+        "code": 0,
+        "stderr": "",
+        "bytes": 10935,
+        "valuesSha256": "588cc094bd2221366f4290522e2967c819485a1b72c2702474a13168a33750b0"
+      },
+      {
+        "chart": "aws-privateca-issuer",
+        "archive": "aws-privateca-issuer-v1.9.2.tgz",
+        "code": 0,
+        "stderr": "",
+        "bytes": 26536,
+        "valuesSha256": null
+      },
+      {
+        "chart": "linkerd-control-plane",
+        "archive": "linkerd-control-plane-2026.9.1.tgz",
+        "code": 0,
+        "stderr": "",
+        "bytes": 85023,
+        "valuesSha256": "1bae3d9625e7c95f49cb685f6132940b969ea5c694c9584d8a18e20fcb5e17c1"
+      }
+    ],
+    "schema": {
+      "status": "passed",
+      "resources": [
+        {
+          "path": "examples/security/cert-manager/bootstrap.yaml",
+          "document": 0,
+          "kind": "Namespace",
+          "name": "cert-manager",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/bootstrap.yaml",
+          "document": 1,
+          "kind": "Namespace",
+          "name": "demo-app",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/bootstrap.yaml",
+          "document": 2,
+          "kind": "Issuer",
+          "name": "bootstrap",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/bootstrap.yaml",
+          "document": 3,
+          "kind": "Certificate",
+          "name": "lab-root",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/bootstrap.yaml",
+          "document": 4,
+          "kind": "ClusterIssuer",
+          "name": "lab-ca",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/bootstrap.yaml",
+          "document": 5,
+          "kind": "Certificate",
+          "name": "app-tls",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/certificate-requester-rbac.yaml",
+          "document": 0,
+          "kind": "Role",
+          "name": "certificate-requester",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/certificate-requester-rbac.yaml",
+          "document": 1,
+          "kind": "RoleBinding",
+          "name": "application-certificate-requesters",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/public-staging.yaml",
+          "document": 0,
+          "kind": "ClusterIssuer",
+          "name": "public-staging",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/public-staging.yaml",
+          "document": 1,
+          "kind": "Namespace",
+          "name": "gateway-system",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/public-staging.yaml",
+          "document": 2,
+          "kind": "Gateway",
+          "name": "public-http",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/route53-issuer.yaml",
+          "document": 0,
+          "kind": "ClusterIssuer",
+          "name": "public-dns01",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/acm-acme-issuer.yaml",
+          "document": 0,
+          "kind": "ClusterIssuer",
+          "name": "acm-acme",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/pca-issuer.yaml",
+          "document": 0,
+          "kind": "AWSPCAClusterIssuer",
+          "name": "private-ca",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/pca-issuer.yaml",
+          "document": 1,
+          "kind": "Certificate",
+          "name": "private-service-tls",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/trust-bundle.yaml",
+          "document": 0,
+          "kind": "Bundle",
+          "name": "application-trust",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/vault-issuer.yaml",
+          "document": 0,
+          "kind": "ServiceAccount",
+          "name": "vault-issuer",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/vault-issuer.yaml",
+          "document": 1,
+          "kind": "Role",
+          "name": "cert-manager-vault-token",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/vault-issuer.yaml",
+          "document": 2,
+          "kind": "RoleBinding",
+          "name": "cert-manager-vault-token",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/vault-issuer.yaml",
+          "document": 3,
+          "kind": "Issuer",
+          "name": "vault-pki",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/alb-acm-ingress.yaml",
+          "document": 0,
+          "kind": "Ingress",
+          "name": "app-acm",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/gateway-tls.yaml",
+          "document": 0,
+          "kind": "Gateway",
+          "name": "app-gateway",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/gateway-tls.yaml",
+          "document": 1,
+          "kind": "HTTPRoute",
+          "name": "app",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/nlb-tcp-service.yaml",
+          "document": 0,
+          "kind": "Service",
+          "name": "app-tls-passthrough",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/trust-consumer.yaml",
+          "document": 0,
+          "kind": "Deployment",
+          "name": "trust-consumer",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/linkerd-identity.yaml",
+          "document": 0,
+          "kind": "Namespace",
+          "name": "linkerd",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/linkerd-identity.yaml",
+          "document": 1,
+          "kind": "Certificate",
+          "name": "linkerd-identity-issuer",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/linkerd-identity.yaml",
+          "document": 2,
+          "kind": "Bundle",
+          "name": "linkerd-identity-trust-roots",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/ack-acm.yaml",
+          "document": 0,
+          "kind": "Secret",
+          "name": "exported-public-tls",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "examples/security/cert-manager/ack-acm.yaml",
+          "document": 1,
+          "kind": "Certificate",
+          "name": "exportable-public-tls",
+          "errors": [],
+          "passed": true
+        }
+      ],
+      "negativeCases": [
+        {
+          "fixture": "ack-acm.yaml",
+          "rejected": true,
+          "errors": [
+            "unknown /spec/validationMethod"
+          ]
+        },
+        {
+          "fixture": "trust-bundle.yaml",
+          "rejected": true,
+          "errors": [
+            "unknown /spec/sources/1/inlineString"
+          ]
+        },
+        {
+          "fixture": "bootstrap.yaml",
+          "rejected": true,
+          "errors": [
+            "unknown /spec/unknownRenewalField"
+          ]
+        }
+      ],
+      "coreSchema": {
+        "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+        "sha256": "dcede2063da1d7ad62ecb5af8adb6d7fabd0b52385a7fa0048afb491dac90450"
+      },
+      "scope": "Pinned official Kubernetes 1.36 OpenAPI and CM/PCA/ACK/Trust/Gateway CRD schemas plus unknown-field walk; bash syntax. No CEL/admission/auth or issuance execution."
+    },
+    "renewal": {
+      "cases": [
+        {
+          "name": "90-day-default",
+          "actual": "2026-10-31T00:00:00Z",
+          "expected": "2026-10-31T00:00:00Z",
+          "passed": true
+        },
+        {
+          "name": "45-day-actual-default",
+          "actual": "2026-10-01T00:00:00Z",
+          "expected": "2026-10-01T00:00:00Z",
+          "passed": true
+        },
+        {
+          "name": "90-day-15-day-buffer",
+          "actual": "2026-11-15T00:00:00Z",
+          "expected": "2026-11-15T00:00:00Z",
+          "passed": true
+        },
+        {
+          "name": "40-day-25-percent-buffer",
+          "actual": "2026-10-01T00:00:00Z",
+          "expected": "2026-10-01T00:00:00Z",
+          "passed": true
+        },
+        {
+          "name": "renewal-disabled",
+          "actual": "<nil>",
+          "expected": "<nil>",
+          "passed": true
+        },
+        {
+          "name": "ARI-supplied-window",
+          "actual": "2026-09-21T00:00:00Z",
+          "expected": "2026-09-21T00:00:00Z",
+          "passed": true
+        }
+      ],
+      "scope": "Actualcert-manager1.21.2pki.RenewalTime;syntheticdates,nocluster/issuance/ARIserver",
+      "status": "passed"
+    },
+    "csr": {
+      "status": "passed",
+      "dnsNames": [
+        "app.example.com"
+      ],
+      "algorithm": "ECDSA-P256",
+      "scope": "Actualcert-managerpkiCSRgeneration/signaturecheck;syntheticlocalkeyonly,noclusterorCArequest"
+    },
+    "controllerConfig": {
+      "cases": [
+        {
+          "accepted": true,
+          "expected": true,
+          "name": "gateway-config"
+        },
+        {
+          "accepted": true,
+          "expected": true,
+          "name": "deprecated-flat-field-still-accepted"
+        },
+        {
+          "accepted": false,
+          "error": "strict decoding error: unknown field \"madeUpSetting\"",
+          "expected": false,
+          "name": "unknown-config-field"
+        }
+      ],
+      "scope": "Pinnedcert-manager1.21.2APIstrictdecoder;noactualcontrollerstartuporcluster",
+      "status": "passed"
+    },
+    "prometheus": {
+      "status": "passed",
+      "cases": 5,
+      "assertions": 20,
+      "version": "3.14.0",
+      "scope": "Syntheticconditionseries/expiryboundaries;noPrometheusscrapeorcluster"
+    },
+    "browser": {
+      "status": "passed",
+      "cases": [
+        {
+          "file": "en-security-10-cert-manager-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1665,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1665,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1665,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 61019,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1079,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1079,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1079,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 55659,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1380,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1380,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1380,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 58909,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1126,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1126,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-10-cert-manager-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1126,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 62757,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 769,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 769,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 769,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 55130,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1039,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1039,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1039,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 58314,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 904,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 904,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 904,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 62256,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1171,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1171,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-10-cert-manager-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1171,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 60104,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        }
+      ],
+      "scope": "24caseson8production-normalizedcert-manager-viewers; motion/reduced-motion/visibility/theme/guided controls and8SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild",
+      "retryNote": "Final six component-viewer cases replace pre-final cases after terminology adjustment; all 24 final cases passed."
+    },
+    "vaultRole": {
+      "status": "passed",
+      "vaultVersion": "2.1.0",
+      "cases": [
+        {
+          "role": "original",
+          "case": "approved-dns",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "ip-san",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "localhost",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "outside-dns",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name outside.invalid not allowed by this role"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "approved-dns",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "fixed",
+          "case": "ip-san",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "IP Subject Alternative Names are not allowed in this role, but was provided [192.0.2.10]"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "localhost",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name localhost not allowed by this role"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "outside-dns",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name outside.invalid not allowed by this role"
+          ]
+        },
+        {
+          "role": "original",
+          "case": "csr-approved-dns",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "csr-ip-san",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "csr-localhost",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "csr-outside-dns",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name outside.invalid not allowed by this role"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "csr-approved-dns",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "fixed",
+          "case": "csr-ip-san",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "IP Subject Alternative Names are not allowed in this role, but was provided some via CSR"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "csr-localhost",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name localhost not allowed by this role"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "csr-outside-dns",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name outside.invalid not allowed by this role"
+          ]
+        }
+      ],
+      "fixedRoleReadback": {
+        "allowed_domains": [
+          "example.com"
+        ],
+        "allow_subdomains": true,
+        "allow_bare_domains": false,
+        "allow_any_name": false,
+        "allow_ip_sans": false,
+        "allow_localhost": false,
+        "use_csr_sans": true
+      },
+      "scope": "Ephemeral in-memory Vault bound only to127.0.0.1; synthetic CA and local issuance requests. No deployed Vault login, Kubernetes authentication, external CA, AWS or cluster calls; token/privatekeys never published."
+    }
+  },
+  "changes": [
+    "Correct CNCF graduation/support/version dates and actual-lifetime/ARI renewal semantics.",
+    "Replace retired ingress-nginx defaults with explicitly required Gateway controller; scope Route53 IAM and separate ALB/NLB Secret use.",
+    "Correct ACK export CRD and ACM ACME EAB/prevalidation/client lifecycle boundaries.",
+    "Correct Vault audience/token RBAC/TLS trust; remove cluster-wide developer Secret reads.",
+    "Distinguish Istio agent/CSR/SDS/peer mTLS and Linkerd external identity renewal.",
+    "Correct Bundle inline field, trust namespace, subPath/reload, readiness condition and expiry alerts.",
+    "Preserve 130 old fragments and redraw eight bilingual diagrams with final PNG visual inspection.",
+    "Explicitly disable Vault IP SAN and localhost issuance; read effective role after POST. Actual ephemeral localhost Vault tests reproduce old permissive behavior and verify fixed policy for both issue and CSR-sign endpoints (16 cases). Correct Korean Gateway shim to Certificate creation."
+  ],
+  "limits": [
+    "No external CA/ACME issuance, AWS resources, deployed Vault login, Kubernetes authentication/admission, mesh installation or runtime mTLS was executed. Synthetic local Vault PKI issuance/signing was tested separately.",
+    "Pinned Kubernetes/CRD OpenAPI validation does not execute CEL/webhook policy. Kubernetes IntOrString extension is explicitly interpreted.",
+    "Helm rendering is not proof of installation, readiness or successful renewal.",
+    "Browser cases use 375/768/1920 widths with local font fallback; full site build delegated to CI."
+  ],
+  "vaultBinary": {
+    "version": "2.1.0",
+    "url": "https://releases.hashicorp.com/vault/2.1.0/vault_2.1.0_linux_arm64.zip",
+    "sha256": "319b3eb7b0c2ad218453f5d1af5c23cac81a024db3a07ccd2494ecd31f2090c3",
+    "checksumVerified": true
+  },
+  "integrationNote": "Preserved two current-main ACM/ACK compatibility aliases from PR255 in addition to the 130 original fragment aliases."
+}

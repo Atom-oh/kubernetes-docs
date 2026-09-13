@@ -1,0 +1,27 @@
+crds:
+  enabled: true
+  keep: true
+replicaCount: 2
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+config:
+  apiVersion: controller.config.cert-manager.io/v1alpha1
+  kind: ControllerConfiguration
+  gatewayAPI:
+    enabled: true
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
+webhook:
+  replicaCount: 2
+  timeoutSeconds: 10
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+cainjector:
+  replicaCount: 2
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1

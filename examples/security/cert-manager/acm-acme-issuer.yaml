@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: acm-acme
+spec:
+  acme:
+    server: https://acm-acme-enroll.ap-northeast-2.api.aws/REPLACE_ENDPOINT_ID/directory
+    email: pki-admin@example.com
+    privateKeySecretRef:
+      name: acm-acme-account
+    externalAccountBinding:
+      keyID: REPLACE_EAB_KEY_ID
+      keySecretRef:
+        name: acm-eab
+        key: hmac

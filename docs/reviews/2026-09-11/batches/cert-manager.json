@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/security/10-cert-manager.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "ff1f09004695ef99c6cb1dd1c129b1c944404649a2720030e8bab4b45bf5ab5e",
+    "summary": "Read all four documents (3602 original lines); fixed cert-manager issuance/renewal, CA trust, ACM/ACK, Vault, mesh, RBAC and monitoring; 20 questions, 23 examples, 8 diagrams, 130 preserved fragments with bounded local validation.",
+    "validationReport": "docs/reviews/2026-09-11/cert-manager-validation.json"
+  },
+  {
+    "path": "en/security/10-cert-manager.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "818c7b538eb9b9d3c3c897e1ac04d52d143244b7a954d74dc9bf405badabd980",
+    "summary": "Read all four documents (3602 original lines); fixed cert-manager issuance/renewal, CA trust, ACM/ACK, Vault, mesh, RBAC and monitoring; 20 questions, 23 examples, 8 diagrams, 130 preserved fragments with bounded local validation.",
+    "validationReport": "docs/reviews/2026-09-11/cert-manager-validation.json"
+  },
+  {
+    "path": "ko/quizzes/security/10-cert-manager-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "809ae86d5e515620e0901c86af4f999a9f1bd16a4bdebf8854ec842788878a71",
+    "summary": "Read all four documents (3602 original lines); fixed cert-manager issuance/renewal, CA trust, ACM/ACK, Vault, mesh, RBAC and monitoring; 20 questions, 23 examples, 8 diagrams, 130 preserved fragments with bounded local validation.",
+    "validationReport": "docs/reviews/2026-09-11/cert-manager-validation.json"
+  },
+  {
+    "path": "en/quizzes/security/10-cert-manager-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b842df4feda1a88f0944924b002435bd743027389db1833de8457bdb9f8b74e5",
+    "summary": "Read all four documents (3602 original lines); fixed cert-manager issuance/renewal, CA trust, ACM/ACK, Vault, mesh, RBAC and monitoring; 20 questions, 23 examples, 8 diagrams, 130 preserved fragments with bounded local validation.",
+    "validationReport": "docs/reviews/2026-09-11/cert-manager-validation.json"
+  }
+]

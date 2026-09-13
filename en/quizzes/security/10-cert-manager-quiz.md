@@ -1,357 +1,194 @@
 # cert-manager Quiz
 
-Test your understanding of cert-manager and Kubernetes certificate management with the following questions.
+> **Last Updated**: September 13, 2026
 
----
+Ten questions covering issuance, renewal, trust distribution, and AWS integration boundaries.
 
 ## Questions
 
 ### 1. What is cert-manager's project status in the CNCF?
 
-- A) Sandbox project
-- B) Incubating project
-- C) Graduated project
-- D) Archived project
+- A) Sandbox
+- B) Incubating
+- C) Graduated
+- D) Archived
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Graduated project**
+**Answer: C) Graduated**
 
-**Explanation:**
-cert-manager achieved CNCF Graduated status in November 2022, making it one of the most mature and widely adopted certificate management solutions for Kubernetes. This status indicates the project has met rigorous requirements for governance, security, and community adoption.
+cert-manager graduated on September 29, 2024. September 19, 2022 was its Incubating date. Project maturity does not establish the security or availability of an individual installation.
 
 </details>
 
----
+<span id="_2-which-component-in-cert-manager-watches-certificate-resources-and-triggers-certificate-issuance"></span>
 
-### 2. Which component in cert-manager watches Certificate resources and triggers certificate issuance?
+### 2. Which component watches Certificates and reconciles issuance and renewal?
 
 - A) cainjector
 - B) webhook
 - C) controller
-- D) acmesolver
+- D) scheduler
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: C) controller**
 
-**Explanation:**
-cert-manager consists of three core components:
-- **controller**: Watches Certificate resources, manages the certificate lifecycle, and triggers issuance/renewal
-- **webhook**: Validates and mutates cert-manager resources via admission webhooks
-- **cainjector**: Injects CA bundles into ValidatingWebhookConfiguration, MutatingWebhookConfiguration, and CRD conversion webhooks
+The controller reconciles certificate lifecycle. The webhook validates, defaults, and converts custom resources; cainjector injects CA bundles into supported API/webhook configurations.
 
 </details>
 
----
+<span id="_3-what-is-the-key-difference-between-issuer-and-clusterissuer-resources"></span>
 
-### 3. What is the key difference between Issuer and ClusterIssuer resources?
+### 3. What is the key difference between Issuer and ClusterIssuer?
 
-- A) Issuer supports more certificate types
-- B) ClusterIssuer is namespace-scoped while Issuer is cluster-scoped
-- C) Issuer is namespace-scoped while ClusterIssuer is cluster-scoped
-- D) ClusterIssuer only works with ACME
+- A) Only Issuer supports ACME
+- B) Issuer is namespaced; ClusterIssuer is cluster-scoped
+- C) Only ClusterIssuer renews automatically
+- D) Creating a ClusterIssuer automatically enforces SAN policy
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Issuer is namespace-scoped while ClusterIssuer is cluster-scoped**
+**Answer: B) Issuer is namespaced; ClusterIssuer is cluster-scoped**
 
-**Explanation:**
-```yaml
-# Issuer - only issues certificates in its namespace
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: letsencrypt-prod
-  namespace: my-app  # Only works in this namespace
-
-# ClusterIssuer - issues certificates across all namespaces
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod  # No namespace - cluster-wide
-```
-
-Use ClusterIssuer for organization-wide certificate policies, Issuer for namespace-specific configurations.
+An Issuer is referenced within its namespace. ClusterIssuer credential/CA Secrets live in the controller cluster-resource namespace, normally cert-manager. Resource scope alone does not authorize SANs or issuerRef; separate approval/admission policy is needed.
 
 </details>
 
----
+<span id="_4-which-acme-challenge-type-supports-wildcard-certificate-issuance"></span>
 
-### 4. Which ACME challenge type supports wildcard certificate issuance?
+### 4. Which validation method supports ordinary Let’s Encrypt ACME wildcard issuance?
 
 - A) HTTP-01
 - B) DNS-01
 - C) TLS-ALPN-01
-- D) Both HTTP-01 and DNS-01
+- D) Only checking port 443 connectivity
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B) DNS-01**
 
-**Explanation:**
-ACME challenge types and their capabilities:
-- **HTTP-01**: Proves domain control via HTTP endpoint (port 80). Does NOT support wildcards.
-- **DNS-01**: Proves domain control via DNS TXT records. Supports wildcard certificates (*.example.com).
-- **TLS-ALPN-01**: Proves domain control via TLS (port 443). Does NOT support wildcards.
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-spec:
-  acme:
-    solvers:
-    - dns01:
-        route53:
-          region: us-east-1
-      selector:
-        dnsNames:
-        - "*.example.com"  # Wildcard requires DNS-01
-```
+DNS-01 proves domain control through TXT records. HTTP-01 requires port 80 and does not support wildcards. Scope DNS API permissions to the intended zone/TXT names. Reused authorizations or ACM prevalidation can avoid a new Challenge on each request.
 
 </details>
 
----
+<span id="_5-in-a-certificate-resource-what-does-the-secretname-field-specify"></span>
 
-### 5. In a Certificate resource, what does the secretName field specify?
+### 5. What does Certificate.spec.secretName specify?
 
-- A) The name of the Issuer secret
-- B) The Kubernetes Secret where the issued certificate will be stored
-- C) The CA certificate secret
-- D) The ACME account secret
+- A) The ACME account key Secret
+- B) The output certificate/private-key Secret in the same namespace
+- C) The ConfigMap that always distributes the root CA
+- D) The Issuer authentication Secret
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The Kubernetes Secret where the issued certificate will be stored**
+**Answer: B) The output certificate/private-key Secret in the same namespace**
 
-**Explanation:**
-The secretName field specifies where cert-manager stores the issued certificate:
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: my-app-tls
-  namespace: my-app
-spec:
-  secretName: my-app-tls-cert  # Certificate stored here
-  issuerRef:
-    name: letsencrypt-prod
-    kind: ClusterIssuer
-  dnsNames:
-  - my-app.example.com
-```
-
-The resulting Secret contains:
-- `tls.crt`: The certificate chain
-- `tls.key`: The private key
-- `ca.crt`: The CA certificate (if available)
+The output Secret contains tls.crt and tls.key. ca.crt may be absent and is not a replacement for distributing client trust. The default privateKey.rotationPolicy has been Always since 1.18. Application reload after Secret updates must be verified separately.
 
 </details>
 
----
+<span id="_6-what-is-the-primary-use-case-for-the-aws-private-ca-issuer"></span>
 
-### 6. What is the primary use case for the AWS Private CA Issuer?
+### 6. Which extension connects AWS Private CA as a cert-manager external issuer?
 
-- A) Free public certificates
-- B) Internal PKI for private/enterprise certificates
-- C) DNS-01 challenge automation
-- D) Certificate revocation
+- A) aws-pca-controller
+- B) aws-privateca-issuer
+- C) acmesolver
+- D) trust-manager
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Internal PKI for private/enterprise certificates**
+**Answer: B) aws-privateca-issuer**
 
-**Explanation:**
-AWS Private CA (PCA) Issuer integrates cert-manager with AWS Certificate Manager Private Certificate Authority:
-
-```yaml
-apiVersion: awspca.cert-manager.io/v1beta1
-kind: AWSPCAClusterIssuer
-metadata:
-  name: aws-pca-issuer
-spec:
-  arn: arn:aws:acm-pca:us-east-1:123456789:certificate-authority/abc-123
-  region: us-east-1
-```
-
-Use cases:
-- Internal microservice mTLS
-- Enterprise PKI compliance requirements
-- Private certificates not exposed to public internet
-- Integration with existing AWS PCA infrastructure
+aws-privateca-issuer handles AWSPCAIssuer/AWSPCAClusterIssuer. It needs CA-scoped IAM permissions, workload identity, request approval, and compatible CA mode/templates/lifetimes. A private CA does not imply public browser trust or free issuance.
 
 </details>
 
----
+<span id="_7-what-does-trust-manager-do-in-the-cert-manager-ecosystem"></span>
 
-### 7. What does trust-manager do in the cert-manager ecosystem?
+### 7. What is the main role of trust-manager?
 
-- A) Validates certificate signatures
-- B) Distributes CA bundles across namespaces as ConfigMaps or Secrets
-- C) Manages ACME account registration
-- D) Handles certificate revocation
+- A) Issuing certificates and private keys
+- B) Distributing CA bundles to selected namespaces
+- C) Copying CA private keys into every Pod
+- D) Automatically revoking certificates
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Distributes CA bundles across namespaces as ConfigMaps or Secrets**
+**Answer: B) Distributing CA bundles to selected namespaces**
 
-**Explanation:**
-trust-manager is a cert-manager sub-project that distributes trusted CA certificates:
-
-```yaml
-apiVersion: trust.cert-manager.io/v1alpha1
-kind: Bundle
-metadata:
-  name: my-ca-bundle
-spec:
-  sources:
-  - useDefaultCAs: true           # Include system CAs
-  - secret:
-      name: "internal-ca"
-      key: "ca.crt"
-  target:
-    configMap:
-      key: "ca-certificates.crt"
-    namespaceSelector:
-      matchLabels:
-        trust-bundle: enabled     # Distribute to labeled namespaces
-```
-
-This ensures consistent CA trust across all application namespaces.
+The default 0.25.0 chart uses Bundle v1alpha1. Sources are read from the configured trust namespace and namespaceSelector limits destinations. ConfigMap targets are supported; Secret targets need separate enablement/RBAC. A subPath mount does not receive updates, and directory projection does not guarantee process reload.
 
 </details>
 
----
+<span id="_8-what-does-the-renewbefore-field-control-in-a-certificate-resource"></span>
 
-### 8. What does the renewBefore field control in a Certificate resource?
+### 8. A request asks for 90 days but receives a 45-day certificate. With no explicit renewal settings or ARI, when is default renewal scheduled?
 
-- A) The minimum validity period
-- B) How long before expiry cert-manager begins renewal
-- C) The maximum renewal attempts
-- D) The renewal check interval
+- A) About 30 days into the actual lifetime
+- B) Day 60 based on the requested 90 days
+- C) Always 30 days before expiry
+- D) Always 75 days after issuance
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) How long before expiry cert-manager begins renewal**
+**Answer: A) About 30 days into the actual lifetime**
 
-**Explanation:**
-The renewBefore field specifies when cert-manager starts the renewal process:
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-spec:
-  secretName: my-cert
-  duration: 2160h    # 90 days validity
-  renewBefore: 360h  # Renew 15 days before expiry
-  issuerRef:
-    name: letsencrypt-prod
-    kind: ClusterIssuer
-  dnsNames:
-  - example.com
-```
-
-With these settings:
-- Certificate valid for 90 days
-- Renewal begins at day 75 (90 - 15 = 75)
-- Provides buffer for renewal failures
+The default is two-thirds through the actual X.509 lifetime. Day 75 is correct only for an actual 90-day certificate with renewBefore:360h. Do not set renewBefore and renewBeforePercentage together. Version 1.21 renewal policy/windows or supported ARI paths can change scheduling; inspect status.renewalTime.
 
 </details>
 
----
+<span id="_9-what-is-the-role-of-istio-csr-in-cert-manager-s-istio-integration"></span>
 
-### 9. What is the role of istio-csr in cert-manager's Istio integration?
+### 9. Which statement correctly describes the Istio sidecar issuance path?
 
-- A) Validates Istio configurations
-- B) Issues workload certificates for Istio service mesh using cert-manager
-- C) Manages Istio gateway certificates only
-- D) Synchronizes certificates between clusters
+- A) Envoy signs using the CA private key
+- B) istio-agent → istio-csr → CertificateRequest/Issuer; SDS delivers material to Envoy
+- C) Every connection inside the same Pod is automatically mTLS
+- D) A rootCAFile path removes the need to mount a real CA file
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Issues workload certificates for Istio service mesh using cert-manager**
+**Answer: B) istio-agent → istio-csr → CertificateRequest/Issuer; SDS delivers material to Envoy**
 
-**Explanation:**
-istio-csr replaces Istio's built-in CA (istiod) with cert-manager for workload identity:
-
-```yaml
-# istio-csr issues certificates for:
-# - Workload mTLS (pod-to-pod)
-# - Service mesh identity (SPIFFE)
-
-# Configuration example
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: istiod
-  namespace: istio-system
-spec:
-  secretName: istiod-tls
-  issuerRef:
-    name: istio-ca
-    kind: ClusterIssuer
-  isCA: true
-```
-
-Benefits:
-- Centralized PKI management
-- Consistent certificate policies across mesh and ingress
-- Integration with external CAs (Vault, AWS PCA)
+istio-agent creates the CSR and istio-csr connects it to cert-manager issuance. Peer-proxy mTLS is distinct from the local application hop. Configure an actual trust-root mount, ready issuer, and Istio external-CA settings; do not mix in the separate Kubernetes CSR RA mode.
 
 </details>
 
----
+<span id="_10-what-is-a-key-difference-between-cert-manager-and-aws-certificate-manager-acm"></span>
 
-### 10. What is a key difference between cert-manager and AWS Certificate Manager (ACM)?
+### 10. Which statement about current ACM and cert-manager behavior is correct?
 
-- A) ACM supports more issuers
-- B) cert-manager can only run on EKS
-- C) cert-manager provides certificates as Kubernetes Secrets, ACM stores them in AWS
-- D) ACM supports more certificate types
+- A) ACM certificates can never be used by Pods or on premises
+- B) ALB reads Kubernetes TLS Secrets directly
+- C) ACM exportable certificates support explicit export; ACM ACME has a separate lifecycle and limitations
+- D) Changing only the server URL completes ACM ACME enrollment
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) cert-manager provides certificates as Kubernetes Secrets, ACM stores them in AWS**
+**Answer: C) ACM exportable certificates support explicit export; ACM ACME has a separate lifecycle and limitations**
 
-**Explanation:**
-cert-manager vs AWS ACM comparison:
-
-| Feature | cert-manager | AWS ACM |
-|---------|--------------|---------|
-| Storage | Kubernetes Secrets | AWS-managed |
-| Private Key Access | Yes (in Secret) | No (AWS-only) |
-| Use with Pods | Direct mounting | Not possible |
-| Ingress Integration | Any ingress controller | ALB/NLB only |
-| Multi-cloud | Yes | AWS only |
-| Issuers | ACME, Vault, PCA, self-signed | Amazon, PCA |
-
-Use cert-manager when you need:
-- Certificates inside pods
-- Multi-cloud portability
-- Custom issuers
-- Fine-grained control over private keys
+ACK ACM export needs options.export:ENABLED, exportTo, an output Secret, and separate domain validation. ACM ACME requires prevalidated domains/EAB and client-managed keys/renewal; its 45-day certificates cannot be directly attached to managed ALB/CloudFront/API Gateway integrations. cert-manager reconciles Kubernetes Secrets and multiple issuers while operators remain responsible for controllers, trust, and CA costs.
 
 </details>
-
----
 
 ## Score Calculation
 
-- **9-10 correct**: Excellent - You have a deep understanding of cert-manager.
-- **7-8 correct**: Good - You have a solid grasp of the key concepts.
-- **5-6 correct**: Fair - There are areas that need additional study.
-- **4 or fewer**: Please review the documentation again.
+- 9–10: Strong understanding.
+- 7–8: Revisit the issuance/trust paths you missed.
+- 6 or fewer: Review the guide and examples.
 
 ## Related Documentation
 

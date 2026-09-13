@@ -57,10 +57,10 @@
           "label": "cert-manager Control Plane"
         },
         "cloud": {
-          "label": "Custom Resources (CRDs)"
+          "label": "Custom resources (CRs)"
         },
         "external": {
-          "label": "External CAs"
+          "label": "Issuer implementations"
         },
         "database": {
           "label": "Kubernetes Secret"
@@ -174,8 +174,8 @@
     {
       "id": "external",
       "type": "external",
-      "label": "External CAs",
-      "sublabel": "Let's Encrypt · Vault · AWS PCA · Self-Signed",
+      "label": "Issuer implementations",
+      "sublabel": "ACME · Vault · AWS PCA · CA · SelfSigned",
       "pos": [
         720,
         400
@@ -258,7 +258,7 @@
       "id": "cert-certreq",
       "from": "cert",
       "to": "certreq",
-      "label": "creates request",
+      "label": "controller creates",
       "variant": "emphasis"
     },
     {
@@ -281,7 +281,7 @@
       "id": "cert-secret",
       "from": "cert",
       "to": "secret",
-      "label": "stores certificate",
+      "label": "controller stores result",
       "variant": "emphasis",
       "fromSide": "bottom",
       "toSide": "top",
@@ -309,7 +309,7 @@
       "id": "cainjector-webhook",
       "from": "cainjector",
       "to": "webhook",
-      "label": "injects CA bundle",
+      "label": "config CA bundle",
       "variant": "security"
     },
     {
@@ -326,7 +326,7 @@
       "title": "Control plane components",
       "items": [
         "controller: watches Certificate and Issuer resources and manages the certificate lifecycle",
-        "webhook: validates CRDs, sets defaults, converts versions",
+        "webhook: validates custom resources, sets defaults, converts versions",
         "cainjector: injects CA bundles into ValidatingWebhookConfiguration and MutatingWebhookConfiguration"
       ]
     },
@@ -334,9 +334,10 @@
       "dot": "amber",
       "title": "Issuance flow",
       "items": [
-        "Issued automatically when a Certificate CR is created; renewed 30 days before expiry",
+        "Default renewal: 2/3 of actual issued lifetime; configuration and ARI may change timing",
         "Multiple issuers: Let's Encrypt, Vault, AWS Private CA, Self-Signed",
-        "Result stored as a Secret holding tls.crt and tls.key"
+        "Result stored as a Secret holding tls.crt and tls.key",
+        "Consumers must reload updated Secrets; CA trust rollout is managed separately"
       ]
     }
   ]
