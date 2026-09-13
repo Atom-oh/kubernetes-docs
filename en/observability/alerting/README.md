@@ -195,7 +195,7 @@ All alerts should include the following information:
 
 ```yaml
 annotations:
-  summary: "Investigate {{ $labels.alertname }}"
+  summary: "Investigate the affected operation"
   description: "Check the rule expression, its units, labels, and collection health."
   impact: "Document the affected user operation before paging."
   action: "Use the owning team's reviewed runbook; do not scale resources blindly."
@@ -347,18 +347,20 @@ groups:
 
 #### 2. Workload-Level Alerts
 
+The CrashLoopBackOff series can disappear briefly between retries. This rule fires after a recent five-minute observation window remains populated for ten minutes. It detects recurring observations, not continuous current Waiting, and can remain active for up to five minutes after the last observation. Native rule tests distinguish a short transient, recurring retries and recovery.
+
 ```yaml
 groups:
   - name: eks-workloads
     rules:
       - alert: PodCrashLooping
-        expr: kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} == 1
-        for: 5m
+        expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]) >= 1
+        for: 10m
         labels:
           severity: warning
           team: app
         annotations:
-          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is waiting in CrashLoopBackOff"
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} repeatedly observed in CrashLoopBackOff"
       - alert: PodFrequentRestarts
         expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
         for: 5m

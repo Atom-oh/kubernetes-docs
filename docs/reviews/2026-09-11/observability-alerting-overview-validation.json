@@ -158,9 +158,9 @@
   ],
   "nativeValidation": {
     "status": "passed",
-    "verifiedAt": "2026-09-13T10:37:21.946600+00:00",
+    "verifiedAt": "2026-09-13T10:55:50.561728+00:00",
     "ruleCount": 14,
-    "ruleTestCases": 31,
+    "ruleTestCases": 34,
     "routingCases": 7,
     "scope": "Native local promtool/amtool only; no HTTP receiver or Kubernetes/AWS execution",
     "results": [
@@ -310,11 +310,11 @@
       },
       {
         "path": "examples/observability/alerting-overview/rules-test.yaml",
-        "sha256": "5f8dc2a4599bab46132c88b56fe573af661383dc190624fab6f40a448cefb75e"
+        "sha256": "ecfdca1254a37fe684bf723a076e79a345772fbd0f7cd3663a46603f33e9faa0"
       },
       {
         "path": "examples/observability/alerting-overview/rules.yaml",
-        "sha256": "6881ca1dbf1d1a21c13f6adc35bb204d4bb5e22698632960df25d9acb275cdde"
+        "sha256": "293c116d574a3d787e30df4c9cf525e07e4e26d94e05bea9b2c8a5e59dd79c0e"
       }
     ]
   },
@@ -323,7 +323,7 @@
     "rows": [
       {
         "path": "en/observability/alerting/README.md",
-        "sha256": "14e313d4da2d08148b66c11ff9da5d4d127a7f926c896f05be63baf92417d0bf",
+        "sha256": "0ce736bf96a500af2b0867ce72ca8b3ff1b17c783e837a86553e41bffe45387b",
         "errors": [],
         "missingAnchors": [],
         "originalIds": 38,
@@ -333,7 +333,7 @@
       },
       {
         "path": "ko/observability/alerting/README.md",
-        "sha256": "5e370505b5c780c3884a8317c82d9c516ff8dcac2067b502032d83834f908c64",
+        "sha256": "2275c206dfa145c2b574c0dd7fa3186c14d341daad2a11bf9b064fafbc388a10",
         "errors": [],
         "missingAnchors": [],
         "originalIds": 38,
@@ -1461,11 +1461,11 @@
   "artifacts": [
     {
       "path": "en/observability/alerting/README.md",
-      "sha256": "14e313d4da2d08148b66c11ff9da5d4d127a7f926c896f05be63baf92417d0bf"
+      "sha256": "0ce736bf96a500af2b0867ce72ca8b3ff1b17c783e837a86553e41bffe45387b"
     },
     {
       "path": "ko/observability/alerting/README.md",
-      "sha256": "5e370505b5c780c3884a8317c82d9c516ff8dcac2067b502032d83834f908c64"
+      "sha256": "2275c206dfa145c2b574c0dd7fa3186c14d341daad2a11bf9b064fafbc388a10"
     },
     {
       "path": "examples/observability/alerting-overview/README.md",
@@ -1477,11 +1477,11 @@
     },
     {
       "path": "examples/observability/alerting-overview/rules-test.yaml",
-      "sha256": "5f8dc2a4599bab46132c88b56fe573af661383dc190624fab6f40a448cefb75e"
+      "sha256": "ecfdca1254a37fe684bf723a076e79a345772fbd0f7cd3663a46603f33e9faa0"
     },
     {
       "path": "examples/observability/alerting-overview/rules.yaml",
-      "sha256": "6881ca1dbf1d1a21c13f6adc35bb204d4bb5e22698632960df25d9acb275cdde"
+      "sha256": "293c116d574a3d787e30df4c9cf525e07e4e26d94e05bea9b2c8a5e59dd79c0e"
     },
     {
       "path": "assets/diagrams/archify/en-observability-alerting-readme-0.architecture.json",
@@ -1705,5 +1705,22 @@
     "IllustrativethresholdsandresponsewindowsnotSLAs;singlecluster/deduplicatedseriesassumption;metricavailabilityandexplicitmemorylimitsmustbechecked.",
     "OfficialHTTPSsourcesretrievedwithurllib;failedguessedURLsareexcludedfromsupportingevidence."
   ],
-  "sourcePreservation": "Alloriginalheadingsandtopicsretained,obsoletecomparison/selectionguidancereplacedwithexplicitcurrentlifecycleandoperationalcriteria."
+  "sourcePreservation": "Alloriginalheadingsandtopicsretained,obsoletecomparison/selectionguidancereplacedwithexplicitcurrentlifecycleandoperationalcriteria.",
+  "reviewFixes": {
+    "fixedAt": "2026-09-13T10:59:48.622163+00:00",
+    "findings": [
+      "ALERTOV-R1-001",
+      "ALERTOV-R1-002"
+    ],
+    "changes": [
+      "CrashLoop uses max_over_time5m plusfor10m; gap/transient/recovery timing tested,observationaldetectionandup-to5mclearancedelaydocumented.",
+      "Standaloneannotationhasexplicitpurposeinsteadofunavailablegeneratedalertname;actualnativeannotationassertionpassed."
+    ],
+    "nativeAnnotation": {
+      "exitCode": 0,
+      "stdout": "  SUCCESS\n\n",
+      "stderr": "",
+      "scope": "ActualnativePrometheusruleannotationrenderingofpublishedstandaloneannotationmapping"
+    }
+  }
 }

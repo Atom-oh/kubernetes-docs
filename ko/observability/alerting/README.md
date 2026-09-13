@@ -195,7 +195,7 @@ groups:
 
 ```yaml
 annotations:
-  summary: "Investigate {{ $labels.alertname }}"
+  summary: "Investigate the affected operation"
   description: "Check the rule expression, its units, labels, and collection health."
   impact: "Document the affected user operation before paging."
   action: "Use the owning team's reviewed runbook; do not scale resources blindly."
@@ -346,18 +346,20 @@ groups:
 
 #### 2. 워크로드 수준 알림
 
+CrashLoopBackOff 지표는 재시도 중 잠시 사라질 수 있습니다. 아래 규칙은 최근 5분의 관측값이 있는 상태가 10분 지속되면 발생합니다. 따라서 현재 계속 Waiting인지가 아니라 반복 관측을 감지하며, 마지막 관측 후 최대 5분 동안 유지될 수 있습니다. 짧은 일회성 상태·반복 재시도·복구를 실제 rule 테스트로 구분합니다.
+
 ```yaml
 groups:
   - name: eks-workloads
     rules:
       - alert: PodCrashLooping
-        expr: kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} == 1
-        for: 5m
+        expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]) >= 1
+        for: 10m
         labels:
           severity: warning
           team: app
         annotations:
-          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is waiting in CrashLoopBackOff"
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} repeatedly observed in CrashLoopBackOff"
       - alert: PodFrequentRestarts
         expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
         for: 5m

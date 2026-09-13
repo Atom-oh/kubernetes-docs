@@ -3,8 +3,8 @@
     "path": "en/observability/alerting/README.md",
     "fullyRead": true,
     "status": "fixed",
-    "summary": "Completepaired960lineoverviewauditwithnative14rules/31cases/7routesand18diagramrepairs.",
-    "reviewedSha256": "14e313d4da2d08148b66c11ff9da5d4d127a7f926c896f05be63baf92417d0bf",
+    "summary": "Completepaired960lineoverviewauditwithnative14rules/34cases/7routes,annotationrenderassertion,and18diagramrepairs.",
+    "reviewedSha256": "0ce736bf96a500af2b0867ce72ca8b3ff1b17c783e837a86553e41bffe45387b",
     "updatedAt": "2026-09-13T10:43:03.701242+00:00",
     "sources": [
       "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
@@ -26,14 +26,18 @@
       "RemovedfalseautomaticCloudWatch-to-Alertmanagerbridge;qualifiedselectedEKScontrolplanemetrics,logsactivation,ALBvsNLBmetrics,CSI/exportercoverage,andunlimitedmemory.",
       "Preservedall76originalrenderedanchorsandtopics,keptall18oldfigureURLs;fixedENrouting/EKS/selectionplacement,replacedobsoletefiguresemantics,andmadepolicydurationsillustrative."
     ],
-    "validationReport": "docs/reviews/2026-09-11/observability-alerting-overview-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/observability-alerting-overview-validation.json",
+    "reviewFixes": [
+      "CrashLoop uses max_over_time5m plusfor10m; gap/transient/recovery timing tested,observationaldetectionandup-to5mclearancedelaydocumented.",
+      "Standaloneannotationhasexplicitpurposeinsteadofunavailablegeneratedalertname;actualnativeannotationassertionpassed."
+    ]
   },
   {
     "path": "ko/observability/alerting/README.md",
     "fullyRead": true,
     "status": "fixed",
-    "summary": "Completepaired960lineoverviewauditwithnative14rules/31cases/7routesand18diagramrepairs.",
-    "reviewedSha256": "5e370505b5c780c3884a8317c82d9c516ff8dcac2067b502032d83834f908c64",
+    "summary": "Completepaired960lineoverviewauditwithnative14rules/34cases/7routes,annotationrenderassertion,and18diagramrepairs.",
+    "reviewedSha256": "2275c206dfa145c2b574c0dd7fa3186c14d341daad2a11bf9b064fafbc388a10",
     "updatedAt": "2026-09-13T10:43:03.701242+00:00",
     "sources": [
       "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
@@ -55,6 +59,10 @@
       "RemovedfalseautomaticCloudWatch-to-Alertmanagerbridge;qualifiedselectedEKScontrolplanemetrics,logsactivation,ALBvsNLBmetrics,CSI/exportercoverage,andunlimitedmemory.",
       "Preservedall76originalrenderedanchorsandtopics,keptall18oldfigureURLs;fixedENrouting/EKS/selectionplacement,replacedobsoletefiguresemantics,andmadepolicydurationsillustrative."
     ],
-    "validationReport": "docs/reviews/2026-09-11/observability-alerting-overview-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/observability-alerting-overview-validation.json",
+    "reviewFixes": [
+      "CrashLoop uses max_over_time5m plusfor10m; gap/transient/recovery timing tested,observationaldetectionandup-to5mclearancedelaydocumented.",
+      "Standaloneannotationhasexplicitpurposeinsteadofunavailablegeneratedalertname;actualnativeannotationassertionpassed."
+    ]
   }
 ]

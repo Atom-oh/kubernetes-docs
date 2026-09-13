@@ -70,13 +70,15 @@ groups:
 - name: eks-workloads
   rules:
   - alert: PodCrashLooping
-    expr: kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} == 1
-    for: 5m
+    expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m])
+      >= 1
+    for: 10m
     labels:
       severity: warning
       team: app
     annotations:
-      summary: Pod {{ $labels.namespace }}/{{ $labels.pod }} is waiting in CrashLoopBackOff
+      summary: Pod {{ $labels.namespace }}/{{ $labels.pod }} repeatedly observed in
+        CrashLoopBackOff
   - alert: PodFrequentRestarts
     expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
     for: 5m

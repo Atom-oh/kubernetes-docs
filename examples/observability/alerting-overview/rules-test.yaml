@@ -196,8 +196,8 @@ tests:
   - series: kube_pod_container_status_waiting_reason{namespace="app",pod="p",container="c",reason="CrashLoopBackOff"}
     values: 1+0x30
   promql_expr_test:
-  - expr: count((kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}
-      == 1)) or vector(0)
+  - expr: count((max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m])
+      >= 1)) or vector(0)
     eval_time: 20m
     exp_samples:
     - labels: '{}'
@@ -471,3 +471,63 @@ tests:
       exp_annotations:
         summary: High CPU usage detected
         description: CPU usage is above 80% for 5 minutes on n
+- name: CrashLoop recurring retry gaps still fire
+  interval: 1m
+  input_series:
+  - series: kube_pod_container_status_waiting_reason{namespace="app",pod="p",container="c",reason="CrashLoopBackOff"}
+    values: 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale
+      1 1 1 1 stale stale stale stale stale stale stale stale stale stale stale stale
+      stale stale stale stale stale
+  alert_rule_test:
+  - eval_time: 9m
+    alertname: PodCrashLooping
+    exp_alerts: []
+  - eval_time: 28m
+    alertname: PodCrashLooping
+    exp_alerts:
+    - exp_labels: &id001
+        namespace: app
+        pod: p
+        container: c
+        reason: CrashLoopBackOff
+        severity: warning
+        team: app
+      exp_annotations: &id002
+        summary: Pod app/p repeatedly observed in CrashLoopBackOff
+- name: CrashLoop brief transient never fires
+  interval: 1m
+  input_series:
+  - series: kube_pod_container_status_waiting_reason{namespace="app",pod="p",container="c",reason="CrashLoopBackOff"}
+    values: 1 stale stale stale stale stale stale stale stale stale stale stale stale
+      stale stale stale stale stale stale stale stale stale stale stale stale stale
+      stale stale stale stale stale stale stale stale stale stale stale stale stale
+      stale stale stale stale stale stale stale
+  alert_rule_test:
+  - eval_time: 4m
+    alertname: PodCrashLooping
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: PodCrashLooping
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: PodCrashLooping
+    exp_alerts: []
+- name: CrashLoop recovery clears after observation window
+  interval: 1m
+  input_series:
+  - series: kube_pod_container_status_waiting_reason{namespace="app",pod="p",container="c",reason="CrashLoopBackOff"}
+    values: 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale 1 1 1 1 stale
+      1 1 1 1 stale stale stale stale stale stale stale stale stale stale stale stale
+      stale stale stale stale stale
+  alert_rule_test:
+  - eval_time: 32m
+    alertname: PodCrashLooping
+    exp_alerts:
+    - exp_labels: *id001
+      exp_annotations: *id002
+  - eval_time: 35m
+    alertname: PodCrashLooping
+    exp_alerts: []
+  - eval_time: 40m
+    alertname: PodCrashLooping
+    exp_alerts: []
