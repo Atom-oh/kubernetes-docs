@@ -9,7 +9,7 @@ spec:
       - apiGroups: [apps]
         apiVersions: [v1]
         operations: [CREATE, UPDATE]
-        resources: [deployments]
+        resources: [deployments, deployments/scale]
   validations:
     - expression: "!has(object.spec.replicas) || (object.spec.replicas >= 1 && object.spec.replicas <= 5)"
       message: replicas must be between 1 and 5

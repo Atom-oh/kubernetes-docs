@@ -212,7 +212,7 @@ spec:
 <details>
 <summary>Show answer</summary>
 
-Match apps/v1 deployments CREATE/UPDATE and select kubernetes.io/metadata.name: production. Configure an actual validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects and admissionReviewVersions. The guide's /mutate handler is not a Deployment validator. For a replica bound alone, use its VAP/binding example.
+Match apps/v1 deployments CREATE/UPDATE and select kubernetes.io/metadata.name: production. Configure an actual validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects and admissionReviewVersions. The guide's /mutate handler is not a Deployment validator. For a replica bound alone, use its VAP/binding example and match both `deployments` and `deployments/scale`, so HPA and `kubectl scale` updates cannot bypass the limit.
 
 </details>
 

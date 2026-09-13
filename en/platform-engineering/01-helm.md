@@ -1,6 +1,6 @@
 # Helm Package Manager
 
-> **Reviewed**: September 12, 2026
+> **Last Updated**: September 12, 2026
 > **Local validation**: Helm 3.21.3 / Helm 4.3.0
 
 Helm renders charts and manages Kubernetes resources and release history. Chart version, appVersion, image tag/digest and release revision are different values. Helm 4 accepts existing apiVersion:v2 charts, but CLI/apply/wait behavior must be checked for the exact version.

@@ -1,6 +1,6 @@
 # Kubernetes Extension Mechanisms
 
-> **Reviewed**: September 12, 2026
+> **Last Updated**: September 12, 2026
 
 ## Choosing an Extension Point
 
@@ -132,7 +132,7 @@ Inspect installed discovery for the actual metrics-server API version. Do not us
 
 ## Admission Policies and Webhooks
 
-ValidatingAdmissionPolicy has been stable since Kubernetes 1.30 and runs CEL validation in-process. This policy/binding limits Deployment replicas to 1–5 specifically in the production namespace. Namespace names are not equivalent to arbitrary environment labels. Review the operational impact before applying a policy.
+ValidatingAdmissionPolicy has been stable since Kubernetes 1.30 and runs CEL validation in-process. This policy/binding limits replicas to 1–5 for Deployments and deployments/scale requests in the production namespace. It also checks HPA and kubectl scale updates; align HPA maxReplicas with the limit. Namespace names are not equivalent to arbitrary environment labels. Review the operational impact before applying a policy.
 
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1
@@ -146,7 +146,7 @@ spec:
       - apiGroups: [apps]
         apiVersions: [v1]
         operations: [CREATE, UPDATE]
-        resources: [deployments]
+        resources: [deployments, deployments/scale]
   validations:
     - expression: "!has(object.spec.replicas) || (object.spec.replicas >= 1 && object.spec.replicas <= 5)"
       message: replicas must be between 1 and 5

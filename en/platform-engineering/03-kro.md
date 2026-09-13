@@ -1,6 +1,6 @@
 # Kube Resource Orchestrator (kro)
 
-> **Reviewed**: September 12, 2026 · **Baseline**: kro 0.9.4
+> **Last Updated**: September 12, 2026 · **Baseline**: kro 0.9.4
 
 ## Concepts and Scope
 

@@ -1,6 +1,6 @@
 # ExampleCorp 주문 시스템: ACK + kro 통합 구성
 
-> **검토일**: 2026년 9월 12일 · kro 0.9.4 / AWS Load Balancer Controller 3.5.0
+> **마지막 업데이트**: 2026년 9월 12일 · kro 0.9.4 / AWS Load Balancer Controller 3.5.0
 
 ## 시나리오와 검증 범위
 

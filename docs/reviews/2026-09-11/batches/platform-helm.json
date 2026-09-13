@@ -3,7 +3,7 @@
     "path": "ko/platform-engineering/01-helm.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "37a5866ee3f747a7f6b63fd8069fb7551ed2be8325163a34f021f7d6d6636f5d",
+    "reviewedSha256": "8874b815f8b2ff071aeda90fa52226e11b19092724275fe470a3071ce9516170",
     "summary": "All original prose/58unique blocks and20quiztopics perlocale reviewed. Complete8filechart, Helm3/4nativechecks,16exactsnippetmatches and4MDcompilation passed.",
     "validationReport": "docs/reviews/2026-09-11/platform-helm-validation.json"
   },
@@ -19,7 +19,7 @@
     "path": "en/platform-engineering/01-helm.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "75655f8c26dbf238f1869ab3d1443114957627c359858845793d35251d277999",
+    "reviewedSha256": "a2c5533b6009023902c000b4fd5144532c19d40a59cf11738d91210b2aaf6bab",
     "summary": "All original prose/58unique blocks and20quiztopics perlocale reviewed. Complete8filechart, Helm3/4nativechecks,16exactsnippetmatches and4MDcompilation passed.",
     "validationReport": "docs/reviews/2026-09-11/platform-helm-validation.json"
   },

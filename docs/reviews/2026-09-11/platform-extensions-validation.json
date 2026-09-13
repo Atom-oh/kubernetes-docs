@@ -40,7 +40,7 @@
     "results": [
       {
         "path": "ko/platform-engineering/04-kubernetes-extensions.md",
-        "sha256": "ec99997cc469520921f17e8fafc1c094511553372eb6fc18ebcbd6934fbff708",
+        "sha256": "0d36df6df7dd7a5598ac846677f87a09fd4ee7eb9b2bb878a276a860a495c013",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -106,7 +106,7 @@
       },
       {
         "path": "ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
-        "sha256": "e838c1a563951ac9ceb2ba92ce2d7e83ac757134a49e423b41731105cbbdcfd8",
+        "sha256": "7afd30f8190ac3592dc1280c043e29f5e7109e8f9e7e9a145cadd233fd06382e",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -222,7 +222,7 @@
       },
       {
         "path": "en/platform-engineering/04-kubernetes-extensions.md",
-        "sha256": "37a93c80204e76140d56a0d964f50410fcfc19e0f84f457740a073cc4fa9f5b6",
+        "sha256": "033e63323208e1554a22e282e52505234b06ff729f898322a464c72ee7d19f0a",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -288,7 +288,7 @@
       },
       {
         "path": "en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
-        "sha256": "0cfa96d7aa36c35ce89bbe027f06346a9216c4fa40f954b0ccadec616c73d3a0",
+        "sha256": "faab363fdb549182ebf48c795e6bcadad02ffe86bcb249f960abd2dc1161a08f",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -516,7 +516,7 @@
     {
       "document": "ko/platform-engineering/04-kubernetes-extensions.md",
       "example": "examples/platform/extensions/replica-policy.yaml",
-      "sha256": "702061365c231b452f573f960f6e85263b6e1c3f8e8cc0b583dcbba9f0b5fc41"
+      "sha256": "564f61f34d3e1e104c2b7bea0f59c00ee08e61d0d1cf2ee6baa12dfb66d84633"
     },
     {
       "document": "ko/platform-engineering/04-kubernetes-extensions.md",
@@ -536,7 +536,7 @@
     {
       "document": "en/platform-engineering/04-kubernetes-extensions.md",
       "example": "examples/platform/extensions/replica-policy.yaml",
-      "sha256": "702061365c231b452f573f960f6e85263b6e1c3f8e8cc0b583dcbba9f0b5fc41"
+      "sha256": "564f61f34d3e1e104c2b7bea0f59c00ee08e61d0d1cf2ee6baa12dfb66d84633"
     },
     {
       "document": "en/platform-engineering/04-kubernetes-extensions.md",
@@ -757,5 +757,79 @@
     "NoaggregatedAPIserver/scheduler/CNI/CSIdriverimplementedorexecuted;nohostnetwork/mount/cloudchanges.",
     "Sixsourcefilesarepublishedincludingwebhooktests;testfixtureoutputisopt-inADMISSION_PATCH_FIXTURES.",
     "No full local VitePress build."
-  ]
+  ],
+  "scaleRequestValidation": {
+    "cases": [
+      {
+        "CELWouldAllow": true,
+        "bindingNamespaceMatches": true,
+        "inMemoryCorrectedRuleMatches": true,
+        "namespace": "production",
+        "publishedRuleMatches": true,
+        "replicas": 3,
+        "resource": "apps/v1/deployments",
+        "subresource": ""
+      },
+      {
+        "CELWouldAllow": false,
+        "bindingNamespaceMatches": true,
+        "inMemoryCorrectedRuleMatches": true,
+        "namespace": "production",
+        "publishedRuleMatches": true,
+        "replicas": 6,
+        "resource": "apps/v1/deployments",
+        "subresource": ""
+      },
+      {
+        "CELWouldAllow": true,
+        "bindingNamespaceMatches": true,
+        "inMemoryCorrectedRuleMatches": true,
+        "namespace": "production",
+        "publishedRuleMatches": true,
+        "replicas": 3,
+        "resource": "apps/v1/deployments",
+        "subresource": "scale"
+      },
+      {
+        "CELWouldAllow": false,
+        "bindingNamespaceMatches": true,
+        "inMemoryCorrectedRuleMatches": true,
+        "namespace": "production",
+        "publishedRuleMatches": true,
+        "replicas": 6,
+        "resource": "apps/v1/deployments",
+        "subresource": "scale"
+      }
+    ],
+    "engine": "Kubernetes apiserver v0.36.2 native rules.Matcher + cel-go",
+    "limits": "Exact current ROOT policy tested with native matcher and CEL; no live Kubernetes API.",
+    "source": "examples/platform/extensions/replica-policy.yaml",
+    "sourceSha256": "564f61f34d3e1e104c2b7bea0f59c00ee08e61d0d1cf2ee6baa12dfb66d84633"
+  },
+  "committedScaleRegression": {
+    "command": "go test -v ./...",
+    "workingDirectory": "examples/platform/extensions/policy-tests",
+    "tests": 25,
+    "passed": 25,
+    "baselineHead": "b5606718f5637123210428b19cf2d2cf0e7e212f",
+    "baselineFailures": [
+      "production/update-scale/0",
+      "production/update-scale/6"
+    ],
+    "matcher": "k8s.io/apiserver v0.36.2 rules.Matcher",
+    "evaluator": "github.com/google/cel-go v0.31.0",
+    "coverage": [
+      "Deployment CREATE and UPDATE",
+      "deployments/scale UPDATE with replicas 0,1,5,6",
+      "production and development namespace selection",
+      "status subresource excluded"
+    ],
+    "limits": [
+      "Offline contract verification; no API server, defaulting, authentication, authorization or live cluster exercised."
+    ],
+    "sourceSha256": {
+      "examples/platform/extensions/replica-policy.yaml": "564f61f34d3e1e104c2b7bea0f59c00ee08e61d0d1cf2ee6baa12dfb66d84633",
+      "examples/platform/extensions/policy-tests/policy_test.go": "e9a86597130835fee7065838b2e8be3c493b29ae1e742982c892cd8cb8d98125"
+    }
+  }
 }

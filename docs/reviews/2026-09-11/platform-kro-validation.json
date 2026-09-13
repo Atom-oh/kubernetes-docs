@@ -40,7 +40,7 @@
     "results": [
       {
         "path": "ko/platform-engineering/03-kro.md",
-        "sha256": "7d12f42c1a1c4f797471bcf0cfc9a2e8bb3acd8dec1d26ca0c64750dafea5c77",
+        "sha256": "5715e2fcfdf0351dfcffd5c5e16556b64caa268d31b885fc20c6cef095b2cbb8",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -227,7 +227,7 @@
       },
       {
         "path": "en/platform-engineering/03-kro.md",
-        "sha256": "7c7a52f2db364b3854882ee7e182a8fa2b13734c77705597d60c7955f1cc42c9",
+        "sha256": "b79497bac0f9856a30c2cb5af8d0ac5e98a0007611ec8d96a80cd3ccb69570f5",
         "passed": true,
         "errors": [],
         "oneH1": true,

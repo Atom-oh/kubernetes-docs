@@ -3,7 +3,7 @@
     "path": "ko/platform-engineering/04-kubernetes-extensions.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "ec99997cc469520921f17e8fafc1c094511553372eb6fc18ebcbd6934fbff708",
+    "reviewedSha256": "0d36df6df7dd7a5598ac846677f87a09fd4ee7eb9b2bb878a276a860a495c013",
     "summary": "All36uniqueblocks/originalguides/quizzesread;40quiztopicsretained;CRD6/CEL6/nativeGo14/JSONPatch4/4MDpassed;6sourcefilesand8guideexactmatches.",
     "validationReport": "docs/reviews/2026-09-11/platform-extensions-validation.json"
   },
@@ -11,7 +11,7 @@
     "path": "ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "e838c1a563951ac9ceb2ba92ce2d7e83ac757134a49e423b41731105cbbdcfd8",
+    "reviewedSha256": "7afd30f8190ac3592dc1280c043e29f5e7109e8f9e7e9a145cadd233fd06382e",
     "summary": "All36uniqueblocks/originalguides/quizzesread;40quiztopicsretained;CRD6/CEL6/nativeGo14/JSONPatch4/4MDpassed;6sourcefilesand8guideexactmatches.",
     "validationReport": "docs/reviews/2026-09-11/platform-extensions-validation.json"
   },
@@ -19,7 +19,7 @@
     "path": "en/platform-engineering/04-kubernetes-extensions.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "37a93c80204e76140d56a0d964f50410fcfc19e0f84f457740a073cc4fa9f5b6",
+    "reviewedSha256": "033e63323208e1554a22e282e52505234b06ff729f898322a464c72ee7d19f0a",
     "summary": "All36uniqueblocks/originalguides/quizzesread;40quiztopicsretained;CRD6/CEL6/nativeGo14/JSONPatch4/4MDpassed;6sourcefilesand8guideexactmatches.",
     "validationReport": "docs/reviews/2026-09-11/platform-extensions-validation.json"
   },
@@ -27,7 +27,7 @@
     "path": "en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "0cfa96d7aa36c35ce89bbe027f06346a9216c4fa40f954b0ccadec616c73d3a0",
+    "reviewedSha256": "faab363fdb549182ebf48c795e6bcadad02ffe86bcb249f960abd2dc1161a08f",
     "summary": "All36uniqueblocks/originalguides/quizzesread;40quiztopicsretained;CRD6/CEL6/nativeGo14/JSONPatch4/4MDpassed;6sourcefilesand8guideexactmatches.",
     "validationReport": "docs/reviews/2026-09-11/platform-extensions-validation.json"
   }

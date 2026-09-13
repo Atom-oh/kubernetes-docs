@@ -1,6 +1,6 @@
 # AWS Controllers for Kubernetes (ACK)
 
-> **검토일**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 개념과 아키텍처
 
