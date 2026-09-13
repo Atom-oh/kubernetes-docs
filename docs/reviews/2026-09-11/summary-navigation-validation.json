@@ -6,7 +6,7 @@
     "results": [
       {
         "path": "ko/SUMMARY.md",
-        "sha256": "18a83deaff869519331733f176b46df176cb7fad7d6a2edf857272050aceea00",
+        "sha256": "0e2a32e283a3e905e6747d52a933e1d3dd2e1019c350056dbbca0f8f71c058cc",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -122,7 +122,7 @@
       },
       {
         "path": "en/SUMMARY.md",
-        "sha256": "6fcf1c4b644aa533d157b6539e3d637e93f13b89bbc29d34f98c21e4d8e0186f",
+        "sha256": "73c94a60c4ada0914bb37c9da156c428433e5dfb6223130d5bfe84676e91a20f",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -239,5 +239,13 @@
     ]
   },
   "localLinksCheckedAgainst": "origin/main510b24c3pluscurrentworkingfiles",
-  "scope": "Navigationonly,notlinkedbodyreview"
+  "scope": "Navigationonly,notlinkedbodyreview",
+  "reviewFixes": {
+    "ids": [
+      "NAV-R1-001",
+      "NAV-R1-002",
+      "NAV-R1-003"
+    ],
+    "scope": "Recognizednewsupdatedates/kroprojectname/strictSpotconstraintwording;nativeoperationalexamplesunchanged"
+  }
 }

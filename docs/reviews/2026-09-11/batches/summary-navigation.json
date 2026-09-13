@@ -3,7 +3,7 @@
     "path": "ko/SUMMARY.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "18a83deaff869519331733f176b46df176cb7fad7d6a2edf857272050aceea00",
+    "reviewedSha256": "0e2a32e283a3e905e6747d52a933e1d3dd2e1019c350056dbbca0f8f71c058cc",
     "summary": "Readall687linesperlocaleandcurrentmaindeltas;alltargetsvalid;restoredmainSpotentriesandaddedmissingRolloutsquiznavigation.",
     "validationReport": "docs/reviews/2026-09-11/summary-navigation-validation.json"
   },
@@ -11,7 +11,7 @@
     "path": "en/SUMMARY.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "6fcf1c4b644aa533d157b6539e3d637e93f13b89bbc29d34f98c21e4d8e0186f",
+    "reviewedSha256": "73c94a60c4ada0914bb37c9da156c428433e5dfb6223130d5bfe84676e91a20f",
     "summary": "Readall687linesperlocaleandcurrentmaindeltas;alltargetsvalid;restoredmainSpotentriesandaddedmissingRolloutsquiznavigation.",
     "validationReport": "docs/reviews/2026-09-11/summary-navigation-validation.json"
   }

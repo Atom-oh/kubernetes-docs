@@ -1,5 +1,5 @@
 # News
-> **Last reviewed**: September 12, 2026
+> **Last Updated**: September 12, 2026
 
 This page records documentation changes prompted by Kubernetes, Amazon EKS and CNCF news. GitHub Actions prepares updates each Monday at 09:00 KST and opens a PR after its quality gate passes. Changes reach the site after review, merge and deployment.
 
