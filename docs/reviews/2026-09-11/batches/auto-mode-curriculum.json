@@ -11,7 +11,7 @@
     "path": "en/training/eks-auto-mode-2h-curriculum.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "5870d3c4efc21f0308115f0567f2a865a104462b5570c8ba0ece1ead83f5713e",
+    "reviewedSha256": "6c7510ae6a285115472013ee68867f2b8f5523adcc0a7d4e1eec9d07a0f1ec0d",
     "summary": "Readall514linesperlocale;preserved120mins;correctAutoModeAPI/AMI/lifetime/metrics/costboundaries,traceIDcardinality,IaCimpacts;NodePoolschemaand2promtoolalertcasespassed.",
     "validationReport": "docs/reviews/2026-09-11/auto-mode-curriculum-validation.json"
   }

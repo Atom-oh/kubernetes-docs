@@ -86,7 +86,7 @@ Compare WhenEmpty, WhenEmptyOrUnderutilized and consolidateAfter, including work
 
 ### 2-1. Spot (10min)
 
-Use the [Spot guide](../eks-auto-mode/04-spot-strategies.md) to review compatible instance diversity, critical capacity and interruption/recovery. Spot-only is mandatory, not a preference with automatic on-demand fallback. do-not-disrupt/PDBs do not prevent Spot reclamation or node failure.
+Use the [Spot guide](../eks-auto-mode/04-spot-strategies.md) to review compatible instance diversity, critical capacity and interruption/recovery. A Spot-only requirement is a hard constraint; it does not express a preference with automatic On-Demand fallback. do-not-disrupt/PDBs do not prevent Spot reclamation or node failure.
 
 ### 2-2. Cost (10min)
 
