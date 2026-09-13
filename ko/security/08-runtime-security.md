@@ -35,6 +35,8 @@ Falco는 event source의 데이터를 규칙으로 평가합니다. 일반적인
 
 관리 가능한 Linux EC2 노드에 설치하는 예제입니다. Fargate나 호스트 접근이 제한된 노드에 DaemonSet을 배치할 수 있다고 가정하지 않습니다. modern eBPF의 커널·BTF·capability 요구사항과 사용 OS를 확인합니다. chart 9.1.0의 명시적 driver 종류는 `modern_ebpf` 또는 `kmod`이며 예전 `ebpf` 값을 그대로 사용하지 않습니다.
 
+아래 명령은 [예제 디렉터리](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/runtime-security)를 내려받고 `examples/security/runtime-security`에서 실행합니다. 세 values 파일과 규칙 파일의 역할은 [예제 README](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/runtime-security/README.md)에 정리되어 있습니다.
+
 ```bash
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update falcosecurity
@@ -64,19 +66,29 @@ falco:
     enabled: true
     url: http://falcosidekick.falco.svc:2801
 customRules:
-  documentation-rules.yaml: "- macro: doc_spawned\n  condition: evt.type in (execve,\
-    \ execveat) and evt.res = SUCCESS\n- macro: doc_container\n  condition: container.id\
-    \ != host\n- rule: Documentation shell execution\n  desc: Observe successful shell\
-    \ process execution in a container; not proof of compromise.\n  condition: doc_spawned\
-    \ and doc_container and proc.name in (bash, sh, dash, zsh)\n  output: Shell process\
-    \ observed (proc=%proc.name command=%proc.cmdline container=%container.id)\n \
-    \ priority: NOTICE\n  tags:\n  - documentation\n  - process\n- rule: Documentation\
-    \ service account token read\n  desc: Observe read access to the default projected\
-    \ service account token path; legitimate\n    clients also read it.\n  condition:\
-    \ evt.type in (open, openat, openat2) and evt.is_open_read\n    = true and fd.num\
-    \ >= 0 and doc_container and fd.name startswith /var/run/secrets/kubernetes.io/serviceaccount/\n\
-    \  output: Service account path read (proc=%proc.name file=%fd.name container=%container.id)\n\
-    \  priority: NOTICE\n  tags:\n  - documentation\n  - credential_access\n"
+  documentation-rules.yaml: |-
+    - macro: doc_spawned
+      condition: evt.type in (execve, execveat) and evt.res = SUCCESS
+    - macro: doc_container
+      condition: container.id != host
+    - rule: Documentation shell execution
+      desc: Observe successful shell process execution in a container; not proof of compromise.
+      condition: doc_spawned and doc_container and proc.name in (bash, sh, dash, zsh)
+      output: Shell process observed (proc=%proc.name command=%proc.cmdline container=%container.id)
+      priority: NOTICE
+      tags:
+      - documentation
+      - process
+    - rule: Documentation service account token read
+      desc: Observe read access to the default projected service account token path; legitimate
+        clients also read it.
+      condition: evt.type in (open, openat, openat2) and evt.is_open_read
+        = true and fd.num >= 0 and doc_container and fd.name startswith /var/run/secrets/kubernetes.io/serviceaccount/
+      output: Service account path read (proc=%proc.name file=%fd.name container=%container.id)
+      priority: NOTICE
+      tags:
+      - documentation
+      - credential_access
 ```
 
 

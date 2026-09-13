@@ -3,7 +3,7 @@
     "path": "ko/security/08-runtime-security.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "55dc5d11885d49fd159fd2f55a4d509f79466bd97dd77aad03f6f26fa3a19717",
+    "reviewedSha256": "af66927c00a8dbcf1d1b4eff5628ed11138192e95adfdc894c393f408d13ed75",
     "summary": "Read four documents and2542original lines;correctedFalco/Tetragonconfig/rules,additiveNetworkPolicy,Secret-safeaudit,forensicslimits,GuardDutycoverage,24quizanswers;11examples34legacyanchors;boundednativevalidation.",
     "validationReport": "docs/reviews/2026-09-11/runtime-security-validation.json"
   },
@@ -11,7 +11,7 @@
     "path": "en/security/08-runtime-security.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "917b890b098275bae63aa640f31751f9cc53985343a32c7b910128d39fd57756",
+    "reviewedSha256": "09376c25001faa3ac78e61dc5b6b90bffbfcd7a5aa127bc524b4a1596a66336d",
     "summary": "Read four documents and2542original lines;correctedFalco/Tetragonconfig/rules,additiveNetworkPolicy,Secret-safeaudit,forensicslimits,GuardDutycoverage,24quizanswers;11examples34legacyanchors;boundednativevalidation.",
     "validationReport": "docs/reviews/2026-09-11/runtime-security-validation.json"
   },

@@ -37,7 +37,7 @@
     "results": [
       {
         "path": "ko/security/08-runtime-security.md",
-        "sha256": "55dc5d11885d49fd159fd2f55a4d509f79466bd97dd77aad03f6f26fa3a19717",
+        "sha256": "af66927c00a8dbcf1d1b4eff5628ed11138192e95adfdc894c393f408d13ed75",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -190,7 +190,7 @@
       },
       {
         "path": "en/security/08-runtime-security.md",
-        "sha256": "917b890b098275bae63aa640f31751f9cc53985343a32c7b910128d39fd57756",
+        "sha256": "09376c25001faa3ac78e61dc5b6b90bffbfcd7a5aa127bc524b4a1596a66336d",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -510,8 +510,8 @@
   "examples": [
     {
       "path": "examples/security/runtime-security/falco-values.yaml",
-      "sha256": "c52a1681b68a3b3310d0000cc43d8ed5295952bcdf255f20248cd92d57ca5294",
-      "bytes": 1429
+      "sha256": "2bc46eea5139c0bf354f4298c0048e53922a17bc2fd1ebf7cb0344b006781bf3",
+      "bytes": 1411
     },
     {
       "path": "examples/security/runtime-security/falco-rules.yaml",
@@ -1393,7 +1393,12 @@
           }
         ]
       }
-    ]
+    ],
+    "literalRuleReadability": {
+      "status": "passed",
+      "parsedRulesEqualIgnoringFinalNewline": true,
+      "nativeFalcoCompile": "passed-no-warnings"
+    }
   },
   "changes": [
     "Falco legacy ebpf driver/current chart fields camelCase vs snake_case; Falcosidekick secret delivery and integration field shape/priority high invalid",

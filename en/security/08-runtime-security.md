@@ -33,6 +33,8 @@ The 0.44.1 distribution bundles container plugin 0.7.1. It supplies fields such 
 
 This example targets Linux EC2 nodes whose host access you manage. Do not assume that a DaemonSet can run on Fargate or other restricted hosts. Verify modern eBPF kernel/BTF/capability requirements. Chart 9.1.0 supports explicit driver kinds `modern_ebpf` and `kmod`; do not retain the old `ebpf` setting.
 
+Download the [example directory](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/runtime-security) and run these commands from `examples/security/runtime-security`. The [example README](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/runtime-security/README.md) describes the three values files and rules.
+
 ```bash
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update falcosecurity
@@ -62,19 +64,29 @@ falco:
     enabled: true
     url: http://falcosidekick.falco.svc:2801
 customRules:
-  documentation-rules.yaml: "- macro: doc_spawned\n  condition: evt.type in (execve,\
-    \ execveat) and evt.res = SUCCESS\n- macro: doc_container\n  condition: container.id\
-    \ != host\n- rule: Documentation shell execution\n  desc: Observe successful shell\
-    \ process execution in a container; not proof of compromise.\n  condition: doc_spawned\
-    \ and doc_container and proc.name in (bash, sh, dash, zsh)\n  output: Shell process\
-    \ observed (proc=%proc.name command=%proc.cmdline container=%container.id)\n \
-    \ priority: NOTICE\n  tags:\n  - documentation\n  - process\n- rule: Documentation\
-    \ service account token read\n  desc: Observe read access to the default projected\
-    \ service account token path; legitimate\n    clients also read it.\n  condition:\
-    \ evt.type in (open, openat, openat2) and evt.is_open_read\n    = true and fd.num\
-    \ >= 0 and doc_container and fd.name startswith /var/run/secrets/kubernetes.io/serviceaccount/\n\
-    \  output: Service account path read (proc=%proc.name file=%fd.name container=%container.id)\n\
-    \  priority: NOTICE\n  tags:\n  - documentation\n  - credential_access\n"
+  documentation-rules.yaml: |-
+    - macro: doc_spawned
+      condition: evt.type in (execve, execveat) and evt.res = SUCCESS
+    - macro: doc_container
+      condition: container.id != host
+    - rule: Documentation shell execution
+      desc: Observe successful shell process execution in a container; not proof of compromise.
+      condition: doc_spawned and doc_container and proc.name in (bash, sh, dash, zsh)
+      output: Shell process observed (proc=%proc.name command=%proc.cmdline container=%container.id)
+      priority: NOTICE
+      tags:
+      - documentation
+      - process
+    - rule: Documentation service account token read
+      desc: Observe read access to the default projected service account token path; legitimate
+        clients also read it.
+      condition: evt.type in (open, openat, openat2) and evt.is_open_read
+        = true and fd.num >= 0 and doc_container and fd.name startswith /var/run/secrets/kubernetes.io/serviceaccount/
+      output: Service account path read (proc=%proc.name file=%fd.name container=%container.id)
+      priority: NOTICE
+      tags:
+      - documentation
+      - credential_access
 ```
 
 
