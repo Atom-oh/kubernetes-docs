@@ -1,147 +1,67 @@
-# Cuestionario de descripción general de Platform Engineering
+# Cuestionario de introducción a la ingeniería de plataformas
 
-> Este cuestionario evalúa tu comprensión del documento [Descripción general de Platform Engineering](../../platform-engineering/00-platform-engineering-overview.md).
+[Guía relacionada](../../platform-engineering/00-platform-engineering-overview.md)
 
----
-
-1. ¿Cuál es el objetivo principal de Platform Engineering?
-   - A) Capacitar a todos los desarrolladores para gestionar la infraestructura directamente
-   - B) Crear una Internal Developer Platform (IDP, plataforma interna para desarrolladores) para el autoservicio de los desarrolladores
-   - C) Reemplazar por completo el rol del equipo de operaciones con automatización
-   - D) Migrar todas las aplicaciones a serverless
+## 1. ¿Cuál es el objetivo principal de la ingeniería de plataformas?
 
 <details>
-<summary>Mostrar respuesta</summary>
+<summary>Respuesta y explicación</summary>
 
-**Respuesta: B) Crear una Internal Developer Platform (IDP, plataforma interna para desarrolladores) para el autoservicio de los desarrolladores**
-
-**Explicación:**
-Platform Engineering es la disciplina de crear una IDP que permite a los desarrolladores desplegar aplicaciones de forma rápida y segura sin tratar directamente con la complejidad de la infraestructura. El objetivo no es enseñar a los desarrolladores la gestión de infraestructura, sino proporcionar interfaces de autoservicio abstraídas.
-
+Comprender las necesidades de los desarrolladores y proporcionar APIs de autoservicio aprobadas, CLIs, portales, plantillas y soporte operativo como un producto interno. No elimina a los equipos de operaciones ni presupone toda la responsabilidad de cada aplicación.
 </details>
 
----
-
-2. En el modelo de madurez de AWS CAF, ¿qué etapa corresponde a "automatización de infraestructura mediante IaC" y "entrega de productos de autoservicio"?
-   - A) START
-   - B) ADVANCE
-   - C) EXCEL
-   - D) Común en todas las etapas
+## 2. ¿Cómo se deben interpretar las asignaciones de Start, Advance, Excel y herramientas?
 
 <details>
-<summary>Mostrar respuesta</summary>
+<summary>Respuesta y explicación</summary>
 
-**Respuesta: B) ADVANCE**
-
-**Explicación:**
-En el modelo de madurez de AWS CAF, la etapa ADVANCE se centra en ampliar la automatización y crear observabilidad centralizada. La automatización de infraestructura (IaC, productos de autoservicio) es una capacidad de ADVANCE construida sobre la base de START. START cubre la construcción de la base, mientras que EXCEL cubre la optimización continua.
-
+Organizan las tareas de mejora en la guía de ingeniería de plataformas de AWS. Advance aborda la automatización de IaC/autoservicio; las asignaciones de Kubernetes de esta guía son ejemplos didácticos, no puntuaciones oficiales de certificación ni una secuencia universal.
 </details>
 
----
-
-3. ¿Qué afirmación describe correctamente la relación entre Platform Engineering, DevOps y SRE?
-   - A) Los tres son enfoques mutuamente excluyentes
-   - B) Platform Engineering reemplaza DevOps y SRE
-   - C) Platform Engineering empaqueta los principios de DevOps y las prácticas de SRE como un producto
-   - D) SRE es un superconjunto que abarca Platform Engineering y DevOps
+## 3. ¿Cómo se relacionan la ingeniería de plataformas, DevOps y SRE?
 
 <details>
-<summary>Mostrar respuesta</summary>
+<summary>Respuesta y explicación</summary>
 
-**Respuesta: C) Platform Engineering empaqueta los principios de DevOps y las prácticas de SRE como un producto**
-
-**Explicación:**
-Los tres enfoques son complementarios. DevOps proporciona cultura y metodología, SRE proporciona prácticas de ingeniería operativa, y Platform Engineering las empaqueta en un producto llamado Internal Developer Platform.
-
+Son complementarios: las plataformas enfatizan la experiencia del desarrollador y los productos reutilizables, DevOps la colaboración y la entrega, y SRE la confiabilidad y la ingeniería de operaciones. Las estructuras y jerarquías de los equipos no son universales.
 </details>
 
----
-
-4. En la arquitectura de referencia de IDP basada en Kubernetes, ¿a qué capa pertenecen ArgoCD, FluxCD y KRO?
-   - A) Capa de interfaz para desarrolladores
-   - B) Capa de integración/orquestación
-   - C) Capa de recursos
-   - D) Capa de infraestructura
+## 4. ¿Cuáles son las capas de IDP y el alcance de un portal de Backstage?
 
 <details>
-<summary>Mostrar respuesta</summary>
+<summary>Respuesta y explicación</summary>
 
-**Respuesta: B) Capa de integración/orquestación**
-
-**Explicación:**
-La capa de integración/orquestación gestiona la administración del estado declarativo y la automatización del despliegue. ArgoCD y FluxCD proporcionan despliegue basado en GitOps, y KRO proporciona orquestación de grafos de recursos. La capa de interfaz para desarrolladores es para UIs/CLIs como Backstage, la capa de recursos es para ACK/Helm/Operators, y la capa de infraestructura es para EKS/VPC/IAM.
-
+La interfaz, la orquestación, los recursos y la infraestructura forman un modelo de referencia. Un portal de estilo Backstage forma parte de la interfaz, no sustituye el aprovisionamiento, las políticas, el entorno de ejecución, la documentación ni el soporte.
 </details>
 
----
-
-5. ¿Qué afirmación sobre Golden Paths (rutas doradas) NO es correcta?
-   - A) Son rutas de despliegue recomendadas proporcionadas por el equipo de plataforma
-   - B) Son reglas obligatorias que los desarrolladores deben seguir
-   - C) Guían a los desarrolladores para comenzar rápidamente usando métodos validados
-   - D) Los desarrolladores pueden desviarse cuando sea necesario, pero son la opción óptima en la mayoría de los casos
+## 5. ¿Puede desviarse de un Golden Path eludir una política de seguridad obligatoria?
 
 <details>
-<summary>Mostrar respuesta</summary>
+<summary>Respuesta y explicación</summary>
 
-**Respuesta: B) Son reglas obligatorias que los desarrolladores deben seguir**
-
-**Explicación:**
-Golden Paths son "recomendados", no "impuestos". Proporcionan métodos de despliegue que el equipo de plataforma ha validado y optimizado, pero los desarrolladores pueden elegir enfoques diferentes cuando sea necesario. El objetivo es diseñar Golden Paths de modo que sean la opción óptima para la mayoría de los casos de uso.
-
+No. Es una ruta recomendada con soporte, pero las excepciones siguen estando sujetas a la aprobación organizacional y a las políticas obligatorias de seguridad y datos. No se garantiza que sea óptima para todos los casos.
 </details>
 
----
-
-6. En el patrón de autoservicio que combina ResourceGraphDefinition (RGD) de KRO y ACK, ¿qué combinación de recursos se crea automáticamente cuando un desarrollador envía un único manifest?
-   - A) Deployment + ConfigMap + PVC
-   - B) Deployment + Service + RDS Instance + IAM Role
-   - C) StatefulSet + Service + DynamoDB Table
-   - D) Pod + Ingress + S3 Bucket
+## 6. ¿Un solo WebApplication siempre hace que kro cree Deployments, RDS e IAM?
 
 <details>
-<summary>Mostrar respuesta</summary>
+<summary>Respuesta y explicación</summary>
 
-**Respuesta: B) Deployment + Service + RDS Instance + IAM Role**
-
-**Explicación:**
-En el patrón de autoservicio KRO RGD + ACK, el único manifest WebApplication de un desarrollador hace que KRO cree automáticamente recursos nativos de Kubernetes (Deployment + Service) y recursos de AWS mediante ACK (RDS Instance, IAM Role). Este es el valor central de una IDP: abstraer la complejidad de la infraestructura.
-
+No. WebApplication es un ejemplo de API personalizada que requiere un RGD/CRD. kro gestiona los recursos de Kubernetes declarados; los controladores de servicio ACK autorizados llaman a las APIs de AWS. Las combinaciones de recursos, la preparación y las políticas de eliminación dependen de las definiciones.
 </details>
 
----
-
-7. En el modelo de madurez de AWS CAF, ¿a qué etapa y área de capacidad pertenecen las métricas DORA?
-   - A) START - Gestión de costos
-   - B) ADVANCE - Observabilidad central
-   - C) EXCEL - Métricas de plataforma
-   - D) Común en todas las etapas
+## 7. ¿Cuáles son las métricas DORA actuales y cómo se deben utilizar?
 
 <details>
-<summary>Mostrar respuesta</summary>
+<summary>Respuesta y explicación</summary>
 
-**Respuesta: C) EXCEL - Métricas de plataforma**
-
-**Explicación:**
-Las métricas DORA (Deployment Frequency, Lead Time, MTTR, Change Failure Rate) pertenecen a la capacidad "Métricas de plataforma" en la etapa EXCEL. Esto representa el nivel de madurez más alto, que logra la optimización continua mediante métricas alineadas con los objetivos de la organización.
-
+El tiempo de entrega de cambios, la frecuencia de despliegue, el tiempo de recuperación de despliegues fallidos, la tasa de fallos de cambios y la tasa de retrabajo de despliegues. Mejoran la entrega y la estabilidad del servicio o equipo, en lugar de sustituir un MTTR genérico o clasificaciones individuales. La medición puede comenzar antes de Excel.
 </details>
 
----
-
-8. Entre los valores centrales de una IDP, ¿cuál incorpora seguridad y cumplimiento de forma predeterminada para que los desarrolladores puedan trabajar en un entorno seguro sin configuración explícita de seguridad?
-   - A) Self-Service
-   - B) Guardrails
-   - C) Estandarización
-   - D) Automatización
+## 8. ¿Los guardrails garantizan automáticamente la seguridad y el cumplimiento?
 
 <details>
-<summary>Mostrar respuesta</summary>
+<summary>Respuesta y explicación</summary>
 
-**Respuesta: B) Guardrails**
-
-**Explicación:**
-Los Guardrails incorporan seguridad y cumplimiento en la plataforma de forma predeterminada. Incluso sin que los desarrolladores configuren explícitamente la seguridad, la plataforma aplica automáticamente políticas de seguridad (Pod Security Standards, network policies, image scanning, etc.). Self-Service se relaciona con el aprovisionamiento directo, la estandarización con Golden Paths, y la automatización con eliminar tareas repetitivas.
-
+No. Aplique y verifique las políticas, la gestión de omisiones/excepciones, los permisos y los cambios, con auditoría y recuperación. Los guardrails no sustituyen las responsabilidades de la aplicación respecto al manejo de datos ni la evaluación de los requisitos legales.
 </details>

@@ -1,764 +1,316 @@
 # Helm 包管理器
 
-> **支持版本**: Helm v3.x
-> **最后更新**: February 23, 2026
+> **最后更新**: September 12, 2026
+> **本地验证**: Helm 3.21.3 / Helm 4.3.0
 
-## 概述
+Helm 渲染 chart 并管理 Kubernetes 资源和 release 历史记录。Chart 版本、appVersion、镜像 tag/digest 与 release revision 是不同的值。Helm 4 接受现有 apiVersion:v2 chart，但必须针对确切版本检查 CLI/apply/wait 行为。
 
-Helm 是用于打包、部署和管理 Kubernetes 应用的包管理器。通过使用一种称为 Charts 的包格式，你可以轻松定义、安装和升级复杂应用。
+## 核心概念和权限
 
-## Helm 核心概念
+Helm 3 移除了 Tiller；客户端使用各自的 Kubernetes 凭证/RBAC。Chart-repository/OCI-registry 通信与 Kubernetes API 访问相互独立。移除 Tiller 并不会使不安全的 chart 或宽泛权限变得无害。
 
-### Helm v3 架构
+Release 存储默认使用 release namespace 中的 Secret；也可以配置 ConfigMap/SQL 后端等替代方案。存储的 release 数据包含 manifest/values，可能会暴露敏感信息。Base64 不是加密；请限制对 release Secret 的访问。
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                      Helm Client                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
-│  │   helm CLI  │  │  Chart SDK  │  │  Repository API │  │
-│  └──────┬──────┘  └──────┬──────┘  └────────┬────────┘  │
-└─────────┼────────────────┼──────────────────┼───────────┘
-          │                │                  │
-          ▼                ▼                  ▼
-┌─────────────────────────────────────────────────────────┐
-│                  Kubernetes API Server                   │
-│  ┌─────────────────────────────────────────────────────┐│
-│  │              Release Secrets (Storage)               ││
-│  │         sh.helm.release.v1.<name>.v<ver>            ││
-│  └─────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────┘
-```
+## 完整的本地 Chart 示例
 
-在 Helm v3 中，Tiller 已被移除，因此客户端会直接与 Kubernetes API 通信。
+`examples/platform/helm/reviewed-app` 包含以下八个文件。已测试 Helm 3/4 的 lint/render 输出、打包、value 覆盖以及对无效 replicaCount 的拒绝。未执行 Kubernetes 安装或容器运行。操作前请验证镜像 digest、namespace、硬件和策略。
 
-### 核心组件
-
-| 组件 | 描述 |
-|-----------|-------------|
-| Chart | 定义 Kubernetes 资源的包 |
-| Release | 安装在集群中的 Chart 实例 |
-| Repository | 用于共享 Charts 的存储 |
-| Values | 传递给 Chart 模板的配置值 |
-
-## Chart 结构
-
-### 基本目录结构
-
-```
-mychart/
-├── Chart.yaml          # Chart metadata
-├── Chart.lock          # Dependency lock file
-├── values.yaml         # Default configuration values
-├── values.schema.json  # Values schema (optional)
-├── charts/             # Dependency Charts
-├── crds/               # Custom Resource Definitions
-├── templates/          # Kubernetes manifest templates
-│   ├── NOTES.txt       # Post-installation notes
-│   ├── _helpers.tpl    # Template helper functions
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── ingress.yaml
-│   └── ...
-└── .helmignore         # Files to exclude from packaging
-```
-
-### Chart.yaml 示例
+### Chart.yaml
 
 ```yaml
 apiVersion: v2
-name: myapp
-description: My Application Helm Chart
+name: reviewed-app
+description: Offline Helm teaching chart
 type: application
-version: 1.0.0
-appVersion: "2.0.0"
-kubeVersion: ">=1.25.0"
-keywords:
-  - web
-  - application
-home: https://example.com
-sources:
-  - https://github.com/example/myapp
-maintainers:
-  - name: DevOps Team
-    email: devops@example.com
-dependencies:
-  - name: postgresql
-    version: "12.x.x"
-    repository: https://charts.bitnami.com/bitnami
-    condition: postgresql.enabled
-  - name: redis
-    version: "17.x.x"
-    repository: https://charts.bitnami.com/bitnami
-    condition: redis.enabled
+version: 0.1.0
+appVersion: "1.30.4"
 ```
 
-## Helm 命令
-
-### Repository 管理
-
-```bash
-# Add repository
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo add stable https://charts.helm.sh/stable
-
-# Update repositories
-helm repo update
-
-# List repositories
-helm repo list
-
-# Remove repository
-helm repo remove stable
-
-# Search for Charts
-helm search repo nginx
-helm search hub wordpress  # Search Artifact Hub
-```
-
-### Chart 安装和管理
-
-```bash
-# Install Chart
-helm install my-release bitnami/nginx
-
-# Specify namespace
-helm install my-release bitnami/nginx -n production --create-namespace
-
-# Use values file
-helm install my-release bitnami/nginx -f custom-values.yaml
-
-# Set values with --set
-helm install my-release bitnami/nginx \
-  --set replicaCount=3 \
-  --set service.type=LoadBalancer
-
-# Dry-run before installation
-helm install my-release bitnami/nginx --dry-run --debug
-
-# Upgrade
-helm upgrade my-release bitnami/nginx --set replicaCount=5
-
-# Install or upgrade (idempotent)
-helm upgrade --install my-release bitnami/nginx
-
-# Rollback
-helm rollback my-release 1
-
-# Uninstall
-helm uninstall my-release
-helm uninstall my-release --keep-history  # Keep history
-```
-
-### Release 管理
-
-```bash
-# List releases
-helm list
-helm list -n production
-helm list --all-namespaces
-
-# Release status
-helm status my-release
-
-# Release history
-helm history my-release
-
-# Get release values
-helm get values my-release
-helm get values my-release --all  # Include defaults
-
-# Get release manifest
-helm get manifest my-release
-```
-
-### Chart 开发
-
-```bash
-# Create new Chart
-helm create mychart
-
-# Lint Chart
-helm lint mychart/
-
-# Package Chart
-helm package mychart/
-
-# Render templates
-helm template my-release mychart/
-helm template my-release mychart/ -f values-prod.yaml
-
-# Dependency management
-helm dependency list mychart/
-helm dependency update mychart/
-helm dependency build mychart/
-```
-
-## 模板编写
-
-### 基本语法
+### values.yaml
 
 ```yaml
-# templates/deployment.yaml
+replicaCount: 1
+image:
+  repository: nginxinc/nginx-unprivileged
+  tag: "1.30.4-alpine"
+service:
+  port: 8080
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 128Mi
+env:
+  LOG_LEVEL: info
+```
+
+### values.schema.json
+
+```json
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "replicaCount",
+    "image",
+    "service"
+  ],
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "image": {
+      "type": "object",
+      "required": [
+        "repository",
+        "tag"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "required": [
+        "port"
+      ],
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}
+```
+
+### templates/_helpers.tpl
+
+```text
+{{- define "reviewed-app.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- define "reviewed-app.selectorLabels" -}}
+app.kubernetes.io/name: {{ .Chart.Name | quote }}
+app.kubernetes.io/instance: {{ .Release.Name | quote }}
+{{- end -}}
+```
+
+### templates/deployment.yaml
+
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "mychart.fullname" . }}
-  labels:
-    {{- include "mychart.labels" . | nindent 4 }}
+  name: {{ include "reviewed-app.fullname" . }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "mychart.selectorLabels" . | nindent 6 }}
+      {{- include "reviewed-app.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "mychart.selectorLabels" . | nindent 8 }}
+        {{- include "reviewed-app.selectorLabels" . | nindent 8 }}
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.containerPort }}
-          {{- if .Values.resources }}
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+      - name: web
+        image: {{ printf "%s:%s" .Values.image.repository .Values.image.tag | quote }}
+        ports:
+        - name: http
+          containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        env:
+          {{- range $key, $value := .Values.env }}
+        - name: {{ $key | quote }}
+          value: {{ $value | quote }}
           {{- end }}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir:
+          sizeLimit: 64Mi
 ```
 
-### 内置对象
+### templates/service.yaml
 
 ```yaml
-# Chart object
-{{ .Chart.Name }}        # Chart name
-{{ .Chart.Version }}     # Chart version
-{{ .Chart.AppVersion }}  # App version
-
-# Release object
-{{ .Release.Name }}       # Release name
-{{ .Release.Namespace }}  # Namespace
-{{ .Release.IsUpgrade }}  # Is upgrade
-{{ .Release.IsInstall }}  # Is install
-{{ .Release.Revision }}   # Revision number
-
-# Values object
-{{ .Values.key }}         # Values from values.yaml
-
-# Capabilities object
-{{ .Capabilities.KubeVersion }}           # K8s version
-{{ .Capabilities.APIVersions.Has "v1" }}  # Check API version
-```
-
-### 条件和循环
-
-```yaml
-# Conditionals
-{{- if .Values.ingress.enabled }}
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: v1
+kind: Service
 metadata:
-  name: {{ include "mychart.fullname" . }}
+  name: {{ include "reviewed-app.fullname" . }}
 spec:
-  {{- if .Values.ingress.tls }}
-  tls:
-    {{- range .Values.ingress.tls }}
-    - hosts:
-        {{- range .hosts }}
-        - {{ . | quote }}
-        {{- end }}
-      secretName: {{ .secretName }}
-    {{- end }}
-  {{- end }}
-  rules:
-    {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
-      http:
-        paths:
-          {{- range .paths }}
-          - path: {{ .path }}
-            pathType: {{ .pathType }}
-            backend:
-              service:
-                name: {{ include "mychart.fullname" $ }}
-                port:
-                  number: {{ $.Values.service.port }}
-          {{- end }}
-    {{- end }}
-{{- end }}
-```
-
-### Helper 模板
-
-```yaml
-# templates/_helpers.tpl
-{{/*
-Expand the name of the chart.
-*/}}
-{{- define "mychart.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Create a default fully qualified app name.
-*/}}
-{{- define "mychart.fullname" -}}
-{{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-{{- end }}
-{{- end }}
-
-{{/*
-Common labels
-*/}}
-{{- define "mychart.labels" -}}
-helm.sh/chart: {{ include "mychart.chart" . }}
-{{ include "mychart.selectorLabels" . }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Selector labels
-*/}}
-{{- define "mychart.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "mychart.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-```
-
-### 常用函数
-
-```yaml
-# Default value
-{{ .Values.image.tag | default "latest" }}
-
-# Quoting
-{{ .Values.name | quote }}        # "value"
-{{ .Values.port | squote }}       # 'value'
-
-# Indentation
-{{ toYaml .Values.resources | nindent 12 }}
-
-# Coalesce
-{{ coalesce .Values.custom.name .Values.default.name "fallback" }}
-
-# String manipulation
-{{ .Values.name | upper }}        # UPPERCASE
-{{ .Values.name | lower }}        # lowercase
-{{ .Values.name | title }}        # Title Case
-{{ .Values.name | trim }}         # Remove whitespace
-{{ .Values.name | trunc 63 }}     # Truncate string
-
-# Encoding
-{{ .Values.secret | b64enc }}     # Base64 encode
-{{ .Values.data | b64dec }}       # Base64 decode
-
-# Lists and Dictionaries
-{{ list "a" "b" "c" }}
-{{ dict "key1" "value1" "key2" "value2" }}
-{{ .Values.list | first }}
-{{ .Values.list | last }}
-{{ .Values.list | uniq }}
-
-# Conditional checks
-{{ if empty .Values.name }}
-{{ if not (empty .Values.name) }}
-{{ if and .Values.a .Values.b }}
-{{ if or .Values.a .Values.b }}
-```
-
-## Values 管理
-
-### 结构化 values.yaml
-
-```yaml
-# values.yaml
-replicaCount: 1
-
-image:
-  repository: nginx
-  pullPolicy: IfNotPresent
-  tag: ""
-
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
-
-serviceAccount:
-  create: true
-  annotations: {}
-  name: ""
-
-podAnnotations: {}
-podSecurityContext: {}
-
-securityContext:
-  capabilities:
-    drop:
-      - ALL
-  readOnlyRootFilesystem: true
-  runAsNonRoot: true
-  runAsUser: 1000
-
-service:
   type: ClusterIP
-  port: 80
-
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-
-resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-
-nodeSelector: {}
-tolerations: []
-affinity: {}
-
-# Subchart settings
-postgresql:
-  enabled: true
-  auth:
-    postgresPassword: "secret"
-    database: "myapp"
-
-redis:
-  enabled: false
+  selector:
+    {{- include "reviewed-app.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: http
+    port: {{ .Values.service.port }}
+    targetPort: http
 ```
 
-### 特定环境 Values 文件
+### templates/NOTES.txt
 
-```yaml
-# values-dev.yaml
-replicaCount: 1
-image:
-  tag: "dev-latest"
-resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
-
-# values-staging.yaml
-replicaCount: 2
-image:
-  tag: "staging-latest"
-resources:
-  limits:
-    cpu: 250m
-    memory: 256Mi
-
-# values-prod.yaml
-replicaCount: 3
-image:
-  tag: "v1.0.0"
-resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
-autoscaling:
-  enabled: true
-  minReplicas: 3
-  maxReplicas: 10
+```text
+Inspect the rendered resources and prepare namespace/image compatibility before installation.
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
 ```
+
+### .helmignore
+
+```text
+*.private
+```
+
+所有 helper 均已定义，Service 指向具名容器端口，manifest 中包含 securityContext，并且 resources/env 已从 values 接入 templates。未使用的 values 条目不会产生任何效果。此基础 chart 不会创建数据库、Ingress 或 autoscaler。
+
+### 本地检查
+
+请从仓库根目录运行，并使用 `helm version --short` 检查所选二进制文件。
 
 ```bash
-# Environment-specific deployment
-helm upgrade --install myapp ./mychart -f values-prod.yaml -n production
+helm lint examples/platform/helm/reviewed-app
+helm template demo examples/platform/helm/reviewed-app --namespace example
+helm template demo examples/platform/helm/reviewed-app   --set replicaCount=3 --set-string env.MAX_CONNECTIONS=100
+helm package examples/platform/helm/reviewed-app --destination ./chart-packages
 ```
+
+lint/template 成功并不验证 admission、CEL、RBAC、镜像执行、Service 连通性或就绪状态。测试 hook 必须在集群中实际执行。`helm template --api-versions` 提供离线 capabilities；它不会安装 CRD。
+
+## 命令和 Helm 3/4 差异
+
+| 目的 | 示例和限制 |
+| --- | --- |
+| Repositories | `helm repo add/update/list/remove`, `helm search repo`；OCI registry 有独立的 login/pull 流程 |
+| Install | `helm install demo ./chart -n example --create-namespace`；验证 namespace/release 是否存在 |
+| Install 或 upgrade | `helm upgrade --install`；hook、随机 values 和外部状态未必具有幂等性 |
+| Inspect | `helm list -n example`, status/history/get values/get manifest；保护敏感输出 |
+| 计算后的 values | `helm get values demo -n example --all` 包含 chart 默认值 |
+| Rollback | `helm rollback demo REVISION -n example`；revision 不是镜像 tag |
+| Uninstall | `helm uninstall demo -n example`；检查 PVC/CRD/hook/external-resource 生命周期 |
+
+旧 stable repository 属于归档，并非当前默认选项。验证外部 chart/镜像的可用性、许可、支持和安全性，并固定 chart 版本。旧的 Bitnami PostgreSQL12/Redis17 依赖项不再是此示例的默认值。
+
+### Dry Run 和等待
+
+Helm 4.3 区分 `--dry-run=client` 和 `--dry-run=server`。在此环境中，4.3 client 模式无需集群即可通过；3.21.3 install client dry-run 尝试访问集群并失败。请使用已验证的 `helm template` 路径进行离线渲染。Server 模式需要集群访问/权限，且无法证明所有 webhook/外部副作用。
+
+在 Helm 4.3 中，省略 --wait 时默认值为 hookOnly；指定 --wait 时默认值为 watcher，也可使用 legacy。`--rollback-on-failure` 会将失败的 upgrade 回滚至先前成功的 release。其名称不同于 Helm 3 的 --atomic。`--force-replace` 和 `--force-conflicts` 分别控制替换和 server-side-apply 冲突；请查看确切版本的帮助信息。
+
+Rollback 不是会撤销 DB migration、外部 API 效果或已删除数据的事务。请区分 timeout、Pod 就绪状态、Job 完成和应用 SLO。
+
+## Templates 和 Values
+
+Chart、Release、Values 和 Capabilities 是上下文对象。range/with 会改变 dot 上下文；根上下文需要时请使用 `$`。Capabilities 反映所提供的发现信息，而非通用兼容性。
+
+include 将 named-template 输出作为字符串返回，并可通过管道传给 nindent，后者还会插入换行符。为 helper 名称添加前缀以避免 subchart 冲突，并避免在 upgrade 期间不必要地变更 selector。
+
+default/coalesce 将 false、零、空字符串和集合视为空。在需要保留显式 false/零时，请分别检查存在性/类型。default 无法保护父 map 不存在时的每一次嵌套查找。
+
+values.yaml 是数据：嵌入的 <code v-pre>{{ .Values... }}</code> 不会再次被自动求值。Chart 作者可在需要时显式使用 tpl，但必须审查输入信任度和 template 权限。先前的 subchart storageClass 和 Blue/Green selector 字符串不会被自动接入。
+
+对于重复的文件/覆盖，最右侧的 values 生效；请理解 map 合并和 list 替换。将 dev/staging/prod 保存为独立文件，而不是在一个 YAML 文档中使用重复键。对看起来像数字的字符串使用 --set-string，并对结构使用版本支持的 --set-json。
+
+--reuse-values、--reset-values 和 --reset-then-reuse-values 以不同方式组合先前的 release values 与新的默认值。请审查计算后的 values 和渲染后的 diff，而不要依赖隐式行为。
 
 ## 依赖管理
 
-### 定义 Chart 依赖
+Chart.yaml 声明 dependency 名称、版本、repository 和可选 alias/condition。此片段假定存在一个**已准备好的本地 helper subchart**。
 
 ```yaml
-# Chart.yaml
 dependencies:
-  - name: postgresql
-    version: "12.1.0"
-    repository: https://charts.bitnami.com/bitnami
-    condition: postgresql.enabled
-    tags:
-      - database
-  - name: redis
-    version: "17.0.0"
-    repository: https://charts.bitnami.com/bitnami
-    condition: redis.enabled
-    alias: cache
-  - name: common
-    version: "2.0.0"
-    repository: https://charts.bitnami.com/bitnami
-    import-values:
-      - child: image
-        parent: global.image
+- name: helper
+  alias: cache
+  version: 0.1.0
+  repository: file://../dependency-child
+  condition: cache.enabled
 ```
 
-### 依赖命令
+使用 alias 时，请将 values 放在 cache 下并使用匹配的 condition。测试 condition path 缺失时的行为。仅当 subchart 使用 global values 时它们才有意义；import-values 需要匹配的 child/parent export 结构。
 
-```bash
-# Download dependencies
-helm dependency update mychart/
+dependency update 解析 Chart.yaml 约束并写入 Chart.lock。build 使用锁定版本；没有 lock 时，它可能以与 update 类似的方式解析。仅有 lock 并不能建立防篡改能力、固定的运行时镜像或完整的可复现性。管理 chart digest/signature、提供路径和镜像 revision。已使用 Helm 3/4 演练本地 file-dependency update/build 及 alias 开/关。
 
-# List dependencies
-helm dependency list mychart/
+## Hooks、CRD 和 Tests
 
-# Build dependencies
-helm dependency build mychart/
-```
+Pre/post install、upgrade、rollback、delete 和 test hook 在各自的生命周期阶段执行。较低的 weight 先运行；对于并列情况，检查 kind/name 排序。pre-install migration 可能会在 chart 的常规数据库资源存在之前运行。
 
-### 向 Subcharts 传递 Values
+Hook Job/Pod 需要真实的可执行文件、镜像、Service/Secret、权限、timeout 和可重复执行的安全行为。使用 before-hook-creation/hook-succeeded/hook-failed 和 Job TTL 规划清理；uninstall 未必会移除所有 hook 资源。结合 --wait 解读 post-install 就绪状态。
 
-```yaml
-# values.yaml
-global:
-  storageClass: "gp3"
+crds/ 下的 CRD 不同于普通 template。不要假定会自动 upgrade/deletion 或 rollback CRD schema。使用明确的 migration 和 custom-resource 保留计划；删除 CRD 可能会删除 custom-resource 数据。
 
-postgresql:
-  enabled: true
-  primary:
-    persistence:
-      storageClass: "{{ .Values.global.storageClass }}"
-  auth:
-    postgresPassword: "secret"
-```
+helm test 会运行已声明的 hook。简单的 HTTP 连通性并不能验证数据库、安全性、负载或恢复。Blue/Green/canary 需要真实的 Deployment、Service/mesh route、controller 以及 metric/rollback 条件。仅有 values 不会实现渐进式交付。
 
-## Hooks
+## GitOps 和安全性
 
-### Hook 类型
+Argo CD 通常将 Helm 用作 template renderer，这不同于拥有 Helm release 生命周期。Flux helm-controller 会协调 HelmRelease。验证 source/chart revision、valuesFrom namespace/precedence、hook 映射、pruning 和所有权；避免存在相互竞争的 controller。
 
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: "{{ .Release.Name }}-db-migrate"
-  annotations:
-    "helm.sh/hook": pre-upgrade,pre-install
-    "helm.sh/hook-weight": "-5"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-spec:
-  template:
-    spec:
-      containers:
-        - name: migrate
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          command: ["./migrate.sh"]
-      restartPolicy: Never
-```
+不要将 secret 放在 chart 默认值、--set 参数或 debug 输出中。--hide-secret 覆盖 dry-run 期间的 Kubernetes Secret 输出，而不是对所有 values/log 的通用脱敏。通过 app 环境变量提供的现有 Secret 引用仍违反 file-credential 策略。请使用已批准的 Secret volume 和文件重读/轮换路径。
 
-| Hook | 描述 |
-|------|-------------|
-| pre-install | 模板渲染后、资源创建前 |
-| post-install | 所有资源创建后 |
-| pre-delete | 删除请求后、资源删除前 |
-| post-delete | 所有资源删除后 |
-| pre-upgrade | 升级请求后、资源更新前 |
-| post-upgrade | 所有资源更新后 |
-| pre-rollback | 回滚请求后、资源恢复前 |
-| post-rollback | 所有资源恢复后 |
-| test | 执行 helm test 时 |
+分别准备 ESO v1 等当前 API 及其 controller。Sealed Secrets/helm-secrets 需要其 controller/plugin、key/KMS 访问和解密工作流；它们不是 Helm 核心功能。检查解密后的 values 是否进入 release records 或 log。
 
-### Hook 删除策略
+仅有 ServiceAccount/Role 不会授予 workload 权限。在需要时连接 RoleBinding 和 serviceAccountName，并且不要仅为了 Secret volume 就授予对所有 Secret 的 get/list/watch 权限。演示 web chart 不需要 Kubernetes API 凭证，并禁用了 token automount。
 
-| 策略 | 描述 |
-|--------|-------------|
-| before-hook-creation | 运行新 hook 前删除之前的 hook |
-| hook-succeeded | hook 成功时删除 |
-| hook-failed | hook 失败时删除 |
+## 故障排查顺序
 
-## 测试
+| 症状 | 调查和修正 |
+| --- | --- |
+| 重用的 release 名称 | 检查 namespace/state/history；选择预期的 upgrade 或新名称 |
+| 现有资源冲突 | 检查 owner annotation/label/controller；使用经过审查的接管/migration 或重命名 |
+| 失败的 release | 检查原因/event/history，并使用已验证的 revision/configuration 重试 |
+| 缺失的 helper | 检查定义、名称、作用域和根上下文 |
+| Schema 失败 | 检查最终合并的 values、类型、必填字段和范围 |
 
-### 定义测试
+Deletion/force flag 并非通用的解决方案。在选择 mutation 前，请审查 diff、immutable field、数据保留和其他 controller。
 
-```yaml
-# templates/tests/test-connection.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: "{{ include "mychart.fullname" . }}-test-connection"
-  labels:
-    {{- include "mychart.labels" . | nindent 4 }}
-  annotations:
-    "helm.sh/hook": test
-spec:
-  containers:
-    - name: wget
-      image: busybox
-      command: ['wget']
-      args: ['{{ include "mychart.fullname" . }}:{{ .Values.service.port }}']
-  restartPolicy: Never
-```
+## 验证和参考资料
 
-```bash
-# Run tests
-helm test my-release
-helm test my-release --logs  # Show logs
-```
+已审阅所有 764 条指南行、每种语言环境的 462 条测验行及 58 个唯一块。检查涵盖完整 chart 的 Helm 3/4 lint/template/package、覆盖/负向 schema 及本地 dependency/alias；4.3 client dry-run 通过。已记录 3.21.3 install dry-run 的集群访问失败。未验证真实的 Kubernetes 安装、upgrade、rollback、hook 或 app HTTP 行为。
 
-## GitOps 集成
+- [Helm install](https://helm.sh/docs/helm/helm_install/)
+- [Helm upgrade](https://helm.sh/docs/helm/helm_upgrade/)
+- [Charts 和 values](https://helm.sh/docs/topics/charts/)
+- [Chart hooks](https://helm.sh/docs/topics/charts_hooks/)
+- [Dependency build](https://helm.sh/docs/helm/helm_dependency_build/)
+- [Helm 4.3.0 release](https://github.com/helm/helm/releases/tag/v4.3.0)
 
-### ArgoCD Application
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: myapp
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/org/helm-charts
-    targetRevision: HEAD
-    path: charts/myapp
-    helm:
-      valueFiles:
-        - values-prod.yaml
-      parameters:
-        - name: image.tag
-          value: v1.2.3
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: production
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-```
-
-### Flux HelmRelease
-
-```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: myapp
-  namespace: production
-spec:
-  interval: 5m
-  chart:
-    spec:
-      chart: myapp
-      version: "1.x"
-      sourceRef:
-        kind: HelmRepository
-        name: my-charts
-        namespace: flux-system
-  values:
-    replicaCount: 3
-    image:
-      tag: v1.2.3
-  valuesFrom:
-    - kind: ConfigMap
-      name: myapp-values
-```
-
-## 安全最佳实践
-
-### Secret 管理
-
-```yaml
-# Reference external secrets
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-    - name: app
-      env:
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.existingSecret | default (include "mychart.fullname" .) }}
-              key: password
-```
-
-### RBAC 模板
-
-```yaml
-# templates/serviceaccount.yaml
-{{- if .Values.serviceAccount.create -}}
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: {{ include "mychart.serviceAccountName" . }}
-  labels:
-    {{- include "mychart.labels" . | nindent 4 }}
-  {{- with .Values.serviceAccount.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-{{- end }}
-
-# templates/role.yaml
-{{- if .Values.rbac.create -}}
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: {{ include "mychart.fullname" . }}
-rules:
-  - apiGroups: [""]
-    resources: ["configmaps", "secrets"]
-    verbs: ["get", "list", "watch"]
-{{- end }}
-```
-
-## 故障排查
-
-### 调试
-
-```bash
-# Check template rendering
-helm template my-release ./mychart --debug
-
-# Server validation with dry-run
-helm install my-release ./mychart --dry-run --debug
-
-# Check release status
-helm status my-release
-
-# Get release manifest
-helm get manifest my-release
-
-# Get release values
-helm get values my-release --all
-```
-
-### 常见错误
-
-| 错误 | 原因 | 解决方案 |
-|-------|-------|----------|
-| `Error: INSTALLATION FAILED: cannot re-use a name` | 已存在同名 Release | `helm uninstall` 或使用不同名称 |
-| `Error: rendered manifests contain a resource that already exists` | 资源冲突 | 删除现有资源或使用 `--force` |
-| `Error: UPGRADE FAILED: has no deployed releases` | Release 处于失败状态 | `helm rollback` 或使用 `--force` |
-| `Error: template: ... not defined` | 未定义模板 | 检查 `_helpers.tpl` |
-
-## 参考资料
-
-- [Helm 官方文档](https://helm.sh/docs/)
-- [Helm Chart 最佳实践](https://helm.sh/docs/chart_best_practices/)
-- [Artifact Hub](https://artifacthub.io/)
-- [Helm GitHub](https://github.com/helm/helm)
+[Helm 测验](../quizzes/platform-engineering/01-helm-quiz.md)

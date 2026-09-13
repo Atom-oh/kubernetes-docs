@@ -1,281 +1,236 @@
 # Cuestionario sobre el gestor de paquetes Helm
 
-> **Documento relacionado**: [Gestor de paquetes Helm](../../platform-engineering/01-helm.md)
+> **Guía relacionada**: [Helm](../../platform-engineering/01-helm.md)
 
-## Preguntas de opción múltiple
+Estos 20 temas de preguntas siguen la revisión de Helm 3.21.3 / 4.3.0.
 
-### 1. ¿Cuál es la razón principal por la que se eliminó Tiller en Helm v3?
+## Opción múltiple
 
-- A) Para mejorar el rendimiento
-- B) Para mejorar la seguridad y simplificar la arquitectura
-- C) Para reducir el tamaño del chart
-- D) Por compatibilidad con versiones de Kubernetes
+### 1. ¿Qué cambió al eliminar Tiller?
 
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Para mejorar la seguridad y simplificar la arquitectura**
-
-**Explicación:**
-Tiller de Helm v2 se ejecutaba con privilegios elevados dentro del cluster, lo que planteaba riesgos de seguridad. En Helm v3, Tiller se eliminó y el cliente se comunica directamente con la API de Kubernetes, mejorando la seguridad y simplificando la arquitectura.
-
-</details>
-
-### 2. ¿Cuál es el propósito principal del archivo values.yaml en un Helm Chart?
-
-- A) Almacenar metadatos del chart
-- B) Definir valores de configuración predeterminados usados en templates
-- C) Almacenar manifiestos de Kubernetes directamente
-- D) Definir dependencias del chart
+- A) Solo cambia el tamaño del chart.
+- B) El cliente utiliza sus credenciales de Kubernetes y RBAC.
+- C) Todos los charts se vuelven seguros.
+- D) La API de Kubernetes ya no es necesaria.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Definir valores de configuración predeterminados usados en templates**
+**Respuesta: B**
 
-**Explicación:**
-El archivo values.yaml define valores de configuración predeterminados que usan los templates del chart. Los usuarios pueden sobrescribir estos valores usando el flag --set o el flag -f para personalizar deployments para diferentes entornos.
+Helm 3 eliminó Tiller y simplificó la ruta de permisos. Los manifests no seguros y los permisos amplios del cliente aún requieren revisión.
 
 </details>
 
-### 3. ¿Cuál es el comportamiento del comando `helm upgrade --install`?
+### 2. ¿Para qué sirve values.yaml?
 
-- A) Siempre instala un nuevo release
-- B) Siempre actualiza un release existente
-- C) Instala si el release no existe, actualiza si existe
-- D) Elimina y reinstala el release
+- A) Metadatos del chart
+- B) Datos de configuración predeterminados consumidos por los templates
+- C) Historial de releases
+- D) Un template ejecutado automáticamente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Instala si el release no existe, actualiza si existe**
+**Respuesta: B**
 
-**Explicación:**
-`helm upgrade --install` proporciona un comportamiento idempotente. Si el release especificado no existe, instala uno nuevo; si existe, lo actualiza. Esto es especialmente útil en pipelines de CI/CD.
+Solo los values consumidos por los templates tienen efecto. Los archivos y las variantes de --set pueden sobrescribirlos; las cadenas de template incorporadas no se evalúan automáticamente.
 
 </details>
 
-### 4. ¿A qué hace referencia <code v-pre>{{ .Release.Name }}</code> en un template de Helm?
+### 3. ¿Qué hace helm upgrade --install?
+
+- A) Siempre crea un release nuevo
+- B) Siempre elimina y vuelve a crear
+- C) Instala un release ausente o actualiza uno existente
+- D) Garantiza la idempotencia de las operaciones externas
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C**
+
+Selecciona la instalación o la actualización. Los hooks, los values aleatorios y los cambios en bases de datos externas no tienen por qué ser idempotentes.
+
+</details>
+
+### 4. ¿Qué es Release.Name?
 
 - A) Nombre del chart
-- B) Nombre del cluster de Kubernetes
-- C) Nombre del release instalado
-- D) Nombre del namespace
+- B) Nombre del clúster
+- C) El nombre de release elegido
+- D) Tag de imagen
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Nombre del release instalado**
+**Respuesta: C**
 
-**Explicación:**
-`.Release.Name` es un objeto integrado de Helm que hace referencia al nombre del release especificado en el comando `helm install`. Por ejemplo, en `helm install my-app chart/`, `.Release.Name` sería "my-app".
+En `helm install demo ./chart`, el nombre es demo. Es diferente del nombre del chart, appVersion y la revisión del release.
 
 </details>
 
-### 5. ¿Cuál es el propósito del atributo `condition` en el campo `dependencies` de Chart.yaml?
+### 5. ¿Qué especifica una condición de dependencia?
 
-- A) Especificar la versión del chart de dependencia
-- B) Especificar la ruta de values que habilita/deshabilita el chart de dependencia
-- C) Especificar la URL del repositorio del chart de dependencia
-- D) Especificar la prioridad del chart de dependencia
+- A) Tag de imagen
+- B) Una ruta de values que controla si la dependencia está habilitada
+- C) Contraseña del registry
+- D) Prioridad de Pod
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Especificar la ruta de values que habilita/deshabilita el chart de dependencia**
+**Respuesta: B**
 
-**Explicación:**
-El atributo `condition` especifica una ruta en values.yaml que determina si se habilita el chart de dependencia. Por ejemplo, `condition: postgresql.enabled` significa que el subchart de PostgreSQL solo se incluye cuando el valor `postgresql.enabled` es true.
+Para el alias cache, use una ruta Booleana real como cache.enabled. Pruebe el comportamiento de las rutas ausentes y distíngalo de los values pasados al subchart.
 
 </details>
 
-### 6. ¿Cuándo se ejecuta el Helm Hook `pre-upgrade`?
+### 6. ¿Cuándo se ejecuta un hook pre-upgrade?
 
-- A) Antes de eliminar el release
-- B) Después de la solicitud de actualización, antes de que se actualicen los recursos
-- C) Después de que se hayan creado todos los recursos
-- D) Después de completar el rollback
+- A) Después de la eliminación
+- B) Después del renderizado y antes de actualizar los recursos ordinarios
+- C) Siempre después de que los Pods nuevos estén Ready
+- D) Solo después del rollback
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Después de la solicitud de actualización, antes de que se actualicen los recursos**
+**Respuesta: B**
 
-**Explicación:**
-El Hook `pre-upgrade` se ejecuta después de recibir una solicitud de actualización, pero antes de que comiencen las actualizaciones reales de recursos. Se usa comúnmente para migraciones de bases de datos u operaciones de respaldo.
+Una migración de base de datos debe tener en cuenta la disponibilidad de la base de datos, los reintentos, los fallos y la compatibilidad con la app anterior. El rollback no deshace automáticamente los cambios en la base de datos.
 
 </details>
 
-### 7. ¿Cuál es el uso principal del comando `helm template`?
+### 7. ¿Cuál es el propósito de helm template ordinario?
 
-- A) Desplegar un chart en el cluster
-- B) Renderizar templates del chart localmente para verificación
-- C) Actualizar dependencias del chart
-- D) Hacer rollback de un release
+- A) Instalar en un clúster
+- B) Renderizar manifests localmente
+- C) Validar webhooks reales
+- D) Realizar rollback automáticamente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Renderizar templates del chart localmente para verificación**
+**Respuesta: B**
 
-**Explicación:**
-`helm template` renderiza templates del chart localmente, lo que permite previsualizar los manifiestos de Kubernetes que se generarán. Esto permite verificar templates sin conectarse a un cluster.
+El renderizado local predeterminado no prueba la admisión, RBAC, la ejecución de imágenes ni la conectividad. Distíngalo de las opciones que contactan con un servidor.
 
 </details>
 
-### 8. ¿Cuál es el propósito del archivo `_helpers.tpl` en Helm?
+### 8. ¿Para qué sirve _helpers.tpl?
 
-- A) Almacenar metadatos del chart
-- B) Definir funciones auxiliares reutilizables de templates
-- C) Almacenar valores predeterminados
-- D) Mostrar mensajes posteriores a la instalación
+- A) Almacenar metadatos
+- B) Definir templates nombrados reutilizables
+- C) Almacenar values predeterminados
+- D) Almacenar el historial de releases
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Definir funciones auxiliares reutilizables de templates**
+**Respuesta: B**
 
-**Explicación:**
-El archivo `_helpers.tpl` define funciones auxiliares (templates con nombre) que se usan comúnmente en múltiples templates. Encapsula lógica repetitiva como nombres de charts, labels y selectors.
+Use define para los templates nombrados e include para consumirlos. Añada prefijos a los nombres para evitar colisiones y pase el contexto previsto.
 
 </details>
 
-### 9. ¿Qué muestra el comando `helm get values my-release --all`?
+### 9. ¿Qué genera helm get values demo --all?
 
-- A) Solo valores especificados por el usuario
-- B) Todos los valores, incluidos los predeterminados
-- C) El manifiesto del release
-- D) El historial del release
+- A) Solo las anulaciones del usuario
+- B) Values calculados, incluidos los valores predeterminados del chart
+- C) Solo manifests
+- D) Solo historial
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Todos los valores, incluidos los predeterminados**
+**Respuesta: B**
 
-**Explicación:**
-Usar el flag `--all` muestra todos los valores calculados, incluidos tanto los valores sobrescritos por el usuario como los valores predeterminados del chart desde values.yaml.
+Seleccione el namespace y el release correctos. Los values pueden contener información confidencial, por lo que debe proteger la salida.
 
 </details>
 
-### 10. ¿Por qué las funciones `toYaml` y `nindent` se usan comúnmente juntas en charts de Helm?
+### 10. ¿Por qué combinar toYaml con nindent?
 
-- A) Para convertir YAML a JSON
-- B) Para insertar valores complejos en YAML con la indentación adecuada
-- C) Para codificar valores en Base64
-- D) Para envolver strings entre comillas
+- A) Cifrado automático
+- B) Serializar values estructurados a YAML y añadir una nueva línea/sangría
+- C) Generar solo JSON
+- D) Convertir siempre los números en cadenas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Para insertar valores complejos en YAML con la indentación adecuada**
+**Respuesta: B**
 
-**Explicación:**
-`toYaml` convierte objetos de Go en strings YAML, y `nindent` aplica el número especificado de espacios para la indentación. Esta combinación es esencial para insertar correctamente estructuras complejas como resources y annotations en templates.
+A diferencia de indent, nindent también antepone una nueva línea. Haga coincidir la sangría requerida en el punto de inserción.
 
 </details>
 
-## Preguntas de respuesta corta
+## Respuesta corta
 
-### 1. ¿Qué tipo de recurso de Kubernetes se usa para almacenar información de release en Helm v3?
+### 1. ¿Cuál es el recurso de almacenamiento predeterminado de los releases?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Secret**
-
-**Explicación:**
-Helm v3 almacena la información de release como Secrets dentro del namespace donde se despliega el release. El formato del nombre del Secret es `sh.helm.release.v1.<release-name>.v<version>`.
+Un Secret en el namespace del release, llamado `sh.helm.release.v1.<release>.v<revision>`. Se pueden configurar otros backends, como ConfigMap o SQL. Base64 no es cifrado.
 
 </details>
 
-### 2. ¿Cuál es el nombre del archivo de bloqueo generado por el comando `helm dependency update`?
+### 2. ¿Qué archivo de bloqueo crea dependency update y cuáles son sus límites?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Chart.lock**
-
-**Explicación:**
-`helm dependency update` analiza las dependencias en Chart.yaml y genera un archivo Chart.lock que contiene versiones exactas. Este archivo garantiza builds reproducibles.
+Chart.lock. dependency build utiliza sus versiones bloqueadas, pero el bloqueo por sí solo no garantiza la integridad de los artefactos, imágenes fijadas ni reproducibilidad completa.
 
 </details>
 
-### 3. ¿Qué función proporciona un valor predeterminado cuando un valor está vacío en templates de Helm?
+### 3. ¿Qué values vacíos importan al usar default?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: default**
-
-**Explicación:**
-La función `default` proporciona un valor predeterminado cuando un valor está vacío o no está definido. Ejemplo de uso: <code v-pre>{{ .Values.image.tag | default .Chart.AppVersion }}</code>
+False, cero, las cadenas vacías y las colecciones cuentan como vacíos. Compruebe la presencia y el tipo cuando sea necesario conservar false/cero explícitos. default no protege todas las búsquedas anidadas.
 
 </details>
 
-### 4. ¿Qué annotation controla el orden de ejecución de Helm Hooks?
+### 4. ¿Qué annotation controla el orden de los hooks?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: helm.sh/hook-weight**
-
-**Explicación:**
-La annotation `helm.sh/hook-weight` determina el orden de ejecución dentro del mismo tipo de Hook. Los números más bajos se ejecutan primero, y se permiten valores negativos.
+`helm.sh/hook-weight`. Los pesos inferiores se ejecutan primero dentro de la fase, incluidos los pesos negativos. Considere también el orden de desempate por kind/name, la finalización de Job y los timeouts.
 
 </details>
 
-### 5. ¿Cuándo se muestra a los usuarios el archivo NOTES.txt en un chart de Helm?
+### 5. ¿Cuándo y por qué se utiliza NOTES.txt?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Después de que helm install o helm upgrade se completen correctamente**
-
-**Explicación:**
-NOTES.txt se muestra a los usuarios después de una instalación o actualización correcta. Normalmente incluye instrucciones de acceso a la aplicación y guía de configuración inicial.
+Genera instrucciones mostradas después de una instalación/actualización correcta y disponibles mediante `helm get notes`. Mantenga las instrucciones precisas y evite los secretos. Las notas no demuestran la preparación de la aplicación.
 
 </details>
 
-## Preguntas prácticas
+## Práctico
 
-### 1. Escribe un comando de Helm que cumpla con los siguientes requisitos:
-
-- Instalar el chart bitnami/nginx como release "web-server"
-- Desplegar en el namespace "frontend" (crearlo si no existe)
-- Establecer replicaCount en 3
+### 1. Instale el ejemplo como web-server en frontend con tres réplicas.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 ```bash
-helm install web-server bitnami/nginx \
-  -n frontend --create-namespace \
+helm install web-server examples/platform/helm/reviewed-app \
+  --namespace frontend --create-namespace \
   --set replicaCount=3
 ```
 
-**Explicación:**
-- `helm install web-server bitnami/nginx`: Instalar el chart nginx como release "web-server"
-- `-n frontend`: Especificar el namespace frontend
-- `--create-namespace`: Crear el namespace si no existe
-- `--set`: Sobrescribir values en línea
+Ejecute desde la raíz del repositorio con un contexto de clúster y permisos aprobados. Esta auditoría ejecutó lint/template/package, no la instalación.
 
 </details>
 
-### 2. Predice la salida del siguiente fragmento de template de Helm:
-
-```yaml
-# values.yaml
-env:
-  LOG_LEVEL: debug
-  MAX_CONNECTIONS: "100"
-
-# template
-env:
-{{- range $key, $value := .Values.env }}
-  - name: {{ $key }}
-    value: {{ $value | quote }}
-{{- end }}
-```
+### 2. ¿Cómo deberían renderizarse LOG_LEVEL=debug y MAX_CONNECTIONS="100" como env?
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -288,175 +243,43 @@ env:
     value: "100"
 ```
 
-**Explicación:**
-- La función `range` itera sobre el mapa `.Values.env`
-- `$key` es la clave del mapa, `$value` es el valor del mapa
-- La función `quote` envuelve los valores entre comillas
-- Los mapas se ordenan alfabéticamente
+Itere sobre el map y entrecomille cada valor para que ambos sigan siendo cadenas. Los templates de Go recorren los maps con claves ordenadas básicas en orden de clave; esto es distinto del orden de las listas.
 
 </details>
 
-### 3. Escribe un template `_helpers.tpl` que cumpla con los siguientes requisitos:
-
-- Nombre: mychart.labels
-- app.kubernetes.io/name: nombre del chart
-- app.kubernetes.io/instance: nombre del release
-- app.kubernetes.io/version: versión de la aplicación
+### 3. Escriba un helper para las etiquetas de chart, release y appVersion.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-```yaml
+```text
 {{- define "mychart.labels" -}}
-app.kubernetes.io/name: {{ .Chart.Name }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/name: {{ .Chart.Name | quote }}
+app.kubernetes.io/instance: {{ .Release.Name | quote }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 ```
 
-**Explicación:**
-- `define` crea un template con nombre reutilizable
-- `.Chart.Name` hace referencia al nombre del chart
-- `.Release.Name` hace referencia al nombre del release
-- `.Chart.AppVersion` hace referencia a la versión de la aplicación (quote garantiza el tipo string)
+Pase el contexto raíz previsto y aplique sangría en el sitio de llamada. appVersion es metadato y no selecciona automáticamente un tag de imagen.
 
 </details>
 
-## Preguntas avanzadas
+## Avanzado
 
-### 1. Explica cómo implementar deployments Blue-Green y Canary usando charts de Helm.
+### 1. ¿Qué se necesita para la entrega Blue/Green y canary con Helm?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Deployment Blue-Green:**
-```yaml
-# values.yaml
-deployment:
-  activeColor: blue
-
-blue:
-  enabled: true
-  image:
-    tag: "v1.0.0"
-
-green:
-  enabled: true
-  image:
-    tag: "v2.0.0"
-
-service:
-  selector:
-    color: "{{ .Values.deployment.activeColor }}"
-```
-
-**Estrategia de implementación:**
-1. Crear dos templates de Deployment para Blue y Green
-2. Cambiar el selector del Service usando el valor activeColor
-3. Establecer green.image.tag en la nueva versión durante el deployment
-4. Después de la verificación, cambiar deployment.activeColor a green
-5. Hacer rollback inmediatamente a blue si surgen problemas
-
-**Canary Deployment (con Istio):**
-```yaml
-# VirtualService for traffic distribution
-http:
-  - route:
-      - destination:
-          host: myapp
-          subset: stable
-        weight: 90
-      - destination:
-          host: myapp
-          subset: canary
-        weight: 10
-```
-
-**Estrategia de implementación:**
-1. Crear dos Deployments para Stable y Canary
-2. Controlar la proporción de tráfico usando Istio VirtualService
-3. Aumentar gradualmente la proporción de Canary (10% -> 25% -> 50% -> 100%)
-4. Implementar rollback automático basado en monitoreo de métricas
+Blue/Green requiere dos Deployments con etiquetas y un template de Service real que seleccione el color activo después de la validación. Las cadenas de template dentro de values.yaml no se evalúan automáticamente. Canary requiere rutas/subconjuntos reales o un controlador de rollout, pesos, métricas de observación y condiciones de cancelación. Los values por sí solos no crean análisis ni rollback automatizados. Tenga en cuenta la compatibilidad de la base de datos y las solicitudes en curso.
 
 </details>
 
-### 2. Explica las mejores prácticas de seguridad para charts de Helm y diseña una estrategia de gestión de secretos.
+### 2. Diseñe la seguridad del chart y la gestión de secretos.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Mejores prácticas de seguridad:**
-
-1. **Validación de valores (values.schema.json)**
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "required": ["image"],
-  "properties": {
-    "image": {
-      "type": "object",
-      "required": ["repository"],
-      "properties": {
-        "repository": {
-          "type": "string",
-          "pattern": "^[a-z0-9.-/]+$"
-        }
-      }
-    }
-  }
-}
-```
-
-2. **Principio de privilegio mínimo de RBAC**
-```yaml
-rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "list"]  # Grant only necessary permissions
-```
-
-3. **Aplicar Pod Security Standards**
-```yaml
-securityContext:
-  runAsNonRoot: true
-  readOnlyRootFilesystem: true
-  capabilities:
-    drop: ["ALL"]
-```
-
-**Estrategia de gestión de secretos:**
-
-1. **Integración con External Secrets Manager (AWS Secrets Manager)**
-```yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: {{ include "mychart.fullname" . }}
-spec:
-  refreshInterval: 1h
-  secretStoreRef:
-    name: aws-secrets-manager
-    kind: ClusterSecretStore
-  target:
-    name: {{ include "mychart.fullname" . }}-secrets
-  data:
-    - secretKey: database-password
-      remoteRef:
-        key: myapp/database
-        property: password
-```
-
-2. **Uso de Sealed Secrets**
-```bash
-# Encrypt secret
-kubeseal --format=yaml < secret.yaml > sealed-secret.yaml
-```
-
-3. **Plugin Helm Secrets**
-```bash
-# Use encrypted values file
-helm secrets install myapp ./mychart -f secrets.yaml
-```
+Valide los values y tipos requeridos con un values.schema.json compatible, y fije las revisiones de chart/imagen revisadas. Conecte los ServiceAccounts y RoleBindings requeridos con permisos mínimos de API. Un volumen Secret no justifica conceder a la app acceso a todos los Secrets. Mantenga los valores secretos fuera de los valores predeterminados, los argumentos de CLI y los logs de depuración; planifique los montajes de archivos aprobados, la rotación y la relectura. ESO v1, Sealed Secrets y helm-secrets requieren sus controladores/plugins y permisos de proveedor/clave. Compruebe si los valores descifrados entran en los registros de releases. Combine un UID no root, capacidades eliminadas, una raíz de solo lectura y los volúmenes de escritura requeridos, y luego verifique la compatibilidad real de la imagen.
 
 </details>

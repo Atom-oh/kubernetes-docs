@@ -1,116 +1,91 @@
-# S3 和 IAM 资源创建示例 (ACK)
+# S3 和 IAM (ACK)
 
-> **注意**：本文档包含来自 [ACK 概念文档](../02-ack.md) 的动手实践示例。
+[ACK](../02-ack.md)
 
-## S3 和 IAM 资源创建示例
+示例使用 S3 1.12.1 / IAM 1.9.0 CRD。请先准备基础设施、controller、ServiceAccount 和 IAM 权限。请将 bucket 名称、账户、region 和 ARN 替换为已批准的值。在应用引用该 Role 的 bucket policy 前，请先同步 IAM Policy 和 Role；S3 可能会拒绝不存在的 principal。
 
-### 创建 S3 Bucket
+这些版本不使用单独的 BucketPolicy 或 RolePolicyAttachment CRD。请使用 Bucket.spec.policy 和 Role.spec.policyRefs。四项 S3 Block Public Access 设置均已启用，并且显式指定 AES256。请使 object/bucket ARN 与 policy action 相匹配。
+
+此 Role 信任 EC2。它不是 IRSA/Pod Identity Role；使用 EC2 还需要关联 InstanceProfile。它的数据读取 policy 并非完整的 ACK controller policy。
+
+## Bucket — bucket-app-data
 
 ```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
-  name: my-sample-bucket
+  name: app-data
+  namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  name: my-unique-bucket-name-123
-  tagging:
-    tagSet:
-      - key: Environment
-        value: Development
-      - key: Project
-        value: ACK-Demo
+  name: replace-with-globally-unique-bucket-name
   createBucketConfiguration:
     locationConstraint: us-west-2
-```
-
-### 设置 S3 Bucket Policy
-
-```yaml
-apiVersion: s3.services.k8s.aws/v1alpha1
-kind: BucketPolicy
-metadata:
-  name: my-bucket-policy
-spec:
-  bucket: my-unique-bucket-name-123
-  policy: |
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": {
-            "AWS": "arn:aws:iam::123456789012:role/MyRole"
-          },
-          "Action": [
-            "s3:GetObject"
-          ],
-          "Resource": [
-            "arn:aws:s3:::my-unique-bucket-name-123/*"
-          ]
-        }
-      ]
-    }
-```
-
-### 创建 IAM Role
-
-```yaml
-apiVersion: iam.services.k8s.aws/v1alpha1
-kind: Role
-metadata:
-  name: my-iam-role
-spec:
-  name: MyApplicationRole
-  assumeRolePolicyDocument: |
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": {
-            "Service": "ec2.amazonaws.com"
-          },
-          "Action": "sts:AssumeRole"
-        }
-      ]
-    }
-  description: "Role for my application"
-  maxSessionDuration: 3600
-  tags:
+  publicAccessBlock:
+    blockPublicACLs: true
+    blockPublicPolicy: true
+    ignorePublicACLs: true
+    restrictPublicBuckets: true
+  encryption:
+    rules:
+    - applyServerSideEncryptionByDefault:
+        sseAlgorithm: AES256
+  tagging:
+    tagSet:
     - key: Environment
       value: Development
+  policy: "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"\
+    Effect\": \"Allow\",\n      \"Principal\": {\n        \"AWS\": \"arn:aws:iam::123456789012:role/MyApplicationRole\"\
+    \n      },\n      \"Action\": \"s3:GetObject\",\n      \"Resource\": \"arn:aws:s3:::replace-with-globally-unique-bucket-name/*\"\
+    \n    }\n  ]\n}"
 ```
 
-### 创建并附加 IAM Policy
+## Policy — policy-app-data-read
 
 ```yaml
 apiVersion: iam.services.k8s.aws/v1alpha1
 kind: Policy
 metadata:
-  name: my-s3-access-policy
+  name: app-data-read
+  namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  name: S3ReadOnlyAccess
-  policyDocument: |
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Action": [
-            "s3:Get*",
-            "s3:List*"
-          ],
-          "Resource": "*"
-        }
-      ]
-    }
-  description: "Policy for S3 read-only access"
----
-apiVersion: iam.services.k8s.aws/v1alpha1
-kind: RolePolicyAttachment
-metadata:
-  name: attach-s3-policy
-spec:
-  policyARN: arn:aws:iam::123456789012:policy/S3ReadOnlyAccess
-  roleName: MyApplicationRole
+  name: AppDataRead
+  policyDocument: "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n\
+    \      \"Effect\": \"Allow\",\n      \"Action\": \"s3:ListBucket\",\n      \"\
+    Resource\": \"arn:aws:s3:::replace-with-globally-unique-bucket-name\"\n    },\n\
+    \    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:GetObject\",\n  \
+    \    \"Resource\": \"arn:aws:s3:::replace-with-globally-unique-bucket-name/*\"\
+    \n    }\n  ]\n}"
 ```
+
+## Role — role-app-role
+
+```yaml
+apiVersion: iam.services.k8s.aws/v1alpha1
+kind: Role
+metadata:
+  name: app-role
+  namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
+spec:
+  name: MyApplicationRole
+  assumeRolePolicyDocument: "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n\
+    \    {\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n        \"Service\"\
+    : \"ec2.amazonaws.com\"\n      },\n      \"Action\": \"sts:AssumeRole\"\n    }\n\
+    \  ]\n}"
+  policyRefs:
+  - from:
+      name: app-data-read
+  maxSessionDuration: 3600
+```
+
+## 验证与运维前提条件
+
+已根据官方版本化 CRD 检查字段。schema 验证成功并不代表 IAM 权限、AWS 服务约束、创建、连接或恢复已得到保证。应用前，请为保留的资源明确分配所有权、成本、清理和备份责任。
+
+- [s3 v1.12.1 CRDs](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/config/crd/bases)
+- [iam v1.9.0 CRDs](https://github.com/aws-controllers-k8s/iam-controller/tree/v1.9.0/config/crd/bases)

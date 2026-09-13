@@ -1,288 +1,193 @@
 # AWS Controllers for Kubernetes (ACK) 测验
 
-本测验考查你对 AWS Controllers for Kubernetes (ACK) 的概念、架构、安装、安全性和运维的理解。
+[ACK](../../platform-engineering/02-ack.md)
 
-## 选择题
+这些问题基于经过审查的 controller 行为，保留了原有的 15 个主题。
 
-1. ACK (AWS Controllers for Kubernetes) 的主要用途是什么？
-   - A) 仅通过 AWS console 管理 AWS resources
-   - B) 通过 Kubernetes API 以声明式方式管理 AWS resources
-   - C) 仅在 AWS 上运行 Kubernetes clusters
-   - D) 自动降低 AWS costs
+## 1. ACK 的主要用途是什么？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 通过 Kubernetes API 以声明式方式管理 AWS resources**
+通过 Kubernetes APIs 和自定义资源以声明式方式管理 AWS 资源。它并不保证自动节省成本或立即就绪。
 
-**解释：**
-ACK 是一个项目，使 Kubernetes 用户能够直接使用熟悉的 Kubernetes APIs 和工具（kubectl、Helm 等）来管理 AWS services 和 resources。这允许与 GitOps 工作流集成，并通过声明式配置以基础设施即代码的方式管理 AWS infrastructure。
 </details>
 
-2. 在 ACK 架构中，哪个组件会针对每个 AWS service 单独安装？
-   - A) Kubernetes API Server
-   - B) Service controller
-   - C) etcd database
-   - D) kubelet
+## 2. 每项服务会安装哪个组件？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) Service controller**
+一个服务 controller 及其 CRDs。选择所需服务，并在已版本化的 CRDs 中检查受支持的资源和字段。
 
-**解释：**
-ACK 为每个 AWS service（S3、RDS、DynamoDB 等）提供独立的 service controllers。例如，要管理 S3 buckets，你需要安装 S3 controller；要管理 RDS databases，你需要安装 RDS controller。这种模块化方法允许你只安装所需 services 的 controllers。
 </details>
 
-3. 为 ACK controllers 设置 IAM permissions 以管理 AWS resources 的推荐方法是什么？
-   - A) 仅使用 EC2 instance profiles
-   - B) 将 AWS access keys 存储在 ConfigMap 中
-   - C) 使用 IRSA (IAM Roles for Service Accounts)
-   - D) 使用具有所有 AWS permissions 的 root account
+## 3. controller 应如何获取 AWS 凭证？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：C) 使用 IRSA (IAM Roles for Service Accounts)**
+配置工作负载身份，例如 IRSA 或受支持的 EKS Pod Identity。验证 OIDC 信任关系/关联、ServiceAccount、SDK/agent 兼容性以及最小 IAM 权限。不要将访问密钥存储在 ConfigMaps 中，也不要使用 root 凭证。
 
-**解释：**
-IRSA (IAM Roles for Service Accounts) 是为 ACK controllers 授予 AWS resource management permissions 的推荐方法，它通过将 IAM roles 与 Kubernetes service accounts 关联来实现。此方法遵循最小权限原则，支持安全的凭证管理，并允许仅向每个 controller 授予必要权限。
 </details>
 
-4. 在 ACK 中，删除 Kubernetes resource 时若要保留 AWS resource，应使用哪个 annotation？
-   - A) services.k8s.aws/keep-resource: "true"
-   - B) services.k8s.aws/deletion-policy: "orphan"
-   - C) services.k8s.aws/preserve: "true"
-   - D) services.k8s.aws/no-delete: "true"
+## 4. 哪个值可在删除 CR 后保留 AWS 资源？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) services.k8s.aws/deletion-policy: "orphan"**
+`services.k8s.aws/deletion-policy: retain`。当前运行时不接受 orphan。优先级依次为 CR、namespace 特定服务 annotation，然后是 controller 默认值。已保留的 AWS 资源仍需要所有权管理和运维操作。
 
-**解释：**
-默认情况下，当 Kubernetes resource 被删除时，ACK 会删除对应的 AWS resource。不过，设置 `services.k8s.aws/deletion-policy: "orphan"` annotation 后，即使 Kubernetes resource 被删除，也会保留 AWS resource。这对于防止在生产环境中意外删除重要 resources 很有用。
 </details>
 
-5. 如何使用 ACK 将现有 AWS resources 导入 Kubernetes？
-   - A) 使用 kubectl import command
-   - B) 使用 AWS console 的 export feature
-   - C) 将 services.k8s.aws/resource-imported: "true" annotation 添加到 resource manifest
-   - D) 使用 ACK CLI import command
+## 5. 如何接管现有资源？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：C) 将 services.k8s.aws/resource-imported: "true" annotation 添加到 resource manifest**
+使用 ResourceAdoption 的 `adoption-policy: adopt` 和服务特定的 adoption-fields，并验证 gates、标识符、区域和账户。resource-imported:true 并非此配置；adopt-or-create 可以创建缺失的资源。后续 reconciliation 可能会修改资源，因此应区分接管与只读行为。
 
-**解释：**
-要将现有 AWS resources 导入 ACK，请创建 resource manifest 并添加 `services.k8s.aws/resource-imported: "true"` annotation。这会使 ACK controller 连接到现有 AWS resource，而不是创建新的 resource。这支持将现有基础设施逐步迁移到 GitOps 工作流。
 </details>
 
-6. 哪个 ACK service controllers 的成熟度级别适合生产使用？
-   - A) Alpha
-   - B) Beta
-   - C) GA (Generally Available)
-   - D) Preview
+## 6. GA 状态确立了什么？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：C) GA (Generally Available)**
+它标识 controller 的官方成熟度阶段，而不是对每个 AWS API 或运维要求的支持。应将成熟度与 CRD 的 v1alpha1 字符串区分开，并验证字段、版本发布和运维适用性。
 
-**解释：**
-ACK service controllers 会经历三个成熟度级别：Alpha、Beta 和 GA。Alpha 是早期开发阶段，API 可能发生变化；Beta 表示功能已完整，但 API 仍可能变化。GA (Generally Available) 是可用于生产的阶段，提供稳定的 APIs 和完整功能。
 </details>
 
-7. 哪个 Condition type 表示 ACK resource 已成功同步？
-   - A) ACK.Ready
-   - B) ACK.ResourceSynced
-   - C) ACK.Healthy
-   - D) ACK.Available
+## 7. 哪个 condition 表示同步，其限制是什么？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) ACK.ResourceSynced**
+ACK.ResourceSynced=True 描述 controller 同步状态。它并不能证明应用就绪、数据库连接或消息传递正常。请检查其他 conditions 和 AWS 服务状态。
 
-**解释：**
-可以在 `status.conditions` 字段中检查 ACK resource 的状态。当 `ACK.ResourceSynced` Condition 为 True 时，表示 Kubernetes resource 的期望状态（spec）已与实际 AWS resource 状态成功同步。这允许你验证 resource 是否已正确创建或更新。
 </details>
 
-8. 在 ACK 中，为多个团队或环境隔离 permissions 的推荐方法是什么？
-   - A) 使用单个 controller 管理所有环境
-   - B) 使用独立 namespaces 和 IAM roles 进行隔离
-   - C) 仅使用 AWS Organizations
-   - D) 仅使用 VPC isolation
+## 8. 分离团队 namespace 是否就完成了隔离？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 使用独立 namespaces 和 IAM roles 进行隔离**
+否。默认的 installScope=cluster 会跨 namespace 监视 CR。应同时限制 watchNamespace/installScope、ServiceAccount/IAM/RBAC 和跨 namespace/CARM 行为。namespace 模式仍可能具有用于其 namespace 缓存的 cluster 读取权限。
 
-**解释：**
-要在 ACK 中为多个团队或环境（开发、预发布、生产）隔离 permissions，建议为每个团队或环境使用独立的 Kubernetes namespaces 和 IAM roles。为每个 namespace 安装独立的 controllers，并将 roles 与适用于该环境的 IAM policies 关联。此外，可以使用 Kubernetes RBAC 控制用户对 ACK resources 的访问。
 </details>
 
-## 简答题
-
-9. ACK controllers 调用 AWS APIs 来创建、更新和删除 resources，同时检测并解决期望状态与实际状态之间差异的模式叫什么？
+## 9. 什么模式可使所需的 AWS 状态与观测到的状态保持一致？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：Reconciliation Loop 或 Reconciliation Pattern**
+reconciliation loop 会反复处理受支持的字段和 controller 逻辑。瞬态错误和 AWS 配额会影响它；它不会立即修复所有可能的状态漂移。
 
-**解释：**
-Reconciliation loop 是 Kubernetes controllers 的核心模式，ACK 也基于此模式。ACK controllers 会持续比较 Kubernetes resources 的期望状态（spec）与 AWS resources 的实际状态。当检测到差异时，controller 会调用 AWS APIs，使实际状态与期望状态一致。此过程会自动重复，以检测并纠正漂移。
 </details>
 
-10. ACK 使用哪种 Kubernetes extension mechanism 通过 Kubernetes API 定义 AWS resources？
+## 10. 哪种 Kubernetes 扩展定义资源输入？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：CRD (Custom Resource Definition)**
+CRDs。S3 示例使用 Bucket.spec.policy。经审查的版本没有单独的 BucketPolicy 或 IAM RolePolicyAttachment CRDs；请验证实际的 kinds 和 schemas。
 
-**解释：**
-ACK 使用 CRD (Custom Resource Definition) 通过 Kubernetes API 定义 AWS resources。例如，安装 S3 controller 时，会创建 `Bucket` 和 `BucketPolicy` 等 CRDs，让你可以像管理 Kubernetes resources 一样管理 S3 buckets。每个 service controller 都会为对应 AWS service 的 resources 提供 CRDs。
 </details>
 
-11. 检查 ACK resource 状态时，可以在哪个字段找到 AWS resource 的 ARN (Amazon Resource Name)？
+## 11. 在哪里可以找到 ARN？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：status.ackResourceMetadata.arn**
+当资源提供该值时，使用 status.ackResourceMetadata.arn，包括 NLB 和 TargetGroup。其他 status 字段因资源而异。
 
-**解释：**
-当 ACK resource 成功创建后，对应 AWS resource 的 ARN 会存储在 `status.ackResourceMetadata.arn` 字段中。使用 `kubectl describe` command 检查 resource 状态时可以看到此信息。你也可以在 `status.ackResourceMetadata.ownerAccountID` 字段中查看拥有该 resource 的 AWS account ID。
 </details>
 
-12. ACK 中允许从多个 clusters 引用同一个 AWS resource，或管理不同 AWS accounts 中 resources 的功能叫什么？
+## 12. CARM 与跨集群引用有何不同？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：Cross-Account Resource Management 或 Multi-Cluster Support**
+CARM 配置 controller 通过假设 target-role 来管理另一个 AWS 账户，这需要信任关系、AssumeRole 权限、映射和 controller 设置。它并不会让多个集群的竞争性修改变得安全。应将修改所有权与只读引用分离。
 
-**解释：**
-ACK 提供了从多个 Kubernetes clusters 引用同一个 AWS resource，或管理不同 AWS accounts 中 resources 的功能。为此，需要配置 IAM role chaining 或 cross-account IAM policies，使 ACK controllers 能够访问其他 accounts 中的 resources。此功能支持在 multi-cluster 或 multi-account 环境中进行集中式 resource management。
 </details>
 
-## 动手实践题
-
-13. 编写一个 Kubernetes manifest，使用 ACK 创建一个 S3 bucket。bucket 名称为 "my-ack-demo-bucket-2025"，并添加标签 Environment: Development。
+## 13. 带有 Development 标签的 S3 Bucket 示例中应包含什么？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
+使用全局唯一名称、实际区域、tagging.tagSet、全部四项 Block Public Access 设置以及加密。应用 bucket policy 前，principal/IAM Role 必须已经存在。请替换示例名称和账户 IDs。
+
 ```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
-  name: my-ack-demo-bucket
-  namespace: default
+  name: app-data
+  namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  name: my-ack-demo-bucket-2025
-  tagging:
-    tagSet:
-      - key: Environment
-        value: Development
+  name: replace-with-globally-unique-bucket-name
   createBucketConfiguration:
     locationConstraint: us-west-2
+  publicAccessBlock:
+    blockPublicACLs: true
+    blockPublicPolicy: true
+    ignorePublicACLs: true
+    restrictPublicBuckets: true
+  encryption:
+    rules:
+    - applyServerSideEncryptionByDefault:
+        sseAlgorithm: AES256
+  tagging:
+    tagSet:
+    - key: Environment
+      value: Development
+  policy: "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"\
+    Effect\": \"Allow\",\n      \"Principal\": {\n        \"AWS\": \"arn:aws:iam::123456789012:role/MyApplicationRole\"\
+    \n      },\n      \"Action\": \"s3:GetObject\",\n      \"Resource\": \"arn:aws:s3:::replace-with-globally-unique-bucket-name/*\"\
+    \n    }\n  ]\n}"
 ```
 
-**解释：**
-这是使用 ACK S3 controller 创建 S3 bucket 的 manifest。`metadata.name` 是 Kubernetes resource name，`spec.name` 是实际的 AWS S3 bucket name。由于 bucket names 必须全局唯一，实际使用时请使用唯一名称。AWS resource tags 可以通过 `tagging.tagSet` 设置，`createBucketConfiguration.locationConstraint` 指定 bucket 将被创建的 region。
 </details>
 
-14. 编写使用 Helm 安装 ACK S3 controller 并配置 IRSA 的 commands。使用 cluster name "my-eks-cluster" 和 namespace "ack-system"。
+## 14. 如何检查 ACK S3 chart，安装之前应做什么？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
+该命令会离线渲染已固定版本的 OCI chart。在实际 install/upgrade 前，准备好 infra、其 ServiceAccount、IRSA/Pod Identity 和 IAM 权限。渲染并不是 AWS 部署验证。
+
 ```bash
-# 1. Add Helm chart repository
-helm repo add aws-controllers-k8s https://aws.github.io/eks-charts
-helm repo update
-
-# 2. Create IAM service account for IRSA
-eksctl create iamserviceaccount \
-  --cluster=my-eks-cluster \
-  --namespace=ack-system \
-  --name=ack-s3-controller \
-  --attach-policy-arn=arn:aws:iam::aws:policy/AmazonS3FullAccess \
-  --approve \
-  --override-existing-serviceaccounts
-
-# 3. Install S3 controller
-helm install ack-s3-controller \
-  aws-controllers-k8s/s3-chart \
-  --namespace ack-system \
-  --create-namespace \
+helm template ack-s3 \
+  oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
+  --version 1.12.1 --namespace infra \
+  --set aws.region=us-west-2 \
+  --set installScope=namespace --set watchNamespace=infra \
+  --set enableCARM=false --set enableCrossNamespace=false \
   --set serviceAccount.create=false \
   --set serviceAccount.name=ack-s3-controller \
-  --set aws.region=us-west-2
+  --set metrics.service.create=true --set deletionPolicy=retain
 ```
 
-**解释：**
-首先，添加 ACK Helm chart repository。然后使用 eksctl 创建用于 IRSA 配置的 IAM service account。S3 management 所需的 IAM policy 会附加到此 service account。最后，使用 Helm 安装 S3 controller，并配置为使用已创建的 service account。对于生产环境，最好使用遵循最小权限原则的 custom policy，而不是 AmazonS3FullAccess。
 </details>
 
-15. 编写 commands，用于检查 controller logs 并查看 resource status，以排查 ACK 创建的 resources 的问题。
+## 15. 应检查哪些 status 和 logs？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
+指定 namespace 和完全限定的 kinds；检查 conditions/events、controller image/logs、实际账户/区域/权限以及引用。chart label 为 app.kubernetes.io/instance=ack-s3。清除 finalizers 并不是常规修复方法。
+
 ```bash
-# 1. Check ACK controller logs
-kubectl logs -n ack-system -l app.kubernetes.io/name=ack-s3-controller
-
-# 2. Check specific resource status and events
-kubectl describe bucket my-ack-demo-bucket
-
-# 3. Check detailed resource status (JSON format)
-kubectl get bucket my-ack-demo-bucket -o json | jq '.status'
-
-# 4. Check resource-related events
-kubectl get events --field-selector involvedObject.name=my-ack-demo-bucket
-
-# 5. Check CRD installation status
-kubectl get crd | grep services.k8s.aws
-
-# 6. Check controller deployment status
-kubectl get deployment -n ack-system
+kubectl get buckets.s3.services.k8s.aws -n infra
+kubectl get bucket.s3.services.k8s.aws app-data -n infra -o json
+kubectl describe bucket.s3.services.k8s.aws app-data -n infra
+kubectl logs -n infra \
+  -l app.kubernetes.io/instance=ack-s3 --all-containers --tail=100
+kubectl get events -n infra \
+  --field-selector involvedObject.name=app-data
 ```
 
-**解释：**
-排查 ACK resource 创建问题时，需要检查多个方面。首先，检查 controller logs 以识别 AWS API 调用错误或 permission 问题。使用 `kubectl describe` 检查 resource 状态和 Conditions，并通过 events 跟踪最近的变化。同时确认 CRDs 已正确安装且 controller pods 正常运行。常见问题包括 IAM permissions 不足、region 设置不正确以及 resource name 冲突。
 </details>
-
----
-
-**评分：**
-- 13-15 题正确：优秀（ACK expert level）
-- 10-12 题正确：良好（具备 practical application 能力）
-- 7-9 题正确：一般（建议 additional learning）
-- 0-6 题正确：不足（需要复习 basic concepts）
-
-[返回学习材料](../../platform-engineering/02-ack.md)

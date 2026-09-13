@@ -1,41 +1,38 @@
 # Kubernetes 拡張メカニズム
 
-> **サポート対象バージョン**: Kubernetes 1.31, 1.32, 1.33
-> **最終更新**: February 21, 2026
+> **最終更新**: September 12, 2026
 
-## 概要
+## 拡張ポイントの選択
 
-Kubernetes は、その基本機能を拡張しカスタマイズするためのさまざまな拡張メカニズムを提供します。このドキュメントでは、Kubernetes の主要な拡張メカニズムを取り上げ、実際のユースケースと実装方法を説明します。
+Kubernetes は API とワークロードの動作を拡張する方法を複数提供しています。CRD を登録することと、その動作を実装することは別物です。
 
-## Custom Resource Definitions (CRD)
+| メカニズム | 役割 | 運用上の要件 |
+| --- | --- | --- |
+| CRD + controller | カスタム API と desired-state の reconciliation | スキーマ、reconciliation、RBAC、status と削除処理 |
+| API aggregation | リクエストを別の API server へ委譲 | APIService、TLS、委譲された認証/認可、discovery/storage |
+| Admission policy/webhook | API リクエストの検証または変更 | スコープ、失敗時の処理、CEL または webhook の可用性 |
+| Scheduler plugin/extender | filtering、scoring、binding の拡張 | 互換性のある scheduler バイナリ、登録/設定、失敗時の処理 |
+| CNI | コンテナネットワーキング | 実際のインターフェース、IPAM、ルート、クリーンアップ |
+| CSI | Volume のライフサイクルと node でのマウント | 機能に応じた RPC とバックエンド/node 操作 |
 
-Custom Resource Definitions (CRD) は、Kubernetes API を拡張してカスタムリソースを定義できるようにするメカニズムです。
+選択した API、ライブラリ、ディストリビューションの互換性を確認してください。現行の controller-runtime 0.25.0 は Go 1.26 と Kubernetes Go モジュール 0.37.0 を使用します。以下の scheduler インターフェースに関する記述は Kubernetes 1.36.2 のソースに対して確認したものです。scheduler-plugins 0.35.7 がそれと互換であると想定しないでください。
 
-### CRD の基本概念
+## CRD とインスタンス
 
-CRD を使用すると、次の利点があります。
-
-1. **宣言型 API**: Kubernetes の宣言型 API モデルを活用できます。
-2. **kubectl との統合**: カスタムリソースを、Kubernetes のネイティブリソースと同じ方法で管理できます。
-3. **バージョン管理**: API バージョン管理を通じてリソーススキーマを進化させることができます。
-4. **バリデーション**: OpenAPI v3 スキーマを通じてリソースのバリデーションを実行できます。
-
-### CRD 作成例
+CRD は OpenAPI v3 構造を用いてカスタム API を定義します。required フィールドはそれを含むレベルに適用されるため、トップレベルの spec と spec.image の両方を明示的に required に指定してください。status はその subresource を通じて管理し、scale では実際の replicas と availableReplicas を区別してください。controller がなければ、この API はデータを保存するだけで Deployment を作成しません。
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: webapps.example.com
+  name: webapps.apps.example.com
 spec:
-  group: example.com
+  group: apps.example.com
   names:
     kind: WebApp
-    listKind: WebAppList
     plural: webapps
     singular: webapp
-    shortNames:
-      - wa
+    shortNames: [wa]
   scope: Namespaced
   versions:
     - name: v1
@@ -44,944 +41,328 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
+          required: [spec]
           properties:
             spec:
+              type: object
+              required: [image]
+              properties:
+                replicas:
+                  type: integer
+                  default: 1
+                  minimum: 1
+                  maximum: 5
+                image:
+                  type: string
+                  minLength: 1
+                port:
+                  type: integer
+                  default: 8080
+                  minimum: 1
+                  maximum: 65535
+            status:
               type: object
               properties:
                 replicas:
                   type: integer
-                  minimum: 1
-                image:
-                  type: string
-                port:
-                  type: integer
-              required: ["image"]
-            status:
-              type: object
-              properties:
                 availableReplicas:
                   type: integer
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                      status:
-                        type: string
-                      lastTransitionTime:
-                        type: string
-      additionalPrinterColumns:
-        - name: Replicas
-          type: integer
-          jsonPath: .spec.replicas
-        - name: Image
-          type: string
-          jsonPath: .spec.image
-        - name: Age
-          type: date
-          jsonPath: .metadata.creationTimestamp
+                selector:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
       subresources:
         status: {}
         scale:
           specReplicasPath: .spec.replicas
-          statusReplicasPath: .status.availableReplicas
+          statusReplicasPath: .status.replicas
+          labelSelectorPath: .status.selector
 ```
 
-### カスタムリソースインスタンスの作成
-
 ```yaml
-apiVersion: example.com/v1
+apiVersion: apps.example.com/v1
 kind: WebApp
 metadata:
-  name: my-webapp
+  name: reviewed-web
+  namespace: example
 spec:
-  replicas: 3
-  image: nginx:1.21
-  port: 80
+  replicas: 2
+  image: nginxinc/nginx-unprivileged:1.30.4-alpine
+  port: 8080
 ```
 
-## Custom Controllers
+controller は observed state から status.replicas、availableReplicas、selector、observedGeneration を設定しなければなりません。status が欠落していたり古いままであることは成功ではありません。served な API バージョンが複数ある場合は、storage バージョン、status.storedVersions、conversion を確認してください。conversion webhook は必要な変換を実装しなければならず、バージョン名を変更してもデータは移行されません。
 
-カスタムリソースだけでは実際の動作を実装できません。Custom controllers はカスタムリソースの状態を監視し、望ましい状態を実現するためのアクションを実行します。
+## client-go、controller-runtime、Operator
 
-### Controller パターン
+client-go はクライアント、informer/キャッシュ、workqueue を提供します。1 回だけ List してから Watch するのは完全な controller ではありません。resourceVersion の連続性、watch のクローズ、410 Gone、再接続、キャッシュ同期、さらに context のキャンセルとクリーンアップを扱う必要があります。
 
-Kubernetes controllers は次のパターンに従います。
+controller-runtime は manager、キャッシュ/クライアント、workqueue、leader election、reconciliation パターンを提供します。カスタム WebApp の Go 型と scheme 登録を生成または用意し、選択したライブラリバージョンに対してコンパイルしてください。存在しない example.com/api 型や appsv1.WebApp への参照は、実行可能な実装にはなりません。
 
-1. **Observe**: リソースの現在の状態を監視します。
-2. **Analyze**: 現在の状態と望ましい状態の差分を分析します。
-3. **Act**: 望ましい状態を実現するためのアクションを実行します。
+以下は **擬似コード** であり、その関数とデプロイ設定は別途実装する必要があります。
 
-### Controller の実装方法
-
-#### 1. client-go の使用
-
-```go
-package main
-
-import (
-    "context"
-    "fmt"
-    "time"
-
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    "k8s.io/client-go/kubernetes"
-    "k8s.io/client-go/tools/clientcmd"
-    "k8s.io/client-go/util/homedir"
-    "path/filepath"
-)
-
-func main() {
-    // Load kubeconfig
-    kubeconfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
-    config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-    if err != nil {
-        panic(err)
-    }
-
-    // Create Kubernetes client
-    clientset, err := kubernetes.NewForConfig(config)
-    if err != nil {
-        panic(err)
-    }
-
-    // Get pod list
-    pods, err := clientset.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
-    if err != nil {
-        panic(err)
-    }
-
-    fmt.Printf("There are %d pods in the default namespace\n", len(pods.Items))
-
-    // Watch pods
-    watch, err := clientset.CoreV1().Pods("default").Watch(context.TODO(), metav1.ListOptions{})
-    if err != nil {
-        panic(err)
-    }
-
-    // Handle events
-    for event := range watch.ResultChan() {
-        fmt.Printf("Event: %s\n", event.Type)
-    }
-}
+```text
+Reconcile(namespace, name):
+  read WebApp; return successfully if it no longer exists
+  if deletionTimestamp is set:
+    finish idempotent external cleanup under the declared retention policy
+    remove only this controller's finalizer after cleanup succeeds
+    return
+  persist a required finalizer before creating external resources
+  read the desired child Deployment
+  reject conflicting ownership; do not silently adopt another controller's object
+  reconcile image, replicas, ports and owned fields without needless updates
+  handle conflicts by rereading; do not index a possibly empty container list
+  observe children and patch status only when it changes
+  report failure/readiness and requeue when another observation is needed
 ```
 
-#### 2. controller-runtime の使用
+ownerReferences は name だけでなく、UID、namespace、スコープの制約にも一致しなければなりません。同名の Deployment を無条件に更新すると、別の controller のワークロードを変更してしまう可能性があります。ガベージコレクションは propagation、owner、finalizer に依存します。ownerReference は任意の外部 AWS データをクリーンアップするものではありません。
 
-```go
-package main
+Operator はドメイン知識を実装するものであり、フェイルオーバー、ローリングアップグレード、バックアップが自動的に安全になるわけではありません。データベースの設計では、primary の fencing、quorum、レプリカの追従、WAL/バックアップのリストアテスト、スキーマ互換性、disruption budget、シャットダウン順序が必要です。
 
-import (
-    "context"
+公式の Operator SDK 1.42.3 のインストール手順に従って、OS/アーキテクチャとチェックサムを選択してください。古い amd64 専用の 1.25.0 バイナリをどこにでもインストールしないでください。init/create api/make manifests は選択した SDK/plugin に対して検証し、生成されたプロジェクトをコンパイル/テストしたうえで、イメージのビルド/プッシュとデプロイを別途行ってください。
 
-    appsv1 "k8s.io/api/apps/v1"
-    corev1 "k8s.io/api/core/v1"
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    "k8s.io/apimachinery/pkg/runtime"
-    ctrl "sigs.k8s.io/controller-runtime"
-    "sigs.k8s.io/controller-runtime/pkg/client"
-    "sigs.k8s.io/controller-runtime/pkg/log"
+## API Aggregation
 
-    examplev1 "example.com/api/v1"
-)
+APIService は group/version のパスを拡張 API server の Service にルーティングします。その server には TLS、discovery、storage、および list/watch などの API 動作が必要です。front-proxy 証明書の CA/CN を検証し、転送されるユーザー identity を巡る信頼境界を維持し、委譲された認可を設定してください。
 
-// WebAppReconciler reconciles a WebApp object
-type WebAppReconciler struct {
-    client.Client
-    Scheme *runtime.Scheme
-}
+metrics-server の実際の API バージョンは、インストール済みの discovery を調べて確認してください。実在しない v1.metrics.k8s.io の APIService や、既定値としての insecureSkipTLSVerify:true を使用しないでください。group/version、Service、caBundle は実際の server と一致しなければなりません。単純な HTTP ハンドラーや空の API group は、完全な Kubernetes API server ではありません。
 
-func (r *WebAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
+## Admission Policy と Webhook
 
-    // Get WebApp instance
-    var webapp examplev1.WebApp
-    if err := r.Get(ctx, req.NamespacedName, &webapp); err != nil {
-        return ctrl.Result{}, client.IgnoreNotFound(err)
-    }
-
-    // Create or update Deployment
-    deployment := &appsv1.Deployment{}
-    err := r.Get(ctx, client.ObjectKey{Namespace: webapp.Namespace, Name: webapp.Name}, deployment)
-    if client.IgnoreNotFound(err) != nil {
-        return ctrl.Result{}, err
-    }
-
-    if err != nil {
-        // Create Deployment if it doesn't exist
-        deployment = &appsv1.Deployment{
-            ObjectMeta: metav1.ObjectMeta{
-                Name:      webapp.Name,
-                Namespace: webapp.Namespace,
-            },
-        }
-
-        if err := ctrl.SetControllerReference(&webapp, deployment, r.Scheme); err != nil {
-            return ctrl.Result{}, err
-        }
-
-        // Set Deployment spec
-        replicas := int32(webapp.Spec.Replicas)
-        deployment.Spec.Replicas = &replicas
-        deployment.Spec.Selector = &metav1.LabelSelector{
-            MatchLabels: map[string]string{"app": webapp.Name},
-        }
-        deployment.Spec.Template.ObjectMeta.Labels = map[string]string{"app": webapp.Name}
-        deployment.Spec.Template.Spec.Containers = []corev1.Container{
-            {
-                Name:  "webapp",
-                Image: webapp.Spec.Image,
-                Ports: []corev1.ContainerPort{
-                    {
-                        ContainerPort: int32(webapp.Spec.Port),
-                    },
-                },
-            },
-        }
-
-        if err := r.Create(ctx, deployment); err != nil {
-            log.Error(err, "Failed to create Deployment")
-            return ctrl.Result{}, err
-        }
-
-        log.Info("Created Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
-    } else {
-        // Update Deployment if it exists
-        replicas := int32(webapp.Spec.Replicas)
-        deployment.Spec.Replicas = &replicas
-        deployment.Spec.Template.Spec.Containers[0].Image = webapp.Spec.Image
-
-        if err := r.Update(ctx, deployment); err != nil {
-            log.Error(err, "Failed to update Deployment")
-            return ctrl.Result{}, err
-        }
-
-        log.Info("Updated Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
-    }
-
-    // Update status
-    webapp.Status.AvailableReplicas = int(deployment.Status.AvailableReplicas)
-    if err := r.Status().Update(ctx, &webapp); err != nil {
-        log.Error(err, "Failed to update WebApp status")
-        return ctrl.Result{}, err
-    }
-
-    return ctrl.Result{}, nil
-}
-
-func (r *WebAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
-    return ctrl.NewControllerManagedBy(mgr).
-        For(&examplev1.WebApp{}).
-        Owns(&appsv1.Deployment{}).
-        Complete(r)
-}
-
-func main() {
-    scheme := runtime.NewScheme()
-    _ = examplev1.AddToScheme(scheme)
-    _ = appsv1.AddToScheme(scheme)
-    _ = corev1.AddToScheme(scheme)
-
-    mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-        Scheme: scheme,
-    })
-    if err != nil {
-        panic(err)
-    }
-
-    if err := (&WebAppReconciler{
-        Client: mgr.GetClient(),
-        Scheme: mgr.GetScheme(),
-    }).SetupWithManager(mgr); err != nil {
-        panic(err)
-    }
-
-    if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-        panic(err)
-    }
-}
-```
-
-### Operator パターン
-
-Operator は、CRD と controllers を組み合わせて、アプリケーション固有の運用知識を自動化するパターンです。
-
-**Operator の主な特徴:**
-
-1. **ドメイン知識の自動化**: アプリケーションのドメイン知識をコードとして実装します。
-2. **宣言型管理**: ユーザーが望ましい状態を宣言し、Operator がそれを実現するためのアクションを実行します。
-3. **自己修復**: 障害状態を検出し、自動的に復旧します。
-4. **アップグレード管理**: アプリケーションのアップグレードを安全に処理します。
-
-**Operator の例:**
-
-- **Prometheus Operator**: Prometheus 監視スタックを管理します。
-- **Elasticsearch Operator**: Elasticsearch クラスターを管理します。
-- **PostgreSQL Operator**: PostgreSQL データベースを管理します。
-
-### Operator SDK
-
-Operator SDK は、Operator 開発を簡素化するツールです。
-
-**Operator の作成:**
-
-```bash
-# Install Operator SDK
-curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.25.0/operator-sdk_linux_amd64
-chmod +x operator-sdk_linux_amd64
-sudo mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk
-
-# Create Operator project
-operator-sdk init --domain example.com --repo github.com/example/webapp-operator
-
-# Create API
-operator-sdk create api --group apps --version v1 --kind WebApp --resource --controller
-
-# Generate CRD
-make manifests
-
-# Build and deploy Operator
-make docker-build docker-push
-make deploy
-```
-
-## API Server Extensions
-
-API server extensions は、Kubernetes API server の機能を拡張する方法を提供します。
-
-### 1. Aggregation Layer
-
-Aggregation layer は、追加の API を Kubernetes API server に登録できるようにするメカニズムです。
-
-**主な機能:**
-
-1. **API 拡張**: 既存の API server に新しい API を追加できます。
-2. **クラスター内実行**: Extension API servers はクラスター内で実行されます。
-3. **認証の委任**: メインの API server が認証を処理し、extension API server に委任します。
-
-**APIService の例:**
-
-```yaml
-apiVersion: apiregistration.k8s.io/v1
-kind: APIService
-metadata:
-  name: v1.metrics.k8s.io
-spec:
-  service:
-    name: metrics-server
-    namespace: kube-system
-  group: metrics.k8s.io
-  version: v1
-  insecureSkipTLSVerify: true
-  groupPriorityMinimum: 100
-  versionPriority: 100
-```
-
-**Extension API Server の実装:**
-
-```go
-package main
-
-import (
-    "fmt"
-    "net/http"
-
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    "k8s.io/apimachinery/pkg/runtime"
-    "k8s.io/apimachinery/pkg/runtime/schema"
-    "k8s.io/apimachinery/pkg/runtime/serializer"
-    "k8s.io/apiserver/pkg/registry/rest"
-    genericapiserver "k8s.io/apiserver/pkg/server"
-    genericoptions "k8s.io/apiserver/pkg/server/options"
-)
-
-var (
-    scheme = runtime.NewScheme()
-    codecs = serializer.NewCodecFactory(scheme)
-)
-
-func main() {
-    // Create server options
-    serverOptions := genericoptions.NewRecommendedOptions("/tmp/apiserver.etcd", codecs.LegacyCodec())
-
-    // Configure server
-    config := genericapiserver.NewRecommendedConfig(codecs)
-    if err := serverOptions.ApplyTo(config); err != nil {
-        panic(err)
-    }
-
-    // Create API server
-    server, err := config.Complete().New("example-apiserver", genericapiserver.NewEmptyDelegate())
-    if err != nil {
-        panic(err)
-    }
-
-    // Install API group
-    apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo("example.com", scheme, metav1.ParameterCodec, codecs)
-    server.InstallAPIGroup(&apiGroupInfo)
-
-    // Run server
-    server.PrepareRun().Run(make(chan struct{}))
-}
-```
-
-### 2. Webhooks
-
-Webhooks は、特定のイベントが発生したときに Kubernetes API server が外部サービスを呼び出して追加処理を実行するメカニズムです。
-
-#### Admission Webhooks
-
-Admission webhooks は、API リクエストがストレージに永続化される前に、それらを検証または変更できます。
-
-**主な種類:**
-
-1. **MutatingAdmissionWebhook**: リクエストを変更できます。
-2. **ValidatingAdmissionWebhook**: 変更せずにリクエストを検証するだけです。
-
-**Webhook 設定例:**
+ValidatingAdmissionPolicy は Kubernetes 1.30 以降で stable であり、CEL による検証をプロセス内で実行します。以下の policy/binding は、production namespace の Deployment および deployments/scale リクエストに対して replicas を 1〜5 に制限します。HPA や kubectl scale による更新もチェックされるため、HPA の maxReplicas をこの制限に合わせてください。namespace 名は任意の環境ラベルと同等ではありません。policy を適用する前に運用への影響を確認してください。
 
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1
-kind: MutatingWebhookConfiguration
+kind: ValidatingAdmissionPolicy
 metadata:
-  name: example-webhook
-webhooks:
-- name: example.webhook.com
-  clientConfig:
-    url: https://example.webhook.com/mutate
-    caBundle: <BASE64_ENCODED_CA_CERT>
-  rules:
-  - apiGroups: [""]
-    apiVersions: ["v1"]
-    resources: ["pods"]
-    operations: ["CREATE", "UPDATE"]
-    scope: "Namespaced"
-  admissionReviewVersions: ["v1"]
-  sideEffects: None
-  timeoutSeconds: 5
-```
-
-**Webhook Server の実装:**
-
-```go
-package main
-
-import (
-    "encoding/json"
-    "fmt"
-    "io/ioutil"
-    "net/http"
-
-    admissionv1 "k8s.io/api/admission/v1"
-    corev1 "k8s.io/api/core/v1"
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    "k8s.io/apimachinery/pkg/runtime"
-    "k8s.io/apimachinery/pkg/runtime/serializer"
-)
-
-var (
-    runtimeScheme = runtime.NewScheme()
-    codecs        = serializer.NewCodecFactory(runtimeScheme)
-    deserializer  = codecs.UniversalDeserializer()
-)
-
-func handleMutate(w http.ResponseWriter, r *http.Request) {
-    // Read request body
-    body, err := ioutil.ReadAll(r.Body)
-    if err != nil {
-        http.Error(w, fmt.Sprintf("Failed to read body: %v", err), http.StatusBadRequest)
-        return
-    }
-
-    // Convert to AdmissionReview object
-    var admissionReview admissionv1.AdmissionReview
-    if _, _, err := deserializer.Decode(body, nil, &admissionReview); err != nil {
-        http.Error(w, fmt.Sprintf("Failed to decode body: %v", err), http.StatusBadRequest)
-        return
-    }
-
-    // Extract pod object
-    var pod corev1.Pod
-    if err := json.Unmarshal(admissionReview.Request.Object.Raw, &pod); err != nil {
-        http.Error(w, fmt.Sprintf("Failed to unmarshal pod: %v", err), http.StatusBadRequest)
-        return
-    }
-
-    // Create patch
-    patch := []map[string]interface{}{
-        {
-            "op":    "add",
-            "path":  "/metadata/labels/example.com~1injected",
-            "value": "true",
-        },
-    }
-
-    patchBytes, err := json.Marshal(patch)
-    if err != nil {
-        http.Error(w, fmt.Sprintf("Failed to marshal patch: %v", err), http.StatusInternalServerError)
-        return
-    }
-
-    // Create response
-    admissionResponse := admissionv1.AdmissionResponse{
-        UID:     admissionReview.Request.UID,
-        Allowed: true,
-        Patch:   patchBytes,
-        PatchType: func() *admissionv1.PatchType {
-            pt := admissionv1.PatchTypeJSONPatch
-            return &pt
-        }(),
-    }
-
-    admissionReview.Response = &admissionResponse
-
-    // Send response
-    resp, err := json.Marshal(admissionReview)
-    if err != nil {
-        http.Error(w, fmt.Sprintf("Failed to marshal response: %v", err), http.StatusInternalServerError)
-        return
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
-}
-
-func main() {
-    http.HandleFunc("/mutate", handleMutate)
-    http.ListenAndServeTLS(":8443", "tls.crt", "tls.key", nil)
-}
-```
-
-## Scheduler Extensions
-
-Kubernetes scheduler は、Pod をどの node に配置するかを決定します。Scheduler extensions を使用すると、この意思決定プロセスをカスタマイズできます。
-
-### 1. Scheduler Framework
-
-Scheduler framework は、スケジューリングパイプラインのさまざまな段階で plugin を追加するための拡張メカニズムを提供します。
-
-**主な拡張ポイント:**
-
-1. **Filter**: Pod を実行できない node を除外します。
-2. **Score**: 適切な node にスコアを割り当てます。
-3. **Bind**: Pod を node にバインドします。
-4. **Reserve/Unreserve**: node リソースを予約または解放します。
-5. **Permit**: Pod のスケジューリングを許可、拒否、または遅延します。
-
-**Scheduler 設定例:**
-
-```yaml
-apiVersion: kubescheduler.config.k8s.io/v1
-kind: KubeSchedulerConfiguration
-profiles:
-- schedulerName: custom-scheduler
-  plugins:
-    filter:
-      enabled:
-      - name: NodeResourcesFit
-      - name: NodeName
-      - name: CustomFilter
-    score:
-      enabled:
-      - name: NodeResourcesBalancedAllocation
-        weight: 1
-      - name: CustomScore
-        weight: 5
-  pluginConfig:
-  - name: CustomFilter
-    args:
-      foo: bar
-```
-
-**Scheduler Plugin の実装:**
-
-```go
-package main
-
-import (
-    "context"
-
-    v1 "k8s.io/api/core/v1"
-    "k8s.io/apimachinery/pkg/runtime"
-    "k8s.io/kubernetes/pkg/scheduler/framework"
-)
-
-// CustomPlugin is a scheduler framework plugin.
-type CustomPlugin struct {
-    handle framework.Handle
-}
-
-var _ framework.FilterPlugin = &CustomPlugin{}
-var _ framework.ScorePlugin = &CustomPlugin{}
-
-// Name returns the name of the plugin.
-func (p *CustomPlugin) Name() string {
-    return "CustomPlugin"
-}
-
-// Filter filters nodes where the pod can run.
-func (p *CustomPlugin) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, node *framework.NodeInfo) *framework.Status {
-    // Implement filtering logic
-    return framework.NewStatus(framework.Success, "")
-}
-
-// Score assigns scores to nodes.
-func (p *CustomPlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-    // Implement score calculation logic
-    return 100, framework.NewStatus(framework.Success, "")
-}
-
-// ScoreExtensions provides score normalization methods.
-func (p *CustomPlugin) ScoreExtensions() framework.ScoreExtensions {
-    return p
-}
-
-// NormalizeScore normalizes scores.
-func (p *CustomPlugin) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, scores framework.NodeScoreList) *framework.Status {
-    // Implement score normalization logic
-    return framework.NewStatus(framework.Success, "")
-}
-
-// New creates a new instance of the plugin.
-func New(configuration runtime.Object, f framework.Handle) (framework.Plugin, error) {
-    return &CustomPlugin{handle: f}, nil
-}
-```
-
-### 2. Scheduler Extender
-
-Scheduler extender は、HTTP webhooks を通じてスケジューリングの判断に影響を与えることができる外部プロセスです。
-
-**Scheduler 設定例:**
-
-```yaml
-apiVersion: kubescheduler.config.k8s.io/v1
-kind: KubeSchedulerConfiguration
-extenders:
-- urlPrefix: "http://extender.example.com"
-  filterVerb: "filter"
-  prioritizeVerb: "prioritize"
-  weight: 5
-  bindVerb: "bind"
-  enableHTTPS: false
-```
-
-**Extender Server の実装:**
-
-```go
-package main
-
-import (
-    "encoding/json"
-    "net/http"
-
-    v1 "k8s.io/api/core/v1"
-    extender "k8s.io/kube-scheduler/extender/v1"
-)
-
-func filter(w http.ResponseWriter, r *http.Request) {
-    var extenderArgs extender.ExtenderArgs
-    var extenderFilterResult extender.ExtenderFilterResult
-
-    // Parse request
-    if err := json.NewDecoder(r.Body).Decode(&extenderArgs); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    // Implement filtering logic
-    filteredNodes := make([]v1.Node, 0, len(extenderArgs.Nodes.Items))
-    failedNodes := make(map[string]string)
-
-    for _, node := range extenderArgs.Nodes.Items {
-        // Node filtering logic
-        if /* check if node is suitable */ true {
-            filteredNodes = append(filteredNodes, node)
-        } else {
-            failedNodes[node.Name] = "Node is not suitable"
-        }
-    }
-
-    // Create result
-    extenderFilterResult = extender.ExtenderFilterResult{
-        Nodes: &v1.NodeList{
-            Items: filteredNodes,
-        },
-        FailedNodes: failedNodes,
-        Error:       "",
-    }
-
-    // Send response
-    if err := json.NewEncoder(w).Encode(extenderFilterResult); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-}
-
-func prioritize(w http.ResponseWriter, r *http.Request) {
-    var extenderArgs extender.ExtenderArgs
-    var hostPriorityList extender.HostPriorityList
-
-    // Parse request
-    if err := json.NewDecoder(r.Body).Decode(&extenderArgs); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    // Implement priority logic
-    hostPriorityList = make(extender.HostPriorityList, 0, len(extenderArgs.Nodes.Items))
-
-    for _, node := range extenderArgs.Nodes.Items {
-        // Node score calculation logic
-        score := int64(0)
-        hostPriorityList = append(hostPriorityList, extender.HostPriority{
-            Host:  node.Name,
-            Score: score,
-        })
-    }
-
-    // Send response
-    if err := json.NewEncoder(w).Encode(hostPriorityList); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-}
-
-func main() {
-    http.HandleFunc("/filter", filter)
-    http.HandleFunc("/prioritize", prioritize)
-    http.ListenAndServe(":8888", nil)
-}
-```
-
-## Network Plugins
-
-Kubernetes は Container Network Interface (CNI) を通じて network plugins をサポートします。
-
-### CNI (Container Network Interface)
-
-CNI は、container runtimes と network plugins の間の標準インターフェースを定義します。
-
-**主要な CNI Plugins:**
-
-1. **Calico**: BGP ベースのネットワークと network policies を提供します。
-2. **Cilium**: eBPF ベースのネットワーク、セキュリティ、可観測性を提供します。
-3. **Flannel**: シンプルな overlay networking を提供します。
-4. **Weave Net**: マルチホストの container networking を提供します。
-
-**CNI 設定例:**
-
-```json
-{
-  "cniVersion": "0.4.0",
-  "name": "mynet",
-  "type": "bridge",
-  "bridge": "cni0",
-  "isGateway": true,
-  "ipMasq": true,
-  "ipam": {
-    "type": "host-local",
-    "subnet": "10.244.0.0/16",
-    "routes": [
-      { "dst": "0.0.0.0/0" }
-    ]
-  }
-}
-```
-
-**CNI Plugin の実装:**
-
-```go
-package main
-
-import (
-    "encoding/json"
-    "net"
-
-    "github.com/containernetworking/cni/pkg/skel"
-    "github.com/containernetworking/cni/pkg/types"
-    current "github.com/containernetworking/cni/pkg/types/100"
-    "github.com/containernetworking/cni/pkg/version"
-)
-
-func cmdAdd(args *skel.CmdArgs) error {
-    // Parse configuration
-    conf := &types.NetConf{}
-    if err := json.Unmarshal(args.StdinData, conf); err != nil {
-        return err
-    }
-
-    // Implement network setup logic
-    // ...
-
-    // Return result
-    result := &current.Result{
-        CNIVersion: conf.CNIVersion,
-        IPs: []*current.IPConfig{
-            {
-                Address: net.IPNet{
-                    IP:   net.ParseIP("10.244.0.2"),
-                    Mask: net.CIDRMask(24, 32),
-                },
-                Gateway: net.ParseIP("10.244.0.1"),
-            },
-        },
-    }
-
-    return types.PrintResult(result, conf.CNIVersion)
-}
-
-func cmdDel(args *skel.CmdArgs) error {
-    // Implement network teardown logic
-    // ...
-
-    return nil
-}
-
-func cmdCheck(args *skel.CmdArgs) error {
-    // Implement network status check logic
-    // ...
-
-    return nil
-}
-
-func main() {
-    skel.PluginMain(cmdAdd, cmdCheck, cmdDel, version.All, "My CNI Plugin v0.1.0")
-}
-```
-
-## Storage Plugins
-
-Kubernetes は Container Storage Interface (CSI) を通じて storage plugins をサポートします。
-
-### CSI (Container Storage Interface)
-
-CSI は、container orchestration systems と storage providers の間の標準インターフェースを定義します。
-
-**主要な CSI Plugins:**
-
-1. **AWS EBS CSI Driver**: Amazon EBS volumes を提供します。
-2. **GCE PD CSI Driver**: Google Compute Engine persistent disks を提供します。
-3. **Azure Disk CSI Driver**: Azure disks を提供します。
-4. **Ceph CSI**: Ceph RBD と CephFS を提供します。
-
-**CSI Driver デプロイ例:**
-
-```yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: csi-sc
-provisioner: example.csi.driver
-parameters:
-  type: ssd
-  fsType: ext4
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: csi-pvc
+  name: reviewed-replica-limit
 spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Gi
-  storageClassName: csi-sc
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments, deployments/scale]
+  validations:
+    - expression: "!has(object.spec.replicas) || (object.spec.replicas >= 1 && object.spec.replicas <= 5)"
+      message: replicas must be between 1 and 5
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: reviewed-replica-limit-production
+spec:
+  policyName: reviewed-replica-limit
+  validationActions: [Deny]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: production
 ```
 
-**CSI Driver の実装:**
+Validating webhook はリクエストを許可または拒否し、mutating webhook は JSON Patch を返すことができます。応答は同じ AdmissionReview バージョンとリクエストの UID を使用してください。patchType は JSONPatch であり、patch のバイト列は JSON 内で Base64 エンコードされます。
 
-CSI drivers は 3 つの主要なサービスを実装する必要があります。
+次の Go ハンドラーは、Pod の CREATE 時に説明用のラベルを追加します。labels マップが存在しない/null の場合は作成し、既存のラベルは保持し、値が既に一致している場合は patch を省略します。サイズ、メソッド、コンテンツタイプ、バージョン、UID、null のリクエスト/オブジェクトをチェックします。このラベルは実際にサイドカーを注入するものではありません。
 
-1. **Identity Service**: Driver の識別と機能検出
-2. **Controller Service**: Volume のプロビジョニングと管理
-3. **Node Service**: node 上での volume のマウントとアンマウント
+### テスト済みの Webhook コード
+
+examples/platform/extensions/webhook には go.mod、この実装、およびそのテストが含まれています。Go 1.25 の標準ライブラリのみを使用しています。構造体は使用する AdmissionReview のフィールドを宣言し、それ以外のフィールドは無視します。
 
 ```go
 package main
 
 import (
-    "context"
-    "net"
-    "os"
-    "os/signal"
-    "syscall"
-
-    "github.com/container-storage-interface/spec/lib/go/csi"
-    "google.golang.org/grpc"
+	"encoding/json"
+	"errors"
+	"io"
+	"log"
+	"mime"
+	"net/http"
+	"time"
 )
 
-type driver struct {
-    csi.UnimplementedIdentityServer
-    csi.UnimplementedControllerServer
-    csi.UnimplementedNodeServer
+type groupVersionResource struct {
+	Group    string `json:"group"`
+	Version  string `json:"version"`
+	Resource string `json:"resource"`
 }
 
-// Identity Service
-func (d *driver) GetPluginInfo(ctx context.Context, req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
-    return &csi.GetPluginInfoResponse{
-        Name:          "example.csi.driver",
-        VendorVersion: "v0.1.0",
-    }, nil
+type admissionRequest struct {
+	UID         string               `json:"uid"`
+	Operation   string               `json:"operation"`
+	Resource    groupVersionResource `json:"resource"`
+	SubResource string               `json:"subResource"`
+	Object      json.RawMessage      `json:"object"`
 }
 
-// Controller Service
-func (d *driver) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
-    // Implement volume creation logic
-    // ...
-
-    return &csi.CreateVolumeResponse{
-        Volume: &csi.Volume{
-            VolumeId:      "vol-123",
-            CapacityBytes: req.GetCapacityRange().GetRequiredBytes(),
-            VolumeContext: req.GetParameters(),
-        },
-    }, nil
+type admissionResponse struct {
+	UID       string `json:"uid"`
+	Allowed   bool   `json:"allowed"`
+	Patch     []byte `json:"patch,omitempty"`
+	PatchType string `json:"patchType,omitempty"`
 }
 
-// Node Service
-func (d *driver) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
-    // Implement volume mount logic
-    // ...
+type review struct {
+	APIVersion string             `json:"apiVersion"`
+	Kind       string             `json:"kind"`
+	Request    *admissionRequest  `json:"request,omitempty"`
+	Response   *admissionResponse `json:"response,omitempty"`
+}
 
-    return &csi.NodePublishVolumeResponse{}, nil
+type podInput struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Metadata   *struct {
+		Labels map[string]string `json:"labels"`
+	} `json:"metadata"`
+}
+
+type patchOperation struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value any    `json:"value"`
+}
+
+func mutate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, "POST required", http.StatusMethodNotAllowed)
+		return
+	}
+	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil || mediaType != "application/json" {
+		http.Error(w, "application/json required", http.StatusUnsupportedMediaType)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	defer r.Body.Close()
+	decoder := json.NewDecoder(r.Body)
+	var incoming review
+	if err := decoder.Decode(&incoming); err != nil {
+		http.Error(w, "invalid admission body", http.StatusBadRequest)
+		return
+	}
+	if err := decoder.Decode(new(any)); !errors.Is(err, io.EOF) {
+		http.Error(w, "single JSON document required", http.StatusBadRequest)
+		return
+	}
+	if incoming.APIVersion != "admission.k8s.io/v1" || incoming.Kind != "AdmissionReview" ||
+		incoming.Request == nil || incoming.Request.UID == "" {
+		http.Error(w, "v1 AdmissionReview request with UID required", http.StatusBadRequest)
+		return
+	}
+	request := incoming.Request
+	response := admissionResponse{UID: request.UID, Allowed: true}
+	if request.Resource == (groupVersionResource{Group: "", Version: "v1", Resource: "pods"}) &&
+		request.SubResource == "" && request.Operation == "CREATE" {
+		var pod podInput
+		if err := json.Unmarshal(request.Object, &pod); err != nil ||
+			pod.APIVersion != "v1" || pod.Kind != "Pod" || pod.Metadata == nil {
+			http.Error(w, "valid Pod object required", http.StatusBadRequest)
+			return
+		}
+		if pod.Metadata.Labels["example.com/injected"] != "true" {
+			operation := patchOperation{
+				Op: "add", Path: "/metadata/labels/example.com~1injected", Value: "true",
+			}
+			if pod.Metadata.Labels == nil {
+				operation.Path = "/metadata/labels"
+				operation.Value = map[string]string{"example.com/injected": "true"}
+			}
+			patch, err := json.Marshal([]patchOperation{operation})
+			if err != nil {
+				http.Error(w, "patch encoding failed", http.StatusInternalServerError)
+				return
+			}
+			response.Patch = patch
+			response.PatchType = "JSONPatch"
+		}
+	}
+	outgoing := review{
+		APIVersion: "admission.k8s.io/v1", Kind: "AdmissionReview", Response: &response,
+	}
+	body, err := json.Marshal(outgoing)
+	if err != nil {
+		http.Error(w, "response encoding failed", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(body); err != nil {
+		log.Printf("write admission response: %v", err)
+	}
 }
 
 func main() {
-    // Set up gRPC server
-    server := grpc.NewServer()
-
-    // Create CSI driver instance
-    d := &driver{}
-
-    // Register CSI services
-    csi.RegisterIdentityServer(server, d)
-    csi.RegisterControllerServer(server, d)
-    csi.RegisterNodeServer(server, d)
-
-    // Create socket listener
-    listener, err := net.Listen("unix", "/csi/csi.sock")
-    if err != nil {
-        panic(err)
-    }
-
-    // Start server
-    go server.Serve(listener)
-
-    // Handle termination signals
-    sigCh := make(chan os.Signal, 1)
-    signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-    <-sigCh
-
-    server.GracefulStop()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/mutate", mutate)
+	server := &http.Server{
+		Addr: ":8443", Handler: mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       30 * time.Second,
+	}
+	// Mount the approved certificate/key as files; the key is never an environment variable.
+	log.Fatal(server.ListenAndServeTLS("/tls/tls.crt", "/tls/tls.key"))
 }
 ```
 
-## まとめ
+```bash
+cd examples/platform/extensions/webhook
+go test ./...
+```
 
-Kubernetes 拡張メカニズムは、さまざまなユースケースや要件に合わせて Kubernetes をカスタマイズするための強力な方法を提供します。CRD と custom controllers で新しい API を定義し、admission webhooks で API リクエストを検証または変更し、scheduler extensions で Pod 配置の判断をカスタマイズし、CNI と CSI でネットワークおよびストレージソリューションを統合できます。
+テストは TLS リスナーを開かず、httptest を通じてハンドラーを呼び出しました。デプロイには依然としてイメージ、Service、証明書/キーのファイル、実際の CA バンドル、API server への接続性、呼び出し元の認証、ネットワークポリシーが必要です。この TLS server は既定ではクライアント認証を設定しません。webhook のリソース、operation、パスをハンドラーに一致させてください。
 
-これらの拡張メカニズムを活用することで、Kubernetes を組織固有の要件に合わせて調整し、複雑なアプリケーション管理を自動化し、cloud-native エコシステムの利点を最大限に引き出すことができます。
+failurePolicy、timeoutSeconds、sideEffects/dryRun、reinvocationPolicy、selector を確認してください。Fail は webhook が利用できないときに API リクエストをブロックし得ます。Ignore はそのチェックをバイパスし得ます。None を宣言する場合は、外部への副作用が実際に存在しないことを反映していなければなりません。
+
+現行の Istio における Pod 単位の注入は sidecar.istio.io/inject **ラベル** を使用します。namespace では istio-injection またはリビジョンのラベルを使用します。古い annotation の例を既定として残すのではなく、Pod テンプレートでのラベル配置とバージョン固有の注入ルールを確認してください。
+
+## Scheduler Framework と Extender
+
+Framework plugin は scheduler バイナリの内部でコンパイルされ登録されます。YAML で CustomFilter という名前を指定しても、存在しないコードは読み込まれません。別の scheduler を選択するには、profile の schedulerName を Pod の spec.schedulerName と一致させてください。
+
+Filter は候補を除外し、Score は実行可能な node をランク付けします。NormalizeScore、plugin の weight、同点時の選択を考慮してください。Reserve/Unreserve は plugin の予約状態を維持するもので、恒久的な容量予約 API ではありません。Permit は allow、reject、wait が可能で、PreBind/Bind/PostBind は binding の各段階を扱います。
+
+Kubernetes 1.36.2 の公開 framework は k8s.io/kube-scheduler/framework の CycleState/NodeInfo を使用し、Score に NodeInfo を渡します。古い nodeName の文字列/ポインタのシグネチャを無条件にコピーせず、正確なマイナーバージョンに対してコンパイルしてください。scheduler-plugins 0.35.7 は 1.36/1.37 のバイナリと自動的に互換になるわけではありません。
+
+Extender は別個の HTTP(S) エンドポイントを公開します。実装済みの filter/prioritize/bind ハンドラーのみを設定し、nodeCacheCapable に応じて Nodes と NodeNames をサポートしてください。以前の例では bindVerb を実装せずに設定していました。nil 入力、ボディサイズ制限、タイムアウト、TLS/認証、失敗時のポリシー、スコア範囲を扱ってください。単純な zone の選択であれば、まず組み込みの node affinity を検討してください。
+
+## CNI
+
+CNI は runtime とネットワーク plugin の実行契約です。CNI ライブラリ 1.3.1 は設定の cniVersion とは別物です。共有される spec のバージョンと、ADD、DEL、CHECK、STATUS、GC などの操作のサポート状況を確認してください。
+
+ADD の成功は、実際の namespace インターフェース、IPAM、ルート設定を反映していなければなりません。JSON で固定 IP を返しても接続は作られず、衝突を引き起こす可能性があります。DEL は部分的な失敗や namespace の欠落をクリーンアップしなければならず、CHECK は実際の状態を検査しなければなりません。同じ host-local サブネットを複数の node にコピーしても、クラスター全体の IPAM にはなりません。
+
+選択した Calico、Cilium、Flannel のリリースについて、機能とディストリビューションの互換性を確認してください。オリジナルの Weave Net リポジトリはアーカイブ済みであり、新規導入の既定の選択肢として提示していません。この監査では host のネットワーキング、veth、ルート、CNI 設定を一切変更していません。
+
+## CSI
+
+CSI 1.13.0 は Identity、Controller、Node の RPC セットと capability を定義します。すべてのデプロイが 1 つのプロセスで 3 つすべてを提供する必要はありません。Node のみの plugin も可能であり、公表する capability は実際の RPC の動作と一致していなければなりません。
+
+CreateVolume は冪等性、容量範囲、topology、バックエンド ID、エラーを扱わなければなりません。NodePublishVolume は要求された権限/読み取り専用の動作で正しくマウントしなければならず、NodeUnpublish/Delete はリトライを扱わなければなりません。常に vol-123 を返したり、マウントせずに成功を報告することは、実際のドライバーの実装ではありません。
+
+StorageClass/PVC はドライバーのデプロイではありません。provisioner 名はインストール済みのドライバーと一致しなければならず、parameters はドライバー固有です。controller サイドカー、node の登録/ソケット/host マウント、認証情報、topology、volumeBindingMode、reclaimPolicy を確認してください。EBS、PD、Azure Disk、Ceph CSI については公式のインストール/サポートガイダンスに従ってください。
+
+## 検証と参考資料
+
+元の 983 行の韓国語ガイドと 987 行の英語ガイド、いずれも 652 行のクイズ 2 本、および 36 個の一意なコードブロックを読みました。チェックは CRD の入力 6 ケース、policy の CEL 6 ケース、Go webhook の 14 ケース、および RFC6902 patch の実適用 4 件を対象としました。完全なクラスター controller、aggregated API server、scheduler、CNI/CSI ドライバーは実行していません。説明用の擬似コードはテスト済みの実装として表示していません。
+
+- [CRDs](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
+- [Admission webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+- [ValidatingAdmissionPolicy](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/)
+- [Aggregation](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/)
+- [Scheduler framework](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
+- [Framework 1.36.2](https://github.com/kubernetes/kubernetes/blob/v1.36.2/staging/src/k8s.io/kube-scheduler/framework/interface.go)
+- [controller-runtime 0.25.0](https://github.com/kubernetes-sigs/controller-runtime/tree/v0.25.0)
+- [Operator SDK](https://sdk.operatorframework.io/docs/installation/)
+- [CNI 1.3.1 source](https://github.com/containernetworking/cni/blob/v1.3.1/SPEC.md)
+- [CSI 1.13.0](https://github.com/container-storage-interface/spec/blob/v1.13.0/spec.md)
+- [Istio injection](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
+
+[拡張メカニズムのクイズ](../quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)

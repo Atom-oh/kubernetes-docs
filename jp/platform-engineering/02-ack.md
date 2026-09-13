@@ -1,578 +1,151 @@
 # AWS Controllers for Kubernetes (ACK)
 
-## 目次
+> **最終更新**: September 12, 2026
 
-* [はじめに](02-ack.md#introduction)
-* [アーキテクチャ](02-ack.md#architecture)
-* [インストールと設定](02-ack.md#installation-and-configuration)
-* [サポートされている AWS Services](02-ack.md#supported-aws-services)
-* [ACK の起源と進化](02-ack.md#the-origins-and-evolution-of-ack)
-* [Resource 作成例](02-ack.md#resource-creation-examples)
-* [Resource 管理](02-ack.md#resource-management)
-* [セキュリティに関する考慮事項](02-ack.md#security-considerations)
-* [監視とログ](02-ack.md#monitoring-and-logging)
-* [ベストプラクティス](02-ack.md#best-practices)
-* [トラブルシューティング](02-ack.md#troubleshooting)
-* [まとめ](02-ack.md#conclusion)
+## 概念とアーキテクチャ
 
-## はじめに
+ACK は、サービス固有の controller を通じて Kubernetes custom resource を AWS API に接続します。CRD は入力を定義し、controller は期待状態を観測された AWS 状態と reconcile します。CR を作成しても、AWS resource の準備が完了しているとは限りません。status とサービス自身の readiness を確認してください。
 
-AWS Controllers for Kubernetes (ACK) は、Kubernetes ユーザーが Kubernetes API を通じて AWS services と resources を直接管理できるようにするプロジェクトです。ACK は Kubernetes の宣言的 API model を AWS resources に拡張し、開発者や運用担当者が使い慣れた Kubernetes tools と APIs を使って AWS infrastructure を管理できるようにします。
+ACK は Kubernetes API、RBAC、GitOps tool を再利用しますが、Kubernetes authorization と AWS IAM は別個のままです。通常、ユーザーの CR は controller の AWS permission で action を実行します。したがって、CR の書き込み permission は、その controller を通じて AWS action をリクエストする能力を委譲します。
 
-### ACK の主なメリット
+ACK は CloudFormation や Terraform の必須の後継ではありません。実際の resource は AWS にあり、Kubernetes には CR spec/status があります。drift handling は、サポートされる field と controller logic に依存します。複数の tool や cluster が同じ AWS resource を reconcile するのではなく、mutation owner を 1 つに割り当ててください。
 
-* **統一された体験**: 同じ tools と workflows で Kubernetes と AWS resources を管理
-* **GitOps サポート**: AWS resources を code として定義し、Git repositories で管理
-* **宣言的な設定**: 望ましい状態を定義し、controller に実際の状態を調整させる
-* **Kubernetes Native アプローチ**: 標準の Kubernetes concepts と APIs を使用
-* **Multi-Cluster サポート**: 複数の clusters から同じ AWS resources を参照
-* **IAM 統合**: Kubernetes service accounts と AWS IAM roles の統合
+![ACK は Kubernetes custom resource を AWS API を介して reconcile する](../.gitbook/assets/en-platform-engineering-02-ack-0.png)
 
-### 既存アプローチとの比較
+[インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-02-ack-0.html)
 
-| Feature                | ACK                 | AWS CloudFormation       | Terraform       | AWS SDK/CLI         |
-| ---------------------- | ------------------- | ------------------------ | --------------- | ------------------- |
-| Interface              | Kubernetes API      | CloudFormation templates | HCL             | Programming API/CLI |
-| Declarative            | ✅                   | ✅                        | ✅               | ❌                   |
-| State Management       | Kubernetes etcd     | CloudFormation stack     | Terraform state | Manual management   |
-| Drift Detection        | ✅                   | ✅                        | ✅               | ❌                   |
-| Kubernetes Integration | Native              | Limited                  | Limited         | Limited             |
-| Supported Services     | Limited (expanding) | Extensive                | Extensive       | All services        |
+## バージョンとサポート
 
-## アーキテクチャ
+| Controller | Version |
+| --- | --- |
+| s3 | 1.12.1 |
+| iam | 1.9.0 |
+| sqs | 1.7.0 |
+| sns | 1.10.1 |
+| elbv2 | 1.7.0 |
+| route53 | 1.6.0 |
+| rds | 1.12.0 |
 
-ACK は Kubernetes operator pattern に基づいており、各 AWS service 向けの controllers を提供します。
+これらの version は公式 release と OCI chart に照らして確認しました。完全な coverage と Alpha/Beta/GA status については、公式 service list を参照してください。GA は、すべての AWS API feature またはすべての運用要件がカバーされることを意味しません。CRD の v1alpha1 API string は controller maturity とは別のものです。
 
-### 主なコンポーネント
+過去の Kubernetes 1.16 minimum は、現在の運用 baseline ではありません。サポート対象の Kubernetes/EKS version、controller compatibility、Helm version、CRD upgrade process をまとめて検証してください。
 
-1. **Service Controller**: 各 AWS service 専用の controller
-2. **Custom Resource Definitions (CRD)**: AWS resources を Kubernetes API として定義
-3. **Custom Resources (CR)**: AWS resources の instances
-4. **Reconciliation Loop**: 望ましい状態と実際の状態の差異を検出して解決
+## インストール準備とオフライン検査
 
-### 仕組み
-
-1. ユーザーが AWS resource を定義する Kubernetes YAML manifest を適用する
-2. ACK controller が custom resource の変更を検出する
-3. Controller が AWS API を呼び出し、対応する AWS resource を作成、更新、または削除する
-4. Controller が AWS resource の状態を監視し、Kubernetes resource status を更新する
-
-## インストールと設定
-
-### 前提条件
-
-* Kubernetes cluster (v1.16 or higher)
-* kubectl configured
-* AWS account and appropriate IAM permissions
-* Helm 3 (optional)
-
-### インストール方法
-
-#### 1. ACK Service Controller のインストール
-
-ACK controllers は AWS service ごとに個別にインストールします。たとえば、S3 controller をインストールするには次のようにします。
+以前の eks-charts s3-chart path ではなく、以下の OCI chart path を使用してください。この command は cluster にインストールせずに manifest を render します。
 
 ```bash
-# Add Helm chart repository
-helm repo add aws-controllers-k8s https://aws.github.io/eks-charts
-
-# Install S3 controller
-helm install --create-namespace -n ack-system ack-s3-controller \
-  aws-controllers-k8s/s3-chart
+helm template ack-s3 \
+  oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
+  --version 1.12.1 --namespace infra \
+  --set aws.region=us-west-2 \
+  --set installScope=namespace --set watchNamespace=infra \
+  --set enableCARM=false --set enableCrossNamespace=false \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=ack-s3-controller \
+  --set metrics.service.create=true --set deletionPolicy=retain
 ```
 
-#### 2. IAM Permission の設定
+実際の install/upgrade の前に、infra namespace と controller ServiceAccount を準備し、IRSA またはサポート対象の EKS Pod Identity を設定してください。IRSA の namespace/ServiceAccount 用 OIDC trust condition、または Pod Identity の agent/SDK compatibility と association を検証してください。IAM role を作成するだけでは、ServiceAccount に permission は付与されません。
 
-ACK controllers が AWS resources を管理するには、適切な IAM permissions が必要です。IRSA (IAM Roles for Service Accounts) を使用して permissions を設定できます。
+managed resource に対する controller の read/create/update/delete/tag と PassRole permission を確認してください。AmazonS3FullAccess や Resource:"*" は least-privilege の例ではありません。サブガイドの data-access policy は完全な controller policy ではありません。
+
+render の成功は、IAM、AWS API constraint、admission、CRD installation、endpoint connectivity、resource creation を検証するものではありません。controller のインストールと CRD の変更は別個の運用変更です。
+
+## Namespace と Account の分離
+
+デフォルトの installScope は cluster です。dev/prod namespace に release をインストールするだけでは、両方の controller が同じ CR を watch したままになる可能性があります。この例では installScope=namespace と watchNamespace=infra を設定し、CARM と cross-namespace reference を無効にしています。ほかの team には、別々の watch scope、ServiceAccount、IAM role、RBAC を使用してください。
+
+namespace mode でも、現在の chart は namespace cache 用に namespace の get/list/watch を付与する ClusterRole を render します。namespace mode はすべての cluster permission を除去するわけではありません。render された Role、ClusterRole、Binding、および Secret/FieldExport access を検査してください。namespace annotation、role mapping、reference target を変更する permission も分離に影響します。
+
+CARM は、target-role trust、AssumeRole permission、controller configuration を必要とする cross-account management です。複数の cluster による安全な concurrent mutation を保証するものではありません。read-only reference と mutation ownership を分離してください。
+
+## 作成、Reference、Status
+
+service schema は異なります。S3 policy は Bucket.spec.policy に属し、別個の BucketPolicy CRD はありません。IAM managed policy は Role.policies/policyRefs を通じて attach します。サブガイドでは、SQS queueName/string attribute と専用の SNS Topic/Subscription field を示しています。
+
+- [S3 / IAM](ack/01-s3-iam.md)
+- [SQS / SNS](ack/02-sqs-sns.md)
+- [ELBv2 / Route 53 / Aurora](ack/03-elbv2-route53-rds.md)
 
 ```bash
-# Create IAM policy
-aws iam create-policy \
-  --policy-name ACKs3ControllerPolicy \
-  --policy-document file://s3-controller-policy.json
-
-# Attach IAM role to service account
-eksctl create iamserviceaccount \
-  --cluster=<cluster-name> \
-  --namespace=ack-system \
-  --name=ack-s3-controller \
-  --attach-policy-arn=arn:aws:iam::<account-id>:policy/ACKs3ControllerPolicy \
-  --approve
+kubectl get buckets.s3.services.k8s.aws -n infra
+kubectl get bucket.s3.services.k8s.aws app-data -n infra -o json
+kubectl describe bucket.s3.services.k8s.aws app-data -n infra
+kubectl logs -n infra \
+  -l app.kubernetes.io/instance=ack-s3 --all-containers --tail=100
+kubectl get events -n infra \
+  --field-selector involvedObject.name=app-data
 ```
 
-s3-controller-policy.json の例:
+ACK.ResourceSynced=True は controller synchronization を示します。database connection や app-readiness check を示すものではありません。ACK.Terminal/ACK.Recoverable などの他の condition と service status を確認してください。resource に提供されている場合、その ARN は status.ackResourceMetadata.arn にあります。NLB と TargetGroup の ARN もこの path を使用します。
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:CreateBucket",
-        "s3:DeleteBucket",
-        "s3:PutBucketTagging",
-        "s3:GetBucketTagging",
-        "s3:PutEncryptionConfiguration",
-        "s3:GetEncryptionConfiguration",
-        "s3:PutBucketPolicy",
-        "s3:GetBucketPolicy",
-        "s3:ListBucket"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
+サポートされる Ref field は、同じ namespace 内の resource を接続できます。複数の YAML document を apply しても、AWS 全体の transaction にはなりません。参照される resource の readiness と external identifier/ARN を検証してください。
 
-#### 3. Controller 設定
+## Adoption と Retention
 
-Helm values files を使用して controller 設定をカスタマイズできます。
-
-```yaml
-# values.yaml
-aws:
-  region: us-west-2
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 500m
-    memory: 256Mi
-serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/ACKs3ControllerRole
-```
-
-```bash
-helm install --create-namespace -n ack-system ack-s3-controller \
-  aws-controllers-k8s/s3-chart -f values.yaml
-```
-
-## サポートされている AWS Services
-
-ACK はさまざまな AWS services 向けの controllers を提供します。各 service controller は個別にインストールして管理できます。
-
-### 現在サポートされている Services（2025年7月時点）
-
-* Amazon API Gateway (apigatewayv2)
-* Amazon DynamoDB
-* Amazon ECR
-* Amazon EKS
-* Amazon ElastiCache
-* Amazon MemoryDB
-* Amazon MQ
-* Amazon RDS
-* Amazon S3
-* Amazon SageMaker
-* AWS IAM
-* AWS Lambda
-* AWS SNS
-* AWS SQS
-* Amazon EventBridge
-* Amazon MSK
-* Amazon OpenSearch Service
-* AWS ACM
-* AWS Route 53
-
-### Service Controller のステータス
-
-各 service controller は次のいずれかの状態を持ちます。
-
-* **Alpha**: 初期開発段階で、API が変更される可能性がある
-* **Beta**: 機能は完成しており安定しているが、API が変更される可能性がある
-* **GA (Generally Available)**: 本番環境での使用に対応
-
-最新のステータスは [ACK GitHub Repository](https://github.com/aws-controllers-k8s/community) で確認してください。
-
-## ACK の起源と進化
-
-### Infrastructure as Code の進化
-
-AWS resource 管理は次のように進化してきました。
-
-1. **Manual Management Era**: AWS Console で resources を直接作成および管理
-2. **AWS CloudFormation**: Template-based の宣言的 infrastructure 管理の導入。ただし Kubernetes workflows からは分離
-3. **Terraform**: Multi-cloud サポートと HCL による統一された infrastructure 管理。ただし、依然として別個の tools と workflows が必要
-4. **ACK**: Kubernetes API を通じた直接的な AWS resource 管理 — kubectl、GitOps、RBAC など既存の K8s toolchain を活用
-
-### なぜ Kubernetes-Native な AWS 管理なのか？
-
-既存アプローチの制限:
-
-* **Tool Separation**: Terraform/CloudFormation と kubectl を別々に運用する二重管理の負担
-* **State Inconsistency**: IaC tool の state と Kubernetes cluster state が分離され、潜在的な drift の原因となる
-* **GitOps Integration Difficulty**: ArgoCD/Flux などの GitOps tools で AWS resources を管理するのが難しい
-* **Team Experience Fragmentation**: Infrastructure teams と application teams が異なる tools と workflows を使用
-
-ACK は単一の Kubernetes control plane を通じて AWS infrastructure と applications を統一的に管理できるようにすることで、これらの課題に対応します。
-
-## Resource 作成例
-
-ACK で AWS resources を作成する詳細な例については、次のドキュメントを参照してください。
-
-* [S3 and IAM](ack/01-s3-iam.md)
-* [SQS and SNS](ack/02-sqs-sns.md)
-* [ELBv2, Route 53, RDS (NLB + Aurora PostgreSQL)](ack/03-elbv2-route53-rds.md)
-
-## Resource 管理
-
-### Resource Status の確認
-
-ACK resources の status を確認するには、次のようにします。
-
-```bash
-kubectl describe bucket my-sample-bucket
-```
-
-出力例:
-
-```
-Name:         my-sample-bucket
-Namespace:    default
-API Version:  s3.services.k8s.aws/v1alpha1
-Kind:         Bucket
-Metadata:
-  ...
-Spec:
-  Name:  my-unique-bucket-name-123
-  ...
-Status:
-  Ack Resource Metadata:
-    Arn:                    arn:aws:s3:::my-unique-bucket-name-123
-    Owner Account ID:       123456789012
-  Conditions:
-    Last Transition Time:  2025-07-13T04:00:00Z
-    Status:                True
-    Type:                  ACK.ResourceSynced
-```
-
-### Resources の更新
-
-ACK resource を更新するには、manifest を変更して再適用します。
-
-```bash
-kubectl apply -f updated-bucket.yaml
-```
-
-### Resources の削除
-
-ACK resource を削除するには、次のようにします。
-
-```bash
-kubectl delete bucket my-sample-bucket
-```
-
-デフォルトでは、Kubernetes resource が削除されると、ACK は対応する AWS resource も削除します。この動作は annotations を使用して変更できます。
-
-```yaml
-metadata:
-  annotations:
-    services.k8s.aws/deletion-policy: "orphan"
-```
-
-### Resources のインポート
-
-既存の AWS resources を ACK にインポートするには、次のようにします。
+以下の ResourceAdoption annotation を使用してください。現在の S3 chart ではこの feature gate が有効です。adoption の前に identifier、account、region を確認し、ほかの tool からの ownership transfer を計画してください。
 
 ```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
-  name: imported-bucket
+  name: existing-data
+  namespace: infra
   annotations:
-    services.k8s.aws/resource-imported: "true"
+    services.k8s.aws/adoption-policy: adopt
+    services.k8s.aws/adoption-fields: '{"name":"REPLACE_WITH_EXISTING_BUCKET"}'
+    services.k8s.aws/deletion-policy: retain
 spec:
-  name: existing-bucket-name
+  name: REPLACE_WITH_EXISTING_BUCKET
 ```
 
-## セキュリティに関する考慮事項
+runtime は adopt と adopt-or-create を受け入れます。adopt は既存の state を spec/status に読み込みます。adopt-or-create は存在しない resource を作成できます。その後の通常の reconciliation は adopted resource を変更できるため、adoption は単なる read access ではありません。read-only behavior は、固有の gate と lifecycle を持つ別機能です。以前の resource-imported:"true" annotation は adoption を設定しません。公式 documentation では、AdoptedResource を以前の approach としても位置付けています。
 
-### IAM Permission 管理
+retention value は **retain** です。現在の runtime は orphan を受け入れません。優先順位は、個々の CR の services.k8s.aws/deletion-policy、namespace の service-specific deletion-policy、controller default の順です。AWS resource を retain すると、継続する cost、ownership、backup responsibility が残ります。
 
-ACK controllers が管理対象の AWS resources を扱うには、適切な IAM permissions が必要です。最小権限の原則に従い、必要な permissions のみを付与することを推奨します。
+## Observability、Scaling、Recovery
 
-#### きめ細かな IAM Policy の例
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:CreateBucket",
-        "s3:DeleteBucket",
-        "s3:GetBucketTagging",
-        "s3:PutBucketTagging"
-      ],
-      "Resource": "arn:aws:s3:::my-unique-bucket-name-*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:ListAllMyBuckets"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
-
-### Namespace Isolation
-
-異なる teams や environments で別々の namespaces と IAM roles を使用し、permissions を分離できます。
-
-```bash
-# Install controller for development environment
-helm install --create-namespace -n ack-system-dev ack-s3-controller \
-  aws-controllers-k8s/s3-chart \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::123456789012:role/ACKs3ControllerRoleDev
-
-# Install controller for production environment
-helm install --create-namespace -n ack-system-prod ack-s3-controller \
-  aws-controllers-k8s/s3-chart \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::123456789012:role/ACKs3ControllerRoleProd
-```
-
-### Resource Policies
-
-Kubernetes RBAC を使用して ACK resources へのアクセスを制限できます。
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: dev
-  name: s3-editor
-rules:
-- apiGroups: ["s3.services.k8s.aws"]
-  resources: ["buckets"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: dev-s3-editor
-  namespace: dev
-subjects:
-- kind: User
-  name: developer
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: Role
-  name: s3-editor
-  apiGroup: rbac.authorization.k8s.io
-```
-
-## 監視とログ
-
-### Controller Logs の確認
-
-ACK controller logs を確認するには、次のようにします。
-
-```bash
-kubectl logs -n ack-system -l app.kubernetes.io/name=ack-s3-controller
-```
-
-### Prometheus Metrics
-
-ACK controllers は Prometheus metrics を公開します。
+metrics.service.create を有効にし、以下の target namespace と port name を一致させてください。Prometheus Operator CRD と Prometheus ServiceMonitor selector は別個の前提条件です。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: ack-s3-controller
+  name: ack-s3
   namespace: monitoring
 spec:
+  namespaceSelector:
+    matchNames: [infra]
   selector:
     matchLabels:
-      app.kubernetes.io/name: ack-s3-controller
+      app.kubernetes.io/name: s3-chart
+      app.kubernetes.io/instance: ack-s3
   endpoints:
-  - port: metrics
-    interval: 30s
+    - port: metricsport
+      interval: 30s
 ```
 
-主な metrics:
+確認した runtime は ack_outbound_api_requests_total と ack_outbound_api_requests_error_total を定義しています。reconcile success/failure や API-latency metric name を勝手に作らないでください。実際の endpoint で controller-runtime の metric name、label、version を検証してください。CloudTrail auditing は service/API logging support と設定された event に依存します。
 
-* `ack_reconcile_success_total`: 成功した reconciliations の数
-* `ack_reconcile_failure_total`: 失敗した reconciliations の数
-* `ack_api_call_duration_seconds`: AWS API call の latency
+replica configuration は deployment.replicas です。複数の replica を実行する場合は leaderElection.enabled を確認してください。replicaCount はこの chart の設定ではありません。追加の leader-elected replica によって parallel throughput が自動的に増加するわけではありません。観測した quota、throttling、resource usage に基づいて reconcile concurrency/resync を調整してください。
 
-### AWS CloudTrail 統合
-
-ACK controllers によって行われた AWS API calls は CloudTrail に記録されます。CloudTrail logs を確認して ACK operations を監査できます。
-
-## ベストプラクティス
-
-### Resource Organization
-
-1. **Clear Naming**: 明確で一貫性のある resource names を使用
-2. **Use Annotations**: Resource 管理に annotations を活用
-3. **Apply Labels**: Resource の grouping と filtering に labels を使用
-
-```yaml
-apiVersion: s3.services.k8s.aws/v1alpha1
-kind: Bucket
-metadata:
-  name: app-data-bucket
-  annotations:
-    services.k8s.aws/deletion-policy: "orphan"
-    description: "Application data storage"
-  labels:
-    environment: production
-    app: my-application
-    team: data-engineering
-spec:
-  name: my-app-data-20250713
-  tagging:
-    tagSet:
-      - key: Environment
-        value: Production
-```
-
-### Version Control
-
-1. **Use Git Repository**: ACK resource manifests を Git repository に保存
-2. **Separate Environment Configurations**: Development、staging、production environments 向けに別々の configurations を維持
-3. **Use Kustomize**: Environment 固有の差異を管理するために Kustomize を使用
-
-```
-├── base/
-│   ├── s3-bucket.yaml
-│   ├── sqs-queue.yaml
-│   └── kustomization.yaml
-├── overlays/
-│   ├── dev/
-│   │   ├── kustomization.yaml
-│   │   └── patch.yaml
-│   ├── staging/
-│   │   ├── kustomization.yaml
-│   │   └── patch.yaml
-│   └── prod/
-│       ├── kustomization.yaml
-│       └── patch.yaml
-```
-
-### Performance and Scalability
-
-1. **Set Resource Requests and Limits**: Controllers に適切な resources を割り当て
-2. **Scale Controller Replicas**: 大規模 environments では controller replicas を増やす
-3. **Adjust Reconciliation Frequency**: 必要に応じて reconciliation frequency を最適化
-
-```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: ack-s3-controller
-  namespace: ack-system
-spec:
-  chart:
-    spec:
-      chart: s3-chart
-      sourceRef:
-        kind: HelmRepository
-        name: aws-controllers-k8s
-  values:
-    resources:
-      requests:
-        cpu: 200m
-        memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-    replicaCount: 2
-```
-
-### Disaster Recovery
-
-1. **Backup Strategy**: ACK resource manifests の定期的なバックアップ
-2. **Recovery Plan**: 障害発生時の resource recovery procedures を文書化
-3. **Multi-Region Consideration**: 重要な resources には multi-region strategy を実装
+environment-specific manifest と chart を Git で version 管理し、credential は含めないでください。recovery には、CR だけでなく AWS data/backup、identifier、retention policy、ownership が必要です。別の region で CR を作成しても、data replication や recovery は実装されません。
 
 ## トラブルシューティング
 
-### よくある問題
+作成失敗の場合は、condition/event、controller image/log、account/region、IAM trust/policy、reference、service constraint を検査してください。Kubernetes RBAC error と AWS IAM error を区別してください。Terminating resource では、finalizer が待機している AWS deletion、dependency、retention condition を特定してください。
 
-#### 1. Resource 作成の失敗
+finalizer を常に削除しないでください。そうすると、追跡されない AWS resource が残る可能性があります。まず原因を解決してください。実際の resource state、backup、その後の ownership を確認したうえで、最後の手段としてのみ recovery procedure を使用してください。
 
-**症状**: ACK resource は作成されたが、AWS resource が作成されない
+## 検証と参照
 
-**解決策**:
+56 個の一意な code block を含む、韓国語/英語の 8 個の元の guide file と 2 個の quiz を読みました。7 個の公式 OCI chart を render し、18 個の resource example を、unknown-spec-field rejection を備えた versioned CRD に対して確認しました。AWS resource creation、controller execution、admission/CEL、message delivery、database connectivity はテストしていません。
 
-* Controller logs を確認する
-* IAM permissions を検証する
-* Resource status と events を確認する
+- [ACK service](https://aws-controllers-k8s.github.io/community/docs/community/services/)
+- [Resource adoption](https://aws-controllers-k8s.github.io/community/docs/user-docs/features/#resourceadoption)
+- [Retention](https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/)
+- [S3 chart 1.12.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/helm)
+- [Runtime 0.63.0](https://github.com/aws-controllers-k8s/runtime/tree/v0.63.0)
 
-```bash
-kubectl logs -n ack-system -l app.kubernetes.io/name=ack-s3-controller
-kubectl describe bucket my-sample-bucket
-```
-
-#### 2. Permission の問題
-
-**症状**: "AccessDenied" error message
-
-**解決策**:
-
-* IAM policies と roles を検証する
-* IRSA configuration を確認する
-* CloudTrail logs を確認する
-
-#### 3. Resource 削除が進まない
-
-**症状**: Resource が "Terminating" state のままになる
-
-**解決策**:
-
-* Dependencies を確認する
-* Finalizers を削除する（必要な場合）
-
-```bash
-kubectl patch bucket my-sample-bucket -p '{"metadata":{"finalizers":[]}}' --type=merge
-```
-
-### デバッグ Tools
-
-```bash
-# Check controller version
-kubectl get deployment -n ack-system ack-s3-controller -o jsonpath="{.spec.template.spec.containers[0].image}"
-
-# Check CRDs
-kubectl get crd | grep services.k8s.aws
-
-# Check events
-kubectl get events --field-selector involvedObject.name=my-sample-bucket
-
-# Check controller logs in detail
-kubectl logs -n ack-system -l app.kubernetes.io/name=ack-s3-controller --tail=100
-```
-
-## まとめ
-
-AWS Controllers for Kubernetes (ACK) は、Kubernetes と AWS services のギャップを埋める強力な tool です。ACK により、Kubernetes ユーザーは使い慣れた Kubernetes APIs と tools を使用して AWS resources を管理できます。
-
-このドキュメントでは、ACK の基本概念、インストール方法、S3、IAM、SQS、SNS resource 作成例、resource 管理、セキュリティに関する考慮事項、監視、トラブルシューティングについて説明しました。
-
-ACK は進化を続けており、より多くの AWS services のサポートが追加されています。GitOps workflows と組み合わせることで、AWS infrastructure を code として管理する強力な方法を提供します。
-
-### 次のステップ
-
-* ACK を使用して GitOps pipelines を構築する
-* 複数の AWS service controllers を統合する
-* Custom resource definitions を拡張する
-* Multi-account と multi-region strategies を開発する
-
-## 参考資料
-
-* [ACK Official Documentation](https://aws-controllers-k8s.github.io/community/)
-* [ACK GitHub Repository](https://github.com/aws-controllers-k8s/community)
-* [AWS Service Controller List](https://aws-controllers-k8s.github.io/community/docs/community/services/)
-* [ACK Design Principles](https://aws-controllers-k8s.github.io/community/docs/community/design/)
-* [EKS Workshop - ACK](https://www.eksworkshop.com/intermediate/290_ack/)
-
-## クイズ
-
-この章で学んだ内容を確認するには、[ACK Quiz](../quizzes/platform-engineering/02-ack-quiz.md) に挑戦してください。
+[ACK quiz](../quizzes/platform-engineering/02-ack-quiz.md)

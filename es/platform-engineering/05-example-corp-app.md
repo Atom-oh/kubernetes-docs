@@ -1,236 +1,238 @@
-# Sistema de pedidos de ExampleCorp: despliegue integrado ACK + KRO
+# Sistema de pedidos de ExampleCorp: integración de ACK + kro
 
-> **Última actualización**: February 21, 2026
+> **Última actualización**: September 12, 2026 · kro 0.9.4 / AWS Load Balancer Controller 3.5.0
 
-## Resumen del escenario
+## Escenario y alcance de la verificación
 
-Un ejemplo de extremo a extremo para desplegar la Order API de ExampleCorp en Kubernetes. ACK aprovisiona la infraestructura de AWS (NLB, Aurora PostgreSQL, Route 53), mientras que KRO gestiona los recursos de la aplicación (Deployment, Service, TargetGroupBinding, ConfigMap) como un único Custom Resource (recurso personalizado).
+ExampleCorp es ficticia. Esta guía define un contrato de integración que conecta un grafo de aplicación de kro con infraestructura administrada por ACK. No es un laboratorio integral que proporcione una API de pedidos funcional ni una imagen de aplicación pública. La anterior imagen ficticia de ECR no se presenta como ejecutable.
 
-```
-ACK (AWS Infrastructure)    KRO (App Deployment)
-─────────────────────     ─────────────────────
-NLB + TargetGroup    ←──  TargetGroupBinding
-Aurora PostgreSQL    ←──  ConfigMap (endpoints)
-Route 53 Record           Deployment + Service
-```
+ACK administra NLB, TargetGroup, Listener, registros de Route 53 y Aurora. kro crea recursos Service, ConfigMap, TargetGroupBinding (TGB) y Deployment. **Un AWS Load Balancer Controller (LBC) independiente reconcilia TGB y registra/anula el registro de targets de IP de Pod.** Instalar solo ACK y kro no implementa esa conexión.
 
-ACK usa los controllers ELBv2, Route 53 y RDS descritos en el [documento de ACK](./02-ack.md) para crear infraestructura, y KRO gestiona los recursos de la aplicación que hacen referencia a esta infraestructura como un único CR.
+![AWS LBC reconciles TargetGroupBinding between ACK infrastructure and the kro application](../.gitbook/assets/en-platform-engineering-05-example-corp-app-0.png)
 
-## Diagrama de arquitectura
+[Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-05-example-corp-app-0.html)
 
-```mermaid
-graph LR
-    subgraph ack["ACK (AWS Infrastructure)"]
-        NLB[NLB] --> TG[Target Group]
-        R53[Route 53 Record] --> NLB
-        Aurora[Aurora PostgreSQL]
-    end
+## Requisitos previos de infraestructura y aplicación
 
-    subgraph kro["KRO (Application)"]
-        CR[WebApp CR] --> D[Deployment]
-        CR --> S[Service]
-        CR --> TGB[TargetGroupBinding]
-        CR --> CM[ConfigMap]
-    end
+Primero revise los esquemas actuales y la guía de ciclo de vida en los [ejemplos de recursos de ACK](ack/03-elbv2-route53-rds.md). Prepare VPC/subnets privadas/grupos de seguridad aprobados, un NLB/Listener interno, un TargetGroup de ip, DNS y clúster/instancias de Aurora. Lea el ARN de TargetGroup desde `.status.ackResourceMetadata.arn`, no desde el anterior `.status.targetGroupARN`.
 
-    TGB -.->|targetGroupARN| TG
-    CM -.->|endpoints| Aurora
-    D -.->|envFrom| CM
-    S -.->|serviceRef| TGB
-```
+Prepare AWS LBC, sus CRD, IAM/ServiceAccount y webhook por separado. Esta guía verifica el TGB elbv2.k8s.aws/v1beta1 de OSS LBC 3.5.0, no las API de balanceo de carga distintas de EKS Auto Mode. Los autores de TGB pueden hacer referencia a TargetGroups dentro de los permisos IAM del controller, por lo que debe restringir los ARN permitidos, los namespaces y el acceso de escritura.
 
-## Paso 1: Aprovisionamiento de infraestructura con ACK
+El operador debe proporcionar una imagen de API de pedidos que cumpla este contrato:
 
-Usa controllers de ACK (elbv2, route53, rds) para aprovisionar la siguiente infraestructura. Para ver el YAML detallado de cada recurso, consulta [ejemplos de recursos de ACK](./ack/03-elbv2-route53-rds.md).
+- Sirva HTTP en el puerto configurado con preparación en `/readyz`.
+- Lea DB_WRITER_HOST, DB_READER_HOST, DB_PORT y DB_NAME desde la configuración de ConfigMap.
+- Lea y rote los archivos de credenciales bajo DB_CREDENTIALS_DIR. No incluya contraseñas en variables de entorno, ConfigMaps ni status.
+- Funcione con UID 10001, una raíz de solo lectura, recursos limitados y un volumen /tmp escribible. Adapte el contrato según la política de seguridad si la imagen real difiere.
 
-- **NLB + TargetGroup + Listener**: ingress de tráfico de la aplicación
-- **Route 53 DNS Record**: mapeo `app.example.com` → NLB
-- **Aurora PostgreSQL**: DBSubnetGroup + DBCluster + Writer + 2 Readers + Custom Endpoint
+Prepare production y order-db-credentials mediante un flujo de proveedor/ESO aprobado. Las credenciales de Secrets Manager administradas por RDS no crean automáticamente un Secret de Kubernetes. La base de datos/usuarios de aplicación, los permisos mínimos de DB, la verificación de TLS y el agrupamiento de conexiones son requisitos independientes. Nombrar una base de datos en el CR no la crea.
 
-## Paso 2: ResourceGraphDefinition de KRO
+## Puertas de preparación y orden de creación
+
+Para las puertas de preparación de Pod de LBC, etiquete el namespace elbv2.k8s.aws/pod-readiness-gate-inject=enabled **antes de la creación de Pod**. Ya deben existir un Service coincidente y su TGB de ip. El grafo impone Service → TGB → Deployment mediante CEL; una anotación de Deployment hace referencia al nombre de TGB para establecer esa dependencia.
+
+El TGB no tiene un readyWhen que espere targets saludables. Hacer que la creación de Pod espere la salud del target puede provocar un interbloqueo cuando no existe ningún Pod que pueda convertirse en un target saludable. La existencia de TGB, la reconciliación de LBC, la salud del target y la preparación de Pod son estados diferentes. Verifique failurePolicy/inyección de webhook, rollout, periodo de gracia de apagado y retraso de anulación de registro.
+
+## ResourceGraphDefinition
+
+Estos archivos también se encuentran en examples/platform/examplecorp. Revise y añada RBAC de agregación para los recursos OrderApp/status/finalizers y Service, ConfigMap, Deployment y TGB. El permiso para crear RGD delega el uso de los privilegios del controller.
 
 ```yaml
 apiVersion: kro.run/v1alpha1
 kind: ResourceGraphDefinition
 metadata:
-  name: webapp-graph
+  name: examplecorp-webapps
 spec:
-  resourceKind:
-    group: kro.example.com
-    kind: WebApp
-    version: v1
-  childResources:
-    # 1. ConfigMap — Aurora connection info
-    - apiVersion: v1
-      kind: ConfigMap
-      nameTemplate: "{{.parent.metadata.name}}-db-config"
-      template: |
-        data:
-          DB_WRITER_HOST: "{{.parent.spec.aurora.writerEndpoint}}"
-          DB_READER_HOST: "{{.parent.spec.aurora.readerEndpoint}}"
-          DB_PORT: "{{.parent.spec.aurora.port}}"
-          DB_NAME: "{{.parent.spec.aurora.dbName}}"
-
-    # 2. Deployment — App container
-    - apiVersion: apps/v1
-      kind: Deployment
-      nameTemplate: "{{.parent.metadata.name}}"
-      template: |
-        spec:
-          replicas: {{.parent.spec.replicas}}
-          selector:
-            matchLabels:
-              app: {{.parent.spec.appName}}
-          template:
-            metadata:
-              labels:
-                app: {{.parent.spec.appName}}
-            spec:
-              containers:
-              - name: {{.parent.spec.appName}}
-                image: {{.parent.spec.image}}
-                ports:
-                - containerPort: {{.parent.spec.port}}
-                envFrom:
-                - configMapRef:
-                    name: {{.children.configmap.metadata.name}}
-
-    # 3. Service — ClusterIP
-    - apiVersion: v1
+  schema:
+    apiVersion: v1alpha1
+    group: platform.example.com
+    kind: OrderApp
+    scope: Namespaced
+    spec:
+      replicas: integer | default=3 minimum=1 maximum=10
+      image: string | required=true
+      port: integer | default=8080 minimum=1 maximum=65535
+      targetGroupARN: string | required=true
+      vpcID: string | required=true
+      credentialsSecretName: string | required=true
+      aurora:
+        writerEndpoint: string | required=true
+        readerEndpoint: string | required=true
+        port: integer | default=5432
+        dbName: string | required=true
+    status:
+      availableReplicas: ${deployment.status.availableReplicas}
+      serviceIP: ${service.spec.clusterIP}
+  resources:
+  - id: service
+    template:
+      apiVersion: v1
       kind: Service
-      nameTemplate: "{{.parent.metadata.name}}"
-      template: |
-        spec:
-          selector:
-            app: {{.parent.spec.appName}}
-          ports:
-          - port: {{.parent.spec.port}}
-            targetPort: {{.parent.spec.port}}
-          type: ClusterIP
-
-    # 4. TargetGroupBinding — ACK Target Group connection
-    - apiVersion: elbv2.k8s.aws/v1beta1
+      metadata:
+        name: ${schema.metadata.name}
+        namespace: ${schema.metadata.namespace}
+        labels:
+          app.kubernetes.io/name: ${schema.metadata.name}
+      spec:
+        type: ClusterIP
+        selector:
+          app.kubernetes.io/name: ${schema.metadata.name}
+        ports:
+        - name: http
+          port: ${schema.spec.port}
+          targetPort: http
+  - id: dbConfig
+    template:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: ${schema.metadata.name + "-db"}
+        namespace: ${schema.metadata.namespace}
+        labels:
+          app.kubernetes.io/name: ${schema.metadata.name}
+      data:
+        DB_WRITER_HOST: ${schema.spec.aurora.writerEndpoint}
+        DB_READER_HOST: ${schema.spec.aurora.readerEndpoint}
+        DB_PORT: ${string(schema.spec.aurora.port)}
+        DB_NAME: ${schema.spec.aurora.dbName}
+  - id: targetGroupBinding
+    template:
+      apiVersion: elbv2.k8s.aws/v1beta1
       kind: TargetGroupBinding
-      nameTemplate: "{{.parent.metadata.name}}-tgb"
-      template: |
-        spec:
-          targetGroupARN: {{.parent.spec.targetGroupARN}}
-          serviceRef:
-            name: {{.children.service.metadata.name}}
-            port: {{.parent.spec.port}}
-          targetType: ip
-
-  statusMappings:
-    - childResource:
-        kind: Deployment
-        name: "{{.parent.metadata.name}}"
-      conditions:
-        - type: Available
-          mapping:
-            type: Ready
-    - childResource:
-        kind: Service
-        name: "{{.parent.metadata.name}}"
-      fieldMappings:
-        - child: "spec.clusterIP"
-          parent: "status.serviceIP"
+      metadata:
+        name: ${schema.metadata.name + "-tgb"}
+        namespace: ${schema.metadata.namespace}
+        labels:
+          app.kubernetes.io/name: ${schema.metadata.name}
+      spec:
+        targetGroupARN: ${schema.spec.targetGroupARN}
+        targetType: ip
+        vpcID: ${schema.spec.vpcID}
+        serviceRef:
+          name: ${service.metadata.name}
+          port: ${schema.spec.port}
+  - id: deployment
+    readyWhen:
+    - ${deployment.status.availableReplicas >= deployment.spec.replicas}
+    - ${deployment.status.observedGeneration >= deployment.metadata.generation}
+    template:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: ${schema.metadata.name}
+        namespace: ${schema.metadata.namespace}
+        labels:
+          app.kubernetes.io/name: ${schema.metadata.name}
+      spec:
+        replicas: ${schema.spec.replicas}
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: ${schema.metadata.name}
+        template:
+          metadata:
+            labels:
+              app.kubernetes.io/name: ${schema.metadata.name}
+            annotations:
+              platform.example.com/target-group-binding: ${targetGroupBinding.metadata.name}
+          spec:
+            automountServiceAccountToken: false
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 10001
+              runAsGroup: 10001
+              fsGroup: 10001
+              seccompProfile:
+                type: RuntimeDefault
+            containers:
+            - name: order-api
+              image: ${schema.spec.image}
+              ports:
+              - name: http
+                containerPort: ${schema.spec.port}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                  - ALL
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+                limits:
+                  cpu: 500m
+                  memory: 128Mi
+              readinessProbe:
+                httpGet:
+                  path: /readyz
+                  port: http
+              volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: db-credentials
+                mountPath: /var/run/order-db
+                readOnly: true
+              envFrom:
+              - configMapRef:
+                  name: ${dbConfig.metadata.name}
+              env:
+              - name: DB_CREDENTIALS_DIR
+                value: /var/run/order-db
+            volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 64Mi
+            - name: db-credentials
+              secret:
+                secretName: ${schema.spec.credentialsSecretName}
 ```
 
-### Descripción de campos de entrada
+## Entradas de instancia
 
-| Campo | Descripción |
-|-------|-------------|
-| `appName` | Nombre de la aplicación (usado en labels y selectors) |
-| `image` | URI de la imagen de Container |
-| `replicas` | Cantidad de réplicas del Deployment |
-| `port` | Puerto del Container y del Service |
-| `targetGroupARN` | ARN del Target Group creado por ACK |
-| `aurora.writerEndpoint` | endpoint Writer del DBCluster de ACK |
-| `aurora.readerEndpoint` | endpoint Reader del DBCluster de ACK |
-| `aurora.port` | Puerto de Aurora (predeterminado 5432) |
-| `aurora.dbName` | Nombre de la base de datos |
-
-## Paso 3: Despliegue de la aplicación
+Las direcciones/la imagen example.invalid y el ARN/ID de VPC a continuación son marcadores de posición. Lea los endpoints/ARN reales de ACK y verifique el digest de la imagen de aplicación y el Secret antes de usarlos. Los endpoints copiados manualmente no siguen automáticamente los cambios de ACK; proporcione una ruta aprobada de actualización de entradas de GitOps.
 
 ```yaml
-apiVersion: kro.example.com/v1
-kind: WebApp
+apiVersion: platform.example.com/v1alpha1
+kind: OrderApp
 metadata:
   name: order-api
   namespace: production
 spec:
-  appName: order-api
-  image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/order-api:v1.2.0
   replicas: 3
+  image: example.invalid/order-api:replace-with-reviewed-image
   port: 8080
-  targetGroupARN: <ACK TargetGroup's .status.targetGroupARN>
+  targetGroupARN: arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/replace-with-approved-tg/0123456789abcdef
+  vpcID: vpc-0123456789abcdef0
+  credentialsSecretName: order-db-credentials
   aurora:
-    writerEndpoint: <ACK DBCluster's .status.endpoint>
-    readerEndpoint: <ACK DBCluster's .status.readerEndpoint>
-    port: "5432"
+    writerEndpoint: replace-with-writer-endpoint.example.invalid
+    readerEndpoint: replace-with-reader-endpoint.example.invalid
+    port: 5432
     dbName: orders
 ```
 
-Inyecta los valores de salida de la infraestructura creada por ACK (ARN del Target Group, endpoints de Aurora) en la spec del CR de KRO.
-
-## Paso 4: Verificación
+## Verificación y operaciones
 
 ```bash
-# Check WebApp CR status
-kubectl get webapp order-api -n production -o yaml
-
-# Check created resources
-kubectl get deploy,svc,targetgroupbinding,configmap -n production -l app=order-api
+kubectl get orderapps.platform.example.com order-api -n production -o yaml
+kubectl get deploy,svc,targetgroupbindings.elbv2.k8s.aws,configmap \
+  -n production -l app.kubernetes.io/name=order-api
+kubectl get pods -n production -l app.kubernetes.io/name=order-api -o wide
 ```
 
-## Patrones operativos
+Inspeccione las condiciones de CR y el estado de Deployment junto con las puertas de preparación de Pod, EndpointSlices, el estado de TGB, la salud del target de AWS, la conectividad DNS/HTTP y TLS de la base de datos. Que la preparación compruebe la base de datos depende de la aplicación real. Todos los metadatos de recursos generados llevan la misma etiqueta de consulta.
 
-### Agregar nuevos Services
+Un nuevo servicio de pagos necesita una imagen revisada, un plan independiente de enrutamiento de TargetGroup/Listener y un contrato de usuario/permisos/esquema de base de datos. Compartir Aurora no garantiza el aislamiento de datos, rendimiento ni costos. Compartir un TargetGroup entre TGB/clústeres requiere un manejo deliberado del ciclo de vida de multiClusterTargetGroup; ignorar el modelo de propiedad predeterminado puede anular el registro de otros targets.
 
-Reutiliza la infraestructura existente simplemente agregando un nuevo CR de WebApp:
+Añada réplicas de Aurora mediante ACK DBInstances usando combinaciones de clase/región compatibles; los nombres/etiquetas no corrigen los roles de writer. Siga la guía de promotionTier, endpoints y failover en el [ejemplo de RDS](ack/03-elbv2-route53-rds.md), y luego pruebe la carga y la recuperación reales.
 
-```yaml
-apiVersion: kro.example.com/v1
-kind: WebApp
-metadata:
-  name: payment-api
-  namespace: production
-spec:
-  appName: payment-api
-  image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/payment-api:v1.0.0
-  replicas: 2
-  port: 8080
-  targetGroupARN: <new Target Group ARN>
-  aurora:
-    writerEndpoint: <existing Aurora Writer Endpoint>
-    readerEndpoint: <existing Aurora Reader Endpoint>
-    port: "5432"
-    dbName: payments
-```
+Actualizar una imagen de Deployment normalmente realiza RollingUpdate, no Blue/Green automático ni tiempo de inactividad cero garantizado. Blue/Green necesita versiones de aplicación independientes, targets/corte de enrutamiento, métricas de validación, condiciones de rollback y compatibilidad de base de datos. Eliminar/reemplazar un CR puede limpiar TGB/Deployments secundarios y asociaciones de targets; no es un cambio de versión inofensivo.
 
-### Escalado de Aurora
+## Comprobaciones realizadas
 
-Agrega DBInstances de ACK para escalar horizontalmente las Read Replicas:
+Se leyeron y compararon ambas guías originales y todos los ejemplos con los esquemas actuales de RGD/TGB. cel-go compiló/evaluó 21 expresiones únicas para comprobar cuatro recursos, selectores de Service/Pod, referencias de ConfigMap/Service, la dependencia TGB-antes-de-Deployment y status. Estas son comprobaciones locales que usan entradas sintéticas. No se ejecutaron recursos de AWS, imagen de aplicación, base de datos, salud de targets, mutación de Pod ni tráfico.
 
-```yaml
-apiVersion: rds.services.k8s.aws/v1alpha1
-kind: DBInstance
-metadata:
-  name: my-aurora-reader-3
-  namespace: infra
-spec:
-  dbInstanceIdentifier: my-aurora-reader-3
-  dbClusterIdentifier: my-aurora-cluster
-  dbInstanceClass: db.r6g.xlarge
-  engine: aurora-postgresql
-```
-
-### Despliegue Blue/Green
-
-Realiza un despliegue sin downtime reemplazando el CR de KRO. Aplicar una nueva versión del CR hace que KRO actualice automáticamente el Deployment.
-
-## Documentos de referencia
-
-- [Conceptos e instalación de ACK](./02-ack.md)
-- [Ejemplos de recursos de ACK: ELBv2, Route 53, RDS](./ack/03-elbv2-route53-rds.md)
-- [Conceptos de KRO y RGD](./03-kro.md)
+- [ACK](02-ack.md)
+- [kro](03-kro.md)
+- [AWS LBC 3.5.0 TGB](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
+- [Puertas de preparación de Pod](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/pod_readiness_gate.md)

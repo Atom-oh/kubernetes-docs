@@ -1,423 +1,271 @@
-# KRO Helm移行クイズ
+# Kube Resource Orchestrator (kro) クイズ
 
-> **関連ドキュメント**: [Kubernetes Resource Operator (KRO)](../../platform-engineering/03-kro.md)
+[kro](../../platform-engineering/03-kro.md)
 
-## 多肢選択問題
+これらの問題は、kro 0.9.4 を使用した元の 20 のトピックを保持しています。
 
-### 1. 次のうち、Kubernetes Resource Operator (KRO) の中核概念ではないものはどれですか？
-
-- A) 宣言的なリソース関係
-- B) 状態ベースの reconciliation
-- C) 命令型スクリプト実行
-- D) リソースグラフ
+## 1. kro のコアコンセプトは何ですか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) 命令型スクリプト実行**
-
-**解説:**
-KRO はリソースを宣言的に管理します。宣言的なリソース関係、状態ベースの reconciliation、リソースグラフ、自動ライフサイクル管理は中核概念ですが、命令型スクリプト実行は KRO の中核概念には含まれません。
+RGD で API schema と resource graph を定義し、CEL 参照から依存関係を推論して、インスタンスを reconcile します。kro は命令型スクリプトランナーではありません。
 
 </details>
 
-### 2. ResourceGraphDefinition (RGD) における `childResources` の役割は何ですか？
-
-- A) 親リソースのメタデータを定義する
-- B) 親リソースから作成される子リソースのリストを定義する
-- C) クラスター全体の設定を定義する
-- D) Namespace ポリシーを定義する
+## 2. 管理対象 resource の定義はどこで宣言しますか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 親リソースから作成される子リソースのリストを定義する**
-
-**解説:**
-`childResources` は、親 Custom Resource（カスタムリソース）から作成される子 Kubernetes リソース（Deployment、Service、Ingress など）のリストとテンプレートを定義します。
+spec.resources 配下で、各エントリの id と template または externalRef を使用して宣言します。以前の childResources は現在の RGD field ではありません。
 
 </details>
 
-### 3. Helm と比較した KRO の主な差別化要素は何ですか？
-
-- A) Go template の使用
-- B) Chart アーカイブのパッケージ化
-- C) 明示的なリソース関係のモデリングと自動的な状態伝播
-- D) リリース履歴管理
+## 3. kro は Helm と併用して何を提供しますか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) 明示的なリソース関係のモデリングと自動的な状態伝播**
-
-**解説:**
-KRO はリソース間の関係を明示的なグラフとしてモデル化し、子リソースの状態を親リソースへ自動的に伝播します。
+resource-reference graph と継続的なインスタンス reconciliation を提供します。Helm は chart rendering と release management を提供します。両者は併用できます。どちらもすべての workload に対して常に優れているわけではありません。
 
 </details>
 
-### 4. RGD テンプレート内の `.parent` は何を参照しますか？
-
-- A) Kubernetes cluster
-- B) 親 Custom Resource
-- C) Namespace
-- D) Controller pod
+## 4. インスタンス入力は CEL でどのように参照しますか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 親 Custom Resource**
-
-**解説:**
-RGD テンプレートでは、`.parent` は ResourceGraphDefinition が適用される親 Custom Resource を参照します。
+`${schema.spec.replicas}` のように schema.spec または schema.metadata を使用します。.parent や Go-template 構文は使用しません。
 
 </details>
 
-### 5. KRO で条件付きの子リソース作成に使用されるフィールドはどれですか？
-
-- A) `when`
-- B) `if`
-- C) `condition`
-- D) `enabled`
+## 5. 条件付き resource inclusion はどのように設定しますか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) `condition`**
-
-**解説:**
-RGD の childResources にある `condition` フィールドを使用して、子リソースを条件付きで作成できます。
+includeWhen に Boolean CEL expression を使用します。条件を変更すると resource が追加または prune される可能性があるため、stateful resource の lifecycle への影響を確認してください。
 
 </details>
 
-### 6. RGD における `statusMappings` の目的は何ですか？
-
-- A) エラー処理の動作を定義する
-- B) 子リソースの status を親リソースの status にマッピングする
-- C) ログレベルを設定する
-- D) Resource quota を設定する
+## 6. 管理対象 resource の status 値はどこに projection しますか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 子リソースの status を親リソースの status にマッピングする**
-
-**解説:**
-`statusMappings` は、子リソースから status 情報を抽出し、それを親 Custom Resource の status フィールドへ伝播する方法を定義します。
+spec.schema.status 配下に CEL expression を定義します。たとえば `${deployment.status.availableReplicas}` です。statusMappings は現在の field ではありません。
 
 </details>
 
-### 7. KRO はリソースの依存関係をどのように扱いますか？
-
-- A) YAML ファイル内の手動の順序付けによって
-- B) 作成順序を自動的に決定するリソースグラフによって
-- C) 数値の優先度フィールドによって
-- D) アルファベット順によって
+## 7. 依存関係と readiness はどのように順序付けられますか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 作成順序を自動的に決定するリソースグラフによって**
-
-**解説:**
-KRO はリソースグラフを使用してリソース間の依存関係を理解し、リソースの作成と削除の正しい順序を自動的に決定します。
+他の resource ID への CEL 参照から DAG が推論されます。dependents は、存在する場合、readyWhen 条件も待機します。cycle は拒否され、YAML の記述順は依存関係の代わりにはなりません。
 
 </details>
 
-### 8. KRO で親 Custom Resource が削除されるとどうなりますか？
-
-- A) 子リソースは孤立したまま残る
-- B) 子リソースは自動的に garbage collection される
-- C) 手動のクリーンアップが必要になる
-- D) エラーがスローされる
+## 8. インスタンスが削除されると何が起こりますか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 子リソースは自動的に garbage collection される**
-
-**解説:**
-KRO は子リソースに owner reference を設定するため、親が削除されると、Kubernetes の garbage collector がすべての子リソースを自動的に削除します。
+現在の kro は ApplySet inventory と deletion wave を使用して、dependents を先に削除し、finalizer を保持します。child finalizer は進行を妨げる可能性があります。external-reference target は削除されません。
 
 </details>
 
-### 9. KRO で Custom Resource の変更を監視するコンポーネントはどれですか？
-
-- A) API Server
-- B) Scheduler
-- C) KRO Controller
-- D) Kubelet
+## 9. インスタンスの変更を監視するのは何ですか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) KRO Controller**
-
-**解説:**
-KRO Controller は、ResourceGraphDefinitions によって定義された Custom Resource の変更を監視し、望ましい状態へ reconciliation します。
+kro の dynamic instance controller が変更を監視し、graph を reconcile します。RGD/GraphRevision の validation と compilation はインスタンスの進行に影響します。
 
 </details>
 
-### 10. KRO における Helm の `helm upgrade --install` 動作に相当するものは何ですか？
-
-- A) Custom Resource に対する `kubectl apply`
-- B) Custom Resource に対する `kubectl replace`
-- C) Custom Resource に対する `kubectl patch`
-- D) `kubectl create --save-config`
+## 10. kubectl apply は何を行いますか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A) Custom Resource に対する `kubectl apply`**
-
-**解説:**
-`kubectl apply` は、`helm upgrade --install` と同様の冪等な動作を提供します。リソースが存在しない場合は作成し、存在する場合は更新します。
+CR の desired state を作成または更新し、その後 controller が reconcile します。apply の成功は graph compilation やアプリケーションの readiness を意味するものではなく、transactional な外部への影響を保証するものでもありません。
 
 </details>
 
-## 短答問題
-
-### 1. Custom Resource と Kubernetes native リソースの関係を定義する、KRO の中核リソースは何ですか？
+## 11. RGD とは何ですか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: ResourceGraphDefinition (RGD)**
-
-**解説:**
-ResourceGraphDefinition (RGD) は KRO の中核コンポーネントであり、Custom Resource（親）と Kubernetes native リソース（子）の関係を宣言的に定義します。
+ResourceGraphDefinition は、生成される API schema、管理対象 resource、status relationship を定義します。これはアプリケーションインスタンスの CR とは異なります。
 
 </details>
 
-### 2. Helm の values.yaml に相当する KRO のものは何ですか？
+## 12. Helm values に相当する入力を提供するのは何ですか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: Custom Resource (CR) の spec フィールド**
-
-**解説:**
-Helm が values.yaml を通じて設定をカスタマイズするのと同様に、KRO は Custom Resource の spec フィールドを通じてアプリケーション設定を定義します。
+生成された API インスタンスの spec です。その SimpleSchema の type、default、bound は、template が実際に使用する field と一致している必要があります。
 
 </details>
 
-### 3. RGD テンプレートで sibling の子リソースの出力をどのように参照しますか？
+## 13. 別の resource はどのように参照しますか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: `.children.<resourceId>` 構文を使用する**
-
-**解説:**
-RGD テンプレートでは、`.children.<resourceId>` を使用して他の子リソースを参照し、それらの metadata、spec、status フィールドにアクセスして、リソース間参照に利用できます。
+`${deployment.spec.selector.matchLabels}` や `${service.metadata.name}` のように、resource ID を直接参照します。.children は使用しません。
 
 </details>
 
-### 4. KRO は管理対象リソースを追跡するためにどの annotation を使用しますか？
+## 14. 管理対象 resource を追跡し、削除の診断を支援するものは何ですか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: `kro.run/owner` annotation**
-
-**解説:**
-KRO は Kubernetes owner reference とともに `kro.run/owner` annotation を使用して、どのリソースがどの親 Custom Resource によって管理されているかを追跡します。
+現在の ApplySet inventory、owner metadata、internal.kro.run/apply-order deletion wave を確認します。作り出した kro.run/owner annotation を追跡契約全体として扱わないでください。
 
 </details>
 
-### 5. KRO は Custom Resource の schema validation をどのように扱いますか？
+## 15. 入力 schema はどのように validation されますか？
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: RGD の spec.schema フィールドで定義された OpenAPI v3 Schema によって**
-
-**解説:**
-KRO は RGD から CRD を生成し、schema validation は ResourceGraphDefinition で定義された OpenAPI v3 Schema を使用して実行されます。
+SimpleSchema は生成される CRD の OpenAPI schema になり、Kubernetes はそれを使用してインスタンスを validation します。RGD の構造、graph-compiler の CEL type checking、runtime readiness は別個の確認です。
 
 </details>
 
-## ハンズオン問題
+## 16. 例の NginxApp インスタンスを記述してください。
 
-### 1. 次の Helm values.yaml を KRO Custom Resource インスタンスに変換してください。
+<details>
+<summary>回答を表示</summary>
+
+最初に、RGD が Active であり、生成された CRD が Established であることを確認します。このインスタンスでは ingress を無効にします。
 
 ```yaml
-# Helm values.yaml
-replicaCount: 2
-image:
-  repository: myapp
-  tag: "1.0.0"
-service:
-  type: ClusterIP
-  port: 8080
-```
-
-<details>
-<summary>回答を表示</summary>
-
-```yaml
-apiVersion: kro.example.com/v1
-kind: MyApp
+apiVersion: platform.example.com/v1alpha1
+kind: NginxApp
 metadata:
-  name: my-application
+  name: reviewed-web
+  namespace: example
 spec:
   replicas: 2
-  image:
-    repository: myapp
-    tag: "1.0.0"
-  service:
-    type: ClusterIP
-    port: 8080
+  image: nginxinc/nginx-unprivileged:1.30.4-alpine
+  ingress:
+    enabled: false
+    className: internal
+    host: app.example.com
+    tlsSecret: app-tls
 ```
 
 </details>
 
-### 2. 親 spec に基づいて Deployment を作成する RGD childResource 定義を書いてください。
+## 17. Deployment を作成する resource entry を記述してください。
 
 <details>
 <summary>回答を表示</summary>
+
+これはガイドと同じ template です。readyWhen は Deployment 自体のみを参照します。実際の環境で image、namespace、policy を確認してください。
 
 ```yaml
-childResources:
-  - id: deployment
-    resource:
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: "{{.parent.metadata.name}}"
-      spec:
-        replicas: "{{.parent.spec.replicas}}"
-        selector:
-          matchLabels:
-            app: "{{.parent.metadata.name}}"
-        template:
-          metadata:
-            labels:
-              app: "{{.parent.metadata.name}}"
-          spec:
-            containers:
-              - name: app
-                image: "{{.parent.spec.image.repository}}:{{.parent.spec.image.tag}}"
-                ports:
-                  - containerPort: "{{.parent.spec.service.port}}"
+resources:
+- id: deployment
+  readyWhen:
+  - ${deployment.status.availableReplicas >= deployment.spec.replicas}
+  - ${deployment.status.observedGeneration >= deployment.metadata.generation}
+  template:
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${schema.metadata.name}
+      namespace: ${schema.metadata.namespace}
+      labels:
+        app.kubernetes.io/name: ${schema.metadata.name}
+    spec:
+      replicas: ${schema.spec.replicas}
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: ${schema.metadata.name}
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: ${schema.metadata.name}
+        spec:
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 101
+            runAsGroup: 101
+            fsGroup: 101
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: web
+            image: ${schema.spec.image}
+            ports:
+            - name: http
+              containerPort: 8080
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 64Mi
+              limits:
+                cpu: 500m
+                memory: 128Mi
+            readinessProbe:
+              httpGet:
+                path: /
+                port: http
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          volumes:
+          - name: tmp
+            emptyDir:
+              sizeLimit: 64Mi
 ```
 
 </details>
 
-### 3. Deployment の available replicas を親 status に公開する statusMappings 設定を書いてください。
+## 18. status で availableReplicas を公開してください。
 
 <details>
 <summary>回答を表示</summary>
+
+これは RGD spec.schema 配下の status section です。値がない場合、解決は待機する可能性があります。これは包括的なアプリケーション health ではありません。
 
 ```yaml
-statusMappings:
-  - childResourceId: deployment
-    fieldPath: status.availableReplicas
-    parentFieldPath: status.availableReplicas
-  - childResourceId: deployment
-    fieldPath: status.conditions
-    parentFieldPath: status.deploymentConditions
+status:
+  availableReplicas: ${deployment.status.availableReplicas}
+  serviceIP: ${service.spec.clusterIP}
 ```
-
-**解説:**
-statusMappings は子リソースの status から特定のフィールドを抽出し、それらを親 Custom Resource の status にマッピングすることで、ユーザーが親リソースを通じてアプリケーションの状態を確認できるようにします。
 
 </details>
 
-## 応用問題
-
-### 1. KRO を使用してマルチ環境（dev/staging/production）の deployment 戦略を設計してください。
+## 19. dev/staging/prod 戦略を設計してください。
 
 <details>
 <summary>回答を表示</summary>
 
-**環境固有の Custom Resource インスタンス:**
-
-```yaml
-# dev/webapp.yaml
-apiVersion: kro.example.com/v1
-kind: WebApp
-metadata:
-  name: myapp
-  namespace: app-dev
-spec:
-  replicas: 1
-  image:
-    tag: "dev-latest"
-  resources:
-    requests:
-      cpu: "100m"
-      memory: "128Mi"
----
-# staging/webapp.yaml
-apiVersion: kro.example.com/v1
-kind: WebApp
-metadata:
-  name: myapp
-  namespace: app-staging
-spec:
-  replicas: 2
-  image:
-    tag: "rc-1.0.0"
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "256Mi"
----
-# production/webapp.yaml
-apiVersion: kro.example.com/v1
-kind: WebApp
-metadata:
-  name: myapp
-  namespace: app-prod
-spec:
-  replicas: 3
-  image:
-    tag: "v1.0.0"
-  autoscaling:
-    enabled: true
-    minReplicas: 3
-    maxReplicas: 10
-  resources:
-    requests:
-      cpu: "500m"
-      memory: "512Mi"
-```
-
-**GitOps 統合:**
-ArgoCD ApplicationSet を使用して、すべての環境で単一の RGD による環境固有の deployment を自動化します。
+検証済みの API contract と image digest を共有しつつ、namespace、replica、ingress、policy をインスタンスごとに分離します。各 cluster で kro/RGD/permission を準備し、synchronization には fleet tooling を使用します。未使用の autoscaling field で HPA は作成されません。
 
 </details>
 
-### 2. データベースクラスターのような stateful application を管理する場合の Helm と KRO の運用上の違いを比較してください。
+## 20. stateful application に対する Helm と kro の限界は何ですか？
 
 <details>
 <summary>回答を表示</summary>
 
-**Helm アプローチ:**
-- テンプレートベース: インストール時に静的な manifests を生成する
-- リリース管理: Secrets/ConfigMaps を介してバージョンを追跡する
-- アップグレードプロセス: `helm upgrade` コマンドが必要
-- 状態追跡: 初回 deployment 後の組み込み reconciliation はない
-- ロールバック: 保存されたリリース履歴を使用する
-
-**KRO アプローチ:**
-- Reconciliation ベース: drift を継続的に監視して修正する
-- Native Kubernetes: 標準の kubectl と CRDs を使用する
-- アップグレードプロセス: CR spec を変更すると、controller が reconciliation する
-- 状態追跡: controller が継続的に監視して reconciliation する
-- ロールバック: CR spec を以前の状態に戻す
-
-**Stateful Applications における主な違い:**
-
-| Aspect | Helm | KRO |
-|--------|------|-----|
-| Drift Detection | Manual | Automatic |
-| Self-healing | No | Yes |
-| Status Visibility | External (helm status) | Native (kubectl get) |
-| Dependency Management | Chart dependencies | Resource graph |
-| Lifecycle Hooks | pre/post hooks | Controller logic |
-
-**推奨:**
-KRO は、継続的な reconciliation、自動的な drift 修正、複雑なライフサイクル管理を必要とする stateful application により適しています。Helm は、単純な deployment を持つ stateless application に対してよりシンプルです。
+database backup、restore、failover、schema migration を自動的に実装するものはどちらにもありません。専用 operator/managed-service の動作と data retention を検証してください。Git spec を restore しても database rollback にはなりません。失敗した最新の GraphRevision が自動的に fallback されることはありません。
 
 </details>

@@ -1,251 +1,150 @@
 # Cuestionario sobre mecanismos de extensión de Kubernetes
 
-> **Documento relacionado**: [Mecanismos de extensión de Kubernetes](../../platform-engineering/04-kubernetes-extensions.md)
+[Kubernetes extensions](../../platform-engineering/04-kubernetes-extensions.md)
 
-## Preguntas de opción múltiple
+Los temas originales de las 20 preguntas se han revisado conforme a las API y el comportamiento actuales.
 
-### 1. ¿Cuál es el propósito principal de un CRD (Custom Resource Definition)?
-
-- A) Modificar recursos existentes de Kubernetes
-- B) Extender la API de Kubernetes con tipos de recursos personalizados
-- C) Configurar la red de Pod
-- D) Aprovisionar volúmenes de almacenamiento
+## 1. ¿Para qué sirve un CRD?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Extender la API de Kubernetes con tipos de recursos personalizados**
-
-**Explicación:**
-Los CRD permiten extender la API de Kubernetes definiendo tipos de recursos personalizados que se comportan como recursos nativos de Kubernetes.
+Registra tipos de recursos personalizados y esquemas de entrada en la API de Kubernetes. Un CRD no implementa por sí mismo el comportamiento de una carga de trabajo.
 
 </details>
 
-### 2. ¿Cuál es la tarea principal que realiza el ciclo de reconciliación de un Custom Controller?
-
-- A) Eliminar recursos inmediatamente
-- B) Reconciliar diferencias entre el estado actual y el estado deseado
-- C) Registrar nuevas API con el API server
-- D) Aplicar políticas de red
+## 2. ¿Qué hace un bucle de reconciliación?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Reconciliar diferencias entre el estado actual y el estado deseado**
-
-**Explicación:**
-El ciclo de reconciliación del Custom Controller observa el estado actual de los recursos, lo compara con el estado deseado (spec) y toma acciones para alcanzar el estado deseado cuando existen diferencias.
+Reconcilia el estado observado y el deseado mientras gestiona eventos repetidos, reinicios y conflictos. Evita actualizaciones innecesarias cuando el estado ya coincide.
 
 </details>
 
-### 3. ¿Cuáles son los componentes principales del patrón Operator?
-
-- A) Deployment y Service
-- B) CRD y Custom Controller
-- C) ConfigMap y Secret
-- D) Ingress y NetworkPolicy
+## 3. ¿Qué define a un Operator y cuáles son sus límites?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) CRD y Custom Controller**
-
-**Explicación:**
-El patrón Operator usa CRD para definir la configuración de aplicaciones y Custom Controllers para automatizar conocimiento operativo, como despliegue, actualizaciones y recuperación.
+Un Operator implementa conocimiento del dominio mediante API y controllers personalizados. Crearlos por sí solos no hace que las copias de seguridad, la conmutación por error ni las actualizaciones sean seguras.
 
 </details>
 
-### 4. ¿Cuál es el uso principal de MutatingAdmissionWebhook?
-
-- A) Rechazar solicitudes de API
-- B) Modificar solicitudes de API
-- C) Registrar respuestas de API
-- D) Actualizar versiones de API
+## 4. ¿Qué puede devolver un mutating webhook?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Modificar solicitudes de API**
-
-**Explicación:**
-MutatingAdmissionWebhook puede modificar solicitudes de API antes de que se persistan. Los usos comunes incluyen: inyección de contenedores sidecar, configuración de valores predeterminados, etc.
+Una respuesta AdmissionReview que permite o rechaza la solicitud y, opcionalmente, incluye JSONPatch. Conserva el UID/la versión de la solicitud; los bytes del parche se codifican en Base64.
 
 </details>
 
-### 5. ¿Cuál es el rol del plugin Filter en el scheduler framework?
-
-- A) Asignar puntuaciones a los nodes
-- B) Excluir nodes que no pueden ejecutar el Pod
-- C) Vincular el Pod a un node
-- D) Reservar recursos de node
+## 5. ¿Qué hace un plugin Filter?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Excluir nodes que no pueden ejecutar el Pod**
-
-**Explicación:**
-Los plugins Filter filtran los nodes que no cumplen con los requisitos del Pod, excluyéndolos de la consideración.
+Excluye Nodes que no pueden satisfacer los requisitos de un Pod. Superar los filtros no completa el binding ni la ejecución.
 
 </details>
 
-### 6. ¿Cuál es la diferencia entre Aggregated API Server y CRD?
-
-- A) No hay diferencia, son lo mismo
-- B) Aggregated API proporciona más control, pero requiere ejecutar un servidor separado
-- C) CRD proporciona más funcionalidades que Aggregated API
-- D) Aggregated API está obsoleto
+## 6. ¿En qué se diferencian la agregación y los CRD?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Aggregated API proporciona más control, pero requiere ejecutar un servidor separado**
-
-**Explicación:**
-Aggregated API Server proporciona control total sobre el comportamiento de la API, backends de almacenamiento personalizados y funcionalidades avanzadas, pero requiere desplegar y mantener un API server separado. Los CRD son más simples, pero tienen limitaciones.
+Los CRD usan el almacenamiento/la validación de recursos personalizados del API server existente. La agregación delega en un servidor independiente que requiere operaciones de TLS, autenticación, autorización, descubrimiento y almacenamiento.
 
 </details>
 
-### 7. ¿Cuál es el propósito de un Finalizer en Kubernetes?
-
-- A) Acelerar la eliminación de recursos
-- B) Evitar la eliminación de recursos hasta que se complete la limpieza
-- C) Reiniciar automáticamente Pods fallidos
-- D) Validar la creación de recursos
+## 7. ¿Qué proporciona un finalizer?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Evitar la eliminación de recursos hasta que se complete la limpieza**
-
-**Explicación:**
-Los Finalizers bloquean la eliminación de recursos hasta que el controller realiza las operaciones de limpieza necesarias (como eliminar recursos externos) y elimina el finalizer.
+Da a un controller la oportunidad de finalizar la limpieza antes de que se complete la eliminación. La cadena no ejecuta ninguna limpieza por sí misma; eliminarla sin investigar puede dejar recursos externos.
 
 </details>
 
-### 8. ¿Qué punto de extensión del scheduler se ejecuta después de que un Pod se ha vinculado a un node?
-
-- A) PreFilter
-- B) PostBind
-- C) Reserve
-- D) Score
+## 8. ¿Cuándo se ejecuta PostBind?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) PostBind**
-
-**Explicación:**
-Los plugins PostBind se llaman después de que el Pod se ha vinculado correctamente a un node. Son informativos y se usan para limpieza o notificaciones.
+Es una fase informativa después de un binding exitoso, no una recuperación de errores universal. Implementa rutas como Unreserve para reservas fallidas o canceladas.
 
 </details>
 
-### 9. ¿Qué anotación se usa para inyectar sidecars mediante admission webhook en Istio?
-
-- A) istio.io/inject
-- B) sidecar.istio.io/inject
-- C) istio-injection
-- D) auto-inject.istio.io
+## 9. ¿Cómo se controla la inyección actual por Pod de Istio?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) sidecar.istio.io/inject**
-
-**Explicación:**
-La anotación `sidecar.istio.io/inject` controla si el mutating webhook de Istio inyecta el sidecar Envoy en un Pod. El control a nivel de namespace usa la etiqueta `istio-injection`.
+Configura sidecar.istio.io/inject en las etiquetas del Pod o de la plantilla de Pod de la carga de trabajo. Comprueba las etiquetas de inyección/revisión del namespace y la precedencia, en lugar de usar anotaciones antiguas como valores predeterminados.
 
 </details>
 
-### 10. ¿Cuál es el propósito del plugin Score en el scheduler framework?
-
-- A) Filtrar nodes no adecuados
-- B) Clasificar los nodes y seleccionar el mejor
-- C) Vincular el Pod al node seleccionado
-- D) Validar especificaciones de Pod
+## 10. ¿Cómo se usan los resultados de Score?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Clasificar los nodes y seleccionar el mejor**
-
-**Explicación:**
-Los plugins Score asignan puntuaciones a los nodes que pasaron el filtrado. El scheduler selecciona el node con la puntuación combinada más alta de todos los plugins Score.
+Clasifican los Nodes viables combinando la normalización y los pesos de los plugins. La selección en caso de empate y la gestión de errores también forman parte del comportamiento del scheduler.
 
 </details>
 
-## Preguntas de respuesta corta
-
-### 1. ¿Qué estándar se usa para la validación de esquemas en CRD?
+## 11. ¿Dónde deben ubicarse los esquemas de CRD y los campos obligatorios?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: OpenAPI v3 Schema (openAPIV3Schema)**
-
-**Explicación:**
-Los CRD usan OpenAPI v3 schema en `spec.versions[].schema.openAPIV3Schema` para definir la estructura y las reglas de validación de recursos personalizados.
+En spec.versions[].schema.openAPIV3Schema. required: [spec] en el nivel superior y required: [image] dentro de spec imponen condiciones diferentes.
 
 </details>
 
-### 2. ¿Cuál es el rol de Owner Reference en los controllers de Kubernetes?
+## 12. ¿Qué debe comprobarse para ownerReferences?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Definir relaciones de propiedad entre recursos y gestionar la recolección de basura y la propagación de eventos**
-
-**Explicación:**
-Owner Reference define relaciones padre-hijo y elimina automáticamente los hijos cuando el padre se elimina mediante la garbage collection de Kubernetes.
+Comprueba el UID del propietario, el namespace/ámbito y la propiedad existente del controller. GC depende de la propagación/los finalizers; los nombres coincidentes no autorizan adoptar otra carga de trabajo.
 
 </details>
 
-### 3. ¿Cuál es la diferencia entre ValidatingAdmissionPolicy y ValidatingAdmissionWebhook?
+## 13. ¿En qué se diferencian VAP y los validating webhooks?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: ValidatingAdmissionPolicy usa expresiones CEL y se ejecuta dentro del proceso, mientras que ValidatingAdmissionWebhook llama a endpoints HTTP externos.**
-
-**Explicación:**
-ValidatingAdmissionPolicy (introducida en 1.26) proporciona mejor rendimiento y no requiere infraestructura externa de webhook, pero tiene menos flexibilidad que los webhooks.
+ValidatingAdmissionPolicy es estable desde la versión 1.30 y evalúa CEL en el proceso. Los webhooks requieren llamadas remotas, TLS y gestión de disponibilidad. VAP también necesita un binding para el ámbito y validationActions.
 
 </details>
 
-### 4. ¿Qué es la biblioteca controller-runtime y por qué se usa comúnmente?
+## 14. ¿Qué proporciona controller-runtime?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: controller-runtime es una biblioteca que proporciona patrones comunes para crear controllers de Kubernetes, incluido el almacenamiento en caché de clientes, la elección de líder y la gestión del ciclo de reconciliación.**
-
-**Explicación:**
-Como parte del proyecto Kubebuilder, controller-runtime abstrae el código repetitivo y las mejores prácticas, lo que facilita crear operators confiables.
+Managers, clients/caches, configuración de reconciliación y elección de líder. No proporciona tipos de API personalizados, schemes, RBAC ni lógica de dominio; alinea las versiones de la biblioteca y del módulo Go de Kubernetes.
 
 </details>
 
-### 5. ¿Cuál es el propósito de los conversion webhooks en CRD?
+## 15. ¿Para qué sirve un webhook de conversión?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Los conversion webhooks convierten recursos entre diferentes versiones de API del mismo CRD.**
-
-**Explicación:**
-Cuando un CRD tiene varias versiones (por ejemplo, v1alpha1, v1beta1, v1), los conversion webhooks gestionan la transformación entre versiones para admitir la evolución de la API.
+Convierte representaciones entre versiones de API de un CRD. Revisa las versiones servidas/de almacenamiento, storedVersions y la preservación semántica. No todos los CRD requieren un webhook de conversión.
 
 </details>
 
-## Preguntas prácticas
-
-### 1. Escribe un CRD que cumpla los siguientes requisitos:
-
-- Nombre: WebApp
-- Grupo: apps.example.com
-- Campos: replicas (integer, mínimo 1), image (string, obligatorio)
+## 16. Escribe un CRD WebApp que requiera image y replicas entre 1 y 5.
 
 <details>
 <summary>Mostrar respuesta</summary>
+
+Esto también requiere spec y separa las rutas de status/scale. Un controller debe completar status.replicas y selector reales.
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -258,8 +157,7 @@ spec:
     kind: WebApp
     plural: webapps
     singular: webapp
-    shortNames:
-      - wa
+    shortNames: [wa]
   scope: Namespaced
   versions:
     - name: v1
@@ -268,385 +166,79 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
+          required: [spec]
           properties:
             spec:
               type: object
-              required: ["image"]
+              required: [image]
               properties:
                 replicas:
                   type: integer
-                  minimum: 1
                   default: 1
+                  minimum: 1
+                  maximum: 5
                 image:
                   type: string
+                  minLength: 1
+                port:
+                  type: integer
+                  default: 8080
+                  minimum: 1
+                  maximum: 65535
             status:
               type: object
-              properties:
-                availableReplicas:
-                  type: integer
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                      status:
-                        type: string
-                      lastTransitionTime:
-                        type: string
-                        format: date-time
-      subresources:
-        status: {}
-      additionalPrinterColumns:
-        - name: Replicas
-          type: integer
-          jsonPath: .spec.replicas
-        - name: Available
-          type: integer
-          jsonPath: .status.availableReplicas
-        - name: Age
-          type: date
-          jsonPath: .metadata.creationTimestamp
-```
-
-</details>
-
-### 2. Escribe una configuración de ValidatingAdmissionWebhook que valide todos los Deployments en el namespace "production".
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-```yaml
-apiVersion: admissionregistration.k8s.io/v1
-kind: ValidatingWebhookConfiguration
-metadata:
-  name: deployment-validator
-webhooks:
-  - name: validate-deployment.example.com
-    clientConfig:
-      service:
-        name: webhook-service
-        namespace: webhook-system
-        path: /validate-deployment
-      caBundle: <base64-encoded-ca-cert>
-    rules:
-      - apiGroups: ["apps"]
-        apiVersions: ["v1"]
-        operations: ["CREATE", "UPDATE"]
-        resources: ["deployments"]
-        scope: Namespaced
-    namespaceSelector:
-      matchLabels:
-        environment: production
-    failurePolicy: Fail
-    sideEffects: None
-    admissionReviewVersions: ["v1"]
-    timeoutSeconds: 10
-```
-
-**Explicación:**
-- `namespaceSelector` limita el webhook a namespaces con la etiqueta `environment: production`
-- `failurePolicy: Fail` rechaza solicitudes si el webhook no está disponible
-- `sideEffects: None` indica que el webhook no tiene efectos secundarios
-
-</details>
-
-### 3. Escribe pseudocódigo de un ciclo de reconciliación simple para un Custom Controller.
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-```go
-func (r *WebAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
-
-    // 1. Fetch the WebApp resource
-    var webapp appsv1.WebApp
-    if err := r.Get(ctx, req.NamespacedName, &webapp); err != nil {
-        if errors.IsNotFound(err) {
-            // Resource deleted, nothing to do
-            return ctrl.Result{}, nil
-        }
-        return ctrl.Result{}, err
-    }
-
-    // 2. Check if being deleted (handle finalizers)
-    if !webapp.DeletionTimestamp.IsZero() {
-        if containsFinalizer(webapp, finalizerName) {
-            // Perform cleanup
-            if err := r.cleanupExternalResources(&webapp); err != nil {
-                return ctrl.Result{}, err
-            }
-            // Remove finalizer
-            removeFinalizer(&webapp, finalizerName)
-            if err := r.Update(ctx, &webapp); err != nil {
-                return ctrl.Result{}, err
-            }
-        }
-        return ctrl.Result{}, nil
-    }
-
-    // 3. Add finalizer if not present
-    if !containsFinalizer(webapp, finalizerName) {
-        addFinalizer(&webapp, finalizerName)
-        if err := r.Update(ctx, &webapp); err != nil {
-            return ctrl.Result{}, err
-        }
-    }
-
-    // 4. Create or update Deployment
-    deployment := r.constructDeployment(&webapp)
-    if err := controllerutil.SetControllerReference(&webapp, deployment, r.Scheme); err != nil {
-        return ctrl.Result{}, err
-    }
-    
-    if err := r.CreateOrUpdate(ctx, deployment); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // 5. Create or update Service
-    service := r.constructService(&webapp)
-    if err := controllerutil.SetControllerReference(&webapp, service, r.Scheme); err != nil {
-        return ctrl.Result{}, err
-    }
-    
-    if err := r.CreateOrUpdate(ctx, service); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // 6. Update status
-    webapp.Status.AvailableReplicas = deployment.Status.AvailableReplicas
-    if err := r.Status().Update(ctx, &webapp); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // 7. Requeue after interval for periodic reconciliation
-    return ctrl.Result{RequeueAfter: time.Minute * 5}, nil
-}
-```
-
-**Puntos clave:**
-- Manejar siempre el recurso no encontrado (puede haber sido eliminado)
-- Usar finalizers para la limpieza de recursos externos
-- Establecer owner references para la garbage collection
-- Actualizar el subrecurso status por separado
-- Considerar intervalos de requeue para comprobaciones periódicas
-
-</details>
-
-## Preguntas avanzadas
-
-### 1. Diseña un Kubernetes Operator para un sistema distribuido complejo.
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Diseño de CRD:**
-```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: postgresclusters.database.example.com
-spec:
-  group: database.example.com
-  names:
-    kind: PostgresCluster
-    plural: postgresclusters
-    shortNames:
-      - pg
-  scope: Namespaced
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              required: ["replicas", "version"]
               properties:
                 replicas:
                   type: integer
-                  minimum: 1
-                  maximum: 10
-                version:
+                availableReplicas:
+                  type: integer
+                selector:
                   type: string
-                  enum: ["14", "15", "16"]
-                storage:
-                  type: object
-                  properties:
-                    size:
-                      type: string
-                      default: "10Gi"
-                    storageClass:
-                      type: string
-                backup:
-                  type: object
-                  properties:
-                    enabled:
-                      type: boolean
-                      default: true
-                    schedule:
-                      type: string
-                      default: "0 2 * * *"
-                    retention:
-                      type: integer
-                      default: 7
-            status:
-              type: object
-              properties:
-                phase:
-                  type: string
-                  enum: ["Creating", "Running", "Upgrading", "Failed", "Deleting"]
-                primaryEndpoint:
-                  type: string
-                replicaEndpoints:
-                  type: array
-                  items:
-                    type: string
-                currentVersion:
-                  type: string
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                      status:
-                        type: string
-                      reason:
-                        type: string
-                      message:
-                        type: string
-                      lastTransitionTime:
-                        type: string
-                        format: date-time
+                observedGeneration:
+                  type: integer
+                  format: int64
       subresources:
         status: {}
         scale:
           specReplicasPath: .spec.replicas
-          statusReplicasPath: .status.readyReplicas
-```
-
-**Lógica central del Controller:**
-- **Gestión de estado basada en fases** (Creating, Running, Upgrading, Failed)
-- **Recuperación automática ante fallos** (Failover cuando Primary falla)
-- **Estrategia de actualización gradual** (actualizar primero las replicas y luego primary)
-- **Gestión de backups** (CronJob para backups programados)
-
-**Arquitectura:**
-```
-PostgresCluster CR
-       |
-       v
-   Controller
-       |
-       +---> StatefulSet (PostgreSQL pods)
-       +---> Service (Primary endpoint)
-       +---> Service (Replica endpoint)
-       +---> Secret (Credentials)
-       +---> ConfigMap (PostgreSQL config)
-       +---> CronJob (Backups)
-       +---> PodDisruptionBudget
+          statusReplicasPath: .status.replicas
+          labelSelectorPath: .status.selector
 ```
 
 </details>
 
-### 2. Explica cómo implementar un scheduler personalizado usando el scheduler framework.
+## 17. ¿Cómo debe limitarse un validating webhook de Deployment al entorno de producción?
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Implementación del plugin Scheduler:**
+Haz coincidir los deployments de apps/v1 CREATE/UPDATE y selecciona kubernetes.io/metadata.name: production. Configura un servidor/Service/ruta de validación real, el paquete CA, failurePolicy, timeoutSeconds, sideEffects y admissionReviewVersions. El controlador /mutate de la guía no es un validador de Deployment. Para un límite de réplicas por sí solo, usa su ejemplo de VAP/binding y haz coincidir tanto `deployments` como `deployments/scale`, de modo que las actualizaciones de HPA y `kubectl scale` no puedan omitir el límite.
 
-```go
-// Plugin implementing multiple extension points
-type CustomSchedulerPlugin struct {
-    handle framework.Handle
-}
+</details>
 
-// Implement PreFilter - check pod requirements
-func (p *CustomSchedulerPlugin) PreFilter(ctx context.Context, state *framework.CycleState, pod *v1.Pod) (*framework.PreFilterResult, *framework.Status) {
-    // Validate pod has required annotations
-    if _, ok := pod.Annotations["custom-scheduler/zone"]; !ok {
-        return nil, framework.NewStatus(framework.Unschedulable, "missing zone annotation")
-    }
-    return nil, framework.NewStatus(framework.Success, "")
-}
+## 18. Describe una secuencia de reconciliación sólida.
 
-// Implement Filter - exclude unsuitable nodes
-func (p *CustomSchedulerPlugin) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
-    requiredZone := pod.Annotations["custom-scheduler/zone"]
-    nodeZone := nodeInfo.Node().Labels["topology.kubernetes.io/zone"]
-    
-    if requiredZone != nodeZone {
-        return framework.NewStatus(framework.Unschedulable, "zone mismatch")
-    }
-    return framework.NewStatus(framework.Success, "")
-}
+<details>
+<summary>Mostrar respuesta</summary>
 
-// Implement Score - rank suitable nodes
-func (p *CustomSchedulerPlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-    nodeInfo, err := p.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
-    if err != nil {
-        return 0, framework.NewStatus(framework.Error, err.Error())
-    }
-    
-    // Score based on available resources
-    allocatable := nodeInfo.Node().Status.Allocatable
-    requested := nodeInfo.Requested
-    
-    cpuScore := calculateResourceScore(allocatable.Cpu(), requested.Cpu)
-    memScore := calculateResourceScore(allocatable.Memory(), requested.Memory)
-    
-    return (cpuScore + memScore) / 2, framework.NewStatus(framework.Success, "")
-}
+Trata NotFound como una finalización exitosa. Durante la eliminación, termina la limpieza idempotente antes de eliminar únicamente tu finalizer. Conserva un finalizer antes de crear recursos externos, comprueba la propiedad de los recursos secundarios y reconcilia los campos de tu propiedad. Reintenta los conflictos y aplica parches al status observado que haya cambiado. No etiquetes pseudocódigo como un controller ejecutable.
 
-// Register the plugin
-func New(_ runtime.Object, h framework.Handle) (framework.Plugin, error) {
-    return &CustomSchedulerPlugin{handle: h}, nil
-}
-```
+</details>
 
-**Configuración del Scheduler:**
+## 19. ¿Qué se necesita al diseñar un Operator de base de datos distribuida?
 
-```yaml
-apiVersion: kubescheduler.config.k8s.io/v1
-kind: KubeSchedulerConfiguration
-profiles:
-  - schedulerName: custom-scheduler
-    plugins:
-      preFilter:
-        enabled:
-          - name: CustomSchedulerPlugin
-      filter:
-        enabled:
-          - name: CustomSchedulerPlugin
-      score:
-        enabled:
-          - name: CustomSchedulerPlugin
-        disabled:
-          - name: NodeResourcesBalancedAllocation
-```
+<details>
+<summary>Mostrar respuesta</summary>
 
-**Resumen de puntos de extensión:**
+Además de los esquemas y la creación de cargas de trabajo, diseña el fencing del primario, el quórum, la sincronización de réplicas, las pruebas de recuperación de backup/WAL, el ciclo de vida del almacenamiento, la compatibilidad de migración y los fallos. Crear Services, StatefulSets y CronJobs no establece la seguridad de los datos.
 
-| Extension Point | Propósito | Cuándo se ejecuta |
-|----------------|---------|-----------|
-| PreFilter | Comprobaciones a nivel de Pod | Antes del filtrado |
-| Filter | Eliminación de nodes | Para cada node |
-| PostFilter | Manejar lo no programable | Cuando ningún node encaja |
-| PreScore | Preparar la puntuación | Antes de puntuar |
-| Score | Clasificación de nodes | Para nodes filtrados |
-| NormalizeScore | Normalización de puntuaciones | Después de todas las puntuaciones |
-| Reserve | Reserva de recursos | Después de seleccionar el node |
-| Permit | Aprobación final | Antes del binding |
-| PreBind | Acciones previas al binding | Antes del binding de API |
-| Bind | Binding real | Actualización del API server |
-| PostBind | Limpieza posterior al binding | Después del binding |
+</details>
+
+## 20. ¿Cómo debe implementarse y verificarse un scheduler personalizado?
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+Compila y registra plugins con las interfaces del framework de la versión menor exacta de Kubernetes. Alinea los nombres de profile y el schedulerName de Pod; prueba los fallos de Filter/Score y de reserva, permiso y binding. El YAML por sí solo no puede instalar un plugin. Considera primero node affinity para requisitos de zona simples.
 
 </details>
