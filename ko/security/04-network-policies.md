@@ -1517,6 +1517,24 @@ Standard 시작 모드는 새 Pod에 정책이 프로그래밍될 때까지 일�
 
 실제 제공되는 기능이지만 리소스 API 그룹은 **`networking.k8s.aws/v1alpha1`**입니다. 클러스터 범위 `ClusterNetworkPolicy`는 `tier`가 필수이며, 아래 네임스페이스 DNS egress 예제는 `ApplicationNetworkPolicy`를 사용합니다. EC2 Linux의 표준·관리자 VPC CNI 정책 지원을 모든 compute mode 지원으로 확대 해석하면 안 됩니다. DNS 규칙은 혼합 클러스터에서도 **Auto Mode가 시작한 EC2 인스턴스**에서만 적용됩니다.
 
+**Auto Mode 선행 조건:** 아래 정책을 적용하기 전에 Auto Mode Network Policy Controller를 활성화해야 합니다. EKS 관리형 `vpc-cni` add-on 갱신은 별도 경로이며 순수 Auto Mode 클러스터의 정책 집행을 활성화하지 않습니다. 필요한 설정은 ConfigMap `kube-system/amazon-vpc-cni`의 `data.enable-network-policy-controller: "true"`입니다. 아래 절차는 기존 data를 merge patch로 보존하고 객체가 없을 때만 생성하며 읽기·쓰기 실패 시 중단합니다. 실행 전 cluster context와 기존 설정을 검토하세요.
+
+```bash
+set -euo pipefail
+config="$(kubectl get configmap amazon-vpc-cni -n kube-system --ignore-not-found -o name)"
+if [ -n "$config" ]; then
+  kubectl patch configmap amazon-vpc-cni -n kube-system --type merge \
+    -p '{"data":{"enable-network-policy-controller":"true"}}'
+else
+  kubectl create configmap amazon-vpc-cni -n kube-system \
+    --from-literal=enable-network-policy-controller=true
+fi
+kubectl get configmap amazon-vpc-cni -n kube-system -o json \
+  | jq -e '.data["enable-network-policy-controller"] == "true"'
+```
+
+활성화 후 해당 `PolicyEndpoints` 객체를 확인하고 선택한 Auto Mode 노드에서 허용·차단 트래픽을 모두 검증합니다. 설정값 저장이나 정책 객체 생성 성공만으로 실제 집행을 보장할 수 없습니다. [Auto Mode network policy 설정](https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html)을 따르세요. 이번 문서 감사에서는 실제 클러스터 집행 시험을 수행하지 않았습니다.
+
 다음 Admin tier 예제는 namespace selector로 선택한 Pod에서 `isolated-demo`로 들어오는 통신을 거부하며, 같은 네임스페이스의 Pod도 포함합니다. 외부·host-network까지 포함하는 완전한 방화벽이나 DNS 허용 정책이 아닙니다. Admin Deny는 네임스페이스 NetworkPolicy가 덮어쓸 수 없습니다. 다른 action을 추가하기 전에 실제 설치 CRD를 확인합니다. 현재 AWS upstream controller 스키마는 허용 action을 `Accept`로 정의하지만 user guide 설명은 “Allow”라고 표현합니다.
 
 ```yaml

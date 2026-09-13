@@ -1490,6 +1490,24 @@ Standard startup mode can initially allow a new Pod until its policy is programm
 
 The feature is real, but its resources use **`networking.k8s.aws/v1alpha1`**. `ClusterNetworkPolicy` is cluster scoped and has a required `tier`; DNS-based egress uses `ApplicationNetworkPolicy` for the namespace example below. Standard/admin VPC CNI policy support on EC2 Linux does not mean every compute mode supports it. DNS rules are enforced only on **Auto Mode-launched EC2 instances**, including in a mixed cluster.
 
+**Auto Mode prerequisite:** enable its Network Policy Controller before applying the policies below. Updating an EKS-managed `vpc-cni` add-on is a separate path and does not enable policy enforcement for a pure Auto Mode cluster. The required setting is ConfigMap `kube-system/amazon-vpc-cni`, `data.enable-network-policy-controller: "true"`. The workflow below preserves other ConfigMap data with a merge patch, creates only when absent, and stops on a failed read or write. Review the cluster context and existing configuration before running it.
+
+```bash
+set -euo pipefail
+config="$(kubectl get configmap amazon-vpc-cni -n kube-system --ignore-not-found -o name)"
+if [ -n "$config" ]; then
+  kubectl patch configmap amazon-vpc-cni -n kube-system --type merge \
+    -p '{"data":{"enable-network-policy-controller":"true"}}'
+else
+  kubectl create configmap amazon-vpc-cni -n kube-system \
+    --from-literal=enable-network-policy-controller=true
+fi
+kubectl get configmap amazon-vpc-cni -n kube-system -o json \
+  | jq -e '.data["enable-network-policy-controller"] == "true"'
+```
+
+After enabling it, inspect the corresponding `PolicyEndpoints` objects and test both allowed and denied traffic on the selected Auto Mode nodes. A stored flag or an accepted policy object is not proof of enforcement. See the [Auto Mode network policy setup](https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html). No cluster enforcement test was performed for this documentation audit.
+
 This Admin-tier example denies incoming traffic from namespace-selected Pods to `isolated-demo`, including Pods in that same namespace. It is not a complete external/host-network firewall or a DNS allow policy. Admin Deny cannot be overridden by a namespace NetworkPolicy. Review the actual installed CRD before adding other actions: the current upstream AWS controller schema names its permitting action `Accept`, while the user-guide prose uses “Allow”.
 
 ```yaml

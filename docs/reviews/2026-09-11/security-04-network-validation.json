@@ -45,7 +45,8 @@
     "Replaced bare PostgreSQL deployment and aws-node deletion shortcut with explicit Pod-SG prerequisites and render-only CNI chaining. Clarified SG union/stateful returns, NACL stateless ephemeral returns and platform/SNAT limits.",
     "Replaced false-PASS/fixed-Pod-delete test script with existing-Pod positive control and UNKNOWN/INCONCLUSIVE outcomes; timeout is not policy-drop proof. Inventory no longer hides API errors or misclassifies empty/allow-all/directional rules.",
     "Distinguished Hubble visualization from policy editing, observed verdicts from delivery proof, licensed Calico UI and intrusive scanning from policy validation; archived Weave support is historical.",
-    "Reconciled all12quizquestions perlocale, removed Q7 duplicate correct answer, qualified scope/identity/DNS and preserved all156priorIDs with twoQ5aliases. LastUpdatedheaders record substantiveSeptember13verification."
+    "Reconciled all12quizquestions perlocale, removed Q7 duplicate correct answer, qualified scope/identity/DNS and preserved all156priorIDs with twoQ5aliases. LastUpdatedheaders record substantiveSeptember13verification.",
+    "NET-R1-001 fixed: Auto Mode Network Policy Controller enablement is separate from managed VPC CNI add-on configuration; documented exact ConfigMap flag and preserving/fail-stop shell workflow."
   ],
   "sources": [
     "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
@@ -75,8 +76,8 @@
   "artifacts": [
     {
       "path": "en/security/04-network-policies.md",
-      "sha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8",
-      "lines": 1842
+      "sha256": "295f2453e7a57702bf57c29d66df3d7dc0dcbf64fd18a97a994615c7eb791a6b",
+      "lines": 1860
     },
     {
       "path": "en/quizzes/security/04-network-policies-quiz.md",
@@ -85,8 +86,8 @@
     },
     {
       "path": "ko/security/04-network-policies.md",
-      "sha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d",
-      "lines": 1851
+      "sha256": "63f7e4d7acf5c4b60f3401f4675f97691ad302bcc55ce33b82f4652942478dfd",
+      "lines": 1889
     },
     {
       "path": "ko/quizzes/security/04-network-policies-quiz.md",
@@ -1906,5 +1907,242 @@
         }
       ]
     }
+  },
+  "autoModeFollowup": {
+    "baseCommit": "c257528d4bd34012a969d92146bac08973b95e11",
+    "changes": [
+      {
+        "path": "en/security/04-network-policies.md",
+        "previousSha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8",
+        "sha256": "295f2453e7a57702bf57c29d66df3d7dc0dcbf64fd18a97a994615c7eb791a6b"
+      },
+      {
+        "path": "ko/security/04-network-policies.md",
+        "previousSha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d",
+        "sha256": "63f7e4d7acf5c4b60f3401f4675f97691ad302bcc55ce33b82f4652942478dfd"
+      }
+    ],
+    "source": "https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html",
+    "sourceSHA256": "8eaf421023b5ae4c6d9f7bf4ad7c6bda36999abca5cbf1faf6568233648a0240",
+    "shell": {
+      "status": "passed",
+      "cases": [
+        {
+          "case": "existing",
+          "exit": 0,
+          "commands": [
+            [
+              "get",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "--ignore-not-found",
+              "-o",
+              "name"
+            ],
+            [
+              "patch",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "--type",
+              "merge",
+              "-p",
+              "{\"data\":{\"enable-network-policy-controller\":\"true\"}}"
+            ],
+            [
+              "get",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "-o",
+              "json"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "case": "absent",
+          "exit": 0,
+          "commands": [
+            [
+              "get",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "--ignore-not-found",
+              "-o",
+              "name"
+            ],
+            [
+              "create",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "--from-literal=enable-network-policy-controller=true"
+            ],
+            [
+              "get",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "-o",
+              "json"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "case": "read-error",
+          "exit": 63,
+          "commands": [
+            [
+              "get",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "--ignore-not-found",
+              "-o",
+              "name"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "case": "write-error",
+          "exit": 42,
+          "commands": [
+            [
+              "get",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "--ignore-not-found",
+              "-o",
+              "name"
+            ],
+            [
+              "patch",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "--type",
+              "merge",
+              "-p",
+              "{\"data\":{\"enable-network-policy-controller\":\"true\"}}"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "case": "create-error",
+          "exit": 43,
+          "commands": [
+            [
+              "get",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "--ignore-not-found",
+              "-o",
+              "name"
+            ],
+            [
+              "create",
+              "configmap",
+              "amazon-vpc-cni",
+              "-n",
+              "kube-system",
+              "--from-literal=enable-network-policy-controller=true"
+            ]
+          ],
+          "passed": true
+        }
+      ],
+      "scriptSHA256": "17607a65a221f67e438dd43d76bc779d3485216b0ad027694630c504a53dc643",
+      "scope": "Published Bash workflow with local kubectl stubs; real jq; no cluster/controller execution."
+    },
+    "markdown": {
+      "status": "passed",
+      "files": [
+        {
+          "path": "en/security/04-network-policies.md",
+          "originalLines": 1842,
+          "originalHash": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8",
+          "sha256": "295f2453e7a57702bf57c29d66df3d7dc0dcbf64fd18a97a994615c7eb791a6b",
+          "originalIds": 64,
+          "aliases": [],
+          "missingOld": [],
+          "missingLinks": [],
+          "duplicateIds": [],
+          "errors": [],
+          "links": [],
+          "lastUpdated": "2026-09-13",
+          "questions": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            1,
+            2,
+            3,
+            4
+          ],
+          "answers": [],
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "originalLines": 1871,
+          "originalHash": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d",
+          "sha256": "63f7e4d7acf5c4b60f3401f4675f97691ad302bcc55ce33b82f4652942478dfd",
+          "originalIds": 74,
+          "aliases": [],
+          "missingOld": [],
+          "missingLinks": [],
+          "duplicateIds": [],
+          "errors": [],
+          "links": [],
+          "lastUpdated": "2026-09-13",
+          "questions": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            1,
+            2,
+            3,
+            4
+          ],
+          "answers": [],
+          "passed": true
+        }
+      ],
+      "quizParity": true,
+      "scope": "Actual VitePress/Vue compile, current fragments, original anchors and 10-question parity; no site build."
+    },
+    "scope": "Two prerequisite insertions. Existing policy examples and quizzes unchanged; five local Bash/kubectl-stub/jq cases verify preservation and stop-on-error behavior. No cluster enforcement tested."
   }
 }
