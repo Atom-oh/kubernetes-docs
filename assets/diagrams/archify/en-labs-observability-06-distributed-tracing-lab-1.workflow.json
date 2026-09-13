@@ -30,7 +30,7 @@
           "metric",
           "exemplar"
         ],
-        "note": "The diamond markers on the p99 latency graph are exemplars; hovering one shows the TraceID of that request."
+        "note": "An exemplar is a representative observation, not necessarily the request at the exact p99 boundary."
       },
       {
         "id": "trace",
@@ -39,7 +39,7 @@
           "exemplar",
           "trace"
         ],
-        "note": "Clicking the exemplar marker jumps from the aggregated metric straight to that single request's trace in Tempo."
+        "note": "Verify that sampling and retention left the trace available."
       },
       {
         "id": "logs",
@@ -147,10 +147,11 @@
     },
     {
       "dot": "cyan",
-      "title": "Prometheus prerequisite",
+      "title": "Verify ingestion, storage and links",
       "items": [
-        "Add exemplar-storage to enableFeatures",
-        "Cap stored exemplars with exemplars.maxSize (e.g. 100000)"
+        "Check exemplar producer → exporter → storage",
+        "Verify actual Prometheus/chart settings",
+        "Match trace ID, datasource UID and retention"
       ]
     }
   ]

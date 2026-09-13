@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5102,11 +5105,11 @@
         </g>
         </g>
 
-        <g data-edge-from="operator" data-edge-to="grafana" data-edge-label="느린 Span 식별 (DB query 800ms)" data-edge-key="6" data-edge-id="slow-span">
+        <g data-edge-from="operator" data-edge-to="grafana" data-edge-label="느린 span과 겹친 시간 확인" data-edge-key="6" data-edge-id="slow-span">
           <path data-composition-edge-from="operator" data-composition-edge-to="grafana" data-composition-edge-id="slow-span" data-composition-points="144.5,410;317.25,410" d="M 144.5 410 L 317.25 410" class="a-default" data-animate="edge" style="--step:6" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="144.27499999999998" y="390" width="173.20000000000002" height="16" rx="3" class="c-mask"/>
-          <text x="230.875" y="400" class="t-backend" font-size="9" text-anchor="middle">느린 Span 식별 (DB query 800ms)</text>
+          <rect x="157.27499999999998" y="390" width="147.20000000000002" height="16" rx="3" class="c-mask"/>
+          <text x="230.875" y="400" class="t-backend" font-size="9" text-anchor="middle">느린 span과 겹친 시간 확인</text>
         </g>
         </g>
 
@@ -5132,7 +5135,7 @@
           <rect x="517.775" y="535" width="173.20000000000002" height="16" rx="3" class="c-mask"/>
           <text x="604.375" y="545" class="t-muted" font-size="9" text-anchor="middle">관련 에러/슬로우 쿼리 로그 표시</text>
         </g>
-        <text data-detail="fine" x="343.25" y="573" class="t-dim" font-size="7">운영자가 근본 원인 식별 — missing index</text>
+        <text data-detail="fine" x="343.25" y="573" class="t-dim" font-size="7">query plan·lock·pool 지표와 대조</text>
         </g>
 
         <!-- Segment Labels -->
@@ -5145,8 +5148,8 @@
           <text x="62" y="281" class="t-dim" font-size="9" font-weight="600">트레이스</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="2">
-          <rect x="56" y="426" width="175.20000000000002" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="439" class="t-dim" font-size="9" font-weight="600">로그 → 근본 원인: missing index</text>
+          <rect x="56" y="448" width="97.2" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="461" class="t-dim" font-size="9" font-weight="600">로그 → 가설 검증</text>
         </g>
 
         <!-- Participants -->
@@ -7206,7 +7209,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

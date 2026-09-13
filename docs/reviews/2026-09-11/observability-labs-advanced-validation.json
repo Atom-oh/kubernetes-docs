@@ -1,0 +1,1410 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T05:50:47.970761+00:00",
+  "scope": "EightKorean/EnglishPart4loadtesting/Part6tracingguidesandquizzes;5runnableloadexamples;6diagrams;sharedmobileviewerfix",
+  "originalFiles": [
+    {
+      "path": "ko/labs/observability/04-load-testing-scaling-lab.md",
+      "lines": 677,
+      "sha256": "3680cbcfb6a4fa2d2bfc5d95d28ffa2dd445f302e51f9cf2396dba8899cef5d7"
+    },
+    {
+      "path": "ko/labs/observability/06-distributed-tracing-lab.md",
+      "lines": 715,
+      "sha256": "02b0b99610688a052046f457c77039b0e6caa6571b2324087ae9eb489a2dfe54"
+    },
+    {
+      "path": "ko/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
+      "lines": 175,
+      "sha256": "9693c631421c6c7355237004711ffe5cb464ebb2651b538fb9f89e5a1f9b34b7"
+    },
+    {
+      "path": "ko/quizzes/observability/labs/06-distributed-tracing-quiz.md",
+      "lines": 175,
+      "sha256": "92b8ee8bca7c5b819c8d3c4796cea5c020216ade751670bda9bda6af65fb95c7"
+    },
+    {
+      "path": "en/labs/observability/04-load-testing-scaling-lab.md",
+      "lines": 617,
+      "sha256": "923759ad15de3ae4e0e1b857e93af9e2a01a2374ecf3c69b668e449a5de37733"
+    },
+    {
+      "path": "en/labs/observability/06-distributed-tracing-lab.md",
+      "lines": 521,
+      "sha256": "18b398e756652c537cfc2be5fb2940476caf245a25ee398b6c3e5c7c0c04c212"
+    },
+    {
+      "path": "en/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
+      "lines": 185,
+      "sha256": "44a0aa7d6b06fdd866c28b590d2b173e717c1c6ed030a0becac1d74d7cb73059"
+    },
+    {
+      "path": "en/quizzes/observability/labs/06-distributed-tracing-quiz.md",
+      "lines": 185,
+      "sha256": "2f3b86af1d559ef7dc98b40d03c081b10e94de9ea157fc048d6b1d7c07872634"
+    }
+  ],
+  "originalLines": 3250,
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/labs/observability/04-load-testing-scaling-lab.md",
+        "sha256": "eae2e1d899de9038bca29de63405458f324698056767ab3a984a9860bad91191",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-부하-테스트-및-스케일링"
+          },
+          {
+            "tag": "h2",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "smoke-test"
+          },
+          {
+            "tag": "h2",
+            "id": "load-stages"
+          },
+          {
+            "tag": "h2",
+            "id": "locust"
+          },
+          {
+            "tag": "h2",
+            "id": "observe-scaling"
+          },
+          {
+            "tag": "h2",
+            "id": "dashboard-queries"
+          },
+          {
+            "tag": "h2",
+            "id": "scale-in"
+          },
+          {
+            "tag": "h2",
+            "id": "cleanup"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료와-검증-범위"
+          }
+        ],
+        "renderedIds": [
+          "part-4-부하-테스트-및-스케일링",
+          "grafana-dashboard-패널",
+          "grafana-확인-항목",
+          "step-4-1-k6-부하-시나리오",
+          "step-4-2-locust-배포-대안",
+          "step-4-3-부하-실행-중-관찰-항목",
+          "step-4-4-cool-down-스케일-인",
+          "step-4-5-스케일링-대시보드-패널-구성",
+          "검증-verification",
+          "관찰-포인트",
+          "다음-단계",
+          "부하-테스트-단계",
+          "부하-테스트-및-스케일링-타임라인",
+          "스케일-아웃-인-이벤트-확인",
+          "스케일-인-동작",
+          "예상-결과",
+          "참조-문서",
+          "학습-목표",
+          "prerequisites",
+          "smoke-test",
+          "load-stages",
+          "locust",
+          "observe-scaling",
+          "dashboard-queries",
+          "scale-in",
+          "cleanup",
+          "참고-자료와-검증-범위"
+        ]
+      },
+      {
+        "path": "ko/labs/observability/06-distributed-tracing-lab.md",
+        "sha256": "22992d2bb2b1df19af33dab6071f5166bd3bd41987d7b656c4226db7e8907505",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-6-분산-추적-분석"
+          },
+          {
+            "tag": "h2",
+            "id": "traceql"
+          },
+          {
+            "tag": "h2",
+            "id": "service-graph"
+          },
+          {
+            "tag": "h2",
+            "id": "waterfall"
+          },
+          {
+            "tag": "h2",
+            "id": "correlation"
+          },
+          {
+            "tag": "h2",
+            "id": "exemplars"
+          },
+          {
+            "tag": "h2",
+            "id": "slo"
+          },
+          {
+            "tag": "h2",
+            "id": "cleanup"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위와-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-6-분산-추적-분석",
+          "exemplar-워크플로우",
+          "full-drill-down-테스트",
+          "logs-→-traces-연동",
+          "span-유형별-병목-분류",
+          "step-6-1-traceql-트레이스-검색",
+          "step-6-2-서비스-그래프-service-graph",
+          "step-6-3-지연-구간-식별-워크플로우",
+          "step-6-4-loki와-tempo-상관관계",
+          "step-6-5-exemplar-활용",
+          "step-6-6-종합-대시보드-구성",
+          "step-6-7-정리-cleanup",
+          "tempo-service-graph-활성화",
+          "traceql-기본-문법",
+          "traces-→-logs-연동",
+          "검증-verification",
+          "검증-체크리스트",
+          "다음-단계-권장",
+          "대시보드-패널-구성",
+          "분석-단계",
+          "분석-워크플로우",
+          "서비스-그래프-해석",
+          "시리즈-목차",
+          "실습-완료",
+          "정리-순서",
+          "정리-확인",
+          "주요-검색-쿼리",
+          "참조-문서",
+          "학습-내용-요약",
+          "학습-목표",
+          "traceql",
+          "service-graph",
+          "waterfall",
+          "correlation",
+          "exemplars",
+          "slo",
+          "cleanup",
+          "검증-범위와-참고-자료"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
+        "sha256": "24ad4c10c0d1daf46d3c76f9f1477235e5d2cf7d8c2c6c2d078385cac3d99734",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-part-4-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-part-4-퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/labs/06-distributed-tracing-quiz.md",
+        "sha256": "a3eda1b4de7b68c4b50426739fd711e5d93e19b50342b634299b1f0e878c9552",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-part-6-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-part-6-퀴즈"
+        ]
+      },
+      {
+        "path": "en/labs/observability/04-load-testing-scaling-lab.md",
+        "sha256": "43d1a37736a8f1ef587555d1d66f8a9335a3d54b5eefac32566a6a01f528f3df",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-load-testing-and-autoscaling"
+          },
+          {
+            "tag": "h2",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "smoke-test"
+          },
+          {
+            "tag": "h2",
+            "id": "load-stages"
+          },
+          {
+            "tag": "h2",
+            "id": "locust"
+          },
+          {
+            "tag": "h2",
+            "id": "observe-scaling"
+          },
+          {
+            "tag": "h2",
+            "id": "dashboard-queries"
+          },
+          {
+            "tag": "h2",
+            "id": "scale-in"
+          },
+          {
+            "tag": "h2",
+            "id": "cleanup"
+          },
+          {
+            "tag": "h2",
+            "id": "references-and-validation-scope"
+          }
+        ],
+        "renderedIds": [
+          "part-4-load-testing-and-autoscaling",
+          "exercise-1-k6-load-test-scenario",
+          "exercise-2-locust-alternative-python-based",
+          "exercise-3-observe-autoscaling-during-load",
+          "exercise-4-cool-down-and-scale-in-observation",
+          "exercise-5-grafana-scaling-dashboard",
+          "key-observations",
+          "learning-objectives",
+          "load-testing-and-scaling-timeline",
+          "next-steps",
+          "references",
+          "steps",
+          "steps-1",
+          "steps-2",
+          "steps-3",
+          "steps-4",
+          "summary",
+          "troubleshooting",
+          "verification",
+          "prerequisites",
+          "smoke-test",
+          "load-stages",
+          "locust",
+          "observe-scaling",
+          "dashboard-queries",
+          "scale-in",
+          "cleanup",
+          "references-and-validation-scope"
+        ]
+      },
+      {
+        "path": "en/labs/observability/06-distributed-tracing-lab.md",
+        "sha256": "79b821e756b668354df32d9f299f0eb52c3e64324bbf46e5b4f5bf0e592c5bb6",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-6-distributed-tracing-analysis"
+          },
+          {
+            "tag": "h2",
+            "id": "traceql"
+          },
+          {
+            "tag": "h2",
+            "id": "service-graph"
+          },
+          {
+            "tag": "h2",
+            "id": "waterfall"
+          },
+          {
+            "tag": "h2",
+            "id": "correlation"
+          },
+          {
+            "tag": "h2",
+            "id": "exemplars"
+          },
+          {
+            "tag": "h2",
+            "id": "slo"
+          },
+          {
+            "tag": "h2",
+            "id": "cleanup"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope-and-references"
+          }
+        ],
+        "renderedIds": [
+          "part-6-distributed-tracing-analysis",
+          "cleanup-steps-table",
+          "drill-down-analysis-workflow",
+          "exercise-1-traceql-trace-search",
+          "exercise-2-service-graph-visualization",
+          "exercise-3-latency-identification-workflow",
+          "exercise-4-loki-tempo-correlation",
+          "exercise-5-exemplar-usage",
+          "exercise-6-comprehensive-dashboard-setup",
+          "final-verification-checklist",
+          "full-cleanup-script",
+          "key-takeaways",
+          "learning-objectives",
+          "next-steps",
+          "prerequisites",
+          "references",
+          "steps",
+          "steps-1",
+          "steps-2",
+          "steps-3",
+          "steps-4",
+          "steps-5",
+          "summary",
+          "traceql-query-reference",
+          "verification",
+          "traceql",
+          "service-graph",
+          "waterfall",
+          "correlation",
+          "exemplars",
+          "slo",
+          "cleanup",
+          "validation-scope-and-references"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
+        "sha256": "0ff1bbf56232cf2325a4000373a37872a091e7fec72a0428e17eaeeffa2c3f16",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-part-4-quiz"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-part-4-quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/labs/06-distributed-tracing-quiz.md",
+        "sha256": "088c05e34cc3f6c3c776f9e0a1840bf48402065fcbca07750a11cba724523c5a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-part-6-quiz"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-part-6-quiz"
+        ]
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "ko/labs/observability/04-load-testing-scaling-lab.md",
+      "sha256": "eae2e1d899de9038bca29de63405458f324698056767ab3a984a9860bad91191",
+      "bytes": 10660
+    },
+    {
+      "path": "ko/labs/observability/06-distributed-tracing-lab.md",
+      "sha256": "22992d2bb2b1df19af33dab6071f5166bd3bd41987d7b656c4226db7e8907505",
+      "bytes": 13835
+    },
+    {
+      "path": "ko/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
+      "sha256": "24ad4c10c0d1daf46d3c76f9f1477235e5d2cf7d8c2c6c2d078385cac3d99734",
+      "bytes": 4947
+    },
+    {
+      "path": "ko/quizzes/observability/labs/06-distributed-tracing-quiz.md",
+      "sha256": "a3eda1b4de7b68c4b50426739fd711e5d93e19b50342b634299b1f0e878c9552",
+      "bytes": 4931
+    },
+    {
+      "path": "en/labs/observability/04-load-testing-scaling-lab.md",
+      "sha256": "43d1a37736a8f1ef587555d1d66f8a9335a3d54b5eefac32566a6a01f528f3df",
+      "bytes": 9069
+    },
+    {
+      "path": "en/labs/observability/06-distributed-tracing-lab.md",
+      "sha256": "79b821e756b668354df32d9f299f0eb52c3e64324bbf46e5b4f5bf0e592c5bb6",
+      "bytes": 11613
+    },
+    {
+      "path": "en/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
+      "sha256": "0ff1bbf56232cf2325a4000373a37872a091e7fec72a0428e17eaeeffa2c3f16",
+      "bytes": 4670
+    },
+    {
+      "path": "en/quizzes/observability/labs/06-distributed-tracing-quiz.md",
+      "sha256": "088c05e34cc3f6c3c776f9e0a1840bf48402065fcbca07750a11cba724523c5a",
+      "bytes": 4713
+    },
+    {
+      "path": "examples/labs/observability/load-test/README.md",
+      "sha256": "046e18b43665702bb3cf0b42bbab7cb8310396bd317d01fc2209f807a8106538",
+      "bytes": 2657
+    },
+    {
+      "path": "examples/labs/observability/load-test/k6-job.yaml",
+      "sha256": "de8680241651eef1f284fd05f35d17f1062f1101e9ae2fb299b1fd15cf340f8f",
+      "bytes": 1578
+    },
+    {
+      "path": "examples/labs/observability/load-test/k6-scenario.js",
+      "sha256": "90d8a353d9ed7ce7068c17f7c6ab12b677321df41c206d2c52ed4e2a88c8bce2",
+      "bytes": 3339
+    },
+    {
+      "path": "examples/labs/observability/load-test/locustfile.py",
+      "sha256": "e80280cceadebfb7117ea484f312f1eac5339c86d766b350a4d4c351be4c199a",
+      "bytes": 2328
+    },
+    {
+      "path": "examples/labs/observability/load-test/requirements.txt",
+      "sha256": "fb784ce57adbc3a8b1c002a21dd4c35d76596ffedce9744a36a91702f40e1316",
+      "bytes": 15
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-04-load-testing-scaling-lab-0.sequence.json",
+      "sha256": "8ea751b2b6d17e48d2593c35a16ba0b2487753a51e8a3133bd2d5f731386ed03",
+      "bytes": 4292
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-04-load-testing-scaling-lab-0.html",
+      "sha256": "f3df42916f25e514926b94dda2b1b2024d8f511f0b9525184c496446d5accc29",
+      "bytes": 715580
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-04-load-testing-scaling-lab-0.png",
+      "sha256": "80aa975caad2b279f81942f376b8a1ad3eb3e9ee2d399e0b250fa6359e8507b0",
+      "bytes": 136102
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-06-distributed-tracing-lab-0.sequence.json",
+      "sha256": "994bb3271c4ca20d567728177c376a93e541ed9928187cc848d5cb8f268a68c3",
+      "bytes": 3289
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-06-distributed-tracing-lab-0.html",
+      "sha256": "235c1bee16450df8cc33166c700e984191592d8ae7e80224edce9afec4637348",
+      "bytes": 710906
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-0.png",
+      "sha256": "09969d0bd79f6ea36dbdc0bc245b85d1fb3366293c5bbe320ece1a94bba46811",
+      "bytes": 114913
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-06-distributed-tracing-lab-1.workflow.json",
+      "sha256": "01c7ff32120e87ae0c50c3e24afb63f2a19ba206a4e14b2221cb3decbd992777",
+      "bytes": 3414
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-06-distributed-tracing-lab-1.html",
+      "sha256": "64effbccc0d294a9529dc89570685f1316bc052b2b966ad125d4f1e06b16a2ad",
+      "bytes": 704930
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-1.png",
+      "sha256": "d548b7a7d1c472df5b7f70be6326b4893eef750ae8dc660c624a72119156e0d0",
+      "bytes": 135409
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-04-load-testing-scaling-lab-0.sequence.json",
+      "sha256": "b6116db2078a15b911a5d13652424adc212cf63d6eb079b6d92fb55b34b454d4",
+      "bytes": 4657
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-04-load-testing-scaling-lab-0.html",
+      "sha256": "ddcb48196ae711c7cc8d782a2981a7865ca01e2632cbbda3633ac5e423476e82",
+      "bytes": 715739
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-04-load-testing-scaling-lab-0.png",
+      "sha256": "398ec2dcadf6560fd1552dd0ce27427f8569389dff8a735f96c04c42ba96f83f",
+      "bytes": 125849
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-06-distributed-tracing-lab-0.sequence.json",
+      "sha256": "d011f6658fd28212d5e82a774164899147f106f166bcf0e9012cd374adcf86b4",
+      "bytes": 3576
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-06-distributed-tracing-lab-0.html",
+      "sha256": "bc2b2a741387ea8ffbc1e02cb2cbf101ef547877bebf8d56cc2c0f93000d1c63",
+      "bytes": 711061
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-06-distributed-tracing-lab-0.png",
+      "sha256": "a4928e16b0680cf8bd9d89b53424d4f842b2bfd4f038294c6d5169c5343d10a2",
+      "bytes": 102543
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-06-distributed-tracing-lab-1.workflow.json",
+      "sha256": "72aa6fa413f398ee1eedbc61fecc4272116fc87fd10798048078a9efb75de4de",
+      "bytes": 3543
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-06-distributed-tracing-lab-1.html",
+      "sha256": "70453e407b036d70615edcc58c70ed0c8eacaa293284ad3b2f81532dd2b9fcd9",
+      "bytes": 705167
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-06-distributed-tracing-lab-1.png",
+      "sha256": "bf423a10321a4493ccda697e68cc2437f1ba18f0c667c459a4ef304ea3af1ec7",
+      "bytes": 131987
+    },
+    {
+      "path": "scripts/lib/archmap-motion.mjs",
+      "sha256": "b125d66cd400cd1c4da73d3af82af16ac38261fb8c3ccf9ab4318ba7907334c8",
+      "bytes": 1979
+    }
+  ],
+  "native": {
+    "k6": {
+      "binary": "k6 v2.2.0",
+      "scriptSha256": "90d8a353d9ed7ce7068c17f7c6ab12b677321df41c206d2c52ed4e2a88c8bce2",
+      "cases": [
+        {
+          "case": "success",
+          "exit": 0,
+          "flowFailureRate": 0,
+          "requests": 6,
+          "passed": true
+        },
+        {
+          "case": "invalid-json",
+          "exit": 99,
+          "flowFailureRate": 1,
+          "requests": 2,
+          "passed": true
+        },
+        {
+          "case": "missing-id",
+          "exit": 99,
+          "flowFailureRate": 1,
+          "requests": 2,
+          "passed": true
+        },
+        {
+          "case": "order-error",
+          "exit": 99,
+          "flowFailureRate": 1,
+          "requests": 2,
+          "passed": true
+        },
+        {
+          "case": "payment-declined",
+          "exit": 99,
+          "flowFailureRate": 1,
+          "requests": 6,
+          "passed": true
+        },
+        {
+          "case": "wrong-read-id",
+          "exit": 99,
+          "flowFailureRate": 1,
+          "requests": 6,
+          "passed": true
+        }
+      ],
+      "limits": "Loopback synthetic API only; no real service, cloud, scaling or stress test executed."
+    },
+    "locust": {
+      "binary": "Locust2.46.5/Python3.12",
+      "scriptSha256": "e80280cceadebfb7117ea484f312f1eac5339c86d766b350a4d4c351be4c199a",
+      "cases": [
+        {
+          "case": "success",
+          "exit": 0,
+          "requests": 9,
+          "passed": true
+        },
+        {
+          "case": "invalid-json",
+          "exit": 99,
+          "requests": 3,
+          "passed": true
+        },
+        {
+          "case": "missing-id",
+          "exit": 99,
+          "requests": 3,
+          "passed": true
+        },
+        {
+          "case": "order-error",
+          "exit": 99,
+          "requests": 3,
+          "passed": true
+        },
+        {
+          "case": "payment-declined",
+          "exit": 99,
+          "requests": 9,
+          "passed": true
+        },
+        {
+          "case": "wrong-read-id",
+          "exit": 99,
+          "requests": 9,
+          "passed": true
+        }
+      ],
+      "limits": "Loopback synthetic API only; no real service, cloud, scaling or stress test executed."
+    },
+    "traceql": {
+      "status": "passed",
+      "tempoVersion": "3.0.3",
+      "releaseCommit": "1900ed7bb5cad1a3edc285783d7d4ac4278337dc",
+      "parser": "actualgithub.com/grafana/tempo/pkg/traceql.Parse",
+      "cases": [
+        {
+          "query": "{ resource.service.name = \"order-service\" && span:duration > 1s }",
+          "valid": true
+        },
+        {
+          "query": "{ span.http.response.status_code >= 500 }",
+          "valid": true
+        },
+        {
+          "query": "{ span.db.system.name = \"postgresql\" && span:duration > 100ms }",
+          "valid": true
+        },
+        {
+          "query": "{ resource.service.name = \"api-gateway\" } >> { resource.service.name = \"order-service\" }",
+          "valid": true
+        },
+        {
+          "query": "{ span.messaging.system = \"aws_sqs\" && span.messaging.operation.type = \"send\" }",
+          "valid": true
+        },
+        {
+          "query": "{ span:status = error } | select(resource.service.name, span.http.response.status_code, span:duration)",
+          "valid": true
+        },
+        {
+          "query": "{ duration > 1s } | sort(duration) | limit(10)",
+          "valid": false
+        },
+        {
+          "query": "{ status = error } | order by duration desc | limit 20",
+          "valid": false
+        },
+        {
+          "query": "{ duration > p99 }",
+          "valid": false
+        },
+        {
+          "query": "{ span:kind = server && span.http.response.status_code >= 500 }",
+          "valid": true
+        },
+        {
+          "query": "{ trace:duration > 2s && resource.service.name = \"order-service\" }",
+          "valid": true
+        },
+        {
+          "query": "{ resource.service.name = \"order-service\" } >> { span.db.system.name = \"postgresql\" }",
+          "valid": true
+        },
+        {
+          "query": "{ resource.service.name = \"payment-service\" && (span:status = error || span:duration > 1s) }",
+          "valid": true
+        },
+        {
+          "query": "{ span.db.system.name = \"postgresql\" } | select(span.db.query.text, span:duration)",
+          "valid": true
+        },
+        {
+          "query": "{ span.http.request.method = \"POST\" && span.http.route = \"/orders\" }",
+          "valid": true
+        }
+      ],
+      "sourceSha256": "312ea7586fe4dd6cdb83ae55d4613b0caf70685146e92c8cd7bedeccc94a9d6b",
+      "limits": "Parser only; no Tempo server/data ingestion/search execution.",
+      "scope": "12 accepted and3 rejected queries with actualTempo3.0.3parser; noTempo server"
+    },
+    "logql": {
+      "status": "passed",
+      "loki": "3.7.7",
+      "cases": [
+        {
+          "query": "{service_name=\"order-service\"} | json | level=\"ERROR\"",
+          "formatStatus": 200,
+          "queryStatus": 200,
+          "matchedSyntheticLines": 1,
+          "passed": true
+        },
+        {
+          "query": "{service_name=\"order-service\"} | json | trace_id=\"0123456789abcdef0123456789abcdef\"",
+          "formatStatus": 200,
+          "queryStatus": 200,
+          "matchedSyntheticLines": 1,
+          "passed": true
+        }
+      ],
+      "limits": "Ephemeral loopback native Loki with 2 synthetic log lines; no cloud, production data or Grafana link execution."
+    },
+    "job": {
+      "status": "passed",
+      "kubernetes": "1.36.2",
+      "source": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/api/openapi-spec/swagger.json",
+      "schemaSha256": "dcede2063da1d7ad62ecb5af8adb6d7fabd0b52385a7fa0048afb491dac90450",
+      "file": "examples/labs/observability/load-test/k6-job.yaml",
+      "sha256": "de8680241651eef1f284fd05f35d17f1062f1101e9ae2fb299b1fd15cf340f8f",
+      "unknownKeysRejected": true,
+      "limits": "OpenAPI shape only; not admission/image pull/Pod execution."
+    }
+  },
+  "prometheus": {
+    "version": "3.14",
+    "assertions": 4,
+    "passed": true,
+    "scope": "Runningphasevaluefilter,totalvsreadyreplicas,constantnodecreationtimestamp",
+    "initialExecutionScope": "Original4assertionsremainhistoricalevidence;reviewFixes.prometheusrecords7currentedgecaseassertions."
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 751,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 751,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 751,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59715,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 597,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 597,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 597,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55133,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 901,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 901,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 901,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47680,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 555,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 555,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 555,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59327,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 409,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 409,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 409,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54886,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 673,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 673,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 673,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47402,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "18caseson6locallygeneratedviewers; motion/reduced-motion/visibility/theme/guided controls and6SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "visualInspection": {
+    "pngFiles": 6,
+    "passed": true,
+    "mobileToolbarScreenshotInspected": true
+  },
+  "legacyAnchors": [
+    {
+      "path": "ko/labs/observability/04-load-testing-scaling-lab.md",
+      "aliases": [
+        "grafana-dashboard-패널",
+        "grafana-확인-항목",
+        "step-4-1-k6-부하-시나리오",
+        "step-4-2-locust-배포-대안",
+        "step-4-3-부하-실행-중-관찰-항목",
+        "step-4-4-cool-down-스케일-인",
+        "step-4-5-스케일링-대시보드-패널-구성",
+        "검증-verification",
+        "관찰-포인트",
+        "다음-단계",
+        "부하-테스트-단계",
+        "부하-테스트-및-스케일링-타임라인",
+        "스케일-아웃-인-이벤트-확인",
+        "스케일-인-동작",
+        "예상-결과",
+        "참조-문서",
+        "학습-목표"
+      ]
+    },
+    {
+      "path": "en/labs/observability/04-load-testing-scaling-lab.md",
+      "aliases": [
+        "exercise-1-k6-load-test-scenario",
+        "exercise-2-locust-alternative-python-based",
+        "exercise-3-observe-autoscaling-during-load",
+        "exercise-4-cool-down-and-scale-in-observation",
+        "exercise-5-grafana-scaling-dashboard",
+        "key-observations",
+        "learning-objectives",
+        "load-testing-and-scaling-timeline",
+        "next-steps",
+        "references",
+        "steps",
+        "steps-1",
+        "steps-2",
+        "steps-3",
+        "steps-4",
+        "summary",
+        "troubleshooting",
+        "verification"
+      ]
+    },
+    {
+      "path": "ko/labs/observability/06-distributed-tracing-lab.md",
+      "aliases": [
+        "exemplar-워크플로우",
+        "full-drill-down-테스트",
+        "logs-→-traces-연동",
+        "span-유형별-병목-분류",
+        "step-6-1-traceql-트레이스-검색",
+        "step-6-2-서비스-그래프-service-graph",
+        "step-6-3-지연-구간-식별-워크플로우",
+        "step-6-4-loki와-tempo-상관관계",
+        "step-6-5-exemplar-활용",
+        "step-6-6-종합-대시보드-구성",
+        "step-6-7-정리-cleanup",
+        "tempo-service-graph-활성화",
+        "traceql-기본-문법",
+        "traces-→-logs-연동",
+        "검증-verification",
+        "검증-체크리스트",
+        "다음-단계-권장",
+        "대시보드-패널-구성",
+        "분석-단계",
+        "분석-워크플로우",
+        "서비스-그래프-해석",
+        "시리즈-목차",
+        "실습-완료",
+        "정리-순서",
+        "정리-확인",
+        "주요-검색-쿼리",
+        "참조-문서",
+        "학습-내용-요약",
+        "학습-목표"
+      ]
+    },
+    {
+      "path": "en/labs/observability/06-distributed-tracing-lab.md",
+      "aliases": [
+        "cleanup-steps-table",
+        "drill-down-analysis-workflow",
+        "exercise-1-traceql-trace-search",
+        "exercise-2-service-graph-visualization",
+        "exercise-3-latency-identification-workflow",
+        "exercise-4-loki-tempo-correlation",
+        "exercise-5-exemplar-usage",
+        "exercise-6-comprehensive-dashboard-setup",
+        "final-verification-checklist",
+        "full-cleanup-script",
+        "key-takeaways",
+        "learning-objectives",
+        "next-steps",
+        "prerequisites",
+        "references",
+        "steps",
+        "steps-1",
+        "steps-2",
+        "steps-3",
+        "steps-4",
+        "steps-5",
+        "summary",
+        "traceql-query-reference",
+        "verification"
+      ]
+    }
+  ],
+  "mobileToolbar": {
+    "originalButtonX": -148.0625,
+    "fixedButtonX": 71.5625,
+    "viewport": 375,
+    "cause": "Mobiletoolbarflex-endnowrapoverflowleftnotvisibleinscrollWidth",
+    "fix": "Generatedmobiletoolbarwrapandclearrelativeoffset;sharedbuildnormalizerappliestoallArchifyviewers",
+    "after": {
+      "vw": 375,
+      "scroll": 375,
+      "parents": [
+        {
+          "tag": "BUTTON",
+          "class": "",
+          "x": 71.5625,
+          "width": 87.203125,
+          "display": "flex",
+          "flex": "0 1 auto",
+          "wrap": "nowrap",
+          "position": "static",
+          "overflow": "visible",
+          "minWidth": "auto"
+        },
+        {
+          "tag": "DIV",
+          "class": "toolbar",
+          "x": 16,
+          "width": 343,
+          "display": "flex",
+          "flex": "0 1 auto",
+          "wrap": "wrap",
+          "position": "relative",
+          "overflow": "visible",
+          "minWidth": "0px"
+        },
+        {
+          "tag": "BODY",
+          "class": "",
+          "x": 0,
+          "width": 375,
+          "display": "block",
+          "flex": "0 1 auto",
+          "wrap": "nowrap",
+          "position": "static",
+          "overflow": "visible",
+          "minWidth": "0px"
+        },
+        {
+          "tag": "HTML",
+          "class": "",
+          "x": 0,
+          "width": 375,
+          "display": "block",
+          "flex": "0 1 auto",
+          "wrap": "nowrap",
+          "position": "static",
+          "overflow": "visible",
+          "minWidth": "0px"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "name": "oncall-status",
+      "url": "https://grafana.com/docs/oncall/latest/set-up/open-source/",
+      "final": "https://grafana.com/docs/oncall/latest/set-up/open-source/",
+      "status": 200,
+      "sha256": "310966af6dfd174f39e2fa34d2e872a5831b70c333a7e32676f69e673ed3f8e0",
+      "bytes": 148972
+    },
+    {
+      "name": "keda-scaledobject",
+      "url": "https://keda.sh/docs/2.20/reference/scaledobject-spec/",
+      "final": "https://keda.sh/docs/2.20/reference/scaledobject-spec/",
+      "status": 200,
+      "sha256": "7a92ab511f2bd8be3ca872da6fc0e1156407d43f19b39e93209e677f276b86b4",
+      "bytes": 75968
+    },
+    {
+      "name": "k6-summary",
+      "url": "https://grafana.com/docs/k6/latest/results-output/end-of-test/custom-summary/",
+      "final": "https://grafana.com/docs/k6/latest/results-output/end-of-test/custom-summary/",
+      "status": 200,
+      "sha256": "9cec1a86e754b22a45fa3fc5f9728b684730663554f16991de72d7f429d2cb73",
+      "bytes": 383316
+    },
+    {
+      "name": "otel-http",
+      "url": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+      "final": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+      "status": 200,
+      "sha256": "c16beeae0872298834c9bcc938e02f6cb542721e0531cf65b6c62e63034f4293",
+      "bytes": 259300
+    },
+    {
+      "name": "otel-db",
+      "url": "https://opentelemetry.io/docs/specs/semconv/database/database-spans/",
+      "final": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+      "status": 200,
+      "sha256": "f4c95893e96e16a4377868180d2c0d4b6e72489f39f30177298dc8ceb456beb7",
+      "bytes": 232706
+    },
+    {
+      "name": "eks-versions",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "final": "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "status": 200,
+      "sha256": "036d5379bc2e7a1dbbd766f9ad9e6004236ee2d6e112f18421251f2a75594af7",
+      "bytes": 43891
+    }
+  ],
+  "limits": [
+    "NoAWSresources,realMSA/load/capacity/autoscaling,TempoquerybackendorGrafanadatalinkexecution.",
+    "LoadtestsusedsyntheticloopbackHTTP;Lokireceived2syntheticloglinesandwasstopped.",
+    "All28labdocumentsfullyreadbutremaining20arestillbeingrepaired;thisreportonlycloses8.",
+    "Globalresponsivefixisvalidatedon6representativegeneratedviewersat375/768/1920;notclaimallviewersmanuallyinspected."
+  ],
+  "reviewFixes": {
+    "reviewedInitialHead": "9f7a2b31ec40f1096dee75f3f1955efb26cb776f",
+    "findingsResolved": [
+      "OBS-LAB-R1-001",
+      "OBS-LAB-R1-002",
+      "OBS-LAB-R1-003"
+    ],
+    "prometheus": {
+      "status": "passed",
+      "cases": [
+        "healthy",
+        "errors",
+        "zero",
+        "absent",
+        "running",
+        "all-pending",
+        "missing"
+      ],
+      "query": "(sum by (client, server) (rate(traces_service_graph_request_failed_total[5m])) or on (client, server) (0 * sum by (client, server) (rate(traces_service_graph_request_total[5m])))) / on (client, server) (sum by (client, server) (rate(traces_service_graph_request_total[5m])) > 0)",
+      "version": "Prometheus3.14",
+      "assertions": 7
+    },
+    "locustBooleanID": {
+      "binary": "Locust2.46.5/Python3.12",
+      "scriptSha256": "e80280cceadebfb7117ea484f312f1eac5339c86d766b350a4d4c351be4c199a",
+      "cases": [
+        {
+          "case": "boolean-read-id",
+          "exit": 99,
+          "requests": 9,
+          "passed": true
+        }
+      ],
+      "limits": "Loopback synthetic API only; no real service, cloud, scaling or stress test executed."
+    },
+    "behavior": "Healthyedgezeroerrornumeratorfilledfrommatchingtotal;no/absenttrafficremainabsent;sumPod0/1gauges;LocustrejectboolandcanonicalizesintegernumericID."
+  }
+}

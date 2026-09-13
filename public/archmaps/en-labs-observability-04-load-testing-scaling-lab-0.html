@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5069,43 +5072,43 @@
         </g>
         </g>
 
-        <g data-edge-from="apigw" data-edge-to="msa" data-edge-label="Order requests → SQS queue builds up" data-edge-key="1" data-edge-id="ramp-orders">
+        <g data-edge-from="apigw" data-edge-to="msa" data-edge-label="Orders and queue consumer path" data-edge-key="1" data-edge-id="ramp-orders">
           <path data-composition-edge-from="apigw" data-composition-edge-to="msa" data-composition-edge-id="ramp-orders" data-composition-points="305.1,225;459.7,225" d="M 305.1 225 L 459.7 225" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="282.79999999999995" y="205" width="199.20000000000002" height="16" rx="3" class="c-mask"/>
-          <text x="382.4" y="215" class="t-backend" font-size="9" text-anchor="middle">Order requests → SQS queue builds up</text>
+          <rect x="298.4" y="205" width="168" height="16" rx="3" class="c-mask"/>
+          <text x="382.4" y="215" class="t-backend" font-size="9" text-anchor="middle">Orders and queue consumer path</text>
         </g>
         </g>
 
-        <g data-edge-from="apigw" data-edge-to="grafana" data-edge-label="Request rate metrics rise" data-edge-key="2" data-edge-id="ramp-metrics">
+        <g data-edge-from="apigw" data-edge-to="grafana" data-edge-label="Observe collected request rate" data-edge-key="2" data-edge-id="ramp-metrics">
           <path data-composition-edge-from="apigw" data-composition-edge-to="grafana" data-composition-edge-id="ramp-metrics" data-composition-points="305.1,260;965.5,260" d="M 305.1 260 L 965.5 260" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <g data-detail="context">
-          <rect x="564.3" y="240" width="142" height="16" rx="3" class="c-mask"/>
-          <text x="635.3" y="250" class="t-messagebus" font-size="9" text-anchor="middle">Request rate metrics rise</text>
+          <rect x="551.3" y="240" width="168" height="16" rx="3" class="c-mask"/>
+          <text x="635.3" y="250" class="t-messagebus" font-size="9" text-anchor="middle">Observe collected request rate</text>
         </g>
         </g>
 
-        <g data-edge-from="keda" data-edge-to="msa" data-edge-label="SQS depth high → 8 Pods" data-edge-key="3" data-edge-id="scale-out">
+        <g data-edge-from="keda" data-edge-to="msa" data-edge-label="Queue metric → consumer replicas" data-edge-key="3" data-edge-id="scale-out">
           <path data-composition-edge-from="keda" data-composition-edge-to="msa" data-composition-edge-id="scale-out" data-composition-points="628.3,322;473.7,322" d="M 628.3 322 L 473.7 322" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <g data-detail="context">
-          <rect x="485.2" y="302" width="131.60000000000002" height="16" rx="3" class="c-mask"/>
-          <text x="551" y="312" class="t-backend" font-size="9" text-anchor="middle">SQS depth high → 8 Pods</text>
+          <rect x="461.8" y="302" width="178.4" height="16" rx="3" class="c-mask"/>
+          <text x="551" y="312" class="t-backend" font-size="9" text-anchor="middle">Queue metric → consumer replicas</text>
         </g>
         </g>
 
-        <g data-edge-from="msa" data-edge-to="karpenter" data-edge-label="Pending Pods appear" data-edge-key="4" data-edge-id="pending">
+        <g data-edge-from="msa" data-edge-to="karpenter" data-edge-label="Observe unschedulable Pods" data-edge-key="4" data-edge-id="pending">
           <path data-composition-edge-from="msa" data-composition-edge-to="karpenter" data-composition-edge-id="pending" data-composition-points="473.7,358;796.9,358" d="M 473.7 358 L 796.9 358" class="a-dashed" data-animate="edge" style="--step:4" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <g data-detail="context">
-          <rect x="579.9" y="338" width="110.8" height="16" rx="3" class="c-mask"/>
-          <text x="635.3" y="348" class="t-messagebus" font-size="9" text-anchor="middle">Pending Pods appear</text>
+          <rect x="561.6999999999999" y="338" width="147.20000000000002" height="16" rx="3" class="c-mask"/>
+          <text x="635.3" y="348" class="t-messagebus" font-size="9" text-anchor="middle">Observe unschedulable Pods</text>
         </g>
         </g>
 
-        <g data-edge-from="karpenter" data-edge-to="msa" data-edge-label="Provision new nodes, then schedule Pods" data-edge-key="5" data-edge-id="provision">
+        <g data-edge-from="karpenter" data-edge-to="msa" data-edge-label="Provision compatible node capacity" data-edge-key="5" data-edge-id="provision">
           <path data-composition-edge-from="karpenter" data-composition-edge-to="msa" data-composition-edge-id="provision" data-composition-points="796.9,394;473.7,394" d="M 796.9 394 L 473.7 394" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="527.9" y="374" width="214.8" height="16" rx="3" class="c-mask"/>
-          <text x="635.3" y="384" class="t-muted" font-size="9" text-anchor="middle">Provision new nodes, then schedule Pods</text>
+          <rect x="540.9" y="374" width="188.8" height="16" rx="3" class="c-mask"/>
+          <text x="635.3" y="384" class="t-muted" font-size="9" text-anchor="middle">Provision compatible node capacity</text>
         </g>
         </g>
 
@@ -5117,19 +5120,19 @@
         </g>
         </g>
 
-        <g data-edge-from="keda" data-edge-to="msa" data-edge-label="Aggressive scale-out (→ 30 Pods)" data-edge-key="7" data-edge-id="scale-out-fast">
+        <g data-edge-from="keda" data-edge-to="msa" data-edge-label="Adjust replicas within HPA bounds" data-edge-key="7" data-edge-id="scale-out-fast">
           <path data-composition-edge-from="keda" data-composition-edge-to="msa" data-composition-edge-id="scale-out-fast" data-composition-points="628.3,493;473.7,493" d="M 628.3 493 L 473.7 493" class="a-emphasis" data-animate="edge" style="--step:7" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <g data-detail="context">
-          <rect x="461.8" y="473" width="178.4" height="16" rx="3" class="c-mask"/>
-          <text x="551" y="483" class="t-backend" font-size="9" text-anchor="middle">Aggressive scale-out (→ 30 Pods)</text>
+          <rect x="459.2" y="473" width="183.6" height="16" rx="3" class="c-mask"/>
+          <text x="551" y="483" class="t-backend" font-size="9" text-anchor="middle">Adjust replicas within HPA bounds</text>
         </g>
         </g>
 
-        <g data-edge-from="karpenter" data-edge-to="msa" data-edge-label="Add nodes (→ 8+)" data-edge-key="8" data-edge-id="add-nodes">
+        <g data-edge-from="karpenter" data-edge-to="msa" data-edge-label="Create NodeClaims if needed" data-edge-key="8" data-edge-id="add-nodes">
           <path data-composition-edge-from="karpenter" data-composition-edge-to="msa" data-composition-edge-id="add-nodes" data-composition-points="796.9,529;473.7,529" d="M 796.9 529 L 473.7 529" class="a-default" data-animate="edge" style="--step:8" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="587.6999999999999" y="509" width="95.2" height="16" rx="3" class="c-mask"/>
-          <text x="635.3" y="519" class="t-muted" font-size="9" text-anchor="middle">Add nodes (→ 8+)</text>
+          <rect x="559.0999999999999" y="509" width="152.4" height="16" rx="3" class="c-mask"/>
+          <text x="635.3" y="519" class="t-muted" font-size="9" text-anchor="middle">Create NodeClaims if needed</text>
         </g>
         </g>
 
@@ -5141,46 +5144,46 @@
         </g>
         </g>
 
-        <g data-edge-from="keda" data-edge-to="msa" data-edge-label="Scale in (HPA cooldown)" data-edge-key="10" data-edge-id="scale-in">
+        <g data-edge-from="keda" data-edge-to="msa" data-edge-label="HPA lookback / KEDA scale to zero" data-edge-key="10" data-edge-id="scale-in">
           <path data-composition-edge-from="keda" data-composition-edge-to="msa" data-composition-edge-id="scale-in" data-composition-points="628.3,628;473.7,628" d="M 628.3 628 L 473.7 628" class="a-dashed" data-animate="edge" style="--step:10" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <g data-detail="context">
-          <rect x="485.2" y="608" width="131.60000000000002" height="16" rx="3" class="c-mask"/>
-          <text x="551" y="618" class="t-messagebus" font-size="9" text-anchor="middle">Scale in (HPA cooldown)</text>
+          <rect x="459.2" y="608" width="183.6" height="16" rx="3" class="c-mask"/>
+          <text x="551" y="618" class="t-messagebus" font-size="9" text-anchor="middle">HPA lookback / KEDA scale to zero</text>
         </g>
         </g>
 
-        <g data-edge-from="karpenter" data-edge-to="msa" data-edge-label="Consolidate / terminate empty nodes (→ 3)" data-edge-key="11" data-edge-id="consolidate">
+        <g data-edge-from="karpenter" data-edge-to="msa" data-edge-label="Respect delays, PDBs and budgets" data-edge-key="11" data-edge-id="consolidate">
           <path data-composition-edge-from="karpenter" data-composition-edge-to="msa" data-composition-edge-id="consolidate" data-composition-points="796.9,664;473.7,664" d="M 796.9 664 L 473.7 664" class="a-dashed" data-animate="edge" style="--step:11" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <g data-detail="context">
-          <rect x="522.6999999999999" y="644" width="225.20000000000002" height="16" rx="3" class="c-mask"/>
-          <text x="635.3" y="654" class="t-messagebus" font-size="9" text-anchor="middle">Consolidate / terminate empty nodes (→ 3)</text>
+          <rect x="546.0999999999999" y="644" width="178.4" height="16" rx="3" class="c-mask"/>
+          <text x="635.3" y="654" class="t-messagebus" font-size="9" text-anchor="middle">Respect delays, PDBs and budgets</text>
         </g>
         </g>
 
-        <g data-edge-from="msa" data-edge-to="grafana" data-edge-label="Confirm Pod/Node counts and SQS depth recover" data-edge-key="12" data-edge-id="verify">
+        <g data-edge-from="msa" data-edge-to="grafana" data-edge-label="Record actual requests, queue, Pods, nodes" data-edge-key="12" data-edge-id="verify">
           <path data-composition-edge-from="msa" data-composition-edge-to="grafana" data-composition-edge-id="verify" data-composition-points="473.7,700;965.5,700" d="M 473.7 700 L 965.5 700" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <g data-detail="context">
-          <rect x="596.6" y="680" width="246" height="16" rx="3" class="c-mask"/>
-          <text x="719.6" y="690" class="t-messagebus" font-size="9" text-anchor="middle">Confirm Pod/Node counts and SQS depth recover</text>
+          <rect x="604.4" y="680" width="230.4" height="16" rx="3" class="c-mask"/>
+          <text x="719.6" y="690" class="t-messagebus" font-size="9" text-anchor="middle">Record actual requests, queue, Pods, nodes</text>
         </g>
         </g>
 
         <!-- Segment Labels -->
         <g data-graph-role="segment-label" data-segment-id="0">
-          <rect x="56" y="140" width="206.4" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="153" class="t-dim" font-size="9" font-weight="600">Phase 1 · Ramp-up (5 min, 10→100 VUs)</text>
+          <rect x="56" y="140" width="107.60000000000001" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="153" class="t-dim" font-size="9" font-weight="600">Ramp · 30s → 5 VUs</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="1">
-          <rect x="56" y="273" width="206.4" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="286" class="t-dim" font-size="9" font-weight="600">Phase 2 · Sustained (10 min, 100 VUs)</text>
+          <rect x="56" y="273" width="123.2" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="286" class="t-dim" font-size="9" font-weight="600">Steady · 60s at 5 VUs</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="2">
-          <rect x="56" y="408" width="201.20000000000002" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="421" class="t-dim" font-size="9" font-weight="600">Phase 3 · Spike (7 min, 100→500 VUs)</text>
+          <rect x="56" y="408" width="149.20000000000002" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="421" class="t-dim" font-size="9" font-weight="600">Spike · 15s → 20, hold 30s</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="3">
-          <rect x="56" y="543" width="211.6" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="556" class="t-dim" font-size="9" font-weight="600">Phase 4 · Cool-down (8 min, 500→0 VUs)</text>
+          <rect x="56" y="543" width="154.4" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="556" class="t-dim" font-size="9" font-weight="600">Recovery · 15s → 5, 30s → 0</text>
         </g>
 
         <!-- Participants -->
@@ -5210,25 +5213,25 @@
           <text data-detail="context" x="298.1" y="111" class="t-muted" font-size="7" text-anchor="middle">msa entrypoint</text>
         </g>
 
-        <g id="node-msa" data-node-id="msa" data-node-label="MSA Pod" tabindex="0" role="button" aria-label="Focus MSA Pod, Deployment, Sequence participant" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Deployment" data-node-context="Sequence participant">
-          <title>MSA Pod · Deployment · Sequence participant</title>
+        <g id="node-msa" data-node-id="msa" data-node-label="MSA Pod" tabindex="0" role="button" aria-label="Focus MSA Pod, API + queue consumer, Sequence participant" aria-pressed="false" data-node-kind="backend" data-node-sublabel="API + queue consumer" data-node-context="Sequence participant">
+          <title>MSA Pod · API + queue consumer · Sequence participant</title>
           <rect x="399.2" y="72" width="135" height="54" rx="6" class="c-mask"/>
           <rect x="399.2" y="72" width="135" height="54" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(405.2 78) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="466.7" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">MSA Pod</text>
-          <text data-detail="context" x="466.7" y="111" class="t-muted" font-size="7" text-anchor="middle">Deployment</text>
+          <text data-detail="context" x="466.7" y="111" class="t-muted" font-size="7" text-anchor="middle">API + queue consumer</text>
         </g>
 
-        <g id="node-keda" data-node-id="keda" data-node-label="KEDA" tabindex="0" role="button" aria-label="Focus KEDA, Pod scaling, Sequence participant" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod scaling" data-node-context="Sequence participant">
-          <title>KEDA · Pod scaling · Sequence participant</title>
+        <g id="node-keda" data-node-id="keda" data-node-label="KEDA / HPA" tabindex="0" role="button" aria-label="Focus KEDA / HPA, Pod scaling, Sequence participant" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod scaling" data-node-context="Sequence participant">
+          <title>KEDA / HPA · Pod scaling · Sequence participant</title>
           <rect x="567.8" y="72" width="135" height="54" rx="6" class="c-mask"/>
           <rect x="567.8" y="72" width="135" height="54" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(573.8 78) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="635.3" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">KEDA</text>
+          <text data-node-label="" data-detail-anchor="" x="635.3" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">KEDA / HPA</text>
           <text data-detail="context" x="635.3" y="111" class="t-muted" font-size="7" text-anchor="middle">Pod scaling</text>
         </g>
 
@@ -7255,7 +7258,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

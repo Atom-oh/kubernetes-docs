@@ -1,0 +1,744 @@
+{
+  "status": "passed",
+  "verifiedAt": "2026-09-13T05:37:12.298474+00:00",
+  "deploymentRun": 34739830442,
+  "mergeCommit": "894b6ab753c9b05c8dcd7de1e2b94baf92e55fb3",
+  "includedPRs": [
+    260
+  ],
+  "pages": [
+    {
+      "path": "ko/security/11-kubescape.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/security/11-kubescape",
+      "status": 200,
+      "sha256": "553292fdad4d4cce98eb068b0e1dd2332979b4b1f7674bdec87e5f701438c72f",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-11-kubescape-0.B7uVFood.png",
+          "status": 200,
+          "sha256": "80bee9d564336b4a219731712d098aa7affb09c1d5146b96e098a89b2ec5e730",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-11-kubescape-1.B72wzIrz.png",
+          "status": 200,
+          "sha256": "0af730c9cb92a2c7de515531570d1a03b448ed9d223615df23d111ab2b0e29a0",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-11-kubescape-2.DLaFER11.png",
+          "status": 200,
+          "sha256": "73913925d0b45dc944693c0a68362d10f71b625fbedee20a09c53383d488bfab",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-11-kubescape-3.BO24xBMM.png",
+          "status": 200,
+          "sha256": "e800eddb21b1949435ac96351d0f5af97441e01ea4a227eed964b4d9bf3df2c9",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-11-kubescape-4.Td6CplNl.png",
+          "status": 200,
+          "sha256": "2b0d8250cde9c1620dd0da69891fa49702ff434df129373b56d345bea821d978",
+          "matchesMain": true
+        }
+      ],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 517577,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "ko/quizzes/security/11-kubescape-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/security/11-kubescape-quiz",
+      "status": 200,
+      "sha256": "c07f1a67d064ca9adeffe20fa7d346099f8ae0ceccde7c9f827d0ae97b72b55a",
+      "images": [],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 453724,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "en/security/11-kubescape.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/security/11-kubescape",
+      "status": 200,
+      "sha256": "a5223ac73bf93359e82e34b7f3a778f94b8b6e85ce047c1eb50c5474490cffae",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-11-kubescape-0.DsfEhalM.png",
+          "status": 200,
+          "sha256": "4ca65e2ed3ea24e1a202bd81ba447e59b494bafe8dc5934428047a5ab2b781a1",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-11-kubescape-1.oTUh75sg.png",
+          "status": 200,
+          "sha256": "b00759c927a7e28d203423e13951b5b41154654fa26f76ea0013aa4f087557e8",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-11-kubescape-2.C9eEitAU.png",
+          "status": 200,
+          "sha256": "62d5a47cc2aff02019a0603e9862c2bf24be1bdd83659cba7343c9e0065d5caa",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-11-kubescape-3.CQz6USXt.png",
+          "status": 200,
+          "sha256": "9237048e25b1f3d8a05611b0c7b387f902cb7515d18ee7af8add309423ba506a",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-11-kubescape-4.L_ebsku-.png",
+          "status": 200,
+          "sha256": "5025b6259ca74f9d57d14867a5f0df5d8929d1e441ea75acc3fecd9d23460d32",
+          "matchesMain": true
+        }
+      ],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 511133,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "en/quizzes/security/11-kubescape-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/security/11-kubescape-quiz",
+      "status": 200,
+      "sha256": "865c0a8138ff660fa52628c9c201304972fada04e5f194630731ed8313760629",
+      "images": [],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 450324,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    }
+  ],
+  "viewers": [
+    {
+      "name": "ko-security-11-kubescape-0.html",
+      "status": 200,
+      "bytes": 718075,
+      "sha256": "49a1d072dc606f3557f03954824e7cfccd8457a23c40f0f2241e15ec3f836f53"
+    },
+    {
+      "name": "ko-security-11-kubescape-1.html",
+      "status": 200,
+      "bytes": 717393,
+      "sha256": "bc4caae539b46b2de3bfd64f4ffa743c62e738885ce560b52c5c32f95fc716a1"
+    },
+    {
+      "name": "ko-security-11-kubescape-2.html",
+      "status": 200,
+      "bytes": 721262,
+      "sha256": "9e8d1b2b318fd41942bd0a72ee5693346bfaa484dc0eee27210a95b5508628aa"
+    },
+    {
+      "name": "ko-security-11-kubescape-3.html",
+      "status": 200,
+      "bytes": 716568,
+      "sha256": "cdca84b94ebd8cc0e2d14a71f599e715560bf21745497d5d96154f5b952c80c8"
+    },
+    {
+      "name": "ko-security-11-kubescape-4.html",
+      "status": 200,
+      "bytes": 720299,
+      "sha256": "0afd9f8b82b41071bf40ec01ba4147b96d85febbb6905a5341ba11f0f2a04882"
+    },
+    {
+      "name": "en-security-11-kubescape-0.html",
+      "status": 200,
+      "bytes": 717763,
+      "sha256": "cf2d5fcf75ba46223f0041c6683d79abb38a6e9ca9423bba9898d836e50d62cd"
+    },
+    {
+      "name": "en-security-11-kubescape-1.html",
+      "status": 200,
+      "bytes": 716922,
+      "sha256": "995bbab9303b28a4c22b701ad679aeac95cb0c2c09c3de84b501e36e3496d082"
+    },
+    {
+      "name": "en-security-11-kubescape-2.html",
+      "status": 200,
+      "bytes": 721195,
+      "sha256": "11bf81e0885ae87197a1cb41b19e6fad64932038af6a20c038da3488a17c55ae"
+    },
+    {
+      "name": "en-security-11-kubescape-3.html",
+      "status": 200,
+      "bytes": 716258,
+      "sha256": "f15816983735371deec17ef2e02d6ff0cfb0232952068712c41fd426ae97a609"
+    },
+    {
+      "name": "en-security-11-kubescape-4.html",
+      "status": 200,
+      "bytes": 719624,
+      "sha256": "45ab00858467e8ea958367bd4b2f4d7696155dd7fce692f78f5aa1dfb0ac0fd8"
+    }
+  ],
+  "scope": "HTTP source and exact hashed PNG comparison; no analytics events or real application execution.",
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-security-11-kubescape-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 781,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 781,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 781,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59959,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1112,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1112,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1112,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57905,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1493,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1493,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1493,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 61863,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 770,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 770,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 770,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58284,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1235,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1235,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-11-kubescape-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1235,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 60243,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 545,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 545,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 545,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58991,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 907,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 907,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 907,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57077,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1103,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1103,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1103,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 60889,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 553,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 553,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 553,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57618,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 772,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 772,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-11-kubescape-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 772,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59421,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "30caseson10fetchedproductionviewers; motion/reduced-motion/visibility/theme/guided controls and10SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  }
+}

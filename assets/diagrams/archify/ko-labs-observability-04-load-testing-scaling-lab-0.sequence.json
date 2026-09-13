@@ -45,12 +45,12 @@
       "id": "msa",
       "type": "backend",
       "label": "MSA Pod",
-      "sublabel": "Deployment"
+      "sublabel": "API + queue consumer"
     },
     {
       "id": "keda",
       "type": "backend",
-      "label": "KEDA",
+      "label": "KEDA / HPA",
       "sublabel": "Pod 스케일"
     },
     {
@@ -70,22 +70,22 @@
     {
       "from": 162,
       "to": 275,
-      "label": "Phase 1 · Ramp-up (2분, 1→50 VUs)"
+      "label": "Ramp · 30s → 5 VUs"
     },
     {
       "from": 295,
       "to": 410,
-      "label": "Phase 2 · Sustained (5분, 50 VUs)"
+      "label": "Steady · 60s at 5 VUs"
     },
     {
       "from": 430,
       "to": 545,
-      "label": "Phase 3 · Spike (2분, 200 VUs)"
+      "label": "Spike · 15s → 20, hold 30s"
     },
     {
       "from": 565,
       "to": 715,
-      "label": "Phase 4 · Cool-down (2분, 50→0 VUs)"
+      "label": "Recovery · 15s → 5, 30s → 0"
     }
   ],
   "messages": [
@@ -102,14 +102,14 @@
       "from": "apigw",
       "to": "msa",
       "y": 225,
-      "label": "주문 요청 → SQS 메시지 적체"
+      "label": "주문과 큐 consumer 경로"
     },
     {
       "id": "ramp-metrics",
       "from": "apigw",
       "to": "grafana",
       "y": 260,
-      "label": "요청률 메트릭 상승",
+      "label": "수집된 요청률 관찰",
       "variant": "dashed"
     },
     {
@@ -117,7 +117,7 @@
       "from": "keda",
       "to": "msa",
       "y": 322,
-      "label": "SQS depth 초과 → 6-10 Pod",
+      "label": "큐 metric → consumer replicas",
       "variant": "emphasis"
     },
     {
@@ -125,7 +125,7 @@
       "from": "msa",
       "to": "karpenter",
       "y": 358,
-      "label": "Pending Pod 발생",
+      "label": "Unschedulable Pod 관찰",
       "variant": "dashed"
     },
     {
@@ -133,7 +133,7 @@
       "from": "karpenter",
       "to": "msa",
       "y": 394,
-      "label": "노드 프로비저닝 (3 → 4-5) 후 Pod 스케줄",
+      "label": "조건에 맞는 노드 capacity 준비",
       "variant": "return"
     },
     {
@@ -149,7 +149,7 @@
       "from": "keda",
       "to": "msa",
       "y": 493,
-      "label": "빠른 스케일아웃 (→ 10-20 Pod)",
+      "label": "HPA bounds 안에서 replicas 조정",
       "variant": "emphasis"
     },
     {
@@ -157,7 +157,7 @@
       "from": "karpenter",
       "to": "msa",
       "y": 529,
-      "label": "노드 추가 (→ 5-8)",
+      "label": "필요한 경우 NodeClaim 생성",
       "variant": "return"
     },
     {
@@ -173,7 +173,7 @@
       "from": "keda",
       "to": "msa",
       "y": 628,
-      "label": "스케일인 (cooldownPeriod 60s)",
+      "label": "HPA 권고 window / KEDA 0 전환",
       "variant": "dashed"
     },
     {
@@ -181,7 +181,7 @@
       "from": "karpenter",
       "to": "msa",
       "y": 664,
-      "label": "빈 노드 통합·제거 (consolidateAfter 30s → 3)",
+      "label": "대기·PDB·disruption 조건 확인",
       "variant": "dashed"
     },
     {
@@ -189,7 +189,7 @@
       "from": "msa",
       "to": "grafana",
       "y": 700,
-      "label": "Pod·Node 수, SQS depth 복귀 확인",
+      "label": "실제 요청·큐·Pod·노드 값 기록",
       "variant": "dashed"
     }
   ],
