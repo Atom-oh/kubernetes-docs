@@ -1,550 +1,158 @@
-# Parte 6: Análisis de trazabilidad distribuida
+# Parte 6: Análisis de trazas distribuidas
 
-> **Dificultad**: Avanzado
-> **Tiempo estimado**: 45 minutos
-> **Última actualización**: February 22, 2026
+<span id="cleanup-steps-table"></span>
+<span id="drill-down-analysis-workflow"></span>
+<span id="exercise-1-traceql-trace-search"></span>
+<span id="exercise-2-service-graph-visualization"></span>
+<span id="exercise-3-latency-identification-workflow"></span>
+<span id="exercise-4-loki-tempo-correlation"></span>
+<span id="exercise-5-exemplar-usage"></span>
+<span id="exercise-6-comprehensive-dashboard-setup"></span>
+<span id="final-verification-checklist"></span>
+<span id="full-cleanup-script"></span>
+<span id="key-takeaways"></span>
+<span id="learning-objectives"></span>
+<span id="next-steps"></span>
+<span id="prerequisites"></span>
+<span id="references"></span>
+<span id="steps"></span>
+<span id="steps-1"></span>
+<span id="steps-2"></span>
+<span id="steps-3"></span>
+<span id="steps-4"></span>
+<span id="steps-5"></span>
+<span id="summary"></span>
+<span id="traceql-query-reference"></span>
+<span id="verification"></span>
 
-## Objetivos de aprendizaje
+> **Dificultad**: Avanzado · **Tiempo estimado**: 45 minutos
+> **Última actualización**: September 13, 2026
 
-- Realizar análisis de trazas de extremo a extremo usando Tempo y Grafana
-- Identificar cuellos de botella de servicios y problemas de rendimiento
-- Configurar la correlación Loki-Tempo para la vinculación de logs y trazas
-- Usar Exemplars para profundizar de métricas a trazas
-- Crear dashboards de observabilidad integrales
+Sigue una petición real desde las métricas, pasando por un exemplar, hasta su trace (traza) y sus logs (registros), separando las observaciones de las hipótesis causales. Esto requiere la ruta de ingesta de la [Parte 2](./02-observability-stack-lab.md) y la propagación de contexto de la [Parte 3](./03-msa-deployment-lab.md). El TraceQL que aparece a continuación se comprobó con el parser real de Tempo **3.0.3** y usa los atributos actuales de OTel.
 
-## Requisitos previos
+![Investigate a metric through its trace and logs](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-0.png)
 
-- [ ] Completó [Parte 5: Alerting y AIOps](./05-alerting-aiops-lab.md)
-- [ ] Servicios MSA en ejecución con instrumentación OTel
-- [ ] Tempo recibiendo trazas
-- [ ] Loki recibiendo logs con traceId
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-0.html)
 
----
-
-## Flujo de trabajo de análisis detallado
-
-```mermaid
-sequenceDiagram
-    participant Op as Operator
-    participant G as Grafana
-    participant P as Prometheus
-    participant T as Tempo
-    participant L as Loki
-
-    Op->>G: Notice error spike in dashboard
-    G->>P: Query error rate metrics
-    P-->>G: Return metrics with exemplars
-
-    Op->>G: Click exemplar point
-    G->>T: Query trace by traceID
-    T-->>G: Return full trace
-
-    Op->>G: Identify slow span
-    G->>T: Get span details
-
-    Op->>G: Click "Logs for this trace"
-    G->>L: Query logs with traceID filter
-    L-->>G: Return correlated logs
-
-    Op->>Op: Identify root cause from logs
-    Note over Op,L: Complete drill-down:<br/>Metric → Trace → Logs
-```
-
----
-
-## Ejercicio 1: Búsqueda de trazas con TraceQL
-
-### Pasos
-
-**Paso 1.1: Acceder a Grafana Explore con Tempo**
-
-```bash
-GRAFANA_URL=$(kubectl -n monitoring get svc grafana \
-  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-
-echo "Open: http://$GRAFANA_URL/explore"
-echo "Select data source: Tempo"
-```
-
-**Paso 1.2: Buscar errores de servidor (5xx)**
+## 1. Búsqueda con TraceQL {#traceql}
 
 ```traceql
-{ status = error } | select(span.http.status_code, resource.service.name, duration)
+{ resource.service.name = "order-service" && span:duration > 1s }
+
+{ trace:duration > 2s && resource.service.name = "order-service" }
+
+{ span:kind = server && span.http.response.status_code >= 500 }
+
+{ span.db.system.name = "postgresql" && span:duration > 100ms }
+
+{ span.messaging.system = "aws_sqs" && span.messaging.operation.type = "send" }
+
+{ resource.service.name = "api-gateway" } >> { resource.service.name = "order-service" }
+
+{ resource.service.name = "order-service" } >> { span.db.system.name = "postgresql" }
+
+{ span:status = error } | select(resource.service.name, span.http.response.status_code, span:duration)
 ```
 
-**Paso 1.3: Encontrar solicitudes lentas (> 1 segundo)**
+`span:duration` mide un span individual; `trace:duration` mide el trace completo. Usa `span:` para los intrínsecos explícitos y `span.`/`resource.` para los atributos. `>>` encuentra los spans de la derecha que descienden de los spans de la izquierda. Buscar descendientes de un span de base de datos no es lo mismo que encontrar trabajo de base de datos por debajo de un Service.
 
-```traceql
-{ duration > 1s && span.http.method = "POST" } | select(resource.service.name, name, duration)
-```
+`sort(duration)`, el `order by` de SQL, `| limit 20` y `{ duration > p99 }` no forman parte de esta sintaxis de búsqueda. Configura el orden de los resultados, el límite de búsqueda y el rango temporal en Grafana, y sustituye un p99 medido por un literal de duración como `800ms`. `select()` solicita los atributos que se muestran; no puede recrear spans que nunca se almacenaron.
 
-**Paso 1.4: Buscar consultas lentas de base de datos**
+Los SDK más antiguos pueden emitir `http.status_code`, `http.method`, `db.system`, `db.statement` o `messaging.operation`. Inspecciona los spans reales y las versiones del SDK antes de usar los actuales `http.response.status_code`, `http.request.method`, `db.system.name`, `db.query.text` o `messaging.operation.type`. Renombrar un atributo de consulta no transforma los datos ya recopilados. Captura el texto de las consultas solo bajo una política explícita de saneamiento; excluye contraseñas, literales SQL y datos de clientes.
 
-```traceql
-{ span.db.system = "postgresql" && duration > 100ms }
-```
+## 2. Requisitos previos del grafo de servicios {#service-graph}
 
-**Paso 1.5: Encontrar retrasos de publicación en SQS**
-
-```traceql
-{ span.messaging.system = "sqs" && span.messaging.operation = "publish" && duration > 500ms }
-```
-
-**Paso 1.6: Consulta compleja: trazas de error con un servicio específico**
-
-```traceql
-{ resource.service.name = "order-service" && status = error }
-| select(span.http.status_code, span.http.route, duration, span.error.message)
-| order by duration desc
-| limit 20
-```
-
-### Referencia de consultas TraceQL
-
-| Caso de uso | Consulta TraceQL |
-|----------|---------------|
-| Todos los errores | `{ status = error }` |
-| Trazas lentas | `{ duration > 1s }` |
-| Servicio específico | `{ resource.service.name = "order-service" }` |
-| HTTP 500 | `{ span.http.status_code >= 500 }` |
-| Consultas de base de datos | `{ span.db.statement =~ "SELECT.*" }` |
-| Entre servicios | `{ resource.service.name = "api-gateway" } >> { resource.service.name = "order-service" }` |
-
----
-
-## Ejercicio 2: Visualización del grafo de servicios
-
-### Pasos
-
-**Paso 2.1: Habilitar Service Graph en Grafana**
-
-```bash
-# Service Graph is auto-generated from trace data
-# Access: Grafana > Explore > Tempo > Service Graph tab
-```
-
-**Paso 2.2: Analizar dependencias de servicios**
-
-El Service Graph muestra:
-- Nodos de Service (círculos)
-- Flujo de solicitudes (flechas)
-- Tasa de solicitudes (grosor de las flechas)
-- Tasa de errores (intensidad del color rojo)
-- Latencia (se muestra al pasar el cursor)
-
-**Paso 2.3: Identificar servicios con cuellos de botella**
-
-Busque:
-1. Servicios con alta latencia (respuesta lenta)
-2. Servicios con altas tasas de error (nodos rojos)
-3. Servicios con muchas conexiones entrantes (posibles puntos críticos)
-4. Servicios con patrones de fan-out (múltiples llamadas downstream)
-
----
-
-## Ejercicio 3: Flujo de trabajo para identificar la latencia
-
-### Pasos
-
-**Paso 3.1: Tabla del flujo de trabajo de análisis de latencia**
-
-| Paso | Acción | Herramienta | Qué buscar |
-|------|--------|------|------------------|
-| 1 | Revisar la tendencia de latencia P99 | Prometheus/Grafana | Picos repentinos o aumento gradual |
-| 2 | Identificar el servicio afectado | Service Graph | Nodos rojos/lentos |
-| 3 | Encontrar trazas lentas | TraceQL | `{ duration > p99 }` |
-| 4 | Analizar la cascada de trazas | Tempo | Spans largos, brechas entre spans |
-| 5 | Revisar los detalles del span | Tempo | db.statement, http.url, mensajes de error |
-| 6 | Correlacionar con logs | Loki | Errores cerca de la misma marca de tiempo |
-| 7 | Revisar las métricas de recursos | Prometheus | CPU, memoria, grupo de conexiones |
-
-**Paso 3.2: Análisis práctico de latencia**
-
-```bash
-# Step 1: Find P99 latency
-# In Grafana Explore with Prometheus:
-histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{service="order-service"}[5m])) by (le))
-
-# Step 2: Find traces above P99
-# In Grafana Explore with Tempo:
-{ resource.service.name = "order-service" && duration > 800ms }
-
-# Step 3: Analyze a specific trace
-# Click on a trace to see the waterfall view
-
-# Step 4: Identify the slowest span
-# Look for spans with longest duration relative to parent
-```
-
-**Paso 3.3: Patrones comunes de latencia**
-
-| Patrón | Síntoma | Causa probable |
-|---------|---------|--------------|
-| Un único span lento | Un span tarda el 90 % del tiempo de la traza | Consulta de base de datos, API externa |
-| Spans secuenciales | Varios spans en secuencia | Falta de paralelización |
-| Brecha entre spans | Tiempo sin contabilizar | Pausa de GC, contención de hilos |
-| Retraso de fan-out | Muchas llamadas paralelas, una lenta | Un servicio downstream degradado |
-| Latencia alta constante | Todas las solicitudes son lentas | Agotamiento de recursos |
-
----
-
-## Ejercicio 4: Correlación Loki-Tempo
-
-### Pasos
-
-**Paso 4.1: Configurar la vinculación bidireccional**
-
-Los datasources de Grafana configurados en la Parte 2 ya tienen la correlación configurada. Verifique:
-
-```bash
-# Check Tempo datasource config
-kubectl get configmap -n monitoring grafana -o yaml | grep -A20 "Tempo"
-```
-
-**Paso 4.2: De traza a logs (Tempo → Loki)**
-
-1. Abra una traza en Grafana Explore (Tempo)
-2. Haga clic en un span
-3. Haga clic en el botón "Logs for this span"
-4. Grafana consulta Loki con el traceId
-
-**Paso 4.3: De logs a traza (Loki → Tempo)**
-
-1. En Grafana Explore, seleccione Loki
-2. Ejecute una consulta de logs:
-   ```logql
-   {namespace="msa"} | json | level="ERROR"
-   ```
-3. Encuentre una línea de log con traceId
-4. Haga clic en el enlace traceId para ir a Tempo
-
-**Paso 4.4: Verificar que la correlación funcione**
-
-```bash
-# Generate a test request and find it in both systems
-curl -X POST "http://$API_URL:8080/api/v1/orders" \
-  -H "Content-Type: application/json" \
-  -d '{"customer_id":"TEST-001","product_id":"PROD-001","quantity":1}'
-
-# Note the response and search in Tempo:
-# { resource.service.name = "api-gateway" && span.http.route = "/api/v1/orders" }
-
-# Find the traceId and search in Loki:
-# {namespace="msa"} |= "traceId" | json | traceId = "<your-trace-id>"
-```
-
----
-
-## Ejercicio 5: Uso de Exemplars
-
-### Pasos
-
-**Paso 5.1: Comprender los Exemplars**
-
-Los Exemplars vinculan puntos de datos de métricas con trazas específicas, lo que permite profundizar desde métricas anómalas hasta las solicitudes reales.
-
-```mermaid
-flowchart LR
-    M[Metric Point<br/>latency=1.2s]
-    E[Exemplar<br/>traceId=abc123]
-    T[Trace<br/>Full request path]
-
-    M -->|contains| E
-    E -->|links to| T
-```
-
-**Paso 5.2: Ver Exemplars en Grafana**
-
-1. Abra Grafana > Explore > Prometheus
-2. Consulte con Exemplars habilitados:
-   ```promql
-   histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{service="order-service"}[5m])) by (le))
-   ```
-3. En el gráfico, busque marcadores de diamante (exemplars)
-4. Pase el cursor sobre un diamante para ver el traceId
-5. Haga clic para navegar a Tempo
-
-**Paso 5.3: Configurar la visualización de Exemplars**
-
-```bash
-# Ensure Prometheus is recording exemplars
-kubectl get configmap -n monitoring kube-prometheus-stack-prometheus -o yaml | grep exemplar
-```
-
-**Paso 5.4: Consulta de Exemplars en Grafana**
+Recibir trazas en Tempo no basta por sí solo para completar el grafo de servicios de Grafana. Habilita el procesador service-graphs del metrics-generator, entrega sus métricas a un backend de métricas real y enlaza el UID de serviceMap del datasource de Tempo en Grafana con ese backend. Los spans cliente/servidor o productor/consumidor deben compartir contexto. El muestreo, los spans ausentes y los tipos de span incorrectos afectan a las aristas resultantes.
 
 ```promql
-# Show request duration with exemplars
-http_server_request_duration_seconds_bucket{service="order-service"}
+sum by (client, server) (rate(traces_service_graph_request_total[5m]))
 
-# In Query Options, enable "Exemplars"
+(
+  sum by (client, server) (rate(traces_service_graph_request_failed_total[5m]))
+  or on (client, server)
+  (0 * sum by (client, server) (rate(traces_service_graph_request_total[5m])))
+)
+/ on (client, server)
+(sum by (client, server) (rate(traces_service_graph_request_total[5m])) > 0)
+
+sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum[5m]))
+/
+sum by (client, server) (rate(traces_service_graph_request_server_seconds_count[5m]))
 ```
 
----
+El contador de fallos puede no tener ninguna serie hasta el primer fallo. Rellena su numerador ausente con cero a partir de la serie de total de peticiones correspondiente y luego exige un denominador positivo para distinguir un 0% saludable de la ausencia de tráfico o de una ingesta que falta.
 
-## Ejercicio 6: Configuración de un dashboard integral
+La última consulta mide la duración media del lado del servidor. La duración del lado del cliente usa `traces_service_graph_request_client_seconds_*`; no consultes la familia inexistente `traces_service_graph_request_duration_seconds_*`. Trata los intervalos sin tráfico como evidencia ausente. Los colores y el grosor de las aristas dependen de la configuración de Grafana y del dashboard; inspecciona los valores de peticiones, errores y duración en lugar de asumir reglas de color fijas del 1%/5%.
 
-### Pasos
+## 3. Formula hipótesis de cuellos de botella a partir del waterfall {#waterfall}
 
-**Paso 6.1: Dashboard RED (Rate, Errors, Duration)**
+| Observación | Seguimiento |
+|---|---|
+| Span de base de datos lento | Revisa el plan de consulta, los bloqueos, el pool de conexiones y las métricas de la base de datos |
+| Span de cliente prolongado | Compara los intervalos de DNS/TLS/red/espera del servidor/reintentos |
+| Hueco entre el span padre y el hijo | Revisa el trabajo no instrumentado, las colas, el GC y la planificación |
+| Spans hijos en paralelo | Analiza el solapamiento y la ruta crítica en lugar de sumar duraciones |
+| Retraso en la mensajería | Separa la duración de envío/recepción/procesamiento de la espera en cola y las reentregas |
 
-```bash
-cat > /tmp/red-dashboard.json << 'EOF'
-{
-  "dashboard": {
-    "title": "MSA RED Dashboard",
-    "tags": ["obs-lab", "red", "sre"],
-    "panels": [
-      {
-        "title": "Request Rate by Service",
-        "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
-        "targets": [{
-          "expr": "sum(rate(http_server_request_count{namespace=\"msa\"}[5m])) by (service)",
-          "legendFormat": "{{service}}"
-        }]
-      },
-      {
-        "title": "Error Rate by Service",
-        "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
-        "targets": [{
-          "expr": "sum(rate(http_server_request_count{namespace=\"msa\",http_status_code=~\"5..\"}[5m])) by (service) / sum(rate(http_server_request_count{namespace=\"msa\"}[5m])) by (service)",
-          "legendFormat": "{{service}}"
-        }],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "percentunit",
-            "thresholds": {
-              "steps": [
-                {"value": 0, "color": "green"},
-                {"value": 0.01, "color": "yellow"},
-                {"value": 0.05, "color": "red"}
-              ]
-            }
-          }
-        }
-      },
-      {
-        "title": "P99 Latency by Service",
-        "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0},
-        "targets": [{
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{namespace=\"msa\"}[5m])) by (le, service))",
-          "legendFormat": "{{service}}"
-        }],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s"
-          }
-        }
-      }
-    ]
-  }
-}
-EOF
+La duración del padre incluye la duración de los hijos; sumar todos los spans cuenta el tiempo dos veces. Un span de base de datos de 1,8 segundos no prueba por sí solo que falte un índice. Compara logs y métricas sobre la misma release, el mismo tráfico y el mismo rango temporal antes de aceptar una hipótesis.
 
-curl -X POST -H "Content-Type: application/json" \
-  -u admin:ObsLab2026! \
-  -d @/tmp/red-dashboard.json \
-  "http://$GRAFANA_URL/api/dashboards/db"
+## 4. Enlaza logs y trazas {#correlation}
+
+```logql
+{service_name="order-service"} | json | level="ERROR"
+
+{service_name="order-service"} | json | trace_id="0123456789abcdef0123456789abcdef"
 ```
 
-**Paso 6.2: Dashboard SLI/SLO**
+Estas consultas dan por supuesto que existen realmente una etiqueta de stream `service_name` y un campo JSON `trace_id`. Sustituye el trace ID de ejemplo de 32 caracteres por un ID de petición real. `traceID`, `traceId` y `trace_id` son campos distintos. Mantén los trace ID en campos de log o en metadatos estructurados, no en etiquetas de stream únicas. Define los límites temporales en Grafana o en los parámetros HTTP; no añadas `timestamp >= 2025-...` a LogQL.
 
-| SLI | Objetivo (SLO) | Consulta |
-|-----|--------------|-------|
-| Disponibilidad | 99.9% | `1 - (sum(rate(http_server_request_count{status_code=~"5.."}[30d])) / sum(rate(http_server_request_count[30d])))` |
-| Latencia P99 | < 500ms | `histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket[5m])) by (le)) < 0.5` |
-| Rendimiento | > 100 RPS | `sum(rate(http_server_request_count[5m])) > 100` |
+Un derived field de Loki extrae el trace ID y enlaza con el UID del datasource de Tempo. En el YAML de provisioning de Grafana, escapa la expresión del enlace interno como `$${__value.raw}`. Las expresiones regulares entre comillas dobles y un envsubst de shell demasiado amplio pueden alterar las barras invertidas o las variables de Grafana; usa comillas simples cuando corresponda y sustituciones de alcance reducido.
 
-**Paso 6.3: Dashboard de infraestructura**
+Configura `tracesToLogsV2` de Tempo con el UID de Loki, el mapeo real de etiquetas de recurso a log, el margen temporal y el filtrado por trace ID. Inspecciona el LogQL generado después de hacer clic en «Logs for this span». Que el enlace exista y que se recupere correctamente la misma petición son comprobaciones distintas.
 
-| Panel | Métrica | Propósito |
-|-------|--------|---------|
-| Node CPU | `node_cpu_seconds_total` | Uso de recursos del Node |
-| Node Memory | `node_memory_MemAvailable_bytes` | Presión de memoria |
-| Pod CPU | `container_cpu_usage_seconds_total` | Uso de recursos del Pod |
-| Pod Memory | `container_memory_working_set_bytes` | Memoria del contenedor |
-| Uso de PVC | `kubelet_volume_stats_used_bytes` | Consumo de almacenamiento |
+## 5. Significado y verificación de los exemplars {#exemplars}
 
-**Paso 6.4: Dashboard de trazabilidad**
+![Follow a representative exemplar to its trace and logs](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-1.png)
 
-| Panel | Fuente de datos | Propósito |
-|-------|-------------|---------|
-| Conteo de trazas | Métricas de Tempo | Volumen de trazas |
-| Mapa de calor de duración de spans | Tempo | Distribución de duración |
-| Service Graph | Tempo | Visualización de dependencias |
-| Tabla de trazas de error | Tempo | Errores recientes |
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-1.html)
 
----
+Un exemplar es una **observación representativa** adjunta a un agregado. Hacer clic en un punto de una gráfica de p99 no prueba que esa petición determinara el límite exacto del percentil. La producción de exemplars, su conservación en el exporter/remote-write, el almacenamiento en Prometheus y el enlace del datasource en Grafana deben funcionar todos. El muestreo o la retención pueden dejar un ID de exemplar cuyo trace no esté disponible.
 
-## Limpieza
+Inspecciona los resultados reales de la API de exemplars de Prometheus y consulta Tempo con el `trace_id` devuelto. Habilitar una opción de visualización en Grafana o buscar un ConfigMap de Prometheus inexistente no valida la ingesta. Verifica los ajustes de almacenamiento de exemplars frente a la versión instalada de Prometheus o del chart y frente al recurso de Prometheus renderizado y sus argumentos de ejecución.
 
-> **Importante**: Complete esta sección de limpieza para evitar costos continuos de AWS.
+## 6. Dashboards RED y SLI/SLO {#slo}
 
-### Tabla de pasos de limpieza
+Construye los paneles RED a partir de los nombres de métrica, las etiquetas y las unidades de histograma reales. Compara la tasa de peticiones, la proporción de fallos y la distribución de duraciones sobre el mismo alcance de Service/ruta. Define qué peticiones son elegibles y qué cuenta como éxito antes de calcular la disponibilidad; indica cómo se tratan las respuestas 4xx, los health checks y los reintentos.
 
-| Recurso | Comando | Notas |
-|----------|---------|-------|
-| Aplicaciones MSA | `kubectl delete namespace msa` | Elimina todos los pods/services de MSA |
-| Stack de observabilidad | `helm uninstall kube-prometheus-stack -n monitoring` | Prometheus, Alertmanager |
-| Loki | `helm uninstall loki -n logging` | Almacenamiento de logs |
-| Tempo | `helm uninstall tempo -n tracing` | Almacenamiento de trazas |
-| Grafana | `helm uninstall grafana -n monitoring` | Dashboards |
-| OTel Collector | `kubectl delete namespace opentelemetry` | Pipeline de telemetría |
-| ArgoCD | `helm uninstall argocd -n argocd` | GitOps |
-| KEDA | `helm uninstall keda -n keda` | Autoscaler |
-| Locust | `kubectl delete deployment locust-master locust-worker -n msa` | Pruebas de carga |
+Un SLO de 30 días requiere retención y observaciones reales a lo largo de ese periodo. Una consulta `[30d]` en un laboratorio recién creado no genera 30 días de evidencia. Gestiona la ausencia de tráfico, las series ausentes y los reinicios de contadores; declara las limitaciones de los percentiles con volúmenes bajos. Calcula el presupuesto de errores usando los fallos permitidos y los fallos observados en la misma ventana. Registra el periodo, el denominador y el valor en lugar de afirmar un fijo «99,9% conseguido».
 
-### Script de limpieza completo
+## 7. Verifica el flujo y luego limpia {#cleanup}
 
-```bash
-#!/bin/bash
-set -e
+Antes de la limpieza, registra una petición cuyo ID de exemplar, trace ID en Tempo y trace ID en los logs coincidan; verifica las dependencias reales del grafo de servicios y la entrega de alertas. Conserva los valores medidos, las marcas de tiempo y las versiones de configuración en lugar de rellenar los resultados con estimaciones.
 
-echo "Starting cleanup..."
+| Orden | Acción y condición de finalización |
+|---|---|
+| 1 | Detén k6/Locust, la inyección de fallos y los disparadores de análisis con IA; guarda los resultados |
+| 2 | Detén la recreación del ApplicationSet/padre de GitOps y elimina en cascada la aplicación real |
+| 3 | Elimina los LoadBalancers/Ingresses, workloads y PVCs del clúster de servicio; verifica la limpieza de los LB y volúmenes externos |
+| 4 | Elimina los custom resources de telemetría antes de desinstalar sus operators usando los nombres reales de release/namespace |
+| 5 | Vacía/elimina los NodeClaims de Karpenter antes de retirar el controlador; conserva los controladores de API/LB/almacenamiento mientras existan dependencias |
+| 6 | Revisa los planes de destrucción con el mismo estado de IaC; usa los IDs/ARNs exactos registrados para los recursos de AWS creados manualmente |
+| 7 | Elimina EKS/VPC después de limpiar las dependencias y luego verifica la eliminación de los servicios gestionados y los recursos residuales |
 
-# 1. Delete MSA applications
-echo "Deleting MSA namespace..."
-kubectl delete namespace msa --ignore-not-found
+No elimines namespaces compartidos ni CRDs de ámbito de clúster. Usa la release/namespace/versión de instalación registrados, no una URL de instalador `latest`. En S3 con versionado hay que revisar las versiones antiguas y los delete markers además de los objetos actuales. Reconcilia la política de snapshots de Aurora, el bucket de MWAA/DAG, AMG, AMP, OpenSearch, SNS/SQS/DLQ, Lambda/API Gateway, las asociaciones de IAM, EBS/LBs, los log groups y las alarmas con tu inventario. Las solicitudes de eliminación aceptadas no equivalen a una eliminación completada.
 
-# 2. Delete observability stack (Managed Cluster)
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-managed)
+Revisa la propiedad de los recursos y preserva la evidencia y el estado en lugar de usar una destrucción autoaprobada sin comprobar, silenciar todos los errores o eliminar todo el directorio de trabajo.
 
-echo "Uninstalling Helm releases..."
-helm uninstall grafana -n monitoring --ignore-not-found || true
-helm uninstall kube-prometheus-stack -n monitoring --ignore-not-found || true
-helm uninstall victoria-metrics -n monitoring --ignore-not-found || true
-helm uninstall mimir -n monitoring --ignore-not-found || true
-helm uninstall loki -n logging --ignore-not-found || true
-helm uninstall tempo -n tracing --ignore-not-found || true
-helm uninstall fluent-bit -n logging --ignore-not-found || true
-helm uninstall argocd -n argocd --ignore-not-found || true
-helm uninstall grafana-oncall -n monitoring --ignore-not-found || true
+## Alcance de la validación y referencias
 
-# 3. Delete namespaces
-echo "Deleting namespaces..."
-kubectl delete namespace monitoring logging tracing opentelemetry argocd --ignore-not-found
+El parser actual de Tempo validó 12 consultas aceptadas y rechazó tres consultas erróneas anteriores. Una instancia local efímera de Loki 3.7.7 recibió dos líneas de log sintéticas; ambas consultas LogQL recuperaron exactamente el trace ID esperado. No se ejecutaron la búsqueda en Tempo del servicio real, la recopilación en Loki, el enlace de datos en Grafana ni la eliminación en la nube.
 
-# 4. Delete Service Cluster resources
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-service)
-helm uninstall keda -n keda --ignore-not-found || true
-helm uninstall argo-rollouts -n argo-rollouts --ignore-not-found || true
-kubectl delete namespace keda argo-rollouts msa opentelemetry --ignore-not-found
-
-# 5. Delete EKS clusters
-echo "Deleting EKS clusters (this takes 15-20 minutes)..."
-eksctl delete cluster -f ~/obs-lab/managed-cluster.yaml --wait || true
-eksctl delete cluster -f ~/obs-lab/service-cluster.yaml --wait || true
-
-# 6. Delete AWS resources
-echo "Deleting AWS resources..."
-
-# Aurora
-aws rds delete-db-instance --db-instance-identifier obs-lab-aurora-1 --skip-final-snapshot --region $AWS_REGION || true
-sleep 60
-aws rds delete-db-cluster --db-cluster-identifier obs-lab-aurora --skip-final-snapshot --region $AWS_REGION || true
-
-# OpenSearch
-aws opensearch delete-domain --domain-name obs-lab-logs --region $AWS_REGION || true
-
-# AMP
-AMP_WORKSPACE_ID=$(aws amp list-workspaces --alias obs-lab-prometheus --query "workspaces[0].workspaceId" --output text --region $AWS_REGION)
-aws amp delete-workspace --workspace-id $AMP_WORKSPACE_ID --region $AWS_REGION || true
-
-# SQS/SNS
-SQS_QUEUE_URL=$(aws sqs get-queue-url --queue-name obs-lab-orders --query QueueUrl --output text --region $AWS_REGION 2>/dev/null)
-aws sqs delete-queue --queue-url $SQS_QUEUE_URL --region $AWS_REGION || true
-
-SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, 'obs-lab-alerts')].TopicArn" --output text --region $AWS_REGION)
-aws sns delete-topic --topic-arn $SNS_TOPIC_ARN --region $AWS_REGION || true
-
-# S3 buckets
-aws s3 rb s3://obs-lab-loki-${ACCOUNT_ID} --force --region $AWS_REGION || true
-aws s3 rb s3://obs-lab-tempo-${ACCOUNT_ID} --force --region $AWS_REGION || true
-aws s3 rb s3://obs-lab-mimir-${ACCOUNT_ID} --force --region $AWS_REGION || true
-aws s3 rb s3://obs-lab-mwaa-${ACCOUNT_ID}-${AWS_REGION} --force --region $AWS_REGION || true
-
-# Lambda and API Gateway
-aws lambda delete-function --function-name obs-lab-aiops-agent --region $AWS_REGION || true
-
-# IAM policies
-aws iam delete-policy --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/obs-lab-amp-access || true
-aws iam delete-policy --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/obs-lab-logging-access || true
-
-# CloudWatch Alarms
-aws cloudwatch delete-alarms --alarm-names obs-lab-aurora-cpu-high obs-lab-sqs-message-age obs-lab-opensearch-health obs-lab-critical-composite --region $AWS_REGION || true
-
-# 7. Cleanup local files
-echo "Cleaning up local files..."
-rm -rf ~/obs-lab
-
-echo "Cleanup complete!"
-echo "Note: Some resources may take additional time to fully delete."
-echo "Verify in AWS Console that all resources are removed."
-```
-
-### Verificación
-
-```bash
-# Verify EKS clusters deleted
-eksctl get cluster --region $AWS_REGION
-
-# Verify AWS resources deleted
-aws rds describe-db-clusters --query "DBClusters[?DBClusterIdentifier=='obs-lab-aurora']" --region $AWS_REGION
-aws opensearch describe-domain --domain-name obs-lab-logs --region $AWS_REGION 2>&1 | grep -q "ResourceNotFoundException" && echo "OpenSearch deleted"
-aws amp list-workspaces --alias obs-lab-prometheus --region $AWS_REGION
-```
-
----
-
-## Resumen
-
-En esta serie de laboratorios, ha creado una plataforma de observabilidad completa:
-
-| Parte | Temas tratados | Habilidades clave |
-|------|---------------|------------|
-| 1 | Infraestructura | EKS, servicios de AWS, ArgoCD multiclúster |
-| 2 | Stack de observabilidad | OTel, Prometheus, Loki, Tempo, Grafana |
-| 3 | Despliegue de MSA | ArgoCD, Argo Rollouts, instrumentación OTel |
-| 4 | Pruebas de carga | Escalado automático con k6, KEDA, Karpenter |
-| 5 | Alerting y AIOps | Alertmanager, OnCall, Bedrock Claude |
-| 6 | Análisis de trazas | TraceQL, correlación, exemplars |
-
-### Puntos clave
-
-1. **Integración de los tres pilares**: Las métricas, los logs y las trazas funcionan conjuntamente para una observabilidad completa
-2. **Estandarización con OTel**: OpenTelemetry proporciona instrumentación independiente del proveedor
-3. **Estrategia multi-backend**: Fan-out a múltiples backends para redundancia y flexibilidad
-4. **Despliegue basado en observabilidad**: Lanzamientos Canary con análisis automatizado
-5. **Automatización AIOps**: El análisis de incidentes impulsado por AI reduce el MTTR
-6. **La correlación es clave**: La vinculación mediante TraceID permite la depuración de extremo a extremo
-
-## Lista de verificación final
-
-- [ ] Funciona el análisis detallado completo de métricas→exemplar→traza→logs
-- [ ] Service Graph muestra todas las dependencias de MSA
-- [ ] Los despliegues Canary usan métricas de observabilidad para tomar decisiones
-- [ ] Las alertas se activan y llegan a los canales de notificación
-- [ ] El agente AIOps proporciona análisis útil
-- [ ] Todos los recursos se limpiaron para evitar costos
-
-## Próximos pasos
-
-Después de completar esta serie de laboratorios:
-
-1. **Despliegue en producción**: Aplique estos patrones a cargas de trabajo de producción
-2. **Instrumentación personalizada**: Agregue métricas y trazas específicas del negocio
-3. **Implementación de SLO**: Defina y haga seguimiento de SLO con presupuestos de error
-4. **Chaos Engineering**: Introduzca fallos controlados para probar la observabilidad
-5. **Optimización de costos**: Implemente políticas de muestreo y retención
-
-## Referencias
-
-- [Documentación de Tempo](../../observability/tracing/01-tempo.md)
-- [Documentación de OpenTelemetry](../../observability/tracing/03-opentelemetry.md)
-- [Documentación de Loki](../../observability/logging/01-loki.md)
-- [Documentación de Prometheus](../../observability/metrics/01-prometheus.md)
-- [Documentación de Grafana](../../observability/grafana/README.md)
-- [Documentación de TraceQL](https://grafana.com/docs/tempo/latest/traceql/)
+- [TraceQL](https://grafana.com/docs/tempo/latest/traceql/)
+- [Métricas del grafo de servicios](https://grafana.com/docs/tempo/latest/metrics-from-traces/service_graphs/)
+- [Spans HTTP de OTel](https://opentelemetry.io/docs/specs/semconv/http/http-spans/)
+- [Spans de base de datos de OTel](https://opentelemetry.io/docs/specs/semconv/database/database-spans/)
+- [Derived fields de Loki](https://grafana.com/docs/grafana/latest/datasources/loki/configure-loki-data-source/)
+- [Guía de Tempo](../../observability/tracing/01-tempo.md)
+- [Guía de Loki](../../observability/logging/01-loki.md)
+- [Índice de la serie](./README.md)

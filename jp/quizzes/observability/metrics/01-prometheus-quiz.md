@@ -1,28 +1,25 @@
 # Prometheus クイズ
 
-Prometheus に関する理解度を確認するクイズです。
+> **最終更新**: September 12, 2026
 
----
+1. Prometheus の通常のメトリクス収集経路は何ですか？
 
-1. Prometheus のデータ収集方式は何ですか？
-   - A) Push ベース - アプリケーションがメトリクスを送信する
-   - B) Pull ベース - Prometheus がターゲットからメトリクスをスクレイプする
-   - C) Streaming ベース - リアルタイムのデータストリーム
-   - D) Batch ベース - 定期的なファイル転送
+   - A) アプリケーションがすべてのサンプルを直接 push する必要がある
+   - B) Prometheus が設定されたターゲットを HTTP 経由で scrape する
+   - C) ストリーミングイベントログのみ
+   - D) 定期的な CSV インポートのみ
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Pull ベース - Prometheus がターゲットからメトリクスをスクレイプする**
+**回答: B**
 
-**解説:**
-Prometheus は Pull ベースのメトリクス収集システムであり、HTTP を介してターゲットの /metrics エンドポイントから定期的にメトリクスをスクレイプします。このアプローチの利点は、収集ターゲットと間隔を一元管理できること、およびターゲットの可用性を自動検出できることです。
+通常の経路は pull/scrape です。Remote write とオプションのバッチ統合により、ほかの配信経路が追加されます。up は scrape の成功を示すものであり、アプリケーションの完全な可用性を示すものではありません。
 
 </details>
 
----
+2. Counter の5分間における1秒あたりの平均 rate を得る式はどれですか？
 
-2. 過去 5 分間の HTTP リクエストレートを計算する正しい PromQL クエリはどれですか？
    - A) `rate(http_requests_total, 5m)`
    - B) `rate(http_requests_total[5m])`
    - C) `increase(http_requests_total[5m])`
@@ -31,52 +28,46 @@ Prometheus は Pull ベースのメトリクス収集システムであり、HTT
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) `rate(http_requests_total[5m])`**
+**回答: B**
 
-**解説:**
-`rate()` 関数は、Counter メトリクスの 1 秒あたりの平均増加率を計算します。Range vector では角括弧 `[]` で時間を指定します。`increase()` は合計増加量を返し、`avg()` は平均値を計算する集計関数です。`rate(http_requests_total[5m])` は 5 分間の 1 秒あたりのリクエスト数を計算します。
+rate() は range vector を使用し、観測された reset/extrapolation を処理します。increase() は総増加量を推定するもので、1秒あたりの rate ではありません。集約の前に rate を適用し、欠落したすべての増分を復元するものと解釈しないでください。
 
 </details>
 
----
+3. 正常に動作する ServiceMonitor が記述しなければならないものは何ですか？
 
-3. Prometheus Operator における ServiceMonitor の役割は何ですか？
-   - A) Prometheus サーバーをデプロイする
-   - B) アラートルールを定義する
-   - C) 監視する Service とスクレイプ設定を定義する
-   - D) Grafana ダッシュボードを作成する
+   - A) Grafana ダッシュボード
+   - B) Prometheus コンテナイメージのみ
+   - C) Prometheus の設定と selector/port 名が一致する、選択対象の Service と scrape endpoint
+   - D) 完全なアプリケーション Deployment
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) 監視する Service とスクレイプ設定を定義する**
+**回答: C**
 
-**解説:**
-ServiceMonitor は Prometheus Operator の CRD であり、Kubernetes Service を監視するためのスクレイプ設定を宣言的に定義します。ターゲット Service のセレクター、エンドポイント、スクレイプ間隔、ラベルの再ラベル付けなどを設定できます。PrometheusRule はアラートルールを処理し、Prometheus CRD はサーバーのデプロイを処理します。
+Prometheus はまず monitor の namespace と label を選択し、その monitor が対象の Service を選択します。endpoint port は Service の port 名です。RBAC、TLS/ネットワークアクセス、計装されたアプリケーションも追加要件です。
 
 </details>
 
----
+4. histogram_quantile() は classic histogram に対して何を返しますか？
 
-4. histogram_quantile 関数について正しい記述はどれですか？
-   - A) Summary メトリクスでのみ使用できる
-   - B) Histogram バケットから分位数を計算する
-   - C) 正確な分位数の値を返す
-   - D) Counter メトリクスの変化率を計算する
+   - A) 正確な Summary percentile
+   - B) bucket ベースの quantile 推定値
+   - C) bucket の解像度に依存しない正確な percentile
+   - D) Counter の request rate
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Histogram バケットから分位数を計算する**
+**回答: B**
 
-**解説:**
-`histogram_quantile()` は Histogram バケットデータから分位数を計算します。たとえば、`histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))` は p95 レイテンシーを計算します。バケット境界に基づく近似値を返すため、正確な分位数には Summary を使用します。
+互換性のある classic bucket を、le を保持したまま集約します。結果は bucket 内で補間されます。Summary quantile にもアルゴリズムや window に依存する誤差があり、fleet 全体の percentile に平均化することはできません。
 
 </details>
 
----
+5. kube-prometheus-stack パッケージの構成要素ではないものはどれですか？
 
-5. kube-prometheus-stack Helm chart に含まれていないコンポーネントはどれですか？
    - A) Prometheus Operator
    - B) Grafana
    - C) VictoriaMetrics
@@ -85,99 +76,90 @@ ServiceMonitor は Prometheus Operator の CRD であり、Kubernetes Service �
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) VictoriaMetrics**
+**回答: C**
 
-**解説:**
-kube-prometheus-stack は、Prometheus Operator、Prometheus、Alertmanager、Grafana、kube-state-metrics、node-exporter などを含む Helm chart です。VictoriaMetrics は別プロジェクトであり、victoria-metrics-k8s-stack chart を使用してインストールします。
+この chart は、有効化された values に応じて Prometheus/Alertmanager、Operator、Grafana、exporter をパッケージ化します。VictoriaMetrics は別の deployment です。任意の image version を混在させるのではなく、確認した chart cohort を pin してください。
 
 </details>
 
----
+6. remote write は何に使用されますか？
 
-6. Prometheus における Remote Write の主な目的は何ですか？
-   - A) ローカルストレージのパフォーマンスを改善する
-   - B) 長期メトリクスストレージにデータを送信する
-   - C) リアルタイムアラートを送信する
-   - D) Grafana ダッシュボードを同期する
+   - A) Alertmanager 通知の送信
+   - B) 設定された外部 receiver への非同期サンプル配信
+   - C) 無制限の障害時バッファリングの保証
+   - D) Grafana ダッシュボードの同期
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 長期メトリクスストレージにデータを送信する**
+**回答: B**
 
-**解説:**
-Remote Write は、Prometheus が収集したメトリクスを外部システム（VictoriaMetrics、Mimir、AMP、Cortex など）に送信する機能です。Prometheus のローカルストレージには保持期間とスケーラビリティの制約があるため、Remote Write を使用して長期保持向けの専用ストレージにデータを送信します。
+receiver には AMP、VictoriaMetrics、Mimir があります。それぞれに独自の endpoint、identity、quota、HA 契約があります。WAL バッファリングには上限があり、ローカル Prometheus の retention 自体も設定可能で、普遍的に30日間に制限されるものではありません。
 
 </details>
 
----
+7. alert rule の for duration は何を制御しますか？
 
-7. PrometheusRule CRD における `for` フィールドの役割は何ですか？
-   - A) ルール評価間隔を設定する
-   - B) アラートが発火するまでの条件継続時間を設定する
-   - C) アラートの再送間隔を設定する
-   - D) メトリクスの保持期間を設定する
+   - A) メトリクスの retention
+   - B) 同じ alert condition/label set が firing 前に pending 状態のままである期間
+   - C) Alertmanager の repeat interval
+   - D) Prometheus replica の数
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) アラートが発火するまでの条件継続時間を設定する**
+**回答: B**
 
-**解説:**
-PrometheusRule の `for` フィールドは、アラート条件が満たされてから実際にアラートが発火するまでの待機時間を設定します。たとえば、`for: 5m` は、アラートが発火する前に条件が 5 分間継続する必要があることを意味します。これにより、一時的なスパイクによる不要なアラートを防止します。
+その alert identity に対して、condition は evaluation を通じて満たされ続ける必要があります。データの欠落や label の変更により、pending 状態が中断されることがあります。通知の grouping と timing は別の Alertmanager 設定です。
 
 </details>
 
----
+8. predict_linear() はどのように解釈すべきですか？
 
-8. PromQL の `predict_linear` 関数の目的は何ですか？
-   - A) 現在値の絶対値を計算する
-   - B) 線形回帰に基づいて将来の値を予測する
-   - C) 時系列データを並べ替える
-   - D) ラベル値を変換する
+   - A) 保証されたディスク障害の期限
+   - B) 将来に外挿された、fitting 済みの Gauge trend
+   - C) 季節性を考慮した三重指数予測
+   - D) すべての capacity measurement の代替
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 線形回帰に基づいて将来の値を予測する**
+**回答: B**
 
-**解説:**
-`predict_linear(v range-vector, t scalar)` は、線形回帰を使用して将来の値を予測します。たとえば、`predict_linear(node_filesystem_avail_bytes[6h], 24*60*60) < 0` は、現在の傾向で 24 時間以内にディスク容量が枯渇するかどうかを予測します。キャパシティプランニングとプロアクティブなアラートに役立ちます。
+観測された linear trend を予測します。workload の変更、cleanup、sparse data、非線形な動作により無効になる可能性があります。以前の holt_winters 名は、Prometheus 3 では明示的に experimental な double-exponential smoothing function に置き換えられています。これは seasonal model ではありません。
 
 </details>
 
----
+9. AlertmanagerConfig の groupBy は何をしますか？
 
-9. Alertmanager の `groupBy` 設定の役割は何ですか？
-   - A) 特定のグループにのみアラートを送信する
-   - B) 指定したラベルでアラートをグループ化する
-   - C) アラートの優先度を設定する
-   - D) 重複するアラートを削除する
+   - A) すべての namespace からの alert を自動的に認可する
+   - B) 選択した label で通知をグループ化する
+   - C) Prometheus の for duration を定義する
+   - D) 一致するすべての sibling route を実行する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 指定したラベルでアラートをグループ化する**
+**回答: B**
 
-**解説:**
-`groupBy` は、指定したラベルでアラートをグループ化し、単一の通知として送信します。たとえば、`groupBy: ['alertname', 'namespace']` は、同じ alertname と namespace を持つアラートをグループ化します。これにより、アラートストームを防ぎ、関連するアラートをまとめて確認できます。
+groupBy は native configuration では group_by になります。通常、route は continue が設定されていない限り、最初に一致した sibling で停止します。inhibition では、無関係な service/node warning を抑制しないように、意味のある resource-identity の equal label が必要です。
 
 </details>
 
----
+10. TSDB WAL は何を提供しますか？
 
-10. Prometheus TSDB における WAL（Write-Ahead Log）の役割は何ですか？
-    - A) クエリキャッシュ
-    - B) データ損失を防ぐための先行書き込み記録
-    - C) アラート履歴の保存
-    - D) ダッシュボード設定の保存
+   - A) query result cache
+   - B) block persistence 前の crash recovery を支える順次記録
+   - C) volume を失っても存続する backup
+   - D) 無制限の remote-write 配信キュー
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) データ損失を防ぐための先行書き込み記録**
+**回答: B**
 
-**解説:**
-WAL（Write-Ahead Log）は、メモリからディスクブロックに完全に書き込まれる前にデータを順次記録するログです。Prometheus が異常終了した場合でも、WAL を通じてデータを復元し、データ損失を防止できます。これはデータベースで一般的に使用される耐久性メカニズムです。
+WAL replay は durability の仕組みであり、破損、volume 障害、または長時間の remote outage が発生しても損失がゼロであるという保証ではありません。retention と WAL/head/compaction のディスク要件は別個です。検証済みの backup と recovery procedure を維持してください。
 
 </details>
+
+[ガイドに戻る](../../../observability/metrics/01-prometheus.md)
