@@ -5030,15 +5030,17 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Kubernetes control plane" x="16" y="76" width="1158" height="534" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Kubernetes Cluster" x="226" y="76" width="948" height="534" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="Kubernetes control plane" x="240" y="90" width="440" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="crossplane-system Namespace" x="240" y="90" width="440" height="110" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="Kubernetes control plane" x="30" y="310" width="210" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="Namespace scope" x="250" y="316" width="200" height="104" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="3" data-composition-frame-label="Kubernetes control plane" x="240" y="310" width="680" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="3" data-composition-frame-label="Cluster scope" x="470" y="316" width="200" height="104" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="4" data-composition-frame-label="Kubernetes control plane" x="920" y="310" width="240" height="300" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="4" data-composition-frame-label="Namespace scope" x="690" y="316" width="220" height="104" rx="12" class="c-region" stroke-width="1"/>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="5" data-composition-frame-label="Provider integration" x="920" y="310" width="240" height="300" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="core" data-edge-to="api" data-edge-key="0" data-edge-id="core-api" data-composition-points="650,150;710,150" d="M 650 150 L 710 150" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
@@ -5052,8 +5054,8 @@
         <path data-edge-from="pctrl" data-edge-to="aws" data-edge-label="AWS API" data-edge-key="8" data-edge-id="pctrl-aws" data-composition-points="1130,370;1200,370" d="M 1130 370 L 1200 370" class="a-emphasis" data-animate="edge" style="--step:8" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
-        <g id="node-core" data-node-id="core" data-node-label="Crossplane core" tabindex="0" role="button" aria-label="Focus Crossplane core, Controller, Kubernetes control plane › Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Controller" data-node-context="Kubernetes control plane › Kubernetes control plane">
-          <title>Crossplane core · Controller · Kubernetes control plane › Kubernetes control plane</title>
+        <g id="node-core" data-node-id="core" data-node-label="Crossplane core" tabindex="0" role="button" aria-label="Focus Crossplane core, Controller, Kubernetes Cluster › crossplane-system Namespace" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Controller" data-node-context="Kubernetes Cluster › crossplane-system Namespace">
+          <title>Crossplane core · Controller · Kubernetes Cluster › crossplane-system Namespace</title>
           <rect x="490" y="120" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="490" y="120" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(496 126) scale(0.6875)">
@@ -5063,8 +5065,8 @@
         <text data-detail="context" x="570" y="164" class="t-muted" font-size="9" text-anchor="middle">Controller</text>
         </g>
 
-        <g id="node-pkg" data-node-id="pkg" data-node-label="Package manager" tabindex="0" role="button" aria-label="Focus Package manager, Providers and Functions, Kubernetes control plane › Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Providers and Functions" data-node-context="Kubernetes control plane › Kubernetes control plane">
-          <title>Package manager · Providers and Functions · Kubernetes control plane › Kubernetes control plane</title>
+        <g id="node-pkg" data-node-id="pkg" data-node-label="Package manager" tabindex="0" role="button" aria-label="Focus Package manager, Providers and Functions, Kubernetes Cluster › crossplane-system Namespace" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Providers and Functions" data-node-context="Kubernetes Cluster › crossplane-system Namespace">
+          <title>Package manager · Providers and Functions · Kubernetes Cluster › crossplane-system Namespace</title>
           <rect x="270" y="120" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="270" y="120" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(276 126) scale(0.6875)">
@@ -5074,8 +5076,8 @@
         <text data-detail="context" x="350" y="164" class="t-muted" font-size="9" text-anchor="middle">Providers and Functions</text>
         </g>
 
-        <g id="node-api" data-node-id="api" data-node-label="Kubernetes API server" tabindex="0" role="button" aria-label="Focus Kubernetes API server, Resource API, Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Resource API" data-node-context="Kubernetes control plane">
-          <title>Kubernetes API server · Resource API · Kubernetes control plane</title>
+        <g id="node-api" data-node-id="api" data-node-label="Kubernetes API server" tabindex="0" role="button" aria-label="Focus Kubernetes API server, Resource API, Kubernetes Cluster" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Resource API" data-node-context="Kubernetes Cluster">
+          <title>Kubernetes API server · Resource API · Kubernetes Cluster</title>
           <rect x="710" y="120" width="180" height="60" rx="6" class="c-mask"/>
           <rect x="710" y="120" width="180" height="60" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(716 126) scale(0.6875)">
@@ -5085,8 +5087,8 @@
         <text data-detail="context" x="800" y="164" class="t-muted" font-size="9" text-anchor="middle">Resource API</text>
         </g>
 
-        <g id="node-etcd" data-node-id="etcd" data-node-label="etcd" tabindex="0" role="button" aria-label="Focus etcd, Kubernetes state, Kubernetes control plane" aria-pressed="false" data-node-kind="database" data-node-sublabel="Kubernetes state" data-node-context="Kubernetes control plane">
-          <title>etcd · Kubernetes state · Kubernetes control plane</title>
+        <g id="node-etcd" data-node-id="etcd" data-node-label="etcd" tabindex="0" role="button" aria-label="Focus etcd, Kubernetes state, Kubernetes Cluster" aria-pressed="false" data-node-kind="database" data-node-sublabel="Kubernetes state" data-node-context="Kubernetes Cluster">
+          <title>etcd · Kubernetes state · Kubernetes Cluster</title>
           <rect x="950" y="120" width="180" height="60" rx="6" class="c-mask"/>
           <rect x="950" y="120" width="180" height="60" rx="6" class="c-database" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(956 126) scale(0.6875)">
@@ -5097,8 +5099,8 @@
         <text data-detail="context" x="1040" y="164" class="t-muted" font-size="9" text-anchor="middle">Kubernetes state</text>
         </g>
 
-        <g id="node-claim" data-node-id="claim" data-node-label="Developer" tabindex="0" role="button" aria-label="Focus Developer, Namespaced XR request, Kubernetes control plane › Kubernetes control plane" aria-pressed="false" data-node-kind="external" data-node-sublabel="Namespaced XR request" data-node-context="Kubernetes control plane › Kubernetes control plane">
-          <title>Developer · Namespaced XR request · Kubernetes control plane › Kubernetes control plane</title>
+        <g id="node-claim" data-node-id="claim" data-node-label="Developer" tabindex="0" role="button" aria-label="Focus Developer, Namespaced XR request, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="Namespaced XR request" data-node-context="Architecture component">
+          <title>Developer · Namespaced XR request · Architecture component</title>
           <rect x="60" y="340" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="60" y="340" width="150" height="60" rx="6" class="c-external" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(66 346) scale(0.6875)">
@@ -5109,8 +5111,8 @@
         <text data-detail="context" x="135" y="384" class="t-muted" font-size="9" text-anchor="middle">Namespaced XR request</text>
         </g>
 
-        <g id="node-xr" data-node-id="xr" data-node-label="Composite Resource" tabindex="0" role="button" aria-label="Focus Composite Resource, v2 namespaced XR, Kubernetes control plane › Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v2 namespaced XR" data-node-context="Kubernetes control plane › Kubernetes control plane">
-          <title>Composite Resource · v2 namespaced XR · Kubernetes control plane › Kubernetes control plane</title>
+        <g id="node-xr" data-node-id="xr" data-node-label="Composite Resource" tabindex="0" role="button" aria-label="Focus Composite Resource, v2 namespaced XR, Kubernetes Cluster › Namespace scope" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v2 namespaced XR" data-node-context="Kubernetes Cluster › Namespace scope">
+          <title>Composite Resource · v2 namespaced XR · Kubernetes Cluster › Namespace scope</title>
           <rect x="270" y="340" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="270" y="340" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(276 346) scale(0.6875)">
@@ -5120,8 +5122,8 @@
         <text data-detail="context" x="350" y="384" class="t-muted" font-size="9" text-anchor="middle">v2 namespaced XR</text>
         </g>
 
-        <g id="node-comp" data-node-id="comp" data-node-label="Composition" tabindex="0" role="button" aria-label="Focus Composition, Function pipeline, Kubernetes control plane › Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Function pipeline" data-node-context="Kubernetes control plane › Kubernetes control plane">
-          <title>Composition · Function pipeline · Kubernetes control plane › Kubernetes control plane</title>
+        <g id="node-comp" data-node-id="comp" data-node-label="Composition" tabindex="0" role="button" aria-label="Focus Composition, Function pipeline, Kubernetes Cluster › Cluster scope" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Function pipeline" data-node-context="Kubernetes Cluster › Cluster scope">
+          <title>Composition · Function pipeline · Kubernetes Cluster › Cluster scope</title>
           <rect x="490" y="340" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="490" y="340" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:6" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(496 346) scale(0.6875)">
@@ -5131,8 +5133,8 @@
         <text data-detail="context" x="570" y="384" class="t-muted" font-size="9" text-anchor="middle">Function pipeline</text>
         </g>
 
-        <g id="node-mr" data-node-id="mr" data-node-label="Managed resources" tabindex="0" role="button" aria-label="Focus Managed resources, v2 namespaced MRs, Kubernetes control plane › Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v2 namespaced MRs" data-node-context="Kubernetes control plane › Kubernetes control plane">
-          <title>Managed resources · v2 namespaced MRs · Kubernetes control plane › Kubernetes control plane</title>
+        <g id="node-mr" data-node-id="mr" data-node-label="Managed resources" tabindex="0" role="button" aria-label="Focus Managed resources, v2 namespaced MRs, Kubernetes Cluster › Namespace scope" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v2 namespaced MRs" data-node-context="Kubernetes Cluster › Namespace scope">
+          <title>Managed resources · v2 namespaced MRs · Kubernetes Cluster › Namespace scope</title>
           <rect x="710" y="340" width="180" height="60" rx="6" class="c-mask"/>
           <rect x="710" y="340" width="180" height="60" rx="6" class="c-backend" data-animate="node" style="--step:7" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(716 346) scale(0.6875)">
@@ -5142,8 +5144,8 @@
         <text data-detail="context" x="800" y="384" class="t-muted" font-size="9" text-anchor="middle">v2 namespaced MRs</text>
         </g>
 
-        <g id="node-pctrl" data-node-id="pctrl" data-node-label="AWS provider controller" tabindex="0" role="button" aria-label="Focus AWS provider controller, Observe and reconcile MRs, Kubernetes control plane › Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Observe and reconcile MRs" data-node-context="Kubernetes control plane › Kubernetes control plane">
-          <title>AWS provider controller · Observe and reconcile MRs · Kubernetes control plane › Kubernetes control plane</title>
+        <g id="node-pctrl" data-node-id="pctrl" data-node-label="AWS provider controller" tabindex="0" role="button" aria-label="Focus AWS provider controller, Observe and reconcile MRs, Kubernetes Cluster › Provider integration" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Observe and reconcile MRs" data-node-context="Kubernetes Cluster › Provider integration">
+          <title>AWS provider controller · Observe and reconcile MRs · Kubernetes Cluster › Provider integration</title>
           <rect x="950" y="340" width="180" height="60" rx="6" class="c-mask"/>
           <rect x="950" y="340" width="180" height="60" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(956 346) scale(0.6875)">
@@ -5153,8 +5155,8 @@
         <text data-detail="context" x="1040" y="384" class="t-muted" font-size="9" text-anchor="middle">Observe and reconcile MRs</text>
         </g>
 
-        <g id="node-pcrd" data-node-id="pcrd" data-node-label="Provider CRDs" tabindex="0" role="button" aria-label="Focus Provider CRDs, Selected service APIs, Kubernetes control plane › Kubernetes control plane" aria-pressed="false" data-node-kind="database" data-node-sublabel="Selected service APIs" data-node-context="Kubernetes control plane › Kubernetes control plane">
-          <title>Provider CRDs · Selected service APIs · Kubernetes control plane › Kubernetes control plane</title>
+        <g id="node-pcrd" data-node-id="pcrd" data-node-label="Provider CRDs" tabindex="0" role="button" aria-label="Focus Provider CRDs, Selected service APIs, Kubernetes Cluster › Provider integration" aria-pressed="false" data-node-kind="database" data-node-sublabel="Selected service APIs" data-node-context="Kubernetes Cluster › Provider integration">
+          <title>Provider CRDs · Selected service APIs · Kubernetes Cluster › Provider integration</title>
           <rect x="950" y="530" width="180" height="60" rx="6" class="c-mask"/>
           <rect x="950" y="530" width="180" height="60" rx="6" class="c-database" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(956 536) scale(0.6875)">
@@ -5189,12 +5191,12 @@
           <text x="240" y="384" class="t-backend" font-size="8" text-anchor="middle">apply XR</text>
         </g>
         <g data-detail="context" data-edge-from="xr" data-edge-to="comp" data-edge-label="pipeline" data-edge-key="5" data-edge-id="xr-comp">
-          <rect x="435.8" y="326" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="460" y="336" class="t-backend" font-size="8" text-anchor="middle">pipeline</text>
+          <rect x="435.8" y="414" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="460" y="424" class="t-backend" font-size="8" text-anchor="middle">pipeline</text>
         </g>
         <g data-detail="context" data-edge-from="comp" data-edge-to="mr" data-edge-label="desired MRs" data-edge-key="6" data-edge-id="comp-mr">
-          <rect x="648.6" y="326" width="62.8" height="14" rx="3" class="c-mask"/>
-          <text x="680" y="336" class="t-backend" font-size="8" text-anchor="middle">desired MRs</text>
+          <rect x="648.6" y="414" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="680" y="424" class="t-backend" font-size="8" text-anchor="middle">desired MRs</text>
         </g>
         <g data-detail="context" data-edge-from="mr" data-edge-to="pctrl" data-edge-label="reconcile" data-edge-key="7" data-edge-id="mr-pctrl">
           <rect x="893.4" y="404" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
@@ -5206,29 +5208,34 @@
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes control plane">
-          <rect data-graph-role="structural-frame-label-mask" x="20" y="100" width="139.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="24" y="113" class="t-cloud" font-size="9" font-weight="600">Kubernetes control plane</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes Cluster">
+          <rect data-graph-role="structural-frame-label-mask" x="230" y="82" width="107.2" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="234" y="95" class="t-cloud" font-size="9" font-weight="600">Kubernetes Cluster</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes control plane">
-          <rect data-graph-role="structural-frame-label-mask" x="244" y="100" width="139.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="248" y="113" class="t-cloud" font-size="9" font-weight="600">Kubernetes control plane</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="crossplane-system Namespace">
+          <rect data-graph-role="structural-frame-label-mask" x="244" y="100" width="155.79999999999998" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="248" y="113" class="t-cloud" font-size="9" font-weight="600">crossplane-system Namespace</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes control plane">
-          <rect data-graph-role="structural-frame-label-mask" x="34" y="320" width="139.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="38" y="333" class="t-cloud" font-size="9" font-weight="600">Kubernetes control plane</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="Namespace scope">
+          <rect data-graph-role="structural-frame-label-mask" x="254" y="320" width="91" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="258" y="333" class="t-cloud" font-size="9" font-weight="600">Namespace scope</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="3" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes control plane">
-          <rect data-graph-role="structural-frame-label-mask" x="244" y="320" width="139.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="248" y="333" class="t-cloud" font-size="9" font-weight="600">Kubernetes control plane</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="3" data-composition-frame-kind="region" data-composition-frame-label="Cluster scope">
+          <rect data-graph-role="structural-frame-label-mask" x="474" y="320" width="80.2" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="478" y="333" class="t-cloud" font-size="9" font-weight="600">Cluster scope</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="4" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes control plane">
-          <rect data-graph-role="structural-frame-label-mask" x="924" y="320" width="139.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="928" y="333" class="t-cloud" font-size="9" font-weight="600">Kubernetes control plane</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="4" data-composition-frame-kind="region" data-composition-frame-label="Namespace scope">
+          <rect data-graph-role="structural-frame-label-mask" x="694" y="320" width="91" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="698" y="333" class="t-cloud" font-size="9" font-weight="600">Namespace scope</text>
+        </g>
+
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="5" data-composition-frame-kind="region" data-composition-frame-label="Provider integration">
+          <rect data-graph-role="structural-frame-label-mask" x="924" y="320" width="118" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="928" y="333" class="t-cloud" font-size="9" font-weight="600">Provider integration</text>
         </g>
 
         <!-- Legend -->

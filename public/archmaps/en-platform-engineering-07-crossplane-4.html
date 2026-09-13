@@ -5030,13 +5030,13 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Kubernetes control plane" x="10" y="50" width="640" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Backstage IDP" x="10" y="50" width="640" height="110" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="Kubernetes control plane" x="670" y="50" width="420" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="GitOps" x="670" y="50" width="420" height="110" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="Kubernetes control plane" x="440" y="270" width="650" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="Crossplane" x="440" y="270" width="650" height="110" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="3" data-composition-frame-label="Kubernetes control plane" x="220" y="490" width="670" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="3" data-composition-frame-label="AWS" x="220" y="490" width="670" height="110" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="ui" data-edge-to="tpl" data-edge-label="1. Input" data-edge-key="0" data-edge-id="ui-tpl" data-composition-points="190,110;250,110" d="M 190 110 L 250 110" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
@@ -5051,8 +5051,8 @@
         <path data-edge-from="mr" data-edge-to="sg" data-edge-key="9" data-edge-id="mr-sg" data-composition-points="569,360;569,440;785,440;785,520" d="M 569 360 L 569 432 Q 569 440 577 440 L 777 440 Q 785 440 785 448 L 785 520" class="a-default" data-animate="edge" style="--step:9" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
-        <g id="node-ui" data-node-id="ui" data-node-label="Backstage UI" tabindex="0" role="button" aria-label="Focus Backstage UI, Developer portal, Kubernetes control plane" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Developer portal" data-node-context="Kubernetes control plane">
-          <title>Backstage UI · Developer portal · Kubernetes control plane</title>
+        <g id="node-ui" data-node-id="ui" data-node-label="Backstage UI" tabindex="0" role="button" aria-label="Focus Backstage UI, Developer portal, Backstage IDP" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Developer portal" data-node-context="Backstage IDP">
+          <title>Backstage UI · Developer portal · Backstage IDP</title>
           <rect x="40" y="80" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="40" y="80" width="150" height="60" rx="6" class="c-frontend" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(46 86) scale(0.6875)">
@@ -5065,8 +5065,8 @@
         <text data-detail="context" x="115" y="124" class="t-muted" font-size="9" text-anchor="middle">Developer portal</text>
         </g>
 
-        <g id="node-tpl" data-node-id="tpl" data-node-label="Software Template" tabindex="0" role="button" aria-label="Focus Software Template, Form and skeleton, Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Form and skeleton" data-node-context="Kubernetes control plane">
-          <title>Software Template · Form and skeleton · Kubernetes control plane</title>
+        <g id="node-tpl" data-node-id="tpl" data-node-label="Software Template" tabindex="0" role="button" aria-label="Focus Software Template, Form and skeleton, Backstage IDP" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Form and skeleton" data-node-context="Backstage IDP">
+          <title>Software Template · Form and skeleton · Backstage IDP</title>
           <rect x="250" y="80" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="250" y="80" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(256 86) scale(0.6875)">
@@ -5076,8 +5076,8 @@
         <text data-detail="context" x="330" y="124" class="t-muted" font-size="9" text-anchor="middle">Form and skeleton</text>
         </g>
 
-        <g id="node-scf" data-node-id="scf" data-node-label="Scaffolder" tabindex="0" role="button" aria-label="Focus Scaffolder, Generate XR YAML, Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Generate XR YAML" data-node-context="Kubernetes control plane">
-          <title>Scaffolder · Generate XR YAML · Kubernetes control plane</title>
+        <g id="node-scf" data-node-id="scf" data-node-label="Scaffolder" tabindex="0" role="button" aria-label="Focus Scaffolder, Generate XR YAML, Backstage IDP" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Generate XR YAML" data-node-context="Backstage IDP">
+          <title>Scaffolder · Generate XR YAML · Backstage IDP</title>
           <rect x="470" y="80" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="470" y="80" width="150" height="60" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(476 86) scale(0.6875)">
@@ -5087,8 +5087,8 @@
         <text data-detail="context" x="545" y="124" class="t-muted" font-size="9" text-anchor="middle">Generate XR YAML</text>
         </g>
 
-        <g id="node-repo" data-node-id="repo" data-node-label="Git PR → Merge" tabindex="0" role="button" aria-label="Focus Git PR → Merge, Reviewed main branch, Kubernetes control plane" aria-pressed="false" data-node-kind="external" data-node-sublabel="Reviewed main branch" data-node-context="Kubernetes control plane">
-          <title>Git PR → Merge · Reviewed main branch · Kubernetes control plane</title>
+        <g id="node-repo" data-node-id="repo" data-node-label="Git PR → Merge" tabindex="0" role="button" aria-label="Focus Git PR → Merge, Reviewed main branch, GitOps" aria-pressed="false" data-node-kind="external" data-node-sublabel="Reviewed main branch" data-node-context="GitOps">
+          <title>Git PR → Merge · Reviewed main branch · GitOps</title>
           <rect x="700" y="80" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="700" y="80" width="150" height="60" rx="6" class="c-external" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(706 86) scale(0.6875)">
@@ -5099,8 +5099,8 @@
         <text data-detail="context" x="775" y="124" class="t-muted" font-size="9" text-anchor="middle">Reviewed main branch</text>
         </g>
 
-        <g id="node-argo" data-node-id="argo" data-node-label="ArgoCD" tabindex="0" role="button" aria-label="Focus ArgoCD, GitOps controller, Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="GitOps controller" data-node-context="Kubernetes control plane">
-          <title>ArgoCD · GitOps controller · Kubernetes control plane</title>
+        <g id="node-argo" data-node-id="argo" data-node-label="ArgoCD" tabindex="0" role="button" aria-label="Focus ArgoCD, GitOps controller, GitOps" aria-pressed="false" data-node-kind="backend" data-node-sublabel="GitOps controller" data-node-context="GitOps">
+          <title>ArgoCD · GitOps controller · GitOps</title>
           <rect x="910" y="80" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="910" y="80" width="150" height="60" rx="6" class="c-backend" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(916 86) scale(0.6875)">
@@ -5110,8 +5110,8 @@
         <text data-detail="context" x="985" y="124" class="t-muted" font-size="9" text-anchor="middle">GitOps controller</text>
         </g>
 
-        <g id="node-claim" data-node-id="claim" data-node-label="Namespaced XR" tabindex="0" role="button" aria-label="Focus Namespaced XR, PostgreSQLDatabase, Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="PostgreSQLDatabase" data-node-context="Kubernetes control plane">
-          <title>Namespaced XR · PostgreSQLDatabase · Kubernetes control plane</title>
+        <g id="node-claim" data-node-id="claim" data-node-label="Namespaced XR" tabindex="0" role="button" aria-label="Focus Namespaced XR, PostgreSQLDatabase, Crossplane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="PostgreSQLDatabase" data-node-context="Crossplane">
+          <title>Namespaced XR · PostgreSQLDatabase · Crossplane</title>
           <rect x="910" y="300" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="910" y="300" width="150" height="60" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(916 306) scale(0.6875)">
@@ -5121,8 +5121,8 @@
         <text data-detail="context" x="985" y="344" class="t-muted" font-size="9" text-anchor="middle">PostgreSQLDatabase</text>
         </g>
 
-        <g id="node-xr" data-node-id="xr" data-node-label="Pipeline" tabindex="0" role="button" aria-label="Focus Pipeline, Composition Functions, Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Composition Functions" data-node-context="Kubernetes control plane">
-          <title>Pipeline · Composition Functions · Kubernetes control plane</title>
+        <g id="node-xr" data-node-id="xr" data-node-label="Pipeline" tabindex="0" role="button" aria-label="Focus Pipeline, Composition Functions, Crossplane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Composition Functions" data-node-context="Crossplane">
+          <title>Pipeline · Composition Functions · Crossplane</title>
           <rect x="690" y="300" width="170" height="60" rx="6" class="c-mask"/>
           <rect x="690" y="300" width="170" height="60" rx="6" class="c-backend" data-animate="node" style="--step:6" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(696 306) scale(0.6875)">
@@ -5132,8 +5132,8 @@
         <text data-detail="context" x="775" y="344" class="t-muted" font-size="9" text-anchor="middle">Composition Functions</text>
         </g>
 
-        <g id="node-mr" data-node-id="mr" data-node-label="Managed resources" tabindex="0" role="button" aria-label="Focus Managed resources, Selected provider APIs, Kubernetes control plane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Selected provider APIs" data-node-context="Kubernetes control plane">
-          <title>Managed resources · Selected provider APIs · Kubernetes control plane</title>
+        <g id="node-mr" data-node-id="mr" data-node-label="Managed resources" tabindex="0" role="button" aria-label="Focus Managed resources, Selected provider APIs, Crossplane" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Selected provider APIs" data-node-context="Crossplane">
+          <title>Managed resources · Selected provider APIs · Crossplane</title>
           <rect x="470" y="300" width="170" height="60" rx="6" class="c-mask"/>
           <rect x="470" y="300" width="170" height="60" rx="6" class="c-backend" data-animate="node" style="--step:7" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(476 306) scale(0.6875)">
@@ -5143,8 +5143,8 @@
         <text data-detail="context" x="555" y="344" class="t-muted" font-size="9" text-anchor="middle">Selected provider APIs</text>
         </g>
 
-        <g id="node-rds" data-node-id="rds" data-node-label="RDS" tabindex="0" role="button" aria-label="Focus RDS, Database, Kubernetes control plane" aria-pressed="false" data-node-kind="database" data-node-sublabel="Database" data-node-context="Kubernetes control plane">
-          <title>RDS · Database · Kubernetes control plane</title>
+        <g id="node-rds" data-node-id="rds" data-node-label="RDS" tabindex="0" role="button" aria-label="Focus RDS, Database, AWS" aria-pressed="false" data-node-kind="database" data-node-sublabel="Database" data-node-context="AWS">
+          <title>RDS · Database · AWS</title>
           <rect x="250" y="520" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="250" y="520" width="150" height="60" rx="6" class="c-database" data-animate="node" style="--step:8" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(256 526) scale(0.6875)">
@@ -5155,8 +5155,8 @@
         <text data-detail="context" x="325" y="564" class="t-muted" font-size="9" text-anchor="middle">Database</text>
         </g>
 
-        <g id="node-s3" data-node-id="s3" data-node-label="S3" tabindex="0" role="button" aria-label="Focus S3, Bucket, Kubernetes control plane" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Bucket" data-node-context="Kubernetes control plane">
-          <title>S3 · Bucket · Kubernetes control plane</title>
+        <g id="node-s3" data-node-id="s3" data-node-label="S3" tabindex="0" role="button" aria-label="Focus S3, Bucket, AWS" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Bucket" data-node-context="AWS">
+          <title>S3 · Bucket · AWS</title>
           <rect x="480" y="520" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="480" y="520" width="150" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:9" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(486 526) scale(0.6875)">
@@ -5166,8 +5166,8 @@
         <text data-detail="context" x="555" y="564" class="t-muted" font-size="9" text-anchor="middle">Bucket</text>
         </g>
 
-        <g id="node-sg" data-node-id="sg" data-node-label="SecurityGroup" tabindex="0" role="button" aria-label="Focus SecurityGroup, Network policy, Kubernetes control plane" aria-pressed="false" data-node-kind="security" data-node-sublabel="Network policy" data-node-context="Kubernetes control plane">
-          <title>SecurityGroup · Network policy · Kubernetes control plane</title>
+        <g id="node-sg" data-node-id="sg" data-node-label="SecurityGroup" tabindex="0" role="button" aria-label="Focus SecurityGroup, Network policy, AWS" aria-pressed="false" data-node-kind="security" data-node-sublabel="Network policy" data-node-context="AWS">
+          <title>SecurityGroup · Network policy · AWS</title>
           <rect x="710" y="520" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="710" y="520" width="150" height="60" rx="6" class="c-security" data-animate="node" style="--step:10" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(716 526) scale(0.6875)">
@@ -5212,24 +5212,24 @@
 
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes control plane">
-          <rect data-graph-role="structural-frame-label-mask" x="14" y="60" width="139.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="18" y="73" class="t-cloud" font-size="9" font-weight="600">Kubernetes control plane</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="Backstage IDP">
+          <rect data-graph-role="structural-frame-label-mask" x="14" y="60" width="80.2" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="18" y="73" class="t-cloud" font-size="9" font-weight="600">Backstage IDP</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes control plane">
-          <rect data-graph-role="structural-frame-label-mask" x="674" y="60" width="139.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="678" y="73" class="t-cloud" font-size="9" font-weight="600">Kubernetes control plane</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="GitOps">
+          <rect data-graph-role="structural-frame-label-mask" x="674" y="60" width="42.4" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="678" y="73" class="t-cloud" font-size="9" font-weight="600">GitOps</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes control plane">
-          <rect data-graph-role="structural-frame-label-mask" x="444" y="280" width="139.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="448" y="293" class="t-cloud" font-size="9" font-weight="600">Kubernetes control plane</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="Crossplane">
+          <rect data-graph-role="structural-frame-label-mask" x="444" y="280" width="64" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="448" y="293" class="t-cloud" font-size="9" font-weight="600">Crossplane</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="3" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes control plane">
-          <rect data-graph-role="structural-frame-label-mask" x="224" y="500" width="139.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="228" y="513" class="t-cloud" font-size="9" font-weight="600">Kubernetes control plane</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="3" data-composition-frame-kind="region" data-composition-frame-label="AWS">
+          <rect data-graph-role="structural-frame-label-mask" x="224" y="500" width="30" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="228" y="513" class="t-cloud" font-size="9" font-weight="600">AWS</text>
         </g>
 
         <!-- Legend -->

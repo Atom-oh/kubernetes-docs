@@ -210,13 +210,12 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Kubernetes control plane",
+      "label": "Kubernetes Cluster",
       "wraps": [
         "core",
         "pkg",
         "api",
         "etcd",
-        "claim",
         "xr",
         "comp",
         "mr",
@@ -227,7 +226,7 @@
     },
     {
       "kind": "region",
-      "label": "Kubernetes control plane",
+      "label": "crossplane-system Namespace",
       "wraps": [
         "core",
         "pkg"
@@ -235,23 +234,31 @@
     },
     {
       "kind": "region",
-      "label": "Kubernetes control plane",
+      "label": "Namespace scope",
       "wraps": [
-        "claim"
-      ]
+        "xr"
+      ],
+      "pad": 20
     },
     {
       "kind": "region",
-      "label": "Kubernetes control plane",
+      "label": "Cluster scope",
       "wraps": [
-        "xr",
-        "comp",
+        "comp"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "Namespace scope",
+      "wraps": [
         "mr"
-      ]
+      ],
+      "pad": 20
     },
     {
       "kind": "region",
-      "label": "Kubernetes control plane",
+      "label": "Provider integration",
       "wraps": [
         "pctrl",
         "pcrd"
@@ -299,7 +306,7 @@
       "to": "comp",
       "label": "pipeline",
       "variant": "emphasis",
-      "labelDy": -24
+      "labelDy": 64
     },
     {
       "id": "comp-mr",
@@ -307,7 +314,7 @@
       "to": "mr",
       "label": "desired MRs",
       "variant": "emphasis",
-      "labelDy": -24
+      "labelDy": 64
     },
     {
       "id": "mr-pctrl",

@@ -5030,15 +5030,17 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Kubernetes Cluster" x="16" y="76" width="1158" height="534" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Kubernetes Cluster" x="226" y="76" width="948" height="534" rx="12" class="c-region" stroke-width="1"/>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="crossplane-system Namespace" x="240" y="90" width="440" height="110" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="개발자 Namespace" x="30" y="310" width="210" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="Namespace 범위" x="250" y="316" width="200" height="104" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="3" data-composition-frame-label="Cluster Scope" x="240" y="310" width="680" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="3" data-composition-frame-label="Cluster 범위" x="470" y="316" width="200" height="104" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="4" data-composition-frame-label="Provider Runtime" x="920" y="310" width="240" height="300" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="4" data-composition-frame-label="Namespace 범위" x="690" y="316" width="220" height="104" rx="12" class="c-region" stroke-width="1"/>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="5" data-composition-frame-label="Provider 연동" x="920" y="310" width="240" height="300" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="core" data-edge-to="api" data-edge-key="0" data-edge-id="core-api" data-composition-points="650,150;710,150" d="M 650 150 L 710 150" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
@@ -5097,8 +5099,8 @@
         <text data-detail="context" x="1040" y="164" class="t-muted" font-size="9" text-anchor="middle">상태 저장소</text>
         </g>
 
-        <g id="node-claim" data-node-id="claim" data-node-label="개발자" tabindex="0" role="button" aria-label="Focus 개발자, namespace XR 요청, Kubernetes Cluster › 개발자 Namespace" aria-pressed="false" data-node-kind="external" data-node-sublabel="namespace XR 요청" data-node-context="Kubernetes Cluster › 개발자 Namespace">
-          <title>개발자 · namespace XR 요청 · Kubernetes Cluster › 개발자 Namespace</title>
+        <g id="node-claim" data-node-id="claim" data-node-label="개발자" tabindex="0" role="button" aria-label="Focus 개발자, namespace XR 요청, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="namespace XR 요청" data-node-context="Architecture component">
+          <title>개발자 · namespace XR 요청 · Architecture component</title>
           <rect x="60" y="340" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="60" y="340" width="150" height="60" rx="6" class="c-external" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(66 346) scale(0.6875)">
@@ -5109,8 +5111,8 @@
         <text data-detail="context" x="135" y="384" class="t-muted" font-size="9" text-anchor="middle">namespace XR 요청</text>
         </g>
 
-        <g id="node-xr" data-node-id="xr" data-node-label="Composite Resource" tabindex="0" role="button" aria-label="Focus Composite Resource, v2: Namespaced XR, Kubernetes Cluster › Cluster Scope" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v2: Namespaced XR" data-node-context="Kubernetes Cluster › Cluster Scope">
-          <title>Composite Resource · v2: Namespaced XR · Kubernetes Cluster › Cluster Scope</title>
+        <g id="node-xr" data-node-id="xr" data-node-label="Composite Resource" tabindex="0" role="button" aria-label="Focus Composite Resource, v2: Namespaced XR, Kubernetes Cluster › Namespace 범위" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v2: Namespaced XR" data-node-context="Kubernetes Cluster › Namespace 범위">
+          <title>Composite Resource · v2: Namespaced XR · Kubernetes Cluster › Namespace 범위</title>
           <rect x="270" y="340" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="270" y="340" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(276 346) scale(0.6875)">
@@ -5120,8 +5122,8 @@
         <text data-detail="context" x="350" y="384" class="t-muted" font-size="9" text-anchor="middle">v2: Namespaced XR</text>
         </g>
 
-        <g id="node-comp" data-node-id="comp" data-node-label="Composition" tabindex="0" role="button" aria-label="Focus Composition, MR 조합 레시피, Kubernetes Cluster › Cluster Scope" aria-pressed="false" data-node-kind="backend" data-node-sublabel="MR 조합 레시피" data-node-context="Kubernetes Cluster › Cluster Scope">
-          <title>Composition · MR 조합 레시피 · Kubernetes Cluster › Cluster Scope</title>
+        <g id="node-comp" data-node-id="comp" data-node-label="Composition" tabindex="0" role="button" aria-label="Focus Composition, MR 조합 레시피, Kubernetes Cluster › Cluster 범위" aria-pressed="false" data-node-kind="backend" data-node-sublabel="MR 조합 레시피" data-node-context="Kubernetes Cluster › Cluster 범위">
+          <title>Composition · MR 조합 레시피 · Kubernetes Cluster › Cluster 범위</title>
           <rect x="490" y="340" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="490" y="340" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:6" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(496 346) scale(0.6875)">
@@ -5131,8 +5133,8 @@
         <text data-detail="context" x="570" y="384" class="t-muted" font-size="9" text-anchor="middle">MR 조합 레시피</text>
         </g>
 
-        <g id="node-mr" data-node-id="mr" data-node-label="Managed Resources" tabindex="0" role="button" aria-label="Focus Managed Resources, v2: Namespaced MR, Kubernetes Cluster › Cluster Scope" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v2: Namespaced MR" data-node-context="Kubernetes Cluster › Cluster Scope">
-          <title>Managed Resources · v2: Namespaced MR · Kubernetes Cluster › Cluster Scope</title>
+        <g id="node-mr" data-node-id="mr" data-node-label="Managed Resources" tabindex="0" role="button" aria-label="Focus Managed Resources, v2: Namespaced MR, Kubernetes Cluster › Namespace 범위" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v2: Namespaced MR" data-node-context="Kubernetes Cluster › Namespace 범위">
+          <title>Managed Resources · v2: Namespaced MR · Kubernetes Cluster › Namespace 범위</title>
           <rect x="710" y="340" width="180" height="60" rx="6" class="c-mask"/>
           <rect x="710" y="340" width="180" height="60" rx="6" class="c-backend" data-animate="node" style="--step:7" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(716 346) scale(0.6875)">
@@ -5142,8 +5144,8 @@
         <text data-detail="context" x="800" y="384" class="t-muted" font-size="9" text-anchor="middle">v2: Namespaced MR</text>
         </g>
 
-        <g id="node-pctrl" data-node-id="pctrl" data-node-label="Provider-AWS Controller" tabindex="0" role="button" aria-label="Focus Provider-AWS Controller, MR 변경 감지, Kubernetes Cluster › Provider Runtime" aria-pressed="false" data-node-kind="backend" data-node-sublabel="MR 변경 감지" data-node-context="Kubernetes Cluster › Provider Runtime">
-          <title>Provider-AWS Controller · MR 변경 감지 · Kubernetes Cluster › Provider Runtime</title>
+        <g id="node-pctrl" data-node-id="pctrl" data-node-label="Provider-AWS Controller" tabindex="0" role="button" aria-label="Focus Provider-AWS Controller, MR 변경 감지, Kubernetes Cluster › Provider 연동" aria-pressed="false" data-node-kind="backend" data-node-sublabel="MR 변경 감지" data-node-context="Kubernetes Cluster › Provider 연동">
+          <title>Provider-AWS Controller · MR 변경 감지 · Kubernetes Cluster › Provider 연동</title>
           <rect x="950" y="340" width="180" height="60" rx="6" class="c-mask"/>
           <rect x="950" y="340" width="180" height="60" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(956 346) scale(0.6875)">
@@ -5153,8 +5155,8 @@
         <text data-detail="context" x="1040" y="384" class="t-muted" font-size="9" text-anchor="middle">MR 변경 감지</text>
         </g>
 
-        <g id="node-pcrd" data-node-id="pcrd" data-node-label="AWS CRDs" tabindex="0" role="button" aria-label="Focus AWS CRDs, 선택한 서비스 API, Kubernetes Cluster › Provider Runtime" aria-pressed="false" data-node-kind="database" data-node-sublabel="선택한 서비스 API" data-node-context="Kubernetes Cluster › Provider Runtime">
-          <title>AWS CRDs · 선택한 서비스 API · Kubernetes Cluster › Provider Runtime</title>
+        <g id="node-pcrd" data-node-id="pcrd" data-node-label="AWS CRDs" tabindex="0" role="button" aria-label="Focus AWS CRDs, 선택한 서비스 API, Kubernetes Cluster › Provider 연동" aria-pressed="false" data-node-kind="database" data-node-sublabel="선택한 서비스 API" data-node-context="Kubernetes Cluster › Provider 연동">
+          <title>AWS CRDs · 선택한 서비스 API · Kubernetes Cluster › Provider 연동</title>
           <rect x="950" y="530" width="180" height="60" rx="6" class="c-mask"/>
           <rect x="950" y="530" width="180" height="60" rx="6" class="c-database" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(956 536) scale(0.6875)">
@@ -5189,12 +5191,12 @@
           <text x="240" y="384" class="t-backend" font-size="8" text-anchor="middle">XR 생성</text>
         </g>
         <g data-detail="context" data-edge-from="xr" data-edge-to="comp" data-edge-label="Composition 참조" data-edge-key="5" data-edge-id="xr-comp">
-          <rect x="416.6" y="326" width="86.8" height="14" rx="3" class="c-mask"/>
-          <text x="460" y="336" class="t-backend" font-size="8" text-anchor="middle">Composition 참조</text>
+          <rect x="416.6" y="414" width="86.8" height="14" rx="3" class="c-mask"/>
+          <text x="460" y="424" class="t-backend" font-size="8" text-anchor="middle">Composition 참조</text>
         </g>
         <g data-detail="context" data-edge-from="comp" data-edge-to="mr" data-edge-label="MR 생성" data-edge-key="6" data-edge-id="comp-mr">
-          <rect x="658.2" y="326" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="680" y="336" class="t-backend" font-size="8" text-anchor="middle">MR 생성</text>
+          <rect x="658.2" y="414" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="680" y="424" class="t-backend" font-size="8" text-anchor="middle">MR 생성</text>
         </g>
         <g data-detail="context" data-edge-from="mr" data-edge-to="pctrl" data-edge-label="Provider가 관리" data-edge-key="7" data-edge-id="mr-pctrl">
           <rect x="879" y="404" width="82" height="14" rx="3" class="c-mask"/>
@@ -5207,8 +5209,8 @@
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
         <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes Cluster">
-          <rect data-graph-role="structural-frame-label-mask" x="20" y="100" width="107.2" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="24" y="113" class="t-cloud" font-size="9" font-weight="600">Kubernetes Cluster</text>
+          <rect data-graph-role="structural-frame-label-mask" x="230" y="82" width="107.2" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="234" y="95" class="t-cloud" font-size="9" font-weight="600">Kubernetes Cluster</text>
         </g>
 
         <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="crossplane-system Namespace">
@@ -5216,19 +5218,24 @@
           <text data-boundary-label="" x="248" y="113" class="t-cloud" font-size="9" font-weight="600">crossplane-system Namespace</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="개발자 Namespace">
-          <rect data-graph-role="structural-frame-label-mask" x="34" y="320" width="96.39999999999999" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="38" y="333" class="t-cloud" font-size="9" font-weight="600">개발자 Namespace</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="Namespace 범위">
+          <rect data-graph-role="structural-frame-label-mask" x="254" y="320" width="85.6" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="258" y="333" class="t-cloud" font-size="9" font-weight="600">Namespace 범위</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="3" data-composition-frame-kind="region" data-composition-frame-label="Cluster Scope">
-          <rect data-graph-role="structural-frame-label-mask" x="244" y="320" width="80.2" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="248" y="333" class="t-cloud" font-size="9" font-weight="600">Cluster Scope</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="3" data-composition-frame-kind="region" data-composition-frame-label="Cluster 범위">
+          <rect data-graph-role="structural-frame-label-mask" x="474" y="320" width="74.8" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="478" y="333" class="t-cloud" font-size="9" font-weight="600">Cluster 범위</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="4" data-composition-frame-kind="region" data-composition-frame-label="Provider Runtime">
-          <rect data-graph-role="structural-frame-label-mask" x="924" y="320" width="96.39999999999999" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="928" y="333" class="t-cloud" font-size="9" font-weight="600">Provider Runtime</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="4" data-composition-frame-kind="region" data-composition-frame-label="Namespace 범위">
+          <rect data-graph-role="structural-frame-label-mask" x="694" y="320" width="85.6" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="698" y="333" class="t-cloud" font-size="9" font-weight="600">Namespace 범위</text>
+        </g>
+
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="5" data-composition-frame-kind="region" data-composition-frame-label="Provider 연동">
+          <rect data-graph-role="structural-frame-label-mask" x="924" y="320" width="80.2" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="928" y="333" class="t-cloud" font-size="9" font-weight="600">Provider 연동</text>
         </g>
 
         <!-- Legend -->

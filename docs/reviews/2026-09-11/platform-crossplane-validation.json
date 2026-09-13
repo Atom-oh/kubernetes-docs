@@ -1421,15 +1421,15 @@
     },
     {
       "path": "assets/diagrams/archify/ko-platform-engineering-07-crossplane-1.architecture.json",
-      "sha256": "8762bd51370f9caa1cd0b79eaff6222448b4590de9473531bbd483f5b3f5540c"
+      "sha256": "71f96381e49db4cd76f819f92efe110a4bf5edfeddedd46be70a3e6f22f6320f"
     },
     {
       "path": "public/archmaps/ko-platform-engineering-07-crossplane-1.html",
-      "sha256": "b3d368f37ddff19401c9afe8dc35cfde89bb3e680abf26981975567e76750192"
+      "sha256": "15d32633f805ff23112914ac2643085b7f33ff170319c91b1cf802176e3819be"
     },
     {
       "path": "ko/.gitbook/assets/ko-platform-engineering-07-crossplane-1.png",
-      "sha256": "50c182ba85ab3c00f1e1c87e108f95b27387cf546c339c384a20161c6da2980f"
+      "sha256": "9958a284f2bfd4b3d98edade5ee3f2c9e3d5029a8323eaad582266cb62def28f"
     },
     {
       "path": "assets/diagrams/archify/ko-platform-engineering-07-crossplane-2.architecture.json",
@@ -1481,15 +1481,15 @@
     },
     {
       "path": "assets/diagrams/archify/en-platform-engineering-07-crossplane-1.architecture.json",
-      "sha256": "88f8a4d534c9790516e910d19e7dbb0168604453c053c6725a34d68481f78607"
+      "sha256": "bd3b55ca05d477c3b250a248f4f1e5351b9b96e128ca624f3f73233e3b3b71cf"
     },
     {
       "path": "public/archmaps/en-platform-engineering-07-crossplane-1.html",
-      "sha256": "6eb4403536daa1c02f51a470d526a10b0c117236f3cacc888d28cdfbb6b1c834"
+      "sha256": "303cff70b6f094a867dc349e5270d1fa891fdd27f463dd7ca0102cc4ed1e1c8c"
     },
     {
       "path": "en/.gitbook/assets/en-platform-engineering-07-crossplane-1.png",
-      "sha256": "dbcf2b994ba23195e1d23d3a28fce65dcb1a8e3cd6562b010880a66729b0c38b"
+      "sha256": "fc6e2c5b7dac2386bd882930df49d1ef0c67269de25724c61c08b9dd18a1cfdf"
     },
     {
       "path": "assets/diagrams/archify/en-platform-engineering-07-crossplane-2.architecture.json",
@@ -1517,15 +1517,15 @@
     },
     {
       "path": "assets/diagrams/archify/en-platform-engineering-07-crossplane-4.architecture.json",
-      "sha256": "01c3b769d1cf25134ae0499412431fec0f5d706038df0f23a42bc5402d1a2586"
+      "sha256": "2c647c889f928574039034b4a886bc1e23db1c26a062f3de56d94046bf91014e"
     },
     {
       "path": "public/archmaps/en-platform-engineering-07-crossplane-4.html",
-      "sha256": "9bc1afaf085df05359320745830d3af827fad0add227d0861ae262c75d678d0b"
+      "sha256": "fe2f0250b84a734f0e968f4451e52ae8ca2a21e252c0fe52033ec4a9758ba2af"
     },
     {
       "path": "en/.gitbook/assets/en-platform-engineering-07-crossplane-4.png",
-      "sha256": "e068cb8279810b0f7624a35d795a740df21a8945a17662e3fa6e7927997aa624"
+      "sha256": "2cd8943eca93f01454297b54ce5f5e286310326342a4e989500bb235fb02f55e"
     }
   ],
   "limits": [
@@ -1535,5 +1535,84 @@
     "CrossplaneCLIhasnobuiltincoreSecretschema;strictmissing-schemafailurewasrecordedthenSecretseparatelycheckedwithcachedofficialKubernetesOpenAPIandbase64validation. Customresourcevalidationkept--error-on-missing-schemas.",
     "ProviderIAMactualrole/DBclassregionavailability/backups/restore/HA/load/Prometheusscraperemainoperatorvalidation.",
     "Browserinitialprocessclosedbeforefirstcase;freshretrycompleted30casesexit0. No full local VitePress build."
-  ]
+  ],
+  "boundaryCorrection": {
+    "checkedAt": "2026-09-13",
+    "baseCommit": "a0c06152e805e81ff55c31f34a3e986e6bdb99ea",
+    "finding": "CP-M1",
+    "changes": [
+      "Both figure-1 locales separate namespaced XR/MR boundaries from cluster-scoped Composition; client and AWS API remain outside the cluster boundary.",
+      "English figure4 distinguishes Backstage, GitOps, Crossplane and external AWS resources."
+    ],
+    "changedArtifacts": [
+      "assets/diagrams/archify/ko-platform-engineering-07-crossplane-1.architecture.json",
+      "public/archmaps/ko-platform-engineering-07-crossplane-1.html",
+      "ko/.gitbook/assets/ko-platform-engineering-07-crossplane-1.png",
+      "assets/diagrams/archify/en-platform-engineering-07-crossplane-1.architecture.json",
+      "public/archmaps/en-platform-engineering-07-crossplane-1.html",
+      "en/.gitbook/assets/en-platform-engineering-07-crossplane-1.png",
+      "assets/diagrams/archify/en-platform-engineering-07-crossplane-4.architecture.json",
+      "public/archmaps/en-platform-engineering-07-crossplane-4.html",
+      "en/.gitbook/assets/en-platform-engineering-07-crossplane-4.png"
+    ],
+    "deliveries": [
+      {
+        "diagram": "ko-platform-engineering-07-crossplane-1",
+        "specificationSha256": "71f96381e49db4cd76f819f92efe110a4bf5edfeddedd46be70a3e6f22f6320f",
+        "htmlSha256": "15d32633f805ff23112914ac2643085b7f33ff170319c91b1cf802176e3819be",
+        "artifactChecksPassed": 9,
+        "artifactCheckCount": 9,
+        "compositionErrors": 0,
+        "compositionWarnings": 0
+      },
+      {
+        "diagram": "en-platform-engineering-07-crossplane-1",
+        "specificationSha256": "bd3b55ca05d477c3b250a248f4f1e5351b9b96e128ca624f3f73233e3b3b71cf",
+        "htmlSha256": "303cff70b6f094a867dc349e5270d1fa891fdd27f463dd7ca0102cc4ed1e1c8c",
+        "artifactChecksPassed": 9,
+        "artifactCheckCount": 9,
+        "compositionErrors": 0,
+        "compositionWarnings": 0
+      },
+      {
+        "diagram": "en-platform-engineering-07-crossplane-4",
+        "specificationSha256": "2c647c889f928574039034b4a886bc1e23db1c26a062f3de56d94046bf91014e",
+        "htmlSha256": "fe2f0250b84a734f0e968f4451e52ae8ca2a21e252c0fe52033ec4a9758ba2af",
+        "artifactChecksPassed": 9,
+        "artifactCheckCount": 9,
+        "compositionErrors": 0,
+        "compositionWarnings": 0
+      }
+    ],
+    "visualValidation": {
+      "viewerCount": 3,
+      "viewports": [
+        [
+          1440,
+          900
+        ],
+        [
+          1600,
+          1000
+        ],
+        [
+          1920,
+          1080
+        ],
+        [
+          2048,
+          1320
+        ]
+      ],
+      "containmentPassed": true,
+      "captures": 12,
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "manualInspection": "Twelve desktop captures reviewed in a contact sheet; all three 1600x1080 PNG fallbacks inspected individually.",
+      "limits": "Contact-sheet review is composition-level; no full-site, real-device or screen-reader validation."
+    },
+    "priorEvidence": "The existing browser field records the preceding snapshot. These new receipts supersede it for the three corrected viewers; other diagram source/artifact bytes are unchanged."
+  }
 }

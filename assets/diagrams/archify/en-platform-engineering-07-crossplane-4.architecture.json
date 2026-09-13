@@ -206,7 +206,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Kubernetes control plane",
+      "label": "Backstage IDP",
       "wraps": [
         "ui",
         "tpl",
@@ -215,7 +215,7 @@
     },
     {
       "kind": "region",
-      "label": "Kubernetes control plane",
+      "label": "GitOps",
       "wraps": [
         "repo",
         "argo"
@@ -223,7 +223,7 @@
     },
     {
       "kind": "region",
-      "label": "Kubernetes control plane",
+      "label": "Crossplane",
       "wraps": [
         "claim",
         "xr",
@@ -232,7 +232,7 @@
     },
     {
       "kind": "region",
-      "label": "Kubernetes control plane",
+      "label": "AWS",
       "wraps": [
         "rds",
         "s3",

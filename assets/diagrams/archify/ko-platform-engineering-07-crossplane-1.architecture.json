@@ -229,7 +229,6 @@
         "pkg",
         "api",
         "etcd",
-        "claim",
         "xr",
         "comp",
         "mr",
@@ -248,23 +247,31 @@
     },
     {
       "kind": "region",
-      "label": "개발자 Namespace",
+      "label": "Namespace 범위",
       "wraps": [
-        "claim"
-      ]
+        "xr"
+      ],
+      "pad": 20
     },
     {
       "kind": "region",
-      "label": "Cluster Scope",
+      "label": "Cluster 범위",
       "wraps": [
-        "xr",
-        "comp",
+        "comp"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "Namespace 범위",
+      "wraps": [
         "mr"
-      ]
+      ],
+      "pad": 20
     },
     {
       "kind": "region",
-      "label": "Provider Runtime",
+      "label": "Provider 연동",
       "wraps": [
         "pctrl",
         "pcrd"
@@ -312,7 +319,7 @@
       "to": "comp",
       "label": "Composition 참조",
       "variant": "emphasis",
-      "labelDy": -24
+      "labelDy": 64
     },
     {
       "id": "comp-mr",
@@ -320,7 +327,7 @@
       "to": "mr",
       "label": "MR 생성",
       "variant": "emphasis",
-      "labelDy": -24
+      "labelDy": 64
     },
     {
       "id": "mr-pctrl",
