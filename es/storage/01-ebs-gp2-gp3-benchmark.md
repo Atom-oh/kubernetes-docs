@@ -182,7 +182,7 @@ Con una profundidad de cola de 1 no hay espera en cola, y lo que se ve es la lat
 
 Aquí gp2 y gp3 son efectivamente idénticos. gp3 se detiene en su referencia de 125 MiB/s; gp2 se detiene en 128 MiB/s, el límite para volúmenes de 170 GiB o menos. La aritmética también explica por qué la prueba secuencial de gp2 no se ralentizó debido a su depósito de créditos vacío: EBS cuenta una E/S de 1 MiB como cuatro operaciones de 256 KiB, así que 130 MiB/s ≈ 520 IOPS, dentro de los 36.000 créditos acumulados durante los 120 segundos de descanso anteriores. El límite de rendimiento se activó antes que el límite de IOPS.
 
-Una cosa más: la referencia de ancho de banda EBS a nivel de instancia de este nodo (m5.xlarge) es 1.150 Mbps ≈ **137 MiB/s**. Eleve el volumen gp3 a 250 MiB/s y **en esta instancia seguirá deteniéndose cerca de 137 MiB/s** (la ráfaga de 4.750 Mbps está disponible durante 30 minutos por cada 24 horas). Revise la columna de ancho de banda EBS de la hoja de especificaciones de la instancia antes de actualizar un volumen. El escaneo completo del [benchmark de ClickHouse](../database/01-clickhouse-on-eks.md) se estancó exactamente en esta banda de 125–137 MiB/s por el mismo motivo.
+Una cosa más: la referencia de ancho de banda EBS a nivel de instancia de este nodo (m5.xlarge) es 1.150 Mbps ≈ **137 MiB/s**. Eleve el volumen gp3 a 250 MiB/s y **en esta instancia seguirá deteniéndose cerca de 137 MiB/s** (la ráfaga de 4.750 Mbps está disponible durante 30 minutos por cada 24 horas). Revise la columna de ancho de banda EBS de la hoja de especificaciones de la instancia antes de actualizar un volumen. El escaneo completo del [benchmark de ClickHouse](https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks) se estancó exactamente en esta banda de 125–137 MiB/s por el mismo motivo.
 
 ## En dólares
 
@@ -267,4 +267,4 @@ Hasta que termine la migración, cree una alarma sobre la métrica de EBS de Clo
 
 - [Descripción general de almacenamiento](./README.md) — cómo elegir el almacenamiento de EKS y dónde encaja este benchmark
 - [Almacenamiento de EKS, parte 1](../eks/04-eks-storage-part1.md) — instalación del controlador EBS CSI y conceptos básicos de StorageClass
-- [Benchmark medido de ClickHouse en EKS](../database/01-clickhouse-on-eks.md) — cómo el límite de rendimiento de 125 MiB/s de este artículo aparece en un escaneo completo de una base de datos real
+- [Benchmark medido de ClickHouse en EKS](https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks) — cómo el límite de rendimiento de 125 MiB/s de este artículo aparece en un escaneo completo de una base de datos real

@@ -120,7 +120,7 @@ EKS Hybrid Nodes 支持两种凭证提供程序，用于向 AWS 验证本地节�
 
 要测试您对 EKS Hybrid Nodes 的理解，请尝试以下测验：
 
-* [EKS Hybrid Nodes 测验](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/eks-hybrid-nodes/README.md)
+* [EKS Hybrid Nodes 测验](https://www.atomai.click/kubernetes-docs/en/quizzes/#eks-hybrid-nodes)
 
 ## 相关文档
 

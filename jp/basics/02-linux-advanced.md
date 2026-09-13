@@ -346,4 +346,4 @@ nc -zv service-name 80
 
 ***
 
-[前へ: Linux の基礎](01-linux-basics.md) | [次へ: Container の基礎](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/basics/03-container-basics.md)
+[前へ: Linux の基礎](01-linux-basics.md) | [次へ: Container の基礎](https://www.atomai.click/kubernetes-docs/en/basics/03-container-technology)

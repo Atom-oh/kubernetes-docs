@@ -182,7 +182,7 @@ queue depth が 1 では queueing はなく、生の EBS round-trip latency が�
 
 ここでは gp2 と gp3 は実質的に同一です。gp3 は 125 MiB/s のベースラインで止まり、gp2 は 170 GiB 以下の volume に対する上限である 128 MiB/s で止まります。また、この計算は gp2 sequential test が空の credit bucket によって遅くならなかった理由も説明します。EBS は 1 MiB I/O を 256 KiB operations 4 回として数えるため、130 MiB/s ≈ 520 IOPS となり、直前の 120 秒の休止中に蓄積された 36,000 credits の範囲内です。IOPS ceiling より先に throughput ceiling が作用しました。
 
-もう 1 点、この node (m5.xlarge) の instance レベルの EBS bandwidth ベースラインは 1,150 Mbps ≈ **137 MiB/s** です。gp3 volume を 250 MiB/s に引き上げても、**この instance では依然として 137 MiB/s 付近で止まります** (4,750 Mbps の burst は 24 時間あたり 30 分間利用可能です)。volume を upgrade する前に、instance spec sheet の EBS bandwidth column を確認してください。[ClickHouse benchmark](../database/01-clickhouse-on-eks.md) の full scan は、まさに同じ理由でこの 125–137 MiB/s band に停滞しました。
+もう 1 点、この node (m5.xlarge) の instance レベルの EBS bandwidth ベースラインは 1,150 Mbps ≈ **137 MiB/s** です。gp3 volume を 250 MiB/s に引き上げても、**この instance では依然として 137 MiB/s 付近で止まります** (4,750 Mbps の burst は 24 時間あたり 30 分間利用可能です)。volume を upgrade する前に、instance spec sheet の EBS bandwidth column を確認してください。[ClickHouse benchmark](https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks) の full scan は、まさに同じ理由でこの 125–137 MiB/s band に停滞しました。
 
 ## 金額で見る
 
@@ -267,4 +267,4 @@ migration が完了するまで、CloudWatch EBS metric **`BurstBalance`** (残�
 
 - [Storage Overview](./README.md) — EKS storage の選び方と、この benchmark の位置付け
 - [EKS Storage Part 1](../eks/04-eks-storage-part1.md) — EBS CSI driver のインストールと StorageClass の基本
-- [ClickHouse on EKS 実測ベンチマーク](../database/01-clickhouse-on-eks.md) — この記事の 125 MiB/s throughput ceiling が実際の database full scan でどのように現れるか
+- [ClickHouse on EKS 実測ベンチマーク](https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks) — この記事の 125 MiB/s throughput ceiling が実際の database full scan でどのように現れるか

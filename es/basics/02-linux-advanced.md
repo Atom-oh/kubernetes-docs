@@ -346,4 +346,4 @@ nc -zv service-name 80
 
 ***
 
-[Previous: Linux Basics](01-linux-basics.md) | [Next: Container Basics](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/basics/03-container-basics.md)
+[Previous: Linux Basics](01-linux-basics.md) | [Next: Container Basics](https://www.atomai.click/kubernetes-docs/en/basics/03-container-technology)

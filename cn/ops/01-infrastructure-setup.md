@@ -1613,14 +1613,14 @@ cd ../03-platform && terraform plan -out=plan.out
 | 平台   | 附加组件、IAM Role、访问条目 | -                               |
 | Kubernetes | -                                  | NodePool、Deployment、Service |
 
-Kubernetes 资源（NodePool 定义、应用程序 Deployment）由 ArgoCD GitOps 管理。详情请参阅 [GitOps Pipeline 配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)。
+Kubernetes 资源（NodePool 定义、应用程序 Deployment）由 ArgoCD GitOps 管理。详情请参阅 [GitOps Pipeline 配置](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)。
 
 ### 交叉引用
 
 * [开始使用 EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
 * [EKS 安全最佳实践](../eks/05-eks-security.md)
 * [NLB 加权路由和蓝绿集群](02-infrastructure-advanced.md)
-* [GitOps Pipeline 配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [GitOps Pipeline 配置](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)
 
 ***
 

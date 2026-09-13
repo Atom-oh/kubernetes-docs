@@ -724,7 +724,7 @@ DNS TTL 会影响权重变化时流量切换的速度：
 
 ### NodePool 可用区配置
 
-实际的 NodePool YAML 由 ArgoCD GitOps 管理（请参阅 [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)），但以下是关键概念：
+实际的 NodePool YAML 由 ArgoCD GitOps 管理（请参阅 [GitOps Pipeline Configuration](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)），但以下是关键概念：
 
 ```yaml
 # Conceptual NodePool for Blue cluster (zone: ap-northeast-2a)
@@ -1390,7 +1390,7 @@ echo "All traffic now routed to: $TO_CLUSTER"
 
 * [Terraform 三层基础设施](01-infrastructure-setup.md)
 * [CI Pipelines](03-ci-pipelines.md)
-* [GitOps Pipeline 配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [GitOps Pipeline 配置](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)
 * [EKS Auto Mode 入门](../eks-auto-mode/01-getting-started.md)
 
 ***

@@ -182,7 +182,7 @@ fio --name=gp2-seqwrite --filename=/mnt/gp2/testfile --size=8G --rw=write --bs=1
 
 在这里，gp2 与 gp3 实际上相同。gp3 停在其 125 MiB/s 基线；gp2 停在 128 MiB/s，即 170 GiB 或更小卷的上限。算术也解释了为什么 gp2 顺序测试未被其空积分桶拖慢：EBS 将一个 1 MiB I/O 计为四个 256 KiB 操作，因此 130 MiB/s ≈ 520 IOPS，远低于此前 120 秒休息期间累积的 36,000 个积分。吞吐量上限先于 IOPS 上限生效。
 
-还有一点：此节点（m5.xlarge）的实例级 EBS 带宽基线是 1,150 Mbps ≈ **137 MiB/s**。将 gp3 卷提高到 250 MiB/s，**在此实例上它仍将在接近 137 MiB/s 时停止**（4,750 Mbps 的突增每天 24 小时中可用 30 分钟）。升级卷之前，请检查实例规格表中的 EBS 带宽列。[ClickHouse 基准测试](../database/01-clickhouse-on-eks.md)中的完整扫描正是出于相同原因而停滞在这个 125–137 MiB/s 区间。
+还有一点：此节点（m5.xlarge）的实例级 EBS 带宽基线是 1,150 Mbps ≈ **137 MiB/s**。将 gp3 卷提高到 250 MiB/s，**在此实例上它仍将在接近 137 MiB/s 时停止**（4,750 Mbps 的突增每天 24 小时中可用 30 分钟）。升级卷之前，请检查实例规格表中的 EBS 带宽列。[ClickHouse 基准测试](https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks)中的完整扫描正是出于相同原因而停滞在这个 125–137 MiB/s 区间。
 
 ## 从成本角度看
 
@@ -267,4 +267,4 @@ kubectl get pvc data-postgres-0 -o jsonpath='{.status.currentVolumeAttributesCla
 
 - [存储概览](./README.md) — 如何选择 EKS 存储以及本基准测试所处的位置
 - [EKS 存储第 1 部分](../eks/04-eks-storage-part1.md) — EBS CSI driver 安装和 StorageClass 基础知识
-- [EKS 上的 ClickHouse 实测基准测试](../database/01-clickhouse-on-eks.md) — 本文的 125 MiB/s 吞吐量上限如何出现在真实数据库完整扫描中
+- [EKS 上的 ClickHouse 实测基准测试](https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks) — 本文的 125 MiB/s 吞吐量上限如何出现在真实数据库完整扫描中

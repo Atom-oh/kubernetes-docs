@@ -12,6 +12,8 @@
 - [Inicio rápido](#quick-start)
 - [Compatibilidad de versiones](#version-compatibility)
 
+<span id="what-is-argocd"></span>
+
 ## ¿Qué es ArgoCD?
 
 ArgoCD es una herramienta declarativa de entrega continua GitOps para Kubernetes. Automatiza el despliegue de aplicaciones en clústeres de Kubernetes sincronizando el estado deseado definido en repositorios Git con el estado real del clúster.
@@ -19,6 +21,8 @@ ArgoCD es una herramienta declarativa de entrega continua GitOps para Kubernetes
 Como proyecto graduado de CNCF, ArgoCD se ha convertido en el estándar de facto para los despliegues de Kubernetes basados en GitOps, utilizado por miles de organizaciones en todo el mundo.
 
 ![Diagrama de arquitectura que muestra el plano de control de ArgoCD obteniendo manifests de fuentes Git, Helm y OCI mediante su Repo Server, con el Application Controller reconciliándolos y sincronizándolos en clústeres de Kubernetes administrados, mientras los usuarios acceden al API Server mediante la UI web, CLI o API gRPC.](../../.gitbook/assets/en-gitops-argocd-README-0.png)
+
+<span id="key-benefits"></span>
 
 ## Beneficios principales
 
@@ -49,6 +53,8 @@ Como proyecto graduado de CNCF, ArgoCD se ha convertido en el estándar de facto
 - **Notificaciones**: Integraciones con Slack, Teams, correo electrónico y webhook
 - **Monitorización de estado**: Comprobaciones de estado integradas y personalizadas
 
+<span id="architecture-overview"></span>
+
 ## Descripción general de la arquitectura
 
 ### Componentes principales
@@ -66,6 +72,8 @@ Como proyecto graduado de CNCF, ArgoCD se ha convertido en el estándar de facto
 ### Flujo de datos
 
 ![Diagrama de secuencia que muestra a un usuario creando una aplicación ArgoCD mediante el API Server, que renderiza manifests a través del Repo Server, seguido por el Application Controller comparando repetidamente el estado deseado y el real con Kubernetes y aplicando cambios ante desviaciones en un bucle de reconciliación.](../../.gitbook/assets/en-gitops-argocd-README-1.png)
+
+<span id="core-concepts"></span>
 
 ## Conceptos principales
 
@@ -99,6 +107,8 @@ La sincronización hace que el estado del clúster coincida con el estado desead
 - **Self-Heal**: Corrige las desviaciones automáticamente
 - **Prune**: Elimina recursos huérfanos
 
+<span id="sub-guide-navigation"></span>
+
 ## Navegación de subguías
 
 | Guía | Descripción |
@@ -112,7 +122,9 @@ La sincronización hace que el estado del clúster coincida con el estado desead
 | [Seguridad](07-security.md) | Integración de SSO, administración de secretos, TLS, registro de auditoría |
 | [Notificaciones](08-notifications.md) | Servicios de notificaciones, triggers, plantillas, suscripciones |
 | [Prácticas recomendadas](09-best-practices.md) | Patrones de repositorio, optimización del rendimiento, solución de problemas, consejos de EKS |
-| [Análisis detallado de experimentos de Rollouts](10-rollouts-experiment.md) | CRD Experiment, validación efímera de ReplicaSet, veredictos de AnalysisRun |
+| [Análisis detallado de experimentos de Rollouts](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/10-rollouts-experiment) | CRD Experiment, validación efímera de ReplicaSet, veredictos de AnalysisRun |
+
+<span id="quick-start"></span>
 
 ## Inicio rápido
 
@@ -193,6 +205,8 @@ spec:
       prune: true
       selfHeal: true
 ```
+
+<span id="version-compatibility"></span>
 
 ## Compatibilidad de versiones
 

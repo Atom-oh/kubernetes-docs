@@ -19,6 +19,8 @@ Kubernetes 最初是为 Linux 容器设计的，但从 1.14 版本开始增加�
 11. [最佳实践](#best-practices)
 12. [结论](#conclusion)
 
+<span id="windows-container-overview"></span>
+
 ## Windows 容器概述
 
 Windows 容器是在 Windows 操作系统上运行的容器，可让您将 Windows 应用程序容器化并进行部署。
@@ -56,6 +58,8 @@ EXPOSE 80
 CMD ["powershell", "-Command", "Start-Service W3SVC; Get-Content -Path 'C:\\inetpub\\logs\\LogFiles\\W3SVC1\\u_ex*' -Wait"]
 ```
 
+<span id="kubernetes-windows-support-architecture"></span>
+
 ## Kubernetes Windows 支持架构
 
 Kubernetes 中的 Windows 支持基于混合环境。控制平面组件始终在 Linux 上运行，而工作节点可以是 Linux 或 Windows。
@@ -80,6 +84,8 @@ Kubernetes 中的 Windows 支持架构如下：
 2. **kube-proxy**：管理网络规则
 3. **CNI Plugin**：网络配置
 4. **CSI Plugin**：存储管理
+
+<span id="windows-node-limitations"></span>
 
 ## Windows 节点限制
 
@@ -110,6 +116,8 @@ Windows 容器与主机 OS 版本之间存在重要的兼容性注意事项：
 | Windows Server 2022 | Windows Server 2022 |
 
 Hyper-V 隔离可以放宽这些限制，但需要额外资源。
+<span id="windows-node-setup"></span>
+
 ## Windows 节点设置
 
 让我们了解将 Windows 节点添加到 Kubernetes 集群的过程。
@@ -198,6 +206,8 @@ Start-Service kubelet
 kubectl label node <windows-node-name> kubernetes.io/os=windows
 kubectl label node <windows-node-name> kubernetes.io/arch=amd64
 ```
+
+<span id="deploying-windows-containers"></span>
 
 ## 部署 Windows 容器
 
@@ -297,6 +307,8 @@ spec:
         Get-Content -Path 'C:\inetpub\logs\LogFiles\W3SVC1\u_ex*' -Wait
       }
 ```
+
+<span id="networking"></span>
 
 ## 网络
 
@@ -429,6 +441,8 @@ spec:
     - protocol: TCP
       port: 80
 ```
+
+<span id="storage"></span>
 
 ## 存储
 
@@ -611,6 +625,8 @@ spec:
     persistentVolumeClaim:
       claimName: windows-pvc
 ```
+<span id="monitoring-and-logging"></span>
+
 ## 监控和日志记录
 
 让我们了解 Windows 节点和容器的监控与日志记录方法。
@@ -720,6 +736,8 @@ spec:
     emptyDir: {}
 ```
 
+<span id="security"></span>
+
 ## 安全性
 
 让我们了解 Windows 节点和容器的安全注意事项。
@@ -816,6 +834,8 @@ spec:
       whoami
       while ($true) { Start-Sleep -Seconds 10 }
 ```
+
+<span id="windows-support-in-amazon-eks"></span>
 
 ## Amazon EKS 中的 Windows 支持
 
@@ -963,6 +983,8 @@ data:
         auto_create_group true
 ```
 
+<span id="best-practices"></span>
+
 ## 最佳实践
 
 让我们了解在 Kubernetes 中运行 Windows 工作负载的最佳实践。
@@ -999,6 +1021,8 @@ data:
 4. **安全组**：配置适当的安全组
 5. **成本优化**：选择适当的实例类型和大小
 
+<span id="conclusion"></span>
+
 ## 结论
 
 Kubernetes 中的 Windows 支持不断演进，现在您可以在生产环境中运行 Windows 工作负载。Windows 节点可以与 Linux 节点在同一集群中并行运行，使您能够在单个 Kubernetes 集群中管理多样化的工作负载。
@@ -1011,4 +1035,4 @@ Amazon EKS 为 Windows 节点提供托管服务，可轻松部署和管理 Windo
 
 ## 测验
 
-要测试您在本章中学到的内容，请尝试 [Kubernetes 中的 Windows 测验](../quizzes/core/10-windows-in-kubernetes-quiz.md)。
+要测试您在本章中学到的内容，请尝试 [Kubernetes 中的 Windows 测验](https://www.atomai.click/kubernetes-docs/en/quizzes/core/10-windows-in-kubernetes-quiz)。

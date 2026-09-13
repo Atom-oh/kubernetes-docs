@@ -447,5 +447,5 @@ EKS Pod 的 `/etc/resolv.conf` 有四个搜索域（`bench-net.svc.cluster.local
 - [Sidecar vs Ambient Mode Selection Guide](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md) —— 将 sidecar 跳转的 +1.29 ms p50 与此处测得的 +0.21 ms AZ 跳转并列比较
 - [EBS gp2 vs gp3 Measured Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md) —— 同一集群的存储路径测量
 - [Kafka on EKS Measured Benchmark](../data-on-eks/kafka/09-kafka-benchmark.md) —— RF3 复制流量如何遇到本页的 5 Gbps 流上限和跨 AZ 定价
-- [Guidebook Roadmap — 测量基准系列](../roadmap.md)
+- [Guidebook Roadmap — 测量基准系列](https://www.atomai.click/kubernetes-docs/en/roadmap)
 - [测验：Pod 网络基准测试](../quizzes/networking/06-pod-network-benchmark-quiz.md)

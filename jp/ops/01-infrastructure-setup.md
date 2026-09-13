@@ -1609,14 +1609,14 @@ cd ../03-platform && terraform plan -out=plan.out
 | Platform   | Add-on、IAM Role、Access Entry | -                               |
 | Kubernetes | -                                  | NodePool、Deployment、Service |
 
-Kubernetes リソース（NodePool 定義、アプリケーション Deployment）は、ArgoCD GitOps によって管理されます。詳細は、[GitOps Pipeline の設定](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)を参照してください。
+Kubernetes リソース（NodePool 定義、アプリケーション Deployment）は、ArgoCD GitOps によって管理されます。詳細は、[GitOps Pipeline の設定](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)を参照してください。
 
 ### クロスリファレンス
 
 * [EKS Auto Mode の開始方法](../eks-auto-mode/01-getting-started.md)
 * [EKS セキュリティのベストプラクティス](../eks/05-eks-security.md)
 * [NLB Weighted Routing と Blue/Green クラスター](02-infrastructure-advanced.md)
-* [GitOps Pipeline の設定](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [GitOps Pipeline の設定](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)
 
 ***
 

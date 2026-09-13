@@ -1109,6 +1109,6 @@ spec:
 
 ## Próximos pasos
 
-1. [Laboratorio: práctica de Rollout consciente de zonas](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/labs/zone-aware-rollout/README.md)
+1. [Laboratorio: práctica de Rollout consciente de zonas](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/09-zone-aware-argo-rollouts#implementation-guide)
 2. Amplíe a [Multi-cluster](02-multi-cluster.md) para implementar conmutación por error entre regiones
-3. [Progressive Delivery](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/advanced/progressive-delivery.md) para análisis y reversión automáticos
+3. [Progressive Delivery](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/08-argo-rollouts) para análisis y reversión automáticos

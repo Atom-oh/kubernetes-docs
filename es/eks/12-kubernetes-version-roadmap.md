@@ -20,6 +20,8 @@ Kubernetes evoluciona rápidamente, con tres lanzamientos por año que introduce
 
 ---
 
+<span id="1-overview-and-learning-objectives"></span>
+
 ## 1. Descripción general y objetivos de aprendizaje
 
 ### Propósito de este documento
@@ -55,6 +57,8 @@ Después de leer este documento, podrás:
 | **Engineering Managers** | Descripción general, matriz de soporte, implicaciones de costo del Extended Support |
 
 ---
+
+<span id="2-kubernetes-release-cycle"></span>
 
 ## 2. Ciclo de lanzamiento de Kubernetes
 
@@ -193,6 +197,8 @@ El desarrollo de Kubernetes se organiza en Special Interest Groups (SIGs). Compr
 
 ---
 
+<span id="3-eks-version-support-matrix"></span>
+
 ## 3. Matriz de compatibilidad de versiones de EKS
 
 ### Niveles de soporte
@@ -318,6 +324,8 @@ Amazon EKS y EKS Distro comenzaron a soportar Kubernetes 1.35, agregando:
 > **Anuncios relacionados**: El soporte de rollback de versiones de EKS (1 de julio de 2026) y el nuevo SLA del control plane de 99.99% / nivel de escalado 8XL (20 de marzo de 2026) se cubren en el documento [EKS Upgrades](08-eks-upgrades.md), ya que se relacionan directamente con el proceso de actualización y no con características de versiones de Kubernetes.
 
 ---
+
+<span id="4-version-by-version-feature-guide"></span>
 
 ## 4. Guía de características por versión
 
@@ -2279,6 +2287,8 @@ spec:
 
 ---
 
+<span id="5-key-feature-graduation-timeline"></span>
+
 ## 5. Cronograma de promoción de características clave
 
 La siguiente tabla proporciona una vista integral entre versiones de las promociones principales de características. Úsala para comprender el ciclo de vida completo de las características que planeas adoptar.
@@ -2388,6 +2398,8 @@ gantt
 ```
 
 ---
+
+<span id="6-deprecations-and-removals"></span>
 
 ## 6. Deprecaciones y eliminaciones
 
@@ -2512,6 +2524,8 @@ Usa esta tabla para verificar que tus manifests sean compatibles con la versión
 | VolumeAttributesClass | `storage.k8s.io/v1` | `v1beta1` (eliminado 1.36) | 1.34 |
 
 ---
+
+<span id="7-eks-specific-considerations"></span>
 
 ## 7. Consideraciones específicas de EKS
 
@@ -2661,6 +2675,8 @@ quadrantChart
 ```
 
 ---
+
+<span id="8-version-upgrade-planning"></span>
 
 ## 8. Planificación de actualización de versiones
 
@@ -3021,6 +3037,8 @@ rollback_strategy:
 
 ---
 
+<span id="9-future-outlook"></span>
+
 ## 9. Perspectiva futura
 
 ### Características en desarrollo activo
@@ -3085,6 +3103,8 @@ Para equipos que planifican su estrategia de Kubernetes:
 
 ---
 
+<span id="10-references"></span>
+
 ## 10. Referencias
 
 ### Recursos oficiales de Kubernetes
@@ -3130,4 +3150,4 @@ Para comprobar lo que aprendiste en este documento, intenta el [Kubernetes Versi
 
 ---
 
-< [Anterior: EKS Advanced Debugging](./11-eks-advanced-debugging.md) | [Tabla de contenido](./README.md) >
+< [Anterior: EKS Advanced Debugging](./11-eks-advanced-debugging.md) | [Tabla de contenido](../README.md) >

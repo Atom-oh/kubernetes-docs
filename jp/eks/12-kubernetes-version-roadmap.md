@@ -20,6 +20,8 @@ Kubernetes は急速に進化しており、年 3 回の release で新機能の
 
 ---
 
+<span id="1-overview-and-learning-objectives"></span>
+
 ## 1. Overview and Learning Objectives
 
 ### Purpose of This Document
@@ -55,6 +57,8 @@ Kubernetes は急速に進化しており、年 3 回の release で新機能の
 | **Engineering Managers** | Overview, Support Matrix, Cost implications of Extended Support |
 
 ---
+
+<span id="2-kubernetes-release-cycle"></span>
 
 ## 2. Kubernetes Release Cycle
 
@@ -193,6 +197,8 @@ Kubernetes development は Special Interest Groups (SIGs) によって編成さ�
 
 ---
 
+<span id="3-eks-version-support-matrix"></span>
+
 ## 3. EKS Version Support Matrix
 
 ### Support Tiers
@@ -318,6 +324,8 @@ Amazon EKS と EKS Distro は Kubernetes 1.35 の support を開始し、以下�
 > **Related announcements**: EKS version rollback support (July 1, 2026) と新しい control plane 99.99% SLA / 8XL scaling tier (March 20, 2026) は、Kubernetes version feature ではなく upgrade process に直接関係するため、[EKS Upgrades](08-eks-upgrades.md) document で扱います。
 
 ---
+
+<span id="4-version-by-version-feature-guide"></span>
 
 ## 4. Version-by-Version Feature Guide
 
@@ -2279,6 +2287,8 @@ spec:
 
 ---
 
+<span id="5-key-feature-graduation-timeline"></span>
+
 ## 5. Key Feature Graduation Timeline
 
 以下の table は、major feature graduation の comprehensive cross-version view を提供します。採用を計画している feature の full lifecycle を理解するために使用してください。
@@ -2388,6 +2398,8 @@ gantt
 ```
 
 ---
+
+<span id="6-deprecations-and-removals"></span>
 
 ## 6. Deprecations and Removals
 
@@ -2512,6 +2524,8 @@ upgrade 前に manifest が target Kubernetes version と compatible である�
 | VolumeAttributesClass | `storage.k8s.io/v1` | `v1beta1` (removed 1.36) | 1.34 |
 
 ---
+
+<span id="7-eks-specific-considerations"></span>
 
 ## 7. EKS-Specific Considerations
 
@@ -2661,6 +2675,8 @@ quadrantChart
 ```
 
 ---
+
+<span id="8-version-upgrade-planning"></span>
 
 ## 8. Version Upgrade Planning
 
@@ -3021,6 +3037,8 @@ rollback_strategy:
 
 ---
 
+<span id="9-future-outlook"></span>
+
 ## 9. Future Outlook
 
 ### Features in Active Development
@@ -3085,6 +3103,8 @@ Kubernetes strategy を計画する team 向けの推奨事項:
 
 ---
 
+<span id="10-references"></span>
+
 ## 10. References
 
 ### Official Kubernetes Resources
@@ -3130,4 +3150,4 @@ Kubernetes strategy を計画する team 向けの推奨事項:
 
 ---
 
-< [前へ: EKS Advanced Debugging](./11-eks-advanced-debugging.md) | [目次](./README.md) >
+< [前へ: EKS Advanced Debugging](./11-eks-advanced-debugging.md) | [目次](../README.md) >

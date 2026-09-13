@@ -169,14 +169,14 @@ EKS 1.36 において Istio の sidecar モードと ambient モードを選択�
 
 ### Istio ドキュメント
 
-* [Istio アーキテクチャ](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md)
-* [Istio トラフィック管理](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/traffic-management/README.md)
-* [Istio セキュリティ](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/security/README.md)
-* [Istio 可観測性](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/observability/README.md)
+* [Istio アーキテクチャ](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture)
+* [Istio トラフィック管理](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/)
+* [Istio セキュリティ](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/)
+* [Istio 可観測性](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/)
 
 ### VPC Lattice ドキュメント
 
-* [VPC Lattice の概要](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/vpc-lattice.md)
+* [VPC Lattice の概要](https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice)
 
 ### 外部リファレンス
 

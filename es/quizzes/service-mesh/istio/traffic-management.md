@@ -153,8 +153,8 @@ spec:
 
 **Referencia:**
 
-* [Balanceo de carga](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md)
-* [Connection Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/08-connection-pool.md)
+* [Balanceo de carga](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/06-load-balancing)
+* [Connection Pool](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/03-destination-rule#_2-connection-pool)
 
 </details>
 
@@ -246,7 +246,7 @@ spec:
 
 **Referencia:**
 
-* [División de tráfico](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [División de tráfico](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
 * [Integración de Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
@@ -337,7 +337,7 @@ spec:
 
 **Referencia:**
 
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
+* [Gateway](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice)
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 
 </details>
@@ -741,7 +741,7 @@ kubectl argo rollouts dashboard
 
 **Referencia:**
 
-* [División de tráfico](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [División de tráfico](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
@@ -949,8 +949,8 @@ En la práctica, puedes combinar ambas estrategias:
 
 **Referencia:**
 
-* [División de tráfico](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
-* [Blue/Green Deployment](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment)
+* [División de tráfico](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
+* [Blue/Green Deployment](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting#bluegreen-deployment)
 
 </details>
 
@@ -1213,7 +1213,7 @@ Cannot validate:
 
 **Referencia:**
 
-* [Traffic Mirroring](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/04-traffic-mirroring.md)
+* [Traffic Mirroring](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror)
 
 </details>
 
@@ -1975,8 +1975,8 @@ spec:
 
 **Referencia:**
 
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [Configuración TLS](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration)
+* [Gateway](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice)
+* [Configuración TLS](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice#https-traffic)
 
 </details>
 
@@ -2000,6 +2000,6 @@ spec:
 
 * [Documentación de gestión de tráfico](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [División de tráfico](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Gateway](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice)
+* [División de tráfico](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)

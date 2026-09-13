@@ -120,7 +120,7 @@ Comience con los [Requisitos previos y requisitos del sistema](01-prerequisites.
 
 Para evaluar su comprensión de EKS Hybrid Nodes, intente responder el siguiente cuestionario:
 
-* [Cuestionario de EKS Hybrid Nodes](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/eks-hybrid-nodes/README.md)
+* [Cuestionario de EKS Hybrid Nodes](https://www.atomai.click/kubernetes-docs/en/quizzes/#eks-hybrid-nodes)
 
 ## Documentos relacionados
 
