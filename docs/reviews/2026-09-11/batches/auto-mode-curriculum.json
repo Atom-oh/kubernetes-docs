@@ -3,7 +3,7 @@
     "path": "ko/training/eks-auto-mode-2h-curriculum.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "9b06e2b5a9652a8e35d477b6db9ac2e12bdcc4932c394e2d5e960ea97eab5c15",
+    "reviewedSha256": "9f12e65d9008f368525e9be32c27f44a162774930537c556eba1ad008bee3d86",
     "summary": "Readall514linesperlocale;preserved120mins;correctAutoModeAPI/AMI/lifetime/metrics/costboundaries,traceIDcardinality,IaCimpacts;NodePoolschemaand2promtoolalertcasespassed.",
     "validationReport": "docs/reviews/2026-09-11/auto-mode-curriculum-validation.json"
   },
@@ -11,7 +11,7 @@
     "path": "en/training/eks-auto-mode-2h-curriculum.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "a14892d8d288f4f52dde149739fd8230a0acb0531a189669ee96c0cfe005c066",
+    "reviewedSha256": "6c7510ae6a285115472013ee68867f2b8f5523adcc0a7d4e1eec9d07a0f1ec0d",
     "summary": "Readall514linesperlocale;preserved120mins;correctAutoModeAPI/AMI/lifetime/metrics/costboundaries,traceIDcardinality,IaCimpacts;NodePoolschemaand2promtoolalertcasespassed.",
     "validationReport": "docs/reviews/2026-09-11/auto-mode-curriculum-validation.json"
   }

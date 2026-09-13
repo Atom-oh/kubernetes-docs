@@ -11,7 +11,7 @@
     "results": [
       {
         "path": "ko/news/README.md",
-        "sha256": "f5054dfe4b13021d372ec32723e6508c1f5f535e39ddf2c8395e6f6879d2df8f",
+        "sha256": "778a5332fbd76ec9fdb023f440bde631194fd00f917dc1fb6be10ee6f2c040d9",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -32,7 +32,7 @@
       },
       {
         "path": "en/news/README.md",
-        "sha256": "d5840f8289a552075af0361ff92258471f26a36841469bd59de8244f47ca204c",
+        "sha256": "04e1c3fc0eddbf44aafd8344102c5e559e170ef6050beeebcf6e3b0bf296e40e",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -629,5 +629,13 @@
     "Notanewsdigestworkflowexecutionorpaidmodelcall",
     "Articleheadlines/recordedannouncementsandreleasefactschecked;doesnotrerunallfeaturesorreplaceeachlinkedguidereview",
     "K8s1.38alphaexistsasaGittagbutnoGitHubRelease;API404notabsenceoftag"
-  ]
+  ],
+  "reviewFixes": {
+    "ids": [
+      "NAV-R1-001",
+      "NAV-R1-002",
+      "NAV-R1-003"
+    ],
+    "scope": "Recognizednewsupdatedates/kroprojectname/strictSpotconstraintwording;nativeoperationalexamplesunchanged"
+  }
 }

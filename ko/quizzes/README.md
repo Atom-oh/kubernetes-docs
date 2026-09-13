@@ -20,6 +20,7 @@
 - [EKS 기반 AI 인프라 퀴즈](./ai-ml/06-ai-infrastructure-quiz.md)
 - [AI/ML 모범 사례 퀴즈](./ai-ml/07-ai-ml-best-practices-quiz.md)
 - [Agentic AI 플랫폼 on EKS 퀴즈](./ai-ml/08-agentic-ai-platform-quiz.md)
+- [LLM 게이트웨이 퀴즈](./ai-ml/08-llm-gateway-quiz.md)
 - [Kubeflow 아키텍처와 EKS 설치 퀴즈](./ai-ml/kubeflow/01-architecture-installation-quiz.md)
 - [Kubeflow Pipelines 퀴즈](./ai-ml/kubeflow/02-pipelines-quiz.md)
 - [Kubeflow Notebooks 퀴즈](./ai-ml/kubeflow/03-notebooks-quiz.md)
