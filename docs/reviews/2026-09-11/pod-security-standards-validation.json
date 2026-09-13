@@ -1342,15 +1342,65 @@
     },
     {
       "path": "ko/security/03-pod-security-standards.md",
-      "sha256": "8f6a1a5a82bbf35718f25ace21f20b161800b46daf352de52356615cdc63cf59"
+      "sha256": "db8c15a504c8ba6c8452582f452c8256f33aa83aac36ce7c2a36e5b6a614a35e"
     },
     {
       "path": "en/security/03-pod-security-standards.md",
-      "sha256": "f2739394bdd1267bacc33fede856615769e51650434ff3c0c6056163a8d37ac9"
+      "sha256": "84a9f0e89154a1fc5d12c6bb8d38413f862763da2e5fab6649caa30fd73ce35e"
     }
   ],
   "limits": [
     "No liveKubernetesadmission/PSPmigration ornamespaceenforcementchange.",
     "MigrationfiguredoesnotprovideexactPSP-to-PSSequivalence;additionalidentity/mutation/OS/versionconditionsmustbereviewed."
-  ]
+  ],
+  "reviewMilestoneFix": {
+    "finding": "SECF-R1-001",
+    "verifiedAt": "2026-09-13T11:22:58.653626+00:00",
+    "change": "Upstreamdefaultenablementwithbeta1.23isdistinguishedfromGA1.25;EKS1.23statementretained.",
+    "source": {
+      "url": "https://kubernetes.io/blog/2021/12/09/pod-security-admission-beta/",
+      "status": 200,
+      "sha256": "0d944a7f7b19b1717f28eaac0aedb98684a320b78e6a891cbe7cc0b9c5b86ab1"
+    },
+    "markdown": {
+      "status": "passed",
+      "rows": [
+        {
+          "path": "en/security/03-pod-security-standards.md",
+          "sha256": "84a9f0e89154a1fc5d12c6bb8d38413f862763da2e5fab6649caa30fd73ce35e",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 66,
+          "images": 3,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        },
+        {
+          "path": "ko/security/03-pod-security-standards.md",
+          "sha256": "db8c15a504c8ba6c8452582f452c8256f33aa83aac36ce7c2a36e5b6a614a35e",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 66,
+          "images": 3,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        },
+        {
+          "path": "ko/quizzes/security/03-pod-security-standards-quiz.md",
+          "sha256": "81deafb2aab1aec23babc5c273ad252f797031077131aef8cf7bca880a41a970",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 15,
+          "images": 0,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        }
+      ],
+      "scope": "Actual VitePress/Vue compilation and original rendered anchor preservation, without a site build."
+    },
+    "nativeLimit": "Proseonly;nativePSAevaluationevidenceunchangedandpreserved."
+  }
 }

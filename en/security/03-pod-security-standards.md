@@ -86,7 +86,7 @@ Request → authentication / authorization → mutating admission
 
 ### Verifying PSA Status
 
-PSA has been enabled by default since Kubernetes 1.25. An absent explicit `--enable-admission-plugins=PodSecurity` flag does not mean it is disabled. Inspect self-managed API server configuration for explicit disabling; EKS does not expose that configuration. Metrics show evaluations, not a feature-gate setting. Access to `/metrics` needs authorization, and an unused series can be absent.
+PSA became beta and enabled by default in Kubernetes 1.23, then reached GA in 1.25. An absent explicit `--enable-admission-plugins=PodSecurity` flag does not mean it is disabled. Inspect self-managed API server configuration for explicit disabling; EKS does not expose that configuration. Metrics show evaluations, not a feature-gate setting. Access to `/metrics` needs authorization, and an unused series can be absent.
 
 ```bash
 kubectl --context "$PSS_CONTEXT" get namespace "$PSS_NAMESPACE" -o yaml

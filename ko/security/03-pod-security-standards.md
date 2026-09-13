@@ -86,7 +86,7 @@ Request → authentication / authorization → mutating admission
 
 ### PSA 활성화 상태 확인
 
-PSA는 Kubernetes 1.25부터 기본 활성화입니다. 명시적인 `--enable-admission-plugins=PodSecurity` 플래그가 없다고 비활성화인 것은 아닙니다. 자체 관리 API 서버의 비활성화 설정을 확인하되 EKS 관리형 설정은 직접 조회·수정할 수 없습니다. 메트릭은 기능 게이트 값이 아니라 평가 기록입니다. `/metrics` 조회 권한이 필요하며 아직 사용하지 않은 시계열은 없을 수 있습니다.
+PSA는 Kubernetes 1.23에서 베타·기본 활성화가 되었고 1.25에서 GA가 되었습니다. 명시적인 `--enable-admission-plugins=PodSecurity` 플래그가 없다고 비활성화인 것은 아닙니다. 자체 관리 API 서버의 비활성화 설정을 확인하되 EKS 관리형 설정은 직접 조회·수정할 수 없습니다. 메트릭은 기능 게이트 값이 아니라 평가 기록입니다. `/metrics` 조회 권한이 필요하며 아직 사용하지 않은 시계열은 없을 수 있습니다.
 
 ```bash
 kubectl --context "$PSS_CONTEXT" get namespace "$PSS_NAMESPACE" -o yaml

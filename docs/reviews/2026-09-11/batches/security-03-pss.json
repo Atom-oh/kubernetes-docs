@@ -42,10 +42,11 @@
       "No live cluster/EKS/cloud writes, image execution, Terraform provider initialization/plan/apply or full site build."
     ],
     "originalSHA256": "73d67a5e7e5bb5ee3d86f07312c90dcf52f288ee88dd364b7961be83270f2bce",
-    "reviewedSha256": "f2739394bdd1267bacc33fede856615769e51650434ff3c0c6056163a8d37ac9",
+    "reviewedSha256": "84a9f0e89154a1fc5d12c6bb8d38413f862763da2e5fab6649caa30fd73ce35e",
     "updatedAt": "2026-09-13T09:41:16.845392+00:00",
     "validationReport": "docs/reviews/2026-09-11/pod-security-standards-validation.json",
-    "parentAssetClosure": "6diagrams/18browser/6SVG/6individualPNG/2captionMDpassed;nativeworkertextvalidationpreserved"
+    "parentAssetClosure": "6diagrams/18browser/6SVG/6individualPNG/2captionMDpassed;nativeworkertextvalidationpreserved",
+    "reviewMilestoneFix": "1.23beta/defaultenablementvs1.25GAcorrectedandverified"
   },
   {
     "path": "en/quizzes/security/03-pod-security-standards-quiz.md",
@@ -93,7 +94,8 @@
     "reviewedSha256": "de2bdd0f5cd9aa70c8c92790b8a07bbccf9ffd120179e9d35526e4d73388857b",
     "updatedAt": "2026-09-13T09:41:16.845392+00:00",
     "validationReport": "docs/reviews/2026-09-11/pod-security-standards-validation.json",
-    "parentAssetClosure": "6diagrams/18browser/6SVG/6individualPNG/2captionMDpassed;nativeworkertextvalidationpreserved"
+    "parentAssetClosure": "6diagrams/18browser/6SVG/6individualPNG/2captionMDpassed;nativeworkertextvalidationpreserved",
+    "reviewMilestoneFix": "1.23beta/defaultenablementvs1.25GAcorrectedandverified"
   },
   {
     "path": "ko/security/03-pod-security-standards.md",
@@ -138,10 +140,11 @@
       "No live cluster/EKS/cloud writes, image execution, Terraform provider initialization/plan/apply or full site build."
     ],
     "originalSHA256": "e5cc68fc524c73ef5c0a63919dbd3d03279d394676bffd87576c89e054474dc1",
-    "reviewedSha256": "8f6a1a5a82bbf35718f25ace21f20b161800b46daf352de52356615cdc63cf59",
+    "reviewedSha256": "db8c15a504c8ba6c8452582f452c8256f33aa83aac36ce7c2a36e5b6a614a35e",
     "updatedAt": "2026-09-13T09:41:16.845392+00:00",
     "validationReport": "docs/reviews/2026-09-11/pod-security-standards-validation.json",
-    "parentAssetClosure": "6diagrams/18browser/6SVG/6individualPNG/2captionMDpassed;nativeworkertextvalidationpreserved"
+    "parentAssetClosure": "6diagrams/18browser/6SVG/6individualPNG/2captionMDpassed;nativeworkertextvalidationpreserved",
+    "reviewMilestoneFix": "1.23beta/defaultenablementvs1.25GAcorrectedandverified"
   },
   {
     "path": "ko/quizzes/security/03-pod-security-standards-quiz.md",
@@ -186,9 +189,10 @@
       "No live cluster/EKS/cloud writes, image execution, Terraform provider initialization/plan/apply or full site build."
     ],
     "originalSHA256": "2a5ea8cecf05f1769c1f8732673cc37fd56e7194495c6fa5b12a0d05e8dc98cf",
-    "reviewedSha256": "e77c2c1e02579e1ad88766e89c4fcab2ede1e20874e7855be4c0a93ad3911370",
+    "reviewedSha256": "81deafb2aab1aec23babc5c273ad252f797031077131aef8cf7bca880a41a970",
     "updatedAt": "2026-09-13T09:41:16.845392+00:00",
     "validationReport": "docs/reviews/2026-09-11/pod-security-standards-validation.json",
-    "parentAssetClosure": "6diagrams/18browser/6SVG/6individualPNG/2captionMDpassed;nativeworkertextvalidationpreserved"
+    "parentAssetClosure": "6diagrams/18browser/6SVG/6individualPNG/2captionMDpassed;nativeworkertextvalidationpreserved",
+    "reviewMilestoneFix": "1.23beta/defaultenablementvs1.25GAcorrectedandverified"
   }
 ]

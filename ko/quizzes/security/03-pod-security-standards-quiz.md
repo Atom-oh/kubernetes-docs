@@ -182,7 +182,7 @@ pod-security.kubernetes.io/<MODE>-version: <VERSION>
 **정답: B) 기본적으로 활성화되어 있음**
 
 **설명:**
-PSA는 upstream Kubernetes 1.25에서 GA·기본 활성화가 되었습니다. AWS는 EKS 1.23부터 기본 활성화하며 privileged/latest 기본값과 정적 예외 없음으로 설명합니다. 실제 namespace 레이블을 조회하고 적절한 정책을 적용해야 하며 활성화만으로 Baseline/Restricted가 적용되는 것은 아닙니다.
+PSA는 upstream Kubernetes 1.23에서 베타·기본 활성화가 되었고 1.25에서 GA가 되었습니다. AWS는 EKS 1.23부터 기본 활성화하며 privileged/latest 기본값과 정적 예외 없음으로 설명합니다. 실제 namespace 레이블을 조회하고 적절한 정책을 적용해야 하며 활성화만으로 Baseline/Restricted가 적용되는 것은 아닙니다.
 
 </details>
 
