@@ -1,12 +1,12 @@
 # 云原生运维测验
 
-阅读指南后使用这些测验来检验概念和执行要求。各主题的形式有所不同：选择题、书面回答、练习和进阶问题。展开每个问题以查看其答案。
+阅读指南后使用这些测验来检验概念和执行要求。形式因主题而异：选择题、书面回答、练习和高级问题。展开每个问题以阅读答案。
 
-对于练习，请在运行命令前查看指南的版本、先决条件和验证范围。
+对于练习，在运行命令之前，请检查指南中的版本、先决条件和验证范围。
 
 ## 完整测验索引
 
-### 介绍
+### 简介
 
 - [使用 LLM 阅读 — llms.txt 测验](./llm-guide-quiz.md)
 - [指南路线图测验](./roadmap-quiz.md)
@@ -35,7 +35,7 @@
 - [Ray Train / Tune 测验](./ai-ml/ray/03-ray-train-tune-quiz.md)
 - [Ray Serve 测验](./ai-ml/ray/04-ray-serve-quiz.md)
 - [SageMaker Qwen 平台架构测验](./ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
-- [合成 PII 数据和分词测验](./ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
+- [合成 PII 数据和 Tokenization 测验](./ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
 - [SageMaker AI 和 MLflow 执行测验](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
 - [SageMaker Qwen 事实验证结果测验](./ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 
@@ -50,12 +50,12 @@
 - [Linux 基础测验](./basics/01-linux-basics-quiz.md)
 - [Linux 运维技能测验](./basics/02-linux-advanced-quiz.md)
 - [容器技术测验](./basics/03-container-technology-quiz.md)
-- [Kubernetes 介绍测验](./basics/04-kubernetes-introduction-quiz.md)
+- [Kubernetes 简介测验](./basics/04-kubernetes-introduction-quiz.md)
 - [eBPF 基础测验](./basics/05-ebpf-fundamentals-quiz.md)
 - [网络基础第 1 部分测验 — 分层模型、链路和路由](./basics/06-network-fundamentals-part1-quiz.md)
 - [网络基础第 2 部分测验 — 传输和 TLS](./basics/06-network-fundamentals-part2-quiz.md)
 - [网络基础第 3 部分测验 — 应用协议](./basics/06-network-fundamentals-part3-quiz.md)
-- [网络基础第 4 部分测验 — 旅程和云](./basics/06-network-fundamentals-part4-quiz.md)
+- [网络基础第 4 部分测验 — 流程和云](./basics/06-network-fundamentals-part4-quiz.md)
 
 ### 容器镜像仓库
 
@@ -88,7 +88,7 @@
 - [第 5 部分：运维和安全测验](./data-on-eks/airflow/05-operations-quiz.md)
 - [Kubernetes 上的 Flink 架构测验](./data-on-eks/flink/01-architecture-quiz.md)
 - [Flink Kubernetes Operator 测验](./data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
-- [状态、检查点和流处理模式测验](./data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+- [状态、Checkpointing 和流处理模式测验](./data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
 - [运维、HA 和托管 Flink 测验](./data-on-eks/flink/04-operations-ha-quiz.md)
 - [Kafka 基础测验](./data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
 - [Strimzi Operator 测验](./data-on-eks/kafka/02-strimzi-operator-quiz.md)
@@ -112,7 +112,7 @@
 
 ### Amazon EKS
 
-- [EKS 介绍测验](./eks/01-eks-introduction-quiz.md)
+- [EKS 简介测验](./eks/01-eks-introduction-quiz.md)
 - [EKS 集群创建测验 - 第 1 部分](./eks/02-eks-cluster-creation-part1-quiz.md)
 - [EKS 集群创建测验 - 第 2 部分](./eks/02-eks-cluster-creation-part2-quiz.md)
 - [EKS 集群创建测验 - 第 3 部分](./eks/02-eks-cluster-creation-part3-quiz.md)
@@ -125,7 +125,7 @@
 - [EKS 存储测验 - 第 2 部分](./eks/04-eks-storage-part2-quiz.md)
 - [EKS 存储第 3 部分测验](./eks/04-eks-storage-part3-quiz.md)
 - [Amazon EKS 安全测验](./eks/05-eks-security-quiz.md)
-- [Amazon EKS 监控和日志记录测验](./eks/06-eks-monitoring-logging-quiz.md)
+- [Amazon EKS 监控和日志测验](./eks/06-eks-monitoring-logging-quiz.md)
 - [Amazon EKS 成本优化测验](./eks/07-eks-cost-optimization-quiz.md)
 - [Amazon EKS 升级测验](./eks/08-eks-upgrades-quiz.md)
 - [Amazon EKS 故障排除测验](./eks/09-eks-troubleshooting-quiz.md)
@@ -141,7 +141,7 @@
 - [EKS Auto Mode Spot 策略测验](./eks-auto-mode/04-spot-strategies-quiz.md)
 - [EKS Auto Mode 运维测验](./eks-auto-mode/05-operations-quiz.md)
 - [EKS Auto Mode 成本管理测验](./eks-auto-mode/06-cost-management-quiz.md)
-- [EKS Auto Mode 节点生命周期测验](./eks-auto-mode/07-node-lifecycle-quiz.md)
+- [EKS Auto Mode Node 生命周期测验](./eks-auto-mode/07-node-lifecycle-quiz.md)
 - [EKS Auto Mode 工作负载优化测验](./eks-auto-mode/08-workload-optimization-quiz.md)
 - [EKS Auto Mode 迁移指南测验](./eks-auto-mode/09-migration-guide-quiz.md)
 
@@ -149,24 +149,24 @@
 
 - [EKS Hybrid Nodes 先决条件测验](./eks-hybrid-nodes/01-prerequisites-quiz.md)
 - [EKS Hybrid Nodes 网络配置测验](./eks-hybrid-nodes/02-network-configuration-quiz.md)
-- [EKS Hybrid Nodes 隔离网络环境设置测验](./eks-hybrid-nodes/03-airgap-setup-quiz.md)
-- [EKS Hybrid Nodes 节点引导测验](./eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+- [EKS Hybrid Nodes Air-Gap 环境设置测验](./eks-hybrid-nodes/03-airgap-setup-quiz.md)
+- [EKS Hybrid Nodes Node 引导测验](./eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 - [EKS Hybrid Nodes GPU 集成测验](./eks-hybrid-nodes/05-gpu-integration-quiz.md)
 - [EKS Hybrid Nodes 工作负载放置测验](./eks-hybrid-nodes/06-workload-placement-quiz.md)
-- [节点生命周期管理测验](./eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+- [Node 生命周期管理测验](./eks-hybrid-nodes/07-node-lifecycle-quiz.md)
 - [EKS Hybrid Nodes 运维测验](./eks-hybrid-nodes/08-operations-quiz.md)
-- [裸金属服务器 OS 安装和迁移测验](./eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+- [裸机服务器 OS 安装和迁移测验](./eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 - [EKS Hybrid Nodes Gateway 测验](./eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 ### GitOps
 
 - [ArgoCD 测验](./gitops/01-argocd-quiz.md)
 - [FluxCD 测验](./gitops/02-fluxcd-quiz.md)
-- [GitOps 工具对比测验](./gitops/03-gitops-comparison-quiz.md)
+- [GitOps 工具比较测验](./gitops/03-gitops-comparison-quiz.md)
 - [Flagger 渐进式交付测验](./gitops/04-flagger-quiz.md)
-- [Feature Flags 和 OpenFeature 测验](./gitops/05-feature-flags-quiz.md)
+- [功能标志和 OpenFeature 测验](./gitops/05-feature-flags-quiz.md)
 - [ArgoCD 安装测验](./gitops/argocd/01-installation-quiz.md)
-- [ArgoCD 应用程序测验](./gitops/argocd/02-applications-quiz.md)
+- [ArgoCD Applications 测验](./gitops/argocd/02-applications-quiz.md)
 - [ArgoCD 同步策略测验](./gitops/argocd/03-sync-strategies-quiz.md)
 - [ArgoCD ApplicationSets 测验](./gitops/argocd/04-applicationsets-quiz.md)
 - [ArgoCD 流量管理测验](./gitops/argocd/05-traffic-management-quiz.md)
@@ -195,26 +195,26 @@
 - [Gateway API 测验](./networking/04-gateway-api-quiz.md)
 - [跨组织 VPC 连接性测验](./networking/05-cross-org-vpc-connectivity-quiz.md)
 - [Pod 网络基准测试测验](./networking/06-pod-network-benchmark-quiz.md)
-- [Calico 介绍测验](./networking/calico/01-introduction-quiz.md)
+- [Calico 简介测验](./networking/calico/01-introduction-quiz.md)
 - [Calico 架构测验](./networking/calico/02-architecture-quiz.md)
 - [Calico 网络模式测验](./networking/calico/03-networking-modes-quiz.md)
 - [BGP 深入解析测验](./networking/calico/04-bgp-deep-dive-quiz.md)
 - [Network Policy 测验](./networking/calico/05-network-policy-quiz.md)
 - [eBPF Dataplane 测验](./networking/calico/06-ebpf-dataplane-quiz.md)
-- [进阶主题测验](./networking/calico/07-advanced-topics-quiz.md)
+- [高级主题测验](./networking/calico/07-advanced-topics-quiz.md)
 - [EKS 集成测验](./networking/calico/08-eks-integration-quiz.md)
 - [运维测验](./networking/calico/09-operations-quiz.md)
 - [Calico 术语表测验](./networking/calico/glossary-quiz.md)
 
 #### Cilium
 
-- [Cilium 介绍和基本概念测验](./networking/cilium/01-introduction-quiz.md)
+- [Cilium 简介和基本概念测验](./networking/cilium/01-introduction-quiz.md)
 - [Cilium eBPF 测验](./networking/cilium/02-ebpf-quiz.md)
 - [Cilium 网络验证练习](./networking/cilium/03-networking-quiz.md)
 - [Cilium IPAM 和 Network Policy 测验](./networking/cilium/04-ipam-policy-quiz.md)
 - [Cilium L2–L7 网络和负载均衡测验](./networking/cilium/05-l2-l7-networking-quiz.md)
-- [Cilium 安全和可观测性测验](./networking/cilium/06-security-visibility-quiz.md)
-- [Cilium 进阶测验](./networking/cilium/07-advanced-topics-quiz.md)
+- [Cilium 安全和可见性测验](./networking/cilium/06-security-visibility-quiz.md)
+- [Cilium 高级测验](./networking/cilium/07-advanced-topics-quiz.md)
 - [术语表测验](./networking/cilium/glossary-quiz.md)
 - [Cilium 网络概念测验](./networking/cilium/networking-concepts-quiz.md)
 
@@ -235,7 +235,7 @@
 - [Amazon OpenSearch Service 测验](./observability/logging/02-opensearch-quiz.md)
 - [CloudWatch Logs 测验](./observability/logging/03-cloudwatch-logs-quiz.md)
 - [用于日志分析的 ClickHouse 测验](./observability/logging/04-clickhouse-quiz.md)
-- [日志收集器对比测验](./observability/logging/05-collectors-quiz.md)
+- [日志采集器比较测验](./observability/logging/05-collectors-quiz.md)
 - [日志概览测验](./observability/logging/README-quiz.md)
 - [指标概览测验](./observability/metrics/00-metrics-overview-quiz.md)
 - [Prometheus 测验](./observability/metrics/01-prometheus-quiz.md)
@@ -251,7 +251,7 @@
 ### 运维
 
 - [基础设施设置测验](./ops/01-infrastructure-setup-quiz.md)
-- [基础设施进阶测验](./ops/02-infrastructure-advanced-quiz.md)
+- [基础设施高级测验](./ops/02-infrastructure-advanced-quiz.md)
 - [CI Pipelines 测验](./ops/03-ci-pipelines-quiz.md)
 - [GitOps 多集群测验](./ops/04-gitops-multi-cluster-quiz.md)
 - [GitOps 自动化测验](./ops/05-gitops-automation-quiz.md)
@@ -271,7 +271,7 @@
 ### 平台工程
 
 - [平台工程概览测验](./platform-engineering/00-platform-engineering-overview-quiz.md)
-- [Helm 包管理器测验](./platform-engineering/01-helm-quiz.md)
+- [Helm Package Manager 测验](./platform-engineering/01-helm-quiz.md)
 - [AWS Controllers for Kubernetes (ACK) 测验](./platform-engineering/02-ack-quiz.md)
 - [KRO Helm 迁移测验](./platform-engineering/03-kro-quiz.md)
 - [Kubernetes 扩展机制测验](./platform-engineering/04-kubernetes-extensions-quiz.md)
@@ -281,16 +281,16 @@
 
 ### 调度
 
-- [自定义调度器测验（第 1 部分）](./scheduling/02-custom-scheduler-part1-quiz.md)
-- [自定义调度器测验（第 2 部分）](./scheduling/02-custom-scheduler-part2-quiz.md)
-- [自定义调度器测验（第 3 部分）](./scheduling/02-custom-scheduler-part3-quiz.md)
+- [自定义 Scheduler 测验（第 1 部分）](./scheduling/02-custom-scheduler-part1-quiz.md)
+- [自定义 Scheduler 测验（第 2 部分）](./scheduling/02-custom-scheduler-part2-quiz.md)
+- [自定义 Scheduler 测验（第 3 部分）](./scheduling/02-custom-scheduler-part3-quiz.md)
 
 ### 安全和策略
 
 - [Kyverno 策略管理测验](./security/01-kyverno-policy-management-quiz.md)
 - [Kubernetes 身份验证和授权测验](./security/02-kubernetes-auth-authz-quiz.md)
-- [Pod 安全标准测验](./security/03-pod-security-standards-quiz.md)
-- [Network Policy 测验](./security/04-network-policies-quiz.md)
+- [Pod Security Standards 测验](./security/03-pod-security-standards-quiz.md)
+- [Network Policies 测验](./security/04-network-policies-quiz.md)
 - [Secrets 管理测验](./security/05-secrets-management-quiz.md)
 - [EKS 安全最佳实践测验](./security/06-eks-security-best-practices-quiz.md)
 - [容器镜像安全测验](./security/07-image-security-quiz.md)
@@ -308,9 +308,9 @@
 - [Cilium Service Mesh 可观测性测验](./service-mesh/cilium-service-mesh/observability.md)
 - [Cilium Service Mesh 安全测验](./service-mesh/cilium-service-mesh/security.md)
 - [Cilium Service Mesh 流量管理测验](./service-mesh/cilium-service-mesh/traffic-management.md)
-- [Istio 进阶主题测验](./service-mesh/istio/advanced.md)
+- [Istio 高级主题测验](./service-mesh/istio/advanced.md)
 - [基础测验](./service-mesh/istio/basic.md)
-- [Istio 对比测验](./service-mesh/istio/comparison.md)
+- [Istio 比较测验](./service-mesh/istio/comparison.md)
 - [可观测性测验](./service-mesh/istio/observability.md)
 - [弹性测验](./service-mesh/istio/resilience.md)
 - [安全测验](./service-mesh/istio/security.md)
@@ -322,6 +322,27 @@
 - [Linkerd 安全测验](./service-mesh/linkerd/security.md)
 - [Linkerd 流量管理测验](./service-mesh/linkerd/traffic-management.md)
 
+- [App Mesh 与 VPC Lattice 架构测验](./service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
+- [延迟影响分析测验](./service-mesh/vpc-lattice/02-latency-quiz.md)
+- [IAM 身份验证流程测验](./service-mesh/vpc-lattice/03-auth-flow-quiz.md)
+- [基础 — Link-Local 和 SNI 测验](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+- [工作负载身份迁移测验](./service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
+- [约束和决策点测验](./service-mesh/vpc-lattice/06-constraints-quiz.md)
+- [内核 Datapath 测验](./service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
+
 ### 存储
 
 - [EBS gp2 与 gp3 实测基准测试测验](./storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+### 区块链
+
+- [区块链基础测验](./blockchain/01-fundamentals-quiz.md)
+- [在 EKS 上运行区块链节点测验](./blockchain/02-nodes-on-eks-quiz.md)
+- [Amazon Managed Blockchain 测验](./blockchain/03-managed-blockchain-quiz.md)
+- [金融服务视角测验](./blockchain/04-financial-services-quiz.md)
+
+### Linux 内核
+
+- [容器背后的内核功能测验](./kernel/01-container-primitives-quiz.md)
+- [内核网络栈测验](./kernel/02-network-stack-quiz.md)
+- [EKS Node 内核调优测验](./kernel/03-eks-node-tuning-quiz.md)
