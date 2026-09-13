@@ -1,6 +1,6 @@
 # Backstage as an Internal Developer Portal
 
-> **Reviewed**: September 12, 2026 · Backstage 1.54.7 / Helm chart 2.10.0
+> **Last Updated**: September 12, 2026 · Backstage 1.54.7 / Helm chart 2.10.0
 
 ## Role and Adoption Scope
 

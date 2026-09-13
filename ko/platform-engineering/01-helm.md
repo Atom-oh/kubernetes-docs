@@ -1,6 +1,6 @@
 # Helm 패키지 매니저
 
-> **검토일**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 12일
 > **실제 로컬 검증**: Helm 3.21.3 / Helm 4.3.0
 
 Helm은 chart를 렌더링하고 Kubernetes 리소스와 release 이력을 관리합니다. chart version, appVersion, image tag/digest, release revision은 서로 다른 값입니다. Helm 4도 기존 apiVersion:v2 chart를 사용하지만 CLI·적용·대기 방식의 차이는 정확한 버전에서 확인해야 합니다.

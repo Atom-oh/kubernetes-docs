@@ -1,6 +1,6 @@
 # Kubernetes 확장 메커니즘
 
-> **검토일**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 확장 지점 선택
 
@@ -132,7 +132,7 @@ APIService는 group/version 경로를 별도 extension API server의 Service에 
 
 ## Admission 정책과 webhook
 
-ValidatingAdmissionPolicy는 Kubernetes 1.30부터 stable인 in-process CEL 검증 방식입니다. 아래 정책과 binding은 정확히 production namespace의 Deployment replica를 1~5로 제한하는 예제입니다. namespace 이름과 임의 environment label을 혼동하지 않습니다. 실제 적용은 운영 정책 변경이므로 영향 범위를 검토합니다.
+ValidatingAdmissionPolicy는 Kubernetes 1.30부터 stable인 in-process CEL 검증 방식입니다. 아래 정책과 binding은 production namespace의 Deployment와 deployments/scale 요청에서 replica를 1~5로 제한하는 예제입니다. HPA·kubectl scale도 검사하며 HPA의 maxReplicas도 이 제한에 맞춰야 합니다. namespace 이름과 임의 environment label을 혼동하지 않습니다. 실제 적용은 운영 정책 변경이므로 영향 범위를 검토합니다.
 
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1
@@ -146,7 +146,7 @@ spec:
       - apiGroups: [apps]
         apiVersions: [v1]
         operations: [CREATE, UPDATE]
-        resources: [deployments]
+        resources: [deployments, deployments/scale]
   validations:
     - expression: "!has(object.spec.replicas) || (object.spec.replicas >= 1 && object.spec.replicas <= 5)"
       message: replicas must be between 1 and 5

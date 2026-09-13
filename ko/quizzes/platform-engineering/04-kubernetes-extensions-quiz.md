@@ -212,7 +212,7 @@ spec:
 <details>
 <summary>정답 보기</summary>
 
-rules를 apps/v1 deployments의 CREATE/UPDATE로 제한하고 namespaceSelector에 kubernetes.io/metadata.name: production을 사용합니다. 실제 validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects와 admissionReviewVersions를 설정합니다. 본문의 /mutate handler는 Deployment validator가 아니므로 그 경로를 재사용하지 않습니다. replica 범위만 필요하면 본문의 VAP+binding 예제를 사용할 수 있습니다.
+rules를 apps/v1 deployments의 CREATE/UPDATE로 제한하고 namespaceSelector에 kubernetes.io/metadata.name: production을 사용합니다. 실제 validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects와 admissionReviewVersions를 설정합니다. 본문의 /mutate handler는 Deployment validator가 아니므로 그 경로를 재사용하지 않습니다. replica 범위만 필요하면 본문의 VAP+binding 예제를 사용하고 `deployments`와 `deployments/scale`을 모두 매칭해 HPA 및 `kubectl scale` 갱신도 제한을 검사하도록 합니다.
 
 </details>
 

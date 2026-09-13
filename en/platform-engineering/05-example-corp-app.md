@@ -1,6 +1,6 @@
 # ExampleCorp Order System: ACK + kro Integration
 
-> **Reviewed**: September 12, 2026 · kro 0.9.4 / AWS Load Balancer Controller 3.5.0
+> **Last Updated**: September 12, 2026 · kro 0.9.4 / AWS Load Balancer Controller 3.5.0
 
 ## Scenario and Verification Scope
 

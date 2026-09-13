@@ -19,7 +19,7 @@
     "results": [
       {
         "path": "ko/platform-engineering/01-helm.md",
-        "sha256": "37a5866ee3f747a7f6b63fd8069fb7551ed2be8325163a34f021f7d6d6636f5d",
+        "sha256": "8874b815f8b2ff071aeda90fa52226e11b19092724275fe470a3071ce9516170",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -266,7 +266,7 @@
       },
       {
         "path": "en/platform-engineering/01-helm.md",
-        "sha256": "75655f8c26dbf238f1869ab3d1443114957627c359858845793d35251d277999",
+        "sha256": "a2c5533b6009023902c000b4fd5144532c19d40a59cf11738d91210b2aaf6bab",
         "passed": true,
         "errors": [],
         "oneH1": true,
