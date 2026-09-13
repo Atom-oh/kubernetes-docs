@@ -1,0 +1,17 @@
+apiVersion: kubescape.io/v1beta1
+kind: SecurityException
+metadata:
+  name: documentation-privileged-exception
+  namespace: demo-app
+spec:
+  author: documentation-security-team
+  reason: Synthetic scan example; replace with an approved owner and justification.
+  expiresAt: '2026-09-30T00:00:00Z'
+  match:
+    resources:
+      - apiGroup: ''
+        kind: Pod
+        name: insecure-example
+  posture:
+    - controlID: C-0057
+      action: alert_only

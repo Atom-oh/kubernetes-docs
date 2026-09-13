@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: kubescape-posture
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames: [kubescape]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubescape-operator
+      app.kubernetes.io/instance: kubescape
+      app.kubernetes.io/component: prometheus-exporter
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      interval: 60s

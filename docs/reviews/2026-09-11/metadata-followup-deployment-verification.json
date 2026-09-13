@@ -1,0 +1,79 @@
+{
+  "status": "passed",
+  "deploymentRun": 34736371386,
+  "includedPR": 254,
+  "verifiedAt": "2026-09-13T04:07:41.381096+00:00",
+  "pages": [
+    {
+      "path": "ko/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/comparison/03-sidecar-vs-ambient",
+      "status": 200,
+      "expectedDate": "2026-09-11",
+      "dateModified": [
+        "2026-09-11"
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/data-on-eks/flink/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/data-on-eks/flink/",
+      "status": 200,
+      "expectedDate": "2026-09-12",
+      "dateModified": [
+        "2026-09-12"
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/observability/metrics/01-prometheus.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/observability/metrics/01-prometheus",
+      "status": 200,
+      "expectedDate": "2026-09-13",
+      "dateModified": [
+        "2026-09-13"
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/observability/metrics/04-cloudwatch-metrics.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/observability/metrics/04-cloudwatch-metrics",
+      "status": 200,
+      "expectedDate": "2026-09-13",
+      "dateModified": [
+        "2026-09-13"
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/observability/metrics/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/observability/metrics/",
+      "status": 200,
+      "expectedDate": "2026-09-13",
+      "dateModified": [
+        "2026-09-13"
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/metrics/00-metrics-overview-quiz",
+      "status": 200,
+      "expectedDate": "2026-09-12",
+      "dateModified": [
+        "2026-09-12"
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/metrics/01-prometheus-quiz",
+      "status": 200,
+      "expectedDate": "2026-09-12",
+      "dateModified": [
+        "2026-09-12"
+      ],
+      "passed": true
+    }
+  ],
+  "scope": "SevenexistingcalendardatespresentinliveJSON-LDdateModified;HTTPonly"
+}

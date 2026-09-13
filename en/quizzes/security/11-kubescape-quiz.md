@@ -1,380 +1,195 @@
 # Kubescape Quiz
 
-Test your understanding of Kubescape security posture management with the following questions.
-
----
+> **Last Updated**: September 13, 2026
 
 ## Questions
 
-### 1. What is Kubescape's project status in the CNCF?
+<span id="_1-what-is-kubescape-s-project-status-in-the-cncf"></span>
 
-- A) Graduated project
-- B) Incubating project
-- C) Sandbox project
-- D) Not a CNCF project
+### 1. What is Kubescape’s current CNCF maturity level?
 
-<details>
-<summary>Show Answer</summary>
-
-**Answer: C) Sandbox project**
-
-**Explanation:**
-Kubescape was accepted as a CNCF Sandbox project in 2022. It was originally developed by ARMO and donated to the CNCF. As a Sandbox project, it is an early-stage project that the CNCF believes has potential for growth.
-
-</details>
-
----
-
-### 2. Which security frameworks does Kubescape support for compliance scanning?
-
-- A) NSA-CISA only
-- B) CIS Benchmarks only
-- C) NSA-CISA, CIS Benchmarks, and MITRE ATT&CK
-- D) OWASP and PCI-DSS only
+- A) Graduated
+- B) Incubating
+- C) Sandbox
+- D) Archived
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) NSA-CISA, CIS Benchmarks, and MITRE ATT&CK**
+**Answer: B) Incubating**
 
-**Explanation:**
-Kubescape supports multiple security frameworks:
-
-```bash
-# Scan with NSA-CISA framework
-kubescape scan framework nsa
-
-# Scan with CIS Kubernetes Benchmark
-kubescape scan framework cis-v1.23-t1.0.1
-
-# Scan with MITRE ATT&CK
-kubescape scan framework mitre
-```
-
-- **NSA-CISA**: Kubernetes Hardening Guide from US government agencies
-- **CIS**: Center for Internet Security Kubernetes Benchmarks
-- **MITRE ATT&CK**: Threat-based security framework mapping attack techniques
+Kubescape joined CNCF on December 13, 2022 and became Incubating on January 13, 2025. This does not guarantee an individual installation’s security or availability.
 
 </details>
 
----
+<span id="_2-which-security-frameworks-does-kubescape-support-for-compliance-scanning"></span>
 
-### 3. What is the correct CLI syntax to scan a Kubernetes cluster with Kubescape?
+### 2. How should framework names and control counts be verified?
 
-- A) kubescape check cluster
-- B) kubescape scan
-- C) kubescape audit cluster
-- D) kubescape analyze
+- A) Always use old CIS aliases
+- B) Record binary/policy versions and inspect the actual list
+- C) NSA control counts never change
+- D) Passing a SOC2 scan completes certification
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) kubescape scan**
+**Answer: B) Record binary/policy versions and inspect the actual list**
 
-**Explanation:**
-Kubescape CLI scan commands:
-
-```bash
-# Scan current cluster
-kubescape scan
-
-# Scan specific namespace
-kubescape scan --include-namespaces production
-
-# Scan YAML files before deployment
-kubescape scan *.yaml
-
-# Scan with specific framework
-kubescape scan framework nsa
-
-# Scan specific control
-kubescape scan control C-0034
-```
-
-The `scan` subcommand is the primary interface for all scanning operations.
+Use kubescape list frameworks and list controls --framework NSA. The reviewed NSA snapshot contains 26 controls, with applicability determined by input. Preserve policy hashes when comparing scores.
 
 </details>
 
----
+<span id="_3-what-is-the-correct-cli-syntax-to-scan-a-kubernetes-cluster-with-kubescape"></span>
 
-### 4. What is the key difference between Kubescape Operator and CLI modes?
+### 3. What happens when a local file target is omitted from kubescape scan?
 
-- A) Operator mode only scans nodes
-- B) CLI mode provides continuous monitoring, Operator is one-time
-- C) Operator provides continuous monitoring with in-cluster components, CLI is one-time scans
-- D) There is no difference
+- A) It always fails
+- B) It can scan the current kubeconfig cluster
+- C) It always scans only local files
+- D) It always performs a dry run
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Operator provides continuous monitoring with in-cluster components, CLI is one-time scans**
+**Answer: B) It can scan the current kubeconfig cluster**
 
-**Explanation:**
-Kubescape deployment modes:
-
-**CLI Mode:**
-```bash
-# One-time scan from local machine
-kubescape scan
-```
-- Ad-hoc scanning
-- CI/CD integration
-- Local development
-
-**Operator Mode:**
-```bash
-# Install in-cluster operator
-helm repo add kubescape https://kubescape.github.io/helm-charts
-helm install kubescape kubescape/kubescape-operator
-```
-- Continuous monitoring
-- Scheduled scans
-- In-cluster vulnerability scanning
-- Integration with ARMO platform for visualization
+CI should pass an existing explicit local file and reject empty/missing targets. --keep-local, an isolated cache, and pinned policy do not replace checking input scope.
 
 </details>
 
----
+<span id="_4-what-is-the-key-difference-between-kubescape-operator-and-cli-modes"></span>
 
-### 5. How does Kubescape calculate risk scores for controls?
+### 4. Which statement correctly distinguishes Operator and CLI operation?
 
-- A) Binary pass/fail only
-- B) Based on severity multiplied by affected resources count
-- C) Random assignment
-- D) Based on namespace priority
+- A) The Operator only provides a GUI
+- B) CLI handles explicit/ad-hoc scans; the Operator runs enabled continuous/scheduled capabilities
+- C) Installing the Operator proves all runtime features work
+- D) CLI and Operator images always have the same version
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Based on severity multiplied by affected resources count**
+**Answer: B) CLI handles explicit/ad-hoc scans; the Operator runs enabled continuous/scheduled capabilities**
 
-**Explanation:**
-Kubescape risk scoring:
-
-```
-Risk Score = Severity Score x (Failed Resources / Total Resources)
-```
-
-Example output:
-```
-┌──────────────────────────────────────────────────┬────────────────┬───────┐
-│ Control Name                                      │ Failed Resources│ Score │
-├──────────────────────────────────────────────────┼────────────────┼───────┤
-│ Privileged container                              │ 3/50           │ 18%   │
-│ Resource limits                                   │ 25/50          │ 35%   │
-│ Non-root containers                               │ 10/50          │ 42%   │
-└──────────────────────────────────────────────────┴────────────────┴───────┘
-```
-
-Higher scores indicate greater risk requiring immediate attention.
+Chart 1.40.4 renders scanner image 4.0.13, while the tested local CLI is 4.0.14. Node/image/runtime/remediation scope and permissions require separate choices and validation.
 
 </details>
 
----
+<span id="_5-how-does-kubescape-calculate-risk-scores-for-controls"></span>
 
-### 6. Which flag enforces a compliance threshold in CI/CD pipelines?
+### 5. How are score and complianceScore related?
 
-- A) --min-score
-- B) --compliance-threshold
-- C) --fail-threshold
-- D) --severity-threshold
+- A) They are always equal
+- B) They always sum to 100
+- C) They are separate aggregates in the result schema
+- D) Both are average CVSS values
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) --compliance-threshold**
+**Answer: C) They are separate aggregates in the result schema**
 
-**Explanation:**
-Using Kubescape in CI/CD pipelines:
-
-```bash
-# Fail pipeline if compliance drops below 80%
-kubescape scan --compliance-threshold 80
-
-# Example GitLab CI
-kubescape-scan:
-  script:
-    - kubescape scan framework nsa --compliance-threshold 75
-    - kubescape scan framework cis --compliance-threshold 80
-```
-
-The threshold is a percentage (0-100). The scan fails (non-zero exit) if the overall compliance score falls below the threshold.
-
-```bash
-# Exit codes
-# 0: Passed threshold
-# 1: Failed threshold
-# 2: Error during scan
-```
+The synthetic insecure Pod produced compliance 55 and score 62.5. Read summaryDetails.complianceScore and summaryDetails.score. These local values do not measure a real cluster’s security.
 
 </details>
 
----
+<span id="_6-which-flag-enforces-a-compliance-threshold-in-ci-cd-pipelines"></span>
 
-### 7. How does Kubescape differ from kube-bench?
+### 6. What happens with compliance 55 and --compliance-threshold 56?
 
-- A) kube-bench only scans applications, Kubescape scans infrastructure
-- B) Kubescape scans workload configurations, kube-bench focuses on node-level CIS benchmarks
-- C) They are identical tools
-- D) kube-bench is for cloud providers only
+- A) It passes because this is a maximum-risk limit
+- B) It exits 1 because minimum compliance is unmet
+- C) It always exits 2
+- D) It is equivalent to the current --fail-threshold 0 gate
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Kubescape scans workload configurations, kube-bench focuses on node-level CIS benchmarks**
+**Answer: B) It exits 1 because minimum compliance is unmet**
 
-**Explanation:**
-Kubescape vs kube-bench comparison:
-
-| Feature | Kubescape | kube-bench |
-|---------|-----------|------------|
-| Focus | Workload/config security | Node/control plane security |
-| Scope | Deployments, Pods, RBAC | kubelet, API server, etcd |
-| Frameworks | NSA, CIS, MITRE | CIS Benchmarks only |
-| Run Location | Outside cluster (CLI) or in-cluster | Must run on each node |
-| Image Scanning | Yes (with Grype) | No |
-| RBAC Analysis | Yes | No |
-
-Use both together for comprehensive security:
-- kube-bench: Cluster infrastructure hardening
-- Kubescape: Workload and configuration security
+The same fixture returned exit 0 at threshold 55 and exit 1 at 56. Version 4.0.14 accepts deprecated --fail-threshold but ignores its value; do not use it as a gate.
 
 </details>
 
----
+<span id="_7-how-does-kubescape-differ-from-kube-bench"></span>
 
-### 8. What feature does Kubescape provide for RBAC security analysis?
+### 7. What is a sound basis for comparing kube-bench and Kubescape?
 
-- A) RBAC policy generation
-- B) RBAC visualization showing permissions and risks
-- C) Automatic RBAC remediation
-- D) RBAC migration tools
+- A) Assume one replaces every check based on its name
+- B) Compare actual node/CIS versus workload/config scope and access
+- C) Both can inspect every control-plane setting without access
+- D) A Kubescape pass is a CIS certificate
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) RBAC visualization showing permissions and risks**
+**Answer: B) Compare actual node/CIS versus workload/config scope and access**
 
-**Explanation:**
-Kubescape RBAC analysis capabilities:
-
-```bash
-# Scan RBAC configurations
-kubescape scan control C-0035  # Cluster-admin binding
-kubescape scan control C-0036  # Wildcard permissions
-kubescape scan control C-0039  # Risky service accounts
-```
-
-RBAC visualization features:
-- Maps ServiceAccounts to Roles/ClusterRoles
-- Identifies overly permissive bindings
-- Highlights dangerous permissions (secrets access, pod exec)
-- Shows attack paths through RBAC
-
-Example finding:
-```
-ServiceAccount 'default' in namespace 'production' has:
-- Cluster-admin binding (CRITICAL)
-- Secrets list/get permissions (HIGH)
-- Pod exec permissions (HIGH)
-```
+Managed EKS control planes, local manifests, and node-file access offer different visibility. Distinguish unavailable/unevaluated checks from passes and select tools accordingly.
 
 </details>
 
----
+<span id="_8-what-feature-does-kubescape-provide-for-rbac-security-analysis"></span>
 
-### 9. Which vulnerability scanner does Kubescape integrate with for image scanning?
+### 8. Which statement about RBAC controls is correct?
 
-- A) Trivy
-- B) Clair
-- C) Grype
-- D) Anchore
+- A) C-0036 always checks wildcard RBAC
+- B) A RoleBinding grants access in all namespaces
+- C) Verify current control IDs/names and collection scope
+- D) scan rbac is a separate subcommand in the reviewed CLI
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Grype**
+**Answer: C) Verify current control IDs/names and collection scope**
 
-**Explanation:**
-Kubescape integrates with Grype (by Anchore) for container image vulnerability scanning:
-
-```bash
-# Enable image scanning
-kubescape scan --enable-host-scan
-
-# Operator mode includes automatic image scanning
-helm install kubescape kubescape/kubescape-operator \
-  --set capabilities.vulnerabilityScan=enable
-```
-
-Grype integration provides:
-- CVE detection in container images
-- SBOM (Software Bill of Materials) generation
-- Severity-based prioritization
-- Integration with security findings
-
-The results combine configuration issues with vulnerability data for comprehensive risk assessment.
+The reviewed bundle maps C-0035 to Administrative Roles and C-0036/0039 to validating/mutating admission checks. RoleBindings are namespaced; static analysis does not automatically validate external IAM.
 
 </details>
 
----
+<span id="_9-which-vulnerability-scanner-does-kubescape-integrate-with-for-image-scanning"></span>
 
-### 10. How does Kubescape handle control exceptions?
+### 9. Which statement correctly distinguishes image and host scans?
 
-- A) Exceptions are not supported
-- B) Using exception YAML files that specify controls and resources to exclude
-- C) Through command-line flags only
-- D) By modifying source code
+- A) Host scanning only checks image CVEs
+- B) Explicit image scans need registry/DB access; host scans have a separate scope
+- C) Grype only generates SBOMs
+- D) Image/platform/database versions do not matter
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Using exception YAML files that specify controls and resources to exclude**
+**Answer: B) Explicit image scans need registry/DB access; host scans have a separate scope**
 
-**Explanation:**
-Kubescape supports exceptions via configuration files:
-
-```yaml
-# exceptions.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kubescape-exceptions
-data:
-  exceptions: |
-    - name: "Allow privileged kube-system pods"
-      policyType: postureExceptionPolicy
-      actions:
-        - alertOnly
-      resources:
-        - designatorType: Attributes
-          attributes:
-            namespace: kube-system
-      posturePolicies:
-        - controlID: C-0057  # Privileged container
-```
-
-Apply exceptions:
-```bash
-kubescape scan --exceptions exceptions.yaml
-```
-
-This allows:
-- Suppressing known false positives
-- Accepting risk for specific resources
-- Maintaining clean scan reports
+The CLI uses Grype and Syft; Operator kubevuln is separately versioned. Host scans can need additional resources/permissions. No image pulls or host scans were run in this audit.
 
 </details>
 
----
+<span id="_10-how-does-kubescape-handle-control-exceptions"></span>
+
+### 10. What are the correct CLI and in-cluster exception formats?
+
+- A) The CLI consumes an arbitrary ConfigMap directly
+- B) Distinguish alertOnly in a CLI JSON array from alert_only in v1beta1 SecurityException
+- C) Every ignore annotation is automatically an exception
+- D) Recording an exception remediates the issue
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) Distinguish alertOnly in a CLI JSON array from alert_only in v1beta1 SecurityException**
+
+In the test, alertOnly acknowledged a failure without changing compliance. exclude-controls changes the evaluation denominator. Track ownership, scope, expiry, and re-review separately from remediation.
+
+</details>
 
 ## Score Calculation
 
-- **9-10 correct**: Excellent - You have a deep understanding of Kubescape.
-- **7-8 correct**: Good - You have a solid grasp of the key concepts.
-- **5-6 correct**: Fair - There are areas that need additional study.
-- **4 or fewer**: Please review the documentation again.
+- 9–10: Strong understanding
+- 7–8: Revisit missed scope/gate concepts
+- 6 or fewer: Review the guide and tested examples
 
 ## Related Documentation
 
-- [Security Posture Management with Kubescape](../../security/11-kubescape.md)
+- [Kubescape](../../security/11-kubescape.md)

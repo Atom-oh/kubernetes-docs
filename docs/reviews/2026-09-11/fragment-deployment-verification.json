@@ -1,0 +1,435 @@
+{
+  "status": "passed",
+  "verifiedAt": "2026-09-13T04:07:27.660003+00:00",
+  "deploymentRun": 34736371386,
+  "mergeCommit": "5924d904e59ddc91111d2377437a063511f33f18",
+  "pages": [
+    {
+      "path": "ko/basics/02-linux-advanced.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/basics/02-linux-advanced",
+      "status": 200,
+      "aliases": 8,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/basics/05-ebpf-fundamentals.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/basics/05-ebpf-fundamentals",
+      "status": 200,
+      "aliases": 10,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/core/03-services-networking.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/core/03-services-networking",
+      "status": 200,
+      "aliases": 3,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/core/04-storage.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/core/04-storage",
+      "status": 200,
+      "aliases": 4,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/core/05-configuration-secrets.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/core/05-configuration-secrets",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/core/06-security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/core/06-security",
+      "status": 200,
+      "aliases": 6,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/core/08-scheduling-preemption-eviction.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/core/08-scheduling-preemption-eviction",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/core/11-extending-kubernetes.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/core/11-extending-kubernetes",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/eks/10-eks-resiliency.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/eks/10-eks-resiliency",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/eks/11-eks-advanced-debugging.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/eks/11-eks-advanced-debugging",
+      "status": 200,
+      "aliases": 10,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/eks/12-kubernetes-version-roadmap.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/eks/12-kubernetes-version-roadmap",
+      "status": 200,
+      "aliases": 10,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/gitops/04-flagger.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/gitops/04-flagger",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/gitops/argocd/05-traffic-management.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/gitops/argocd/05-traffic-management",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/networking/05-cross-org-vpc-connectivity.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/networking/05-cross-org-vpc-connectivity",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/observability/09-observability-optimization.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/observability/09-observability-optimization",
+      "status": 200,
+      "aliases": 9,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/observability/alerting/03-grafana-oncall.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/observability/alerting/03-grafana-oncall",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/ops/01-infrastructure-setup.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ops/01-infrastructure-setup",
+      "status": 200,
+      "aliases": 5,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/ops/15-zonal-operations-guide.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ops/15-zonal-operations-guide",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/ops/02-infrastructure-advanced.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ops/02-infrastructure-advanced",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/ops/16-troubleshooting-playbook.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ops/16-troubleshooting-playbook",
+      "status": 200,
+      "aliases": 12,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/03-architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/03-architecture",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/02-basic-concepts.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/02-basic-concepts",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/security/07-image-security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/security/07-image-security",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/security/08-runtime-security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/security/08-runtime-security",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/security/10-cert-manager.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/security/10-cert-manager",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/security/11-kubescape.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/security/11-kubescape",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/security/12-spiffe-spire.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/security/12-spiffe-spire",
+      "status": 200,
+      "aliases": 11,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/03-logging.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/observability/03-logging",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/security/02-authentication.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/security/02-authentication",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/security/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/security/",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/traffic-management/04-traffic-splitting",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/basics/02-linux-advanced.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/basics/02-linux-advanced",
+      "status": 200,
+      "aliases": 8,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/basics/05-ebpf-fundamentals.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/basics/05-ebpf-fundamentals",
+      "status": 200,
+      "aliases": 10,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/core/03-services-networking.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/core/03-services-networking",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/eks/11-eks-advanced-debugging.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/eks/11-eks-advanced-debugging",
+      "status": 200,
+      "aliases": 10,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/eks/12-kubernetes-version-roadmap.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/eks/12-kubernetes-version-roadmap",
+      "status": 200,
+      "aliases": 10,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/gitops/04-flagger.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/gitops/04-flagger",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/gitops/argocd/06-projects-rbac.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/gitops/argocd/06-projects-rbac",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/observability/09-observability-optimization.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/observability/09-observability-optimization",
+      "status": 200,
+      "aliases": 9,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/observability/alerting/03-grafana-oncall.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/observability/alerting/03-grafana-oncall",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/ops/15-zonal-operations-guide.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ops/15-zonal-operations-guide",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/ops/16-troubleshooting-playbook.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook",
+      "status": 200,
+      "aliases": 12,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/03-architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/02-basic-concepts.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/02-basic-concepts",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/security/07-image-security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/security/07-image-security",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/security/08-runtime-security.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/security/08-runtime-security",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/security/10-cert-manager.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/security/10-cert-manager",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/security/11-kubescape.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/security/11-kubescape",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/observability/03-logging.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/03-logging",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/security/02-authentication.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/02-authentication",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/security/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting",
+      "status": 200,
+      "aliases": 2,
+      "missing": [],
+      "passed": true
+    },
+    {
+      "path": "en/networking/05-cross-org-vpc-connectivity.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/networking/05-cross-org-vpc-connectivity",
+      "status": 200,
+      "aliases": 1,
+      "missing": [],
+      "passed": true
+    }
+  ],
+  "aliasCount": 195,
+  "scope": "All53affectedliveHTMLpagescheckedfor195exactaliasIDs;HTTPfetchonly,noanalyticsorinteractiveclickclaims.",
+  "retryNote": "TwoREADMEpathsrecheckedatcanonicaldirectoryURL;all53canonicalpagespassed."
+}

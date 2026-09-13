@@ -2,92 +2,97 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Kubescape Scanning Pipeline Flow",
-    "locale": "en",
-    "quality_profile": "showcase",
+    "title": "Kubescape Scanning Pipeline",
     "animation": "trace",
-    "viewBox": [1240, 776],
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "input-framework",
+        "label": "Input and framework",
+        "focus": [
+          "cli",
+          "fw",
+          "parse"
+        ],
+        "note": "Choose explicit local manifests or a live cluster and a verified framework bundle."
+      },
+      {
+        "id": "evaluation",
+        "label": "Control evaluation",
+        "focus": [
+          "parse",
+          "evalc",
+          "check",
+          "calc"
+        ],
+        "note": "Parse resources and evaluate applicable controls; unavailable coverage is not a pass."
+      },
+      {
+        "id": "scoring-output",
+        "label": "Scores and reports",
+        "focus": [
+          "calc",
+          "sev",
+          "prio",
+          "pretty",
+          "json",
+          "sarif",
+          "htmlpdf"
+        ],
+        "note": "Keep score and complianceScore separate. --format selects a type; --output names the file."
+      }
+    ],
     "legend": {
+      "mode": "auto",
       "entries": {
-        "frontend": {
-          "label": "Scan trigger (CLI)"
-        },
-        "security": {
-          "label": "Framework · control evaluation"
-        },
         "backend": {
-          "label": "Risk scoring"
+          "label": "Processing"
+        },
+        "database": {
+          "label": "Data"
         },
         "external": {
-          "label": "Report output"
+          "label": "Output/reference"
+        },
+        "frontend": {
+          "label": "Input"
+        },
+        "security": {
+          "label": "Policy"
         }
       }
     },
-    "views": [
-      {
-        "id": "select",
-        "label": "Trigger and framework",
-        "focus": [
-          "cli",
-          "framework"
-        ],
-        "note": "kubescape scan framework <nsa|cis|mitre|custom> picks the control set the scan will evaluate."
-      },
-      {
-        "id": "evaluate",
-        "label": "Control evaluation",
-        "focus": [
-          "framework",
-          "collect",
-          "checks",
-          "severity"
-        ],
-        "note": "Cluster resources are collected, each framework control is checked, and findings are classified by severity."
-      },
-      {
-        "id": "report",
-        "label": "Score and report",
-        "focus": [
-          "severity",
-          "score",
-          "prioritize",
-          "report"
-        ],
-        "note": "Findings are scored and prioritized, then emitted to the console or as JSON, SARIF, or HTML."
-      }
-    ]
+    "output": "en-security-11-kubescape-1.html",
+    "locale": "en"
   },
   "lanes": [
     {
       "id": "input",
-      "label": "Input"
+      "label": "Input and framework"
     },
     {
-      "id": "fw",
-      "label": "Framework Selection"
-    },
-    {
-      "id": "eval",
-      "label": "Control Evaluation"
+      "id": "evaluation",
+      "label": "Control evaluation"
     },
     {
       "id": "scoring",
-      "label": "Risk Scoring"
+      "label": "Score aggregation"
     },
     {
-      "id": "out",
-      "label": "Report Generation"
+      "id": "output",
+      "label": "Report output"
     }
   ],
   "mainPath": [
     "cli",
-    "framework",
-    "collect",
-    "checks",
-    "severity",
-    "score",
-    "prioritize",
-    "report"
+    "fw",
+    "parse",
+    "evalc",
+    "check",
+    "calc",
+    "sev",
+    "prio",
+    "htmlpdf"
   ],
   "nodes": [
     {
@@ -96,132 +101,186 @@
       "col": 0,
       "type": "frontend",
       "label": "Kubescape CLI",
-      "sublabel": "kubescape scan",
+      "sublabel": "Manifests · Helm · cluster",
       "width": 150
     },
     {
-      "id": "framework",
-      "lane": "fw",
+      "id": "fw",
+      "lane": "input",
       "col": 1,
       "type": "security",
-      "label": "Framework Selection",
-      "sublabel": "NSA-CISA · CIS · MITRE · Custom",
-      "width": 176
+      "label": "Framework",
+      "sublabel": "NSA · CIS · MITRE · All",
+      "width": 150
     },
     {
-      "id": "collect",
-      "lane": "eval",
+      "id": "parse",
+      "lane": "evaluation",
+      "col": 1,
+      "type": "backend",
+      "label": "Parse Resources",
+      "sublabel": "",
+      "width": 150
+    },
+    {
+      "id": "evalc",
+      "lane": "evaluation",
       "col": 2,
-      "type": "security",
-      "label": "Resource Collection",
-      "sublabel": "cluster or manifests",
-      "width": 160
+      "type": "backend",
+      "label": "Run Controls",
+      "sublabel": "",
+      "width": 150
     },
     {
-      "id": "checks",
-      "lane": "eval",
+      "id": "check",
+      "lane": "evaluation",
       "col": 3,
       "type": "security",
-      "label": "Control Checks",
-      "sublabel": "per control ID",
+      "label": "Check Rules",
+      "sublabel": "",
       "width": 150
     },
     {
-      "id": "severity",
-      "lane": "eval",
+      "id": "calc",
+      "lane": "scoring",
+      "col": 3,
+      "type": "backend",
+      "label": "Summarize Scores",
+      "tag": "Policy decision",
+      "sublabel": "Separate score fields",
+      "width": 150
+    },
+    {
+      "id": "sev",
+      "lane": "scoring",
+      "col": 4,
+      "type": "backend",
+      "label": "Classify Severity",
+      "sublabel": "",
+      "width": 150
+    },
+    {
+      "id": "prio",
+      "lane": "scoring",
+      "col": 5,
+      "type": "backend",
+      "label": "Prioritize",
+      "width": 124,
+      "sublabel": ""
+    },
+    {
+      "id": "pretty",
+      "lane": "output",
+      "col": 2,
+      "type": "external",
+      "label": "Console",
+      "sublabel": "Default output",
+      "width": 124
+    },
+    {
+      "id": "json",
+      "lane": "output",
+      "col": 3,
+      "type": "database",
+      "label": "JSON",
+      "sublabel": "--format json"
+    },
+    {
+      "id": "sarif",
+      "lane": "output",
       "col": 4,
       "type": "security",
-      "label": "Severity Assessment",
-      "sublabel": "classify findings",
-      "width": 160
+      "label": "SARIF",
+      "sublabel": "--format sarif"
     },
     {
-      "id": "score",
-      "lane": "scoring",
-      "col": 4,
-      "type": "backend",
-      "label": "Calculate Score",
-      "sublabel": "risk score",
-      "width": 150
-    },
-    {
-      "id": "prioritize",
-      "lane": "scoring",
-      "col": 5,
-      "type": "backend",
-      "label": "Prioritize Findings",
-      "sublabel": "by severity",
-      "width": 160
-    },
-    {
-      "id": "report",
-      "lane": "out",
+      "id": "htmlpdf",
+      "lane": "output",
       "col": 5,
       "type": "external",
-      "label": "Report Generation",
-      "sublabel": "console · JSON/SARIF · HTML",
-      "width": 176
+      "label": "HTML / PDF",
+      "sublabel": "--format html,pdf",
+      "width": 155
     }
   ],
   "edges": [
     {
       "from": "cli",
-      "to": "framework",
+      "to": "fw",
       "label": "scan framework"
     },
     {
-      "from": "framework",
-      "to": "collect"
+      "from": "fw",
+      "to": "parse"
     },
     {
-      "from": "collect",
-      "to": "checks"
+      "from": "parse",
+      "to": "evalc"
     },
     {
-      "from": "checks",
-      "to": "severity"
+      "from": "evalc",
+      "to": "check"
     },
     {
-      "from": "severity",
-      "to": "score"
+      "from": "check",
+      "to": "calc"
     },
     {
-      "from": "score",
-      "to": "prioritize"
+      "from": "calc",
+      "to": "sev"
     },
     {
-      "from": "prioritize",
-      "to": "report",
-      "label": "--format"
+      "from": "sev",
+      "to": "prio"
+    },
+    {
+      "from": "prio",
+      "to": "pretty",
+      "role": "branch"
+    },
+    {
+      "from": "prio",
+      "to": "json",
+      "role": "branch"
+    },
+    {
+      "from": "prio",
+      "to": "sarif",
+      "role": "branch",
+      "variant": "emphasis"
+    },
+    {
+      "from": "prio",
+      "to": "htmlpdf",
+      "role": "branch"
     }
   ],
   "cards": [
     {
-      "dot": "violet",
-      "title": "Frameworks",
+      "dot": "cyan",
+      "title": "Input scope",
       "items": [
-        "NSA-CISA: government hardening, 30+ controls",
-        "CIS Benchmark: configuration baseline, 100+ controls",
-        "MITRE ATT&CK: threat mapping, 40+ controls",
-        "Custom: organization-specific control list (YAML)"
+        "Scan an explicit local YAML file for CI",
+        "Render Helm/Kustomize before scanning",
+        "No target file means a live-cluster scan"
       ]
     },
     {
       "dot": "amber",
-      "title": "Scan Scope",
+      "title": "Scores and gates",
       "items": [
-        "Full cluster, or --include/--exclude-namespaces",
-        "YAML files, directories, or Helm charts (shift-left)",
-        "--severity-threshold high to gate on severity"
+        "summaryDetails.score and complianceScore differ",
+        "--compliance-threshold sets a minimum",
+        "--severity-threshold gates failed controls"
       ]
     },
     {
-      "dot": "cyan",
-      "title": "Output Formats",
+      "dot": "emerald",
+      "title": "Output formats",
       "items": [
-        "Console output (default)",
-        "--format json / sarif (SARIF for GitHub integration)",
-        "--format html for a shareable report"
+        "--format chooses the report type",
+        "--output chooses the destination file",
+        "JSON/SARIF/HTML/PDF are supported by4.0.14"
       ]
     }
   ]

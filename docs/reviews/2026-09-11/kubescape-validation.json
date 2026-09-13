@@ -1,0 +1,2802 @@
+{
+  "status": "passed-scoped-audit",
+  "reviewedAt": "2026-09-13T05:03:46.831080+00:00",
+  "scope": {
+    "documents": 4,
+    "originalLines": 3719,
+    "quizQuestions": 20,
+    "exampleFiles": 14,
+    "diagrams": 10,
+    "newEnglishDiagram": 1,
+    "legacyAnchors": 118,
+    "additionalMainAliasesPreserved": 2
+  },
+  "originalFiles": [
+    {
+      "path": "ko/security/11-kubescape.md",
+      "sha256": "2aefbd75bc47ff52597f7d0545e6849167cb8a5d61dc4c4671050f8f8480dff2",
+      "lines": 1467
+    },
+    {
+      "path": "ko/quizzes/security/11-kubescape-quiz.md",
+      "sha256": "70c2e3de88d17832aa01640a248092e1fefbf62555678d46c22356ab6912b7b1",
+      "lines": 382
+    },
+    {
+      "path": "en/security/11-kubescape.md",
+      "sha256": "eb626858ac854c8a9a5e39d43c0ff501c8d5007fbaa30131a305ed54559d70cf",
+      "lines": 1490
+    },
+    {
+      "path": "en/quizzes/security/11-kubescape-quiz.md",
+      "sha256": "e9abaa8922c94d2aab1d4a8432d4e594e81b7c55fe26a8e7c12f996f0c0dc244",
+      "lines": 380
+    }
+  ],
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/security/11-kubescape.md",
+        "sha256": "cad97cc3769766ee37ed6adcb9ce1ca033d8aec90eab5c6d8ab0dd321efaf192",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubescape를-활용한-보안-태세-관리"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h2",
+            "id": "설치"
+          },
+          {
+            "tag": "h3",
+            "id": "cli-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "helm을-이용한-operator-설치"
+          },
+          {
+            "tag": "h2",
+            "id": "보안-프레임워크"
+          },
+          {
+            "tag": "h3",
+            "id": "프레임워크와-컨트롤"
+          },
+          {
+            "tag": "h3",
+            "id": "커스텀-프레임워크"
+          },
+          {
+            "tag": "h2",
+            "id": "cli-스캐닝"
+          },
+          {
+            "tag": "h3",
+            "id": "클러스터와-로컬-파일의-구분"
+          },
+          {
+            "tag": "h3",
+            "id": "실제-로컬-검사-결과"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지와-rbac-분석"
+          },
+          {
+            "tag": "h2",
+            "id": "operator-모드-인클러스터"
+          },
+          {
+            "tag": "h2",
+            "id": "리스크-스코어링"
+          },
+          {
+            "tag": "h2",
+            "id": "ci-cd-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "공통-보안-게이트"
+          },
+          {
+            "tag": "h3",
+            "id": "github-actions"
+          },
+          {
+            "tag": "h3",
+            "id": "gitlab과-jenkins"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-특화-가이드"
+          },
+          {
+            "tag": "h2",
+            "id": "컨트롤-예외-처리"
+          },
+          {
+            "tag": "h3",
+            "id": "cli-예외"
+          },
+          {
+            "tag": "h3",
+            "id": "인클러스터-예외"
+          },
+          {
+            "tag": "h2",
+            "id": "모범-사례"
+          },
+          {
+            "tag": "h3",
+            "id": "prometheus-연동"
+          },
+          {
+            "tag": "h2",
+            "id": "요약-및-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "목차",
+          "kubescape를-활용한-보안-태세-관리",
+          "kubescape란",
+          "kubescape-vs-다른-도구-비교",
+          "아키텍처-개요",
+          "개요",
+          "설치-확인",
+          "kubescape-cloud-연동-선택사항",
+          "설치",
+          "cli-설치",
+          "helm을-이용한-operator-설치",
+          "프레임워크-비교표",
+          "nsa-cisa-kubernetes-하드닝-가이드",
+          "cis-kubernetes-benchmark",
+          "mitre-att-ck-for-kubernetes",
+          "보안-프레임워크",
+          "프레임워크와-컨트롤",
+          "커스텀-프레임워크",
+          "스캔-파이프라인-흐름",
+          "클러스터-스캔",
+          "특정-컨트롤-스캔",
+          "yaml-helm-매니페스트-스캔-shift-left",
+          "이미지-취약점-스캐닝",
+          "rbac-시각화-및-분석",
+          "cli-스캐닝",
+          "클러스터와-로컬-파일의-구분",
+          "실제-로컬-검사-결과",
+          "이미지와-rbac-분석",
+          "지속적-스캔-아키텍처",
+          "operator-컴포넌트",
+          "지속적-스캐닝-설정",
+          "스캔-결과-조회",
+          "런타임-위협-탐지-node-agent",
+          "kubernetes-api-공격-탐지",
+          "operator-모드-인클러스터",
+          "리스크-점수-계산",
+          "심각도-수준",
+          "우선순위-지정",
+          "리스크-스코어링",
+          "ci-cd-워크플로우",
+          "github-actions-워크플로우",
+          "gitlab-ci-파이프라인",
+          "jenkins-파이프라인",
+          "cicd-통합",
+          "ci-cd-통합",
+          "공통-보안-게이트",
+          "github-actions",
+          "gitlab과-jenkins",
+          "eks-전용-컨트롤",
+          "aws-auth-configmap-분석",
+          "irsa-iam-roles-for-service-accounts-검증",
+          "eks-보안-스캔-스크립트",
+          "eks-특화-가이드",
+          "예외-정책-정의",
+          "인라인-예외-어노테이션",
+          "허용된-리스크-문서화",
+          "컨트롤-예외-처리",
+          "cli-예외",
+          "인클러스터-예외",
+          "정기-스캐닝-일정",
+          "알림-및-에스컬레이션",
+          "컴플라이언스-리포팅",
+          "수정-워크플로우",
+          "보안-강화-체크리스트",
+          "모범-사례",
+          "prometheus-연동",
+          "핵심-요점",
+          "주요-명령어-요약",
+          "참고-자료",
+          "요약-및-참고-자료"
+        ]
+      },
+      {
+        "path": "en/security/11-kubescape.md",
+        "sha256": "6e9feb544a16f42a7181be6545279bacd7613cc28aa5b6176604cf91e6aa8b64",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "security-posture-management-with-kubescape"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h2",
+            "id": "installation"
+          },
+          {
+            "tag": "h3",
+            "id": "cli-installation"
+          },
+          {
+            "tag": "h3",
+            "id": "helm-operator-installation"
+          },
+          {
+            "tag": "h2",
+            "id": "security-frameworks"
+          },
+          {
+            "tag": "h3",
+            "id": "frameworks-and-controls"
+          },
+          {
+            "tag": "h3",
+            "id": "custom-frameworks"
+          },
+          {
+            "tag": "h2",
+            "id": "cli-scanning"
+          },
+          {
+            "tag": "h3",
+            "id": "cluster-versus-local-input"
+          },
+          {
+            "tag": "h3",
+            "id": "actual-local-results"
+          },
+          {
+            "tag": "h3",
+            "id": "image-and-rbac-analysis"
+          },
+          {
+            "tag": "h2",
+            "id": "operator-mode-in-cluster"
+          },
+          {
+            "tag": "h2",
+            "id": "risk-scoring"
+          },
+          {
+            "tag": "h2",
+            "id": "ci-cd-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "shared-security-gate"
+          },
+          {
+            "tag": "h3",
+            "id": "github-actions"
+          },
+          {
+            "tag": "h3",
+            "id": "gitlab-and-jenkins"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-specific-guide"
+          },
+          {
+            "tag": "h2",
+            "id": "control-exception-handling"
+          },
+          {
+            "tag": "h3",
+            "id": "cli-exceptions"
+          },
+          {
+            "tag": "h3",
+            "id": "in-cluster-exceptions"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h3",
+            "id": "prometheus-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "summary-and-references"
+          }
+        ],
+        "renderedIds": [
+          "security-posture-management-with-kubescape",
+          "what-kubescape-solves",
+          "cncf-sandbox-project",
+          "comparison-with-similar-tools",
+          "kubescape-architecture",
+          "overview",
+          "linux-and-macos",
+          "windows",
+          "container-image",
+          "helm-operator-installation-in-cluster",
+          "operator-configuration-values",
+          "kubescape-cloud-saas",
+          "installation",
+          "cli-installation",
+          "helm-operator-installation",
+          "nsa-cisa-kubernetes-hardening-guide",
+          "cis-kubernetes-benchmark",
+          "mitre-att-ck-framework",
+          "framework-comparison",
+          "security-frameworks",
+          "frameworks-and-controls",
+          "custom-frameworks",
+          "scanning-pipeline-flow",
+          "cluster-scanning",
+          "specific-control-scanning",
+          "yaml-and-helm-manifest-scanning-shift-left",
+          "image-vulnerability-scanning",
+          "rbac-visualization-and-analysis",
+          "cli-scanning",
+          "cluster-versus-local-input",
+          "actual-local-results",
+          "image-and-rbac-analysis",
+          "continuous-scanning-architecture",
+          "operator-components",
+          "scheduled-scanning-configuration",
+          "vulnerability-scanning-integration",
+          "runtime-threat-detection-node-agent-with-ebpf",
+          "kubernetes-api-attack-detection",
+          "operator-mode-in-cluster",
+          "risk-score-calculation",
+          "severity-levels",
+          "viewing-risk-scores",
+          "prioritization-strategy",
+          "risk-scoring",
+          "ci-cd-integration-workflow",
+          "github-actions-workflow",
+          "gitlab-ci-cd-integration",
+          "jenkins-pipeline-integration",
+          "threshold-based-gates",
+          "cicd-integration",
+          "ci-cd-integration",
+          "shared-security-gate",
+          "github-actions",
+          "gitlab-and-jenkins",
+          "eks-specific-controls",
+          "aws-auth-configmap-analysis",
+          "irsa-iam-roles-for-service-accounts-validation",
+          "eks-security-best-practices-scan",
+          "eks-specific-guide",
+          "exception-policies",
+          "applying-exceptions-via-cli",
+          "accepted-risks-documentation",
+          "inline-resource-exceptions",
+          "control-exception-handling",
+          "cli-exceptions",
+          "in-cluster-exceptions",
+          "periodic-scanning-schedule",
+          "scanning-configuration",
+          "compliance-reporting",
+          "remediation-workflow",
+          "integration-with-other-security-tools",
+          "prometheus-metrics-integration",
+          "best-practices",
+          "prometheus-integration",
+          "table-of-contents",
+          "key-takeaways",
+          "quick-reference-commands",
+          "references",
+          "related-documentation",
+          "summary-and-references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/security/11-kubescape-quiz.md",
+        "sha256": "dcfe1a218804006f6baac88018d9dbf57a6b6c2e3a1dc12b7144f03b47b2faaf",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubescape-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "문제"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-kubescape의-현재-cncf-성숙도는"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-프레임워크-이름과-컨트롤-수를-확인하는-올바른-방법은"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-kubescape-scan에서-로컬-파일을-생략하면-어떤-위험이-있는가"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-operator와-cli의-차이를-올바르게-설명한-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-score와-compliancescore의-관계는"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-compliance-55에-compliance-threshold-56을-적용한-결과는"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-kube-bench와-kubescape를-비교할-때-올바른-기준은"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-rbac-컨트롤에-관한-올바른-설명은"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-이미지-스캔과-host-scan을-올바르게-구분한-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-cli-예외와-in-cluster-예외의-올바른-형식은"
+          },
+          {
+            "tag": "h2",
+            "id": "점수-계산"
+          },
+          {
+            "tag": "h2",
+            "id": "관련-문서"
+          }
+        ],
+        "renderedIds": [
+          "kubescape-퀴즈",
+          "문제",
+          "_1-kubescape-프로젝트의-cncf-상태는",
+          "_1-kubescape의-현재-cncf-성숙도는",
+          "_2-kubescape가-지원하는-보안-프레임워크가-아닌-것은",
+          "_2-프레임워크-이름과-컨트롤-수를-확인하는-올바른-방법은",
+          "_3-kubescape-cli로-클러스터를-스캔하는-기본-명령어-형식은",
+          "_3-kubescape-scan에서-로컬-파일을-생략하면-어떤-위험이-있는가",
+          "_4-kubescape-operator와-cli-모드의-주요-차이점은",
+          "_4-operator와-cli의-차이를-올바르게-설명한-것은",
+          "_5-kubescape의-리스크-스코어-risk-score-계산-방식은",
+          "_5-score와-compliancescore의-관계는",
+          "_6-ci-cd-파이프라인에서-kubescape-스캔이-특정-점수-이상이면-실패하도록-설정하는-플래그는",
+          "_6-compliance-55에-compliance-threshold-56을-적용한-결과는",
+          "_7-kube-bench와-kubescape의-주요-차이점은",
+          "_7-kube-bench와-kubescape를-비교할-때-올바른-기준은",
+          "_8-kubescape의-rbac-시각화-기능이-제공하는-정보는",
+          "_8-rbac-컨트롤에-관한-올바른-설명은",
+          "_9-kubescape에서-이미지-취약점-스캐닝을-위해-연동되는-도구는",
+          "_9-이미지-스캔과-host-scan을-올바르게-구분한-것은",
+          "_10-kubescape에서-특정-컨트롤을-예외-처리하는-방법은",
+          "_10-cli-예외와-in-cluster-예외의-올바른-형식은",
+          "점수-계산",
+          "관련-문서"
+        ]
+      },
+      {
+        "path": "en/quizzes/security/11-kubescape-quiz.md",
+        "sha256": "a4ede173822033509b1e0cf83a7b6429f45c2da460367c2a8b9bf865c55be081",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubescape-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "questions"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-what-is-kubescape-s-current-cncf-maturity-level"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-how-should-framework-names-and-control-counts-be-verified"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-what-happens-when-a-local-file-target-is-omitted-from-kubescape-scan"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-which-statement-correctly-distinguishes-operator-and-cli-operation"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-how-are-score-and-compliancescore-related"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-what-happens-with-compliance-55-and-compliance-threshold-56"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-what-is-a-sound-basis-for-comparing-kube-bench-and-kubescape"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-which-statement-about-rbac-controls-is-correct"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-which-statement-correctly-distinguishes-image-and-host-scans"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-what-are-the-correct-cli-and-in-cluster-exception-formats"
+          },
+          {
+            "tag": "h2",
+            "id": "score-calculation"
+          },
+          {
+            "tag": "h2",
+            "id": "related-documentation"
+          }
+        ],
+        "renderedIds": [
+          "kubescape-quiz",
+          "questions",
+          "_1-what-is-kubescape-s-project-status-in-the-cncf",
+          "_1-what-is-kubescape-s-current-cncf-maturity-level",
+          "_2-which-security-frameworks-does-kubescape-support-for-compliance-scanning",
+          "_2-how-should-framework-names-and-control-counts-be-verified",
+          "_3-what-is-the-correct-cli-syntax-to-scan-a-kubernetes-cluster-with-kubescape",
+          "_3-what-happens-when-a-local-file-target-is-omitted-from-kubescape-scan",
+          "_4-what-is-the-key-difference-between-kubescape-operator-and-cli-modes",
+          "_4-which-statement-correctly-distinguishes-operator-and-cli-operation",
+          "_5-how-does-kubescape-calculate-risk-scores-for-controls",
+          "_5-how-are-score-and-compliancescore-related",
+          "_6-which-flag-enforces-a-compliance-threshold-in-ci-cd-pipelines",
+          "_6-what-happens-with-compliance-55-and-compliance-threshold-56",
+          "_7-how-does-kubescape-differ-from-kube-bench",
+          "_7-what-is-a-sound-basis-for-comparing-kube-bench-and-kubescape",
+          "_8-what-feature-does-kubescape-provide-for-rbac-security-analysis",
+          "_8-which-statement-about-rbac-controls-is-correct",
+          "_9-which-vulnerability-scanner-does-kubescape-integrate-with-for-image-scanning",
+          "_9-which-statement-correctly-distinguishes-image-and-host-scans",
+          "_10-how-does-kubescape-handle-control-exceptions",
+          "_10-what-are-the-correct-cli-and-in-cluster-exception-formats",
+          "score-calculation",
+          "related-documentation"
+        ]
+      }
+    ]
+  },
+  "examples": [
+    {
+      "path": "examples/security/kubescape/README.md",
+      "sha256": "6fd8079b82ff6096e82784b891e75ebca009a8c6aef2e82dd1bfad0466f55fe2",
+      "bytes": 3825
+    },
+    {
+      "path": "examples/security/kubescape/exceptions.json",
+      "sha256": "1eaa6864f093722a0b800a0f59e6b2f711e5b6cf3b2ade2314960e65b26cc84a",
+      "bytes": 438
+    },
+    {
+      "path": "examples/security/kubescape/github-actions.yaml",
+      "sha256": "5187e771ef59dd9ba000e92856069494279dea574d4667e69c362be78879fe55",
+      "bytes": 1739
+    },
+    {
+      "path": "examples/security/kubescape/insecure-pod.yaml",
+      "sha256": "f8aaddaebe9ea9a4e6f8c19b7c66af2037025ba8b68336542549cbaabd1e2a04",
+      "bytes": 265
+    },
+    {
+      "path": "examples/security/kubescape/no-exceptions.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3
+    },
+    {
+      "path": "examples/security/kubescape/operator-values.yaml",
+      "sha256": "566458fabb6894808ec1ee5a0fb4ce3aeb2f93909eee9cc47c8770b2c24dd891",
+      "bytes": 711
+    },
+    {
+      "path": "examples/security/kubescape/podmonitor.yaml",
+      "sha256": "9a83a3e276c3535baf34f7acd7559e00887bb133b9a1f8a1d7b0e10bb499c868",
+      "bytes": 430
+    },
+    {
+      "path": "examples/security/kubescape/policies/LICENSE",
+      "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+      "bytes": 11357
+    },
+    {
+      "path": "examples/security/kubescape/policies/controls-inputs.json",
+      "sha256": "db1f5d85949a578a8791b2861818743255cfce55af3fffe987029a0b44a0bf59",
+      "bytes": 2758
+    },
+    {
+      "path": "examples/security/kubescape/policies/nsa.json",
+      "sha256": "115db60001ff89f4d22941f9d693b2aff38c2ce85c7d0bb779c45e20be6107ee",
+      "bytes": 191429
+    },
+    {
+      "path": "examples/security/kubescape/policies/provenance.json",
+      "sha256": "fa3a954b417686bb86308dd800443eccd602907d07d182313a6409ca1380de13",
+      "bytes": 576
+    },
+    {
+      "path": "examples/security/kubescape/scan-manifests.sh",
+      "sha256": "9ae3fe4b28f92c46c68693e90efad6e2d3e9b48165a8adc1a6f928fac4905c35",
+      "bytes": 1738
+    },
+    {
+      "path": "examples/security/kubescape/secure-pod.yaml",
+      "sha256": "f3b12fc3785c05b70928bf8056a84b69c2bf95124f968610c62afdb067c37bca",
+      "bytes": 779
+    },
+    {
+      "path": "examples/security/kubescape/security-exception.yaml",
+      "sha256": "56f92e5b4af46159cefb3aaf22e7e9d00b2364cca2913a86fea11b5002f861b9",
+      "bytes": 450
+    }
+  ],
+  "assets": [
+    {
+      "path": "assets/diagrams/archify/en-security-11-kubescape-0.architecture.json",
+      "sha256": "685af56e83eeb67bde3853f59ca6d19521abb20034bb235c4eff5cf0505aabde",
+      "bytes": 6013
+    },
+    {
+      "path": "public/archmaps/en-security-11-kubescape-0.html",
+      "sha256": "7826c18105854e4f1747eb3b545092c65937bf3c227cd490add19bb1606d482b",
+      "bytes": 716329
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-11-kubescape-0.png",
+      "sha256": "4ca65e2ed3ea24e1a202bd81ba447e59b494bafe8dc5934428047a5ab2b781a1",
+      "bytes": 146288
+    },
+    {
+      "path": "assets/diagrams/archify/en-security-11-kubescape-1.workflow.json",
+      "sha256": "2aba58512225026953cfa5a37f8d76c8169b833fa560ffe87c88f2937e8d5666",
+      "bytes": 5724
+    },
+    {
+      "path": "public/archmaps/en-security-11-kubescape-1.html",
+      "sha256": "e671f1825962fd65593c07df6d85797020f18dcf27c7be89cd8631d846b226b3",
+      "bytes": 715488
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-11-kubescape-1.png",
+      "sha256": "b00759c927a7e28d203423e13951b5b41154654fa26f76ea0013aa4f087557e8",
+      "bytes": 154879
+    },
+    {
+      "path": "assets/diagrams/archify/en-security-11-kubescape-2.architecture.json",
+      "sha256": "09d77d1644999bcd15517d04248dbcdf19f44bc83acf9080be2bac0a6465a340",
+      "bytes": 7714
+    },
+    {
+      "path": "public/archmaps/en-security-11-kubescape-2.html",
+      "sha256": "bac3639bcba699514ed3121d31ee9ef5d871804f98b615274b0121a13b1ef5e3",
+      "bytes": 719761
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-11-kubescape-2.png",
+      "sha256": "62d5a47cc2aff02019a0603e9862c2bf24be1bdd83659cba7343c9e0065d5caa",
+      "bytes": 182849
+    },
+    {
+      "path": "assets/diagrams/archify/en-security-11-kubescape-3.workflow.json",
+      "sha256": "50610ab3fc94ac1c11489f2290df6b76985b2d34c663d9ff4bfc0c8c40cb7503",
+      "bytes": 5158
+    },
+    {
+      "path": "public/archmaps/en-security-11-kubescape-3.html",
+      "sha256": "db85a78956c2c18d30fbf63f57c3b5bd06d55d0cfcbb21bbacaef862340913d1",
+      "bytes": 714824
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-11-kubescape-3.png",
+      "sha256": "9237048e25b1f3d8a05611b0c7b387f902cb7515d18ee7af8add309423ba506a",
+      "bytes": 171379
+    },
+    {
+      "path": "assets/diagrams/archify/en-security-11-kubescape-4.workflow.json",
+      "sha256": "a7000d869242cc45f870acc2335567e79d0f67e04ca3c347dc8e7235f8fb1a9f",
+      "bytes": 6762
+    },
+    {
+      "path": "public/archmaps/en-security-11-kubescape-4.html",
+      "sha256": "93d9b304ddaa0ab45a0fe440ec0c3b5664a6b16cd5e7d5abc94e724dfd21d5bf",
+      "bytes": 718190
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-11-kubescape-4.png",
+      "sha256": "5025b6259ca74f9d57d14867a5f0df5d8929d1e441ea75acc3fecd9d23460d32",
+      "bytes": 202223
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-11-kubescape-0.architecture.json",
+      "sha256": "4a9dd6e89d1f8e54697a64de952824e46bf3c4ecbb78961d2387a5a656334b89",
+      "bytes": 6176
+    },
+    {
+      "path": "public/archmaps/ko-security-11-kubescape-0.html",
+      "sha256": "aa332e56839d4ccade23dfb9cec607f0151d299eb2e640e2d9e8cd57fd67b571",
+      "bytes": 716641
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-11-kubescape-0.png",
+      "sha256": "80bee9d564336b4a219731712d098aa7affb09c1d5146b96e098a89b2ec5e730",
+      "bytes": 137459
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-11-kubescape-1.workflow.json",
+      "sha256": "c8d6dbc5220986fdc41e3423b2c895bb11f27d1bd056fbe472bd2cb5e0bf189f",
+      "bytes": 5867
+    },
+    {
+      "path": "public/archmaps/ko-security-11-kubescape-1.html",
+      "sha256": "783be8840844ac0c94fce5fabb024fbd6e769bd2a6454ae0f1468379be087ce3",
+      "bytes": 715959
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-11-kubescape-1.png",
+      "sha256": "0af730c9cb92a2c7de515531570d1a03b448ed9d223615df23d111ab2b0e29a0",
+      "bytes": 184092
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-11-kubescape-2.architecture.json",
+      "sha256": "78965041983db3173c7580631f1c5399356ea7f8b527e4b9896efeac00b28069",
+      "bytes": 7738
+    },
+    {
+      "path": "public/archmaps/ko-security-11-kubescape-2.html",
+      "sha256": "16840a7b85e6e5e74545519c9bd48e29b7a9a9f151d8f3ae4cca8514608dcc15",
+      "bytes": 719828
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-11-kubescape-2.png",
+      "sha256": "73913925d0b45dc944693c0a68362d10f71b625fbedee20a09c53383d488bfab",
+      "bytes": 175773
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-11-kubescape-3.workflow.json",
+      "sha256": "3e379bbc94b0e006f41bed923aff89006c0593982ce6b07af4bbbb7adbe93e1e",
+      "bytes": 5245
+    },
+    {
+      "path": "public/archmaps/ko-security-11-kubescape-3.html",
+      "sha256": "03cd3a535c038a00667a5a224ce1cf6dcaededf85195ac7d615a6688e529a283",
+      "bytes": 715134
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-11-kubescape-3.png",
+      "sha256": "e800eddb21b1949435ac96351d0f5af97441e01ea4a227eed964b4d9bf3df2c9",
+      "bytes": 160104
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-11-kubescape-4.workflow.json",
+      "sha256": "344636f748e1eba0fe30fae19bbd5b350820ff5f183b3a6797bf3cf9af12fc15",
+      "bytes": 6963
+    },
+    {
+      "path": "public/archmaps/ko-security-11-kubescape-4.html",
+      "sha256": "47db12ebda7a0b6664f45ca9922028c2bce29757d777962667dd453f3c2bbae8",
+      "bytes": 718865
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-11-kubescape-4.png",
+      "sha256": "2b0d8250cde9c1620dd0da69891fa49702ff434df129373b56d345bea821d978",
+      "bytes": 188589
+    }
+  ],
+  "releases": [
+    {
+      "repo": "kubescape/kubescape",
+      "tag": "v4.0.14",
+      "publishedAt": "2026-09-09T12:42:24Z",
+      "url": "https://github.com/kubescape/kubescape/releases/tag/v4.0.14",
+      "assets": [
+        {
+          "name": "checksums.sha256",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/checksums.sha256",
+          "size": 2860
+        },
+        {
+          "name": "checksums.sha256.pem",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/checksums.sha256.pem",
+          "size": 3344
+        },
+        {
+          "name": "checksums.sha256.sig",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/checksums.sha256.sig",
+          "size": 96
+        },
+        {
+          "name": "downloader_4.0.14_linux_amd64.sbom.json",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/downloader_4.0.14_linux_amd64.sbom.json",
+          "size": 989022
+        },
+        {
+          "name": "downloader_4.0.14_linux_arm64.sbom.json",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/downloader_4.0.14_linux_arm64.sbom.json",
+          "size": 989022
+        },
+        {
+          "name": "ksserver_4.0.14_linux_amd64.sbom.json",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/ksserver_4.0.14_linux_amd64.sbom.json",
+          "size": 986918
+        },
+        {
+          "name": "ksserver_4.0.14_linux_arm64.sbom.json",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/ksserver_4.0.14_linux_arm64.sbom.json",
+          "size": 986918
+        },
+        {
+          "name": "kubescape.exe_4.0.14_windows_amd64.sbom.json",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape.exe_4.0.14_windows_amd64.sbom.json",
+          "size": 1007523
+        },
+        {
+          "name": "kubescape.exe_4.0.14_windows_arm64.sbom.json",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape.exe_4.0.14_windows_arm64.sbom.json",
+          "size": 1007523
+        },
+        {
+          "name": "kubescape_4.0.14_darwin_amd64",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_darwin_amd64",
+          "size": 292901328
+        },
+        {
+          "name": "kubescape_4.0.14_darwin_amd64.sbom.json",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_darwin_amd64.sbom.json",
+          "size": 992306
+        },
+        {
+          "name": "kubescape_4.0.14_darwin_amd64.tar.gz",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_darwin_amd64.tar.gz",
+          "size": 121959152
+        },
+        {
+          "name": "kubescape_4.0.14_darwin_arm64",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_darwin_arm64",
+          "size": 277976674
+        },
+        {
+          "name": "kubescape_4.0.14_darwin_arm64.sbom.json",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_darwin_arm64.sbom.json",
+          "size": 992306
+        },
+        {
+          "name": "kubescape_4.0.14_darwin_arm64.tar.gz",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_darwin_arm64.tar.gz",
+          "size": 115613388
+        },
+        {
+          "name": "kubescape_4.0.14_linux_amd64",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64",
+          "size": 283478888
+        },
+        {
+          "name": "kubescape_4.0.14_linux_amd64.apk",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64.apk",
+          "size": 118565076
+        },
+        {
+          "name": "kubescape_4.0.14_linux_amd64.deb",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64.deb",
+          "size": 115345920
+        },
+        {
+          "name": "kubescape_4.0.14_linux_amd64.rpm",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64.rpm",
+          "size": 115370633
+        },
+        {
+          "name": "kubescape_4.0.14_linux_amd64.sbom.json",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64.sbom.json",
+          "size": 993742
+        },
+        {
+          "name": "kubescape_4.0.14_linux_amd64.tar.gz",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64.tar.gz",
+          "size": 115356599
+        },
+        {
+          "name": "kubescape_4.0.14_linux_arm64",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_arm64",
+          "size": 266247403
+        },
+        {
+          "name": "kubescape_4.0.14_linux_arm64.apk",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_arm64.apk",
+          "size": 109094539
+        },
+        {
+          "name": "kubescape_4.0.14_linux_arm64.deb",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_arm64.deb",
+          "size": 106391576
+        },
+        {
+          "name": "kubescape_4.0.14_linux_arm64.rpm",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_arm64.rpm",
+          "size": 106384098
+        },
+        {
+          "name": "kubescape_4.0.14_linux_arm64.sbom.json",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_arm64.sbom.json",
+          "size": 993742
+        },
+        {
+          "name": "kubescape_4.0.14_linux_arm64.tar.gz",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_arm64.tar.gz",
+          "size": 106391954
+        },
+        {
+          "name": "kubescape_4.0.14_windows_amd64.exe",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_windows_amd64.exe",
+          "size": 285466624
+        },
+        {
+          "name": "kubescape_4.0.14_windows_amd64.tar.gz",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_windows_amd64.tar.gz",
+          "size": 116315620
+        },
+        {
+          "name": "kubescape_4.0.14_windows_arm64.exe",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_windows_arm64.exe",
+          "size": 265927680
+        },
+        {
+          "name": "kubescape_4.0.14_windows_arm64.tar.gz",
+          "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_windows_arm64.tar.gz",
+          "size": 106410216
+        }
+      ]
+    },
+    {
+      "repo": "kubescape/helm-charts",
+      "tag": "kubescape-operator-1.40.4",
+      "publishedAt": "2026-09-04T14:39:04Z",
+      "url": "https://github.com/kubescape/helm-charts/releases/tag/kubescape-operator-1.40.4",
+      "assets": [
+        {
+          "name": "kubescape-operator-1.40.4.tgz",
+          "url": "https://github.com/kubescape/helm-charts/releases/download/kubescape-operator-1.40.4/kubescape-operator-1.40.4.tgz",
+          "size": 77074
+        }
+      ]
+    },
+    {
+      "repo": "kubescape/kubevuln",
+      "tag": "v0.3.441",
+      "publishedAt": "2026-09-10T12:31:18Z",
+      "url": "https://github.com/kubescape/kubevuln/releases/tag/v0.3.441",
+      "assets": []
+    },
+    {
+      "repo": "kubescape/node-agent",
+      "tag": "v0.3.231",
+      "publishedAt": "2026-09-11T15:31:27Z",
+      "url": "https://github.com/kubescape/node-agent/releases/tag/v0.3.231",
+      "assets": []
+    }
+  ],
+  "chart": {
+    "version": "1.40.4",
+    "appVersion": "1.40.4",
+    "url": "https://github.com/kubescape/helm-charts/releases/download/kubescape-operator-1.40.4/kubescape-operator-1.40.4.tgz",
+    "sha256": "9c9dad697b13d085ed1c6cbb166d9ade239305aa2e8b5999840d455fc91a10ea"
+  },
+  "binary": {
+    "version": "4.0.14",
+    "url": "https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_arm64.tar.gz",
+    "sha256": "e12d63d6b9cd28f57ba7cd2130528d4147448779ecec9da07f06c3baa4153117",
+    "checksumVerified": true
+  },
+  "policyArtifactManifest": [
+    {
+      "path": "controls-inputs.json",
+      "sha256": "db1f5d85949a578a8791b2861818743255cfce55af3fffe987029a0b44a0bf59",
+      "bytes": 2758,
+      "controls": 0
+    },
+    {
+      "path": "exceptions.json",
+      "sha256": "2fb548d83f39ddbff925cf7a08bd9fd96aae05a4a96600d268ba0ae723551788",
+      "bytes": 176665,
+      "controls": null
+    },
+    {
+      "path": "allcontrols.json",
+      "sha256": "3856e353c0c8b272bc9e85236f1037b22a8136926c389aa007728993f9048772",
+      "bytes": 1587134,
+      "controls": 289
+    },
+    {
+      "path": "cis-gke-v1.9.0.json",
+      "sha256": "52956f9fdbaf661b7761675131f34635938c6c4290c4c9b7400332c5d1716634",
+      "bytes": 302531,
+      "controls": 40
+    },
+    {
+      "path": "agentruntimehardening.json",
+      "sha256": "bca4ab188986a8267f5b26a52d13c2d92f14609b16325f4b32c5298891e0f0eb",
+      "bytes": 33823,
+      "controls": 9
+    },
+    {
+      "path": "cis-eks-t1.8.0.json",
+      "sha256": "e2594efb931730fa444c926bdfe7c7c9e09e57d111c3500ae8b7183125c51272",
+      "bytes": 296015,
+      "controls": 49
+    },
+    {
+      "path": "cis-v1.12.0.json",
+      "sha256": "e268398485830ffc202b181bc98da341d21a88a4a525cbfe62da22e1807c8f4d",
+      "bytes": 730447,
+      "controls": 131
+    },
+    {
+      "path": "mitre.json",
+      "sha256": "5d8ad80aee82c36ef89db3cb81598cf77e061075d9f1e9dbe565a75f850460f0",
+      "bytes": 172462,
+      "controls": 27
+    },
+    {
+      "path": "nsa.json",
+      "sha256": "115db60001ff89f4d22941f9d693b2aff38c2ce85c7d0bb779c45e20be6107ee",
+      "bytes": 191429,
+      "controls": 26
+    },
+    {
+      "path": "soc2.json",
+      "sha256": "0195569ab9a91abb402d6964d90fdfab864269285ad85278f751c2e1a926d486",
+      "bytes": 51868,
+      "controls": 7
+    },
+    {
+      "path": "cis-v1.10.0.json",
+      "sha256": "df09bff141a0d5f1e2de1a3ffc844d6b3e8b9134d451f368ffc4891ca6248b79",
+      "bytes": 719309,
+      "controls": 129
+    },
+    {
+      "path": "cis-aks-t1.2.0.json",
+      "sha256": "c62a025ed93cd784584ce7995d5eccbca28b1fc833ee315e4a68b066be5483f9",
+      "bytes": 344673,
+      "controls": 52
+    },
+    {
+      "path": "armobest.json",
+      "sha256": "f788d36dc04a8a448370a517989df261f6c75c1dcf82b059c691b8203a192576",
+      "bytes": 260528,
+      "controls": 40
+    },
+    {
+      "path": "devopsbest.json",
+      "sha256": "e310dea774c08e0154e8df1236c25c6600bd6b05bc59965091b6fb7292e038eb",
+      "bytes": 125636,
+      "controls": 25
+    },
+    {
+      "path": "cis-eks-t1.7.0.json",
+      "sha256": "469537ffb29e4b710c228e370504cb1b7303d8f44794e77af087b9ad195408e9",
+      "bytes": 279635,
+      "controls": 45
+    },
+    {
+      "path": "cis-aks-t1.8.0.json",
+      "sha256": "c0c09fb62cf527157995e98ace80c1c9a0971587750c5dbf5bfbceb70ee23a29",
+      "bytes": 361414,
+      "controls": 56
+    },
+    {
+      "path": "attack-tracks.json",
+      "sha256": "d601511987a05a87ffed36f57c898a08455f4c71dcc78ee3a6973ced906323cc",
+      "bytes": 3591,
+      "controls": null
+    }
+  ],
+  "primarySources": [
+    {
+      "url": "https://www.cncf.io/projects/kubescape/",
+      "status": 200,
+      "finalURL": "https://www.cncf.io/projects/kubescape/",
+      "path": ".vitepress/cache/content-review-kubescape/sources/aefede4802c8.html",
+      "sha256": "5273068567cb8dde022b9c248a3a34f10381b5389d9971ca0dd32705c0df5aed",
+      "bytes": 179922
+    },
+    {
+      "url": "https://kubescape.github.io/helm-charts/index.yaml",
+      "status": 200,
+      "finalURL": "https://kubescape.github.io/helm-charts/index.yaml",
+      "path": ".vitepress/cache/content-review-kubescape/sources/3221eb2bb716.yaml",
+      "sha256": "75a712c761a6572ed7e4bc7ebc91104266758f7d1a9d2b6e566e169a938ccbb4",
+      "bytes": 278470
+    },
+    {
+      "url": "https://kubescape.io/docs/",
+      "status": 200,
+      "finalURL": "https://kubescape.io/docs/",
+      "path": ".vitepress/cache/content-review-kubescape/sources/9f36f675f5c2.html",
+      "sha256": "bd9b59067931371c73eab7edc29c92c6c4069a848b4ae865af7f3b027d6d69b5",
+      "bytes": 47239
+    },
+    {
+      "url": "https://kubescape.io/docs/frameworks-and-controls/",
+      "status": 200,
+      "finalURL": "https://kubescape.io/docs/frameworks-and-controls/",
+      "path": ".vitepress/cache/content-review-kubescape/sources/23752770e761.html",
+      "sha256": "8ff752518accb8efc1b1deb4f013b636bd3f370923ed493ad2efebed98ddf5df",
+      "bytes": 51357
+    },
+    {
+      "url": "https://kubescape.io/docs/operator/",
+      "status": 200,
+      "finalURL": "https://kubescape.io/docs/operator/",
+      "path": ".vitepress/cache/content-review-kubescape/sources/c1b889eff4d4.html",
+      "sha256": "acc97afb3e6cdcf874acb3b0141126c7c00262f934b2a1b047106f36ccc3130c",
+      "bytes": 57996
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubescape/kubescape/v4.0.14/README.md",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/kubescape/kubescape/v4.0.14/README.md",
+      "path": ".vitepress/cache/content-review-kubescape/sources/5e5ecb932b42.txt",
+      "sha256": "fae70117278e607830faee08ae9f3e37a6304137660dbabe92e53eb5169b7d88",
+      "bytes": 18103
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubescape/kubescape/v4.0.14/go.mod",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/kubescape/kubescape/v4.0.14/go.mod",
+      "path": ".vitepress/cache/content-review-kubescape/sources/90b465373443.txt",
+      "sha256": "3193035ed7e817aa8878c2c8a6addd340bf5525e96b1463f982e0e5cbb58c4c5",
+      "bytes": 34317
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubescape/kubescape/v4.0.14/core/pkg/score/score.go",
+      "path": ".vitepress/cache/content-review-kubescape/sources/core_pkg_score_score.go"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubescape/kubescape/v4.0.14/core/cautils/getter/crdexceptionsgetter.go",
+      "path": ".vitepress/cache/content-review-kubescape/sources/core_cautils_getter_crdexceptionsgetter.go"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubescape/kubescape/v4.0.14/core/pkg/opaprocessor/exceptionaudit.go",
+      "path": ".vitepress/cache/content-review-kubescape/sources/core_pkg_opaprocessor_exceptionaudit.go"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubescape/kubescape/v4.0.14/cmd/scan/framework.go",
+      "path": ".vitepress/cache/content-review-kubescape/sources/cmd_scan_framework.go"
+    }
+  ],
+  "changes": [
+    "KubescapeCNCFacceptedDec13,2022;IncubatingJan13,2025",
+    "-o isoutputfilepathnotformat;-f/--formatcurrentmanyformatsPDF/HTMLsupported",
+    "compliance-thresholdisMINIMUMcompliance;notmaximumrisk;scoreseparateandnot100-compliance",
+    "summaryDetails.complianceScore andsummaryDetails.controls keyedID;top-levelriskScore/complianceScoreabsent",
+    "CurrentdefaultartifactsCIS1.12/cis-eks-t1.8 andmanyframeworks;captureversionsratherthanfixedoldcounts",
+    "Current4.0.14hasSecurityException/ClusterSecurityExceptionCRDs getter,notControlException/AcceptedRiskoldexamples;mustdescribeexactcurrentAPInotdenyallCRDsupport",
+    "--fail-threshold accepteddeprecateddummyNOOP:localfailedfindingsstill exit0;--scan-images and--skip-controlsareacceptedlegacyfeatures,notunknown;include-api-audit/custom-framework/sort-by unknown",
+    "ActualsummaryDetails.score62.5vscompliance55 oninsecurePod;C-0036validatingadmission/C-0039mutatingadmission notRBACwildcard/riskysa",
+    "alertOnlyexceptionacknowledgesfailureanddoesnotraisecompliance55;excludeC0057removescontrolandchangesdenominator57.8947;explicitsuppressionisnotremediation",
+    "OperatorstorageisaggregatedAPIServicev1beta1.spdx.softwarecomposition.kubescape.io,notallresultsCRDs;chart1.40.4scannerimagev4.0.13"
+  ],
+  "validation": {
+    "nativeScans": {
+      "status": "passed",
+      "version": "4.0.14",
+      "cases": [
+        {
+          "name": "insecure-threshold55",
+          "exitCode": 0,
+          "expectedExitCode": 0,
+          "complianceScore": 55,
+          "score": 62.5,
+          "passed": true
+        },
+        {
+          "name": "insecure-threshold56",
+          "exitCode": 1,
+          "expectedExitCode": 1,
+          "complianceScore": 55,
+          "score": 62.5,
+          "passed": true
+        },
+        {
+          "name": "insecure-severityhigh",
+          "exitCode": 1,
+          "expectedExitCode": 1,
+          "complianceScore": 55,
+          "score": 62.5,
+          "passed": true
+        },
+        {
+          "name": "secure-severityhigh",
+          "exitCode": 0,
+          "expectedExitCode": 0,
+          "complianceScore": 95,
+          "score": 6.818182,
+          "passed": true
+        }
+      ],
+      "scope": "Local syntheticYAML,downloadedpolicyartifacts,noexceptions,noimages,nocluster,noSaaSsubmission;keep-localandisolatedcache"
+    },
+    "localFramework": {
+      "status": "passed",
+      "compliance": 55,
+      "exitCode": 0,
+      "source": "--use-fromnsa.jsonwithlocalcontrols-config/noexceptions/keep-local"
+    },
+    "deprecatedGate": {
+      "status": "passed-reproduction",
+      "exitCode": 0,
+      "reportStatus": "failed",
+      "complianceScore": 55,
+      "flag": "--fail-threshold 0",
+      "meaning": "Legacyflagacceptedbutinert;failedfindingsdo notfailthiscommandwithoutcurrentgates",
+      "scope": "LocalYAML/offlineartifacts/noimageorclustercalls"
+    },
+    "flagClassification": {
+      "status": "observed-not-all-invalid",
+      "cases": [
+        {
+          "args": [
+            "--fail-threshold",
+            "0"
+          ],
+          "exitCode": 1,
+          "error": "Flag --fail-threshold has been deprecated, use '--compliance-threshold' flag instead\n{\"level\":\"info\",\"ts\":\"2026-09-13T04:02:07Z\",\"msg\":\"Kubescape scanner initializing...\"}\n{\"level\":\"info\",\"ts\":\"2026-09-13T04:02:07Z\",\"msg\":\"Initialized scanner\"}\n{\"level\":\"info\",\"ts\":\"2026-09-13T04:02:07Z\",\"msg\":\"Loading policies...\"}\nError: framework: workloadscan: framework from file not matching",
+          "classification": "accepted-deprecated-alias;defaultframeworkartifactmissing"
+        },
+        {
+          "args": [
+            "--scan-images"
+          ],
+          "exitCode": 1,
+          "error": "{\"level\":\"info\",\"ts\":\"2026-09-13T04:02:07Z\",\"msg\":\"Kubescape scanner initializing...\"}\n{\"level\":\"info\",\"ts\":\"2026-09-13T04:02:07Z\",\"msg\":\"Initialized scanner\"}\n{\"level\":\"info\",\"ts\":\"2026-09-13T04:02:07Z\",\"msg\":\"Loading policies...\"}\nError: framework: workloadscan: framework from file not matching",
+          "classification": "accepted-hidden-flag;defaultframeworkartifactmissing"
+        },
+        {
+          "args": [
+            "--include-api-audit"
+          ],
+          "exitCode": 1,
+          "error": "Error: unknown flag: --include-api-audit\nUsage:\n  kubescape scan [flags]\n  kubescape scan [command]\n\nExamples:\n\n  Scan command is for scanning an existing cluster or kubernetes manifest files based on pre-defined frameworks\n\n  # Scan current cluster\n  kubescape scan\n\n  # Scan kubernetes manifest files\n  kubescape scan .\n\n  # Scan manifest files, leaving test fixtures and generated output out of the scan\n  kubescape scan . --exclude-path 'test/**' --exclude-path '*.generated.yaml'\n\n  # Scan and save the results in the JSON format\n  kubescape sca",
+          "classification": "unknown-flag"
+        },
+        {
+          "args": [
+            "--custom-framework",
+            "fixture.yaml"
+          ],
+          "exitCode": 1,
+          "error": "Error: unknown flag: --custom-framework\nUsage:\n  kubescape scan [flags]\n  kubescape scan [command]\n\nExamples:\n\n  Scan command is for scanning an existing cluster or kubernetes manifest files based on pre-defined frameworks\n\n  # Scan current cluster\n  kubescape scan\n\n  # Scan kubernetes manifest files\n  kubescape scan .\n\n  # Scan manifest files, leaving test fixtures and generated output out of the scan\n  kubescape scan . --exclude-path 'test/**' --exclude-path '*.generated.yaml'\n\n  # Scan and save the results in the JSON format\n  kubescape scan",
+          "classification": "unknown-flag"
+        },
+        {
+          "args": [
+            "--sort-by",
+            "severity"
+          ],
+          "exitCode": 1,
+          "error": "Error: unknown flag: --sort-by\nUsage:\n  kubescape scan [flags]\n  kubescape scan [command]\n\nExamples:\n\n  Scan command is for scanning an existing cluster or kubernetes manifest files based on pre-defined frameworks\n\n  # Scan current cluster\n  kubescape scan\n\n  # Scan kubernetes manifest files\n  kubescape scan .\n\n  # Scan manifest files, leaving test fixtures and generated output out of the scan\n  kubescape scan . --exclude-path 'test/**' --exclude-path '*.generated.yaml'\n\n  # Scan and save the results in the JSON format\n  kubescape scan --format",
+          "classification": "unknown-flag"
+        },
+        {
+          "args": [
+            "--skip-controls",
+            "C-0057"
+          ],
+          "exitCode": 1,
+          "error": "{\"level\":\"info\",\"ts\":\"2026-09-13T04:02:07Z\",\"msg\":\"Kubescape scanner initializing...\"}\n{\"level\":\"info\",\"ts\":\"2026-09-13T04:02:08Z\",\"msg\":\"Initialized scanner\"}\n{\"level\":\"info\",\"ts\":\"2026-09-13T04:02:08Z\",\"msg\":\"Loading policies...\"}\nError: framework: workloadscan: framework from file not matching",
+          "classification": "accepted-hidden-flag;defaultframeworkartifactmissing"
+        }
+      ],
+      "scope": "ExplicitlocalYAML/noSaaS/offlineartifacts;threeunknownflags,threeacceptedhiddenaliases;noimageorclustercapturestarted"
+    },
+    "exceptionBehavior": [
+      {
+        "case": "exception",
+        "exitCode": 0,
+        "control": {
+          "statusInfo": {
+            "status": "failed",
+            "subStatus": "w/exceptions"
+          },
+          "controlID": "C-0057",
+          "name": "Privileged container",
+          "status": "failed",
+          "resourceIDs": {},
+          "ResourceCounters": {
+            "passedResources": 0,
+            "failedResources": 1,
+            "skippedResources": 0,
+            "excludedResources": 0
+          },
+          "subStatusCounters": {
+            "ignoredResources": 0,
+            "acknowledgedResources": 1
+          },
+          "score": 100,
+          "complianceScore": 0,
+          "scoreFactor": 8,
+          "category": {
+            "name": "Workload",
+            "id": "Cat-5",
+            "subCategory": {
+              "name": "Node escape",
+              "id": "Cat-9"
+            }
+          },
+          "severity": "High"
+        },
+        "complianceScore": 55
+      },
+      {
+        "case": "exclude",
+        "exitCode": 0,
+        "control": null,
+        "complianceScore": 57.894737
+      }
+    ],
+    "publishedGate": {
+      "status": "passed",
+      "cases": [
+        {
+          "file": "insecure-pod.yaml",
+          "exitCode": 1,
+          "expected": 1,
+          "passed": true
+        },
+        {
+          "file": "secure-pod.yaml",
+          "exitCode": 0,
+          "expected": 0,
+          "passed": true
+        },
+        {
+          "file": "missing.yaml",
+          "exitCode": 2,
+          "expected": 2,
+          "passed": true
+        }
+      ],
+      "scope": "Originalpre-reviewhelperregression;currentfixcoveredseparatelybyisolatedGate.",
+      "historicalHead": "1f0c79ce4878de5c9ff9f0671209db67e17c656b"
+    },
+    "securityException": {
+      "status": "passed",
+      "apiVersion": "kubescape.io/v1beta1",
+      "kind": "SecurityException",
+      "scope": "Chart1.40.4OpenAPIschema+date-time;posturepresent;CEL/admission/RBAC/controllernotexecuted"
+    },
+    "podMonitor": {
+      "status": "passed",
+      "targetDeployment": "prometheus-exporter",
+      "namespace": "kubescape",
+      "port": "metrics",
+      "containerPort": 8080,
+      "scope": "Renderedchartselectors/ports;PrometheusOperatorCRDandPrometheusPodMonitorselectionareprerequisites;noactualscrape"
+    },
+    "exampleStructure": {
+      "status": "passed",
+      "pods": [
+        {
+          "path": "examples/security/kubescape/secure-pod.yaml",
+          "passed": true,
+          "sha256": "f3b12fc3785c05b70928bf8056a84b69c2bf95124f968610c62afdb067c37bca"
+        },
+        {
+          "path": "examples/security/kubescape/insecure-pod.yaml",
+          "passed": true,
+          "sha256": "f8aaddaebe9ea9a4e6f8c19b7c66af2037025ba8b68336542549cbaabd1e2a04"
+        }
+      ],
+      "bashSyntax": "passed",
+      "actionlint": "1.7.12passed",
+      "scope": "K8s1.36OpenAPIandCLIworkflowstructure;noapplicationdeployment"
+    },
+    "controls": [
+      {
+        "id": "C-0001",
+        "name": "Forbidden Container Registries",
+        "baseScore": 7
+      },
+      {
+        "id": "C-0002",
+        "name": "Prevent containers from allowing command execution",
+        "baseScore": 5
+      },
+      {
+        "id": "C-0004",
+        "name": "Resources memory limit and request",
+        "baseScore": 8
+      },
+      {
+        "id": "C-0009",
+        "name": "Resource limits",
+        "baseScore": 7
+      },
+      {
+        "id": "C-0013",
+        "name": "Non-root containers",
+        "baseScore": 6
+      },
+      {
+        "id": "C-0016",
+        "name": "Allow privilege escalation",
+        "baseScore": 6
+      },
+      {
+        "id": "C-0017",
+        "name": "Immutable container filesystem",
+        "baseScore": 3
+      },
+      {
+        "id": "C-0034",
+        "name": "Automatic mapping of service account",
+        "baseScore": 6
+      },
+      {
+        "id": "C-0035",
+        "name": "Administrative Roles",
+        "baseScore": 6
+      },
+      {
+        "id": "C-0036",
+        "name": "Validate admission controller (validating)",
+        "baseScore": 3
+      },
+      {
+        "id": "C-0038",
+        "name": "Host PID/IPC privileges",
+        "baseScore": 7
+      },
+      {
+        "id": "C-0039",
+        "name": "Validate admission controller (mutating)",
+        "baseScore": 4
+      },
+      {
+        "id": "C-0041",
+        "name": "HostNetwork access",
+        "baseScore": 7
+      },
+      {
+        "id": "C-0044",
+        "name": "Container hostPort",
+        "baseScore": 4
+      },
+      {
+        "id": "C-0046",
+        "name": "Insecure capabilities",
+        "baseScore": 7
+      },
+      {
+        "id": "C-0055",
+        "name": "Linux hardening",
+        "baseScore": 4
+      },
+      {
+        "id": "C-0057",
+        "name": "Privileged container",
+        "baseScore": 8
+      }
+    ],
+    "browser": {
+      "status": "passed",
+      "cases": [
+        {
+          "file": "en-security-11-kubescape-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 781,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 781,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 781,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 59959,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1112,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1112,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1112,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 57905,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1493,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1493,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1493,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 61863,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 770,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 770,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 770,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 58284,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-4.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1235,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-4.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1235,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-security-11-kubescape-4.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1235,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 60243,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 545,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 545,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 545,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 58991,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 907,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 907,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 907,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 57077,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1103,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1103,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1103,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 60889,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 553,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 553,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 553,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 57618,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-4.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 772,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-4.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 772,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-11-kubescape-4.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 772,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 59421,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        }
+      ],
+      "scope": "30caseson10production-normalizedKubescapeviewers; motion/reduced-motion/visibility/theme/guided controls and10SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild",
+      "retryNote": "Sixfinalschedule-cardcasesreplacepriorKO/EN2;all30finalcasespass."
+    },
+    "legacyAnchors": [
+      {
+        "path": "ko/security/11-kubescape.md",
+        "preserved": 44,
+        "anchors": [
+          {
+            "id": "목차",
+            "oldHeading": "목차",
+            "newHeading": "Kubescape를 활용한 보안 태세 관리"
+          },
+          {
+            "id": "kubescape란",
+            "oldHeading": "Kubescape란?",
+            "newHeading": "개요"
+          },
+          {
+            "id": "kubescape-vs-다른-도구-비교",
+            "oldHeading": "Kubescape vs 다른 도구 비교",
+            "newHeading": "개요"
+          },
+          {
+            "id": "아키텍처-개요",
+            "oldHeading": "아키텍처 개요",
+            "newHeading": "개요"
+          },
+          {
+            "id": "설치-확인",
+            "oldHeading": "설치 확인",
+            "newHeading": "설치"
+          },
+          {
+            "id": "kubescape-cloud-연동-선택사항",
+            "oldHeading": "Kubescape Cloud 연동 (선택사항)",
+            "newHeading": "설치"
+          },
+          {
+            "id": "프레임워크-비교표",
+            "oldHeading": "프레임워크 비교표",
+            "newHeading": "보안 프레임워크"
+          },
+          {
+            "id": "nsa-cisa-kubernetes-하드닝-가이드",
+            "oldHeading": "NSA-CISA Kubernetes 하드닝 가이드",
+            "newHeading": "보안 프레임워크"
+          },
+          {
+            "id": "cis-kubernetes-benchmark",
+            "oldHeading": "CIS Kubernetes Benchmark",
+            "newHeading": "보안 프레임워크"
+          },
+          {
+            "id": "mitre-att-ck-for-kubernetes",
+            "oldHeading": "MITRE ATT&CK for Kubernetes",
+            "newHeading": "보안 프레임워크"
+          },
+          {
+            "id": "스캔-파이프라인-흐름",
+            "oldHeading": "스캔 파이프라인 흐름",
+            "newHeading": "CLI 스캐닝"
+          },
+          {
+            "id": "클러스터-스캔",
+            "oldHeading": "클러스터 스캔",
+            "newHeading": "CLI 스캐닝"
+          },
+          {
+            "id": "특정-컨트롤-스캔",
+            "oldHeading": "특정 컨트롤 스캔",
+            "newHeading": "CLI 스캐닝"
+          },
+          {
+            "id": "yaml-helm-매니페스트-스캔-shift-left",
+            "oldHeading": "YAML/Helm 매니페스트 스캔 (Shift-Left)",
+            "newHeading": "CLI 스캐닝"
+          },
+          {
+            "id": "이미지-취약점-스캐닝",
+            "oldHeading": "이미지 취약점 스캐닝",
+            "newHeading": "CLI 스캐닝"
+          },
+          {
+            "id": "rbac-시각화-및-분석",
+            "oldHeading": "RBAC 시각화 및 분석",
+            "newHeading": "CLI 스캐닝"
+          },
+          {
+            "id": "지속적-스캔-아키텍처",
+            "oldHeading": "지속적 스캔 아키텍처",
+            "newHeading": "Operator 모드 (인클러스터)"
+          },
+          {
+            "id": "operator-컴포넌트",
+            "oldHeading": "Operator 컴포넌트",
+            "newHeading": "Operator 모드 (인클러스터)"
+          },
+          {
+            "id": "지속적-스캐닝-설정",
+            "oldHeading": "지속적 스캐닝 설정",
+            "newHeading": "Operator 모드 (인클러스터)"
+          },
+          {
+            "id": "스캔-결과-조회",
+            "oldHeading": "스캔 결과 조회",
+            "newHeading": "Operator 모드 (인클러스터)"
+          },
+          {
+            "id": "런타임-위협-탐지-node-agent",
+            "oldHeading": "런타임 위협 탐지 (Node Agent)",
+            "newHeading": "Operator 모드 (인클러스터)"
+          },
+          {
+            "id": "kubernetes-api-공격-탐지",
+            "oldHeading": "Kubernetes API 공격 탐지",
+            "newHeading": "Operator 모드 (인클러스터)"
+          },
+          {
+            "id": "리스크-점수-계산",
+            "oldHeading": "리스크 점수 계산",
+            "newHeading": "리스크 스코어링"
+          },
+          {
+            "id": "심각도-수준",
+            "oldHeading": "심각도 수준",
+            "newHeading": "리스크 스코어링"
+          },
+          {
+            "id": "우선순위-지정",
+            "oldHeading": "우선순위 지정",
+            "newHeading": "리스크 스코어링"
+          },
+          {
+            "id": "ci-cd-워크플로우",
+            "oldHeading": "CI/CD 워크플로우",
+            "newHeading": "CI/CD 통합"
+          },
+          {
+            "id": "github-actions-워크플로우",
+            "oldHeading": "GitHub Actions 워크플로우",
+            "newHeading": "CI/CD 통합"
+          },
+          {
+            "id": "gitlab-ci-파이프라인",
+            "oldHeading": "GitLab CI 파이프라인",
+            "newHeading": "CI/CD 통합"
+          },
+          {
+            "id": "jenkins-파이프라인",
+            "oldHeading": "Jenkins 파이프라인",
+            "newHeading": "CI/CD 통합"
+          },
+          {
+            "id": "eks-전용-컨트롤",
+            "oldHeading": "EKS 전용 컨트롤",
+            "newHeading": "EKS 특화 가이드"
+          },
+          {
+            "id": "aws-auth-configmap-분석",
+            "oldHeading": "aws-auth ConfigMap 분석",
+            "newHeading": "EKS 특화 가이드"
+          },
+          {
+            "id": "irsa-iam-roles-for-service-accounts-검증",
+            "oldHeading": "IRSA (IAM Roles for Service Accounts) 검증",
+            "newHeading": "EKS 특화 가이드"
+          },
+          {
+            "id": "eks-보안-스캔-스크립트",
+            "oldHeading": "EKS 보안 스캔 스크립트",
+            "newHeading": "EKS 특화 가이드"
+          },
+          {
+            "id": "예외-정책-정의",
+            "oldHeading": "예외 정책 정의",
+            "newHeading": "컨트롤 예외 처리"
+          },
+          {
+            "id": "인라인-예외-어노테이션",
+            "oldHeading": "인라인 예외 (어노테이션)",
+            "newHeading": "컨트롤 예외 처리"
+          },
+          {
+            "id": "허용된-리스크-문서화",
+            "oldHeading": "허용된 리스크 문서화",
+            "newHeading": "컨트롤 예외 처리"
+          },
+          {
+            "id": "정기-스캐닝-일정",
+            "oldHeading": "정기 스캐닝 일정",
+            "newHeading": "모범 사례"
+          },
+          {
+            "id": "알림-및-에스컬레이션",
+            "oldHeading": "알림 및 에스컬레이션",
+            "newHeading": "모범 사례"
+          },
+          {
+            "id": "컴플라이언스-리포팅",
+            "oldHeading": "컴플라이언스 리포팅",
+            "newHeading": "모범 사례"
+          },
+          {
+            "id": "수정-워크플로우",
+            "oldHeading": "수정 워크플로우",
+            "newHeading": "모범 사례"
+          },
+          {
+            "id": "보안-강화-체크리스트",
+            "oldHeading": "보안 강화 체크리스트",
+            "newHeading": "모범 사례"
+          },
+          {
+            "id": "핵심-요점",
+            "oldHeading": "핵심 요점",
+            "newHeading": "요약 및 참고 자료"
+          },
+          {
+            "id": "주요-명령어-요약",
+            "oldHeading": "주요 명령어 요약",
+            "newHeading": "요약 및 참고 자료"
+          },
+          {
+            "id": "참고-자료",
+            "oldHeading": "참고 자료",
+            "newHeading": "요약 및 참고 자료"
+          }
+        ]
+      },
+      {
+        "path": "ko/quizzes/security/11-kubescape-quiz.md",
+        "preserved": 10,
+        "anchors": [
+          {
+            "id": "_1-kubescape-프로젝트의-cncf-상태는",
+            "oldHeading": "1. Kubescape 프로젝트의 CNCF 상태는?",
+            "newHeading": "1. Kubescape의 현재 CNCF 성숙도는?"
+          },
+          {
+            "id": "_2-kubescape가-지원하는-보안-프레임워크가-아닌-것은",
+            "oldHeading": "2. Kubescape가 지원하는 보안 프레임워크가 아닌 것은?",
+            "newHeading": "2. 프레임워크 이름과 컨트롤 수를 확인하는 올바른 방법은?"
+          },
+          {
+            "id": "_3-kubescape-cli로-클러스터를-스캔하는-기본-명령어-형식은",
+            "oldHeading": "3. Kubescape CLI로 클러스터를 스캔하는 기본 명령어 형식은?",
+            "newHeading": "3. kubescape scan에서 로컬 파일을 생략하면 어떤 위험이 있는가?"
+          },
+          {
+            "id": "_4-kubescape-operator와-cli-모드의-주요-차이점은",
+            "oldHeading": "4. Kubescape Operator와 CLI 모드의 주요 차이점은?",
+            "newHeading": "4. Operator와 CLI의 차이를 올바르게 설명한 것은?"
+          },
+          {
+            "id": "_5-kubescape의-리스크-스코어-risk-score-계산-방식은",
+            "oldHeading": "5. Kubescape의 리스크 스코어(Risk Score) 계산 방식은?",
+            "newHeading": "5. score와 complianceScore의 관계는?"
+          },
+          {
+            "id": "_6-ci-cd-파이프라인에서-kubescape-스캔이-특정-점수-이상이면-실패하도록-설정하는-플래그는",
+            "oldHeading": "6. CI/CD 파이프라인에서 Kubescape 스캔이 특정 점수 이상이면 실패하도록 설정하는 플래그는?",
+            "newHeading": "6. compliance 55에 --compliance-threshold 56을 적용한 결과는?"
+          },
+          {
+            "id": "_7-kube-bench와-kubescape의-주요-차이점은",
+            "oldHeading": "7. kube-bench와 Kubescape의 주요 차이점은?",
+            "newHeading": "7. kube-bench와 Kubescape를 비교할 때 올바른 기준은?"
+          },
+          {
+            "id": "_8-kubescape의-rbac-시각화-기능이-제공하는-정보는",
+            "oldHeading": "8. Kubescape의 RBAC 시각화 기능이 제공하는 정보는?",
+            "newHeading": "8. RBAC 컨트롤에 관한 올바른 설명은?"
+          },
+          {
+            "id": "_9-kubescape에서-이미지-취약점-스캐닝을-위해-연동되는-도구는",
+            "oldHeading": "9. Kubescape에서 이미지 취약점 스캐닝을 위해 연동되는 도구는?",
+            "newHeading": "9. 이미지 스캔과 host scan을 올바르게 구분한 것은?"
+          },
+          {
+            "id": "_10-kubescape에서-특정-컨트롤을-예외-처리하는-방법은",
+            "oldHeading": "10. Kubescape에서 특정 컨트롤을 예외 처리하는 방법은?",
+            "newHeading": "10. CLI 예외와 in-cluster 예외의 올바른 형식은?"
+          }
+        ]
+      },
+      {
+        "path": "en/security/11-kubescape.md",
+        "preserved": 54,
+        "anchors": [
+          {
+            "id": "table-of-contents",
+            "oldHeading": "Table of Contents",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "what-kubescape-solves",
+            "oldHeading": "What Kubescape Solves",
+            "newHeading": "Overview"
+          },
+          {
+            "id": "cncf-sandbox-project",
+            "oldHeading": "CNCF Sandbox Project",
+            "newHeading": "Overview"
+          },
+          {
+            "id": "comparison-with-similar-tools",
+            "oldHeading": "Comparison with Similar Tools",
+            "newHeading": "Overview"
+          },
+          {
+            "id": "kubescape-architecture",
+            "oldHeading": "Kubescape Architecture",
+            "newHeading": "Overview"
+          },
+          {
+            "id": "linux-and-macos",
+            "oldHeading": "Linux and macOS",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "windows",
+            "oldHeading": "Windows",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "container-image",
+            "oldHeading": "Container Image",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "helm-operator-installation-in-cluster",
+            "oldHeading": "Helm Operator Installation (In-Cluster)",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "operator-configuration-values",
+            "oldHeading": "Operator Configuration Values",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "kubescape-cloud-saas",
+            "oldHeading": "Kubescape Cloud (SaaS)",
+            "newHeading": "Installation"
+          },
+          {
+            "id": "nsa-cisa-kubernetes-hardening-guide",
+            "oldHeading": "NSA-CISA Kubernetes Hardening Guide",
+            "newHeading": "Security Frameworks"
+          },
+          {
+            "id": "cis-kubernetes-benchmark",
+            "oldHeading": "CIS Kubernetes Benchmark",
+            "newHeading": "Security Frameworks"
+          },
+          {
+            "id": "mitre-att-ck-framework",
+            "oldHeading": "MITRE ATT&CK Framework",
+            "newHeading": "Security Frameworks"
+          },
+          {
+            "id": "framework-comparison",
+            "oldHeading": "Framework Comparison",
+            "newHeading": "Security Frameworks"
+          },
+          {
+            "id": "scanning-pipeline-flow",
+            "oldHeading": "Scanning Pipeline Flow",
+            "newHeading": "CLI Scanning"
+          },
+          {
+            "id": "cluster-scanning",
+            "oldHeading": "Cluster Scanning",
+            "newHeading": "CLI Scanning"
+          },
+          {
+            "id": "specific-control-scanning",
+            "oldHeading": "Specific Control Scanning",
+            "newHeading": "CLI Scanning"
+          },
+          {
+            "id": "yaml-and-helm-manifest-scanning-shift-left",
+            "oldHeading": "YAML and Helm Manifest Scanning (Shift-Left)",
+            "newHeading": "CLI Scanning"
+          },
+          {
+            "id": "image-vulnerability-scanning",
+            "oldHeading": "Image Vulnerability Scanning",
+            "newHeading": "CLI Scanning"
+          },
+          {
+            "id": "rbac-visualization-and-analysis",
+            "oldHeading": "RBAC Visualization and Analysis",
+            "newHeading": "CLI Scanning"
+          },
+          {
+            "id": "continuous-scanning-architecture",
+            "oldHeading": "Continuous Scanning Architecture",
+            "newHeading": "Operator Mode (In-Cluster)"
+          },
+          {
+            "id": "operator-components",
+            "oldHeading": "Operator Components",
+            "newHeading": "Operator Mode (In-Cluster)"
+          },
+          {
+            "id": "scheduled-scanning-configuration",
+            "oldHeading": "Scheduled Scanning Configuration",
+            "newHeading": "Operator Mode (In-Cluster)"
+          },
+          {
+            "id": "vulnerability-scanning-integration",
+            "oldHeading": "Vulnerability Scanning Integration",
+            "newHeading": "Operator Mode (In-Cluster)"
+          },
+          {
+            "id": "runtime-threat-detection-node-agent-with-ebpf",
+            "oldHeading": "Runtime Threat Detection (Node Agent with eBPF)",
+            "newHeading": "Operator Mode (In-Cluster)"
+          },
+          {
+            "id": "kubernetes-api-attack-detection",
+            "oldHeading": "Kubernetes API Attack Detection",
+            "newHeading": "Operator Mode (In-Cluster)"
+          },
+          {
+            "id": "risk-score-calculation",
+            "oldHeading": "Risk Score Calculation",
+            "newHeading": "Risk Scoring"
+          },
+          {
+            "id": "severity-levels",
+            "oldHeading": "Severity Levels",
+            "newHeading": "Risk Scoring"
+          },
+          {
+            "id": "viewing-risk-scores",
+            "oldHeading": "Viewing Risk Scores",
+            "newHeading": "Risk Scoring"
+          },
+          {
+            "id": "prioritization-strategy",
+            "oldHeading": "Prioritization Strategy",
+            "newHeading": "Risk Scoring"
+          },
+          {
+            "id": "ci-cd-integration-workflow",
+            "oldHeading": "CI/CD Integration Workflow",
+            "newHeading": "CI/CD Integration"
+          },
+          {
+            "id": "github-actions-workflow",
+            "oldHeading": "GitHub Actions Workflow",
+            "newHeading": "CI/CD Integration"
+          },
+          {
+            "id": "gitlab-ci-cd-integration",
+            "oldHeading": "GitLab CI/CD Integration",
+            "newHeading": "CI/CD Integration"
+          },
+          {
+            "id": "jenkins-pipeline-integration",
+            "oldHeading": "Jenkins Pipeline Integration",
+            "newHeading": "CI/CD Integration"
+          },
+          {
+            "id": "threshold-based-gates",
+            "oldHeading": "Threshold-Based Gates",
+            "newHeading": "CI/CD Integration"
+          },
+          {
+            "id": "eks-specific-controls",
+            "oldHeading": "EKS-Specific Controls",
+            "newHeading": "EKS-Specific Guide"
+          },
+          {
+            "id": "aws-auth-configmap-analysis",
+            "oldHeading": "aws-auth ConfigMap Analysis",
+            "newHeading": "EKS-Specific Guide"
+          },
+          {
+            "id": "irsa-iam-roles-for-service-accounts-validation",
+            "oldHeading": "IRSA (IAM Roles for Service Accounts) Validation",
+            "newHeading": "EKS-Specific Guide"
+          },
+          {
+            "id": "eks-security-best-practices-scan",
+            "oldHeading": "EKS Security Best Practices Scan",
+            "newHeading": "EKS-Specific Guide"
+          },
+          {
+            "id": "exception-policies",
+            "oldHeading": "Exception Policies",
+            "newHeading": "Control Exception Handling"
+          },
+          {
+            "id": "applying-exceptions-via-cli",
+            "oldHeading": "Applying Exceptions via CLI",
+            "newHeading": "Control Exception Handling"
+          },
+          {
+            "id": "accepted-risks-documentation",
+            "oldHeading": "Accepted Risks Documentation",
+            "newHeading": "Control Exception Handling"
+          },
+          {
+            "id": "inline-resource-exceptions",
+            "oldHeading": "Inline Resource Exceptions",
+            "newHeading": "Control Exception Handling"
+          },
+          {
+            "id": "periodic-scanning-schedule",
+            "oldHeading": "Periodic Scanning Schedule",
+            "newHeading": "Best Practices"
+          },
+          {
+            "id": "scanning-configuration",
+            "oldHeading": "Scanning Configuration",
+            "newHeading": "Best Practices"
+          },
+          {
+            "id": "compliance-reporting",
+            "oldHeading": "Compliance Reporting",
+            "newHeading": "Best Practices"
+          },
+          {
+            "id": "remediation-workflow",
+            "oldHeading": "Remediation Workflow",
+            "newHeading": "Best Practices"
+          },
+          {
+            "id": "integration-with-other-security-tools",
+            "oldHeading": "Integration with Other Security Tools",
+            "newHeading": "Best Practices"
+          },
+          {
+            "id": "prometheus-metrics-integration",
+            "oldHeading": "Prometheus Metrics Integration",
+            "newHeading": "Best Practices"
+          },
+          {
+            "id": "key-takeaways",
+            "oldHeading": "Key Takeaways",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "quick-reference-commands",
+            "oldHeading": "Quick Reference Commands",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "references",
+            "oldHeading": "References",
+            "newHeading": "Summary and References"
+          },
+          {
+            "id": "related-documentation",
+            "oldHeading": "Related Documentation",
+            "newHeading": "Summary and References"
+          }
+        ]
+      },
+      {
+        "path": "en/quizzes/security/11-kubescape-quiz.md",
+        "preserved": 10,
+        "anchors": [
+          {
+            "id": "_1-what-is-kubescape-s-project-status-in-the-cncf",
+            "oldHeading": "1. What is Kubescape's project status in the CNCF?",
+            "newHeading": "1. What is Kubescape’s current CNCF maturity level?"
+          },
+          {
+            "id": "_2-which-security-frameworks-does-kubescape-support-for-compliance-scanning",
+            "oldHeading": "2. Which security frameworks does Kubescape support for compliance scanning?",
+            "newHeading": "2. How should framework names and control counts be verified?"
+          },
+          {
+            "id": "_3-what-is-the-correct-cli-syntax-to-scan-a-kubernetes-cluster-with-kubescape",
+            "oldHeading": "3. What is the correct CLI syntax to scan a Kubernetes cluster with Kubescape?",
+            "newHeading": "3. What happens when a local file target is omitted from kubescape scan?"
+          },
+          {
+            "id": "_4-what-is-the-key-difference-between-kubescape-operator-and-cli-modes",
+            "oldHeading": "4. What is the key difference between Kubescape Operator and CLI modes?",
+            "newHeading": "4. Which statement correctly distinguishes Operator and CLI operation?"
+          },
+          {
+            "id": "_5-how-does-kubescape-calculate-risk-scores-for-controls",
+            "oldHeading": "5. How does Kubescape calculate risk scores for controls?",
+            "newHeading": "5. How are score and complianceScore related?"
+          },
+          {
+            "id": "_6-which-flag-enforces-a-compliance-threshold-in-ci-cd-pipelines",
+            "oldHeading": "6. Which flag enforces a compliance threshold in CI/CD pipelines?",
+            "newHeading": "6. What happens with compliance 55 and --compliance-threshold 56?"
+          },
+          {
+            "id": "_7-how-does-kubescape-differ-from-kube-bench",
+            "oldHeading": "7. How does Kubescape differ from kube-bench?",
+            "newHeading": "7. What is a sound basis for comparing kube-bench and Kubescape?"
+          },
+          {
+            "id": "_8-what-feature-does-kubescape-provide-for-rbac-security-analysis",
+            "oldHeading": "8. What feature does Kubescape provide for RBAC security analysis?",
+            "newHeading": "8. Which statement about RBAC controls is correct?"
+          },
+          {
+            "id": "_9-which-vulnerability-scanner-does-kubescape-integrate-with-for-image-scanning",
+            "oldHeading": "9. Which vulnerability scanner does Kubescape integrate with for image scanning?",
+            "newHeading": "9. Which statement correctly distinguishes image and host scans?"
+          },
+          {
+            "id": "_10-how-does-kubescape-handle-control-exceptions",
+            "oldHeading": "10. How does Kubescape handle control exceptions?",
+            "newHeading": "10. What are the correct CLI and in-cluster exception formats?"
+          }
+        ]
+      }
+    ],
+    "helm": {
+      "status": "passed",
+      "chart": "1.40.4",
+      "resources": 50,
+      "images": [
+        "quay.io/kubescape/kubescape:v4.0.13",
+        "quay.io/kubescape/operator:v0.2.169",
+        "quay.io/kubescape/prometheus-exporter:v0.2.23",
+        "quay.io/kubescape/storage:v0.0.331"
+      ],
+      "aggregatedAPI": [
+        "v1beta1.spdx.softwarecomposition.kubescape.io"
+      ],
+      "scope": "Posture-onlyvalues;noinstallation;generatedcertificatesarenotpublished"
+    },
+    "inlineGate": {
+      "status": "passed-reproduction-and-fix",
+      "skippedControlIDs": [
+        "C-0013",
+        "C-0016",
+        "C-0017",
+        "C-0030",
+        "C-0034",
+        "C-0055",
+        "C-0057",
+        "C-0270",
+        "C-0271"
+      ],
+      "cases": [
+        {
+          "script": "original.sh",
+          "exitCode": 0,
+          "expected": 0,
+          "complianceScore": 100,
+          "passed": true
+        },
+        {
+          "script": "fixed.sh",
+          "exitCode": 1,
+          "expected": 1,
+          "complianceScore": 55,
+          "passed": true
+        }
+      ],
+      "scope": "SyntheticlocalannotatedPod+actualCLI4.0.14;noSaaSclusterorimagecalls"
+    },
+    "isolatedGate": {
+      "status": "passed",
+      "cases": [
+        {
+          "case": "hostile-insecure",
+          "exitCode": 1,
+          "expected": 1,
+          "complianceScore": 55,
+          "reportNonempty": true,
+          "requests": 0,
+          "passed": true
+        },
+        {
+          "case": "hostile-inline",
+          "exitCode": 1,
+          "expected": 1,
+          "complianceScore": 55,
+          "reportNonempty": true,
+          "requests": 0,
+          "passed": true
+        },
+        {
+          "case": "option-filename",
+          "exitCode": 1,
+          "expected": 1,
+          "complianceScore": null,
+          "reportNonempty": false,
+          "requests": 0,
+          "passed": true
+        },
+        {
+          "case": "option-yaml-filename",
+          "exitCode": 1,
+          "expected": 1,
+          "complianceScore": 55,
+          "reportNonempty": true,
+          "requests": 0,
+          "passed": true
+        },
+        {
+          "case": "hostile-secure",
+          "exitCode": 0,
+          "expected": 0,
+          "complianceScore": 95,
+          "reportNonempty": true,
+          "requests": 0,
+          "passed": true
+        }
+      ],
+      "apiRequests": [],
+      "scope": "RealCLI+syntheticYAML+hostileloopbackkubeconfigandinclusterenv;noactualK8scredentials/API;fivecaseszeromockrequests"
+    }
+  },
+  "limits": [
+    "No real cluster/node scan, Operator installation, IAM authorization, registry/image pull, vulnerability database scan, SaaS submission or notification was performed.",
+    "Local YAML scans use the pinned local NSA/control-input snapshot and explicit no-exceptions; observed numbers apply only to those fixtures.",
+    "Helm rendering does not establish installation/runtime collection. SecurityException schema validation does not execute CEL/admission/controllers.",
+    "The generated chart scanner image is4.0.13; nativeCLItestingused4.0.14.",
+    "Browser validation used375/768/1920andlocalfontfallback;all10PNGsvisuallyinspectedafterfinalchanges.",
+    "The policy bundle license andSHAprovenance are shippedwiththeofflineexamples."
+  ],
+  "reviewFixes": [
+    "DisableinlineexceptionsforCI",
+    "Freshper-runemptykubeconfig/cache;clearKubernetesenvironmentanddisablehostscan",
+    "Normalizeinputtoabsolutepath;leading-optionfilenamefailsclosed",
+    "CorrectschedulecardtorequestBody.commands[].args.scanV1"
+  ]
+}

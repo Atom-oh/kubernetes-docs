@@ -39,7 +39,7 @@
           "sarif",
           "htmlpdf"
         ],
-        "note": "리스크 점수를 계산하고 심각도·우선순위를 매긴 뒤 -o 옵션에 따라 원하는 형식으로 출력한다."
+        "note": "score와 complianceScore를 구분하고 --format으로 형식, --output으로 파일을 지정한다."
       }
     ],
     "legend": {
@@ -61,7 +61,8 @@
           "label": "판단 · 정책"
         }
       }
-    }
+    },
+    "output": "ko-security-11-kubescape-1.html"
   },
   "lanes": [
     {
@@ -137,8 +138,9 @@
       "lane": "scoring",
       "col": 3,
       "type": "backend",
-      "label": "리스크 계산",
-      "tag": "핵심 판정"
+      "label": "점수 집계",
+      "tag": "핵심 판정",
+      "sublabel": "별도 점수 필드"
     },
     {
       "id": "sev",
@@ -170,7 +172,7 @@
       "col": 3,
       "type": "database",
       "label": "JSON",
-      "sublabel": "-o json"
+      "sublabel": "--format json"
     },
     {
       "id": "sarif",
@@ -178,7 +180,7 @@
       "col": 4,
       "type": "security",
       "label": "SARIF",
-      "sublabel": "-o sarif"
+      "sublabel": "--format sarif"
     },
     {
       "id": "htmlpdf",
@@ -186,8 +188,8 @@
       "col": 5,
       "type": "external",
       "label": "HTML / PDF",
-      "sublabel": "-o html · -o pdf",
-      "width": 124
+      "sublabel": "--format html,pdf",
+      "width": 155
     }
   ],
   "edges": [
@@ -254,11 +256,11 @@
     },
     {
       "dot": "amber",
-      "title": "리스크 점수",
+      "title": "점수와 게이트",
       "items": [
-        "리스크 점수 = Σ(컨트롤 심각도 × 영향 범위 × 실패 비율) / 전체 컨트롤 수",
-        "Critical · High · Medium · Low 심각도로 분류",
-        "점수 기준 우선순위 지정 후 출력"
+        "summaryDetails.score와 complianceScore는 별도 값",
+        "--compliance-threshold: 최소 준수 점수",
+        "--severity-threshold: 실패한 컨트롤의 심각도 기준"
       ]
     },
     {
