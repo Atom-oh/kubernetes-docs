@@ -471,7 +471,7 @@ en las integraciones HTTP/de mensajería compatibles. Los service maps provienen
 instrumentadas observadas, no únicamente de `DD_TAGS` arbitrarios.
 
 No etiquete por defecto identificadores de cliente/pedido en bruto, tokens ni cuerpos de solicitud.
-Revise la captura de la instrumentación, los mensajes de error y las reglas de muestreo/redacción para
+Revise la captura de la instrumentación, los mensajes de error y las reglas de muestreo/enmascaramiento para
 la aplicación real. La auto-instrumentación no garantiza la eliminación completa de PII.
 
 ## Log Management
@@ -819,7 +819,7 @@ el uso medido en lugar de tratar esa estimación como una garantía presupuestar
 
 Use labels consistentes de service/env/version y tags acotados, con permisos separados para la
 ingesta con API key y la automatización con application key. Revise la captura de la aplicación
-y las rutas de secretos/redacción antes de recopilar todos los logs, argumentos de proceso o profiles.
+y las rutas de secretos/enmascaramiento antes de recopilar todos los logs, argumentos de proceso o profiles.
 Monitoree las colas/descartes del collector y verifique las salidas reales tras cambiar filtros.
 
 Acuerde con el equipo de operaciones la severidad de las alertas, la propiedad y los objetivos de respuesta.
@@ -865,11 +865,11 @@ API/application keys o credenciales de proxy.
 
 Para los logs, inspeccione el identificador real de anotación/contenedor y el acceso a archivos, y luego
 las exclusiones de recopilación, el parsing y los filtros de índice. `agent configcheck`, el status, los
-logs y los archivos pueden exponer configuración o datos de la aplicación; inspeccione/redacte las
+logs y los archivos pueden exponer configuración o datos de la aplicación; inspeccione/enmascare las
 salidas antes de compartirlas.
 
 `agent flare --local` crea un paquete local para inspección. La carga o la recopilación remota de flares
-es una acción de soporte autorizada aparte. La redacción integrada es útil,
+es una acción de soporte autorizada aparte. El enmascaramiento integrado es útil,
 pero no sustituye la revisión del archivo en busca de los datos que recopiló su aplicación.
 
 ## Alcance de la validación

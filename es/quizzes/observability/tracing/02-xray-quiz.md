@@ -67,7 +67,7 @@ FixedRate, ReservoirSize y Priority son campos de sampling. RetentionDays no es 
    - A) Cada segment recibe de forma independiente 100 annotations indexadas
    - B) Las annotations se indexan para el filtrado de X-Ray; la metadata no indexada permanece almacenada y accesible
    - C) Las annotations solo aceptan strings
-   - D) La metadata se redacta automáticamente
+   - D) La metadata se enmascara automáticamente
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -76,7 +76,7 @@ FixedRate, ReservoirSize y Priority son campos de sampling. RetentionDays no es 
 
 **Explicación:**
 
-X-Ray indexa hasta50annotations por trace. La metadata no se indexa como annotations, pero no indexada no significa secreta ni inaccesible. Usa campos delimitados deliberadamente y elimina payloads sensibles, identificadores, tokens y parámetros SQL antes de la recopilación. index_all_attributes=false no es un processor de redacción.
+X-Ray indexa hasta50annotations por trace. La metadata no se indexa como annotations, pero no indexada no significa secreta ni inaccesible. Usa campos delimitados deliberadamente y elimina payloads sensibles, identificadores, tokens y parámetros SQL antes de la recopilación. index_all_attributes=false no es un procesador de enmascaramiento.
 
 </details>
 

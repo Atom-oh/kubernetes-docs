@@ -902,7 +902,7 @@ try (Segment segment = AWSXRay.beginSegment("ProcessOrder")) {
 
 ### 2. Uso de anotaciones y metadatos
 
-X-Ray indexa hasta **50 anotaciones por traza**, no 50 por cada segmento de forma independiente. Use campos deliberadamente de baja cardinalidad. Los metadatos no se indexan como anotaciones, pero permanecen almacenados y accesibles; no constituyen redacción ni un límite de privacidad. Elimine tokens de acceso, cookies, claves privadas, payloads sin procesar de solicitud/respuesta, identificadores de usuario y parámetros SQL antes de la recolección. El acceso y la retención de spans/logs de Transaction Search también requieren revisión. El ajuste index_all_attributes=false del collector no elimina los atributos no indexados.
+X-Ray indexa hasta **50 anotaciones por traza**, no 50 por cada segmento de forma independiente. Use campos deliberadamente de baja cardinalidad. Los metadatos no se indexan como anotaciones, pero permanecen almacenados y accesibles; no constituyen enmascaramiento ni un límite de privacidad. Elimine tokens de acceso, cookies, claves privadas, payloads sin procesar de solicitud/respuesta, identificadores de usuario y parámetros SQL antes de la recolección. El acceso y la retención de spans/logs de Transaction Search también requieren revisión. El ajuste index_all_attributes=false del collector no elimina los atributos no indexados.
 
 ```java
 // Synthetic, bounded examples. Never attach complete request/response bodies.
