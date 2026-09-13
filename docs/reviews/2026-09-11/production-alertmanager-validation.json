@@ -1,0 +1,603 @@
+{
+  "status": "passed",
+  "http": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T15:30:36.396016+00:00",
+    "deploymentRun": 34765196152,
+    "deploymentCommit": "1fb021029c3ba9bd2a5dcf32bfe0ceec5ec8b2af",
+    "includedPRs": [
+      310
+    ],
+    "pages": [
+      {
+        "pr": 310,
+        "path": "en/observability/alerting/01-alertmanager.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/alerting/01-alertmanager",
+        "status": 200,
+        "bytes": 774434,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/alerting/01-alertmanager",
+        "sha256": "d1ee2ae302e0a54aadd957f8dc9ed86f8ab471615f1124496b8493f39411e8d3",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-01-alertmanager-2.D7JC3vpE.png",
+            "status": 200,
+            "sha256": "b060500fa878836c530f8443a97fd4ed76ea1ff6bc154b9ad725e207be8a4cf3"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-01-alertmanager-3.GzX5DR-M.png",
+            "status": 200,
+            "sha256": "37cb99f12132ccd04c062b953cc4b7febd7201edc0fc8c5cbff1db396888e479"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-01-alertmanager-6.D5ILHXKE.png",
+            "status": 200,
+            "sha256": "2caf90860034fdf7665f2c1ca616fd002ea8067ab9e81210ca7d94b19b7099aa"
+          }
+        ]
+      },
+      {
+        "pr": 310,
+        "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/alerting/01-alertmanager-quiz",
+        "status": 200,
+        "bytes": 453337,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/alerting/01-alertmanager-quiz",
+        "sha256": "1f3733f593db3e2ca33986b5848cda6d6bf8fb8e415620bd5632841b5154f658",
+        "images": []
+      },
+      {
+        "pr": 310,
+        "path": "ko/observability/alerting/01-alertmanager.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/alerting/01-alertmanager",
+        "status": 200,
+        "bytes": 781131,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/alerting/01-alertmanager",
+        "sha256": "b1e2ff6aa447ab18ad5ba17c9112efefb9e2ab6dd0295d17e2c5fe8c8af5cd45",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-01-alertmanager-2.BgkbyoqK.png",
+            "status": 200,
+            "sha256": "04b8bd585b3ed199c3ab4ed6fe66641013a0bc90ab295dca93c9206735e2916e"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-01-alertmanager-3.DlPDfiOZ.png",
+            "status": 200,
+            "sha256": "e2507b9ef528ab45eed459fa6d8b1606220f2c46b3b17520211eb75ac81e2448"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-01-alertmanager-6.CZYOeRkn.png",
+            "status": 200,
+            "sha256": "413ef0f26772a769f7fc38b02d50eda4a13b703c7fe6859308c62014c2396fb4"
+          }
+        ]
+      },
+      {
+        "pr": 310,
+        "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/alerting/01-alertmanager-quiz",
+        "status": 200,
+        "bytes": 455001,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/alerting/01-alertmanager-quiz",
+        "sha256": "e5b9bcacb4d7aa8a21ae0b5d36f99d8a502c9735ceb13a35c669e4920fdaa447",
+        "images": []
+      }
+    ],
+    "viewers": [
+      {
+        "pr": 310,
+        "name": "en-observability-alerting-01-alertmanager-0.html",
+        "status": 200,
+        "sha256": "d771ba4ae8844a3990c324f72cfe91cb79dea33068e83c795b77642833a0e4fb",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 310,
+        "name": "en-observability-alerting-01-alertmanager-1.html",
+        "status": 200,
+        "sha256": "3e3c3dfc625190946b3a306f00cd4333890af3a4cb4b895ba1d47f328a51e2a3",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 310,
+        "name": "en-observability-alerting-01-alertmanager-4.html",
+        "status": 200,
+        "sha256": "7410b987f34fe4d5b4b9cdc75374f2d3a65a5f70924c2a49231a7caf3b63f4ec",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 310,
+        "name": "en-observability-alerting-01-alertmanager-5.html",
+        "status": 200,
+        "sha256": "899bdde5dfc4b96d8f25fbfeede99de629d704669702b976ca8e6392d1652a21",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 310,
+        "name": "ko-observability-alerting-01-alertmanager-0.html",
+        "status": 200,
+        "sha256": "0412f552a49139174ccd8475885e959b701889e970f7061895b88b2e3cb08d10",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 310,
+        "name": "ko-observability-alerting-01-alertmanager-1.html",
+        "status": 200,
+        "sha256": "40f64e63e05a386b96fe716a3cdc43e06d0248cde8dc859715a96ae76f6deb5c",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 310,
+        "name": "ko-observability-alerting-01-alertmanager-4.html",
+        "status": 200,
+        "sha256": "535b662430e638c5816370fca4754a8b90ca8795df50a1a9bde74440c6cc388c",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 310,
+        "name": "ko-observability-alerting-01-alertmanager-5.html",
+        "status": 200,
+        "sha256": "4e152d7c5bc6e0deb40d5ac1fa05f7eebe890eb744ea25cb275a41f446cfc0d4",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      }
+    ],
+    "scope": "Production HTTP, metadata and reviewed PNG/SVG comparison. No analytics or cluster execution."
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 880,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 880,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 880,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47558,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56133,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 602,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 602,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 602,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51149,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 981,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 981,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 981,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52523,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 567,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 567,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 567,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47371,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 454,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 454,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 454,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55796,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 455,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 455,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 455,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50978,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 628,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 628,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 628,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51794,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "24 cases on 8 fetched production viewers; motion/reduced-motion/visibility/theme/guided controls and 8 SVG exports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "limits": [
+    "Fourdeployedguides/quizzes and8correctedviewerSVGpayloadsmatchreviewedAlertmanagerbd587e00. SixinlinePNGreferencesmatchreviewedfiles.",
+    "24browsercasesforfetchedproductionviewersat375/768/1920passed;noexternalnotificationsorproductionAlertmanagerruntimeexecuted."
+  ]
+}

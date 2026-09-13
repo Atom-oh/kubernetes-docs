@@ -1,0 +1,2755 @@
+{
+  "status": "passed",
+  "productionHTTP": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T10:32:55.935758+00:00",
+    "deploymentRun": 34751099367,
+    "deploymentCommit": "4f80a2126f4c3bb7fdcb99702421fcd7542449d5",
+    "includedPRs": [
+      272,
+      274,
+      275
+    ],
+    "pages": [
+      {
+        "pr": 272,
+        "path": "en/labs/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/labs/",
+        "status": 200,
+        "bytes": 445467,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/labs/",
+        "sha256": "6a999d7ba6129096db0887f6c61508a80fcb50c9057c1bc2e27e8372e7c2cbfc",
+        "images": []
+      },
+      {
+        "pr": 272,
+        "path": "en/labs/observability/01-infrastructure-setup-lab.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/labs/observability/01-infrastructure-setup-lab",
+        "status": 200,
+        "bytes": 467903,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/labs/observability/01-infrastructure-setup-lab",
+        "sha256": "4e30e16e3314523f3898b2897a745dd33a7b616d90a47e9044b54139ed2c83fa",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-01-infrastructure-setup-lab-0.DvpwdH_m.png",
+            "status": 200,
+            "sha256": "0b95f5e4dcd03f52a46bae54752bed372b0ed081c381ac144800f8cf52122869"
+          }
+        ]
+      },
+      {
+        "pr": 272,
+        "path": "en/labs/observability/02-observability-stack-lab.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/labs/observability/02-observability-stack-lab",
+        "status": 200,
+        "bytes": 471542,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/labs/observability/02-observability-stack-lab",
+        "sha256": "2b80beafee616391531abd93ff09874335ded220a79265fa11654e69cbf54a46",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-02-observability-stack-lab-0.C_38e3x8.png",
+            "status": 200,
+            "sha256": "ac160922174afdcf0107d531fc6cacc467027dd24fdc2573aab44429b751359a"
+          }
+        ]
+      },
+      {
+        "pr": 272,
+        "path": "en/labs/observability/03-msa-deployment-lab.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/labs/observability/03-msa-deployment-lab",
+        "status": 200,
+        "bytes": 477651,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/labs/observability/03-msa-deployment-lab",
+        "sha256": "f5ce3dae05320b9415730d9e1902d67b5515e63d955ab07cc34bc5f4a15c5df9",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-03-msa-deployment-lab-10.ClNg97DO.png",
+            "status": 200,
+            "sha256": "5a6123cca8813b311658705886a6741ed1bc99238fc8bbefeb786e04566302a5"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-03-msa-deployment-lab-0.DX0Mr14Q.png",
+            "status": 200,
+            "sha256": "82094c8562fd75b3e4b1baa8fe9c601cbf0a9ec2971dd0d79682a9c087fbc80b"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-03-msa-deployment-lab-1.DCMhNgtT.png",
+            "status": 200,
+            "sha256": "46d2930e90931d40ca9d8a5d3096908f0cda7c593c5dca439775b7d61655aa5e"
+          }
+        ]
+      },
+      {
+        "pr": 272,
+        "path": "en/labs/observability/06-distributed-tracing-lab.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/labs/observability/06-distributed-tracing-lab",
+        "status": 200,
+        "bytes": 469632,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/labs/observability/06-distributed-tracing-lab",
+        "sha256": "e4f8d9e96a335eb614e8021222253d5d71dafce16cd94f4e35291461f34495ce",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-06-distributed-tracing-lab-0.B8eb5gDl.png",
+            "status": 200,
+            "sha256": "09969d0bd79f6ea36dbdc0bc245b85d1fb3366293c5bbe320ece1a94bba46811"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-06-distributed-tracing-lab-1.6AMe8cYc.png",
+            "status": 200,
+            "sha256": "d548b7a7d1c472df5b7f70be6326b4893eef750ae8dc660c624a72119156e0d0"
+          }
+        ]
+      },
+      {
+        "pr": 272,
+        "path": "en/labs/observability/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/labs/observability/",
+        "status": 200,
+        "bytes": 448967,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/labs/observability/",
+        "sha256": "af69b8760530e07908dfb76795192b86710ba92e032a8bef7069c4533f1e106a",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-overview-0.ZYOxMuqm.png",
+            "status": 200,
+            "sha256": "6600f3ad35d4c0787ae2cbe8760147ead8eacb138b35ef87a1016161ad98c81b"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-overview-2.BY_-2jVY.png",
+            "status": 200,
+            "sha256": "c4b388ef3a04f9253a04283426eb942e4398f3f629b7b7866bfb74c4b91c53d8"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-overview-3.B1LJ7URf.png",
+            "status": 200,
+            "sha256": "59447db3b8baa0b5c071f7d0455df1b47c7ee2e0218644282b3260b4c9b48dc6"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-overview-1.CnOVvwqx.png",
+            "status": 200,
+            "sha256": "1193366faf91c68291b1c31a8be11f0e2c341f36dc332504ac15cbb18ba7325c"
+          }
+        ]
+      },
+      {
+        "pr": 272,
+        "path": "en/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/labs/01-infrastructure-setup-quiz",
+        "status": 200,
+        "bytes": 445684,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/labs/01-infrastructure-setup-quiz",
+        "sha256": "21a5bea358cb382187f3efa37f3d611ddb4c8752ab260bca6f73a544dc57466d",
+        "images": []
+      },
+      {
+        "pr": 272,
+        "path": "en/quizzes/observability/labs/02-observability-stack-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/labs/02-observability-stack-quiz",
+        "status": 200,
+        "bytes": 445547,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/labs/02-observability-stack-quiz",
+        "sha256": "d514f261a10675d035b70ec64ec98e4a6516672cf4afff45aa7487dff7c5be13",
+        "images": []
+      },
+      {
+        "pr": 272,
+        "path": "en/quizzes/observability/labs/03-msa-deployment-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/labs/03-msa-deployment-quiz",
+        "status": 200,
+        "bytes": 444919,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/labs/03-msa-deployment-quiz",
+        "sha256": "93a4fb5a3437558c8200d87374b0f270915a165c6ed6352dfefb81739cfeaa5c",
+        "images": []
+      },
+      {
+        "pr": 272,
+        "path": "ko/labs/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/labs/",
+        "status": 200,
+        "bytes": 447635,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/labs/",
+        "sha256": "f192b181152de1d117f02ddca6160a3f453a65eacf94c4f5856df7ba498da2ab",
+        "images": []
+      },
+      {
+        "pr": 272,
+        "path": "ko/labs/observability/01-infrastructure-setup-lab.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/01-infrastructure-setup-lab",
+        "status": 200,
+        "bytes": 470950,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/01-infrastructure-setup-lab",
+        "sha256": "acb474194369bb725648f9c56d74ceb10bd310ed516d3d74c271fc6e53dca9c6",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-01-infrastructure-setup-lab-0.BhtwPrFJ.png",
+            "status": 200,
+            "sha256": "6d8f87f63cb369065315972aa3c8fe86cd5e8456e9b888f298774ce225792e0f"
+          }
+        ]
+      },
+      {
+        "pr": 272,
+        "path": "ko/labs/observability/02-observability-stack-lab.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/02-observability-stack-lab",
+        "status": 200,
+        "bytes": 474066,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/02-observability-stack-lab",
+        "sha256": "916cce027abe5f6cbb972995f1f182e749ddb3cbc09f79251636add9ad7997f9",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-02-observability-stack-lab-0.RDXdI5kh.png",
+            "status": 200,
+            "sha256": "661acb3c8f0cfe62dd3d82556c85c58c08c164ecf48076318bbf60d0d10d138c"
+          }
+        ]
+      },
+      {
+        "pr": 272,
+        "path": "ko/labs/observability/03-msa-deployment-lab.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/03-msa-deployment-lab",
+        "status": 200,
+        "bytes": 480470,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/03-msa-deployment-lab",
+        "sha256": "b4acc53e786351001672e26999565217c3c33ba94008612ed6466aa320d06234",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-03-msa-deployment-lab-10.B4kr7KhQ.png",
+            "status": 200,
+            "sha256": "6de3f156d104ac0494da558ac34418cf7c172d13d2cee4dfbdfa08f12746f874"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-03-msa-deployment-lab-0.Bo7Pxezp.png",
+            "status": 200,
+            "sha256": "126147d0fe07a7873a74d51ad2270548a8683122427cddf2f7b34867e77d5635"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-03-msa-deployment-lab-1.BvYM24BE.png",
+            "status": 200,
+            "sha256": "c889e572c66be7e357111282fb2e2f7c3a9f68ad10f57fbc8e28cf89dcb47412"
+          }
+        ]
+      },
+      {
+        "pr": 272,
+        "path": "ko/labs/observability/06-distributed-tracing-lab.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/06-distributed-tracing-lab",
+        "status": 200,
+        "bytes": 473172,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/06-distributed-tracing-lab",
+        "sha256": "48abee740f90cb33218965fb24b249238277a2a62fd31f341e8e593817c938fd",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-06-distributed-tracing-lab-0.CdRiRDR0.png",
+            "status": 200,
+            "sha256": "a4928e16b0680cf8bd9d89b53424d4f842b2bfd4f038294c6d5169c5343d10a2"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-06-distributed-tracing-lab-1.DSHKk6PC.png",
+            "status": 200,
+            "sha256": "bf423a10321a4493ccda697e68cc2437f1ba18f0c667c459a4ef304ea3af1ec7"
+          }
+        ]
+      },
+      {
+        "pr": 272,
+        "path": "ko/labs/observability/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/",
+        "status": 200,
+        "bytes": 451365,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/",
+        "sha256": "c10fc56ffbff9fe7183c7f8375baec829a71ce6674dbad341225c80b0e12d5f5",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-overview-0.BRGikXB9.png",
+            "status": 200,
+            "sha256": "5765cf22c6d4762183a51deddc4d74ce0924386dae1b82cc64d46dcbb015de48"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-overview-2.oym6V5LK.png",
+            "status": 200,
+            "sha256": "637c09b55b7dfafbdb2c90191f4b6a8ebc348afb33f80f9ce6679f53caa8c391"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-overview-3.BiFj7YQ9.png",
+            "status": 200,
+            "sha256": "91a55ae3ce63906244d550abbd90c0fc53eb19baf3876a452ee45422c3340bae"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-overview-1.BlbUrohp.png",
+            "status": 200,
+            "sha256": "47358dae3f32d5f6fcbc99b55540b103105221eebbd85c3d276e43928d70f940"
+          }
+        ]
+      },
+      {
+        "pr": 272,
+        "path": "ko/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/labs/01-infrastructure-setup-quiz",
+        "status": 200,
+        "bytes": 446519,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/labs/01-infrastructure-setup-quiz",
+        "sha256": "bad1db3c4ea19aca57432de6b47d064e178c3fd5747f972155e3de439c62cd3e",
+        "images": []
+      },
+      {
+        "pr": 272,
+        "path": "ko/quizzes/observability/labs/02-observability-stack-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/labs/02-observability-stack-quiz",
+        "status": 200,
+        "bytes": 446165,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/labs/02-observability-stack-quiz",
+        "sha256": "afaf8a36242bd1966f7b9f14b4e95cd0b6700a196305cbd1d2391a3172246a81",
+        "images": []
+      },
+      {
+        "pr": 272,
+        "path": "ko/quizzes/observability/labs/03-msa-deployment-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/labs/03-msa-deployment-quiz",
+        "status": 200,
+        "bytes": 445656,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/labs/03-msa-deployment-quiz",
+        "sha256": "c48448745f686261bc77db4ec271192ee49ee2753bbd6ac5834a216ce2593b16",
+        "images": []
+      },
+      {
+        "pr": 274,
+        "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/security/09-opa-gatekeeper-quiz",
+        "status": 200,
+        "bytes": 498826,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/security/09-opa-gatekeeper-quiz",
+        "sha256": "d9fe5796a7e804d6c0f492e4c717969261169038d7cf060a1c4c7761991df6a1",
+        "images": []
+      },
+      {
+        "pr": 274,
+        "path": "en/security/09-opa-gatekeeper.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/security/09-opa-gatekeeper",
+        "status": 200,
+        "bytes": 488415,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/security/09-opa-gatekeeper",
+        "sha256": "f86c15c8742fe825cc4e87612dd1262325f993d4081b296b1dcde64bcb78d1a1",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-09-opa-gatekeeper-0.Z9t_VMYI.png",
+            "status": 200,
+            "sha256": "e0a5d9dcd663146a440834c8cc5e43a1234eab696443cef9c1e01fae48718051"
+          }
+        ]
+      },
+      {
+        "pr": 274,
+        "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/security/09-opa-gatekeeper-quiz",
+        "status": 200,
+        "bytes": 502447,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/security/09-opa-gatekeeper-quiz",
+        "sha256": "551b0dcce7b81859e54b7d94f2cfb42968ddeb3896028db9d60ad70c95cc2804",
+        "images": []
+      },
+      {
+        "pr": 274,
+        "path": "ko/security/09-opa-gatekeeper.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/security/09-opa-gatekeeper",
+        "status": 200,
+        "bytes": 493732,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/security/09-opa-gatekeeper",
+        "sha256": "83ea4580a6da49b1f64fb51b5f00d803117585613cf8bdf3b3ba280ba30aa4ea",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-09-opa-gatekeeper-0.BxM4ayIz.png",
+            "status": 200,
+            "sha256": "f7355e3f8a8fce82f5289bced05b7ce5fc824c70bd822ac37984bea55e8619e1"
+          }
+        ]
+      },
+      {
+        "pr": 275,
+        "path": "en/eks-hybrid-nodes/07-node-lifecycle.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/07-node-lifecycle",
+        "status": 200,
+        "bytes": 613449,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/07-node-lifecycle",
+        "sha256": "8b33d765a53b52c77ba0ca3d934be3a3cd763e667a8351c668514dd85f4d4f87",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "en/eks-hybrid-nodes/08-operations.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/08-operations",
+        "status": 200,
+        "bytes": 545780,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/08-operations",
+        "sha256": "da26ff51289275d9a3e93ea3d218cc72233d763995c339ec6c78c99f32e5664e",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "en/eks-hybrid-nodes/09-bare-metal-os-setup.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/09-bare-metal-os-setup",
+        "status": 200,
+        "bytes": 528196,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/09-bare-metal-os-setup",
+        "sha256": "a9c1fda4d7149eb5c5c3500cb750a1112d50b238a019bd3cd600cb9c9bc52734",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/10-hybrid-nodes-gateway",
+        "status": 200,
+        "bytes": 666693,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/10-hybrid-nodes-gateway",
+        "sha256": "14cce3c701fc4a606c16b2c24d059137b0e04b246fdc0e73a09701dbe24b51fd",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.TI5i9lxG.png",
+            "status": 200,
+            "sha256": "b916a788f115355e08c429bb48e0b6fbe4252dea652a012dd5820b154fe9f40e"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.DygiDE48.png",
+            "status": 200,
+            "sha256": "51aac43a19df3a0b08b58b1771aa609e564a5d9ba57cc2006546b4c6cf4e48de"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.DHQ_k4mn.png",
+            "status": 200,
+            "sha256": "e31e84cf5045ec8a447dc4ed5c24013c6ea2b24268eac39b306950bef2226f7e"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.BWYP4uM5.png",
+            "status": 200,
+            "sha256": "bf7d715c36c005e86afc796eb67a7a3e875a99955092176eceb0c3adaede7f2a"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.CeCyoYlw.png",
+            "status": 200,
+            "sha256": "5d2ffb1adfa74476fbe85eb94b1a12188ba1e89c6bda825116d2fb2da966541f"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.FTsBkRIa.png",
+            "status": 200,
+            "sha256": "12931247dfcde0cf285e7abe74490c4cb771983fe49385342075d74cbbfb1e4a"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.Da6iOss-.png",
+            "status": 200,
+            "sha256": "a35bc1719cf202ac84db8652333853a9d04a650d010b66fd870fc8574eba029e"
+          }
+        ]
+      },
+      {
+        "pr": 275,
+        "path": "en/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz",
+        "status": 200,
+        "bytes": 446935,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz",
+        "sha256": "0a91fbce7f3e074eb0ef8e9bb011ff42176f970ca1945dd1ecb9c894e22b304d",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "en/quizzes/eks-hybrid-nodes/08-operations-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/eks-hybrid-nodes/08-operations-quiz",
+        "status": 200,
+        "bytes": 457810,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/eks-hybrid-nodes/08-operations-quiz",
+        "sha256": "2fa8357f4a60d475af8bbdad111a67bb71d8dbb6b83108edf4e61cf4c3eeac98",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "en/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz",
+        "status": 200,
+        "bytes": 456253,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz",
+        "sha256": "6a27d7e9d73f32f0174dd232fc61a6f4569c320fbd2fb0227a0f58132ad5d40b",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "en/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz",
+        "status": 200,
+        "bytes": 448049,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz",
+        "sha256": "05e1d2610c23e823edba662ac764d3029fff68a96e2136848c704f0b7bec7909",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "ko/eks-hybrid-nodes/07-node-lifecycle.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/eks-hybrid-nodes/07-node-lifecycle",
+        "status": 200,
+        "bytes": 620335,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/eks-hybrid-nodes/07-node-lifecycle",
+        "sha256": "5e212b0c10ad82bd9769665f90f69f5f37ab47168ab9ab750d4e140879af255e",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "ko/eks-hybrid-nodes/08-operations.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/eks-hybrid-nodes/08-operations",
+        "status": 200,
+        "bytes": 549195,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/eks-hybrid-nodes/08-operations",
+        "sha256": "fce82e5385ce2e0730178c154bd36b4ec707de8212f98b9744386d9b355d0ae7",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "ko/eks-hybrid-nodes/09-bare-metal-os-setup.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/eks-hybrid-nodes/09-bare-metal-os-setup",
+        "status": 200,
+        "bytes": 533209,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/eks-hybrid-nodes/09-bare-metal-os-setup",
+        "sha256": "dfdfc6c86f247832f096e80fa1772954c144eac875d2543c833c9a466a589859",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/eks-hybrid-nodes/10-hybrid-nodes-gateway",
+        "status": 200,
+        "bytes": 692889,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/eks-hybrid-nodes/10-hybrid-nodes-gateway",
+        "sha256": "32874fbeb2e393048d4309936b9dc60be117b262ba6e8595ec146a074af96cfb",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.CKLEEkxq.png",
+            "status": 200,
+            "sha256": "332a64cc3d30b203199a725318eb1b36207156d38864e89baba157b97f1ae616"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.DwRdUDad.png",
+            "status": 200,
+            "sha256": "4f562898b4a5aa8d33a1c3d9cb795599f4aec60d37a54290d1fd66250643a064"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.CHJ6yAH2.png",
+            "status": 200,
+            "sha256": "ad1c72e46bdba37872976e8c68ab8c0825cf5079537354f8437b38a91e693188"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.DyYr5Exi.png",
+            "status": 200,
+            "sha256": "3e58355e91967739f60de787de5051791dd0d4c05420f2d0df54a9a9fda2de7a"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.DrxiJdft.png",
+            "status": 200,
+            "sha256": "55d729b819b794d5e082797a0356c2857d3ea48490976401d5a904c69dd8b92d"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.DGAuEyEz.png",
+            "status": 200,
+            "sha256": "83d5186caeab4a17d9c8f8d2d92bb896c8ab0b2019afefb91115dd404b31364e"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.5tJlV0Q8.png",
+            "status": 200,
+            "sha256": "6b32214ad335ab8717fe6fdded42bd108f21f528a5ecb1e514115d5516af0cc1"
+          }
+        ]
+      },
+      {
+        "pr": 275,
+        "path": "ko/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz",
+        "status": 200,
+        "bytes": 448693,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz",
+        "sha256": "86a344f7887733b981483555374af5825005b5e9035627c84d468d5d2aa8dabf",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "ko/quizzes/eks-hybrid-nodes/08-operations-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/eks-hybrid-nodes/08-operations-quiz",
+        "status": 200,
+        "bytes": 461827,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/eks-hybrid-nodes/08-operations-quiz",
+        "sha256": "960bb80a793940da9b236327dc4bbfb7566c093df07665adf5174227baf0264e",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "ko/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz",
+        "status": 200,
+        "bytes": 459900,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz",
+        "sha256": "e191fbd309ca71d50335e8b7bc083f8081bd0836e06d7b8c45ab10594b97eecc",
+        "images": []
+      },
+      {
+        "pr": 275,
+        "path": "ko/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz",
+        "status": 200,
+        "bytes": 449618,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz",
+        "sha256": "bf78d1acda3158c16a5a282fd9cb89c5a9e2c583754a51626e9307367fe85b6a",
+        "images": []
+      }
+    ],
+    "viewers": [
+      {
+        "pr": 272,
+        "name": "en-labs-observability-01-infrastructure-setup-lab-0.html",
+        "status": 200,
+        "sha256": "a2a33d54e94e6ffee336916565ce0abcc7d672dca7759b321d7d44380b0f4ca9",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 272,
+        "name": "en-labs-observability-02-observability-stack-lab-0.html",
+        "status": 200,
+        "sha256": "3f620d4ef96faa6f993a14720531216274363b180edd3f47a714ab49f8f868e0",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 272,
+        "name": "en-labs-observability-03-msa-deployment-lab-0.html",
+        "status": 200,
+        "sha256": "c3807709bb9bd6efe662a4b0be2169dbdad5c88c7aa1e6b986e95d6a190bd7bb",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 272,
+        "name": "en-labs-observability-03-msa-deployment-lab-1.html",
+        "status": 200,
+        "sha256": "e27b8d9a85ac93282eab8051494b600ab64963dd9f7e884e136f363d1692e5b9",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 272,
+        "name": "en-labs-observability-03-msa-deployment-lab-10.html",
+        "status": 200,
+        "sha256": "784e3cba461cfa92ce3841159d58e35ab93811e2e818e39e068c6907ad100484",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 272,
+        "name": "en-labs-observability-overview-0.html",
+        "status": 200,
+        "sha256": "2dd0d67c9821efc864f3fa5c2990c20401b73f4bc5631cabd15cf1b3bbb27a13",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 272,
+        "name": "en-labs-observability-overview-1.html",
+        "status": 200,
+        "sha256": "d95b752c40d1fcda4ca296e0ee5d3df41cae4a2f5407af1239add52f62b64578",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 272,
+        "name": "en-labs-observability-overview-2.html",
+        "status": 200,
+        "sha256": "a6897f59975d08d2b10c28b028d6770834de9a5859e6b44c3c14e6a920539417",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 272,
+        "name": "en-labs-observability-overview-3.html",
+        "status": 200,
+        "sha256": "5404aedd5c7e9a19daad07d2897f9e30e892899e9796298560b1d5574911cc79",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 272,
+        "name": "ko-labs-observability-01-infrastructure-setup-lab-0.html",
+        "status": 200,
+        "sha256": "db69e679545ebbd6424f2c2cf04fc20811db3dfcf7a9fff9f06423f9d16df88e",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 272,
+        "name": "ko-labs-observability-02-observability-stack-lab-0.html",
+        "status": 200,
+        "sha256": "0e976eadcb89be9ebbda268386d5b86d8df9d8294ba353e3060d4c8e1ddf9480",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 272,
+        "name": "ko-labs-observability-03-msa-deployment-lab-0.html",
+        "status": 200,
+        "sha256": "c92875f354ab0570a78e67d303a0204f1bf8037a5106adcf47f6d665765412aa",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 272,
+        "name": "ko-labs-observability-03-msa-deployment-lab-1.html",
+        "status": 200,
+        "sha256": "41f2d61d6379e35188a40c54563ea3b57190c28b00ac1a9eb727be32bf5b11ec",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 272,
+        "name": "ko-labs-observability-03-msa-deployment-lab-10.html",
+        "status": 200,
+        "sha256": "cc24c26a6b2b6934b95566525ffb1b6d83c71326e36ca7a27ad226991d0f3be0",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 272,
+        "name": "ko-labs-observability-overview-0.html",
+        "status": 200,
+        "sha256": "8dfa3e661ad4606a16703b26d278efa3a35512db56153c80d48df1d6d147f12e",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 272,
+        "name": "ko-labs-observability-overview-1.html",
+        "status": 200,
+        "sha256": "8859642e36848b8b5f12ee128e51b3f36027d181213cf2dc119387aca4187fff",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 272,
+        "name": "ko-labs-observability-overview-2.html",
+        "status": 200,
+        "sha256": "80b0b624932afa47376b47d99902f8a6508380f8094a2e2c51f79afae5f55734",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 272,
+        "name": "ko-labs-observability-overview-3.html",
+        "status": 200,
+        "sha256": "1d473b05252e4a00715a56ba6b21a4c367db3fd71318f0d0f3f48d5db16ffc50",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 274,
+        "name": "en-security-09-opa-gatekeeper-0.html",
+        "status": 200,
+        "sha256": "3ddd1cf1621d1806095cf2b93234c4713d94264f95ef44d17e99db651909ee70",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 274,
+        "name": "ko-security-09-opa-gatekeeper-0.html",
+        "status": 200,
+        "sha256": "454653697ee78780cacb5fbe12f856319a4dafd004d06a03fe16fdd0bdb8236b",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 275,
+        "name": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+        "status": 200,
+        "sha256": "4e6c812be5a84095d72cdae078eba2b9488079078d00ae1bc2ebd62beca9b1b3",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 275,
+        "name": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+        "status": 200,
+        "sha256": "f66b80e01593e5a53535df911a7156211c43b036f5651b71761a19703aa24b82",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 275,
+        "name": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+        "status": 200,
+        "sha256": "d3b7a18d077b950f8b7f92c3e50cfe12cc3b914f72850320f58e92be2f9c04ab",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 275,
+        "name": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+        "status": 200,
+        "sha256": "6bcad34aaa43a405f504ec14c54a675c9ad05e78abc403ce241a5a1ba5c5d256",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 275,
+        "name": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+        "status": 200,
+        "sha256": "2fcec28e97f28921de747819cd66bd81fe5ef717219b0f6c6704f6de75ace9db",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 275,
+        "name": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+        "status": 200,
+        "sha256": "bd309c20497d5e181e5acd34220fea733faa726e8e3c31e497a7e7dcbeb636d5",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 275,
+        "name": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+        "status": 200,
+        "sha256": "c26739b6e0a253b23711378cb8e524a202b2372ff2b77908e6617453461c67f6",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 275,
+        "name": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+        "status": 200,
+        "sha256": "168c3a73c4e527ae00f8e62d484c0b512830e0a0b842dd56ab48ed90fe00133c",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 275,
+        "name": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+        "status": 200,
+        "sha256": "4b690b3325fa27212438d3c4bd10a9c025ce8497d0dfc9eaf49c71567042099d",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 275,
+        "name": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+        "status": 200,
+        "sha256": "a23e87c10b61ae35d2ebeef860753c060062ced5910881ea132b6381bb109df4",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 275,
+        "name": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+        "status": 200,
+        "sha256": "4b10bdf0a9943d239c4a8a6f61bf743d6f9f68ad871ca9169c85a4321c34eaad",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 275,
+        "name": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+        "status": 200,
+        "sha256": "74468bc3b72f8ce72d5eff4180a50e33cac31e9cae792e68732297e9c24ff7dd",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 275,
+        "name": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+        "status": 200,
+        "sha256": "6b44cc441e89f85e663a648f9da6b2d5f12c8a7abf80516a87933b014951bc5b",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 275,
+        "name": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+        "status": 200,
+        "sha256": "76a998e7bf6bd88722af146e917fb7769ebebc348476d7484bd6d35cfea70d04",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      }
+    ],
+    "scope": "Production HTTP, metadata and reviewed PNG/SVG comparison. No analytics or cluster execution."
+  },
+  "productionViewerBrowser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1224,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1224,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1224,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54422,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 905,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 905,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 905,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50567,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1194,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1194,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1194,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57404,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 822,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 822,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 822,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55240,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 757,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 757,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 757,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50075,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 925,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 925,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 925,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49979,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1324,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1324,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1324,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50530,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50278,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-02-observability-stack-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 586,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-02-observability-stack-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 586,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-02-observability-stack-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 586,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55785,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 818,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 818,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 818,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57449,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 672,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 672,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 672,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49783,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57455,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 698,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 698,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 698,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50275,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 630,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 630,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 630,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50940,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 487,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 487,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 487,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49323,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 808,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 808,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 808,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59469,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-09-opa-gatekeeper-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 874,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-09-opa-gatekeeper-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 874,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-09-opa-gatekeeper-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 874,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55538,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 962,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 962,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 962,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53987,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 575,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 575,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 575,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50930,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 614,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 614,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 614,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55028,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 482,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 482,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 482,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52763,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 639,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 639,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 639,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52564,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 548,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 548,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 548,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53431,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 739,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 739,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 739,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50684,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 537,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 537,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 537,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50106,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-02-observability-stack-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 468,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-02-observability-stack-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 468,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-02-observability-stack-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 468,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55778,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 720,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 720,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 720,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57427,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49554,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 708,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 708,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 708,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57430,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 534,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 534,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 534,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50100,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 484,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 484,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 484,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50734,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 397,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 397,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 397,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48923,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 629,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 629,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 629,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59281,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-09-opa-gatekeeper-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 645,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-09-opa-gatekeeper-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 645,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-09-opa-gatekeeper-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 645,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54954,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "102 cases on 34 fetched production viewers; motion/reduced-motion/visibility/theme/guided controls and 34 SVG exports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "limits": [
+    "No analytics requests or cluster execution; browser tests used fetched production viewer HTML with external network blocked.",
+    "The recorded successful deployment contains all three merged changes; later deployments can serve the same reviewed assets."
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "status": "passed",
+  "http": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T10:52:16.146867+00:00",
+    "deploymentRun": 34751817492,
+    "deploymentCommit": "26fb0a6238e8c58d56c5817e99dad5df9c5aa5c7",
+    "includedPRs": [
+      273
+    ],
+    "pages": [
+      {
+        "pr": 273,
+        "path": "en/observability/grafana/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/grafana/",
+        "status": 200,
+        "bytes": 517219,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/grafana/",
+        "sha256": "43ee92371c0299ab21084d65e3eeef96ac90cd6898869ec1cdbd6eaa7b8fdbd1",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-grafana-readme-0.5oA9SwTv.png",
+            "status": 200,
+            "sha256": "40934b2792e0bb6ed814bb7daf601f065db932716e330bd21c1229dd0d8176d9"
+          }
+        ]
+      },
+      {
+        "pr": 273,
+        "path": "en/quizzes/observability/grafana/grafana-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/grafana/grafana-quiz",
+        "status": 200,
+        "bytes": 447296,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/grafana/grafana-quiz",
+        "sha256": "c491cfcfd679046cbb8d61d69a7487d400b62c6975634fdb935bdf84b84ef8c4",
+        "images": []
+      },
+      {
+        "pr": 273,
+        "path": "ko/observability/grafana/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/grafana/",
+        "status": 200,
+        "bytes": 521984,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/grafana/",
+        "sha256": "2b99a627ccba0a0b125cbd7814c28758dafa88e03d1712b12aa0fe0eacfb4fbe",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-grafana-readme-0.DutVibW7.png",
+            "status": 200,
+            "sha256": "bafa5d02c46247743b725bfdb4519c692628d76dc29aa8d5b28a1c256a05a35d"
+          }
+        ]
+      },
+      {
+        "pr": 273,
+        "path": "ko/quizzes/observability/grafana/grafana-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/grafana/grafana-quiz",
+        "status": 200,
+        "bytes": 448954,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/grafana/grafana-quiz",
+        "sha256": "4120d1c6c336a466dd7be165c062ebfb258243d6fc7686db82ec218f30b972f7",
+        "images": []
+      }
+    ],
+    "viewers": [
+      {
+        "pr": 273,
+        "name": "en-observability-grafana-readme-0.html",
+        "status": 200,
+        "sha256": "63a205e7e35450dcc55a0369cb6263fa93b210ba8b39c372d6073f4ca0a18464",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 273,
+        "name": "ko-observability-grafana-readme-0.html",
+        "status": 200,
+        "sha256": "4daa0c97d2e2999a2dab5dad35584e648c1c9cd9c74e204871724ac78c54064c",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      }
+    ],
+    "scope": "Production HTTP, metadata and reviewed PNG/SVG comparison. No analytics or cluster execution."
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-grafana-readme-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 935,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-grafana-readme-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 935,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-grafana-readme-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 935,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56512,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-grafana-readme-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 676,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-grafana-readme-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 676,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-grafana-readme-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 676,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56086,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "6 cases on 2 fetched production viewers; motion/reduced-motion/visibility/theme/guided controls and 2 SVG exports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  }
+}

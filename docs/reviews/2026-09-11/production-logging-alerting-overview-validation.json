@@ -1,0 +1,2721 @@
+{
+  "status": "passed",
+  "http": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T11:37:16.478156+00:00",
+    "deploymentRun": 34753854017,
+    "deploymentCommit": "70e6d8c487cf3ef059508b7ddf69aa29f771e34d",
+    "includedPRs": [
+      276,
+      284
+    ],
+    "pages": [
+      {
+        "pr": 276,
+        "path": "en/observability/logging/01-loki.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/logging/01-loki",
+        "status": 200,
+        "bytes": 575960,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/logging/01-loki",
+        "sha256": "c8e384c3348164912c5607086622c1128130ddd4794bc8af9e2d453617663000",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "en/observability/logging/02-opensearch.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/logging/02-opensearch",
+        "status": 200,
+        "bytes": 651184,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/logging/02-opensearch",
+        "sha256": "682ad4aa9c69f7b66761af73aec143eed9290ba167e382fdb97c68ada4707bc9",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-logging-02-opensearch-0.BfLjlyG9.png",
+            "status": 200,
+            "sha256": "bd126cc191011cf91e21e728d083785f281a041e90dfaf1ae3987aa031c44aa1"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-logging-02-opensearch-1.BuW_5F6l.png",
+            "status": 200,
+            "sha256": "52254ec2c5b605a9251fbe57cbdf70f4461d4a7d4481ef745a52165ac5ca9679"
+          }
+        ]
+      },
+      {
+        "pr": 276,
+        "path": "en/observability/logging/03-cloudwatch-logs.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/logging/03-cloudwatch-logs",
+        "status": 200,
+        "bytes": 608019,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/logging/03-cloudwatch-logs",
+        "sha256": "658c7aef498a75ef8f072ba62985ebcd063f6ed18f616b7f5385c3d8c0893785",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "en/observability/logging/04-clickhouse.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse",
+        "status": 200,
+        "bytes": 591611,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse",
+        "sha256": "30e150d6ca858b718185dc5e8cf2f83832acb775013dbbda8fcf3c6e5222fc87",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-logging-04-clickhouse-0.CfW0cnri.png",
+            "status": 200,
+            "sha256": "9deadb1b0c1f6351c2fc4569c5f2fa91ef4426da14115d1441dfe6d3ee6c9faf"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-logging-04-clickhouse-1.D5dBJYcR.png",
+            "status": 200,
+            "sha256": "9eefe4c8b0e01110cbaaf7ad36ea95d2a2df5b0701b0803f0c6a2e1b044f2cff"
+          }
+        ]
+      },
+      {
+        "pr": 276,
+        "path": "en/observability/logging/05-collectors.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/logging/05-collectors",
+        "status": 200,
+        "bytes": 588663,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/logging/05-collectors",
+        "sha256": "5a4f7052ce0a0c3ad0c2a89cb6e7031f0b9e554106f114e525c10c9b068b809d",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-logging-05-collectors-0.Bxi2PmY7.png",
+            "status": 200,
+            "sha256": "78ec745af077bee622bd6d0bd41dbadee9c91dee075cd9b8e6e3d598f5ba7dba"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-logging-05-collectors-1.C2cXaj54.png",
+            "status": 200,
+            "sha256": "23e9c15b6c0c58caff57e8e8a4b465e7d9b39550a1e2ea34cef34c12ac60653c"
+          }
+        ]
+      },
+      {
+        "pr": 276,
+        "path": "en/observability/logging/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/logging/",
+        "status": 200,
+        "bytes": 473784,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/logging/",
+        "sha256": "d140134fd9bb29f4983dc2c0420635f982910d57e40fb615c3be1c0ee0c8b1d7",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "en/quizzes/observability/logging/01-loki-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/01-loki-quiz",
+        "status": 200,
+        "bytes": 446463,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/01-loki-quiz",
+        "sha256": "b6468d2677bd983bd43e0d60f0ddabf6f6b024c7da38c67a444b75d6ca6de34e",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "en/quizzes/observability/logging/02-opensearch-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/02-opensearch-quiz",
+        "status": 200,
+        "bytes": 447224,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/02-opensearch-quiz",
+        "sha256": "daff4c505462898e4e41ee4649288ab84bdcf639af3a0c502a5e2586906dbf1f",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/03-cloudwatch-logs-quiz",
+        "status": 200,
+        "bytes": 446286,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/03-cloudwatch-logs-quiz",
+        "sha256": "dbd5d62eee602eb1f1112fbeded87e8268219ff9f8747555adf35df47e910238",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "en/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/04-clickhouse-quiz",
+        "status": 200,
+        "bytes": 446255,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/04-clickhouse-quiz",
+        "sha256": "9f5f6327aea096d375ef58843a28323c8866e8e179f807ec8b6d447547a83e0d",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "en/quizzes/observability/logging/05-collectors-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/05-collectors-quiz",
+        "status": 200,
+        "bytes": 446223,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/05-collectors-quiz",
+        "sha256": "e2dd05d713b910e16506c9fcc65ac3814158e22452b0ff5cbcb838e318dba3ca",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "en/quizzes/observability/logging/README-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/README-quiz",
+        "status": 200,
+        "bytes": 446182,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/logging/README-quiz",
+        "sha256": "8930fc85a143cf2dc3c2a89fafee5ca453ae185f693ec6a628c205b158c46c6f",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "ko/observability/logging/01-loki.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/01-loki",
+        "status": 200,
+        "bytes": 580621,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/01-loki",
+        "sha256": "8f1852b44935565af5101adde01d85cb0edfd604aa2dcec5d334795dc0c1f4cd",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "ko/observability/logging/02-opensearch.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/02-opensearch",
+        "status": 200,
+        "bytes": 655805,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/02-opensearch",
+        "sha256": "25ad8b95dae69d7d3b36fabd3987f669be0ec657ba6b825a437f84e02db136d5",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-logging-02-opensearch-0.CZjzyaL6.png",
+            "status": 200,
+            "sha256": "acad38bc683a7e58637e60cad86718d03bb3de6d76b2f97d7bfbde2e9dfa1770"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-logging-02-opensearch-1.Cu-X2dbV.png",
+            "status": 200,
+            "sha256": "37e7a4b97e304b94f8bf5d536867cb5111f33dc1c5661f4d04aaadfa1c56e198"
+          }
+        ]
+      },
+      {
+        "pr": 276,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/03-cloudwatch-logs",
+        "status": 200,
+        "bytes": 612830,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/03-cloudwatch-logs",
+        "sha256": "c05c37f0f1fd14be2ec504fcea3191a788900d7124cc055b374e715e381e6129",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "ko/observability/logging/04-clickhouse.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/04-clickhouse",
+        "status": 200,
+        "bytes": 597500,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/04-clickhouse",
+        "sha256": "2251f037b52429c16f8d2019a8aaa73904099a1e91a667da5325c90e5c5d2da1",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-logging-04-clickhouse-0.DQV8ngHM.png",
+            "status": 200,
+            "sha256": "c00708747ff2b062715c36674cff6ddacf18f35c1daedbb69707b39cdfa20c69"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-logging-04-clickhouse-1.Ctnkuv6q.png",
+            "status": 200,
+            "sha256": "cb97454c3a3e4aadf4a60fb4bf031f848ca2d4686027da93af158383a696d48c"
+          }
+        ]
+      },
+      {
+        "pr": 276,
+        "path": "ko/observability/logging/05-collectors.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/05-collectors",
+        "status": 200,
+        "bytes": 591747,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/05-collectors",
+        "sha256": "54267ea185c5d20f0773e5b199fd6035cc3c58a0d03f3ada5b226dc579cabbae",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-logging-05-collectors-0.CNzoW_w2.png",
+            "status": 200,
+            "sha256": "01a6d9eda7ac23150521bbb84d61222983255ff94f309e8cdbd036de00ced507"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-logging-05-collectors-1.Blj4wEbq.png",
+            "status": 200,
+            "sha256": "795c54b9d186158f2b70b72b6239dff35c71bf51f244c2a4b70f6446fda66aef"
+          }
+        ]
+      },
+      {
+        "pr": 276,
+        "path": "ko/observability/logging/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/",
+        "status": 200,
+        "bytes": 476135,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/logging/",
+        "sha256": "b3e7c3868df51335bb084d724ef0880dbc8653de4079cc783ddc2d456e8f8eb4",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "ko/quizzes/observability/logging/01-loki-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/01-loki-quiz",
+        "status": 200,
+        "bytes": 447832,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/01-loki-quiz",
+        "sha256": "a1903566da134f221d222347fda0d05a382d0f52dfed2a6bba57049b610a2ab9",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "ko/quizzes/observability/logging/02-opensearch-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/02-opensearch-quiz",
+        "status": 200,
+        "bytes": 448448,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/02-opensearch-quiz",
+        "sha256": "712087cee1085770a1f32324a6987eaabd3415796b2720ee6e29e6998ca82677",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/03-cloudwatch-logs-quiz",
+        "status": 200,
+        "bytes": 447475,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/03-cloudwatch-logs-quiz",
+        "sha256": "e627af004bb80cc953b73b8a0841c95d16c11f53e42d17ca687520a26358ee9d",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/04-clickhouse-quiz",
+        "status": 200,
+        "bytes": 447434,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/04-clickhouse-quiz",
+        "sha256": "752376ae71dad5687b54dcf66edb788ffae151b13cab2fe684d35dba5fad4fda",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "ko/quizzes/observability/logging/05-collectors-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/05-collectors-quiz",
+        "status": 200,
+        "bytes": 447308,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/05-collectors-quiz",
+        "sha256": "4ba85176eab8f7440f90f17e45242b3a755cb5dfce97a568897a5daebf171446",
+        "images": []
+      },
+      {
+        "pr": 276,
+        "path": "ko/quizzes/observability/logging/README-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/README-quiz",
+        "status": 200,
+        "bytes": 447157,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/logging/README-quiz",
+        "sha256": "d0776dd22286520512efb399e83b21ea7a1e999fc2fd902d404e0733b719b1a4",
+        "images": []
+      },
+      {
+        "pr": 284,
+        "path": "en/observability/alerting/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/observability/alerting/",
+        "status": 200,
+        "bytes": 520104,
+        "canonical": "https://www.atomai.click/kubernetes-docs/en/observability/alerting/",
+        "sha256": "bb97c4f8b0b1e9795c0920f1d615955e8e40f4ec2a97171bf83baeaaec31e9f2",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-readme-0.Dvx81E4s.png",
+            "status": 200,
+            "sha256": "c2e1e54683f962a4dc53e24b56f6c6e162daeec97edb785d958fd45400fbdc58"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-readme-1.Cx3SXI6o.png",
+            "status": 200,
+            "sha256": "379dd2a5992beefa4ab4b4f0a02c602a928c5b7b7bd29ea4dfd953ced66f84c1"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-readme-2.lvdXFlAr.png",
+            "status": 200,
+            "sha256": "25fb5653349101b96b82b1d01cda9c908edaf4cf4baa0d7ae603728d209a8e38"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-readme-3.DnniA2jZ.png",
+            "status": 200,
+            "sha256": "1a8dcd09b143ff545e3c1d2b6fc03c546fbc2293cfaf6ed3bd642be65cbb505c"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-readme-5.BRtrrxpG.png",
+            "status": 200,
+            "sha256": "6bc8fb94448a5220be888e7569b36a8744802fe5c443eaa2b39452e322ab80b3"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-readme-8.C3naaKtr.png",
+            "status": 200,
+            "sha256": "3ddcc06019cfabcde9e7cb630481ef0a38d9a251751b8affc06304eb09728546"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-readme-4.3DqrDTqB.png",
+            "status": 200,
+            "sha256": "256075e6f76125226d975f040a2c3b0ae0074570a2df4755f11e942374f74752"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-readme-6.D8PszIZ5.png",
+            "status": 200,
+            "sha256": "d28b77e5a1135240d9ceeeb64b0e1032f649a15a7a7eb0d6de640edb01a3f763"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-observability-alerting-readme-7.DAzObhzB.png",
+            "status": 200,
+            "sha256": "b9fa9a250434fe7f38a7c1f834d031d614f5a9420ed5d154140bb3d8a89ae453"
+          }
+        ]
+      },
+      {
+        "pr": 284,
+        "path": "ko/observability/alerting/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/alerting/",
+        "status": 200,
+        "bytes": 525115,
+        "canonical": "https://www.atomai.click/kubernetes-docs/ko/observability/alerting/",
+        "sha256": "b51af837fa0524e41cf2815373972d8094736f4acfbd7bd764d1ede570728110",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-readme-0.CneiMlBe.png",
+            "status": 200,
+            "sha256": "fbb1bf7c7a0afef204de793206152f63fe077ae6062add5372d48432f052f55a"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-readme-1.DXZcr3RA.png",
+            "status": 200,
+            "sha256": "968bdb4751f39105f89ca2d7d6291701eaf1e9ff675d6738ad979e2ece987634"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-readme-2.dw3YIIzg.png",
+            "status": 200,
+            "sha256": "3c8213619a56b227d05e95ebcf2765ee1b3f73ced03e4c288919b537e570ffe5"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-readme-3.DcjqgAqF.png",
+            "status": 200,
+            "sha256": "5a9d8804ddb4e0011dc1ad82e6c03048892ad717018dc547206485783ba193b8"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-readme-4.FAxIXeXh.png",
+            "status": 200,
+            "sha256": "6b2a97ce93104a810b685243438d57e32349200382a9f7eaca41c4c420e73dd9"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-readme-5.C6cDhINY.png",
+            "status": 200,
+            "sha256": "10fba1b0c6dee4182915f467cddf67026ad6e930d4d566dcfea4f0cb3b1291a1"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-readme-6.0m3WIwMm.png",
+            "status": 200,
+            "sha256": "14ef6bc6da489a428b1cc0884382356d93d63632a14af759daecc9b7e2c517a3"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-readme-7.Cmx5moJa.png",
+            "status": 200,
+            "sha256": "1b4e57d81be67403c0564b066fdd0a8a42adaaa8409b4f324bb71a8e19c8ecc5"
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-observability-alerting-readme-8.jtoZA5mk.png",
+            "status": 200,
+            "sha256": "4191c76b15d475b04818faf0dcf12d21d472790a0c24d6162fc136fc55d43501"
+          }
+        ]
+      }
+    ],
+    "viewers": [
+      {
+        "pr": 276,
+        "name": "en-observability-logging-01-loki-0.html",
+        "status": 200,
+        "sha256": "06e98d8d5fc1ca1f87a9d77005a796e4be0c6d8b0825587947218d7b244702ce",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 276,
+        "name": "en-observability-logging-01-loki-1.html",
+        "status": 200,
+        "sha256": "49557cf064fb56ff381e97aeab051f96e5bba5ee517eb03a2e2ac336c6c2d5e6",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 276,
+        "name": "en-observability-logging-03-cloudwatch-logs-0.html",
+        "status": 200,
+        "sha256": "eaa875e96b5be467b1ec7abc0e48e357961dcba0ab731ebdf0e2f60ba9fef168",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 276,
+        "name": "en-observability-logging-05-collectors-2.html",
+        "status": 200,
+        "sha256": "02769e1350dfc8411573f6df21c90b5efb20a7d0dce2e65816102a44c6d6c3fd",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 276,
+        "name": "en-observability-logging-05-collectors-3.html",
+        "status": 200,
+        "sha256": "2c3b03fccb170dae9940a15116544cca69eb39bf63e19e74a6356d4635056772",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 276,
+        "name": "en-observability-logging-05-collectors-4.html",
+        "status": 200,
+        "sha256": "3f0476bf1172fdec2366c02d744e3f63ce1ef7e72c7aaad33df2a20466b810bf",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 276,
+        "name": "en-observability-logging-readme-0.html",
+        "status": 200,
+        "sha256": "85289c29bb5644275c629234351f293b9a07153f50be9cb747f9705483e329a1",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 276,
+        "name": "en-observability-logging-readme-1.html",
+        "status": 200,
+        "sha256": "859faf8c0834972986c0d4016d223b313f03775d6e4b4536b542a5f136b4a7b2",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 276,
+        "name": "ko-observability-logging-01-loki-0.html",
+        "status": 200,
+        "sha256": "cfba9d7e2c825d2a552aa1620e5e3e53ce40bb7b572a3df87f6c8dca33fad899",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 276,
+        "name": "ko-observability-logging-01-loki-1.html",
+        "status": 200,
+        "sha256": "a9c08b45cdafbee698be11b0ac404b0b35303ea92d1f6d024ef15c3e7e42b4b1",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 276,
+        "name": "ko-observability-logging-03-cloudwatch-logs-0.html",
+        "status": 200,
+        "sha256": "1ad2489d4d22b99e8526fd8174b446a3720315a3ab14f6da836bf90869eab0a9",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 276,
+        "name": "ko-observability-logging-05-collectors-2.html",
+        "status": 200,
+        "sha256": "589b61e09b887d7600d98cb89201bebb7824eee80e92a38fc97cf2a58098c6f9",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 276,
+        "name": "ko-observability-logging-05-collectors-3.html",
+        "status": 200,
+        "sha256": "5eb037731cb102135fe04bc58756a8297d8e950b7dfc627c1fda4a9217e7aa02",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 276,
+        "name": "ko-observability-logging-05-collectors-4.html",
+        "status": 200,
+        "sha256": "bb22e6bb65ec23154af769972850159ec2699b5d5d0e92dd774c0f8d4ad6da1a",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 276,
+        "name": "ko-observability-logging-readme-0.html",
+        "status": 200,
+        "sha256": "2868b095f8f2f89e64cef48b30411072b3a9e741e46c0615da966312d372204a",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 276,
+        "name": "ko-observability-logging-readme-1.html",
+        "status": 200,
+        "sha256": "00d275630be8f2cb33f53496b50a5ef7905048f54449f1199dede4f9b89b0754",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 284,
+        "name": "en-observability-alerting-readme-0.html",
+        "status": 200,
+        "sha256": "9c5912129fe7c18a90da7fc494c1d253653ccfe690089afe408ebdc3ed8b3734",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 284,
+        "name": "en-observability-alerting-readme-1.html",
+        "status": 200,
+        "sha256": "cf3e40d733dd890084877073a013f9aef0e33f440f64f29188737b4f7e9e194f",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 284,
+        "name": "en-observability-alerting-readme-2.html",
+        "status": 200,
+        "sha256": "99430c34ce0d24c8f053f8af5c609f1725e9fbd01ab808653854e2080c879f10",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 284,
+        "name": "en-observability-alerting-readme-3.html",
+        "status": 200,
+        "sha256": "4c57fda31ebe456e231ba7f654794ce6faff33789ce87bd02ba1e38dc280021e",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 284,
+        "name": "en-observability-alerting-readme-4.html",
+        "status": 200,
+        "sha256": "32e03fd1703f2a06c9d86f4eea4a550cce23537ffbda0270923e0b4ca409caaf",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 284,
+        "name": "en-observability-alerting-readme-5.html",
+        "status": 200,
+        "sha256": "e2c79761850de2ed05649c8c21cad1e89dcbda352c45c6ebeac09bb8836641f9",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 284,
+        "name": "en-observability-alerting-readme-6.html",
+        "status": 200,
+        "sha256": "596b431cfacc2e5b003500a2c610f50b5ceb3684c4a69fd8741fbbda6b2d4e7b",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 284,
+        "name": "en-observability-alerting-readme-7.html",
+        "status": 200,
+        "sha256": "17ae181e9f9ac168ae1a4bd893a34c41fe54442e2894fcd374d777c26fba6bd0",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 284,
+        "name": "en-observability-alerting-readme-8.html",
+        "status": 200,
+        "sha256": "b671796014db67e9722307424f6deda4cdfe01f63cc9d0f2b531bdbca7e83d73",
+        "reviewedSvgMatches": true,
+        "language": "en"
+      },
+      {
+        "pr": 284,
+        "name": "ko-observability-alerting-readme-0.html",
+        "status": 200,
+        "sha256": "9eea5a32bdf7de2a0108d93ac3fff845eb153ac238aa0b26377d133269d53ec2",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 284,
+        "name": "ko-observability-alerting-readme-1.html",
+        "status": 200,
+        "sha256": "bbbb6eb75cb32fad6cf6d67d671e64f9e681cab19b192207ca11f8bfbebfe150",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 284,
+        "name": "ko-observability-alerting-readme-2.html",
+        "status": 200,
+        "sha256": "362356fcddbe950536c539159296b77f2a1a60811f7a3fe87cc0273817b828e5",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 284,
+        "name": "ko-observability-alerting-readme-3.html",
+        "status": 200,
+        "sha256": "2e86a8f58dcddbf814eb8d2425bdf8d1f8844929bfd02687661599daffcd2d89",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 284,
+        "name": "ko-observability-alerting-readme-4.html",
+        "status": 200,
+        "sha256": "3257193b4bc31210c7d2bddf5fa556f87c3bf461fbf146ed21499c2ec6ae67fb",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 284,
+        "name": "ko-observability-alerting-readme-5.html",
+        "status": 200,
+        "sha256": "d6a00d1b092760d9fb3f6131f3a263342d37d48c4251b8676d6dffc516430219",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 284,
+        "name": "ko-observability-alerting-readme-6.html",
+        "status": 200,
+        "sha256": "7f95d34df5c755f27dba51a29b60242be7806b895238d0bc28af028fa4724993",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 284,
+        "name": "ko-observability-alerting-readme-7.html",
+        "status": 200,
+        "sha256": "6f1efc4292021911161fedd49ae77cbbf63899acea9633d35333c97b4ece0c2f",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      },
+      {
+        "pr": 284,
+        "name": "ko-observability-alerting-readme-8.html",
+        "status": 200,
+        "sha256": "545220d2e8beccb82a4ea7904afcb497c7bb3643d2496cca932f7210fa4bb3ba",
+        "reviewedSvgMatches": true,
+        "language": "ko"
+      }
+    ],
+    "scope": "Production HTTP, metadata and reviewed PNG/SVG comparison. No analytics or cluster execution."
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-alerting-readme-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 914,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 914,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 914,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51414,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1010,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1010,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1010,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54502,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 755,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 755,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 755,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51233,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1068,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1068,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1068,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54142,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 984,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 984,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 984,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54305,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 664,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 664,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 664,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50725,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-6.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 612,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-6.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 612,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-6.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 612,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47933,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-7.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 606,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-7.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 606,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-7.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 606,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49043,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-8.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 630,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-8.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 630,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-readme-8.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 630,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47805,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1269,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1269,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1269,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57920,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 476,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 476,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 476,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48492,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 908,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 908,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 908,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58203,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1035,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1035,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1035,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57971,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1175,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1175,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1175,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59517,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 293,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 293,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 293,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 45888,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 728,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 728,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 728,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52126,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 288,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 288,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 288,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 45890,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 573,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 573,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 573,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51155,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 619,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 619,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 619,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53555,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 478,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 478,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 478,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50932,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 617,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 617,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 617,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52906,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 455,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 455,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 455,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50124,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 390,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 390,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 390,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47578,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-6.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 679,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-6.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 679,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-6.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 679,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53785,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-7.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 379,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-7.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 379,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-7.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 379,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47413,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-8.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 384,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-8.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 384,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-readme-8.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 384,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48756,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 842,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 842,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 842,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57121,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 328,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 328,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 328,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48043,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57451,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 796,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 796,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 796,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57687,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 885,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 885,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 885,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59065,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 211,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 211,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 211,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 45649,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 521,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 521,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 521,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51815,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 193,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 193,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 193,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 45577,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "102 cases on 34 fetched production viewers; motion/reduced-motion/visibility/theme/guided controls and 34 SVG exports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "limits": [
+    "NoGAevents,fullsitebuildorcloudruntimeexecution.",
+    "LegacyClickHouseproductionHTMLwasalsoverifiedagainstreviewedsource;3viewportsandquery/merge-resetcancellationpassed."
+  ],
+  "legacyClickHouse": {
+    "http": {
+      "status": 200,
+      "url": "https://www.atomai.click/kubernetes-docs/assets/clickhouse-3tier-pipeline.html",
+      "sha256": "a7175cfaa66295abae1ffc6a2c853f05b6e4374abcef3bebc624a8765ff726e6",
+      "matchesReviewedSource": true,
+      "verifiedAt": "2026-09-13T12:32:14.857371+00:00"
+    },
+    "browser": {
+      "status": "passed",
+      "viewports": [
+        {
+          "width": 375,
+          "layout": {
+            "width": 375,
+            "scroll": 375,
+            "canvasWidth": 960,
+            "wrapWidth": 375,
+            "controls": [
+              {
+                "left": 16,
+                "right": 115
+              },
+              {
+                "left": 123,
+                "right": 219
+              },
+              {
+                "left": 227,
+                "right": 297
+              },
+              {
+                "left": 16,
+                "right": 83
+              }
+            ],
+            "notice": "\n    Illustrative animation, not a benchmark or a durability model. Buffer is optional and can lose unflushed rows;\n    prefer collector batching or tested asynchronous inserts for new pipelines. Kafka consumers normally write to a durable destination.\n    Distributed routes queries/inserts and is not another stored copy. S3 Parquet export is a separate job, not TTL movement of table parts.\n    All counters and delays below are simulated. On narrow screens, scroll within the diagram.\n  "
+          },
+          "reset": {
+            "inserting": false,
+            "querying": false,
+            "latency": null,
+            "parts": 0,
+            "timeouts": 0,
+            "intervals": 0,
+            "text": "[12:32:27] Pipeline reset — all state cleared"
+          },
+          "errors": [],
+          "pass": true
+        },
+        {
+          "width": 768,
+          "layout": {
+            "width": 768,
+            "scroll": 768,
+            "canvasWidth": 960,
+            "wrapWidth": 768,
+            "controls": [
+              {
+                "left": 16,
+                "right": 115
+              },
+              {
+                "left": 123,
+                "right": 219
+              },
+              {
+                "left": 227,
+                "right": 297
+              },
+              {
+                "left": 305,
+                "right": 372
+              }
+            ],
+            "notice": "\n    Illustrative animation, not a benchmark or a durability model. Buffer is optional and can lose unflushed rows;\n    prefer collector batching or tested asynchronous inserts for new pipelines. Kafka consumers normally write to a durable destination.\n    Distributed routes queries/inserts and is not another stored copy. S3 Parquet export is a separate job, not TTL movement of table parts.\n    All counters and delays below are simulated. On narrow screens, scroll within the diagram.\n  "
+          },
+          "reset": {
+            "inserting": false,
+            "querying": false,
+            "latency": null,
+            "parts": 0,
+            "timeouts": 0,
+            "intervals": 0,
+            "text": "[12:32:30] Pipeline reset — all state cleared"
+          },
+          "errors": [],
+          "pass": true
+        },
+        {
+          "width": 1920,
+          "layout": {
+            "width": 1920,
+            "scroll": 1920,
+            "canvasWidth": 1920,
+            "wrapWidth": 1920,
+            "controls": [
+              {
+                "left": 1548,
+                "right": 1647
+              },
+              {
+                "left": 1655,
+                "right": 1751
+              },
+              {
+                "left": 1759,
+                "right": 1829
+              },
+              {
+                "left": 1837,
+                "right": 1904
+              }
+            ],
+            "notice": "\n    Illustrative animation, not a benchmark or a durability model. Buffer is optional and can lose unflushed rows;\n    prefer collector batching or tested asynchronous inserts for new pipelines. Kafka consumers normally write to a durable destination.\n    Distributed routes queries/inserts and is not another stored copy. S3 Parquet export is a separate job, not TTL movement of table parts.\n    All counters and delays below are simulated. On narrow screens, scroll within the diagram.\n  "
+          },
+          "reset": {
+            "inserting": false,
+            "querying": false,
+            "latency": null,
+            "parts": 0,
+            "timeouts": 0,
+            "intervals": 0,
+            "text": "[12:32:34] Pipeline reset — all state cleared"
+          },
+          "errors": [],
+          "pass": true
+        }
+      ],
+      "mergeResetPassed": true,
+      "scope": "FetchedproductionHTMLwithallbrowsernetworkblocked;fallbackCSS/controls/mobileinnercanvaspan/queryandmergeresetcancellation; noClickHouseorcloudconnection."
+    }
+  }
+}
