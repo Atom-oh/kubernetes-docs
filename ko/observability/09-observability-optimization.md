@@ -6,6 +6,20 @@
 
 관측성 최적화는 장애 조사에 필요한 질문, 수집 품질, 실제 비용에서 시작합니다. 노드 수만으로 수집량·조회 부하·보존 비용·운영 인력을 예측할 수 없습니다. 이 장은 [완전한 설정 예제](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/optimization)를 제공하고 클러스터 설치는 각 배포 가이드로 연결합니다. native 검증에는 합성 데이터를 사용했으며 운영 성능 벤치마크가 아닙니다.
 
+<span id="목차"></span>
+
+## 문서 목차
+
+- [1. 관측성 3대 축 개요](#1-관측성-3대-축-개요)
+- [2. 로깅 솔루션 비교](#2-로깅-솔루션-비교)
+- [3. 메트릭 수집 및 저장](#3-메트릭-수집-및-저장)
+- [4. 분산 트레이싱](#4-분산-트레이싱)
+- [5. eBPF 기반 No-Code 모니터링](#5-ebpf-기반-no-code-모니터링)
+- [6. 비용 모니터링](#6-비용-모니터링)
+- [7. 통합 관측성 대시보드](#7-통합-관측성-대시보드)
+- [8. 운영 과제와 해결 방법](#8-운영-과제와-해결-방법)
+- [9. 모범 사례와 다음 단계](#9-모범-사례와-다음-단계)
+
 <span id="_1-1-로깅-메트릭-트레이싱의-관계"></span>
 
 <span id="_1-2-각-축의-역할과-선택-기준"></span>
@@ -341,8 +355,6 @@ Prometheus config/9개 rule, 실제 합성 scrape에서 선택적 bucket relabel
 - [Prometheus 운영 가이드](./metrics/01-prometheus.md)
 - [Grafana 대시보드](./grafana/README.md)
 - [관측성 최적화 퀴즈](../quizzes/observability/09-observability-optimization-quiz.md)
-
-<span id="목차"></span>
 
 ## 참고 자료
 

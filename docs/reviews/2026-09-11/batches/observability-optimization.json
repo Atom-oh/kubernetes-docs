@@ -3,32 +3,52 @@
     "path": "ko/observability/09-observability-optimization.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "9e5e38a47cf50799a26cc8ec9368998c11a34d1d3a71d05adc8f7f9867ef2a35",
+    "reviewedSha256": "1f9f21d670afc9ca797f5e562519702f2e6df213178b8081860b3b6e1e801dd6",
     "summary": "Full3820original-line review;40questions;6examplefiles;18diagrams54responsive18SVG18individualPNG;realPrometheusrelabel/SLO7assertions/Collector840spans/Alertmanager/OpenCostchart;92legacyaliases;noAWS/eBPFdeployment.",
-    "validationReport": "docs/reviews/2026-09-11/observability-optimization-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/observability-optimization-validation.json",
+    "reviewFixes": [
+      "RemovedduplicatedFluentBitregexanswerinbothquizzes.",
+      "RestoredcompactTOCnearintroandmovedlegacyTOCbookmarkstoit;allcurrentfragmentlinksresolve.",
+      "Koreanlatencyboundarynowstrictlygreaterthan1second,matchingCollector0.160.0evaluator."
+    ]
   },
   {
     "path": "ko/quizzes/observability/09-observability-optimization-quiz.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "7a8b1d9c4ad85ed4edccad90aae156018e032759542d6df7f7116cdfe1c4537b",
+    "reviewedSha256": "f9011b56141ff75fb3f8387c7b130c44fc2b4a6fd2a9c37fa6bb956a5ee16f96",
     "summary": "Full3820original-line review;40questions;6examplefiles;18diagrams54responsive18SVG18individualPNG;realPrometheusrelabel/SLO7assertions/Collector840spans/Alertmanager/OpenCostchart;92legacyaliases;noAWS/eBPFdeployment.",
-    "validationReport": "docs/reviews/2026-09-11/observability-optimization-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/observability-optimization-validation.json",
+    "reviewFixes": [
+      "RemovedduplicatedFluentBitregexanswerinbothquizzes.",
+      "RestoredcompactTOCnearintroandmovedlegacyTOCbookmarkstoit;allcurrentfragmentlinksresolve.",
+      "Koreanlatencyboundarynowstrictlygreaterthan1second,matchingCollector0.160.0evaluator."
+    ]
   },
   {
     "path": "en/observability/09-observability-optimization.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "56e2715d4aa794f5f557a78ad03da53e05f2c94f35fffb4f6c761a7dead95067",
+    "reviewedSha256": "53752481b131c0470bcca6672c0cbc71b68564b3a0181332c654aad80c0d4f0d",
     "summary": "Full3820original-line review;40questions;6examplefiles;18diagrams54responsive18SVG18individualPNG;realPrometheusrelabel/SLO7assertions/Collector840spans/Alertmanager/OpenCostchart;92legacyaliases;noAWS/eBPFdeployment.",
-    "validationReport": "docs/reviews/2026-09-11/observability-optimization-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/observability-optimization-validation.json",
+    "reviewFixes": [
+      "RemovedduplicatedFluentBitregexanswerinbothquizzes.",
+      "RestoredcompactTOCnearintroandmovedlegacyTOCbookmarkstoit;allcurrentfragmentlinksresolve.",
+      "Koreanlatencyboundarynowstrictlygreaterthan1second,matchingCollector0.160.0evaluator."
+    ]
   },
   {
     "path": "en/quizzes/observability/09-observability-optimization-quiz.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "3ecae526b0b577e0bc8afcd9d2b83366ff3ba6c8167677ac00a5010526341110",
+    "reviewedSha256": "5f7397d662d58a4a78e7818bbf92c4f0f00f096950d0f9233c38c4e04ef14cf5",
     "summary": "Full3820original-line review;40questions;6examplefiles;18diagrams54responsive18SVG18individualPNG;realPrometheusrelabel/SLO7assertions/Collector840spans/Alertmanager/OpenCostchart;92legacyaliases;noAWS/eBPFdeployment.",
-    "validationReport": "docs/reviews/2026-09-11/observability-optimization-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/observability-optimization-validation.json",
+    "reviewFixes": [
+      "RemovedduplicatedFluentBitregexanswerinbothquizzes.",
+      "RestoredcompactTOCnearintroandmovedlegacyTOCbookmarkstoit;allcurrentfragmentlinksresolve.",
+      "Koreanlatencyboundarynowstrictlygreaterthan1second,matchingCollector0.160.0evaluator."
+    ]
   }
 ]

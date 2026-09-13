@@ -251,14 +251,6 @@ vmstorage가 저장을 담당합니다. 여러 인스턴스를 만드는 것만�
     Exclude  level ^(DEBUG|TRACE)$
 ```
 
-또는 정규표현식을 활용한 방식:
-```ini
-[FILTER]
-    Name     grep
-    Match    *
-    Exclude  level ^(DEBUG|TRACE)$
-```
-
 **설명:**
 파싱된 level 필드에 ^(DEBUG|TRACE)$를 적용하면 임의 본문의 단어로 중요한 로그를 지우는 일을 피할 수 있습니다. 실제 drop과 장애 조사 영향을 측정하며 일정한 40~60% 절감을 보장하지 않습니다.
 
@@ -303,7 +295,7 @@ spec:
 
 </details>
 
-3. OpenTelemetry Collector에서 에러 트레이스는 100%, 1초 이상 지연된 트레이스는 100%, 나머지는 10%만 샘플링하는 tail_sampling 프로세서 설정을 작성하세요.
+3. OpenTelemetry Collector에서 에러 트레이스는 100%, 1초 초과 지연된 트레이스는 100%, 나머지는 10%만 샘플링하는 tail_sampling 프로세서 설정을 작성하세요.
 
 <details>
 <summary>정답 보기</summary>

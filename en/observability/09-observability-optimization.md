@@ -6,6 +6,20 @@
 
 Optimize observability around incident questions, collection quality and measured cost. A node count alone cannot predict ingestion volume, query load, retention cost or staffing requirements. This chapter uses [complete configuration examples](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/optimization) and links to the deployment guides for cluster installation. Native tests use synthetic data; they are not production capacity benchmarks.
 
+<span id="table-of-contents"></span>
+
+## Contents
+
+- [1. Overview of the Three Pillars of Observability](#1-overview-of-the-three-pillars-of-observability)
+- [2. Logging Solution Comparison](#2-logging-solution-comparison)
+- [3. Metrics Collection and Storage](#3-metrics-collection-and-storage)
+- [4. Distributed Tracing](#4-distributed-tracing)
+- [5. eBPF-Based No-Code Monitoring](#5-ebpf-based-no-code-monitoring)
+- [6. Cost Monitoring](#6-cost-monitoring)
+- [7. Unified Observability Dashboard](#7-unified-observability-dashboard)
+- [8. Operational Challenges and Solutions](#8-operational-challenges-and-solutions)
+- [9. Best Practices and Next Steps](#9-best-practices-and-next-steps)
+
 <span id="_1-1-relationship-between-logging-metrics-and-tracing"></span>
 
 <span id="_1-2-role-of-each-pillar-and-selection-criteria"></span>
@@ -341,8 +355,6 @@ Native checks covered Prometheus configuration and nine rules, selective bucket 
 - [Prometheus guide](./metrics/01-prometheus.md)
 - [Grafana dashboards](./grafana/README.md)
 - [Observability optimization quiz](../quizzes/observability/09-observability-optimization-quiz.md)
-
-<span id="table-of-contents"></span>
 
 ## References
 

@@ -548,11 +548,11 @@
     },
     {
       "path": "en/observability/09-observability-optimization.md",
-      "sha256": "56e2715d4aa794f5f557a78ad03da53e05f2c94f35fffb4f6c761a7dead95067"
+      "sha256": "53752481b131c0470bcca6672c0cbc71b68564b3a0181332c654aad80c0d4f0d"
     },
     {
       "path": "en/quizzes/observability/09-observability-optimization-quiz.md",
-      "sha256": "3ecae526b0b577e0bc8afcd9d2b83366ff3ba6c8167677ac00a5010526341110"
+      "sha256": "5f7397d662d58a4a78e7818bbf92c4f0f00f096950d0f9233c38c4e04ef14cf5"
     },
     {
       "path": "examples/observability/optimization/README.md",
@@ -616,11 +616,11 @@
     },
     {
       "path": "ko/observability/09-observability-optimization.md",
-      "sha256": "9e5e38a47cf50799a26cc8ec9368998c11a34d1d3a71d05adc8f7f9867ef2a35"
+      "sha256": "1f9f21d670afc9ca797f5e562519702f2e6df213178b8081860b3b6e1e801dd6"
     },
     {
       "path": "ko/quizzes/observability/09-observability-optimization-quiz.md",
-      "sha256": "7a8b1d9c4ad85ed4edccad90aae156018e032759542d6df7f7116cdfe1c4537b"
+      "sha256": "f9011b56141ff75fb3f8387c7b130c44fc2b4a6fd2a9c37fa6bb956a5ee16f96"
     },
     {
       "path": "public/archmaps/en-observability-09-observability-optimization-0.html",
@@ -1833,7 +1833,7 @@
       "preservedAliases": [
         {
           "id": "목차",
-          "target": "## 참고 자료"
+          "target": "## 문서 목차"
         },
         {
           "id": "_1-1-로깅-메트릭-트레이싱의-관계",
@@ -2081,7 +2081,7 @@
       "preservedAliases": [
         {
           "id": "table-of-contents",
-          "target": "## References"
+          "target": "## Contents"
         },
         {
           "id": "_1-1-relationship-between-logging-metrics-and-tracing",
@@ -2331,5 +2331,69 @@
     "No AWS billing reconciliation, production performance benchmark or external notification.",
     "Source diagrams are conceptual; icon counts are not replica minimums.",
     "Examples use new lab metrics and should integrate after PR272; Grafana links should integrate after PR273."
-  ]
+  ],
+  "reviewFixes": {
+    "date": "2026-09-13T11:05:56.965626+00:00",
+    "findings": [
+      "OPT-R1-001",
+      "OPT-R1-002",
+      "OPT-R1-003"
+    ],
+    "changes": [
+      "RemovedduplicatedFluentBitregexanswerinbothquizzes.",
+      "RestoredcompactTOCnearintroandmovedlegacyTOCbookmarkstoit;allcurrentfragmentlinksresolve.",
+      "Koreanlatencyboundarynowstrictlygreaterthan1second,matchingCollector0.160.0evaluator."
+    ],
+    "markdownValidation": {
+      "status": "passed",
+      "rows": [
+        {
+          "path": "en/observability/09-observability-optimization.md",
+          "sha256": "53752481b131c0470bcca6672c0cbc71b68564b3a0181332c654aad80c0d4f0d",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 68,
+          "images": 9,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        },
+        {
+          "path": "ko/observability/09-observability-optimization.md",
+          "sha256": "1f9f21d670afc9ca797f5e562519702f2e6df213178b8081860b3b6e1e801dd6",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 68,
+          "images": 9,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        },
+        {
+          "path": "en/quizzes/observability/09-observability-optimization-quiz.md",
+          "sha256": "5f7397d662d58a4a78e7818bbf92c4f0f00f096950d0f9233c38c4e04ef14cf5",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 5,
+          "images": 0,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        },
+        {
+          "path": "ko/quizzes/observability/09-observability-optimization-quiz.md",
+          "sha256": "f9011b56141ff75fb3f8387c7b130c44fc2b4a6fd2a9c37fa6bb956a5ee16f96",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 5,
+          "images": 0,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        }
+      ],
+      "scope": "Actual VitePress/Vue compilation and original rendered anchor preservation, without a site build."
+    },
+    "limits": "Text/anchoronlychanges;nativetelemetry/configartifactsunchangedandpriornativeevidenceretained."
+  }
 }

@@ -251,14 +251,6 @@ Tiering depends on access frequency, restore delay and retention. Moving active 
     Exclude  level ^(DEBUG|TRACE)$
 ```
 
-Or using regular expressions:
-```ini
-[FILTER]
-    Name     grep
-    Match    *
-    Exclude  level ^(DEBUG|TRACE)$
-```
-
 **Explanation:**
 Match ^(DEBUG|TRACE)$ on a parsed level field rather than arbitrary message text. Measure drops and incident-investigation impact; 40–60% savings are not guaranteed.
 
