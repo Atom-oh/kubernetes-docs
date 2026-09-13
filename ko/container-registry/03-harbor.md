@@ -737,7 +737,7 @@ Chart의 `metrics.enabled`와, Operator CRD가 있는 경우 `metrics.serviceMon
 - [Harbor Helm Chart](https://github.com/goharbor/harbor-helm)
 - [Harbor API Reference](https://editor.swagger.io/?url=https://raw.githubusercontent.com/goharbor/harbor/main/api/v2.0/swagger.yaml)
 - [Trivy Documentation](https://aquasecurity.github.io/trivy/)
-- [Cosign Documentation](https://docs.sigstore.dev/cosign/overview/)
+- [Cosign Documentation](https://docs.sigstore.dev/quickstart/quickstart-cosign/)
 - [Harbor in Air-gapped Environment](https://goharbor.io/docs/main/install-config/configure-yml-file/)
 
 ### 검토한 버전별 근거

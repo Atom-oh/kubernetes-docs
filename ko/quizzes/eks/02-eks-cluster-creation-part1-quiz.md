@@ -1149,7 +1149,7 @@ resources:
 
 7. **비용 할당:** Cost Explorer와 구성된 비용 할당 보고서·도구를 사용합니다. Kubernetes 레이블이 자동으로 활성 AWS 비용 할당 태그가 되지는 않습니다. 컨트롤 플레인, 해당하는 Auto Mode 수수료, 스토리지, 로드 밸런서, NAT, 전송, 로깅 비용도 포함합니다.
 
-참고: [EKS의 CA](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html), [CA 차트](https://github.com/kubernetes/autoscaler/tree/master/charts/cluster-autoscaler), [CA 1.36.1](https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.36.1), [Spot 요금](https://aws.amazon.com/ec2/spot/), [Fargate 요금](https://aws.amazon.com/fargate/pricing/), [Graviton](https://aws.amazon.com/ec2/graviton/), [Savings Plans](https://aws.amazon.com/savingsplans/).
+참고: [EKS의 CA](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html), [CA 차트](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/charts/cluster-autoscaler), [CA 1.36.1](https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.36.1), [Spot 요금](https://aws.amazon.com/ec2/spot/), [Fargate 요금](https://aws.amazon.com/fargate/pricing/), [Graviton](https://aws.amazon.com/ec2/graviton/), [Savings Plans](https://aws.amazon.com/savingsplans/).
 
 </details>
 

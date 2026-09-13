@@ -1360,7 +1360,7 @@ Karpenter를 사용하면 클러스터 관리를 간소화하고, 리소스 활�
 - [Karpenter 공식 문서](https://karpenter.sh/)
 - [Karpenter AWS 공급자 저장소](https://github.com/aws/karpenter-provider-aws)
 - [Amazon EKS 워크숍 - Karpenter](https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/)
-- [AWS 블로그 - Karpenter](https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
+- [AWS 블로그 - Karpenter](https://aws.amazon.com/blogs/aws/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
 - [Karpenter 모범 사례](https://aws.github.io/aws-eks-best-practices/karpenter/)
 - [Karpenter GitHub Releases](https://github.com/aws/karpenter-provider-aws/releases)
 - [AWS What's New - Karpenter ARC Zonal Shift 지원](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)

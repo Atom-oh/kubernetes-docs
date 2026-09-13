@@ -711,7 +711,7 @@ To test what you've learned in this chapter, take the [Container Technology Quiz
 * [Docker Official Documentation](https://docs.docker.com/)
 * [OCI (Open Container Initiative)](https://opencontainers.org/)
 * [containerd Project](https://containerd.io/)
-* [CNCF Container Runtime Overview](https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/)
+* [Kubernetes Container Runtime Overview](https://kubernetes.io/docs/setup/production-environment/container-runtimes/)
 * [AWS Container Services](https://aws.amazon.com/containers/)
 
 ## Verification References

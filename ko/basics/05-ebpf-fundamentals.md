@@ -1514,8 +1514,8 @@ sysctl net.core.bpf_jit_harden
 - [bpftrace Tutorial](https://github.com/iovisor/bpftrace/blob/master/docs/tutorial_one_liners.md) - bpftrace 원라이너 튜토리얼
 
 **커뮤니티**:
-- [eBPF Summit](https://ebpf.io/summit/) - 연례 eBPF 컨퍼런스
-- [Cilium Slack](https://cilium.io/slack) - Cilium 커뮤니티
+- [eBPF Summit](https://ebpf.io/events/?conference=eBPF%20Summit) - 연례 eBPF 컨퍼런스
+- [Cilium Slack](https://slack.cilium.io/) - Cilium 커뮤니티
 
 ### 10.3 관련 문서
 

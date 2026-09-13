@@ -160,7 +160,7 @@ A. spiffe://root.linkerd.cluster.local/ns/my-app/sa/web-service
 
 B. web-service.my-app.serviceaccount.identity.linkerd.cluster.local
 
-C. https://linkerd.io/identity/my-pod
+C. `https://linkerd.io/identity/my-pod`
 
 D. urn:linkerd:my-pod
 
