@@ -1,12 +1,14 @@
 # OPA Gatekeeper 测验
 
-通过以下问题测试你对 OPA Gatekeeper 和 Rego 策略语言的理解。
+> **最后更新**: September 13, 2026
+
+通过以下问题测试您对 OPA Gatekeeper 和 Rego 策略语言的理解。
 
 ***
 
 ## 问题
 
-### 1. 在 OPA Gatekeeper 中使用哪种语言编写策略？
+### 1. OPA Gatekeeper 使用什么语言编写策略？
 
 * A) YAML
 * B) JSON
@@ -17,28 +19,30 @@
 
 <summary>显示答案</summary>
 
-**答案：C) Rego**
+**答案: C) Rego**
 
-**解释：** OPA (Open Policy Agent) 使用一种名为 Rego 的声明式策略语言。Rego 针对查询 JSON/YAML 数据和进行策略决策进行了优化。
+**说明：** OPA（Open Policy Agent）使用一种名为 Rego 的声明式策略语言。Rego 针对查询 JSON/YAML 数据和作出策略决策进行了优化。
 
 ```rego
-package kubernetes.admission
-
-violation[{"msg": msg}] {
-    input.request.kind.kind == "Pod"
-    container := input.request.object.spec.containers[_]
-    not container.resources.limits.memory
-    msg := sprintf("Container %v has no memory limit", [container.name])
+package docsrequiredlabels
+valid_label(key) if {
+  value := input.review.object.metadata.labels[key]
+  is_string(value)
+  value != ""
+}
+violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
+  some key in input.parameters.labels
+  not valid_label(key)
 }
 ```
 
-与 Kyverno 不同，你需要学习一门新语言，但它允许表达更复杂的策略逻辑。
+学习 Rego 集合、推导式和输入契约，然后根据您的需求和测试选择策略引擎。
 
 </details>
 
 ***
 
-### 2. Gatekeeper 中哪个 CRD 定义可复用的策略模板？
+### 2. 哪个 CRD 在 Gatekeeper 中定义可复用的策略模板？
 
 * A) Policy
 * B) ConstraintTemplate
@@ -49,44 +53,58 @@ violation[{"msg": msg}] {
 
 <summary>显示答案</summary>
 
-**答案：B) ConstraintTemplate**
+**答案: B) ConstraintTemplate**
 
-**解释：** ConstraintTemplate 定义 Rego 策略逻辑和参数 schema：
+**说明：** ConstraintTemplate 定义 Rego 策略逻辑和参数 schema：
 
 ```yaml
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
-  name: k8srequiredlabels
+  name: docsrequiredlabels
 spec:
   crd:
     spec:
       names:
-        kind: K8sRequiredLabels
+        kind: DocsRequiredLabels
       validation:
         openAPIV3Schema:
           type: object
           properties:
             labels:
               type: array
+              minItems: 1
               items:
                 type: string
+                minLength: 1
+          required:
+          - labels
   targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package k8srequiredlabels
-        violation[{"msg": msg}] {
-            # Rego policy logic
-        }
+  - target: admission.k8s.gatekeeper.sh
+    code:
+    - engine: Rego
+      source:
+        version: v1
+        rego: |
+          package docsrequiredlabels
+          valid_label(key) if {
+            value := input.review.object.metadata.labels[key]
+            is_string(value)
+            value != ""
+          }
+          violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
+            some key in input.parameters.labels
+            not valid_label(key)
+          }
 ```
 
-Constraints 基于 ConstraintTemplates 创建，用于应用实际策略。
+基于 ConstraintTemplate 创建 Constraint，以应用实际策略。
 
 </details>
 
 ***
 
-### 3. Gatekeeper Constraint 的 enforcementAction 字段不支持哪个值？
+### 3. Gatekeeper Constraint 的 enforcementAction 字段不支持以下哪个值？
 
 * A) deny
 * B) dryrun
@@ -97,28 +115,35 @@ Constraints 基于 ConstraintTemplates 创建，用于应用实际策略。
 
 <summary>显示答案</summary>
 
-**答案：D) audit**
+**答案: D) audit**
 
-**解释：** Gatekeeper 支持的 enforcementAction 值：
+**说明：** Gatekeeper 支持的 enforcementAction 值：
 
-* **deny**：在策略违规时拒绝请求
-* **dryrun**：记录违规但允许请求
+* **deny**：策略违规时拒绝请求
+* **dryrun**：记录违规，但允许请求
 * **warn**：显示警告消息，允许请求
 
 ```yaml
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
+kind: DocsRequiredLabels
 metadata:
-  name: require-labels
+  name: required-labels
 spec:
-  enforcementAction: deny  # or dryrun, warn
+  enforcementAction: deny
   match:
     kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
+    - apiGroups:
+      - ''
+      kinds:
+      - Pod
+    namespaces:
+    - policy-lab
+  parameters:
+    labels:
+    - app.kubernetes.io/name
 ```
 
-audit 不是 enforcementAction，而是 Gatekeeper 的后台审计功能。
+audit 并非 enforcementAction，而是 Gatekeeper 的后台 Audit 功能。
 
 </details>
 
@@ -135,32 +160,32 @@ audit 不是 enforcementAction，而是 Gatekeeper 的后台审计功能。
 
 <summary>显示答案</summary>
 
-**答案：C) item := array\[\_]**
+**答案: C) item := array\[\_]**
 
-**解释：** 在 Rego 中，`[_]` 表示数组的所有索引：
+**说明：** 在 Rego 中，`[_]` 表示数组的所有索引：
 
 ```rego
 # Iterate all containers
-container := input.request.object.spec.containers[_]
+container := input.review.object.spec.containers[_]
 
 # Iterate all label keys
-label := input.request.object.metadata.labels[_]
+key := object.keys(input.review.object.metadata.labels)[_]
 
 # Specific index
-first_container := input.request.object.spec.containers[0]
+first_container := input.review.object.spec.containers[0]
 
 # When both index and value are needed
 some i
-container := input.request.object.spec.containers[i]
+container := input.review.object.spec.containers[i]
 ```
 
-这种语法是在规则中评估多个值时使用的核心 Rego 模式。
+在规则中评估多个值时，此语法是核心 Rego 模式。
 
 </details>
 
 ***
 
-### 5. Gatekeeper 中哪个功能会检查现有集群资源的策略合规性？
+### 5. Gatekeeper 中哪个功能检查现有集群资源的策略合规性？
 
 * A) Validation
 * B) Mutation
@@ -171,17 +196,17 @@ container := input.request.object.spec.containers[i]
 
 <summary>显示答案</summary>
 
-**答案：C) Audit**
+**答案: C) Audit**
 
-**解释：** Gatekeeper Audit 功能：
+**说明：** Gatekeeper Audit 功能：
 
 * 定期检查现有资源
-* 在 Constraint 状态中记录违规
+* 在 Constraint status 中记录违规
 * 验证现有资源，而不仅仅是新资源
 
 ```bash
 # Check violations in Constraint
-kubectl describe k8srequiredlabels require-labels
+kubectl describe docsrequiredlabels required-labels
 
 # Check violations in Status section:
 # Status:
@@ -193,13 +218,15 @@ kubectl describe k8srequiredlabels require-labels
 #       Namespace: default
 ```
 
-这可以在应用策略之前了解其影响。
+这使您能够在应用策略之前了解其影响。
 
 </details>
 
 ***
 
-### 6. Gatekeeper v3.10+ 中用于自动修改资源的 CRD 是什么？
+<span id="_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-v3-10"></span>
+
+### 6. Gatekeeper 3.23.1 中使用哪个 CRD 进行自动资源修改？
 
 * A) MutatingPolicy
 * B) Assign / AssignMetadata
@@ -210,9 +237,9 @@ kubectl describe k8srequiredlabels require-labels
 
 <summary>显示答案</summary>
 
-**答案：B) Assign / AssignMetadata**
+**答案: B) Assign / AssignMetadata**
 
-**解释：** Gatekeeper 的 Mutation CRDs：
+**说明：** Gatekeeper 的 Mutation CRD：
 
 * **AssignMetadata**：添加 metadata（labels、annotations）
 * **Assign**：修改 spec 等通用字段
@@ -235,13 +262,13 @@ spec:
       value: "platform-team"
 ```
 
-类似于 Kyverno 的 mutate 功能。
+与 Kyverno 的 mutate 功能类似。
 
 </details>
 
 ***
 
-### 7. Rego 中哪个运算符用于计算两个集合之间的差集？
+### 7. Rego 中哪个运算符计算两个集合之间的差集？
 
 * A) difference()
 * B) subtract()
@@ -252,9 +279,9 @@ spec:
 
 <summary>显示答案</summary>
 
-**答案：C) - (minus)**
+**答案: C) - (minus)**
 
-**解释：** Rego 集合操作：
+**说明：** Rego 集合操作：
 
 ```rego
 # Compare required and existing labels
@@ -273,13 +300,13 @@ common := required & provided
 all := required | provided
 ```
 
-这些操作经常用于必需 label 验证。
+这些操作常用于必需 label 验证。
 
 </details>
 
 ***
 
-### 8. 在 Gatekeeper 中引用其他 namespaces 的资源需要什么配置？
+### 8. Gatekeeper 中需要什么配置才能引用其他 namespace 中的资源？
 
 * A) CrossNamespacePolicy
 * B) Config's sync.syncOnly
@@ -290,9 +317,9 @@ all := required | provided
 
 <summary>显示答案</summary>
 
-**答案：B) Config's sync.syncOnly**
+**答案: B) Config's sync.syncOnly**
 
-**解释：** 要让 Gatekeeper 引用外部数据，需要通过 Config 资源进行 sync 配置：
+**说明：** 此示例将 Kubernetes 对象同步到 inventory；它不会自动连接外部 HTTP provider 或任意 bundle：
 
 ```yaml
 apiVersion: config.gatekeeper.sh/v1alpha1
@@ -311,7 +338,7 @@ spec:
         kind: "Ingress"
 ```
 
-同步后的资源可以在 Rego 中通过 `data.inventory` 访问：
+可通过 Rego 中的 `data.inventory` 访问已同步的资源：
 
 ```rego
 other_ingress := data.inventory.namespace[ns]["networking.k8s.io/v1"]["Ingress"][name]
@@ -332,117 +359,103 @@ other_ingress := data.inventory.namespace[ns]["networking.k8s.io/v1"]["Ingress"]
 
 <summary>显示答案</summary>
 
-**答案：C) gator**
+**答案: C) gator**
 
-**解释：** Gator 是用于在本地测试 Gatekeeper 策略的官方 CLI 工具：
+**说明：** Gator 是在本地测试 Gatekeeper 策略的官方 CLI 工具：
 
 ```bash
 # Install
-go install github.com/open-policy-agent/gatekeeper/cmd/gator@latest
+gator version  # verified 3.23.1 release binary
 
 # Validate policies
-gator verify ./policies/
+gator verify tests/suite.yaml --verbose
 
 # Run test suite
-gator test ./tests/
+gator test -f templates/ -f constraints/ -f tests/fixtures/labels-present.yaml --output=json
 ```
 
 测试套件示例：
 
 ```yaml
-kind: Suite
 apiVersion: test.gatekeeper.sh/v1alpha1
+kind: Suite
 metadata:
-  name: required-labels-test
+  name: docs-gatekeeper
 tests:
-  - name: "Pod without labels should fail"
-    template: ../templates/k8srequiredlabels.yaml
-    constraint: ../constraints/require-labels.yaml
-    cases:
-      - name: pod-without-labels
-        object: fixtures/pod-no-labels.yaml
-        assertions:
-          - violations: yes
+- name: required-labels
+  template: ../templates/docsrequiredlabels.yaml
+  constraint: ../constraints/required-labels.yaml
+  cases:
+  - name: labels-present
+    object: fixtures/labels-present.yaml
+    assertions:
+    - violations: 0
+  - name: labels-absent
+    object: fixtures/labels-absent.yaml
+    assertions:
+    - violations: 1
 ```
 
 </details>
 
 ***
 
-### 10. 在比较 Gatekeeper 和 Kyverno 时，Gatekeeper 的优势是什么？
+<span id="_10-what-is-gatekeeper-s-advantage-when-comparing-gatekeeper-and-kyverno"></span>
 
-* A) 学习曲线更低
-* B) YAML 原生策略
-* C) 资源生成功能
-* D) 复杂策略逻辑表达能力
+### 10. 哪项具体需求可能促使您选择 Rego 策略？
+
+* A) 保证每个策略的内存使用量都更低
+* B) 无需检查即可自动生成每种资源
+* C) 始终处理比其他引擎更复杂的逻辑
+* D) 对 JSON 输入应用集合操作和推导式，并通过测试验证它们
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：D) 复杂策略逻辑表达能力**
+**答案: D) 对 JSON 输入应用集合操作和推导式，并通过测试验证它们**
 
-**解释：** Gatekeeper (OPA) 与 Kyverno 对比：
-
-| Feature             | Gatekeeper         | Kyverno   |
-| ------------------- | ------------------ | --------- |
-| Policy Language     | Rego               | YAML      |
-| Learning Curve      | High               | Low       |
-| Complex Logic       | Very Flexible      | Limited   |
-| Resource Generation | Not Supported      | Supported |
-| External Data       | OPA Bundle Support | API Call  |
-
-Gatekeeper 借助 Rego 的灵活性，更容易处理：
-
-* 复杂条件组合
-* 递归数据结构处理
-* 高级集合操作
-* 外部数据集成
+**说明：** Rego 为此需求提供声明式操作。应比较实际策略表达、团队技能、测试和运行需求，而不是断言其在性能或复杂度上具有普遍优势。
 
 </details>
 
 ***
 
-### 11. 当 Rego 中定义了多个 violation 规则时，它们如何被评估？
+### 11. 在 Rego 中定义多个 violation 规则时，它们如何被评估？
 
-* A) 只评估第一条规则
-* B) 所有规则按 OR 进行评估
-* C) 所有规则按 AND 进行评估
-* D) 随机选择一条规则
+* A) 仅评估第一个规则
+* B) 所有规则均按 OR 评估
+* C) 所有规则均按 AND 评估
+* D) 随机选择其中一个
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：B) 所有规则按 OR 进行评估**
+**答案: B) 所有规则均按 OR 评估**
 
-**解释：** 在 Rego 中，多个同名规则会按 OR 进行评估：
+**说明：** 此 partial-set violation 规则的多个定义会将其结果贡献给同一个集合：
 
 ```rego
-# Rule 1: Check privileged containers
-violation[{"msg": msg}] {
-    container := input.request.object.spec.containers[_]
-    container.securityContext.privileged == true
-    msg := "Privileged containers not allowed"
+package examples
+violation contains {"msg": "Privileged container"} if {
+  container := input.review.object.spec.containers[_]
+  container.securityContext.privileged == true
 }
-
-# Rule 2: Check root execution
-violation[{"msg": msg}] {
-    container := input.request.object.spec.containers[_]
-    container.securityContext.runAsUser == 0
-    msg := "Running as root not allowed"
+violation contains {"msg": "Explicit root user"} if {
+  container := input.review.object.spec.containers[_]
+  container.securityContext.runAsUser == 0
 }
-
-# Violation occurs if either rule is violated
 ```
 
-每条 violation 规则的结果都会添加到一个集合中，如果存在一个或多个违规，则整体策略失败。
+每个 violation 规则的结果都会添加到一个集合中；如果存在一个或多个违规，整体策略即失败。
+
+这些 partial-set violation 规则会贡献给同一个集合。每个 body 内部的条件均为 AND；发生冲突的 complete-document 规则不会通过 OR 解决。此片段并非完整的 PSS 实现。
 
 </details>
 
 ***
 
-### 12. Gatekeeper 中哪个字段配置 Constraint 仅应用于特定 namespaces？
+### 12. Gatekeeper 中哪个字段将 Constraint 配置为仅应用于特定 namespace？
 
 * A) spec.targetNamespaces
 * B) spec.match.namespaces
@@ -453,34 +466,33 @@ violation[{"msg": msg}] {
 
 <summary>显示答案</summary>
 
-**答案：B) spec.match.namespaces**
+**答案: B) spec.match.namespaces**
 
-**解释：** Constraint 的 match 部分指定应用范围：
+**说明：** Constraint 的 match 部分指定应用范围：
 
 ```yaml
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
+kind: DocsRequiredLabels
 metadata:
-  name: require-labels-prod
+  name: required-labels
 spec:
   enforcementAction: deny
   match:
     kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
+    - apiGroups:
+      - ''
+      kinds:
+      - Pod
     namespaces:
-      - production
-      - staging
-    excludedNamespaces:
-      - kube-system
-      - gatekeeper-system
-    namespaceSelector:
-      matchLabels:
-        environment: production
+    - production
+    - staging
+  parameters:
+    labels:
+    - app.kubernetes.io/name
 ```
 
-* `namespaces`：要包含的 namespaces 列表
-* `excludedNamespaces`：要排除的 namespaces 列表
+* `namespaces`：要包含的 namespace 列表
+* `excludedNamespaces`：要排除的 namespace 列表
 * `namespaceSelector`：基于 label 的选择
 
 </details>
@@ -489,19 +501,19 @@ spec:
 
 ## 分数计算
 
-每题计 1 分。
+每题 1 分。
 
 | 分数 | 评级                                                  |
 | ----- | ------------------------------------------------------- |
 | 11-12 | 优秀 - OPA Gatekeeper 专家级别                 |
 | 8-10  | 良好 - 已理解基本概念，需要深入学习 Rego |
-| 5-7   | 一般 - 建议继续学习                  |
+| 5-7   | 一般 - 建议进一步学习                  |
 | 0-4   | 需要基础学习                                   |
 
 ***
 
 ## 相关文档
 
-* [OPA Gatekeeper](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/09-opa-gatekeeper.md)
-* [Kyverno 策略管理](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/01-kyverno-policy-management.md)
-* [Pod Security Standards](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/security/03-pod-security-standards.md)
+* [OPA Gatekeeper](../../security/09-opa-gatekeeper.md)
+* [Kyverno 策略管理](01-kyverno-policy-management-quiz.md)
+* [Pod 安全标准](03-pod-security-standards-quiz.md)

@@ -1,565 +1,170 @@
 # OPA Gatekeeper
 
-> **支持版本**: Gatekeeper v3.14+, Kubernetes 1.25+
-> **最后更新**: February 22, 2026
+> **验证基线**: Gatekeeper/Gator 3.23.1 · Helm chart 3.23.1
+
+> **最后更新**: September 13, 2026
 
 ## 概述
 
-OPA (Open Policy Agent) Gatekeeper 是用于 Kubernetes 的策略管理工具，它使用 Rego 语言编写声明式策略，并通过 Admission Controller 强制执行集群策略。
+Gatekeeper 会在 Kubernetes 准入和定期审计期间评估策略。ConstraintTemplate 定义逻辑和参数 schema；Constraint 定义范围、值和 enforcementAction。 [完整示例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/gatekeeper)使用专用的 `policy-lab` namespace 和本地测试。请勿将每个测试 fixture 都应用到生产集群。
 
-```mermaid
-graph TB
-    subgraph "OPA Gatekeeper Architecture"
-        API[API Server] --> WH[Webhook]
-        WH --> GK[Gatekeeper Controller]
-        GK --> OPA[OPA Engine]
-        OPA --> CT[Constraint Templates]
-        OPA --> C[Constraints]
-        GK --> AR[Audit Results]
-    end
+![Gatekeeper 准入和定期审计，其中 Template 定义逻辑，而 Constraint 选择范围。](../.gitbook/assets/en-security-09-opa-gatekeeper-0.png)
 
-    subgraph "Policy Components"
-        CT --> |Defines| Rego[Rego Policy]
-        C --> |Applies to| Target[Target Resources]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-security-09-opa-gatekeeper-0.html)
 
-    style GK fill:#e1f5fe
-    style OPA fill:#fff3e0
-```
+<span id="gatekeeper-vs-kyverno-comparison"></span>
 
-## Gatekeeper 与 Kyverno 对比
+## 选择 Gatekeeper 和 Kyverno
 
-| 特性 | Gatekeeper | Kyverno |
-|---------|------------|---------|
-| **策略语言** | Rego（声明式） | YAML（原生 K8s） |
-| **学习曲线** | 高（新语言） | 低（对 K8s 友好） |
-| **灵活性** | 非常高 | 高 |
-| **外部数据** | OPA bundles、外部来源 | ConfigMap、API Call |
-| **Mutation** | v3.10+ 支持 | 原生支持 |
-| **Generation** | 不支持 | 原生支持 |
-| **Audit** | 内置 | 内置 |
-| **资源使用量** | 中等 | 低 |
-| **社区** | CNCF Graduated | CNCF Incubating |
+请根据需求、测试和运营模型，在 Gatekeeper 的 Rego/Constraint 模型与 Kyverno 面向 Kubernetes 的策略模型之间做出选择。Gatekeeper 还支持可选的基于 CEL 的 Kubernetes 原生验证。避免使用没有依据的固定资源使用量排名，或声称其他引擎无法表达复杂逻辑。OPA 的 CNCF 毕业并不意味着 Gatekeeper 是一个单独毕业的项目。
+
+<span id="installation-with-helm"></span>
+
+<span id="installation-with-manifests"></span>
+
+<span id="verify-installation"></span>
 
 ## 安装 Gatekeeper
 
-### 使用 Helm 安装
+使用示例目录中固定版本的 chart 和受支持的值。`auditInterval` 和 `logLevel` 是顶层 chart 字段；不要假定任意 `audit.replicas` 或 `audit.logLevel` 值都会生效。该配置文件会渲染三个 webhook 副本和一个 audit Deployment。验证 EKS control plane 到 webhook 的网络路径、证书、放置位置及可用资源。
 
 ```bash
-# Add Gatekeeper Helm repository
 helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
-helm repo update
-
-# Install Gatekeeper
-helm install gatekeeper gatekeeper/gatekeeper \
-  --namespace gatekeeper-system \
-  --create-namespace \
-  --set replicas=3 \
-  --set audit.replicas=1 \
-  --set audit.logLevel=INFO \
-  --set controllerManager.logLevel=INFO
+helm repo update gatekeeper
+helm upgrade --install gatekeeper gatekeeper/gatekeeper --version 3.23.1 \
+  --namespace gatekeeper-system --create-namespace --values values.yaml --wait
+kubectl -n gatekeeper-system rollout status deployment/gatekeeper-controller-manager
+kubectl -n gatekeeper-system rollout status deployment/gatekeeper-audit
 ```
 
-### 使用 Manifests 安装
+对于分阶段推出，`values.yaml` 明确保留 webhook `failurePolicy: Ignore`。因此，即使 Constraint 指定 `deny`，webhook 调用失败也可能允许请求。请结合 API 可用性、恢复能力和豁免 namespace 来评估 `Fail`。webhook 范围可能比单个 Constraint 的范围更广。
+
+### Template 和 Constraint 的顺序
+
+Template 会生成相应的 Constraint CRD。应用 Constraint 前，请等待 CRD 处于 Established 状态并检查 Template Pod 状态。所有示例 Constraint 均从 `dryrun` 开始；请针对目标环境检查镜像前缀、参数和 namespace。
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/v3.14.0/deploy/gatekeeper.yaml
+kubectl create namespace policy-lab --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -f templates/
+kubectl wait --for=condition=Established --timeout=90s \
+  crd/docsrequiredlabels.constraints.gatekeeper.sh \
+  crd/docsnoprivileged.constraints.gatekeeper.sh \
+  crd/docsapprovedimages.constraints.gatekeeper.sh \
+  crd/k8scontainerlimits.constraints.gatekeeper.sh \
+  crd/docsuniqueingress.constraints.gatekeeper.sh
+kubectl apply -f constraints/
 ```
 
-### 验证安装
+<span id="rego-language-basics"></span>
 
-```bash
-# Check Pod status
-kubectl get pods -n gatekeeper-system
+<span id="rego-syntax-overview"></span>
 
-# Check CRDs
-kubectl get crd | grep gatekeeper
+<span id="rego-data-types"></span>
 
-# Example output:
-# configs.config.gatekeeper.sh
-# constrainttemplates.templates.gatekeeper.sh
-# constraintpodstatuses.status.gatekeeper.sh
-# mutatorpodstatuses.status.gatekeeper.sh
-# assignmetadata.mutations.gatekeeper.sh
-# assign.mutations.gatekeeper.sh
-# modifyset.mutations.gatekeeper.sh
-```
+<span id="rego-operators-and-built-in-functions"></span>
 
-## Rego 语言基础
+## Rego 与输入契约
 
-### Rego 语法概览
-
-```rego
-# Package declaration
-package kubernetes.admission
-
-# import statements
-import data.kubernetes.namespaces
-import future.keywords.in
-import future.keywords.contains
-import future.keywords.if
-
-# Basic rule definition
-deny[msg] {
-    input.request.kind.kind == "Pod"
-    container := input.request.object.spec.containers[_]
-    not container.resources.limits.memory
-    msg := sprintf("Container %v has no memory limit", [container.name])
-}
-
-# Helper function
-is_privileged(container) {
-    container.securityContext.privileged == true
-}
-
-# Complex condition
-violation[{"msg": msg}] {
-    container := input.request.object.spec.containers[_]
-    is_privileged(container)
-    msg := sprintf("Privileged container not allowed: %v", [container.name])
-}
-```
-
-### Rego 数据类型
-
-```rego
-package examples
-
-# Scalar values
-string_val := "hello"
-number_val := 42
-boolean_val := true
-null_val := null
-
-# Complex types
-array_val := ["a", "b", "c"]
-object_val := {"key": "value", "nested": {"inner": 1}}
-set_val := {"unique", "values", "only"}
-
-# Comprehensions
-filtered := [x | x := input.items[_]; x > 10]
-mapped := {k: v | some k; v := input.data[k]; v != null}
-```
-
-### Rego 运算符和内置函数
-
-```rego
-package operators
-
-# Comparison operators
-equal := 1 == 1
-not_equal := 1 != 2
-less_than := 1 < 2
-greater_than := 2 > 1
-
-# String functions
-contains_check := contains("hello world", "world")
-starts_check := startswith("kubernetes", "kube")
-ends_check := endswith("pod.yaml", ".yaml")
-lower_case := lower("HELLO")
-upper_case := upper("hello")
-split_result := split("a,b,c", ",")
-sprintf_result := sprintf("pod-%s", ["name"])
-
-# Regular expressions
-regex_match := regex.match("^pod-.*", "pod-123")
-
-# Array/Set functions
-count_items := count([1, 2, 3])
-sum_items := sum([1, 2, 3])
-max_item := max([1, 2, 3])
-min_item := min([1, 2, 3])
-sort_items := sort([3, 1, 2])
-array_concat := array.concat([1, 2], [3, 4])
-
-# Object functions
-object_get := object.get({"a": 1}, "a", 0)
-object_keys := object.keys({"a": 1, "b": 2})
-json_marshal := json.marshal({"key": "value"})
-json_unmarshal := json.unmarshal("{\"key\":\"value\"}")
-```
-
-## 编写 Constraint Templates
-
-### 基本结构
+Gatekeeper 策略使用 `input.review`，而不是通用 OPA AdmissionReview 示例中的 `input.request`。`input.parameters` 提供 Constraint 值，`data.inventory` 提供已同步的 Kubernetes 对象。现有 `targets[].rego` 默认使用受支持的 Rego v0。Rego v1 需通过 `code[].source.version: v1` 显式选择；较旧的 v0 Template 不会自动失效。
 
 ```yaml
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
-  name: k8srequiredlabels
-  annotations:
-    metadata.gatekeeper.sh/title: "Required Labels"
-    metadata.gatekeeper.sh/version: 1.0.0
-    description: "Requires resources to have specified labels"
+  name: docsrequiredlabels
 spec:
   crd:
     spec:
       names:
-        kind: K8sRequiredLabels
+        kind: DocsRequiredLabels
       validation:
         openAPIV3Schema:
           type: object
           properties:
             labels:
               type: array
+              minItems: 1
               items:
                 type: string
-              description: "A list of required labels"
-            message:
-              type: string
-              description: "Custom error message"
+                minLength: 1
+          required:
+          - labels
   targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package k8srequiredlabels
-
-        import future.keywords.in
-
-        violation[{"msg": msg, "details": {"missing_labels": missing}}] {
-            provided := {label | input.review.object.metadata.labels[label]}
-            required := {label | label := input.parameters.labels[_]}
-            missing := required - provided
-            count(missing) > 0
-            msg := sprintf("Resource missing required labels: %v", [missing])
-        }
+  - target: admission.k8s.gatekeeper.sh
+    code:
+    - engine: Rego
+      source:
+        version: v1
+        rego: "package docsrequiredlabels\nvalid_label(key) if {\n  value := input.review.object.metadata.labels[key]\n\
+          \  is_string(value)\n  value != \"\"\n}\nviolation contains {\"msg\": sprintf(\"\
+          required nonempty label: %v\", [key])} if {\n  some key in input.parameters.labels\n\
+          \  not valid_label(key)\n}\n"
 ```
 
-### 防止 Privileged Containers
+`violation contains ... if` 是 v1 的部分集合规则。多个定义会共同构成该集合；这并不意味着相互冲突的完整文档规则总会以 OR 方式组合。规则主体内的条件必须全部成立。请区分递归的用户定义规则与 `walk` 等 JSON 遍历内置函数。
 
-```yaml
-apiVersion: templates.gatekeeper.sh/v1
-kind: ConstraintTemplate
-metadata:
-  name: k8spsprivilegedcontainer
-  annotations:
-    metadata.gatekeeper.sh/title: "Privileged Container"
-    description: "Prevents containers from running in privileged mode"
-spec:
-  crd:
-    spec:
-      names:
-        kind: K8sPSPPrivilegedContainer
-      validation:
-        openAPIV3Schema:
-          type: object
-          properties:
-            exemptImages:
-              type: array
-              items:
-                type: string
-              description: "Images exempt from this policy"
-  targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package k8spsprivilegedcontainer
-
-        import future.keywords.in
-
-        violation[{"msg": msg, "details": {"container": container.name}}] {
-            container := input_containers[_]
-            container.securityContext.privileged == true
-            not is_exempt(container)
-            msg := sprintf("Privileged container not allowed: %v", [container.name])
-        }
-
-        input_containers[c] {
-            c := input.review.object.spec.containers[_]
-        }
-
-        input_containers[c] {
-            c := input.review.object.spec.initContainers[_]
-        }
-
-        input_containers[c] {
-            c := input.review.object.spec.ephemeralContainers[_]
-        }
-
-        is_exempt(container) {
-            exempt_image := input.parameters.exemptImages[_]
-            startswith(container.image, exempt_image)
-        }
+```rego
+package examples
+items := [x | some x in input.items; x > 10]
+keys := object.keys(object.get(input, "labels", {}))
+missing := {"app", "team"} - keys
 ```
 
-### 强制执行资源限制
+`obj[_]` 选择对象值。当需要标签键时，请使用 `object.keys` 或显式绑定键。集合差集 `-`、交集 `&` 和并集 `|` 是实用的策略操作。
 
-```yaml
-apiVersion: templates.gatekeeper.sh/v1
-kind: ConstraintTemplate
-metadata:
-  name: k8scontainerlimits
-  annotations:
-    metadata.gatekeeper.sh/title: "Container Limits"
-    description: "Requires containers to have resource limits"
-spec:
-  crd:
-    spec:
-      names:
-        kind: K8sContainerLimits
-      validation:
-        openAPIV3Schema:
-          type: object
-          properties:
-            cpu:
-              type: string
-              description: "Maximum CPU limit"
-            memory:
-              type: string
-              description: "Maximum memory limit"
-            exemptContainers:
-              type: array
-              items:
-                type: string
-  targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package k8scontainerlimits
+<span id="writing-constraint-templates"></span>
 
-        import future.keywords.in
+<span id="basic-structure"></span>
 
-        violation[{"msg": msg}] {
-            container := input.review.object.spec.containers[_]
-            not is_exempt(container.name)
-            not container.resources.limits.cpu
-            msg := sprintf("Container %v has no CPU limit", [container.name])
-        }
+<span id="preventing-privileged-containers"></span>
 
-        violation[{"msg": msg}] {
-            container := input.review.object.spec.containers[_]
-            not is_exempt(container.name)
-            not container.resources.limits.memory
-            msg := sprintf("Container %v has no memory limit", [container.name])
-        }
+<span id="enforcing-resource-limits"></span>
 
-        violation[{"msg": msg}] {
-            container := input.review.object.spec.containers[_]
-            not is_exempt(container.name)
-            cpu_limit := container.resources.limits.cpu
-            max_cpu := input.parameters.cpu
-            exceeds_cpu(cpu_limit, max_cpu)
-            msg := sprintf("Container %v CPU limit %v exceeds maximum %v",
-                          [container.name, cpu_limit, max_cpu])
-        }
+<span id="restricting-image-registries"></span>
 
-        violation[{"msg": msg}] {
-            container := input.review.object.spec.containers[_]
-            not is_exempt(container.name)
-            memory_limit := container.resources.limits.memory
-            max_memory := input.parameters.memory
-            exceeds_memory(memory_limit, max_memory)
-            msg := sprintf("Container %v memory limit %v exceeds maximum %v",
-                          [container.name, memory_limit, max_memory])
-        }
+<span id="defining-constraints"></span>
 
-        is_exempt(name) {
-            exempt := input.parameters.exemptContainers[_]
-            name == exempt
-        }
+<span id="basic-constraint-writing"></span>
 
-        # CPU comparison function (convert to millicores)
-        exceeds_cpu(limit, max) {
-            limit_milli := parse_cpu(limit)
-            max_milli := parse_cpu(max)
-            limit_milli > max_milli
-        }
+<span id="using-namespace-selectors"></span>
 
-        parse_cpu(cpu) = milli {
-            endswith(cpu, "m")
-            milli := to_number(trim_suffix(cpu, "m"))
-        }
+<span id="resource-limits-constraint"></span>
 
-        parse_cpu(cpu) = milli {
-            not endswith(cpu, "m")
-            milli := to_number(cpu) * 1000
-        }
+<span id="image-registry-constraint"></span>
 
-        # Memory comparison function (convert to bytes)
-        exceeds_memory(limit, max) {
-            limit_bytes := parse_memory(limit)
-            max_bytes := parse_memory(max)
-            limit_bytes > max_bytes
-        }
+## 策略和范围
 
-        parse_memory(mem) = bytes {
-            endswith(mem, "Gi")
-            bytes := to_number(trim_suffix(mem, "Gi")) * 1073741824
-        }
+| Template | 检查项 | 范围和限制 |
+|---|---|---|
+| DocsRequiredLabels | 必需的非空标签 | Pod metadata；Deployment metadata 与 Pod template 标签不同 |
+| DocsNoPrivileged | 拒绝 privileged=true | 常规、init 和 ephemeral container；并非完整的 PSS 套件 |
+| DocsApprovedImages | 已批准的 registry/path 前缀 | 所有三种 container 类型；schema 要求以结尾的 `/` 作为边界 |
+| K8sContainerLimits | CPU/memory limit 的存在性和最大值 | 固定版本的上游策略；常规/init container，因为 ephemeral container 无法设置资源字段 |
+| DocsUniqueIngress | 已同步 inventory 中的精确 host 冲突 | 排除同一对象更新；不保证 wildcard 或原子性的并发创建 |
 
-        parse_memory(mem) = bytes {
-            endswith(mem, "Mi")
-            bytes := to_number(trim_suffix(mem, "Mi")) * 1048576
-        }
+### 镜像边界和例外
 
-        parse_memory(mem) = bytes {
-            endswith(mem, "Ki")
-            bytes := to_number(trim_suffix(mem, "Ki")) * 1024
-        }
-```
+`registry.example.com/team/` 与 `registry.example.com/team-evil/` 及 `registry.example.com.evil/` 不同。前缀匹配需要分隔符边界和完整限定的镜像名称契约。该示例不提供工作负载可控的绕过标签，例如 `skip-privileged-check=true`。namespace 例外需要为标签变更实施受控的 RBAC、授权、到期机制和审计记录。
 
-### 限制 Image Registries
+### 资源数量
 
-```yaml
-apiVersion: templates.gatekeeper.sh/v1
-kind: ConstraintTemplate
-metadata:
-  name: k8sallowedrepos
-  annotations:
-    metadata.gatekeeper.sh/title: "Allowed Repositories"
-    description: "Requires container images from allowed repositories"
-spec:
-  crd:
-    spec:
-      names:
-        kind: K8sAllowedRepos
-      validation:
-        openAPIV3Schema:
-          type: object
-          properties:
-            repos:
-              type: array
-              items:
-                type: string
-              description: "List of allowed image repositories"
-  targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package k8sallowedrepos
+仅支持 Gi/Mi/Ki 的解析器可能对 `9G` 或纯字节返回 undefined，并悄然漏报违规。该示例固定使用上游 `K8sContainerLimits` 策略，它会将不受支持的字符串报告为违规。它不接受 Kubernetes 允许的每种数量表示；请记录其格式限制。原生测试区分 millicore、十进制/二进制内存、纯字节、数值输入以及显式引用的指数格式字符串。请引用如 `8e9` 的字符串 fixture，以防 YAML 解析器将其转换为数字。
 
-        import future.keywords.in
+### PSS 和 Controller 资源
 
-        violation[{"msg": msg}] {
-            container := input.review.object.spec.containers[_]
-            not image_allowed(container.image)
-            msg := sprintf("Container %v uses image %v from disallowed repository",
-                          [container.name, container.image])
-        }
+不要将少量 privileged/runAsNonRoot 检查标为完整的 Baseline/Restricted 强制执行。版本化 PSS 还涵盖 host namespace、seccomp、capability、OS 差异、Pod 级继承和 ephemeral container；请使用 [Pod Security Standards 指南](./03-pod-security-standards.md)。这些示例检查 Pod 准入。如需更早评估 controller Pod template，请配置单独的 Template 或 ExpansionTemplate 测试。
 
-        violation[{"msg": msg}] {
-            container := input.review.object.spec.initContainers[_]
-            not image_allowed(container.image)
-            msg := sprintf("InitContainer %v uses image %v from disallowed repository",
-                          [container.name, container.image])
-        }
+<span id="advanced-policy-patterns"></span>
 
-        image_allowed(image) {
-            repo := input.parameters.repos[_]
-            startswith(image, repo)
-        }
-```
+<span id="external-data-reference"></span>
 
-## 定义 Constraints
+<span id="cross-namespace-policies"></span>
 
-### 基本 Constraint 编写
+<span id="complex-condition-policies"></span>
 
-```yaml
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
-metadata:
-  name: require-app-labels
-spec:
-  enforcementAction: deny
-  match:
-    kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
-      - apiGroups: ["apps"]
-        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
-    namespaces:
-      - production
-      - staging
-    excludedNamespaces:
-      - kube-system
-      - gatekeeper-system
-  parameters:
-    labels:
-      - "app.kubernetes.io/name"
-      - "app.kubernetes.io/version"
-      - "app.kubernetes.io/component"
-    message: "All resources must have standard Kubernetes labels"
-```
+## 同步数据和引用策略
 
-### 使用 Namespace Selectors
-
-```yaml
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sPSPPrivilegedContainer
-metadata:
-  name: deny-privileged-containers
-spec:
-  enforcementAction: deny
-  match:
-    kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
-    namespaceSelector:
-      matchExpressions:
-        - key: environment
-          operator: In
-          values: ["production", "staging"]
-        - key: privileged-allowed
-          operator: NotIn
-          values: ["true"]
-    labelSelector:
-      matchExpressions:
-        - key: skip-privileged-check
-          operator: NotIn
-          values: ["true"]
-  parameters:
-    exemptImages:
-      - "gcr.io/google-containers/"
-      - "k8s.gcr.io/"
-```
-
-### Resource Limits Constraint
-
-```yaml
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sContainerLimits
-metadata:
-  name: container-resource-limits
-spec:
-  enforcementAction: deny
-  match:
-    kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
-    excludedNamespaces:
-      - kube-system
-      - gatekeeper-system
-      - monitoring
-  parameters:
-    cpu: "4"
-    memory: "8Gi"
-    exemptContainers:
-      - istio-proxy
-      - linkerd-proxy
-```
-
-### Image Registry Constraint
-
-```yaml
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sAllowedRepos
-metadata:
-  name: allowed-image-repos
-spec:
-  enforcementAction: deny
-  match:
-    kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
-    excludedNamespaces:
-      - kube-system
-  parameters:
-    repos:
-      - "123456789012.dkr.ecr.us-west-2.amazonaws.com/"
-      - "gcr.io/distroless/"
-      - "docker.io/library/"
-```
-
-## 高级策略模式
-
-### 外部数据引用
+`sync.yaml` 将 `networking.k8s.io/v1` Ingress 对象同步到 inventory。这不同于连接外部 HTTP provider 或任意 OPA bundle。仅同步必要的对象，并审查 RBAC、内存和敏感数据。
 
 ```yaml
 apiVersion: config.gatekeeper.sh/v1alpha1
@@ -570,608 +175,160 @@ metadata:
 spec:
   sync:
     syncOnly:
-      - group: ""
-        version: "v1"
-        kind: "Namespace"
-      - group: ""
-        version: "v1"
-        kind: "ConfigMap"
-      - group: "networking.k8s.io"
-        version: "v1"
-        kind: "Ingress"
+    - group: networking.k8s.io
+      version: v1
+      kind: Ingress
 ```
 
-### 跨 Namespace 策略
+同一 namespace 中不同的名称，或不同 namespace 中相同的名称，仍然可能冲突。要求 namespace 和名称都不同会漏掉这些情况。该示例只将相同 namespace/名称作为自身更新排除。由于 inventory 最终一致，它不能为并发创建以原子方式保证唯一性。
 
-```yaml
-apiVersion: templates.gatekeeper.sh/v1
-kind: ConstraintTemplate
-metadata:
-  name: k8suniqueingresshost
-spec:
-  crd:
-    spec:
-      names:
-        kind: K8sUniqueIngressHost
-  targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package k8suniqueingresshost
+<span id="mutation-features"></span>
 
-        import future.keywords.in
+<span id="using-assignmetadata"></span>
 
-        violation[{"msg": msg}] {
-            input.review.kind.kind == "Ingress"
-            host := input.review.object.spec.rules[_].host
-            other := data.inventory.namespace[ns][otherapiversion]["Ingress"][name]
-            other.metadata.namespace != input.review.object.metadata.namespace
-            other.metadata.name != input.review.object.metadata.name
-            other_host := other.spec.rules[_].host
-            host == other_host
-            msg := sprintf("Ingress host %v is already used by %v/%v",
-                          [host, ns, name])
-        }
-```
+<span id="using-assign"></span>
 
-### 复杂条件策略
+<span id="conditional-mutation"></span>
 
-```yaml
-apiVersion: templates.gatekeeper.sh/v1
-kind: ConstraintTemplate
-metadata:
-  name: k8spodsecuritystandard
-spec:
-  crd:
-    spec:
-      names:
-        kind: K8sPodSecurityStandard
-      validation:
-        openAPIV3Schema:
-          type: object
-          properties:
-            level:
-              type: string
-              enum: ["baseline", "restricted"]
-  targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package k8spodsecuritystandard
+<span id="using-modifyset"></span>
 
-        import future.keywords.in
+## 变更
 
-        # Baseline level violations
-        violation[{"msg": msg, "details": {"level": "baseline"}}] {
-            input.parameters.level == "baseline"
-            container := input_containers[_]
-            container.securityContext.privileged == true
-            msg := sprintf("Baseline violation: privileged container %v", [container.name])
-        }
-
-        violation[{"msg": msg, "details": {"level": "baseline"}}] {
-            input.parameters.level == "baseline"
-            container := input_containers[_]
-            has_host_namespace(input.review.object.spec)
-            msg := "Baseline violation: host namespaces not allowed"
-        }
-
-        # Restricted level violations (includes Baseline)
-        violation[{"msg": msg, "details": {"level": "restricted"}}] {
-            input.parameters.level == "restricted"
-            container := input_containers[_]
-            container.securityContext.privileged == true
-            msg := sprintf("Restricted violation: privileged container %v", [container.name])
-        }
-
-        violation[{"msg": msg, "details": {"level": "restricted"}}] {
-            input.parameters.level == "restricted"
-            container := input_containers[_]
-            not container.securityContext.runAsNonRoot == true
-            msg := sprintf("Restricted violation: container %v must run as non-root",
-                          [container.name])
-        }
-
-        violation[{"msg": msg, "details": {"level": "restricted"}}] {
-            input.parameters.level == "restricted"
-            container := input_containers[_]
-            not container.securityContext.allowPrivilegeEscalation == false
-            msg := sprintf("Restricted violation: container %v allows privilege escalation",
-                          [container.name])
-        }
-
-        violation[{"msg": msg, "details": {"level": "restricted"}}] {
-            input.parameters.level == "restricted"
-            container := input_containers[_]
-            has_dangerous_capabilities(container)
-            msg := sprintf("Restricted violation: container %v has dangerous capabilities",
-                          [container.name])
-        }
-
-        input_containers[c] {
-            c := input.review.object.spec.containers[_]
-        }
-
-        input_containers[c] {
-            c := input.review.object.spec.initContainers[_]
-        }
-
-        has_host_namespace(spec) {
-            spec.hostNetwork == true
-        }
-
-        has_host_namespace(spec) {
-            spec.hostPID == true
-        }
-
-        has_host_namespace(spec) {
-            spec.hostIPC == true
-        }
-
-        has_dangerous_capabilities(container) {
-            cap := container.securityContext.capabilities.add[_]
-            dangerous_caps[cap]
-        }
-
-        dangerous_caps := {"ALL", "SYS_ADMIN", "NET_ADMIN", "SYS_PTRACE"}
-```
-
-## Mutation 功能
-
-### 使用 AssignMetadata
-
-```yaml
-apiVersion: mutations.gatekeeper.sh/v1
-kind: AssignMetadata
-metadata:
-  name: add-owner-label
-spec:
-  match:
-    scope: Namespaced
-    kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
-    excludedNamespaces:
-      - kube-system
-  location: "metadata.labels.owner"
-  parameters:
-    assign:
-      value: "platform-team"
-```
-
-### 使用 Assign
-
-```yaml
-apiVersion: mutations.gatekeeper.sh/v1
-kind: Assign
-metadata:
-  name: set-image-pull-policy
-spec:
-  applyTo:
-    - groups: [""]
-      kinds: ["Pod"]
-      versions: ["v1"]
-  match:
-    scope: Namespaced
-    excludedNamespaces:
-      - kube-system
-  location: "spec.containers[name:*].imagePullPolicy"
-  parameters:
-    assign:
-      value: "Always"
-```
-
-### 条件式 Mutation
-
-```yaml
-apiVersion: mutations.gatekeeper.sh/v1
-kind: Assign
-metadata:
-  name: add-tolerations-for-spot
-spec:
-  applyTo:
-    - groups: [""]
-      kinds: ["Pod"]
-      versions: ["v1"]
-  match:
-    scope: Namespaced
-    labelSelector:
-      matchLabels:
-        allow-spot: "true"
-  location: "spec.tolerations"
-  parameters:
-    assign:
-      value:
-        - key: "kubernetes.io/spot"
-          operator: "Exists"
-          effect: "NoSchedule"
-```
-
-### 使用 ModifySet
+AssignMetadata 添加受支持的 metadata label/annotation；它不是通用覆盖机制。Assign 设置字段。分配整个 toleration 列表可能会丢弃现有条目，因此该示例使用 ModifySet merge。该 toleration 允许专用 lab taint；它不选择 Spot node。
 
 ```yaml
 apiVersion: mutations.gatekeeper.sh/v1
 kind: ModifySet
 metadata:
-  name: add-security-capability
+  name: docs-dedicated-toleration
 spec:
   applyTo:
-    - groups: [""]
-      kinds: ["Pod"]
-      versions: ["v1"]
+  - groups:
+    - ''
+    versions:
+    - v1
+    kinds:
+    - Pod
   match:
     scope: Namespaced
-  location: "spec.containers[name:*].securityContext.capabilities.drop"
+    namespaces:
+    - policy-lab
+  location: spec.tolerations
   parameters:
     operation: merge
     values:
       fromList:
-        - "ALL"
+      - key: dedicated
+        operator: Equal
+        value: policy-lab
+        effect: NoSchedule
 ```
 
-## 审计与监控
+将 mutation/defaulting 与 validation 分开。审查 CREATE/UPDATE 范围、重复应用、与其他 mutator 的收敛性以及对现有对象的影响。创建 mutator 不会自动重写每个现有对象。
 
-### 审计配置
+<span id="audit-configuration"></span>
 
-```yaml
-apiVersion: config.gatekeeper.sh/v1alpha1
-kind: Config
-metadata:
-  name: config
-  namespace: gatekeeper-system
-spec:
-  # Audit interval setting (seconds)
-  # Can be checked with audit command
-  validation:
-    traces:
-      - user: "*"
-        kind:
-          group: ""
-          version: "v1"
-          kind: "Pod"
-```
+<span id="checking-constraint-violations"></span>
 
-### 检查 Constraint Violations
+<span id="prometheus-metrics"></span>
+
+<span id="grafana-dashboard"></span>
+
+## 审计和监控
+
+使用 chart `auditInterval` 设置审计频率。Config `validation.traces` 用于调试选定的准入评估，而不是安排审计。准入输入和 Rego print 可能包含敏感对象数据；仅在所需范围内启用它们。`constraintViolationsLimit` 限制状态详情列表，其值可能不同于 totalViolations。
 
 ```bash
-# Check violation status for all Constraints
 kubectl get constraints
-
-# Get detailed violation info for specific Constraint
-kubectl describe k8srequiredlabels require-app-labels
-
-# Example output:
-# Status:
-#   Audit Timestamp:  2026-02-21T10:30:00Z
-#   Total Violations:  5
-#   Violations:
-#     Enforcement Action:  deny
-#     Kind:               Pod
-#     Name:               nginx-without-labels
-#     Namespace:          default
-#     Message:            Resource missing required labels: {"app.kubernetes.io/name"}
-```
-
-### Prometheus Metrics
-
-```yaml
-# Gatekeeper ServiceMonitor
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: gatekeeper-controller-manager
-  namespace: gatekeeper-system
-spec:
-  selector:
-    matchLabels:
-      control-plane: controller-manager
-  endpoints:
-    - port: metrics
-      interval: 30s
-```
-
-关键 Metrics：
-
-| Metric 名称 | 描述 |
-|-------------|-------------|
-| `gatekeeper_violations` | 每个 Constraint 的 Violations |
-| `gatekeeper_constraints` | Constraint 总数 |
-| `gatekeeper_constraint_templates` | ConstraintTemplate 总数 |
-| `gatekeeper_request_count` | Admission 请求数 |
-| `gatekeeper_request_duration_seconds` | 请求处理时间 |
-| `gatekeeper_audit_duration_seconds` | Audit 持续时间 |
-
-### Grafana Dashboard
-
-```json
-{
-  "panels": [
-    {
-      "title": "Policy Violations by Constraint",
-      "targets": [
-        {
-          "expr": "sum by (constraint_name) (gatekeeper_violations)",
-          "legendFormat": "{{constraint_name}}"
-        }
-      ]
-    },
-    {
-      "title": "Admission Request Latency",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.99, sum(rate(gatekeeper_request_duration_seconds_bucket[5m])) by (le))",
-          "legendFormat": "p99"
-        }
-      ]
-    },
-    {
-      "title": "Admission Requests by Status",
-      "targets": [
-        {
-          "expr": "sum by (admission_status) (rate(gatekeeper_request_count[5m]))",
-          "legendFormat": "{{admission_status}}"
-        }
-      ]
-    }
-  ]
-}
-```
-
-## 测试和 CI/CD 集成
-
-### Gator CLI 测试
-
-```bash
-# Install Gator
-go install github.com/open-policy-agent/gatekeeper/cmd/gator@latest
-
-# Validate policies
-gator verify ./policies/
-
-# Run test suite
-gator test ./tests/
-```
-
-### Test Suite 定义
-
-```yaml
-# tests/required-labels-test.yaml
-kind: Suite
-apiVersion: test.gatekeeper.sh/v1alpha1
-metadata:
-  name: required-labels-test
-tests:
-  - name: "Missing required labels should fail"
-    template: ../templates/k8srequiredlabels.yaml
-    constraint: ../constraints/require-app-labels.yaml
-    cases:
-      - name: pod-without-labels
-        object: fixtures/pod-without-labels.yaml
-        assertions:
-          - violations: yes
-            message: "missing required labels"
-
-      - name: pod-with-all-labels
-        object: fixtures/pod-with-labels.yaml
-        assertions:
-          - violations: no
-```
-
-### Test Fixtures
-
-```yaml
-# fixtures/pod-without-labels.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-pod
-  namespace: production
-spec:
-  containers:
-    - name: nginx
-      image: nginx:latest
----
-# fixtures/pod-with-labels.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-pod
-  namespace: production
-  labels:
-    app.kubernetes.io/name: nginx
-    app.kubernetes.io/version: "1.0"
-    app.kubernetes.io/component: web
-spec:
-  containers:
-    - name: nginx
-      image: nginx:latest
-```
-
-### GitHub Actions 集成
-
-```yaml
-name: Policy Validation
-on:
-  pull_request:
-    paths:
-      - 'policies/**'
-      - 'constraints/**'
-
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Gator
-        run: |
-          go install github.com/open-policy-agent/gatekeeper/cmd/gator@latest
-
-      - name: Validate Constraint Templates
-        run: |
-          gator verify ./policies/templates/
-
-      - name: Run Policy Tests
-        run: |
-          gator test ./policies/tests/
-
-      - name: Dry-run against cluster
-        if: github.event_name == 'pull_request'
-        run: |
-          kubectl apply --dry-run=server -f ./policies/
-```
-
-## 最佳实践
-
-### 策略组织
-
-```
-policies/
-├── templates/
-│   ├── security/
-│   │   ├── privileged-container.yaml
-│   │   ├── host-namespaces.yaml
-│   │   └── capabilities.yaml
-│   ├── resources/
-│   │   ├── container-limits.yaml
-│   │   └── storage-class.yaml
-│   └── networking/
-│       ├── allowed-repos.yaml
-│       └── ingress-host.yaml
-├── constraints/
-│   ├── production/
-│   │   ├── security-constraints.yaml
-│   │   └── resource-constraints.yaml
-│   └── development/
-│       └── basic-constraints.yaml
-├── mutations/
-│   ├── defaults/
-│   │   └── image-pull-policy.yaml
-│   └── labels/
-│       └── add-owner-label.yaml
-└── tests/
-    ├── security/
-    │   └── privileged-test.yaml
-    └── resources/
-        └── limits-test.yaml
-```
-
-### 渐进式策略发布
-
-```yaml
-# Phase 1: Dry Run (dryrun mode)
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
-metadata:
-  name: require-labels-dryrun
-spec:
-  enforcementAction: dryrun  # Logging only
-  match:
-    kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
----
-# Phase 2: Warn mode
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
-metadata:
-  name: require-labels-warn
-spec:
-  enforcementAction: warn  # Warning only
-  match:
-    kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
----
-# Phase 3: Deny mode (full enforcement)
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
-metadata:
-  name: require-labels-enforce
-spec:
-  enforcementAction: deny  # Reject
-  match:
-    kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
-```
-
-### 策略例外管理
-
-```yaml
-# Using namespace labels for exceptions
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: legacy-app
-  labels:
-    policy-exceptions: "privileged"
----
-# Exception handling in Constraint
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sPSPPrivilegedContainer
-metadata:
-  name: deny-privileged
-spec:
-  enforcementAction: deny
-  match:
-    kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
-    namespaceSelector:
-      matchExpressions:
-        - key: policy-exceptions
-          operator: NotIn
-          values: ["privileged"]
-```
-
-## 故障排查
-
-### 常见问题
-
-```bash
-# Check webhook issues
-kubectl get validatingwebhookconfigurations gatekeeper-validating-webhook-configuration -o yaml
-
-# Check Gatekeeper logs
-kubectl logs -n gatekeeper-system -l control-plane=controller-manager -f
-
-# Check Audit logs
-kubectl logs -n gatekeeper-system -l control-plane=audit-controller -f
-
-# Check Constraint sync status
+kubectl describe docsrequiredlabels required-labels
 kubectl get constrainttemplatepodstatuses -n gatekeeper-system
 kubectl get constraintpodstatuses -n gatekeeper-system
 ```
 
-### 调试技巧
+chart webhook Service 仅暴露 HTTPS webhook 流量，而非 metrics。`podmonitor.yaml` 在 audit 和 webhook Deployment 上选择实际命名的 metrics:8888 container port。请先安装 Prometheus Operator CRD 并对齐 PodMonitor label/namespace selector。
 
-```yaml
-# Using print statements for Rego debugging
-violation[{"msg": msg}] {
-    container := input.review.object.spec.containers[_]
-    print("Checking container:", container.name)
-    print("Image:", container.image)
-    not starts_with_allowed(container.image)
-    msg := sprintf("Invalid image: %v", [container.image])
-}
+| Metric | 含义 |
+|---|---|
+| gatekeeper_validation_request_count | 带有实际 admission_status label 的验证请求 |
+| gatekeeper_validation_request_duration_seconds | 验证延迟直方图 |
+| gatekeeper_violations | 按 enforcement_action 分类的已审计违规；不假定存在默认 constraint_name label |
+| gatekeeper_audit_last_run_end_time | 上次完成审计的时间戳 |
+| gatekeeper_constraint_templates | Template 状态计数 |
+
+```promql
+sum by (enforcement_action) (gatekeeper_violations)
+histogram_quantile(0.99, sum by (le) (rate(gatekeeper_validation_request_duration_seconds_bucket[5m])))
 ```
 
-## 总结
+<span id="testing-and-ci-cd-integration"></span>
 
-OPA Gatekeeper 是一个强大的策略引擎，提供：
+<span id="gator-cli-testing"></span>
 
-1. **Rego 语言**：声明式且灵活的策略编写
-2. **ConstraintTemplate**：可复用的策略模板
-3. **Constraint**：具体的策略应用
-4. **Mutation**：自动资源修改
-5. **Audit**：对现有资源进行策略合规性检查
-6. **Testing**：使用 Gator 进行策略验证
+<span id="test-suite-definition"></span>
 
-虽然与 Kyverno 相比它的学习曲线更高，但它为复杂策略逻辑提供了更大的灵活性。
+<span id="test-fixtures"></span>
 
----
+<span id="github-actions-integration"></span>
 
-## 相关文档
+## Gator 测试和 CI
 
-- [Kyverno 策略管理](./01-kyverno-policy-management.md)
+安装官方 3.23.1 release asset 并验证其发布的 checksum。ARM64 binary 在 GitVersion 中报告 +dirty；审计验证了发布 archive 的 hash，而非假定该文本意味着本地修改。请勿用未固定版本的 @latest CLI 运行替代带版本证据的运行。
+
+```bash
+gator version
+gator verify tests/suite.yaml --verbose
+gator test -f templates/docsnoprivileged.yaml \
+  -f constraints/no-privileged.yaml \
+  -f tests/fixtures/tenant-skip-label-no-bypass.yaml --output=json
+```
+
+`verify` 检查 Suite 中的预期违规；`test -f` 根据 Template/Constraint 评估 manifest。Verify 可以忽略不含 Suite 的目录，因此请检查五个测试和 33 个 case 均已运行，而不要仅信任 exit status。fixture 镜像是策略输入，并非可拉取的工作负载。CI 在没有凭据的情况下运行本地 suite；任何集群 dry-run 都应属于拥有已授权访问权限的独立受信环境。
+
+<span id="best-practices"></span>
+
+<span id="policy-organization"></span>
+
+<span id="gradual-policy-rollout"></span>
+
+<span id="policy-exception-management"></span>
+
+<span id="troubleshooting"></span>
+
+<span id="common-issues"></span>
+
+<span id="debugging-tips"></span>
+
+## 推出和故障排除
+
+将同一个已填充的 Constraint 依次经过 dryrun→warn→deny，并审查 audit/admission 结果和例外。请勿将三个无参数 Constraint 作为推出机制。Dryrun/warn 可能在 Gator 测试 exit status 为零时返回违规；deny 违规则返回一。请将 webhook 可用性失败与策略违规分开观察。
+
+```bash
+kubectl get validatingwebhookconfiguration gatekeeper-validating-webhook-configuration -o yaml
+kubectl -n gatekeeper-system logs deployment/gatekeeper-controller-manager --tail=100
+kubectl -n gatekeeper-system logs deployment/gatekeeper-audit --tail=100
+```
+
+检查策略输入、match 范围、CRD/Template 错误、webhook certificate/network、audit timestamp 和 inventory 新鲜度。在更改 webhook 强制执行或扩大 namespace 例外前，请先诊断原因。
+
+<span id="summary"></span>
+
+<span id="related-documentation"></span>
+
+## 验证范围和相关阅读
+
+Gator 3.23.1 执行了 33 个策略 case 和三种 enforcement mode。检查涵盖固定版本的 Helm render、八个 Gatekeeper CRD 对象以及 audit/webhook PodMonitor 绑定。它们没有执行 Kubernetes admission、EKS networking、实时 audit-cache 同步或 API failover。独立的原生 mutation 验证记录在审查报告中。
+
+- [Gatekeeper 测验](../quizzes/security/09-opa-gatekeeper-quiz.md)
+- [Kyverno](./01-kyverno-policy-management.md)
 - [Pod Security Standards](./03-pod-security-standards.md)
-- [EKS 安全最佳实践](./06-eks-security-best-practices.md)
+- [EKS 安全实践](./06-eks-security-best-practices.md)
+
+## 参考资料
+
+- [Gatekeeper v3.23.1](https://github.com/open-policy-agent/gatekeeper/tree/v3.23.1)
+- [ConstraintTemplate 和 Rego 版本](https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/constrainttemplates.md)
+- [Gator](https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/gator.md)
+- [Mutation](https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/mutation.md)
+- [Audit](https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/audit.md)
+- [Metrics](https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/metrics.md)
+- [固定版本的资源限制策略](https://github.com/open-policy-agent/gatekeeper-library/blob/bd333d4704647b1000cef5a92017257ee46fe2c8/library/general/containerlimits/template.yaml)
