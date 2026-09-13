@@ -1,6 +1,10 @@
 # アラートの概要
 
-> **最終更新**: February 20, 2026
+> **最終更新**: September 13, 2026
+
+
+> レビュー基準: Prometheus 3.14.0 および Alertmanager 0.34.0。例では 1 つの cluster と重複排除された series を想定しています。実際の job、label、exporter、metric の可用性を確認してから、threshold を調整してください。ローカルの rule/routing チェックのみを実行しており、cluster または notification channel は検証していません。
+
 
 ## 目次
 
@@ -9,113 +13,72 @@
 - [アラート設計の原則](#alert-design-principles)
 - [アラートのルーティングとエスカレーション](#alert-routing-and-escalation)
 - [オンコールローテーション](#on-call-rotation)
-- [EKS 環境向けアラート戦略](#alerting-strategy-for-eks-environments)
-- [ソリューションの比較](#solution-comparison)
+- [EKS 環境におけるアラート戦略](#alerting-strategy-for-eks-environments)
+- [ソリューション比較](#solution-comparison)
 
 ---
 
 ## アラートの役割と重要性
 
-### オブザーバビリティの 3 本柱におけるアラートの位置付け
+### オブザーバビリティの 3 つの柱におけるアラートの位置付け
 
-現代のオブザーバビリティは、次の 3 つの中核的な柱で構成されています。
+Metrics、logs、traces は一般的なオブザーバビリティシグナルであり、profiles やその他のシグナルも存在します。rule engine が必ずしもこれら 3 つすべてを直接評価するわけではありません。
 
-```mermaid
-graph TB
-    subgraph Observability["Observability"]
-        M[Metrics]
-        L[Logs]
-        T[Traces]
-    end
+![一般的なオブザーバビリティシグナルが、互換性のある backend rule または派生 metric に入力され、構成済みの notification および incident integration に渡されます。](../../.gitbook/assets/en-observability-alerting-readme-0.png)
 
-    subgraph Alerting["Alerting"]
-        A[Alert Rules]
-        N[Notifications]
-        E[Escalation]
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-0.html)
 
-    M --> A
-    L --> A
-    T --> A
-    A --> N
-    N --> E
+- **Metrics**: システムの定量的な状態（CPU、memory、request count など）
+- **Logs**: event の詳細な記録
+- **Traces**: 分散システムにおける request のフロー
 
-    style Observability fill:#e1f5fe
-    style Alerting fill:#fff3e0
-```
-
-- **Metrics**: システムの定量的な状態（CPU、メモリ、リクエスト数など）
-- **Logs**: イベントの詳細な記録
-- **Traces**: 分散システムにおけるリクエストフロー
-
-**Alerting** は、これら 3 つのデータソースに基づいて異常を検出し、担当者に適時通知することで、迅速な対応を可能にします。
+Prometheus rule は metrics を評価します。logs と traces は backend 固有の rule または派生 metric を通じてアラートに入力されます。検出、通知、人間による acknowledgment は別々の段階であり、配信の成功には独自の monitoring が必要です。
 
 ### アラートが必要な理由
 
-1. **プロアクティブな問題対応**: ユーザーが問題を経験する前に問題を検出する
-2. **ダウンタイムの最小化**: 迅速な検出と対応によりサービスの可用性を向上させる
-3. **コスト削減**: 自動監視により人件費を削減する
-4. **SLA/SLO の遵守**: サービスレベル目標を達成するための不可欠な要素
-5. **インシデントの記録**: 問題発生履歴を追跡・分析する
+1. **プロアクティブな問題対応**: ユーザーが問題を経験する前に issue を検出する
+2. **ダウンタイムの最小化**: 迅速な検出と対応により service availability を向上させる
+3. **コスト削減**: 自動 monitoring により人件費を削減する
+4. **SLA/SLO 準拠**: service level objective を達成するための必須要素
+5. **Incident の記録**: 問題発生履歴を追跡して分析する
 
 ### 良いアラートと悪いアラート
 
 | 観点 | 良いアラート | 悪いアラート |
 |--------|-------------|------------|
-| **対応可能性** | 即時の対応が必要 | 情報のみで、対応不要 |
-| **明確性** | 問題が何であるかが明確 | 曖昧で不明確 |
-| **緊急度** | 緊急度が重大度と一致している | すべてが緊急扱い |
-| **頻度** | 適切な頻度 | 頻度が高すぎる、または低すぎる |
-| **重複** | 関連するアラートがグループ化されている | 同じ問題に対して数十件のアラート |
+| **実行可能性** | 即時の対応が必要 | 情報のみで、対応不要 |
+| **明確さ** | 問題が何であるか明確 | 曖昧で不明確 |
+| **緊急度** | 緊急度が severity と一致 | すべてが緊急 |
+| **頻度** | 適切な頻度 | 頻繁すぎる、または少なすぎる |
+| **重複** | 関連するアラートをグループ化 | 同じ issue に対して多数のアラート |
 
 ---
 
 ## アラートのライフサイクル
 
-アラートは次のライフサイクルをたどります。
+この図は rule state と incident response を組み合わせています。Prometheus は inactive/pending/firing を使用します。acknowledgment と work-in-progress はオンコールツールに属します。incident をクローズしても firing rule はクリアされません。time series が消失した場合も rule が非アクティブになることがあり、復旧の証拠として扱ってはなりません。
 
-```mermaid
-stateDiagram-v2
-    [*] --> Inactive: Normal state
-    Inactive --> Pending: Threshold exceeded
-    Pending --> Firing: Wait time elapsed
-    Firing --> Notified: Alert sent
-    Notified --> Acknowledged: Responder confirmed
-    Acknowledged --> InProgress: Action in progress
-    InProgress --> Resolved: Problem solved
-    Resolved --> [*]: End
+![Prometheus の rule state と独立した incident-response state。incident のクローズまたは series の喪失は service recovery を証明しません。](../../.gitbook/assets/en-observability-alerting-readme-1.png)
 
-    Pending --> Inactive: Returns within threshold
-    Firing --> Inactive: Auto-resolved
-
-    note right of Pending
-        Held during the wait time
-        specified in the for clause
-    end note
-
-    note right of Firing
-        Alert is active
-        Waiting to be sent to receivers
-    end note
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-1.html)
 
 ### 1. 検出
 
-- **しきい値ベース**: 特定の値が設定済みのしきい値を超えた場合
+- **Threshold ベース**: 特定の値が構成済みの threshold を超えた場合
 - **変化率ベース**: 変化率が異常な場合
-- **異常検知**: 機械学習ベースの異常パターン検知
-- **ログパターン**: 特定のログパターンが発生した場合
+- **Anomaly detection**: machine learning ベースの異常パターン検出
+- **Log pattern**: 特定の log pattern が発生した場合
 
 ```yaml
-# Prometheus alert rule example
 groups:
   - name: node-alerts
     rules:
       - alert: HighCPUUsage
-        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-        for: 5m  # Alert fires if condition persists for 5 minutes
+        expr: 100 * (1 - avg by (cluster, instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 80
+        for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
           summary: "High CPU usage detected"
           description: "CPU usage is above 80% for 5 minutes on {{ $labels.instance }}"
@@ -123,44 +86,34 @@ groups:
 
 ### 2. 通知
 
-- **チャネル選択**: Slack、Email、SMS、PagerDuty など
-- **ルーティング**: アラートの種類に応じて適切な受信者へ配信する
-- **グループ化**: 関連するアラートをまとめる
-- **重複排除**: 同一アラートの繰り返し送信を防止する
+- **Channel の選択**: Slack、Email、SMS、PagerDuty など
+- **Routing**: alert type に基づいて適切な receiver に配信する
+- **Grouping**: 関連するアラートをまとめる
+- **Deduplication**: 重複通知を削減する。exactly-once の保証はなく、repeat_interval の reminder と retry は発生する可能性があります
 
 ### 3. エスカレーション
 
-- **時間ベース**: 指定時間内に応答がない場合、次の担当者へエスカレーションする
-- **重大度ベース**: 重大度に応じて異なるエスカレーションパスを設定する
-- **自動エスカレーション**: 定義済みのルールに従って自動的にエスカレーションする
+- **時間ベース**: 指定時間内に応答がなければ次の responder にエスカレーションする
+- **Severity ベース**: severity に基づいて異なるエスカレーションパスを使用する
+- **自動エスカレーション**: オンコール service で構成します。Alertmanager の repeat_interval は acknowledgment の確認も responder の交代も行いません
 
-```mermaid
-graph LR
-    A[Alert Fired] --> B{Primary<br/>Response?}
-    B -->|Yes| C[Action Proceeds]
-    B -->|No, 15min elapsed| D{Secondary<br/>Response?}
-    D -->|Yes| C
-    D -->|No, 15min elapsed| E{Team Lead<br/>Response?}
-    E -->|Yes| C
-    E -->|No, 15min elapsed| F[Entire Team Alert]
+![オンコール service で実装する例示的なエスカレーション時間枠。acknowledgment と backup の動作は policy で設定します。](../../.gitbook/assets/en-observability-alerting-readme-2.png)
 
-    style A fill:#ffcdd2
-    style C fill:#c8e6c9
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-2.html)
 
 ### 4. 解決
 
-- **手動解決**: 担当者が問題を修正した後にアラートをクローズする
-- **自動解決**: Metrics が正常範囲に戻った時点で自動的にクローズする
+- **手動解決**: responder が incident tool で incident をクローズし、rule state は個別に確認する
+- **自動解決**: rule と collection health を確認後、integration policy に従って incident state を更新する
 - **解決通知**: 問題が修正されたときに解決通知を送信する
 
 ---
 
 ## アラート設計の原則
 
-### 1. 対応可能なアラート
+### 1. 実行可能なアラート
 
-すべてのアラートは、受信者が即時に対応できるようにする必要があります。
+人を中断させる page には、即時に実行可能な対応が必要です。情報提供 event や長期的な作業は、代わりに ticket または dashboard に送ることができます。
 
 **悪い例:**
 ```
@@ -170,180 +123,144 @@ Alert: Database connection count increased
 **良い例:**
 ```
 Alert: Database connection pool exhausted
-Action Required: Scale up database or investigate connection leaks
-Runbook: https://wiki.company.com/db-connection-exhausted
+Action Required: Confirm user impact; inspect pool saturation and connection leaks using the runbook
+Runbook: https://example.com/runbooks/replace-db-runbook
 ```
 
 ### 2. アラート疲れの防止
 
-アラートが多すぎると、重要なアラートを見逃す原因になります。
+アラートが多すぎると、重要なアラートを見逃す可能性があります。
 
-```mermaid
-graph TB
-    subgraph Problem["Alert Fatigue Vicious Cycle"]
-        A[Excessive Alerts] --> B[Alerts Ignored]
-        B --> C[Important Alerts Missed]
-        C --> D[Incident Occurs]
-        D --> E[More Alerts Added]
-        E --> A
-    end
+![アラート疲れと、実行可能性、grouping、緊急ではない作業の扱いを改善する review cycle。](../../.gitbook/assets/en-observability-alerting-readme-3.png)
 
-    subgraph Solution["Solution"]
-        F[Alert Refinement] --> G[Appropriate Thresholds]
-        G --> H[Alert Grouping]
-        H --> I[Regular Review]
-        I --> F
-    end
-
-    style Problem fill:#ffcdd2
-    style Solution fill:#c8e6c9
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-3.html)
 
 **アラート疲れを防止する戦略:**
 
-1. **しきい値の調整**: 過度に敏感なしきい値を設定しない
-2. **アラートのグループ化**: 関連するアラートを 1 つにまとめる
-3. **抑制**: 親アラートが発火したときに子アラートを抑制する
+1. **Threshold の調整**: 敏感すぎる threshold を設定しない
+2. **Alert grouping**: 関連するアラートを 1 つにまとめる
+3. **Inhibition**: 親 alert が firing のときに子 alert を抑制する
 4. **定期的なレビュー**: 不要なアラートを削除する
-5. **段階的な導入**: 新しいアラートはまず低い重大度から開始する
+5. **段階的な導入**: 新しいアラートは最初に低い severity で開始する
 
-### 3. 重大度レベル
+### 3. Severity レベル
 
-一貫した重大度システムを定義し、それに従います。
+これらの response time は例示的な組織の policy であり、product SLA や普遍的な推奨事項ではありません。
 
-| 重大度 | 説明 | 対応時間 | 例 |
+| Severity | 説明 | Response Time | 例 |
 |----------|-------------|---------------|----------|
-| **Critical** | サービスの完全な停止 | 即時（5 分以内） | サービス全体の停止、データ損失のリスク |
-| **High** | 主要機能の障害 | 15 分以内 | 決済システムのエラー、ログイン障害 |
-| **Warning** | 潜在的な問題 | 1 時間以内 | ディスク使用率 80%、レスポンスレイテンシの増加 |
-| **Info** | 情報アラート | 営業時間内 | Deployment 完了、バックアップ成功 |
+| **Critical** | service の完全な停止 | 即時（5 分以内） | service 全体の停止、data loss のリスク |
+| **High** | 主要機能の障害 | 15 分以内 | payment system error、login failure |
+| **Warning** | 潜在的な問題 | 1 時間以内 | disk usage 80%、response latency の増加 |
+| **Info** | 情報提供アラート | 営業時間内 | Deployment 完了、backup 成功 |
 
 ```yaml
-# Alert rules by severity example
 groups:
   - name: disk-alerts
     rules:
       - alert: DiskSpaceCritical
-        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 5
+        expr: |
+          (100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"} < 5)
+          and node_filesystem_readonly == 0
+          and node_filesystem_size_bytes > 0
         for: 5m
         labels:
           severity: critical
+          team: sre
         annotations:
           summary: "Disk space critical"
-
       - alert: DiskSpaceWarning
-        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 20
+        expr: |
+          (100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"} < 20)
+          and node_filesystem_readonly == 0
+          and node_filesystem_size_bytes > 0
         for: 10m
         labels:
           severity: warning
+          team: sre
         annotations:
           summary: "Disk space low"
 ```
 
-### 4. アラートのドキュメント化
+### 4. アラートのドキュメント
 
 すべてのアラートには次の情報を含める必要があります。
 
 - **説明**: アラートの意味
-- **影響**: この問題がサービスに与える影響
-- **対応手順**: 問題を解決するためのステップバイステップガイド
-- **Runbook リンク**: 詳細な対応手順書
+- **Impact**: この問題が service に与える影響
+- **Action steps**: 問題を解決するためのステップごとのガイド
+- **Runbook link**: 詳細な対応手順書
 
 ```yaml
 annotations:
-  summary: "High memory usage on {{ $labels.instance }}"
-  description: |
-    Memory usage is above 90% on {{ $labels.instance }}.
-    Current value: {{ $value | printf "%.2f" }}%
-  impact: "Application may experience OOM kills and service degradation"
-  action: |
-    1. Check for memory leaks: kubectl top pods -n {{ $labels.namespace }}
-    2. Review recent deployments
-    3. Consider scaling horizontally
-  runbook_url: "https://wiki.company.com/runbooks/high-memory"
+  summary: "Investigate the affected operation"
+  description: "Check the rule expression, its units, labels, and collection health."
+  impact: "Document the affected user operation before paging."
+  action: "Use the owning team's reviewed runbook; do not scale resources blindly."
+  runbook_url: "https://example.com/runbooks/replace-with-reviewed-runbook"
 ```
 
 ---
 
 ## アラートのルーティングとエスカレーション
 
-### ルーティング戦略
+### Routing 戦略
 
-アラートは、さまざまな基準に基づいて適切な受信者へ配信する必要があります。
+アラートはさまざまな条件に基づいて適切な receiver に配信する必要があります。
 
-```mermaid
-graph TB
-    A[Alert Fired] --> B{Severity?}
+![alert label が配信前にオンコールおよび team receiver を選択します。critical のみの match は default receiver も呼び出しません。](../../.gitbook/assets/en-observability-alerting-readme-5.png)
 
-    B -->|Critical| C[Immediate Phone/SMS]
-    B -->|High| D[Slack + PagerDuty]
-    B -->|Warning| E[Slack Channel]
-    B -->|Info| F[Email]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
 
-    C --> G{Team?}
-    D --> G
-    E --> G
+### Routing Tree の設計
 
-    G -->|Infrastructure| H[SRE Team]
-    G -->|Application| I[Dev Team]
-    G -->|Database| J[DBA Team]
-    G -->|Security| K[Security Team]
-
-    style C fill:#ffcdd2
-    style D fill:#fff3e0
-    style E fill:#fff9c4
-    style F fill:#e8f5e9
-```
-
-### ルーティングツリーの設計
+これは完全な**通知しない** routing-validation configuration です。空の receiver は意図的なものです。本番使用前にレビュー済み integration と Secret file を構成してください。Critical alert はオンコール receiver と一致する team に fan out されます。team label がない場合は default にフォールバックしますが、critical のみの match は default も呼び出しません。grouping delay のため、即時の電話を保証するものではありません。Disk critical は同じ instance/device/mountpoint の warning のみを inhibit します。
 
 ```yaml
-# Alertmanager routing configuration example
 route:
-  receiver: 'default-receiver'
-  group_by: ['alertname', 'cluster', 'service']
+  receiver: default-receiver
+  group_by: [alertname, cluster, namespace, service]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
-
   routes:
-    # Critical alerts - immediate phone call
-    - match:
-        severity: critical
-      receiver: 'pagerduty-critical'
+    - matchers: ['severity="critical"']
+      receiver: critical-oncall
       continue: true
-
-    # Infrastructure team alerts
-    - match_re:
-        alertname: ^(Node|Disk|CPU|Memory).*
-      receiver: 'sre-team'
-      routes:
-        - match:
-            severity: critical
-          receiver: 'sre-oncall'
-
-    # Application team alerts
-    - match_re:
-        namespace: ^(app|api|web).*
-      receiver: 'dev-team'
-
-    # Database alerts
-    - match_re:
-        alertname: ^(MySQL|PostgreSQL|Redis|MongoDB).*
-      receiver: 'dba-team'
+    - matchers: ['team="sre"']
+      receiver: sre-team
+    - matchers: ['team="app"']
+      receiver: dev-team
+    - matchers: ['team="database"']
+      receiver: dba-team
+    - matchers: ['team="security"']
+      receiver: security-team
+receivers:
+  - name: default-receiver
+  - name: critical-oncall
+  - name: sre-team
+  - name: dev-team
+  - name: dba-team
+  - name: security-team
+inhibit_rules:
+  - source_matchers: ['alertname="DiskSpaceCritical"', 'instance!=""', 'device!=""', 'mountpoint!=""']
+    target_matchers: ['alertname="DiskSpaceWarning"', 'instance!=""', 'device!=""', 'mountpoint!=""']
+    equal: [cluster, instance, device, mountpoint]
 ```
 
-### エスカレーションポリシー
+### エスカレーション policy
 
-アラートが無視されないように、時間ベースのエスカレーションポリシーを設定します。
+以下は例示です。オンコール service で time zone、acknowledgment window、backup、再 page の動作を構成し、drill でテストしてください。
 
-| ステップ | 時間 | 対象 | チャネル |
+| ステップ | 時間 | 対象 | Channel |
 |------|------|--------|---------|
-| 1 | 0 分 | プライマリオンコール | Slack、PagerDuty |
-| 2 | 15 分 | セカンダリオンコール | Slack、PagerDuty、SMS |
-| 3 | 30 分 | チームリード | Slack、PagerDuty、電話 |
-| 4 | 45 分 | エンジニアリングマネージャー | 電話 |
-| 5 | 60 分 | CTO/VP Engineering | 電話 |
+| 1 | 0 分 | Primary on-call | Slack、PagerDuty |
+| 2 | 15 分 | Secondary on-call | Slack、PagerDuty、SMS |
+| 3 | 30 分 | Team Lead | Slack、PagerDuty、Phone |
+| 4 | 45 分 | Engineering Manager | Phone |
+| 5 | 60 分 | CTO/VP Engineering | Phone |
 
 ---
 
@@ -351,309 +268,254 @@ route:
 
 ### オンコールの概念
 
-オンコールとは、指定された期間中にシステム問題を担当するよう指定された対応者を指します。
+オンコールとは、指定された期間中に system issue を担当するよう指定された responder を指します。
 
-```mermaid
-gantt
-    title Weekly On-Call Rotation
-    dateFormat  YYYY-MM-DD
-    section SRE Team
-    Engineer A    :a1, 2025-02-17, 7d
-    Engineer B    :a2, after a1, 7d
-    Engineer C    :a3, after a2, 7d
-    Engineer D    :a4, after a3, 7d
-```
+![handoff を伴う例示的な 4 週間の rotation。実際の time zone、staffing、backup、compensation には合意済みの policy が必要です。](../../.gitbook/assets/en-observability-alerting-readme-8.png)
+
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-8.html)
+
 
 ### オンコールのベストプラクティス
 
-1. **明確な引き継ぎスケジュール**: 毎週または隔週でローテーションする
-2. **引き継ぎプロセス**: シフト変更時に進行中の問題を引き継ぐ
-3. **バックアップ対応者**: プライマリが不在の場合のバックアップを用意する
-4. **適切な補償**: オンコール手当または代休
-5. **燃え尽き防止**: 適切なローテーションサイクル
+1. **明確な handoff schedule**: 毎週または隔週の rotation
+2. **Handoff process**: シフト交代時に継続中の issue を引き継ぐ
+3. **Backup responder**: primary が対応できない場合の backup
+4. **適切な compensation**: オンコール手当または代休
+5. **Burnout の防止**: 適切な rotation cycle
 
 ### オンコールツールの要件
 
-- **スケジュール管理**: カレンダー統合、シフト管理
-- **オーバーライド**: 一時的な対応者の変更
-- **エスカレーション**: 自動エスカレーション
-- **モバイル対応**: いつでもどこでもアラートを受信する
-- **レポート**: オンコール活動の分析
+- **Schedule management**: calendar integration、shift management
+- **Override**: 一時的な responder の変更
+- **Escalation**: 自動エスカレーション
+- **Mobile support**: いつでもどこでもアラートを受信
+- **Reporting**: オンコール activity の分析
 
 ---
 
-## EKS 環境向けアラート戦略
+## EKS 環境におけるアラート戦略
 
 ### EKS 固有のアラート領域
 
-```mermaid
-graph TB
-    subgraph EKS["Amazon EKS Alerting Areas"]
-        subgraph Control["Control Plane"]
-            API[API Server]
-            ETCD[etcd]
-            SCH[Scheduler]
-            CM[Controller Manager]
-        end
+![EKS の monitoring scope と collection limit。scrape failure、target absence、readiness、resource signal を分離しています。](../../.gitbook/assets/en-observability-alerting-readme-4.png)
 
-        subgraph Data["Data Plane"]
-            Node[Node Status]
-            Pod[Pod Status]
-            Cont[Container Status]
-        end
-
-        subgraph Network["Networking"]
-            VPC[VPC CNI]
-            SVC[Service/Ingress]
-            DNS[CoreDNS]
-        end
-
-        subgraph Storage["Storage"]
-            EBS[EBS CSI]
-            EFS[EFS CSI]
-            PV[PV/PVC]
-        end
-    end
-
-    style Control fill:#e3f2fd
-    style Data fill:#e8f5e9
-    style Network fill:#fff3e0
-    style Storage fill:#fce4ec
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-4.html)
 
 ### レイヤー別のアラート戦略
 
 #### 1. Cluster レベルのアラート
 
+job 名をデプロイ済みの target に置き換えてください。up=0 は scrape failure を証明しますが、完全な API outage を証明するものではありません。absent rule は 1 つの collection scope を対象とします。multi-cluster setup には expected-target inventory と cluster label が必要です。累積的な Cluster Autoscaler error counter には increase を使用します。5 分間存在する最近の increase は、error が 5 分間連続して発生したことを意味しません。この rule は Karpenter または EKS Auto Mode にはそのまま適用できません。
+
 ```yaml
-# Cluster-level alert examples
 groups:
   - name: eks-cluster
     rules:
-      - alert: EKSAPIServerDown
+      - alert: EKSAPIServerScrapeFailed
         expr: up{job="kubernetes-apiservers"} == 0
         for: 1m
         labels:
           severity: critical
+          team: sre
         annotations:
-          summary: "EKS API Server is down"
-
+          summary: "Prometheus cannot scrape the configured API server target"
+      - alert: EKSAPIServerTargetMissing
+        expr: absent(up{job="kubernetes-apiservers"})
+        for: 5m
+        labels:
+          severity: warning
+          team: sre
+        annotations:
+          summary: "No API server target series in this Prometheus"
       - alert: EKSNodeNotReady
         expr: kube_node_status_condition{condition="Ready",status="true"} == 0
         for: 5m
         labels:
           severity: critical
+          team: sre
         annotations:
           summary: "Node {{ $labels.node }} is not ready"
-
-      - alert: EKSClusterAutoscalerError
-        expr: cluster_autoscaler_errors_total > 0
+      - alert: EKSClusterAutoscalerRecentErrors
+        expr: increase(cluster_autoscaler_errors_total[10m]) > 0
         for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
-          summary: "Cluster Autoscaler is experiencing errors"
+          summary: "Cluster Autoscaler recorded failed loops in the last 10 minutes"
 ```
 
 #### 2. Workload レベルのアラート
 
+CrashLoopBackOff series は retry の間に短時間消失することがあります。この rule は、最近 5 分間の observation window が 10 分間にわたり存在し続けた後に firing します。連続的な現在の Waiting ではなく、繰り返しの observation を検出し、最後の observation から最大 5 分間アクティブのままとなる可能性があります。native rule test は短い transient、繰り返す retry、recovery を区別します。
+
 ```yaml
-# Workload-level alert examples
 groups:
   - name: eks-workloads
     rules:
       - alert: PodCrashLooping
-        expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 3
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Pod {{ $labels.pod }} is crash looping"
-
-      - alert: PodNotReady
-        expr: |
-          sum by (namespace, pod) (
-            kube_pod_status_phase{phase=~"Pending|Unknown"}
-          ) > 0
-        for: 15m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Pod {{ $labels.pod }} has been pending for 15 minutes"
-
-      - alert: DeploymentReplicasMismatch
-        expr: |
-          kube_deployment_spec_replicas != kube_deployment_status_replicas_available
+        expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]) >= 1
         for: 10m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Deployment {{ $labels.deployment }} has replica mismatch"
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} repeatedly observed in CrashLoopBackOff"
+      - alert: PodFrequentRestarts
+        expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has frequent restarts"
+      - alert: PodNotReady
+        expr: |
+          (kube_pod_status_ready{condition="true"} == 0)
+          and on (namespace, pod, uid)
+          (kube_pod_status_phase{phase=~"Pending|Running|Unknown"} == 1)
+        for: 15m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Active pod {{ $labels.namespace }}/{{ $labels.pod }} is not ready"
+      - alert: DeploymentReplicasMismatch
+        expr: |
+          kube_deployment_spec_replicas
+            > on (namespace, deployment) kube_deployment_status_replicas_available
+        for: 10m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has fewer available replicas than desired"
 ```
 
 #### 3. Resource レベルのアラート
 
+CFS の例は、経過時間の割合ではなく、**throttled period / total period** を測定します。cAdvisor がこれらの metric を export していることを確認してください。unlimited memory は zero または非常に大きな値として現れる可能性があります。memory rule は明示的な limit を持つ container に制限してください。PVC statistics は CSI driver と volume type に依存します。zero denominator は除外されますが、metric がないことは健全性を証明しません。
+
 ```yaml
-# Resource-level alert examples
 groups:
   - name: eks-resources
     rules:
       - alert: ContainerCPUThrottling
         expr: |
-          rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0.25
+          (
+            sum by (namespace, pod, container) (
+              rate(container_cpu_cfs_throttled_periods_total{container!="",container!="POD"}[5m]))
+            / sum by (namespace, pod, container) (
+              rate(container_cpu_cfs_periods_total{container!="",container!="POD"}[5m]))
+          ) > 0.25
+          and sum by (namespace, pod, container) (
+            rate(container_cpu_cfs_periods_total{container!="",container!="POD"}[5m])) > 0
         for: 5m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Container {{ $labels.container }} is being CPU throttled"
-
+          summary: "More than 25% of CFS periods throttled for {{ $labels.pod }}/{{ $labels.container }}"
       - alert: ContainerMemoryNearLimit
         expr: |
-          (container_memory_working_set_bytes / container_spec_memory_limit_bytes) > 0.9
+          (
+            container_memory_working_set_bytes{container!="",container!="POD"}
+            / container_spec_memory_limit_bytes{container!="",container!="POD"}
+          ) > 0.9
+          and container_spec_memory_limit_bytes{container!="",container!="POD"} > 0
         for: 5m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Container {{ $labels.container }} memory usage is near limit"
-
+          summary: "Container {{ $labels.pod }}/{{ $labels.container }} memory is near its reported limit"
       - alert: PVCAlmostFull
         expr: |
-          (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.85
+          (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.85)
+          and kubelet_volume_stats_capacity_bytes > 0
         for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
-          summary: "PVC {{ $labels.persistentvolumeclaim }} is almost full"
+          summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is almost full"
 ```
 
-### AWS サービス統合アラート
+### AWS Service Integration アラート
 
-EKS はさまざまな AWS サービスと統合されるため、これらに対するアラートも必要です。
+EKS 1.28+ は AWS/EKS に選択された control-plane metric を提供しますが、scraping 用にすべての内部 component を公開するわけではありません。authentication error を調査するには、control-plane log を個別に有効化してください。collection health、API request failure、external probe を使用して availability を評価してください。
 
-| AWS サービス | 監視項目 | アラートツール |
+| AWS Service | Monitoring 項目 | Alert Tool |
 |-------------|------------------|------------|
-| EKS Control Plane | API Server の可用性、認証エラー | CloudWatch |
-| EC2 (Nodes) | インスタンスの状態、システムチェック | CloudWatch |
-| EBS | ボリュームの状態、IOPS 使用率 | CloudWatch |
-| EFS | スループット、接続数 | CloudWatch |
-| ALB/NLB | リクエスト数、エラー率、レイテンシ | CloudWatch |
-| VPC | ネットワークトラフィック、NAT Gateway | CloudWatch/VPC Flow Logs |
+| EKS Control Plane | API Server availability、authentication error | CloudWatch |
+| EC2 (Nodes) | Instance status、system check | CloudWatch |
+| EBS | Volume status、IOPS usage | CloudWatch |
+| EFS | Throughput、connection count | CloudWatch |
+| ALB / NLB | ALB HTTP request/error/response time、NLB flow/TCP reset/target health | CloudWatch: product 固有の metric を使用 |
+| VPC / NAT Gateway | NAT metric、個別に有効化した Flow Logs の accepted/rejected record | CloudWatch metrics/Logs。Flow Logs は alarm engine ではありません |
 
 ---
 
-## ソリューションの比較
+## ソリューション比較
 
-### 主要なアラートソリューションの比較表
+### 主なアラートソリューションの比較表
 
-| 機能 | Alertmanager | CloudWatch Alarms | Grafana OnCall | PagerDuty | OpsGenie |
-|---------|--------------|-------------------|----------------|-----------|----------|
-| **種類** | オープンソース | AWS ネイティブ | オープンソース/SaaS | SaaS | SaaS |
-| **コスト** | 無料 | アラームごとの料金 | 無料/有料 | 有料 | 有料 |
-| **EKS 統合** | Prometheus 統合 | ネイティブ | Alertmanager 統合 | さまざまな統合 | さまざまな統合 |
-| **オンコール管理** | なし | なし | はい | はい | はい |
-| **エスカレーション** | 基本的 | なし | はい | 高度 | 高度 |
-| **モバイルアプリ** | なし | なし | はい | はい | はい |
-| **ChatOps** | Webhook | SNS | Slack、Teams | さまざま | さまざま |
-| **複雑さ** | 中 | 低 | 中 | 低 | 低 |
+| Product | 役割と運用上の制約 |
+|---------|--------------------------------|
+| Alertmanager | オープンソースの grouping、routing、inhibition、reminder。hosting と operation が必要。オンコール schedule や acknowledgment ベースの escalation はありません |
+| CloudWatch Alarms | AWS metric/supported query を評価し、state を変更して構成済みの action を実行する。schedule は別途必要 |
+| Grafana OnCall OSS | 2026-03-24 に archive 済み。新しい production deployment のデフォルト選択肢ではありません |
+| Grafana Cloud IRM / PagerDuty | オンコール/escalation の候補。現在の plan、channel、region、contract を確認してください |
+| Opsgenie | 2025-06-04 に販売終了。support と service の終了は 2027-04-05 に予定されています。既存ユーザーには migration plan が必要です |
 
 ### ソリューション選択ガイド
 
-```mermaid
-graph TB
-    A[Select Alerting Solution] --> B{Need On-Call<br/>Management?}
+![要件に応じて保守されている rule、routing、オンコールツールを選択し、archive 済みの OnCall OSS と終了予定の Opsgenie の migration を計画してください。](../../.gitbook/assets/en-observability-alerting-readme-6.png)
 
-    B -->|No| C{Prefer AWS<br/>Native?}
-    B -->|Yes| D{Budget?}
-
-    C -->|Yes| E[CloudWatch Alarms]
-    C -->|No| F[Alertmanager]
-
-    D -->|Open Source| G[Grafana OnCall]
-    D -->|Enterprise| H{Existing Tools?}
-
-    H -->|None| I[PagerDuty]
-    H -->|Atlassian| J[OpsGenie]
-
-    style E fill:#ff9800
-    style F fill:#4caf50
-    style G fill:#2196f3
-    style I fill:#8bc34a
-    style J fill:#03a9f4
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-6.html)
 
 #### 状況別の推奨ソリューション
 
-1. **小規模チーム、コスト重視**: Alertmanager + Slack
-2. **全面的に AWS を使用する環境**: CloudWatch Alarms + SNS + Lambda
-3. **中規模、オンコールが必要**: Grafana OnCall
-4. **大規模組織、複雑なエスカレーション**: PagerDuty
-5. **Atlassian エコシステム**: OpsGenie
+1. Prometheus 重視: Alertmanager を grouping/routing に使用し、必要な channel を接続します。
+2. AWS metric 重視: SNS またはサポートされる incident integration を使用して CloudWatch Alarms を評価します。
+3. 24 時間対応: staffing、backup、time zone、acknowledgment、escalation、cost に基づいて、保守されているオンコール service を選択します。
+4. 既存の Grafana OnCall OSS/Opsgenie: 機能、history、schedule、integration の migration を確認します。
 
 ### ハイブリッドアプローチ
 
-ほとんどの本番環境では、複数のソリューションを組み合わせて使用します。
+ソリューションは組み合わせることができます。CloudWatch は自動的に Alertmanager へ直接送信しません。この例では、オンコール service への SNS/サポート対象 integration を使用しています。Alertmanager を経由した routing には、個別に設計された adapter、authentication、duplicate/resolution の処理が必要です。
 
-```mermaid
-graph LR
-    subgraph Sources["Alert Sources"]
-        P[Prometheus]
-        CW[CloudWatch]
-    end
+![Prometheus は Alertmanager を使用し、CloudWatch はオンコール service への明示的な SNS または service integration を使用します。自動の直接 bridge はありません。](../../.gitbook/assets/en-observability-alerting-readme-7.png)
 
-    subgraph Routing["Routing"]
-        AM[Alertmanager]
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-7.html)
 
-    subgraph OnCall["On-Call Management"]
-        GO[Grafana OnCall]
-        PD[PagerDuty]
-    end
+**アーキテクチャ例:**
 
-    subgraph Notification["Notification Channels"]
-        S[Slack]
-        E[Email]
-        SMS[SMS]
-    end
-
-    P --> AM
-    CW --> AM
-    AM --> GO
-    AM --> PD
-    GO --> S
-    GO --> SMS
-    PD --> S
-    PD --> E
-    PD --> SMS
-
-    style Sources fill:#e3f2fd
-    style Routing fill:#fff3e0
-    style OnCall fill:#e8f5e9
-    style Notification fill:#fce4ec
-```
-
-**推奨アーキテクチャ:**
-
-1. **Prometheus + Alertmanager**: Metrics の収集とプライマリアラート処理
-2. **CloudWatch**: AWS サービスの Metrics 収集
-3. **Grafana OnCall または PagerDuty**: オンコール管理とエスカレーション
-4. **Slack**: リアルタイムアラートとコラボレーション
+1. **Prometheus + Alertmanager**: Metric collection と primary alert processing
+2. **CloudWatch**: AWS service metric collection
+3. **保守されているオンコール service**: オンコール管理と escalation
+4. **Slack**: リアルタイムアラートと collaboration
 
 ---
 
 ## 次のステップ
 
-このセクションでは、アラートの基本概念と戦略を取り上げました。各ソリューションの詳細な設定方法については、次のドキュメントを参照してください。
+このセクションでは、アラートの基本概念と戦略について説明しました。各ソリューションの詳細な構成方法については、以下のドキュメントを参照してください。
 
 - [Prometheus Alertmanager](./01-alertmanager.md): オープンソースのアラート管理
 - [CloudWatch Alarms](./02-cloudwatch-alarms.md): AWS ネイティブのアラート
-- [Grafana OnCall](./03-grafana-oncall.md): オンコールとインシデント管理
+- [Grafana OnCall](./03-grafana-oncall.md): 既存 installation のレビューと migration に関する考慮事項
 
 ---
 
 ## 参考資料
 
-- [Prometheus のアラートに関するベストプラクティス](https://prometheus.io/docs/practices/alerting/)
-- [Google SRE Book - 実践的なアラート](https://sre.google/sre-book/practical-alerting/)
-- [AWS CloudWatch Alarms ドキュメント](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
-- [Grafana OnCall ドキュメント](https://grafana.com/docs/oncall/latest/)
-- [PagerDuty 運用ガイド](https://www.pagerduty.com/resources/operations/)
+- [Prometheus Alerting Best Practices](https://prometheus.io/docs/practices/alerting/)
+- [Google SRE Book - Practical Alerting](https://sre.google/sre-book/practical-alerting/)
+- [AWS CloudWatch Alarms Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
+- [Grafana OnCall Documentation](https://grafana.com/docs/oncall/latest/)
+- [PagerDuty Operations Guide](https://www.pagerduty.com/resources/operations/)
+
+- [Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/)
+- [EKS control-plane metrics](https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch.html)
+- [Opsgenie lifecycle and migration](https://www.atlassian.com/software/opsgenie)
