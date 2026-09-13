@@ -1,0 +1,171 @@
+{
+  "status": "passed",
+  "verifiedAt": "2026-09-13T13:00:52.872380+00:00",
+  "scope": "Two retained Collector viewers/PNGs corrected to match the current signal-specific OpenTelemetry chapter example.",
+  "sourceReport": "docs/reviews/2026-09-11/observability-opentelemetry-validation.json",
+  "changes": [
+    "SeparateOTLPtraces/metrics/logspipelines;metrics/logsneverroutedthroughtraces-onlytail_sampling.",
+    "span_metricsbranchesbeforetailfrompreprocessedspans;notunique-requestcounter.",
+    "CorrectcurrentTempoOTLPgRPC,LokinativeOTLPHTTPandPrometheusremote-writepaths.",
+    "Removedfixed1500/500MiB,100percenterrorretentionandremovedlokiexporterclaims;memoryheadroomandboundedtaildecisionlimitsclear."
+  ],
+  "delivery": [
+    {
+      "stem": "en-observability-tracing-03-opentelemetry-3",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-tracing-03-opentelemetry-3",
+      "ok": true,
+      "diagnostics": []
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-tracing-03-opentelemetry-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 786,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-03-opentelemetry-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 786,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-03-opentelemetry-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 786,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53481,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-03-opentelemetry-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 578,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-03-opentelemetry-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 578,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-03-opentelemetry-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 578,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53281,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "6 cases on2locallygeneratedviewers; motion/reduced-motion/visibility/theme/guided controls and2SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "individualPNGsViewed": 2,
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/en-observability-tracing-03-opentelemetry-3.architecture.json",
+      "sha256": "59a0f44522c24e19ef8cff5d1cfe73b7616df9c15925f77f6e5d1aaf26c134f0"
+    },
+    {
+      "path": "public/archmaps/en-observability-tracing-03-opentelemetry-3.html",
+      "sha256": "2936e550c81bdeccf04092a0be53f0731af5a3c80b074d1e2d7a80c3468803a3"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-tracing-03-opentelemetry-3.png",
+      "sha256": "350e1ed27af61ef968360af1e622480332f33f654ee2b66f55d8f5321cfa7046"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-tracing-03-opentelemetry-3.architecture.json",
+      "sha256": "9cf35b2c21d8e227bbcb14176234b9b3ea9ce218dd24ce6291eb3cf04f8c52df"
+    },
+    {
+      "path": "public/archmaps/ko-observability-tracing-03-opentelemetry-3.html",
+      "sha256": "b3ecdb993ff40874df4d223060be97ca8bcdbd79657c835700c97c22d81df6d1"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-tracing-03-opentelemetry-3.png",
+      "sha256": "833e3dd3af92775d39f7a86cdb6c86089e18a46b789076e58c9dd120a1db8d9f"
+    }
+  ],
+  "limits": [
+    "Asset-onlyrepair;backendnativechecksfromthecompletedsourceauditwerenotrerun.",
+    "No cloud/backend deployment; browser network blocked."
+  ]
+}

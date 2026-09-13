@@ -1,9 +1,9 @@
 # Network Policies
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: July 3, 2026
+> **Review baseline**: Kubernetes 1.35 OpenAPI, Cilium 1.20.1, Calico 3.32.2 and current AWS documentation. Offline checks do not establish cluster compatibility.
+> **Last Updated**: September 13, 2026
 
-Kubernetes Network Policies are firewall rules that control traffic between Pods. This document covers everything from basic NetworkPolicy to Cilium and Calico extensions.
+Kubernetes Network Policies are firewall rules that control traffic between Pods. This document covers basic NetworkPolicy and Cilium/Calico extensions. Sections are independent examples; merging every policy would change the effective permissions. No cluster/cloud deployment or live connectivity test was performed.
 
 ## Table of Contents
 
@@ -24,7 +24,9 @@ Kubernetes Network Policies are firewall rules that control traffic between Pods
 
 ### What is a Network Policy?
 
-Network Policies act as Pod-level firewalls in Kubernetes. By default, Kubernetes Pods can communicate freely with all other Pods, but Network Policies allow you to restrict this traffic.
+Kubernetes NetworkPolicy selects Pods in its own namespace and controls supported ingress and egress traffic. A Pod with no selecting policy for a direction is not isolated by NetworkPolicy in that direction; routing, security groups, NACLs and other policy engines can still prevent connectivity.
+
+**Both endpoints must permit** a Pod-to-Pod connection: the source's effective egress rules and the destination's effective ingress rules must allow it. Return traffic for an allowed connection is implicitly allowed. Policies are implemented asynchronously by a supporting network plugin; an API object alone does not prove enforcement. Node/hostNetwork traffic and protocols outside TCP/UDP/SCTP require implementation-specific review. The diagrams below show policy intent, not a reachability guarantee.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -59,7 +61,7 @@ Network Policies act as Pod-level firewalls in Kubernetes. By default, Kubernete
 | Property | Description |
 |----------|-------------|
 | **Namespace Scoped** | NetworkPolicy applies to resources within a namespace |
-| **Additive** | When multiple policies exist, the union of all policies applies |
+| **Additive** | Allow rules from selecting Kubernetes NetworkPolicies form a union for each direction; Cilium denies, Calico tiers and AWS administrative policies have separate semantics |
 | **Selective Application** | Target Pods specified via podSelector |
 | **Directional Control** | Separate control for Ingress (inbound) and Egress (outbound) |
 | **CNI Dependent** | CNI plugin must support NetworkPolicy |
@@ -69,16 +71,18 @@ Network Policies act as Pod-level firewalls in Kubernetes. By default, Kubernete
 | CNI | Basic NetworkPolicy | Extensions | L7 Policy |
 |-----|---------------------|------------|-----------|
 | **Cilium** | ✓ | CiliumNetworkPolicy, CiliumClusterwideNetworkPolicy | ✓ |
-| **Calico** | ✓ | GlobalNetworkPolicy, NetworkSet | ✓ (Enterprise) |
-| **Weave Net** | ✓ | Limited | ✗ |
-| **Flannel** | ✗ | ✗ | ✗ |
-| **Amazon VPC CNI** | ✗ (requires separate installation) | Security Groups for Pods | ✗ |
+| **Calico** | ✓ | GlobalNetworkPolicy, NetworkSet, Tier | Optional Istio/Dikastes integration; verify the deployed product and versions |
+| **Weave Net (archived project)** | Historical support | Legacy reference; evaluate a maintained implementation for new deployments | ✗ |
+| **Flannel alone** | No policy enforcement by itself | A separate supported policy engine is needed | ✗ |
+| **Amazon VPC CNI** | ✓ when enabled on supported EC2 Linux nodes | Standard NetworkPolicy; ClusterNetworkPolicy with VPC CNI 1.21+ | DNS egress on EKS Auto Mode nodes; see EKS considerations |
 
 ---
 
 ## Kubernetes NetworkPolicy Spec
 
 ### Basic Structure
+
+Specify `policyTypes` explicitly. If omitted, Kubernetes defaults to Ingress and adds Egress when there is at least one egress rule. Empty rule arrays alone do not imply both directions.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -129,7 +133,7 @@ spec:
 
 ### podSelector
 
-Selects the Pods to which the policy applies.
+Selects the Pods to which the policy applies in its own namespace. The following are alternative spec fragments, not standalone API resources.
 
 ```yaml
 # Apply to Pods with specific labels
@@ -139,10 +143,12 @@ spec:
       app: api
       version: v1
 
+---
 # Apply to all Pods (empty selector)
 spec:
   podSelector: {}
 
+---
 # Using matchExpressions
 spec:
   podSelector:
@@ -160,7 +166,7 @@ spec:
 
 ### namespaceSelector
 
-Selects Pods from other namespaces.
+Selects namespaces by labels, including the current namespace if it matches. `name` is not an automatically assigned namespace label. Use the built-in immutable `kubernetes.io/metadata.name` label for an exact namespace name; restrict who may change custom tenancy labels.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -179,11 +185,11 @@ spec:
         # Allow all Pods from monitoring namespace
         - namespaceSelector:
             matchLabels:
-              name: monitoring
+              kubernetes.io/metadata.name: monitoring
         # Allow specific Pods from production namespace
         - namespaceSelector:
             matchLabels:
-              name: production
+              kubernetes.io/metadata.name: production
           podSelector:
             matchLabels:
               role: frontend
@@ -192,22 +198,23 @@ spec:
 **Note:** AND vs OR distinction when using `namespaceSelector` and `podSelector` together:
 
 ```yaml
-# OR condition (two separate rules)
+# OR condition (two separate peer entries)
 ingress:
   - from:
       - namespaceSelector:    # Rule 1
           matchLabels:
-            name: team-a
+            kubernetes.io/metadata.name: team-a
       - podSelector:          # Rule 2
           matchLabels:
             role: frontend
 
+---
 # AND condition (single rule)
 ingress:
   - from:
       - namespaceSelector:    # Both conditions must be met
           matchLabels:
-            name: team-a
+            kubernetes.io/metadata.name: team-a
         podSelector:
           matchLabels:
             role: frontend
@@ -215,7 +222,7 @@ ingress:
 
 ### ipBlock
 
-Allow or block specific IP ranges.
+An `ipBlock` permits a CIDR minus its `except` ranges in that rule. An exception is not a global deny and another policy can allow it. Service/load-balancer address translation can change the source or destination visible to the CNI; verify the actual path. The documentation CIDRs below are illustrative, not reachable production endpoints.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -232,7 +239,7 @@ spec:
     - Egress
   ingress:
     - from:
-        # Allow external load balancer IP range
+        # Example private source range; not a guarantee of the load balancer source IP
         - ipBlock:
             cidr: 10.0.0.0/8
         # Allow specific external IP
@@ -254,7 +261,7 @@ spec:
 
 ### ports
 
-Specify allowed ports and protocols.
+Specify allowed ports and protocols. `endPort` requires a numeric starting port and CNI range support; a named port cannot be the start of a range. API acceptance alone does not prove enforcement by every plugin.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -288,9 +295,11 @@ spec:
 
 ## Default Deny Policies
 
+An empty baseline contributes no allows; other selecting policies can still allow traffic. Existing-connection behavior after a policy change depends on the implementation and must be tested separately.
+
 ### Default Deny Ingress
 
-Default policy that blocks all inbound traffic:
+An ingress isolation baseline with no allows of its own. Other selecting policies can still permit ingress:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -307,7 +316,7 @@ spec:
 
 ### Default Deny Egress
 
-Default policy that blocks all outbound traffic:
+An egress isolation baseline with no allows of its own. Other selecting policies can still permit egress:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -339,7 +348,7 @@ spec:
 
 ### Default Deny with DNS Allowed
 
-Common pattern to allow DNS lookups when blocking egress:
+This profile assumes Pod-based CoreDNS in `kube-system` with `k8s-app=kube-dns`. It allows both TCP and UDP 53. If DNS itself has ingress isolation, its policy must also allow the clients. NodeLocal DNSCache and Auto Mode node-local CoreDNS need their actual resolver path/IP profile; do not apply this Pod selector unchanged there.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -350,26 +359,27 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-    - Egress
+  - Egress
   egress:
-    # Allow kube-dns/CoreDNS access
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: UDP
-          port: 53
-        - protocol: TCP
-          port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ```
 
 ### Zero Trust Architecture Default Policy
 
+Both directions of frontend→API are present. This does not allow inbound traffic to the frontend or API→database; add only the reviewed flows. Use the Pod-based DNS assumption above.
+
 ```yaml
----
-# 1. Default deny all traffic
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -378,10 +388,11 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
 ---
-# 2. Allow DNS only
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -390,17 +401,21 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-    - Egress
+  - Egress
   egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      ports:
-        - protocol: UDP
-          port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ---
-# 3. Explicitly allow only required communication
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -411,24 +426,42 @@ spec:
     matchLabels:
       app: api
   policyTypes:
-    - Ingress
+  - Ingress
   ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: frontend
-      ports:
-        - protocol: TCP
-          port: 8080
-```
-
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
 ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-api-egress
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - protocol: TCP
+      port: 8080
+```
 
 ## Policy Order and Evaluation
 
 ### Policy Evaluation Rules
 
-NetworkPolicy is evaluated according to the following rules:
+For each endpoint and direction, evaluate only selecting **Kubernetes NetworkPolicies** as below. Then check the other endpoint's direction and all other network controls. An ingress-only policy does not isolate egress.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -501,7 +534,7 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              name: monitoring
+              kubernetes.io/metadata.name: monitoring
       ports:
         - protocol: TCP
           port: 8080
@@ -509,11 +542,11 @@ spec:
           port: 9090
 ```
 
-**Result:** The `app: api` Pod allows both frontend Pod access on 8080 and monitoring namespace access on 8080 and 9090.
+**Result:** The API's ingress allows frontend Pods on 8080 and monitoring namespace Pods on 8080/9090. Their egress rules, actual listeners and other network controls must also permit the connection.
 
 ### Policy Evaluation Order
 
-NetworkPolicy has no priority concept. All policies are treated equally:
+The Kubernetes NetworkPolicy API has no priority or explicit deny rule. Its allow union does not describe Calico policy order/tier actions, Cilium explicit denies, or AWS administrative policy evaluation:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -539,6 +572,8 @@ NetworkPolicy has no priority concept. All policies are treated equally:
 ---
 
 ## Cilium Network Policy Extensions
+
+These examples use the released Cilium 1.20.1 policy schema, not an instruction to upgrade every cluster. HTTP rules need a supported L7 proxy path. AWS VPC CNI chaining has documented advanced-feature limitations, including L7 policies; do not assume these HTTP examples work in that mode. A numeric Cilium security identity is an allocation for a label set, not a permanent application ID.
 
 ### CiliumNetworkPolicy
 
@@ -578,6 +613,8 @@ spec:
 
 ### L7 HTTP Policy
 
+Cilium HTTP rules filter requests visible to its L7 proxy; they do not authenticate API keys or establish administrator roles. A caller can supply an `X-User-Role` header. This example filters methods, paths and an exact `Content-Type`. Enforce authentication and authorization in the application or an authenticated gateway. End-to-end TLS is not automatically decrypted for HTTP inspection. Review other policies that may allow the same traffic at L4.
+
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -588,84 +625,62 @@ spec:
   endpointSelector:
     matchLabels:
       app: api-server
-
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            app: web-frontend
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
-          rules:
-            http:
-              # Allow only GET requests
-              - method: GET
-                path: "/api/v1/products"
-
-              # Allow specific path patterns
-              - method: GET
-                path: "/api/v1/products/[0-9]+"
-
-              # POST only allowed with specific headers
-              - method: POST
-                path: "/api/v1/orders"
-                headers:
-                  - "X-API-Key: .*"
-                  - "Content-Type: application/json"
-
-              # PUT/DELETE only for admin
-              - method: "PUT|DELETE"
-                path: "/api/v1/.*"
-                headers:
-                  - "X-User-Role: admin"
+  - fromEndpoints:
+    - matchLabels:
+        app: web-frontend
+    toPorts:
+    - ports:
+      - port: '8080'
+        protocol: TCP
+      rules:
+        http:
+        - method: GET
+          path: /api/v1/products
+        - method: GET
+          path: /api/v1/products/[0-9]+
+        - method: POST
+          path: /api/v1/orders
+          headerMatches:
+          - name: Content-Type
+            value: application/json
 ```
 
+[HTTP API — Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/http.go)
+
 ### L7 Kafka Policy
+
+The released Cilium 1.20.1 CNP schema supports HTTP and DNS L7 rules, but has no `rules.kafka`. The former `role`, `topic` and `clientID` recipe is not a current deployable API. Restrict broker connectivity with network policy, then enforce producer/consumer permissions for `orders` and `events` using Kafka authentication and ACLs. A client ID is not an authenticated principal.
+
+This L4 example assumes an already configured TLS broker listener on TCP 9093, same-namespace clients, and separately authorized client egress/DNS. It does not configure TLS, broker ACLs or topic permissions.
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: kafka-policy
+  name: kafka-client-network-access
   namespace: data
 spec:
   endpointSelector:
     matchLabels:
       app: kafka
-
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            app: producer
-      toPorts:
-        - ports:
-            - port: "9092"
-              protocol: TCP
-          rules:
-            kafka:
-              # Allow produce only to specific topics
-              - role: produce
-                topic: "orders"
-              - role: produce
-                topic: "events"
-
-    - fromEndpoints:
-        - matchLabels:
-            app: consumer
-      toPorts:
-        - ports:
-            - port: "9092"
-              protocol: TCP
-          rules:
-            kafka:
-              # Allow consume only from specific topics
-              - role: consume
-                topic: "orders"
-                clientID: "order-processor-.*"
+  - fromEndpoints:
+    - matchLabels:
+        app: producer
+    - matchLabels:
+        app: consumer
+    toPorts:
+    - ports:
+      - port: '9093'
+        protocol: TCP
 ```
 
+[CNP schema — Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+
 ### L7 DNS Policy
+
+This example uses Pod-based CoreDNS. `ANY` on port53 covers UDP and TCP. DNS query permission and permission to connect to a returned IP are separate: resolving the database name below does not allow database connections. Replace the example domain, account for DNS search suffixes/cache/TTL, and verify the actual resolver profile. FQDN rules learn IPs from DNS; they do not authenticate a SaaS tenant or replace TLS/application authorization.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -677,104 +692,80 @@ spec:
   endpointSelector:
     matchLabels:
       app: web
-
   egress:
-    # Allow DNS lookups
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: kube-system
-            k8s-app: kube-dns
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-          rules:
-            dns:
-              # Allow only specific domain lookups
-              - matchPattern: "*.amazonaws.com"
-              - matchPattern: "api.example.com"
-              - matchName: "database.production.svc.cluster.local"
-
-    # Allow connections to looked up domains
-    - toFQDNs:
-        - matchPattern: "*.amazonaws.com"
-        - matchName: "api.example.com"
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: '53'
+        protocol: ANY
+      rules:
+        dns:
+        - matchName: api.example.com
+        - matchName: database.production.svc.cluster.local
+  - toFQDNs:
+    - matchName: api.example.com
+    toPorts:
+    - ports:
+      - port: '443'
+        protocol: TCP
 ```
 
 ### CiliumClusterwideNetworkPolicy
 
-Cluster-wide policy:
+The resource is cluster-scoped, while its selector explicitly limits it to `production/app=api`. It permits gateway Pods on TCP8080. It controls ingress only; egress isolation/DNS and the gateway's own egress require their corresponding policies. The previous all-endpoint cluster/world allow example was not a default-deny policy.
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
-  name: cluster-default-deny
+  name: production-api-from-edge
 spec:
-  # Apply to all endpoints
-  endpointSelector: {}
-
+  endpointSelector:
+    matchLabels:
+      k8s:io.kubernetes.pod.namespace: production
+      app: api
   ingress:
-    - fromEntities:
-        - cluster  # Allow only internal cluster traffic
-
-  egress:
-    - toEntities:
-        - cluster
-        - world  # Allow external traffic (if needed)
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: kube-system
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: gateway-system
+        app: edge-proxy
+    toPorts:
+    - ports:
+      - port: '8080'
+        protocol: TCP
 ```
 
 ### Cilium Entity-Based Policy
+
+`host` includes the local node and its host-network containers; `cluster` includes more than application Pods. `world` covers endpoints outside the cluster and is not a fine-grained Internet/SaaS allowlist. Use explicit CIDR/FQDN rules when narrowing external access. This example gives only a labeled Kubernetes API client TCP443 access; configure its API endpoint, TLS trust, credentials and RBAC separately. Source identity can change across managed-control-plane network paths, so inspect actual flow identity rather than broadening ingress to the entire cluster.
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: entity-based-policy
+  name: kubernetes-api-client
   namespace: production
 spec:
   endpointSelector:
     matchLabels:
-      app: web
-
-  ingress:
-    - fromEntities:
-        - world      # Outside cluster
-        - cluster    # Inside cluster
-
+      app: kubernetes-api-client
   egress:
-    - toEntities:
-        - world      # Internet
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
-
-    - toEntities:
-        - host       # Node itself
-      toPorts:
-        - ports:
-            - port: "10250"  # kubelet
-              protocol: TCP
-
-    - toEntities:
-        - kube-apiserver  # API server
+  - toEntities:
+    - kube-apiserver
+    toPorts:
+    - ports:
+      - port: '443'
+        protocol: TCP
 ```
 
----
-
 ## Calico Network Policy Extensions
+
+The policy/Tier examples follow Calico Open Source3.32.2 resources. `projectcalico.org/v3` requires the supported Calico API server or matching `calicoctl` workflow; it is not the raw Kubernetes `crd.projectcalico.org/v1` storage API. Verify the installed datastore/API before applying. Ordered Calico actions and tier delegation differ from the additive Kubernetes NetworkPolicy API.
+
+Current Open Source documentation also describes [Istio/Dikastes application-layer integration](https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy). The HTTPMatch API requires that separate setup and supports ingress Allow rules. The Calico examples below cover L3/L4 policy; this review did not deploy or test the L7 integration.
 
 ### Calico NetworkPolicy
 
@@ -814,57 +805,53 @@ spec:
 
 ### GlobalNetworkPolicy
 
-Calico policy that applies cluster-wide:
+These two global resources select only workloads in the `production` namespace. An unconstrained `selector: all()` can also affect host endpoints; do not apply a cluster-wide deny without an explicit scope and recovery path. Lower `order` is evaluated first within the tier. The example permits Pod-based DNS and otherwise supplies a deny baseline; add the reviewed application flows and account for higher-tier actions.
 
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
-  name: default-deny-all
+  name: production-default-deny
 spec:
-  # Full selector instead of namespace
+  namespaceSelector: projectcalico.org/name == 'production'
   selector: all()
-
-  order: 1000  # Low priority (other policies evaluated first)
-
+  order: 1000
   types:
-    - Ingress
-    - Egress
-
-  # No rules = block all traffic
-
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
 ---
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
-  name: allow-dns
+  name: production-allow-dns
 spec:
+  namespaceSelector: projectcalico.org/name == 'production'
   selector: all()
   order: 100
-
   types:
-    - Egress
-
+  - Egress
   egress:
-    - action: Allow
-      protocol: UDP
-      destination:
-        selector: k8s-app == 'kube-dns'
-        namespaceSelector: projectcalico.org/name == 'kube-system'
-        ports:
-          - 53
-    - action: Allow
-      protocol: TCP
-      destination:
-        selector: k8s-app == 'kube-dns'
-        namespaceSelector: projectcalico.org/name == 'kube-system'
-        ports:
-          - 53
+  - action: Allow
+    protocol: UDP
+    destination:
+      selector: k8s-app == 'kube-dns'
+      namespaceSelector: projectcalico.org/name == 'kube-system'
+      ports:
+      - 53
+  - action: Allow
+    protocol: TCP
+    destination:
+      selector: k8s-app == 'kube-dns'
+      namespaceSelector: projectcalico.org/name == 'kube-system'
+      ports:
+      - 53
 ```
 
 ### NetworkSet
 
-Define reusable IP sets:
+NetworkSet selectors match `metadata.labels`, not the resource's name. The first set is namespaced; the blocked set is global and is consumed by the security-tier example below. All CIDRs here are documentation ranges and must be replaced with reviewed destinations. The egress example permits TCP443 to the labeled namespaced set; DNS is a separate rule.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -872,25 +859,23 @@ kind: NetworkSet
 metadata:
   name: external-apis
   namespace: production
+  labels:
+    network-role: external-api
 spec:
   nets:
-    - 203.0.113.0/24     # External API servers
-    - 198.51.100.10/32   # Specific service
-
+  - 203.0.113.0/24
+  - 198.51.100.10/32
 ---
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkSet
 metadata:
   name: blocked-ips
+  labels:
+    network-role: blocked
 spec:
   nets:
-    - 192.0.2.0/24       # IP range to block
-    - 10.0.0.5/32        # Specific blocked IP
-```
-
-Using NetworkSet:
-
-```yaml
+  - 192.0.2.0/24
+---
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
@@ -899,18 +884,19 @@ metadata:
 spec:
   selector: app == 'web'
   types:
-    - Egress
-
+  - Egress
   egress:
-    - action: Allow
-      destination:
-        selector: projectcalico.org/name == 'external-apis'
-        namespaceSelector: projectcalico.org/name == 'production'
+  - action: Allow
+    protocol: TCP
+    destination:
+      selector: network-role == 'external-api'
+      ports:
+      - 443
 ```
 
 ### Tier-Based Policies
 
-Hierarchical policies supported in Calico Enterprise:
+Tiers are available in the referenced Calico Open Source release, not only Enterprise. A selecting tier defaults to `Deny` when no rule acts. The deny-known-threats tier therefore explicitly uses `defaultAction: Pass` so unrelated traffic can reach subsequent policy. `Pass` is delegation, not permission. `global()` belongs in `namespaceSelector`; the separate label selector identifies the GlobalNetworkSet. Populate application-tier policies and verify any final profile/default-tier behavior before deployment; creating an empty Tier is not a complete application isolation policy.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -919,7 +905,7 @@ metadata:
   name: security
 spec:
   order: 100
-
+  defaultAction: Pass
 ---
 apiVersion: projectcalico.org/v3
 kind: Tier
@@ -927,7 +913,7 @@ metadata:
   name: platform
 spec:
   order: 200
-
+  defaultAction: Pass
 ---
 apiVersion: projectcalico.org/v3
 kind: Tier
@@ -935,9 +921,8 @@ metadata:
   name: application
 spec:
   order: 300
-
+  defaultAction: Deny
 ---
-# Security Tier policy (evaluated first)
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
@@ -946,15 +931,15 @@ spec:
   tier: security
   order: 100
   selector: all()
+  namespaceSelector: projectcalico.org/name == 'production'
   types:
-    - Ingress
+  - Ingress
   ingress:
-    - action: Deny
-      source:
-        selector: global(name == 'blocked-ips')
-
+  - action: Deny
+    source:
+      selector: network-role == 'blocked'
+      namespaceSelector: global()
 ---
-# Platform Tier policy
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
@@ -963,27 +948,35 @@ spec:
   tier: platform
   order: 100
   selector: all()
+  namespaceSelector: projectcalico.org/name == 'production'
   types:
-    - Egress
+  - Egress
   egress:
-    - action: Allow
-      protocol: UDP
-      destination:
-        ports:
-          - 53
+  - action: Allow
+    protocol: UDP
+    destination:
+      selector: k8s-app == 'kube-dns'
+      namespaceSelector: projectcalico.org/name == 'kube-system'
+      ports:
+      - 53
+  - action: Allow
+    protocol: TCP
+    destination:
+      selector: k8s-app == 'kube-dns'
+      namespaceSelector: projectcalico.org/name == 'kube-system'
+      ports:
+      - 53
 ```
-
----
 
 ## Design Patterns
 
+These are **alternative policy profiles**, not a bundle to apply together. Reusing `production` does not make unrelated examples compatible: their allow rules would accumulate. Prepare namespaces, workload labels, listening ports and the real DNS profile first. The examples were schema/intent checked locally, not exercised on a cluster.
+
 ### Microsegmentation
 
-Isolate each service individually:
+This profile permits frontend→API TCP8080 and API→database TCP5432 on both sides, plus DNS. It deliberately has no Internet egress or external frontend ingress. If required, add an approved destination CIDR/port or an authenticated egress gateway profile; excluding RFC1918 from 0.0.0.0/0 is not a SaaS allowlist.
 
 ```yaml
----
-# 1. Namespace default deny
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -992,10 +985,11 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
 ---
-# 2. Allow DNS
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1004,17 +998,41 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-    - Egress
+  - Egress
   egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      ports:
-        - protocol: UDP
-          port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ---
-# 3. Frontend -> API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-api-egress
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - protocol: TCP
+      port: 8080
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1025,17 +1043,16 @@ spec:
     matchLabels:
       app: api
   policyTypes:
-    - Ingress
+  - Ingress
   ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: frontend
-      ports:
-        - protocol: TCP
-          port: 8080
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
 ---
-# 4. API -> Database
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1046,46 +1063,42 @@ spec:
     matchLabels:
       app: api
   policyTypes:
-    - Egress
+  - Egress
   egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app: database
-      ports:
-        - protocol: TCP
-          port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          app: database
+    ports:
+    - protocol: TCP
+      port: 5432
 ---
-# 5. API external access (if needed)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: api-external-access
+  name: database-from-api
   namespace: production
 spec:
   podSelector:
     matchLabels:
-      app: api
+      app: database
   policyTypes:
-    - Egress
-  egress:
-    - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-            except:
-              - 10.0.0.0/8
-              - 172.16.0.0/12
-              - 192.168.0.0/16
-      ports:
-        - protocol: TCP
-          port: 443
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - protocol: TCP
+      port: 5432
 ```
 
 ### Namespace Isolation
 
+The team profile includes same-team ingress **and egress**, plus DNS. Shared services additionally need destination ingress allowing team-a and a real TLS443 listener. Restrict namespace label administration; a team label is not an independent trust boundary.
+
 ```yaml
----
-# 1. Set namespace labels
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -1094,7 +1107,6 @@ metadata:
     team: team-a
     environment: production
 ---
-# 2. Allow communication only within same team
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1103,14 +1115,30 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-    - Ingress
+  - Ingress
+  - Egress
   ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              team: team-a
+  - from:
+    - &id001
+      namespaceSelector:
+        matchLabels:
+          team: team-a
+  egress:
+  - to:
+    - *id001
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ---
-# 3. Allow access to specific services from other teams
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1119,18 +1147,23 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-    - Egress
+  - Egress
   egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              shared-services: "true"
-          podSelector:
-            matchLabels:
-              exposed: "true"
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          shared-services: 'true'
+      podSelector:
+        matchLabels:
+          exposed: 'true'
+    ports:
+    - protocol: TCP
+      port: 443
 ```
 
 ### Database Protection
+
+The `database` namespace must exist. Production callers and monitoring Pods need their own egress allows. TCP5432 peer rules permit the assumed PostgreSQL replication transport only; configure database authentication/TLS separately. TCP9187 assumes a separately installed exporter.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1143,55 +1176,76 @@ spec:
     matchLabels:
       app: postgresql
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress
   ingress:
-    # Allow access only from application
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              environment: production
-          podSelector:
-            matchLabels:
-              database-access: "true"
-      ports:
-        - protocol: TCP
-          port: 5432
-    # Allow monitoring access
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              name: monitoring
-          podSelector:
-            matchLabels:
-              app: prometheus
-      ports:
-        - protocol: TCP
-          port: 9187  # postgres_exporter
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          environment: production
+      podSelector:
+        matchLabels:
+          database-access: 'true'
+    ports:
+    - protocol: TCP
+      port: 5432
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9187
+  - from:
+    - podSelector:
+        matchLabels:
+          app: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
   egress:
-    # Access other DB instances for replication
-    - to:
-        - podSelector:
-            matchLabels:
-              app: postgresql
-      ports:
-        - protocol: TCP
-          port: 5432
-    # DNS
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      ports:
-        - protocol: UDP
-          port: 53
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ```
 
 ### 3-Tier Architecture Policy
 
+Assume an existing `gateway-system/app=edge-proxy` workload that terminates client TLS and may reach the web Pods on TCP80. The gateway's egress policy is outside this namespace. Data peer ingress and egress use TCP5432/6379; additional replication/cluster-bus/backup ports depend on the chosen database and are not implied. Split PostgreSQL and Redis selectors in a real deployment.
+
 ```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: three-tier-default-deny
+  namespace: production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
 ---
-# Web Tier
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1202,37 +1256,28 @@ spec:
     matchLabels:
       tier: web
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress
   ingress:
-    # Allow access from external (Ingress Controller)
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              name: ingress-nginx
-      ports:
-        - protocol: TCP
-          port: 80
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway-system
+      podSelector:
+        matchLabels:
+          app: edge-proxy
+    ports:
+    - protocol: TCP
+      port: 80
   egress:
-    # Communicate only with App Tier
-    - to:
-        - podSelector:
-            matchLabels:
-              tier: app
-      ports:
-        - protocol: TCP
-          port: 8080
-    # DNS
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: UDP
-          port: 53
+  - to:
+    - podSelector:
+        matchLabels:
+          tier: app
+    ports:
+    - protocol: TCP
+      port: 8080
 ---
-# App Tier
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1243,39 +1288,27 @@ spec:
     matchLabels:
       tier: app
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress
   ingress:
-    # Allow access only from Web Tier
-    - from:
-        - podSelector:
-            matchLabels:
-              tier: web
-      ports:
-        - protocol: TCP
-          port: 8080
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: web
+    ports:
+    - protocol: TCP
+      port: 8080
   egress:
-    # Communicate only with Data Tier
-    - to:
-        - podSelector:
-            matchLabels:
-              tier: data
-      ports:
-        - protocol: TCP
-          port: 5432
-        - protocol: TCP
-          port: 6379
-    # DNS
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: UDP
-          port: 53
+  - to:
+    - podSelector:
+        matchLabels:
+          tier: data
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
 ---
-# Data Tier
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1286,25 +1319,67 @@ spec:
     matchLabels:
       tier: data
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress
   ingress:
-    # Allow access only from App Tier
-    - from:
-        - podSelector:
-            matchLabels:
-              tier: app
-      ports:
-        - protocol: TCP
-          port: 5432
-        - protocol: TCP
-          port: 6379
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: app
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: data
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
   egress:
-    # Replication communication within same tier
-    - to:
-        - podSelector:
-            matchLabels:
-              tier: data
+  - to:
+    - podSelector:
+        matchLabels:
+          tier: data
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: three-tier-dns
+  namespace: production
+spec:
+  podSelector:
+    matchExpressions:
+    - key: tier
+      operator: In
+      values:
+      - web
+      - app
+      - data
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ```
 
 ---
@@ -1313,177 +1388,173 @@ spec:
 
 ### Testing with netshoot
 
-```bash
-# Deploy netshoot Pod
-kubectl run netshoot --image=nicolaka/netshoot -it --rm -- /bin/bash
-
-# Connection tests
-curl -v http://api-service:8080/health
-nc -zv database-service 5432
-nslookup api-service.production.svc.cluster.local
-
-# TCP connection test
-curl --connect-timeout 5 http://target-service:8080
-```
+Use approved, already provisioned diagnostic Pods with pinned images and reviewed permissions. Select source labels/namespace/node placement that actually exercise the policy; a generic unlabeled Pod does not represent the application. Provisioning netshoot creates a workload and may conflict with Pod Security admission. Do not create/delete a fixed shared `test-pod` name as part of an observation script. Only run probes against owned test endpoints.
 
 ### Testing with kubectl exec
 
+Set the context, namespace, existing Pod and container explicitly. DNS success is not TCP success; connection refusal, an unhealthy listener, a TLS error and a policy drop are different outcomes. These commands test connectivity only and do not print response bodies. They were not run against a cluster during this review.
+
 ```bash
-# Test connection from Pod to another service
-kubectl exec -it frontend-pod -- curl -v http://api-service:8080
-
-# DNS verification
-kubectl exec -it frontend-pod -- nslookup api-service
-
-# Port scan
-kubectl exec -it frontend-pod -- nc -zv api-service 8080
+# Both Pods already exist in the approved test environment.
+kubectl --context="$CONTEXT" -n "$NAMESPACE" get pods --show-labels
+kubectl --context="$CONTEXT" -n "$NAMESPACE" exec "$ALLOW_POD" \
+  -c "$PROBE_CONTAINER" -- nslookup api-service.production.svc.cluster.local
+kubectl --context="$CONTEXT" -n "$NAMESPACE" exec "$ALLOW_POD" \
+  -c "$PROBE_CONTAINER" -- curl --silent --show-error --output /dev/null \
+  --connect-timeout 3 --max-time 5 http://api-service.production.svc.cluster.local:8080/health
 ```
 
 ### Cilium Connectivity Test
 
-```bash
-# Run Cilium connectivity test
-cilium connectivity test
-
-# Run specific tests only
-cilium connectivity test --test pod-to-pod
-cilium connectivity test --test pod-to-service
-
-# Policy tests
-cilium connectivity test --test to-entities-world
-cilium connectivity test --test to-cidr-external
-```
+`cilium connectivity test` creates test resources and traffic; it is not a read-only status command. Use an approved isolated cluster/namespace, compatible CLI and images, defined external destinations, and a cleanup plan. Consult `cilium connectivity test --help` for the installed CLI's filters instead of assuming historical test names still exist. A passing suite does not prove every application policy or CNI chaining feature.
 
 ### Automated Test Script
 
+This script only executes bounded curl probes in two existing Pods; it creates or deletes no cluster resources. Set `CONTEXT`, `NAMESPACE`, `ALLOW_POD`, `DENIED_POD`, `PROBE_CONTAINER` and a non-secret `TARGET_URL` ending in `/health`. Both containers need `sh` and `curl`. The first Pod is a known allowed positive control for the same destination. HTTP error responses still establish network reachability because this test is not application-health validation.
+
+Exit1 means the blocked subject unexpectedly connected; exit2 means unknown/error; exit3 means timeout requiring corroboration. A timeout **never** becomes automatic PASS: correlate the exact source/destination/port/time with a CNI policy-drop verdict, while checking endpoint health, routes and SG/NACL controls. No live enforcement is claimed by the local mock tests.
+
 ```bash
-#!/bin/bash
-# network-policy-test.sh
-
-echo "=== Network Policy Test Suite ==="
-
-# Create test Pod
-kubectl run test-pod --image=nicolaka/netshoot --restart=Never --labels="app=test" -- sleep 3600
-
-# Wait for Pod to be ready
-kubectl wait --for=condition=Ready pod/test-pod --timeout=60s
-
-# Run test cases
-run_test() {
-    local name=$1
-    local command=$2
-    local expected=$3
-
-    echo -n "Testing: $name... "
-    result=$(kubectl exec test-pod -- timeout 5 sh -c "$command" 2>&1)
-
-    if [[ "$expected" == "success" && $? -eq 0 ]]; then
-        echo "PASS"
-    elif [[ "$expected" == "fail" && $? -ne 0 ]]; then
-        echo "PASS (correctly blocked)"
-    else
-        echo "FAIL"
-        echo "  Result: $result"
-    fi
+#!/usr/bin/env bash
+set -euo pipefail
+: "${CONTEXT:?Set an approved kubectl context}"
+: "${NAMESPACE:?Set the test namespace}"
+: "${ALLOW_POD:?Set an existing positive-control Pod}"
+: "${DENIED_POD:?Set a different existing policy-subject Pod}"
+: "${PROBE_CONTAINER:?Set a container with sh and curl in both Pods}"
+: "${TARGET_URL:?Set the same non-secret health URL for both probes}"
+if [[ "$ALLOW_POD" == "$DENIED_POD" ||
+      ! "$TARGET_URL" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?/health$ ]]; then
+  echo "Invalid probe inputs: use different Pods and a plain /health URL." >&2
+  exit 2
+fi
+work=$(mktemp -d "${TMPDIR:-/tmp}/network-policy-probe.XXXXXX")
+trap 'rm -rf -- "$work"' EXIT
+probe() {
+  local pod=$1 result
+  if ! result=$(kubectl --context="$CONTEXT" --request-timeout=15s \
+      -n "$NAMESPACE" exec "$pod" -c "$PROBE_CONTAINER" -- \
+      sh -c 'rc=0
+        curl --silent --output /dev/null --connect-timeout 3 --max-time 5 "$1" || rc=$?
+        printf "PROBE_EXIT=%s\n" "$rc"' sh "$TARGET_URL" \
+      2>"$work/transport-error"); then
+    echo "UNKNOWN: kubectl exec/authorization/transport failed." >&2
+    return 2
+  fi
+  if [[ ! "$result" =~ ^PROBE_EXIT=([0-9]+)$ ]]; then
+    echo "UNKNOWN: missing or malformed remote probe result." >&2
+    return 2
+  fi
+  printf '%s\n' "${BASH_REMATCH[1]}"
 }
-
-# Test cases
-run_test "DNS resolution" "nslookup kubernetes.default" "success"
-run_test "API server access" "curl -k https://kubernetes.default/healthz" "success"
-run_test "External access blocked" "curl -s --connect-timeout 3 http://example.com" "fail"
-run_test "Database access" "nc -zv database-service 5432" "success"
-
-# Cleanup
-kubectl delete pod test-pod --force --grace-period=0
+allowed=$(probe "$ALLOW_POD") || exit 2
+if [[ "$allowed" != 0 ]]; then
+  echo "UNKNOWN: positive control could not reach the target." >&2
+  exit 2
+fi
+denied=$(probe "$DENIED_POD") || exit 2
+case "$denied" in
+  0) echo "FAIL: the intended blocked Pod reached the target."; exit 1 ;;
+  28) echo "INCONCLUSIVE: timeout; correlate an actual policy-drop verdict."; exit 3 ;;
+  *) echo "UNKNOWN: DNS/TLS/refused/tool error is not proof of a policy drop."; exit 2 ;;
+esac
 ```
-
----
 
 ## EKS Considerations
 
 ### Amazon VPC CNI and NetworkPolicy
 
-Amazon VPC CNI does not support NetworkPolicy by default. Additional configuration is required to use NetworkPolicy:
+Amazon VPC CNI supports network policy after enablement. The current AWS guide requires VPC CNI 1.21+ for both standard and admin policies, a compatible EKS platform and Linux kernel 5.10+. Enforcement applies to supported EC2 Linux nodes, not Fargate or Windows. Use a currently supported EKS version and verify its compatible add-on release; do not infer EKS support from upstream Kubernetes releases.
+
+For an **EKS-managed** VPC CNI add-on, preserve its existing configuration while setting the documented string `"enableNetworkPolicy": "true"`. The following changes the selected cluster after review; it does not upgrade the add-on version. If the installed version is incompatible, stop and follow the documented upgrade procedure first.
 
 ```bash
-# Option 1: Enable VPC CNI NetworkPolicy support (v1.14.0+)
-kubectl set env daemonset aws-node -n kube-system ENABLE_NETWORK_POLICY=true
-
-# Check VPC CNI version
-kubectl describe daemonset aws-node -n kube-system | grep Image
-
-# Option 2: Install Calico policy engine separately
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-operator.yaml
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
+# Requires AWS CLI, kubectl and jq; use an approved test cluster.
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the approved test-cluster name}"
+umask 077
+aws eks describe-addon --cluster-name "$CLUSTER_NAME" --addon-name vpc-cni   --output json > vpc-cni-before.json
+jq -e '(.addon.configurationValues // "{}") | if . == "" then {} else fromjson end
+  | .enableNetworkPolicy = "true"' vpc-cni-before.json > vpc-cni-network-policy.json
+# Review the saved current version/configuration and the complete merged JSON first.
+aws eks update-addon --cluster-name "$CLUSTER_NAME" --addon-name vpc-cni   --configuration-values file://vpc-cni-network-policy.json --resolve-conflicts PRESERVE
 ```
+
+Check the update status and policy behavior before rollout. `--resolve-conflicts PRESERVE` does not merge a replacement JSON document for you; the example explicitly carries forward the existing values. Keep the snapshot for recovery. A Helm-owned installation uses its reviewed chart/values and `enableNetworkPolicy: true`; do not take ownership of it through this managed-add-on command. Setting the invented `ENABLE_NETWORK_POLICY` environment variable is not the enablement procedure.
+
+Standard startup mode can initially allow a new Pod until its policy is programmed. `NETWORK_POLICY_ENFORCING_MODE=strict` starts eligible Pods denied and requires a complete allow matrix, including DNS; changing it can interrupt workloads. Controller-managed Pods are the reliable testing target. Enforcement is on the primary Pod interface, so inspect extra interfaces, IPv6-to-IPv4 egress, host networking and NAT separately. Do not install two engines to manage the same standard policies or delete `aws-node` as a migration shortcut.
 
 ### EKS Enhanced Network Security Policies (December 2025)
 
 > **Announced**: December 15, 2025 · [Source](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
 
-EKS added two capabilities on top of namespace-scoped `NetworkPolicy`:
+The feature is real, but its resources use **`networking.k8s.aws/v1alpha1`**. `ClusterNetworkPolicy` is cluster scoped and has a required `tier`; DNS-based egress uses `ApplicationNetworkPolicy` for the namespace example below. Standard/admin VPC CNI policy support on EC2 Linux does not mean every compute mode supports it. DNS rules are enforced only on **Auto Mode-launched EC2 instances**, including in a mixed cluster.
 
-- **ClusterNetworkPolicy**: A new resource that lets you apply a consistent network policy across the entire cluster from a central place, instead of managing policies namespace by namespace.
-- **DNS (FQDN)-based egress control**: Allows or blocks egress traffic based on domain name instead of destination IP. This is more reliable than IP-based `ipBlock` rules for targets whose IPs change frequently, such as SaaS APIs or external endpoints.
-
-**Requirements**:
-- Available on new Kubernetes 1.29+ clusters
-- `ClusterNetworkPolicy` supports all launch modes on VPC CNI v1.21.0+
-- DNS-based policies are supported only on **EC2 nodes created by EKS Auto Mode**
-- No additional cost
+This Admin-tier example denies incoming traffic from namespace-selected Pods to `isolated-demo`, including Pods in that same namespace. It is not a complete external/host-network firewall or a DNS allow policy. Admin Deny cannot be overridden by a namespace NetworkPolicy. Review the actual installed CRD before adding other actions: the current upstream AWS controller schema names its permitting action `Accept`, while the user-guide prose uses “Allow”.
 
 ```yaml
-# ClusterNetworkPolicy example: cluster-wide default deny + allow DNS
-apiVersion: policy.networking.k8s.io/v1alpha1
+apiVersion: networking.k8s.aws/v1alpha1
 kind: ClusterNetworkPolicy
 metadata:
-  name: cluster-default-deny
+  name: isolate-demo-namespace
 spec:
-  priority: 100
-  subject:
-    namespaces: {}
-  egress:
-    - name: allow-dns
-      action: Allow
-      to:
-        - namespaces:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      ports:
-        - protocol: UDP
-          port: 53
-```
-
-```yaml
-# DNS (FQDN)-based egress policy example: allow only specific SaaS domains
-apiVersion: policy.networking.k8s.io/v1alpha1
-kind: ClusterNetworkPolicy
-metadata:
-  name: allow-saas-fqdn-egress
-spec:
-  priority: 200
+  tier: Admin
+  priority: 10
   subject:
     namespaces:
       matchLabels:
-        team: payments
-  egress:
-    - name: allow-external-api
-      action: Allow
-      to:
-        - fqdns:
-            - "api.stripe.com"
-            - "*.datadoghq.com"
-      ports:
-        - protocol: TCP
-          port: 443
+        kubernetes.io/metadata.name: isolated-demo
+  ingress:
+  - name: deny-pod-ingress
+    action: Deny
+    from:
+    - namespaces:
+        matchLabels: {}
 ```
+
+The FQDN example selects `app=backend` in `production`. **Replace `10.100.0.10/32` with your cluster's actual Auto Mode CoreDNS IP**: it is Service CIDR network address plus 10 (`::a/128` for IPv6). Pure Auto Mode CoreDNS runs on the node; a conventional CoreDNS Pod selector is not interchangeable. Allow both TCP and UDP DNS. Use a unique resource name that does not collide with a NetworkPolicy in that namespace.
+
+```yaml
+apiVersion: networking.k8s.aws/v1alpha1
+kind: ApplicationNetworkPolicy
+metadata:
+  name: approved-api-egress
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 10.100.0.10/32
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to:
+    - domainNames:
+      - api.stripe.com
+    ports:
+    - protocol: TCP
+      port: 443
+```
+
+The DNS proxy observes permitted answers and their TTLs, then the data path permits the learned destination IPs/ports. This does not authenticate a SaaS account or prove the peer's HTTP identity; shared IPs and DNS behavior require testing. TLS certificate verification, application authorization, routes and any Route 53 DNS Firewall rules remain relevant. Other applicable policies and direct backend paths must be reviewed together.
+
+[AWS NetworkPolicy](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html) · [Configuration](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html) · [Auto Mode policies](https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html)
 
 ### Security Groups for Pods
 
-In EKS, you can apply Security Groups directly to Pods:
+This binding example assumes the EKS VPC Resource Controller, its **cluster-role** permissions, supported trunking-compatible EC2 Linux nodes and a reviewed VPC CNI configuration. The current AWS guide excludes Windows and EKS Auto Mode. Fargate uses a separate Pod-SG model and does not gain VPC-CNI NetworkPolicy support merely from having a security group. Apply the binding to new matching workload Pods through their owner; existing Pods are not retrofitted automatically.
+
+For Calico plus Pod SGs, AWS documents VPC CNI1.11.0+ with `POD_SECURITY_GROUP_ENFORCING_MODE=standard`; use the current CNI requirements as well, rather than treating that minimum as a recommended version. Standard-mode external SNAT can use the node SG instead of the Pod SG. Verify the exact path. The old bare PostgreSQL Pod lacked credentials/storage and was not a functioning database deployment.
 
 ```yaml
-# SecurityGroupPolicy definition
+# Binding example only: use an existing reviewed security group.
 apiVersion: vpcresources.k8s.aws/v1beta1
 kind: SecurityGroupPolicy
 metadata:
@@ -1495,50 +1566,32 @@ spec:
       app: database
   securityGroups:
     groupIds:
-      - sg-0123456789abcdef0  # Database Security Group
----
-# Pod automatically gets Security Group applied
-apiVersion: v1
-kind: Pod
-metadata:
-  name: database-pod
-  namespace: production
-  labels:
-    app: database
-spec:
-  containers:
-    - name: postgres
-      image: postgres:15
+      - sg-0123456789abcdef0
 ```
 
-Security Group example configuration:
+The Terraform fragment permits DB ingress from one reviewed app SG and initiates no new egress connections. Stateful return traffic is allowed by SG tracking; add only the required DNS, replication, backup or external egress separately. Variables are existing operator inputs; no Terraform plan/apply was executed.
 
 ```hcl
-# Define Security Group with Terraform
+# Fragment for an existing reviewed Terraform configuration.
+# Supply the actual VPC and application SG; this is not a standalone module.
 resource "aws_security_group" "database_pods" {
   name_prefix = "database-pods-"
-  vpc_id      = module.vpc.vpc_id
-
+  vpc_id      = var.vpc_id
   ingress {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.app_pods.id]
+    security_groups = [var.application_security_group_id]
   }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  egress = []
 }
 ```
 
 ### Combining VPC-Level Controls with NetworkPolicy
 
+NetworkPolicy, the actually applied SGs and NACLs must all allow the relevant path. This ingress-only NetworkPolicy does not restrict database egress; add the selected egress profile and source-Pod egress. Multiple SGs combine their allows. NACLs are **stateless**, so a subnet rule allowing inbound5432 needs a matching return path to the client's ephemeral ports, plus appropriate rules on the client's subnet. The fragments below do not replace a complete reviewed ACL rule set.
+
 ```yaml
-# NetworkPolicy (Pod level)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1548,8 +1601,7 @@ spec:
   podSelector:
     matchLabels:
       app: database
-  policyTypes:
-    - Ingress
+  policyTypes: [Ingress]
   ingress:
     - from:
         - podSelector:
@@ -1561,65 +1613,66 @@ spec:
 ```
 
 ```hcl
-# Security Group (VPC level)
-# Provides additional network isolation
-resource "aws_security_group" "database_pods" {
-  # ... (see example above)
-}
-
-# NACL (Subnet level)
-# Controls traffic between subnets
-resource "aws_network_acl_rule" "database_subnet" {
-  network_acl_id = aws_network_acl.database.id
+# Fragments for a DB subnet NACL and an explicitly reviewed client CIDR.
+# Choose the client's actual ephemeral port range; also review its subnet NACL.
+resource "aws_network_acl_rule" "database_inbound" {
+  network_acl_id = var.database_network_acl_id
   rule_number    = 100
   egress         = false
   protocol       = "tcp"
   rule_action    = "allow"
-  cidr_block     = "10.0.0.0/16"
+  cidr_block     = var.application_subnet_cidr
   from_port      = 5432
   to_port        = 5432
+}
+resource "aws_network_acl_rule" "database_return" {
+  network_acl_id = var.database_network_acl_id
+  rule_number    = 100
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = var.application_subnet_cidr
+  from_port      = var.client_ephemeral_port_start
+  to_port        = var.client_ephemeral_port_end
 }
 ```
 
 ### Using Cilium on EKS
 
-```bash
-# Remove VPC CNI (optional)
-kubectl delete daemonset aws-node -n kube-system
+Choose **AWS VPC CNI chaining** or a separately designed full CNI/IPAM migration. In chaining mode AWS VPC CNI keeps ENI/IPAM responsibility and Cilium attaches its datapath. Preserve `aws-node`; deleting it is not an installation shortcut. Review the existing add-on/Helm owner and avoid overlapping policy-enforcement engines. Existing Pods need a controlled recreation before chaining policy applies; plan disruption and rollback.
 
-# Install Cilium
-helm repo add cilium https://helm.cilium.io/
-helm install cilium cilium/cilium --version 1.15.0 \
-    --namespace kube-system \
-    --set eni.enabled=true \
-    --set ipam.mode=eni \
-    --set egressMasqueradeInterfaces=eth0 \
-    --set routingMode=native
+The official1.20.1 chaining guide supplies these values, but also documents L7/IPsec limitations. It contains old illustrative outputs; those are not validation of your current EKS environment. Prepare the chart repository/package, verify provenance and render first:
+
+```bash
+# Render locally after verifying the official chart/package provenance.
+# Rendering alone does not change a cluster or validate a migration.
+helm template cilium cilium/cilium --version 1.20.1 \
+  --namespace kube-system \
+  --set cni.chainingMode=aws-cni \
+  --set cni.exclusive=false \
+  --set enableIPv4Masquerade=false \
+  --set routingMode=native > cilium-reviewed.yaml
 ```
 
----
+[AWS VPC CNI chaining — Cilium 1.20.1](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
 
 ## Visualization Tools
 
 ### Cilium Network Policy Editor
 
-Cilium provides a web-based policy editor:
+A policy editor helps author policy; **Hubble UI visualizes observed service flows**. They are different tools. Enabling Hubble/UI changes cluster configuration and belongs to the installation owner. With an already installed, authenticated Hubble service, inspect the existing service and use a local port-forward. Do not expose the UI publicly as a debugging shortcut.
 
 ```bash
-# Enable Cilium Hubble UI
-cilium hubble enable --ui
-
-# Access Hubble UI
-cilium hubble ui
-
-# Or port forward
-kubectl port-forward -n kube-system svc/hubble-ui 12000:80
+kubectl --context="$CONTEXT" -n kube-system port-forward --address=127.0.0.1 svc/hubble-ui 12000:80
 ```
 
 ### Cilium Policy Verdict Check
 
+Use an authenticated Hubble connection. `DROPPED` includes reasons other than policy; inspect drop reason, endpoint identity, time and direction. A `FORWARDED` observation at one point is not an end-to-end delivery guarantee.
+
+
 ```bash
-# Check real-time policy decisions
+# Inspect observed policy decisions
 hubble observe --verdict DROPPED
 hubble observe --verdict FORWARDED
 
@@ -1632,44 +1685,22 @@ hubble observe --output json | jq '.flow.verdict'
 
 ### Calico Enterprise UI
 
-Calico Enterprise provides a policy visualization UI:
-
-```bash
-# Access Calico Enterprise dashboard
-kubectl port-forward -n calico-system svc/cnx-manager 9443:443
-```
+The Enterprise management UI requires the licensed product and its actual service/TLS/authentication configuration; it is not automatically installed by Calico Open Source. Inspect the installed service name/port and access policy before forwarding. Do not assume `cnx-manager` exists in every installation.
 
 ### Network Policy Visualization Tools
 
-```bash
-# Install kubectl-np-viewer
-kubectl krew install np-viewer
-
-# Visualize policies
-kubectl np-viewer -n production
-
-# Check policies for specific Pod
-kubectl np-viewer -n production --pod api-server
-```
+Use `kubectl get networkpolicy -n <namespace>` and `kubectl describe networkpolicy <name> -n <namespace>` to inspect Kubernetes policy selectors/rules, and the installed engine's authenticated flow tools to inspect enforcement. Third-party viewer/plugin availability and flags must be checked against that project's current release. A graph of YAML alone cannot prove dataplane enforcement.
 
 ### Security Testing with Kube-hunter
 
-```bash
-# Cluster security scan
-kubectl run kube-hunter --image=aquasec/kube-hunter --restart=Never -- --pod
-
-# Check results
-kubectl logs kube-hunter
-```
-
----
+kube-hunter is a cluster exposure/security scanner, not a NetworkPolicy allow/deny verifier. Its scans can generate intrusive traffic; use an explicitly approved target/scope and a reviewed release/image. Do not deploy an unpinned scanner into a live namespace from a general policy tutorial. This review did not execute a scanner.
 
 ## Best Practices
 
 ### 1. Apply Default Deny Policy
 
 ```yaml
-# Apply to all production namespaces
+# Applies only to this production namespace
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1692,6 +1723,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: api-minimal-access
+  namespace: production
 spec:
   podSelector:
     matchLabels:
@@ -1717,37 +1749,67 @@ metadata:
   annotations:
     description: "Allow traffic from frontend to API on port 8080"
     owner: "platform-team"
-    last-reviewed: "2026-02-21"
+    review-ticket: "REPLACE_WITH_APPROVED_CHANGE"
 spec:
-  # ...
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
 ```
 
 ### 4. Regular Policy Audits
 
+This read-only inventory lists namespace-wide empty allow baselines separately for ingress and egress. Empty `[]` and absent rule arrays are handled, while a rule `{}` allows traffic and is not a deny baseline. API/authorization errors fail instead of appearing as zero policies. A listed baseline is **not proof of isolation**: other allow rules, extension policies, uncovered Pods and CNI state still require review.
+
 ```bash
-#!/bin/bash
-# audit-network-policies.sh
-
-echo "=== Network Policy Audit ==="
-
-# Find namespaces without policies
-for ns in $(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}'); do
-    policies=$(kubectl get networkpolicies -n "$ns" --no-headers 2>/dev/null | wc -l)
-    if [[ $policies -eq 0 ]]; then
-        echo "WARNING: No NetworkPolicy in namespace: $ns"
-    fi
-done
-
-# Check for default deny policies
-for ns in $(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}'); do
-    deny_policy=$(kubectl get networkpolicies -n "$ns" -o json | jq -r '.items[] | select(.spec.podSelector == {} and .spec.ingress == null) | .metadata.name')
-    if [[ -z "$deny_policy" ]]; then
-        echo "INFO: No default-deny policy in namespace: $ns"
-    fi
-done
+#!/usr/bin/env bash
+set -euo pipefail
+: "${CONTEXT:?Set an approved kubectl context}"
+work=$(mktemp -d "${TMPDIR:-/tmp}/network-policy-inventory.XXXXXX")
+trap 'rm -rf -- "$work"' EXIT
+if ! kubectl --context="$CONTEXT" --request-timeout=15s get namespaces -o json >"$work/namespaces.json"; then
+  echo "UNKNOWN: namespace inventory failed." >&2
+  exit 2
+fi
+if ! kubectl --context="$CONTEXT" --request-timeout=15s get networkpolicies -A -o json >"$work/policies.json"; then
+  echo "UNKNOWN: policy inventory failed." >&2
+  exit 2
+fi
+jq -n --slurpfile ns "$work/namespaces.json" --slurpfile np "$work/policies.json" '
+  def directions:
+    (.spec.policyTypes // []) as $types |
+    if ($types | length) > 0 then $types
+    else ["Ingress"] + (if ((.spec.egress // []) | length) > 0 then ["Egress"] else [] end)
+    end;
+  def selects_all:
+    ((.spec.podSelector.matchLabels // {}) | length) == 0 and
+    ((.spec.podSelector.matchExpressions // []) | length) == 0;
+  def empty_baseline($direction; $rules):
+    select(selects_all and ((directions | index($direction)) != null) and
+           ((.spec[$rules] // []) | length) == 0) | .metadata.name;
+  {
+    note: "Inventory only: other allow rules, extension policies and CNI enforcement are not evaluated.",
+    namespaces: [
+      $ns[0].items[] | .metadata.name as $name |
+      [$np[0].items[] | select(.metadata.namespace == $name)] as $policies |
+      {
+        namespace: $name,
+        policyCount: ($policies | length),
+        ingressBaselines: [$policies[] | empty_baseline("Ingress"; "ingress")],
+        egressBaselines: [$policies[] | empty_baseline("Egress"; "egress")]
+      }
+    ]
+  }
+'
 ```
-
----
 
 ## Summary
 
@@ -1770,7 +1832,11 @@ Kubernetes Network Policies are a core security mechanism for controlling Pod co
 ## References
 
 - [Kubernetes Network Policies Official Documentation](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [Cilium Network Policy Documentation](https://docs.cilium.io/en/stable/security/policy/)
-- [Calico Network Policy Documentation](https://docs.tigera.io/calico/latest/network-policy/)
-- [EKS Security Best Practices - Network Security](https://aws.github.io/aws-eks-best-practices/security/docs/network/)
+- [Cilium Network Policy Documentation](https://docs.cilium.io/en/stable/security/policy/index.html)
+- [Calico Network Policy Documentation](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
+- [EKS Security Best Practices - Network Security](https://docs.aws.amazon.com/eks/latest/best-practices/network-security.html)
 - [Amazon EKS Enhanced Network Security Policies (2025-12-15)](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
+
+- [EKS Pod security groups](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+- [Calico Tier](https://docs.tigera.io/calico/latest/reference/resources/tier)
+- [Calico NetworkSet](https://docs.tigera.io/calico/latest/reference/resources/networkset)

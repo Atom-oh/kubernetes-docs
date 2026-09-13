@@ -1,10 +1,12 @@
 # OpenTelemetry 퀴즈
 
+> **마지막 업데이트**: 2026년 9월 13일
+
 OpenTelemetry에 대한 이해도를 테스트하는 퀴즈입니다.
 
 ---
 
-1. OpenTelemetry가 지원하는 세 가지 신호(Signal)는?
+1. 이 문서에서 중점적으로 다루는 세 가지 핵심 신호는?
    - A) Logs, Metrics, Events
    - B) Traces, Metrics, Logs
    - C) Spans, Counters, Logs
@@ -16,7 +18,7 @@ OpenTelemetry에 대한 이해도를 테스트하는 퀴즈입니다.
 **정답: B) Traces, Metrics, Logs**
 
 **설명:**
-OpenTelemetry는 관측성의 세 가지 핵심 신호인 Traces(분산 추적), Metrics(메트릭), Logs(로그)를 표준화합니다. 이 세 가지 신호를 통합적으로 수집하고 상관분석할 수 있어, 시스템의 전체적인 관측성을 확보할 수 있습니다.
+이 문서는 traces·metrics·logs를 중점적으로 다룹니다. OpenTelemetry는 profiling 지원도 개발하며 신호·컴포넌트·언어별 안정성이 다릅니다. Exporter 세 개를 켜는 것만으로 상관관계가 만들어지지는 않으며 일관된 Resource 속성과 컨텍스트 전파가 필요합니다.
 
 </details>
 
@@ -58,19 +60,19 @@ OTEL Collector의 파이프라인은 Receivers(데이터 수신) → Processors(
 
 ---
 
-4. OTEL Collector의 tail_sampling 프로세서가 head-based 샘플링보다 유리한 경우는?
+4. Head-based 샘플링과 비교해 Collector의 tail_sampling 프로세서가 유용한 경우는?
    - A) 리소스 사용량을 최소화해야 할 때
-   - B) 오류나 지연이 있는 요청을 놓치지 않아야 할 때
+   - B) 관측한 span 상태와 소요 시간을 샘플링 결정에 반영할 때
    - C) 구현이 간단해야 할 때
    - D) 샘플링 결정을 빠르게 해야 할 때
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 오류나 지연이 있는 요청을 놓치지 않아야 할 때**
+**정답: B) 관측한 span 상태와 소요 시간을 샘플링 결정에 반영할 때**
 
 **설명:**
-Tail-based 샘플링은 요청이 완료된 후 결과(오류, 지연 등)를 보고 샘플링 여부를 결정합니다. 이를 통해 중요한 요청(오류 발생, 응답 시간 초과)을 놓치지 않습니다. 반면 head-based 샘플링은 요청 시작 시점에 결정하므로 구현이 간단하고 리소스 사용량이 적지만, 중요한 요청을 놓칠 수 있습니다.
+Collector 0.160.0의 기본 `trace-complete` 전략은 결정 타이머가 동작할 때까지 모은 span을 평가합니다. 이름만으로 요청이나 trace의 완료가 보장되지는 않습니다. Head sampling에서 이미 버린 span은 복구할 수 없으며 늦은 도착·용량 한도·재시도·라우팅 변경도 보존 결과에 영향을 줍니다. 상태를 유지하는 tail sampling에는 같은 trace의 span을 동일 sampling Collector로 보내는 구성이 필요하며 모든 오류·지연 요청의 보존을 보장하지 않습니다.
 
 </details>
 
@@ -88,13 +90,13 @@ Tail-based 샘플링은 요청이 완료된 후 결과(오류, 지연 등)를 �
 **정답: B) 텔레메트리 데이터를 생성하는 엔티티 식별**
 
 **설명:**
-Resource는 텔레메트리 데이터를 생성하는 엔티티(서비스, 호스트, 컨테이너 등)를 식별하는 메타데이터입니다. service.name, service.version, deployment.environment 같은 속성을 포함하여 데이터의 출처를 명확히 합니다. 이 정보는 모든 텔레메트리 데이터에 자동으로 첨부됩니다.
+Resource는 `service.name`, `service.version`, `deployment.environment.name` 등으로 텔레메트리 생산자를 식별합니다. 구성한 SDK/provider가 전송 데이터에 연결하며 Kubernetes·클라우드·사용자 지정 신원 속성은 해당 설정이나 detector가 필요합니다. 모든 속성을 자동으로 알아내는 것은 아닙니다.
 
 </details>
 
 ---
 
-6. EKS에서 OTEL Collector 배포 패턴 중 가장 리소스 효율적인 것은?
+6. 배치 대상인 각 노드에 보통 Collector 하나를 실행하는 Kubernetes 워크로드는?
    - A) Sidecar 패턴
    - B) DaemonSet 패턴
    - C) Gateway 패턴
@@ -106,7 +108,7 @@ Resource는 텔레메트리 데이터를 생성하는 엔티티(서비스, 호�
 **정답: B) DaemonSet 패턴**
 
 **설명:**
-DaemonSet 패턴은 각 노드에 하나의 Collector만 실행하므로 리소스 효율적입니다. Sidecar 패턴은 각 Pod마다 Collector를 실행하여 리소스 오버헤드가 큽니다. Gateway 패턴은 중앙 집중식이지만 단일 장애점이 될 수 있습니다. 일반적으로 DaemonSet으로 수집하고 Gateway로 처리/전송하는 조합이 권장됩니다.
+DaemonSet은 selector·taint·스케줄링 조건을 충족하는 각 노드에 Pod를 배치하며 EKS Fargate에서는 지원되지 않습니다. Sidecar는 앱 Pod를 공유하고 gateway는 여러 replica로 구성할 수도 있는 중앙 계층입니다. 실제 신호량·노드/Pod 수·격리·가용성·상태 유지 처리 요구를 비교해야 하며 항상 가장 효율적인 패턴은 없습니다. DaemonSet 앞의 ClusterIP Service도 자동으로 같은 노드에 연결하지 않습니다.
 
 </details>
 
@@ -124,7 +126,7 @@ DaemonSet 패턴은 각 노드에 하나의 Collector만 실행하므로 리소�
 **정답: B) instrumentation.opentelemetry.io/inject-java: "true"**
 
 **설명:**
-OpenTelemetry Operator는 `instrumentation.opentelemetry.io/inject-{language}` 형식의 annotation을 사용합니다. 언어별로 inject-java, inject-python, inject-nodejs, inject-dotnet, inject-go 등을 사용합니다. 이 annotation이 있는 Pod에 자동으로 계측 에이전트가 주입됩니다.
+Operator는 언어별 injection annotation을 사용합니다. Deployment에서는 `spec.template.metadata.annotations`에 넣고 올바른 namespace의 기존 Instrumentation 리소스를 참조합니다. 정상 webhook과 지원되는 언어·runtime 설정도 필요합니다. 기존 Pod를 소급 계측하지 않으며 Go 등 언어별 전제 조건은 별도로 검토해야 합니다.
 
 </details>
 
@@ -132,17 +134,17 @@ OpenTelemetry Operator는 `instrumentation.opentelemetry.io/inject-{language}` �
 
 8. OTEL Collector 설정에서 memory_limiter 프로세서의 역할은?
    - A) 데이터 압축
-   - B) 메모리 부족 시 데이터 손실 방지
+   - B) 설정한 메모리 임계값 초과 시 backpressure 적용
    - C) 캐시 관리
    - D) 네트워크 버퍼 관리
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 메모리 부족 시 데이터 손실 방지**
+**정답: B) 설정한 메모리 임계값 초과 시 backpressure 적용**
 
 **설명:**
-memory_limiter 프로세서는 Collector의 메모리 사용량을 모니터링하고 제한합니다. 메모리 사용량이 limit_mib에 도달하면 새 데이터 수신을 거부하여 OOM(Out of Memory)으로 인한 데이터 손실을 방지합니다. spike_limit_mib는 갑작스러운 메모리 증가에 대한 버퍼를 제공합니다.
+`limit_mib`는 hard limit이고 soft limit은 `limit_mib - spike_limit_mib`입니다. Soft limit을 넘으면 재시도 가능한 오류로 데이터를 거부하고 hard limit을 넘으면 GC도 강제합니다. 앞단의 재시도·backpressure 처리가 없으면 거부한 데이터는 손실될 수 있습니다. 컨테이너 메모리 한도 아래에 여유를 두어야 하며 durable storage나 절대적인 OOM·손실 방지 보장은 아닙니다.
 
 </details>
 
@@ -160,7 +162,7 @@ memory_limiter 프로세서는 Collector의 메모리 사용량을 모니터링�
 **정답: D) span-name**
 
 **설명:**
-W3C Trace Context의 traceparent 헤더는 `version-trace_id-parent_id-trace_flags` 형식으로 구성됩니다. version은 형식 버전, trace_id는 전체 추적 식별자, parent_id는 부모 스팬 ID, trace_flags는 샘플링 플래그입니다. span-name은 Span 내부에 저장되며 전파 헤더에 포함되지 않습니다.
+OpenTelemetry는 W3C Trace Context 표준을 사용합니다. `traceparent`에는 version·trace ID·parent ID·trace flags가 있으며 parent ID는 전송하는 span을 식별하고 flags에는 sampled bit가 포함됩니다. Span 이름은 이 헤더에 없으며 컨텍스트 전파만으로 span이 기록·전송되는 것도 아닙니다.
 
 </details>
 
@@ -178,8 +180,10 @@ W3C Trace Context의 traceparent 헤더는 `version-trace_id-parent_id-trace_fla
 **정답: B) exporters 배열에 여러 exporter 나열**
 
 **설명:**
-OTEL Collector의 pipeline 설정에서 exporters 배열에 여러 exporter를 나열하면 동일한 데이터가 모든 백엔드로 전송됩니다. 예: `exporters: [otlp/tempo, awsxray, datadog]`. 이를 통해 하나의 Collector로 여러 관측성 백엔드를 동시에 사용할 수 있습니다.
+Pipeline의 신호를 지원하며 실제 구성한 exporter를 나열합니다. 예를 들어 해당 컴포넌트를 포함한 배포판의 traces는 `exporters: [otlp/tempo, awsxray, datadog]`로 보낼 수 있습니다. 여러 백엔드에 대한 원자적 트랜잭션은 아니므로 exporter 오류·queue·재시도·변환·백엔드 수락 여부에 따라 실제 보존 결과가 달라질 수 있습니다.
 
 </details>
 
 ---
+
+[본문으로 돌아가기](../../../observability/tracing/03-opentelemetry.md)

@@ -1,0 +1,2423 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T12:25:06.522479+00:00",
+  "scope": [
+    "en/observability/tracing/03-opentelemetry.md",
+    "en/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+    "ko/observability/tracing/03-opentelemetry.md",
+    "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/tracing/03-opentelemetry.md": {
+      "lines": 772,
+      "sha256": "7f9dd5017fd75fb2453aae9abe7c5ccf16ce18f3f2f78a243a3de71a3ca60062"
+    },
+    "en/quizzes/observability/tracing/03-opentelemetry-quiz.md": {
+      "lines": 185,
+      "sha256": "3c28cba957b0427b37cf409ddf49cf22daf511aafeb6c362ec348e987d9cc0e7"
+    },
+    "ko/observability/tracing/03-opentelemetry.md": {
+      "lines": 1114,
+      "sha256": "587c766ef6855157b900092489bdbb4b7618c46002c97d86c13dd06495939b45"
+    },
+    "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md": {
+      "lines": 185,
+      "sha256": "91b8c67450044c9d5e7d2ffdb7ff7ac8eb52d4e14384f33bff9530c7a94427e4"
+    }
+  },
+  "checks": {
+    "status": "passed",
+    "files": [
+      {
+        "path": "en/observability/tracing/03-opentelemetry.md",
+        "sha256": "37867b3657059ab26d2cacab7c93d6a78c8ebeef630b1144b55429521b32c6e4",
+        "lines": 1553,
+        "fullyRead": true
+      },
+      {
+        "path": "en/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+        "sha256": "76a1a067453ef824e254e5a769c9a7459cf9bc063f1166b2aae85acee55d95e6",
+        "lines": 189,
+        "fullyRead": true
+      },
+      {
+        "path": "ko/observability/tracing/03-opentelemetry.md",
+        "sha256": "59f27e6612e2824b009a0f8bdc528b14c6aa3dbfb3bbbc7078f91442c0df990c",
+        "lines": 1557,
+        "fullyRead": true
+      },
+      {
+        "path": "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+        "sha256": "174d2eb3fce2ea7dff77d66767f7e1c41c8cef6e94018985cd8cd9e01303fdfb",
+        "lines": 189,
+        "fullyRead": true
+      }
+    ],
+    "contracts": {
+      "status": "passed",
+      "checks": [
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "order-service"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "order-service"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "payment-service"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "payment-service"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "notification-service"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "notification-service"
+          ],
+          "errors": []
+        },
+        {
+          "name": "verified-configuration-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "v1",
+            "ServiceAccount",
+            "otel",
+            "otel-collector"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "v1",
+            "ServiceAccount",
+            "otel",
+            "otel-collector"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "otel-collector"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "otel-collector"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-collector"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-collector"
+          ],
+          "errors": []
+        },
+        {
+          "name": "verified-configuration-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "DaemonSet",
+            "otel",
+            "otel-agent"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "DaemonSet",
+            "otel",
+            "otel-agent"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-agent"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-agent"
+          ],
+          "errors": []
+        },
+        {
+          "name": "verified-configuration-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "order-with-sidecar"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "order-with-sidecar"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "otel-relay"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "otel-relay"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-relay"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-relay"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "autoscaling/v2",
+            "HorizontalPodAutoscaler",
+            "otel",
+            "otel-relay"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "autoscaling/v2",
+            "HorizontalPodAutoscaler",
+            "otel",
+            "otel-relay"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "opentelemetry.io/v1alpha1",
+            "Instrumentation",
+            "ecommerce",
+            "otel-instrumentation"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "opentelemetry.io/v1alpha1",
+            "Instrumentation",
+            "ecommerce",
+            "otel-instrumentation"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "order-injected"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "en",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "order-injected"
+          ],
+          "errors": []
+        },
+        {
+          "name": "verified-configuration-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "verified-configuration-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "shell-syntax",
+          "passed": true,
+          "locale": "en",
+          "block": 0,
+          "error": ""
+        },
+        {
+          "name": "shell-syntax",
+          "passed": true,
+          "locale": "en",
+          "block": 1,
+          "error": ""
+        },
+        {
+          "name": "shell-syntax",
+          "passed": true,
+          "locale": "en",
+          "block": 2,
+          "error": ""
+        },
+        {
+          "name": "shell-syntax",
+          "passed": true,
+          "locale": "en",
+          "block": 3,
+          "error": ""
+        },
+        {
+          "name": "shell-syntax",
+          "passed": true,
+          "locale": "en",
+          "block": 4,
+          "error": ""
+        },
+        {
+          "name": "manual-code-binding",
+          "passed": true,
+          "locale": "en",
+          "language": "java"
+        },
+        {
+          "name": "manual-code-binding",
+          "passed": true,
+          "locale": "en",
+          "language": "python"
+        },
+        {
+          "name": "manual-code-binding",
+          "passed": true,
+          "locale": "en",
+          "language": "javascript"
+        },
+        {
+          "name": "old-collector-image-removed",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "old-agent-configmap-removed",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "retired-architecture-figure-unlinked",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "replacement-graph-present",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "explicit-current-date",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "quiz-10-questions",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "quiz-10-answers",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "quiz-no-never-miss-guarantee",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "order-service"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "order-service"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "payment-service"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "payment-service"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "notification-service"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "notification-service"
+          ],
+          "errors": []
+        },
+        {
+          "name": "verified-configuration-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "v1",
+            "ServiceAccount",
+            "otel",
+            "otel-collector"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "v1",
+            "ServiceAccount",
+            "otel",
+            "otel-collector"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "otel-collector"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "otel-collector"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-collector"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-collector"
+          ],
+          "errors": []
+        },
+        {
+          "name": "verified-configuration-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "DaemonSet",
+            "otel",
+            "otel-agent"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "DaemonSet",
+            "otel",
+            "otel-agent"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-agent"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-agent"
+          ],
+          "errors": []
+        },
+        {
+          "name": "verified-configuration-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "order-with-sidecar"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "order-with-sidecar"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "otel-relay"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "otel",
+            "otel-relay"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-relay"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "v1",
+            "Service",
+            "otel",
+            "otel-relay"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "autoscaling/v2",
+            "HorizontalPodAutoscaler",
+            "otel",
+            "otel-relay"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "autoscaling/v2",
+            "HorizontalPodAutoscaler",
+            "otel",
+            "otel-relay"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "opentelemetry.io/v1alpha1",
+            "Instrumentation",
+            "ecommerce",
+            "otel-instrumentation"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "opentelemetry.io/v1alpha1",
+            "Instrumentation",
+            "ecommerce",
+            "otel-instrumentation"
+          ],
+          "errors": []
+        },
+        {
+          "name": "workload-fixture-binding",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "order-injected"
+          ]
+        },
+        {
+          "name": "published-schema",
+          "passed": true,
+          "locale": "ko",
+          "key": [
+            "apps/v1",
+            "Deployment",
+            "ecommerce",
+            "order-injected"
+          ],
+          "errors": []
+        },
+        {
+          "name": "verified-configuration-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "verified-configuration-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "shell-syntax",
+          "passed": true,
+          "locale": "ko",
+          "block": 0,
+          "error": ""
+        },
+        {
+          "name": "shell-syntax",
+          "passed": true,
+          "locale": "ko",
+          "block": 1,
+          "error": ""
+        },
+        {
+          "name": "shell-syntax",
+          "passed": true,
+          "locale": "ko",
+          "block": 2,
+          "error": ""
+        },
+        {
+          "name": "shell-syntax",
+          "passed": true,
+          "locale": "ko",
+          "block": 3,
+          "error": ""
+        },
+        {
+          "name": "shell-syntax",
+          "passed": true,
+          "locale": "ko",
+          "block": 4,
+          "error": ""
+        },
+        {
+          "name": "manual-code-binding",
+          "passed": true,
+          "locale": "ko",
+          "language": "java"
+        },
+        {
+          "name": "manual-code-binding",
+          "passed": true,
+          "locale": "ko",
+          "language": "python"
+        },
+        {
+          "name": "manual-code-binding",
+          "passed": true,
+          "locale": "ko",
+          "language": "javascript"
+        },
+        {
+          "name": "old-collector-image-removed",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "old-agent-configmap-removed",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "retired-architecture-figure-unlinked",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "replacement-graph-present",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "explicit-current-date",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "quiz-10-questions",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "quiz-10-answers",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "quiz-no-never-miss-guarantee",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "paired-code-equality",
+          "passed": true,
+          "language": "yaml"
+        },
+        {
+          "name": "paired-code-equality",
+          "passed": true,
+          "language": "java"
+        },
+        {
+          "name": "paired-code-equality",
+          "passed": true,
+          "language": "python"
+        },
+        {
+          "name": "paired-code-equality",
+          "passed": true,
+          "language": "javascript"
+        },
+        {
+          "name": "paired-code-equality",
+          "passed": true,
+          "language": "bash"
+        },
+        {
+          "name": "paired-code-equality",
+          "passed": true,
+          "language": "dockerfile"
+        },
+        {
+          "name": "original-anchors-preserved",
+          "passed": true,
+          "path": "en/observability/tracing/03-opentelemetry.md",
+          "missing": []
+        },
+        {
+          "name": "current-local-fragments",
+          "passed": true,
+          "path": "en/observability/tracing/03-opentelemetry.md"
+        },
+        {
+          "name": "draft-render-current-hash",
+          "passed": true,
+          "path": "en/observability/tracing/03-opentelemetry.md"
+        },
+        {
+          "name": "original-anchors-preserved",
+          "passed": true,
+          "path": "ko/observability/tracing/03-opentelemetry.md",
+          "missing": []
+        },
+        {
+          "name": "current-local-fragments",
+          "passed": true,
+          "path": "ko/observability/tracing/03-opentelemetry.md"
+        },
+        {
+          "name": "draft-render-current-hash",
+          "passed": true,
+          "path": "ko/observability/tracing/03-opentelemetry.md"
+        },
+        {
+          "name": "original-anchors-preserved",
+          "passed": true,
+          "path": "en/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+          "missing": []
+        },
+        {
+          "name": "current-local-fragments",
+          "passed": true,
+          "path": "en/quizzes/observability/tracing/03-opentelemetry-quiz.md"
+        },
+        {
+          "name": "draft-render-current-hash",
+          "passed": true,
+          "path": "en/quizzes/observability/tracing/03-opentelemetry-quiz.md"
+        },
+        {
+          "name": "original-anchors-preserved",
+          "passed": true,
+          "path": "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+          "missing": []
+        },
+        {
+          "name": "current-local-fragments",
+          "passed": true,
+          "path": "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md"
+        },
+        {
+          "name": "draft-render-current-hash",
+          "passed": true,
+          "path": "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md"
+        }
+      ],
+      "counts": {
+        "kubernetesObjects": 26,
+        "instrumentationObjects": 2,
+        "profileBindings": 10,
+        "shellBlocks": 10
+      },
+      "limits": "Exact draft/fixture and schema bindings, syntax and anchor checks; no Kubernetes API, cloud or application/image execution."
+    },
+    "nativeCollector": {
+      "status": "passed",
+      "checks": [
+        {
+          "name": "ingest-rejects-client-without-certificate",
+          "passed": true
+        },
+        {
+          "name": "traces-http-ingest",
+          "passed": true
+        },
+        {
+          "name": "logs-http-ingest",
+          "passed": true
+        },
+        {
+          "name": "metrics-http-ingest",
+          "passed": true
+        },
+        {
+          "name": "error-slow-selected-service-traces-exported",
+          "passed": true
+        },
+        {
+          "name": "health-trace-filtered",
+          "passed": true
+        },
+        {
+          "name": "healthy-tail-sampling-is-selective",
+          "passed": true
+        },
+        {
+          "name": "named-sensitive-span-attributes-removed",
+          "passed": true
+        },
+        {
+          "name": "loki-native-otlp-path-log-delivery",
+          "passed": true
+        },
+        {
+          "name": "named-sensitive-log-attribute-removed",
+          "passed": true
+        },
+        {
+          "name": "original-otlp-metric-retained",
+          "passed": true
+        },
+        {
+          "name": "span-metrics-before-tail-sampling",
+          "passed": true
+        },
+        {
+          "name": "span-metrics-explicit-seconds-unit",
+          "passed": true
+        },
+        {
+          "name": "remote-write-https-delivery",
+          "passed": true
+        }
+      ],
+      "scope": "Actual Contrib0.160.0 HTTP-mTLS input, gRPC-mTLS relay and HTTPS output; synthetic data only. Published processing unchanged. Loopback addresses, telemetry disabled and a test-only secondary OTLP metrics sink differ from the draft. Remote-write HTTPS delivery only, not live Prometheus ingestion. No cloud/Kubernetes/backend-product deployment."
+    },
+    "manualPython": {
+      "version": "OpenTelemetrySDK1.44.0",
+      "checks": [
+        {
+          "name": "lookup-return-preserved",
+          "passed": true
+        },
+        {
+          "name": "parent-and-lookup-span",
+          "passed": true
+        },
+        {
+          "name": "parent-child-context",
+          "passed": true
+        },
+        {
+          "name": "business-work-internal-kind",
+          "passed": true
+        },
+        {
+          "name": "lookup-boolean-attribute",
+          "passed": true
+        },
+        {
+          "name": "no-user-id-or-email-in-telemetry",
+          "passed": true
+        },
+        {
+          "name": "callback-order",
+          "passed": true
+        },
+        {
+          "name": "create-workflow-four-spans",
+          "passed": true
+        },
+        {
+          "name": "business-result-preserved",
+          "passed": true
+        },
+        {
+          "name": "create-email-not-recorded",
+          "passed": true
+        },
+        {
+          "name": "original-error-propagated",
+          "passed": true
+        },
+        {
+          "name": "failed-parent-and-child-error-status",
+          "passed": true
+        },
+        {
+          "name": "error-type-only-no-message-event",
+          "passed": true
+        },
+        {
+          "name": "parent-based-unsampled-parent-respected",
+          "passed": true
+        }
+      ],
+      "scope": "Actual manual SDK spans with in-memory exporter and synthetic callbacks. No auto-instrumentation bootstrap, database, messagebroker, remoteexport or cloud call."
+    },
+    "configurationProfiles": [
+      {
+        "profile": "advanced",
+        "passed": true,
+        "scope": "Pure config validation only; no exporter Start/no AWS,Datadog or Jaeger calls."
+      },
+      {
+        "profile": "multi",
+        "passed": true,
+        "scope": "Pure config validation only; no exporter Start/no AWS,Datadog or Jaeger calls.",
+        "secretFileFormat": "Whole api mapping from file provider; key quoted to preserve its exact string value. Nativeconfigparserpassed;invalidcolonselectorattemptretainedseparately."
+      }
+    ],
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "TwoinlineMermaidgraphsparsed/renderedinnativebrowser;privateSVG/PNG;no sitebuild/server",
+      "results": [
+        {
+          "path": "en/observability/tracing/03-opentelemetry.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 10,
+          "edges": 10,
+          "errors": [],
+          "passed": true,
+          "codeSha256": "39b1f25f1a6bd62c934dc48599f0f9a782b16796209a0ae1517746fad5d3a227",
+          "pngIndividuallyViewed": true
+        },
+        {
+          "path": "ko/observability/tracing/03-opentelemetry.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 10,
+          "edges": 10,
+          "errors": [],
+          "passed": true,
+          "codeSha256": "99756d7f45929446f2797984174f9f144a605cb1bb10fdd63896e642bfe515e5",
+          "pngIndividuallyViewed": true
+        }
+      ]
+    },
+    "localLinks": [
+      {
+        "source": "en/observability/tracing/03-opentelemetry.md",
+        "target": "../../.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png",
+        "passed": true
+      },
+      {
+        "source": "en/observability/tracing/03-opentelemetry.md",
+        "target": "../../.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png",
+        "passed": true
+      },
+      {
+        "source": "en/observability/tracing/03-opentelemetry.md",
+        "target": "../logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/tracing/03-opentelemetry.md",
+        "target": "../../security/10-cert-manager.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/tracing/03-opentelemetry.md",
+        "target": "./02-xray.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/tracing/03-opentelemetry.md",
+        "target": "../../quizzes/observability/tracing/03-opentelemetry-quiz.md",
+        "passed": true
+      },
+      {
+        "source": "en/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+        "target": "../../../observability/tracing/03-opentelemetry.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/tracing/03-opentelemetry.md",
+        "target": "../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-0.png",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/tracing/03-opentelemetry.md",
+        "target": "../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-1.png",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/tracing/03-opentelemetry.md",
+        "target": "../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-2.png",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/tracing/03-opentelemetry.md",
+        "target": "../logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/tracing/03-opentelemetry.md",
+        "target": "../../security/10-cert-manager.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/tracing/03-opentelemetry.md",
+        "target": "./02-xray.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/tracing/03-opentelemetry.md",
+        "target": "../../quizzes/observability/tracing/03-opentelemetry-quiz.md",
+        "passed": true
+      },
+      {
+        "source": "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+        "target": "../../../observability/tracing/03-opentelemetry.md",
+        "passed": true
+      }
+    ],
+    "containerImage": {
+      "source": "https://registry-1.docker.io/v2/otel/opentelemetry-collector-contrib/manifests/0.160.0",
+      "status": 200,
+      "digest": "sha256:799dc6cf12c96192af37b5bdba804da8c10b3bc563b43cb90c3f3c58d9572ad6",
+      "sha256": "799dc6cf12c96192af37b5bdba804da8c10b3bc563b43cb90c3f3c58d9572ad6",
+      "platforms": [
+        {
+          "architecture": "386",
+          "os": "linux"
+        },
+        {
+          "architecture": "amd64",
+          "os": "linux"
+        },
+        {
+          "architecture": "arm64",
+          "os": "linux"
+        },
+        {
+          "architecture": "arm",
+          "os": "linux",
+          "variant": "v7"
+        },
+        {
+          "architecture": "ppc64le",
+          "os": "linux"
+        },
+        {
+          "architecture": "riscv64",
+          "os": "linux"
+        },
+        {
+          "architecture": "s390x",
+          "os": "linux"
+        }
+      ],
+      "checkedAt": "2026-09-13T12:23:34.172162+00:00",
+      "scope": "Anonymous officialregistrymanifestmetadataonly;noimage/layerpull,build,executionorupload."
+    },
+    "artifacts": [
+      {
+        "path": ".vitepress/cache/observability-otel-audit/collector.yaml",
+        "sha256": "4121f9ef7785486d83727d8a612e9ac7c6ce8ea04668cbf76433e65687317400"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/otel-relay-config.yaml",
+        "sha256": "f9ce9d4bca6a01d6884110bb11bd6dbe99bf7c1e4b05ab54d658c3708dd598ce"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/otel-sidecar-config.yaml",
+        "sha256": "06b17b4bb8e68292e3a5b5e04373a794e4001e058e7789b7e9fb73c1dcc43b9a"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/advanced-sampling.yaml",
+        "sha256": "a9106005458b6654a20e0ef417361b0f07564b523e5eb047658ac08d990c2668"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/multi-backend.yaml",
+        "sha256": "6ca6183d8e33720586b955d9affd910a42dbe6eec103d272442567707f326205"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/sampler-workload.yaml",
+        "sha256": "13008a787ad527044f62bf2c84a59a1876cef2fc46e40608d1f5f6763e98854f"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/daemonset-workload.yaml",
+        "sha256": "9745d891d30b720a7b27450b9430ef2fd0020c8a05982aa6da1e82e652983ef5"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/sidecar-workload.yaml",
+        "sha256": "f7810a33411715621457b18f99e7c945a93d5d53c6fd4a9c817c7da2843bb809"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/gateway-workload.yaml",
+        "sha256": "af84a023daac0000024ef38d53636baad86946322a2af0252125efaa570bdf05"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/java-application.yaml",
+        "sha256": "696ee03b29f88d79467c7377eda9e48e013592539523f20ca923e95065c90a97"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/python-application.yaml",
+        "sha256": "68c0ff7327056144a74258a7eced552d26760b375d203deeb65960098c4b27fb"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/node-application.yaml",
+        "sha256": "140cb7dcfc18073a883f245f673c46c13acab5a8fc3004a7971ccc3fe157c0b1"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/operator-application.yaml",
+        "sha256": "b764422bfcec68b0fa8affcd065c5f149a623eec59232006bd28bf2bad870989"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/instrumentation.yaml",
+        "sha256": "2a61a249f3093d0b465e13687468cbaa770c2c48d36ba2973ef6f91ee8729877"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/OrderTelemetry.java",
+        "sha256": "90fab10c7a24b9d1876fe120c07b10e6fa7c69cf711a66b3c6a860ca1cf349fb"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/user_telemetry.py",
+        "sha256": "4fc4791bbed21eda117227422a6c38b20e3f46fb0b5872743da3b9e4f63899a4"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/tracing.cjs",
+        "sha256": "d088f93526b235db2966a126efe2cd827d3e792ec6fcaf59689daae6ed5f24ab"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/check-collector-runtime.py",
+        "sha256": "6b93cc827fcda6d4fd462a338b59fa5450863b8cbf288abee73b2032cb73b0f3"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/collector-runtime-validation.json",
+        "sha256": "282339da8bb33f101214de7963ee15fde171b504f3648c5b84fb6d43345886ae"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/runtime-call-metrics.json",
+        "sha256": "5af50955e1282df72d7d1d880821af0fbeded54ebe6d2650c9b60376e0adb653"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/manual-python-validation.json",
+        "sha256": "e2029a8accdd275954fa5ac33de36f8d31698c8bae4b27700fc2ce289eb50a48"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/draft-contract-validation.json",
+        "sha256": "faa527f4d63209fcd65889c549a5696a3a0db2a00b249e8224d6ea9040f41cc5"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/optional-config-validation.json",
+        "sha256": "d095e86f5efb23a55d9b9b14e9926047e3b7f3a7b44e75e4447cef0cb83e7a6f"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/original-figure-review.json",
+        "sha256": "1523780d265d5c6e69074f356d77720c73de2f96af259e9e50e7de45cfe4f813"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/retired-figure-handoff.json",
+        "sha256": "8ebfb651a6743840086139b9a51da7c4685f8dd9b860415aead4934669792c3c"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/collector-image-provenance.json",
+        "sha256": "15566db2db20821ca7c0083fa932b0ecec6406f012efa7b706e396ed83bd0a66"
+      },
+      {
+        "path": ".vitepress/cache/observability-otel-audit/mermaid-validation.json",
+        "sha256": "a805c65b2d8a882018124033fe0db2766c84b69a1849141349188211621a9691"
+      }
+    ],
+    "limits": [
+      "No fullsitebuild,cloud/KubernetesAPI mutation,GPU/modelcall,containerbuild/imageexecution,actualJava/NodeapplicationstartuporOperatorinjection.",
+      "Collector14checksusedsyntheticloopbackOTLPHTTPmTLS input/gRPCmTLS relay/HTTPSoutputs. Remote-writeprovesHTTPSdeliverytoatest sink,notPrometheusproductingestion. Test-onlysecondaryOTLPmetrics exporter observedtheprocessedmetrics;productionprocessing unchanged.",
+      "ManualPython14checksusedactualSDK1.44and in-memoryexporter/syntheticcallbacks;noDB/messagebroker execution. Zero-codepackage compatibility/sourcechecked,notanapplicationinjectiontest.",
+      "NativeconfigurationandOpenAPI checksare notliveadmission,endpointreachability,HA,throughputorcloudsupportproof. Templatesrequireowner-preparedimages,Secrets,PKI,backends,namespaces,andmetrics-server.",
+      "TwoobsoleteCollectorfiguresareunlinkedfromKO/ENand replacedwithvalidatedMermaid. Parentownsretiredassetrepairandforeignautomatedsynchronization.",
+      "Initialcounterassertion failures retained:upstream0.160cumulativeSumMetricsdeliberatelyexports0first;passingrunwaitedforthenextflush. Invalidfile-providerselectorattemptwasrejectedbeforepublication;publishedvariantincludeswholeapimapping."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/tracing/03-opentelemetry.md",
+        "sha256": "37867b3657059ab26d2cacab7c93d6a78c8ebeef630b1144b55429521b32c6e4",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "opentelemetry"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h3",
+            "id": "july-2026-update-cncf-graduation"
+          },
+          {
+            "tag": "h2",
+            "id": "what-is-opentelemetry"
+          },
+          {
+            "tag": "h2",
+            "id": "core-concepts"
+          },
+          {
+            "tag": "h3",
+            "id": "three-signals"
+          },
+          {
+            "tag": "h3",
+            "id": "core-components"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry-sdk"
+          },
+          {
+            "tag": "h3",
+            "id": "auto-instrumentation"
+          },
+          {
+            "tag": "h4",
+            "id": "java-auto-instrumentation"
+          },
+          {
+            "tag": "h4",
+            "id": "python-auto-instrumentation"
+          },
+          {
+            "tag": "h4",
+            "id": "node-js-auto-instrumentation"
+          },
+          {
+            "tag": "h3",
+            "id": "manual-instrumentation"
+          },
+          {
+            "tag": "h4",
+            "id": "java-manual-instrumentation"
+          },
+          {
+            "tag": "h4",
+            "id": "python-manual-instrumentation"
+          },
+          {
+            "tag": "h2",
+            "id": "otel-collector"
+          },
+          {
+            "tag": "h3",
+            "id": "architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "collector-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "single-instance-workload-and-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "optional-collection-and-enrichment"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-deployment-patterns"
+          },
+          {
+            "tag": "h3",
+            "id": "daemonset-pattern"
+          },
+          {
+            "tag": "h3",
+            "id": "sidecar-pattern"
+          },
+          {
+            "tag": "h3",
+            "id": "gateway-pattern"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-operator"
+          },
+          {
+            "tag": "h3",
+            "id": "operator-installation"
+          },
+          {
+            "tag": "h3",
+            "id": "instrumentation-cr"
+          },
+          {
+            "tag": "h3",
+            "id": "auto-instrumentation-injection"
+          },
+          {
+            "tag": "h2",
+            "id": "multi-backend-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "july-2026-update-observing-a-network-boundary-for-ai-agent-traffic"
+          },
+          {
+            "tag": "h3",
+            "id": "august-2026-update-distilling-slow-sql-queries-into-reliability-metrics"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-standardize-resource-attributes"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-sampling-strategy"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-security-considerations"
+          },
+          {
+            "tag": "h3",
+            "id": "validation-and-limits"
+          },
+          {
+            "tag": "h3",
+            "id": "official-references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "localFragments": [
+          "opentelemetry",
+          "introduction",
+          "july-2026-update-cncf-graduation",
+          "what-is-opentelemetry",
+          "core-concepts",
+          "three-signals",
+          "core-components",
+          "opentelemetry-sdk",
+          "auto-instrumentation",
+          "java-auto-instrumentation",
+          "python-auto-instrumentation",
+          "node-js-auto-instrumentation",
+          "manual-instrumentation",
+          "java-manual-instrumentation",
+          "python-manual-instrumentation",
+          "otel-collector",
+          "architecture",
+          "collector-configuration",
+          "single-instance-workload-and-configuration",
+          "optional-collection-and-enrichment",
+          "eks-deployment-patterns",
+          "daemonset-pattern",
+          "sidecar-pattern",
+          "gateway-pattern",
+          "kubernetes-operator",
+          "operator-installation",
+          "instrumentation-cr",
+          "auto-instrumentation-injection",
+          "multi-backend-configuration",
+          "july-2026-update-observing-a-network-boundary-for-ai-agent-traffic",
+          "august-2026-update-distilling-slow-sql-queries-into-reliability-metrics",
+          "best-practices",
+          "_1-standardize-resource-attributes",
+          "_2-sampling-strategy",
+          "_3-security-considerations",
+          "validation-and-limits",
+          "official-references",
+          "quiz"
+        ],
+        "renderedIds": [
+          "opentelemetry",
+          "introduction",
+          "july-2026-update-cncf-graduation",
+          "what-is-opentelemetry",
+          "core-concepts",
+          "three-signals",
+          "core-components",
+          "opentelemetry-sdk",
+          "auto-instrumentation",
+          "java-auto-instrumentation",
+          "python-auto-instrumentation",
+          "node-js-auto-instrumentation",
+          "manual-instrumentation",
+          "java-manual-instrumentation",
+          "python-manual-instrumentation",
+          "otel-collector",
+          "architecture",
+          "mermaid-235",
+          "collector-configuration",
+          "single-instance-workload-and-configuration",
+          "optional-collection-and-enrichment",
+          "eks-deployment-patterns",
+          "daemonset-pattern",
+          "sidecar-pattern",
+          "gateway-pattern",
+          "kubernetes-operator",
+          "operator-installation",
+          "instrumentation-cr",
+          "auto-instrumentation-injection",
+          "multi-backend-configuration",
+          "july-2026-update-observing-a-network-boundary-for-ai-agent-traffic",
+          "august-2026-update-distilling-slow-sql-queries-into-reliability-metrics",
+          "best-practices",
+          "_1-standardize-resource-attributes",
+          "_2-sampling-strategy",
+          "_3-security-considerations",
+          "validation-and-limits",
+          "official-references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/tracing/03-opentelemetry.md",
+        "sha256": "59f27e6612e2824b009a0f8bdc528b14c6aa3dbfb3bbbc7078f91442c0df990c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "opentelemetry"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h3",
+            "id": "_2026년-7월-업데이트-cncf-졸업-graduation"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry란"
+          },
+          {
+            "tag": "h2",
+            "id": "핵심-개념"
+          },
+          {
+            "tag": "h3",
+            "id": "세-가지-신호-three-signals"
+          },
+          {
+            "tag": "h3",
+            "id": "핵심-컴포넌트"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry-sdk"
+          },
+          {
+            "tag": "h3",
+            "id": "auto-instrumentation-자동-계측"
+          },
+          {
+            "tag": "h4",
+            "id": "java-auto-instrumentation"
+          },
+          {
+            "tag": "h4",
+            "id": "python-auto-instrumentation"
+          },
+          {
+            "tag": "h4",
+            "id": "node-js-auto-instrumentation"
+          },
+          {
+            "tag": "h3",
+            "id": "manual-instrumentation-수동-계측"
+          },
+          {
+            "tag": "h4",
+            "id": "java-manual-instrumentation"
+          },
+          {
+            "tag": "h4",
+            "id": "python-manual-instrumentation"
+          },
+          {
+            "tag": "h2",
+            "id": "otel-collector"
+          },
+          {
+            "tag": "h3",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "collector-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "단일-인스턴스-워크로드와-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "선택적-수집과-속성-보강"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-배포-패턴"
+          },
+          {
+            "tag": "h3",
+            "id": "daemonset-패턴"
+          },
+          {
+            "tag": "h3",
+            "id": "sidecar-패턴"
+          },
+          {
+            "tag": "h3",
+            "id": "gateway-패턴"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-operator"
+          },
+          {
+            "tag": "h3",
+            "id": "operator-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "instrumentation-cr"
+          },
+          {
+            "tag": "h3",
+            "id": "자동-계측-주입"
+          },
+          {
+            "tag": "h2",
+            "id": "다중-백엔드-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "_2026년-7월-업데이트-ai-에이전트-트래픽의-네트워크-경계-관측"
+          },
+          {
+            "tag": "h3",
+            "id": "_2026년-8월-업데이트-느린-sql-쿼리를-신뢰성-메트릭으로-정제하기"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-리소스-속성-표준화"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-샘플링-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-보안-고려사항"
+          },
+          {
+            "tag": "h3",
+            "id": "검증과-한계"
+          },
+          {
+            "tag": "h3",
+            "id": "공식-참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "localFragments": [
+          "opentelemetry",
+          "소개",
+          "_2026년-7월-업데이트-cncf-졸업-graduation",
+          "opentelemetry란",
+          "핵심-개념",
+          "세-가지-신호-three-signals",
+          "핵심-컴포넌트",
+          "opentelemetry-sdk",
+          "auto-instrumentation-자동-계측",
+          "java-auto-instrumentation",
+          "python-auto-instrumentation",
+          "node-js-auto-instrumentation",
+          "manual-instrumentation-수동-계측",
+          "java-manual-instrumentation",
+          "python-manual-instrumentation",
+          "otel-collector",
+          "아키텍처",
+          "collector-설정",
+          "단일-인스턴스-워크로드와-설정",
+          "선택적-수집과-속성-보강",
+          "eks-배포-패턴",
+          "daemonset-패턴",
+          "sidecar-패턴",
+          "gateway-패턴",
+          "kubernetes-operator",
+          "operator-설치",
+          "instrumentation-cr",
+          "자동-계측-주입",
+          "다중-백엔드-구성",
+          "_2026년-7월-업데이트-ai-에이전트-트래픽의-네트워크-경계-관측",
+          "_2026년-8월-업데이트-느린-sql-쿼리를-신뢰성-메트릭으로-정제하기",
+          "best-practices",
+          "_1-리소스-속성-표준화",
+          "_2-샘플링-전략",
+          "_3-보안-고려사항",
+          "검증과-한계",
+          "공식-참고-자료",
+          "퀴즈"
+        ],
+        "renderedIds": [
+          "opentelemetry",
+          "소개",
+          "_2026년-7월-업데이트-cncf-졸업-graduation",
+          "opentelemetry란",
+          "핵심-개념",
+          "세-가지-신호-three-signals",
+          "핵심-컴포넌트",
+          "opentelemetry-sdk",
+          "auto-instrumentation-자동-계측",
+          "java-auto-instrumentation",
+          "python-auto-instrumentation",
+          "node-js-auto-instrumentation",
+          "manual-instrumentation-수동-계측",
+          "java-manual-instrumentation",
+          "python-manual-instrumentation",
+          "otel-collector",
+          "아키텍처",
+          "mermaid-239",
+          "collector-설정",
+          "단일-인스턴스-워크로드와-설정",
+          "선택적-수집과-속성-보강",
+          "eks-배포-패턴",
+          "daemonset-패턴",
+          "sidecar-패턴",
+          "gateway-패턴",
+          "kubernetes-operator",
+          "operator-설치",
+          "instrumentation-cr",
+          "자동-계측-주입",
+          "다중-백엔드-구성",
+          "_2026년-7월-업데이트-ai-에이전트-트래픽의-네트워크-경계-관측",
+          "_2026년-8월-업데이트-느린-sql-쿼리를-신뢰성-메트릭으로-정제하기",
+          "best-practices",
+          "_1-리소스-속성-표준화",
+          "_2-샘플링-전략",
+          "_3-보안-고려사항",
+          "검증과-한계",
+          "공식-참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+        "sha256": "76a1a067453ef824e254e5a769c9a7459cf9bc063f1166b2aae85acee55d95e6",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "opentelemetry-quiz"
+          }
+        ],
+        "localFragments": [
+          "opentelemetry-quiz"
+        ],
+        "renderedIds": [
+          "opentelemetry-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+        "sha256": "174d2eb3fce2ea7dff77d66767f7e1c41c8cef6e94018985cd8cd9e01303fdfb",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "opentelemetry-퀴즈"
+          }
+        ],
+        "localFragments": [
+          "opentelemetry-퀴즈"
+        ],
+        "renderedIds": [
+          "opentelemetry-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/",
+      "cacheKey": "398d61f178d7",
+      "fetchedAt": "2026-09-13T11:15:56.262293+00:00",
+      "status": 200,
+      "finalURL": "https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/",
+      "sha256": "4a8ec1898050f12302d29df192292c9bd2fa721345e3e1f36222b669e8817985"
+    },
+    {
+      "url": "https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/",
+      "cacheKey": "0c83c7ebf6a4",
+      "fetchedAt": "2026-09-13T11:15:57.841015+00:00",
+      "status": 200,
+      "finalURL": "https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/",
+      "sha256": "468ad7c9202af75bad64e85da2124373bc602787c62c93a78e9ed357c372f0ad"
+    },
+    {
+      "url": "https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/",
+      "cacheKey": "f4bdcd202278",
+      "fetchedAt": "2026-09-13T11:15:57.863979+00:00",
+      "status": 200,
+      "finalURL": "https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/",
+      "sha256": "173869eeef7d41ae52c2dc4db129ab62ac13d2ccbd1dcbb3dac638ff61c75247"
+    },
+    {
+      "url": "https://api.github.com/repos/open-telemetry/opentelemetry-operator/releases/latest",
+      "cacheKey": "5b175f132897",
+      "fetchedAt": "2026-09-13T11:15:58.124553+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/open-telemetry/opentelemetry-operator/releases/latest",
+      "sha256": "b038ab97f6474a054e9aba9d1481a209960b9f6089d8935b05d40b5d591d6fcc"
+    },
+    {
+      "url": "https://api.github.com/repos/open-telemetry/opentelemetry-java-instrumentation/releases/latest",
+      "cacheKey": "5ece370cbf44",
+      "fetchedAt": "2026-09-13T11:15:58.137491+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/open-telemetry/opentelemetry-java-instrumentation/releases/latest",
+      "sha256": "916d2719b74e9f9fa0c10a84d9322e90497ce67b806b5dc0f6becd51d6295f51"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-releases/v0.160.0/distributions/otelcol-contrib/manifest.yaml",
+      "cacheKey": "b2cc0a3680a2",
+      "fetchedAt": "2026-09-13T11:15:58.781015+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-releases/v0.160.0/distributions/otelcol-contrib/manifest.yaml",
+      "sha256": "17d180dbafc5d77b2b50f0d2a41eae8b388dce363e9e1226ebe26f090935c54e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/processor/tailsamplingprocessor/README.md",
+      "cacheKey": "6972b6c25420",
+      "fetchedAt": "2026-09-13T11:15:58.365506+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/processor/tailsamplingprocessor/README.md",
+      "sha256": "cc848d941b4469e849448e54a0704f128204e94708f40ea0af50459cff7f9639"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/connector/spanmetricsconnector/README.md",
+      "cacheKey": "79e29ac6d165",
+      "fetchedAt": "2026-09-13T11:15:58.401943+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/connector/spanmetricsconnector/README.md",
+      "sha256": "ae95c2ce1a969b37676b069c588782d5f6247e25a24d962986ba8514b7cd88a6"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/connector/spanmetricsconnector/internal/metrics/metrics.go",
+      "cacheKey": "91e72aacd849",
+      "fetchedAt": "2026-09-13T11:34:06.654240+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/connector/spanmetricsconnector/internal/metrics/metrics.go",
+      "sha256": "6ab3cf101a9d0a1f22d59fc90d54b19e8a8ca0c7dd9801a9e9cbe804efc34fb5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector/v0.160.0/processor/memorylimiterprocessor/README.md",
+      "cacheKey": "61db36889c41",
+      "fetchedAt": "2026-09-13T11:16:50.805133+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector/v0.160.0/processor/memorylimiterprocessor/README.md",
+      "sha256": "c684265071b4e453ae1b9af4ab3a9b30a367d0c0da3f15f6334a958674b34e46"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/processor/attributesprocessor/README.md",
+      "cacheKey": "936ee7fac03f",
+      "fetchedAt": "2026-09-13T11:16:51.048254+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/processor/attributesprocessor/README.md",
+      "sha256": "88cada31bed446723956ad80f722e1c410dcd8085be77eb3a949b322d25885ab"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/send-data/otel/",
+      "cacheKey": "a7caa0073e47",
+      "fetchedAt": "2026-09-13T11:15:58.697282+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/send-data/otel/",
+      "sha256": "7b101a5f1f10f116e7ebf4ca9d548e90ce7d02a139dfe4ad0d1857338a49dd5a"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/collector/scaling/",
+      "cacheKey": "b8b660805ec0",
+      "fetchedAt": "2026-09-13T11:16:52.061639+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/collector/scaling/",
+      "sha256": "aaeac79f9c6583919ab123b8676c089f0bfae3065772505cad2dbe83aa82b37e"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/collector/internal-telemetry/",
+      "cacheKey": "476907ccf6ee",
+      "fetchedAt": "2026-09-13T11:16:51.633076+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/collector/internal-telemetry/",
+      "sha256": "2f8c763ac987b6a1d0c3ac40acae9fabde3cc22b7eee9b12d8a1cc6006548428"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/",
+      "cacheKey": "b5c35cd9a9e0",
+      "fetchedAt": "2026-09-13T11:16:00.001485+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/",
+      "sha256": "209ee5309a5c6ce4d7fa721c6ce3b13f94f508dcc928352c3bce67ed074ba906"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/v0.158.0/docs/getting-started/compatibility.md",
+      "cacheKey": "8d926f80ac52",
+      "fetchedAt": "2026-09-13T11:24:42.556150+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/v0.158.0/docs/getting-started/compatibility.md",
+      "sha256": "3a1c896a6a2d8522f862ce079a2f8c145b91660db1ebb4eeac08ecc76221c14f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/v0.158.0/docs/auto-instrumentation/README.md",
+      "cacheKey": "320f449a9f12",
+      "fetchedAt": "2026-09-13T11:19:41.802568+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/v0.158.0/docs/auto-instrumentation/README.md",
+      "sha256": "46ae682809b5dd9060953b94b2bbedf51d2461fc51bb61d63c5d6d89be968869"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/v0.158.0/docs/auto-instrumentation/languages/go.md",
+      "cacheKey": "c3e175ac8ed7",
+      "fetchedAt": "2026-09-13T11:24:42.782423+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/v0.158.0/docs/auto-instrumentation/languages/go.md",
+      "sha256": "ac0d5b06eb02074d7b2f8160d8b5dfd4bb6cd07838e0f0222353f27d42fde9f5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/v0.158.0/config/crd/bases/opentelemetry.io_instrumentations.yaml",
+      "cacheKey": "7c82ff0dc7b1",
+      "fetchedAt": "2026-09-13T11:19:42.780220+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/v0.158.0/config/crd/bases/opentelemetry.io_instrumentations.yaml",
+      "sha256": "946e6761b41f7ecf7d37bdc105692cf65b37cbeb1bbc6c5544e1a0d091125867"
+    },
+    {
+      "url": "https://registry.npmjs.org/@opentelemetry/sdk-node/0.220.0",
+      "cacheKey": "7a4630d08004",
+      "fetchedAt": "2026-09-13T11:25:51.067047+00:00",
+      "status": 200,
+      "finalURL": "https://registry.npmjs.org/@opentelemetry/sdk-node/0.220.0",
+      "sha256": "624b299e514b57dc3b9ca6db4ebec44c0a12ab1c0c8d1315ac4fc27318d3dec3"
+    },
+    {
+      "url": "https://registry.npmjs.org/@opentelemetry/auto-instrumentations-node/0.78.0",
+      "cacheKey": "3d7e0ce85cf4",
+      "fetchedAt": "2026-09-13T11:24:43.216242+00:00",
+      "status": 200,
+      "finalURL": "https://registry.npmjs.org/@opentelemetry/auto-instrumentations-node/0.78.0",
+      "sha256": "53451fa3bcdfaeb9fa5b8da09fb347efbe22fd79ef7b303fa5eccc2df4753888"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-js/experimental/v0.220.0/experimental/packages/opentelemetry-sdk-node/src/types.ts",
+      "cacheKey": "f7fc514d5b84",
+      "fetchedAt": "2026-09-13T11:25:51.116926+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-js/experimental/v0.220.0/experimental/packages/opentelemetry-sdk-node/src/types.ts",
+      "sha256": "8cc8ec4cee0788820027fda709c601bd725666b10cb6b7a7f5d97d9146e56524"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-js/experimental/v0.220.0/experimental/packages/otlp-exporter-base/src/configuration/otlp-node-http-env-configuration.ts",
+      "cacheKey": "9376144d4577",
+      "fetchedAt": "2026-09-13T11:41:26.581705+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-js/experimental/v0.220.0/experimental/packages/otlp-exporter-base/src/configuration/otlp-node-http-env-configuration.ts",
+      "sha256": "10414135b3be4f8f728f1b2c0aa653a9b66bf6babb169642b1d498e9a756ba79"
+    },
+    {
+      "url": "https://pypi.org/pypi/opentelemetry-distro/0.65b0/json",
+      "cacheKey": "10300221d2b3",
+      "fetchedAt": "2026-09-13T11:38:54.294660+00:00",
+      "status": 200,
+      "finalURL": "https://pypi.org/pypi/opentelemetry-distro/0.65b0/json",
+      "sha256": "439fe285002fc82783f1c4f77157125a2518b7efab902011d2232633ec588a31"
+    },
+    {
+      "url": "https://pypi.org/pypi/opentelemetry-instrumentation-flask/0.65b0/json",
+      "cacheKey": "d889c5b97e12",
+      "fetchedAt": "2026-09-13T11:38:54.292234+00:00",
+      "status": 200,
+      "finalURL": "https://pypi.org/pypi/opentelemetry-instrumentation-flask/0.65b0/json",
+      "sha256": "14e27723a9010fb1cf8e37386b75a761f9c699934f54c3d8044a326af1d888aa"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/specs/semconv/resource/deployment-environment/",
+      "cacheKey": "cf3b41590061",
+      "fetchedAt": "2026-09-13T11:19:42.462151+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/specs/semconv/resource/deployment-environment/",
+      "sha256": "257c14a835f8446493c15b22afe901822433b86bd5c74bd3a17e70f6f0632309"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/configuration/configmap/",
+      "cacheKey": "02bcaed0f5e6",
+      "fetchedAt": "2026-09-13T11:16:51.169644+00:00",
+      "status": 200,
+      "finalURL": "https://kubernetes.io/docs/concepts/configuration/configmap/",
+      "sha256": "c97de4ee6e43779896ad163a8d2807c0ebdabeb30a440da3bfb394ae0c624fd0"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/",
+      "cacheKey": "2ed3984d8bc0",
+      "fetchedAt": "2026-09-13T11:52:21.937926+00:00",
+      "status": 200,
+      "finalURL": "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/",
+      "sha256": "13f76933174ad0b83bd187356c89e07e1bdcc0265deba3277fced9276fac9fb8"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/service-traffic-policy/",
+      "cacheKey": "282f6cb4a984",
+      "fetchedAt": "2026-09-13T11:52:23.144189+00:00",
+      "status": 200,
+      "finalURL": "https://kubernetes.io/docs/concepts/services-networking/service-traffic-policy/",
+      "sha256": "fca0bad212f39a0e855fd49509b9e6bc41b2d8a3e3bcd7abe2fbbfe7827b37bf"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "cacheKey": "231ba2678238",
+      "fetchedAt": "2026-09-13T11:52:22.161713+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "sha256": "4e90c68d514f556e88e5f862e619d0cd3884e1454c02d1d3c9a219ff1bb31d2e"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "cacheKey": "87a44d5404a5",
+      "fetchedAt": "2026-09-13T11:58:57.822300+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "sha256": "036d5379bc2e7a1dbbd766f9ad9e6004236ee2d6e112f18421251f2a75594af7"
+    },
+    {
+      "url": "https://www.w3.org/TR/trace-context/",
+      "cacheKey": "6a0029787a22",
+      "fetchedAt": "2026-09-13T11:19:42.419660+00:00",
+      "status": 200,
+      "finalURL": "https://www.w3.org/TR/trace-context/",
+      "sha256": "9e7228d2a91c5aa4bef6e7f610366a2000274ee51699053e10c8ac3f0b8965be"
+    },
+    {
+      "url": "https://api.github.com/repos/census-instrumentation/opencensus-go",
+      "cacheKey": "6077b202b475",
+      "fetchedAt": "2026-09-13T11:58:57.940214+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/census-instrumentation/opencensus-go",
+      "sha256": "2c919db7fd7c76283801c27ebcb4507bb99c1d8d8ebf392b2570193727986122"
+    },
+    {
+      "url": "https://www.cncf.io/projects/opentracing/",
+      "cacheKey": "3298c783c073",
+      "fetchedAt": "2026-09-13T11:58:58.648284+00:00",
+      "status": 200,
+      "finalURL": "https://www.cncf.io/projects/opentracing/",
+      "sha256": "3717da22d322081954be80ebae422c5cff4be2cf457b13cfd79825f59f73a085"
+    }
+  ],
+  "findings": [
+    "ReplacedOTEL1.x/Collector0.92guidancewithseparateContrib0.160/Operator0.158/Java2.31.1/Python1.44+0.65b0/NodeSDK0.220+auto0.78baselines;K8s1.35recipeandEKS1.34-1.36standard/supportintersectionexplicit.",
+    "ReplacedremovedLoki/Jaegerexportersandspanmetricsprocessor;nativeLokiOTLP,otlp_grpc,span_metrics,explicitseconds,andcurrentinternaltelemetryreaders.",
+    "CompleteDeploymentselectors/labels,ConfigMapfilebindings,oneRecreatesampler,statelessrelayDaemonSet/native-sidecar/gatewayHPAprofiles,memoryheadroom,localService/Fargateboundaries.",
+    "Java25MBagentmovedoutofimpossibleConfigMapdistribution;releasedJAR/Operatormanifestchecksums,appbuildprerequisites,explicitHTTP/protobuf/mTLSSecretpaths,andcorrectInstrumentationnamespace/Podannotations.",
+    "Removedrawuser/customer/email/payment/SQL/exceptionpayloadtelemetry;manualinternalspanspreserveresults/errors/contextwithoutinventedIOclaims;SHA1hashnotanonymization;DatadogAPIconfigurationfromSecretfilemapping.",
+    "Tailtimersdonotprovecompletion;positivepoliciesORnotpriority;upstreamheadsampling/filtering/drop/routinglimits;spanmetricsbranchbeforetailcountsobservedspansnotuniquerequests;initialcumulativezeroverifiedinupstreamandnativeexecution.",
+    "All20quizquestionspreservedandcorrected;memorysoft/hardthresholds,retrybackpressure,nonuniversalDaemonSetefficiency,Resource/context/operatorprerequisites,nonatomicfanout.",
+    "CNCFgraduationMay2026distinguishedfromJulyretrospective;historicalprojectmilestones/articlespreservedwithverifiedscope;AIproxyrequiresnetworkenforcementanddoesnotproveagentdecisions;SQLmetricscardinality/privacylimitsretained.",
+    "Sevenoriginalfiguresreviewed;fivePNG/viewerreferencesretainedwithscope/historicalclarifications;twoobsoleteCollectorfiguresreplacedbycurrentMermaidwithoutchangingoutside-scopeassets."
+  ],
+  "figures": {
+    "originalReview": [
+      {
+        "image": "en/.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png",
+        "imageSha256": "e2cf9e06f23d97d62c5800817a2c739154dea7e0fea5db0130435c84241a0957",
+        "spec": "assets/diagrams/archify/en-observability-tracing-03-opentelemetry-0.architecture.json",
+        "specSha256": "8c54cd426b794c9147caa7fbeecaeec43733c2667b699567a4613c6d51704804",
+        "html": "public/archmaps/en-observability-tracing-03-opentelemetry-0.html",
+        "htmlSha256": "b6bb8b612493380e274fcb5bf49c66974c6659fd33c47d28dd9314c9d083669d",
+        "individualPngViewed": true,
+        "guidedPayloadMatchesSpec": true,
+        "disposition": "retained-with-scope-or-historical-caption-clarification"
+      },
+      {
+        "image": "en/.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png",
+        "imageSha256": "e169e176d14d35e5469e28a3aed95db7d34637eb3a9a15245299660beb987d15",
+        "spec": "assets/diagrams/archify/en-observability-tracing-03-opentelemetry-2.architecture.json",
+        "specSha256": "1d17f28eaab617a1f48d6fc349d93dc10c27ef8ff9d53394a2cfab0f6fb0b182",
+        "html": "public/archmaps/en-observability-tracing-03-opentelemetry-2.html",
+        "htmlSha256": "f359230534d37e95d68dcf5655410a9d080251cdd106500153a41d182123c219",
+        "individualPngViewed": true,
+        "guidedPayloadMatchesSpec": true,
+        "disposition": "retained-with-scope-or-historical-caption-clarification"
+      },
+      {
+        "image": "en/.gitbook/assets/en-observability-tracing-03-opentelemetry-3.png",
+        "imageSha256": "213392fada63381f216dc43c8c8a4a7ab39cb5ad939fa6034c0a876c5432721d",
+        "spec": "assets/diagrams/archify/en-observability-tracing-03-opentelemetry-3.architecture.json",
+        "specSha256": "a233232ff395f60e3c6225bf5addbe3c401bcb9bfb8421f7ddb0152cb03c7d3d",
+        "html": "public/archmaps/en-observability-tracing-03-opentelemetry-3.html",
+        "htmlSha256": "c394b84ec2067bccaf3ceb6eefade4ef8a5ba8e28f250685f6ceaffefaad715d",
+        "individualPngViewed": true,
+        "guidedPayloadMatchesSpec": true,
+        "disposition": "replaced-in-ko-en-source-with-validated-Mermaid"
+      },
+      {
+        "image": "ko/.gitbook/assets/ko-observability-tracing-03-opentelemetry-0.png",
+        "imageSha256": "05c827c9d3d21e18e9145bb72a4025625fab446c84f8013a3f7d60999eef9f0a",
+        "spec": "assets/diagrams/archify/ko-observability-tracing-03-opentelemetry-0.architecture.json",
+        "specSha256": "aaa63223b54a4730066ad45a23757429ed24fade7823f74750ba566430121c6e",
+        "html": "public/archmaps/ko-observability-tracing-03-opentelemetry-0.html",
+        "htmlSha256": "3224a2b9785f779c226442393ed336fd5f2e659b7e6908f631386da588ac7110",
+        "individualPngViewed": true,
+        "guidedPayloadMatchesSpec": true,
+        "disposition": "retained-with-scope-or-historical-caption-clarification"
+      },
+      {
+        "image": "ko/.gitbook/assets/ko-observability-tracing-03-opentelemetry-1.png",
+        "imageSha256": "bacd79c4b7f211598167255f220ad05a37e591dee025a113ed60897f09bb4208",
+        "spec": "assets/diagrams/archify/ko-observability-tracing-03-opentelemetry-1.architecture.json",
+        "specSha256": "ad61d9fd0cacfa7850c6a2e3efa89b65fcd5ce5570f03e553a0f719f9066b4be",
+        "html": "public/archmaps/ko-observability-tracing-03-opentelemetry-1.html",
+        "htmlSha256": "9977a2821469d4723fa4e47c4e81b2d5746e5e451eea6147d4d7880a6a1c9884",
+        "individualPngViewed": true,
+        "guidedPayloadMatchesSpec": true,
+        "disposition": "retained-with-scope-or-historical-caption-clarification"
+      },
+      {
+        "image": "ko/.gitbook/assets/ko-observability-tracing-03-opentelemetry-2.png",
+        "imageSha256": "5d4bfd250d37aac70b7b02d7554ae69bd7ae90bb3f9540e05653bb0a13928685",
+        "spec": "assets/diagrams/archify/ko-observability-tracing-03-opentelemetry-2.architecture.json",
+        "specSha256": "abb31e2f05d3660ba01a277e3c6938ebfb3f2c44b4aa37dad7ca7db164d8d651",
+        "html": "public/archmaps/ko-observability-tracing-03-opentelemetry-2.html",
+        "htmlSha256": "92baf15b9287529c674ab57557e33d75b4c9f3b1744e49a16c24a73c2a6d5174",
+        "individualPngViewed": true,
+        "guidedPayloadMatchesSpec": true,
+        "disposition": "retained-with-scope-or-historical-caption-clarification"
+      },
+      {
+        "image": "ko/.gitbook/assets/ko-observability-tracing-03-opentelemetry-3.png",
+        "imageSha256": "1184dd2e4163bfa6b5fa0bd09ac08f4c1cd271008f359c5e029eeadd10f6af3a",
+        "spec": "assets/diagrams/archify/ko-observability-tracing-03-opentelemetry-3.architecture.json",
+        "specSha256": "e5e4cd9ec0dfe5b75ddd8b2f9f22b578ef805258258adb0b7da0f9f6099d7860",
+        "html": "public/archmaps/ko-observability-tracing-03-opentelemetry-3.html",
+        "htmlSha256": "9bb2d790f1c94a766b627e900a86ce497719e8c6afff20ac0818afbdd36dcb85",
+        "individualPngViewed": true,
+        "guidedPayloadMatchesSpec": true,
+        "disposition": "replaced-in-ko-en-source-with-validated-Mermaid"
+      }
+    ],
+    "replacementMermaid": {
+      "version": "11.16.0",
+      "scope": "TwoinlineMermaidgraphsparsed/renderedinnativebrowser;privateSVG/PNG;no sitebuild/server",
+      "results": [
+        {
+          "path": "en/observability/tracing/03-opentelemetry.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 10,
+          "edges": 10,
+          "errors": [],
+          "passed": true,
+          "codeSha256": "39b1f25f1a6bd62c934dc48599f0f9a782b16796209a0ae1517746fad5d3a227",
+          "pngIndividuallyViewed": true
+        },
+        {
+          "path": "ko/observability/tracing/03-opentelemetry.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 10,
+          "edges": 10,
+          "errors": [],
+          "passed": true,
+          "codeSha256": "99756d7f45929446f2797984174f9f144a605cb1bb10fdd63896e642bfe515e5",
+          "pngIndividuallyViewed": true
+        }
+      ]
+    },
+    "parentRetiredAssets": {
+      "scope": "Parent-owned assets/foreign automated synchronization; worker did not change asset files.",
+      "items": [
+        {
+          "image": "en/.gitbook/assets/en-observability-tracing-03-opentelemetry-3.png",
+          "imageSha256": "213392fada63381f216dc43c8c8a4a7ab39cb5ad939fa6034c0a876c5432721d",
+          "spec": "assets/diagrams/archify/en-observability-tracing-03-opentelemetry-3.architecture.json",
+          "specSha256": "a233232ff395f60e3c6225bf5addbe3c401bcb9bfb8421f7ddb0152cb03c7d3d",
+          "html": "public/archmaps/en-observability-tracing-03-opentelemetry-3.html",
+          "htmlSha256": "c394b84ec2067bccaf3ceb6eefade4ef8a5ba8e28f250685f6ceaffefaad715d",
+          "individualPngViewed": true,
+          "guidedPayloadMatchesSpec": true,
+          "disposition": "replaced-in-ko-en-source-with-validated-Mermaid",
+          "findings": [
+            "OldfiguremixesPrometheusmetricswithatracesprocessorchain.",
+            "Cardsstillstate1500MiB/500MiB memory and100%errorretention.",
+            "RemovedLokiexporteranddeprecatedexporteraliasesremainincards."
+          ],
+          "sourceRepair": "KO/ENMarkdownnowcontainsasignal-specificMermaidwithpresamplingmetricsbranch;oldviewerandPNGlinkremoved."
+        },
+        {
+          "image": "ko/.gitbook/assets/ko-observability-tracing-03-opentelemetry-3.png",
+          "imageSha256": "1184dd2e4163bfa6b5fa0bd09ac08f4c1cd271008f359c5e029eeadd10f6af3a",
+          "spec": "assets/diagrams/archify/ko-observability-tracing-03-opentelemetry-3.architecture.json",
+          "specSha256": "e5e4cd9ec0dfe5b75ddd8b2f9f22b578ef805258258adb0b7da0f9f6099d7860",
+          "html": "public/archmaps/ko-observability-tracing-03-opentelemetry-3.html",
+          "htmlSha256": "9bb2d790f1c94a766b627e900a86ce497719e8c6afff20ac0818afbdd36dcb85",
+          "individualPngViewed": true,
+          "guidedPayloadMatchesSpec": true,
+          "disposition": "replaced-in-ko-en-source-with-validated-Mermaid",
+          "findings": [
+            "OldfiguremixesPrometheusmetricswithatracesprocessorchain.",
+            "Cardsstillstate1500MiB/500MiB memory and100%errorretention.",
+            "RemovedLokiexporteranddeprecatedexporteraliasesremainincards."
+          ],
+          "sourceRepair": "KO/ENMarkdownnowcontainsasignal-specificMermaidwithpresamplingmetricsbranch;oldviewerandPNGlinkremoved."
+        }
+      ]
+    }
+  },
+  "artifactDirectory": ".vitepress/cache/observability-otel-audit",
+  "limits": [
+    "No fullsitebuild,cloud/KubernetesAPI mutation,GPU/modelcall,containerbuild/imageexecution,actualJava/NodeapplicationstartuporOperatorinjection.",
+    "Collector14checksusedsyntheticloopbackOTLPHTTPmTLS input/gRPCmTLS relay/HTTPSoutputs. Remote-writeprovesHTTPSdeliverytoatest sink,notPrometheusproductingestion. Test-onlysecondaryOTLPmetrics exporter observedtheprocessedmetrics;productionprocessing unchanged.",
+    "ManualPython14checksusedactualSDK1.44and in-memoryexporter/syntheticcallbacks;noDB/messagebroker execution. Zero-codepackage compatibility/sourcechecked,notanapplicationinjectiontest.",
+    "NativeconfigurationandOpenAPI checksare notliveadmission,endpointreachability,HA,throughputorcloudsupportproof. Templatesrequireowner-preparedimages,Secrets,PKI,backends,namespaces,andmetrics-server.",
+    "TwoobsoleteCollectorfiguresareunlinkedfromKO/ENand replacedwithvalidatedMermaid. Parentownsretiredassetrepairandforeignautomatedsynchronization.",
+    "Initialcounterassertion failures retained:upstream0.160cumulativeSumMetricsdeliberatelyexports0first;passingrunwaitedforthenextflush. Invalidfile-providerselectorattemptwasrejectedbeforepublication;publishedvariantincludeswholeapimapping."
+  ],
+  "sourceAccessNotes": [
+    "PublicprimaryHTTPS/registrymetadataandpersistentcache;noauthenticatedAWSAPIcalls. Guessedoperator docs/api.md anddatadog config.go404were replacedbyactualversioneddocs/CRD/sourcepaths.",
+    "Parentcrosscuttinghandoff:currentEKSpubliclifecyclepage7dayrollback;parentreportedOIDCPrivateLinkoidc-eks/Route53APIendpointfeatures.Nooutside-scopeproseedits."
+  ],
+  "parentRetiredAssetClosure": {
+    "status": "passed",
+    "report": "docs/reviews/2026-09-11/opentelemetry-retired-assets-validation.json",
+    "note": "TwoobsoleteCollectortriplesupdated;historicaloriginalassetfindingsretainedabove;otherfiveverifiedfiguresunchanged."
+  }
+}

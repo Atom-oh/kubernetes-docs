@@ -1,10 +1,12 @@
 # OpenTelemetry Quiz
 
+> **Last Updated**: September 13, 2026
+
 Test your understanding of OpenTelemetry.
 
 ---
 
-1. What are the three signals supported by OpenTelemetry?
+1. Which three core signals does this guide focus on?
    - A) Logs, Metrics, Events
    - B) Traces, Metrics, Logs
    - C) Spans, Counters, Logs
@@ -16,7 +18,7 @@ Test your understanding of OpenTelemetry.
 **Answer: B) Traces, Metrics, Logs**
 
 **Explanation:**
-OpenTelemetry standardizes the three core observability signals: Traces (distributed tracing), Metrics, and Logs. By collecting and correlating these three signals in an integrated way, you can achieve comprehensive system observability.
+This guide focuses on traces, metrics, and logs. OpenTelemetry also develops profiling support; stability differs by signal, component, and language. Correlation requires compatible resource attributes and propagated context, not merely enabling three exporters.
 
 </details>
 
@@ -58,19 +60,19 @@ Auto-instrumentation automatically traces common library calls like HTTP, databa
 
 ---
 
-4. When is the OTEL Collector's tail_sampling processor more advantageous than head-based sampling?
+4. When is the Collector's tail_sampling processor useful compared with head-based sampling?
    - A) When minimizing resource usage
-   - B) When you can't miss requests with errors or latency
+   - B) When observed span status and duration should influence sampling
    - C) When implementation needs to be simple
    - D) When sampling decisions need to be fast
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) When you can't miss requests with errors or latency**
+**Answer: B) When observed span status and duration should influence sampling**
 
 **Explanation:**
-Tail-based sampling decides whether to sample after the request completes, based on results (errors, latency, etc.). This ensures important requests (error occurrences, response time exceeded) are never missed. In contrast, head-based sampling decides at request start, so it's simpler to implement with lower resource usage, but may miss important requests.
+With the Collector 0.160.0 default `trace-complete` strategy, evaluation uses accumulated spans when the decision timer fires; the name does not prove the request or trace is complete. Spans already discarded by head sampling cannot be recovered. Late spans, capacity limits, retries and routing changes can affect retention. Stateful tail sampling requires spans of a trace to reach the same sampling Collector; it does not guarantee that every error or slow request is retained.
 
 </details>
 
@@ -88,13 +90,13 @@ Tail-based sampling decides whether to sample after the request completes, based
 **Answer: B) Identifying the entity generating telemetry data**
 
 **Explanation:**
-Resource is metadata that identifies the entity (service, host, container, etc.) generating telemetry data. It includes attributes like service.name, service.version, deployment.environment to clarify the source of data. This information is automatically attached to all telemetry data.
+A Resource identifies the telemetry producer, for example through `service.name`, `service.version`, and `deployment.environment.name`. The configured SDK/provider associates it with emitted data. Kubernetes, cloud, or custom identity attributes require the appropriate configuration or detector; they are not all discovered automatically.
 
 </details>
 
 ---
 
-6. Which OTEL Collector deployment pattern is most resource-efficient in EKS?
+6. Which Kubernetes workload normally runs one Collector on each eligible node?
    - A) Sidecar pattern
    - B) DaemonSet pattern
    - C) Gateway pattern
@@ -106,7 +108,7 @@ Resource is metadata that identifies the entity (service, host, container, etc.)
 **Answer: B) DaemonSet pattern**
 
 **Explanation:**
-The DaemonSet pattern is resource-efficient as it runs only one Collector per node. The Sidecar pattern has high resource overhead as it runs a Collector for each Pod. The Gateway pattern is centralized but can become a single point of failure. Typically, a combination of DaemonSet for collection and Gateway for processing/transmission is recommended.
+A DaemonSet places a Pod on each eligible node; selectors, taints and scheduling constraints determine eligibility. It is not supported on EKS Fargate. Sidecars share an application Pod, while gateways use a central tier that may have multiple replicas. No pattern is universally the most resource-efficient: compare actual signal volume, node/Pod counts, isolation, availability and stateful processing needs. A ClusterIP Service in front of a DaemonSet does not automatically route to the local node.
 
 </details>
 
@@ -124,7 +126,7 @@ The DaemonSet pattern is resource-efficient as it runs only one Collector per no
 **Answer: B) instrumentation.opentelemetry.io/inject-java: "true"**
 
 **Explanation:**
-The OpenTelemetry Operator uses annotations in the format `instrumentation.opentelemetry.io/inject-{language}`. Language-specific annotations include inject-java, inject-python, inject-nodejs, inject-dotnet, inject-go, etc. Instrumentation agents are automatically injected into Pods with these annotations.
+The Operator uses language-specific injection annotations. For a Deployment, place them on `spec.template.metadata.annotations` and reference an existing Instrumentation resource in the correct namespace. Successful injection also requires a working webhook and supported language/runtime configuration. Existing Pods are not retroactively instrumented; Go and other language-specific prerequisites must be reviewed separately.
 
 </details>
 
@@ -132,17 +134,17 @@ The OpenTelemetry Operator uses annotations in the format `instrumentation.opent
 
 8. What is the role of the memory_limiter processor in OTEL Collector configuration?
    - A) Data compression
-   - B) Preventing data loss when memory is low
+   - B) Applying backpressure as configured memory thresholds are exceeded
    - C) Cache management
    - D) Network buffer management
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Preventing data loss when memory is low**
+**Answer: B) Applying backpressure as configured memory thresholds are exceeded**
 
 **Explanation:**
-The memory_limiter processor monitors and limits the Collector's memory usage. When memory usage reaches limit_mib, it refuses new data ingestion to prevent data loss due to OOM (Out of Memory). spike_limit_mib provides a buffer for sudden memory spikes.
+`limit_mib` is the hard limit; the soft limit is `limit_mib - spike_limit_mib`. Above the soft limit, the processor refuses data with a retryable error. Above the hard limit, it also forces garbage collection. Upstream retry/backpressure behavior matters: refused data can be lost if it is not retried. Leave headroom below the container memory limit; this processor is neither durable storage nor an absolute OOM/data-loss guarantee.
 
 </details>
 
@@ -160,7 +162,7 @@ The memory_limiter processor monitors and limits the Collector's memory usage. W
 **Answer: D) span-name**
 
 **Explanation:**
-The W3C Trace Context traceparent header format is `version-trace_id-parent_id-trace_flags`. version is the format version, trace_id is the entire trace identifier, parent_id is the parent span ID, and trace_flags is the sampling flag. span-name is stored within the Span and is not included in the propagation header.
+OpenTelemetry uses the W3C Trace Context standard. The `traceparent` fields are version, trace ID, parent ID and trace flags; the parent ID identifies the sending span, and the flags include a sampled bit. A span name is not carried in this header. Propagating context does not itself record or export a span.
 
 </details>
 
@@ -178,8 +180,10 @@ The W3C Trace Context traceparent header format is `version-trace_id-parent_id-t
 **Answer: B) List multiple exporters in the exporters array**
 
 **Explanation:**
-In the OTEL Collector pipeline configuration, listing multiple exporters in the exporters array sends the same data to all backends. For example: `exporters: [otlp/tempo, awsxray, datadog]`. This allows using multiple observability backends simultaneously with a single Collector.
+List configured exporters that support the pipeline's signal, for example `exporters: [otlp/tempo, awsxray, datadog]` for traces in a distribution containing those components. Fan-out is not an atomic transaction across backends: exporter errors, queues, retries, transformations and backend acceptance can produce different retained results.
 
 </details>
 
 ---
+
+[Return to the guide](../../../observability/tracing/03-opentelemetry.md)
