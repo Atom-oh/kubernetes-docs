@@ -1,182 +1,181 @@
 # Parte 1: Fundamentos de Kafka
 
-> **Versiones compatibles**: Apache Kafka 3.9 (modo KRaft)\
-> **Última actualización**: July 9, 2026
+> **Última actualización**: 12 de septiembre de 2026. Apache Kafka 4.3.1, compatible con Strimzi 1.2.0.
+> **Validación**: Diecinueve comprobaciones utilizaron las clases de configuración reales de Kafka 4.3.1 para verificar validez, valores predeterminados y conflictos. No se inició ningún broker ni clúster EKS.
 
-## ¿Qué es Apache Kafka?
+## 1. Brokers, temas y particiones
 
-Apache Kafka es una plataforma distribuida de streaming de eventos diseñada para gestionar flujos de datos en tiempo real y de gran volumen. Desarrollada originalmente en LinkedIn y posteriormente publicada como código abierto como un proyecto de Apache, se utiliza ampliamente para la agregación de logs, pipelines de métricas, microservicios orientados a eventos y pipelines de captura de datos de cambios (CDC).
+Kafka almacena eventos en registros de partición, lo que permite que productores y consumidores avancen de forma independiente. Un broker puede almacenar réplicas de particiones de varios temas; no necesita contener un tema completo.
 
-Este documento abarca los conceptos esenciales que necesitas antes de ejecutar Kafka en EKS: brokers, topics, partitions, consumer groups, replicación y KRaft. La Parte 2 explica cómo implementar estos conceptos en un clúster real de EKS utilizando el Strimzi Operator.
+| Término | Significado |
+| --- | --- |
+| Broker | Rol de servidor que almacena réplicas de datos y atiende solicitudes |
+| Tema | Categoría lógica de eventos |
+| Partición | Registro ordenado al que se añaden entradas; la retención y la compactación pueden eliminar registros |
+| Offset | Posición dentro de una partición, no un ID global; las eliminaciones y transacciones pueden dejar huecos visibles |
+| Factor de replicación | Número de réplicas de una partición, gestionado mediante metadatos de creación/reasignación |
+| Líder / seguidor | Los líderes gestionan escrituras y los seguidores replican; la lectura desde seguidores configurada puede atender a consumidores |
+| ISR | Réplicas suficientemente sincronizadas con el líder, incluido el propio líder |
 
-## 1. Fundamentos de la arquitectura de Kafka
+![Ejemplo de un grupo KafkaConsumer con tres consumidores asignados a tres particiones; en general, un consumidor puede ser responsable de varias particiones](../../.gitbook/assets/en-data-on-eks-kafka-01-kafka-fundamentals-0.png)
 
-### Terminología principal
+[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-kafka-01-kafka-fundamentals-0.html)
 
-* **Broker**: Un proceso de servidor Kafka que almacena mensajes y atiende solicitudes de clientes. Un clúster de Kafka suele estar compuesto por varios brokers.
-* **Topic**: Un canal lógico utilizado para categorizar mensajes, como `orders` o `payments`.
-* **Partition**: La unidad física en la que se divide un topic. Cada partition es un log ordenado, de solo anexado e inmutable.
-* **Offset**: Un número secuencial y único asignado a cada mensaje dentro de una partition. Los consumers rastrean «hasta dónde han leído» mediante offsets.
-* **Factor de replicación**: El número de brokers en los que se copian los datos de una partition, lo que protege contra la pérdida de datos cuando falla un broker.
-* **Réplica Leader/Follower**: Para cada partition, una réplica se designa como leader y gestiona todas las lecturas y escrituras; las réplicas follower restantes copian los datos del leader.
-* **ISR (In-Sync Replicas)**: El conjunto de réplicas que están lo suficientemente sincronizadas con el leader. Cuando se envía una escritura con `acks=all`, solo se considera correcta una vez que cada réplica del ISR ha recibido el mensaje.
+El diagrama 3:3 es un ejemplo. Con la asignación automática de grupos de KafkaConsumer mediante `subscribe()`, cada partición se asigna a un miembro del grupo a la vez; un miembro puede tener varias particiones. El uso manual de `assign()` se gestiona por separado. Varios grupos pueden consumir el mismo tema de forma independiente. Los Share Groups/KafkaShareConsumer de Kafka 4.x utilizan otro modelo de distribución y confirmación.
 
-### Flujo Producer -> Partitions -> Consumer Group
+## 2. Orden y claves de partición
 
-```mermaid
-flowchart LR
-    P1[Producer]
-    subgraph B1[Broker 1]
-        T0[Topic orders - Partition 0 - Leader]
-    end
-    subgraph B2[Broker 2]
-        T1[Topic orders - Partition 1 - Leader]
-    end
-    subgraph B3[Broker 3]
-        T2[Topic orders - Partition 2 - Leader]
-    end
-    P1 --> T0
-    P1 --> T1
-    P1 --> T2
-    subgraph CG[Consumer Group: order-processor]
-        C1[Consumer 1]
-        C2[Consumer 2]
-        C3[Consumer 3]
-    end
-    T0 --> C1
-    T1 --> C2
-    T2 --> C3
-```
+Kafka define el orden del registro **dentro de una partición**. No establece automáticamente un orden global del tema ni un orden según las marcas de tiempo de los eventos de negocio.
 
-Los producers escriben mensajes en un topic, y Kafka distribuye esos mensajes entre varios brokers en el nivel de partition. Los consumers que pertenecen al mismo consumer group dividen las partitions entre ellos (aproximadamente en una relación uno a uno) y consumen mensajes en paralelo.
+El enrutamiento coherente de una misma clave requiere serialización, particionado y número de particiones coherentes. Aumentar el número de particiones puede cambiar la asignación basada en hash. Los particionadores personalizados y las particiones elegidas explícitamente también afectan al enrutamiento. Varios productores, reintentos y procesamiento paralelo de la aplicación requieren su propio contrato de orden.
 
-## 2. Partitions y garantías de ordenamiento
+El enrutamiento de claves nulas depende del cliente/particionador. Una cardinalidad alta de claves por sí sola no garantiza una carga equilibrada; unas pocas claves desproporcionadamente frecuentes pueden crear particiones calientes.
 
-La cantidad de partitions es el factor más importante que determina el rendimiento paralelo de un clúster. Más partitions permiten que más consumers trabajen simultáneamente, pero demasiadas partitions incrementan la sobrecarga de metadatos y los descriptores de archivos abiertos en los brokers.
-
-> **Concepto clave**: Kafka **no** garantiza el orden en un topic completo. El orden solo está garantizado **dentro de una única partition**.
-
-### Estrategias de selección de la clave de partition
-
-Cuando un producer envía un mensaje con una clave, Kafka lo enruta a una partition según un hash de esa clave. La misma clave siempre se enruta a la misma partition, que es la forma de preservar el orden entre eventos que comparten una clave.
-
-| Estrategia | Descripción | Caso de uso de ejemplo |
-| --- | --- | --- |
-| Sin clave (null) | Un particionador round-robin o sticky distribuye los mensajes entre las partitions | Ingestión de logs donde el orden no importa |
-| ID de entidad como clave | Fija los eventos de la misma entidad en la misma partition | Preservar el orden de los eventos de estado para un ID de pedido determinado |
-| Particionador personalizado | Enruta las partitions según reglas de negocio | Aislar el tráfico de un cliente específico en una partition dedicada |
+Este comando crea un tema en un **clúster ya accesible con al menos tres brokers**. Añada `--command-config client.properties` para listeners autenticados. No lo aplique sin cambios a la configuración didáctica de un solo nodo que aparece más adelante.
 
 ```bash
-# Create a topic with 6 partitions and a replication factor of 3
-kafka-topics.sh --create \
-  --bootstrap-server localhost:9092 \
-  --topic orders \
-  --partitions 6 \
-  --replication-factor 3 \
+: "${DOCS_BOOTSTRAP:?Set the existing Kafka bootstrap host:port}"
+kafka-topics.sh --create --bootstrap-server "$DOCS_BOOTSTRAP" \
+  --topic orders --partitions 6 --replication-factor 3 \
   --config min.insync.replicas=2
 ```
 
-Una clave mal elegida puede crear una «partition caliente», donde el tráfico se concentra en una única partition, así que asegúrate de que la clave tenga suficiente cardinalidad (una cantidad suficientemente grande de valores distintos) para distribuir la carga de forma uniforme.
+## 3. Grupos de consumidores y offsets
 
-## 3. Consumer Groups y reequilibrio
+Los grupos basados en particiones pueden tener miembros inactivos cuando hay más consumidores que particiones. El rendimiento de los productores, los discos, la red y el procesamiento de la aplicación también afectan a la concurrencia; el número de particiones por sí solo no predice el rendimiento.
 
-### Cómo funcionan los Consumer Groups
+### Distinguir los protocolos de grupo
 
-Los consumers que comparten el mismo `group.id` forman un **consumer group**. Kafka asigna automáticamente las partitions de un topic entre las instancias de consumer del grupo, y cada partition es leída por exactamente un consumer dentro de ese grupo (si hay más consumers que partitions, algunos consumers permanecen inactivos).
+El consumidor Java de Kafka 4.3 establece `group.protocol` en `classic` de forma predeterminada.
 
-### Qué desencadena un reequilibrio
+| Opción | Asignación y tiempos de espera |
+| --- | --- |
+| `classic` | Asignadores del cliente y `session.timeout.ms` / `heartbeat.interval.ms` |
+| `consumer` | Asignadores del servidor y `group.consumer.session.timeout.ms` / `group.consumer.heartbeat.interval.ms` del broker |
 
-* Un nuevo consumer se une al grupo
-* Un consumer existente abandona el grupo (apagado ordenado) o se detecta que se ha desconectado mediante el tiempo de espera del heartbeat
-* Cambia el número de partitions del topic
-* Un consumer no envía un heartbeat dentro de `session.timeout.ms`, o supera `max.poll.interval.ms` porque el procesamiento tarda demasiado
+El rebalanceo eager de Classic revoca un conjunto amplio de asignaciones. CooperativeStickyAssignor mueve incrementalmente las particiones que necesitan reasignación. El protocolo consumer más reciente también realiza reconciliación incremental en el servidor. No todos los rebalanceos pausan necesariamente el grupo completo. No traslade al protocolo nuevo las suposiciones de Classic sobre asignadores y tiempos de espera del cliente.
 
-El consumo se pausa brevemente para el grupo afectado mientras hay un reequilibrio en curso, por lo que los reequilibrios demasiado frecuentes perjudican el rendimiento. El uso de `CooperativeStickyAssignor` minimiza el movimiento de partitions durante un reequilibrio y reduce su costo.
+`max.poll.interval.ms` tiene un valor predeterminado de 300000 ms. Con membresía estática (`group.instance.id`), superarlo no reasigna inmediatamente las particiones: el consumidor deja de enviar latidos y el tiempo de espera de sesión aplicable también afecta a la reasignación.
 
-### Estrategias de confirmación de Offset
+### Offsets y finalización del trabajo de negocio
 
-| Estrategia | Configuración | Características |
-| --- | --- | --- |
-| Confirmación automática | `enable.auto.commit=true` (predeterminado) | Confirmaciones periódicas prácticas, pero los offsets se pueden confirmar antes de que termine el procesamiento, lo que implica riesgo de pérdida de mensajes |
-| Confirmación manual (sincrónica) | `enable.auto.commit=false` + `commitSync()` | Confirma solo después de que finaliza el procesamiento — más seguro, pero con menor rendimiento |
-| Confirmación manual (asincrónica) | `enable.auto.commit=false` + `commitAsync()` | Mayor rendimiento, pero la aplicación debe gestionar por sí misma los errores de confirmación |
+Un offset confirmado generalmente identifica la siguiente posición que se leerá. La posición de lectura del cliente y el trabajo externo completado son hechos diferentes. Con procesamiento asíncrono/paralelo, no confirme más allá de registros cuyo trabajo siga pendiente.
 
-### Semántica de entrega
+| Método | Significado y consideraciones |
+| --- | --- |
+| Confirmación automática | `enable.auto.commit=true`, intervalo predeterminado de 5000 ms; no determina la finalización del negocio |
+| `commitSync()` | Espera a que termine la llamada; el impacto en la latencia depende de los lotes y la frecuencia |
+| `commitAsync()` | Siga los fallos y el progreso mediante callbacks; no reintente ciegamente offsets obsoletos que hagan retroceder el progreso confirmado |
 
-* **Como máximo una vez**: El offset se confirma antes de procesar el mensaje. Los mensajes pueden perderse ante un fallo.
-* **Al menos una vez**: El offset se confirma después del procesamiento (la opción predeterminada recomendada habitualmente). Los mensajes pueden volver a procesarse ante un fallo, por lo que la lógica del consumer debe diseñarse para ser idempotente.
-* **Exactamente una vez**: Combinar la opción idempotente del producer con la API transaccional (`transactional.id`) logra un procesamiento exactamente una vez dentro de Kafka (de topic a topic). El procesamiento exactamente una vez que abarca sistemas externos requiere trabajo de diseño adicional (por ejemplo, un sink connector exactamente una vez en Kafka Connect).
+Confirmar antes de procesar puede perder trabajo tras un fallo; confirmar después puede repetir efectos durante la recuperación. Pruebe fallos, reinicios y rebalanceos junto con la salida de la aplicación.
 
-## 4. KRaft: Kafka sin ZooKeeper
+## 4. Alcance del procesamiento exactamente una vez
 
-Históricamente, Kafka dependía de un conjunto independiente de ZooKeeper para gestionar los metadatos del clúster — información de topics/partitions, ACL y elección del controller. A partir de Kafka 3.3, **KRaft (modo de metadatos Kafka Raft)** estuvo listo para producción (GA), y **Kafka 4.0 (lanzado en marzo de 2025)** eliminó por completo el modo ZooKeeper, convirtiendo a KRaft en el único mecanismo compatible para la gestión de metadatos.
+`enable.idempotence` evita escrituras duplicadas en el registro de una misma transmisión del productor durante los reintentos. No es una clave general de deduplicación para una aplicación que envía el mismo evento de negocio como un envío nuevo.
 
-### Arquitectura de KRaft
+Para procesamiento de Kafka a Kafka, confirme los registros de salida y los **siguientes offsets de entrada** en la misma transacción, y haga que los consumidores lean con `read_committed`. Establecer una cadena `transactional.id` no implementa esa lógica de procesamiento. Las bases de datos y API externas requieren contratos independientes de transacción del destino, idempotencia y recuperación.
 
-En lugar de un clúster independiente de ZooKeeper, KRaft designa un subconjunto de los procesos de broker de Kafka para actuar como el **quórum de controllers**.
-
-* **Controller Voter**: Un nodo que participa en el protocolo de consenso Raft y replica el log de metadatos (normalmente un número impar, como 3 o 5, para el quórum).
-* **Controller activo**: El único voter elegido como leader que procesa realmente los cambios de metadatos del clúster — elección del leader de la partition, creación de topics, etc.
-* Los roles de controller y broker pueden combinarse en el mismo proceso (`process.roles=broker,controller`) para clústeres pequeños, o dividirse en nodos dedicados solo a controller (`process.roles=controller`) para implementaciones más grandes.
-
-### Comparación antes/después
-
-| Aspecto | Basado en ZooKeeper (predeterminado hasta Kafka 3.x) | Basado en KRaft (GA en 3.3+, único modo en 4.0+) |
-| --- | --- | --- |
-| Almacenamiento de metadatos | Conjunto independiente de ZooKeeper | El topic interno de metadatos propio de Kafka (`__cluster_metadata`) |
-| Clústeres requeridos | Dos — el clúster de Kafka y el clúster de ZooKeeper | Uno — solo el clúster de Kafka |
-| Elección del controller | Elección de leader mediante znodes efímeros de ZooKeeper | Controller activo elegido mediante consenso Raft |
-| Escalabilidad de metadatos | La carga de ZooKeeper crece con el número de partitions | La replicación basada en logs escala mejor para grandes cantidades de partitions |
-| Sobrecarga operativa de Kubernetes | Requiere un StatefulSet de ZooKeeper, PVC independientes y monitoreo independiente | No hay un componente independiente que gestionar — solo Pods de broker/controller de Kafka |
-
-Esta diferencia es muy importante en entornos de Kubernetes/EKS. Las implementaciones basadas en ZooKeeper requerían ejecutar tanto un StatefulSet de Kafka como un StatefulSet de ZooKeeper, y duplicar las network policies, los PodDisruptionBudgets y el monitoreo en ambos componentes. KRaft elimina esa carga operativa y reduce el número de tipos de recursos que un operador como Strimzi necesita gestionar. La implementación basada en Strimzi que se explica en la Parte 2 utiliza el modo KRaft de forma predeterminada.
-
-### Configuración de ejemplo de un nodo KRaft (server.properties)
+**`producer.properties`**
 
 ```properties
-# This node acts as both broker and controller (suitable for small clusters)
-process.roles=broker,controller
-node.id=1
-
-# List of controller quorum voters (node.id@host:port)
-controller.quorum.voters=1@kafka-0.kafka-headless:9093,2@kafka-1.kafka-headless:9093,3@kafka-2.kafka-headless:9093
-
-listeners=BROKER://:9092,CONTROLLER://:9093
-controller.listener.names=CONTROLLER
-inter.broker.listener.name=BROKER
-
-log.dirs=/var/lib/kafka/data
+bootstrap.servers=127.0.0.1:19092
+key.serializer=org.apache.kafka.common.serialization.StringSerializer
+value.serializer=org.apache.kafka.common.serialization.StringSerializer
+acks=all
+enable.idempotence=true
+transactional.id=orders-writer-1
+max.in.flight.requests.per.connection=5
+delivery.timeout.ms=120000
 ```
 
-## 5. Configuración de replicación y durabilidad
+**`consumer.properties`**
 
-El grado de confianza que puede tener un producer de que un mensaje se ha «almacenado de forma segura» depende de la combinación de tres configuraciones.
+```properties
+bootstrap.servers=127.0.0.1:19092
+key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+group.id=order-processor
+group.protocol=consumer
+enable.auto.commit=false
+isolation.level=read_committed
+max.poll.interval.ms=300000
+```
 
-* **`replication.factor`** (configuración a nivel de topic): Determina en cuántos brokers se copian los datos de una partition. Se recomienda un mínimo de 3, que tolera hasta dos fallos simultáneos de broker sin perder datos.
-* **`min.insync.replicas`** (configuración a nivel de topic): Cuando se envía una escritura con `acks=all`, especifica el número mínimo de miembros del ISR que deben tener el mensaje para que la escritura se considere correcta. Una combinación común es `replication.factor=3` con `min.insync.replicas=2`, que mantiene las escrituras disponibles incluso si falla un broker.
-* **`acks`** (configuración a nivel de producer): Determina cuánto tiempo espera el producer la confirmación antes de considerar completa una escritura.
+El procesamiento transaccional incluye `initTransactions()`, `beginTransaction()`, los envíos de salida, `sendOffsetsToTransaction(...)`, `commitTransaction()` y la gestión de abortos/recuperación. Los productores concurrentes necesitan IDs transaccionales distintos; diseñe un comportamiento estable de reinicio y exclusión del escritor lógico.
 
-| Valor de `acks` | Comportamiento | Durabilidad | Latencia/rendimiento |
-| --- | --- | --- | --- |
-| `0` | El producer no espera ninguna respuesta | La más baja (los mensajes pueden perderse justo después del envío) | El más rápido |
-| `1` | Se considera correcto cuando el leader lo ha escrito | Media (los datos no replicados pueden perderse si falla el leader) | Rápido |
-| `all` (`-1`) | Se considera correcto solo una vez que cada réplica del ISR lo ha escrito | La más alta | Relativamente más lento |
+La idempotencia explícita requiere `acks=all`, `retries>0` y `max.in.flight.requests.per.connection<=5`. Los conflictos generan ConfigException. La idempotencia predeterminada implícita puede desactivarse con ajustes incompatibles. Un valor alto de retries no anula plazos como `delivery.timeout.ms`.
+
+## 5. Metadatos KRaft
+
+KRaft llegó como acceso anticipado en Kafka 2.8, pasó a estar listo para producción en 3.3 y es el único modo desde la eliminación de ZooKeeper en Kafka 4.0. Los procesos de controlador dedicados no necesitan atender tráfico de datos de brokers, por lo que los controladores no son necesariamente un subconjunto de los brokers de datos.
+
+Los votantes del controlador replican el registro Raft de metadatos, con un controlador activo. Las implementaciones de producción suelen utilizar tres o cinco votantes. Los grupos de tamaño par también tienen una mayoría calculable; los tamaños impares usan los recursos eficientemente para la misma tolerancia a fallos.
+
+`__cluster_metadata` nombra el registro interno de metadatos, no un tema de aplicación ordinario gestionado mediante KafkaProducer/KafkaConsumer. Eliminar ZooKeeper no elimina la responsabilidad sobre el quórum de controladores, almacenamiento, actualizaciones y monitorización.
+
+### Quórums dinámicos y estáticos
+
+Los quórums dinámicos usan `controller.quorum.bootstrap.servers` como puntos iniciales de descubrimiento, no como membresía de votantes. El formateo inicial del almacenamiento y el arranque del quórum deben coincidir en el ID del clúster, los IDs de directorio y los votantes iniciales. Para cambios, utilice los procedimientos admitidos de incorporación/eliminación de controladores.
+
+El ajuste estático `controller.quorum.voters` sigue siendo compatible con Kafka 4.3.1. No lo establezca para un quórum dinámico. Cambiar las direcciones iniciales por sí solo no migra automáticamente un quórum estático.
+
+Este archivo sirve para **aprendizaje local con un solo nodo**, no para HA. Usa listeners PLAINTEXT de loopback. Antes del arranque, un directorio de datos nuevo necesita el procedimiento adecuado de formato/inicialización del almacenamiento. Nunca formatee arbitrariamente datos existentes de Kafka.
+
+**`combined-lab.properties`**
+
+```properties
+# Local, single-node configuration for learning; not an HA deployment.
+process.roles=broker,controller
+node.id=1
+controller.quorum.bootstrap.servers=127.0.0.1:19093
+listeners=BROKER://127.0.0.1:19092,CONTROLLER://127.0.0.1:19093
+advertised.listeners=BROKER://127.0.0.1:19092,CONTROLLER://127.0.0.1:19093
+listener.security.protocol.map=BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+controller.listener.names=CONTROLLER
+inter.broker.listener.name=BROKER
+log.dirs=./kafka-lab-data
+# Single-node internal-topic settings are for this lab only.
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+share.coordinator.state.topic.replication.factor=1
+share.coordinator.state.topic.min.isr=1
+```
+
+Un listener personalizado `BROKER` necesita una asignación explícita de protocolo. Kafka 4.3.1 puede proporcionar una asignación PLAINTEXT para el listener predeterminado exclusivo del controlador `CONTROLLER` en las configuraciones pertinentes; la ausencia de una línea de asignación no invalida todas las configuraciones de controlador.
+
+En EKS, use los ajustes, certificados y almacenamiento generados por Strimzi en la Parte 2. No edite directamente server.properties de Pods gestionados por el Operator. Configure el TLS, la autenticación y la autorización necesarios para los listeners de producción.
+
+## 6. Replicación, disponibilidad de escritura y durabilidad
+
+RF=3 por sí solo no garantiza que todos los datos sobrevivan a cualesquiera dos fallos de brokers. Considere el progreso real de replicación, el ISR al confirmar, la elección de líderes elegibles, los fallos de almacenamiento/red y el quórum de controladores.
+
+Si inicialmente las tres réplicas pertenecen a un ISR saludable, una partición con `min.insync.replicas=2` y `acks=all` puede continuar con dos miembros ISR tras el fallo de un broker mientras se mantengan las demás condiciones. La transición de líder todavía puede causar errores/reintentos. Por debajo del ISR mínimo, las escrituras fallan o se rechazan, con detalles de error que dependen del momento.
+
+| acks | Confirmación | Interpretación |
+| --- | --- | --- |
+| `0` | No espera respuesta del broker | Almacenamiento sin confirmar; el offset devuelto es -1 |
+| `1` | El líder responde después de registrar | Riesgo de perder el líder antes de la replicación a seguidores |
+| `all` / `-1` | Espera al ISR completo actual | Evalúelo junto con el ISR mínimo, la replicación y la política de elección de líder |
+
+`acks=all` no significa que cada disco haya completado fsync para cada registro. Tampoco acks por sí solo garantiza una clasificación de rendimiento o p99. Mida el coste de confirmación con cargas, lotes y redes comparables.
+
+Puede cambiar el ISR mínimo como sigue. Cambiar el factor de replicación requiere reasignar réplicas, no añadir `replication.factor` como configuración ordinaria del tema.
 
 ```bash
-# Dynamically change min.insync.replicas on an existing topic
-kafka-configs.sh --bootstrap-server localhost:9092 \
+kafka-configs.sh --bootstrap-server "$DOCS_BOOTSTRAP" \
   --alter --entity-type topics --entity-name orders \
   --add-config min.insync.replicas=2
 ```
 
-Una combinación común de nivel de producción es `replication.factor=3`, `min.insync.replicas=2`, `acks=all` del producer y `enable.idempotence=true`. Esta combinación sobrevive a un único fallo de broker sin pérdida de datos, y la configuración de producer idempotente evita escrituras duplicadas provocadas por reintentos de red. Ten en cuenta que `acks=all` añade latencia en comparación con `acks=1`, por lo que las cargas de trabajo sensibles a la latencia que pueden tolerar cierta pérdida de datos (como la ingestión de métricas) a veces intercambian durabilidad por velocidad al elegir `acks=1`.
 
-## Próximos pasos
+## Siguientes pasos y referencias
 
-Este documento abarcó los conceptos principales de Kafka — el modelo de broker/topic/partition, el alcance de las garantías de ordenamiento, el reequilibrio de consumer groups, el cambio a KRaft y las configuraciones de replicación/durabilidad. La Parte 2 abarca la implementación de todos estos conceptos como un clúster de Kafka basado en KRaft en Amazon EKS utilizando el **Strimzi Operator**.
-
-[Volver a la página principal](./README.md)
-
-## Cuestionario
-
-Para comprobar lo que has aprendido en este capítulo, prueba el [Cuestionario de topics](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md).
+- [Strimzi Operator](./02-strimzi-operator.md)
+- [Descripción general de Kafka](./README.md)
+- [Cuestionario](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+- [Diseño de Kafka](https://kafka.apache.org/43/design/design/)
+- [Configuraciones del consumidor](https://kafka.apache.org/43/configuration/consumer-configs/)
+- [Configuraciones del productor](https://kafka.apache.org/43/configuration/producer-configs/)
+- [Operaciones de KRaft](https://kafka.apache.org/43/operations/kraft/)
+- [Versión Strimzi 1.2.0 y aviso de migración](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)

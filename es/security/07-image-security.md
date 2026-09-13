@@ -1,38 +1,38 @@
-# Seguridad de imágenes de contenedor
+# Seguridad de imágenes de contenedores
 
 > **Última actualización**: September 13, 2026
-> **Base de validación**: Trivy 0.74.0, Trivy Operator 0.34.0/chart 0.36.0, Cosign 3.1.3, Kyverno 1.19.1, Connaisseur 3.12.0/chart 2.12.0. Estas son bases de referencia de CLI/configuración, no una afirmación de pruebas de implementación en todas las versiones de Kubernetes.
+> **Versiones de referencia para la validación**: Trivy 0.74.0, Trivy Operator 0.34.0/chart 0.36.0, Cosign 3.1.3, Kyverno 1.19.1, Connaisseur 3.12.0/chart 2.12.0. Son referencias de CLI/configuración, no una afirmación de que se hayan probado los despliegues en todas las versiones de Kubernetes.
 
-La seguridad de las imágenes comienza confirmando que **el artefacto compilado, escaneado y desplegado es el mismo**. El escaneo identifica vulnerabilidades conocidas y problemas de configuración; las firmas vinculan a un firmante con un digest. Ninguno garantiza la seguridad de la aplicación.
+La seguridad de las imágenes comienza por confirmar que **el artefacto compilado, analizado y desplegado es el mismo**. El análisis identifica vulnerabilidades conocidas y problemas de configuración; las firmas vinculan un firmante con un digest. Ninguno de los dos garantiza la seguridad de la aplicación.
 
-## Tabla de contenido
+## Índice
 
-1. [Descripción general del escaneo de imágenes](#image-scanning-overview)
+1. [Descripción general del análisis de imágenes](#image-scanning-overview)
 2. [Trivy](#trivy)
-3. [Escaneo de imágenes de Amazon ECR](#amazon-ecr-image-scanning)
+3. [Análisis de imágenes en Amazon ECR](#amazon-ecr-image-scanning)
 4. [Firma de imágenes con Cosign/Sigstore](#image-signing-with-cosignsigstore)
 5. [Verificación de imágenes en el control de admisión](#image-verification-in-admission-control)
 6. [Seguridad de la cadena de suministro](#supply-chain-security)
-7. [Selección de imagen base](#base-image-selection)
-8. [Prácticas recomendadas para el registro de imágenes](#image-registry-best-practices)
-9. [Integración de la canalización de CI/CD](#cicd-pipeline-integration)
+7. [Selección de la imagen base](#base-image-selection)
+8. [Buenas prácticas para registros de imágenes](#image-registry-best-practices)
+9. [Integración en la canalización de CI/CD](#cicd-pipeline-integration)
 
 <span id="shift-left-security"></span>
 <span id="scan-targets"></span>
 
-## Descripción general del escaneo de imágenes
+## Descripción general del análisis de imágenes {#image-scanning-overview}
 
-Shift-left introduce verificaciones en el IDE, PR y compilación. Aparecen nuevos CVE después del lanzamiento, por lo que el reescaneo del registro y la detección en tiempo de ejecución siguen siendo requisitos independientes.
+El enfoque shift-left introduce comprobaciones en el IDE, las PR y la compilación. Después de publicar aparecen nuevas CVE, por lo que los nuevos análisis del registro y la detección en tiempo de ejecución siguen siendo requisitos independientes.
 
-| Objetivo | Verificación | Herramientas de ejemplo |
+| Objetivo | Comprobación | Herramientas de ejemplo |
 |---|---|---|
-| Paquetes de SO/lenguaje | Identificación, antigüedad de la base de datos, versiones corregidas, decisiones VEX | Trivy, Grype |
+| Paquetes del sistema operativo y de lenguajes | Identificación, antigüedad de la base de datos, versiones corregidas, decisiones VEX | Trivy, Grype |
 | IaC/Dockerfiles | Ejecución sin root, permisos, configuración | Trivy misconfig, Checkov |
 | Secretos | Credenciales en capas de imagen o código fuente | Trivy secret, TruffleHog |
 | Licencias/SBOM | Cobertura de detección de componentes y licencias | Syft, Trivy |
-| Comportamiento en tiempo de ejecución | Syscalls, procesos y red activos | Herramientas independientes como Falco |
+| Comportamiento en ejecución | Llamadas al sistema, procesos y red en vivo | Herramientas independientes como Falco |
 
-El flujo es `source checks → build once → scan that artifact → push → sign/verify digest → admission checks → rescan`. Las organizaciones definen controles por gravedad y asignan a las excepciones un responsable, una justificación y una fecha de vencimiento.
+El flujo es `source checks → build once → scan that artifact → push → sign/verify digest → admission checks → rescan`. Las organizaciones definen controles de severidad y asignan a cada excepción un responsable, una justificación y una fecha de caducidad.
 
 <span id="trivy-installation"></span>
 <span id="image-scanning"></span>
@@ -40,11 +40,11 @@ El flujo es `source checks → build once → scan that artifact → push → si
 <span id="trivy-configuration-file"></span>
 <span id="trivy-operator-kubernetes-integration"></span>
 
-## Trivy
+## Trivy {#trivy}
 
-### Instalación y escaneo
+### Instalación y análisis
 
-Verifique el paquete de lanzamiento oficial para el sistema operativo/arquitectura de CPU y su suma de verificación. No instale un binario amd64 en Linux ARM64 ni use instrucciones apt-key retiradas. Fije las versiones de CLI/action en la automatización.
+Verifique el paquete oficial de la versión correspondiente al sistema operativo y la arquitectura de CPU, y su suma de comprobación. No instale un binario amd64 en Linux ARM64 ni utilice instrucciones retiradas de apt-key. Fije las versiones de CLI/actions en la automatización.
 
 ```bash
 trivy --version
@@ -59,7 +59,7 @@ trivy config ./k8s/
 trivy config ./charts/my-app/ --helm-values ./charts/my-app/values.yaml
 ```
 
-`IMAGE_REF` es un marcador de posición intencional que requiere un digest real. Use `misconfig`, no `--scanners config`. `--ignore-unfixed` oculta vulnerabilidades sin correcciones, por lo que no lo habilite indiscriminadamente en el control predeterminado. Verifique los requisitos de red/caché para registros, bases de datos de vulnerabilidades/Java y paquetes de verificaciones. `trivy config` no tiene una opción `--offline-scan`.
+`IMAGE_REF` es un marcador intencionado que requiere un digest real. Utilice `misconfig`, no `--scanners config`. `--ignore-unfixed` oculta vulnerabilidades sin corrección disponible, por lo que no debe habilitarse indiscriminadamente en el control predeterminado. Compruebe los requisitos de red y caché para los registros, las bases de datos de vulnerabilidades/Java y los paquetes de comprobaciones. `trivy config` no tiene la opción `--offline-scan`.
 
 ### Configuración y excepciones
 
@@ -81,7 +81,7 @@ vulnerability:
   ignore-unfixed: false
 ```
 
-Esta es una base de referencia de escaneo de imágenes/sistema de archivos. No añada vulnerability.type no compatible ni una lista de ignorados de nivel superior. Administre las excepciones mediante los formatos .trivyignore/política de ignorados compatibles, diferenciando las excepciones de secretos y de vulnerabilidades. El ejemplo de .trivyignore no tiene exclusiones predeterminadas.
+Esta es una configuración de referencia para analizar imágenes y sistemas de archivos. No añada vulnerability.type ni una lista de exclusión de nivel superior, ya que no se admiten. Gestione las excepciones mediante .trivyignore o formatos compatibles de políticas de exclusión, distinguiendo las excepciones de secretos de las de vulnerabilidades. El .trivyignore de ejemplo no incluye exclusiones predeterminadas.
 
 <span id="trivy-overview"></span>
 
@@ -94,24 +94,24 @@ helm upgrade --install trivy-operator aqua/trivy-operator   --version 0.36.0 --n
 kubectl get vulnerabilityreports -A
 ```
 
-Chart 0.36.0 despliega la aplicación 0.34.0. El [archivo de valores](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml) establece explícitamente ignoreUnfixed:false. Los informes son resultados generados por el Operator; no aplique un manifiesto fabricado de CVE/versión de paquete como evidencia de escaneo. Verifique el esquema real de los informes, los namespaces observados, las credenciales de registro, los privilegios del scan-Job y los recursos. Esta auditoría solo renderizó el chart.
+El chart 0.36.0 despliega la aplicación 0.34.0. El [archivo de valores](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml) establece explícitamente ignoreUnfixed:false. Los informes son resultados generados por el operador; no aplique un manifiesto inventado de CVE/versiones de paquetes como prueba de análisis. Compruebe el esquema real del informe, los namespaces vigilados, las credenciales del registro, los privilegios de los Jobs de análisis y sus recursos. Esta auditoría solo generó los manifiestos del chart.
 
 <span id="basic-scanning-vs-enhanced-scanning"></span>
 <span id="enabling-enhanced-scanning"></span>
 <span id="retrieving-scan-results"></span>
 <span id="notifications-via-eventbridge"></span>
 
-## Escaneo de imágenes de Amazon ECR
+## Análisis de imágenes en Amazon ECR {#amazon-ecr-image-scanning}
 
-| Propiedad | Básico | Mejorado |
+| Propiedad | Basic | Enhanced |
 |---|---|---|
-| Motor actual | Escáner nativo de AWS | Amazon Inspector |
-| Cobertura | Vulnerabilidades de paquetes de SO | Paquetes de SO y de lenguaje compatibles |
-| Frecuencia | Manual o scan-on-push | Scan-on-push o continuo |
+| Motor actual | Analizador nativo de AWS | Amazon Inspector |
+| Cobertura | Vulnerabilidades de paquetes del sistema operativo | Paquetes del sistema operativo y de lenguajes compatibles |
+| Frecuencia | Manual o al cargar imágenes | Al cargar imágenes o continua |
 | Resultados | imageScanFindings.findings | imageScanFindings.enhancedFindings |
-| Eventos | Finalización del escaneo básico de ECR | Eventos de escaneo/hallazgos de Inspector2 |
+| Eventos | Finalización del análisis básico de ECR | Eventos de análisis/hallazgos de Inspector2 |
 
-Distinga las descripciones antiguas de Clair del motor Basic actual. Cambiar los modos de escaneo puede modificar la visibilidad de los resultados establecidos. La cobertura mejorada depende de los filtros de repositorio, la duración del reescaneo y los criterios de imágenes compatibles; no todas las imágenes se escanean para siempre. Las imágenes archivadas deben restaurarse antes del escaneo.
+Distinga las antiguas descripciones de Clair del motor Basic actual. Cambiar de modo de análisis puede modificar la visibilidad de resultados existentes. La cobertura de Enhanced depende de los filtros de repositorios, el periodo de nuevos análisis y los criterios de imágenes compatibles; no todas las imágenes se analizan indefinidamente. Las imágenes archivadas deben restaurarse antes de analizarlas.
 
 ```bash
 aws ecr put-registry-scanning-configuration --scan-type ENHANCED --rules '[
@@ -122,13 +122,13 @@ aws ecr put-registry-scanning-configuration --scan-type ENHANCED --rules '[
 aws ecr describe-image-scan-findings --repository-name production/my-app   --image-id imageDigest=sha256:REPLACE_WITH_64_HEX_DIGEST   --query 'imageScanFindings.enhancedFindings[?severity==`CRITICAL`]'
 ```
 
-El comando de configuración escribe la configuración del registro y no fue ejecutado por esta auditoría. Use DescribeImageScanFindings en lugar de depender del resumen Basic heredado en DescribeImages. Habilitar el escaneo de ECR no bloquea automáticamente que las imágenes vulnerables se envíen, extraigan o desplieguen.
+El comando de configuración escribe opciones del registro y no se ejecutó durante esta auditoría. Utilice DescribeImageScanFindings en lugar de depender del resumen Basic heredado de DescribeImages. Habilitar el análisis de ECR no bloquea automáticamente la carga, descarga ni despliegue de imágenes vulnerables.
 
-### Alertas y permisos de Inspector
+### Alertas de Inspector y permisos
 
-Filtre los hallazgos Enhanced mediante source aws.inspector2, detail-type Inspector2 Finding y detail.severity/status/resources[].type. No mezcle esto con Basic ECR Image Scan y finding-severity-counts. Un campo cuyo valor numérico es cero sigue existiendo; exists:true no implica un recuento de vulnerabilidades positivo.
+Filtre los hallazgos de Enhanced mediante source aws.inspector2, detail-type Inspector2 Finding y detail.severity/status/resources[].type. No lo mezcle con ECR Image Scan de Basic ni con finding-severity-counts. Un campo cuyo valor numérico es cero sigue existiendo; exists:true no significa que la cantidad de vulnerabilidades sea positiva.
 
-El [ejemplo completo de CloudFormation](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml) conecta un tema SNS cifrado a un rol de ejecución de EventBridge. Requiere una clave KMS simétrica administrada por el cliente, existente y de la misma cuenta/Region, cuya política permita la delegación de IAM; las suscripciones aprobadas de consumidores de SNS son independientes. EventBridge actual admite roles de ejecución para destinos SNS. No copie las condiciones SourceArn/SourceAccount de KMS del bus de eventos en la ruta directa del principal de servicio a SNS cifrado. La plantilla pasó cfn-lint; la entrega real, la autorización KMS y los reintentos requieren pruebas en el entorno de despliegue.
+El [ejemplo completo de CloudFormation](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/inspector-alerts.yaml) conecta un tema SNS cifrado a un rol de ejecución de EventBridge. Requiere una clave KMS simétrica existente, administrada por el cliente y de la misma cuenta y región, cuya política permita la delegación mediante IAM; las suscripciones aprobadas de consumidores SNS se gestionan por separado. EventBridge admite actualmente roles de ejecución para destinos SNS. No copie las condiciones KMS SourceArn/SourceAccount del bus de eventos a la ruta directa entre el principal de servicio y SNS cifrado. La plantilla superó cfn-lint; la entrega real, la autorización KMS y los reintentos requieren pruebas en el entorno de despliegue.
 
 <span id="cosign-overview"></span>
 <span id="cosign-installation"></span>
@@ -136,11 +136,13 @@ El [ejemplo completo de CloudFormation](https://github.com/Atom-oh/kubernetes-do
 <span id="keyless-signing-oidc-based"></span>
 <span id="github-actions-integration"></span>
 
-## Firma de imágenes con Cosign/Sigstore
+
+
+## Firma de imágenes con Cosign/Sigstore {#image-signing-with-cosignsigstore}
 
 ### Orden de firma y confianza
 
-Para el flujo habitual de registro, envíe la imagen, obtenga su digest y firme ese digest. Verifique una clave de confianza o un emisor/identidad OIDC exactos, el digest y la evidencia requerida de transparencia/marca de tiempo. Una firma por sí sola no establece un firmante aprobado ni la ausencia de vulnerabilidades.
+En el flujo habitual con un registro, cargue la imagen, obtenga su digest y firme ese digest. Verifique una clave confiable o el emisor y la identidad OIDC exactos, el digest y las pruebas de transparencia y sellado de tiempo exigidas. Una firma por sí sola no demuestra que el firmante esté aprobado ni que no existan vulnerabilidades.
 
 ```bash
 cosign version
@@ -149,20 +151,20 @@ cosign sign --key cosign.key "$IMAGE_REF"
 cosign verify --key cosign.pub "$IMAGE_REF"
 ```
 
-No incluya claves privadas en commits. Administre su ciclo de vida mediante administradores de credenciales/KMS o controles equivalentes. GitHub Actions sin clave usa id-token:write y el entorno OIDC de Actions. GITHUB_TOKEN es una credencial de registro/API, no el token de ID OIDC en sí.
+No incluya claves privadas en commits. Gestione su ciclo de vida mediante gestores de credenciales/KMS o controles equivalentes. La firma sin claves en GitHub Actions utiliza id-token:write y el entorno OIDC de Actions. GITHUB_TOKEN es una credencial de registro/API, no el propio token de identidad OIDC.
 
 ```bash
 cosign sign --yes "$IMAGE_REF"
 cosign verify   --certificate-identity 'https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main'   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'   "$IMAGE_REF"
 ```
 
-Reemplace la identidad por el workflow aprobado. --certificate-identity-regexp acepta una expresión regular, no un glob. Prefiera una identidad exacta o una expresión regular anclada en lugar de expresiones permisivas como `https://github.com/org/repo/*`. Verifique la compatibilidad de los bundles/referrers OCI de Cosign 3 con los verificadores posteriores.
+Sustituya la identidad por el workflow aprobado. --certificate-identity-regexp acepta una expresión regular, no un patrón glob. Prefiera una identidad exacta o una expresión regular anclada a expresiones permisivas como `https://github.com/org/repo/*`. Compruebe la compatibilidad de los bundles y los OCI referrers de Cosign 3 con los verificadores que los consumen.
 
 <span id="kyverno-imageverify"></span>
 
-## Verificación de imágenes en el control de admisión
+## Verificación de imágenes en el control de admisión {#image-verification-in-admission-control}
 
-Kyverno 1.19.1 advierte que ClusterPolicy está obsoleto. Los nuevos ejemplos usan policies.kyverno.io/v1 ValidatingPolicy e ImageValidatingPolicy. La regla verifyImages heredada no es el nombre del nuevo tipo de política.
+Kyverno 1.19.1 advierte de que ClusterPolicy está obsoleta. Los nuevos ejemplos utilizan ValidatingPolicy e ImageValidatingPolicy de policies.kyverno.io/v1. La regla heredada verifyImages no es el nombre del nuevo tipo de política.
 
 ### Política de registro y digest
 
@@ -196,9 +198,9 @@ spec:
       message: All container images must use the approved repository and a SHA-256 digest.
 ```
 
-Esto cubre contenedores ordinarios, init y efímeros, incluidas las actualizaciones de pods/ephemeralcontainers. Reemplace example-org por repositorios aprobados. Un formato de digest fija una dirección de contenido; no realiza verificación de firma ni de vulnerabilidades.
+Esto abarca contenedores ordinarios, init y efímeros, incluidas las actualizaciones de pods/ephemeralcontainers. Sustituya example-org por los repositorios aprobados. El formato de digest fija una dirección de contenido; no verifica firmas ni vulnerabilidades.
 
-### Política de firma de workflow
+### Política de firma del workflow
 
 ```yaml
 apiVersion: policies.kyverno.io/v1
@@ -249,15 +251,15 @@ spec:
       message: Image signature must match the approved workflow and transparency proof.
 ```
 
-Las imágenes fuera de matchImageReferences se pueden omitir mediante la verificación de imágenes, por lo que aplique también la política de registro. Diseñe excepciones de namespace, acceso a PolicyException, disponibilidad/tiempos de espera de webhook, credenciales de registro y confianza TLS, y luego pruebe las solicitudes de admisión reales. La política de firma se verificó con el esquema CRD; esto no es evidencia de verificación activa de registro/Fulcio/Rekor. Los ejemplos de producción no deshabilitan las verificaciones de transparencia.
+La verificación de imágenes puede omitir las imágenes que no coincidan con matchImageReferences, por lo que también debe aplicar la política de registro. Diseñe las excepciones de namespaces, el acceso a PolicyException, la disponibilidad y los tiempos de espera del webhook, las credenciales del registro y la confianza TLS; después pruebe solicitudes reales de admisión. La política de firma se comprobó con el esquema de la CRD; esto no demuestra una verificación real contra el registro/Fulcio/Rekor. Los ejemplos de producción no deshabilitan las comprobaciones de transparencia.
 
 <span id="connaisseur"></span>
 
-### Alternativa Connaisseur — ruta de firma heredada
+### Alternativa Connaisseur: ruta de firmas heredadas
 
-**Connaisseur 3.12.0 no consume bundles predeterminados de Cosign 3.** Usa la ruta de verificación cosign/v2 con tags de firma heredados y cargas útiles SimpleSigning. Use un productor de compatibilidad independiente. El [script de firma heredada](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh) establece explícitamente Cosign 3.1.3 `--new-bundle-format=false --registry-referrers-mode=legacy` mientras mantiene la carga/verificación de transparencia. La configuración de firma complementaria selecciona explícitamente Rekor v1 para el formato de registro del verificador heredado. Proporcione claves aprobadas reales y un digest. Esta ruta es independiente del formato de bundle predeterminado de secure-build.yaml; no proporcione directamente a Connaisseur la salida predeterminada de ese workflow. Los flags heredados están obsoletos, así que planifique una migración coordinada de productor/verificador. Se verificaron las opciones de CLI y ambos contratos fuente; no se ejecutó la integración de registro/firma.
+**Connaisseur 3.12.0 no consume los bundles predeterminados de Cosign 3.** Utiliza la ruta de verificación de cosign/v2 con etiquetas de firma heredadas y cargas SimpleSigning. Utilice un productor de compatibilidad independiente. El [script de firma heredada](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh) establece explícitamente `--new-bundle-format=false --registry-referrers-mode=legacy` de Cosign 3.1.3, manteniendo la carga y verificación de transparencia. La configuración de firma adjunta selecciona explícitamente Rekor v1 para el formato de registro del verificador heredado. Proporcione claves reales aprobadas y un digest. Esta ruta es independiente del formato de bundle predeterminado de secure-build.yaml; no entregue directamente la salida predeterminada de ese workflow a Connaisseur. Los flags heredados están obsoletos, por lo que debe planificarse una migración coordinada del productor y el verificador. Se comprobaron las opciones de CLI y los contratos de ambos códigos fuente; no se ejecutó la integración del registro y las firmas.
 
-Connaisseur 3.12.0/chart 2.12.0 es otra opción. En el [ejemplo de valores](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml), los validadores y la política pertenecen a application, y deny es un validador estático definido explícitamente. La clave pública incluida es una clave de prueba sintética que se debe reemplazar con la clave de confianza real.
+Connaisseur 3.12.0/chart 2.12.0 es otra opción. En el [ejemplo de valores](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml), validators y policy pertenecen a application, y deny es un validador estático definido explícitamente. La clave pública incluida es una clave sintética de prueba que debe sustituirse por la clave real de confianza.
 
 ```bash
 helm repo add connaisseur https://sse-secure-systems.github.io/connaisseur/charts
@@ -265,13 +267,13 @@ helm upgrade --install connaisseur connaisseur/connaisseur   --version 2.12.0 --
 kubectl label namespace production securesystemsengineering.connaisseur/webhook=validate
 ```
 
-El ejemplo usa el modo validate de namespaced-validation y solo verifica los namespaces con esa etiqueta. Una identidad autorizada para cambiar etiquetas de namespace puede omitir esta selección, así que gestione esos permisos. Kyverno y Connaisseur son alternativas, no un requisito para instalar ambos. El renderizado de Helm no sustituye las pruebas reales de permitir/denegar firmas.
+El ejemplo utiliza namespaced-validation en modo validate y solo comprueba namespaces con esa etiqueta. Una identidad autorizada a cambiar etiquetas de namespaces puede eludir esta selección, por lo que esos permisos deben controlarse. Kyverno y Connaisseur son alternativas; no es obligatorio instalar ambos. La generación de manifiestos con Helm no sustituye las pruebas reales de aceptación y rechazo de firmas.
 
 <span id="sbom-software-bill-of-materials-generation"></span>
 <span id="sbom-based-vulnerability-scanning"></span>
 <span id="slsa-supply-chain-levels-for-software-artifacts"></span>
 
-## Seguridad de la cadena de suministro
+## Seguridad de la cadena de suministro {#supply-chain-security}
 
 ### SBOM y atestaciones
 
@@ -285,34 +287,34 @@ cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$IMAGE_REF"
 cosign verify-attestation --type spdxjson   --certificate-identity 'https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main'   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' "$IMAGE_REF"
 ```
 
-Los comandos de generación Syft/Trivy son alternativas. Un SBOM inventaría lo que detecta la herramienta; no se garantiza su integridad ni seguridad. cosign attach sbom está obsoleto y un adjunto simple difiere de una atestación firmada. Valide conjuntamente el contenido del predicado, el digest del sujeto, el firmante, el momento de verificación y la política.
+Los comandos de generación de Syft/Trivy son alternativas. Una SBOM registra los componentes que detecta la herramienta; no se garantizan su integridad ni la seguridad. cosign attach sbom está obsoleto, y un adjunto simple difiere de una atestación firmada. Valide conjuntamente el contenido del predicado, el digest del sujeto, el firmante, el momento de verificación y la política.
 
 ### Procedencia SLSA
 
-La procedencia registra relaciones entre las entradas de compilación, el constructor y el artefacto. Invocar una acción de generación no satisface automáticamente el nivel de compilación 3 de SLSA. Evalúe por separado los requisitos pertinentes de aislamiento, resistencia a la falsificación de procedencia y política de código fuente.
+La procedencia registra las relaciones entre las entradas de compilación, el constructor y el artefacto. Invocar una acción de generación no satisface automáticamente SLSA Build Level 3. Evalúe por separado los requisitos pertinentes de aislamiento, resistencia a la falsificación de procedencia y políticas de código fuente.
 
-Para los workflows reutilizables existentes de slsa-github-generator, verifique la cadena de herramientas compatible y los requisitos del llamador. El nuevo workflow a continuación usa actions/attest actual. La versión 4 de attest-build-provenance es un wrapper; las nuevas implementaciones se dirigen a actions/attest. Verifique las diferencias de plan de GitHub y raíz de confianza de Sigstore para repositorios públicos frente a privados.
+Para los workflows reutilizables existentes de slsa-github-generator, compruebe la cadena de herramientas compatible y los requisitos del invocador. El nuevo workflow siguiente utiliza la acción actual actions/attest. La versión 4 de attest-build-provenance es una envoltura; las nuevas implementaciones se orientan a actions/attest. Compruebe las diferencias de planes de GitHub y raíces de confianza de Sigstore entre repositorios públicos y privados.
 
 <span id="image-type-comparison"></span>
 <span id="using-distroless-images"></span>
 <span id="using-chainguard-images"></span>
 <span id="alpine-security-hardening"></span>
 
-## Selección de imagen base
+## Selección de la imagen base {#base-image-selection}
 
-| Imagen | Características | Verificación |
+| Imagen | Características | Comprobación |
 |---|---|---|
-| Distroless | Los runtimes estándar omiten shell/administrador de paquetes | Las variantes de depuración, bibliotecas y dependencias de la aplicación difieren |
-| Alpine | Distribución pequeña basada en musl | Compatibilidad con glibc, duración del mantenimiento, digest real |
-| Chainguard | Variantes diferenciadas mínimas de runtime y desarrollo | No suponga que las imágenes de runtime contienen shell/pip |
-| Ubuntu/Debian | Selección más amplia de paquetes/herramientas | El tamaño por sí solo no determina el recuento de vulnerabilidades |
-| Scratch | Imagen base vacía | Los binarios copiados, archivos CA y dependencias de la aplicación aún pueden ser vulnerables |
+| Distroless | Las imágenes estándar de ejecución omiten el shell y el gestor de paquetes | Las variantes de depuración, bibliotecas y dependencias de la aplicación difieren |
+| Alpine | Distribución pequeña basada en musl | Compatibilidad con glibc, periodo de mantenimiento, digest real |
+| Chainguard | Variantes mínimas de ejecución y de desarrollo diferenciadas | No dé por supuesto que las imágenes de ejecución contienen shell/pip |
+| Ubuntu/Debian | Selección más amplia de paquetes y herramientas | El tamaño por sí solo no determina la cantidad de vulnerabilidades |
+| Scratch | Imagen base vacía | Los binarios copiados, los archivos de CA y las dependencias de la aplicación aún pueden ser vulnerables |
 
-No confunda los antiguos ejemplos de Go 1.22/Alpine 3.19 con bases de referencia compatibles actuales. Verifique el mantenimiento, EOL del SO, ABI de CPU, digests y hallazgos de escaneo al actualizar. Distroless recibe binarios de una etapa de compilación; siga el patrón de Python de Chainguard de preparar dependencias/venv en una etapa de desarrollo y copiarlas al runtime. Este documento no ejecutó compilaciones de Dockerfile ni comparó recuentos de vulnerabilidades.
+No confunda los antiguos ejemplos de Go 1.22/Alpine 3.19 con versiones de referencia actualmente soportadas. Al actualizar, compruebe el mantenimiento, el fin de vida del sistema operativo, la ABI de CPU, los digests y los hallazgos de análisis. Distroless recibe binarios de una etapa de compilación; siga el patrón de Chainguard Python que prepara dependencias/venv en una etapa de desarrollo y los copia a la etapa de ejecución. En este documento no se ejecutaron compilaciones de Dockerfiles ni se compararon cantidades de vulnerabilidades.
 
-### Ejemplos de compilación de imágenes base mínimas
+### Ejemplos de compilación con imágenes base mínimas
 
-El [contexto de compilación completo](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/image-security/base-images) contiene programas Go/Python que imprimen un mensaje fijo y tres Dockerfiles. Seleccione un Dockerfile para comparar los patrones; estos no son ejemplos de servidores web. Se verificaron los digests de índice de base y la disponibilidad amd64/arm64, pero no se ejecutaron compilaciones/runtimes de contenedores.
+El [contexto de compilación completo](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/image-security/base-images) contiene programas Go/Python que imprimen un mensaje fijo y tres Dockerfiles. Seleccione un Dockerfile para comparar los patrones; no son ejemplos de servidores web. Se comprobaron los digests de los índices de imágenes base y la disponibilidad de amd64/arm64, pero no se compilaron ni ejecutaron los contenedores.
 
 **Dockerfile.distroless**
 
@@ -353,32 +355,34 @@ USER 10001:10001
 ENTRYPOINT ["python3", "/app/app.py"]
 ```
 
-Las aplicaciones se ejecutaron directamente con Go 1.27.1 y Python 3.12, y los tres Dockerfiles superaron las verificaciones de configuración HIGH/CRITICAL. Los requisitos de Python están vacíos en este fixture. Añadir dependencias reales requiere locks/hashes, verificaciones ABI de compilador/runtime y escaneo de vulnerabilidades. Administre por separado los repositorios apk de Alpine y las actualizaciones del digest base.
+Las aplicaciones se ejecutaron directamente con Go 1.27.1 y Python 3.12, y los tres Dockerfiles superaron las comprobaciones de configuración HIGH/CRITICAL. En este conjunto de prueba, los requisitos de Python están vacíos. Añadir dependencias reales requiere archivos de bloqueo y hashes, comprobaciones de ABI entre compilación y ejecución, y análisis de vulnerabilidades. Gestione por separado los repositorios apk de Alpine y las actualizaciones de digests de las imágenes base.
 
 <span id="using-private-registries"></span>
 <span id="image-pull-policies"></span>
 <span id="immutable-tag-policy-kyverno"></span>
 
-## Prácticas recomendadas para el registro de imágenes
+## Buenas prácticas para registros de imágenes {#image-registry-best-practices}
 
-- Las imágenes privadas necesitan identidades de extracción aprobadas. Los roles de ejecución de ECR kubelet/node/Fargate difieren de Pod Identity de la aplicación.
-- Los registros externos pueden usar un Secret kubernetes.io/dockerconfigjson válido y ServiceAccount imagePullSecrets. Base64 no es cifrado.
-- imagePullPolicy:Always controla la comprobación de referencias del registro, no la verificación de firmas. Configure por separado la fijación de digest, la verificación de admisión y los controles de escaneo.
-- Un patrón que prohíbe solo latest puede omitir tags y las imágenes init/efímeras sin especificar. Pruebe el alcance con la política de registro/digest anterior.
-- La extracción anónima de imágenes deliberadamente públicas no es inherentemente una vulnerabilidad. Separe los requisitos de confidencialidad, permisos de envío, procedencia, límites de tasa y licencias.
-- Asegúrese de que la retención/recolección de basura no elimine digests activos ni referrers de firma/atestación necesarios; pruebe la recuperación.
+- Las imágenes privadas necesitan identidades aprobadas para descargarlas. Los roles de ejecución de ECR para kubelet/nodos/Fargate difieren de la Pod Identity de la aplicación.
+- Los registros externos pueden utilizar un Secret kubernetes.io/dockerconfigjson válido y imagePullSecrets de ServiceAccount. Base64 no es cifrado.
+- imagePullPolicy:Always controla la comprobación de referencias del registro, no la verificación de firmas. Configure por separado la fijación de digests, la verificación de admisión y los controles de análisis.
+- Un patrón que solo prohíba latest puede no detectar etiquetas omitidas ni imágenes init/efímeras. Pruebe la cobertura con la política de registro/digest anterior.
+- La descarga anónima de imágenes publicadas intencionadamente no es una vulnerabilidad por sí misma. Separe los requisitos de confidencialidad, permisos de carga, procedencia, límites de frecuencia y licencias.
+- Asegúrese de que la retención y la recolección de elementos no utilizados no eliminen digests activos ni referrers necesarios de firmas o atestaciones; pruebe la recuperación.
 
 <span id="complete-image-security-pipeline"></span>
 
-## Integración de la canalización de CI/CD
 
-Revise el [archivo de workflow completo](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/secure-build.yaml) antes de colocarlo en .github/workflows/secure-build.yaml en el repositorio de la aplicación. Un Dockerfile y un contexto de compilación reales son requisitos previos. Sus propiedades previstas son:
 
-1. El escaneo de PR usa un job de solo lectura sin publicación en el registro/firma OIDC.
-2. El job de lanzamiento al enviar a main compila una vez y escanea esa imagen local.
-3. Envía sin recompilar y captura el RepoDigest.
-4. La firma, verificación, atestación SBOM y procedencia usan ese mismo digest.
-5. Las Actions se fijan a SHA de commits revisados; se deshabilitan los registros independientes de almacenamiento de artefactos.
+## Integración en la canalización de CI/CD {#cicd-pipeline-integration}
+
+Revise el [archivo completo del workflow](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/secure-build.yaml) antes de colocarlo en .github/workflows/secure-build.yaml del repositorio de la aplicación. Se requieren un Dockerfile real y un contexto de compilación. Sus propiedades previstas son:
+
+1. El análisis de PR utiliza un job de solo lectura sin publicación en el registro ni firma OIDC.
+2. El job de publicación activado por un push a main compila una vez y analiza esa imagen local.
+3. Carga la imagen sin recompilar y captura el RepoDigest.
+4. La firma, la verificación, la atestación SBOM y la procedencia utilizan ese mismo digest.
+5. Las actions están fijadas a SHA de commits revisados; se deshabilitan los registros separados de almacenamiento de artefactos.
 
 ```yaml
 name: Secure Image Build
@@ -503,33 +507,33 @@ jobs:
           create-storage-record: false
 ```
 
-Configure los permisos de paquete de GHCR, OIDC de Actions, soporte del plan de atestaciones y acceso de red. Se verificaron las entradas YAML/action del workflow y la sintaxis de shell, pero no se ejecutó ningún workflow de compilación/envío/firma/atestación en GitHub runner. No ignore los errores de SBOM/firma ni continúe con digests vacíos. Si añade cargas de SARIF, gestione por separado los permisos security-events de PR de forks y la conservación de resultados tras un fallo de escaneo.
+Configure los permisos de paquetes de GHCR, OIDC de Actions, el soporte de atestaciones del plan y el acceso de red. Se comprobaron el YAML del workflow, las entradas de las actions y la sintaxis de shell, pero no se ejecutó ningún workflow de compilación, carga, firma y atestación en un runner de GitHub. No ignore los fallos de SBOM/firmas ni propague digests vacíos. Si añade cargas SARIF, gestione por separado los permisos security-events de PR procedentes de forks y la conservación de resultados tras un fallo de análisis.
 
-## Verificaciones realizadas y límites
+## Comprobaciones realizadas y límites
 
-- Trivy 0.74: dos casos de secretos sintéticos y dos verificaciones de Dockerfile sin root. No hubo una base de datos CVE real ni escaneo de imágenes remotas.
-- Cosign 3.1.3: verificación de clave/blob local sintética válida/manipulada. Omitir la transparencia en ese fixture privado no es evidencia de verificación de registro/OIDC de producción.
-- Kyverno 1.19.1: seis casos de objetos CEL de registro/digest, incluidos contenedores init/efímeros, más dos esquemas CRD fijados. Sin admisión activa ni verificación de firma en red.
-- Se ejecutaron el renderizado Helm de Trivy Operator/Connaisseur, fixtures sintéticos de modelo de API ECR/JMESPath, lint de CloudFormation y actionlint. No se ejecutaron recursos de AWS, notificaciones ni envíos al registro.
+- Trivy 0.74: dos casos sintéticos de secretos y dos comprobaciones de ejecución sin root en Dockerfiles. No se utilizó una base de datos real de CVE ni se analizaron imágenes remotas.
+- Cosign 3.1.3: verificación local sintética con clave y blob válidos o alterados. Omitir la transparencia en ese conjunto privado de prueba no constituye evidencia de verificación del registro/OIDC en producción.
+- Kyverno 1.19.1: seis casos de objetos CEL de registro/digest que incluyen contenedores init/efímeros, además de dos esquemas CRD fijados a versiones concretas. No se realizaron admisiones reales ni verificación de firmas por red.
+- Se ejecutaron la generación de manifiestos Helm de Trivy Operator/Connaisseur, pruebas sintéticas de modelos de API de ECR/JMESPath, lint de CloudFormation y actionlint. No se actuó sobre recursos AWS, no se enviaron notificaciones ni se cargaron imágenes en registros.
 
 <span id="summary"></span>
 <span id="recommendations"></span>
 
 ## Referencias
 
-- [Lanzamientos de Trivy](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0)
+- [Versiones de Trivy](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0)
 - [Documentación de Trivy](https://aquasecurity.github.io/trivy/)
 - [Chart de Trivy Operator](https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm)
-- [Escaneo de ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html)
+- [Análisis de ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html)
 - [Esquemas de eventos de Inspector](https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html)
-- [Autorización de destino de EventBridge](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
-- [Compatibilidad de KMS con SNS](https://docs.aws.amazon.com/sns/latest/dg/sns-key-management.html)
+- [Autorización de destinos de EventBridge](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
+- [Compatibilidad KMS de SNS](https://docs.aws.amazon.com/sns/latest/dg/sns-key-management.html)
 - [Cosign 3.1.3](https://github.com/sigstore/cosign/releases/tag/v3.1.3)
 - [Verificación de Sigstore](https://docs.sigstore.dev/cosign/verifying/verify/)
-- [Migración CEL de Kyverno](https://kyverno.io/docs/guides/migration-to-cel/)
-- [Kyverno ImageValidatingPolicy](https://kyverno.io/docs/policy-types/image-validating-policy/)
+- [Migración de Kyverno a CEL](https://kyverno.io/docs/guides/migration-to-cel/)
+- [ImageValidatingPolicy de Kyverno](https://kyverno.io/docs/policy-types/image-validating-policy/)
 - [Validación por namespace de Connaisseur](https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md)
-- [Requisitos de SLSA](https://slsa.dev/spec/v1.2/build-requirements)
+- [Requisitos SLSA](https://slsa.dev/spec/v1.2/build-requirements)
 - [Acción attest de GitHub](https://github.com/actions/attest/tree/v4.2.2)
 - [Distroless](https://github.com/GoogleContainerTools/distroless)
 - [Chainguard Python](https://images.chainguard.dev/directory/image/python/overview)

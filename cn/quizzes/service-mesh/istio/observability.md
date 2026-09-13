@@ -1,16 +1,19 @@
 # 可观测性测验
 
-> **支持版本**: Istio 1.28.0 **EKS 版本**: 1.34 (Kubernetes 1.28+) **最后更新**: February 19, 2026
+> **最后更新**：2026 年 9 月 11 日 · Istio 1.31 · Kubernetes 1.32–1.36。EKS 和 Kiali 兼容性限制参阅安装及仪表板章节。
 
-本测验检验你对 Istio 可观测性功能的理解。
+本测验涵盖已配置的 Sidecar/waypoint 遥测。各示例独立，假定所述后端、命名空间、权限和流量已存在。YAML/API/查询检查不是生产或真实集群测试；ztunnel L4、原生 Sidecar 和高可用部署需要各自采集配置。
 
 ## 选择题（1-5）
 
 ### 问题 1：Prometheus 指标
 
-以下哪个指标**不会**由 Istio 中的 Prometheus 默认采集？
+哪项**不是 Istio 标准服务指标名称/族**？
 
-A. istio\_requests\_total（请求总数） B. istio\_request\_duration\_milliseconds（请求延迟） C. istio\_request\_bytes（请求大小） D. istio\_pod\_cpu\_usage（Pod CPU 使用量）
+A. istio\_requests\_total（总请求数）\
+B. istio\_request\_duration\_milliseconds（请求延迟）\
+C. istio\_request\_bytes（请求大小）\
+D. istio\_pod\_cpu\_usage（Pod CPU 用量）
 
 <details>
 
@@ -18,49 +21,49 @@ A. istio\_requests\_total（请求总数） B. istio\_request\_duration\_millise
 
 **答案：D**
 
-Istio Envoy 仅采集**流量相关指标**，而 Pod CPU 使用量由 **Kubernetes Metrics Server** 或 **cAdvisor** 采集。
+Istio 标准服务指标描述流量；Envoy 还暴露内部代理统计。Prometheus 从 kubelet/cAdvisor（或运行时资源管道）获取容器 CPU 用量。Metrics Server 为自动扩缩容和 `kubectl top` 提供资源指标；kube-state-metrics 暴露对象状态及配置的 requests/limits，不是实测 CPU 消耗。
 
-**说明：**
+**解释：**
 
 **Istio 采集的指标：**
 
-1. **istio\_requests\_total (A - O)**
+1. **istio\_requests\_total（A - O）**
 
 ```promql
-# Total requests by service
-sum(rate(istio_requests_total[5m])) by (destination_service_name)
+# Request rate by service (per second)
+sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 ```
 
-2. **istio\_request\_duration\_milliseconds (B - O)**
+2. **istio\_request\_duration\_milliseconds（B - O）**
 
 ```promql
 # P95 latency
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
 )
 ```
 
-3. **istio\_request\_bytes (C - O)**
+3. **istio\_request\_bytes（C - O）**
 
 ```promql
-# Request size
-sum(rate(istio_request_bytes_sum[5m])) by (destination_service_name)
+# Request body byte rate (bytes/second), not mean request size
+sum(rate(istio_request_bytes_sum{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 ```
 
-4. **istio\_pod\_cpu\_usage (D - X)**
+4. **istio\_pod\_cpu\_usage（D - X）**
 
 * 这不是 Istio 指标
 * Kubernetes 指标：`container_cpu_usage_seconds_total`
-* 需要 kube-state-metrics 才能在 Prometheus 中采集
+* 抓取 kubelet/cAdvisor；比较用量与配置 limits 时，kube-state-metrics 很有用
 
 **Istio 指标类别：**
 
-| 类别     | 示例指标                                | 描述                   |
+| 类别 | 示例指标 | 描述 |
 | ------------ | --------------------------------------------- | ----------------------------- |
-| **请求**  | istio\_requests\_total                        | 请求数量、响应代码 |
-| **时长** | istio\_request\_duration\_milliseconds        | 延迟分布          |
-| **大小**     | istio\_request\_bytes, istio\_response\_bytes | 流量大小                  |
-| **TCP**      | istio\_tcp\_connections\_opened\_total        | TCP 连接               |
+| **请求** | istio\_requests\_total | 请求数、响应码 |
+| **持续时间** | istio\_request\_duration\_milliseconds | 延迟分布 |
+| **大小** | istio\_request\_bytes、istio\_response\_bytes | 流量大小 |
+| **TCP** | istio\_tcp\_connections\_opened\_total | TCP 连接 |
 
 **黄金信号示例：**
 
@@ -68,37 +71,37 @@ sum(rate(istio_request_bytes_sum[5m])) by (destination_service_name)
 # 1. Latency
 histogram_quantile(0.95,
   sum(rate(
-    istio_request_duration_milliseconds_bucket{
-      destination_service_name="reviews"
+    istio_request_duration_milliseconds_bucket{reporter="destination",
+      destination_service_name="reviews", destination_service_namespace="default"
     }[5m]
   )) by (le)
 )
 
 # 2. Traffic
 sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews"
+  istio_requests_total{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default"
   }[5m]
 ))
 
 # 3. Errors (error rate)
 sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews",
+  istio_requests_total{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default",
     response_code=~"5.."
   }[5m]
 ))
 /
 sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews"
+  istio_requests_total{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default"
   }[5m]
 ))
 
 # 4. Saturation - Uses Kubernetes metrics
 sum(rate(
   container_cpu_usage_seconds_total{
-    pod=~"reviews-.*"
+    namespace="default", container="istio-proxy", pod=~"reviews-.*"
   }[5m]
 ))
 ```
@@ -107,8 +110,7 @@ sum(rate(
 
 ```bash
 # Check metrics via Envoy Admin API
-kubectl exec <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus
+istioctl x envoy-stats <pod-name>.default --output prom
 
 # Check in Prometheus
 kubectl port-forward -n istio-system svc/prometheus 9090:9090
@@ -125,9 +127,12 @@ kubectl port-forward -n istio-system svc/prometheus 9090:9090
 
 ### 问题 2：分布式追踪
 
-在 Istio 中启用分布式追踪所需的**最低配置**是什么？
+在追踪提供程序/后端正常工作的前提下，要连接跨服务调用的代理 span，应用必须承担哪项职责？
 
-A. 应用程序必须生成 trace ID B. 应用程序必须传播 HTTP header C. 必须在所有 Service 上安装 Jaeger client D. Envoy 自动处理所有事项
+A. 应用必须生成 trace ID\
+B. 应用必须传播 HTTP 标头\
+C. 所有服务必须安装 Jaeger 客户端\
+D. Envoy 自动处理一切
 
 <details>
 
@@ -135,56 +140,28 @@ A. 应用程序必须生成 trace ID B. 应用程序必须传播 HTTP header C. 
 
 **答案：B**
 
-Istio Envoy 会自动生成 trace ID，但**应用程序必须将 HTTP header 传播**到下一个 Service。
+配置的代理可生成 span 和 trace ID，但应用必须向出站调用传播追踪上下文。SDK 应注入活动上下文，因此子 span ID 可改变，而 trace ID 保持相同。没有自身 span 的透明应用可转发所选传播标头。
 
-**说明：**
+**解释：**
 
-**分布式追踪的工作方式：**
+**分布式追踪如何工作：**
 
-```mermaid
-flowchart LR
-    User[User] --> Gateway[Ingress Gateway]
-    Gateway -->|x-request-id: abc123<br/>x-b3-traceid: xyz| ServiceA[Service A]
-    ServiceA -->|Header propagation required| ServiceB[Service B]
-    ServiceB -->|Header propagation required| ServiceC[Service C]
+![Ingress Gateway 为入站请求生成追踪标头，各下游服务（A、B、C）向下一跳传播追踪上下文，每一跳也将自己的 span 发送到 Jaeger。](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-0.png)
 
-    Gateway -.->|Send Span| Jaeger[Jaeger]
-    ServiceA -.->|Send Span| Jaeger
-    ServiceB -.->|Send Span| Jaeger
-    ServiceC -.->|Send Span| Jaeger
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-observability-0.html)
 
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef jaeger fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+图中演示 B3 传播到已配置 Jaeger 后端。也支持 W3C 传播及中间 OpenTelemetry Collector；已插桩应用注入其活动 span 上下文，不是原样复制每个标头。
 
-    class User user;
-    class Gateway gateway;
-    class ServiceA,ServiceB,ServiceC service;
-    class Jaeger jaeger;
+**需要传播的 HTTP 标头：**
+
+```text
+W3C: traceparent, tracestate
+B3 (if configured): b3 OR x-b3-traceid, x-b3-spanid, x-b3-parentspanid, x-b3-sampled
+Istio correlation: x-request-id
+B3 debug flag: x-b3-flags (do not force debug sampling on ordinary traffic)
 ```
 
-**要传播的 HTTP Headers：**
-
-```yaml
-# Zipkin (B3) headers
-x-b3-traceid: Trace ID
-x-b3-spanid: Current Span ID
-x-b3-parentspanid: Parent Span ID
-x-b3-sampled: Sampling decision
-x-b3-flags: Flags
-
-# Or single header
-b3: {traceid}-{spanid}-{sampled}-{parentspanid}
-
-# Istio internal headers
-x-request-id: Unique request ID
-
-# Jaeger native headers (optional)
-uber-trace-id
-```
-
-**应用程序代码示例：**
+**应用代码示例：**
 
 ```python
 # Python Flask example
@@ -197,7 +174,7 @@ app = Flask(__name__)
 def get_users():
     # 1. Extract received headers
     headers = {}
-    for header in ['x-request-id', 'x-b3-traceid', 'x-b3-spanid',
+    for header in ['x-request-id', 'traceparent', 'tracestate', 'b3', 'x-b3-traceid', 'x-b3-spanid',
                    'x-b3-parentspanid', 'x-b3-sampled', 'x-b3-flags']:
         if header in request.headers:
             headers[header] = request.headers[header]
@@ -205,9 +182,10 @@ def get_users():
     # 2. Propagate headers when calling next service
     response = requests.get(
         'http://user-service/users',
-        headers=headers  # Header propagation required
+        headers=headers, timeout=3  # Selected propagation format
     )
 
+    response.raise_for_status()
     return response.json()
 ```
 
@@ -220,7 +198,7 @@ const app = express();
 app.get('/api/users', async (req, res) => {
   // 1. Extract received headers
   const tracingHeaders = {};
-  ['x-request-id', 'x-b3-traceid', 'x-b3-spanid',
+  ['x-request-id', 'traceparent', 'tracestate', 'b3', 'x-b3-traceid', 'x-b3-spanid',
    'x-b3-parentspanid', 'x-b3-sampled', 'x-b3-flags'].forEach(header => {
     if (req.headers[header]) {
       tracingHeaders[header] = req.headers[header];
@@ -228,43 +206,50 @@ app.get('/api/users', async (req, res) => {
   });
 
   // 2. Propagate headers when calling next service
-  const response = await axios.get('http://user-service/users', {
-    headers: tracingHeaders  // Header propagation required
-  });
-
-  res.json(response.data);
+  try {
+    const response = await axios.get('http://user-service/users', {
+      headers: tracingHeaders, timeout: 3000
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(502).json({error: 'Downstream request failed'});
+  }
 });
 ```
 
 **各选项分析：**
 
-* **A (X)**：Envoy 自动生成 trace ID
-* **B (O)**：应用程序必须传播 HTTP header（必需）
-* **C (X)**：不需要 Jaeger client，Envoy 会发送 Span
-* **D (X)**：Envoy 创建并发送 Span，但传播 header 是应用程序的职责
+* **A（X）**：Envoy 自动生成 trace ID
+* **B（O）**：应用必须传播 HTTP 标头（必需）
+* **C（X）**：无需 Jaeger 客户端，Envoy 发送 span
+* **D（X）**：Envoy 创建/发送 span，但标头传播是应用职责
 
 **采样配置：**
 
+此处假定使用追踪章节的 `otel-tracing` 提供程序。`1.0` 表示 1%，不是 100%；提供程序/导出器设置和上下文传播是独立要求。
+
 ```yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: tracing-sample
+  namespace: default
 spec:
-  meshConfig:
-    defaultConfig:
-      tracing:
-        sampling: 1.0  # 100% sampling (development)
-        # sampling: 10.0  # 10% sampling (production)
+  tracing:
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 1.0
 ```
 
 **访问 Jaeger：**
 
 ```bash
-istioctl dashboard jaeger
+kubectl port-forward -n observability svc/jaeger-query 16686:16686
 ```
 
 **参考资料：**
 
-* [分布式追踪](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/02-distributed-tracing.md)
+* [分布式追踪](../../../service-mesh/istio/observability/02-tracing.md)
 
 </details>
 
@@ -272,9 +257,12 @@ istioctl dashboard jaeger
 
 ### 问题 3：Kiali 可视化
 
-以下哪项功能**不**由 Kiali 提供？
+Kiali **不提供**哪项功能？
 
-A. Service 拓扑可视化 B. 流量流向分析 C. 自动执行 Canary 部署 D. Istio 配置验证
+A. 服务拓扑可视化\
+B. 流量分析\
+C. 自动执行金丝雀部署\
+D. Istio 配置验证
 
 <details>
 
@@ -282,13 +270,13 @@ A. Service 拓扑可视化 B. 流量流向分析 C. 自动执行 Canary 部署 D
 
 **答案：C**
 
-Kiali 是一个**观测和分析工具**，而部署执行由 **Argo Rollouts** 等工具处理。
+Kiali 是**观察和分析工具**，部署执行由 **Argo Rollouts** 等工具处理。
 
-**说明：**
+**解释：**
 
-**Kiali 的主要功能：**
+**Kiali 主要功能：**
 
-**1. Service 拓扑可视化 (A - O)**
+**1. 服务拓扑可视化（A - O）**
 
 ```bash
 # Open Kiali dashboard
@@ -301,7 +289,7 @@ istioctl dashboard kiali
 # - Response time display
 ```
 
-**Graph 视图示例：**
+**图视图示例：**
 
 ```
 Frontend → Backend → Database
@@ -314,55 +302,34 @@ Color codes:
 - Gray: No traffic
 ```
 
-**2. 流量流向分析 (B - O)**
+**2. 流量分析（B - O）**
 
-Kiali 显示：
+Kiali 展示：
 
-* 请求数量（RPS）
+* 请求数（RPS）
 * 错误率（%）
 * P50/P95/P99 延迟
 * TCP 连接数
 
-**3. 自动执行 Canary 部署 (C - X)**
+**3. 自动执行金丝雀部署（C - X）**
 
-* Kiali 不执行部署
-* Kiali 仅**可视化**流量分割状态
+* Kiali 可展示流量，并在有权限时编辑 Istio 配置/使用流量向导
+* 它不替代自动渐进式交付控制器
 * 部署执行：Argo Rollouts、Flagger
 
-**4. Istio 配置验证 (D - O)**
+**4. Istio 配置验证（D - O）**
 
-```yaml
-# Items Kiali validates:
+[Kiali 验证目录](https://kiali.io/docs/features/validations/)中的示例：
 
-1. VirtualService errors:
-   - Non-existent host reference
-   - Invalid subset reference
-   - Weight sum not equal to 100
+- VirtualService：未定义子集（`KIA1107`）。
+- DestinationRule：重叠主机/子集定义（`KIA0201`）。
+- AuthorizationPolicy：引用命名空间未找到（`KIA0101`），或主体未关联到已发现工作负载 ServiceAccount（`KIA0106`）。
 
-2. DestinationRule errors:
-   - Subset labels don't match Pods
-   - Duplicate subset names
-
-3. Gateway errors:
-   - Missing TLS certificate
-   - Invalid selector
-
-4. AuthorizationPolicy errors:
-   - Conflicting policies
-   - Invalid principal format
-```
+检查取决于 Kiali 版本、发现范围和访问权限。检查实际代码/消息及生效代理策略；Kiali 不能证明任意策略冲突，也不能证明每个证书和运行时路由都正常。
 
 **Kiali 安装：**
 
-```bash
-# Install Kiali included in Istio samples
-kubectl apply -f samples/addons/kiali.yaml
-
-# Or install with Helm
-helm repo add kiali https://kiali.org/helm-charts
-helm install kiali-server kiali/kiali-server \
-  --namespace istio-system
-```
+固定 Operator、身份验证及当前兼容性限制参阅[仪表板章节](../../../service-mesh/istio/observability/04-dashboards.md)。Kiali 单独安装；示例插件用于演示，没有后端/RBAC 配置的 Helm 安装不是生产设置。
 
 **Kiali 主菜单：**
 
@@ -375,15 +342,15 @@ helm install kiali-server kiali/kiali-server \
 6. Istio Config: VirtualService, DestinationRule, etc.
 ```
 
-**Kiali 与其他工具对比：**
+**Kiali 与其他工具：**
 
-| 工具              | 角色                                | 部署执行 |
+| 工具 | 作用 | 自动渐进式交付 |
 | ----------------- | ----------------------------------- | -------------------- |
-| **Kiali**         | 可视化、分析、验证 | 否                   |
-| **Argo Rollouts** | 渐进式交付                | 是                  |
-| **Flagger**       | 自动 Canary 部署         | 是                  |
-| **Grafana**       | 指标仪表板                   | 否                   |
-| **Jaeger**        | 分布式追踪                 | 否                   |
+| **Kiali** | 可视化、分析、验证 | 否 |
+| **Argo Rollouts** | 渐进式交付 | 是 |
+| **Flagger** | 自动金丝雀部署 | 是 |
+| **Grafana** | 指标仪表板 | 否 |
+| **Jaeger** | 分布式追踪 | 否 |
 
 **实际使用示例：**
 
@@ -406,18 +373,21 @@ istioctl dashboard kiali
 
 **参考资料：**
 
-* [可视化](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
+* [可视化](../../../service-mesh/istio/observability/04-dashboards.md)
 * [Kiali 官方文档](https://kiali.io/docs/)
 
 </details>
 
 ***
 
-### 问题 4：Access Log 配置
+### 问题 4：访问日志配置
 
-如何在 Istio 中配置以 **JSON 格式**输出 Access Log？
+如何在 Istio 中将访问日志输出配置为 **JSON 格式**？
 
-A. 在 IstioOperator 中将 meshConfig.accessLogEncoding 设置为 JSON B. 直接修改 Envoy ConfigMap C. 为每个 Pod 添加 annotation D. 通过 Prometheus query 转换为 JSON
+A. 在 IstioOperator 中将 meshConfig.accessLogEncoding 设为 JSON\
+B. 直接修改 Envoy ConfigMap\
+C. 为每个 Pod 添加注解\
+D. 通过 Prometheus 查询转换为 JSON
 
 <details>
 
@@ -425,11 +395,11 @@ A. 在 IstioOperator 中将 meshConfig.accessLogEncoding 设置为 JSON B. 直�
 
 **答案：A**
 
-在 IstioOperator 中将 **meshConfig.accessLogEncoding** 字段设置为 `JSON`。
+A 是有效的 MeshConfig 方法：在 `istioctl install -f` 输入中启用日志，并使用 `accessLogEncoding: JSON`。这不是集群内 Operator 资源。自定义 `envoyFileAccessLog.logFormat.labels` 提供程序是另一受支持方法，日志章节有说明。
 
-**说明：**
+**解释：**
 
-**JSON 格式 Access Log 配置：**
+**JSON 格式访问日志配置：**
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -445,9 +415,10 @@ spec:
     # Define custom JSON format
     accessLogFormat: |
       {
+        "log_type": "access",
         "start_time": "%START_TIME%",
         "method": "%REQ(:METHOD)%",
-        "path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
+        "path": "%REQ_WITHOUT_QUERY(X-ENVOY-ORIGINAL-PATH?:PATH)%",
         "protocol": "%PROTOCOL%",
         "response_code": "%RESPONSE_CODE%",
         "response_flags": "%RESPONSE_FLAGS%",
@@ -473,6 +444,7 @@ spec:
 
 ```json
 {
+  "log_type": "access",
   "start_time": "2025-01-20T10:30:00.123Z",
   "method": "GET",
   "path": "/api/users",
@@ -497,10 +469,12 @@ spec:
 }
 ```
 
-**按 Namespace 配置：**
+**按命名空间配置：**
+
+此替代方案需先按日志章节定义 `mesh-json`。Telemetry 选择提供程序/范围；本身不更改提供程序格式。
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: access-logging
@@ -508,13 +482,13 @@ metadata:
 spec:
   accessLogging:
   - providers:
-    - name: envoy
-    # Can configure JSON format for specific Namespace only
+    - name: mesh-json
+    # Select the already-defined JSON provider
 ```
 
 **Envoy 格式变量：**
 
-```yaml
+```text
 # Key variables:
 %START_TIME%: Request start time
 %REQ(HEADER)%: Request header
@@ -528,6 +502,8 @@ spec:
 ```
 
 **CloudWatch Logs 集成：**
+
+这仅是已部署 Fluent Bit 代理的输出片段，要求匹配的输入标签、CRI/JSON 解析、IAM 凭证和日志挂载。仅 ConfigMap 不采集日志。EKS Fargate 需要其受支持日志路由器配置。
 
 ```yaml
 apiVersion: v1
@@ -553,22 +529,22 @@ data:
 kubectl logs <pod-name> -c istio-proxy
 
 # Real-time monitoring
-kubectl logs -f <pod-name> -c istio-proxy | jq .
+kubectl logs -f <pod-name> -c istio-proxy | jq -R 'fromjson?'
 
 # Filter specific response codes
 kubectl logs <pod-name> -c istio-proxy | \
-  jq 'select(.response_code == "500")'
+  jq -R 'fromjson? | select((.response_code | tonumber?) == 500)'
 ```
 
-**TEXT 格式与 JSON 格式对比：**
+**TEXT 格式与 JSON 格式：**
 
-| 项目            | TEXT         | JSON            |
+| 项目 | TEXT | JSON |
 | --------------- | ------------ | --------------- |
-| **可读性** | 高（人工） | 低（人工）     |
-| **解析**     | 困难    | 简单（机器）  |
-| **大小**        | 小        | 大           |
-| **结构**   | 非结构化 | 结构化      |
-| **查询**    | 困难    | 简单（jq 等） |
+| **可读性** | 高（人工） | 低（人工） |
+| **解析** | 困难 | 容易（机器） |
+| **大小** | 小 | 大 |
+| **结构** | 非结构化 | 结构化 |
+| **查询** | 困难 | 容易（jq 等） |
 
 **TEXT 格式示例：**
 
@@ -579,7 +555,7 @@ kubectl logs <pod-name> -c istio-proxy | \
 **参考资料：**
 
 * [日志](../../../service-mesh/istio/observability/03-logging.md)
-* [Envoy Access Log 格式](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
+* [Envoy 访问日志格式](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
 
 </details>
 
@@ -587,9 +563,12 @@ kubectl logs <pod-name> -c istio-proxy | \
 
 ### 问题 5：Grafana 仪表板
 
-以下哪个 Grafana 仪表板不会随 Istio 安装默认提供？
+哪个仪表板**不属于** Istio 发布的 Grafana 仪表板集合？
 
-A. Istio Service Dashboard B. Istio Workload Dashboard C. Istio Performance Dashboard D. Istio Cost Dashboard
+A. Istio 服务仪表板\
+B. Istio 工作负载仪表板\
+C. Istio 性能仪表板\
+D. Istio 成本仪表板
 
 <details>
 
@@ -597,147 +576,15 @@ A. Istio Service Dashboard B. Istio Workload Dashboard C. Istio Performance Dash
 
 **答案：D**
 
-Istio 默认**不提供 Cost Dashboard**。
+D。Istio 发布流量/控制平面仪表板，但 Grafana 本身是独立插件；安装 Istio 不会自动安装这些仪表板。
 
-**说明：**
+**解释：**
 
-**Istio 默认 Grafana 仪表板：**
+1.31 目录包含 Service7636、Workload7630、Mesh7639、Performance11829、Control Plane7645、Wasm13277 和 Ztunnel21306。Performance 关注资源/数据用量；xDS/webhook 面板主要属于 Control Plane。Mesh 包含全局流量和组件版本，不包含此前此处列出的每个延迟面板。选择匹配已安装 Istio 版本的修订。
 
-**1. Istio Service Dashboard (A - O)**
+成本不能通过将 `istio_requests_total` 乘以 GB 传输价格计算：请求数不是字节数，`source_cluster`/`destination_cluster` 标识集群而非可用区。代理内存是用量，不是账单。网络成本需要计费字节测量及实际源/目标位置/服务规则；资源成本分摊需要节点价格、时间和明确分摊模型。应将估算与 AWS 计费/CUR 数据及适用价格核对，不要断言固定公式。
 
-```
-Service-level metrics:
-- Request Volume (request count)
-- Request Duration (P50, P95, P99)
-- Request Size / Response Size
-- Success Rate
-- 4xx, 5xx error trends
-```
-
-**2. Istio Workload Dashboard (B - O)**
-
-```
-Workload (Pod) level metrics:
-- Incoming Request Volume
-- Incoming Success Rate
-- Incoming Request Duration
-- Incoming Request Size
-- Outgoing Request Volume
-- Outgoing Success Rate
-```
-
-**3. Istio Performance Dashboard (C - O)**
-
-```
-Istio's own performance metrics:
-- Pilot performance (xDS push time)
-- Envoy memory usage
-- Envoy CPU usage
-- Sidecar injection success rate
-- Configuration sync latency
-```
-
-**4. Istio Control Plane Dashboard**
-
-```
-Control Plane metrics:
-- Istiod resource usage
-- xDS connection count
-- Webhook performance
-- Certificate issuance statistics
-```
-
-**5. Istio Mesh Dashboard**
-
-```
-Overall mesh metrics:
-- Total request count
-- Overall success rate
-- Global P99 latency
-- Service count, Pod count
-```
-
-**Cost Dashboard 不可用 (D - X)**
-
-你需要为成本相关指标创建自定义仪表板：
-
-```promql
-# Cross-AZ traffic cost estimation
-sum(rate(istio_requests_total{
-  source_cluster="us-east-1a",
-  destination_cluster!="us-east-1a"
-}[5m])) * 86400 * 30 * 0.01 / 1000000
-
-# Sidecar resource cost (memory basis)
-sum(container_memory_usage_bytes{
-  container="istio-proxy"
-}) / 1024 / 1024 / 1024 * 30 * 0.01
-```
-
-**Grafana 安装和访问：**
-
-```bash
-# Install Grafana
-kubectl apply -f samples/addons/grafana.yaml
-
-# Access Grafana
-istioctl dashboard grafana
-
-# Or port forwarding
-kubectl port-forward -n istio-system svc/grafana 3000:3000
-# http://localhost:3000
-```
-
-**创建自定义仪表板：**
-
-```json
-{
-  "dashboard": {
-    "title": "Istio Custom Metrics",
-    "panels": [
-      {
-        "title": "Request Rate",
-        "targets": [
-          {
-            "expr": "sum(rate(istio_requests_total[5m])) by (destination_service_name)"
-          }
-        ]
-      },
-      {
-        "title": "Error Rate",
-        "targets": [
-          {
-            "expr": "sum(rate(istio_requests_total{response_code=~\"5..\"}[5m])) / sum(rate(istio_requests_total[5m]))"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-**使用仪表板变量：**
-
-```yaml
-# Add Namespace variable
-variables:
-  - name: namespace
-    type: query
-    query: label_values(istio_requests_total, destination_workload_namespace)
-
-# Use variable in panel
-expr: |
-  sum(rate(
-    istio_requests_total{
-      destination_workload_namespace="$namespace"
-    }[5m]
-  )) by (destination_service_name)
-```
-
-**参考资料：**
-
-* [可视化](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
-* [Grafana 官方文档](https://grafana.com/docs/)
+已验证目录修订和完整自定义 JSON/预置示例参阅[仪表板章节](../../../service-mesh/istio/observability/04-dashboards.md)。仅 ConfigMap 和标签不会安装仪表板加载器，也不会解析数据源输入。
 
 </details>
 
@@ -747,372 +594,104 @@ expr: |
 
 ### 问题 6：黄金信号监控
 
-说明如何使用 Istio 和 Prometheus 监控 Google SRE 的**黄金信号**（Latency、Traffic、Errors、Saturation）。请包含每个信号的 **Prometheus 查询**和**告警规则**。
+解释如何使用 Istio 和 Prometheus 监控 Google SRE 的**黄金信号**（延迟、流量、错误、饱和度）。为每个信号提供 **Prometheus 查询**和**警报规则**。
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：**
-
-**黄金信号监控实现：**
-
-***
-
-**1. Latency**
-
-**Prometheus 查询：**
+每次服务跳点计算使用一个报告方，并保留服务命名空间（适用时加集群）。目标指标测量服务收到的请求；从未到达的上游失败需要源指标。HTTP5xx 只是错误定义之一；gRPC 失败需要 `grpc_response_status` 及应用专属 SLI 规则。以下延迟以毫秒计，速率为每秒：
 
 ```promql
-# P95 latency
-histogram_quantile(0.95,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket{
-      destination_service_name="reviews"
-    }[5m]
-  )) by (le)
-)
+histogram_quantile(0.95, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])))
 
-# P99 latency
-histogram_quantile(0.99,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket{
-      destination_service_name="reviews"
-    }[5m]
-  )) by (le)
-)
+histogram_quantile(0.99, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])))
 
-# P50 latency (median)
-histogram_quantile(0.50,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket{
-      destination_service_name="reviews"
-    }[5m]
-  )) by (le)
-)
+sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
+
+sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m])) / sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
 ```
 
-**告警规则：**
+对于单集群经典 Sidecar 部署，用量/limit 比率需要 kubelet/cAdvisor 和 kube-state-metrics。排除缺失/零 limit。原生 Sidecar 可能在初始化容器资源序列中报告声明的 limits；使用这些表达式前确认实际指标族：
+
+```promql
+sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m])) / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="cpu",unit="core"}) > 0)
+
+max by (namespace, pod, container) (container_memory_working_set_bytes{container="istio-proxy"}) / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="memory",unit="byte"}) > 0)
+
+envoy_cluster_upstream_cx_active
+envoy_cluster_upstream_rq_pending_active
+envoy_cluster_circuit_breakers_default_cx_open
+```
+
+`_cx_open` 指标是 0/1 状态 gauge；活动连接数除以它不是利用率。需要容量比率时检查配置的断路器阈值。CPU rate 相除前单位是核；内存工作集相除前单位是字节。按方法细分需要先添加有界 `request_method` Telemetry 标签。
+
+以下 PrometheusRule 必须由已安装 Prometheus Operator 选中。阈值和比较窗口仅为示意；流量季节性、无数据、抓取失败和最小流量条件需要环境专属处理。前一个小时窗口不是学习得到的正常基线。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: istio-latency-alerts
+  name: istio-golden-signals
   namespace: monitoring
 spec:
   groups:
-  - name: latency
-    interval: 30s
+  - name: golden-signals
     rules:
-    # P95 latency exceeds 500ms
     - alert: HighLatency
-      expr: |
-        histogram_quantile(0.95,
-          sum(rate(
-            istio_request_duration_milliseconds_bucket[5m]
-          )) by (le, destination_service_name)
-        ) > 500
+      expr: histogram_quantile(0.95, sum by (destination_service_name, destination_service_namespace,
+        le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m]))) > 500
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "High latency detected on {{ $labels.destination_service_name }}"
-        description: "P95 latency is {{ $value }}ms"
-
-    # P99 latency exceeds 1 second
-    - alert: CriticalLatency
-      expr: |
-        histogram_quantile(0.99,
-          sum(rate(
-            istio_request_duration_milliseconds_bucket[5m]
-          )) by (le, destination_service_name)
-        ) > 1000
-      for: 5m
-      labels:
-        severity: critical
-      annotations:
-        summary: "Critical latency on {{ $labels.destination_service_name }}"
-```
-
-***
-
-**2. Traffic**
-
-**Prometheus 查询：**
-
-```promql
-# Requests per second (RPS)
-sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews"
-  }[5m]
-))
-
-# RPS by service
-sum(rate(
-  istio_requests_total[5m]
-)) by (destination_service_name)
-
-# RPS by HTTP method
-sum(rate(
-  istio_requests_total[5m]
-)) by (request_method)
-```
-
-**告警规则：**
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: istio-traffic-alerts
-spec:
-  groups:
-  - name: traffic
-    rules:
-    # Traffic spike (2x normal)
+        summary: P95 request duration exceeds500ms
     - alert: TrafficSpike
-      expr: |
-        sum(rate(istio_requests_total[5m])) by (destination_service_name)
-        >
-        sum(rate(istio_requests_total[1h] offset 1h)) by (destination_service_name) * 2
+      expr: sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
+        > 2 * sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[1h]
+        offset 1h))
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "Traffic spike on {{ $labels.destination_service_name }}"
-
-    # Traffic drop (below 50% of normal)
-    - alert: TrafficDrop
-      expr: |
-        sum(rate(istio_requests_total[5m])) by (destination_service_name)
-        <
-        sum(rate(istio_requests_total[1h] offset 1h)) by (destination_service_name) * 0.5
-      for: 10m
-      labels:
-        severity: warning
-```
-
-***
-
-**3. Errors**
-
-**Prometheus 查询：**
-
-```promql
-# Error rate (5xx)
-sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews",
-    response_code=~"5.."
-  }[5m]
-))
-/
-sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews"
-  }[5m]
-))
-
-# 4xx + 5xx error rate
-sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews",
-    response_code=~"[45].."
-  }[5m]
-))
-/
-sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews"
-  }[5m]
-))
-
-# Distribution by response code
-sum(rate(
-  istio_requests_total[5m]
-)) by (response_code, destination_service_name)
-```
-
-**告警规则：**
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: istio-error-alerts
-spec:
-  groups:
-  - name: errors
-    rules:
-    # Error rate > 1%
+        summary: Traffic exceeds the previous comparison window
     - alert: HighErrorRate
-      expr: |
-        (
-          sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (destination_service_name)
-          /
-          sum(rate(istio_requests_total[5m])) by (destination_service_name)
-        ) > 0.01
+      expr: sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m]))
+        / sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
+        > 0.01
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "High error rate on {{ $labels.destination_service_name }}"
-        description: "Error rate is {{ $value | humanizePercentage }}"
-
-    # Error rate > 5%
-    - alert: CriticalErrorRate
-      expr: |
-        (
-          sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (destination_service_name)
-          /
-          sum(rate(istio_requests_total[5m])) by (destination_service_name)
-        ) > 0.05
-      for: 2m
-      labels:
-        severity: critical
-```
-
-***
-
-**4. Saturation**
-
-**Prometheus 查询：**
-
-```promql
-# Envoy CPU usage
-sum(rate(
-  container_cpu_usage_seconds_total{
-    pod=~".*",
-    container="istio-proxy"
-  }[5m]
-)) by (pod)
-
-# Envoy memory usage
-sum(
-  container_memory_usage_bytes{
-    pod=~".*",
-    container="istio-proxy"
-  }
-) by (pod)
-
-# Envoy connection count
-sum(
-  envoy_cluster_upstream_cx_active
-) by (cluster_name)
-
-# Envoy pending requests
-sum(
-  envoy_cluster_upstream_rq_pending_active
-) by (cluster_name)
-```
-
-**告警规则：**
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: istio-saturation-alerts
-spec:
-  groups:
-  - name: saturation
-    rules:
-    # Envoy CPU > 80%
+        summary: HTTP5xx fraction exceeds1%
     - alert: HighEnvoyCPU
-      expr: |
-        sum(rate(
-          container_cpu_usage_seconds_total{
-            container="istio-proxy"
-          }[5m]
-        )) by (pod, namespace)
-        /
-        sum(
-          container_spec_cpu_quota{
-            container="istio-proxy"
-          } / 100000
-        ) by (pod, namespace)
-        > 0.8
+      expr: sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m]))
+        / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="cpu",unit="core"})
+        > 0) > 0.8
       for: 5m
       labels:
         severity: warning
-
-    # Envoy Memory > 80%
+      annotations:
+        summary: Proxy CPU consumption exceeds80% of its configured limit
     - alert: HighEnvoyMemory
-      expr: |
-        sum(
-          container_memory_usage_bytes{
-            container="istio-proxy"
-          }
-        ) by (pod, namespace)
-        /
-        sum(
-          container_spec_memory_limit_bytes{
-            container="istio-proxy"
-          }
-        ) by (pod, namespace)
-        > 0.8
+      expr: max by (namespace, pod, container) (container_memory_working_set_bytes{container="istio-proxy"})
+        / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="memory",unit="byte"})
+        > 0) > 0.8
       for: 5m
       labels:
         severity: warning
-
-    # Connection Pool Saturated
-    - alert: ConnectionPoolSaturated
-      expr: |
-        envoy_cluster_upstream_cx_active
-        /
-        envoy_cluster_circuit_breakers_default_cx_open
-        > 0.9
+      annotations:
+        summary: Proxy working set exceeds80% of its configured limit
+    - alert: ConnectionBreakerAtCapacity
+      expr: envoy_cluster_circuit_breakers_default_cx_open == 1
       for: 5m
       labels:
-        severity: critical
+        severity: warning
+      annotations:
+        summary: Connection breaker at capacity
 ```
 
-***
-
-**Grafana 仪表板配置：**
-
-```json
-{
-  "dashboard": {
-    "title": "Golden Signals",
-    "panels": [
-      {
-        "title": "Latency (P95, P99)",
-        "targets": [
-          {"expr": "histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le))"},
-          {"expr": "histogram_quantile(0.99, sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le))"}
-        ]
-      },
-      {
-        "title": "Traffic (RPS)",
-        "targets": [
-          {"expr": "sum(rate(istio_requests_total[5m])) by (destination_service_name)"}
-        ]
-      },
-      {
-        "title": "Errors (Rate)",
-        "targets": [
-          {"expr": "sum(rate(istio_requests_total{response_code=~\"5..\"}[5m])) / sum(rate(istio_requests_total[5m]))"}
-        ]
-      },
-      {
-        "title": "Saturation (CPU, Memory)",
-        "targets": [
-          {"expr": "sum(rate(container_cpu_usage_seconds_total{container=\"istio-proxy\"}[5m])) by (pod)"},
-          {"expr": "sum(container_memory_usage_bytes{container=\"istio-proxy\"}) by (pod)"}
-        ]
-      }
-    ]
-  }
-}
-```
-
-**参考资料：**
-
-* [指标](../../../service-mesh/istio/observability/01-metrics.md)
-* [Google SRE Book - 监控](https://sre.google/sre-book/monitoring-distributed-systems/)
+使用[已检查仪表板模板](../../../service-mesh/istio/observability/04-dashboards.md)，为请求速率、错误比例、延迟和资源单位创建独立面板。不要将 CPU 核数和内存字节放在没有单位标注的共享刻度上。
 
 </details>
 
@@ -1120,626 +699,92 @@ spec:
 
 ### 问题 7：使用 Jaeger 查找性能瓶颈
 
-说明如何使用分布式追踪工具 Jaeger 在微服务架构中查找**性能瓶颈**。请包含 **Trace 分析方法**和**实际调试场景**。
+解释如何使用分布式追踪工具 Jaeger 查找微服务架构中的**性能瓶颈**。包括**追踪分析方法**和**实际调试场景**。
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：**
+从 [Jaeger2/OTLP 追踪设置](../../../service-mesh/istio/observability/02-tracing.md)、已配置 Telemetry 提供程序及应用上下文传播开始。不要假定旧 Jaeger 插件/Zipkin 端口或仅采样值就会部署追踪。应用/数据库 span 需要 SDK 或代理插桩；代理 span 不能揭示数据库查询内部细节。
 
-**使用 Jaeger 进行性能瓶颈分析：**
-
-***
-
-**1. Jaeger 安装和配置**
-
-```bash
-# Install Jaeger
-kubectl apply -f samples/addons/jaeger.yaml
-
-# Enable Tracing (100% sampling)
-istioctl install --set values.pilot.traceSampling=100.0
-```
-
-```yaml
-# Or configure with IstioOperator
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    defaultConfig:
-      tracing:
-        sampling: 100.0  # Development: 100%, Production: 1-10%
-        zipkin:
-          address: jaeger-collector.istio-system:9411
-```
-
-***
-
-**2. 理解 Trace 结构**
-
-```
-Trace
-└─ Span 1: Ingress Gateway (total 150ms)
-   └─ Span 2: Frontend (total 140ms)
-      ├─ Span 3: Backend API (total 100ms)
-      │  ├─ Span 4: Database Query (80ms)  ← Bottleneck!
-      │  └─ Span 5: Cache Check (10ms)
-      └─ Span 6: External API (30ms)
-```
-
-**Span 信息：**
-
-* **时长**：在 Span 中耗费的时间
-* **Tags**：元数据（HTTP method、URL、响应代码）
-* **Logs**：事件（错误、警告）
-* **父子关系**：调用层级
-
-***
-
-**3. 实际调试场景**
-
-**场景 1：高 P99 延迟**
-
-**症状：**
+1. 用限定命名空间的 Prometheus 延迟查询定位受影响服务/时间窗口，再在 Jaeger 查找代表性慢追踪和正常追踪。Prometheus 直方图查询返回聚合统计，不是 trace ID。
+2. 沿关键路径分析，区分父级持续时间与自身独占时间。长父级包含子级；不自动意味着它是原因。
+3. 比较错误、重试、连接等待、查询执行和并行度。追踪时序、采样和缺失 span 限制结论。
 
 ```promql
-# P99 latency is 2 seconds
-histogram_quantile(0.99,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket[5m]
-  )) by (le)
-) = 2000
+histogram_quantile(0.99, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m]))) > 2000
 ```
-
-**Jaeger 分析步骤：**
 
 ```bash
-# 1. Access Jaeger UI
-istioctl dashboard jaeger
-
-# 2. Set search criteria
-Service: productpage
-Lookback: Last 1 hour
-Min Duration: 2000ms  # Filter only 2+ seconds
-Limit Results: 20
-
-# 3. Analyze results
+kubectl port-forward -n observability svc/jaeger-query 16686:16686
 ```
 
-**识别出的问题：**
+这些是假设调试场景，不是基准测试结果或字面 Jaeger API 响应：
 
-```
-Trace ID: abc-123-def
-Total Duration: 2.1 seconds
+| 观察 | 验证内容 | 适当响应 |
+|---|---|---|
+| 2.1s 请求，包含 1.8s 的已插桩数据库操作 | 区分连接池等待、查询时间、锁和网络延迟；验证数据库执行计划 | 修复测得的原因。名为 `redis.conf` 的 ConfigMap 不会添加应用缓存 |
+| 约 10s 请求且连接池超时 | 检查应用数据库客户端池、并发和数据库容量 | 调整应用/数据库连接池并修复泄漏；Envoy DestinationRule 不配置应用连接池，HTTP 池设置也不调优 PostgreSQL |
+| 独立的 2s+2s+1s 调用顺序运行 | 确认依赖、负载限制和追踪上下文 | 仅用真实异步客户端或有界线程并行独立 I/O；预期时间可接近最长调用加开销，不保证 2s |
 
-├─ productpage (2.1s)
-   └─ reviews (2.0s)  ← Bottleneck!
-      └─ ratings (1.9s)  ← Actual bottleneck!
-         └─ MongoDB Query (1.8s)  ← Root cause!
-```
-
-**解决方案：**
-
-```yaml
-# 1. Optimize MongoDB query
-# - Add index
-# - Query tuning
-
-# 2. Add caching
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ratings-config
-data:
-  redis.conf: |
-    host: redis.default.svc.cluster.local
-    port: 6379
-    ttl: 300
-
-# 3. Set Timeout
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: ratings
-spec:
-  hosts:
-  - ratings
-  http:
-  - timeout: 500ms  # Set timeout
-    retries:
-      attempts: 3
-      perTryTimeout: 200ms
-```
-
-***
-
-**场景 2：间歇性超时**
-
-**Jaeger 分析：**
-
-```
-# Normal Trace
-Trace ID: normal-001
-Duration: 120ms
-├─ frontend (120ms)
-   └─ backend (100ms)
-      └─ database (80ms)
-
-# Timeout Trace
-Trace ID: timeout-001
-Duration: 10,000ms  ← Abnormal!
-├─ frontend (10,000ms)
-   └─ backend (9,980ms)
-      └─ database (9,950ms)  ← Bottleneck!
-         └─ Error: Connection timeout
-```
-
-**检查 Span 详情：**
-
-```json
-{
-  "traceID": "timeout-001",
-  "spanID": "span-db",
-  "operationName": "database.query",
-  "duration": 9950000,
-  "tags": {
-    "db.statement": "SELECT * FROM users WHERE status = 'active'",
-    "db.type": "postgresql",
-    "error": true
-  },
-  "logs": [
-    {
-      "timestamp": 1234567890,
-      "fields": [
-        {"key": "event", "value": "error"},
-        {"key": "error.kind", "value": "ConnectionTimeout"},
-        {"key": "message", "value": "Connection pool exhausted"}
-      ]
-    }
-  ]
-}
-```
-
-**解决方案：**
-
-```yaml
-# Increase Connection Pool
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: database
-spec:
-  host: database
-  trafficPolicy:
-    connectionPool:
-      tcp:
-        maxConnections: 100  # 50 → 100
-      http:
-        http1MaxPendingRequests: 50
-        maxRequestsPerConnection: 2
-```
-
-***
-
-**场景 3：级联延迟**
-
-**Jaeger 分析：**
-
-```
-Trace ID: cascade-001
-Total Duration: 5.2 seconds
-
-├─ frontend (5.2s)
-   ├─ backend-a (2.0s)
-   │  └─ database (1.9s)
-   ├─ backend-b (2.0s)  ← Sequential call issue!
-   │  └─ external-api (1.9s)
-   └─ backend-c (1.0s)
-      └─ cache (0.9s)
-
-Problem: Sequential execution of parallelizable calls
-```
-
-**解决方案（应用程序修改）：**
+对于现有同步 I/O 回调，此 Python3.9+ 片段保留返回顺序并使用工作线程。应用必须提供回调并执行自己的超时；取消等待任务不会停止已经运行的线程：
 
 ```python
-# Sequential calls (Before)
-def get_user_data(user_id):
-    profile = call_backend_a(user_id)      # 2 seconds
-    orders = call_backend_b(user_id)       # 2 seconds
-    recommendations = call_backend_c(user_id)  # 1 second
-    return merge(profile, orders, recommendations)
-
-# Total time: 5 seconds
-
-# Parallel calls (After)
 import asyncio
 
 async def get_user_data(user_id):
+    # Application-owned synchronous I/O functions; each must enforce its timeout.
     profile, orders, recommendations = await asyncio.gather(
-        call_backend_a(user_id),      # 2 seconds
-        call_backend_b(user_id),       # 2 seconds
-        call_backend_c(user_id)        # 1 second
+        asyncio.to_thread(call_backend_a, user_id),
+        asyncio.to_thread(call_backend_b, user_id),
+        asyncio.to_thread(call_backend_c, user_id),
     )
     return merge(profile, orders, recommendations)
-
-# Total time: 2 seconds (longest call)
 ```
 
-***
-
-**4. Jaeger UI 提示**
-
-**Service 依赖关系（Service Dependency Graph）：**
-
-```bash
-# Jaeger UI → Dependencies tab
-# - Visualize service call relationships
-# - Display error rates
-# - Display request counts
-```
-
-**比较 Trace：**
-
-```bash
-# 1. Select normal Trace
-# 2. Select slow Trace
-# 3. Click Compare button
-# 4. Check time differences per Span
-```
-
-**深层依赖关系图：**
-
-```bash
-# Check detailed dependencies for specific Trace
-# - Time spent per Span
-# - Parallel/sequential execution status
-# - Critical Path
-```
-
-***
-
-**5. 性能优化检查清单**
-
-```yaml
-# 1. Remove unnecessary calls
-# - N+1 query problem
-# - Duplicate API calls
-
-# 2. Parallel processing
-# - Execute independent calls in parallel
-# - Use asyncio, Promise.all, etc.
-
-# 3. Caching
-# - Redis, Memcached
-# - CDN (static resources)
-
-# 4. Connection Pool tuning
-# - Appropriate max connections
-# - Enable Keep-Alive
-
-# 5. Timeout settings
-# - Appropriate timeout (not too long)
-# - Fail Fast
-
-# 6. Database optimization
-# - Add indexes
-# - Query optimization
-# - Use read replicas
-```
-
-***
-
-**6. Prometheus + Jaeger 集成**
-
-```promql
-# Find Traces with high latency
-histogram_quantile(0.99,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket[5m]
-  )) by (le, destination_service_name)
-) > 1000
-
-# After checking in Prometheus, search Traces in Jaeger for that time period
-```
-
-**参考资料：**
-
-* [分布式追踪](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/02-distributed-tracing.md)
-* [Jaeger 官方文档](https://www.jaegertracing.io/docs/)
+超时限制等待；不修复慢数据库，重试可能放大负载。展示 VirtualService 超时时，包含实际路由目的地，仅在考虑幂等性/负载后使用重试。持久 Jaeger 依赖图可能需要额外聚合；单个追踪瀑布图与全局依赖图是不同视图。应通过重复流量和指标/追踪验证疑似修复，不要只看一条漂亮追踪。
 
 </details>
 
 ***
 
-### 问题 8：使用 Kiali 排查 Service Mesh 问题
+### 问题 8：使用 Kiali 排查服务网格
 
-说明如何使用 Kiali 诊断并解决 Istio service mesh 中的**常见问题**（配置错误、流量异常、安全策略冲突）。
+解释如何使用 Kiali 诊断并解决 Istio 服务网格的**常见问题**（配置错误、流量异常、安全策略冲突）。
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：**
+将 Kiali 配置检查、观测流量、Pod 日志和追踪作为证据，再验证生效代理配置。仪表板章节记录版本/身份验证前提条件。不要凭图形形状虚构 Kiali 警告，也不要将绿色图标当作运行时保证。
 
-**使用 Kiali 排查 Service Mesh 问题：**
+| 症状 | 正确解释和检查 |
+|---|---|
+| 缺失服务/子集 | 在 `default` 中，`reviews` 和 `reviews.default.svc.cluster.local` 解析为同一主机。缩短名称不会创建缺失 Service。KIA1107 标识未定义子集；检查 Service/EndpointSlice、DestinationRule 和实际 Pod 标签 |
+| 子集标签不匹配 | 标签值 `1.0` 本身没有错；让目标 Deployment 标签匹配子集。编写完整 DestinationRule 时包含元数据、host 和文档分隔符 |
+| 配置 50/50，却观察到 90/10 | 检查有效权重、匹配规则、连接亲和性、重试、端点/剔除状态和时间窗口。仅就绪副本更少不会重新定义 VirtualService 子集权重，也不保证以后达到 50/50 |
+| A↔B 环 | 双向图不证明递归调用、死锁或自动 Kiali 警报。重新设计应用前，使用追踪识别实际非预期循环 |
+| HTTP403 | 检查执行代理的策略、身份和响应详情。空 spec AuthorizationPolicy 是没有匹配规则的 ALLOW 策略；另一 ALLOW 可提供例外。它不是优先覆盖的 DENY |
+| mTLS 失败 | PeerAuthentication 描述接收方。检查特定方向的发送方 TLS 设置、接收方策略、纳管、证书/信任和端口协议。不同接收模式不自动构成冲突；统一 STRICT 是迁移决策，不是通用修复 |
 
-***
-
-**1. 配置错误诊断**
-
-**问题 1：VirtualService Host 错误**
-
-**症状：**
-
-```bash
-# Service call failure
-curl http://reviews:9080
-# 503 Service Unavailable
-```
-
-**Kiali 诊断：**
-
-```bash
-# 1. Access Kiali dashboard
-istioctl dashboard kiali
-
-# 2. Istio Config → VirtualServices tab
-# 3. Warning indicator on reviews VirtualService
-
-# 4. Click for details
-```
-
-**Kiali 错误消息：**
-
-```
-Warning: VirtualService 'reviews-vs' has issues:
-- Host 'reviews.default.svc.cluster.local' references service 'reviews'
-  but service does not exist
-- Subset 'v2' references DestinationRule 'reviews-dr'
-  but subset is not defined
-```
-
-**解决方案：**
+假定 mTLS 提供命名 frontend 主体，且没有更早的 CUSTOM/DENY 拒绝请求，带 frontend 例外的限定范围默认拒绝基线有效：
 
 ```yaml
-# Incorrect configuration
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: reviews-vs
-spec:
-  hosts:
-  - reviews.default.svc.cluster.local  # Service doesn't exist!
-  http:
-  - route:
-    - destination:
-        host: reviews
-        subset: v2  # Not defined in DestinationRule!
-
----
-# Correct configuration
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: reviews-vs
-spec:
-  hosts:
-  - reviews  # Service name only
-  http:
-  - route:
-    - destination:
-        host: reviews
-        subset: v1  # Existing subset
-
----
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews-dr
-spec:
-  host: reviews
-  subsets:
-  - name: v1
-    labels:
-      version: v1
-```
-
-***
-
-**问题 2：DestinationRule Subset label 不匹配**
-
-**Kiali 诊断：**
-
-```
-In Graph view:
-- No traffic being sent to reviews service
-- Kiali shows red dashed line
-
-In Istio Config tab:
-Warning: DestinationRule 'reviews-dr' has issues:
-- Subset 'v1' selects labels {version: v1}
-  but no pods match these labels
-```
-
-**检查问题：**
-
-```bash
-# Check Pod labels
-kubectl get pods -l app=reviews --show-labels
-
-# Output:
-NAME            LABELS
-reviews-v1-xxx  app=reviews,version=1.0  ← version=1.0 (wrong)
-```
-
-**解决方案：**
-
-```yaml
-# Incorrect DestinationRule
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-spec:
-  subsets:
-  - name: v1
-    labels:
-      version: v1  # Pod has version=1.0
-
-# Corrected DestinationRule
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-spec:
-  subsets:
-  - name: v1
-    labels:
-      version: "1.0"  # Match Pod label
-```
-
-***
-
-**2. 流量异常诊断**
-
-**问题 3：流量不均衡**
-
-**在 Kiali Graph 视图中检查：**
-
-```
-frontend → backend-v1 (90% traffic)  ← Expected: 50%
-frontend → backend-v2 (10% traffic)  ← Expected: 50%
-```
-
-**根本原因分析：**
-
-```bash
-# Kiali → Workloads tab → backend
-# Check Pod status:
-
-backend-v1: 5 pods (all Ready)
-backend-v2: 5 pods (3 Ready, 2 Terminating)
-
-# Problem: backend-v2 Pods not starting normally
-```
-
-**解决方案：**
-
-```bash
-# 1. Check backend-v2 logs in Kiali
-Workloads → backend-v2 → Logs tab
-
-# 2. Analyze logs
-Error: Cannot connect to database
-Connection: postgresql://db:5432
-
-# 3. Fix
-kubectl edit deployment backend-v2
-# Fix database connection string
-
-# 4. Verify traffic balance in Kiali
-# After few minutes: 50% / 50% normalized
-```
-
-***
-
-**问题 4：循环依赖**
-
-**在 Kiali Graph 视图中检查：**
-
-```
-service-a → service-b
-    ↑           ↓
-    └───────────┘
-
-Circular dependency detected!
-```
-
-**Kiali 告警：**
-
-```
-Warning: Circular dependency detected:
-service-a → service-b → service-a
-```
-
-**解决方案：**
-
-```yaml
-# Architecture redesign needed
-# Before:
-service-a ↔ service-b
-
-# After:
-service-a → service-c (common service)
-service-b → service-c
-```
-
-***
-
-**3. 安全策略冲突诊断**
-
-**问题 5：AuthorizationPolicy 冲突**
-
-**症状：**
-
-```bash
-# frontend → backend call fails
-curl http://backend:8080
-# 403 RBAC: access denied
-```
-
-**Kiali 诊断：**
-
-```bash
-# Kiali → Istio Config → Authorization Policies
-
-Policy 1:
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: deny-all
-spec: {}  # Deny all requests
-
-Policy 2:
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-frontend
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
-
-# Kiali warning:
-Warning: Policy conflict detected:
-- deny-all denies all traffic
-- allow-frontend allows traffic from frontend
-- Evaluation order: DENY policies are evaluated first
-```
-
-**解决方案：**
-
-```yaml
-# Correct configuration (per-Namespace separation)
----
-# deny-all applies only to specific service
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: backend-deny-all
+  name: backend-default-deny
+  namespace: default
 spec:
   selector:
     matchLabels:
       app: backend
-  # Empty rules = deny all requests
-
 ---
-# Explicit allow policy
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-allow-frontend
+  namespace: default
 spec:
   selector:
     matchLabels:
@@ -1748,169 +793,66 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
+        principals:
+        - cluster.local/ns/default/sa/frontend
 ```
-
-***
-
-**问题 6：mTLS 模式不匹配**
-
-**在 Kiali Security 视图中检查：**
-
-```
-service-a: mTLS STRICT
-service-b: mTLS PERMISSIVE
-service-c: mTLS DISABLED
-
-Kiali warning:
-Warning: mTLS configuration mismatch detected
-- service-a requires mTLS but service-c has mTLS disabled
-- Connection may fail
-```
-
-**解决方案：**
-
-```yaml
-# Apply consistent mTLS policy across entire mesh
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT  # Apply STRICT to all services
-```
-
-***
-
-**4. Kiali 高级功能**
-
-**自定义时间范围：**
 
 ```bash
-# Kiali → Graph view
-# Time Range: Last 1 hour
-# Refresh Interval: Every 15s
-
-# Analyze specific time period
-# - Check before/after incident
-# - Compare before/after deployment
+kubectl get service reviews -n default
+kubectl get endpointslice -n default -l kubernetes.io/service-name=reviews
+kubectl get pods -n default -l app=reviews --show-labels
+istioctl analyze -n default
+istioctl proxy-config clusters <source-pod> -n default --fqdn reviews.default.svc.cluster.local -o json
+istioctl x authz check <backend-pod>.default
 ```
 
-**流量动画：**
+流量动画概括选定窗口；不是字节精确的数据包检查。假设不成立时，重复诊断/配置/测试循环，不要盲目重启工作负载。
 
-```bash
-# Kiali → Graph view
-# Display: Enable Traffic Animation
+![Kiali 排障循环：打开 Graph 视图，将症状分为无流量、错误、响应慢或安全拒绝，检查 Istio 配置、日志、追踪或安全策略，再修复并测试配置，未解决则重复诊断。](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-1.png)
 
-# Real-time traffic flow visualization
-# - Request size shown as animation speed
-# - Errors shown in red
-```
-
-**边标签：**
-
-```bash
-# Kiali → Graph view
-# Edge Labels:
-# - Request percentage
-# - Request per second
-# - Response time (95th percentile)
-
-# Check traffic split ratio
-frontend → backend-v1: 80% (8 rps)
-frontend → backend-v2: 20% (2 rps)
-```
-
-**Service 详情：**
-
-```bash
-# Kiali → Services → backend
-
-Tabs:
-1. Overview: Summary information
-2. Traffic: Inbound/Outbound traffic
-3. Inbound Metrics: Metric charts
-4. Traces: Jaeger trace integration
-5. Envoy: Envoy configuration check
-```
-
-***
-
-**5. 故障排查工作流**
-
-```mermaid
-flowchart TD
-    Start[Problem Occurs] --> Kiali[Kiali Dashboard]
-    Kiali --> Graph[Go to Graph View]
-    Graph --> Issue{Problem Type?}
-
-    Issue -->|No Traffic| Config[Check Istio Config]
-    Issue -->|Errors| Logs[Check Logs]
-    Issue -->|Slow Response| Traces[Check Traces]
-    Issue -->|Security Denied| Security[Check Security]
-
-    Config --> Validate[Validate Configuration]
-    Logs --> Debug[Analyze Logs]
-    Traces --> Jaeger[Jaeger Integration]
-    Security --> Policy[Check Policies]
-
-    Validate --> Fix[Fix Configuration]
-    Debug --> Fix
-    Jaeger --> Fix
-    Policy --> Fix
-
-    Fix --> Test[Test]
-    Test --> Verify{Resolved?}
-    Verify -->|Yes| Done[Complete]
-    Verify -->|No| Start
-
-    classDef problem fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef kiali fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Start,Issue problem;
-    class Kiali,Graph,Config,Logs,Traces,Security kiali;
-    class Validate,Debug,Jaeger,Policy,Fix,Test action;
-```
-
-**参考资料：**
-
-* [可视化](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
-* [Kiali 官方文档](https://kiali.io/docs/)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-observability-1.html)
 
 </details>
 
 ***
 
-### 问题 9：生产环境可观测性栈设置
+### 问题 9：生产可观测性技术栈设置
 
-说明如何在生产 Kubernetes 集群中以**高可用性（HA）**配置部署 Istio 可观测性栈（Prometheus、Grafana、Jaeger、Kiali）。请包含**持久化存储**、**扩缩容**和**备份**策略。
+解释如何为生产 Kubernetes 集群以**高可用（HA）** 配置部署 Istio 可观测性技术栈（Prometheus、Grafana、Jaeger、Kiali）。包含**持久存储**、**扩缩容**和**备份**策略。
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：**
+生产高可用技术栈是环境专属设计和验证任务。下文涵盖主要要求；不是经生产测试的部署包。固定兼容 Kubernetes/Istio/Operator/chart/后端版本，审核实际使用的 chart values，并在发布前验证故障和恢复行为。[仪表板章节](../../../service-mesh/istio/observability/04-dashboards.md)记录当前 Kiali 兼容性缺口；不要因版本最新就推断兼容。
 
-**生产环境可观测性栈设置：**
+| 组件 | 状态和高可用要求 |
+|---|---|
+| Prometheus | 运行独立副本，每副本一个 PVC；同集群副本共享集群标签，并使用不同副本标签（其他标签必须匹配才能去重）。分散故障域，按观测写入量规划保留期。负载均衡器不会合并历史 |
+| Thanos | Sidecar 暴露 StoreAPI 并可选上传块；Query 发现真实 StoreAPI 端点并按配置副本标签去重。Store Gateway 读取对象存储；Compactor 负责块压缩整理/保留，并具备适当单写入方/分片所有权 |
+| Grafana | 两个副本需要共享高可用 PostgreSQL/MySQL 数据库、一致预置/插件/密钥配置和负载均衡器。两个副本共享 SQLite 或跨节点共享一个 EBS ReadWriteOnce 卷，不是 Grafana 高可用 |
+| Alertmanager | 副本需要对等/通知去重配置、持久状态和安全接收器凭证；将 Slack webhook 放入 chart values 不是完整密钥/通知设计 |
+| Jaeger2/collector | 使用无状态 query/collector 副本，以及受支持的持久后端及其自身 HA/TLS/凭证。尾部采样器需要 trace ID 亲和性；随机 Service 后多个副本收不到完整追踪 |
+| Kiali | 使用兼容 Operator/服务器、共享配置/会话密钥行为及适当 Pod 放置。保护后端 API 和用户命名空间权限。Token 策略是单集群；需要时选择文档规定的多集群身份验证 |
 
-由于此答案篇幅较长，请参阅韩文源文件以获取完整实现细节，包括：
+**存储和对象存储连接：**
 
-1. 使用 Helm（kube-prometheus-stack）的 **Prometheus HA 配置**
-2. 使用 S3 backend 的 **Thanos 长期指标存储**
-3. 使用 Elasticsearch backend 的 **Jaeger HA 配置**
-4. **Kiali HA 配置**
-5. 使用 Velero 的**备份和恢复策略**
-6. 使用 PrometheusRules 的**监控和告警**
+- 即使使用对象存储，也保留本地 Prometheus 持久化：近期 head/WAL 数据可能尚未上传。Sidecar 上传应遵循安装的 Thanos 版本对本地压缩整理/块时长的要求。
+- S3 桶、区域端点、加密、保留和 IAM 权限必须存在。将带凭证 ServiceAccount 绑定到实际运行 Sidecar/Store/Compactor 的 Pod。写着“IRSA”的 YAML 注释不会创建凭证。当前 Thanos S3 配置可使用 `aws_sdk_auth: true` 和受支持 AWS SDK 凭证链。
+- 当前 kube-prometheus-stack values 在 `prometheus.prometheusSpec.thanos.objectStorageConfig.existingSecret` 下用真实名称/键选择现有对象存储 Secret。挂载键 `thanos.yaml` 不会创建名为 `objstore.yaml` 的文件。验证文件路径、命名 gRPC Service 端口和 DNS-SRV 目标。
+- 当前 Thanos Query 使用 `--endpoint` 和 `--query.replica-label` 配置端点/去重。不要未检查所选版本就沿用旧 `--store` 示例。Kiali 查询兼容 Prometheus 后端时，可能还需文档规定的 `thanos_proxy` 设置。
+- 每个 Deployment/StatefulSet 需要匹配选择器/Pod 标签和 Service；原先不完整资源无法构成有效 StoreAPI 拓扑。在 EKS 上，EBS 支持的状态需要受支持 EC2 放置/CSI 配置；Fargate 不挂载 EBS，也不运行任意 DaemonSet。
 
-**参考资料：**
+**配置、备份和证明：**
 
-* [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator)
-* [Thanos](https://thanos.io/tip/thanos/getting-started.md/)
-* [Jaeger Operator](https://www.jaegertracing.io/docs/latest/operator/)
+1. 配置实际监控/规则选择器和抓取目标。在 kube-prometheus-stack 中，`alertmanager.config` 与 `alertmanager.alertmanagerSpec` 同级；验证固定 chart 模式。将密码/webhook 保留在受支持 Secret 引用中。
+2. 使用应用一致流程备份 Grafana 数据库/配置/预置仪表板/插件、所需 Prometheus 状态及 Jaeger 存储。仅对象存储保留不是所有组件的恢复策略。
+3. 仅 Velero PVC/PV 清单不能证明卷数据已捕获。配置受支持的 CSI 快照/数据移动器或文件系统备份路径、快照类/插件、凭证和恢复工作负载所需资源。检查备份状态并执行隔离恢复。
+4. 备份 Job 必须使用经过测试且包含所需工具的镜像、正确源 URL、限定范围身份、目标桶和失败处理。旧 AWS CLI 镜像/假定 curl+jq/S3 CronJob 不是已验证备份方案。
+5. 监控接收器/导出器失败、排队、抓取健康和实际 PVC 容量指标。`prometheus_tsdb_storage_blocks_bytes_total` 不是有效容量分母。技术栈无法可靠报告自身全面故障；使用独立心跳/观察者，并将缺失序列/无数据与 `up == 0` 分开处理。
+6. 测试副本/节点/可用区丢失、存储中断、后端/身份验证失败、发布和恢复。PDB 有助于计划中断；不创建数据库或可用区级高可用。记录 RPO/RTO 和观测容量，不要仅凭副本数声称达到目标。
+
+参阅 [Grafana 高可用](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/)、[Thanos Sidecar](https://thanos.io/tip/components/sidecar.md/)、[Thanos Query](https://thanos.io/tip/components/query.md/)、[Thanos 存储](https://thanos.io/tip/thanos/storage.md/)及 [Velero CSI 备份](https://velero.io/docs/main/csi/)。
 
 </details>
 
@@ -1918,30 +860,344 @@ flowchart TD
 
 ### 问题 10：自定义指标和仪表板创建
 
-说明如何收集 Istio Envoy 默认指标之外的**业务指标**（例如订单数量、支付成功率），并创建 Grafana 自定义仪表板。
+解释如何采集 Istio Envoy 默认指标之外的**业务指标**（如订单数、支付成功率），并创建 Grafana 自定义仪表板。
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：**
+选择指标前先定义业务事件和计数边界。Envoy 了解请求，不知道订单是否持久创建或支付是否结算。以下**集成片段统计已完成处理尝试**，不是唯一订单或会计收入。应用必须提供处理函数/错误约定、幂等性和验证。真实支付成功指标应在支付边界记录支付结果，并从结果计数器推导比率；未维护的 Gauge 不是成功率。
 
-**自定义指标和仪表板创建：**
+使用取值有界的类别/状态标签、尝试次数 Counter，以及非负金额/持续时间 Histogram。在 `finally` 中观察持续时间以包含失败。不要以订单 ID、用户 ID 或原始 URL 标记指标。这些是单进程示例；多工作进程聚合需要客户端库支持的设置。
 
-由于此答案篇幅较长，请参阅韩文源文件以获取完整实现细节，包括：
+**Python/Flask**（应用提供 `process_order` 和 `PaymentException`）：
 
-1. **从应用程序暴露指标**（Python Flask 和 Node.js Express 示例）
-2. **Kubernetes ServiceMonitor 配置**
-3. 业务指标的 **Prometheus 查询**
-4. **Grafana 自定义仪表板** JSON 配置
-5. 使用 ConfigMap 的**仪表板配置供应**
-6. 使用 PrometheusRules 的**告警配置**
+```python
+from flask import Flask, request, jsonify, Response
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+import time
 
-**参考资料：**
+# Integration fragment: your application supplies process_order and PaymentException.
+# process_order returns a validated nonnegative USD amount and category after processing.
+app = Flask(__name__)
+CATEGORIES = {"books", "electronics", "other"}
+STATUSES = ("success", "payment_failed", "error")
+orders_total = Counter("orders_total", "Completed order-processing attempts", ["status", "product_category"])
+order_amount = Histogram("order_amount_dollars", "Observed amounts of successful attempts in USD",
+                         buckets=[10, 50, 100, 500, 1000, 5000])
+order_duration = Histogram("order_processing_duration_seconds", "Order attempt duration, including failures",
+                           buckets=[0.1, 0.5, 1.0, 2.0, 5.0])
+for status in STATUSES:
+    for category in CATEGORIES:
+        orders_total.labels(status=status, product_category=category).inc(0)
 
-* [指标](../../../service-mesh/istio/observability/01-metrics.md)
-* [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
-* [Grafana Provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
+@app.post("/api/orders")
+def create_order():
+    payload = request.get_json()
+    started = time.perf_counter()
+    try:
+        order = process_order(payload)
+        category = order["category"] if order["category"] in CATEGORIES else "other"
+        orders_total.labels(status="success", product_category=category).inc()
+        order_amount.observe(order["amount"])
+        return jsonify(order), 201
+    except PaymentException:
+        orders_total.labels(status="payment_failed", product_category="other").inc()
+        return jsonify({"error": "Payment failed"}), 400
+    except Exception:
+        orders_total.labels(status="error", product_category="other").inc()
+        return jsonify({"error": "Order processing failed"}), 500
+    finally:
+        order_duration.observe(time.perf_counter() - started)
+
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), content_type=CONTENT_TYPE_LATEST)
+
+# Use the application's server lifecycle. Do not treat a Flask development server
+# or process-local counters as a production accounting system.
+```
+
+**Node.js/Express**：持续维护的包为 `@prometheus-io/client`（示例 API 使用 Node 22 上的 0.16.1 检查）。`prom-client` 已弃用，由此包替代；现有项目必须审核迁移变更日志。配置 JSON 中间件并 await `register.metrics()`：
+
+```javascript
+const express = require('express');
+const client = require('@prometheus-io/client'); // Example verified with 0.16.1, Node 22
+const app = express();
+app.use(express.json());
+const register = new client.Registry();
+const categories = new Set(['books', 'electronics', 'other']);
+const ordersTotal = new client.Counter({
+  name: 'orders_total', help: 'Completed order-processing attempts',
+  labelNames: ['status', 'product_category'], registers: [register]
+});
+const orderAmount = new client.Histogram({
+  name: 'order_amount_dollars', help: 'Observed successful attempt amounts in USD',
+  buckets: [10, 50, 100, 500, 1000, 5000], registers: [register]
+});
+const orderDuration = new client.Histogram({
+  name: 'order_processing_duration_seconds', help: 'Order attempt duration, including failures',
+  buckets: [0.1, 0.5, 1, 2, 5], registers: [register]
+});
+for (const status of ['success', 'payment_failed', 'error']) {
+  for (const product_category of categories) ordersTotal.inc({status, product_category}, 0);
+}
+// The application supplies async processOrder with validated amount/category output.
+app.post('/api/orders', async (req, res) => {
+  const end = orderDuration.startTimer();
+  try {
+    const order = await processOrder(req.body);
+    const product_category = categories.has(order.category) ? order.category : 'other';
+    ordersTotal.inc({status: 'success', product_category});
+    orderAmount.observe(order.amount);
+    res.status(201).json(order);
+  } catch (error) {
+    const status = error.code === 'PAYMENT_FAILED' ? 'payment_failed' : 'error';
+    ordersTotal.inc({status, product_category: 'other'});
+    res.status(status === 'payment_failed' ? 400 : 500).json({error: 'Order processing failed'});
+  } finally {
+    end();
+  }
+});
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (error) {
+    res.status(500).end();
+  }
+});
+// Integrate app.listen/shutdown with the application's server lifecycle.
+```
+
+**Kubernetes 采集**：此 Sidecar 实验使用 Istio 合并端点，不假定明文应用抓取能通过 STRICT mTLS。将这些标签/注解合并到 `default` 中实际 `order-service` Deployment；镜像必须包含应用并在 8080 暴露 `/metrics`。网格必须启用 Prometheus 合并。代理端点 15020 为明文，因此限制网络访问。若现有抓取器已采集这些业务指标，不要添加重复监控器。
+
+```yaml
+spec:
+  template:
+    metadata:
+      labels:
+        app: order-service
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: /metrics
+        prometheus.io/port: '8080'
+        prometheus.istio.io/merge-metrics: 'true'
+```
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: default
+  labels:
+    app: order-service
+spec:
+  selector:
+    app: order-service
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: merged-metrics
+    port: 15020
+    targetPort: 15020
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: order-service-metrics
+  namespace: istio-system
+spec:
+  namespaceSelector:
+    matchNames:
+    - default
+  selector:
+    matchLabels:
+      app: order-service
+  targetLabels:
+  - app
+  endpoints:
+  - port: merged-metrics
+    path: /stats/prometheus
+    interval: 30s
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: orders_total|order_amount_dollars_(bucket|sum|count)|order_processing_duration_seconds_(bucket|sum|count)
+      action: keep
+```
+
+Prometheus 资源必须选择 `istio-system` 中的 ServiceMonitor；它在 `default` 中发现 Service。仅保留业务指标族，避免重复其他位置已抓取的代理指标。`targetLabels` 显式添加 Service 的 `app` 标签。这是 Sidecar 示例；Ambient/直接 TLS 抓取需要自己的受支持设计。
+
+**查询**（依次为：区间尝试次数、每秒尝试次数、成功比例、观测金额 P95、持续时间 P99、类别速率、订单尝试中的支付失败比例）：
+
+```promql
+sum(increase(orders_total{namespace="default",app="order-service"}[5m]))
+
+sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
+
+sum(rate(orders_total{namespace="default",app="order-service",status="success"}[5m])) / sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
+
+histogram_quantile(0.95, sum by (le) (rate(order_amount_dollars_bucket{namespace="default",app="order-service"}[5m])))
+
+histogram_quantile(0.99, sum by (le) (rate(order_processing_duration_seconds_bucket{namespace="default",app="order-service"}[5m])))
+
+sum by (product_category) (rate(orders_total{namespace="default",app="order-service"}[5m]))
+
+sum(rate(orders_total{namespace="default",app="order-service",status="payment_failed"}[5m])) / sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
+```
+
+`increase` 估算区间总量；`rate` 为每秒值。进程重启、重试和漏抓意味着运维计数器/金额总和不是会计台账。对于唯一已提交订单或收入，应与持久业务系统核对，不要假定遥测恰好一次。
+
+**Grafana**：此完整仪表板对象要求数据源 UID `prometheus` 及上方监控器标签。保存时不带 API 包装层，并使用[文档规定的仪表板文件预置](../../../service-mesh/istio/observability/04-dashboards.md)。仅 ConfigMap 标签不配置提供程序。
+
+```json
+{
+  "uid": "order-business-metrics",
+  "title": "Order Processing Operational Metrics",
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Completed Attempts per Minute",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(orders_total{namespace=\"default\",app=\"order-service\"}[5m])) * 60",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 2,
+      "title": "Attempt Success Fraction",
+      "type": "gauge",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(orders_total{namespace=\"default\",app=\"order-service\",status=\"success\"}[5m])) / sum(rate(orders_total{namespace=\"default\",app=\"order-service\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Processing P95",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(order_processing_duration_seconds_bucket{namespace=\"default\",app=\"order-service\"}[5m])))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Observed Successful Attempt Amount (Last Hour)",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(order_amount_dollars_sum{namespace=\"default\",app=\"order-service\"}[1h]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        }
+      }
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s"
+}
+```
+
+**警报**：通过已安装 Prometheus Operator 选择此规则。最小流量阈值避免无流量时触发比例警报；缺失/抓取失败需要独立信号。阈值是示例，不是业务 SLO 保证。
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: business-metrics-alerts
+  namespace: istio-system
+spec:
+  groups:
+  - name: business-metrics
+    rules:
+    - alert: LowOrderAttemptSuccessFraction
+      expr: (sum(rate(orders_total{namespace="default",app="order-service",status="success"}[5m])) / sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
+        < 0.95) and (sum(rate(orders_total{namespace="default",app="order-service"}[5m])) > 0.1)
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Order-processing attempt success fraction below95%
+    - alert: SlowOrderProcessing
+      expr: histogram_quantile(0.95, sum by (le) (rate(order_processing_duration_seconds_bucket{namespace="default",app="order-service"}[5m])))
+        > 2
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: P95 processing attempt duration exceeds2s
+```
+
+指标类型、暴露格式和进程模型参阅 [Python 客户端](https://prometheus.github.io/client_python/)及 [JavaScript 客户端](https://github.com/prometheus/client_js)文档。
 
 </details>
 
@@ -1951,19 +1207,19 @@ flowchart TD
 
 * 选择题 1-5：每题 10 分（共 50 分）
 * 简答题 6-10：每题 10 分（共 50 分）
-* **总计：100 分**
+* **总分：100 分**
 
 **评估标准：**
 
-* 90-100 分：优秀（Istio 可观测性专家）
-* 80-89 分：良好（具备生产环境监控能力）
+* 90-100 分：对这些主题理解出色
+* 80-89 分：理解良好；部署验证仍需单独进行
 * 70-79 分：一般（建议进一步学习）
-* 60-69 分：低于平均水平（需要复习基础概念）
+* 60-69 分：低于平均（需要复习基本概念）
 * 0-59 分：需要重新学习
 
 ## 学习资源
 
 * [指标](../../../service-mesh/istio/observability/01-metrics.md)
-* [分布式追踪](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/02-distributed-tracing.md)
+* [分布式追踪](../../../service-mesh/istio/observability/02-tracing.md)
 * [日志](../../../service-mesh/istio/observability/03-logging.md)
-* [可视化](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
+* [可视化](../../../service-mesh/istio/observability/04-dashboards.md)

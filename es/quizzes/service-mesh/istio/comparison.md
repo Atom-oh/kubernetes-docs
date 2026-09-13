@@ -1,20 +1,23 @@
-# Cuestionario de comparación de Istio
+# Cuestionario comparativo de Istio
 
-> **Versiones compatibles**: Istio 1.30 / EKS 1.36
-> **Última actualización**: August 21, 2026
+> **Informe histórico**: Istio 1.30.2 / EKS 1.36.2; no es una matriz actual de soporte
+> **Última actualización**: 11 de septiembre de 2026
 
-Este cuestionario evalúa tu comprensión de los criterios para seleccionar entre sidecar y modo ambient, especialmente los resultados de las pruebas de EKS 1.36.
+Evalúa criterios sidecar/ambient, especialmente los límites de las mediciones EKS publicadas. La auditoría no reprodujo esos experimentos.
 
 ## Preguntas de opción múltiple (1-6)
 
-### Pregunta 1: Causa raíz de los 503 del waypoint en ambient
+### Pregunta 1: Evidencia sobre los 503 del waypoint ambient
 
-¿Cuál es la causa raíz de los 503 intermitentes en la ruta del waypoint durante los rollouts en modo ambient?
+¿Qué puede concluirse de los conteos agregados de rollout sobre la causa de los 503?
 
-A. Asignación de IP duplicada cuando un Pod se reinicia
-B. El waypoint reutiliza conexiones indexadas por IP:Port de destino, y ztunnel no notifica al waypoint cuando un Pod termina
-C. NetworkPolicy bloquea el tráfico del waypoint
-D. El mTLS STRICT no es compatible con el waypoint
+A. Se demostró asignación IP duplicada
+
+B. La carrera del ciclo de conexión es una hipótesis; hacen falta flags de respuesta y cronologías de endpoints/conexiones
+
+C. Se demostró que NetworkPolicy causó todos los fallos
+
+D. Los conteos prueban que STRICT mTLS no está soportado
 
 <details>
 <summary>Respuesta y explicación</summary>
@@ -23,24 +26,28 @@ D. El mTLS STRICT no es compatible con el waypoint
 
 **Explicación:**
 
-El waypoint (Envoy) administra y reutiliza un pool de conexiones indexado por IP:Port de destino. ztunnel no notifica explícitamente al waypoint cuando un Pod de destino termina. Si la IP del Pod terminado se reasigna a un Pod nuevo, el waypoint puede reutilizar una conexión que ya no es válida y devolver un 503. Este es el mecanismo detrás del problema — **gestión del ciclo de vida de las conexiones**, no asignación de IP duplicada — y las tasas de 503 medidas en §4 son coherentes con ello.
+Los estados HTTP agregados no determinan una causa. Terminación Pod, propagación de endpoints, drenaje, timeouts y pools pueden contribuir. La explicación original de reutilización IP/notificación ztunnel no tenía una cronología diagnóstica conservada. Investigue hosts upstream, flags, UID de Pods y eventos de conexión, sin enseñar esa hipótesis como mecanismo probado.
 
 **Referencias:**
-- [Sidecar vs Ambient Mode Selection Guide](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
-- [Ambient Mode: Waypoint Proxy](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+
+- [Guía de selección sidecar y ambient](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
+- [Ambient: proxy waypoint](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 
 </details>
 
 ---
 
-### Pregunta 2: Interpretación de los resultados de las pruebas de EKS 1.36
+### Pregunta 2: Interpretar los resultados EKS
 
-Con una carga de 100 qps x 600s (60,000 solicitudes) y rollouts repetidos en un clúster EKS 1.36 dedicado de un solo inquilino, sidecar mostró una tasa de 503 del 0.5%, ambient-L4 (sin waypoint) no mostró 503 reales (pero sí un 0.3% de errores TCP), y ambient-L7 (con waypoint) mostró un 2.6%. ¿Cuál es la interpretación correcta?
+Las muestras sin ajustar registraron 324 HTTP 503 y 2 errores no HTTP en 60,000 llamadas sidecar; 0 y 195 en 60,000 ambient L4; y 1,528 y 84 en 59,913 ambient L7. ¿Qué interpretación está respaldada?
 
-A. Ambient siempre es más estable que sidecar
-B. El enrutamiento a través de un waypoint produce una tasa de 503 más alta que sidecar, pero usar solo L4 (sin waypoint) no produce 503 reales
-C. Los errores TCP de ambient-L4 (0.3%) son el mismo fenómeno que los 503 del waypoint
-D. El modo con el menor uso de sockets es el más estable
+A. Ambient siempre es más estable
+
+B. L7 tuvo mayor fracción observada de HTTP 503; cero 503 en L4 todavía dejó 195 fallos no HTTP
+
+C. Se probó una misma causa para todas las categorías
+
+D. SocketCount de Fortio mide directamente el pool upstream del waypoint
 
 <details>
 <summary>Respuesta y explicación</summary>
@@ -49,10 +56,11 @@ D. El modo con el menor uso de sockets es el más estable
 
 **Explicación:**
 
-Los datos muestran que "ambient" no es universalmente mejor ni peor que sidecar — que el tráfico pase por un **waypoint** es la variable decisiva. Ambient-L7 (con un waypoint) tuvo aproximadamente 5 veces la tasa de 503 de sidecar (2.6% frente a 0.5%), mientras que ambient-L4 (sin waypoint) no tuvo 503 reales. Sin embargo, eso no significa que ambient-L4 esté libre de fallos — presentó en cambio un modo de fallo diferente: pérdidas de conexión a nivel TCP (0.3%), lo cual no es lo mismo que el waypoint reenvíe una solicitud a través de una conexión inactiva y devuelva un 503 (por lo que C es incorrecta). El uso de sockets no es una métrica de estabilidad, sino solo un indicador de la frecuencia con la que se restablecieron las conexiones (por lo que D es incorrecta) — de hecho, ambient-L4 consumió la *mayor* cantidad de sockets y aun así tuvo cero 503.
+Las fracciones son 0.54% en sidecar y aproximadamente 2.55% en L7, una razón de 4.72 en estas muestras, no un multiplicador propio del producto. Cero 503 no es cero fallos. El código no HTTP -1 de Fortio no identifica reset/EOF/timeout sin detalles. SocketCount mide sockets cliente; L7 tuvo más (2,486), no L4 (1,652). QPS solicitado por duración no garantiza llamadas completadas exactas, y distintos conteos de rollout limitan la comparación causal.
 
 **Referencias:**
-- [Sidecar vs Ambient Mode Selection Guide: Zero-Downtime Rollout Results](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
+
+- [Guía sidecar/ambient: resultados de rollout sin interrupciones](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
 
@@ -60,37 +68,15 @@ Los datos muestran que "ambient" no es universalmente mejor ni peor que sidecar 
 
 ### Pregunta 3: NetworkPolicy y ambient
 
-En un clúster que usa NetworkPolicies basadas en puertos, el tráfico no llega a los Pods en modo ambient. La aplicación escucha en el puerto 8080. ¿Cuál es la causa y corrección más probables?
+En el experimento VPC CNI se verificó aplicación de políticas y una regla de entrada solo para 8080 bloqueó la ruta HBONE observada. ¿Qué debe comprobarse después?
 
-A. Ambient no es compatible con NetworkPolicy, por lo que se debe eliminar la NetworkPolicy
-B. El tráfico real llega a través del túnel HBONE (TCP 15008), por lo que la NetworkPolicy necesita una regla de permiso de entrada para 15008
-C. PeerAuthentication se debe cambiar a PERMISSIVE
-D. Se debe reiniciar el DaemonSet istio-cni
+A. Eliminar todas las NetworkPolicies
 
-<details>
-<summary>Respuesta y explicación</summary>
+B. Permitir TCP 15008 con alcance adecuado y verificar origen, identidad y límites de política del puerto interior
 
-**Respuesta: B**
+C. Cambiar mTLS a PERMISSIVE
 
-**Explicación:**
-
-En modo ambient, ztunnel encapsula el tráfico del Pod en un túnel HBONE (mTLS) y lo entrega en el puerto 15008. Una NetworkPolicy que solo permite el puerto de la aplicación (8080) bloquea el tráfico 15008 que realmente llega. La corrección es agregar una regla de permiso de entrada para TCP 15008 en los Pods de destino. Sidecar no necesita esta regla adicional porque el sidecar comparte el mismo espacio de nombres de red del Pod que la aplicación.
-
-**Referencias:**
-- [Sidecar vs Ambient Mode Selection Guide: NetworkPolicy](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
-
-</details>
-
----
-
-### Pregunta 4: API no idempotentes y políticas de reintento
-
-¿Por qué se recomienda no habilitar de forma predeterminada los reintentos a nivel de mesh (por ejemplo, reintento del waypoint, reintentos de VirtualService) en rutas de API no idempotentes como la creación de pedidos?
-
-A. Los reintentos añaden demasiada sobrecarga de CPU
-B. Cuando un waypoint reenvía una solicitud a través de una conexión inactiva y devuelve un 503, un reintento puede volver a ejecutar una solicitud que ya se había completado en el servidor, lo que provoca una ejecución duplicada (por ejemplo, un pedido duplicado)
-C. El reintento es incompatible con mTLS STRICT
-D. El reintento no es compatible con el modo ambient
+D. Reiniciar CNI y asumir que la política es correcta
 
 <details>
 <summary>Respuesta y explicación</summary>
@@ -99,23 +85,56 @@ D. El reintento no es compatible con el modo ambient
 
 **Explicación:**
 
-Un 503 es un fallo visible para el cliente, pero dentro de esa categoría de fallo hay casos en los que la solicitud realmente llegó al servidor y terminó de procesarse — solo se perdió la *respuesta*, debido a una condición de carrera entre la caída de la conexión y la finalización del trabajo por parte de la aplicación. En ese caso, un reintento del mesh reenvía la misma solicitud lógica a través de una conexión diferente y, si el servidor no garantiza la idempotencia, la solicitud se procesa dos veces. Este riesgo es especialmente grave para operaciones irreversibles como la creación de pedidos, por lo que es más seguro no habilitar los reintentos de forma predeterminada y verificarlos por separado. Una prueba de seguimiento (T2) ejecutó 300s de cambios continuos de rollout contra reintentos de sidecar y waypoint de ambient-L7 y no encontró ejecuciones duplicadas en esa ejecución — lo que reduce la confianza en que la condición de carrera sea *común*, pero no establece que sea *segura*, ya que requiere una ventana de tiempo muy estrecha que una prueba más larga o de mayor rendimiento aún podría detectar.
+El flujo se recuperó tras permitir TCP 15008. Es evidencia de esa ruta probada, no de comportamiento idéntico en todo CNI o política. Permitir el túnel exterior no constituye una política completa de mínimo privilegio para su tráfico interno. Verifique selectores de origen, paso por waypoint, dependencias DNS/control plane y aplicación real. La observación del puerto de aplicación sidecar también tiene alcance limitado.
 
 **Referencias:**
-- [Sidecar vs Ambient Mode Selection Guide: The Risk of Retry as a Mitigation](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
+
+- [Guía sidecar/ambient: NetworkPolicy](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
 
 ---
 
-### Pregunta 5: Comparación justa de rollouts de sidecar y ambient
+### Pregunta 4: API no idempotentes y reintentos
 
-Sidecar produjo menos 503 visibles para el cliente que ambient en una prueba de rollout. ¿Qué experimento determina mejor si eso refleja un plano de datos inherentemente más estable?
+¿Por qué desactivar explícitamente por defecto los reintentos mesh en comandos no idempotentes, como crear pedidos?
 
-A. Enviar solo solicitudes GET y comparar los conteos finales de 200
-B. Mantener el reintento predeterminado en sidecar pero deshabilitar el reintento en ambient
-C. Establecer el reintento de la ruta de escritura en `attempts: 0` en ambos modos y registrar por separado los fallos HTTP/TCP sin procesar, los conteos de reintentos y los resultados finales
-D. Considerar más estable el modo con menor uso promedio de CPU
+A. Siempre consumen más CPU que la aplicación
+
+B. Una respuesta fallida o perdida puede dejar el resultado desconocido y repetir un comando ya confirmado
+
+C. Son incompatibles con STRICT mTLS
+
+D. Ambient no tiene reintentos L7
+
+<details>
+<summary>Respuesta y explicación</summary>
+
+**Respuesta: B**
+
+**Explicación:**
+
+Timeout, reset o error no siempre prueban ausencia de efecto. Repetir una escritura ambigua puede duplicar trabajo si el servidor no aporta idempotencia durable/transacciones adecuadas. No depende de probar una carrera concreta del waypoint. Cero duplicados en el antiguo T2 no demuestra seguridad ni una frecuencia fiable: cliente ilimitado, conteos incompatibles con duración/tasa y posibles errores del observador ocultos. Un observador revisado y limitado tampoco es un registro transaccional de negocio. Mida ID estables y pérdida de respuesta con observación completa.
+
+**Referencias:**
+
+- [Guía sidecar/ambient: riesgo de usar reintentos como mitigación](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
+
+</details>
+
+---
+
+### Pregunta 5: Comparación justa del plano de datos
+
+¿Qué experimento inicial permite separar fallos de fallos ocultos por reintentos?
+
+A. Comparar solo éxitos GET finales
+
+B. Mantener reintentos sidecar y desactivar ambient
+
+C. Usar attempts: 0 en escrituras de ambos modos y recoger errores HTTP/no HTTP, contadores de retry, entregas upstream y resultados finales
+
+D. Elegir el modo con menor CPU media
 
 <details>
 <summary>Respuesta y explicación</summary>
@@ -124,24 +143,28 @@ D. Considerar más estable el modo con menor uso promedio de CPU
 
 **Explicación:**
 
-Envoy de sidecar y Envoy de waypoint pueden ocultar un fallo sin procesar al cliente mediante un reintento L7, mientras que ztunnel es un proxy L4 que no puede interpretar un HTTP 503 ni reproducir una solicitud HTTP. Deshabilita los reintentos de escritura de manera equivalente y registra por separado HTTP 503, restablecimiento/EOF de TCP, `upstream_rq_retry`, entregas reales al upstream y resultados finales del cliente. De lo contrario, la prueba no puede distinguir entre "ocurrieron menos fallos" y "el reintento ocultó más fallos".
+Sidecar y waypoint Envoy pueden reintentar L7; ztunnel no interpreta 503 ni repite HTTP. Desactive equivalentemente escrituras y registre upstream_rq_retry, entregas reales, ID estables y contabilidad cliente. Controle carga, versiones, recursos y exposición a rollout; repita el experimento. Separa mejor las observaciones, pero una ejecución no demuestra estabilidad intrínseca.
 
 **Referencias:**
-- [Sidecar vs Ambient Mode Selection Guide: raw failure measurement](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
-- [Retry and Timeout](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
+
+- [Guía sidecar/ambient: medición de fallos brutos](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
+- [Reintentos y timeout](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
 
 </details>
 
 ---
 
-### Pregunta 6: Autenticación y cifrado de Cilium
+### Pregunta 6: Autenticación y cifrado Cilium
 
-¿Qué afirmación es correcta para un plano de datos Cilium establecido con la autenticación mutua configurada como `required`?
+En la autenticación mutua fuera de banda documentada, ¿qué implica authentication required?
 
-A. Cada carga útil de la aplicación se cifra automáticamente con TLS de workload
-B. La autenticación de identidad de endpoint y el cifrado de la carga útil son independientes; la confidencialidad requiere WireGuard/IPsec o mTLS nativo de ztunnel compatible
-C. Es idéntica a `PeerAuthentication STRICT` de Istio en implementación, madurez y semántica operativa
-D. Habilitar la autenticación mutua elimina la necesidad de CiliumNetworkPolicy
+A. Todos los datos usan TLS de carga automáticamente
+
+B. Handshake de identidad y cifrado de datos son separados; el cifrado se configura y verifica aparte
+
+C. Es idéntico a PeerAuthentication STRICT en implementación y madurez
+
+D. Ya no se necesita autorización
 
 <details>
 <summary>Respuesta y explicación</summary>
@@ -150,10 +173,11 @@ D. Habilitar la autenticación mutua elimina la necesidad de CiliumNetworkPolicy
 
 **Explicación:**
 
-La autenticación mutua establecida de Cilium verifica la identidad del par mediante un handshake fuera de banda separado de la ruta de datos de la aplicación. La política de autenticación por sí sola no cifra automáticamente las cargas útiles, por lo que debes seleccionar WireGuard/IPsec por separado o validar la vista previa de mTLS nativo de ztunnel en una plataforma compatible. Evalúa por separado la autorización de identidad, la autenticación de pares y el cifrado en tránsito en vez de tratar el resultado como idéntico al mTLS de workload `STRICT` de Istio.
+La documentación publicada de Cilium 1.20.1 califica este mecanismo como Beta y describe una negociación fuera de banda separada de la ruta de datos de la aplicación. La política de autenticación por sí sola no cifra el contenido de la aplicación. Evalúe por separado el cifrado compatible de WireGuard/IPsec, incluidos sus límites de plataforma y cobertura de tráfico. Cilium 1.20.1 también tiene una beta de cifrado ztunnel independiente, con incorporación por espacio de nombres, solo TCP y restricciones de políticas/plataforma. Este ajuste de política de autenticación fuera de banda no la activa.
 
 **Referencias:**
-- [Cilium Service Mesh Security](../../../service-mesh/cilium-service-mesh/03-security.md)
+
+- [Seguridad de Cilium Service Mesh](../../../service-mesh/cilium-service-mesh/03-security.md)
 
 </details>
 
@@ -161,14 +185,19 @@ La autenticación mutua establecida de Cilium verifica la identidad del par medi
 
 ## Puntuación
 
-- Cuenta cuántas de las 6 preguntas respondiste correctamente.
-- 6/6: Puedes explicar la selección entre sidecar, ambient y Cilium, además del riesgo de reintento, usando evidencia medida.
-- 4-5/6: Revisa la medición de fallos sin procesar o la distinción entre autenticación y cifrado.
-- 0-3/6: Vuelve a leer desde el principio la [Sidecar vs Ambient Mode Selection Guide](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md).
+- Cuente aciertos entre las 6 preguntas.
+- 6/6: Puede explicar selección sidecar/ambient/Cilium y riesgo de retry con evidencia medida.
+- 4-5/6: Repase medición de fallos brutos o diferencia autenticación/cifrado.
+- 0-3/6: Relea desde el inicio la [guía de selección](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md).
 
 ## Recursos de aprendizaje
 
-- [Sidecar vs Ambient Mode Selection Guide](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
-- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+- [Guía de selección sidecar/ambient](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
+- [Modo ambient](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 - [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Cilium Service Mesh Security](../../../service-mesh/cilium-service-mesh/03-security.md)
+- [Seguridad Cilium Service Mesh](../../../service-mesh/cilium-service-mesh/03-security.md)
+
+## Evidencia oficial
+
+- [Estado de funciones L7 ambient](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/l7-features/index.md)
+- [Autenticación mutua Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)

@@ -1,82 +1,51 @@
 # 韧性
 
-Istio 的韧性功能确保 Service Mesh 即使在故障场景下也能可靠运行。
+> **最后更新**：2026 年 9 月 11 日 · Istio 1.31。这些是 `default` 中使用端口 8080 HTTP `myapp` 的独立 Sidecar 示例。不要同时应用每个同主机示例。验证实际代理配置和容量；示例未部署或负载测试。Ambient L7 行为需要 waypoint 及受支持策略附加。
+
+Istio 韧性功能在按应用语义和容量配置后，可帮助限制故障影响。
 
 ## 目录
 
-1. [Outlier Detection（异常检测）](01-outlier-detection.md)
-2. [Rate Limiting（速率限制）](02-rate-limiting.md)
-3. [Zone Aware Routing（区域感知路由）](03-zone-aware-routing.md)
+1. [异常检测](01-outlier-detection.md)
+2. [限速](02-rate-limiting.md)
+3. [可用区感知路由](03-zone-aware-routing.md)
 
 ### 其他韧性模式
 
-本文档还涵盖以下模式：
-- **Circuit Breaker**：通过 Connection Pool 实现熔断
-- **Retry**：重试策略
-- **Timeout**：请求时间限制
-- **Fault Injection**：故障注入测试
+本文也涵盖以下模式：
+
+- **断路器**：通过连接池实现断路
+- **重试**：重试策略
+- **超时**：请求时间限制
+- **故障注入**：故障注入测试
 
 ## 概述
 
-韧性是分布式系统的关键特性。Istio 可以自动实施各种韧性模式。
+韧性是分布式系统的重要特征。Istio 可自动实现多种韧性模式。
 
 ### 核心韧性模式
 
-```mermaid
-flowchart TB
-    Request[Client Request]
+![客户端请求经过异常检测、限速和可用区感知路由，流量被路由到健康 Pod，不健康 Pod 被排除。](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-0.png)
 
-    subgraph Resilience["Istio Resilience Patterns"]
-        Outlier[Outlier Detection<br/>Exclude Unhealthy Instances]
-        RateLimit[Rate Limiting<br/>Request Rate Control]
-        ZoneAware[Zone Aware Routing<br/>Locality-Preferred Routing]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-0.html)
 
-    subgraph Healthy["Healthy Instances"]
-        Pod1[Pod 1<br/>Zone A]
-        Pod2[Pod 2<br/>Zone B]
-    end
+图表概括概念，不是固定网络服务序列。异常检测和局部性选择是代理负载均衡决策；配置的 HTTP 限速过滤器在选定监听器/路由运行。
 
-    subgraph Unhealthy["Unhealthy Instances"]
-        Pod3[Pod 3<br/>Error Occurring]
-    end
+### 1. 异常检测
 
-    Request --> Outlier
-    Outlier --> RateLimit
-    RateLimit --> ZoneAware
-
-    ZoneAware -->|Preferred| Pod1
-    ZoneAware -->|Failover| Pod2
-
-    Outlier -.->|Excluded| Pod3
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef resilience fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef healthy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Outlier,RateLimit,ZoneAware resilience;
-    class Pod1,Pod2 healthy;
-    class Pod3 unhealthy;
-```
-
-### 1. Outlier Detection（异常检测）
-
-自动检测表现异常的 Service 实例，并将其从流量池中排除。
+自动检测行为异常的服务实例并将其排除出流量池。
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
+  namespace: default
 spec:
   host: myapp
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -84,50 +53,74 @@ spec:
 
 **主要功能**：
 - 连续错误检测
-- 自动排除和恢复
-- 可与 Circuit Breaker 配合使用
+- 临时剔除并重新获得后续流量资格
+- 配合断路器工作
 
-### 2. Rate Limiting（速率限制）
+剔除局限于各观测代理，不删除 Pod，也不是网格范围健康裁决。连续失败可立即触发检测；`interval` 是扫描周期。剔除会到期并可重复；不证明恢复。
 
-限制请求速率，以保护 Service 免受过载影响。
+### 2. 限速
+
+限制请求速率以保护服务免于过载。
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: ratelimit
+  namespace: default
 spec:
   configPatches:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      listener:
+        portNumber: 8080
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
             max_tokens: 100
             tokens_per_fill: 10
             fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+  workloadSelector:
+    labels:
+      app: myapp
 ```
 
 **主要功能**：
-- Token Bucket 算法
-- 本地和全局速率限制
+- 令牌桶算法
+- 本地和全局限速
 - 按客户端和路径限制
 
-### 3. Zone Aware Routing（区域感知路由）
+示例为匹配 HTTP 监听器在每 Envoy 进程执行本地令牌桶：初始 100 个令牌，随后每秒 10 个。不是服务范围配额；副本数和流量分布影响总吞吐量。全局配额需要限速服务和匹配描述符。客户端/路径限制需要额外可信分类；调用方提供的标头不是经过验证的身份。
 
-优化 Availability Zone 之间的流量，以降低延迟并节约成本。
+### 3. 可用区感知路由
+
+优化可用区间流量，降低延迟并节省成本。
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
+  namespace: default
 spec:
   host: myapp
   trafficPolicy:
@@ -135,60 +128,55 @@ spec:
       localityLbSetting:
         enabled: true
         distribute:
-        - from: us-east-1a/*
+        - from: us-east-1/us-east-1a/*
           to:
-            "us-east-1a/*": 80
-            "us-east-1b/*": 20
+            us-east-1/us-east-1a/*: 80
+            us-east-1/us-east-1b/*: 20
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 0
 ```
 
 **主要功能**：
-- 优先处理同一 AZ 的流量
-- 减少跨 AZ 成本
-- 故障时自动故障转移
+- 优先同可用区流量
+- 减少跨可用区成本
+- 需要时配置独立局部性故障转移策略
 
-### 4. Circuit Breaker
+局部性路径为 `region/zone/subzone`。此示例在两个可用区健康时有意按 80/20 分配；20% 是普通跨可用区流量，不是备用故障转移。同可用区优先并溢出应使用独立局部性故障转移模式，不要将 `distribute` 与 `failover`/`failoverPriority` 组合。异常检测、就绪端点和目标备用容量是前提；节省取决于实际计费流量。
 
-限制连接和请求数量，以防止 Service 过载。
+### 4. 断路器
+
+限制连接和请求数量以防服务过载。
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: circuit-breaker
+  namespace: default
 spec:
   host: myapp
   trafficPolicy:
     connectionPool:
       tcp:
-        maxConnections: 100              # Maximum TCP connections
+        maxConnections: 100
       http:
-        http1MaxPendingRequests: 10      # Maximum pending requests
-        http2MaxRequests: 100            # Maximum HTTP/2 requests
-        maxRequestsPerConnection: 2       # Maximum requests per connection
+        http1MaxPendingRequests: 10
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
 **工作原理**：
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client
-    participant Envoy as Envoy Proxy
-    participant Service as Service
+![Envoy 代理将正常客户端请求转发到服务，然后对超出连接限制的请求返回 503 断路器打开响应，而不再转发的时序图。](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-1.png)
 
-    Client->>Envoy: Requests 1-100 (normal)
-    Envoy->>Service: Forward
-    Service->>Envoy: Response
-    Envoy->>Client: Response
-
-    Client->>Envoy: Request 101 (limit exceeded)
-    Envoy-->>Client: 503 Circuit Breaker Open
-
-    Note over Envoy,Service: Connection limit reached<br/>New connections blocked
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-1.html)
 
 **主要功能**：
 - TCP 连接限制
@@ -196,27 +184,51 @@ sequenceDiagram
 - 待处理请求限制
 - 溢出时快速失败
 
-### 5. Retry（重试）
+连接/请求断路器局限于各代理的上游集群和优先级，不是全局每服务器 Pod 容量限制。`http2MaxRequests` 也适用于 HTTP/1.1。命中连接限制时，请求可能排队，直到超过待处理/请求限制；图中展示 HTTP 溢出返回 503/UO，不代表每次连接达到阈值。TCP 溢出没有 HTTP 状态。
 
-在瞬时故障时自动重试请求。
+### 5. 重试
+
+短暂失败时自动重试请求。
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
+  namespace: default
 spec:
   hosts:
   - myapp
   http:
+  - name: writes-no-retry
+    match:
+    - method:
+        regex: ^(POST|PUT|PATCH|DELETE)$
+    route:
+    - destination:
+        host: myapp
+    timeout: 10s
+    retries:
+      attempts: 0
   - route:
     - destination:
         host: myapp
     retries:
-      attempts: 3                        # Maximum 3 retries
-      perTryTimeout: 2s                  # Timeout per attempt
-      retryOn: 5xx,reset,connect-failure,refused-stream  # Retry conditions
-    timeout: 10s                         # Total request timeout
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream
+    timeout: 10s
+    name: idempotent-reads
+    match:
+    - method:
+        regex: ^(GET|HEAD|OPTIONS)$
+  - name: other-methods-no-retry
+    route:
+    - destination:
+        host: myapp
+    timeout: 10s
+    retries:
+      attempts: 0
 ```
 
 **重试条件**（`retryOn`）：
@@ -224,67 +236,78 @@ spec:
 - `reset`：TCP 连接重置
 - `connect-failure`：连接失败
 - `refused-stream`：HTTP/2 流被拒绝
-- `retriable-4xx`：可重试的 4xx（例如 409）
-- `gateway-error`：Gateway 错误（502、503、504）
+- `retriable-4xx`：在此 Envoy 策略下仅 HTTP 409
+- `gateway-error`：网关错误（502、503、504）
 
-**指数退避**：
+**退避和局部性（上方匹配读取路由的片段）**：
 ```yaml
 retries:
   attempts: 5
   perTryTimeout: 2s
-  retryOn: 5xx
-  retryRemoteLocalities: true            # Retry to other localities
+  retryOn: gateway-error,connect-failure,refused-stream
+  backoff: 25ms
+  retryRemoteLocalities: true
 ```
 
 **工作原理**：
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client
-    participant Envoy as Envoy Proxy
-    participant Pod1 as Pod 1 (failure)
-    participant Pod2 as Pod 2 (success)
+![Envoy 代理首次向 Pod 1 尝试时收到 503，再向 Pod 2 重试相同请求，后者成功并向客户端返回 200 OK 的时序图。](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-2.png)
 
-    Client->>Envoy: Request
-    Envoy->>Pod1: Attempt 1
-    Pod1-->>Envoy: 503 Service Unavailable
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-2.html)
 
-    Note over Envoy: Retry condition met<br/>Retry to different Pod
+`attempts: 3` 允许初始尝试后最多三次重试。路由超时可能更早停止。读取方法匹配假定应用幂等；启用 PUT/DELETE 重试前，仍需验证其语义和应用幂等键。省略可能继承网格重试，因此写入/回退路由显式使用 `attempts: 0`。重试可再次访问同一主机，不保证成功。退避为带抖动的指数退避；允许远程局部性不会设置退避。
 
-    Envoy->>Pod2: Attempt 2
-    Pod2->>Envoy: 200 OK
-    Envoy->>Client: 200 OK
-```
+### 6. 超时
 
-### 6. Timeout（超时）
-
-设置时间限制，防止请求无限期等待。
+设置时间限制，防止请求无限等待。
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
+  namespace: default
 spec:
   hosts:
   - myapp
   http:
+  - name: writes-no-retry
+    match:
+    - method:
+        regex: ^(POST|PUT|PATCH|DELETE)$
+    route:
+    - destination:
+        host: myapp
+    timeout: 5s
+    retries:
+      attempts: 0
   - route:
     - destination:
         host: myapp
-    timeout: 5s                          # Request timeout
+    timeout: 5s
     retries:
       attempts: 3
-      perTryTimeout: 2s                  # Per-retry timeout
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream
+    name: idempotent-reads
+    match:
+    - method:
+        regex: ^(GET|HEAD|OPTIONS)$
+  - name: other-methods-no-retry
+    route:
+    - destination:
+        host: myapp
+    timeout: 5s
+    retries:
+      attempts: 0
 ```
 
-**超时层级**：
+**超时层次**（要求 `default` 中单独配置 `my-gateway`）：
 ```yaml
-# Gateway level timeout
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: gateway-timeout
+  namespace: default
 spec:
   gateways:
   - my-gateway
@@ -294,14 +317,15 @@ spec:
   - route:
     - destination:
         host: frontend
-    timeout: 30s                         # Gateway -> Frontend: 30 seconds
-
+    timeout: 30s
+    retries:
+      attempts: 0
 ---
-# Service level timeout
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: service-timeout
+  namespace: default
 spec:
   hosts:
   - backend
@@ -309,41 +333,42 @@ spec:
   - route:
     - destination:
         host: backend
-    timeout: 5s                          # Frontend -> Backend: 5 seconds
+    timeout: 5s
+    retries:
+      attempts: 0
 ```
 
-**推荐设置**：
-- Gateway -> Frontend：30–60 秒（面向用户）
-- Service -> Service：5–10 秒（内部通信）
-- 数据库查询：2–5 秒
-- 外部 API：10–30 秒
+**示意预算范围（实际值按 SLO 和依赖推导）**：
+- Gateway -> Frontend：30-60 秒（面向用户）
+- Service -> Service：5-10 秒（内部通信）
+- 数据库查询：2-5 秒
+- 外部 API：10-30 秒
 
-### 7. Fault Injection（故障注入）
+HTTP 路由超时不配置数据库客户端/查询超时，也不保证取消下游工作。传播应用期限；更短总超时有意允许更少重试。
 
-有意注入故障以进行混沌工程。
+### 7. 故障注入
+
+为混沌工程有意注入故障。
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: fault-injection
+  namespace: default
 spec:
   hosts:
   - myapp
   http:
   - fault:
-      # Delay injection
       delay:
         percentage:
-          value: 10.0                    # 10% of requests delayed
-        fixedDelay: 5s                   # 5 second delay
-
-      # Error injection
+          value: 10.0
+        fixedDelay: 5s
       abort:
         percentage:
-          value: 5.0                     # 5% of requests fail
-        httpStatus: 503                  # Return 503 error
-
+          value: 5.0
+        httpStatus: 503
     route:
     - destination:
         host: myapp
@@ -351,7 +376,7 @@ spec:
 
 **使用场景**：
 
-1. **网络延迟模拟**：
+1. **模拟网络延迟**：
 ```yaml
 fault:
   delay:
@@ -360,12 +385,12 @@ fault:
     fixedDelay: 7s
 ```
 
-2. **间歇性故障测试**：
+2. **间歇性失败测试**：
 ```yaml
 fault:
   abort:
     percentage:
-      value: 20.0                        # 20% failure rate
+      value: 20.0
     httpStatus: 500
 ```
 
@@ -375,6 +400,7 @@ apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: fault-injection-user
+  namespace: default
 spec:
   hosts:
   - myapp
@@ -382,7 +408,7 @@ spec:
   - match:
     - headers:
         end-user:
-          exact: test-user               # Apply only to test-user
+          exact: test-user
     fault:
       abort:
         percentage:
@@ -391,61 +417,90 @@ spec:
     route:
     - destination:
         host: myapp
+  - name: ordinary-traffic
+    route:
+    - destination:
+        host: myapp
+    retries:
+      attempts: 0
 ```
+
+故障注入是受控实验操作。带 `fault` 的客户端路由上，Istio 不启用该路由的重试/超时。测试重试行为应在独立下游跳点注入故障。测试用户标头仅限定流量；应限制谁可提供它。普通流量回退防止其他请求无法匹配。
 
 ## 韧性模式组合
 
-### Outlier Detection（异常检测）+ Circuit Breaker
+### 异常检测 + 断路器
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp-resilient
+  namespace: default
 spec:
   host: myapp
   trafficPolicy:
-    # Connection Pool (Circuit Breaker)
     connectionPool:
       tcp:
         maxConnections: 100
       http:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
-
-    # Outlier Detection
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
-      minHealthPercent: 50
+      minHealthPercent: 0
 ```
 
-### Rate Limiting（速率限制）+ Retry（重试）
+### 限速 + 重试
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
+  namespace: default
 spec:
   hosts:
   - myapp
   http:
+  - name: writes-no-retry
+    match:
+    - method:
+        regex: ^(POST|PUT|PATCH|DELETE)$
+    route:
+    - destination:
+        host: myapp
+    timeout: 10s
+    retries:
+      attempts: 0
   - route:
     - destination:
         host: myapp
     retries:
       attempts: 3
       perTryTimeout: 2s
-      retryOn: 5xx,reset,connect-failure
+      retryOn: gateway-error,connect-failure,refused-stream
     timeout: 10s
+    name: idempotent-reads
+    match:
+    - method:
+        regex: ^(GET|HEAD|OPTIONS)$
+  - name: other-methods-no-retry
+    route:
+    - destination:
+        host: myapp
+    timeout: 10s
+    retries:
+      attempts: 0
 ---
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: ratelimit
+  namespace: default
 spec:
   workloadSelector:
     labels:
@@ -454,144 +509,124 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      listener:
+        portNumber: 8080
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
             max_tokens: 1000
             tokens_per_fill: 100
             fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
 ```
 
 ## 韧性架构
 
-```mermaid
-flowchart TB
-    Client[Client]
+![客户端请求经限速入口网关进入异常检测，后者排除不健康 Pod A3，仅向健康 Service A Pod 发送流量，再由这些 Pod 按可用区感知路由调用同可用区 Service B Pod。](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-3.png)
 
-    subgraph Gateway["Ingress Gateway"]
-        GW[Gateway<br/>Rate Limiting]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-3.html)
 
-    subgraph ServiceA["Service A"]
-        A1[Pod A1<br/>Zone A<br/>Healthy]
-        A2[Pod A2<br/>Zone B<br/>Healthy]
-        A3[Pod A3<br/>Zone A<br/>Unhealthy]
-    end
+## 韧性指标 {#resilience-metrics}
 
-    subgraph ServiceB["Service B"]
-        B1[Pod B1<br/>Zone A]
-        B2[Pod B2<br/>Zone B]
-    end
+按[指标](../observability/01-metrics.md)章节，每 Pod 抓取一个预期代理端点。Envoy 默认不导出每个可选统计。将此注解合并到相关 Pod 模板并滚动发布新代理，再检查实际名称/标签：
 
-    subgraph Policies["Resilience Policies"]
-        OD[Outlier Detection<br/>A3 Excluded]
-        RL[Rate Limiting<br/>100 req/s]
-        ZA[Zone Aware<br/>A -> B Same Zone]
-    end
-
-    Client -->|Request| GW
-    GW -->|Rate Limit Passed| OD
-    OD -->|Healthy Pods Only| A1
-    OD -->|Healthy Pods Only| A2
-    OD -.->|Excluded| A3
-
-    A1 -->|Zone A -> Zone A Preferred| B1
-    A2 -->|Zone B -> Zone B Preferred| B2
-
-    ZA -.->|Affects| B1
-    ZA -.->|Affects| B2
-    RL -.->|Applied| GW
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class GW gateway;
-    class A1,A2,B1,B2 service;
-    class A3 unhealthy;
-    class OD,RL,ZA policy;
+```yaml
+spec:
+  template:
+    metadata:
+      annotations:
+        proxy.istio.io/config: |
+          proxyStatsMatcher:
+            inclusionRegexps:
+            - ".*outlier_detection.*"
+            - ".*circuit_breakers.*"
+            - ".*upstream_rq_retry.*"
+            - ".*upstream_rq_timeout.*"
+            - ".*upstream_rq_.*overflow.*"
+            - ".*http_local_rate_limit.*"
+            - ".*fault.*"
 ```
-
-## 韧性指标
 
 ### Prometheus 查询
 
+速率为每秒；`_open` 是 0/1 容量状态 gauge，`ejections_active` 是当前主机数。单集群示例假定抓取标签 `namespace`/`pod`；特定依赖应缩小目标集群范围。本地限速前缀取决于 `stat_prefix` 和输出统计名。`rate_limited` 即使不执行限制也统计令牌不足；`enforced` 统计实际限制。活动请求溢出计数器因 Envoy 版本而异：如暴露 `upstream_rq_active_overflow` 应检查它，不要假定每次溢出都增加 pending 计数器。
+
 ```promql
-# 1. Outlier Detection: Ejected instance count
-envoy_cluster_outlier_detection_ejections_active
+# Active ejections per observed cluster
+ envoy_cluster_outlier_detection_ejections_active{namespace="default"}
 
-# 2. Rate Limiting: Rate-limited request count
-rate(envoy_http_local_rate_limit_rate_limited[5m])
+# Locally rate-limited requests per second, retaining Pod identity
+sum by (namespace, pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace="default"}[5m]))
 
-# 3. Zone Aware: Traffic ratio between zones
-sum(rate(istio_requests_total[5m])) by (source_zone, destination_zone)
+# Request circuit breaker currently at capacity (not a cumulative count)
+envoy_cluster_circuit_breakers_default_rq_open{namespace="default"}
 
-# 4. Circuit Breaker: Open circuit count
-envoy_cluster_circuit_breakers_default_rq_open
+# Pending-queue circuit-breaker overflows per second
+sum(rate(envoy_cluster_upstream_rq_pending_overflow{namespace="default"}[5m]))
 
-# 5. Circuit Breaker: Requests rejected due to overflow
-envoy_cluster_circuit_breakers_default_rq_overflow
+# Retry attempts and retry-success events per second (different event counters)
+sum(rate(envoy_cluster_upstream_rq_retry{namespace="default"}[5m]))
+sum(rate(envoy_cluster_upstream_rq_retry_success{namespace="default"}[5m]))
 
-# 6. Retry: Retried request count
-sum(rate(envoy_cluster_upstream_rq_retry[5m]))
+# Upstream request timeouts per second
+sum(rate(envoy_cluster_upstream_rq_timeout{namespace="default"}[5m]))
 
-# 7. Retry: Retry success rate
-sum(rate(envoy_cluster_upstream_rq_retry_success[5m])) /
-sum(rate(envoy_cluster_upstream_rq_retry[5m])) * 100
-
-# 8. Timeout: Timeout occurrence count
-sum(rate(envoy_cluster_upstream_rq_timeout[5m]))
-
-# 9. Overall request success rate
-sum(rate(istio_requests_total{response_code!~"5.."}[5m])) /
-sum(rate(istio_requests_total[5m])) * 100
+# Observed destination HTTP 2xx/3xx fraction; define your own SLI for 4xx/gRPC
+sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="default",response_code=~"[23].."}[5m])) /
+sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="default"}[5m]))
 ```
+
+`source_zone` 和 `destination_zone` 不是标准 Istio 标签。可用区报告需要已验证拓扑数据补充或其他可用区流量来源；集群 ID 不是可用区 ID。目标指标排除未到达服务的请求，因此也应检查源侧失败信号。
 
 ### Grafana 仪表板面板
 
-**Circuit Breaker 状态**：
+分别展示活动连接、打开/关闭状态和溢出速率。没有标准 `envoy_cluster_circuit_breakers_default_cx_max` 容量 gauge 或 `...rq_overflow` 断路器 gauge。计算容量使用生效集群阈值，绝不除以 0/1 打开标志。
+
 ```promql
-# Active connections vs max connections
-envoy_cluster_upstream_cx_active /
-envoy_cluster_circuit_breakers_default_cx_max * 100
+envoy_cluster_upstream_cx_active{namespace="default"}
+envoy_cluster_circuit_breakers_default_cx_open{namespace="default"}
+
+# Source-side observed final HTTP 5xx fraction, not hypothetical no-retry errors
+sum(rate(istio_requests_total{reporter="source",destination_service_namespace="default",response_code=~"5.."}[5m])) /
+sum(rate(istio_requests_total{reporter="source",destination_service_namespace="default"}[5m]))
 ```
 
-**Retry 效果**：
-```promql
-# Error rate without retries
-sum(rate(envoy_cluster_upstream_rq_xx{envoy_response_code_class="5"}[5m])) /
-sum(rate(envoy_cluster_upstream_rq_xx[5m])) * 100
-
-# Actual error rate after retries
-sum(rate(istio_requests_total{response_code=~"5.."}[5m])) /
-sum(rate(istio_requests_total[5m])) * 100
-```
+重试计数器无法重建反事实“没有重试时的错误率”。使用限定范围测量关联尝试、最终结果、延迟和负载；无流量/缺失序列需单独处理。
 
 ## 最佳实践
 
-### 1. Outlier Detection（异常检测）阈值调优
+### 1. 异常检测阈值调优
 
 ```yaml
 # Adjust according to service characteristics
 outlierDetection:
-  consecutiveErrors: 5          # 5 consecutive failures
+  consecutive5xxErrors: 5          # 5 consecutive failures
   interval: 30s                 # Evaluate every 30 seconds
   baseEjectionTime: 30s         # 30 second ejection
   maxEjectionPercent: 50        # Maximum 50% ejected
-  minHealthPercent: 50          # Maintain at least 50%
+  minHealthPercent: 0           # Disable unhealthy-pool fail-open threshold
 ```
 
-### 2. 分阶段 Rate Limiting（速率限制）
+`minHealthPercent` 不保证健康容量：低于非零阈值时，异常检测禁用，代理可使用健康和不健康主机。`0` 禁用该阈值。重复剔除可能长于 `baseEjectionTime`；监控实际剔除主机和剩余容量。
+
+### 2. 分阶段限速
 
 ```yaml
 # Apply limits at Gateway -> Service stages
@@ -599,121 +634,49 @@ outlierDetection:
 # Service: Individual service limit
 ```
 
-### 3. Zone Aware Routing（区域感知路由）优先级
+### 3. 可用区感知路由优先级
+
+同可用区优先并故障转移应使用局部性优先级，而非 80/20 分配。确认节点区域/可用区标签和可用端点。[可用区感知章节](03-zone-aware-routing.md)将分配与故障转移作为不同模式介绍。
+
+### 4. 断路器配置
+
+根据实测并发和目标容量，为各调用方代理规划目标集群限制。调用方数量、HTTP 复用、负载分布和发布激增都重要；Pod 数乘任意因子不是全局准入限制。大队列可能掩盖过载。
 
 ```yaml
-# Prioritize same AZ, use other AZs for failover
-distribute:
-- from: us-east-1a/*
-  to:
-    "us-east-1a/*": 80    # Same AZ 80%
-    "us-east-1b/*": 20    # Other AZ 20% (failover)
-```
-
-### 4. Circuit Breaker 配置
-
-```yaml
-# Configure according to service capacity
+# DestinationRule trafficPolicy fragment; example values require load tests
 connectionPool:
   tcp:
-    maxConnections: 100              # Maximum connections per pod
+    maxConnections: 100
   http:
-    http1MaxPendingRequests: 10      # Queue size (keep small)
+    http1MaxPendingRequests: 10
     http2MaxRequests: 100
-    maxRequestsPerConnection: 2       # Keep-alive limit
-
-# Avoid overly large values
-connectionPool:
-  tcp:
-    maxConnections: 10000            # Excessively large
-  http:
-    http1MaxPendingRequests: 1000    # Queue too long
+    maxRequestsPerConnection: 0
+    maxRetries: 10
 ```
 
-**推荐值**：
-- `maxConnections`：Pod 数量 x 预期并发连接数 x 1.5
-- `http1MaxPendingRequests`：10–50（快速失败很重要）
-- `maxRequestsPerConnection`：1–5（限制连接复用）
+`maxRequestsPerConnection: 0` 允许不受此请求数上限限制的复用；`1` 禁用 keep-alive。1–5 不是通用优化值。`maxRetries` 限制每上游集群并发未完成重试，不是每请求重试数。
 
-### 5. Retry（重试）策略
+### 5. 重试策略
 
-```yaml
-# Retry only idempotent requests
-retries:
-  attempts: 3
-  perTryTimeout: 2s
-  retryOn: 5xx,reset,connect-failure    # GET requests
+使用上方完整示例中的显式写入保护和读取方法匹配。写着“仅 GET”的 YAML 注释不限制匹配。仅重试应用语义可安全重复的操作，设置有界尝试/退避及总期限。不要自动重试 429 或过载响应：重试可抵消限速并加重故障。组合示例使用更大本地桶（初始 1000 令牌，每秒补充 100），不是全局配额。
 
-# Avoid indiscriminate retries on POST/PUT requests
-retries:
-  attempts: 5
-  retryOn: 5xx                           # Risk of duplicate data creation
+### 6. 超时配置
+
+为整个调用图规划预算，包括首次尝试、重试、退避和应用处理。如果希望所有尝试都容纳在内：
+
+```text
+route budget >= (1 + attempts) × perTryTimeout + backoff + other overhead
 ```
 
-**重试指南**：
-- **GET、HEAD、OPTIONS**：可安全重试
-- **POST、PUT、PATCH**：仅当保证幂等性时重试
-- **DELETE**：可安全重试（幂等）
+`attempts: 3` 和 `perTryTimeout: 2s` 下，四次完整尝试在退避/其他开销前已用 8 秒。`timeout: 10s` 是示例预算，不是保证；`timeout: 5s` 有意无法容纳四次完整两秒尝试。应用期限还必须覆盖请求上传/流式传输语义，并适当传播取消。
 
-### 6. Timeout（超时）配置
+### 7. 故障注入测试
 
-```yaml
-# Hierarchical timeouts (parent > child)
-# Gateway
-timeout: 30s
-retries:
-  perTryTimeout: 10s
-
-# Service A -> Service B
-timeout: 10s
-retries:
-  perTryTimeout: 3s
-
-# Avoid child timeout larger than parent
-timeout: 5s
-retries:
-  perTryTimeout: 10s                     # perTryTimeout > timeout
-```
-
-**超时公式**：
-```
-total timeout >= (perTryTimeout x attempts) + overhead
-```
-
-示例：`timeout: 10s`、`perTryTimeout: 2s`、`attempts: 3`
-- 所需最小值：2s x 3 = 6s
-- 推荐值：10s（保留余量）
-
-### 7. Fault Injection（故障注入）测试
-
-```yaml
-# In production, limit to specific users/headers
-- match:
-  - headers:
-      x-chaos-test:
-        exact: "true"
-  fault:
-    delay:
-      percentage:
-        value: 100.0
-      fixedDelay: 5s
-
-# Avoid indiscriminate fault injection in production
-fault:
-  abort:
-    percentage:
-      value: 50.0                        # 50% failure!
-    httpStatus: 500
-```
-
-**测试阶段**：
-1. **开发**：使用 100% 故障注入进行全面测试
-2. **预发布**：仅应用于特定用户组
-3. **生产**：采用渐进式金丝雀方法（1% -> 5% -> 10%）
+使用上方完整的标头匹配路由和普通流量回退。将制造故障的跳点与被测试重试/超时策略分开。从可销毁测试环境开始，再在预发布使用有界工作负载组和中止标准。任何生产实验需要工作负载专属授权、可观测性和回滚阈值；固定 1%→5%→10% 时间表不普遍安全。
 
 ## 故障排除
 
-### Outlier Detection（异常检测）未生效
+### 异常检测不工作
 
 ```bash
 # 1. Check DestinationRule
@@ -723,11 +686,10 @@ kubectl get destinationrule -A
 istioctl proxy-config clusters <pod-name> -n <namespace>
 
 # 3. Check Outlier Detection metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep outlier
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep outlier
 ```
 
-### Rate Limiting（速率限制）未应用
+### 限速未应用
 
 ```bash
 # 1. Check EnvoyFilter
@@ -737,81 +699,74 @@ kubectl get envoyfilter -A
 istioctl proxy-config listener <pod-name> -n <namespace> -o json
 
 # 3. Check Rate Limit metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep rate_limit
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep rate_limit
 ```
 
-### Zone Aware Routing（区域感知路由）未生效
+### 可用区感知路由不工作
 
 ```bash
 # 1. Check DestinationRule
 kubectl get destinationrule -A
 
-# 2. Check Pod Zone labels
-kubectl get pods -n <namespace> -o wide \
-  -L topology.kubernetes.io/zone
+# 2. Map Pods to node topology; Pod zone labels are not added automatically
+kubectl get pods -n <namespace> -o wide
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
 
 # 3. Check Locality information
 istioctl proxy-config endpoints <pod-name> -n <namespace>
 ```
 
-### Circuit Breaker 未打开
+### 断路器未打开
 
 ```bash
 # 1. Check DestinationRule connectionPool settings
 kubectl get destinationrule <name> -o yaml
 
 # 2. Check Circuit Breaker metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep circuit_breakers
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep circuit_breakers
 
 # 3. Check for overflow
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep overflow
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep overflow
 
 # 4. Check active connection count
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep upstream_cx_active
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep upstream_cx_active
 ```
 
-### Retry（重试）未生效
+### 重试不工作
 
 ```bash
 # 1. Check VirtualService
 kubectl get virtualservice <name> -o yaml
 
 # 2. Check Retry metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep retry
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep retry
 
-# 3. Check Envoy logs for retries
+# 3. Inspect enabled access/debug logs; default logs need not contain each retry
 kubectl logs -n <namespace> <pod-name> -c istio-proxy | grep retry
 
 # 4. Check retry conditions
 istioctl proxy-config routes <pod-name> -n <namespace> -o json | \
-  jq '.[] | select(.name | contains("your-service")) | .virtualHosts[].routes[].route.retryPolicy'
+  jq '.[] | .virtualHosts[]? | {name, domains, routes: [.routes[]? | {name, match, retryPolicy: .route.retryPolicy}]}'
 ```
 
-### Timeout（超时）未应用
+### 超时未应用
 
 ```bash
 # 1. Check VirtualService timeout
 kubectl get virtualservice <name> -o yaml | grep timeout
 
 # 2. Check Timeout metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep timeout
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep timeout
 
 # 3. Check request duration
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep request_duration
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep request_duration
 
 # 4. Check Envoy route configuration
 istioctl proxy-config routes <pod-name> -n <namespace> -o json | \
   jq '.[] | .virtualHosts[].routes[].route.timeout'
 ```
 
-### Fault Injection（故障注入）未生效
+### 故障注入不工作
 
 ```bash
 # 1. Check VirtualService fault configuration
@@ -822,40 +777,39 @@ curl -H "end-user: test-user" http://your-service/api
 
 # 3. Check Envoy filters
 istioctl proxy-config routes <pod-name> -n <namespace> -o json | \
-  jq '.[] | .virtualHosts[].routes[].route.rateLimits'
+  jq '.[] | .virtualHosts[]?.routes[]? | select(.typedPerFilterConfig["envoy.filters.http.fault"] != null) | {name, fault: .typedPerFilterConfig["envoy.filters.http.fault"]}'
 
 # 4. Check Fault metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep fault
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep fault
 ```
 
 ## 后续步骤
 
-1. **[Outlier Detection（异常检测）](01-outlier-detection.md)**：自动检测不健康实例
-2. **[Rate Limiting（速率限制）](02-rate-limiting.md)**：请求速率控制
-3. **[Zone Aware Routing（区域感知路由）](03-zone-aware-routing.md)**：位置感知路由
+1. **[异常检测](01-outlier-detection.md)**：自动检测不健康实例
+2. **[限速](02-rate-limiting.md)**：请求速率控制
+3. **[可用区感知路由](03-zone-aware-routing.md)**：局部性感知路由
 
 ## 参考资料
 
 ### 官方文档
-- [Istio Resilience](https://istio.io/latest/docs/concepts/traffic-management/#network-resilience-and-testing)
-- [Outlier Detection](https://istio.io/latest/docs/reference/config/networking/destination-rule/#OutlierDetection)
-- [Circuit Breaking](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
-- [Request Timeouts](https://istio.io/latest/docs/tasks/traffic-management/request-timeouts/)
-- [Retries](https://istio.io/latest/docs/concepts/traffic-management/#retries)
-- [Rate Limiting](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
-- [Fault Injection](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
-- [Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+- [Istio 韧性](https://istio.io/latest/docs/concepts/traffic-management/#network-resilience-and-testing)
+- [异常检测](https://istio.io/latest/docs/reference/config/networking/destination-rule/#OutlierDetection)
+- [断路器](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
+- [请求超时](https://istio.io/latest/docs/tasks/traffic-management/request-timeouts/)
+- [重试](https://istio.io/latest/docs/concepts/traffic-management/#retries)
+- [限速](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
+- [故障注入](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
+- [局部性负载均衡](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
 
 ### AWS 相关资源
-- [Enhancing Network Resilience with Istio on Amazon EKS](https://aws.amazon.com/blogs/opensource/enhancing-network-resilience-with-istio-on-amazon-eks/)
-- [Amazon EKS Best Practices - Service Mesh](https://aws.github.io/aws-eks-best-practices/reliability/docs/networkmanagement/#service-mesh)
+- [使用 Amazon EKS 上的 Istio 增强网络韧性](https://aws.amazon.com/blogs/opensource/enhancing-network-resilience-with-istio-on-amazon-eks/)
+- [Amazon EKS 最佳实践 - 可靠性](https://docs.aws.amazon.com/eks/latest/best-practices/reliability.html)
 
 ### 模式和架构
-- [Microservices Patterns - Circuit Breaker](https://microservices.io/patterns/reliability/circuit-breaker.html)
-- [Release It! - Stability Patterns](https://pragprog.com/titles/mnee2/release-it-second-edition/)
-- [Chaos Engineering Principles](https://principlesofchaos.org/)
+- [微服务模式 - 断路器](https://microservices.io/patterns/reliability/circuit-breaker.html)
+- [Release It! - 稳定性模式](https://pragprog.com/titles/mnee2/release-it-second-edition/)
+- [混沌工程原则](https://principlesofchaos.org/)
 
 ## 测验
 
-要测试本章所学知识，请尝试 [Istio Resilience 测验](../../../quizzes/service-mesh/istio/resilience.md)。
+要测试本章知识，请尝试 [Istio 韧性测验](../../../quizzes/service-mesh/istio/resilience.md)。

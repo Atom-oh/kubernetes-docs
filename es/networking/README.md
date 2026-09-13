@@ -1,61 +1,61 @@
 # Redes de Kubernetes
 
-> **Última actualización**: September 13, 2026. Las referencias a características incluyen Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9 y AWS VPC CNI 1.23.0. Consulte la matriz de Kubernetes/plataforma de cada producto antes de la instalación; no se trata de una configuración de clúster probada conjuntamente.
+> **Última actualización**: 13 de septiembre de 2026. Las referencias incluyen Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9 y AWS VPC CNI 1.23.0. Consulte la matriz Kubernetes/plataforma de cada producto antes de instalar; no constituyen una configuración probada conjuntamente.
 
 ## Descripción general
 
-Las redes de Kubernetes son la capa de infraestructura central que permite la comunicación entre aplicaciones en contenedores. Esta sección abarca todo, desde los conceptos básicos de redes de Kubernetes hasta soluciones avanzadas de CNI (Container Network Interface) y patrones de red en entornos de AWS EKS.
+La red de Kubernetes es la capa central de infraestructura que permite la comunicación entre aplicaciones en contenedores. Esta sección abarca desde los conceptos básicos de redes de Kubernetes hasta soluciones avanzadas de CNI (Container Network Interface) y patrones de red en entornos AWS EKS.
 
-## Modelo de redes de Kubernetes
+## Modelo de red de Kubernetes
 
-El modelo actual de Kubernetes proporciona una red de Pods en la que los Pods pueden comunicarse directamente entre nodos sin traducción de direcciones ni proxies, **sujeto a una segmentación de red intencionada**. Los agentes de nodo como kubelet deben poder alcanzar los Pods de su propio nodo. La network policy (política de red), el enrutamiento y los listeners de la aplicación siguen determinando si una conexión concreta tiene éxito.
+El modelo actual ofrece una red donde los Pods se comunican directamente entre nodos sin traducción de direcciones ni proxies, **sujetos a la segmentación intencionada de la red**. Los agentes como kubelet deben alcanzar los Pods de su propio nodo. Las políticas, las rutas y los listeners de aplicación siguen determinando si una conexión concreta tiene éxito.
 
-Los Pods ordinarios tienen su propio network namespace y direcciones válidas en todo el clúster; los contenedores de un mismo Pod comparten ese namespace y localhost. Los Pods con host network comparten la red del nodo, y las configuraciones dual-stack o multired requieren un manejo más preciso de las direcciones. Volver a crear un Pod puede asignarle una IP distinta; reiniciar un contenedor dentro del mismo Pod no necesariamente vuelve a crear su sandbox de red.
+Los Pods ordinarios tienen su propio espacio de nombres de red y direcciones únicas en el clúster; sus contenedores comparten ese espacio y localhost. Los Pods con red de host comparten la del nodo; las configuraciones dual-stack o multirred necesitan un tratamiento más preciso de direcciones. Recrear un Pod puede cambiar su IP; reiniciar un contenedor del mismo Pod no recrea necesariamente el entorno de red.
 
 | Componente | Función |
 |---|---|
-| Red de Pods | Direccionamiento y conectividad entre los network namespaces de las cargas de trabajo |
-| Service/descubrimiento | Nombres de servicio o direcciones virtuales estables sobre endpoints cambiantes |
-| Implementación de Ingress/Gateway | Entrada externa configurada y enrutamiento de la aplicación |
-| Motor de network policy | Aplica las políticas admitidas por la implementación seleccionada |
+| Red de Pods | Direccionamiento y conectividad entre espacios de red de cargas |
+| Service/descubrimiento | Nombres estables o direcciones virtuales sobre endpoints cambiantes |
+| Implementación Ingress/Gateway | Entrada externa y enrutamiento de aplicaciones configurados |
+| Motor de políticas | Aplica las políticas soportadas por la implementación elegida |
 
-Estas funciones no forman una ruta de paquetes obligatoriamente en serie. La traducción de Service, un proxy L7 y la política de la carga de trabajo pueden cambiar cómo una solicitud concreta atraviesa la red.
+Estas funciones no forman un recorrido serial obligatorio. La traducción de Service, un proxy L7 y las políticas pueden cambiar la ruta de cada solicitud.
 
-### Redes de Pods
+### Red de Pods
 
-Las redes de Pods proporcionan el direccionamiento y las rutas para la comunicación entre Pods. La ilustración siguiente muestra Pods IPv4 ordinarios; sus conexiones suponen que las políticas y los controles de red aplicables las permiten.
+Proporciona direcciones y rutas para comunicar Pods. La ilustración muestra Pods IPv4 ordinarios y presupone que las políticas y controles permiten sus conexiones.
 
-![Rutas IPv4 directas ilustrativas entre Pods en dos nodos, con conectividad sujeta a la política y el enrutamiento configurados.](../.gitbook/assets/en-networking-readme-1.png)
+![Rutas IPv4 directas entre Pods de dos nodos, sujetas a las políticas y rutas configuradas.](../.gitbook/assets/en-networking-readme-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-1.html)
 
-Las direcciones son direcciones ilustrativas de Pods ordinarios. El aislamiento intencionado y las configuraciones con host network o multired requieren su propia interpretación.
+Las direcciones son ejemplos de Pods ordinarios. El aislamiento intencionado, la red de host y las configuraciones multirred requieren su propia interpretación.
 
-#### Métodos de implementación de redes de Pods
+#### Métodos de implementación
 
-| Método | Descripción | CNI de ejemplo |
+| Método | Descripción | Ejemplos de CNI |
 |--------|-------------|-------------|
-| **Red superpuesta (overlay)** | Encapsula el tráfico sobre la red existente | Flannel VXLAN, Calico VXLAN/IPIP, Cilium VXLAN/Geneve |
-| **Enrutamiento nativo** | Usa rutas de la red subyacente sin esa encapsulación superpuesta | AWS VPC CNI, enrutamiento/BGP de Calico, enrutamiento nativo de Cilium |
-| **Encapsulación condicional** | Usa rutas directas o encapsulación según la topología configurada | Modos admitidos de Calico/Flannel/Cilium, con distintos requisitos previos |
+| **Red superpuesta** | Encapsula tráfico sobre la red existente | Flannel VXLAN, Calico VXLAN/IPIP, Cilium VXLAN/Geneve |
+| **Enrutamiento nativo** | Usa rutas subyacentes sin esa encapsulación | AWS VPC CNI, Calico routing/BGP, Cilium native routing |
+| **Encapsulación condicional** | Elige rutas directas o encapsulación según la topología | Modos compatibles de Calico/Flannel/Cilium, con requisitos distintos |
 
-### Redes de Service
+### Red de Services
 
-Los Services describen un conjunto lógico de endpoints, normalmente Pods, y cómo alcanzarlos. ClusterIP proporciona una IP virtual estable de forma predeterminada; los Services headless omiten esa IP virtual, y ExternalName utiliza una asignación CNAME de DNS. Un Service también puede tener endpoints administrados sin un selector de Pods.
+Los Services describen un conjunto lógico de endpoints, normalmente Pods, y cómo alcanzarlos. ClusterIP ofrece una IP virtual estable por defecto; headless la omite y ExternalName usa un CNAME DNS. También pueden existir endpoints administrados sin selector de Pods.
 
-![Mecanismos de entrada habituales para Services ClusterIP, NodePort, LoadBalancer y ExternalName; la asignación de DNS se distingue del reenvío de paquetes.](../.gitbook/assets/en-networking-readme-2.png)
+![Entradas habituales de ClusterIP, NodePort, LoadBalancer y ExternalName; se diferencia el mapeo DNS del reenvío de paquetes.](../.gitbook/assets/en-networking-readme-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-2.html)
 
-Estos son mecanismos de exposición habituales, no garantías de seguridad. El rango de NodePort y las direcciones de nodo accesibles son configurables; los LoadBalancers pueden ser internos. ExternalName devuelve un alias de DNS y no crea un proxy de reenvío.
+Son mecanismos habituales de exposición, no garantías de seguridad. El rango NodePort y las direcciones accesibles son configurables; un LoadBalancer puede ser interno. ExternalName devuelve un alias DNS y no crea un proxy de reenvío.
 
 #### Características de los tipos de Service
 
-Cree Pods coincidentes con `app: my-app` en `default`, que escuchen en los puertos de destino mostrados. El rango de asignación predeterminado de NodePort es 30000–32767 y se puede configurar. La accesibilidad externa sigue dependiendo de las direcciones, las rutas y los controles de acceso.
+Cree Pods `app: my-app` en `default` escuchando en los puertos de destino indicados. El rango NodePort predeterminado, configurable, es 30000–32767. La accesibilidad externa depende de direcciones, rutas y controles.
 
-El ejemplo de LoadBalancer selecciona explícitamente el **AWS Load Balancer Controller**, con targets de instancia EC2 y NodePorts asignados. Instale y configure primero ese controlador y sus requisitos previos de IAM/subredes. EKS Auto Mode utiliza un controlador/clase diferente. El puerto 443 aquí solo selecciona un puerto TCP; TLS debe servirse desde el backend en 8443 o configurarse por separado en el load balancer.
+El ejemplo LoadBalancer selecciona explícitamente **AWS Load Balancer Controller**, destinos de instancia EC2 y NodePorts asignados. Prepare primero controlador, IAM y subredes. Auto Mode usa otro controlador/clase. Aquí 443 solo elige un puerto TCP; el backend debe servir TLS en 8443 o configurarse por separado en el balanceador.
 
-Estas asignaciones de puertos ilustran la API de Service general de Kubernetes. Actualmente AWS documenta requisitos adicionales para la network policy nativa de EKS: el puerto del Service debe coincidir con el puerto del contenedor, y los Pods administrados por un controlador con `metadata.ownerReferences` ofrecen una aplicación fiable. Adapte los ejemplos a esos requisitos antes de probar esa implementación de política.
+Estos mapeos ilustran la API general de Service. AWS documenta requisitos adicionales para su política EKS nativa: el puerto Service debe coincidir con el del contenedor, y los Pods gestionados por controlador con `metadata.ownerReferences` permiten aplicación fiable. Adapte los ejemplos antes de probar ese motor.
 
 ```yaml
 apiVersion: v1
@@ -107,17 +107,17 @@ spec:
   allocateLoadBalancerNodePorts: true
 ```
 
-### Redes de Ingress
+### Red de Ingress
 
-Un recurso Ingress necesita un controlador y su plano de datos. Este ejemplo de HTTP usa AWS LBC con `spec.ingressClassName: alb` y targets de tipo IP. Los Services `api-v1`, `api-v2` y `web-frontend` referenciados deben existir en `default`, exponer el puerto 80 y tener endpoints de Pod listos y enrutables en la VPC. Configure HTTPS/certificados por separado cuando sea necesario. Consulte la [guía de LBC](03-aws-lb-controller.md) para su instalación y los requisitos previos de los targets.
+Ingress necesita controlador y plano de datos. El ejemplo HTTP usa AWS LBC con `spec.ingressClassName: alb` y destinos IP. `api-v1`, `api-v2` y `web-frontend` deben existir en `default`, publicar 80 y tener endpoints listos enrutables en la VPC. Configure HTTPS/certificados aparte cuando corresponda. Consulte la [guía LBC](03-aws-lb-controller.md).
 
-Ingress define reglas para enrutar tráfico HTTP/HTTPS hacia Services internos del clúster.
+Ingress define reglas HTTP/HTTPS hacia Services internos.
 
-![Enrutamiento lógico de host/ruta de Ingress hacia backends de Service y Pods.](../.gitbook/assets/en-networking-readme-3.png)
+![Enrutamiento lógico por host/ruta de Ingress hacia Services backend y Pods.](../.gitbook/assets/en-networking-readme-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-3.html)
 
-El recuadro representa la función del plano de datos de Ingress. AWS LBC programa el ALB; el tráfico de la aplicación no atraviesa el proceso de reconciliación del controlador. Según el modo de target, el plano de datos puede alcanzar IP de Pod o NodePorts en lugar de atravesar la IP virtual de un Service como un salto adicional literal.
+El cuadro representa la función del plano de datos. LBC programa ALB; el tráfico no atraviesa la reconciliación del controlador. Según el modo, puede llegar a IP de Pods o NodePorts sin pasar por la IP virtual del Service como salto literal adicional.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -162,59 +162,59 @@ spec:
 
 ## CNI (Container Network Interface)
 
-CNI estandariza la interfaz mediante la cual un runtime configura la red de un contenedor. En el Kubernetes actual, kubelet solicita las operaciones del sandbox del Pod a través de CRI y el **runtime de contenedores administra CNI**. Los antiguos flags de kubelet para administrar CNI directamente se eliminaron en Kubernetes 1.24.
+CNI estandariza cómo el runtime configura la red de un contenedor. Actualmente kubelet solicita operaciones del entorno de Pod mediante CRI y el **runtime de contenedores administra CNI**. Los antiguos indicadores de gestión directa de kubelet se eliminaron en Kubernetes 1.24.
 
-### Responsabilidades del runtime y del plugin
+### Responsabilidades del runtime y los plugins
 
 | Actor | Responsabilidad |
 |---|---|
-| kubelet | Solicita la creación/eliminación del sandbox a través de la interfaz del runtime de contenedores |
-| Runtime de contenedores | Selecciona la configuración de red e invoca la cadena de plugins CNI |
-| Plugin CNI | Recibe la configuración, ejecuta ADD/DEL y otras operaciones admitidas, y devuelve resultados |
-| Implementación de IPAM | Asigna/libera direcciones; puede ser un plugin delegado o parte de un agente específico del proveedor |
-| Agente de nodo opcional | Mantiene rutas, políticas, pools de IP o estado del datapath específicos del proveedor |
+| kubelet | Solicita crear/eliminar el entorno mediante la interfaz del runtime |
+| Runtime de contenedores | Selecciona la configuración e invoca la cadena CNI |
+| Plugin CNI | Recibe configuración, ejecuta ADD/DEL y otras operaciones compatibles, y devuelve resultados |
+| Implementación IPAM | Asigna/libera direcciones; puede delegarse a un plugin o integrarse en un agente específico |
+| Agente de nodo opcional | Mantiene rutas, políticas, grupos IP o estado del datapath del proveedor |
 
-El runtime pasa la configuración al plugin a través de la interfaz CNI; un agente de larga duración independiente o un binario de IPAM no son obligatorios para todos los plugins. Los tipos de interfaz también varían: los pares veth son habituales, pero no son la única implementación.
+El runtime entrega configuración mediante CNI; no todos los plugins requieren un agente permanente o binario IPAM separado. También varían las interfaces: los pares veth son habituales, pero no únicos.
 
 ## Comparación de CNI
 
-| Proyecto / alcance | Redes y política | Características y límites a distinguir |
+| Proyecto / alcance | Redes y políticas | Funciones y límites que distinguir |
 |---|---|---|
-| **Cilium 1.20.1** | Redes con eBPF; Envoy para las funciones L7 correspondientes; network policies de Cilium y Hubble | Dataplane de workers Linux, con requisitos AMD64/Arm64. La disponibilidad de la CLI en Windows no es compatibilidad de CNI en Windows. WireGuard/IPsec y el mTLS de ztunnel en Beta tienen alcances distintos. |
-| **Calico Open Source 3.32** | Opciones de enrutamiento/encapsulación; opciones de iptables, nftables y eBPF; niveles (tiers) de política ordenados y política de host/carga de trabajo | Windows tiene límites propios, incluida la ausencia de dataplane eBPF o WireGuard de Linux. La observabilidad de flujos Whisker/Goldmane está disponible como Tech Preview. Consulte la matriz de ediciones para las capacidades de pago. |
-| **Flannel 0.28.9** | Asignación de subred de host y transporte entre nodos; VXLAN, host-gw y otros backends | `flanneld` por sí mismo no aplica NetworkPolicy; el `netpol.enabled` opcional del chart despliega un controlador de política de los SIGs. WireGuard es un backend documentado; IPsec es experimental. VXLAN en Windows tiene ajustes/límites específicos. |
-| **AWS VPC CNI 1.23.0 / EKS** | Asignación de direcciones de VPC y ENIs/prefijos de EC2; capacidades de network policy estándar y Admin de EKS en nodos EC2 Linux compatibles | EKS Auto Mode es una implementación de red administrada con capacidades adicionales de política de DNS. Windows, Fargate, redes personalizadas, delegación de prefijos y la compatibilidad multi-NIC tienen condiciones propias. |
-| **Proyecto original Weave Net** | Implementación histórica de redes superpuestas | El repositorio original `weaveworks/weave` está archivado. No lo describa como un valor predeterminado activo y compatible para un clúster nuevo. |
+| **Cilium 1.20.1** | Redes eBPF; Envoy para funciones L7; políticas Cilium y Hubble | Dataplane Linux con requisitos AMD64/Arm64. CLI Windows no implica CNI Windows. WireGuard/IPsec y ztunnel mTLS Beta tienen ámbitos distintos. |
+| **Calico Open Source 3.32** | Opciones de rutas/encapsulación, iptables/nftables/eBPF, niveles ordenados y políticas de host/cargas | Windows tiene límites propios, sin dataplane Linux eBPF/WireGuard. Whisker/Goldmane está en vista previa técnica. Consulte la matriz para funciones de pago. |
+| **Flannel 0.28.9** | Subredes de host y transporte entre nodos; VXLAN, host-gw y otros backends | `flanneld` no aplica NetworkPolicy; `netpol.enabled` instala el controlador SIGs opcional. WireGuard está documentado e IPsec es experimental. VXLAN Windows tiene ajustes y límites propios. |
+| **AWS VPC CNI 1.23.0 / EKS** | Direcciones VPC y ENI/prefijos EC2; políticas estándar/Admin en Linux EC2 compatible | Auto Mode es una implementación administrada con políticas DNS adicionales. Windows, Fargate, redes personalizadas, delegación de prefijos y varias NIC tienen condiciones separadas. |
+| **Proyecto Weave Net original** | Implementación histórica de red superpuesta | `weaveworks/weave` está archivado. No lo presente como opción predeterminada activa y soportada para un clúster nuevo. |
 
-### Política, cifrado y observabilidad
+### Políticas, cifrado y observabilidad
 
-- Cilium proporciona política con reconocimiento de HTTP/DNS a través de los componentes L7 aplicables, y política de host y de todo el clúster. Su semántica de deny/allow no es la API de Tiers ordenados de Calico.
-- Calico Open Source incluye niveles jerárquicos de política y política de host. La matriz actual del producto asigna la política de capa de aplicación, la política de DNS/FQDN y Cluster Mesh a Cloud/Enterprise; no deben atribuirse tácitamente a la edición open source. El cifrado en tránsito documentado de Calico usa WireGuard.
-- Amazon EKS proporciona controles Admin/Baseline de `ClusterNetworkPolicy` para Auto Mode y las instalaciones compatibles de EC2/VPC-CNI. La característica `ApplicationNetworkPolicy` de DNS/FQDN descrita por AWS es para **Auto Mode**. Su nombre no implica que actualmente inspeccione el método o el cuerpo HTTP.
-- El controlador de política opcional de Flannel tiene sus propios requisitos; seleccionar únicamente un backend de red no habilita la aplicación de políticas.
-- El cifrado entre nodos, la identidad autenticada de la carga de trabajo y el mTLS de aplicación son controles diferentes. La visibilidad de flujos de red también se diferencia del trazado de aplicaciones o de la aplicación de controles sobre procesos/archivos.
+- Cilium ofrece políticas HTTP/DNS mediante los componentes L7 correspondientes y políticas globales/de host. Su semántica deny/allow no es la API ordenada Tier de Calico.
+- Calico Open Source incluye niveles jerárquicos y política de host. La matriz actual reserva política de aplicación, DNS/FQDN y Cluster Mesh para Cloud/Enterprise; no los atribuya silenciosamente a Open Source. Su cifrado en tránsito documentado usa WireGuard.
+- EKS ofrece controles Admin/Baseline `ClusterNetworkPolicy` en Auto Mode e instalaciones EC2/VPC-CNI compatibles. La función DNS/FQDN `ApplicationNetworkPolicy` descrita por AWS corresponde a **Auto Mode**; el nombre no implica inspección actual de métodos/cuerpos HTTP.
+- El controlador opcional de Flannel tiene requisitos propios; elegir un backend no activa por sí solo la aplicación de políticas.
+- Cifrado entre nodos, identidad autenticada de carga y mTLS de aplicación son controles distintos. La visibilidad de flujos también difiere del tracing o control de procesos/archivos.
 
-### Enrutamiento y rendimiento
+### Rutas y rendimiento
 
-Calico y Cilium pueden anunciar rutas mediante BGP; eso por sí solo no proporciona descubrimiento de servicios multiclúster, sincronización de políticas ni cifrado. Flannel host-gw usa rutas directas y requiere una conectividad de capa 2 adecuada. Una red superpuesta añade consideraciones de encapsulación y MTU, pero no se puede inferir una clasificación universal de rendimiento a partir del nombre del CNI.
+Calico y Cilium anuncian rutas BGP, pero eso no proporciona por sí solo descubrimiento multiclúster, sincronización de políticas o cifrado. Flannel host-gw usa rutas directas y necesita conectividad L2 adecuada. Una superposición añade encapsulación y consideraciones MTU; el nombre del CNI no permite deducir una clasificación universal de rendimiento.
 
-La antigua cifra de rendimiento del 100/98/95/85/80/75 por ciento no tenía una carga de trabajo, versiones ni fuente de medición reproducibles. Use hardware, kernel, tamaños de paquete/solicitud, concurrencia y ajustes de cifrado/política comparables, además de rendimiento, pérdida y latencia de cola. El [benchmark de Pods](06-pod-network-benchmark.md) independiente conserva su propio entorno y sus mediciones históricas.
+La antigua cifra de rendimiento 100/98/95/85/80/75% no tenía carga reproducible, versiones ni fuente. Compare hardware, kernel, tamaños, concurrencia, cifrado/políticas, rendimiento, pérdidas y latencia de cola equivalentes. El [benchmark de Pods](06-pod-network-benchmark.md) conserva su entorno y mediciones históricos.
 
 ## Guía de selección de CNI
 
-Elija primero el enrutamiento, la política, el sistema operativo y el modelo de soporte requeridos, y después pruebe esa combinación.
+Elija primero rutas, políticas, sistema operativo y soporte necesarios; pruebe después la combinación.
 
-| Necesidad | Ruta de evaluación |
+| Necesidad | Evaluación |
 |---|---|
-| Direccionamiento de VPC estándar de EKS y network policies compatibles | Evalúe las capacidades de AWS VPC CNI/EKS antes de añadir un segundo motor de política. |
-| Niveles de política ordenados, política de host o BGP de infraestructura | Evalúe la edición/dataplane de Calico correspondiente y los requisitos previos de enrutamiento. |
-| Política de Cilium, Hubble o características de mesh seleccionadas | Compruebe la compatibilidad de Linux/kernel/plataforma y la [guía de mesh de Cilium](../service-mesh/cilium-service-mesh/README.md). Envoy sigue formando parte de las rutas L7 aplicables. |
-| Una red pequeña con un conjunto de características limitado | Evalúe el backend de Flannel y su controlador de política opcional frente a los requisitos reales. |
-| Aplicación de controles sobre procesos, syscalls o archivos | Evalúe un componente de seguridad en runtime como Tetragon por separado de la network policy. |
+| Direcciones VPC EKS estándar y políticas compatibles | Evalúe AWS VPC CNI/EKS antes de añadir otro motor. |
+| Niveles ordenados, política host o BGP de infraestructura | Evalúe edición/dataplane Calico y requisitos de rutas. |
+| Políticas Cilium, Hubble o funciones de mesh | Compruebe Linux/kernel/plataforma y la [guía Cilium](../service-mesh/cilium-service-mesh/README.md). Envoy sigue en las rutas L7 pertinentes. |
+| Red pequeña con pocas funciones | Evalúe backend Flannel y controlador opcional frente a requisitos reales. |
+| Control de procesos, syscalls o archivos | Evalúe un componente runtime como Tetragon aparte de la política de red. |
 
-### Configuración del add-on administrado de EKS
+### Configuración de complemento administrado EKS
 
-Lo siguiente es un ejemplo de **payload de configuración**, no una instrucción para instalar tanto Calico como el motor de política de VPC CNI sobre las mismas cargas de trabajo:
+Lo siguiente es una **carga de configuración** de ejemplo, no una instrucción para instalar Calico y el motor VPC CNI sobre las mismas cargas:
 
 ```json
 {
@@ -222,7 +222,7 @@ Lo siguiente es un ejemplo de **payload de configuración**, no una instrucción
 }
 ```
 
-La cadena `"true"` es el tipo documentado para este ajuste. Seleccione una compilación del add-on de EKS compatible con la versión de Kubernetes existente e inspeccione el esquema de configuración de esa compilación:
+La cadena `"true"` es el tipo documentado. Seleccione un build compatible con la versión Kubernetes existente e inspeccione su esquema:
 
 ```bash
 EKS_REGION=ap-northeast-2
@@ -234,44 +234,44 @@ aws eks describe-addon-configuration --region "$EKS_REGION" --addon-name vpc-cni
   --addon-version "$VPC_CNI_ADDON_VERSION"
 ```
 
-El número de versión 1.23.0 del proyecto upstream y una versión `eksbuild` de EKS son identificadores diferentes. Combine los cambios con la configuración prevista del add-on administrado; no seleccione a ciegas `latest` ni reemplace valores no relacionados. Una migración desde una implementación de política de terceros también requiere eliminar su estado de aplicación existente y un plan de transición de nodos/cargas de trabajo probado.
+La versión upstream 1.23.0 y un `eksbuild` son identificadores distintos. Combine los cambios con la configuración prevista; no seleccione `latest` a ciegas ni sustituya valores ajenos. Migrar desde otro motor también requiere retirar su estado de aplicación existente y un plan probado de transición de nodos/cargas.
 
-## Fundamentos de redes de EKS
+## Fundamentos de red de EKS
 
-### Arquitectura de red predeterminada de EKS
+### Arquitectura predeterminada
 
 | Ubicación / componente | Responsabilidad |
 |---|---|
-| VPC administrada por EKS | AWS ejecuta el plano de control administrado de Kubernetes en varias zonas de disponibilidad. |
-| VPC del clúster del cliente | Las redes de los workers, las subredes seleccionadas y las ENIs entre cuentas administradas por EKS proporcionan las rutas configuradas hacia el plano de control. |
-| ALB/NLB en las subredes seleccionadas de la VPC del cliente | Proporciona el punto de entrada de la aplicación público o interno elegido; una internet gateway o NAT gateway no sustituye a esa configuración de enrutamiento. |
-| NAT gateway o endpoints de servicio privados | Proporciona las rutas de salida concretas que requiere el diseño de la carga de trabajo. |
+| VPC administrada por EKS | AWS ejecuta el plano de control administrado entre AZ. |
+| VPC del clúster del cliente | Red de workers, subredes y ENI entre cuentas administradas por EKS proporcionan las rutas al plano de control. |
+| ALB/NLB en subredes elegidas de la VPC del cliente | Entrada pública o interna; internet gateway/NAT no sustituye esa configuración. |
+| NAT gateway o endpoints privados | Rutas de salida concretas que necesita el diseño. |
 
-La figura anterior situaba el plano de control dentro de la VPC del cliente y los load balancers fuera de ella; se ha reemplazado por estos límites de propiedad.
+La figura anterior situaba el control plane dentro de la VPC del cliente y los balanceadores fuera; se sustituyó por estos límites de propiedad.
 
-### DNS y redes según el modo de cómputo
+### DNS y redes según el cómputo
 
-| Modo de cómputo | Ubicación de DNS / componentes |
+| Modo | DNS / ubicación de componentes |
 |---|---|
-| Nodos EC2 estándar | Normalmente usan el Deployment de CoreDNS configurado y los componentes de red instalados; los reemplazos necesitan su propia configuración compatible. |
-| EKS Auto Mode puro | Las funciones de CoreDNS, VPC CNI y kube-proxy se ejecutan como servicios systemd administrados del nodo. Para estos nodos no es necesario un Deployment/add-on de CoreDNS. |
-| Auto Mode mezclado con nodos no Auto | Conserve el Deployment de CoreDNS para los nodos no Auto; no pueden usar el servicio DNS de Auto Mode de otro nodo. |
+| Nodos EC2 estándar | Normalmente CoreDNS Deployment y componentes instalados; las sustituciones necesitan configuración compatible propia. |
+| Solo EKS Auto Mode | CoreDNS, VPC CNI y kube-proxy funcionan como servicios systemd administrados; no necesitan Deployment/add-on CoreDNS. |
+| Auto Mode y nodos no Auto mezclados | Conserve CoreDNS Deployment para los nodos no Auto; no pueden usar DNS Auto Mode de otro nodo. |
 
-El primer resolver de DNS de Auto Mode es local al nodo. El reenvío upstream y la comunicación con el plano de control pueden seguir requiriendo acceso de red; esto no garantiza que todos los paquetes relacionados con DNS permanezcan en el nodo. AWS documenta políticas Admin y de DNS para Auto Mode, mientras que la política Admin estándar de EC2 con VPC-CNI tiene sus propios requisitos de versión y habilitación.
+El primer resolver Auto Mode es local al nodo. El reenvío upstream y la comunicación de control todavía pueden necesitar red; no garantiza que todo paquete DNS permanezca local. AWS documenta Admin y DNS para Auto Mode, mientras Admin en EC2/VPC-CNI tiene requisitos propios de versión/activación.
 
-### Cómo funciona VPC CNI
+### Funcionamiento de VPC CNI
 
-AWS VPC CNI otorga a los Pods ordinarios direcciones enrutables en la VPC utilizando el modo de IPAM seleccionado. Las direcciones IPv4 secundarias, los prefijos delegados, las branch ENIs y las configuraciones multi-NIC son diferentes; los Pods con host network comparten la red del nodo.
+VPC CNI asigna direcciones enrutables a Pods ordinarios según IPAM. Direcciones IPv4 secundarias, prefijos delegados, ENI de rama y varias NIC difieren; host-network comparte la red del nodo.
 
-![Asignación ilustrativa de IPv4 secundarias desde ENIs de EC2 hacia Pods, incluida una interfaz warm opcional.](../.gitbook/assets/en-networking-readme-9.png)
+![Asignación ilustrativa de IPv4 secundarias desde ENI EC2 a Pods, incluida una interfaz caliente opcional.](../.gitbook/assets/en-networking-readme-9.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-9.html)
 
-Esto solo representa el modo de IP secundarias. Una ENI warm es una estrategia de asignación configurable, no un requisito de que cada nodo reserve siempre exactamente una. La delegación de prefijos, las redes personalizadas y las branch ENIs tienen reglas de asignación diferentes.
+Solo muestra modo secondary-IP. Una ENI caliente es una estrategia configurable, no la obligación de reservar exactamente una siempre. Delegación, redes personalizadas y ENI de rama tienen reglas diferentes.
 
 #### Límites de ENI e IP
 
-| Tipo de instancia | ENIs máximas | Ranuras IPv4 por ENI | Valor histórico de arranque con IP secundarias |
+| Tipo de instancia | ENI máximas | Espacios IPv4 por ENI | Valor histórico de arranque secondary-IP |
 |---------------|----------|--------------|------------------------|
 | t3.medium | 3 | 6 | 17 |
 | t3.large | 3 | 12 | 35 |
@@ -280,13 +280,13 @@ Esto solo representa el modo de IP secundarias. Una ENI warm es una estrategia d
 | m5.2xlarge | 4 | 15 | 58 |
 | c5.4xlarge | 8 | 30 | 234 |
 
-Estos valores se han verificado con los límites de instancia de VPC CNI 1.23.0 y la tabla histórica de max-Pods. El cálculo histórico es `ENIs × (ranuras IPv4 por ENI − 1) + 2`; no es una recomendación universal actual. La delegación de prefijos, las redes personalizadas, las branch ENIs y varias tarjetas de red cambian la capacidad de direcciones. La planificación de Kubernetes también está limitada por `maxPods` de kubelet y los recursos. Los managed node groups de EKS limitan `maxPods` a 110 para instancias con menos de 30 vCPU y a 250 en el resto; el número de IP disponibles por sí solo no anula ese límite.
+Se verificaron contra los límites de VPC CNI 1.23.0 y la tabla histórica max-Pods. La fórmula `ENIs × (IPv4 slots per ENI − 1) + 2` no es una recomendación universal actual. Prefijos, redes personalizadas, ENI de rama y varias tarjetas cambian la capacidad. La programación también queda limitada por `maxPods` y recursos. Los grupos administrados EKS limitan `maxPods` a 110 con menos de 30 vCPU y 250 en el resto; disponer de más IP no anula ese límite.
 
-### Consideraciones de redes en EKS
+### Consideraciones de red de EKS
 
-#### Administración de direcciones IP
+#### Gestión de direcciones IP
 
-Para **VPC CNI en Linux**, configure las variables de entorno documentadas mediante el mecanismo de administración de add-on/Helm/DaemonSet seleccionado. Lo siguiente es un fragmento de configuración de un add-on de EKS. El antiguo ConfigMap `amazon-vpc-cni` con `enable-prefix-delegation` no configura IPAMD en Linux de esta forma. Conserve los demás valores previstos del add-on al aplicar un cambio.
+Para **Linux VPC CNI**, configure las variables de entorno documentadas mediante el mecanismo de gestión seleccionado de complemento/Helm/DaemonSet. Lo siguiente es un fragmento de configuración del complemento de EKS. El antiguo ConfigMap `amazon-vpc-cni` con `enable-prefix-delegation` no configura Linux IPAMD de esta manera. Conserve los demás valores previstos del complemento al aplicar un cambio.
 
 ```json
 {
@@ -297,9 +297,9 @@ Para **VPC CNI en Linux**, configure las variables de entorno documentadas media
 }
 ```
 
-Como alternativa, ajuste el mínimo total de asignación y el objetivo de IP libres. Cuando se configura `MINIMUM_IP_TARGET` o `WARM_IP_TARGET`, tiene precedencia sobre `WARM_PREFIX_TARGET`; se trata de políticas alternativas y no de cuatro objetivos independientes que se sumen. La asignación sigue produciéndose en unidades del tamaño del prefijo. La compatibilidad con Nitro, el espacio `/28` contiguo para IPv4 y un límite de Pods de kubelet adecuado son requisitos previos independientes.
+Como alternativa, ajuste el mínimo total y objetivo de IP libres. `MINIMUM_IP_TARGET` o `WARM_IP_TARGET` prevalecen sobre `WARM_PREFIX_TARGET`; son políticas alternativas, no cuatro objetivos aditivos. La asignación sigue usando unidades de prefijo. Soporte Nitro, espacio IPv4 `/28` contiguo y límite kubelet adecuado son requisitos independientes.
 
-La asignación de prefijos en Windows es una ruta de configuración diferente: AWS documenta `enable-windows-prefix-delegation` y sus claves de warm-target en el ConfigMap `amazon-vpc-cni`. No copie sin cambios el procedimiento de variables de entorno de Linux a Windows.
+La asignación de prefijos de Windows utiliza una ruta de configuración diferente: AWS documenta `enable-windows-prefix-delegation` y sus claves de objetivos de reserva en el ConfigMap `amazon-vpc-cni`. No copie sin cambios a Windows el procedimiento de variables de entorno de Linux.
 
 ```json
 {
@@ -313,7 +313,7 @@ La asignación de prefijos en Windows es una ruta de configuración diferente: A
 
 #### Redes personalizadas
 
-Estos ejemplos de IPv4 requieren ID reales de subred/security group en la AZ y la VPC previstas. Habilite las redes personalizadas y seleccione el ENIConfig de cada nodo mediante su etiqueta de zona. Una anotación explícita de ENIConfig en el nodo tiene precedencia sobre esa etiqueta. Los nombres del ejemplo siguiente usan la misma región en ambos idiomas; reemplácelos por las zonas reales de los nodos. Instalar solo los objetos ENIConfig no activa las redes personalizadas.
+Los ejemplos IPv4 requieren ID reales de subred/grupo en la AZ y VPC previstas. Active la función y seleccione ENIConfig mediante la etiqueta de zona del nodo. Una anotación ENIConfig explícita prevalece. Los nombres usan la misma región en ambos idiomas; sustitúyalos por las zonas reales. Instalar objetos ENIConfig no activa por sí solo la función.
 
 ```json
 {
@@ -346,106 +346,106 @@ spec:
 
 ## Conceptos avanzados de redes
 
-Los elementos siguientes se mencionan de pasada en otras partes de esta descripción general. Los procedimientos de configuración completos y las cifras medidas están en las páginas de análisis en profundidad enlazadas; esta sección organiza en qué se diferencian estas piezas según la capa y dónde encaja cada una.
+Los elementos siguientes se mencionan brevemente en otras partes de esta introducción. Las páginas enlazadas contienen los procedimientos completos y mediciones; aquí se ordenan sus diferencias por capa y su función.
 
-### L2–L7 y la diferencia entre routers y load balancers
+### L2–L7 y la diferencia entre routers y balanceadores
 
-«Router» y «load balancer» aparecen a menudo en la misma frase, pero responden a preguntas diferentes. Un router elige (en general) una ruta hacia un único destino; un load balancer elige un target entre varios candidatos equivalentes usando un algoritmo de distribución.
+Aunque suelen mencionarse juntos, responden a preguntas distintas. Un router elige normalmente una ruta hacia un destino; un balanceador elige un destino entre varios candidatos equivalentes mediante un algoritmo de distribución.
 
-| Capa | Dispositivo/función | Base de la decisión | Correspondencia en Kubernetes/AWS |
+| Capa | Dispositivo/función | Criterio | Correspondencia Kubernetes/AWS |
 |---|---|---|---|
-| L2 (enlace) | Switch, bridge | Dirección MAC de destino | Pares veth y bridges de Linux creados por el CNI, la NIC virtual que expone una ENI |
-| L3 (red) | Router o inserción de appliance transparente | IP de destino para el enrutamiento; identidad de flujo para la selección del appliance | El router implícito de la VPC, TGW; GWLB encapsula paquetes IP para los appliances |
-| L4 (transporte) | Load balancer L4 | Identidad de conexión/flujo, habitualmente la 5-tupla | NLB; kube-proxy (iptables, IPVS, nftables); implementaciones de Service basadas en eBPF aparte |
-| L7 (aplicación) | Load balancer L7/proxy inverso | Host, ruta y cabeceras por solicitud; con reconocimiento del protocolo | ALB, implementaciones de Ingress/Gateway API, sidecars de service mesh (Envoy) |
+| L2 (enlace) | Switch, bridge | MAC de destino | Pares veth y bridges Linux del CNI, NIC virtual de una ENI |
+| L3 (red) | Router o inserción transparente de dispositivos | IP destino para rutas; identidad del flujo para elegir dispositivo | Router implícito de VPC, TGW; GWLB encapsula paquetes IP para dispositivos |
+| L4 (transporte) | Balanceador L4 | Identidad de conexión/flujo, normalmente 5-tupla | NLB; kube-proxy (iptables, IPVS, nftables); implementaciones Service eBPF separadas |
+| L7 (aplicación) | Balanceador L7/proxy inverso | Host, ruta y cabeceras por solicitud, con conocimiento del protocolo | ALB, implementaciones Ingress/Gateway API, sidecars Envoy |
 
-La diferencia clave es la **unidad de distribución**. Un load balancer L4 normalmente selecciona un target para una conexión TCP o un flujo UDP con seguimiento. Un proxy L7 puede seleccionar un target para cada solicitud de aplicación admitida, incluidas solicitudes que comparten una conexión. GWLB distribuye flujos IP encapsulados entre appliances de seguridad en lugar de analizar solicitudes de aplicación. La adherencia (stickiness) de flujo depende del timeout, el estado de salud y el comportamiento de failover configurados; no garantiza que un flujo nunca pueda reasignarse ni interrumpirse.
+La diferencia principal es la **unidad de distribución**. L4 normalmente selecciona por conexión TCP o flujo UDP seguido. Un proxy L7 puede hacerlo por solicitud compatible, incluso dentro de una misma conexión. GWLB distribuye flujos IP encapsulados entre dispositivos de seguridad, sin interpretar solicitudes. La afinidad depende de timeout, salud y failover; no garantiza que un flujo nunca se reasigne o interrumpa.
 
-> 📎 Las definiciones a nivel de protocolo de los conceptos L2/L3 están en [Fundamentos de redes, parte 1](../basics/06-network-fundamentals-part1.md); los tipos de target de ALB/NLB y la configuración real están en [AWS Load Balancer Controller](03-aws-lb-controller.md).
+> 📎 Las definiciones L2/L3 están en [Fundamentos de red, Parte 1](../basics/06-network-fundamentals-part1.md); los tipos de destino y configuración ALB/NLB, en [AWS Load Balancer Controller](03-aws-lb-controller.md).
 
 ### Conectividad entre cuentas/VPC: TGW, VPC Peering, GWLB, PrivateLink, Lattice
 
-Estas cinco opciones de conectividad se diferencian en la capa y el modelo de tráfico. La latencia medida en el uso compartido de TGW con RAM, VPC Peering, PrivateLink, TGW Peering y VPC Lattice está en [Conectividad de VPC entre organizaciones](05-cross-org-vpc-connectivity.md). Esta sección añade GWLB, que no está en esa tabla comparativa, y replantea las cinco por capa.
+Estas cinco opciones difieren en capa y modelo de tráfico. [Conectividad VPC entre organizaciones](05-cross-org-vpc-connectivity.md) contiene latencias medidas para TGW compartido por RAM, VPC Peering, PrivateLink, TGW Peering y Lattice. Aquí se añade GWLB, ausente de aquella tabla, y se reorganizan las cinco por capa.
 
 | Conectividad | Capa/modelo | Características |
 |---|---|---|
-| VPC Peering | L3, enrutamiento IP bidireccional | No es transitivo; no se puede configurar con CIDR solapados |
-| Transit Gateway (TGW) | L3, enrutamiento IP hub-and-spoke | Usa asociaciones de attachment y propagación en una o varias tablas de enrutamiento de TGW; se comparte entre cuentas mediante RAM |
-| Gateway Load Balancer (GWLB) | L3, inserción de appliance transparente | Encapsula el paquete original en GENEVE (UDP 6081); un modelo de servicio de endpoint de VPC conecta el tráfico del consumidor con la flota de appliances del proveedor |
-| PrivateLink | Conectividad mediante endpoints privados | Un servicio de endpoint respaldado por NLB es un modelo; también existen los resource endpoints. Los CIDR de consumidor/proveedor pueden solaparse |
-| VPC Lattice | Redes de aplicaciones y de recursos | Los servicios HTTP/HTTPS admiten enrutamiento L7 y autorización IAM opcional; el passthrough de TLS y las configuraciones de recursos tienen capacidades diferentes |
+| VPC Peering | L3, rutas IP bidireccionales | No transitivo; no admite CIDR superpuestos |
+| Transit Gateway (TGW) | L3, concentrador y radios | Asociaciones y propagación de adjuntos en una o más tablas TGW; compartido entre cuentas por RAM |
+| Gateway Load Balancer (GWLB) | L3, inserción transparente | Encapsula en GENEVE (UDP 6081); el servicio de endpoint VPC conecta tráfico consumidor con dispositivos del proveedor |
+| PrivateLink | Conectividad privada por endpoints | El servicio con NLB es un modelo; también hay endpoints de recursos. Los CIDR pueden solaparse |
+| VPC Lattice | Redes de aplicaciones y recursos | HTTP/HTTPS con rutas L7 e IAM opcional; TLS passthrough y recursos tienen capacidades distintas |
 
-GWLB inserta appliances de inspección como firewalls e IDS/IPS en una ruta IP mediante un endpoint de Gateway Load Balancer. Su adherencia de flujo predeterminada usa cinco campos; las configuraciones admitidas pueden usar en su lugar dos o tres. Valide las rutas de ida y de retorno, el estado de salud de los appliances, la MTU de encapsulación, las NACL y los security groups de las cargas de trabajo/appliances reales. GWLB en sí no tiene un security group al estilo de ALB, y la adherencia de flujo no sustituye a las pruebas de fallo.
+GWLB inserta dispositivos de inspección, como cortafuegos e IDS/IPS, en una ruta IP mediante un endpoint de Gateway Load Balancer. Su afinidad de flujo predeterminada utiliza cinco campos; las configuraciones compatibles pueden utilizar dos o tres en su lugar. Valide las rutas de ida y retorno, el estado de los dispositivos, la MTU de encapsulación, las NACL y los grupos de seguridad de las cargas de trabajo/dispositivos reales. GWLB no tiene un grupo de seguridad al estilo ALB, y la afinidad de flujo no sustituye las pruebas de fallo.
 
-> 📎 La integración completa de EKS/VPC Lattice (Gateway API Controller, autorización IAM, enrutamiento) está en [VPC Lattice](02-vpc-lattice.md).
+> 📎 La integración EKS/Lattice completa, con controlador, IAM y rutas, está en [VPC Lattice](02-vpc-lattice.md).
 
-### Cómo se comportan realmente el resolver de DNS y las tablas de enrutamiento
+### Comportamiento real de DNS Resolver y tablas de rutas
 
-**Resolver de DNS:** AmazonProvidedDNS **es Route 53 Resolver**. Sus direcciones incluyen la dirección de red IPv4 principal de la VPC más dos (`10.0.0.2` para `10.0.0.0/16`) y `169.254.169.253`; resuelve las zonas privadas asociadas y los nombres públicos según las reglas del Resolver. CoreDNS normalmente atiende el dominio de clúster de Kubernetes configurado, a menudo `cluster.local`; `kube-dns` es el nombre de su Service, no un namespace ni una zona DNS. El reenvío externo sigue el Corefile y el archivo de resolver visible para el Pod de DNS. Inspeccione esos ajustes en lugar de suponer que el archivo de resolver del nodo se usa sin cambios. En un diseño con endpoints de Resolver, los endpoints entrantes aceptan consultas on-premises, mientras que los endpoints salientes y las reglas asociadas reenvían consultas seleccionadas de la VPC al DNS on-premises. El resolver local al nodo de Auto Mode no elimina las dependencias upstream.
+**Resolver DNS:** AmazonProvidedDNS **es Route 53 Resolver**. Sus direcciones incluyen la dirección IPv4 primaria de red VPC más dos (`10.0.0.2` para `10.0.0.0/16`) y `169.254.169.253`; resuelve zonas privadas asociadas y nombres públicos según sus reglas. CoreDNS sirve normalmente el dominio del clúster, a menudo `cluster.local`; `kube-dns` es el nombre del Service, no un namespace o zona DNS. El reenvío externo sigue Corefile y el archivo resolver visible para el Pod DNS. Inspecciónelos, sin asumir que se usa intacto el archivo del nodo. Los endpoints de entrada reciben consultas locales externas; los de salida y sus reglas envían consultas VPC seleccionadas al DNS local. El resolver local de Auto Mode no elimina dependencias upstream.
 
-**Tablas de enrutamiento:** la evaluación de rutas de la VPC generalmente usa la coincidencia del prefijo más largo. AWS permite reemplazar el target de una ruta `local` y añadir rutas de subred más específicas admitidas para el enrutamiento hacia appliances; `local` no es incondicionalmente la ruta más específica. Para destinos idénticos, las rutas estáticas de la VPC tienen precedencia sobre las rutas propagadas desde una virtual private gateway. Una ruta de VPC que apunta a un TGW es estática; la propagación dentro de un TGW pertenece a sus tablas de enrutamiento independientes. Los targets no válidos pueden dejar entradas `blackhole` que descartan tráfico, así que inspeccione el estado de la ruta además del destino. Una subred sin una asociación explícita a una tabla de enrutamiento usa la tabla de enrutamiento principal de la VPC.
+**Tablas de rutas:** VPC suele elegir el prefijo más largo. AWS permite sustituir el destino de una ruta `local` y añadir rutas de subred más específicas compatibles para dispositivos; `local` no siempre es la más específica. Para destinos idénticos, las rutas estáticas VPC prevalecen sobre las propagadas desde una virtual private gateway. Una ruta VPC a TGW es estática; la propagación dentro de TGW pertenece a sus propias tablas. Un destino inválido puede dejar entradas `blackhole` que descartan tráfico: revise el estado además del destino. Sin asociación explícita, una subred usa la tabla principal de la VPC.
 
-> 📎 La prioridad de rutas de TGW/Peering y los ejemplos de configuración de rutas estáticas están en [los hallazgos operativos de Conectividad de VPC entre organizaciones](05-cross-org-vpc-connectivity.md#operational-findings).
+> 📎 Consulte prioridades TGW/Peering y rutas estáticas en los [hallazgos operativos de conectividad VPC entre organizaciones](05-cross-org-vpc-connectivity.md#operational-findings).
 
-### El plano de datos del kernel: iptables, IPVS, eBPF y filtrado de paquetes
+### Plano de datos del kernel: iptables, IPVS, eBPF y filtrado
 
-El reenvío de Services en Linux y la aplicación de network policies pueden usar mecanismos diferentes. Netfilter proporciona hooks en la ruta del paquete que usan iptables y nftables. Las implementaciones eBPF pueden adjuntarse en hooks XDP, tc o de socket y realizar allí la selección de Service. Esto no significa que todos los paquetes de un clúster con eBPF habilitado eludan Netfilter o el seguimiento de conexiones; la ruta depende del CNI, el kernel, el enrutamiento y la configuración de características.
+El reenvío de Service en Linux y la aplicación de políticas de red pueden utilizar mecanismos distintos. Netfilter proporciona puntos de conexión de la ruta de paquetes utilizados por iptables y nftables. Las implementaciones eBPF pueden asociarse a puntos XDP, tc o de sockets y realizar allí la selección de Service. Esto no significa que todos los paquetes de un clúster con eBPF eludan Netfilter o el seguimiento de conexiones; la ruta depende del CNI, el kernel, el enrutamiento y la configuración de funciones.
 
-| Implementación | Dónde se sitúa | Características |
+| Implementación | Ubicación | Características |
 |---|---|---|
-| iptables | Cadenas de reglas secuenciales en hooks de netfilter | El tiempo de evaluación escala con el número de reglas (O(n)); modo predeterminado de kube-proxy desde hace mucho tiempo |
-| IPVS | Load balancer L4 nativo del kernel, una extensión de netfilter | Búsqueda basada en hash (casi O(1)); obsoleto como modo de kube-proxy a partir de Kubernetes 1.35 |
-| nftables | Framework sucesor de iptables en netfilter | Modo estable de kube-proxy desde 1.33; compruebe primero la compatibilidad del kernel/CNI |
-| eBPF (p. ej., Cilium) | Hooks XDP, tc y de socket configurados | Puede reemplazar el manejo de Services de kube-proxy; es una implementación independiente, con un comportamiento de Netfilter/conntrack específico de cada ruta |
+| iptables | Cadenas secuenciales sobre hooks netfilter | Tiempo proporcional a reglas (O(n)); modo predeterminado histórico de kube-proxy |
+| IPVS | Balanceador L4 del kernel, extensión netfilter | Búsqueda hash cercana a O(1); modo kube-proxy obsoleto desde Kubernetes 1.35 |
+| nftables | Marco netfilter sucesor de iptables | Modo estable de kube-proxy desde 1.33; comprobar kernel/CNI |
+| eBPF (p. ej., Cilium) | Hooks XDP, tc y socket configurados | Puede sustituir Service de kube-proxy; implementación separada con comportamiento Netfilter/conntrack específico de la ruta |
 
-Cambiar de implementación puede dejar atrás reglas del kernel y conexiones activas. Siga el procedimiento de migración de la distribución/CNI, drene las cargas de trabajo según sea necesario y planifique reinicios de nodos cuando la limpieza los requiera. Reemplazar kube-proxy por un CNI basado en eBPF también requiere un orden de conmutación admitido para que las implementaciones no compitan por el mismo tráfico de Service.
+Un cambio puede dejar reglas del kernel y conexiones activas. Siga la migración de la distribución/CNI, drene cargas cuando corresponda y prevea reinicios si la limpieza los requiere. Sustituir kube-proxy por eBPF también exige un orden compatible para evitar competencia por el mismo tráfico Service.
 
-> 📎 El calendario de obsolescencia de IPVS y la transición a nftables estable se tratan en [Introducción a Kubernetes](../basics/04-kubernetes-introduction.md); el reemplazo de kube-proxy con eBPF en Cilium está en [Cilium eBPF](cilium/02-ebpf.md); el plano de datos eBPF de Calico y su procedimiento de migración están en [Calico eBPF](calico/06-ebpf-dataplane.md).
+> 📎 La obsolescencia de IPVS y estabilidad de nftables se explican en [Introducción a Kubernetes](../basics/04-kubernetes-introduction.md); la sustitución eBPF, en [Cilium eBPF](cilium/02-ebpf.md), y el dataplane/migración Calico, en [Calico eBPF](calico/06-ebpf-dataplane.md).
 
-### Redes de uso intensivo de cómputo: ENI, EFA, NVLink y transceptores ópticos
+### Redes de cómputo intensivo: ENI, EFA, NVLink y transceptores ópticos
 
-ENI, EFA y NVLink sirven a rutas diferentes. Una **ENI** es una interfaz de red virtual adjunta a una instancia EC2 en una zona de disponibilidad; su tráfico IP normal puede alcanzar otras AZ y VPC conectadas cuando el enrutamiento y la política lo permiten (consulte [VPC CNI](01-vpc-cni.md)). **EFA** proporciona un dispositivo de OS-bypass utilizado a través de libfabric por software MPI/NCCL compatible. **El tráfico del dispositivo EFA no es enrutable y no puede cruzar los límites de VPC/AZ**; el tráfico IP normal a través del dispositivo ENA de una interfaz EFA-con-ENA sigue siendo enrutable. Las interfaces solo EFA no tienen dispositivo ENA ni direccionamiento IP. **NVLink** conecta GPU dentro de sistemas compatibles, incluidos los dominios NVLink a escala de rack admitidos. Mida el hardware seleccionado, las operaciones colectivas y la ubicación en lugar de asumir una aceleración fija respecto a EFA.
+ENI, EFA y NVLink sirven rutas distintas. Una **ENI** es una interfaz virtual conectada a una instancia EC2 de una AZ; su tráfico IP normal puede alcanzar otras AZ/VPC conectadas si lo permiten rutas y políticas (véase [VPC CNI](01-vpc-cni.md)). **EFA** proporciona un dispositivo que evita el SO, usado mediante libfabric por MPI/NCCL compatible. **El tráfico del dispositivo EFA no es enrutable y no cruza límites VPC/AZ**; el tráfico IP normal del dispositivo ENA de EFA-with-ENA sigue siendo enrutable. EFA-only no tiene ENA ni direccionamiento IP. **NVLink** conecta GPU en sistemas compatibles, incluidos dominios a escala de rack soportados. Mida hardware, operaciones colectivas y ubicación, sin asumir una aceleración fija respecto a EFA.
 
-Los **transceptores ópticos** son un concepto general de redes de centros de datos. Los cables de cobre DAC (Direct Attach Copper) son adecuados para tramos cortos; los módulos ópticos y la fibra cubren otros requisitos de alcance y ancho de banda. QSFP y OSFP describen factores de forma de módulo, no una garantía de medio óptico. Tome esto como contexto general: no establece el cableado físico de una carga de trabajo concreta de AWS.
+Los **transceptores ópticos** son un concepto general de centros de datos. DAC de cobre sirve recorridos cortos; módulos ópticos y fibra cubren otras distancias y anchos de banda. QSFP/OSFP son formatos físicos, no garantía de medio óptico. Es contexto general, no prueba del cableado físico de una carga AWS concreta.
 
-> 📎 La planificación con reconocimiento de topología NVLink/IMEX y los ejemplos de ubicación de Pods con GPU están en [Infraestructura de IA/ML](../ai-ml/06-ai-infrastructure.md); la restricción de límites de VPC/AZ de EFA y sus mediciones están en [Conectividad de VPC entre organizaciones](05-cross-org-vpc-connectivity.md).
+> 📎 La programación consciente de NVLink/IMEX y ubicación de GPU están en [Infraestructura AI/ML](../ai-ml/06-ai-infrastructure.md); los límites VPC/AZ y mediciones EFA, en [Conectividad VPC entre organizaciones](05-cross-org-vpc-connectivity.md).
 
-### Qué significan los protocolos de nueva generación para Kubernetes: HTTP/3, gRPC, QUIC
+### Protocolos de nueva generación en Kubernetes: HTTP/3, gRPC y QUIC
 
-La mecánica de protocolo de HTTP/3 (RFC 9114) y su transporte QUIC (RFC 9000) se tratan en [Fundamentos de redes, parte 2](../basics/06-network-fundamentals-part2.md) y [parte 3](../basics/06-network-fundamentals-part3.md). Aquí solo cubrimos lo que realmente afecta a la distribución de tráfico en Kubernetes.
+HTTP/3 (RFC 9114) y QUIC (RFC 9000) se explican en [Fundamentos de red, Parte 2](../basics/06-network-fundamentals-part2.md) y [Parte 3](../basics/06-network-fundamentals-part3.md). Aquí solo se aborda su efecto real en la distribución de tráfico.
 
-- **gRPC y los load balancers L4:** gRPC multiplexa solicitudes sobre conexiones HTTP/2. Un balanceador L4 normalmente mantiene una conexión TCP establecida en el endpoint que seleccionó; si ese endpoint es un proxy, puede tomar decisiones de enrutamiento adicionales. Añadir Pods por sí solo no redistribuye las conexiones existentes. La distribución por RPC requiere un proxy L7 compatible o una política del lado del cliente. Un RPC de streaming sigue siendo una sola llamada; sus mensajes individuales no se balancean de forma independiente.
-- **GRPCRoute de Gateway API:** Ingress no tiene un recurso específico para gRPC, pero Gateway API estandariza el enrutamiento a nivel de servicio/método con `GRPCRoute`. La compatibilidad varía según la implementación (cuántas coincidencias de cabecera, políticas de reintento, etc.), así que consulte la documentación propia del controlador.
-- **Hasta dónde llega realmente HTTP/3/QUIC dentro del clúster:** la compatibilidad con HTTP/3 entre un cliente y el borde (una CDN, un load balancer) es una cuestión distinta de la compatibilidad con HTTP/3 dentro del clúster o en la conexión con el backend de un Ingress. Muchas implementaciones de Ingress/Gateway siguen hablando HTTP/1.1 o HTTP/2 con el backend, y si se admite HTTP/3 de extremo a extremo varía según la implementación y la versión: no generalice; consulte la documentación del controlador que realmente esté en uso.
+- **gRPC y balanceadores L4:** gRPC multiplexa solicitudes en conexiones HTTP/2. L4 suele mantener una conexión TCP establecida en su endpoint; si este es un proxy, puede tomar decisiones adicionales. Añadir Pods no redistribuye conexiones existentes. Distribuir por RPC requiere proxy L7 o política cliente compatible. Un RPC streaming sigue siendo una llamada; sus mensajes no se balancean individualmente.
+- **GRPCRoute de Gateway API:** Ingress no tiene un recurso específico de gRPC, pero Gateway API estandariza el enrutamiento a nivel de servicio/método con `GRPCRoute`. La compatibilidad varía según la implementación (cuántas coincidencias de cabeceras, políticas de reintentos, etc.), por lo que debe consultar la documentación del propio controlador.
+- **Hasta dónde llega realmente HTTP/3/QUIC dentro del clúster:** La compatibilidad con HTTP/3 entre un cliente y el borde (una CDN, un equilibrador de carga) es una cuestión distinta de la compatibilidad con HTTP/3 dentro del clúster o en la conexión de backend de un Ingress. Muchas implementaciones de Ingress/Gateway siguen hablando HTTP/1.1 o HTTP/2 con el backend, y la compatibilidad con HTTP/3 de extremo a extremo varía según implementación y versión; no generalice, consulte la documentación del controlador realmente utilizado.
 
 ## Subpáginas de redes
 
-Esta sección cubre en detalle los temas siguientes:
+Esta sección desarrolla los siguientes temas:
 
 ### [VPC CNI](01-vpc-cni.md)
-Redes de EKS con direcciones de VPC para Pods ordinarios y requisitos previos de IPAM/política específicos de cada modo.
+Red EKS con direcciones VPC para Pods ordinarios y requisitos IPAM/política por modo.
 
 ### [Cilium en profundidad](cilium/README.md)
-Solución de CNI de alto rendimiento basada en eBPF. Proporciona características avanzadas como Network Policy L7, Service Mesh y observabilidad (Hubble).
+CNI de alto rendimiento basado en eBPF. Incluye política L7, service mesh y observabilidad Hubble.
 
 ### [Calico en profundidad](calico/README.md)
-Uno de los CNI más utilizados. Network Policy potente, compatibilidad con BGP y características empresariales. Abarca la introducción, la arquitectura, los modos de red, BGP en profundidad, Network Policy, eBPF, temas avanzados, la integración con EKS y la guía de operaciones.
+Uno de los CNI más utilizados. Potentes políticas de red, compatibilidad con BGP y funciones empresariales. Cubre introducción, arquitectura, modos de red, análisis detallado de BGP, políticas de red, eBPF, temas avanzados, integración con EKS y guía de operaciones.
 
 ### [VPC Lattice](02-vpc-lattice.md)
-Servicio administrado de redes de aplicaciones de AWS. Comunicación entre servicios a través de VPC y cuentas.
+Servicio administrado AWS de redes de aplicaciones. Comunicación entre servicios de distintas VPC y cuentas.
 
 ### [AWS Load Balancer Controller](03-aws-lb-controller.md)
-Integra los Services e Ingress de Kubernetes con ELB de AWS (ALB/NLB).
+Integra Services e Ingress con AWS ELB (ALB/NLB).
 
 ### [Gateway API](04-gateway-api.md)
-API de ingress de nueva generación de Kubernetes. Modelo de recursos estandarizado y configuración basada en roles.
+API de entrada Kubernetes de nueva generación, con recursos estandarizados y configuración por roles.
 
 ### [Benchmark de red de Pods](06-pod-network-benchmark.md)
-RTT entre Pods, latencia HTTP y rendimiento medidos en EKS para el mismo nodo, la misma AZ y entre AZ, además de la amplificación de consultas de DNS con `ndots:5`.
+RTT, latencia HTTP y rendimiento entre Pods medidos en EKS dentro de nodo/AZ y entre AZ, más amplificación DNS por `ndots:5`.
 
-## Solución de problemas de red
+## Resolución de problemas de red
 
-### Problemas comunes y soluciones
+### Problemas y soluciones habituales
 
 #### Fallo de comunicación entre Pods
 
@@ -461,9 +461,9 @@ kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=100
 kubectl -n kube-system logs -l k8s-app=cilium -c cilium-agent --tail=100
 ```
 
-Ejecute los diagnósticos desde un Pod existente que tenga las herramientas indicadas. Consulte únicamente el CNI instalado en el clúster; los servicios del sistema de Auto Mode no son esos DaemonSets. El éxito de DNS, la accesibilidad TCP y una respuesta HTTP de la aplicación son comprobaciones diferentes. ICMP puede estar bloqueado o requerir privilegios adicionales, por lo que un ping fallido por sí solo no demuestra que un servicio TCP sea inalcanzable.
+Diagnostique desde un Pod existente con las herramientas indicadas. Consulte solo el CNI instalado; los servicios Auto Mode no son esos DaemonSets. DNS, conectividad TCP y respuesta HTTP son comprobaciones distintas. ICMP puede estar bloqueado o necesitar privilegios; un ping fallido no demuestra que un servicio TCP sea inaccesible.
 
-#### Service inalcanzable
+#### Service inaccesible
 
 ```bash
 NAMESPACE=default
@@ -474,9 +474,9 @@ kubectl -n "$NAMESPACE" get endpointslices \
 kubectl -n kube-system logs -l k8s-app=kube-proxy --tail=100
 ```
 
-Use EndpointSlice para el diagnóstico actual de endpoints. Compruebe los selectores del Service, los puertos de destino, la disponibilidad de los endpoints, la familia de direcciones y la política aplicable. Inspeccione los logs de kube-proxy solo si ese componente es realmente el responsable del reenvío de Services; un reemplazo basado en eBPF o Auto Mode necesita sus propios diagnósticos.
+Utilice EndpointSlice para el diagnóstico actual de endpoints. Compruebe los selectores de Service, los puertos de destino, la disponibilidad de endpoints, la familia de direcciones y las políticas aplicables. Inspeccione los registros de kube-proxy solo si ese componente realmente gestiona el reenvío de Service; una sustitución eBPF o Auto Mode necesitan sus propios diagnósticos.
 
-#### Depuración de Network Policy
+#### Diagnóstico de políticas
 
 ```bash
 kubectl get networkpolicies.networking.k8s.io -A
@@ -487,11 +487,11 @@ kubectl get networkpolicies.crd.projectcalico.org -A
 kubectl get globalnetworkpolicies.crd.projectcalico.org
 ```
 
-Los comandos de Cilium inspeccionan un Agent seleccionado por la referencia al DaemonSet; elija el Agent del nodo afectado al investigar un incidente. Las instalaciones con la API nativa de Calico pueden exponer un grupo de API diferente, así que inspeccione los recursos servidos por la instalación. Las políticas de Kubernetes, de Calico y de las extensiones de AWS son recursos distintos y pueden tener precedencias diferentes.
+Los comandos Cilium inspeccionan un Agent elegido por la referencia DaemonSet; seleccione el del nodo afectado. Calico con API nativa puede exponer otro grupo; compruebe los recursos servidos. Las políticas Kubernetes, Calico y extensiones AWS son recursos distintos con posibles precedencias diferentes.
 
-### Pruebas de rendimiento de red
+### Pruebas de rendimiento
 
-Este ejercicio TCP acotado usa el índice de imágenes fijado por el publicador de Netshoot v0.16, que contiene imágenes para Linux AMD64 y Arm64; su Dockerfile incluye `iperf3`. Cree estos Pods en un entorno de pruebas donde el puerto TCP 5201 esté permitido. Es una carga de trabajo ilustrativa, no una comparación medida de CNI.
+Este ejercicio TCP limitado usa el índice Netshoot v0.16 fijado por su editor, con Linux AMD64/Arm64 y `iperf3` en el Dockerfile. Cree los Pods en pruebas donde TCP 5201 esté permitido. Es una carga ilustrativa, no una comparación medida entre CNI.
 
 ```yaml
 apiVersion: v1
@@ -577,25 +577,25 @@ test -n "$IPERF_SERVER_IP"
 kubectl -n default exec iperf-client -- iperf3 -c "$IPERF_SERVER_IP" -t 10 -b 10M
 ```
 
-El cliente duerme durante una hora y el comando limita el tráfico ofrecido a 10 Mbit/s durante diez segundos. Esto prueba la ruta seleccionada, no el rendimiento máximo. Registre la ubicación real de Pods/nodos/AZ, los límites de recursos y la política antes de interpretar los resultados. Elija herramientas específicas de Windows para los nodos Windows. Al terminar, elimine únicamente los recursos de prueba que usted creó.
+El cliente duerme una hora y el comando limita la oferta a 10 Mbit/s durante diez segundos. Prueba la ruta, no el máximo rendimiento. Registre ubicación Pod/nodo/AZ, límites y política antes de interpretar. Use herramientas Windows para nodos Windows. Al terminar, retire solo los recursos de prueba creados.
 
-Estos Pods de diagnóstico independientes sirven para pruebas de conectividad. Para las pruebas de aplicación de network policy nativa de EKS, use Pods administrados por Deployment/Job y los requisitos documentados de Service/puerto de contenedor.
+Estos Pods independientes son para conectividad. Para comprobar políticas EKS nativas, use Pods de Deployment/Job y los requisitos documentados de puertos Service/contenedor.
 
-## Prácticas recomendadas
+## Buenas prácticas
 
-### 1. Planificación de direcciones IP
+### 1. Planificar direcciones IP
 
-- Diseñe bloques CIDR suficientemente grandes
-- Separe la red de Pods de la red de Services
-- Diseñe las subredes pensando en la expansión futura
+- Diseñar bloques CIDR suficientemente grandes
+- Separar la red de Pods de la de Services
+- Prever expansión futura en las subredes
 
-### 2. Aplicar network policies
+### 2. Aplicar políticas de red
 
-Cree el namespace aislado `networking-demo` antes de usar este ejemplo. Selecciona todos los Pods de ese namespace y aísla tanto el ingress como el egress según la semántica estándar de NetworkPolicy de Kubernetes; los flujos de DNS y de aplicación requeridos necesitan reglas de permiso explícitas. La aplicación requiere un motor de política compatible. Las APIs adicionales de política de clúster/administración pueden alterar la precedencia, y este único manifiesto no es una arquitectura zero-trust completa.
+Cree primero el namespace aislado `networking-demo`. El ejemplo selecciona todos sus Pods y aísla entrada/salida bajo NetworkPolicy estándar; DNS y flujos necesarios requieren permisos explícitos. Se necesita un motor compatible. Las API de clúster/Admin pueden alterar la precedencia, y un manifiesto no es una arquitectura completa de confianza cero.
 
-- Aplique políticas de denegación predeterminada (Zero Trust)
-- Permita explícitamente solo el tráfico necesario
-- Aísle los namespaces
+- Aplicar denegación por defecto (confianza cero)
+- Permitir explícitamente solo tráfico necesario
+- Aislar namespaces
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -610,79 +610,79 @@ spec:
   - Egress
 ```
 
-### 3. Optimización del rendimiento
+### 3. Optimizar rendimiento
 
-- Elija el CNI adecuado (acorde con la carga de trabajo)
-- Optimización de MTU
-- Ajuste de parámetros del kernel
+- Elegir el CNI adecuado para la carga
+- Optimizar MTU
+- Ajustar parámetros del kernel
 
-### 4. Refuerzo de la seguridad
+### 4. Reforzar seguridad
 
-- Seleccione un cifrado de transporte compatible y verifique qué tráfico cubre.
-- Configure la identidad de la carga de trabajo/aplicación y mTLS donde sea necesario; manténgalos separados de las listas de permitidos basadas en DNS/IP.
-- Revise periódicamente los cambios de política, certificados y control de acceso.
+- Elegir cifrado compatible y verificar el tráfico cubierto.
+- Configurar identidad de carga/aplicación y mTLS donde proceda, separados de listas DNS/IP.
+- Revisar periódicamente cambios de políticas, certificados y acceso.
 
-### 5. Garantizar la observabilidad
+### 5. Garantizar observabilidad
 
-- Recopile métricas de red
-- Habilite los flow logs
-- Implemente el trazado distribuido
+- Recopilar métricas de red
+- Activar logs de flujo
+- Implementar tracing distribuido
 
-## Pasos siguientes
+## Próximos pasos
 
 1. [VPC CNI](01-vpc-cni.md) - CNI predeterminado de EKS
-2. [Cilium en profundidad](cilium/README.md) - Redes basadas en eBPF
-3. [Calico en profundidad](calico/README.md) - Enrutamiento, política y planos de datos
-4. [VPC Lattice](02-vpc-lattice.md) - Redes administradas de AWS
-5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - Integración con ELB
-6. [Gateway API](04-gateway-api.md) - Ingress de nueva generación
-7. [Conectividad de VPC entre organizaciones](05-cross-org-vpc-connectivity.md) - Conexión de VPC entre AWS Organizations (verificado en campo)
-8. [Benchmark de red de Pods](06-pod-network-benchmark.md) - Latencia y rendimiento medidos por límite de nodo/AZ
+2. [Cilium en profundidad](cilium/README.md) - Redes eBPF
+3. [Calico en profundidad](calico/README.md) - Rutas, políticas y dataplanes
+4. [VPC Lattice](02-vpc-lattice.md) - Redes administradas AWS
+5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - Integración ELB
+6. [Gateway API](04-gateway-api.md) - Entrada de nueva generación
+7. [Conectividad VPC entre organizaciones](05-cross-org-vpc-connectivity.md) - VPC entre AWS Organizations, verificado en campo
+8. [Benchmark de red de Pods](06-pod-network-benchmark.md) - Latencia y rendimiento medidos por límite nodo/AZ
 
 ---
 
 ## Referencias
 
-- [Kubernetes network model](https://kubernetes.io/docs/concepts/services-networking/)
-- [Kubernetes Services](https://kubernetes.io/docs/concepts/services-networking/service/)
-- [Container runtime and CNI](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/)
+- [Modelo de red de Kubernetes](https://kubernetes.io/docs/concepts/services-networking/)
+- [Services de Kubernetes](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [Runtime de contenedores y CNI](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/)
 - [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [CNI specification](https://raw.githubusercontent.com/containernetworking/cni/main/SPEC.md)
-- [Calico product editions](https://docs.tigera.io/calico/latest/about)
-- [Calico policy tiers](https://docs.tigera.io/calico/latest/network-policy/policy-tiers/tiered-policy)
-- [Calico Whisker flow logs](https://docs.tigera.io/calico/latest/observability/view-flow-logs)
-- [Calico Windows limitations](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)
-- [Flannel 0.28.9 networking and policy](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/README.md)
-- [Flannel backends](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/Documentation/backends.md)
-- [Original Weave repository status](https://api.github.com/repos/weaveworks/weave)
+- [Especificación CNI](https://raw.githubusercontent.com/containernetworking/cni/main/SPEC.md)
+- [Ediciones de Calico](https://docs.tigera.io/calico/latest/about)
+- [Niveles de políticas Calico](https://docs.tigera.io/calico/latest/network-policy/policy-tiers/tiered-policy)
+- [Logs de flujo Calico Whisker](https://docs.tigera.io/calico/latest/observability/view-flow-logs)
+- [Limitaciones Windows de Calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)
+- [Redes y políticas Flannel 0.28.9](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/README.md)
+- [Backends de Flannel](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/Documentation/backends.md)
+- [Estado del repositorio Weave original](https://api.github.com/repos/weaveworks/weave)
 - [AWS VPC CNI 1.23.0](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md)
-- [EKS network policy configuration](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
-- [EKS standard and Admin network policies](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
-- [EKS prefix delegation and maxPods](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html)
-- [EKS Admin and DNS policy deployment models](https://aws.amazon.com/blogs/containers/enhance-amazon-eks-network-security-posture-with-dns-and-admin-network-policies/)
-- [EKS Auto Mode networking](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)
-- [EKS add-on requirements](https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html)
-- [EKS control plane architecture](https://docs.aws.amazon.com/eks/latest/best-practices/control-plane.html)
-- [Netshoot v0.16 image metadata](https://hub.docker.com/v2/repositories/nicolaka/netshoot/tags/v0.16)
-- [Netshoot v0.16 Dockerfile](https://raw.githubusercontent.com/nicolaka/netshoot/v0.16/Dockerfile)
-- [Tetragon runtime security](https://tetragon.io/docs/overview/)
-- [AWS LBC 3.5 NLB configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/nlb.md)
-- [AWS LBC 3.5 Ingress configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md)
-- [Gateway Load Balancer concepts](https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-load-balancers.html)
-- [GENEVE encapsulation (RFC 8926)](https://www.rfc-editor.org/rfc/rfc8926)
-- [VPC DNS resolver](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html)
-- [Route 53 Resolver endpoints and rules](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html)
-- [VPC route table evaluation order](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
-- [Local routes and more-specific subnet routes](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-route-tables.html)
-- [Static and propagated route priority](https://docs.aws.amazon.com/vpc/latest/userguide/route-tables-priority.html)
-- [AmazonProvidedDNS addresses and behavior](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html)
-- [GWLB flow stickiness and failover](https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/edit-target-group-attributes.html)
-- [Kubernetes Service virtual IPs and kube-proxy modes](https://kubernetes.io/docs/reference/networking/virtual-ips/)
-- [CoreDNS Service names and forwarding configuration](https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/)
-- [PrivateLink resource endpoints](https://docs.aws.amazon.com/vpc/latest/privatelink/privatelink-access-resources.html)
-- [Netfilter/iptables project documentation](https://www.netfilter.org/documentation/index.html)
+- [Configuración de políticas EKS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
+- [Políticas estándar y Admin de EKS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+- [Delegación de prefijos y maxPods de EKS](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html)
+- [Modelos de despliegue de políticas Admin y DNS de EKS](https://aws.amazon.com/blogs/containers/enhance-amazon-eks-network-security-posture-with-dns-and-admin-network-policies/)
+- [Redes EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)
+- [Requisitos de complementos EKS](https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html)
+- [Arquitectura del plano de control EKS](https://docs.aws.amazon.com/eks/latest/best-practices/control-plane.html)
+- [Metadatos de imagen Netshoot v0.16](https://hub.docker.com/v2/repositories/nicolaka/netshoot/tags/v0.16)
+- [Dockerfile Netshoot v0.16](https://raw.githubusercontent.com/nicolaka/netshoot/v0.16/Dockerfile)
+- [Seguridad runtime de Tetragon](https://tetragon.io/docs/overview/)
+- [Configuración NLB de AWS LBC 3.5](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/nlb.md)
+- [Configuración Ingress de AWS LBC 3.5](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md)
+- [Conceptos de Gateway Load Balancer](https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-load-balancers.html)
+- [Encapsulación GENEVE (RFC 8926)](https://www.rfc-editor.org/rfc/rfc8926)
+- [Resolver DNS de VPC](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html)
+- [Endpoints y reglas Route 53 Resolver](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html)
+- [Orden de evaluación de rutas VPC](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
+- [Rutas locales y subredes más específicas](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-route-tables.html)
+- [Prioridad de rutas estáticas y propagadas](https://docs.aws.amazon.com/vpc/latest/userguide/route-tables-priority.html)
+- [Direcciones y comportamiento AmazonProvidedDNS](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html)
+- [Afinidad y failover GWLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/edit-target-group-attributes.html)
+- [IP virtuales Service y modos kube-proxy](https://kubernetes.io/docs/reference/networking/virtual-ips/)
+- [Nombres Service CoreDNS y reenvío](https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/)
+- [Endpoints de recursos PrivateLink](https://docs.aws.amazon.com/vpc/latest/privatelink/privatelink-access-resources.html)
+- [Documentación Netfilter/iptables](https://www.netfilter.org/documentation/index.html)
 - [EC2 Elastic Fabric Adapter](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html)
-- [QUIC transport protocol (RFC 9000)](https://www.rfc-editor.org/rfc/rfc9000)
+- [Protocolo QUIC (RFC 9000)](https://www.rfc-editor.org/rfc/rfc9000)
 - [HTTP/3 (RFC 9114)](https://www.rfc-editor.org/rfc/rfc9114)
-- [gRPC over HTTP/2 and load balancing](https://grpc.io/blog/grpc-load-balancing/)
+- [gRPC sobre HTTP/2 y balanceo](https://grpc.io/blog/grpc-load-balancing/)
 - [Gateway API GRPCRoute](https://gateway-api.sigs.k8s.io/guides/user-guides/grpc-routing/)

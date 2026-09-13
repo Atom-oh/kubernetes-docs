@@ -1,290 +1,220 @@
-# Container Image 安全测验
+<span id="quiz-questions"></span>
 
-本测验测试你对 image scanning、image signing、supply chain security 以及 base image 选择的理解。
+# 容器镜像安全测验
+> **最后更新**：2026 年 9 月 13 日
 
-## 测验题目
+<span id="_1-what-is-the-correct-command-to-scan-a-container-image-with-trivy"></span>
 
-### 1. 使用 Trivy 扫描 container image 的正确命令是什么？
+### 1. 哪个命令使用 Trivy 扫描给定镜像引用？
 
-A. trivy scan nginx:latest
-B. trivy image nginx:latest
-C. trivy container nginx:latest
-D. trivy check nginx:latest
+- A. trivy scan "$IMAGE_REF"
+- B. trivy image "$IMAGE_REF"
+- C. trivy container "$IMAGE_REF"
+- D. trivy check "$IMAGE_REF"
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. trivy image nginx:latest**
+**答案：B. trivy image "$IMAGE_REF"**
 
-**解释：**
-Trivy 的 image scanning 命令：
-```bash
-trivy image nginx:latest
-trivy image --severity HIGH,CRITICAL nginx:latest
-trivy image --format json nginx:latest
-```
-
-`trivy image` 会扫描 container image 中的漏洞。
+trivy image 是镜像扫描命令。将 IMAGE_REF 设为真实摘要引用。仅语法有效不证明仓库访问、数据库新鲜度或软件包检测覆盖。
 
 </details>
 
-### 2. 哪个工具用于 image signing 和验证？
+<span id="_2-which-tool-is-used-for-image-signing-and-verification"></span>
 
-A. Trivy
-B. Cosign/Sigstore
-C. Clair
-D. Anchore
+### 2. 哪个工具验证镜像摘要与获准签名者之间的关系？
+
+- A. Trivy 的 CVE 数据库
+- B. Cosign/Sigstore
+- C. Clair 软件包扫描器
+- D. Docker imagePullPolicy
 
 <details>
 <summary>显示答案</summary>
 
 **答案：B. Cosign/Sigstore**
 
-**解释：**
-Cosign 是 Sigstore 项目的一部分，是用于 container image signing 和验证的工具：
-```bash
-# Sign image
-cosign sign --key cosign.key myregistry/myimage:tag
-
-# Verify signature
-cosign verify --key cosign.pub myregistry/myimage:tag
-```
-
-Trivy、Clair 和 Anchore 是 vulnerability scanners。
+Cosign 验证密钥或 OIDC 身份/签发者、摘要及必需透明性证据。签名不保证没有已知漏洞。
 
 </details>
 
-### 3. “Shift-Left” 安全方法是什么意思？
+<span id="_3-what-does-the-shift-left-security-approach-mean"></span>
 
-A. 将安全推迟到运维阶段
-B. 将安全前移到早期开发阶段
-C. 仅由安全团队负责
-D. 移除自动化
+### 3. 安全左移是什么意思？
+
+- A. 将检查推迟到生产
+- B. 在开发、PR 和构建中更早检查
+- C. 将源码访问限于安全团队
+- D. 移除生产重新扫描
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 将安全前移到早期开发阶段**
+**答案：B. 在开发、PR 和构建中更早检查**
 
-**解释：**
-Shift-Left 安全将安全检查移动到开发周期中尽可能早的阶段：
-- 在 IDE 阶段进行扫描
-- CI/CD pipeline 中的 build gates
-- PR review 期间的安全检查
-
-问题发现得越早，修复成本就越低。
+更早检查缩短反馈循环。发布后新 CVE 和运行时行为仍需要仓库重新扫描和运行时检测。
 
 </details>
 
-### 4. Distroless images 的主要特征是什么？
+<span id="_4-what-is-the-main-characteristic-of-distroless-images"></span>
 
-A. 包含所有 Linux 实用程序
-B. 只包含运行应用程序所需的最小组件
-C. 包含调试工具
-D. 包含 package managers
+### 4. 标准 distroless 运行时镜像有什么特点？
+
+- A. 包含所有 Linux 工具
+- B. 仅包含最小应用运行时组件集
+- C. 总是包含 shell 和调试器
+- D. 必须包含软件包管理器
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 只包含运行应用程序所需的最小组件**
+**答案：B. 仅包含最小应用运行时组件集**
 
-**解释：**
-Distroless images 具有：
-- 无 shell（bash、sh 等）
-- 无 package manager
-- 无不必要的实用程序
-- 最小攻击面
-- 仅应用程序 runtime
-
-在安全性和 image 大小方面都有好处。
+标准运行时不含 shell/软件包管理器；调试变体不同。应用二进制和库仍可包含漏洞。
 
 </details>
 
-### 5. Amazon ECR image scanning 的两种类型是什么？
+<span id="_5-what-are-the-two-types-of-amazon-ecr-image-scanning"></span>
 
-A. Basic scanning, Enhanced scanning
-B. Automatic scanning, Manual scanning
-C. Quick scanning, Deep scanning
-D. Free scanning, Paid scanning
+### 5. 当前 ECR Basic 与 Enhanced 扫描有何不同？
+
+- A. Basic 使用 AWS 原生操作系统扫描；Enhanced 使用 Inspector 扫描操作系统/语言软件包
+- B. Basic 总使用 Clair；Enhanced 仅扫描操作系统包
+- C. 两者都自动拒绝推送
+- D. Enhanced 永久扫描每个镜像
 
 <details>
 <summary>显示答案</summary>
 
-**答案：A. Basic scanning, Enhanced scanning**
+**答案：A. Basic 使用 AWS 原生操作系统扫描；Enhanced 使用 Inspector 扫描操作系统/语言软件包**
 
-**解释：**
-Amazon ECR scanning 类型：
-- **Basic scanning**：基于 Clair 的 OS package vulnerability scan
-- **Enhanced scanning**：基于 Amazon Inspector，支持 OS + programming language packages，并进行 continuous scanning
-
-Enhanced scanning 有额外费用，但更全面。
+Basic 支持手动/推送时扫描；Enhanced 支持推送时/持续扫描。区分 findings 与 enhancedFindings，以及 ECR 与 Inspector 事件。
 
 </details>
 
-### 6. 什么是 SBOM (Software Bill of Materials)？
+<span id="_6-what-is-sbom-software-bill-of-materials"></span>
 
-A. software licenses 列表
-B. software components 列表
-C. security vulnerabilities 列表
-D. build commands 列表
+### 6. SBOM 提供什么？
+
+- A. 无漏洞认证
+- B. 工具检测到的软件组件清单
+- C. 获准签名者的自动证明
+- D. 部署授权
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. software components 列表**
+**答案：B. 工具检测到的软件组件清单**
 
-**解释：**
-SBOM 是软件中包含的所有组件（库、依赖项、版本等）的列表。它对 supply chain security 和 vulnerability management 至关重要：
-```bash
-# Generate SBOM with Trivy
-trivy image --format spdx-json -o sbom.json nginx:latest
-```
+SBOM 记录组件和关系，但覆盖可能不完整。单独评估将其绑定摘要的签名证明和验证策略。
 
 </details>
 
-### 7. 哪种 policy 类型会在 Kyverno 中验证 image signatures？
+<span id="_7-what-policy-type-verifies-image-signatures-in-kyverno"></span>
 
-A. validate
-B. mutate
-C. verifyImages
-D. generate
+### 7. 旧 Kyverno ClusterPolicy 中哪个规则执行镜像签名检查？
+
+- A. 仅 validate
+- B. 仅 mutate
+- C. verifyImages
+- D. 仅 generate
 
 <details>
 <summary>显示答案</summary>
 
 **答案：C. verifyImages**
 
-**解释：**
-Kyverno 的 `verifyImages` 规则会验证 container image signatures：
-```yaml
-spec:
-  rules:
-  - name: verify-signature
-    verifyImages:
-    - imageReferences:
-      - "myregistry/*"
-      attestors:
-      - entries:
-        - keys:
-            publicKeys: |-
-              -----BEGIN PUBLIC KEY-----
-              ...
-              -----END PUBLIC KEY-----
-```
+区分旧 verifyImages 和较新的 ImageValidatingPolicy。Kyverno 1.19.1 示例使用 CEL 策略，配合覆盖普通、初始化和临时容器的仓库/摘要限制。
 
 </details>
 
-### 8. 为什么应该使用 digests 而不是 image tags？
+<span id="_8-why-should-you-use-digests-instead-of-image-tags"></span>
 
-A. 名称更短
-B. 保证不可变性
-C. 拉取更快
-D. 节省存储空间
+### 8. 为什么固定镜像摘要而非标签？
+
+- A. 总是更短
+- B. 标识特定镜像内容
+- C. 自动验证签名
+- D. 移除 CVE
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 保证不可变性**
+**答案：B. 标识特定镜像内容**
 
-**解释：**
-Tags（例如 `nginx:latest`）可以被更改为指向不同的 images。Digests（例如 `nginx@sha256:abc123...`）是特定 image 内容的哈希，并且不可变：
-```yaml
-image: nginx@sha256:abc123def456...
-```
-
-这可以确保可复现性和安全性。
+标签可移动；摘要标识内容。这支持可复现制品选择，但不替代签名者信任、漏洞检查或可用性验证。
 
 </details>
 
-### 9. Trivy 不会扫描什么？
+<span id="_9-what-does-trivy-not-scan"></span>
 
-A. OS package vulnerabilities
-B. Language-specific dependencies
-C. Runtime behavior
-D. Secret detection
+### 9. 哪个领域独立于 Trivy 静态检查？
+
+- A. 操作系统软件包识别
+- B. 语言依赖扫描
+- C. 实时系统调用/进程行为检测
+- D. 源码密钥检测
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. Runtime behavior**
+**答案：C. 实时系统调用/进程行为检测**
 
-**解释：**
-Trivy 是一个 static analysis 工具，会扫描：
-- OS package vulnerabilities
-- Language-specific dependencies（npm、pip、go 等）
-- IaC misconfigurations
-- Hardcoded secrets
-- Licenses
-
-Runtime behavior analysis 是 Falco 等 runtime security tools 的领域。
+软件包、错误配置和密钥扫描不同于运行时行为检测。单独设计 Falco 等运行时工具。
 
 </details>
 
-### 10. 哪一项不是 container image registry 安全最佳实践？
+<span id="_10-which-is-not-a-container-image-registry-security-best-practice"></span>
 
-A. 使用 private registry
-B. 启用 image scanning
-C. 允许 anonymous pulling
-D. 阻止 vulnerable image push
+### 10. 哪种仓库访问做法不合适？
+
+- A. 为私有镜像使用获准拉取身份
+- B. 验证公共镜像摘要/签名
+- C. 允许任意匿名镜像推送/删除
+- D. 分离仓库、准入和扫描门禁权限
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 允许 anonymous pulling**
+**答案：C. 允许任意匿名镜像推送/删除**
 
-**解释：**
-Registry 安全最佳实践：
-- 使用 private registry
-- 基于 IAM 的 authentication
-- 启用 image scanning
-- 阻止 vulnerable image push/pull
-- Image signature verification
-- 使用 immutable tags 或 digests
-
-Anonymous pulling 是安全风险，应在生产环境中禁用。
+有意公开镜像的匿名读取本身不是漏洞。分别控制保密性、写入/删除权限、来源和限速。
 
 </details>
 
-### 11. 当 CI/CD pipeline 中 image scanning 失败时，建议的操作是什么？
+<span id="_11-what-is-the-recommended-action-when-image-scanning-fails-in-ci-cd-pipeline"></span>
 
-A. 仅记录 warning
-B. 停止 build
-C. 自动修复
-D. 忽略并继续
+### 11. 约定的 CI 扫描门禁未通过时应如何处理？
+
+- A. 始终忽略
+- B. 在发布/签名前停止并检查原因
+- C. 重建另一镜像，不扫描就推送
+- D. 强制退出码为 0
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 停止 build**
+**答案：B. 在发布/签名前停止并检查原因**
 
-**解释：**
-在 CI/CD pipelines 中，当发现 Critical/High 漏洞时，build 应该停止：
-```bash
-trivy image --exit-code 1 --severity HIGH,CRITICAL myimage:tag
-```
-
-当发现漏洞时，`--exit-code 1` 会返回非零退出码，从而使 pipeline 失败。
+区分策略违规与扫描器/数据库/权限错误，并保留结果。不要部署扫描后重新构建的不同制品。例外需要理由、所有者和到期时间。
 
 </details>
 
-### 12. 哪一项不是 Alpine base images 的优势？
+<span id="_12-what-is-not-an-advantage-of-alpine-base-images"></span>
 
-A. 体积小
-B. 漏洞更少
-C. glibc 兼容性
-D. build 速度快
+### 12. 关于 Alpine 的哪个假设不正确？
+
+- A. 使用 musl libc
+- B. 使用 apk 软件包管理器
+- C. 总是与依赖 glibc 的应用完全兼容
+- D. 必须检查所选发布版本的支持寿命
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. glibc 兼容性**
+**答案：C. 总是与依赖 glibc 的应用完全兼容**
 
-**解释：**
-Alpine Linux 特性：
-- 体积小（~5MB）
-- 最少 packages
-- 使用 musl libc（不是 glibc）
-
-Alpine 使用 musl libc 而不是 glibc，因此某些依赖 glibc 的应用程序可能存在兼容性问题。
+Alpine 使用 musl，因此依赖 glibc 的二进制可能有兼容性问题。仅镜像大小既不保证漏洞数量，也不保证构建速度。
 
 </details>

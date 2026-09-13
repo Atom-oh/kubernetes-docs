@@ -12,7 +12,7 @@
 - [学習教材の目次](#table-of-contents) - トピック別の学習教材
 - [クイズ集](./quizzes/README.md) - トピック別のクイズ
 
-## 目次
+## 目次 {#table-of-contents}
 
 ### ニュース
 - [週刊ニュース](./news/README.md) - 最新の Kubernetes/EKS エコシステムニュースダイジェスト
@@ -210,13 +210,6 @@
 10. [cert-manager](./security/10-cert-manager.md) | [クイズ](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [クイズ](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [クイズ](./quizzes/security/12-spiffe-spire-quiz.md)
-
-### Container Registry
-1. [Container Registry 概要](./container-registry/README.md)
-2. [Docker Hub](./container-registry/01-docker-hub.md) | [クイズ](./quizzes/container-registry/01-docker-hub-quiz.md)
-3. [Amazon ECR](./container-registry/02-amazon-ecr.md) | [クイズ](./quizzes/container-registry/02-amazon-ecr-quiz.md)
-4. [Harbor](./container-registry/03-harbor.md) | [クイズ](./quizzes/container-registry/03-harbor-quiz.md)
-5. [Container Registry Best Practices](./container-registry/04-best-practices.md) | [クイズ](./quizzes/container-registry/04-best-practices-quiz.md)
 
 ### Platform Engineering
 0. [Platform Engineering 概要](./platform-engineering/00-platform-engineering-overview.md) | [クイズ](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)

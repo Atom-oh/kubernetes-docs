@@ -1,131 +1,153 @@
-# クロス組織 VPC 接続
+# 組織をまたぐ VPC 接続
 
-> **最終更新**: September 1, 2026
+> **元のレポートのタイムスタンプ**: September 1, 2026
+>
+> **内容レビュー**: September 12, 2026
 
-このドキュメントでは、**2 つの異なる AWS Organizations 間で VPC を接続する** 5 つの方法を扱います。たとえば、GPU ワークロードを既存の MSP 支払いアカウントとは別の支払いアカウント（別の Organization）で契約する場合です。ここで示すすべての数値は、実際の 2 つの Organizations をまたいだ構築・計測による検証結果です（ap-northeast-2、両アカウントとも ZoneId `apne2-az1` に固定）。
+本章では、既存環境と別のガバナンス下にある GPU 環境など、**異なる AWS Organizations に属するアカウント**を接続する五つのパターンを比較します。表には以前の文書で報告された測定値を保持しています。このレビューは AWS の動作と計算を確認するもので、新たな実環境へのデプロイや、独立して再現したベンチマークを主張するものではありません。
 
 ## 目次
 
-1. [クロス組織接続が必要な理由](#why-cross-org-connectivity)
-2. [5 つの選択肢の比較](#comparing-the-five-options)
-3. [実地検証結果](#field-verification-results)
-4. [レイテンシ計測（M1–M7）](#latency-measurements-m1m7)
-5. [実地で得られた運用上の知見](#operational-findings-from-the-field)
-6. [シナリオ別の推奨アーキテクチャ](#recommended-architecture-by-scenario)
-7. [結論](#conclusion)
+1. [組織をまたぐ接続が必要になる理由](#why-cross-org-connectivity)
+2. [五つの選択肢の比較](#comparing-the-five-options)
+3. [元のレポートで報告された検証結果](#reported-verification-results)
+4. [レイテンシー測定（M1–M7）](#latency-measurements-m1m7)
+5. [運用上の知見](#operational-findings)
+6. [要件に基づくアーキテクチャの選択](#architecture-selection-by-requirement)
+7. [制約と次に行う確認](#limitations-and-next-checks)
 
-## クロス組織接続が必要な理由
+## 組織をまたぐ接続が必要になる理由 {#why-cross-org-connectivity}
 
-GPU インスタンス（P5/P6 など）はコストが非常に大きいため、組織では既存の MSP 支払いアカウントではなく、**別の支払いアカウント（別の AWS Organization）** で契約することが増えています。一般的な動機は以下のとおりです。
+契約上の所有権、買収、独立したガバナンス、分離要件などにより、GPU ワークロードと既存サービスが異なる Organizations に配置される場合があります。組織構造はこうした要件に従って決めるべきであり、二つ目の Organization を作れば GPU の割引、クォータ、コンプライアンスが自動的に改善するという前提で決めるべきではありません。
 
-- **請求の分離**: GPU 固有のボリュームディスカウント / EDP 最適化
-- **Service quota の分離**: GPU vCPU 上限と Capacity Blocks を個別に管理
-- **影響範囲の封じ込め**: SCP の誤設定やセキュリティインシデントを既存の本番環境から隔離
-- **規制コンプライアンス**: AI/ML ワークロードのデータ境界と監査証跡を分離
+EC2 のリソースクォータは通常、**アカウントとリージョン**単位で設定されます。この分離は別のアカウントで実現でき、別の Organization は必須ではありません。請求の集約、交渉による割引、ガバナンス作業の重複も確認が必要です。Organization の境界は、アプリケーション認可、ネットワーク分割、監査制御の代わりにはなりません。
 
-主な課題は、既存環境（ORG A）と GPU 環境（ORG B）を接続することです。EKS の観点では、これはトレーニングクラスター（ORG B）から既存のデータパイプライン（ORG A）へ到達すること、または推論 API を既存サービスに公開することを対象とします。
+EKS では、データパイプラインや推論 API への通常の IP アクセスと、GPU の集合通信を区別してください。CPU インスタンスによるリクエスト／レスポンスのベンチマークでは、NCCL、スループット、RDMA の性能は確認できません。**EFA の OS バイパストラフィックは VPC やアベイラビリティーゾーンをまたげません**。一方、ENA インターフェイスからの通常の IP トラフィックは引き続きルーティングできます。
 
-## 5 つの選択肢の比較
+## 五つの選択肢の比較 {#comparing-the-five-options}
 
-| 観点 | ① TGW RAM Sharing | ② VPC Peering | ③ PrivateLink | ④ TGW Peering | ⑤ VPC Lattice |
+PrivateLink と Lattice の列は、**テストされた NLB ベースのエンドポイントサービスと HTTP サービスのパターン**を説明しています。PrivateLink にはリソースエンドポイントやサービスネットワークエンドポイントの種類もあり、Lattice には TCP リソース設定もあります。製品全体を一律に「NLB が必須」「L7 のみ」と捉えることはできません。
+
+| 観点 | ① TGW の RAM 共有 | ② VPC ピアリング | ③ PrivateLink エンドポイントサービス | ④ TGW ピアリング | ⑤ VPC Lattice HTTP サービス |
 |---|---|---|---|---|---|
-| 仕組み | RAM 経由で外部アカウントに TGW を共有 | 1:1 VPC 接続 | NLB ベースの endpoint | ORG ごとの TGW 間 Peering | L7 Service network |
-| 重複する CIDR | ❌ | ❌ | ✅ (ENI ベース) | ❌ | ✅ (link-local ベース) |
-| 方向 | 双方向 L3 | 双方向 L3 | 一方向（Consumer→Provider） | 双方向 L3 | 一方向（Consumer→Provider） |
-| 推移的ルーティング | ✅ TGW RT 経由 | ❌ | ❌ | ✅ | ❌（Service ごと） |
-| ルーティング制御 | **TGW 所有アカウント（ORG A）** | 両側で独立 | Provider が principals を制御 | **各 ORG が独立** | Service network 所有者 |
-| プロビジョニング時間（計測値） | TGW 約 3 分 + 承諾手順 | **1 分未満** | Endpoint 約 3 分 | **約 7 分（最長）** | 約 5 分 |
+| 仕組み | 外部アカウントと TGW を共有 | VPC のペアを直接接続 | 利用側のインターフェイスエンドポイント → 提供側の NLB／サービス | 各所有者の TGW を接続 | サービスとクライアント VPC をサービスネットワークに関連付け |
+| アドレスの重複 | 直接ルーティングには曖昧さのないアドレス設計が必要 | CIDR が重複する VPC はピアリング不可 | サービスアクセスでは VPC CIDR の重複に対応可能 | 直接ルーティングには曖昧さのないアドレス設計が必要 | サービスアクセスでは VPC CIDR の重複に対応可能 |
+| 接続モデル | 許可された場合に双方向 IP ルーティング | 許可された場合に双方向 IP ルーティング | 利用側が開始し、レスポンスはその接続で返送可能 | 許可された場合に双方向 IP ルーティング | クライアントが公開サービスにリクエストを開始。逆方向のアクセスには独立した設定が必要 |
+| ルーティング設定 | VPC ルートと TGW のルートテーブル／関連付け | 両側のルート。VPC ピアリングに推移的接続はない | 一般的な VPC 中継ではなく、エンドポイント／サービスの権限とネットワーク制御 | ピアに向かう明示的な静的ルートと VPC ルート | 一般的な VPC 中継ではなく、サービス／ネットワークの関連付けとポリシー |
+| 制御 | TGW 所有者が自身の TGW ルートテーブルを管理。利用側は自身の VPC 制御を保持 | 各 VPC 所有者 | 提供側はサービス権限／ターゲットを、利用側は自身のエンドポイントを制御 | 各 TGW 所有者がルートを調整 | ネットワーク／サービス所有者とクライアントネットワークの制御 |
+| 元のレポートのプロビジョニング時間 | TGW 約 3 分と承諾処理 | 1 分未満 | エンドポイント約 3 分 | 約 7 分 | 約 5 分 |
 
-## 実地検証結果
+プロビジョニング時間は元のレポートの観測値であり、SLA やエンドツーエンドの提供所要時間の見積もりではありません。ルーティングの行は、本章の二つの TGW によるトポロジーを説明しています。任意のピアリングの連鎖を無制限に中継できるという意味ではありません。重複への対応には NAT やアドレスの再設計という方法もあり、それぞれ設計が必要です。
 
-5 つの選択肢はすべて、異なる 2 つの Organizations のアカウント間で構築し、コントロールプレーン（接続確立）とデータプレーン（実トラフィック）の両方でテストしました。**5 つすべてが実装可能です。** Organization 境界そのものによる制限はなく、境界で必要になるのは明示的な手順、すなわち **アカウント ID の指定と受信側での承諾** だけです。
+## 元のレポートで報告された検証結果 {#reported-verification-results}
 
-![クロス組織の 5 経路計測トポロジー](../../assets/cross-org-5paths-latency.png)
+元のレポートでは、二つの Organizations 間ですべての五つのパターンを構築し、トラフィックを交換したとされています。AWS ドキュメントは、これらのパターンのクロスアカウントデプロイをサポートしており、同じ Organization への所属は本質的な要件ではありません。ただし、IAM／SCP／共有の制限が構築を妨げることがあり、通信が機能するかどうかはルート、セキュリティグループ、NACL、DNS、サービス認可によって決まります。アカウント ID と承諾だけでは不十分です。
 
-## レイテンシ計測（M1–M7）
+![元の組織間トポロジーには、ピアリング、TGW、PrivateLink 経路の TCP_RR p50 と、Lattice HTTP サービス経路の HTTP keep-alive p50 が示されています。](../.gitbook/assets/en-networking-05-cross-org-vpc-connectivity-0.png)
 
-**計測設計** — シグナルはサブミリ秒単位のため、計測誤差はシグナルより小さくする必要があります。
+[インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-05-cross-org-vpc-connectivity-0.html)
 
-- **c7g.large** インスタンス（バースト可能タイプは不使用）。応答側は **1 台の EC2 インスタンス（nginx 固定 200）** であり、ロードバランサーは構造上必要な場所（③⑤、および NLB hop を分離するための M7）にのみ使用します
-- 応答側には 3 つの ENI（経路ごとの subnet と個別の戻り Route table）があるため、**M1–M7 は Route の入れ替えなしにラウンドロビンで交互実行し、5 ラウンド** 計測します
-- 主指標: **永続 TCP_RR ping-pong、1 経路あたり 1,500 サンプル**（プロセス起動および handshake コストを除外）。副指標: ICMP 100/経路、HTTP keep-alive 275/経路
+図には元の観測値を保持しています。Lattice の値は **HTTP KA** で、その他の表示値は **TCP_RR** です。直接比較できる同一の指標ではありません。「GPU」というラベルは想定環境を示すもので、GPU ベンチマークを表してはいません。
+
+
+
+## レイテンシー測定（M1–M7） {#latency-measurements-m1m7}
+
+**報告された構成:** `ap-northeast-2`、アカウント間で一致する ZoneId `apne2-az1`、`c7g.large`、および nginx で固定の HTTP 200 を返す一つの EC2 レスポンダーです。レポートには、経路別のサブネット／戻りルートを持つ三つの ENI、ラウンドロビンで交互に実施した五ラウンド、経路ごとに 1,500 個の持続接続 TCP_RR サンプル、100 個の ICMP サンプル、275 個の HTTP keep-alive サンプルが記載されています。
+
+nginx の記述は HTTP レスポンダーを示しています。本ページには TCP_RR の実装やメッセージサイズは記載されていません。生のサンプル、ソフトウェア／カーネルのバージョン、計時の開始・終了点、Linux の戻り経路ポリシー設定へのリンクもありません。持続接続は接続確立の繰り返しによる影響を減らす意図がありますが、これらの表だけでは計時範囲を独立して確認できません。
+
+**以下のレイテンシー値はすべてミリ秒です。TTL は別のパケットフィールドです。** TCP_RR と ICMP はリクエスト／レスポンスの往復測定です。HTTP KA にはアプリケーション処理が含まれます。以下の二つの測定実験は分けて解釈する必要があります。
 
 | ID | 経路 | ICMP p50 | TCP_RR p50 | RR p99 | RR sd | HTTP KA p50 | TTL |
 |---|---|---|---|---|---|---|---|
-| M1 | 同一 VPC → EC2（ベースライン） | 0.121 | **0.049** | 0.062 | 0.007 | 0.087 | 127 |
-| M2 | ② VPC Peering → EC2 | 0.125 | **0.048** | 0.057 | 0.011 | 0.080 | 127 |
+| M1 | 同一 VPC → EC2（基準） | 0.121 | **0.049** | 0.062 | 0.007 | 0.087 | 127 |
+| M2 | ② VPC ピアリング → EC2 | 0.125 | **0.048** | 0.057 | 0.011 | 0.080 | 127 |
 | M3 | ① 共有 TGW（RAM）→ EC2 | 0.535 | **0.619** | 0.695 | 0.141 | 0.686 | 126 |
-| M4 | ④ TGW Peering（2 hops）→ EC2 | 0.912 | **0.599** | 0.855 | 0.133 | 0.488 | 125 |
-| M5 | ③ PrivateLink → NLB → EC2 | 未計測 | **0.961** | 1.084 | 0.035 | 0.711 | — |
-| M6 | ⑤ VPC Lattice → EC2 target | 未計測 | 未計測（L7 のみ） | — | — | **1.635** | — |
-| M7 | ② Peering → NLB → EC2（NLB hop 分離） | 未計測 | **0.841** | 0.909 | 0.119 | 0.883 | — |
+| M4 | ④ TGW ピアリング（二つの TGW）→ EC2 | 0.912 | **0.599** | 0.855 | 0.133 | 0.488 | 125 |
+| M5 | ③ PrivateLink → NLB → EC2 | 未測定 | **0.961** | 1.084 | 0.035 | 0.711 | — |
+| M6 | ⑤ VPC Lattice → EC2 ターゲット | 未測定 | この HTTP サービスでは未測定 | — | — | **1.635** | — |
+| M7 | ② ピアリング → NLB → EC2（NLB ホップの影響を分離） | 未測定 | **0.841** | 0.909 | 0.119 | 0.883 | — |
 
-**導出指標（p50、ms）:**
+### 報告された中央値の差
 
-| 指標 | 定義 | TCP_RR | ICMP |
-|---|---|---|---|
-| TGW 1-hop コスト | M3 − M2 | **+0.571** | +0.410 |
-| TGW 2-hop コスト | M4 − M2 | **+0.551** | +0.787 |
-| NLB hop コスト | M7 − M2 | **+0.793** | — |
-| 純粋な PrivateLink ENI オーバーヘッド | M5 − M7 | **+0.120** | — |
-| Lattice proxy コスト（HTTP） | M6 − M2 | +1.555 | — |
+これらは**経路の中央値同士の差**であり、分離して測定した片方向のホップコストでも、個別の ENI／プロキシコンポーネントの測定値でもありません。
 
-**判定:**
+| 観測された経路の比較 | 差 | Δ TCP_RR p50 | Δ ICMP p50 | Δ HTTP KA p50 |
+|---|---|---|---|---|
+| ピアリングと同一 VPC の基準 | M2 − M1 | -0.001 | +0.004 | -0.007 |
+| 共有 TGW 経路とピアリング | M3 − M2 | +0.571 | +0.410 | +0.606 |
+| 二つの TGW の経路とピアリング | M4 − M2 | +0.551 | +0.787 | +0.408 |
+| NLB 経由のピアリングと直接ピアリング | M7 − M2 | +0.793 | — | +0.803 |
+| PrivateLink/NLB とピアリング/NLB | M5 − M7 | +0.120 | — | -0.172 |
+| Lattice HTTP サービスと直接ピアリングの HTTP | M6 − M2 | — | — | +1.555 |
 
-> **同一 AZ 内では、TGW hop は p50 で 0.4–0.6 ms を追加します** — 一般に観測される「hop あたりサブミリ秒」と整合します。
-> **VPC Peering のレイテンシコストは計測限界内でゼロです**（M2 0.048 ≈ M1 ベースライン 0.049）。
-> **PrivateLink ENI 自体が追加するのは +0.12 ms のみです** — PrivateLink の合計レイテンシ（0.96 ms）の大部分は、構造上必要な **NLB hop（+0.79 ms）** によるものです。Lattice の L7 proxy コストは +1.6 ms です。
+- M2 は同一 VPC の基準に近いものの、この表から統計的な同等性やオーバーヘッドがゼロであることは確認できません。
+- 二つの TGW を通る経路の TCP_RR 中央値は、一つの共有 TGW を通る経路より低くなっています。したがって、このデータは一律の「TGW 一ホップ当たり 0.4–0.6 ms」や線形のホップコスト式を裏付けません。
+- M5−M7 は **TCP_RR では +0.120 ms、HTTP KA では −0.172 ms** です。純粋な PrivateLink ENI のコストとは表現できません。
+- Lattice の比較は **HTTP +1.555 ms** であり、TCP_RR ではありません。この HTTP サービスのテストを示すもので、すべての Lattice モードを示してはいません。
+- 初期 TTL と関連するネットワーク動作が分からなければ、TTL から経路のホップ数は判断できません。
 
-**追加計測 — Service 前段配置での公平な比較（すべての経路に NLB）:** 実際のデプロイでは、Peering および TGW の経路でも Service 前段に NLB を置くため、すべての L3 経路について NLB 前段配置の構成を追加で構築・計測しました（subnet ごとの NLB、IP target、同一手法）。
+### サービス前段に NLB を置いた別の測定実験
+
+元のレポートでは、各 L3 経路にも NLB を配置しています。このサービス公開パターンに対しては有用な比較ですが、本番のすべてのピアリング／TGW デプロイで NLB が必要という意味ではありません。
 
 | 構成 | TCP_RR p50 | HTTP KA p50 |
 |---|---|---|
-| ② Peering → NLB → EC2 | **0.622** | 0.648 |
+| ② ピアリング → NLB → EC2 | **0.622** | 0.648 |
 | ③ PrivateLink → NLB → EC2 | **0.658** | 0.845 |
 | ① 共有 TGW → NLB → EC2 | **1.273** | 1.257 |
-| ④ TGW Peering → NLB → EC2 | **1.425** | 1.279 |
-| ⑤ Lattice（LB 自体として機能 — NLB は不要） | — | **1.680** |
+| ④ TGW ピアリング → NLB → EC2 | **1.425** | 1.279 |
+| ⑤ Lattice HTTP サービス（このテストでは別の NLB なし） | — | **1.680** |
 
-> **Service 公開フレームでの判定:** 純粋な PrivateLink ENI コストは +0.036 ms（N5−N2）であり、事実上ゼロです。応答側前段の NLB が共通のベースラインとなる実際の Service 公開構成では、**③ PrivateLink は Peering+NLB と同等であり、TGW 経路 + NLB より約 2 倍高速です。** 「直接 TGW は PrivateLink より高速」という結論は、LB を使わない直接接続フレームでのみ成り立ちます。Lattice はロードバランサー自体として機能するため個別の NLB は不要であり、同じフレームでの TGW+NLB との差は +0.3–0.4 ms に縮まります。
+この測定実験では、PrivateLink/NLB からピアリング/NLB を引いた差は **TCP_RR で +0.036 ms**、**HTTP KA で +0.197 ms** です。共有 TGW とピアリングした TGW の TCP_RR 中央値は、PrivateLink の中央値のそれぞれ **1.93× と 2.17×**、HTTP の比率は **1.49× と 1.51×** です。これらはレイテンシーの比率であり、スループットの倍率や経路が同等であることの証明ではありません。
 
-**手法から得た教訓**（以前の計測ラウンドを破棄して再実施した理由）: バースト可能インスタンス（t-family）、2 段の NLB→ALB proxy chain、リクエストごとの新規接続（curl）を組み合わせると、サブミリ秒のシグナルがノイズに埋もれます（経路に依存しない p95 は約 7 ms）。新規 TCP flow では、TGW/NLB を通る最初の RTT に実際に +0.6–1.6 ms の flow-setup コストがかかります。そのため、**keep-alive/長時間接続のワークロード（gRPC、NCCL、DB pool）と単発接続のワークロードでは、レイテンシを分けて評価してください**。
+Lattice の HTTP 中央値は、共有 TGW/NLB とピアリングした TGW/NLB の HTTP 中央値をそれぞれ **+0.423 ms と +0.401 ms** 上回っています。コンポーネントのコストを導くために、この実験を M1–M7 の実験と組み合わせないでください。ピアリング/NLB の中央値でさえ、実行ごとに異なります。
 
-## 実地で得られた運用上の知見
+元のレポートには、破棄された予備実験も記載されています。バースト可能インスタンス、NLB→ALB、接続を毎回新規作成する curl を使用し、p95 は約 **7 ms**、最初のフローの増分は **0.6–1.6 ms** でした。これらは生サンプルへのリンクがない元レポートの観測値であり、AWS の保証ではありません。実際のアプリケーションについて、接続確立と定常状態の動作を分けて測定してください。
 
-1. **クロス組織 RAM 共有には、明示的な招待承諾ステップが必要です** — `--allow-external-principals` なしでは共有が拒否され、受信側が `accept-resource-share-invitation` を実行するまでリソースは表示されません（TGW と Lattice で同様です）。自動化パイプラインにはこの承諾ステップが必要です。
-2. **共有 TGW への外部 ORG の attachment は `pendingAcceptance` で停止します** — TGW 所有者が承諾する必要があります。「所有者側での中央制御」は API レベルで強制されます。
-3. **TGW Peering では各側で異なる attachment ID が表示されます** — リクエスター側の ID で accept API を呼び出すと `NotFound` が返ります。承諾側アカウントは自身の ID を一覧で見つける必要があり、propagation には約 2 分かかります。
-4. **TGW Peering は BGP をサポートしません** — 両方の TGW Route table に static route を手動で追加する必要があります。
-5. **Lattice のデータプレーンは link-local（169.254.171.0/24）から到達します** — target SG が VPC CIDR のみを許可している場合、すべての health check が UNHEALTHY になります。managed prefix list `com.amazonaws.<region>.vpc-lattice` を SG に追加してください。
-6. **static TGW route は propagated route より優先されます** — 両者が共存する場合は、意図しない経路選択に注意してください。
-7. **アカウント自動化は teardown を妨げます** — GuardDuty Runtime Monitoring の managed SG は VPC 削除をブロックし（DependencyViolation）、自動アタッチされた IAM policy は role 削除をブロックします。また、残存する Lattice target group も VPC 削除をブロックします。
+## 運用上の知見 {#operational-findings}
 
-## シナリオ別の推奨アーキテクチャ
+1. **RAM の外部共有:** 外部プリンシパルを許可し、Organization 外のアカウントが共有招待を承諾する必要があります。`CreateResourceShare` API の `allowExternalPrincipals` のデフォルトは **true** です。`--allow-external-principals` を明示すると意図を記録できますが、この CLI フラグの省略が常に失敗原因になるわけではありません。実効的な共有設定と権限を確認してください。
+2. **共有 TGW の VPC アタッチメント承諾:** `AutoAcceptSharedAttachments` が無効の場合（デフォルト）、TGW 所有者が共有アタッチメントを承諾する必要があります。有効にすると、この手順が変わります。RAM 共有の承諾と TGW アタッチメントの承諾は別の手順です。利用側は所有者の TGW ルートテーブルを変更できませんが、自身の VPC ルートとセキュリティ設定は引き続き制御します。
+3. **TGW ピアリングの承諾:** 承諾側の TGW 所有者は、同一アカウントのピアリングであっても、**承諾側のリージョンで**保留中のピアリングリクエストを承諾します。そのリクエストの `TransitGatewayAttachmentId` を使用し、TGW ID や VPC アタッチメント ID と混同しないでください。`NotFound` という応答だけでは、両側に異なる ID が必要というルールは導けません。元レポートの約二分の可視性遅延は観測値であり、固定の待ち時間を保証するものではありません。
+4. **ピアリングのルート:** 直接の TGW 間ピアリングは、ピアリングアタッチメントをまたぐ BGP ルート伝播ではなく、明示的に設定した静的ルートを使用します。関連する TGW と VPC のルートテーブルを双方向に設定してください。これらの静的ルートは自動化で管理できます。
+5. **ルートの優先順位:** 最長プレフィックス一致が最初に適用されます。静的ルートが伝播ルートより優先されるのは、**宛先プレフィックスが同じ場合**です。より広い範囲の静的ルートが、より具体的な伝播ルートを上書きすることはありません。
+6. **Lattice ターゲットのセキュリティグループ:** 文書化されている VPC 関連付けによるサービス経路では、リージョン／IP ファミリーに対応するマネージドプレフィックスリスト（`com.amazonaws.REGION.vpc-lattice` と `com.amazonaws.REGION.ipv6.vpc-lattice`）を実際のターゲットポートとヘルスチェックポートに適用してください。元の `169.254.171.0/24` の例は、すべてに共通するリスト定義ではありません。マネージドリストにはリンクローカルアドレスやルーティングできないパブリックアドレスが含まれることがあります。エンドポイント／リソースゲートウェイの経路には固有の制御があります。IAM によるサービス認証も設定が必要であり、VPC を関連付けるだけでは有効になりません。
+7. **クリーンアップの所有権:** 元のレポートでは、GuardDuty が管理するネットワーク依存関係、IAM ポリシーのアタッチ、残存する Lattice リソースが削除作業に影響したとされています。操作前に実際の依存先 ID と所有サービスを確認してください。VPC／ロールの削除を強行するためだけに、マネージドセキュリティ制御を無効化したり、無関係のリソースを削除したりしないでください。
 
-| シナリオ | 第一選択 | 根拠（計測結果） |
+## 要件に基づくアーキテクチャの選択 {#architecture-selection-by-requirement}
+
+| 要件 | 候補パターン | 重要な確認事項 |
 |---|---|---|
-| GPU ORG の完全分離、双方向の大量転送（トレーニングデータ） | **④ TGW Peering** | ORG ごとに独立したルーティング + 0.4–0.6 ms/hop のペナルティは無視できる |
-| 推論 API のみを公開（一方向） | **③ PrivateLink** | 最小限の公開範囲、重複 CIDR に対応可能、Service 前段配置の比較では Peering+NLB と同等（TGW 経路 + NLB より約 2 倍高速） |
-| 回避できない CIDR 重複（M&A、MSP 移行） | **③ PrivateLink / ⑤ Lattice** | ENI / link-local ベース — CIDR 非依存 |
-| 既存 TGW に GPU アカウントだけを追加 | **① TGW RAM Sharing** | 既存 hub を再利用。外部 ORG はルーティングを変更できない |
-| 小規模 PoC（1–2 VPCs） | **② VPC Peering** | 設定は 1 分未満、レイテンシコスト ≈ 0、追加インフラ不要 |
-| L7 auth/governance が必要な Service 公開 | **⑤ VPC Lattice** | 組み込みの IAM Auth と Service discovery（+1.6 ms の proxy コストを許容） |
+| 各 Organization が自身の TGW ルーティング権限を維持する必要がある | ④ TGW ピアリング | 静的ルートの調整、アドレス設計、スループット、可用性、トラフィック検査、転送料金 |
+| 少数の推論／サービスエンドポイントを公開したい | ③ PrivateLink エンドポイントサービス | 対応プロトコル／モデル、エンドポイント承諾、アプリケーション認証、DNS、コスト、実際のペイロード／同時実行数 |
+| CIDR が重複する環境間でのサービスアクセス | ③ PrivateLink または ⑤ Lattice | サービス／リソースの範囲。より広い IP ルーティングが必要なら NAT／アドレス再設計を評価 |
+| 別アカウントが集中管理されたハブを利用できる | ① TGW の RAM 共有 | 外部共有ポリシー、承諾設定、所有者の TGW 制御モデル |
+| 少数の直接接続 VPC ペア | ② VPC ピアリング | 重複しない CIDR、ペアごとのルート保守、クォータ、データ転送料金 |
+| マネージド HTTP サービスのアイデンティティ、検出、ガバナンスが必要 | ⑤ VPC Lattice | 明示的な IAM 認証ポリシー、署名付きリクエスト、サービス接続、ワークロード測定 |
 
-大半の GPU 分離シナリオでは、**④ TGW Peering（双方向インフラストラクチャ）+ ③ PrivateLink（推論 API 公開）** のハイブリッドが最適であり、計測結果もこの推奨を裏付けています。
+独立したネットワークガバナンスと限定的な API 公開には、TGW ピアリングと PrivateLink のハイブリッドが適する場合があります。ただし、公表されたレイテンシー表から、大半の GPU 環境で最適であるとは確認できません。必要な接続と制御に基づいて選択し、その後で実際のワークロードを測定してください。
 
-## 結論
+## 制約と次に行う確認 {#limitations-and-next-checks}
 
-- 5 つすべての選択肢は、純粋に API を介して異なる Organizations 間で構成できます。Organization 境界は「アカウント ID の指定 + 受信側での承諾」としてのみ現れます。
-- 同一 AZ 内: TGW は 0.4–0.6 ms/hop、VPC Peering ≈ 0、NLB hop は +0.79 ms、PrivateLink ENI は +0.12 ms、Lattice proxy は +1.6 ms — レイテンシコストは hop と proxy layer に応じて正直に増加します。
-- EKS では、大量のトレーニングデータ転送（長時間接続）は TGW 経由でルーティングし、推論 API は PrivateLink 経由で公開します。
+元のレポートには、Network Firewall による検査経路の実測、クロスリージョンのレイテンシー、スループット／同時実行数の測定は含まれていません。アドレス重複の機能確認は報告されていますが、重複時のレイテンシー結果は公開されていません。GPU の集合通信、EFA／RDMA、代表的なペイロードサイズ、不確実性の推定、完全な再現用アーティファクトも本ページでは確認されていません。
 
-**制限事項（未計測）:** Network Firewall 検査を通る経路、Cross-Region、CIDR が重複する環境（機能面のみ確認）、および throughput/concurrency の軸。
-
----
+報告値は歴史的な背景として保持してください。デプロイ前に、対象アカウントのポリシーと対応する接続モデル、必要な双方向ルートまたはサービスアクセス、障害時の動作、アプリケーションのレイテンシー／スループット予算を検証してください。このレビューでは AWS のプロビジョニングや実環境のベンチマークは実施していません。
 
 ## 参考資料
 
-- [スケーラブルな Multi-VPC ネットワークインフラストラクチャの構築（AWS Whitepaper）](https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/welcome.html)
-- [RAM を使用した TGW クロス組織共有（AWS Prescriptive Guidance）](https://docs.aws.amazon.com/prescriptive-guidance/latest/integrate-third-party-services/architecture-3-1.html)
-- [単一 Organization と複数 Organizations の選択（AWS Architecture Blog）](https://aws.amazon.com/blogs/architecture/choosing-between-single-or-multiple-organizations-in-aws-organizations/)
-- [VPC Lattice（このシリーズ）](02-vpc-lattice.md)
+- [スケーラブルなマルチ VPC ネットワークのホワイトペーパー](https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/welcome.html)
+- [クロスアカウント TGW 共有](https://docs.aws.amazon.com/prescriptive-guidance/latest/integrate-third-party-services/architecture-3-1.html)
+- [単一または複数の Organizations](https://aws.amazon.com/blogs/architecture/choosing-between-single-or-multiple-organizations-in-aws-organizations/)
+- [RAM CreateResourceShare API](https://docs.aws.amazon.com/ram/latest/APIReference/API_CreateResourceShare.html)
+- [TGW の承諾オプション](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_TransitGatewayRequestOptions.html)
+- [TGW ピアリングの承諾](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering-accept-reject.html)
+- [TGW のルーティングと評価順序](https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html)
+- [PrivateLink のエンドポイントタイプ](https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html)
+- [プライベート NAT と重複するネットワーク](https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-scenarios.html)
+- [Lattice のセキュリティグループ](https://docs.aws.amazon.com/vpc-lattice/latest/ug/security-groups.html)
+- [EC2 のアカウント／リージョンクォータ](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html)
+- [EFA の制約](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html)
+- [VPC Lattice ガイド](02-vpc-lattice.md)
+- [組織間接続クイズ](../quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)

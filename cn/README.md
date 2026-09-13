@@ -12,7 +12,7 @@
 - [学习材料目录](#table-of-contents) - 按主题组织的学习材料
 - [测验集合](./quizzes/README.md) - 按主题组织的测验
 
-## 目录
+## 目录 {#table-of-contents}
 
 ### 新闻
 - [每周新闻](./news/README.md) - 最新 Kubernetes/EKS 生态系统新闻摘要
@@ -34,7 +34,7 @@
 7. [策略](./core/07-policies.md) | [测验](./quizzes/core/07-policies-quiz.md)
 8. [调度、抢占和驱逐](./core/08-scheduling-preemption-eviction.md) | [测验](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
 9. [Cluster 管理](./core/09-cluster-administration.md) | [测验](./quizzes/core/09-cluster-administration-quiz.md)
-10. [Kubernetes 中的 Windows](./core/10-windows-in-kubernetes.md) | [测验](./quizzes/core/10-windows-in-kubernetes-quiz.md)
+10. [Kubernetes 中的 Windows](./core/10-windows-in-kubernetes.md)
 11. [扩展 Kubernetes](./core/11-extending-kubernetes.md) | [测验](./quizzes/core/11-extending-kubernetes-quiz.md)
 
 ### 调度
@@ -210,13 +210,6 @@
 10. [cert-manager](./security/10-cert-manager.md) | [测验](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [测验](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [测验](./quizzes/security/12-spiffe-spire-quiz.md)
-
-### Container Registry
-1. [Container Registry 概览](./container-registry/README.md)
-2. [Docker Hub](./container-registry/01-docker-hub.md) | [测验](./quizzes/container-registry/01-docker-hub-quiz.md)
-3. [Amazon ECR](./container-registry/02-amazon-ecr.md) | [测验](./quizzes/container-registry/02-amazon-ecr-quiz.md)
-4. [Harbor](./container-registry/03-harbor.md) | [测验](./quizzes/container-registry/03-harbor-quiz.md)
-5. [Container Registry 最佳实践](./container-registry/04-best-practices.md) | [测验](./quizzes/container-registry/04-best-practices-quiz.md)
 
 ### Platform Engineering
 0. [Platform Engineering 概览](./platform-engineering/00-platform-engineering-overview.md) | [测验](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)

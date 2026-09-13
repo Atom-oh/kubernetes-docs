@@ -1,279 +1,84 @@
 # Linkerd 可观测性
 
-> **支持的版本**: Linkerd 2.16+
-> **最后更新**: February 22, 2026
+> **最后更新**：2026 年 9 月 11 日 · Linkerd edge-26.9.1 / chart 2026.9.1 · Prometheus Operator 示例对照 0.93.1 检查
 
-## 概述
+Linkerd 暴露代理和协议指标；Viz 添加 Prometheus、metrics-api、tap、tap-injector 和 Web 仪表板。当前 Viz chart **不**安装 Grafana。分布式追踪还需要配置的 Collector/后端、追踪上下文和采样；安装指标仪表板不会启用它。
 
-Linkerd 开箱即提供强大的可观测性功能。无需任何插桩，它会自动收集黄金信号（成功率、请求率、延迟），并通过直观的仪表板和 CLI 工具实现实时服务健康状况监控。
+示例假定已满足[安装指南](01-installation.md)，`my-app` 中存在网格 `web`/`api` 工作负载及实际流量。为安装配置正确命名空间、工作负载/Service 名称、端口和身份。不透明 TCP 数据库不会自动产生 HTTP 成功/延迟测量。
 
-## 可观测性架构
+## 指标含义
 
-```mermaid
-graph TB
-    subgraph "Data Plane"
-        P1[Proxy 1<br/>Metrics Collection]
-        P2[Proxy 2<br/>Metrics Collection]
-        P3[Proxy 3<br/>Metrics Collection]
-    end
+| 指标 | 含义 |
+|---|---|
+| response_total | 最终响应分类，包括错误/流结束处理 |
+| request_total | 观测请求；不是成功业务操作数 |
+| response_latency_ms_bucket | 毫秒单位的首字节时间直方图 |
+| tcp_open_connections | 当前打开的传输连接 |
+| tcp_open_total | 累计打开连接，不是当前活动连接 |
 
-    subgraph "Viz Extension"
-        PROM[Prometheus<br/>Metrics Storage]
-        GRAF[Grafana<br/>Visualization]
-        WEB[Web Dashboard<br/>UI]
-        TAP[Tap API<br/>Real-time Stream]
-        METRICS[Metrics API<br/>Aggregation]
-    end
+常见服务指标是成功率、请求速率和延迟。按需添加容量/饱和度、应用及 Kubernetes 指标。HTTP 默认代理分类将服务器错误视为失败；HTTP 400 可计为成功。gRPC 状态和配置的响应策略可改变分类。这不自动成为业务成功 SLI。
 
-    subgraph "External (Optional)"
-        EXT_PROM[External Prometheus]
-        EXT_GRAF[External Grafana]
-        JAEGER[Jaeger<br/>Distributed Tracing]
-    end
+延迟不是整个响应流时长。发布代理在首个可用响应正文帧记录延迟，正文丢弃时回退，独立于最终响应分类。因此直方图和响应计数器观测可能在不同时间可用。不要向不暴露成功/失败分类的直方图应用该标签。
 
-    P1 -->|:4191| PROM
-    P2 -->|:4191| PROM
-    P3 -->|:4191| PROM
-
-    PROM --> GRAF
-    PROM --> METRICS
-    METRICS --> WEB
-    TAP --> WEB
-
-    PROM --> EXT_PROM
-    EXT_PROM --> EXT_GRAF
-    P1 --> JAEGER
-```
-
-## 黄金指标
-
-Linkerd 会自动收集 Google 的三项黄金信号。
-
-### 三项核心指标
-
-| 指标 | 描述 | Prometheus 指标 |
-|--------|-------------|-------------------|
-| **成功率** | 成功请求（2xx/3xx）的比例 | `response_total{classification="success"}` |
-| **请求率** | 每秒请求数（RPS） | `request_total` |
-| **延迟** | 请求处理时间分布（p50、p95、p99） | `response_latency_ms_bucket` |
-
-### 检查指标
+### CLI 统计和实时检查
 
 ```bash
-# Basic statistics
 linkerd viz stat deploy -n my-app
-
-# Expected output:
-# NAME      MESHED   SUCCESS   RPS  LATENCY_P50  LATENCY_P95  LATENCY_P99
-# api       2/2      99.50%   100       10ms         50ms        100ms
-# web       3/3      98.20%   200       15ms         80ms        200ms
-# database  1/1     100.00%    50        5ms         20ms         50ms
-
-# Detailed specific Deployment
 linkerd viz stat deploy/web -n my-app --to deploy/api
-
-# Per-Pod statistics
-linkerd viz stat po -n my-app
-
-# Per-Namespace statistics
-linkerd viz stat ns
-```
-
-## Viz 仪表板
-
-Viz 扩展提供基于 Web 的仪表板。
-
-### 访问仪表板
-
-```bash
-# Open dashboard (auto-launches browser)
-linkerd viz dashboard
-
-# Open on specific port
-linkerd viz dashboard --port 8084
-
-# Run in background
-linkerd viz dashboard &
-
-# Allow external access (caution: security consideration required)
-linkerd viz dashboard --address 0.0.0.0
-```
-
-### 仪表板功能
-
-```mermaid
-graph TB
-    subgraph "Dashboard Views"
-        NS[Namespace Overview<br/>Per-namespace Status]
-        DEPLOY[Deployments<br/>Deployment Status]
-        PODS[Pods<br/>Pod Status]
-        TOPO[Topology<br/>Service Topology]
-        ROUTES[Routes<br/>Per-route Metrics]
-        TAP[Tap<br/>Real-time Requests]
-    end
-
-    NS --> DEPLOY
-    DEPLOY --> PODS
-    DEPLOY --> ROUTES
-    NS --> TOPO
-    DEPLOY --> TAP
-```
-
-**仪表板视图：**
-
-| 视图 | 描述 |
-|------|-------------|
-| Namespace | 按 Namespace 划分的 Mesh 状态概览 |
-| Deployments | 每个 Deployment 的成功率、RPS、延迟 |
-| Pods | 每个 Pod 的详细指标 |
-| TCP | TCP 连接指标 |
-| Routes | 每条 ServiceProfile 路由的指标 |
-| Topology | 服务间通信可视化 |
-| Tap | 实时请求流 |
-
-## CLI 工具
-
-### linkerd viz stat
-
-查询服务统计信息。
-
-```bash
-# Basic usage
-linkerd viz stat <resource-type> [flags]
-
-# Resource types: deploy, po, ns, svc, rs, job, cronjob, ds, sts
-
-# Deployment statistics
-linkerd viz stat deploy -n my-app
-
-# Traffic to specific service only
-linkerd viz stat deploy/web -n my-app --to deploy/api
-
-# Traffic from specific service only
 linkerd viz stat deploy/api -n my-app --from deploy/web
-
-# Specify time range
-linkerd viz stat deploy -n my-app --time-window 10m
-
-# JSON output
+linkerd viz stat pods -n my-app
+linkerd viz stat namespaces
+linkerd viz stat deploy -n my-app --time-window 10m -o wide
 linkerd viz stat deploy -n my-app -o json
-
-# Show additional info (proxy version, etc.)
-linkerd viz stat deploy -n my-app -o wide
 ```
 
-### linkerd viz top
-
-实时显示最活跃的路径。
+表包含 MESHED、SUCCESS、RPS、延迟百分位和 TCP_CONN。Wide 输出添加传输字节速率；不是代理版本清单。Pod/Deployment 视图和 Service 视图观察点不同：Service 统计使用出站客户端指标，遗漏非网格调用方。比较总量时保留该区别。
 
 ```bash
-# Top request paths for Deployment
-linkerd viz top deploy/web -n my-app
-
-# Expected output:
-# Source                Destination          Method  Path                Count  Best  Worst  Last  Success
-# web-7b8f9c-abc12     api-5d6e7f-xyz89      GET    /api/users            150   2ms   50ms   5ms    98.00%
-# web-7b8f9c-abc12     api-5d6e7f-xyz89      POST   /api/orders            50   5ms  100ms  10ms    96.00%
-
-# Entire namespace
-linkerd viz top ns/my-app
-
-# Show hidden headers
 linkerd viz top deploy/web -n my-app --hide-sources=false
-```
-
-### linkerd viz tap
-
-查看实时请求流。
-
-```bash
-# Basic tap
-linkerd viz tap deploy/web -n my-app
-
-# Expected output:
-# req id=0:0 proxy=out src=10.0.0.1:54321 dst=10.0.0.2:80 tls=true :method=GET :path=/api/users
-# rsp id=0:0 proxy=out src=10.0.0.1:54321 dst=10.0.0.2:80 tls=true :status=200 latency=5ms
-# end id=0:0 proxy=out src=10.0.0.1:54321 dst=10.0.0.2:80 tls=true duration=5ms response-length=1234B
-
-# Filtering
 linkerd viz tap deploy/web -n my-app --method GET --path /api
-
-# Traffic to specific destination
-linkerd viz tap deploy/web -n my-app --to deploy/api
-
-# Traffic from specific source
-linkerd viz tap deploy/api -n my-app --from deploy/web
-
-# Include HTTP headers
-linkerd viz tap deploy/web -n my-app --show-headers
-
-# Limit maximum requests
-linkerd viz tap deploy/web -n my-app --max-rps 100
-
-# JSON output
+linkerd viz tap deploy/web -n my-app --to deploy/api --max-rps 20
 linkerd viz tap deploy/web -n my-app -o json
-```
-
-### linkerd viz routes
-
-检查每条 ServiceProfile 路由的指标。
-
-```bash
-# Per-route statistics
-linkerd viz routes deploy/api -n my-app
-
-# Expected output:
-# ROUTE                          SERVICE   SUCCESS      RPS   LATENCY_P50   LATENCY_P95   LATENCY_P99
-# GET /api/users                 api       99.50%    50.0rps         10ms          50ms         100ms
-# POST /api/orders               api       98.00%    20.0rps         20ms         100ms         200ms
-# GET /health                    api      100.00%     5.0rps          1ms           2ms           5ms
-# [DEFAULT]                      api       95.00%    10.0rps         15ms          80ms         150ms
-
-# Routes to specific destination
-linkerd viz routes deploy/web -n my-app --to svc/api
-
-# Time range
-linkerd viz routes deploy/api -n my-app --time-window 10m
-```
-
-### linkerd viz edges
-
-检查服务间连接（边）。
-
-```bash
-# Check edges
 linkerd viz edges deploy -n my-app
-
-# Expected output:
-# SRC          DST          SRC_NS    DST_NS    SECURED
-# web          api          my-app    my-app    √
-# api          database     my-app    database  √
-# ingress      web          ingress   my-app    √
-
-# Per-Pod edges
-linkerd viz edges po -n my-app
+linkerd viz edges pods -n my-app
 ```
 
-## Prometheus 集成
+`top` 汇总 Tap 观察的实时流量。`--hide-sources=false` 显示来源列，不显示 HTTP 标头。`tap --path` 是路径前缀过滤器；`--max-rps` 限制被观察请求速率，不限制应用请求总量。当前 tap 没有 `--from` 或 `--show-headers`。使用 `--to` 对源工作负载执行 Tap，或使用受支持统计过滤器。
 
-### 内置 Prometheus（包含 Viz）
+Tap 是采样/受限观测流，不是抓包或完整审计。路径和请求元数据可能敏感，应限制 API 访问。Edges 展示观察到的连接；空视图不证明没有流量或全部加密。
 
-使用随 Viz 扩展提供的 Prometheus。
+## Viz 仪表板和存储
 
 ```bash
-# Access Prometheus
-kubectl port-forward -n linkerd-viz svc/prometheus 9090:9090
-
-# Access http://localhost:9090 in browser
+linkerd viz dashboard --address 127.0.0.1 --port 8084 --show url
 ```
 
-### 外部 Prometheus 集成
+打开显示的本地 URL。保持本地访问绑定回环地址；外部发布仪表板需要自己的身份验证和访问设计。绑定地址或 Host 标头检查不是用户身份验证。
 
-将 Linkerd 指标与现有 Prometheus 集成。
+![从命名空间和工作负载视图导航到 Pod、路由指标、拓扑和 Tap 的逻辑流程。可用数据取决于实际流量和配置策略；不是全部当前菜单的截图。](../../.gitbook/assets/en-service-mesh-linkerd-05-observability-1.png)
+
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-05-observability-1.html)
+
+默认捆绑 Prometheus 保留六小时，使用临时存储。所选 chart 固定自己的 Prometheus 镜像；不要默默替换为新主版本。持久化可按安装指南配置，长期/高可用存储是独立设计。
+
+```bash
+kubectl -n linkerd-viz port-forward --address 127.0.0.1 svc/prometheus 9090:9090
+# In another terminal:
+curl --fail --get --data-urlencode 'query=up{job="linkerd-proxy"}' \
+  http://127.0.0.1:9090/api/v1/query
+```
+
+## 外部 Prometheus
+
+有计划地选择直接抓取、联邦或适当远程写入管道。同一序列经多条路径采集且不去重，可能重复计数。
+
+### 直接抓取配置
+
+将此合并到现有 Prometheus 配置下。它遵循所选 Viz chart 的任务/标签映射，并为控制器目标显式添加命名空间/Pod 标签：
 
 ```yaml
-# prometheus-additional-scrape-configs.yaml
-- job_name: 'linkerd-controller'
+scrape_configs:
+- job_name: linkerd-controller
   kubernetes_sd_configs:
   - role: pod
     namespaces:
@@ -284,66 +89,83 @@ kubectl port-forward -n linkerd-viz svc/prometheus 9090:9090
   - source_labels:
     - __meta_kubernetes_pod_container_port_name
     action: keep
-    regex: admin-http
-  - source_labels: [__meta_kubernetes_namespace]
+    regex: .*admin$
+  - source_labels:
+    - __meta_kubernetes_pod_container_port_name
+    action: drop
+    regex: linkerd-admin
+  - source_labels:
+    - __meta_kubernetes_pod_container_name
     action: replace
+    target_label: component
+  - source_labels:
+    - __meta_kubernetes_namespace
     target_label: namespace
-  - source_labels: [__meta_kubernetes_pod_name]
-    action: replace
+  - source_labels:
+    - __meta_kubernetes_pod_name
     target_label: pod
-  - source_labels: [__meta_kubernetes_pod_container_name]
-    action: replace
-    target_label: container
-
-- job_name: 'linkerd-proxy'
+- job_name: linkerd-proxy
   kubernetes_sd_configs:
   - role: pod
   relabel_configs:
   - source_labels:
+    - __meta_kubernetes_pod_phase
+    regex: (Pending|Running)
+    action: keep
+  - source_labels:
     - __meta_kubernetes_pod_container_name
     - __meta_kubernetes_pod_container_port_name
+    - __meta_kubernetes_pod_label_linkerd_io_control_plane_ns
     action: keep
-    regex: ^linkerd-proxy;linkerd-admin$
-  - source_labels: [__meta_kubernetes_namespace]
+    regex: ^linkerd-proxy;linkerd-admin;linkerd$
+  - source_labels:
+    - __meta_kubernetes_namespace
     action: replace
     target_label: namespace
-  - source_labels: [__meta_kubernetes_pod_name]
+  - source_labels:
+    - __meta_kubernetes_pod_name
     action: replace
     target_label: pod
-  - source_labels: [__meta_kubernetes_pod_label_linkerd_io_proxy_deployment]
+  - source_labels:
+    - __meta_kubernetes_pod_label_linkerd_io_proxy_job
     action: replace
-    target_label: deployment
+    target_label: k8s_job
   - action: labeldrop
     regex: __meta_kubernetes_pod_label_linkerd_io_proxy_job
+  - action: labelmap
+    regex: __meta_kubernetes_pod_label_linkerd_io_proxy_(.+)
+  - action: labeldrop
+    regex: __meta_kubernetes_pod_label_linkerd_io_proxy_(.+)
+  - action: labelmap
+    regex: __meta_kubernetes_pod_label_linkerd_io_(.+)
+  - action: labelmap
+    regex: __meta_kubernetes_pod_label_(.+)
+    replacement: __tmp_pod_label_$1
+  - action: labelmap
+    regex: __tmp_pod_label_linkerd_io_(.+)
+    replacement: __tmp_pod_label_$1
+  - action: labeldrop
+    regex: __tmp_pod_label_linkerd_io_(.+)
+  - action: labelmap
+    regex: __tmp_pod_label_(.+)
 ```
 
-### Prometheus Operator 集成
+旧 `admin-http` 控制器端口过滤器遗漏 `dest-admin`、`ident-admin` 等当前端口。代理过滤器为目标控制平面保留命名的 `linkerd-proxy`/`linkerd-admin` 目标。Kubernetes Pod 发现包含初始化容器，因此不要仅因 `__meta_kubernetes_pod_container_init` 为 true 就丢弃目标：默认原生 Sidecar 位于那里。
+
+这些标签支持所示工作负载查询。保留额外 Viz 查询和仪表板需要的标签；审核映射应用标签的基数和敏感数据。配置 Kubernetes 发现 RBAC、API 访问和指标端口可达性。有效 YAML 文件不证明发现或抓取成功。
+
+### Prometheus Operator 替代方案
+
+Prometheus 资源必须选择这两个监控器及其命名空间。示例元数据假定选择器接受 `release: monitoring`；按实际安装调整标签。
 
 ```yaml
-# ServiceMonitor for Linkerd
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: linkerd-controller
-  namespace: monitoring
-spec:
-  namespaceSelector:
-    matchNames:
-    - linkerd
-  selector:
-    matchLabels:
-      linkerd.io/control-plane-component: destination
-  endpoints:
-  - port: admin-http
-    interval: 10s
-
----
-# PodMonitor for Linkerd Proxies
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
   name: linkerd-proxies
   namespace: monitoring
+  labels:
+    release: monitoring
 spec:
   namespaceSelector:
     any: true
@@ -352,125 +174,353 @@ spec:
       linkerd.io/control-plane-ns: linkerd
   podMetricsEndpoints:
   - port: linkerd-admin
-    interval: 10s
     path: /metrics
+    interval: 10s
+    relabelings:
+    - sourceLabels:
+      - __meta_kubernetes_pod_phase
+      regex: (Pending|Running)
+      action: keep
+    - sourceLabels:
+      - __meta_kubernetes_pod_container_name
+      - __meta_kubernetes_pod_container_port_name
+      - __meta_kubernetes_pod_label_linkerd_io_control_plane_ns
+      action: keep
+      regex: ^linkerd-proxy;linkerd-admin;linkerd$
+    - sourceLabels:
+      - __meta_kubernetes_namespace
+      action: replace
+      targetLabel: namespace
+    - sourceLabels:
+      - __meta_kubernetes_pod_name
+      action: replace
+      targetLabel: pod
+    - sourceLabels:
+      - __meta_kubernetes_pod_label_linkerd_io_proxy_job
+      action: replace
+      targetLabel: k8s_job
+    - action: labeldrop
+      regex: __meta_kubernetes_pod_label_linkerd_io_proxy_job
+    - action: labelmap
+      regex: __meta_kubernetes_pod_label_linkerd_io_proxy_(.+)
+    - action: labeldrop
+      regex: __meta_kubernetes_pod_label_linkerd_io_proxy_(.+)
+    - action: labelmap
+      regex: __meta_kubernetes_pod_label_linkerd_io_(.+)
+    - action: labelmap
+      regex: __meta_kubernetes_pod_label_(.+)
+      replacement: __tmp_pod_label_$1
+    - action: labelmap
+      regex: __tmp_pod_label_linkerd_io_(.+)
+      replacement: __tmp_pod_label_$1
+    - action: labeldrop
+      regex: __tmp_pod_label_linkerd_io_(.+)
+    - action: labelmap
+      regex: __tmp_pod_label_(.+)
+    - targetLabel: job
+      replacement: linkerd-proxy
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: linkerd-destination
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+    - linkerd
+  selector:
+    matchLabels:
+      linkerd.io/control-plane-component: destination
+  podMetricsEndpoints:
+  - port: dest-admin
+    path: /metrics
+    interval: 10s
+    relabelings:
+    - sourceLabels:
+      - __meta_kubernetes_pod_container_name
+      targetLabel: component
+    - targetLabel: job
+      replacement: linkerd-controller
+  - port: spval-admin
+    path: /metrics
+    interval: 10s
+    relabelings:
+    - sourceLabels:
+      - __meta_kubernetes_pod_container_name
+      targetLabel: component
+    - targetLabel: job
+      replacement: linkerd-controller
+  - port: policy-admin
+    path: /metrics
+    interval: 10s
+    relabelings:
+    - sourceLabels:
+      - __meta_kubernetes_pod_container_name
+      targetLabel: component
+    - targetLabel: job
+      replacement: linkerd-controller
 ```
 
-### 关键 Prometheus 指标
+第二个 PodMonitor 覆盖 **destination Deployment** 的三个指标端点。不是每个控制器。其他组件使用实际声明端口：
 
-```promql
-# Success rate (5-minute window)
-sum(rate(response_total{classification="success"}[5m])) by (deployment)
-/
-sum(rate(response_total[5m])) by (deployment)
+| 组件 | 命名指标端口 |
+|---|---|
+| Identity | ident-admin |
+| Proxy injector | injector-admin |
+| Viz 组件 | admin |
 
-# Request rate (RPS)
-sum(rate(request_total[5m])) by (deployment)
+Destination Service 不暴露 `admin-http` Service 端口，因此选择该不存在端口的 ServiceMonitor 发现不了端点。声明容器端口使用 PodMonitor，或有意预置适当 Service。不要对相同目标同时配置重复原始抓取和 PodMonitor。
 
-# P99 latency
-histogram_quantile(0.99,
-  sum(rate(response_latency_ms_bucket[5m])) by (le, deployment)
-)
+联邦是另一选项。对于所选 Viz chart，Prometheus Service 端口名为 **admin**，端点为 `/federate`。保留导出标签、选择目标任务，并针对 Viz `prometheus-admin` Server 授权调用的网格 ServiceAccount。命名为 `admin-http` 的通用上游示例不匹配此 chart。
 
-# P95 latency
-histogram_quantile(0.95,
-  sum(rate(response_latency_ms_bucket[5m])) by (le, deployment)
-)
+### 让 Viz 查询现有 Prometheus
 
-# P50 latency
-histogram_quantile(0.50,
-  sum(rate(response_latency_ms_bucket[5m])) by (le, deployment)
-)
-
-# TCP connection count
-sum(tcp_open_total) by (deployment)
-
-# Retry ratio
-sum(rate(request_total{direction="outbound", tls="true", retry="true"}[5m]))
-/
-sum(rate(request_total{direction="outbound", tls="true"}[5m]))
-
-# mTLS ratio
-sum(rate(response_total{tls="true"}[5m]))
-/
-sum(rate(response_total[5m]))
-```
-
-## Grafana 仪表板
-
-### Viz 内置 Grafana
-
-```bash
-# Access Grafana
-kubectl port-forward -n linkerd-viz svc/grafana 3000:3000
-
-# Access http://localhost:3000 in browser
-```
-
-### 外部 Grafana 集成
+对于单独配置、可达且保留所需 Linkerd 数据的 Prometheus：
 
 ```yaml
-# Disable Grafana when installing Viz
-# viz-values.yaml
-grafana:
+prometheus:
   enabled: false
+prometheusUrl: http://prometheus.monitoring.svc.cluster.local:9090
 ```
 
-### 预构建仪表板
+将这些 values 合并到所选 Viz 发布的完整配置。禁用本地 Prometheus 前，验证查询 API 行为、抓取标签、保留、身份验证和授权。此 URL 不安装 Prometheus 或授予访问。
 
-Linkerd 提供多个 Grafana 仪表板：
+## 范围明确的查询
 
-| 仪表板 | 描述 |
-|-----------|-------------|
-| Linkerd Health | 控制平面状态 |
-| Linkerd Top Line | 整体 Mesh 概览 |
-| Linkerd Deployment | 每个 Deployment 的详细信息 |
-| Linkerd Pod | 每个 Pod 的详细信息 |
-| Linkerd Service | 每个服务的详细信息 |
-| Linkerd Route | 每条路由的详细信息 |
-| Linkerd Authority | 每个 Authority 的详细信息 |
-| Linkerd Multicluster | 多集群状态 |
+这些查询对入站 API 观测只选择一次。调整命名空间/Deployment，共享后端添加集群范围。
 
-### 自定义仪表板示例
+成功比例：
+
+```promql
+((sum(rate(response_total{namespace="my-app",deployment="api",direction="inbound",classification="success"}[5m])) or vector(0)) / sum(rate(response_total{namespace="my-app",deployment="api",direction="inbound"}[5m])))
+and on() (sum(rate(response_total{namespace="my-app",deployment="api",direction="inbound"}[5m])) > 0)
+```
+
+所有观测响应失败且无成功序列时，分子回退为零。总量为正条件使缺失/空闲流量不产生成功结果；不会将缺失数据显示为 100%。
+
+请求速率：
+
+```promql
+sum(rate(request_total{namespace="my-app",deployment="api",direction="inbound"}[5m]))
+```
+
+首字节时间百分位，单位毫秒：
+
+```promql
+histogram_quantile(0.5, sum by (le) (rate(response_latency_ms_bucket{namespace="my-app",deployment="api",direction="inbound"}[5m])))
+
+histogram_quantile(0.95, sum by (le) (rate(response_latency_ms_bucket{namespace="my-app",deployment="api",direction="inbound"}[5m])))
+
+histogram_quantile(0.99, sum by (le) (rate(response_latency_ms_bucket{namespace="my-app",deployment="api",direction="inbound"}[5m])))
+```
+
+入站源侧活动 TCP 连接：
+
+```promql
+sum(tcp_open_connections{namespace="my-app",deployment="api",direction="inbound",peer="src"})
+```
+
+`peer="src"` 避免将代理独立的本地应用连接计入。每秒打开连接数应对 `tcp_open_total` 应用 rate，并保持相同预期观测范围。
+
+request_total 上没有通用 `retry="true"` 标签。对于 ServiceProfile，以匹配范围和窗口检查 route_actual_request_total、route_request_total 和 route_retryable_total。可重试响应不等于实际发送的重试；no-budget 序列是子集。当前策略指标和应用尝试证据需要各自解释。参阅[流量管理](03-traffic-management.md)。
+
+
+## Grafana
+
+Grafana 自 Linkerd 2.12 起独立安装。当前默认 Viz 安装没有捆绑 `svc/grafana` 可供端口转发，`grafana.enabled:false` 也不配置受支持集成。
+
+使用现有 Grafana，配置包含所需指标的 Prometheus 数据源。对于在 `monitoring` 命名空间以 ServiceAccount `grafana` 运行的网格 Grafana，以下允许访问现有 Viz Prometheus：
+
+```yaml
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: prometheus-admin-grafana
+  namespace: linkerd-viz
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: prometheus-admin
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: monitoring
+```
+
+若 Grafana 使用不同身份或外部 Prometheus，在相应位置配置访问。ServiceAccount 授权要求调用方实际出示该网格身份。
+
+将 Viz 链接到外部可访问 Grafana：
+
+```yaml
+grafana:
+  externalUrl: https://grafana.example.com/
+```
+
+受支持备选为：浏览器完整 URL 使用 `grafana.externalUrl`，集群内反向代理集成使用 `grafana.url`。后者还要求 Grafana 根路径/子路径配置。`grafana.uidPrefix` 区分导入仪表板 UID；不是租户授权控制。
+
+发布仪表板集合包括健康、总体、命名空间/工作负载、Service、路由、authority 和多集群视图。**Authority 指 HTTP host/:authority，不是授权权限。** 从已审核发布导入仪表板，验证数据源、标签、单位和 UID 链接。
+
+### 小型仪表板示例
+
+此经典仪表板 JSON 包含数据源导入输入、常量 namespace/deployment 变量及面板单位。导入时选择数据源并调整常量。查询和 JSON 已检查；未执行 Grafana 服务器导入。
 
 ```json
 {
-  "title": "Linkerd Service Overview",
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "id": null,
+  "uid": "linkerd-api-overview",
+  "title": "Linkerd API Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "type": "constant",
+        "query": "my-app",
+        "current": {
+          "text": "my-app",
+          "value": "my-app"
+        }
+      },
+      {
+        "name": "deployment",
+        "type": "constant",
+        "query": "api",
+        "current": {
+          "text": "api",
+          "value": "api"
+        }
+      }
+    ]
+  },
   "panels": [
     {
-      "title": "Success Rate",
+      "id": 1,
+      "title": "Proxy-classified Success Rate",
       "type": "gauge",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
       "targets": [
         {
-          "expr": "sum(rate(response_total{classification=\"success\", namespace=\"$namespace\", deployment=\"$deployment\"}[5m])) / sum(rate(response_total{namespace=\"$namespace\", deployment=\"$deployment\"}[5m])) * 100",
-          "legendFormat": "Success Rate"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "100 * (((sum(rate(response_total{namespace=\"$namespace\",deployment=\"$deployment\",direction=\"inbound\",classification=\"success\"}[5m])) or vector(0)) / sum(rate(response_total{namespace=\"$namespace\",deployment=\"$deployment\",direction=\"inbound\"}[5m])))\nand on() (sum(rate(response_total{namespace=\"$namespace\",deployment=\"$deployment\",direction=\"inbound\"}[5m])) > 0))",
+          "legendFormat": "success"
         }
       ]
     },
     {
+      "id": 2,
       "title": "Request Rate",
-      "type": "graph",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
       "targets": [
         {
-          "expr": "sum(rate(request_total{namespace=\"$namespace\", deployment=\"$deployment\"}[5m]))",
-          "legendFormat": "RPS"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(request_total{namespace=\"$namespace\",deployment=\"$deployment\",direction=\"inbound\"}[5m]))",
+          "legendFormat": "requests/s"
         }
       ]
     },
     {
-      "title": "Latency Distribution",
-      "type": "graph",
+      "id": 3,
+      "title": "Time to First Byte",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(response_latency_ms_bucket{namespace=\"$namespace\", deployment=\"$deployment\"}[5m])) by (le))",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(response_latency_ms_bucket{namespace=\"$namespace\",deployment=\"$deployment\",direction=\"inbound\"}[5m])))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(response_latency_ms_bucket{namespace=\"$namespace\", deployment=\"$deployment\"}[5m])) by (le))",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(response_latency_ms_bucket{namespace=\"$namespace\",deployment=\"$deployment\",direction=\"inbound\"}[5m])))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(response_latency_ms_bucket{namespace=\"$namespace\", deployment=\"$deployment\"}[5m])) by (le))",
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(response_latency_ms_bucket{namespace=\"$namespace\",deployment=\"$deployment\",direction=\"inbound\"}[5m])))",
           "legendFormat": "p99"
         }
       ]
@@ -479,190 +529,188 @@ Linkerd 提供多个 Grafana 仪表板：
 }
 ```
 
-## 分布式追踪（Jaeger）
+## 分布式追踪
 
-### Jaeger 扩展安装
+Linkerd-Jaeger 扩展在 Linkerd 2.19 移除。当前追踪使用独立管理、兼容 OpenTelemetry 的 Collector/后端；旧 `linkerd jaeger` 命令、扩展 webhook 地址和任意 `linkerd-jaeger-config` ConfigMap 不会完成设置。
 
-```bash
-# Install Jaeger extension
-linkerd jaeger install | kubectl apply -f -
-
-# Verify installation
-linkerd jaeger check
-
-# Open dashboard
-linkerd jaeger dashboard
-```
-
-### 追踪配置
+对于已有**网格内** OTLP/gRPC Collector，端口 4317，在 `tracing` 命名空间以 ServiceAccount `collector` 运行，将这些 values 合并到完整 Linkerd 配置：
 
 ```yaml
-# Jaeger extension values
-# jaeger-values.yaml
-collector:
-  replicas: 1
-  resources:
-    cpu:
-      request: 100m
-      limit: 500m
-    memory:
-      request: 100Mi
-      limit: 500Mi
-
-jaeger:
-  replicas: 1
-  resources:
-    cpu:
-      request: 100m
-      limit: 500m
-    memory:
-      request: 100Mi
-      limit: 500Mi
-
-# Sampling configuration
-webhook:
-  collectorSvcAddr: collector.linkerd-jaeger:55678
+proxy:
+  tracing:
+    enabled: true
+    collector:
+      endpoint: collector.tracing.svc.cluster.local:4317
+      meshIdentity:
+        serviceAccountName: collector
+        namespace: tracing
 ```
 
-### 应用程序追踪请求头
+所选 chart 要求 Collector 端点及两个 meshIdentity 字段，并据此推导预期 Collector DNS 身份。仅在网格外运行 OTLP 接收器不满足此配置。验证 Service 端口、接收管道、网络/授权访问、存储及采样 span。通过安装所有者更新工作负载，使代理收到追踪配置。
 
-应用程序必须传播追踪请求头，才能进行分布式追踪：
+Linkerd 参与 W3C 追踪上下文和 B3 追踪；两者同时出现时 W3C 优先。`x-request-id` 是关联 ID，不是必需追踪上下文格式。入口/应用或测试生成器必须建立上下文和采样，应用必须在自身调用间传播上下文。
 
-```yaml
-# Headers to propagate
-# - x-request-id
-# - x-b3-traceid
-# - x-b3-spanid
-# - x-b3-parentspanid
-# - x-b3-sampled
-# - x-b3-flags
-# - b3
-```
+### 应用传播示例
+
+优先使用合适 OpenTelemetry 库，验证提取、子 span 创建、采样和导出。这些小型 **GET 适配器仅透传 W3C 上下文**；不创建应用 span、不验证用户身份，也不提供通用反向代理。后端 URL 从可信部署设置配置。
+
+Python（本地检查使用 Flask 3.1.3 / Requests 2.32.5）：
 
 ```python
-# Python Flask example
-from flask import Flask, request
+from flask import Flask, Response, request
 import requests
 
 app = Flask(__name__)
+BACKEND_URL = "http://backend-service/api/backend"  # Trusted configuration.
+MAX_RESPONSE_BYTES = 1024 * 1024
+app.config["DOWNSTREAM_TIMEOUT"] = (2, 5)  # Connect/read inactivity, not total time.
 
-# Headers to propagate
-TRACE_HEADERS = [
-    'x-request-id',
-    'x-b3-traceid',
-    'x-b3-spanid',
-    'x-b3-parentspanid',
-    'x-b3-sampled',
-    'x-b3-flags',
-    'b3'
-]
 
-@app.route('/api/data')
+@app.get("/api/data")
 def get_data():
-    # Extract trace headers
-    headers = {h: request.headers.get(h) for h in TRACE_HEADERS if request.headers.get(h)}
-
-    # Propagate headers when calling downstream services
-    response = requests.get('http://backend-service/api/backend', headers=headers)
-    return response.json()
+    headers = {}
+    if request.headers.get("traceparent"):
+        for name in ("traceparent", "tracestate"):
+            if request.headers.get(name):
+                headers[name] = request.headers[name]
+    try:
+        with requests.get(
+            BACKEND_URL,
+            headers=headers,
+            timeout=app.config["DOWNSTREAM_TIMEOUT"],
+            allow_redirects=False,
+            stream=True,
+        ) as upstream:
+            # This small API adapter does not follow or relay redirects.
+            if 300 <= upstream.status_code < 400:
+                return Response("Unexpected upstream redirect\n", status=502)
+            body = bytearray()
+            for chunk in upstream.iter_content(chunk_size=16384):
+                body.extend(chunk)
+                if len(body) > MAX_RESPONSE_BYTES:
+                    return Response("Upstream response too large\n", status=502)
+            return Response(
+                bytes(body),
+                status=upstream.status_code,
+                content_type=upstream.headers.get(
+                    "Content-Type", "application/octet-stream"
+                ),
+            )
+    except requests.Timeout:
+        return Response("Upstream timeout\n", status=504)
+    except requests.RequestException:
+        return Response("Upstream request failed\n", status=502)
 ```
 
+连接/读取超时限制连接等待和读取空闲，不限制总端到端时长。持续缓慢返回的响应或调用方取消，需要超出此同步示例的应用/服务器期限设计。响应缓冲有上限，并显式拒绝重定向。
+
+现有 HTTP 服务器的 Go 处理器：
+
 ```go
-// Go example
 package main
 
 import (
-    "net/http"
+	"errors"
+	"io"
+	"net"
+	"net/http"
+	"time"
 )
 
-var traceHeaders = []string{
-    "x-request-id",
-    "x-b3-traceid",
-    "x-b3-spanid",
-    "x-b3-parentspanid",
-    "x-b3-sampled",
-    "x-b3-flags",
-    "b3",
+var backendURL = "http://backend-service/api/backend" // Trusted configuration.
+var downstreamClient = &http.Client{
+	Timeout: 5 * time.Second,
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	},
 }
+
+const maxResponseBytes = 1024 * 1024
 
 func handler(w http.ResponseWriter, r *http.Request) {
-    // Create downstream request
-    req, _ := http.NewRequest("GET", "http://backend-service/api/backend", nil)
-
-    // Propagate trace headers
-    for _, h := range traceHeaders {
-        if v := r.Header.Get(h); v != "" {
-            req.Header.Set(h, v)
-        }
-    }
-
-    client := &http.Client{}
-    resp, _ := client.Do(req)
-    defer resp.Body.Close()
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, backendURL, nil)
+	if err != nil {
+		http.Error(w, "Invalid backend configuration", http.StatusInternalServerError)
+		return
+	}
+	if r.Header.Get("traceparent") != "" {
+		for _, name := range []string{"traceparent", "tracestate"} {
+			if value := r.Header.Get(name); value != "" {
+				req.Header.Set(name, value)
+			}
+		}
+	}
+	resp, err := downstreamClient.Do(req)
+	if err != nil {
+		status := http.StatusBadGateway
+		var networkError net.Error
+		if errors.As(err, &networkError) && networkError.Timeout() {
+			status = http.StatusGatewayTimeout
+		}
+		http.Error(w, "Upstream request failed", status)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		http.Error(w, "Unexpected upstream redirect", http.StatusBadGateway)
+		return
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
+	if err != nil || len(body) > maxResponseBytes {
+		http.Error(w, "Invalid or oversized upstream response", http.StatusBadGateway)
+		return
+	}
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.WriteHeader(resp.StatusCode)
+	_, _ = w.Write(body)
 }
 ```
 
-### 外部 Jaeger 集成
+它传播请求取消、限制客户端调用、使用响应前检查错误，并转发后端状态/正文。两个示例都有意拒绝重定向和过大响应。本地测试覆盖这些路径；不展示生产追踪、导入、采样或负载行为。
+
+确认已知采样追踪到达后端并包含预期代理/应用 span。追踪仪表板打开成功不证明上下文传播、采样正确或追踪完整。
+
+## 诊断和访问日志
+
+代理诊断日志级别/格式与 HTTP 访问日志是独立设置。将此**现有网格 Deployment 的合并补丁**保存为 `proxy-logging-patch.yaml`；它不是独立 Deployment 清单：
 
 ```yaml
-# When using external Jaeger
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: linkerd-jaeger-config
-  namespace: linkerd-jaeger
-data:
-  config.yaml: |
-    collector:
-      address: jaeger-collector.monitoring:14268
-```
-
-## 访问日志
-
-### Proxy 日志配置
-
-```yaml
-# Set log level via Pod annotation
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web
 spec:
   template:
     metadata:
+      labels:
+        mesh-required: 'true'
       annotations:
-        config.linkerd.io/proxy-log-level: "warn,linkerd=info,linkerd_proxy=debug"
-        config.linkerd.io/proxy-log-format: "json"
+        config.linkerd.io/access-log: json
+        config.linkerd.io/proxy-log-format: json
+        config.linkerd.io/proxy-log-level: warn,linkerd=info
 ```
-
-### 日志级别
-
-| 级别 | 描述 |
-|-------|-------------|
-| error | 仅错误 |
-| warn | 警告及以上 |
-| info | 信息及以上（默认） |
-| debug | 调试及以上 |
-| trace | 所有日志 |
-
-### 查看日志
 
 ```bash
-# Check proxy logs
-kubectl logs deploy/web -n my-app -c linkerd-proxy
-
-# Real-time log stream
-kubectl logs deploy/web -n my-app -c linkerd-proxy -f
-
-# Filter specific keywords
-kubectl logs deploy/web -n my-app -c linkerd-proxy | grep "error"
+# This changes the existing workload's Pod template and triggers its rollout.
+kubectl -n my-app patch deployment/api --type merge --patch-file proxy-logging-patch.yaml
+kubectl -n my-app rollout status deployment/api --timeout=5m
+kubectl -n my-app logs deployment/api -c linkerd-proxy --tail=100
 ```
 
-## ServiceProfile 指标
+`config.linkerd.io/access-log:json` 启用 HTTP 访问记录。`proxy-log-format:json` 仅改变诊断格式。避免无差别 debug/trace 或标头日志；将诊断采集和数据处理限定到调查范围。这些设置不会将不透明 TCP 流量变为 HTTP 请求日志。
 
-定义 ServiceProfile 可启用按路由收集指标。
+`mesh-required:true` Pod 标签为下方警报标记工作负载有意要求健康代理；不执行注入。纳管仍遵循安装/命名空间策略。
 
-### 启用按路由指标
+## ServiceProfile 和策略路由指标
+
+ServiceProfile 继续用于兼容。添加它可覆盖该 Service 当前出站 HTTPRoute 可靠性设置；不要仅为填充仪表板而添加冲突 profile。
+
+针对现有 api-service 的独立旧指标练习中，此 profile 添加路由名，但不启用重试：
 
 ```yaml
 apiVersion: linkerd.io/v1alpha2
@@ -674,153 +722,124 @@ spec:
   routes:
   - name: GET /api/users
     condition:
-      method: GET
-      pathRegex: /api/users
-    isRetryable: true
-
+      all:
+      - method: GET
+      - pathRegex: ^/api/users$
+    isRetryable: false
   - name: POST /api/orders
     condition:
-      method: POST
-      pathRegex: /api/orders
+      all:
+      - method: POST
+      - pathRegex: ^/api/orders$
     isRetryable: false
-
   - name: GET /health
     condition:
-      method: GET
-      pathRegex: /health
+      all:
+      - method: GET
+      - pathRegex: ^/health$
+    isRetryable: false
 ```
 
-### 路由指标查询
+显式 all 条件让方法/路径匹配明确。Profile 路由、HTTPRoute 策略指标和任意应用路径是不同视图：
+
+```bash
+linkerd viz routes service/api-service -n my-app
+linkerd viz routes deploy/web -n my-app --to svc/api-service --time-window 10m
+linkerd viz stat httproute/api-inbound -n my-app
+linkerd viz authz deploy/api -n my-app
+```
+
+HTTPRoute 示例假定已有 Server 附加入站路由。`viz routes` 是 ServiceProfile 视图，不是所有 Gateway API 路由的通用列表。
+
+来自 `web` 的出站调用聚合时，同时保留目的地和路由标签：
 
 ```promql
-# Per-route success rate
-sum(rate(route_response_total{classification="success"}[5m])) by (rt_route)
-/
-sum(rate(route_response_total[5m])) by (rt_route)
-
-# Per-route latency
-histogram_quantile(0.99,
-  sum(rate(route_response_latency_ms_bucket[5m])) by (le, rt_route)
-)
-
-# Per-route request rate
-sum(rate(route_request_total[5m])) by (rt_route)
+(sum by (dst, rt_route) (rate(route_response_total{namespace="my-app",deployment="web",direction="outbound",classification="success"}[5m]))
+ or on(dst, rt_route) (0 * sum by (dst, rt_route) (rate(route_response_total{namespace="my-app",deployment="web",direction="outbound"}[5m])))) / sum by (dst, rt_route) (rate(route_response_total{namespace="my-app",deployment="web",direction="outbound"}[5m]))
+and on(dst, rt_route) (sum by (dst, rt_route) (rate(route_response_total{namespace="my-app",deployment="web",direction="outbound"}[5m])) > 0)
 ```
 
-## 监控最佳实践
+```promql
+histogram_quantile(0.99, sum by (le, dst, rt_route) (rate(route_response_latency_ms_bucket{namespace="my-app",deployment="web",direction="outbound"}[5m])))
+```
 
-### 告警配置
+```promql
+sum by (dst, rt_route) (rate(route_request_total{namespace="my-app",deployment="web",direction="outbound"}[5m]))
+```
+
+对齐的零分子保留全失败路由，不会将其丢弃。仅按路由名分组可能组合具有相同路由标签的无关 Service。
+
+## 警报和调查
+
+以下 PrometheusRule 假定选择器标签被接受、所示 Linkerd 任务已抓取，kube-state-metrics 暴露 Pod 标签及普通/初始化容器运行指标。在 metric-labels 允许列表启用 `mesh-required` Pod 标签；否则目标 Pod 选择器无数据。
 
 ```yaml
-# Prometheus alert rules
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: linkerd-alerts
   namespace: monitoring
+  labels:
+    release: monitoring
 spec:
   groups:
   - name: linkerd
     rules:
-    # Low success rate alert
-    - alert: LinkerdHighErrorRate
-      expr: |
-        (
-          sum(rate(response_total{classification="failure"}[5m])) by (deployment, namespace)
-          /
-          sum(rate(response_total[5m])) by (deployment, namespace)
-        ) > 0.05
-      for: 5m
-      labels:
-        severity: critical
-      annotations:
-        summary: "High error rate detected"
-        description: "{{ $labels.deployment }} in {{ $labels.namespace }} has error rate > 5%"
-
-    # High latency alert
-    - alert: LinkerdHighLatency
-      expr: |
-        histogram_quantile(0.99,
-          sum(rate(response_latency_ms_bucket[5m])) by (le, deployment, namespace)
-        ) > 1000
+    - alert: LinkerdAPIHighErrorRate
+      expr: |-
+        (((sum(rate(response_total{namespace="my-app",deployment="api",direction="inbound",classification="failure"}[5m])) or vector(0)) / sum(rate(response_total{namespace="my-app",deployment="api",direction="inbound"}[5m])))
+        and on() (sum(rate(response_total{namespace="my-app",deployment="api",direction="inbound"}[5m])) > 0)) > 0.05
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "High latency detected"
-        description: "{{ $labels.deployment }} p99 latency > 1s"
-
-    # Proxy not injected alert
-    - alert: LinkerdProxyNotInjected
-      expr: |
-        sum by (namespace) (
-          kube_pod_status_phase{phase="Running"}
-        ) - sum by (namespace) (
-          kube_pod_container_status_running{container="linkerd-proxy"}
-        ) > 0
+        summary: API proxy-classified response error ratio exceeds 5%
+    - alert: LinkerdAPIHighTTFB
+      expr: histogram_quantile(0.99, sum by (le) (rate(response_latency_ms_bucket{namespace="my-app",deployment="api",direction="inbound"}[5m])))
+        > 1000
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: API p99 time-to-first-byte exceeds 1000ms
+    - alert: LinkerdExpectedProxyNotRunning
+      expr: |-
+        max by (namespace, pod) (
+          (kube_pod_status_phase{namespace="my-app",phase="Running"} == 1)
+          and on(namespace, pod) kube_pod_labels{namespace="my-app",label_mesh_required="true"}
+        )
+        unless on(namespace, pod) max by (namespace, pod) (
+          (kube_pod_container_status_running{namespace="my-app",container="linkerd-proxy"} == 1)
+          or (kube_pod_init_container_status_running{namespace="my-app",container="linkerd-proxy"} == 1)
+        )
       for: 10m
       labels:
         severity: warning
       annotations:
-        summary: "Pods without Linkerd proxy"
-        description: "Some pods in {{ $labels.namespace }} are not meshed"
+        summary: Expected proxy is not running for {{ $labels.namespace }}/{{ $labels.pod }}
+    - alert: LinkerdScrapeTargetDown
+      expr: up{job=~"linkerd-proxy|linkerd-controller"} == 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: A discovered Linkerd metrics target cannot be scraped
 ```
 
-### 仪表板配置建议
+代理警报检查**预期运行的 Pod 中没有运行代理的情况**，不只是注入是否存在。它处理普通及原生初始化 Sidecar，忽略未标记需要网格的 Pod。缺失 kube-state-metrics 抓取仍可使预期清单消失；单独监控采集健康。
 
-```yaml
-# Key monitoring dashboard configuration
-1. Overview Dashboard:
-   - Overall mesh success rate
-   - Total request rate
-   - Top error services
+延迟阈值为 1000ms TTFB，不是总请求时长。基于分类的错误阈值必须匹配 SLI。`up == 0` 检测失败的已发现目标，不检测所有未被发现目标。
 
-2. Per-Service Dashboard:
-   - Service success rate trend
-   - Request rate trend
-   - Latency distribution (p50, p95, p99)
-   - Upstream/downstream dependencies
+开始调查时验证抓取健康和所选流量范围。再比较工作负载/Service 统计、检查相关路由、使用有界 Tap/日志观测，并按迹象检查身份/策略。诊断并修复原因，再复现请求验证恢复。仅一串诊断命令不会解决事件。
 
-3. Infrastructure Dashboard:
-   - Control plane status
-   - Proxy resource usage
-   - Certificate expiration time
-```
+## 参考资料和后续步骤
 
-### 故障排除工作流
-
-```mermaid
-graph TB
-    START[Issue Detected] --> STAT[linkerd viz stat]
-    STAT --> CHECK{Low Success<br/>Rate?}
-
-    CHECK -->|Yes| TOP[linkerd viz top]
-    CHECK -->|No| LATENCY{High<br/>Latency?}
-
-    TOP --> TAP[linkerd viz tap]
-    TAP --> LOGS[Check Proxy Logs]
-
-    LATENCY -->|Yes| ROUTES[linkerd viz routes]
-    LATENCY -->|No| EDGES[linkerd viz edges]
-
-    ROUTES --> TAP
-    EDGES --> CHECK_TLS{mTLS<br/>Issue?}
-
-    CHECK_TLS -->|Yes| CERT[Check Certificates]
-    CHECK_TLS -->|No| END[Issue Resolved]
-
-    LOGS --> END
-    CERT --> END
-```
-
-## 后续步骤
-
-- [多集群](./06-multi-cluster.md)：跨集群可观测性
-- [最佳实践](./07-best-practices.md)：生产环境监控设置
-
-## 参考资料
-
-- [Linkerd 可观测性](https://linkerd.io/2/features/dashboard/)
-- [Prometheus 集成](https://linkerd.io/2/tasks/exporting-metrics/)
-- [Grafana 仪表板](https://linkerd.io/2/tasks/grafana/)
-- [分布式追踪](https://linkerd.io/2/tasks/distributed-tracing/)
+- [多集群](06-multi-cluster.md)、[最佳实践](07-best-practices.md)、[可观测性测验](../../quizzes/service-mesh/linkerd/observability.md)
+- [仪表板](https://linkerd.io/docs/features/dashboard/)、[导出指标](https://linkerd.io/docs/tasks/exporting-metrics/)、[Grafana](https://linkerd.io/docs/tasks/grafana/)
+- [代理指标](https://linkerd.io/docs/reference/proxy-metrics/)和[代理配置](https://linkerd.io/docs/reference/proxy-configuration/)
+- [追踪](https://linkerd.io/docs/tasks/distributed-tracing/)
+- [发布的指标计时实现](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/http/metrics/src/requests/service.rs)
+- [发布的 Viz 抓取配置](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/viz/charts/linkerd-viz/templates/prometheus.yaml)
+- [发布的 Grafana 仪表板集合](https://github.com/linkerd/linkerd2/tree/edge-26.9.1/grafana/dashboards)
+- [kube-state-metrics Pod 指标](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md)
+- [W3C 追踪上下文](https://www.w3.org/TR/trace-context/)

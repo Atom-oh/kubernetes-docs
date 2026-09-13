@@ -1,93 +1,103 @@
-# Part 4: BGP 詳解
+# 第4部: BGP詳解
 
-> **対応バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
+> **レビュー基準**: Calico 3.32.2。Calico 3.32はKubernetes 1.34–1.36でテストされています。**最終更新**: September 12, 2026。
+>
+> 設定例は、BGPを有効にし、標準Calico APIサーバー（`projectcalico.org/v3`）をインストールしたLinux Calicoクラスターを前提とします。別々のトポロジーの選択肢であり、順番に適用する1つのマニフェストではありません。Operator/GitOpsによる所有権を維持し、意図したフィールドを既存設定にマージします。API前提条件は[インストールガイド](01-introduction.md)、BGPなしのルーティング代替手段は[ネットワーキングモードガイド](03-networking-modes.md)で扱います。ルーターアドレス、ASN、CIDRは管理下のネットワークと一致する必要があります。このレビューでは実ファブリックやクラスターのフェイルオーバーをテストしていません。
 
 ## はじめに
 
-Border Gateway Protocol（BGP）はインターネットを支えるルーティングプロトコルであり、Calico はこれを活用して Kubernetes クラスター向けに高いスケーラビリティと標準ベースのネットワーキングを提供します。トラフィックをカプセル化するオーバーレイネットワークとは異なり、Calico の BGP ベースネットワーキングはネイティブ IP ルーティングを可能にし、優れたパフォーマンスと既存ネットワークインフラストラクチャとのシームレスな統合を実現します。
+Border Gateway Protocol（BGP）は到達可能性情報を交換します。CalicoはBGPでワークロード経路を配布し、既存のルーティングファブリックと統合できます。BGPはコントロールプレーンのプロトコルです。非カプセル化ルーティングやIP-in-IPと併用でき、それ自体が性能向上を保証するものではありません。Calico 3.32はBGPなしのFelix管理クラスター経路もサポートします。外部BGP広告には引き続きBGPスピーカーが必要です。
 
-この詳解では、BGP の基本、Calico の BGP アーキテクチャオプション、設定リソース、およびエンタープライズ環境向けの高度なデプロイメントパターンを扱います。
+この詳解では、BGPの基礎、CalicoのBGPアーキテクチャの選択肢、設定リソース、企業環境向けの高度なデプロイパターンを扱います。
 
 ***
 
-## BGP の基本
+## BGPの基礎
 
-### BGP とは
+### BGPとは
 
-BGP（Border Gateway Protocol）は、自律システム間でルーティング情報を交換するために設計されたパスベクタールーティングプロトコルです。Calico では、BGP はクラスターのノード間で Pod IP ルートを配布し、必要に応じて外部ネットワークインフラストラクチャにも配布します。
+BGP（Border Gateway Protocol）は自律システム間でルーティング情報を交換するためのパスベクトル型ルーティングプロトコルです。Calicoでは、Pod IP経路をクラスターノード間、必要に応じて外部ネットワークインフラへ配布します。
 
-### BGP の主要概念
+### BGPの主要概念
 
-| 概念                    | 説明                                                          |
+| 概念 | 説明 |
 | -------------------------- | -------------------------------------------------------------------- |
-| **自律システム（AS）** | 単一の管理ドメイン下にある IP ネットワークの集合     |
-| **AS 番号（ASN）**        | AS の一意の識別子（16 ビット: 1-65534、32 ビット: 1-4294967294）  |
-| **iBGP**                   | 内部 BGP - 同じ AS 内のルーター間のセッション               |
-| **eBGP**                   | 外部 BGP - 異なる AS 内のルーター間のセッション            |
-| **NLRI**                   | Network Layer Reachability Information - 広報されるルート |
-| **BGP Speaker**            | BGP に参加するルーターまたはソフトウェア                        |
+| **自律システム（AS）** | 単一管理ドメイン下のIPネットワークの集合 |
+| **AS番号（ASN）** | 16ビットまたは32ビットの識別子。割り当てでは特殊/予約範囲を除外 |
+| **iBGP** | 内部BGP。同一AS内のルーター間セッション |
+| **eBGP** | 外部BGP。異なるASのルーター間セッション |
+| **NLRI** | Network Layer Reachability Information。広告される経路 |
+| **BGPスピーカー** | BGPに参加するルーターまたはソフトウェア |
 
-### プライベート AS 番号の範囲
+### プライベートAS番号の範囲
 
-組織内での内部使用向けに、IANA は次のプライベート ASN 範囲を予約しています。
+組織内での使用向けに、IANAは以下のプライベートASN範囲を予約しています。
 
 ```
 16-bit Private ASN Range: 64512 - 65534
 32-bit Private ASN Range: 4200000000 - 4294967294
 ```
 
-Calico は通常、クラスター内部 BGP に `64512-65534` の範囲の ASN を使用します。
+CalicoのデフォルトクラスターASNは`64512`です。プライベートASNは、経路がグローバルインターネットに達する前にASパスから除去する必要があります。識別子であり、本質的にルーティング不能なIPアドレスではありません。他の特殊範囲には文書用ASNの`64496–64511`と`65536–65551`、`23456`（AS_TRANS）があります。それ以外の整数をすべて割り当て済みパブリックASNと見なさず、[IANAレジストリ](https://www.iana.org/assignments/as-numbers/as-numbers.xhtml)を確認してください。
 
-### BGP ルート選択プロセス
+### BGP経路選択の処理
 
-BGP Speaker が同じ宛先への複数のルートを受信すると、次の基準を順に使用して最適なルートを選択します。
+実際の実装とルーティングポリシーを比較してください。Ciscoの`Weight`や管理距離20/200は普遍的なBGP特性でもCalico BIRDのデフォルトでもありません。
 
-![同じ宛先への複数のルートを持つ BGP Speaker は、7 つのタイブレーク基準を順に評価し、同点の場合は次の基準へ進み、最適なルートを 1 つ選択します。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-0.svg)
+Calico 3.32.2はBIRDフォークを`v0.3.3-211-g9111ec3c`に固定します。比較可能な適格BGP経路について、選択関数は高いLOCAL_PREF、短いAS_PATH（有効時）、低いORIGIN、該当する隣接ASポリシー下の低いMED、iBGPよりeBGP、低いIGPメトリックを確認します。残る同順位はrouter/ORIGINATOR_ID、CLUSTER_LIST長、ピアIPで判定し、任意の古い経路優先設定で同順位の決定方法が変わります。抑制、次ホップ到達性、古い経路の扱い、BIRD経路優先度も重要です。普遍的な11段階の手順ではありません。
 
-### iBGP と eBGP の動作
+Calico 3.32は経路優先度をLOCAL_PREFとカーネルメトリックに変換します。そのため、ローカルからエクスポートする全経路が上流BIRDのデフォルトLOCAL_PREF 100を保持すると想定しないでください。
 
-| 属性               | iBGP                               | eBGP                                   |
-| ----------------------- | ---------------------------------- | -------------------------------------- |
-| AS\_PATH の変更   | 変更なし                       | ローカル AS を追加                      |
-| Next-hop                | デフォルトでは変更なし             | ピアリングアドレスに変更             |
-| デフォルト TTL             | 255                                | 1（隣接していない場合はマルチホップが必要） |
-| ルート広報     | eBGP ピアにのみ送信（スプリットホライズン） | すべてのピアに送信                           |
-| Administrative Distance | 200                                | 20                                     |
+### iBGPとeBGPの動作
+
+| 属性 | iBGP | eBGP |
+| --- | --- | --- |
+| ASの関係 | 同一AS | 異なるAS |
+| AS_PATH | 通常は保持 | 通常はローカルASを先頭に追加 |
+| 経路伝播 | iBGPで学習した経路は通常、別のiBGPピアへ送らない。RRは例外 | エクスポートはポリシーとループ防止に依存 |
+| 次ホップ | 多くの場合保持。到達可能である必要がある | 多くの場合変更。`nextHopMode`とトポロジーが影響 |
+| TTLと管理距離 | 実装/設定に依存 | 実装/設定に依存 |
+
+ローカル生成経路やeBGPで学習した経路はiBGPピアへ送信できます。Calicoが生成する外部ピア設定はBIRD multihopを使います。一般的な「eBGP TTL 1」表から診断しないでください。生成設定とネゴシエートされたセッション状態を調べます。
 
 ***
 
-## Calico BGP アーキテクチャ
+## CalicoのBGPアーキテクチャ
 
-![Calico BGP トポロジーを並べて比較します。デフォルトのフルメッシュでは 4 つのノードが他のすべてのノードとピアリングします（N(N−1)/2 セッション）。一方、Route Reflector 設計ではノードは相互にピアリングした 2 つの Reflector とのみピアリングします（2N+1 セッション）。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-9.png)
+### BIRD: CalicoのBGP実装
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-9.html)
+BGP有効時、Calicoは`calico-node`内でBIRDフォークを実行し、confdが設定をレンダリングします。BGP無効のデプロイにBIRDは不要です。選択モードに応じて、BIRDとFelixの両方がルーティングの責務を持ちます。
 
-### BIRD: Calico の BGP 実装
+![BGPコントロールプレーンの関係。confdがBIRDを設定し、BIRDはピアと経路を交換し、Felixはデータプレーンを設定する。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-1.png)
 
-Calico は BGP 実装として BIRD（BIRD Internet Routing Daemon）を使用します。BIRD はすべてのノード上の `calico-node` DaemonSet の一部として実行されます。
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-1.html)
 
-![各 calico-node Pod 内では、Calico API が confd に情報を渡して BIRD を設定し、BIRD がルーティングテーブルをプログラムして外部ルーターおよび他の Calico ノードと BGP でピアリングします。一方、Felix は独立して iptables/eBPF データプレーンをプログラムします。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-1.svg)
+> 境界は概略です。Calico APIサーバーは独立コンポーネントで、各calico-node Pod内のプロセスではありません。Felixはローカルワークロード経路と、選択したモードではクラスター経路も管理します。BIRDは有効な場合のみ存在します。
 
-### BGP トポロジーオプション
+### BGPトポロジーの選択肢
 
-Calico は主に 2 つの BGP トポロジーをサポートします。
+一般的な内部BGPトポロジーには次があります。
 
-1. **ノード間メッシュ（フルメッシュ）** - デフォルト設定
-2. **Route Reflector** - 大規模クラスターに推奨
+1. **ノード間メッシュ（フルメッシュ）** - デフォルト構成
+2. **ルートリフレクター** - 大規模クラスター向けに推奨
 
 ***
 
 ## フルメッシュトポロジー
 
-### フルメッシュの仕組み
+### フルメッシュの動作
 
-デフォルトのフルメッシュ設定では、すべての Calico ノードがクラスター内の他のすべてのノードと BGP ピアリングセッションを確立します。
+BGPとデフォルトのノードメッシュが有効な場合、参加する非RRノードは相互にピア接続します。ルートリフレクターに指定したノードは自動メッシュから除外されます。
 
-![デフォルトのフルメッシュ設定では、すべての Calico ノードが他のすべてのノードとピアリングします。Node 1 の視点では残りの 4 ノードに接続し、同じ関係が 5 ノードすべてで対称的に成立するため、合計 10 の BGP セッションが生成されます。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-2.svg)
+![5ノードのすべての組を10セッションで接続するフルメッシュ。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-3.png)
+
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-3.html)
+
+> 矢印は双方向セッションを数えており、片方向通信ではありません。対象アドレスファミリーについて、組ごとに1セッションを数えます。
 
 ### セッション数の計算式
 
-フルメッシュトポロジーの BGP セッション数は二次的に増加します。
+フルメッシュトポロジーのBGPセッション数は二次関数的に増加します。
 
 ```
 Sessions = N × (N - 1) / 2
@@ -99,161 +109,132 @@ Examples:
 - 500 nodes:  500 × 499 / 2 = 124,750 sessions
 ```
 
-### フルメッシュのスケーリング上の制約
+### フルメッシュのスケーリングと移行
 
-| クラスターサイズ  | BGP セッション | ノードあたりのメモリ | CPU への影響 | 推奨事項 |
-| ------------- | ------------ | --------------- | ---------- | -------------- |
-| < 50 ノード    | < 1,225      | \~50 MB         | 最小限    | フルメッシュで可   |
-| 50-100 ノード  | 1,225-4,950  | \~100 MB        | 低        | RR を検討    |
-| 100-200 ノード | 4,950-19,900 | \~200 MB        | 中程度   | RR を使用         |
-| > 200 ノード   | > 19,900     | > 400 MB        | 高       | RR が必須     |
+計算式は、数えるアドレスファミリーでノードの組ごとに1セッションを前提とします。各ノードは`N−1`ピアを持ちます。CPUとメモリは経路数、更新頻度、ポリシー、ハードウェア、収束目標に依存します。以前のノードあたりメモリ表や固定の50/200ノード制限は実測容量制限ではありませんでした。
 
-### ノード間メッシュの有効化/無効化
-
-現在の状態を確認します。
+既存設定を確認します。
 
 ```bash
-calicoctl get bgpconfiguration default -o yaml
+kubectl get bgpconfiguration.projectcalico.org default -o yaml
 ```
 
-ノード間メッシュを無効化します（Route Reflector を使用する場合）。
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  nodeToNodeMeshEnabled: false
-  asNumber: 64512
-```
+`default`リソースがない場合、デフォルト値が使われている可能性があります。自動メッシュを無効にする前に、代替RRまたはファブリックセッションを準備・検証します。下の移行順序に従ってください。RRラベルを作成するだけでは機能する代替経路にはなりません。
 
 ***
 
-## Route Reflector トポロジー
+## ルートリフレクタートポロジー
 
-### Route Reflector の概念
+### ルートリフレクターの概念
 
-Route Reflector（RR）は、ノードの一部が他のノードへルートを反射できるようにすることで iBGP のスケーラビリティ問題を解決します。これによりフルメッシュが不要になります。
+ルートリフレクター（RR）は、一部のノードが他ノードへ経路を反射できるようにしてiBGPの拡張性問題を解決します。これによりフルメッシュが不要になります。
 
-![2 つの Route Reflector は相互に、かつすべてのクライアントノードとピアリングし、クライアントノード同士が直接ピアリングしなくてもルートを学習できるようにするため、フルメッシュが不要になります。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-3.svg)
+![6クライアントが、それぞれ相互ピア接続された2つのルートリフレクターと接続する。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-4.png)
 
-### Route Reflector の主要属性
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-4.html)
 
-| 属性            | 説明                                                   |
+> 図は6クライアントと2 RR、計13セッションです。図の2N+1式でNはクライアント数、フルメッシュのNは総ノード数です。自動メッシュは明示的な代替トポロジーを検証した後にのみ無効にします。
+
+### ルートリフレクターの主な属性
+
+| 属性 | 説明 |
 | -------------------- | ------------------------------------------------------------- |
-| **Cluster ID**       | 同じクライアントにサービスを提供する RR のセットを識別します              |
-| **Originator ID**    | ルーティングループを防止します（送信元の router ID に設定）   |
-| **Route Reflection** | RR はクライアントから学習したルートを他のクライアントへ再広報します |
+| **Cluster ID** | 同じクライアントを担当するRR群を識別 |
+| **Originator ID** | ルーティングループを防止（発信元のルーターIDを設定） |
+| **経路反射** | RRがクライアントから学習した経路を他クライアントへ再広告 |
 
-### Route Reflector 使用時のセッション数
+### ルートリフレクター使用時のセッション数
 
-2 つの Route Reflector と N 個のクライアントノードの場合:
+総ノード数を`T`、リフレクター数を`R`、クライアント数を`C=T−R`とします。全クライアントが全RRと接続し、RR同士も接続する場合は次のようになります。
 
-```
-Sessions = 2 × N + 1 (RR-to-RR peering)
-
-Examples:
-- 100 nodes: 2 × 100 + 1 = 201 sessions (vs 4,950 in full-mesh)
-- 500 nodes: 2 × 500 + 1 = 1,001 sessions (vs 124,750 in full-mesh)
+```text
+RR sessions = C×R + R×(R−1)/2
+T=100, R=2: 98×2 + 1 = 197 (full mesh of the same 100 nodes: 4,950)
+T=500, R=2: 498×2 + 1 = 997 (full mesh of the same 500 nodes: 124,750)
 ```
 
-### Route Reflector ノードの設定
+「100ノード」が100クライアントと追加の2 RRを意味するなら201セッションですが、そのトポロジーは102ノードです。2つの意味を混同してはいけません。
 
-**手順 1: Route Reflector として指定するノードにラベルを付与する**
+### ルートリフレクターノードの設定
+
+移行には準備済みでワークロードのないRRノードを使います。クラスターID設定は即座にそのノードを自動メッシュから外すため、稼働中ノードをその場で変更すると接続が中断する場合があります。このKubernetesデータストア例は既存ノードIPと他フィールドを保持します。
+
+**1. 準備したRRノードにラベルとアノテーションを設定**
 
 ```bash
-kubectl label node rr-node-1 calico-route-reflector=true
-kubectl label node rr-node-2 calico-route-reflector=true
+kubectl label node rr-node-1 rr-node-2 route-reflector=true
+kubectl annotate node rr-node-1 rr-node-2   projectcalico.org/RouteReflectorClusterID=244.0.0.1
 ```
 
-**手順 2: Route Reflector の Cluster ID を設定する**
+共有IDはこの冗長RRクラスターを識別し、Kubernetesクラスターを識別しません。他のRRクラスター/階層レベルには意図的なID設計が必要です。
+
+**2. 明示的なピアリングを作成**
 
 ```yaml
-apiVersion: projectcalico.org/v3
-kind: Node
-metadata:
-  name: rr-node-1
-  labels:
-    calico-route-reflector: "true"
-spec:
-  bgp:
-    ipv4Address: 10.0.1.10/24
-    routeReflectorClusterID: 1.0.0.1
----
-apiVersion: projectcalico.org/v3
-kind: Node
-metadata:
-  name: rr-node-2
-  labels:
-    calico-route-reflector: "true"
-spec:
-  bgp:
-    ipv4Address: 10.0.1.11/24
-    routeReflectorClusterID: 1.0.0.1
-```
-
-**手順 3: ノード間メッシュを無効化する**
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  nodeToNodeMeshEnabled: false
-  asNumber: 64512
-```
-
-**手順 4: Route Reflector への BGP ピアリングを設定する**
-
-```yaml
-# Peering from non-RR nodes to RR nodes
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
-  name: peer-to-route-reflectors
+  name: peer-to-rr
 spec:
-  nodeSelector: "!has(calico-route-reflector)"
-  peerSelector: has(calico-route-reflector)
+  nodeSelector: "!has(route-reflector)"
+  peerSelector: "has(route-reflector)"
 ---
-# Peering between RR nodes
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
-  name: route-reflector-mesh
+  name: rr-mesh
 spec:
-  nodeSelector: has(calico-route-reflector)
-  peerSelector: has(calico-route-reflector)
+  nodeSelector: "has(route-reflector)"
+  peerSelector: "has(route-reflector)"
 ```
 
-### Route Reflector の冗長化パターン
+`peerSelector`はCalicoノードを選び、`reversePeering: Manual`を選ばない限り逆方向ピアリングは自動です。任意の外部ルーターを検出するものではありません。
 
-**パターン 1: デュアル Route Reflector（小規模/中規模クラスター）**
+**3. 旧経路を削除する前に検証**
 
-![各 Availability Zone に 1 つの Route Reflector を配置し、両方の Zone にあるすべてのノードが両方の Route Reflector とピアリングします。そのため、1 つの Zone の Route Reflector を失っても、どのノードも孤立しません。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-4.svg)
+両RRとクライアントのEstablishedセッション、想定する広告/受信ワークロードプレフィックス、次ホップ到達性、代表的なノード間通信を確認します。計画したいずれかのRR喪失でも転送が継続することを確認してください。この移行中、通常のクライアントメッシュセッションは残しておけます。
 
-**パターン 2: 階層型 Route Reflector（大規模クラスター）**
+**4. 確認後にのみ自動メッシュを無効化**
 
-![2 階層の Route Reflector 構成です。2 つのグローバル Route Reflector が相互に、かつすべてのラックレベル Route Reflector とピアリングし、各ラックのノードはそのラックの Route Reflector とのみピアリングします。これにより、クラスターの成長に伴ってもセッション数を低く抑えられます。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-5.svg)
+所有する`BGPConfiguration/default`マニフェストを更新し、ASN、コミュニティ、他設定を保持します。既存リソースへの同等マージパッチは次のとおりです。
+
+```bash
+kubectl patch bgpconfiguration.projectcalico.org default --type=merge   -p '{"spec":{"nodeToNodeMeshEnabled":false}}'
+```
+
+`default`がなければ、同じ確認後にインストールの設定所有者を通じて作成します。変更後に経路と通信を再確認し、元のトポロジーへのロールバック計画を保持します。
+
+### ルートリフレクターの冗長化パターン
+
+**パターン1: 2つのルートリフレクター（小/中規模クラスター）**
+
+![各ゾーンのクライアントが、別々のゾーンに配置した両ルートリフレクターと接続する。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-11.png)
+
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-11.html)
+
+> 転送路、転送機能、残存容量が正常なら、RRを1つ失っても生存クライアントに冗長な経路配布経路を提供します。障害ゾーン内のワークロードを維持するものではありません。
+
+**パターン2: 階層型ルートリフレクター**
+
+ラックレベルRRをグローバルRRに接続して、ノードあたりのセッション数を減らせます。総セッション数はクライアント数とラック数に応じて増えます。グローバルRRが冗長でもラックあたりRRが1つなら障害点として残ります。階層採用前に各層の冗長性、クラスターID、反射ルール、到達性、収束を評価してください。
 
 ***
 
-## BGPPeer リソース
+## BGPPeerリソース
 
-`BGPPeer` リソースは、Calico ノードと外部 BGP Speaker 間の BGP ピアリング関係を定義します。
+`BGPPeer`リソースはCalicoノードと外部BGPスピーカー間のピアリング関係を定義します。
 
-### BGPPeer スコープタイプ
+### BGPPeerのスコープタイプ
 
-| タイプ              | 説明          | ユースケース                |
+| タイプ | 説明 | 用途 |
 | ----------------- | -------------------- | ----------------------- |
-| **グローバル**        | すべてのノードに適用 | 外部ルーターピアリング |
-| **ノード固有** | nodeSelector を使用    | ラックローカルピアリング      |
-| **ノード単位**      | 正確なノードを指定 | 特別な設定  |
+| **グローバル** | 全ノードに適用 | 外部ルーターとのピアリング |
+| **ノード選択** | nodeSelectorを使用 | ラック内ピアリング |
+| **ノードごと** | 特定ノードを指定 | 特殊な構成 |
 
-### グローバル BGPPeer の例
+### グローバルBGPPeerの例
 
-すべてのノードを外部 ToR スイッチとピアリングします。
+全ノードを外部ToRスイッチと接続します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -266,9 +247,9 @@ spec:
   # No nodeSelector means all nodes peer with this address
 ```
 
-### ノード固有 BGPPeer の例
+### ノードを選択するBGPPeerの例
 
-特定のラックにあるノードをローカル ToR スイッチとピアリングします。
+特定ラックのノードをローカルToRスイッチと接続します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -290,9 +271,9 @@ spec:
   asNumber: 65002
 ```
 
-### peerSelector を使用する BGPPeer
+### peerSelectorを使うBGPPeer
 
-`peerSelector` を使用して、Calico ノードをピアとして動的に選択します。
+`peerSelector`でCalicoノードをピアとして動的に選択します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -304,7 +285,9 @@ spec:
   peerSelector: has(route-reflector)
 ```
 
-### 高度な BGPPeer 設定
+### 高度なBGPPeer設定
+
+先に参照するSecretと、セキュリティセクションの`tor-policy` BGPFilterを作成します。この例は、GTSMと認証設定が一致した直接接続ピアを前提とします。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -315,40 +298,37 @@ spec:
   node: specific-node-name
   peerIP: 192.168.1.1
   asNumber: 65100
-
-  # Authentication
   password:
     secretKeyRef:
       name: bgp-secrets
-      key: peer-password
-
-  # Timers (seconds)
-  keepAliveTime: 30
-  holdTime: 90
-
-  # Source address for BGP session
-  sourceAddress: 10.0.0.5
-
-  # Maximum number of hops for eBGP multihop
-  numAllowedLocalASNumbers: 2
-
-  # TTL security (GTSM)
+      key: datacenter-password
+  keepaliveTime: 30s
+  maxRestartTime: 120s
+  sourceAddress: UseNodeIP
+  nextHopMode: Auto
   ttlSecurity: 1
-
-  # Filters
   filters:
-    - action: Accept
-      matchOperator: In
-      cidr: 10.0.0.0/8
+    - tor-policy
 ```
+
+| フィールド | Calico 3.32.2での意味 |
+| --- | --- |
+| `keepaliveTime` | 期間文字列。小文字の`a`が重要。リリースCRDとレンダラーで確認済み。 |
+| `maxRestartTime` | 隣接ルーターに広告するグレースフルリスタート時間。接続再試行間隔ではない。 |
+| `sourceAddress` | `UseNodeIP`または`None`。リテラルの送信元IPは受け入れない。 |
+| `filters` | 既存`BGPFilter`リソースの名前。埋め込みルールオブジェクトではない。 |
+| `ttlSecurity` | エッジ数で表すGTSM経路長。`1`は直接接続ピアを意味する。 |
+| `numAllowedLocalASNumbers` | 受信AS_PATH内のローカルASN出現許容数。ループ防止を緩和し、マルチホップ設定ではない。ルーティング設計に必要な場合以外は未設定にする。 |
+
+現在の`BGPPeer` APIに`holdTime`、`keepAliveTime`、`restartTime`フィールドはありません。`nextHopMode`は`Auto`、`Self`、`Keep`です。旧`keepOriginalNextHop`フィールドは削除ではなく非推奨です。
 
 ***
 
-## BGPConfiguration リソース
+## BGPConfigurationリソース
 
-`BGPConfiguration` リソースは、クラスター全体の BGP 設定を定義します。
+`BGPConfiguration`リソースはクラスター全体のBGP設定を定義します。
 
-### 基本的な BGPConfiguration
+### 基本的なBGPConfiguration
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -359,16 +339,14 @@ spec:
   # Cluster AS number
   asNumber: 64512
 
-  # Node-to-node mesh (disable for Route Reflectors)
-  nodeToNodeMeshEnabled: false
-
+  # Set topology separately after validating its peerings.
   # Log level for BIRD
   logSeverityScreen: Info
 ```
 
-### Service IP の広報
+### Service IPの広告
 
-Calico は BGP を介して Kubernetes Service IP を広報できるため、外部クライアントは Service に直接到達できます。
+Calicoは既存Service IPを許可されたルーティングネットワークへ広告できます。広告はIPを割り当てず、クラウドロードバランサーを作らず、到達可能な復路も保証しません。以下のCIDRは例です。必要範囲だけを既存設定にマージし、他設定を保持します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -377,7 +355,6 @@ metadata:
   name: default
 spec:
   asNumber: 64512
-  nodeToNodeMeshEnabled: false
 
   # Advertise Service ClusterIPs
   serviceClusterIPs:
@@ -392,9 +369,9 @@ spec:
     - cidr: 198.51.100.0/24
 ```
 
-### BGP Community の設定
+### BGPコミュニティ設定
 
-BGP Community を使用すると、外部ルーター上でポリシーベースルーティングを行うためにルートへタグ付けできます。
+`prefixAdvertisements`は、現在のレンダラーではPod経路も含む一致した既存経路にコミュニティを追加します。指定プレフィックスを生成したり、全Podブロックをそのプレフィックスに集約したりは**しません**。名前付きコミュニティは参照時にのみ効力を持ち、名前や任意値だけでルーティングポリシーを実装するものではありません。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -414,7 +391,7 @@ spec:
       communities:
         - "64512:300"  # Service IPs community
 
-  # Named communities (referenced in other configs)
+  # Named aliases, referenced by prefixAdvertisements in this configuration
   communities:
     - name: pod-networks
       value: "64512:100"
@@ -424,67 +401,45 @@ spec:
       value: "65535:65281"  # Well-known NO_EXPORT
 ```
 
-### ノード固有の AS 番号
+### ノード固有のAS番号
 
-複雑なトポロジーでは、ノードごとに異なる AS 番号を割り当てることができます。
+Kubernetesデータストアでは既存ノードにアノテーションを付け、アドレスや他フィールドを保持します。ASN変更は影響するピアリングをリセットするため、両端とルーティングトポロジーを調整してください。
 
-```yaml
-apiVersion: projectcalico.org/v3
-kind: Node
-metadata:
-  name: border-node-1
-spec:
-  bgp:
-    ipv4Address: 10.0.1.10/24
-    asNumber: 65001  # Override cluster default
+```bash
+kubectl annotate node border-node-1 projectcalico.org/ASNumber=65001
 ```
+
+既存アノテーションは現在値を確認してから設定所有者を通じて更新します。他データストアではCalico Node APIを使用します。架空アドレスを含む部分例で既存Nodeを置き換えないでください。
 
 ***
 
-## Service IP の広報
+## Service IPの広告
 
-### 広報タイプ
+### 広告タイプと転送
 
-| タイプ               | 説明               | ユースケース                |
-| ------------------ | ------------------------- | ----------------------- |
-| **ClusterIP**      | 内部 Service IP       | 内部負荷分散 |
-| **ExternalIP**     | ユーザー割り当ての外部 IP | 外部からの直接アクセス  |
-| **LoadBalancerIP** | Cloud provider が割り当て   | Cloud 統合       |
+| タイプ | アドレス所有者と前提条件 |
+| --- | --- |
+| ClusterIP | Kubernetesが割り当てる。Service CIDRの広告はサービスネットワークへの経路を公開する。 |
+| ExternalIP | 運用者が割り当てたアドレスをすでに所有し、ルーティングしている必要がある。`spec.externalIPs`はKubernetes 1.36から非推奨だが、既存サポートの削除ではない。 |
+| LoadBalancer IP | 互換コントローラーが割り当てる。Calico自身が所有VIPを割り当てるか、明示的に選んだアロケーターと連携できる。クラウドLBホスト名はIPプレフィックスではない。 |
 
-### ExternalIP 広報の例
+デフォルトの集約動作では、ClusterモードServiceは設定した集約広告を使い、LocalモードServiceは準備済みローカルエンドポイントがあるノードからホスト経路（`/32`または`/128`）を使います。明示的なホストプレフィックス範囲とCalico 3.32の`serviceLoadBalancerAggregation`設定で広告経路が変わる場合があります。Serviceタイプだけから推測せず、実際のRIB/エクスポートを調べます。エンドポイント、Serviceデータプレーン、上流ECMP、復路を検証してください。Pod IPAMブロック広告とは別です。
+
+### CalicoネイティブのLoadBalancer IPAM
+
+Calico 3.32は`calico-kube-controllers`にLoadBalancerコントローラーを含みます。`allowedUses: [LoadBalancer]`付きIPPoolが必要で、標準Podプールは自動的にそのアドレスを提供しません。コントローラーが有効か確認してください。この単独ベアメタル例は、既存`calico-demo`名前空間と、指定ポートを提供する準備済み`app=my-app`エンドポイントも前提とします。文書用範囲を所有するルーティング可能な範囲に置き換えます。
 
 ```yaml
-# BGPConfiguration for ExternalIP advertisement
 apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
+kind: IPPool
 metadata:
-  name: default
+  name: service-lb-pool
 spec:
-  serviceExternalIPs:
-    - cidr: 203.0.113.0/24
-
+  cidr: 198.51.100.0/24
+  allowedUses:
+    - LoadBalancer
+  assignmentMode: Automatic
 ---
-# Service with ExternalIP
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-external-service
-spec:
-  type: ClusterIP
-  externalIPs:
-    - 203.0.113.10
-  selector:
-    app: my-app
-  ports:
-    - port: 80
-      targetPort: 8080
-```
-
-### LoadBalancer IP の広報
-
-Cloud provider 統合のないベアメタルクラスターの場合:
-
-```yaml
 apiVersion: projectcalico.org/v3
 kind: BGPConfiguration
 metadata:
@@ -492,16 +447,18 @@ metadata:
 spec:
   serviceLoadBalancerIPs:
     - cidr: 198.51.100.0/24
-
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: my-lb-service
+  namespace: calico-demo
   annotations:
-    metallb.universe.tf/loadBalancerIPs: 198.51.100.50
+    projectcalico.org/loadBalancerIPs: '["198.51.100.50"]'
 spec:
   type: LoadBalancer
+  loadBalancerClass: calico
+  externalTrafficPolicy: Local
   selector:
     app: my-app
   ports:
@@ -509,151 +466,68 @@ spec:
       targetPort: 8443
 ```
 
-### 選択的な Service 広報
+明示的な`projectcalico.org/loadBalancerIPs`要求は、適格プールに属し利用可能でなければなりません。割り当て失敗時に他アドレスへフォールバックしません。割り当てとBGP広告は別です。変更前にコントローラーの`assignIPs`モードを確認してください。`RequestedServicesOnly`は既存のアノテーションなしServiceの割り当てを解除する場合があります。既存プールとコントローラーの所有権を維持します。
 
-アノテーションを使用して、広報する Service を制御します。
+MetalLBは代替アロケーターで、現在の要求IPアノテーションは`metallb.io/loadBalancerIPs`です。同一VIPに競合するアロケーター/スピーカーを動かさず、割り当てとBGPスピーカーの所有権を意図的に選択してください。AWS管理のロードバランサーアドレスをローカル所有プールとして広告しないでください。
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: internal-only-service
-  annotations:
-    # Prevent BGP advertisement
-    projectcalico.org/bgp-advertise: "false"
-spec:
-  type: LoadBalancer
-  ...
-```
+### 選択的なService広告
+
+`projectcalico.org/bgp-advertise`というCalico Serviceの広告除外アノテーションは文書化されていません。`BGPConfiguration`で広告範囲を選び、必要に応じてピア固有のBGPFilterを適用します。対応ノードラベル`node.kubernetes.io/exclude-from-external-load-balancers=true`はノードを除外し、Serviceごとの除外ではありません。
+
+1つの`/32`を拒否しても、それを覆うService集約経路が広告されたままならIPは到達不能になりません。内部限定にするServiceは、広告範囲がカバーしないことを確認し、アクセス制御も独立して適用してください。経路フィルタリングは認可境界ではありません。
 
 ***
 
 ## 物理ネットワークとの統合
 
-### ToR スイッチ設定の例
+### ToRルーティングポリシーとベンダー対応
 
-**Cisco NX-OS 設定:**
+ルーターのASN、ノード隣接関係、アドレスファミリー、認証、インポート/エクスポートポリシー、到達可能な次ホップを1つの設計として設定します。ノードが既存アンダーレイのデフォルト経路を使うか、BGPでデフォルトを受け取るかを決めます。`network`は一致する既存経路を生成し、隣接ルーターからの経路を受け入れるコマンドではありません。広範な`redistribute connected`は無関係なネットワークを漏らす可能性があります。
 
-```
-! Configure BGP
-router bgp 65001
-  router-id 10.0.1.1
+| プラットフォーム | 必要な調整 |
+| --- | --- |
+| Cisco IOS XE / NX-OS | 正確なプラットフォーム/リリースの構文を使用。IOS XE動的隣接はピアグループと`bgp listen range`を使用。IOSとNX-OSのコマンド階層を混在させない。参照する全route mapとprefix listを定義する。 |
+| Arista EOS | デプロイ済みリリースのピアグループ、アドレスファミリー、シークレット、インポート/エクスポートポリシー設定を使用。以前の未検証EOSコマンドブロックは実行可能な手順ではない。 |
+| Junos | 通常のprefix-list一致は完全一致。より具体的な経路を対象にする場合は明示的なroute-filter一致タイプを使用。 |
 
-  ! Peer with Kubernetes nodes in rack
-  neighbor 10.0.1.0/24 remote-as 64512
+例えば次の**Junosポリシー断片**を、ToRの対象ノード向けBGPグループのインポートポリシーとして接続すると、計画したPod `/26`–`/32`経路とLoadBalancer `/32`経路を受け入れ、残りを拒否します。
 
-  address-family ipv4 unicast
-    ! Accept pod network routes
-    network 10.244.0.0/16
-    ! Redistribute connected for node networks
-    redistribute connected route-map KUBERNETES-NODES
-
-    ! Route map for prefix filtering
-    neighbor 10.0.1.0/24 route-map ACCEPT-K8S-ROUTES in
-    neighbor 10.0.1.0/24 route-map DENY-ALL out
-
-! Route map definitions
-route-map ACCEPT-K8S-ROUTES permit 10
-  match ip address prefix-list K8S-POD-NETS
-
-ip prefix-list K8S-POD-NETS seq 10 permit 10.244.0.0/16 le 26
-ip prefix-list K8S-POD-NETS seq 20 permit 10.96.0.0/12 le 32
-```
-
-**Arista EOS 設定:**
-
-```
-! Configure BGP
-router bgp 65001
-  router-id 10.0.1.1
-
-  ! Peer group for Kubernetes nodes
-  neighbor K8S-NODES peer group
-  neighbor K8S-NODES remote-as 64512
-  neighbor K8S-NODES maximum-routes 10000
-  neighbor K8S-NODES password 7 <encrypted>
-
-  ! Dynamic neighbors from subnet
-  bgp listen range 10.0.1.0/24 peer-group K8S-NODES
-
-  address-family ipv4
-    neighbor K8S-NODES activate
-    neighbor K8S-NODES prefix-list K8S-PODS-IN in
-    neighbor K8S-NODES prefix-list DENY-ALL out
-
-! Prefix lists
-ip prefix-list K8S-PODS-IN seq 10 permit 10.244.0.0/16 le 26
-ip prefix-list K8S-PODS-IN seq 20 permit 10.96.0.0/12 le 32
-ip prefix-list DENY-ALL seq 10 deny 0.0.0.0/0 le 32
-```
-
-**Juniper Junos 設定:**
-
-```
-protocols {
-    bgp {
-        group K8S-NODES {
-            type external;
-            peer-as 64512;
-            local-as 65001;
-
-            multipath multiple-as;
-
-            import K8S-IMPORT;
-            export DENY-ALL;
-
-            allow 10.0.1.0/24;
-
-            authentication-key "$9$encrypted";
-        }
-    }
-}
-
+```text
 policy-options {
-    prefix-list K8S-POD-NETS {
-        10.244.0.0/16;
-    }
-    prefix-list K8S-SVC-NETS {
-        10.96.0.0/12;
-    }
     policy-statement K8S-IMPORT {
-        term accept-pods {
+        term approved {
             from {
-                prefix-list K8S-POD-NETS;
-                prefix-length-range /26-/26;
+                route-filter 10.244.0.0/16 prefix-length-range /26-/32;
+                route-filter 198.51.100.0/24 prefix-length-range /32-/32;
             }
             then accept;
         }
-        term accept-services {
-            from {
-                prefix-list K8S-SVC-NETS;
-            }
-            then accept;
-        }
-        term reject-all {
+        term reject-rest {
             then reject;
         }
     }
-    policy-statement DENY-ALL {
-        then reject;
-    }
 }
 ```
 
-### Spine-Leaf アーキテクチャとの統合
+Podの最小長は`/26` IPAMブロックを前提とします。実際のプールと経路一覧に合わせてください。借用アドレスや一部の移動経路には`/32`が必要なため、`le 26`は一般的に安全なPodフィルターではありません。この断片は隣接関係を作成せず、デフォルト経路を広告しません。ベンダー機器設定やフェイルオーバーはここで実行時テストしていません。デプロイ前に正確なルーターリリースでエクスポートポリシー、制限、次ホップ動作を完成させ、検証してください。
 
-![Spine-Leaf ファブリックでは、各 Leaf スイッチが冗長性のために両方の Spine スイッチとピアリングし、各ラックの Kubernetes ノードはそのラックの Leaf スイッチとのみピアリングします。したがって、BGP ルートはノードから Leaf 層、Spine 層へと流れます。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-6.svg)
+### スパイン・リーフ構成との統合
 
-Spine-Leaf 向けの Calico 設定:
+![ノードがローカルリーフスイッチと接続し、リーフがスパイン層に接続する。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-5.png)
+
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-5.html)
+
+> グループ化されたボックスは複数セッションをまとめています。共有ノードASNには明示的なASループ/オーバーライド設計が必要です。スパイン2台だけではリーフやノード上り接続の冗長性は得られません。アドレスとASNは例示トポロジーとして使い、完全なデプロイ可能設定とは見なさないでください。
+
+スパイン・リーフ設計のCalicoピア断片を以下に示します。先にノードラベル、直接/再帰的な次ホップ到達性、エクスポートポリシー、復路を確認します。ラックをまたぐノードでASN 64512を再利用すると、受信ノードのASNがAS_PATHにあるため経路が拒否される場合があります。一意ASNか、意図的に検証したファブリックのASオーバーライド/ループポリシーを設計してください。`numAllowedLocalASNumbers`を無条件に増やして回避しないでください。メッシュセッションの削除前に代替経路を検証します。
 
 ```yaml
-# Disable node-to-node mesh
+# Final topology alternative: establish fabric peerings before removing mesh.
 apiVersion: projectcalico.org/v3
 kind: BGPConfiguration
 metadata:
   name: default
 spec:
-  nodeToNodeMeshEnabled: false
   asNumber: 64512
 
 ---
@@ -690,19 +564,21 @@ spec:
 
 ***
 
-## BGP Community タグ付け戦略
+## BGPコミュニティのタグ付け戦略
 
-### Community 設計パターン
+### コミュニティ設計パターン
 
-| Community     | 意味        | アクション                           |
+以下のプライベート値はルーターポリシーが必要なローカル規約であり、組み込み優先度制御ではありません。標準コミュニティは2つの16ビット値、ラージコミュニティは3つの32ビット値を含み、4バイトASNを標準コミュニティに押し込めずに表せます。
+
+| コミュニティ | 意味 | アクション |
 | ------------- | -------------- | -------------------------------- |
-| `64512:100`   | Pod ネットワーク   | 受け入れ、通常のルーティング           |
-| `64512:200`   | Service IP    | 受け入れ、特別なポリシーを適用する場合がある |
-| `64512:300`   | インフラストラクチャ | より優先度の高いルーティング          |
-| `65535:65281` | NO\_EXPORT     | AS 外へ広報しない      |
-| `65535:65282` | NO\_ADVERTISE  | どのピアにも広報しない     |
+| `64512:100` | Podネットワーク | 受け入れ、通常ルーティング |
+| `64512:200` | Service IP | 受け入れ、特別ポリシーを適用する場合あり |
+| `64512:300` | インフラ | 高優先度ルーティング |
+| `65535:65281` | NO\_EXPORT | ASコンフェデレーション境界の外に広告しない（コンフェデレーションなしならAS外） |
+| `65535:65282` | NO\_ADVERTISE | どのピアにも広告しない |
 
-### Community ベースのトラフィックエンジニアリング
+### コミュニティに基づくトラフィックエンジニアリング
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -721,12 +597,12 @@ spec:
       value: "65535:65281"  # NO_EXPORT
 
   prefixAdvertisements:
-    # Production pod networks - advertise everywhere
+    # Tag existing production routes; actual propagation follows routing policy
     - cidr: 10.244.0.0/17
       communities:
         - production
 
-    # Staging pod networks - keep local
+    # Add NO_EXPORT to existing staging routes
     - cidr: 10.244.128.0/17
       communities:
         - staging
@@ -740,80 +616,82 @@ spec:
 
 ***
 
-## BGP セキュリティ
+## BGPセキュリティ
 
-### MD5 認証
+### MD5認証
 
-MD5 認証で BGP セッションを保護します。
+CalicoはBGPにTCP MD5署名オプションをサポートします。シークレットを共有するピアの通信を認証しますが、暗号化や認証済みピアが送る経路の正当性検証はしません。
+
+シークレット管理手順で、`calico-node`が動作する名前空間（このOperatorインストールでは`calico-system`、マニフェストでは`kube-system`の場合あり）に`bgp-secrets`を用意します。例には`datacenter-password`キーが必要です。`mesh-password`やラック固有/リーフ固有キーを参照する他の例には、それらのキーも必要です。対応ルーターに一致する認証情報を設定し、CalicoサービスアカウントがSecretを読めることを確認します。
 
 ```yaml
-# Create secret for BGP password
-apiVersion: v1
-kind: Secret
-metadata:
-  name: bgp-auth
-  namespace: kube-system
-type: Opaque
-stringData:
-  bgp-password: "SuperSecretPassword123!"
-
----
-# Reference in BGPPeer
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
   name: secure-peer
 spec:
-  peerIP: 10.0.1.1
-  asNumber: 65001
+  peerIP: 192.168.1.1
+  asNumber: 65100
   password:
     secretKeyRef:
-      name: bgp-auth
-      key: bgp-password
+      name: bgp-secrets
+      key: datacenter-password
 ```
 
-### Prefix フィルタリング
+### プレフィックスフィルタリング
 
-受け入れる/広報する Prefix を制限します。
+ルールは順番に評価され、最初の一致が即実行されます。未一致経路はデフォルトで**Accept**されるため、許可リストには最後に無条件Rejectが必要です。`Equal 0.0.0.0/0`はデフォルト経路だけに、`In 0.0.0.0/0`は全IPv4経路に一致し、`NotIn 0.0.0.0/0`は何にも一致しません。
+
+以下の外部ピア例は、インポートではデフォルト経路と計画したアンダーレイ`10.0.0.0/16`だけを受け入れます。エクスポートでは実際のPod `/26`–`/32`経路とLoadBalancer `/32`経路を許可します。CIDRと長さを実際の経路一覧に合わせてください。この外部ポリシーをRR/クライアントセッションへ無差別に付けないでください。
 
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: BGPFilter
 metadata:
-  name: allow-pod-nets-only
+  name: tor-policy
 spec:
+  importV4:
+    - action: Accept
+      matchOperator: Equal
+      cidr: 0.0.0.0/0
+    - action: Accept
+      matchOperator: In
+      cidr: 10.0.0.0/16
+    - action: Reject
   exportV4:
     - action: Accept
       matchOperator: In
       cidr: 10.244.0.0/16
-      prefixLength: "24-28"
-    - action: Reject
-      matchOperator: In
-      cidr: 0.0.0.0/0
-
-  importV4:
+      prefixLength:
+        min: 26
+        max: 32
+      operations:
+        - addCommunity:
+            value: "64512:100"
     - action: Accept
       matchOperator: In
-      cidr: 10.0.0.0/8
+      cidr: 198.51.100.0/24
+      prefixLength:
+        min: 32
+        max: 32
     - action: Reject
-      matchOperator: In
-      cidr: 0.0.0.0/0
-
 ---
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
   name: filtered-peer
 spec:
-  peerIP: 10.0.1.1
-  asNumber: 65001
+  peerIP: 192.168.1.1
+  asNumber: 65100
   filters:
-    - allow-pod-nets-only
+    - tor-policy
 ```
 
-### GTSM（TTL セキュリティ）
+`prefixLength`は`min`と`max`を持つオブジェクトで、範囲文字列ではありません。Calico 3.32は`addCommunity`など受理経路への操作もサポートします。明示的エクスポートAcceptは、組み込みCalicoエクスポート/集約/`prefixAdvertisements`処理の前に戻ります。そのためRIB内のより具体的な経路をエクスポートする場合があり、この例ではルール内で直接Podタグを追加します。ファブリックに適用する前に`show route export`を確認してください。BGPFilterは存在しない経路を作成しません。
 
-Generalized TTL Security Mechanism は、偽装された BGP パケットを防ぎます。
+### GTSM（TTLセキュリティ）
+
+GTSMは想定経路しきい値より低いTTLで届くパケットを拒否します。経路外からのなりすましへの露出を減らしますが、ピアを認証せず、同一リンク上の攻撃者も防ぎません。両端を整合するよう設定します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -821,16 +699,18 @@ kind: BGPPeer
 metadata:
   name: gtsm-enabled-peer
 spec:
-  peerIP: 10.0.1.1
-  asNumber: 65001
-  ttlSecurity: 1  # Expect TTL of 254 or higher
+  peerIP: 192.168.1.1
+  asNumber: 65100
+  ttlSecurity: 1
 ```
+
+固定したBIRD実装では、GTSMはTTL 255で送信し、最小受信TTLを`256−hops`にします。そのため`ttlSecurity: 1`には254でなく255が必要で、2エッジでは最低254が必要です。有効化前に実際の経路を確認してください。AS_PATH内のローカルASN許容数とは無関係です。
 
 ***
 
-## パフォーマンスチューニング
+## 性能調整
 
-### BGP タイマー設定
+### BGPタイマー設定
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -838,19 +718,27 @@ kind: BGPPeer
 metadata:
   name: tuned-peer
 spec:
-  peerIP: 10.0.1.1
-  asNumber: 65001
-
-  # Keepalive interval (default: 60s)
-  keepAliveTime: 20
-
-  # Hold time (default: 180s, must be 3x keepalive)
-  holdTime: 60
+  peerIP: 192.168.1.1
+  asNumber: 65100
+  keepaliveTime: 20s
+  maxRestartTime: 120s
 ```
 
-### ルート集約
+固定したBIRDフォークはデフォルトで240秒のHold Timeを提案し、隣接ルーターとの間で小さい方の値を合意します。keepalive間隔未設定なら、合意したHold Timeの3分の1を使います。明示的な`keepaliveTime`は間隔を上書きしますが、Hold Timeを自動的にその3倍へ変えるわけでは**ありません**。実際に合意されたタイマーを調べ、それに合う間隔を選んでください。
 
-Pod CIDR を集約して、広報するルート数を削減します。
+`BGPPeer`は`holdTime`を公開しません。以前の60/180、10/30、3/9という推奨は、検証済みCalicoデフォルトや障害検出保証ではありませんでした。BIRD単体のBFD機能は、対応Calico BFD CRDや設定フィールドがあることを意味しません。架空フィールドを追加せず、別のBFD統合は正確な対応デプロイでテストしてください。
+
+### 経路集約
+
+Calicoは通常、ローカルIPAMアドレスを割り当て済みブロックに集約します。現在のBIRD集約テンプレートは、高優先度のより具体的な経路も許可します。借用や移動にはホスト経路が必要な場合があります。`prefixAdvertisements`は一致する既存経路にタグを付けるだけで、全`/26`を生成された`/16`に変えません。
+
+大きなIPAMブロックは、ブロック経路数の削減と割り当て粒度/アドレス利用効率のトレードオフです。既存IPPoolの`blockSize`は不変です。新プールが必要なら[ネットワーキングモード](03-networking-modes.md)のプール移行手順を使います。既存デフォルトプールに新ブロックサイズを適用したり、対象全宛先に到達できないルーターからそれらを覆う集約経路を広告したりしないでください。
+
+### グレースフルリスタート
+
+CalicoのBIRDテンプレートはGraceful Restartを有効にします。効果には合意された機能と動作し続ける転送経路が必要で、そうでなければ保持した古い経路がトラフィックをブラックホール化する場合があります。無中断の更新は保証しません。
+
+明示的ピアでは`BGPPeer.maxRestartTime`が広告する再起動時間を設定します。以下の設定は**自動ノードメッシュ**セッション向けで、すべての明示的ピア向けではありません。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -858,104 +746,84 @@ kind: BGPConfiguration
 metadata:
   name: default
 spec:
-  asNumber: 64512
-
-  # Aggregate individual /26 pod CIDRs into /16
-  prefixAdvertisements:
-    - cidr: 10.244.0.0/16
-      communities:
-        - "64512:100"
+  nodeMeshMaxRestartTime: 120s
 ```
 
-### Graceful Restart
-
-BIRD の再起動中のトラフィック中断を最小限にするため、BGP Graceful Restart を有効化します。
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  asNumber: 64512
-
-  # Enable graceful restart (BIRD default is enabled)
-  # Stale route time in seconds
-  nodeMeshMaxRestartTime: 120
-```
+これは期間文字列で、整数や有効化スイッチではありません。既存設定所有者を通じて変更し、実際のピア機能と復旧動作を検証します。
 
 ***
 
-## BGP のデバッグ
+## BGPのデバッグ
 
-### birdcl コマンド
+### 正しいノードからBIRDを調べる
 
-calico-node Pod から BIRD コマンドラインインターフェースにアクセスします。
-
-```bash
-# Enter calico-node pod
-kubectl exec -it -n kube-system calico-node-xxxxx -c calico-node -- /bin/sh
-
-# Show BGP protocol status
-birdcl -s /var/run/calico/bird.ctl show protocols all
-
-# Show BGP neighbors
-birdcl -s /var/run/calico/bird.ctl show protocols all bgp*
-
-# Show routing table
-birdcl -s /var/run/calico/bird.ctl show route
-
-# Show routes to specific prefix
-birdcl -s /var/run/calico/bird.ctl show route for 10.244.1.0/24
-
-# Show route export to specific peer
-birdcl -s /var/run/calico/bird.ctl show route export Mesh_10_0_1_11
-
-# Show BGP neighbor details
-birdcl -s /var/run/calico/bird.ctl show protocols all Mesh_10_0_1_11
-```
-
-### 一般的な BGP の問題と解決策
-
-| 問題                    | 症状                      | 解決策                              |
-| ------------------------ | ----------------------------- | ------------------------------------- |
-| セッションが Active で停止 | ルートを学習しない             | ファイアウォール（TCP 179）、AS 番号を確認  |
-| ルートが伝播しない   | ラック間で Pod に到達できない | ノード間メッシュまたは RR 設定を確認 |
-| ルートフラッピング           | 断続的な接続性     | BGP タイマー、ネットワーク安定性を確認   |
-| セッションリセット           | Established->Active が頻発  | MTU、MD5 パスワードを確認              |
-
-### 診断コマンド
+実際のノードとインストール名前空間を選びます。読み取り専用の以下のコマンドは、運用者のシェルからIPv4 BIRD制御ソケットに対して実行します。IPv6には`birdcl6`と`/var/run/calico/bird6.ctl`を使います。BGP無効のインストールでは、どちらのデーモンも不要です。
 
 ```bash
-# Check Calico node status
-calicoctl node status
-
-# List all BGP peers
-calicoctl get bgppeers -o wide
-
-# Check BGP configuration
-calicoctl get bgpconfiguration default -o yaml
-
-# View BIRD logs
-kubectl logs -n kube-system calico-node-xxxxx -c calico-node | grep -i bird
-
-# Check IP routes on node
-ip route show | grep bird
+CALICO_NAMESPACE=calico-system
+CALICO_NODE=worker-1
+CALICO_POD="$(kubectl -n "$CALICO_NAMESPACE" get pods -l k8s-app=calico-node \
+  --field-selector "spec.nodeName=$CALICO_NODE" -o jsonpath='{.items[0].metadata.name}')"
+test -n "$CALICO_POD"
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show protocols all
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show route
 ```
+
+```bash
+CALICO_BGP_PROTOCOL=Global_192_168_1_1
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show protocols all "$CALICO_BGP_PROTOCOL"
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show route export "$CALICO_BGP_PROTOCOL"
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show route protocol "$CALICO_BGP_PROTOCOL"
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl 'show route where net ~ [10.244.0.0/16+]'
+```
+
+```bash
+kubectl get bgpconfiguration.projectcalico.org default -o yaml
+kubectl get bgppeers.projectcalico.org -o wide
+kubectl get bgpfilters.projectcalico.org -o yaml
+kubectl -n "$CALICO_NAMESPACE" logs "$CALICO_POD" -c calico-node --tail=200
+```
+
+`CALICO_BGP_PROTOCOL`を`show protocols`が返す名前に置き換えます。実際の名前には`Mesh_…`、`Global_…`、`Node_…`があり、普遍的な`bgp*`プレフィックスではありません。ローカルシェルに展開されないよう経路式を引用符で囲みます。`show protocols all`には非BGPプロトコルも含まれます。
+
+コンテナログに起動やconfdエラーが出る場合がありますが、一致する標準出力行がないだけでBIRDが正常とは証明できません。BIRDのログ送信先とセッション状態を確認します。`calicoctl node status`はノード環境が必要なノードローカル診断で、ワークステーションのkubeconfigだけでは不十分です。同様に`ip route`も対象ノード/ネットワーク名前空間で調べる必要があります。
+
+| 症状 | 確認項目 |
+| --- | --- |
+| セッションがActiveのまま | ピアアドレス/ASN、TCPリスナーとファイアウォール、送信元アドレス、MD5/GTSMの一致、転送路到達性 |
+| Establishedだが有用な経路がない | インポート/エクスポートフィルター、RRの役割、エンドポイント/IPAM状態、次ホップ到達性、ASループによる拒否 |
+| フラッピングやリセット | 転送路の損失、MTU、認証、合意タイマー、コントローラー変更 |
+| 経路はあるが通信失敗 | 実際のカーネル/FIB経路、復路、Service転送、アクセス方針、それを覆う集約経路 |
+
+BGPがEstablishedであるだけでは、ワークロード接続性は証明されません。
 
 ***
 
-## マルチラックおよびマルチデータセンターの設計
+## 複数ラックと複数データセンターの設計
 
-### Route Reflector を使用するマルチラック
+### ルートリフレクターを使う複数ラック構成
 
-![管理ラックにある 2 つの Route Reflector は相互に、かつすべてのコンピュートラックとピアリングします。そのため、各コンピュートラックのノードはフルメッシュなしですべての他ラックのルートに到達でき、1 つの Route Reflector を失ってもどのラックも孤立しません。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-7.svg)
+![1つの管理ラックにある2つのルートリフレクターが、それぞれ複数ラックのコンピュートノードと接続する。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-7.png)
 
-### マルチデータセンター BGP 設計
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-7.html)
 
-![各データセンターは独自の AS を実行し、各自の Route Reflector が内部でノードとピアリングします。また、各データセンターの Route Reflector は共有 WAN エッジと eBGP でピアリングし、2 つのデータセンターを接続します。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-8.svg)
+> 生存RRが経路配布を維持できるのは転送路と容量が利用可能な場合だけです。両RRが1つの管理ラックにあると同じラック障害リスクを共有するため、ラックレベルの耐障害性には障害ドメインを分離します。
 
-マルチデータセンター向けの設定:
+### 複数データセンターのBGP設計
+
+![各データセンターが独自ASを持ち、ルートリフレクターがWANルーターと接続する。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-8.png)
+
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-8.html)
+
+> WANグループは別途設定が必要な中継をまとめています。見えるリンクだけでエンドツーエンド到達性は成立しません。DC1の発信元タグ付けにも、本文のprefixAdvertisements参照が必要です。
+
+DC1が所有するワークロードCIDRを`10.244.0.0/16`とし、ローカルRRトポロジーが動作済みという前提の設定断片を示します。名前付きコミュニティは、`prefixAdvertisements`からも参照して一致経路にタグを付ける必要があります。DC2には独自の非重複CIDR、ASN、ピア定義、WANには明示的な中継/復路ルーティングとポリシーが必要です。完全な2 DCデプロイではありません。
 
 ```yaml
 # DC1 Configuration
@@ -965,11 +833,14 @@ metadata:
   name: default
 spec:
   asNumber: 64512
-  nodeToNodeMeshEnabled: false
 
   communities:
     - name: dc1-origin
       value: "64512:1"
+  prefixAdvertisements:
+    - cidr: 10.244.0.0/16
+      communities:
+        - dc1-origin
 
 ---
 # Peer DC1 RRs with WAN routers
@@ -985,38 +856,52 @@ spec:
 
 ***
 
-## ベストプラクティスの要約
+## ベストプラクティスのまとめ
 
-### 設計に関する推奨事項
+### 設計の推奨事項
 
-1. **クラスターサイズ < 50 ノード**: フルメッシュで問題ありません
-2. **クラスターサイズ 50-200 ノード**: 2～3 個の Route Reflector をデプロイします
-3. **クラスターサイズ > 200 ノード**: 階層型 Route Reflector をデプロイします
-4. **マルチラック**: ラックを考慮した Route Reflector 配置を使用します
-5. **マルチデータセンター**: DC ごとに個別の AS を使用し、DC 間には eBGP を使用します
+1. 実測経路数、変更頻度、収束目標でフルメッシュとRRデプロイの規模を決めます。
+2. 冗長RRを障害ドメイン間で分離し、残存容量と転送路を検証します。
+3. ラックを考慮したラベルと、文書化されたASN、CIDR、次ホップ計画を使います。
+4. 反射/ループ規則と各層の冗長性を理解した場合のみ階層を追加します。
+5. 複数データセンターを単なる2つのBGPPeerでなく、完全なルーティングとセキュリティ設計として扱います。
 
-### セキュリティに関する推奨事項
+### セキュリティの推奨事項
 
-1. 外部ピアには常に MD5 認証を有効化します
-2. ルートインジェクションを防ぐため Prefix フィルタリングを実装します
-3. サポートされる場合は GTSM（TTL セキュリティ）を使用します
-4. ピアごとに受け入れる最大ルート数を制限します
-5. BGP セッションの異常を監視します
+1. 外部ピアでは常にMD5認証を有効化
+2. 経路注入を防ぐプレフィックスフィルタリングを実装
+3. 対応する場合にGTSM（TTLセキュリティ）を使用
+4. 外部ルーターでサポートされるプレフィックス上限を設定。架空のCalico BGPPeer制限フィールドを作らない。
+5. BGPセッションの異常を監視
 
-### 運用に関する推奨事項
+### 運用の推奨事項
 
-1. BGP トポロジー用に一貫してノードにラベルを付けます
-2. AS 番号の割り当てスキームを文書化します
-3. BGP のモニタリングとアラートを実装します
-4. フェイルオーバーシナリオを定期的にテストします
-5. ピア間で BGP タイマーを一貫させます
+1. BGPトポロジー用のノードラベルを一貫させる
+2. AS番号割り当て方式を文書化
+3. BGP監視とアラートを実装
+4. フェイルオーバーシナリオを定期的にテスト
+5. 合意タイマーを調べて復旧をテスト。keepaliveを短くしてもHold Timeが短くなる保証はない。
 
 ***
 
 ## 参考資料
 
-* [Calico BGP ドキュメント](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
+* [Calico BGPドキュメント](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
 * [BIRD Internet Routing Daemon](https://bird.network.cz/)
-* [RFC 4271 - BGP-4](https://tools.ietf.org/html/rfc4271)
-* [RFC 4456 - BGP Route Reflection](https://tools.ietf.org/html/rfc4456)
-* [RFC 5765 - BGP の GTSM](https://tools.ietf.org/html/rfc5082)
+* [RFC 4271 - BGP-4](https://www.rfc-editor.org/rfc/rfc4271)
+* [RFC 4456 - BGP経路反射](https://www.rfc-editor.org/rfc/rfc4456)
+* [RFC 5082 - GTSM](https://www.rfc-editor.org/rfc/rfc5082)
+
+* [Calico BGPPeer API](https://docs.tigera.io/calico/latest/reference/resources/bgppeer)
+* [Calico BGPConfiguration API](https://docs.tigera.io/calico/latest/reference/resources/bgpconfig)
+* [Calico BGPFilter API](https://docs.tigera.io/calico/latest/reference/resources/bgpfilter)
+* [Service IPの広告](https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ips)
+* [Calico LoadBalancer IPAM](https://docs.tigera.io/calico/latest/networking/ipam/service-loadbalancer)
+* [Calico 3.32.2のBIRD設定処理](https://github.com/projectcalico/calico/blob/v3.32.2/confd/pkg/backends/calico/bgp_processor.go)
+* [Calico 3.32.2のBIRDテンプレート](https://github.com/projectcalico/calico/blob/v3.32.2/confd/etc/calico/confd/templates/bird.cfg.template)
+* [固定版BIRDの最適経路実装](https://github.com/projectcalico/bird/blob/9111ec3c3ff3e769727a5940d3d829a0be8b5201/proto/bgp/attrs.c)
+* [固定版BIRDのタイマーとGTSM](https://github.com/projectcalico/bird/blob/9111ec3c3ff3e769727a5940d3d829a0be8b5201/proto/bgp/bgp.c)
+* [Cisco IOS XEの動的隣接](https://www.cisco.com/c/en/us/td/docs/routers/ios/config/17-x/ip-routing/b-ip-routing/m_irg-bgp-dynamic-neighbors.html)
+* [Junos route-filterの一致タイプ](https://www.juniper.net/documentation/en_US/junos/topics/usage-guidelines/policy-configuring-route-lists-for-use-in-routing-policy-match-conditions.html)
+* [Kubernetes Service APIとexternalIPsの非推奨化](https://kubernetes.io/docs/concepts/services-networking/service/)
+* [Calico 3.32.2のService経路生成](https://github.com/projectcalico/calico/blob/v3.32.2/confd/pkg/backends/calico/routes.go)

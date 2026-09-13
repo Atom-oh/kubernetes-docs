@@ -1,163 +1,184 @@
-# Cilium Service Mesh セキュリティ
+# Ciliumサービスメッシュのセキュリティ
 
-> **サポート対象バージョン**: Cilium 1.16+, Kubernetes 1.28+
-> **最終更新**: August 21, 2026
+> **最終更新**: September 11, 2026 · Cilium/chart 1.20.1 · 同梱SPIRE 1.15.2。テスト済みKubernetes/EKS版とプラットフォーム要件は[概要](./README.md)を参照してください。
 
 ## 概要
 
-Cilium のセキュリティには、明確に分かれた 3 つのレイヤーがあります。
+ワークロード認可、ピア認証、アプリデータ暗号化という3つの別制御を評価します。Ciliumの帯域外相互認証、WireGuard/IPsec転送暗号化、別のztunnel mTLSベータは要件と制限が異なります。
 
-1. **Identity ベースの認可:** Cilium Identity と eBPF policy が、通信を許可される workload を決定します。
-2. **相互認証:** SPIFFE/SPIRE を使用する Cilium 相互認証は、application data connection とは分離された **帯域外（out-of-band）** ハンドシェイクを通じて peer identity を検証します。
-3. **データ暗号化:** 確立済みの実装では、payload を暗号化するために WireGuard/IPsec を別途有効にする必要があります。サポートされている場合、native ztunnel mTLS preview は TLS により workload traffic を暗号化します。
-
-これらの機能は組み合わせることができますが、Istio `PeerAuthentication` `STRICT` workload mTLS と自動的に同等になるわけではありません。Identity authorization、peer authentication、および転送中の encryption を個別の要件として評価してください。
+以下のポリシー例は通常のCiliumポリシー/帯域外認証経路です。**ztunnel暗号化を有効にしたときも同じL4適用が維持されると想定しないでください**。ベータの制限は後述します。
 
 ## セキュリティアーキテクチャ
 
-![Workload traffic は Cilium Identity と eBPF policy によって認可され、SPIFFE/SPIRE ベースの帯域外相互認証と WireGuard/IPsec または native ztunnel mTLS の payload encryption は別個のレイヤーとして機能します。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-0.png)
+![ID/ポリシー、帯域外認証、任意の暗号化選択肢の論理的分離。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-0.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-0.html)
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-0.html)
+
+ボックスは責務をまとめ、全組み合わせが全ポリシーを保持すると認定するものではありません。特にztunnelベータは別のID/データ経路を使い、デフォルトCAは帯域外認証で示すSPIRE統合を必要としません。
 
 ## 相互認証とデータ暗号化
 
-### 確立済みの Cilium 相互認証
+### 従来のCilium相互認証
 
-Cilium 相互認証は、接続が許可される前に両方の endpoint identity を検証しますが、確立済みの authentication handshake は application data path とは分離されています。`authentication.mode: required` のみで、既存の data connection の payload が TLS 暗号化されると想定しないでください。データの機密性が必要な場合は、[WireGuard または IPsec](https://docs.cilium.io/en/stable/security/network/encryption/) を設定してください。
+帯域外方式はCilium 1.20.1でも**ベータ/未完成**と文書化されています。CiliumエージェントはSPIRE提供SVIDでCiliumセキュリティIDを認証します。ネットワークポリシールールが認証を要求しても、アプリ接続自体がTLSになるわけではありません。
 
-![Pod A の接続要求は、policy により許可された data connection に至る前に、Cilium agent、SPIRE SVID authentication、および帯域外 auth handshake を通過します。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
+![ポリシーで保護された通信を進める前の、エージェント間帯域外認証交換の例。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-1.html)
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-1.html)
 
-### ztunnel 経由の Native mTLS（2026 年更新）
+認証記録はID関係についてキャッシュされます。図はHTTP要求ごと、あるいは必ずアプリ接続ごとに新証明書/ハンドシェイクを作る意味ではありません。認証要件に加え明示的な認可ルールも適用します。
 
-2026 年 3 月に発表された Cilium native mTLS design は、ztunnel model を使用して、workload-mTLS path 上で相互認証と実際の payload encryption を組み合わせます。これは、確立済みの帯域外相互認証と WireGuard/IPsec とは異なる data plane です。この stack は、連携する次の 3 つの component で構成されます。
+### ztunnelによるネイティブmTLS（2026年更新）
 
-- **SPIRE** — workload identity と X.509 certificate を発行します（以下の SPIRE ベース設定と同じ役割）
-- **Cilium** — outbound Pod traffic を port 15001 の ztunnel に透過的に redirect する iptables rule をインストールします
-- **ztunnel** — 実際の mTLS handshake を実行し、Pod-to-Pod traffic を暗号化する、node ごとの proxy（Pod ごとの sidecar ではない）
-
-これにより、TLS handshake は専用の node ごとの process で実行される一方で、「Pod ごとの sidecar なし、application の変更なし」という特性が維持されます。導入前に現在の preview status と platform support を確認してください。運用面で成熟した Istio `STRICT` mTLS path の自動的な代替と見なしてはいけません。
-
-完全な architecture の解説については、[native mTLS に関する Cilium のブログ記事](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)を参照してください。
-
-### mTLS に Cilium と Istio のどちらを選択するか
-
-- 要件が、すでに Cilium を実行している data plane における効率的な L3/L4 Identity policy と network encryption である場合は、**Cilium を選択**してください。追加の sidecar や service ごとの proxy を運用する必要がなく、CiliumNetworkPolicy/CiliumClusterwideNetworkPolicy で必要な access rule をすでに表現できます。
-- 要件が `PeerAuthentication` `STRICT` semantics を持つ成熟した workload-certificate mTLS、または Istio native の L7 policy/routing（[sidecar と ambient の比較](../istio/comparison/03-sidecar-vs-ambient.md)で扱う `AuthorizationPolicy`、retry、traffic-shifting rule のようなもの）である場合は、**Istio を選択**してください。Cilium の確立済み相互認証は帯域外であり、その policy surface を備えていません。
-- encryption layer だけで判断しないでください。Cilium の WireGuard/IPsec と native ztunnel mTLS preview はどちらも payload を暗号化しますが、どちらも単独では、workload identity issuance、policy enforcement、payload encryption を 1 つの switch で組み合わせる Istio `PeerAuthentication` `STRICT` を再現しません。
-
-### SPIRE ベースの相互認証設定
+Cilium 1.20.1には **Ztunnel Transparent Encryption（ベータ）** があります。必要なブートストラップ/CA素材を準備してから、次のモード断片で選択します。
 
 ```yaml
-# values.yaml - SPIRE integration configuration
+encryption:
+  enabled: true
+  type: ztunnel
+  ztunnel:
+    ca:
+      type: internal
+```
+
+リリースのデフォルトはCilium内部CAオプションです。`cilium-ztunnel-secrets` Secretが`bootstrap-private.key`、`bootstrap-root.crt`、`ca-private.key`、`ca-root.crt`を提供します。公式生成スクリプトは例で、完全な本番PKI/ローテーション設計ではありません。チャートの`bootstrapRootCert`単体は公開証明書だけを提供し、内部CAに必要な秘密鍵は生成しません。
+
+Ciliumエージェントは参加Podのネットワーク名前空間にiptablesリダイレクトを設定し、ノードのztunnelへワークロード状態を送り、制御/証明書インターフェースを提供します。チャートは`ztunnel-cilium` DaemonSetを作成します。名前空間参加には`io.cilium/mtls-enabled=true`を使い、モードをインストールするだけでは全名前空間は参加しません。
+
+リリースガイドは次の境界を定めています。
+
+- 送信元と宛先の両ワークロードが参加する必要があり、参加済みと未参加間の通信は非対応。
+- 参加は名前空間単位で、Podごとの参加は非対応。ホストネットワークPodは参加不可。
+- mTLSへリダイレクトするのはTCPだけで、UDPや他プロトコルはこの暗号化経路外。
+- ClusterMeshは非対応で、カーネルは必要なiptables操作に対応している必要がある。
+- 暗号化はパケットがPodを出る前に行われる。そのためHBONEポート15008を直接対象とする場合を除き、通常L4ポリシーはこの経路で動作しない。
+
+この統合は名前空間/サービスアカウントのワークロードIDモデルを使います。帯域外認証の数値`/identity/<id>` SPIFFEパスとは異なります。
+
+準備したテストインストールの読み取り専用確認例:
+
+```bash
+kubectl -n kube-system get daemonset ztunnel-cilium
+kubectl get namespaces -l io.cilium/mtls-enabled=true
+kubectl -n kube-system get configmap cilium-config -o yaml
+```
+
+名前空間ラベル、正常プロキシ、15008上のパケットだけでは期待する全通信の暗号化/認可は証明されません。参加成功、選択経路の両端、証明書ID/信頼、非対応通信を確認します。
+
+### mTLSにCiliumとIstioのどちらを選ぶか
+
+必要なID、認可、通信範囲で選択します。既存CiliumではIDポリシーとWireGuard/IPsecを使うか、制限内で別のztunnelベータを評価できます。実際に有効にする追加プロキシ、CA、運用依存関係を考慮します。
+
+Istioはサイドカー/ambientでワークロードプロキシmTLSを提供し、それぞれ機能/プラットフォーム境界があります。`PeerAuthentication`の`STRICT`は受信mTLS要件で、単体ではID発行、プロキシ導入、全呼び出し元認可をしません。比較を暗号化スイッチ1つに還元しないでください。[サイドカー/ambientの章](../istio/comparison/03-sidecar-vs-ambient.md)は実測版とシナリオを保持しています。
+
+### SPIREベース相互認証の設定
+
+**帯域外**認証には、レビュー済みインストールvaluesへこのオーバーレイをマージします。
+
+```yaml
 authentication:
+  enabled: true
   mutual:
     spire:
       enabled: true
+      trustDomain: spiffe.cilium
+      agentSocketPath: /run/spire/sockets/agent/agent.sock
       install:
         enabled: true
-        namespace: cilium-spire
-
         server:
-          # SPIRE Server configuration
-          replicas: 1
           dataStorage:
             enabled: true
             size: 1Gi
-            storageClass: gp3
-
-          # Trust Domain configuration
-          trustDomain: cluster.local
-
-          # CA configuration
-          ca:
-            # Use internal CA
-            keyType: ec-p256
-            ttl: 24h
-
-          # Node Attestor configuration
-          nodeAttestor:
-            k8sPsat:
-              enabled: true
-
-        agent:
-          # SPIRE Agent configuration
-          socketPath: /run/spire/sockets/agent.sock
-
-          # Workload Attestor configuration
-          workloadAttestor:
-            k8s:
-              enabled: true
-              disableContainerSelectors: false
 ```
 
-### 相互認証 policy の適用
+SPIRE StatefulSetに適切なStorageClass/PVを準備します。`gp3`クラスが全EKSに自動存在するわけではありません。`authentication.enabled`は必須です。trust domainとagent socket設定は`install.server`や`install.agent`下でなく`authentication.mutual.spire`下です。同梱チャートは旧`server.replicas`、`server.nodeAttestor`、`agent.workloadAttestor`、`server.ca.ttl`例を実装しません。
+
+SPIRE Serverはエージェントを検証しSVIDに署名します。エージェントはワークロードを検証します。Cilium統合はさらに取得を委任し、CiliumセキュリティIDのエントリを登録します。SPIREを有効にするだけでは全通信への認証適用もWireGuard/IPsec有効化もしません。
+
+### 相互認証ポリシーの適用
+
+`authentication`は**Ingress/Egress許可ルール内のオブジェクト**です。配列でも最上位`spec.authentication`スイッチでもありません。このクラスター範囲ポリシーは意図的に1アプリ/名前空間を選びます。
 
 ```yaml
-# Require mutual authentication cluster-wide
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
-  name: enforce-mtls
+  name: production-backend-auth
 spec:
-  endpointSelector: {}
-  authentication:
-  - mode: required
+  endpointSelector:
+    matchLabels:
+      k8s:io.kubernetes.pod.namespace: production
+      k8s:app: backend
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: production
+        k8s:app: frontend
+    toPorts:
+    - ports:
+      - port: '8080'
+        protocol: TCP
+    authentication:
+      mode: required
 ```
 
-### Namespace ごとの相互認証
+### 名前空間ごとの相互認証
+
+この名前空間単位の例は`production`のワークロードを選び、その名前空間の認証済みピアをTCP 8080で許可します。
 
 ```yaml
-# Apply mutual authentication to a specific namespace
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: namespace-mtls
+  name: namespace-auth
   namespace: production
 spec:
   endpointSelector: {}
   ingress:
   - fromEndpoints:
-    - {}
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: production
+    toPorts:
+    - ports:
+      - port: '8080'
+        protocol: TCP
     authentication:
-    - mode: required
-  egress:
-  - toEndpoints:
-    - {}
-    authentication:
-    - mode: required
+      mode: required
 ```
 
-### Service ごとの相互認証
+同一名前空間許可の例で、全アプリの最小権限ではありません。他ポート、クライアント、プローブ、既存ポリシー許可は別評価です。Ingressに影響し、完全なEgress依存ポリシーを暗黙に設定しません。
+
+### サービスごとの相互認証
 
 ```yaml
-# Enforce mutual authentication between specific services
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: service-mtls
+  name: service-auth
   namespace: default
 spec:
   endpointSelector:
     matchLabels:
-      app: backend
-
+      k8s:io.kubernetes.pod.namespace: default
+      k8s:app: backend
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
-    authentication:
-    - mode: required
+        k8s:io.kubernetes.pod.namespace: default
+        k8s:app: frontend
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
+    authentication:
+      mode: required
 ```
 
-## CiliumNetworkPolicy L7 ルール
+送信元/宛先ラベルはワークロードを記述し、エンドユーザーのログインではありません。ワークロード作成、ラベル変更、サービスアカウント使用を誰ができるか、Kubernetes権限で制御する必要があります。
 
-### HTTP L7 セキュリティ policy
+## CiliumNetworkPolicyのL7ルール
+
+### HTTP L7セキュリティポリシー
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -168,114 +189,92 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: api-server
-
+      k8s:io.kubernetes.pod.namespace: default
+      k8s:app: api-server
   ingress:
-  # Read-only access
   - fromEndpoints:
     - matchLabels:
-        role: reader
+        k8s:io.kubernetes.pod.namespace: default
+        k8s:role: reader
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: GET
-          path: "/api/.*"
-
-  # Admin access
+        - method: ^GET$
+          path: ^/api/.*$
   - fromEndpoints:
     - matchLabels:
-        role: admin
+        k8s:io.kubernetes.pod.namespace: default
+        k8s:role: admin
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: ".*"
-          path: "/api/.*"
+        - method: ^(GET|POST|PUT|PATCH|DELETE)$
+          path: ^/api/.*$
           headers:
-          - "Authorization: Bearer .*"
-
-  # Health checks
+          - Authorization
   - fromEndpoints:
     - matchLabels:
-        app: monitoring
+        k8s:io.kubernetes.pod.namespace: default
+        k8s:app: monitoring
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: GET
-          path: "/health"
-        - method: GET
-          path: "/metrics"
+        - method: ^GET$
+          path: ^/health$
+        - method: ^GET$
+          path: ^/metrics$
 ```
 
-### Kafka L7 セキュリティ policy
+ルール内のHTTPルールは選択肢です。`headers: [Authorization]`は存在だけを要求し、bearer token、署名、期限、権限は検証しません。旧`Authorization: Bearer .*`文字列はJWT検証器でも汎用正規表現の値一致でもありません。アプリ認証/認可を独立して行います。
+
+HTTPパスポリシーには対応する検査可能L7経路が必要です。アプリTLS、プローブ、他依存通信には関連設定が必要で、ポート番号だけではTLSは有効になりません。
+
+### Kafka L7セキュリティポリシー
+
+旧`rules.kafka`オブジェクトはCilium 1.20.1 L7スキーマで拒否されます。以下の置換は**ネットワーク到達性だけ**を制限します。
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: kafka-security
+  name: kafka-network-boundary
   namespace: kafka
 spec:
   endpointSelector:
     matchLabels:
-      app: kafka
-
+      k8s:io.kubernetes.pod.namespace: kafka
+      k8s:app: kafka
   ingress:
-  # Producer - allow writing to specific topics only
   - fromEndpoints:
     - matchLabels:
-        role: producer
+        k8s:io.kubernetes.pod.namespace: kafka
+        k8s:role: producer
     toPorts:
     - ports:
-      - port: "9092"
+      - port: '9092'
         protocol: TCP
-      rules:
-        kafka:
-        - apiKey: produce
-          topic: "orders"
-        - apiKey: produce
-          topic: "events"
-        - apiKey: metadata
-
-  # Consumer - allow reading from specific topics only
   - fromEndpoints:
     - matchLabels:
-        role: consumer
+        k8s:io.kubernetes.pod.namespace: kafka
+        k8s:role: consumer
     toPorts:
     - ports:
-      - port: "9092"
+      - port: '9092'
         protocol: TCP
-      rules:
-        kafka:
-        - apiKey: fetch
-          topic: "orders"
-        - apiKey: fetch
-          topic: "events"
-        - apiKey: listoffsets
-          topic: "orders"
-        - apiKey: listoffsets
-          topic: "events"
-        - apiKey: metadata
-        - apiKey: findcoordinator
-        - apiKey: joingroup
-        - apiKey: heartbeat
-        - apiKey: leavegroup
-        - apiKey: syncgroup
-        - apiKey: offsetcommit
-          topic: "orders"
-        - apiKey: offsetfetch
-          topic: "orders"
 ```
 
-### DNS L7 セキュリティ policy
+produce/fetch、トピック、コンシューマーグループ用に、実KafkaリスナーのTLS/SASLとブローカーACLを設定します。古いL7ルール削除後にはL4アクセスが残り、トピック単位認可は維持されません。
+
+### DNS L7セキュリティポリシー
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -286,243 +285,194 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: web-application
-
+      k8s:io.kubernetes.pod.namespace: default
+      k8s:app: web-application
   egress:
-  # Restrict DNS queries
   - toEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: kube-system
-        k8s-app: kube-dns
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "53"
+      - port: '53'
         protocol: UDP
+      - port: '53'
+        protocol: TCP
       rules:
         dns:
-        # Allow internal services only
-        - matchPattern: "*.svc.cluster.local"
-        # Allow specific external domains only
-        - matchName: "api.stripe.com"
-        - matchName: "api.aws.amazon.com"
-        - matchPattern: "*.s3.amazonaws.com"
-
-  # Egress to allowed external services
+        - matchPattern: '*.*.svc.cluster.local'
+        - matchName: api.stripe.com
+        - matchName: sts.us-east-1.amazonaws.com
   - toFQDNs:
-    - matchName: "api.stripe.com"
-    - matchName: "api.aws.amazon.com"
-    - matchPattern: "*.s3.amazonaws.com"
+    - matchName: api.stripe.com
+    - matchName: sts.us-east-1.amazonaws.com
     toPorts:
     - ports:
-      - port: "443"
+      - port: '443'
         protocol: TCP
 ```
 
-## 相互認証
+例は`kube-system`の`k8s-app=kube-dns`ラベル付きCoreDNSと通常の`cluster.local` DNSサフィックスを前提とします。UDP/TCP両方のDNSを許可します。Service FQDNはserviceとnamespace両ラベルを含むため、`*.*.svc.cluster.local`は旧`*.svc.cluster.local`と異なります。
 
-> このセクションでは `authentication.mode` policy の例を設定します。相互認証でカバーされることとカバーされないこと（payload encryption から分離された帯域外 handshake）については、上記の[相互認証とデータ暗号化](#mutual-authentication-and-data-encryption)を参照してください。
+外部HTTPS許可はDNSクエリ許可と別です。`sts.us-east-1.amazonaws.com`は特定リージョンのAWSエンドポイントです。AWSは旧`api.aws.amazon.com`を汎用APIエンドポイントとして使いません。該当IPv6/デュアルスタック/プライベート版も含め、実SDKのリージョン/サービスエンドポイントを選びます。内部DNS応答は全内部Serviceへの接続を自動許可しません。
+
+リゾルバー検索リストと、有効ならNodeLocal DNS動作を確認します。広いS3ワイルドカードは意図した1バケット以外も許し得ます。DNS/IPポリシーは許可先経由の持ち出し防止を保証しません。
+
+## 相互認証
 
 ### 認証モード
 
-```yaml
-# Cilium authentication mode options
+| モード | 帯域外ポリシーAPIでの意味 |
+|---|---|
+| `required` | 一致する許可通信に認証成功を要求 |
+| `disabled` | 一致ルールに対する明示的認証免除 |
+| `test-always-fail` | 意図的に認証失敗させるテストモード |
 
-# 1. disabled - no authentication (default)
-authentication:
-- mode: disabled
+リリーススキーマに`optional`はありません。他ルールが重なる場合、明示要件がないことと慎重に範囲を限定した免除は異なります。認証ルールが通常の独立Allowと同じと想定せず、結果ポリシーを確認します。
 
-# 2. optional - use authentication if possible, otherwise allow
-authentication:
-- mode: optional
+### 相互認証ポリシー例
 
-# 3. required - authentication required
-authentication:
-- mode: required
-
-# 4. test-always-fail - for testing (always fails)
-authentication:
-- mode: test-always-fail
-```
-
-### 相互認証 policy の例
+免除は明示的かつ狭い範囲とし、理由を示すべきです。
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: mutual-auth-policy
+  name: authentication-exception
   namespace: production
 spec:
   endpointSelector:
     matchLabels:
-      app: secure-service
-
+      k8s:io.kubernetes.pod.namespace: production
+      k8s:app: secure-service
   ingress:
-  # Allow authenticated clients only
   - fromEndpoints:
     - matchLabels:
-        app: trusted-client
-    authentication:
-    - mode: required
+        k8s:io.kubernetes.pod.namespace: production
+        k8s:app: trusted-client
     toPorts:
     - ports:
-      - port: "443"
+      - port: '443'
         protocol: TCP
-
-  # Optional authentication for monitoring
+    authentication:
+      mode: required
   - fromEndpoints:
     - matchLabels:
-        app: prometheus
-    authentication:
-    - mode: optional
+        k8s:io.kubernetes.pod.namespace: monitoring
+        k8s:app: prometheus
     toPorts:
     - ports:
-      - port: "9090"
+      - port: '9090'
         protocol: TCP
-```
-
-### SPIFFE ID ベースの認証
-
-```yaml
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: spiffe-auth
-  namespace: default
-spec:
-  endpointSelector:
-    matchLabels:
-      app: database
-
-  ingress:
-  # Allow specific SPIFFE ID only
-  - fromEndpoints:
-    - matchLabels:
-        app: backend
     authentication:
-    - mode: required
-      # SPIFFE ID verification is performed automatically
-      # spiffe://cluster.local/ns/default/sa/backend
+      mode: disabled
 ```
+
+Prometheusルールは「可能なら認証」でなく**認証無効**です。指定監視ワークロードとポートだけを許可します。どちらかのアプリ待ち受けポートのTLSは別アプリ設定です。
+
+### SPIFFE IDベースの認証
+
+デフォルトの**帯域外**SPIRE trust domainでは、CiliumセキュリティIDは次の形式です。
+
+```text
+spiffe://spiffe.cilium/identity/<numeric-security-identity>
+```
+
+許可ピアはエンドポイント/IDポリシーで選択します。`authentication`に任意SPIFFE-ID許可リストフィールドはありません。コメントをIstio型`/ns/.../sa/...` URIに変えてもアクセスは制限されません。上述のztunnelベータは別のワークロードIDモデルです。
 
 ## 暗号化
 
-> このセクションでは、上記の[相互認証とデータ暗号化](#mutual-authentication-and-data-encryption)で概念的に導入した payload-encryption mechanism（WireGuard/IPsec）を設定します。暗号化は相互認証とは別の選択であり、その副産物ではありません。
-
-### WireGuard 透過的暗号化
-
-WireGuard は、Linux kernel level ですべての Pod-to-Pod traffic を暗号化します。
+### WireGuard透過暗号化
 
 ```yaml
-# values.yaml - Enable WireGuard
 encryption:
   enabled: true
   type: wireguard
+```
 
-  wireguard:
-    # Userspace fallback (when kernel support unavailable)
-    userspaceFallback: true
+Ciliumはノード鍵ペアを作り、CiliumNode情報で公開鍵を配布します。**異なるノード**のCilium管理Pod間の対応通信は暗号化されますが、同一ノード通信はされません。カーネルのWireGuard対応が必要です。チャートに`encryption.wireguard.userspaceFallback`はありません。
 
-  # Node-to-node encryption
+必要なノード間UDP 51871経路を許可し、MTU/カプセル化を考慮します。AWS VPC CNIチェイニングには、文書化された`cni.enableRouteMTUForCNIChaining`を含む追加MTU要件があります。無条件に適用せず、選択インストールモードに従います。
+
+#### WireGuardアーキテクチャ
+
+![Ciliumエージェントがノード間WireGuardを論理的に管理し、カーネルのWireGuardインターフェースが暗号化する。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-2.png)
+
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-2.html)
+
+Agentボックスは管理/鍵配布を表し、各パケットのユーザー空間中継ホップではありません。WireGuardインターフェース上のキャプチャでは平文の内側パケットが見える場合があります。暗号化評価では正しい外側ネットワーク経路を確認します。
+
+ノード間の対象拡張は別のベータオプションです。
+
+```yaml
+encryption:
+  enabled: true
+  type: wireguard
   nodeEncryption: true
 ```
 
-```bash
-# Check WireGuard status
-cilium status | grep Encryption
+鍵更新のブートストラップ失敗を避けるため、デフォルトではコントロールプレーンノードをノード暗号化から除外します。リリースの通信表はXDPアクセラレーション、非Geneve DSR、Egress Gateway応答の除外も示します。外部要求のクライアント→クラスター区間はノードWireGuardでは暗号化されません。
 
-# Expected output
-Encryption:              Wireguard  [NodeEncryption: Enabled, cilium_wg0 (Pubkey: xxx, Port: 51871, Peers: 2)]
-
-# Check WireGuard peers
-cilium encrypt status
-
-# Expected output
-Encryption: Wireguard
-Keys in use: 1
-Max Seq. Number: 0x0
-Errors: 0
-```
-
-#### WireGuard アーキテクチャ
-
-![Node A と Node B 上の cilium_wg0 WireGuard interface は、ChaCha20-Poly1305 で暗号化された tunnel を介して Pod-to-Pod traffic を運びます。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-2.png)
-
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-2.html)
-
-### IPsec 暗号化
+### IPsec暗号化
 
 ```yaml
-# values.yaml - Enable IPsec
 encryption:
   enabled: true
   type: ipsec
-
   ipsec:
-    # IPsec interface
-    interface: ""
-
-    # Key rotation interval
-    keyRotationDuration: "5m"
-
-    # Encryption interface
-    mountPath: /etc/ipsec
-
-# Generate IPsec key
-# kubectl create secret generic -n kube-system cilium-ipsec-keys \
-#   --from-literal=keys="3 rfc4106(gcm(aes)) $(openssl rand -hex 20) 128"
+    secretName: cilium-ipsec-keys
+    keyFile: keys
+    keyWatcher: true
+    keyRotationDuration: 5m
 ```
+
+SecretはCiliumの名前空間に存在する必要があります。文書化されたAES-GCM例の`keys`エントリは次の形式です。
+
+```text
+3+ rfc4106(gcm(aes)) <fresh-20-byte-random-value-in-hex> 128
+```
+
+`+`はトンネルごとに導出した鍵を選びます。`+`なしの旧グローバル鍵形式はセキュリティ上の理由で非推奨です。現行ガイダンスとしてコピーしないでください。サンプル鍵を再利用せず、文書化されたCLI/Secret手順で新しい鍵素材を生成・保護します。
+
+`keyRotationDuration: 5m`は鍵変更後の移行/旧鍵削除猶予で、**5分ごとに新鍵を生成するスケジューラーではありません**。対応ローテーション手順で鍵IDと素材を更新し、ClusterMesh使用時は全クラスターを調整します。更新中にノード版が混在している間はローテーションしないでください。
+
+ESP/ファイアウォール対応、実暗号化インターフェース、ネイティブルーティングCIDRを確認します。現IPsecはL7で文書化された透過DNSプロキシ動作を要求し、CNIチェイニングとホストポリシーは非対応で、同一ノード通信は暗号化しません。
 
 ### 暗号化の比較
 
-| 機能 | WireGuard | IPsec |
-|---------|-----------|-------|
-| パフォーマンス | 非常に高い | 高い |
-| 設定の複雑さ | 低い | 中程度 |
-| Kernel サポート | 5.6+（組み込み） | 全バージョン |
-| 暗号化アルゴリズム | ChaCha20Poly1305 | AES-GCM など |
-| Key 管理 | 自動 | 手動/自動 |
-| 標準 | 非標準 | IETF 標準 |
+| 項目 | WireGuard | IPsec | ztunnelベータ |
+|---|---|---|---|
+| 鍵/ID | ノード生成の鍵ペア | トンネル別導出を使う配布鍵素材 | ワークロードmTLS証明書とブートストラップ/CA素材 |
+| データ経路 | カーネルWireGuardインターフェース | カーネルIPsec/XFRM | ノードごとのTLSプロキシとPod名前空間リダイレクト |
+| 同一ノード/範囲 | 同一ノード通信は非暗号化。リリース通信表を使用 | 同一ノード通信は非暗号化。モード制限あり | 両端参加、TCPのみ、ポリシー制限あり |
+| 暗号設定 | WireGuardのChaCha20-Poly1305スイート | AES-GCMなどカーネル対応の設定アルゴリズム | 対応プロキシがネゴシエートするTLS |
+| 性能 | 実CPU、MTU、通信構成を測定 | アルゴリズム/ハードウェア、トンネル、単一トンネル復号制約を測定 | プロキシ、TLS、ワークロード負荷を測定。以前の比較ベンチマーク対象外 |
 
-## Identity ベースのセキュリティ
+透過暗号化にも、許可された未知宛先を外部として扱うエンドポイント検出の期間があり得ます。Ciliumは緩和策として制限Egressと暗号化strictモードを文書化しますが、制限があります。strict EgressはIPv4/CIDR依存、strict IngressはWireGuardと管理インターフェースが必要でCNIチェイニング非対応です。「暗号化有効」を全経路のfail-closed保護の証明と解釈しないでください。
 
-### Cilium Identity
+## IDベースのセキュリティ
 
-Cilium は IP ではなく Identity に基づいて security policy を適用します。
+### Cilium ID
 
-![Pod の label set は数値 Identity に hash 化され、それを使用して eBPF policy map を検索し、allow/deny decision を生成します。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-3.png)
+CiliumはIDに関係するラベル集合に数値IDを割り当て、複数Podが共有できます。ユーザー計算のハッシュでも永久Pod識別子でもありません。
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-3.html)
-
-### Identity コンポーネント
+### IDの構成要素
 
 ```bash
-# Identity label composition
-# - k8s:io.kubernetes.pod.namespace
-# - k8s:io.cilium.k8s.policy.serviceaccount
-# - k8s:app
-# - k8s:version
-# - Other user-defined labels
-
-# List identities
-cilium identity list
-
-# Example output
-IDENTITY   LABELS
-1          reserved:host
-2          reserved:world
-3          reserved:unmanaged
-4          reserved:health
-5          reserved:init
-6          reserved:remote-node
-12345      k8s:app=frontend,k8s:io.kubernetes.pod.namespace=default
-12346      k8s:app=backend,k8s:io.kubernetes.pod.namespace=default
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+CILIUM_POD='<agent-on-the-workload-node>'
+kubectl -n default get ciliumendpoints
+kubectl get ciliumidentities
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg identity list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg encrypt status
 ```
 
-### Identity ベースの policy
+名前空間、サービスアカウント、選択ワークロードラベルが寄与し得ます。ID 1–6はhost、world、unmanaged、health、init、remote-nodeに対応し、割り当てワークロードIDはインストールに依存します。関連ノードのエージェントを調べ、コマンド失敗/状態を完全に保持します。
+
+### IDベースのポリシー
 
 ```yaml
-# Identity-based network policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -531,40 +481,43 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: backend
-
+      k8s:io.kubernetes.pod.namespace: default
+      k8s:app: backend
   ingress:
-  # Allow only Pods with specific labels (Identity)
   - fromEndpoints:
     - matchLabels:
-        app: frontend
-        environment: production
+        k8s:io.kubernetes.pod.namespace: default
+        k8s:app: frontend
+        k8s:environment: production
     toPorts:
     - ports:
-      - port: "8080"
-
-  # Allow specific service from another namespace
+      - port: '8080'
+        protocol: TCP
   - fromEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: monitoring
-        app: prometheus
+        k8s:app: prometheus
     toPorts:
     - ports:
-      - port: "9090"
+      - port: '9090'
+        protocol: TCP
 ```
 
-### IP と Identity の比較
+### IPとIDの比較
 
-![IP ベースの security では Pod IP が変更されるたびに policy update が必要ですが、Identity ベースの security は IP churn の影響を受けません。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-4.png)
+![IDセレクターでPod変更ごとのアドレス一覧手修正を避ける一方、CiliumはアドレスとIDの対応状態を維持する。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-4.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-4.html)
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-4.html)
 
-## 外部 PKI 統合
+IP変更をまたいでポリシーセレクターは安定したままにできます。Ciliumはエンドポイント/IPキャッシュ状態を更新する必要があり、IDはGCで回収・再割り当てされ得ます。図は再起動ごとに数値IDが不変と約束しません。
 
-### cert-manager 統合
+## 外部PKI統合
+
+### cert-manager統合
+
+以下は上流CA Secret生成の例であり、**それだけでSecretをSPIREへ接続しません**。
 
 ```yaml
-# Certificate management with cert-manager
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -580,144 +533,170 @@ metadata:
   namespace: cilium-spire
 spec:
   secretName: spire-ca-secret
-  duration: 8760h  # 1 year
-  renewBefore: 720h  # Renew 30 days before expiry
+  duration: 8760h
+  renewBefore: 720h
   isCA: true
   privateKey:
     algorithm: ECDSA
     size: 256
+    rotationPolicy: Always
+  usages:
+  - cert sign
+  - crl sign
   subject:
     organizations:
     - Cilium
-  commonName: SPIRE CA
+  commonName: SPIRE upstream CA
   issuerRef:
     name: cilium-ca-issuer
     kind: ClusterIssuer
+    group: cert-manager.io
 ```
 
-### Vault 統合
+cert-manager設定のクラスターリソース名前空間にある`cilium-ca-secret`へ、十分な残存有効期間を持つ有効署名CA/キーを準備します。CA制約、署名用途、信頼チェーンを検証します。1年は下位CA寿命の例で、普遍的推奨ではありません。
 
-```yaml
-# Use Vault as CA in SPIRE
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: spire-server-config
-  namespace: cilium-spire
-data:
-  server.conf: |
-    server {
-      trust_domain = "cluster.local"
+外部管理SPIREサーバーは対応UpstreamAuthorityを使い、必要マウント素材またはissuer APIへアクセスする必要があります。既存PKIへ参加するdisk authorityでは、SPIREは`cert_file_path`、`key_file_path`、信頼ルートの`bundle_file_path`を要求します。再読み込み/ローテーションと信頼の重複期間を計画します。Kubernetes Secret更新だけでは全利用者が新CAを採用した証明にはなりません。
 
-      ca_subject = {
-        country = ["US"]
-        organization = ["MyOrg"]
-        common_name = ""
-      }
+同梱SPIRE ConfigMapを部分的な無関係ファイルで置き換えないでください。外部運用SPIREでは、Ciliumの外部サーバーアドレス、trust domain、委任ID登録、認証前提を別々に確認します。
 
-      # Vault UpstreamAuthority
-      UpstreamAuthority "vault" {
-        plugin_data {
-          vault_addr = "https://vault.vault.svc:8200"
-          pki_mount_path = "pki"
-          ca_cert_path = "/vault/ca/ca.crt"
-          token_path = "/vault/token/token"
-        }
+### Vault統合
+
+以下は独立設定したSPIRE 1.15.2サーバーの**プラグイン断片**のみで、完全なサーバー設定やKubernetes Deploymentではありません。
+
+```hcl
+plugins {
+  UpstreamAuthority "vault" {
+    plugin_data {
+      vault_addr = "https://vault.vault.svc:8200"
+      pki_mount_point = "pki"
+      ca_cert_path = "/vault/ca/ca.crt"
+      k8s_auth {
+        k8s_auth_mount_point = "kubernetes"
+        k8s_auth_role_name = "spire-upstream"
+        token_path = "/var/run/secrets/vault/token"
       }
     }
+  }
+}
 ```
 
-## Zero Trust ネットワーキング
+プラグインは`server`内でなく最上位`plugins`に置きます。フィールドは`pki_mount_point`、ここで`token_path`は`k8s_auth`内です。トークンは設定Vault認証ロール用の投影Kubernetesサービスアカウントトークンで、汎用Vaultトークンファイルではありません。
 
-### Default Deny policy
+トークン投影/audienceとVault Kubernetes認証を準備し、ロールを対象SPIREワークロードに結び付け、Vault検証用TLS CAをマウントして、必要なPKI sign-intermediate操作を許可します。SPIREの`ca_ttl`、Vault PKI TTL、ワークロード信頼、ローテーションを調整します。このガイドは外部依存をデプロイ/テスト済みと主張しません。
+
+## ゼロトラストネットワーキング
+
+### デフォルト拒否ポリシー
+
+このクラスター範囲リソースは、隔離した`policy-lab`名前空間を意図的に対象とします。
 
 ```yaml
-# Cluster-wide default deny
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
-  name: default-deny
+  name: policy-lab-default-deny
+spec:
+  endpointSelector:
+    matchLabels:
+      k8s:io.kubernetes.pod.namespace: policy-lab
+  enableDefaultDeny:
+    ingress: true
+    egress: true
+  ingress: []
+  egress: []
+```
+
+`enableDefaultDeny`を明示します。空のCilium ingress/egress配列だけではデフォルト拒否を有効にするルールは提供されません。Kubernetes NetworkPolicy例からその前提を持ち込まないでください。
+
+DNSなど具体的な依存先を別Allowルールとして追加します。
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: policy-lab-dns
+  namespace: policy-lab
 spec:
   endpointSelector: {}
-  ingress:
-  - fromEndpoints:
-    - matchLabels:
-        reserved:host: ""
   egress:
   - toEndpoints:
     - matchLabels:
-        reserved:host: ""
-  - toEndpoints:
-    - matchLabels:
         k8s:io.kubernetes.pod.namespace: kube-system
-        k8s-app: kube-dns
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "53"
+      - port: '53'
         protocol: UDP
+      - port: '53'
+        protocol: TCP
 ```
+
+すべてのホストネットワーク通信を許す普遍的要件はありません。実kubelet/プローブ、リゾルバー、ホストポリシー動作を評価します。例はCiliumのホスト処理を変えず、侵害された特権ノードを防御しません。
 
 ### 最小権限アクセス
 
+例は`edge`の`app=ingress-gateway`ラベル付きCilium管理ゲートウェイ、`production`のfrontend/database、動作するSPIRE統合を前提とします。
+
 ```yaml
-# Production namespace security policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: production-security
   namespace: production
 spec:
-  # Apply to all Pods
-  endpointSelector: {}
-
-  # Default deny
-  ingressDeny:
-  - fromEntities:
-    - world
-
-  # Allow rules
+  endpointSelector:
+    matchLabels:
+      k8s:io.kubernetes.pod.namespace: production
+      k8s:app: api
   ingress:
-  # Allow communication within same namespace
   - fromEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: production
-    authentication:
-    - mode: required
-
-  # Allow access from Ingress Controller
-  - fromEndpoints:
-    - matchLabels:
-        k8s:io.kubernetes.pod.namespace: ingress-nginx
-        app: nginx-ingress
+        k8s:app: frontend
     toPorts:
     - ports:
-      - port: "8080"
-
+      - port: '8080'
+        protocol: TCP
+    authentication:
+      mode: required
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: edge
+        k8s:app: ingress-gateway
+    toPorts:
+    - ports:
+      - port: '8080'
+        protocol: TCP
   egress:
-  # DNS
   - toEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: kube-system
-        k8s-app: kube-dns
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "53"
+      - port: '53'
         protocol: UDP
-
-  # Communication within same namespace
+      - port: '53'
+        protocol: TCP
   - toEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: production
+        k8s:app: database
+    toPorts:
+    - ports:
+      - port: '5432'
+        protocol: TCP
     authentication:
-    - mode: required
+      mode: required
 ```
+
+選択Gateway実装で実際に観測したラベルとIDを使います。Cilium自身のノードEnvoy Ingress/Gateway経路や外部LBは異なるIDを示す場合があります。任意Podラベルは`reserved:ingress`や外部クライアントアドレスと交換可能ではありません。終了した旧ingress-nginx例は必須依存ではありません。
 
 ### マイクロセグメンテーション
 
+このアプリ階層ポリシーは、Service検索を開始する階層に明示DNSアクセスを残します。同じGatewayモデルと指定待ち受けポートを前提とします。
+
 ```yaml
-# 3-tier architecture security
----
-# Frontend policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -726,24 +705,39 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      tier: frontend
-
+      k8s:io.kubernetes.pod.namespace: app
+      k8s:tier: frontend
   ingress:
-  - fromEntities:
-    - world
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: edge
+        k8s:app: ingress-gateway
     toPorts:
     - ports:
-      - port: "443"
-
+      - port: '443'
+        protocol: TCP
   egress:
   - toEndpoints:
     - matchLabels:
-        tier: backend
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '53'
+        protocol: UDP
+      - port: '53'
+        protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: app
+        k8s:tier: backend
+    toPorts:
+    - ports:
+      - port: '8080'
+        protocol: TCP
+    authentication:
+      mode: required
 ---
-# Backend policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -752,29 +746,41 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      tier: backend
-
+      k8s:io.kubernetes.pod.namespace: app
+      k8s:tier: backend
   ingress:
   - fromEndpoints:
     - matchLabels:
-        tier: frontend
+        k8s:io.kubernetes.pod.namespace: app
+        k8s:tier: frontend
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
+        protocol: TCP
     authentication:
-    - mode: required
-
+      mode: required
   egress:
   - toEndpoints:
     - matchLabels:
-        tier: database
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "5432"
+      - port: '53'
+        protocol: UDP
+      - port: '53'
+        protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: app
+        k8s:tier: database
+    toPorts:
+    - ports:
+      - port: '5432'
+        protocol: TCP
     authentication:
-    - mode: required
+      mode: required
 ---
-# Database policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -783,98 +789,112 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      tier: database
-
+      k8s:io.kubernetes.pod.namespace: app
+      k8s:tier: database
+  enableDefaultDeny:
+    egress: true
   ingress:
   - fromEndpoints:
     - matchLabels:
-        tier: backend
+        k8s:io.kubernetes.pod.namespace: app
+        k8s:tier: backend
     toPorts:
     - ports:
-      - port: "5432"
+      - port: '5432'
+        protocol: TCP
     authentication:
-    - mode: required
-
-  # No external egress (data exfiltration prevention)
-  egressDeny:
-  - toEntities:
-    - world
+      mode: required
+  egress: []
 ```
 
-## セキュリティ監査とモニタリング
+DBはEgress Allowなしで明示的にEgressデフォルト拒否を有効にします。許可接続へのステートフル応答は引き続き許可されます。実バックアップ、レプリケーション、認証などの依存を意図的に追加します。ネットワーク経路制限は、認可されたDB/アプリ要求を通じたデータ取得を完全防止しません。
 
-### Policy Audit Mode
+## セキュリティ監査と監視
 
-```yaml
-# Test policy in audit mode
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: audit-policy
-  namespace: default
-  annotations:
-    # Audit mode - logging only, no blocking
-    cilium.io/audit-mode: "true"
-spec:
-  endpointSelector:
-    matchLabels:
-      app: backend
+### ポリシー監査モード
 
-  ingress:
-  - fromEndpoints:
-    - matchLabels:
-        app: frontend
-    toPorts:
-    - ports:
-      - port: "8080"
-```
+`cilium.io/audit-mode: "true"`は対応するポリシーごとの監査スイッチではありません。その任意アノテーションを持つポリシーも通常どおり適用され得ます。
 
-### Policy 違反のモニタリング
+**隔離エンドポイントテスト**では、実際の変更可能オプションは`PolicyAuditMode`です。ローカルエンドポイントを確認し、一時有効化して管理された観察後に適用を戻します。
 
 ```bash
-# Observe policy violations with Hubble
-hubble observe --verdict DROPPED
-
-# Dropped traffic in specific namespace
-hubble observe --namespace production --verdict DROPPED
-
-# Policy violation statistics
-hubble observe --verdict DROPPED -o json | jq -r '.flow | "\(.source.namespace)/\(.source.pod_name) -> \(.destination.namespace)/\(.destination.pod_name)"' | sort | uniq -c | sort -rn
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint list
+ENDPOINT_ID='<local-endpoint-id-in-the-isolated-test>'
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint config "$ENDPOINT_ID"
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint config "$ENDPOINT_ID" PolicyAuditMode=true
+# Observe the controlled test, then restore enforcement.
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint config "$ENDPOINT_ID" PolicyAuditMode=false
 ```
 
-### Prometheus メトリクス
+1ポリシーオブジェクトへ監査動作を付けるのでなく、そのエンドポイントの適用を変えます。全L7拒否や全セキュリティ失敗が許可監査イベントになると推測しないでください。具体的データパス/プロキシ動作を確認します。`enableDefaultDeny: false`も同等のL7監査モードではありません。
+
+### ポリシー違反の監視
+
+```bash
+# Terminal 1
+cilium hubble port-forward --port-forward 4245
+# Terminal 2
+hubble observe --server localhost:4245 --namespace production --verdict DROPPED --last 100
+hubble observe --server localhost:4245 --namespace production --verdict DROPPED --drop-reason-desc POLICY_DENIED --last 100
+hubble observe --server localhost:4245 --namespace policy-lab --verdict AUDIT --last 100
+```
+
+`DROPPED`にはポリシー拒否以外の原因も含まれます。理由で絞ったクエリは報告されたpolicy-denied破棄に注目します。L7/アプリ認可失敗には独自観測が必要です。`AUDIT`は`DROPPED`と別です。`--last 100`は制限付き履歴で、Relayは接続Hubbleインスタンスごとにその数を返す場合があります。完全なクラスター通信カウンターではありません。ストリーミング観測が意図した場合だけ`--follow`を追加します。
+
+### Prometheusメトリクス
 
 ```yaml
-# Collect security-related metrics
+prometheus:
+  enabled: true
 hubble:
+  enabled: true
   metrics:
     enabled:
     - dns
     - drop
     - flow
-    - http
+    - httpV2
     - icmp
     - port-distribution
     - tcp
-
-# Useful metrics
-# - cilium_drop_count_total: Packets dropped by policy
-# - cilium_policy_verdict: Policy decisions (allow/deny)
-# - cilium_forward_count_total: Forwarded packets
 ```
+
+エージェントとHubbleエクスポーターには、有効化フラグに加えてPrometheus検出/スクレイプが必要です。`httpV2`は非推奨`http`を置き換えるため両方有効にしないでください。HTTPメトリクスには対応L7可視性が必要です。
+
+- `cilium_drop_count_total`は理由/方向別の破棄パケットを数え、ポリシー違反だけではありません。
+- `cilium_forward_count_total`は転送パケットを数え、成功アプリ要求ではありません。
+- Hubbleの`drop`エクスポーターは`hubble_drop_total`でフロー破棄情報を公開し、エージェントのパケットカウンターとは計数単位が違います。
+- 旧`cilium_policy_verdict`は文書化されたメトリクス名ではありません。実ポリシー判定イベントか選択エクスポーターが公開するメトリクスを使います。
 
 ## 次のステップ
 
-- [Observability](./04-observability.md): Hubble を使用したセキュリティモニタリング
-- [Ingress & Gateway](./05-ingress-gateway.md): 外部 traffic のセキュリティ
-- [ベストプラクティス](./06-best-practices.md): 本番環境のセキュリティ設定
+- [可観測性](./04-observability.md)
+- [IngressとGateway](./05-ingress-gateway.md)
+- [ベストプラクティス](./06-best-practices.md)
+- [セキュリティクイズ](../../quizzes/service-mesh/cilium-service-mesh/security.md)
 
 ## 参考資料
 
-- [Cilium Network Policy ドキュメント](https://docs.cilium.io/en/stable/security/policy/)
-- [Cilium 相互認証](https://docs.cilium.io/en/stable/network/servicemesh/mutual-authentication/)
-- [Cilium 暗号化ドキュメント](https://docs.cilium.io/en/stable/security/network/encryption/)
-- [Cilium Native mTLS](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)
-- [Istio PeerAuthentication](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
-- [SPIFFE/SPIRE ドキュメント](https://spiffe.io/docs/latest/)
-- [Zero Trust Architecture - NIST](https://www.nist.gov/publications/zero-trust-architecture)
+- [Cilium1.20.1相互認証](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [認証例/API構造](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication-example.rst)
+- [Cilium1.20.1 CNPスキーマ](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+- [Cilium1.20.1 ztunnelベータ](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)
+- [Ztunnel CA実装](https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go)
+- [Ztunnelブートストラップ例](https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes-ztunnel/generate-secrets.sh)
+- [暗号化範囲/strictモード](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption.rst)
+- [WireGuard](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
+- [IPsecと鍵ローテーション](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ipsec.rst)
+- [Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
+- [HTTP/DNSポリシー](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst)
+- [デフォルト拒否動作](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/intro.rst)
+- [明示的デフォルト拒否API](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/rule.go)
+- [変更可能エンドポイント監査オプション](https://github.com/cilium/cilium/blob/v1.20.1/pkg/option/endpoint.go)
+- [エンドポイント設定CLI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_config.md)
+- [メトリクス](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst)
+- [SPIRE1.15.2サーバー設定](https://github.com/spiffe/spire/blob/v1.15.2/doc/spire_server.md)
+- [SPIRE Vault authority](https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_vault.md)
+- [SPIRE disk authority](https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_disk.md)
+- [Kafka ACL](https://kafka.apache.org/41/security/authorization-and-acls/)
+- [AWS STSエンドポイント](https://docs.aws.amazon.com/general/latest/gr/sts.html)
+- [WireGuardプロトコル](https://www.wireguard.com/protocol/)
+- [NISTゼロトラストアーキテクチャ — 追加資料](https://www.nist.gov/publications/zero-trust-architecture)

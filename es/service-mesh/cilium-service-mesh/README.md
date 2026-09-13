@@ -1,329 +1,148 @@
 # Descripción general de Cilium Service Mesh
 
-> **Versiones compatibles**: Cilium 1.16+, Kubernetes 1.28+
-> **Última actualización**: February 22, 2026
+> **Última actualización**: 11 de septiembre de 2026 · Cilium/chart 1.20.1 · CLI 0.20.0 · Hubble CLI 1.19.4
 
-## Introducción
+Cilium combina redes Kubernetes, políticas/balanceo eBPF y funciones opcionales de proxy de aplicación. Su integración Envoy procesa tráfico L7 seleccionado; eliminar sidecars por aplicación no elimina el proxy, requisitos del kernel ni componentes operativos.
 
-Cilium Service Mesh es una solución de service mesh sin sidecar basada en eBPF. A diferencia de los enfoques tradicionales de proxy sidecar, Cilium Service Mesh aprovecha la tecnología eBPF del kernel de Linux para procesar el tráfico de red y utiliza un único proxy Envoy compartido por nodo para proporcionar funcionalidad L7.
+## Arquitectura y límites de seguridad
 
-### Propuesta de valor clave
+![Comparación lógica con Istio sidecar: Cilium usa la ruta eBPF y redirige tráfico L7 seleccionado a Envoy compartido. No garantiza cifrado/rendimiento ni representa Istio ambient.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-readme-0.png)
 
-El valor central de Cilium Service Mesh es una **plataforma unificada de networking y service mesh**:
+[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-readme-0.html)
 
-1. **Eficiencia de recursos**: Funcionalidades de service mesh sin la sobrecarga de un proxy sidecar
-2. **Baja latencia**: Procesamiento de paquetes a nivel de kernel mediante eBPF
-3. **Operaciones sencillas**: CNI y service mesh integrados en un único componente
-4. **Adopción gradual**: Los usuarios existentes de Cilium CNI pueden ampliar fácilmente a service mesh
-5. **Seguridad sólida**: Identidad basada en SPIFFE y compatibilidad transparente con mTLS
+Envoy puede ejecutarse como proceso con el agente Cilium o como DaemonSet `cilium-envoy` gestionado por separado. La configuración renderizada habitual del chart elegido usa el DaemonSet dedicado. Ubicación y número de saltos L7 dependen de funciones/políticas; no todo paquete atraviesa Envoy.
 
-## Arquitectura Sidecar vs. sin Sidecar
+| Componente | Rol |
+|---|---|
+| Agente Cilium | Ruta de datos del nodo, identidades de endpoints y aplicación de políticas |
+| Operador Cilium | IPAM y otras responsabilidades de clúster/controlador según modo |
+| Envoy | Políticas L7 coincidentes, ingress y Gateway API |
+| Hubble | Observaciones de flujos; L7 requiere visibilidad del proxy correspondiente |
+| Hubble Relay / UI | Componentes adicionales de agregación y visualización |
+| SPIRE, si se configura | Infraestructura de identidad para autenticación mutua beta |
 
-```mermaid
-graph TB
-    subgraph "Traditional Sidecar Approach (Istio)"
-        direction TB
-        P1A[Pod A]
-        S1A[Sidecar Proxy A]
-        P1B[Pod B]
-        S1B[Sidecar Proxy B]
+### Autenticación mutua no es cifrado automático de tráfico
 
-        P1A --> S1A
-        S1A --> S1B
-        S1B --> P1B
-    end
+Cilium 1.20.1 documenta **la autenticación mutua fuera de banda como beta e incompleta**. Su handshake de identidad basado en mTLS ocurre fuera de banda entre agentes para identidades de seguridad Cilium. No envuelve cada conexión de aplicación en el mismo modelo TLS de un proxy Istio o Linkerd.
 
-    subgraph "Cilium Service Mesh Approach"
-        direction TB
-        P2A[Pod A]
-        P2B[Pod B]
-        eBPF1[eBPF Datapath]
-        NodeEnvoy[Node Envoy<br/>L7 Processing]
+WireGuard/IPsec son mecanismos independientes con sus modos y alcances. WireGuard no es TLS y habilitar solo SPIRE no cifra datos ni activa reglas de autenticación para todos los endpoints. La versión también documenta incompatibilidad de autenticación mutua con ClusterMesh o una solución mTLS de malla externa.
 
-        P2A --> eBPF1
-        eBPF1 --> NodeEnvoy
-        NodeEnvoy --> eBPF1
-        eBPF1 --> P2B
-    end
-```
+Cilium 1.20.1 ofrece además una [beta separada de cifrado transparente ztunnel](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), seleccionada con `encryption.type: ztunnel`. Proporciona mTLS TCP de cargas por inscripción de namespace; ambos extremos deben estar inscritos. Excluye ClusterMesh y Pods host-network; la guía advierte que las políticas L4 ordinarias no funcionan en esa ruta salvo sobre HBONE 15008. Es otro despliegue con requisitos CA/bootstrap propios.
 
-### Diagrama de comparación de arquitecturas
+Revise la [guía de seguridad](03-security.md) y el modelo/límites publicados antes de adoptarlo. Trate routing, autenticación, autorización y cifrado como requisitos distintos.
 
-```mermaid
-flowchart LR
-    subgraph "Sidecar-based (Istio)"
-        direction TB
-        AppA1[App Container] --> ProxyA1[Envoy Sidecar]
-        ProxyA1 --> Network1[Network]
-        Network1 --> ProxyB1[Envoy Sidecar]
-        ProxyB1 --> AppB1[App Container]
-    end
+Cilium también puede proporcionar el CNI de una instalación Istio. Esa integración no hace intercambiables sus autenticaciones; revise balanceo en sockets según modo, coexistencia CNI y propiedad de políticas L7.
 
-    subgraph "eBPF-based (Cilium)"
-        direction TB
-        AppA2[App Container] --> eBPF2[eBPF<br/>L3/L4]
-        eBPF2 --> SharedProxy[Shared Envoy<br/>L7 Only]
-        SharedProxy --> eBPF3[eBPF<br/>L3/L4]
-        eBPF3 --> AppB2[App Container]
-    end
-```
+## Comparar capacidades y costes medidos
 
-## Comparación de Service Mesh
+| Tema | Cilium | Istio | Linkerd |
+|---|---|---|---|
+| Plano de datos | eBPF y Envoy compartido para L7 seleccionado | Sidecar o roles ztunnel/waypoint ambient | Proxy por Pod, incluida ubicación sidecar nativa |
+| Redes Pod | Proporciona CNI o se encadena con otro según modo | Necesita red Pod subyacente; su CNI redirige tráfico de malla | Necesita red Pod; CNI opcional redirige tráfico de malla |
+| Política | NetworkPolicy Kubernetes/Cilium y L7 | Autorización/rutas de malla con capa de red separada | Autorización Server/ruta y routing saliente, no solo L4 |
+| Gateway API | Controlador opt-in y conformidad/funciones documentadas | Roles gateway y routing de malla | Roles de rutas con padres Service/Server admitidos |
+| Seguridad | Autenticación fuera de banda y cifrado separado; ztunnel mTLS beta distinto con límites | mTLS de carga más políticas | mTLS de carga más políticas |
 
-| Característica | Cilium Service Mesh | Istio | Linkerd |
-|---------|---------------------|-------|---------|
-| **Arquitectura** | eBPF + Node Envoy | Sidecar Envoy | Sidecar linkerd2-proxy |
-| **Proxy** | 1 por nodo (solo L7) | 1 por Pod | 1 por Pod |
-| **Sobrecarga de memoria** | Baja (~50-100MB/nodo) | Alta (~50MB/Pod) | Media (~20MB/Pod) |
-| **Sobrecarga de CPU** | Muy baja | Alta | Media |
-| **Latencia** | ~0.1-0.5ms | ~1-3ms | ~0.5-1ms |
-| **Procesamiento L4** | eBPF (kernel) | Envoy (userspace) | linkerd2-proxy |
-| **Procesamiento L7** | Envoy | Envoy | linkerd2-proxy |
-| **mTLS** | Transparente (eBPF/WireGuard) | Sidecar Envoy | linkerd2-proxy |
-| **Integración de CNI** | Nativa | Requiere CNI independiente | Requiere CNI independiente |
-| **Complejidad de instalación** | Baja | Alta | Media |
-| **Gateway API** | Compatibilidad completa | Compatibilidad completa | Compatibilidad parcial |
-| **Política de red** | CiliumNetworkPolicy (L3-L7) | AuthorizationPolicy | Server (L4) |
-| **Observabilidad** | Hubble (nativa) | Kiali, Jaeger | Linkerd Viz |
+Ningún producto tiene un ranking universal CPU/memoria/latencia independiente de carga y configuración. Las cifras fijas antiguas por nodo/Pod y el diagrama de memoria de 100 Pods no eran un benchmark atribuido y omitían componentes, nodos y carga. Compare coste incremental medido con la misma base, incluyendo agentes/proxies, controladores, telemetría e identidad.
 
-### Comparación de uso de recursos
+Cilium puede ser útil si su modelo de red y L7 necesario encajan, especialmente si ya se opera allí. Evalúe migración CNI, soporte kernel/plataforma, fallo de nodo compartido, seguridad y dependencias de políticas. Ni «sin sidecars» ni «eBPF» demuestran un objetivo de latencia/coste para cargas financieras o en tiempo real.
 
-```mermaid
-graph LR
-    subgraph "Memory Usage for 100 Pod Cluster"
-        direction TB
-        Cilium["Cilium SM<br/>~500MB total<br/>(~100MB per node)"]
-        Istio["Istio<br/>~5GB total<br/>(~50MB per Pod)"]
-        Linkerd["Linkerd<br/>~2GB total<br/>(~20MB per Pod)"]
-    end
-```
+Consulte la [comparación mantenida de mallas](../istio/comparison/01-service-mesh-comparison.md) para límites más amplios.
 
-## Cuándo elegir Cilium Service Mesh
+## Requisitos de versión y plataforma
 
-### Casos de uso adecuados
+Para la versión elegida:
 
-1. **Ya utiliza Cilium CNI**
-   - Aproveche la inversión existente en Cilium
-   - Habilite funcionalidades de service mesh sin componentes adicionales
-   - Operaciones y monitoreo unificados
-
-2. **La eficiencia de recursos es crítica**
-   - Elimine la sobrecarga de sidecar en clusters grandes
-   - Se requiere optimización de recursos de nodo
-   - La reducción de costos es importante
-
-3. **La baja latencia es esencial**
-   - Workloads de alto rendimiento
-   - Aplicaciones en tiempo real
-   - Sistemas financieros/de trading
-
-4. **Se desean operaciones sencillas**
-   - Un único componente para CNI + service mesh
-   - No se necesita gestionar la inyección de sidecar
-   - Actualizaciones y resolución de problemas simplificadas
-
-### Casos de uso no adecuados
-
-1. **Gran inversión existente en Istio**
-   - Ya se implementaron políticas complejas de Istio
-   - Dependencia de funcionalidades específicas de Istio
-
-2. **Se requieren extensiones extensas de Envoy**
-   - Filtros personalizados por sidecar
-   - Configuración detallada de proxy por Pod
-
-3. **Mesh multi-cluster complejo**
-   - Necesidad de las funcionalidades maduras multi-cluster de Istio
-
-## Requisitos previos
-
-### Verificar la instalación de Cilium CNI
-
-Cilium Service Mesh requiere que Cilium CNI se instale primero:
+- La compatibilidad Kubernetes e2e general es **1.33–1.36**. El archivo EKS CI publicado lista **1.33–1.35**, con 1.35 por defecto. Son conjuntos de evidencia distintos; combinaciones nuevas/no listadas del proveedor necesitan validación separada.
+- El permisivo `kubeVersion >=1.21.0-0` del chart no es la matriz probada; versiones Kubernetes más recientes no quedan cubiertas automáticamente.
+- Hosts requieren Linux AMD64/AArch64 compatible, normalmente kernel 5.10 o posterior o backport equivalente documentado. Redirección L7 y funciones avanzadas añaden requisitos kernel/módulos.
+- La referencia Gateway API es **v1.6.1**. Revise CRD requeridos/opcionales y notas de actualización TLSRoute 1.20 antes de cambiarlos; no sustituya por latest sin revisión.
 
 ```bash
-# Check Cilium status
-cilium status
-
-# Expected output
-    /¯¯\
- /¯¯\__/¯¯\    Cilium:             OK
- \__/¯¯\__/    Operator:           OK
- /¯¯\__/¯¯\    Envoy DaemonSet:    OK
- \__/¯¯\__/    Hubble Relay:       OK
-    \__/       ClusterMesh:        disabled
-
-# Check Cilium version
+cilium version --client
 cilium version
+cilium status --wait --wait-duration 5m
+kubectl -n kube-system get daemonset cilium
+# For the dedicated Envoy mode selected below:
+kubectl -n kube-system get daemonset cilium-envoy
 ```
 
-### Instalar Cilium en EKS
+La versión CLI y la imagen Cilium activa son datos distintos. Conserve estado completo y errores; grep de «Envoy» o «Hubble» no certifica readiness. En modo integrado puede ser normal que no exista DaemonSet Envoy dedicado.
 
-```bash
-# Add Helm repository
-helm repo add cilium https://helm.cilium.io/
-helm repo update
+### Opciones de instalación EKS
 
-# Install Cilium on EKS (with service mesh features)
-helm install cilium cilium/cilium --version 1.16.0 \
-  --namespace kube-system \
-  --set eni.enabled=true \
-  --set ipam.mode=eni \
-  --set egressMasqueradeInterfaces=eth0 \
-  --set routingMode=native \
-  --set kubeProxyReplacement=true \
-  --set loadBalancer.algorithm=maglev \
-  --set envoy.enabled=true \
-  --set hubble.enabled=true \
-  --set hubble.relay.enabled=true \
-  --set hubble.ui.enabled=true
-```
+| Modo/plataforma | Distinción requerida |
+|---|---|
+| Modo AWS ENI Cilium | Cilium gestiona ENI IPAM/routing nativo; necesita plan IAM, rutas e inscripción nodo/Pod. La referencia ENI 1.20.1 documenta IPv6 Beta, pero la página EKS aún dice solo IPv4; use aquí IPv4 y verifique aparte IPv6 específico |
+| AWS VPC CNI chaining | AWS mantiene interfaces/IPAM; Cilium adjunta después su ruta; evalúe limitaciones L7/IPsec avanzadas |
+| EKS Fargate | No admite CNI alternativos; requiere AWS VPC CNI |
+| EKS Auto Mode | No admite CNI ni plugins de políticas de red alternativos |
+| EKS Hybrid Nodes | Siga la guía independiente de versiones/configuración/capacidades Cilium soportadas por AWS, no argumentos ENI EC2 |
 
-### Componentes requeridos
+AWS solo soporta Amazon VPC CNI para nodos EC2; otros CNI compatibles necesitan soporte operativo/del proveedor propio. No infiera el límite de soporte Hybrid Nodes de una tabla genérica Cilium.
 
-| Componente | Función | Requerido |
-|-----------|------|----------|
-| Cilium Agent | Gestión de programas eBPF, aplicación de políticas | Requerido |
-| Cilium Operator | Gestión de CRD, IPAM | Requerido |
-| Envoy (cilium-envoy) | Procesamiento de proxy L7 | Requerido para service mesh |
-| Hubble | Observabilidad | Recomendado |
-| Hubble Relay | Conectividad de UI/CLI | Recomendado |
-| Hubble UI | Visualización | Opcional |
+Una línea Helm install no es un plan de migración de un clúster VPC CNI existente. Aborde acceso bootstrap API, reemplazo kube-proxy, propiedad CNI, IAM, taints de readiness y recreación de Pods previamente no gestionados mediante un procedimiento probado. La auditoría no creó clústeres ni sustituyó su CNI.
 
-## Habilitar funcionalidades de Service Mesh
+## Habilitar funciones seleccionadas
 
-### Habilitación básica
+Para un Cilium ya instalado correctamente, guarde el overlay como `cilium-mesh-features.yaml`:
 
 ```yaml
-# values.yaml
+l7Proxy: true
 envoy:
   enabled: true
-
-# Default configuration for L7 proxy policy enforcement
-proxy:
-  enabled: true
-```
-
-### Configuración completa de Service Mesh
-
-```yaml
-# values.yaml - Full service mesh features
-envoy:
-  enabled: true
-  resources:
-    limits:
-      cpu: 2000m
-      memory: 2Gi
-    requests:
-      cpu: 100m
-      memory: 256Mi
-
-# Hubble observability
 hubble:
   enabled: true
   relay:
     enabled: true
   ui:
     enabled: true
-  metrics:
-    enabled:
-      - dns
-      - drop
-      - tcp
-      - flow
-      - icmp
-      - http
+```
 
-# Mutual authentication (mTLS)
+El flag L7 admitido es `l7Proxy`; `proxy.enabled` no lo sustituye. La comprobación nativa confirmó que `proxy.enabled:false` deja L7 activo y `l7Proxy:false` lo desactiva.
+
+```bash
+set -euo pipefail
+umask 077
+helm repo add cilium https://helm.cilium.io/
+helm repo update cilium
+# Preview only: reviewed-cni-values.yaml must describe the existing intended CNI mode.
+helm template cilium cilium/cilium --version 1.20.1 \
+  --namespace kube-system --kube-version 1.35.0 \
+  -f reviewed-cni-values.yaml -f cilium-mesh-features.yaml \
+  > cilium-mesh-rendered.yaml
+```
+
+Esto previsualiza una versión Kubernetes compatible de ejemplo y combina values CNI revisados. Inspeccione el resultado y siga la actualización admitida bajo el propietario existente. No es instalación CNI completa ni permiso para cambiar modo de red.
+
+| Capacidad opcional | Requisitos adicionales |
+|---|---|
+| Gateway API | Sustitución kube-proxy, proxy L7, CRD v1.6.1 necesarios y diseño adecuado LB/host-network |
+| Controlador ingress | Configuración y exposición admitidas; no todo el tráfico de malla automáticamente |
+| Métricas Hubble | Familias elegidas y collector configurado; Relay/UI no crean Prometheus |
+| Autenticación mutua | Revisión beta, habilitación explícita, SPIRE/almacenamiento/conectividad, política aplicable y cifrado evaluado aparte |
+
+Para una **evaluación aislada de autenticación beta**, debe incluirse el flag raíz ausente antes:
+
+```yaml
 authentication:
+  enabled: true
   mutual:
     spire:
       enabled: true
       install:
         enabled: true
-
-# Ingress Controller
-ingressController:
-  enabled: true
-  loadbalancerMode: shared
-
-# Gateway API
-gatewayAPI:
-  enabled: true
 ```
 
-## Estructura del documento
+El chart rechaza SPIRE sin `authentication.enabled:true`. El servidor SPIRE incluido usa persistencia por defecto, por lo que necesita PVC adecuado. El fragmento no establece seguridad productiva, autenticación entre clústeres ni cifrado de aplicación.
 
-Esta sección está organizada de la siguiente manera:
+## Ejemplo de política L7 y observación
 
-| Documento | Descripción |
-|----------|-------------|
-| [Arquitectura](./01-architecture.md) | Datapath de eBPF, Node Envoy, modelo de CRD |
-| [Gestión de tráfico](./02-traffic-management.md) | Enrutamiento L7, balanceo de carga, división de tráfico |
-| [Seguridad](./03-security.md) | mTLS, políticas de red, cifrado |
-| [Observabilidad](./04-observability.md) | Hubble, métricas, mapas de servicios |
-| [Ingress y Gateway](./05-ingress-gateway.md) | Ingress Controller, Gateway API |
-| [Prácticas recomendadas](./06-best-practices.md) | Despliegue en producción, migración, optimización |
+Prepare una aplicación HTTP gestionada por Cilium con `app:productpage` en `bookinfo`, y un cliente Cilium `app:frontend` en el mismo namespace. Si usa Bookinfo, despliegue todas sus dependencias; solo productpage no es la aplicación completa. Use imágenes verificadas y readiness apropiada.
 
-## Inicio rápido
-
-### 1. Verificar las funcionalidades de Service Mesh
-
-```bash
-# Check Envoy DaemonSet
-kubectl get daemonset -n kube-system cilium-envoy
-
-# Check Cilium service mesh status
-cilium status | grep -E "Envoy|Hubble"
-```
-
-### 2. Desplegar aplicación de ejemplo
+La política selecciona ese endpoint y permite combinaciones cliente/método/ruta mostradas. No crea ninguna carga:
 
 ```yaml
-# bookinfo.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: bookinfo
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: productpage
-  namespace: bookinfo
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: productpage
-  template:
-    metadata:
-      labels:
-        app: productpage
-    spec:
-      containers:
-      - name: productpage
-        image: docker.io/istio/examples-bookinfo-productpage-v1:1.18.0
-        ports:
-        - containerPort: 9080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: productpage
-  namespace: bookinfo
-spec:
-  selector:
-    app: productpage
-  ports:
-  - port: 9080
-    targetPort: 9080
-```
-
-### 3. Aplicar política L7
-
-```yaml
-# l7-policy.yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -332,45 +151,56 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: productpage
+      k8s:app: productpage
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:app: frontend
+        k8s:io.kubernetes.pod.namespace: bookinfo
     toPorts:
     - ports:
-      - port: "9080"
+      - port: '9080'
         protocol: TCP
       rules:
         http:
         - method: GET
-          path: "/productpage"
+          path: ^/productpage$
         - method: GET
-          path: "/health"
+          path: ^/health$
 ```
 
-### 4. Observar el tráfico
+Evalúe otras políticas y el default-deny esperado antes de aplicarla por su propietario. Permite dos rutas, no todos los assets o dependencias de un flujo completo de navegador. Autenticación/cifrado son independientes de este permiso L7.
 
 ```bash
-# Observe L7 traffic with Hubble CLI
-hubble observe --namespace bookinfo -f
+# Keep this terminal running; configure the intended kube context first.
+cilium hubble port-forward --port-forward 4245
 
-# Filter HTTP requests
-hubble observe --namespace bookinfo --protocol http
-
-# Check inter-service flows
-hubble observe --namespace bookinfo --to-service productpage
+# In another terminal, use the selected Hubble CLI:
+hubble status --server localhost:4245
+hubble observe --server localhost:4245 --namespace bookinfo --protocol http --follow
+# Service-name filters are an alternative to --namespace in this CLI.
+hubble observe --server localhost:4245 --to-service bookinfo/productpage
 ```
 
-## Próximos pasos
+La CLI Hubble elegida rechaza combinar `--namespace` y `--to-service`. Use observación de namespace o prefijo de servicio con namespace. L7 necesita tráfico real coincidente y visibilidad de proxy; descartes anteriores al proxy pueden requerir inspección más amplia de flujos/drops. No observar flujos no demuestra ruta permitida, denegada ni saludable.
 
-1. **[Arquitectura](./01-architecture.md)**: Comprenda el funcionamiento interno de Cilium Service Mesh.
-2. **[Gestión de tráfico](./02-traffic-management.md)**: Configure el enrutamiento L7 y el control de tráfico.
-3. **[Seguridad](./03-security.md)**: Configure mTLS y las políticas de red L7.
+## Estructura documental y referencias
 
-## Referencias
+| Guía | Alcance |
+|---|---|
+| [Arquitectura](01-architecture.md) | Ruta de datos, Envoy y modelo API |
+| [Gestión del tráfico](02-traffic-management.md) | Enrutamiento y balanceo |
+| [Seguridad](03-security.md) | Límites de políticas, autenticación y cifrado |
+| [Observabilidad](04-observability.md) | Hubble y métricas |
+| [Ingress/Gateway](05-ingress-gateway.md) | Tráfico externo y Gateway API |
+| [Buenas prácticas](06-best-practices.md) | Operaciones, migración y validación |
 
-- [Documentación oficial de Cilium](https://docs.cilium.io/)
-- [Guía de Cilium Service Mesh](https://docs.cilium.io/en/stable/network/servicemesh/)
-- [Introducción a eBPF](https://ebpf.io/)
-- [Documentación de Gateway API](https://gateway-api.sigs.k8s.io/)
+- [Compatibilidad Kubernetes publicada](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/compatibility.rst)
+- [Requisitos del sistema](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst)
+- [Red Cilium con Istio](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst)
+- [Modos Envoy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/proxy/envoy.rst)
+- [Límites de autenticación mutua](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Requisitos Gateway API](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/installation.rst)
+- [Requisitos ENI EKS](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst) y [AWS VPC CNI chaining](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/cni-chaining-aws-cni.rst)
+- [CNI alternativos EKS](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html) y [CNI Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Cilium 1.20.1 ENI IPAM / IPv6 Beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst)

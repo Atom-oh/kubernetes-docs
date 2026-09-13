@@ -1,74 +1,76 @@
-# Kafka Fundamentals Quiz
+# Kafkaの基礎クイズ
 
-このクイズでは、Kafka の broker/topic/partition モデル、順序保証、consumer group の rebalance、KRaft、replication/durability 設定についての理解を確認します。
+> **最終更新**: September 12, 2026、Kafka 4.3.1。
+
+このクイズはKafkaのブローカー/トピック/パーティションモデル、順序保証、コンシューマーグループのリバランス、KRaft、レプリケーション/耐久性設定の理解を確認します。
 
 ## 選択問題
 
-1. Kafka が message の順序を保証する範囲はどれですか？
-   - A) cluster 全体
-   - B) topic 全体（すべての partition にまたがる）
-   - C) 同じ partition 内のみ
-   - D) 同じ consumer group 内のみ
+1. Kafkaはどの範囲でメッセージ順序を保証しますか？
+   - A) クラスター全体
+   - B) トピック全体（全パーティションにまたがる）
+   - C) 同じパーティション内のみ
+   - D) 同じコンシューマーグループ内のみ
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: C) 同じ partition 内のみ**
+**正解: C) 同じパーティション内のみ**
 
-**説明:**
-Kafka は単一の partition 内でのみ message の順序を保証します。topic に複数の partition がある場合、producer が送信した順序に関係なく、異なる partition に保存された message 間の相対的な順序は保証されません。特定の entity の event（たとえば、ある order ID に関する event）の順序を維持するには、その entity を識別する key を使用し、すべての event が同じ partition に route されるようにする必要があります。
+**解説:**
+保証するのはパーティションログの順序です。同一キーのルーティングには一貫したシリアライズ、パーティショナー、パーティション数が必要で、サイズやクライアントの変更で対応が変わる場合があります。業務イベント時刻やアプリケーションの並列処理には別の順序契約が必要です。
 </details>
 
-2. ISR (In-Sync Replicas) は何を指しますか？
-   - A) cluster に登録されているすべての broker の集合
-   - B) leader に十分追従している replica の集合
-   - C) leader になる資格のない replica の集合
-   - D) consumer group に属する consumer の集合
+2. ISR（In-Sync Replicas）は何を指しますか？
+   - A) クラスターに登録された全ブローカーの集合
+   - B) リーダーに十分追いついているレプリカの集合
+   - C) リーダーになる資格がないレプリカの集合
+   - D) コンシューマーグループに属するコンシューマーの集合
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: B) leader に十分追従している replica の集合**
+**正解: B) リーダーに十分追いついているレプリカの集合**
 
-**説明:**
-ISR (In-Sync Replicas) は、partition の leader replica とデータが十分に同期されている follower replica（および leader 自身）の集合です。write が `acks=all` で送信された場合、ISR 内のすべての replica が message を受信して初めて成功とみなされます。leader から大きく遅れた follower は ISR から削除され、これは障害時のデータ整合性を守るための safeguard として機能します。
+**解説:**
+ISRはリーダーを含む十分に同期したレプリカです。acks=allは現在の全ISRを待ち、min.insync.replicasはその最小数を制約します。確認応答は各レコードのfsyncと同義ではありません。
 </details>
 
-3. Kafka consumer の `enable.auto.commit` 設定の default 値は何ですか？
+3. Kafka 4.3 Java KafkaConsumerのenable.auto.commitのデフォルト値は何ですか？
    - A) `false`
    - B) `true`
-   - C) broker configuration に依存する
-   - D) この設定は Kafka 3.x 以降で削除された
+   - C) ブローカー設定に依存する
+   - D) Kafka 3.xから設定が削除された
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: B) `true`**
+**正解: B) `true`**
 
-**説明:**
-`enable.auto.commit` の default 値は `true` です。この場合、consumer は `auto.commit.interval.ms` ごと（default では 5 秒ごと）に offset を自動 commit します。これは便利ですが、message processing が実際に完了する前に offset が commit される可能性があり、障害時に message loss のリスクがあります。processing の完了後にのみ commit するには、`enable.auto.commit=false` を設定し、`commitSync()` または `commitAsync()` を明示的に呼び出します。
+**解説:**
+Kafka 4.3 Java KafkaConsumerのデフォルトはtrue、間隔は5000 msです。クライアント位置は外部業務の完了ではありません。非同期/並列処理では未完了処理を越えてコミットしないようにします。手動コミットにも正しい完了位置の管理が必要です。
 </details>
 
-4. 次のうち、consumer group rebalance を trigger しないものはどれですか？
-   - A) 新しい consumer が group に参加する
-   - B) consumer が `session.timeout.ms` 以内に heartbeat を送信できない
-   - C) topic 上の partition 数が変わる
-   - D) producer が `acks=all` で message を送信する
+4. 次のうちコンシューマーグループのリバランスを引き起こさないものはどれですか？
+   - A) 新しいコンシューマーがグループへ参加
+   - B) Classicプロトコルのコンシューマーが`session.timeout.ms`内にハートビートを送れない
+   - C) トピックのパーティション数が変更
+   - D) プロデューサーが`acks=all`でメッセージを送信
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: D) producer が `acks=all` で message を送信する**
+**正解: D) プロデューサーが`acks=all`でメッセージを送信**
 
-**説明:**
-rebalance は、consumer group membership が変わった場合、または subscribed topic の partition layout が変わった場合に発生します。consumer の参加または離脱、heartbeat timeout、`max.poll.interval.ms` の超過、partition 数の変更が典型的な trigger です。一方で `acks` は、producer が write の完了をどのように確認するかを決定する producer 側の設定であり、consumer group の partition assignment や rebalance とは関係ありません。
+**解説:**
+メンバー構成、購読パーティション、ハートビート/pollタイムアウトは割り当てに影響します。Classicはクライアントのsession.timeout.ms、consumerプロトコルはブローカーのgroup.consumer.session.timeout.msを使います。acksはプロデューサーの確認応答を制御します。
 </details>
 
-5. KRaft (Kafka Raft metadata mode) が production-ready (GA) になったのは、どの Kafka version からですか？
+5. KRaft（Kafka Raftメタデータモード）が本番利用可能（GA）になったKafkaバージョンはどれですか？
    - A) Kafka 2.8
    - B) Kafka 3.3
    - C) Kafka 3.9
@@ -78,13 +80,13 @@ rebalance は、consumer group membership が変わった場合、または subs
 
 <summary>解答を表示</summary>
 
-**解答: B) Kafka 3.3**
+**正解: B) Kafka 3.3**
 
-**説明:**
-KRaft は Kafka 2.8 で early-access preview として初めて導入されましたが、production-ready (General Availability) になったのは Kafka 3.3 からです。その後の minor release で安定化が続き、Kafka 4.0 では ZooKeeper mode が完全に削除され、KRaft が唯一サポートされる metadata management mechanism になりました。
+**解説:**
+KRaftはKafka 2.8で早期アクセスプレビューとして初登場しましたが、本番利用可能（一般提供）になったのはKafka 3.3です。その後のマイナーリリースで安定化が進み、Kafka 4.0はZooKeeperモードを完全削除して、KRaftを唯一の対応メタデータ管理方式にしました。
 </details>
 
-6. ZooKeeper mode が完全に削除され、KRaft が唯一の metadata management mechanism になったのは、どの Kafka version ですか？
+6. ZooKeeperモードを完全削除し、KRaftを唯一のメタデータ管理方式としたKafkaバージョンはどれですか？
    - A) Kafka 3.3
    - B) Kafka 3.5
    - C) Kafka 3.9
@@ -94,13 +96,13 @@ KRaft は Kafka 2.8 で early-access preview として初めて導入されま�
 
 <summary>解答を表示</summary>
 
-**解答: D) Kafka 4.0**
+**正解: D) Kafka 4.0**
 
-**説明:**
-Kafka 4.0（2025 年 3 月 release）では、ZooKeeper ベースの metadata management mode が完全に削除されました。この version 以降、新しい cluster は KRaft mode でのみ bootstrap でき、既存の ZooKeeper ベースの cluster は 4.0 へ upgrade する前に Kafka 3.x 上で KRaft への migration を完了する必要があります。
+**解説:**
+Kafka 4.0（2025年3月リリース）はZooKeeperベースのメタデータ管理モードを完全に削除しました。この版以降、新クラスターはKRaftでのみ初期構築でき、既存ZooKeeperクラスターは4.0更新前にKafka 3.xでKRaft移行を完了する必要があります。
 </details>
 
-7. topic が `replication.factor=3` と `min.insync.replicas=2` で設定され、producer が `acks=all` を使用している場合、write を受け付け続けながら許容できる同時 broker 障害の最大数はいくつですか？
+7. 正常なISRレプリカ3つがあり、コントローラークォーラムなどの他要件を維持した場合、RF=3/min ISR=2/acks=allは書き込み可用性を保ちながら何台のブローカー障害に耐えられますか？
    - A) 0
    - B) 1
    - C) 2
@@ -110,13 +112,13 @@ Kafka 4.0（2025 年 3 月 release）では、ZooKeeper ベースの metadata ma
 
 <summary>解答を表示</summary>
 
-**解答: B) 1**
+**正解: B) 1**
 
-**説明:**
-replication factor が 3 の場合、各 partition は 3 つの replica に保存されます。`min.insync.replicas=2` は、`acks=all` write が成功するには少なくとも 2 つの replica が ISR に残っている必要があることを意味します。1 台の broker が障害になっても、残り 2 つの replica は ISR に残るため、write は引き続き成功します。しかし 2 台の broker が同時に障害になると、ISR は 1 つだけに縮小し、`min.insync.replicas` を満たせなくなるため、producer は `NotEnoughReplicasException` を受け取ります。
+**解説:**
+最初に全3レプリカが正常ISRに属し、コントローラークォーラム、ネットワーク、ストレージが利用可能な前提です。1ブローカー障害後も残るISR 2つが最小数を満たしますが、移行中エラー/再試行は起こり得ます。2レプリカ障害では書き込み可用性を保てません。RF=3だけで任意の2ブローカー障害時のデータ存続は保証されません。
 </details>
 
-8. durability が最も低い一方で latency も最も低い producer の `acks` 設定はどれですか？
+8. ブローカーの確認応答を待たないacks設定はどれですか？
    - A) `acks=0`
    - B) `acks=1`
    - C) `acks=all`
@@ -126,97 +128,97 @@ replication factor が 3 の場合、各 partition は 3 つの replica に保�
 
 <summary>解答を表示</summary>
 
-**解答: A) `acks=0`**
+**正解: A) `acks=0`**
 
-**説明:**
-`acks=0` は、producer が broker からの応答を一切待たないことを意味します。message が送信された瞬間に write が成功したとみなします。これは latency と throughput の観点では最速の option ですが、network issue や broker failure が発生した場合、message が実際に保存されたかどうかを知る方法がないため、data loss のリスクが最も高い option です。なお、`acks=all` と `acks=-1` は同じ意味であり、write が成功とみなされる前にすべての ISR replica が acknowledge する必要がある、最も安全な設定です。
+**解説:**
+acks=0はブローカー応答を待たず、保存を確認できず、offset -1を返します。全負荷で最良のレイテンシー/スループットを保証しません。明示的に有効にした冪等性とは競合します。acks=allと-1は同等です。
 </details>
 
-9. KRaft architecture において、cluster metadata の変更（partition leader election、topic creation など）を実際に処理する単一の node は何と呼ばれますか？
-   - A) Controller Voter
-   - B) Active Controller
-   - C) Partition Leader
-   - D) Metadata Broker
+9. KRaftで、クラスターのメタデータ変更（パーティションリーダー選出、トピック作成など）を実際に処理する単一ノードを何と呼びますか？
+   - A) コントローラー投票者
+   - B) アクティブコントローラー
+   - C) パーティションリーダー
+   - D) メタデータブローカー
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: B) Active Controller**
+**正解: B) アクティブコントローラー**
 
-**説明:**
-KRaft では、複数の controller voter（通常は 3 または 5、Raft quorum のため奇数）が metadata log の replication に参加し、そのうち 1 つが Raft consensus によって Active Controller に elected されます。実際に cluster metadata の変更を処理するのは Active Controller だけです。Active Controller が障害になると、残りの voter から新しい Active Controller が elected されます。
+**解説:**
+コントローラー投票者1つがアクティブコントローラーに選ばれます。後任の選出には必要な過半数と接続性が必要です。専用コントローラーはブローカーのデータロールを担う必要はありません。
 </details>
 
-10. `CooperativeStickyAssignor` を使用する主な目的は何ですか？
-    - A) producer が partition key を hash する方法を変更するため
-    - B) rebalance 中の partition movement を最小化し、その cost を削減するため
-    - C) controller quorum 内の voter 数を動的に調整するため
-    - D) ISR に含まれる replica 数を増やすため
+10. ClassicグループプロトコルでのCooperativeStickyAssignorの目的は何ですか？
+    - A) プロデューサーのパーティションキーハッシュ方式を変更
+    - B) リバランス中のパーティション移動を最小化し、コストを減らす
+    - C) コントローラークォーラムの投票者数を動的調整
+    - D) ISR内のレプリカ数を増やす
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: B) rebalance 中の partition movement を最小化し、その cost を削減するため**
+**正解: B) リバランス中のパーティション移動を最小化し、コストを減らす**
 
-**説明:**
-従来の eager rebalancing protocol では、rebalance が開始されるたびに、すべての consumer が所有しているすべての partition を手放し、最初から再 assignment される必要があります。`CooperativeStickyAssignor` は、実際に移動が必要な partition だけを再 assignment する cooperative rebalancing protocol を使用し、既存の consumer がすでに所有している partition を保持できるようにします。これにより、rebalance 中に consumption が中断される partition の数が減り、全体的な throughput への影響が緩和されます。
+**解説:**
+CooperativeStickyAssignorはClassicグループプロトコルのクライアント割り当て器です。段階的再割り当てで不要な中断を減らします。新しいconsumerプロトコルはサーバー側割り当て器を使うため、同じクライアントクラス設定は適用しません。
 </details>
 
-## 記述問題
+## 短答問題
 
-11. KRaft mode で cluster metadata が保存される内部 Kafka topic の名前は何ですか？
+11. KRaftの内部メタデータRaftログの名前は何ですか？
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: `__cluster_metadata`**
+**正解: `__cluster_metadata`**
 
-**説明:**
-KRaft mode では、別個の ZooKeeper ensemble に依存する代わりに、Kafka は cluster metadata（topic/partition 情報、ACL、controller state change history など）を `__cluster_metadata` という名前の internal topic 内の event log として保存します。Controller quorum voter は Raft protocol を介してこの topic を replicate し、broker は最新の metadata に追従するためにこれを subscribe します。この設計により、Kafka は metadata management にも、自身の core storage model である partition log を再利用できます。
+**解説:**
+__cluster_metadataはKRaftの内部メタデータRaftログで、通常__cluster_metadata-0ディレクトリとして見えます。KafkaProducer/KafkaConsumerで管理する通常アプリケーショントピックではなく、コントローラーとブローカーはメタデータの複製/取得経路を使います。
 </details>
 
-12. network retry によって発生する duplicate message write を防ぐために有効化する producer 設定は何ですか？
+12. ネットワーク再試行によるメッセージの重複書き込みを防ぐため、有効にするプロデューサー設定は何ですか？
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: `enable.idempotence`（idempotent producer、`enable.idempotence=true`）**
+**正解: `enable.idempotence`（冪等プロデューサー、`enable.idempotence=true`）**
 
-**説明:**
-`enable.idempotence=true` を設定すると、producer は各 message に sequence number と producer ID を付与します。broker はこれを使用して、retry によって発生した duplicate write を検出し破棄します。この設定は、Kafka 内（topic level）で exactly-once write を実現するための基盤であり、`transactional.id` と組み合わせることで、複数の partition または topic にまたがる atomic write へその保証を拡張できます。
+**解説:**
+プロデューサーID、エポック、シーケンスが、同じ送信の再試行による重複を抑えます。アプリが業務イベントを新しい送信として提出する場合の一般的な重複排除ではありません。トランザクションには論理書き込み主体のID/フェンシング、出力/入力オフセットのアトミックなコミット、read_committedでの消費が必要です。
 </details>
 
-13. 選択した partition key の cardinality（distinct value の数）が低いため、traffic が少数の partition に集中する状況を表す用語は何ですか？
+13. パーティションキーのカーディナリティが低い（異なる値が少ない）ため、少数パーティションに通信が集中する状況を何と呼びますか？
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: Hot Partition**
+**正解: ホットパーティション**
 
-**説明:**
-hot partition は、partition key として選択された値に十分な cardinality（distinct value）がない場合、または特定の値が不均衡に頻繁に出現する場合に発生します。たとえば、traffic の大部分が少数の大きな customer ID に集中している場合、それらの key が hash される partition だけが過剰な load を受け、残りは idle のままになります。これは parallel consumer processing の利点を損なうため、key を設計する際には traffic distribution を慎重に確認する必要があります。
+**解説:**
+キーに選んだ値のカーディナリティが不足するか、特定値が不釣り合いに頻出するとホットパーティションが生じます。例えば大半の通信が少数の大口顧客IDに集中すると、キーのハッシュ先だけが過負荷となり、残りはアイドルになります。並列コンシューマー処理の利点が失われるため、キー設計で通信分布を慎重に確認すべきです。
 </details>
 
-14. `poll()` 呼び出しの間に consumer が message processing に費やせる最大時間を制御し、それを超えると consumer が group を離脱したとみなされて rebalance を trigger する設定は何ですか？
+14. KafkaConsumerの連続したpoll()呼び出し間隔を制限する設定は何ですか？
 
 <details>
 
 <summary>解答を表示</summary>
 
-**解答: `max.poll.interval.ms`**
+**正解: `max.poll.interval.ms`**
 
-**説明:**
-`max.poll.interval.ms` は、連続する `poll()` 呼び出しの間に許可される最大時間（default では 5 分）を指定します。単一の `poll()` から返された record の processing がこれより長くかかると、broker は consumer がもはや alive ではないとみなし、group から削除して rebalance を trigger します。これは `session.timeout.ms` とは別の mechanism です。`session.timeout.ms` は別個の heartbeat thread によって制御されます。processing logic が遅い場合は、この値を増やすか、`max.poll.records` を減らして batch size を小さくする必要があります。
+**解説:**
+デフォルトは300000 msです。静的メンバーシップ（group.instance.id）では超過しても即パーティション再割り当てにはならず、ハートビート停止後のセッションタイムアウトも関係します。Classic/consumerのタイムアウト規則を確認し、処理、pollサイズ、実行モデルを一緒に調整します。
 </details>
 
-## ハンズオン問題
+## 実践問題
 
-15. `events` という名前の topic を、8 partitions、replication factor 3、`min.insync.replicas=2` で作成する `kafka-topics.sh` command を書いてください。
+15. 8パーティション、レプリケーション係数3、`min.insync.replicas=2`で`events`トピックを作成する`kafka-topics.sh`コマンドを書いてください。
 
 <details>
 
@@ -225,18 +227,18 @@ hot partition は、partition key として選択された値に十分な cardin
 **解答:**
 ```bash
 kafka-topics.sh --create \
-  --bootstrap-server localhost:9092 \
+  --bootstrap-server "$DOCS_BOOTSTRAP" \
   --topic events \
   --partitions 8 \
   --replication-factor 3 \
   --config min.insync.replicas=2
 ```
 
-**説明:**
-`--partitions 8` は topic を 8 個の partition に分割し、最大 8 つの consumer が並列に consume できるようにします。`--replication-factor 3` は各 partition を 3 台の broker に copy し、最大 2 台の broker failure にわたって data を保持します。`--config min.insync.replicas=2` は、`acks=all` write が成功するために少なくとも 2 つの replica が ISR に残っていることを強制します。replication factor と組み合わせることで、単一の broker failure が発生しても write を継続できます。
+**解説:**
+3台以上のブローカーと適切な認証を備えた到達可能なクラスターを前提とします。8パーティションなら、自動割り当てされるパーティションベースグループで最大8つのアクティブ所有者を持てます。1コンシューマーが複数を所有することもあります。耐障害性は実際の同期、クォーラム、他条件に依存します。
 </details>
 
-16. 専用の 3-node KRaft controller quorum（controller role のみ、broker role なし）用の sample `server.properties` configuration を書いてください。node ID 90、91、92 を使用してください。
+16. 専用コントローラーnode.id=90と3つの検出エンドポイントを持つKafka 4.3.1動的クォーラム設定の抜粋を書き、シードが投票者メンバー構成ではない理由を説明してください。
 
 <details>
 
@@ -244,23 +246,22 @@ kafka-topics.sh --create \
 
 **解答:**
 ```properties
-# server.properties for one dedicated controller node (e.g., node.id=90)
+# Configuration excerpt for node 90; these DNS names must resolve in the deployment.
 process.roles=controller
 node.id=90
-
-controller.quorum.voters=90@kraft-controller-0:9093,91@kraft-controller-1:9093,92@kraft-controller-2:9093
-
-listeners=CONTROLLER://:9093
+controller.quorum.bootstrap.servers=controller-0.example.internal:9093,controller-1.example.internal:9093,controller-2.example.internal:9093
+listeners=CONTROLLER://controller-0.example.internal:9093
+advertised.listeners=CONTROLLER://controller-0.example.internal:9093
+listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
 controller.listener.names=CONTROLLER
-
-log.dirs=/var/lib/kafka/controller-data
+log.dirs=./controller-90-data
 ```
 
-**説明:**
-`process.roles=controller` を設定すると、この node は controller quorum voter としてのみ動作し、broker traffic を処理しません。より大きな cluster では、このように controller role を broker role から分離することで、metadata processing load が data processing load と競合しなくなり、stability が向上します。`controller.quorum.voters` には、controller quorum に参加するすべての node を `node.id@host:port` 形式で列挙する必要があります。また奇数個（3 または 5）を使用すると、cluster が明確な Raft quorum majority を計算できます。
+**解説:**
+controller.quorum.bootstrap.serversは検出シード一覧で、投票者構成ではありません。初期format/bootstrapではクラスターID、ディレクトリID、初期投票者を調整する必要があります。動的クォーラムでcontroller.quorum.votersを設定しないでください。DNS、リスナー、TLS/認証をデプロイに合わせます。設定抜粋であり、完全なデプロイ可能クラスターではありません。
 </details>
 
-17. exactly-once write を実現するために、`acks=all`、idempotent write、transactional ID を組み合わせた producer configuration（Java properties format）を書いてください。
+17. 冪等性とトランザクションIDのプロデューサー設定を示し、Kafka間のexactly-once処理に必要な追加手順を説明してください。
 
 <details>
 
@@ -268,16 +269,18 @@ log.dirs=/var/lib/kafka/controller-data
 
 **解答:**
 ```properties
-bootstrap.servers=broker1:9092,broker2:9092,broker3:9092
+bootstrap.servers=127.0.0.1:19092
+key.serializer=org.apache.kafka.common.serialization.StringSerializer
+value.serializer=org.apache.kafka.common.serialization.StringSerializer
 acks=all
 enable.idempotence=true
-transactional.id=order-producer-1
+transactional.id=orders-writer-1
 max.in.flight.requests.per.connection=5
-retries=2147483647
+delivery.timeout.ms=120000
 ```
 
-**説明:**
-`acks=all` は、write が成功とみなされる前にすべての ISR replica が message を受信することを要求し、`enable.idempotence=true` は retry によって発生する duplicate write を排除します。`transactional.id` を設定すると producer は transactional producer になり、`initTransactions()`、`beginTransaction()`、`commitTransaction()` API を使用して複数の partition にまたがって atomic に write できます。`enable.idempotence=true` が設定されていれば ordering と duplicate は自動的に管理されるため、`retries` を非常に高く設定しても安全です。ordering guarantee を壊さないために、`max.in.flight.requests.per.connection` は 5 以下に保つ必要があります。
+**解説:**
+設定はトランザクション用プロデューサーを準備するだけです。initTransactions、beginTransaction、出力送信、次入力オフセットによるsendOffsetsToTransaction、commitTransaction、中止/復旧処理を実装します。コンシューマーは自動コミットを無効にしread_committedを使います。同時書き込み主体には異なるトランザクションIDが必要で、delivery.timeout.msなどの期限も適用されます。
 </details>
 
 ---

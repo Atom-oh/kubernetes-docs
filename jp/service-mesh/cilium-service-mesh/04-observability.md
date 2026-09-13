@@ -1,98 +1,57 @@
-# Cilium Service Mesh 可観測性
+# Ciliumサービスメッシュの可観測性
 
-> **サポート対象バージョン**: Cilium 1.16+, Kubernetes 1.28+
-> **最終更新**: February 22, 2026
+> **最終更新**: September 11, 2026 · Cilium/chart 1.20.1 · Hubble CLI 1.19.4 · Collector Contrib 0.160.0 · Loki 3.7.7。Kubernetes/EKSとプラットフォーム要件は[概要](./README.md)を参照してください。
 
 ## 概要
 
-Cilium Service Mesh は、Hubble を通じて強力なネットワーク可観測性を提供します。Hubble は eBPF に基づいてネットワークフローをリアルタイムで観測し、Service の依存関係を可視化するとともに、詳細な L7 メトリクスを収集します。この章では、Hubble のコンポーネントと使用方法について説明します。
+HubbleはCiliumが扱う通信の観測を公開します。L3/L4イベントはデータパス由来で、HTTP可視性にはさらに対応L7プロキシ/ポリシー経路が必要です。Hubble有効化だけでは任意のアプリTLSを復号せず、全依存を検出せず、分散アプリトレースも生成しません。
 
-## Hubble アーキテクチャ
+例は`production`の準備済みワークロードと、正しくインストールされたCiliumを前提とします。観測可能範囲の解釈には[セキュリティ章](./03-security.md)の暗号化/ztunnel制限を適用してください。
 
-```mermaid
-graph TB
-    subgraph "Kubernetes Cluster"
-        subgraph "Node 1"
-            eBPF1[eBPF Programs]
-            Agent1[Cilium Agent]
-            Hubble1[Hubble Observer]
-        end
+## Hubbleアーキテクチャ
 
-        subgraph "Node 2"
-            eBPF2[eBPF Programs]
-            Agent2[Cilium Agent]
-            Hubble2[Hubble Observer]
-        end
+![Cilium、Hubble Relay/UI/CLI、Prometheus/Grafanaを通る論理フロー観測とメトリクス経路。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-0.png)
 
-        Relay[Hubble Relay]
-        UI[Hubble UI]
-    end
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-04-observability-0.html)
 
-    subgraph "External"
-        CLI[Hubble CLI]
-        Prometheus[Prometheus]
-        Grafana[Grafana]
-    end
+図はコンポーネントをまとめています。設定時はEnvoyもL7イベントを供給し、HTTP観測の入力はeBPFだけではありません。PrometheusはRelayフローAPIと別にメトリクスをスクレイプします。
 
-    eBPF1 --> Agent1
-    Agent1 --> Hubble1
-    eBPF2 --> Agent2
-    Agent2 --> Hubble2
+| コンポーネント | 役割 |
+|---|---|
+| Cilium Agent内Observer | 上限付きノード別フロー履歴を保存・提供 |
+| Hubble Relay | 接続Hubbleサーバーの観測を集約 |
+| Hubble UI | 観測された関係とフロー詳細を表示 |
+| Hubble CLI | API照会またはエクスポート済みJSONの読み取り |
+| Hubbleメトリクスハンドラー | 対象観測をPrometheusメトリクスに変換 |
 
-    Hubble1 --> Relay
-    Hubble2 --> Relay
-    Relay --> UI
-    Relay --> CLI
-    Hubble1 --> Prometheus
-    Hubble2 --> Prometheus
-    Prometheus --> Grafana
-```
+観測バッファは長期ログストアではありません。バッファ満杯、ノード欠落、エクスポーター失敗、イベント喪失はアプリ健全性と分けて解釈します。
 
-### コンポーネント
+## Hubbleのインストールと設定
 
-| コンポーネント | 役割 | デプロイメント |
-|-----------|------|------------|
-| Hubble Observer | Node ごとのフロー収集 | Cilium Agent に組み込み |
-| Hubble Relay | Cluster 全体のフロー集約 | Deployment |
-| Hubble UI | 可視化ダッシュボード | Deployment |
-| Hubble CLI | コマンドラインインターフェイス | ローカルインストール |
-| Hubble Metrics | Prometheus メトリクス | Cilium Agent に組み込み |
+### Helmによるインストール
 
-## Hubble のインストールと設定
-
-### Helm によるインストール
+このオーバーレイをCilium 1.20.1のレビュー済みvaluesにマージします。メトリクスを公開し、port-forwardアクセスのRelay/UIを有効にします。Prometheus、Grafana、Collector、Lokiはインストールしません。
 
 ```yaml
-# values.yaml
+prometheus:
+  enabled: true
 hubble:
   enabled: true
-
-  # Hubble Relay
   relay:
     enabled: true
     replicas: 1
     resources:
-      limits:
-        cpu: 1000m
-        memory: 1024Mi
       requests:
         cpu: 100m
         memory: 128Mi
-
-  # Hubble UI
+      limits:
+        cpu: 1000m
+        memory: 1024Mi
   ui:
     enabled: true
     replicas: 1
     ingress:
-      enabled: true
-      hosts:
-      - hubble.example.com
-      tls:
-      - secretName: hubble-tls
-        hosts:
-        - hubble.example.com
-
-  # Hubble metrics
+      enabled: false
   metrics:
     enabled:
     - dns
@@ -100,652 +59,738 @@ hubble:
     - tcp
     - flow
     - icmp
-    - http
-
-    serviceMonitor:
-      enabled: true
-
-  # Flow log settings
-  export:
-    static:
-      enabled: false
-      filePath: /var/run/cilium/hubble/events.log
-
-  # TLS settings
+    - port-distribution
+    - httpV2:labelsContext=source_namespace,source_workload,destination_namespace,destination_workload
   tls:
     enabled: true
     auto:
       enabled: true
-      method: helm
-      certValidityDuration: 1095
+      method: cronJob
+      certValidityDuration: 365
+      schedule: 0 0 1 */4 *
 ```
 
-### Hubble CLI のインストール
+リソース量は例で、サイジング結果ではありません。一部エージェント設定変更には管理されたロールアウトが必要です。適用前にレンダリングされたワークロードと手順を確認します。
+
+Hubbleサーバー→RelayのmTLSは観測転送を保護します。UI Ingress、クライアント向けRelay API、メトリクス、アプリ通信には別のTLS/認証設定があります。公開到達可能UIには適切なアクセス制御境界が必要で、TLS Secretだけではユーザー認証になりません。
+
+オーバーレイは`cronJob`証明書更新を選びます。選択チャートのデフォルト有効期間は365日で、TLSガイドには明示設定した1,095日例もあります。`method: helm`は証明書生成が可能ですが更新はスケジュールしません。証明書Job、期限、信頼を確認してください。Hubbleは再読み込みをサポートしますが、更新処理の運用の代わりではありません。
+
+### Hubble CLIのインストール
+
+このUnix例は版を固定し、Linux/macOSとamd64/arm64を選び、ダウンロード/チェックサム失敗で停止します。
 
 ```bash
-# macOS
-brew install hubble
-
-# Linux
-HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
-curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-amd64.tar.gz
-tar xzvf hubble-linux-amd64.tar.gz
-sudo mv hubble /usr/local/bin/
-
-# Connection setup (port forwarding)
-kubectl port-forward -n kube-system svc/hubble-relay 4245:80 &
-
-# Check status
-hubble status
-
-# Expected output
-Healthcheck (via localhost:4245): Ok
-Current/Max Flows: 8190/8190 (100.00%)
-Flows/s: 23.19
-Connected Nodes: 3/3
+set -eu
+HUBBLE_VERSION=v1.19.4
+case "$(uname -s)" in
+  Linux) HUBBLE_RELEASE_OS=linux ;;
+  Darwin) HUBBLE_RELEASE_OS=darwin ;;
+  *) echo "Use the matching release archive for this operating system." >&2; exit 1 ;;
+esac
+case "$(uname -m)" in
+  x86_64|amd64) HUBBLE_RELEASE_ARCH=amd64 ;;
+  aarch64|arm64) HUBBLE_RELEASE_ARCH=arm64 ;;
+  *) echo "Unsupported architecture for this example." >&2; exit 1 ;;
+esac
+HUBBLE_ARCHIVE="hubble-${HUBBLE_RELEASE_OS}-${HUBBLE_RELEASE_ARCH}.tar.gz"
+HUBBLE_RELEASE_BASE="https://github.com/cilium/hubble/releases/download/${HUBBLE_VERSION}"
+curl -fSLO "${HUBBLE_RELEASE_BASE}/${HUBBLE_ARCHIVE}"
+curl -fSLO "${HUBBLE_RELEASE_BASE}/${HUBBLE_ARCHIVE}.sha256sum"
+if command -v sha256sum >/dev/null 2>&1; then
+  sha256sum --check "${HUBBLE_ARCHIVE}.sha256sum"
+else
+  shasum -a 256 -c "${HUBBLE_ARCHIVE}.sha256sum"
+fi
+tar -xzf "$HUBBLE_ARCHIVE" hubble
+sudo install -m 0755 hubble /usr/local/bin/hubble
+hubble version
 ```
+
+ダウンロードに適した作業ディレクトリを使います。公式にはWindows amd64/arm64アーカイブもあり、公開SHA-256を確認してプラットフォームの手順に従います。CLIが利用可能でも、そのOSでCilium Linuxデータパスを実行できる意味ではありません。
+
+### Relayへの接続
+
+```bash
+# Terminal 1
+cilium hubble port-forward --port-forward 4245
+# Terminal 2
+hubble status --server localhost:4245
+hubble observe --server localhost:4245 --namespace production --last 100
+hubble observe --server localhost:4245 --namespace production --follow
+```
+
+全状態/エラーを保持します。「Hubble」のgrep成功や3ノード接続というサンプル出力は、このインストールの健全性を証明しません。
 
 ## Hubble CLI
 
-### 基本的な使用方法
+### 基本操作とフィルタリング
+
+`hubble observe`は通常、最近のバッファ内観測を返します。`--follow`なしでは継続ストリームではありません。`--last`は履歴を制限し、Relayは接続Hubbleインスタンスごとにその上限を返す場合があります。
 
 ```bash
-# Real-time flow observation
-hubble observe
-
-# Observe specific namespace
-hubble observe --namespace production
-
-# Observe specific Pod
-hubble observe --pod production/frontend-xxx
-
-# Observe specific service
-hubble observe --to-service backend
-
-# Follow mode (real-time)
-hubble observe -f
+hubble observe --pod production/frontend --last 100
+hubble observe --from-ip 10.0.1.5 --to-ip 10.0.2.10
+hubble observe --to-port 8080
+hubble observe --protocol http --http-status '5+'
+hubble observe --protocol http --http-status '2+'
+hubble observe --http-method POST --http-method PUT
+hubble observe --http-path '^/api/v1/users/.*$'
+hubble observe --to-label 'k8s:app=backend,k8s:version=v2'
+hubble observe --from-namespace production --to-namespace production --from-workload frontend --to-workload backend
+hubble observe --to-service production/backend
+hubble observe --namespace production --verdict DROPPED --drop-reason-desc POLICY_DENIED
 ```
 
-### フローフィルタリング
+重要な一致規則:
+
+- Pod名とService名は**プレフィックス**で、名前空間省略時は`default`です。
+- `--from-ip`と`--to-ip`を使います。旧`--ip-source`/`--ip-destination`は無効です。
+- HTTP状態は正確なコードと`5+`などのプレフィックスに対応し、`500-599`は受理しません。
+- HTTPメソッド値は正確な選択肢です。POSTまたはPUTにはフラグを繰り返します。`"POST|PUT"`は文字どおりのメソッド値で正規表現ではありません。
+- カンマ区切り要件を持つ1つのラベルセレクター文字列はAND、繰り返したラベルセレクターは選択肢です。
+- ServiceフィルターはService/ClusterIP由来メタデータを使います。`--from-service frontend`はfrontend Service所属Podの汎用フィルターではありません。呼び出し元にはワークロード/Pod/ラベルフィルターを使います。
+- 名前空間付き`--to-service production/backend`は単独使用し、CLIは`--to-service`と`--namespace`の併用を拒否します。
+
+### 出力形式と保持データ
+
+`json`と`jsonpb`は同じprotobuf JSON対応の別名です。`dict`、`compact`、`table`表示もサポートします。
 
 ```bash
-# Filter by protocol
-hubble observe --protocol http
-hubble observe --protocol tcp
-hubble observe --protocol dns
-
-# Filter by IP address
-hubble observe --ip-source 10.0.1.5
-hubble observe --ip-destination 10.0.2.10
-
-# Filter by port
-hubble observe --port 80
-hubble observe --port 443
-
-# Filter by verdict (allow/deny)
-hubble observe --verdict FORWARDED
-hubble observe --verdict DROPPED
-
-# Filter by HTTP status code
-hubble observe --http-status 500
-hubble observe --http-status 200-299
-
-# Combined filters
-hubble observe \
-  --namespace production \
-  --protocol http \
-  --verdict DROPPED \
-  -f
-```
-
-### 出力形式
-
-```bash
-# Default output
-hubble observe
-
-# JSON output
-hubble observe -o json
-
-# JSON output (for piping)
-hubble observe -o jsonpb
-
-# Dictionary format
-hubble observe -o dict
-
-# Compact format
-hubble observe -o compact
-
-# Table format
-hubble observe -o table
-```
-
-### 高度なクエリ
-
-```bash
-# Specific time range
+hubble observe --namespace production --last 100 -o json
+hubble observe --input-file flows.jsonl --last 100 -o json
 hubble observe --since 5m
-hubble observe --since 2024-01-15T10:00:00Z --until 2024-01-15T11:00:00Z
-
-# Last N flows
-hubble observe --last 100
-
-# Filter by specific labels
-hubble observe --from-label "app=frontend"
-hubble observe --to-label "app=backend,version=v2"
-
-# Inter-service flows
-hubble observe --from-service frontend --to-service backend
-
-# Filter by Identity
-hubble observe --from-identity 12345
-hubble observe --to-identity 12346
-
-# Regex filtering
-hubble observe --http-path "/api/v1/users/.*"
-hubble observe --http-method "POST|PUT"
 ```
+
+絶対RFC3339の`--since`/`--until`時刻は利用可能データだけを照会します。メモリ内バッファで何年もの履歴が利用可能になるわけではありません。過去調査が必要ならエクスポートを保持します。
 
 ## Hubble UI
 
-### Service Map
+### サービスマップ
 
-Hubble UI は Service の依存関係を視覚的に表示します。
+![全依存の検出を証明するスクリーンショットではなく、概念的なアプリ依存グラフ。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-1.png)
 
-```mermaid
-graph LR
-    subgraph "Service Map View"
-        FE[Frontend<br/>3 pods] --> BE[Backend<br/>5 pods]
-        BE --> DB[(Database<br/>2 pods)]
-        BE --> Cache[(Redis<br/>3 pods)]
-        FE --> Static[Static Assets<br/>CDN]
-    end
-```
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-04-observability-1.html)
 
-### UI 機能
+UIの関係は観測通信から得られます。静かなワークロード、非対応経路、外部ブラウザー/CDN通信、エンドポイントメタデータ欠損は表示されない場合があります。辺がないことは依存がない証明ではありません。
 
-1. **Service Map**: リアルタイムの Service 依存関係グラフ
-2. **Flow Timeline**: 時系列のネットワークフロー
-3. **Namespace Filter**: Namespace 別の表示
-4. **Verdict Filter**: 許可／拒否されたトラフィックの分離
-5. **Detail View**: 個々のフローの L7 詳細
+### UIの機能とアクセス
 
-### UI へのアクセス
+UIは名前空間/判定フィルター、最近のフロー詳細、観測サービスマップを提供します。L7詳細にはL7可視性が必要です。
 
 ```bash
-# Port forwarding
-kubectl port-forward -n kube-system svc/hubble-ui 12000:80
-
-# Access in browser
-# http://localhost:12000
+kubectl -n kube-system port-forward --address 127.0.0.1 service/hubble-ui 12000:80
+# Open http://localhost:12000
 ```
 
-## L7 フローの可視性
+## L7フロー可視性
 
-### HTTP フロー
-
-```bash
-# Observe HTTP requests
-hubble observe --protocol http -o json | jq '.flow.l7.http'
-
-# Example output
-{
-  "code": 200,
-  "method": "GET",
-  "url": "/api/v1/users",
-  "protocol": "HTTP/1.1",
-  "headers": [
-    {"key": "Host", "value": "api.example.com"},
-    {"key": "User-Agent", "value": "curl/7.79.1"}
-  ]
-}
-
-# Track HTTP errors
-hubble observe --protocol http --http-status 500-599
-
-# Identify slow requests
-hubble observe --protocol http -o json | jq 'select(.flow.l7.latency_ns > 1000000000)'
-```
-
-### gRPC フロー
+### HTTP、gRPC、DNS
 
 ```bash
-# Observe gRPC calls
-hubble observe --protocol http --http-path "/.*Service/.*"
-
-# Filter by gRPC method
-hubble observe --http-path "/myapp.UserService/GetUser"
-```
-
-### DNS クエリ
-
-```bash
-# Observe DNS queries
-hubble observe --protocol dns
-
-# Specific domain queries
-hubble observe --protocol dns -o json | jq '.flow.l7.dns | select(.query != null)'
-
-# Filter by DNS response code
-hubble observe --protocol dns --dns-rcode NXDOMAIN
-```
-
-### Kafka フロー
-
-```bash
-# Observe Kafka traffic
+hubble observe --protocol http --last 100 -o json |
+  jq 'select(.flow.l7.type == "RESPONSE") | .flow.l7.http'
+hubble observe --protocol http --last 100 -o json |
+  jq 'select(.flow.l7.type == "RESPONSE") |
+      select((.flow.l7.latency_ns // "0" | tonumber) > 1000000000)'
+hubble observe --protocol dns --last 100 -o json |
+  jq 'select(.flow.l7.dns.rcode == 3)'
+hubble observe --protocol http --http-path '^/myapp[.]UserService/GetUser$'
 hubble observe --port 9092
-
-# Filter by Kafka topic (when L7 policy applied)
-hubble observe --protocol kafka -o json | jq '.flow.l7.kafka'
 ```
 
-## Prometheus メトリクス
+JSON対応は64ビット`latency_ns`を**文字列**としてエンコードします。数値比較前に`tonumber`で変換してください。文字列をJSON数値と直接比較すると遅い要求の結果が誤ります。
 
-### メトリクスの有効化
+HTTP応答レコードは状態を持ちますが、要求レコードにはまだない場合があります。gRPCメソッドはHTTPパスで選べますが、HTTP 200はアプリレベルgRPC成功を意味しません。必要ならRPC結果を別収集します。
+
+選択CLIに`--dns-rcode`はありません。JSONの数値DNS応答コードを確認し、3はNXDOMAINです。CLIの`kafka`フィルターは互換過去データを読めますが、Cilium 1.20.1で削除したKafka L7処理を復活させません。9092フィルターはL4観測で、トピック/操作検査ではありません。
+
+## Prometheusメトリクス
+
+### 収集の有効化
+
+各ハンドラーを1度ずつ有効にします。例えば`dns`はDNSメトリクス群を出し、`dns:query`は別クエリカウンターを有効にせずクエリ名コンテキストを追加します。query/response/durationの別エントリとして`dns`や`http`を繰り返すと重複メトリクス群の登録を試みます。
+
+`httpV2`は非推奨`http`を置き換え、同時には有効化できません。`hubble_http_requests_total`カウンターは**応答イベント**を使い、`status`を含み、要求方向のsource/destinationコンテキストを示します。旧`hubble_http_responses_total`群は出しません。
+
+基本オーバーレイはnamespace/workloadコンテキストラベルを明示要求します。`destination_service`は対応`labelsContext`名ではありません。Prometheus Operator CRD/コントローラー導入とセレクター確認後にだけ実収集を追加します。
 
 ```yaml
-# values.yaml
+prometheus:
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: prometheus
+    relabelings:
+    - sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: node
+      action: replace
+      replacement: ${1}
+    - targetLabel: cluster
+      replacement: example-cluster
+      action: replace
 hubble:
   metrics:
-    enabled:
-    # DNS metrics
-    - dns:query
-    - dns:response
-
-    # Packet drop metrics
-    - drop
-
-    # TCP metrics
-    - tcp
-
-    # Flow metrics
-    - flow
-
-    # ICMP metrics
-    - icmp
-
-    # HTTP metrics
-    - http:requests
-    - http:responses
-    - http:duration
-
-    # Port distribution
-    - port-distribution
-
-    # ServiceMonitor enabled
     serviceMonitor:
       enabled: true
       labels:
         release: prometheus
+      relabelings:
+      - sourceLabels:
+        - __meta_kubernetes_pod_node_name
+        targetLabel: node
+        action: replace
+        replacement: ${1}
+      - targetLabel: cluster
+        replacement: example-cluster
+        action: replace
 ```
 
-### 主要なメトリクス
+`example-cluster`を意図した一意メトリクスラベル、`release: prometheus`を実Prometheusセレクターに合うラベルへ置き換えます。リストのカスタマイズ時はノードrelabelを保持します。以下ルールも対応`ruleSelector`/名前空間選択が必要です。
 
-```promql
-# Requests per second (RPS)
-rate(hubble_http_requests_total[5m])
+このrelabelはスクレイプ対象とサンプルに`cluster`を加えます。Prometheusの`external_labels`だけではローカルクエリサンプルに追加されません。実ターゲットラベルを確認します。`job="hubble-metrics"`や`job="cilium-agent"`例は通常のService由来job名を前提とします。
 
-# HTTP error rate
-sum(rate(hubble_http_responses_total{status=~"5.."}[5m])) /
-sum(rate(hubble_http_responses_total[5m])) * 100
+### 記録ルールとアラートルール
 
-# HTTP latency (p99)
-histogram_quantile(0.99, rate(hubble_http_request_duration_seconds_bucket[5m]))
+Prometheusがルールを評価し、Alertmanagerが通知ルーティングを扱います。依存クエリ/ダッシュボードの前に記録ルールを読み込む必要があります。
 
-# Packet drop count
-rate(hubble_drop_total[5m])
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cilium-hubble-observation
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+  - name: cilium.hubble.httpv2
+    rules:
+    - record: cilium_hubble:http_responses:rate5m
+      expr: sum by (cluster, destination_namespace, destination_workload) (rate(hubble_http_requests_total{reporter="server",cluster!="",destination_namespace!="",destination_workload!=""}[5m]))
+    - record: cilium_hubble:http_5xx:rate5m
+      expr: 'sum by (cluster, destination_namespace, destination_workload) (rate(hubble_http_requests_total{reporter="server",cluster!="",destination_namespace!="",destination_workload!="",status=~"5.."}[5m]))
 
-# DNS query count
-rate(hubble_dns_queries_total[5m])
+        or on (cluster, destination_namespace, destination_workload) (0 * cilium_hubble:http_responses:rate5m)'
+    - record: cilium_hubble:http_5xx_percent:rate5m
+      expr: '(100 * cilium_hubble:http_5xx:rate5m / cilium_hubble:http_responses:rate5m)
 
-# TCP connection count
-hubble_tcp_flags_total{flag="SYN"}
-
-# Network flow count
-rate(hubble_flows_processed_total[5m])
+        and on (cluster, destination_namespace, destination_workload) (cilium_hubble:http_responses:rate5m
+        > 0)'
+    - record: cilium_hubble:http_latency_bucket:rate5m
+      expr: sum by (le, cluster, destination_namespace, destination_workload) (rate(hubble_http_request_duration_seconds_bucket{reporter="server",cluster!="",destination_namespace!="",destination_workload!=""}[5m]))
+    - alert: HighObservedHTTP5xx
+      expr: (cilium_hubble:http_5xx_percent:rate5m > 5) and on (cluster, destination_namespace,
+        destination_workload) (cilium_hubble:http_responses:rate5m > 1)
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High observed HTTP 5xx ratio
+        description: '{{ $labels.cluster }}/{{ $labels.destination_namespace }}/{{
+          $labels.destination_workload }}: {{ $value }}%'
+    - alert: HighObservedHTTPP99
+      expr: (histogram_quantile(0.99, cilium_hubble:http_latency_bucket:rate5m) >
+        1) and on (cluster, destination_namespace, destination_workload) (cilium_hubble:http_responses:rate5m
+        > 1)
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High observed HTTP latency
+        description: '{{ $labels.cluster }}/{{ $labels.destination_namespace }}/{{
+          $labels.destination_workload }}: {{ $value }}s'
+    - alert: HubbleMetricsScrapeFailed
+      expr: up{job="hubble-metrics"} == 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Known Hubble metrics target cannot be scraped
+    - alert: CiliumBPFMapPressure
+      expr: cilium_bpf_map_pressure > 0.9
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High pressure in an instrumented BPF map
+        description: '{{ $labels.cluster }}/{{ $labels.node }} {{ $labels.map_name
+          }}: {{ $value }}'
 ```
 
-### Cilium Agent メトリクス
+例は**サーバー/Ingress観測境界**を選びます。クライアント/Egress観測が同じ交換を表す場合があり、境界混在は二重計上になり得ます。複数GatewayやL7ポリシーがある場合は実プロキシ経路を確認します。
+
+欠けた5xx系列を0にするのは対応する観測合計がある場合だけです。アイドル合計を割って偽の正常割合にせず、観測欠損は欠損のままです。これらの比率は全TCP失敗、拒否要求、応答欠損、アプリレベル失敗をカバーしません。
+
+しきい値、毎秒1応答の下限、5分期間はワークロードのエラーバジェットに合わせる例です。`up == 0`は既知のスクレイプ対象失敗を検出し、対象自体の欠損は別の一覧/準備確認が必要です。マップ圧力メトリクスは計装マップだけが対象で、policy-map圧力は報告しきい値未満で存在しない場合があります。
+
+### 主なクエリ
+
+最初の3クエリは上の記録ルールを使います。単位と観測範囲もメトリクスの意味の一部です。
+
+### 観測したサーバーHTTP応答数/秒
 
 ```promql
-# Cilium agent status
-cilium_agent_up
+cilium_hubble:http_responses:rate5m
+```
 
-# Endpoint count
-cilium_endpoint_count
+### 観測したHTTP5xx割合
 
-# Policy count
-cilium_policy_count
+```promql
+cilium_hubble:http_5xx_percent:rate5m
+```
 
-# BPF map usage
+### 観測したHTTP P99秒
+
+```promql
+histogram_quantile(0.99, cilium_hubble:http_latency_bucket:rate5m)
+```
+
+### Hubbleフロー破棄イベント数/秒
+
+```promql
+sum by (cluster, reason) (rate(hubble_drop_total[5m]))
+```
+
+### 観測したDNSクエリ数/秒
+
+```promql
+sum by (cluster) (rate(hubble_dns_queries_total[5m]))
+```
+
+### 観測したSYNフラグ出現数/秒
+
+```promql
+sum by (cluster) (rate(hubble_tcp_flags_total{flag="SYN"}[5m]))
+```
+
+### 観測したフローイベント数/秒
+
+```promql
+sum by (cluster) (rate(hubble_flows_processed_total[5m]))
+```
+
+### Cilium転送バイト数/秒
+
+```promql
+sum by (cluster, node, direction) (rate(cilium_forward_bytes_total[5m]))
+```
+
+### Prometheusスクレイプ成功
+
+```promql
+up{job=~"cilium-agent|hubble-metrics"}
+```
+
+### 管理エンドポイント数
+
+```promql
+cilium_endpoint
+```
+
+### 読み込み済みポリシー数
+
+```promql
+cilium_policy
+```
+
+### 計装されたBPFマップ圧力
+
+```promql
 cilium_bpf_map_pressure
+```
 
-# Connection tracking table usage
-cilium_datapath_conntrack_active
+### 最後のGC時のCTエントリ
 
-# Proxy redirect count
+```promql
+cilium_datapath_conntrack_gc_entries
+```
+
+### 設定済みエンドポイントプロキシリダイレクト
+
+```promql
 cilium_proxy_redirects
 ```
 
-## Grafana ダッシュボード
+`hubble_flows_processed_total`はバイトでなくフローイベントを数えます。Hubble破棄イベントとエージェントのパケットカウンターは違います。SYN出現には再送も含み、アクティブ接続ゲージではありません。
 
-### デフォルトダッシュボードのインストール
+エージェントは旧`*_count`でなく`cilium_endpoint`と`cilium_policy`を公開します。`cilium_datapath_conntrack_gc_entries`はGC実行時の観測エントリです。旧`cilium_datapath_conntrack_active`/`max`比率は文書化された現行メトリクス対ではありません。`cilium_proxy_redirects`は設定済みリダイレクトを数え、要求数ではありません。BPF圧力/容量には独自mapラベルと報告動作があります。無関係な使用率分母を作らないでください。
 
-```bash
-# Import Cilium official dashboards
-# In Grafana UI: Dashboard > Import > Enter Dashboard ID
+## Grafanaダッシュボード
 
-# Key Dashboard IDs
-# - 16611: Cilium v1.12 Agent
-# - 16612: Cilium v1.12 Operator
-# - 16613: Cilium v1.12 Hubble
-```
+### リリースされたダッシュボード
 
-### カスタムダッシュボードの例
+Ciliumは選択リリースにダッシュボードJSONを含みます。有効メトリクスと対象ラベルに照らして各ダッシュボードを確認します。一般Hubbleダッシュボードには旧HTTP応答クエリがまだあり、HTTPワークロード用はHTTPv2型データとcluster/workload変数を使います。成功系列がない場合は成功率パネルにも注意が必要です。
+
+旧v1.12ダッシュボードID一覧は、このガイドに版が一致する導入手順ではありません。以下のカスタムは修正済み記録ルール、明示データソース入力、配置、単位を使います。既存Grafanaへインポートし、一致Prometheusデータソースを選びます。
+
+### カスタムダッシュボード例
 
 ```json
 {
-  "title": "Cilium Service Mesh Overview",
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "id": null,
+  "uid": "cilium-hubble-observed",
+  "title": "Cilium Hubble Observations",
+  "tags": [
+    "cilium",
+    "hubble"
+  ],
+  "schemaVersion": 38,
+  "version": 1,
+  "timezone": "browser",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s",
   "panels": [
     {
-      "title": "HTTP Requests/s",
-      "type": "graph",
+      "id": 1,
+      "title": "Observed HTTP responses/s",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "targets": [
         {
-          "expr": "sum(rate(hubble_http_requests_total[5m])) by (destination_service)",
-          "legendFormat": "{{destination_service}}"
+          "refId": "A",
+          "expr": "cilium_hubble:http_responses:rate5m",
+          "legendFormat": "{{cluster}} / {{destination_namespace}} / {{destination_workload}}"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
     },
     {
-      "title": "HTTP Error Rate",
-      "type": "gauge",
+      "id": 2,
+      "title": "Observed HTTP5xx (%)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "targets": [
         {
-          "expr": "sum(rate(hubble_http_responses_total{status=~\"5..\"}[5m])) / sum(rate(hubble_http_responses_total[5m])) * 100"
+          "refId": "A",
+          "expr": "cilium_hubble:http_5xx_percent:rate5m",
+          "legendFormat": "{{cluster}} / {{destination_namespace}} / {{destination_workload}}"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
     },
     {
-      "title": "P99 Latency",
-      "type": "graph",
+      "id": 3,
+      "title": "Observed HTTP P99",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(hubble_http_request_duration_seconds_bucket[5m])) by (le, destination_service))",
-          "legendFormat": "{{destination_service}}"
+          "refId": "A",
+          "expr": "histogram_quantile(0.99, cilium_hubble:http_latency_bucket:rate5m)",
+          "legendFormat": "{{cluster}} / {{destination_namespace}} / {{destination_workload}}"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
     },
     {
-      "title": "Dropped Packets",
-      "type": "graph",
+      "id": 4,
+      "title": "Observed flow drops/s",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "targets": [
         {
-          "expr": "sum(rate(hubble_drop_total[5m])) by (reason)",
-          "legendFormat": "{{reason}}"
+          "refId": "A",
+          "expr": "sum by (cluster, reason) (rate(hubble_drop_total[5m]))",
+          "legendFormat": "{{cluster}} / {{reason}}"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
     }
   ]
 }
 ```
 
-## Service 依存関係マップ
+報告するのは観測で、保証されたエンドツーエンドアプリSLIではありません。欠損データは通信、L7可視性、スクレイプを調べる契機にします。
 
-### 依存関係の可視化
+## サービス依存マップ
+
+### 依存関係の抽出
+
+例は方向を維持し、ワークロードメタデータ欠損でのエラーを避け、**Ingress境界で観測したHTTP要求**をグループ化します。
 
 ```bash
-# Extract inter-service dependencies
-hubble observe -o json | jq -r '[.flow.source.labels[] | select(startswith("k8s:app="))] | first' | sort | uniq -c
-
-# Generate service dependency graph
-hubble observe --namespace production -o json | \
-  jq -r 'select(.flow.source.labels != null and .flow.destination.labels != null) |
-    "\(.flow.source.labels | map(select(startswith("k8s:app="))) | first // "unknown") -> \(.flow.destination.labels | map(select(startswith("k8s:app="))) | first // "unknown")"' | \
+hubble observe --namespace production --protocol http --traffic-direction ingress --last 1000 -o json |
+  jq -r 'select(.flow.l7.type == "REQUEST") |
+    [.flow.source.namespace,
+     (.flow.source.workloads[0].name // .flow.source.pod_name // "unknown"),
+     .flow.destination.namespace,
+     (.flow.destination.workloads[0].name // .flow.destination.pod_name // "unknown")] |
+    @tsv' |
   sort | uniq -c | sort -rn
 ```
 
-### Service Map の例
+数は選択観測の数で、自動的に要求レートや完全な依存一覧にはなりません。不明エンドポイントと観測経路外の依存には他の証拠が必要です。
 
-```mermaid
-graph TB
-    subgraph "Production Namespace"
-        ingress[Ingress Controller]
-        frontend[Frontend<br/>RPS: 1000<br/>P99: 50ms]
-        api[API Gateway<br/>RPS: 800<br/>P99: 100ms]
-        users[User Service<br/>RPS: 500<br/>P99: 80ms]
-        orders[Order Service<br/>RPS: 300<br/>P99: 120ms]
-        payments[Payment Service<br/>RPS: 100<br/>P99: 200ms]
-        db[(PostgreSQL)]
-        redis[(Redis)]
-        kafka[Kafka]
-    end
+### サービスマップ例
 
-    ingress --> frontend
-    frontend --> api
-    api --> users
-    api --> orders
-    users --> db
-    users --> redis
-    orders --> db
-    orders --> kafka
-    orders --> payments
-    payments --> kafka
-```
+![RPS/P99の例示注記が付いたサービス関係。ガイドが提供する実測値ではない。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-2.png)
 
-## ゴールデンシグナルのモニタリング
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-04-observability-2.html)
 
-### 4 つのゴールデンシグナル
+図の数値にはここでは測定根拠がありません。容量やSLOしきい値の選択でなく関係の説明に使います。CiliumはKafkaのトピックレベル可視性なしでもKafkaへのL4通信を観測できます。
 
-```mermaid
-graph LR
-    subgraph "Golden Signals"
-        Latency[Latency<br/>Response Time]
-        Traffic[Traffic<br/>Throughput]
-        Errors[Errors<br/>Error Rate]
-        Saturation[Saturation<br/>Resource Usage]
-    end
-```
+## ゴールデンシグナル監視
 
-### PromQL クエリ
+![4つのゴールデンシグナル: レイテンシー、トラフィック、エラー、飽和。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-3.png)
 
-```promql
-# 1. Latency
-# P50 latency
-histogram_quantile(0.50, sum(rate(hubble_http_request_duration_seconds_bucket[5m])) by (le, destination_service))
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-04-observability-3.html)
 
-# P99 latency
-histogram_quantile(0.99, sum(rate(hubble_http_request_duration_seconds_bucket[5m])) by (le, destination_service))
+サービスに合う定義で使います。可用性は4つの名前にはありませんが明示SLIが必要で、観測HTTP 5xx比率は完全な可用性測定ではありません。ヒストグラム分位数はインスタンス別パーセンタイルを平均せず、`le`を保持して互換バケットを集約します。
 
-# 2. Traffic (Throughput)
-# Requests per second
-sum(rate(hubble_http_requests_total[5m])) by (destination_service)
+## OpenTelemetry統合
 
-# Bytes per second
-sum(rate(hubble_flows_processed_total[5m])) by (destination_service)
+### Hubbleフローのエクスポート
 
-# 3. Errors (Error Rate)
-# HTTP error rate
-sum(rate(hubble_http_responses_total{status=~"5.."}[5m])) by (destination_service) /
-sum(rate(hubble_http_responses_total[5m])) by (destination_service) * 100
+選択チャートは静的/動的な**ファイルエクスポート**をサポートします。旧`hubble.export.opentelemetry`と`fileOutput`はOTLP送信を設定しません。
 
-# Packet drop rate
-sum(rate(hubble_drop_total[5m])) by (reason)
-
-# 4. Saturation
-# TCP connection count
-hubble_tcp_connections_total
-
-# Connection tracking table utilization
-cilium_datapath_conntrack_active / cilium_datapath_conntrack_max * 100
-```
-
-### AlertManager ルール
+例はファイルローテーションを制限し、フィールドを選択して、`production`が関係する観測の動的エクスポーターを有効にします。
 
 ```yaml
-# prometheus-rules.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: cilium-alerts
-  namespace: monitoring
-spec:
-  groups:
-  - name: cilium.service-mesh
-    rules:
-    # High error rate
-    - alert: HighHTTPErrorRate
-      expr: |
-        sum(rate(hubble_http_responses_total{status=~"5.."}[5m])) by (destination_service)
-        / sum(rate(hubble_http_responses_total[5m])) by (destination_service) * 100 > 5
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "High HTTP error rate for {{ $labels.destination_service }}"
-        description: "HTTP 5xx error rate is {{ $value }}%"
-
-    # High latency
-    - alert: HighLatency
-      expr: |
-        histogram_quantile(0.99, sum(rate(hubble_http_request_duration_seconds_bucket[5m])) by (le, destination_service)) > 1
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "High latency for {{ $labels.destination_service }}"
-        description: "P99 latency is {{ $value }}s"
-
-    # Packet drops
-    - alert: HighDropRate
-      expr: sum(rate(hubble_drop_total[5m])) by (reason) > 100
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "High packet drop rate"
-        description: "Drop rate is {{ $value }}/s for reason {{ $labels.reason }}"
-```
-
-## OpenTelemetry 統合
-
-### OTLP エクスポート設定
-
-```yaml
-# values.yaml
 hubble:
   export:
-    fileOutput:
+    static:
       enabled: false
-    opentelemetry:
+    dynamic:
       enabled: true
-      otlp:
-        endpoint: "otel-collector.observability.svc:4317"
-        insecure: true
-        headers:
-          "x-api-key": "your-api-key"
+      config:
+        createConfigMap: true
+        configMapName: cilium-flowlog-config
+        content:
+        - name: production
+          filePath: /var/run/cilium/hubble/events.log
+          fileMaxSizeMb: 10
+          fileMaxBackups: 5
+          fileCompress: false
+          includeFilters:
+          - source_pod:
+            - production/
+          - destination_pod:
+            - production/
+          excludeFilters: []
+          fieldMask:
+          - time
+          - node_name
+          - source.namespace
+          - source.pod_name
+          - source.workloads
+          - destination.namespace
+          - destination.pod_name
+          - destination.workloads
+          - IP
+          - l4
+          - verdict
+          - drop_reason_desc
+          - l7.type
+          - l7.latency_ns
+          - l7.http.code
+          - l7.http.method
+          - l7.http.protocol
+          - l7.dns.rcode
 ```
 
-### OpenTelemetry Collector の設定
+2つのincludeフィルターは選択肢で、送信元か宛先がその名前空間です。このマスクはHTTP URL/ヘッダーとワークロードラベルを省き、追加フィールドは意図的に選びます。エクスポーター有効化後の動的設定更新はエージェント再起動なしで適用できますが、初回有効化/導入変更には適切なロールアウトが必要です。
+
+ローテーションはローカルファイル保持で、耐久性のある中央ストレージではありません。期待ノードへの書き込みを確認し、適切なログ読み取りを用意します。
+
+### Collector設定
+
+以下はCollector Contrib 0.160.0の**設定**で、Deploymentではありません。ノードローカルCollector DaemonSetに、対応ホストログディレクトリの読み取り権限、書き込み可能な永続チェックポイントストレージ、downward APIの`K8S_NODE_NAME`を用意する必要があります。
 
 ```yaml
-# otel-collector-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: otel-collector-config
-  namespace: observability
-data:
-  config.yaml: |
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-
-    processors:
-      batch:
-        timeout: 10s
-
-    exporters:
-      # Export to Jaeger
-      jaeger:
-        endpoint: jaeger-collector.observability.svc:14250
-        tls:
-          insecure: true
-
-      # Export metrics to Prometheus
-      prometheus:
-        endpoint: 0.0.0.0:8889
-
-      # Export logs to Loki
-      loki:
-        endpoint: http://loki.observability.svc:3100/loki/api/v1/push
-
-    service:
-      pipelines:
-        traces:
-          receivers: [otlp]
-          processors: [batch]
-          exporters: [jaeger]
-        metrics:
-          receivers: [otlp]
-          processors: [batch]
-          exporters: [prometheus]
+extensions:
+  file_storage:
+    directory: /var/lib/otelcol/file_storage
+    create_directory: true
+receivers:
+  filelog/hubble:
+    include:
+    - /var/run/cilium/hubble/events*.log
+    start_at: end
+    storage: file_storage
+    operators:
+    - type: json_parser
+      parse_from: body
+      parse_to: body
+      timestamp:
+        parse_from: body.time
+        layout_type: gotime
+        layout: 2006-01-02T15:04:05.999999999Z07:00
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 128
+    spike_limit_mib: 32
+  resource/hubble:
+    attributes:
+    - key: service.name
+      value: hubble-flow-logs
+      action: upsert
+    - key: k8s.node.name
+      value: ${env:K8S_NODE_NAME}
+      action: upsert
+  batch:
+    timeout: 5s
+exporters:
+  otlphttp/loki:
+    endpoint: https://logs.example.com/otlp
+    headers:
+      X-Scope-OrgID: example-tenant
+    tls:
+      ca_file: /etc/otel/tls/backend-ca.crt
+service:
+  extensions:
+  - file_storage
+  pipelines:
+    logs:
+      receivers:
+      - filelog/hubble
+      processors:
+      - memory_limiter
+      - resource/hubble
+      - batch
+      exporters:
+      - otlphttp/loki
 ```
+
+例示バックエンドアドレス、テナント、CAパスを実Loki OTLPエンドポイントと信頼設定に置き換えます。選択Gatewayに必要な認証を提供してください。`X-Scope-OrgID`はテナント識別で認証ではありません。
+
+filelog receiverはJSON本文と時刻を解析します。永続`file_storage`チェックポイントは読み取りオフセットを保持します。一時チェックポイントボリュームは再起動動作を変え得ます。`start_at: end`は保存位置がないと既存内容を飛ばし、再生/インポート設定ではありません。
+
+Loki 3.7.7は`/otlp/v1/logs`でOTLP/HTTPログを受け入れます。エクスポーターが`/otlp`基本エンドポイントに`/v1/logs`を追加します。Lokiは構造化メタデータと互換ストレージ設定に対応し、有効にする必要があります。削除されたCollector `loki`エクスポーターを使わないでください。リソース属性`service.name`はLokiラベル`service_name`となり、構造化本文はログ内容に残ります。
+
+フローログ、Prometheusメトリクス、アプリトレースは異なるシグナルです。
+
+| シグナル | このガイドの経路 |
+|---|---|
+| Hubbleフロー記録 | ファイルエクスポーター → ノードfilelog receiver → OTLP/HTTPログバックエンド |
+| Hubble/エージェントメトリクス | メトリクスエンドポイント → Prometheus収集 |
+| アプリ/Envoyトレース | 別の計装と適切なトレースパイプライン/バックエンド |
+
+旧Collector `jaeger`エクスポーターも選択ディストリビューションにはありません。現Jaegerは正しく設定したトレースパイプラインでOTLPトレースを受け取れますが、フローログをトレースエクスポーターへ向けても分散トレースにはなりません。この章のCollectorは**ログだけ**を出力します。
 
 ## トラブルシューティング
 
-### 一般的な問題の診断
+### 状態と設定
 
 ```bash
-# Check Cilium status
 cilium status
-
-# Check Hubble status
-hubble status
-
-# Diagnose connection issues
-hubble observe --verdict DROPPED --namespace problematic-namespace
-
-# Check policy violations
-hubble observe --verdict DROPPED -o json | jq '.flow.drop_reason_desc'
-
-# Diagnose specific Pod issues
-hubble observe --pod production/problematic-pod-xxx
-
-# Diagnose DNS issues
-hubble observe --protocol dns --dns-rcode NXDOMAIN
-
-# Check connection tracking table
-cilium bpf ct list global
+hubble status --server localhost:4245
+kubectl -n kube-system get daemonset cilium
+kubectl -n kube-system get deployment hubble-relay hubble-ui
+kubectl -n kube-system get configmap cilium-config -o yaml
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+CILIUM_POD='<agent-on-the-node-being-inspected>'
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf ct list global
+kubectl -n kube-system logs deployment/hubble-relay --since=10m
 ```
 
-### フローが表示されない問題
+関連ノードのAgentを使います。クライアント側`cilium` CLIとAgent内`cilium-dbg`は別です。エラーと全状態を保持してください。grep出力は準備完了の証明ではありません。
 
-```bash
-# Check if Hubble is enabled
-kubectl get cm -n kube-system cilium-config -o yaml | grep hubble
+### フローなし/メトリクス欠損
 
-# Check Hubble Relay status
-kubectl get pods -n kube-system -l app.kubernetes.io/name=hubble-relay
+データパスが壊れたと結論する前に通信生成、保持期間、フィルターを確認します。接続HubbleインスタンスとTLS/証明書更新を検証し、次を区別します。
 
-# Check Hubble Observer status
-cilium status | grep Hubble
+- 名前空間、プレフィックス、方向、プロトコルの誤フィルターで一致観測がない。
+- 対応L7可視性が未設定、またはペイロードが暗号化のままでHTTP観測がない。
+- Relay/サーバーが利用不能、またはメトリクス対象にアクセス不能。
+- ServiceMonitor/PrometheusRuleが実Prometheusに選択されていない。
+- context/clusterラベル不足、または異なるハンドラー用クエリ。
+- エクスポート/readerエラー、ローテーション/保持の欠損、観測喪失。
 
-# Check buffer size
-kubectl exec -n kube-system ds/cilium -- cilium hubble status
-```
+グラフを埋めるためだけに無制限の接続テストを回さないでください。準備ワークロードに管理された通信を使い、各観測の意味を検証します。
 
 ## 次のステップ
 
-- [Ingress & Gateway](./05-ingress-gateway.md): 外部トラフィックのモニタリング
-- [Best Practices](./06-best-practices.md): 可観測性設定の最適化
+- [IngressとGateway](./05-ingress-gateway.md)
+- [ベストプラクティス](./06-best-practices.md)
+- [可観測性クイズ](../../quizzes/service-mesh/cilium-service-mesh/observability.md)
 
 ## 参考資料
 
-- [Hubble Documentation](https://docs.cilium.io/en/stable/observability/hubble/)
-- [Hubble CLI Reference](https://docs.cilium.io/en/stable/observability/hubble/hubble-cli/)
-- [Hubble Metrics](https://docs.cilium.io/en/stable/observability/metrics/)
-- [Grafana Dashboards for Cilium](https://grafana.com/grafana/dashboards/?search=cilium)
+- [Cilium1.20.1 Hubble設定](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/setup.rst)
+- [Hubble TLSと更新](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/configuration/tls.rst)
+- [Hubbleエクスポート](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/configuration/export.rst)
+- [Hubble CLI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/hubble-cli.rst)
+- [Hubble CLI1.19.4リリース](https://github.com/cilium/hubble/releases/tag/v1.19.4)
+- [Hubble UI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/hubble-ui.rst)
+- [メトリクス定義](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst)
+- [HTTPメトリクス実装](https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/http/handler.go)
+- [メトリクスコンテキストラベル](https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/api/context.go)
+- [リリース済みHTTPワークロードダッシュボード](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json)
+- [リリース済み一般Hubbleダッシュボード](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json)
+- [Collector0.160 filelog receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/receiver/filelogreceiver/README.md)
+- [Loki3.7.7 OTLP取り込み](https://github.com/grafana/loki/blob/v3.7.7/docs/sources/send-data/otel/_index.md)
+- [Loki3.7.7 OTLP対応とエンドポイント](https://github.com/grafana/loki/blob/v3.7.7/docs/sources/shared/otel.md)
+- [Collector JSONパーサー](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/pkg/stanza/docs/operators/json_parser.md)
+- [Google SREゴールデンシグナル](https://sre.google/sre-book/monitoring-distributed-systems/)

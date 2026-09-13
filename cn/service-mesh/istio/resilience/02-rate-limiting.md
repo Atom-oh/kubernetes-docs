@@ -1,136 +1,82 @@
-# 限流
+# 限速
 
-限流是一项限制请求速率的功能，用于保护 Service 免受过载、确保资源的公平使用并控制成本。
+> **最后更新**：2026 年 9 月 11 日 · Istio 1.31。独立示例；每工作负载/监听器选择一个本地策略。Sidecar 应用在 `default` 使用 HTTP 8080；网关示例选择 `istio-system` 中带 `istio: ingressgateway` 的专用网关。应用前验证实际标签/监听器。这些配置未部署或进行负载测试。
+
+限速限制请求速率，以保护服务免于过载、确保公平资源使用并控制成本。
 
 ## 目录
 
 1. [概述](#overview)
-2. [限流类型](#rate-limiting-types)
-3. [本地限流](#local-rate-limiting)
-4. [全局限流](#global-rate-limiting)
-5. [实践示例](#practical-examples)
+2. [限速类型](#rate-limiting-types)
+3. [本地限速](#local-rate-limiting)
+4. [全局限速](#global-rate-limiting)
+5. [实际示例](#practical-examples)
 6. [监控](#monitoring)
 7. [故障排除](#troubleshooting)
 
-## 概述
+## 概述 {#overview}
 
-在以下情况下需要使用限流：
+以下情况需要限速：
 
-```mermaid
-flowchart TB
-    Client1[Client 1<br/>100 req/s]
-    Client2[Client 2<br/>50 req/s]
-    Client3[Client 3<br/>200 req/s]
+![三个客户端通过令牌桶限速器发送流量，限速器将获准请求转发到两个服务 Pod，并以 429 响应拒绝超额流量。](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-0.png)
 
-    subgraph RateLimiter["Rate Limiter"]
-        RL[Token Bucket<br/>100 req/s Limit]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-02-rate-limiting-0.html)
 
-    subgraph Service["Service"]
-        S1[Pod 1<br/>Capacity: 50 req/s]
-        S2[Pod 2<br/>Capacity: 50 req/s]
-    end
+### 限速目的
 
-    Client1 -->|100 req/s| RL
-    Client2 -->|50 req/s| RL
-    Client3 -->|200 req/s| RL
-
-    RL -->|100 req/s<br/>Allowed| S1
-    RL -->|100 req/s<br/>Allowed| S2
-    RL -.->|250 req/s<br/>Blocked| Reject[429 Too Many Requests]
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef limiter fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef reject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client1,Client2,Client3 client;
-    class RL limiter;
-    class S1,S2 service;
-    class Reject reject;
-```
-
-### 限流的目的
-
-1. **Service 保护**：防止过载
-2. **公平性**：向所有客户端公平地分配资源
+1. **服务保护**：防止过载
+2. **公平性**：需要有计划的描述符/身份模型；仅共享桶不等于逐客户端公平。
 3. **成本控制**：管理外部 API 调用成本
-4. **安全性**：抵御 DDoS 攻击
+4. **减少滥用**：限制选定 HTTP 请求；不替代边缘/DDoS 保护，也不防止连接/TLS 耗尽。
 
-## 限流类型
+## 限速类型 {#rate-limiting-types}
 
-### 1. 本地限流
+### 1. 本地限速
 
-**特性**：
-- 每个 Envoy proxy 独立限流
-- 响应快速（无需额外的网络调用）
-- 在分布式环境中，总限额按实例分别生效
+**特点**：
+- 每个 Envoy 代理独立限速
+- 响应快（无额外网络调用）
+- 分布式环境中，总限制按实例应用
 
 ```yaml
 # 100 req/s limit per pod
-# With 3 pods, up to 300 req/s total allowed
+# Three independently configured buckets can sustain roughly 300 req/s in aggregate,
+# subject to traffic distribution; each bucket also has its own burst allowance.
 ```
 
-### 2. 全局限流
+### 2. 全局限速
 
-**特性**：
-- 使用集中式 Rate Limit server
-- 准确的总限额（所有实例共享）
-- 存在轻微延迟（外部 Service 调用）
+**特点**：
+- 使用集中限速服务器
+- 对定义的域/描述符和窗口共享计数器；后端/失败行为很重要
+- 有少量延迟（外部服务调用）
 
 ```yaml
-# 100 req/s total limit
-# Only 100 req/s allowed regardless of pod count
+# Shared descriptor quota:100 per backend second-window
+# Replicas must use the same counter; test window boundaries and backend failures.
 ```
 
-### 对比
+### 比较
 
-| 特性 | 本地限流 | 全局限流 |
+| 特性 | 本地限速 | 全局限速 |
 |----------------|---------------------|----------------------|
-| **准确性** | 低（每个实例） | 高（总量） |
-| **性能** | 非常快 | 稍慢 |
-| **复杂度** | 低 | 高（需要外部 Service） |
-| **使用场景** | 常规保护 | 需要精确限流时 |
+| **配额范围** | 每个配置的本地桶 | 共享域/描述符 |
+| **性能** | 很快 | 稍慢 |
+| **复杂度** | 低 | 高（需要外部服务） |
+| **使用场景** | 一般保护 | 需要精确限制时 |
 
-## 本地限流
+## 本地限速 {#local-rate-limiting}
 
 ### 令牌桶算法
 
-```mermaid
-flowchart TB
-    Bucket[Token Bucket<br/>Max: 100 tokens]
-    Refill[Refill<br/>10 tokens/sec]
-    Request[Request Arrives]
-    Check{Token<br/>Available?}
-    Allow[Allow Request<br/>Consume 1 token]
-    Reject[Reject Request<br/>Return 429]
+![令牌桶算法流程：每秒向桶补充令牌，检查每个到达请求是否有可用令牌；消耗一个令牌并允许请求，或以 429 拒绝。](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-1.png)
 
-    Refill -.->|Add 10 every second| Bucket
-    Request --> Check
-    Bucket --> Check
-    Check -->|Yes| Allow
-    Check -->|No| Reject
-    Allow -.->|Decrease tokens| Bucket
-
-    %% Style definitions
-    classDef bucket fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef reject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Bucket,Refill bucket;
-    class Request,Allow process;
-    class Check decision;
-    class Reject reject;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-02-rate-limiting-1.html)
 
 ### 基本配置
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: local-ratelimit
@@ -146,39 +92,38 @@ spec:
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
             subFilter:
-              name: "envoy.filters.http.router"
+              name: envoy.filters.http.router
+        portNumber: 8080
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
-            max_tokens: 100        # Maximum token count
-            tokens_per_fill: 10    # Tokens to add
-            fill_interval: 1s      # Fill interval
+            max_tokens: 100
+            tokens_per_fill: 10
+            fill_interval: 1s
           filter_enabled:
-            runtime_key: local_rate_limit_enabled
             default_value:
               numerator: 100
               denominator: HUNDRED
           filter_enforced:
-            runtime_key: local_rate_limit_enforced
             default_value:
               numerator: 100
               denominator: HUNDRED
           response_headers_to_add:
-          - append: false
-            header:
+          - header:
               key: x-local-rate-limit
               value: 'true'
+            append_action: OVERWRITE_IF_EXISTS_OR_ADD
 ```
 
 **关键参数**：
-- `max_tokens`：桶可容纳的最大令牌数（允许突发流量）
+- `max_tokens`：桶可容纳的最大令牌数（允许突发）
 - `tokens_per_fill`：每个 fill_interval 添加的令牌数
 - `fill_interval`：令牌添加间隔
 
@@ -192,13 +137,13 @@ token_bucket:
 
 # Result:
 # - Average: 10 req/s
-# - Burst: 100 req/s (for short periods)
+# - Burst: up to100 immediately available tokens, not a second sustained rate
 ```
 
-### 基于路径的限流
+### 基于路径的限速
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: path-based-ratelimit
@@ -211,39 +156,71 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
+        portNumber: 8080
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
-
-          # Different limits per path
           descriptors:
-          # /api/v1/users - High limit
           - entries:
             - key: header_match
-              value: "/api/v1/users"
+              value: /api/v1/users
             token_bucket:
               max_tokens: 1000
               tokens_per_fill: 100
               fill_interval: 1s
-
-          # /api/v1/admin - Low limit
           - entries:
             - key: header_match
-              value: "/api/v1/admin"
+              value: /api/v1/admin
             token_bucket:
               max_tokens: 100
               tokens_per_fill: 10
               fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          token_bucket:
+            max_tokens: 100
+            tokens_per_fill: 10
+            fill_interval: 1s
+          always_consume_default_token_bucket: false
+          rate_limits:
+          - actions:
+            - header_value_match:
+                descriptor_value: /api/v1/users
+                headers:
+                - name: :path
+                  string_match:
+                    prefix: /api/v1/users
+          - actions:
+            - header_value_match:
+                descriptor_value: /api/v1/admin
+                headers:
+                - name: :path
+                  string_match:
+                    prefix: /api/v1/admin
 ```
 
-### 基于请求头的限流
+`rate_limits` 生成 `header_match` 条目，`descriptors` 选择匹配令牌桶。该字段存在于 Istio 1.31 固定的 Envoy API 中；此处设置后，它替代本地过滤器对路由/虚拟主机限速操作的查找。路径值是字面描述符键；实际前缀匹配在 `headers` 中。前缀也匹配以该文本开头的更长路径。回退桶限制未匹配请求；`always_consume_default_token_bucket: false` 避免将匹配的 100 req/s 用户额外限制到 10 req/s 回退速率。
+
+### 基于标头的限速
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: user-based-ratelimit
@@ -256,94 +233,88 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
+        portNumber: 8080
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
-
-          # Limits by user tier
           descriptors:
-          # Premium users
           - entries:
             - key: header_match
-              value: "x-user-tier:premium"
+              value: x-user-tier:premium
             token_bucket:
               max_tokens: 1000
               tokens_per_fill: 100
               fill_interval: 1s
-
-          # Free users
           - entries:
             - key: header_match
-              value: "x-user-tier:free"
+              value: x-user-tier:free
             token_bucket:
               max_tokens: 100
               tokens_per_fill: 10
               fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          token_bucket:
+            max_tokens: 100
+            tokens_per_fill: 10
+            fill_interval: 1s
+          always_consume_default_token_bucket: false
+          rate_limits:
+          - actions:
+            - header_value_match:
+                descriptor_value: x-user-tier:premium
+                headers:
+                - name: x-user-tier
+                  string_match:
+                    exact: premium
+          - actions:
+            - header_value_match:
+                descriptor_value: x-user-tier:free
+                headers:
+                - name: x-user-tier
+                  string_match:
+                    exact: free
 ```
 
-## 全局限流
+层级描述符是本地代理内各层级的共享桶，不是每用户一个桶。经过身份验证的上游必须剥离调用方层级标头并插入可信层级，服务必须防止绕过该路径。缺失/未知层级使用有界回退桶。仅 premium 标头不验证任何人身份。
 
-全局限流使用集中式 Rate Limit Service，在整个集群中应用准确的速率限制。
+## 全局限速 {#global-rate-limiting}
+
+全局限速向共享决策服务查询域/描述符。范围可跨网关副本，但不自动覆盖集群每个请求。计数器存储、窗口边界、故障转移和失败模式策略影响实际保证。
 
 ### 架构
 
-```mermaid
-flowchart TB
-    subgraph Clients["Clients"]
-        C1[Client 1]
-        C2[Client 2]
-        C3[Client 3]
-    end
+![客户端通过 Istio 入口网关发送请求，网关查询由内存缓存支持的集中限速服务器，再将获准流量转发到后端服务。](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-2.png)
 
-    subgraph Gateway["Istio Gateway"]
-        IG[Ingress Gateway<br/>Envoy Proxy]
-    end
-
-    subgraph RateLimitService["Rate Limit Service"]
-        RLS[Rate Limit Server<br/>envoyproxy/ratelimit]
-        Cache[In-Memory Cache]
-    end
-
-    subgraph Backend["Backend Services"]
-        S1[Service A]
-        S2[Service B]
-    end
-
-    C1 -->|Request| IG
-    C2 -->|Request| IG
-    C3 -->|Request| IG
-
-    IG -->|"1. Check Rate Limit<br/>(gRPC)"| RLS
-    RLS -->|"2. Allow/Deny Response"| IG
-    RLS -.->|Cache Lookup/Update| Cache
-
-    IG -->|"3. Forward Only<br/>Allowed Requests"| S1
-    IG -->|"3. Forward Only<br/>Allowed Requests"| S2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef ratelimit fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class C1,C2,C3 client;
-    class IG gateway;
-    class RLS,Cache ratelimit;
-    class S1,S2 service;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-02-rate-limiting-2.html)
 
 ### 配置方法
 
-全局限流需要部署外部 Rate Limit Service 并与 EnvoyFilter 集成。
+全局限速需要部署外部限速服务，并通过 EnvoyFilter 集成。
 
-#### 1. 部署 Rate Limit Service
+图中缓存必须由 Redis 等共享计数存储支持；独立进程内缓存不创建全局配额。以下 Deployment 假定隔离实验中 `redis-ratelimit.istio-system.svc.cluster.local:6379` 已有**可用 Redis TCP 服务**。后端预置、身份验证/TLS、持久化/高可用和故障转移是独立要求；下方不创建它。对于受保护后端，通过适当 Secret/挂载配置固定服务的 REDIS_AUTH/REDIS_TLS/证书设置。
 
-**注意**：Istio 使用 [envoyproxy/ratelimit](https://github.com/envoyproxy/ratelimit) Service 作为外部依赖项。
+镜像来自发布提交 8fe6ea42（2026 年 8 月 24 日），以清单摘要固定，适用于 linux/amd64 和 linux/arm64。上游在 v1.4.0 后使用提交标签，而非语义版本发布；这不是认证稳定/生产版本声明。审核并测试升级。Deployment 显式请求 Sidecar 注入：验证注入器匹配，且实际网格/网络策略允许网关访问其 gRPC Service。
+
+#### 1. 部署限速服务
+
+**注意**：Istio 使用 [envoyproxy/ratelimit](https://github.com/envoyproxy/ratelimit) 服务作为外部依赖。
 
 ```yaml
 apiVersion: v1
@@ -352,28 +323,7 @@ metadata:
   name: ratelimit-config
   namespace: istio-system
 data:
-  config.yaml: |
-    domain: production-ratelimit
-    descriptors:
-      # Global limit: 100 per second
-      - key: generic_key
-        value: "global"
-        rate_limit:
-          unit: second
-          requests_per_unit: 100
-
-      # Per-path limit
-      - key: header_match
-        value: "/api/v1/*"
-        rate_limit:
-          unit: second
-          requests_per_unit: 50
-
-      # Per-user limit (per minute)
-      - key: remote_address
-        rate_limit:
-          unit: minute
-          requests_per_unit: 1000
+  config.yaml: "domain: production-ratelimit\ndescriptors:\n  # Global limit: 100 per second\n  - key: generic_key\n    value: \"global\"\n    rate_limit:\n      unit: second\n      requests_per_unit: 100\n\n  # Per-path limit\n  - key: header_match\n    value: \"/api/v1/*\"\n    rate_limit:\n      unit: second\n      requests_per_unit: 50\n\n  # Per-user limit (per minute)\n  - key: remote_address\n    rate_limit:\n      unit: minute\n      requests_per_unit: 1000\n"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -389,10 +339,12 @@ spec:
     metadata:
       labels:
         app: ratelimit
+      annotations:
+        sidecar.istio.io/inject: 'true'
     spec:
       containers:
       - name: ratelimit
-        image: envoyproxy/ratelimit:19f2079f  # Use stable version
+        image: docker.io/envoyproxy/ratelimit:8fe6ea42@sha256:a61547259607d40aff153050c2a87873ca1676d1d9f5f06937d412000dcc2df1
         ports:
         - containerPort: 8080
           name: http
@@ -400,27 +352,50 @@ spec:
           name: grpc
         env:
         - name: LOG_LEVEL
-          value: debug
+          value: info
+        - name: CONFIG_TYPE
+          value: FILE
         - name: RUNTIME_ROOT
           value: /data
         - name: RUNTIME_SUBDIRECTORY
           value: ratelimit
+        - name: RUNTIME_APPDIRECTORY
+          value: config
+        - name: RUNTIME_WATCH_ROOT
+          value: 'false'
         - name: RUNTIME_IGNOREDOTFILES
-          value: "true"
+          value: 'true'
         - name: USE_STATSD
-          value: "false"
+          value: 'false'
+        - name: REDIS_SOCKET_TYPE
+          value: tcp
+        - name: REDIS_URL
+          value: redis-ratelimit.istio-system.svc.cluster.local:6379
+        - name: HOST
+          value: '::'
+        - name: GRPC_HOST
+          value: '::'
+        - name: HEALTHY_WITH_AT_LEAST_ONE_CONFIG_LOADED
+          value: 'true'
         volumeMounts:
         - name: config-volume
           mountPath: /data/ratelimit/config
           readOnly: true
-        command: ["/bin/ratelimit"]
+        command:
+        - /bin/ratelimit
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "100m"
+            memory: 128Mi
+            cpu: 100m
           limits:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: 512Mi
+            cpu: 500m
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
       volumes:
       - name: config-volume
         configMap:
@@ -443,7 +418,7 @@ spec:
     app: ratelimit
 ```
 
-#### 2. 使用 EnvoyFilter 配置全局限流
+#### 2. 使用 EnvoyFilter 配置全局限速
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -456,149 +431,106 @@ spec:
     labels:
       istio: ingressgateway
   configPatches:
-    # Add HTTP filter
-    - applyTo: HTTP_FILTER
-      match:
-        context: GATEWAY
-        listener:
-          filterChain:
-            filter:
-              name: "envoy.filters.network.http_connection_manager"
-              subFilter:
-                name: "envoy.filters.http.router"
-      patch:
-        operation: INSERT_BEFORE
-        value:
-          name: envoy.filters.http.ratelimit
-          typed_config:
-            "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
-            domain: production-ratelimit
-            failure_mode_deny: true
-            timeout: 5s
-            rate_limit_service:
-              grpc_service:
-                envoy_grpc:
-                  cluster_name: rate_limit_cluster
-              transport_api_version: V3
-
-    # Add Rate Limit cluster
-    - applyTo: CLUSTER
-      match:
-        context: GATEWAY
-      patch:
-        operation: ADD
-        value:
-          name: rate_limit_cluster
-          type: STRICT_DNS
-          connect_timeout: 5s
-          lb_policy: ROUND_ROBIN
-          http2_protocol_options: {}
-          load_assignment:
-            cluster_name: rate_limit_cluster
-            endpoints:
-            - lb_endpoints:
-              - endpoint:
-                  address:
-                    socket_address:
-                      address: ratelimit.istio-system.svc.cluster.local
-                      port_value: 8081
----
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: filter-ratelimit-svc
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-    # Add rate limit action to VirtualHost
-    - applyTo: VIRTUAL_HOST
-      match:
-        context: GATEWAY
-      patch:
-        operation: MERGE
-        value:
-          rate_limits:
-            # Global limit
-            - actions:
-              - generic_key:
-                  descriptor_value: "global"
+  - applyTo: HTTP_FILTER
+    match:
+      context: GATEWAY
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.ratelimit
+        typed_config:
+          '@type': type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+          domain: production-ratelimit
+          failure_mode_deny: true
+          timeout: 0.1s
+          rate_limit_service:
+            grpc_service:
+              envoy_grpc:
+                cluster_name: outbound|8081||ratelimit.istio-system.svc.cluster.local
+                authority: ratelimit.istio-system.svc.cluster.local
+            transport_api_version: V3
 ```
 
-#### 3. 将限流操作添加到 VirtualService
+#### 3. 添加网关 VirtualHost 限速操作
+
+将此操作集向与过滤器相同的专用网关应用一次。它有意覆盖全部 HTTP 虚拟主机；共享网关应将匹配缩小到经验证的生成 vhost。它生成与 ConfigMap 对应的全局、路径前缀和客户端 IP 描述符。`remote_address` 是可信下游 IP，不是用户身份；用其配额前配置真实代理/XFF 信任链并考虑 NAT。
+
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: filter-ratelimit-actions
-  namespace: default
+  namespace: istio-system
 spec:
   workloadSelector:
     labels:
       istio: ingressgateway
   configPatches:
-    - applyTo: VIRTUAL_HOST
-      match:
-        context: GATEWAY
-        routeConfiguration:
-          vhost:
-            name: "*:80"
-      patch:
-        operation: MERGE
-        value:
-          rate_limits:
-            # Path-based Rate Limiting
-            - actions:
-              - header_value_match:
-                  descriptor_value: "/api/v1/*"
-                  headers:
-                  - name: ":path"
-                    string_match:
-                      prefix: "/api/v1/"
-
-            # IP-based Rate Limiting
-            - actions:
-              - remote_address: {}
+  - applyTo: VIRTUAL_HOST
+    match:
+      context: GATEWAY
+    patch:
+      operation: MERGE
+      value:
+        rate_limits:
+        - actions:
+          - generic_key:
+              descriptor_value: global
+        - actions:
+          - header_value_match:
+              descriptor_value: /api/v1/*
+              headers:
+              - name: :path
+                string_match:
+                  prefix: /api/v1/
+        - actions:
+          - remote_address: {}
 ```
+
+过滤器使用 Istio 生成的 gRPC 集群，因此正常服务发现和网格 TLS 策略适用。不添加手工明文集群。`failure_mode_deny: true` 通常在决策服务错误时返回 HTTP 500，超限时返回 HTTP 429；false 可故障放行。100ms 预算是示意：对齐 Redis 超时、延迟和调用方期限。验证跨窗口边界、Redis 重启/故障转移和服务副本变化的计数器行为。ConfigMap 更改后确认配置重新加载或重启；不要仅因 Pod 正在运行就推断策略已加载。
 
 ### 关键参数说明
 
-| 参数 | 说明 |
+| 参数 | 描述 |
 |-----------|-------------|
-| `domain` | Rate Limit Service 配置域（必须与 ConfigMap 匹配） |
-| `failure_mode_deny` | Rate Limit Service 发生故障时是否拒绝请求 |
-| `timeout` | 等待 Rate Limit Service 响应的时间 |
-| `rate_limit_service` | 外部 Rate Limit Service 的 gRPC 端点 |
+| `domain` | 限速服务配置域（必须匹配 ConfigMap） |
+| `failure_mode_deny` | 限速服务失败时是否拒绝请求 |
+| `timeout` | 等待限速服务响应的时间 |
+| `rate_limit_service` | 外部限速服务 gRPC 端点 |
 
-### 全局与本地限流的选择标准
+### 全局与本地限速选择标准
 
-**使用本地限流**：
+**使用本地限速**：
 - 配置简单
-- 响应速度快
+- 响应快
 - 无外部依赖
-- 按 Pod 限流（总限额不准确）
+- 每桶范围；副本数/流量分布影响总吞吐量
 
-**使用全局限流**：
-- 准确的总限额
-- 复杂规则（按用户、按 IP、按路径）
-- 集中式管理
-- 需要外部 Service（复杂度增加）
-- 轻微延迟（gRPC 调用）
+**使用全局限速**：
+- 所选描述符的共享限制
+- 复杂规则（按用户、IP、路径）
+- 集中管理
+- 需要外部服务（复杂度增加）
+- 少量延迟（gRPC 调用）
 
 **建议**：
-- **生产 API Gateway**：全局限流（需要精确控制）
-- **微服务保护**：本地限流（响应快速）
-- **混合模式**：Gateway 使用全局限流，内部 Service 使用本地限流
+- **生产 API 网关**：全局限速（需要精确控制）
+- **微服务保护**：本地限速（响应快）
+- **混合**：网关全局限速，内部服务本地限速
 
-## 实践示例
+## 实际示例 {#practical-examples}
 
-### 示例 1：API Gateway 限流
+### 示例 1：API 网关限速
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: api-gateway-ratelimit
@@ -611,47 +543,84 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: GATEWAY
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
-
-          # Public API: Low limit
           descriptors:
           - entries:
             - key: header_match
-              value: "/api/v1/public/*"
+              value: /api/v1/public/*
             token_bucket:
               max_tokens: 100
               tokens_per_fill: 10
               fill_interval: 1s
-
-          # Authenticated API: High limit
           - entries:
             - key: header_match
-              value: "/api/v1/protected/*"
+              value: /api/v1/protected/*
             token_bucket:
               max_tokens: 1000
               tokens_per_fill: 100
               fill_interval: 1s
-
-          # GraphQL: Medium limit
           - entries:
             - key: header_match
-              value: "/graphql"
+              value: /graphql
             token_bucket:
               max_tokens: 500
               tokens_per_fill: 50
               fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          token_bucket:
+            max_tokens: 100
+            tokens_per_fill: 10
+            fill_interval: 1s
+          always_consume_default_token_bucket: false
+          rate_limits:
+          - actions:
+            - header_value_match:
+                descriptor_value: /api/v1/public/*
+                headers:
+                - name: :path
+                  string_match:
+                    prefix: /api/v1/public/
+          - actions:
+            - header_value_match:
+                descriptor_value: /api/v1/protected/*
+                headers:
+                - name: :path
+                  string_match:
+                    prefix: /api/v1/protected/
+          - actions:
+            - header_value_match:
+                descriptor_value: /graphql
+                headers:
+                - name: :path
+                  string_match:
+                    prefix: /graphql
 ```
 
-### 示例 2：按用户分层限流
+此本地网关示例按路径前缀分类；`/protected` 本身不执行身份验证。每个网关副本有独立桶。未知路径使用回退桶。本地过滤器自身的 `rate_limits` 避免依赖猜测的生成路由名。
+
+### 示例 2：按用户层级限速
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: tiered-ratelimit
@@ -664,48 +633,85 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
+        portNumber: 8080
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
-
           descriptors:
-          # Enterprise: 1000 req/s
           - entries:
             - key: header_match
-              value: "x-api-tier:enterprise"
+              value: x-api-tier:enterprise
             token_bucket:
               max_tokens: 10000
               tokens_per_fill: 1000
               fill_interval: 1s
-
-          # Premium: 100 req/s
           - entries:
             - key: header_match
-              value: "x-api-tier:premium"
+              value: x-api-tier:premium
             token_bucket:
               max_tokens: 1000
               tokens_per_fill: 100
               fill_interval: 1s
-
-          # Free: 10 req/s
           - entries:
             - key: header_match
-              value: "x-api-tier:free"
+              value: x-api-tier:free
             token_bucket:
               max_tokens: 100
               tokens_per_fill: 10
               fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          token_bucket:
+            max_tokens: 100
+            tokens_per_fill: 10
+            fill_interval: 1s
+          always_consume_default_token_bucket: false
+          rate_limits:
+          - actions:
+            - header_value_match:
+                descriptor_value: x-api-tier:enterprise
+                headers:
+                - name: x-api-tier
+                  string_match:
+                    exact: enterprise
+          - actions:
+            - header_value_match:
+                descriptor_value: x-api-tier:premium
+                headers:
+                - name: x-api-tier
+                  string_match:
+                    exact: premium
+          - actions:
+            - header_value_match:
+                descriptor_value: x-api-tier:free
+                headers:
+                - name: x-api-tier
+                  string_match:
+                    exact: free
 ```
+
+下方 enterprise/premium/free 配额在每个配置的代理桶中按层级共享。需要与前述标头示例相同的可信标头和防绕过控制。不要将 1000 req/s 理解为每个企业用户的独立分配。
 
 ### 示例 3：外部 API 保护
 
 ```yaml
-# External API call limiting (Egress)
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: external-api-ratelimit
@@ -718,82 +724,166 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_OUTBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: egress_rate_limiter
-
-          # External API limit (cost savings)
-          token_bucket:
-            max_tokens: 1000   # Allow burst
-            tokens_per_fill: 10  # 10 per second
-            fill_interval: 1s
-
-          # Log when limit exceeded
-          response_headers_to_add:
-          - header:
-              key: x-rate-limit-exceeded
-              value: "true"
+  - applyTo: VIRTUAL_HOST
+    match:
+      context: SIDECAR_OUTBOUND
+      routeConfiguration:
+        vhost:
+          name: api.external.com:80
+    patch:
+      operation: MERGE
+      value:
+        typed_per_filter_config:
+          envoy.filters.http.local_ratelimit:
+            '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+            stat_prefix: egress_rate_limiter
+            token_bucket:
+              max_tokens: 1000
+              tokens_per_fill: 10
+              fill_interval: 1s
+            response_headers_to_add:
+            - header:
+                key: x-rate-limit-exceeded
+                value: 'true'
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+            filter_enabled:
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+            filter_enforced:
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
 ```
 
-## 监控
+此出站示例假定使用[外部异常保护](01-outlier-detection.md#protecting-external-services-serviceentry)中的 `api.external.com` HTTP 80→TLS 443 ServiceEntry/DestinationRule。验证生成 vhost 为 `api.external.com:80`。监听器安装未激活过滤器；仅该 vhost 获得启用的桶。此示例不限制其他出站 HTTP 主机。不透明应用 HTTPS 无法由 HTTP 过滤器分类。每个调用方有自己的桶，因此不是共享厂商/账户配额。响应标头标记被拒绝响应；不配置日志。
+
+## 监控 {#monitoring}
 
 ### Prometheus 指标
 
+将注解合并到相关应用/网关 Pod 模板，再滚动发布新代理。使用[指标](../observability/01-metrics.md)中的采集设置；查询假定 `namespace`/`pod` 抓取标签及每代理一次预期抓取。发现实际指标名，因为本地前缀取决于 `stat_prefix`。
+
 ```yaml
-# Rate Limiting metrics
-
-# 1. Limited request count
-rate(envoy_http_local_rate_limit_rate_limited[5m])
-
-# 2. Allowed request count
-rate(envoy_http_local_rate_limit_ok[5m])
-
-# 3. Rate Limit application rate
-(rate(envoy_http_local_rate_limit_rate_limited[5m])
- /
- (rate(envoy_http_local_rate_limit_rate_limited[5m]) + rate(envoy_http_local_rate_limit_ok[5m]))) * 100
-
-# 4. Global Rate Limit calls
-rate(envoy_cluster_ratelimit_over_limit[5m])
+spec:
+  template:
+    metadata:
+      annotations:
+        proxy.istio.io/config: |
+          proxyStatsMatcher:
+            inclusionRegexps:
+            - ".*http_local_rate_limit.*"
+            - ".*ratelimit.*"
 ```
+
+依次为：本地实际拒绝/秒、未超限决策/秒、已咨询请求中的实际限制比例，以及全局超限/正常/错误/故障放行结果/秒。即使执行关闭，`rate_limited` 也统计令牌不足决策，而 `enforced` 统计实际拒绝。`over_limit` 不是全局调用总数。全局过滤器计数器属于路由目标集群，不一定是限速服务集群。
+
+```promql
+sum by (namespace, pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace="default"}[5m]))
+
+sum by (namespace, pod) (rate({__name__=~"envoy_.*http_local_rate_limit_ok",namespace="default"}[5m]))
+
+100 * sum by (namespace, pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace="default"}[5m])) / sum by (namespace, pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enabled",namespace="default"}[5m]))
+
+rate(envoy_cluster_ratelimit_over_limit{namespace="istio-system"}[5m])
+
+rate(envoy_cluster_ratelimit_ok{namespace="istio-system"}[5m])
+
+rate(envoy_cluster_ratelimit_error{namespace="istio-system"}[5m])
+
+rate(envoy_cluster_ratelimit_failure_mode_allowed{namespace="istio-system"}[5m])
+```
+
+网关本地策略使用 `namespace="istio-system"`；为所选策略缩小 Pod/集群/前缀标签。零分母、缺失统计或抓取失败需要明确无数据处理。应用可独立返回 429，因此仅 HTTP 429 不证明此过滤器执行了配额。
 
 ### Grafana 仪表板
 
+此仪表板对象需要数据源 UID `prometheus` 和上方标签。使用[仪表板文件预置](../observability/04-dashboards.md)流程；仅 ConfigMap 标签不是仪表板加载器。
+
 ```json
 {
-  "dashboard": {
-    "title": "Istio Rate Limiting",
-    "panels": [
-      {
-        "title": "Rate Limited Requests",
-        "targets": [
-          {
-            "expr": "rate(envoy_http_local_rate_limit_rate_limited[5m])",
-            "legendFormat": "{{pod_name}}"
-          }
-        ]
+  "uid": "istio-rate-limiting",
+  "title": "Istio Rate Limiting",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Local Enforced Rejections per Second",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
       },
-      {
-        "title": "Rate Limit Hit Rate",
-        "targets": [
-          {
-            "expr": "(rate(envoy_http_local_rate_limit_rate_limited[5m]) / (rate(envoy_http_local_rate_limit_rate_limited[5m]) + rate(envoy_http_local_rate_limit_ok[5m]))) * 100",
-            "legendFormat": "Hit Rate %"
-          }
-        ]
+      "targets": [
+        {
+          "expr": "sum by (namespace, pod) (rate({__name__=~\"envoy_.*http_local_rate_limit_enforced\",namespace=\"default\"}[5m]))",
+          "legendFormat": "{{namespace}} / {{pod}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
       }
-    ]
-  }
+    },
+    {
+      "id": 2,
+      "title": "Local Enforced Fraction",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "100 * sum by (namespace, pod) (rate({__name__=~\"envoy_.*http_local_rate_limit_enforced\",namespace=\"default\"}[5m])) / sum by (namespace, pod) (rate({__name__=~\"envoy_.*http_local_rate_limit_enabled\",namespace=\"default\"}[5m]))",
+          "legendFormat": "{{namespace}} / {{pod}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        }
+      }
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s"
 }
 ```
 
-## 故障排除
+## 故障排除 {#troubleshooting}
 
-### 限流未生效
+### 限速不工作
 
 ```bash
 # 1. Check EnvoyFilter
@@ -801,13 +891,14 @@ kubectl get envoyfilter -A
 
 # 2. Check Envoy configuration
 istioctl proxy-config listeners <pod-name> -n <namespace> -o json | \
-  jq '.[] | select(.name | contains("0.0.0.0")) | .filterChains[].filters[] | select(.name == "envoy.filters.network.http_connection_manager") | .typedConfig.httpFilters[] | select(.name == "envoy.filters.http.local_ratelimit")'
+  jq '.. | objects | select(.name? == "envoy.filters.http.local_ratelimit" or .name? == "envoy.filters.http.ratelimit")'
 
-# 3. Check logs
-kubectl logs -n <namespace> <pod-name> -c istio-proxy | grep ratelimit
+# 3. Check route/vhost overrides and actual optional counters
+istioctl proxy-config routes <pod-name> -n <namespace> -o json
+istioctl x envoy-stats <pod-name> -n <namespace> --output prom | grep -E "rate_limit|ratelimit"
 ```
 
-### 全局限流连接失败
+### 全局限速连接失败
 
 ```bash
 # Check Rate Limit Service
@@ -815,11 +906,18 @@ kubectl get pods -n istio-system -l app=ratelimit
 kubectl logs -n istio-system -l app=ratelimit
 
 # Check Redis connection
-kubectl exec -n istio-system -it deploy/ratelimit -- redis-cli -h redis-ratelimit ping
+kubectl exec <redis-client-pod> -n istio-system -c <client-container> -- \
+  redis-cli -h redis-ratelimit.istio-system.svc.cluster.local -p 6379 PING
+
+# Check the gateway-to-service cluster and ready backend endpoints
+istioctl proxy-config clusters <gateway-pod> -n istio-system --fqdn ratelimit.istio-system.svc.cluster.local
+kubectl get endpointslice -n istio-system -l kubernetes.io/service-name=ratelimit
 ```
+
+Redis 命令要求现有获授权客户端容器包含 redis-cli，并配置后端 TLS/身份验证。固定的限速镜像为 distroless，不提供 shell 或 redis-cli。检查服务日志、`/healthcheck`、已加载配置、命名空间选择器、网格策略和描述符一致性。绿色 Pod 或空默认代理日志不是执行证明。
 
 ## 参考资料
 
-- [Istio 限流](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
-- [Envoy 限流](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/local_rate_limit_filter)
-- [Envoy 全局限流](https://github.com/envoyproxy/ratelimit)
+- [Istio 限速](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
+- [Envoy 限速](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/local_rate_limit_filter)
+- [Envoy 全局限速](https://github.com/envoyproxy/ratelimit)

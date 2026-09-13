@@ -1,405 +1,101 @@
 # AWS Load Balancer Controller
 
-> **Versiones compatibles**: AWS Load Balancer Controller v2.8+
-> **Última actualización**: July 3, 2026
+> **Base de revisión**: AWS Load Balancer Controller / chart Helm v3.5.0
+> **Última actualización**: 11 de septiembre de 2026
 
 ## Descripción general
 
-AWS Load Balancer Controller es un controlador que administra AWS Elastic Load Balancers (ELB) para clústeres de Kubernetes. Integra automáticamente los recursos Ingress y Service de Kubernetes con AWS Application Load Balancer (ALB) y Network Load Balancer (NLB).
+AWS Load Balancer Controller administra los Elastic Load Balancers (ELB) de AWS para clústeres Kubernetes. Integra automáticamente los recursos Ingress y Service con Application Load Balancer (ALB) y Network Load Balancer (NLB).
 
-### Características principales
+### Funciones principales
 
-- **Application Load Balancer (ALB)**: tráfico HTTP/HTTPS, enrutamiento basado en rutas, enrutamiento basado en hosts
-- **Network Load Balancer (NLB)**: tráfico TCP/UDP, balanceo de carga L4 de alto rendimiento
-- **TargetGroupBinding**: conecta Target Groups existentes a Services de Kubernetes
-- **Integración con AWS WAF**: aplicación de Web Application Firewall
-- **AWS Shield**: protección contra DDoS
+- **Application Load Balancer (ALB)**: Tráfico HTTP/HTTPS y enrutamiento por ruta o host
+- **Network Load Balancer (NLB)**: Tráfico TCP/UDP y balanceo L4 de alto rendimiento
+- **TargetGroupBinding**: Conecta grupos de destino existentes con Services de Kubernetes
+- **Integración con AWS WAF**: Aplicación de un firewall de aplicaciones web
+- **AWS Shield**: Protección DDoS
 
-```mermaid
-graph TB
-    subgraph "AWS Cloud"
-        subgraph "AWS Load Balancer Controller"
-            CTRL[Controller<br/>Watches K8s Resources]
-        end
+![Diagrama que muestra cómo los recursos Ingress y Service de un clúster EKS activan AWS Load Balancer Controller, que crea un Application Load Balancer y un Network Load Balancer, cada uno con su propio grupo de destino, mientras TargetGroupBinding vincula directamente un grupo de destino existente y ambos grupos registran los mismos Pods de backend.](../.gitbook/assets/en-networking-03-aws-lb-controller-0.png)
 
-        subgraph "Load Balancers"
-            ALB[Application Load Balancer<br/>HTTP/HTTPS L7]
-            NLB[Network Load Balancer<br/>TCP/UDP L4]
-        end
-
-        subgraph "EKS Cluster"
-            ING[Ingress Resources]
-            SVC[Service Resources]
-            TGB[TargetGroupBinding]
-            POD[Pods]
-        end
-
-        subgraph "Target Groups"
-            TG1[Target Group 1]
-            TG2[Target Group 2]
-        end
-    end
-
-    CTRL -->|Creates/Manages| ALB
-    CTRL -->|Creates/Manages| NLB
-    ING -->|Triggers| CTRL
-    SVC -->|Triggers| CTRL
-    ALB --> TG1
-    NLB --> TG2
-    TG1 --> POD
-    TG2 --> POD
-    TGB --> TG1
-
-    style CTRL fill:#ff9800
-    style ALB fill:#2196f3
-    style NLB fill:#9c27b0
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-03-aws-lb-controller-0.html)
 
 ## Arquitectura
 
-### Cómo funciona el controlador
+### Funcionamiento del controlador
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant K8sAPI as Kubernetes API
-    participant CTRL as LB Controller
-    participant AWS as AWS API
-    participant ALB as ALB/NLB
+![El controlador reacciona a un nuevo Ingress o Service creando ALB/NLB, grupo de destino y reglas mediante ELBv2; actualiza el estado y continúa registrando destinos cuando cambian los Pods.](../.gitbook/assets/en-networking-03-aws-lb-controller-1.png)
 
-    User->>K8sAPI: Create Ingress/Service
-    K8sAPI->>CTRL: Watch event
-    CTRL->>CTRL: Analyze resource
-    CTRL->>AWS: Request Load Balancer creation
-    AWS->>ALB: Provision ALB/NLB
-    AWS-->>CTRL: Return ARN
-    CTRL->>AWS: Create Target Group
-    CTRL->>AWS: Configure Listener rules
-    CTRL->>K8sAPI: Update Status
-    K8sAPI-->>User: Provide Load Balancer DNS
-
-    Note over CTRL,AWS: Auto register/deregister targets on Pod changes
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-03-aws-lb-controller-1.html)
 
 ### Estructura de componentes
 
-```yaml
-# Deployment structure
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: aws-load-balancer-controller
-  namespace: kube-system
-spec:
-  replicas: 2  # HA configuration
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: aws-load-balancer-controller
-  template:
-    spec:
-      serviceAccountName: aws-load-balancer-controller
-      containers:
-        - name: controller
-          image: public.ecr.aws/eks/aws-load-balancer-controller:v2.8.0
-          args:
-            - --cluster-name=my-cluster
-            - --ingress-class=alb
-            - --aws-vpc-id=vpc-xxxxxxxxx
-            - --aws-region=us-east-1
-```
+Instale el chart completo publicado, incluidos RBAC, CRD, sondas y certificados de webhook. El controlador observa objetos y llama a las API de AWS; el tráfico de aplicaciones pasa por el balanceador y sus destinos, no por su Pod. Con elección de líder, una réplica reconcilia y las demás aportan reserva y disponibilidad del webhook. El número de réplicas no garantiza distribución entre nodos o zonas de disponibilidad.
 
 ## Requisitos previos
 
-### 1. Crear una política IAM
+### Propiedad y compatibilidad
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "iam:CreateServiceLinkedRole"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "iam:AWSServiceName": "elasticloadbalancing.amazonaws.com"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DescribeAccountAttributes",
-        "ec2:DescribeAddresses",
-        "ec2:DescribeAvailabilityZones",
-        "ec2:DescribeInternetGateways",
-        "ec2:DescribeVpcs",
-        "ec2:DescribeVpcPeeringConnections",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeSecurityGroups",
-        "ec2:DescribeInstances",
-        "ec2:DescribeNetworkInterfaces",
-        "ec2:DescribeTags",
-        "ec2:GetCoipPoolUsage",
-        "ec2:DescribeCoipPools",
-        "elasticloadbalancing:DescribeLoadBalancers",
-        "elasticloadbalancing:DescribeLoadBalancerAttributes",
-        "elasticloadbalancing:DescribeListeners",
-        "elasticloadbalancing:DescribeListenerCertificates",
-        "elasticloadbalancing:DescribeSSLPolicies",
-        "elasticloadbalancing:DescribeRules",
-        "elasticloadbalancing:DescribeTargetGroups",
-        "elasticloadbalancing:DescribeTargetGroupAttributes",
-        "elasticloadbalancing:DescribeTargetHealth",
-        "elasticloadbalancing:DescribeTags",
-        "elasticloadbalancing:DescribeTrustStores"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "cognito-idp:DescribeUserPoolClient",
-        "acm:ListCertificates",
-        "acm:DescribeCertificate",
-        "iam:ListServerCertificates",
-        "iam:GetServerCertificate",
-        "waf-regional:GetWebACL",
-        "waf-regional:GetWebACLForResource",
-        "waf-regional:AssociateWebACL",
-        "waf-regional:DisassociateWebACL",
-        "wafv2:GetWebACL",
-        "wafv2:GetWebACLForResource",
-        "wafv2:AssociateWebACL",
-        "wafv2:DisassociateWebACL",
-        "shield:GetSubscriptionState",
-        "shield:DescribeProtection",
-        "shield:CreateProtection",
-        "shield:DeleteProtection"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:AuthorizeSecurityGroupIngress",
-        "ec2:RevokeSecurityGroupIngress"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:CreateSecurityGroup"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:CreateTags"
-      ],
-      "Resource": "arn:aws:ec2:*:*:security-group/*",
-      "Condition": {
-        "StringEquals": {
-          "ec2:CreateAction": "CreateSecurityGroup"
-        },
-        "Null": {
-          "aws:RequestTag/elbv2.k8s.aws/cluster": "false"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:CreateTags",
-        "ec2:DeleteTags"
-      ],
-      "Resource": "arn:aws:ec2:*:*:security-group/*",
-      "Condition": {
-        "Null": {
-          "aws:RequestTag/elbv2.k8s.aws/cluster": "true",
-          "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:AuthorizeSecurityGroupIngress",
-        "ec2:RevokeSecurityGroupIngress",
-        "ec2:DeleteSecurityGroup"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "Null": {
-          "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "elasticloadbalancing:CreateLoadBalancer",
-        "elasticloadbalancing:CreateTargetGroup"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "Null": {
-          "aws:RequestTag/elbv2.k8s.aws/cluster": "false"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "elasticloadbalancing:CreateListener",
-        "elasticloadbalancing:DeleteListener",
-        "elasticloadbalancing:CreateRule",
-        "elasticloadbalancing:DeleteRule"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "elasticloadbalancing:AddTags",
-        "elasticloadbalancing:RemoveTags"
-      ],
-      "Resource": [
-        "arn:aws:elasticloadbalancing:*:*:targetgroup/*/*",
-        "arn:aws:elasticloadbalancing:*:*:loadbalancer/net/*/*",
-        "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/*/*"
-      ],
-      "Condition": {
-        "Null": {
-          "aws:RequestTag/elbv2.k8s.aws/cluster": "true",
-          "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "elasticloadbalancing:AddTags",
-        "elasticloadbalancing:RemoveTags"
-      ],
-      "Resource": [
-        "arn:aws:elasticloadbalancing:*:*:listener/net/*/*/*",
-        "arn:aws:elasticloadbalancing:*:*:listener/app/*/*/*",
-        "arn:aws:elasticloadbalancing:*:*:listener-rule/net/*/*/*",
-        "arn:aws:elasticloadbalancing:*:*:listener-rule/app/*/*/*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "elasticloadbalancing:ModifyLoadBalancerAttributes",
-        "elasticloadbalancing:SetIpAddressType",
-        "elasticloadbalancing:SetSecurityGroups",
-        "elasticloadbalancing:SetSubnets",
-        "elasticloadbalancing:DeleteLoadBalancer",
-        "elasticloadbalancing:ModifyTargetGroup",
-        "elasticloadbalancing:ModifyTargetGroupAttributes",
-        "elasticloadbalancing:DeleteTargetGroup"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "Null": {
-          "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "elasticloadbalancing:AddTags"
-      ],
-      "Resource": [
-        "arn:aws:elasticloadbalancing:*:*:targetgroup/*/*",
-        "arn:aws:elasticloadbalancing:*:*:loadbalancer/net/*/*",
-        "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/*/*"
-      ],
-      "Condition": {
-        "StringEquals": {
-          "elasticloadbalancing:CreateAction": [
-            "CreateTargetGroup",
-            "CreateLoadBalancer"
-          ]
-        },
-        "Null": {
-          "aws:RequestTag/elbv2.k8s.aws/cluster": "false"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "elasticloadbalancing:RegisterTargets",
-        "elasticloadbalancing:DeregisterTargets"
-      ],
-      "Resource": "arn:aws:elasticloadbalancing:*:*:targetgroup/*/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "elasticloadbalancing:SetWebAcl",
-        "elasticloadbalancing:ModifyListener",
-        "elasticloadbalancing:AddListenerCertificates",
-        "elasticloadbalancing:RemoveListenerCertificates",
-        "elasticloadbalancing:ModifyRule"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
+Este capítulo configura el **controlador de código abierto autogestionado**. EKS Auto Mode ofrece su propio balanceo administrado: los Services NLB usan `eks.amazonaws.com/nlb`, IngressClass ALB usa `eks.amazonaws.com/alb` y su API TargetGroupBinding difiere de `elbv2.k8s.aws/v1beta1`. Consulte la migración de Auto Mode en vez de cambiar la clase o copiar todas las anotaciones. Las clases explícitas evitan ambigüedad cuando coexisten ambos modelos.
 
-### 2. Configuración de IRSA
+Use una versión de EKS Kubernetes actualmente soportada y compruebe todos los controladores que comparten CRD globales. LBC **v3.5.0** se publicó el **2026-08-03**; el chart verificado **3.5.0** lo incluye. Los usuarios de Gateway API necesitan CRD **v1.6.0** antes de actualizar; los CRD Gateway específicos de LBC usan `gateway.k8s.aws/v1`. Esto no implica compatibilidad con cualquier versión más reciente. El antiguo mínimo genérico «Kubernetes 1.22+» no es una matriz actual de soporte de EKS.
+
+El webhook necesita acceso TCP 9443 desde el plano de control. Especifique región/VPC cuando IMDS esté restringido o se ejecute en Fargate/Hybrid Nodes; elija credenciales compatibles con ese cómputo. Los destinos IP necesitan direcciones de Pods enrutables en la VPC y descubrimiento de endpoints/ENI compatible. Amazon VPC CNI es habitual en EKS, pero no es la única configuración posible. Los destinos de instancia requieren un Service con NodePort y una red de nodos adecuada.
+
+
+
+### 1. Crear la política IAM
+
+Use la política incluida en **v3.5.0** y la partición AWS correcta. Revise permisos amplios de descubrimiento y grupos de seguridad, condiciones de recursos/etiquetas y funciones activas. Guarde la política revisada antes de crearla. La política upstream no garantiza mínimo privilegio; no copie una antigua v2.8. Las credenciales AWS del controlador pueden usar **IRSA o EKS Pod Identity** en nodos compatibles y son independientes de RBAC de Kubernetes.
+
+### 2. Configurar IRSA
 
 ```bash
-# Check OIDC Provider
-aws eks describe-cluster --name my-cluster --query "cluster.identity.oidc.issuer" --output text
+export AWS_REGION=us-east-1
+export CLUSTER_NAME=my-cluster
+export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+export VPC_ID="$(aws eks describe-cluster --name "$CLUSTER_NAME" \
+  --query 'cluster.resourcesVpcConfig.vpcId' --output text)"
+kubectl config current-context
 
-# Create OIDC Provider if not exists
-eksctl utils associate-iam-oidc-provider --cluster my-cluster --approve
+aws eks describe-cluster --name "$CLUSTER_NAME" \
+  --query cluster.identity.oidc.issuer --output text
+# Only if this cluster's IAM OIDC provider does not already exist:
+eksctl utils associate-iam-oidc-provider --cluster "$CLUSTER_NAME" \
+  --region "$AWS_REGION" --approve
 
-# Create IAM policy
-curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.8.0/docs/install/iam_policy.json
-
-aws iam create-policy \
+curl --fail --location --output iam-policy-upstream.json \
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json
+export REVIEWED_POLICY_FILE=iam-policy-reviewed.json
+test -s "$REVIEWED_POLICY_FILE"
+export CONTROLLER_POLICY_ARN="$(aws iam create-policy \
   --policy-name AWSLoadBalancerControllerIAMPolicy \
-  --policy-document file://iam_policy.json
-
-# Create Service Account
-eksctl create iamserviceaccount \
-  --cluster=my-cluster \
-  --namespace=kube-system \
-  --name=aws-load-balancer-controller \
-  --role-name AmazonEKSLoadBalancerControllerRole \
-  --attach-policy-arn=arn:aws:iam::<ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
-  --approve
+  --policy-document "file://$REVIEWED_POLICY_FILE" --query Policy.Arn --output text)"
+eksctl create iamserviceaccount --cluster "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --namespace kube-system --name aws-load-balancer-controller \
+  --attach-policy-arn "$CONTROLLER_POLICY_ARN" --approve
 ```
+
+Reutilice políticas y roles revisados. Un rol IRSA reutilizado necesita confianza para el proveedor OIDC de este clúster y la cuenta de servicio prevista. Revise propiedad y anotaciones de una cuenta existente antes de modificarla. Pod Identity usa su propio agente, asociación y confianza; no copie claves estáticas en los values.
 
 ## Instalación
 
 ### Instalación con Helm
 
 ```bash
-# Add Helm repo
 helm repo add eks https://aws.github.io/eks-charts
-helm repo update
+helm repo update eks
+helm pull eks/aws-load-balancer-controller --version 3.5.0
 
-# Install
-helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-  -n kube-system \
-  --set clusterName=my-cluster \
-  --set serviceAccount.create=false \
-  --set serviceAccount.name=aws-load-balancer-controller \
-  --set region=us-east-1 \
-  --set vpcId=vpc-xxxxxxxxx
+# Review cluster-wide CRD changes and other controllers before applying.
+curl --fail --location --output gateway-api-v1.6.0.yaml \
+  https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml
+kubectl apply --server-side -f gateway-api-v1.6.0.yaml
+helm show crds ./aws-load-balancer-controller-3.5.0.tgz > lbc-crds.yaml
+kubectl apply --server-side -f lbc-crds.yaml
+
+# Save the values below as controller-values.yaml and replace its cluster/region/VPC.
+helm install aws-load-balancer-controller ./aws-load-balancer-controller-3.5.0.tgz \
+  -n kube-system -f controller-values.yaml --wait --timeout 5m
 ```
 
 ```yaml
@@ -410,7 +106,7 @@ serviceAccount:
   name: aws-load-balancer-controller
 
 region: us-east-1
-vpcId: vpc-xxxxxxxxx
+vpcId: vpc-0123456789abcdef0
 
 # Resource settings
 resources:
@@ -456,7 +152,15 @@ createIngressClassResource: true
 enableShield: false
 enableWaf: false
 enableWafv2: true
+# Use explicit Service classes; do not claim unclassified LoadBalancer Services.
+enableServiceMutatorWebhook: false
+enableEndpointSlices: true
+keepTLSSecret: true
+clusterSecretsPermissions:
+  allowAllSecrets: false
 ```
+
+Los recursos son ejemplos, no tamaños de producción medidos. Los releases existentes requieren un `helm upgrade` revisado con values guardados; Helm no actualiza los CRD automáticamente. Con `enableServiceMutatorWebhook: false`, los NLB seleccionan explícitamente `service.k8s.aws/nlb`. El webhook predeterminado modifica Services LoadBalancer recién creados, no uno existente cuyo tipo cambia después. `keepTLSSecret: true` reutiliza el Secret del webhook administrado por Helm cuando existe; coordine el bundle CA y el certificado del Pod durante GitOps/rotación, o use cert-manager compatible instalado aparte. No elimine CRD compartidos para forzar una actualización.
 
 ### Verificar la instalación
 
@@ -475,6 +179,8 @@ kubectl get ingressclass
 ```
 
 ## Application Load Balancer (ALB)
+
+Cada manifiesto siguiente es independiente. Sustituya ID de cuentas/recursos, dominios, subredes, grupos y ARN de certificados por valores verificados de la región correcta. Cree primero namespaces, Services y backends listos; el puerto Service 80 y el destino 8080 tienen roles distintos. Declarar containerPort no hace que una aplicación escuche ni implemente /health. El endpoint de salud, puerto real, protocolo HTTP/TLS, grupos y NetworkPolicies deben coincidir. La imagen inicial muestra **destinos IP**; los de instancia registran nodos y usan NodePorts. Este controlador también reconcilia TargetGroupBinding, y la secuencia es ilustrativa, no una transacción atómica.
 
 ### Configuración básica de Ingress
 
@@ -505,6 +211,7 @@ metadata:
 
     # Security groups
     alb.ingress.kubernetes.io/security-groups: sg-xxxxxxxxx
+    alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
 
     # Health check settings
     alb.ingress.kubernetes.io/healthcheck-path: /health
@@ -543,14 +250,12 @@ metadata:
     alb.ingress.kubernetes.io/group.name: my-app-group
     alb.ingress.kubernetes.io/group.order: "10"
 
-    # Sticky Sessions
-    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=60
-
-    # Slow start
-    alb.ingress.kubernetes.io/target-group-attributes: slow_start.duration_seconds=30
-
-    # Connection draining
-    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=30
+    # Target group attributes
+    alb.ingress.kubernetes.io/target-group-attributes: >-
+      stickiness.enabled=true,
+      stickiness.lb_cookie.duration_seconds=60,
+      slow_start.duration_seconds=30,
+      deregistration_delay.timeout_seconds=30
 
     # IP address type
     alb.ingress.kubernetes.io/ip-address-type: dualstack
@@ -559,10 +264,7 @@ metadata:
     alb.ingress.kubernetes.io/load-balancer-attributes: >-
       idle_timeout.timeout_seconds=60,
       routing.http2.enabled=true,
-      routing.http.drop_invalid_header_fields.enabled=true
-
-    # Access logs
-    alb.ingress.kubernetes.io/load-balancer-attributes: >-
+      routing.http.drop_invalid_header_fields.enabled=true,
       access_logs.s3.enabled=true,
       access_logs.s3.bucket=my-alb-logs,
       access_logs.s3.prefix=my-app
@@ -612,7 +314,7 @@ spec:
                   number: 80
 ```
 
-### Enrutamiento basado en rutas
+### Enrutamiento por ruta
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -647,6 +349,13 @@ spec:
             pathType: Prefix
             backend:
               service:
+                name: api-v2
+                port:
+                  number: 80
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
                 name: api-v1
                 port:
                   number: 80
@@ -672,6 +381,8 @@ spec:
 
 ### Configuración de autenticación
 
+Los ejemplos requieren certificado HTTPS y aplicación del proveedor de identidad existentes. Configure callback `https://app.example.com/oauth2/idpresponse`, flujo de código de autorización, scopes y secreto de cliente. El ALB debe alcanzar los endpoints de token/información de usuario por IPv4; un ALB interno puede necesitar salida/NAT. La autenticación solo ocurre en listeners HTTPS. `allow` para solicitudes no autenticadas no protege el backend. Restrinja el acceso directo y valide las claims de usuario firmadas por ALB según la aplicación.
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -680,6 +391,8 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
 
     # Cognito authentication
     alb.ingress.kubernetes.io/auth-type: cognito
@@ -716,6 +429,8 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
 
     # OIDC authentication
     alb.ingress.kubernetes.io/auth-type: oidc
@@ -752,9 +467,44 @@ stringData:
   clientSecret: your-client-secret
 ```
 
+El Secret OIDC debe estar en el namespace del Ingress. El chart usa `clusterSecretsPermissions.allowAllSecrets: false`; conceda solo acceso al Secret necesario. v3.5.0 lo observa mediante selector `metadata.name`, por lo que el Role puede limitar `resourceNames`. Cree el Secret real mediante el proceso aprobado; no publique un secreto real en Git.
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: lbc-oidc-secret
+  namespace: default
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - secrets
+  resourceNames:
+  - oidc-secret
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lbc-oidc-secret
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: aws-load-balancer-controller
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: lbc-oidc-secret
+```
+
 ## Network Load Balancer (NLB)
 
-### Configuración básica de Service NLB
+### Configuración básica del Service NLB
 
 ```yaml
 apiVersion: v1
@@ -763,7 +513,6 @@ metadata:
   name: nlb-service
   annotations:
     # Specify NLB type
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
 
     # Scheme
@@ -782,6 +531,7 @@ metadata:
 
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
   selector:
     app: my-app
   ports:
@@ -791,7 +541,36 @@ spec:
       protocol: TCP
 ```
 
-### Terminación TLS de NLB
+### Grupos de destino ponderados
+
+El Service asigna peso 90 a su grupo implícito y 10 al backend existente `service-canary:8080`. Ambos necesitan endpoints listos y configuración compatible; la anotación no crea la aplicación canary. El sufijo indica protocolo y puerto del listener: **`actions.TCP-80`**.
+
+Los pesos relativos van de **0 a 999** y se aplican a conexiones nuevas. Los cambios ordinarios conservan conexiones existentes; **poner el peso de un grupo en 0 cierra sus conexiones existentes tras un breve período**, además de impedir nuevas. No es un drenaje garantizado sin interrupciones. Los listeners TLS necesitan protocolos compatibles y no admiten afinidad de grupo de destino.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nlb-weighted
+  namespace: default
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/actions.TCP-80: '{"type":"forward","forwardConfig":{"baseServiceWeight":90,"targetGroups":[{"serviceName":"service-canary","servicePort":8080,"weight":10}]}}'
+spec:
+  type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  selector:
+    app: my-app
+    version: stable
+  ports:
+  - name: tcp
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+```
+
+### NLB con terminación TLS
 
 ```yaml
 apiVersion: v1
@@ -799,7 +578,6 @@ kind: Service
 metadata:
   name: nlb-tls-service
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
 
@@ -813,6 +591,7 @@ metadata:
 
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
   selector:
     app: my-app
   ports:
@@ -830,7 +609,6 @@ kind: Service
 metadata:
   name: internal-nlb
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
 
     # Internal scheme
@@ -844,9 +622,11 @@ metadata:
 
     # Security groups (optional)
     service.beta.kubernetes.io/aws-load-balancer-security-groups: sg-xxxxxxxxx
+    service.beta.kubernetes.io/aws-load-balancer-manage-backend-security-group-rules: "true"
 
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
   selector:
     app: internal-service
   ports:
@@ -854,7 +634,7 @@ spec:
       targetPort: 8080
 ```
 
-### Compatibilidad con UDP de NLB
+### NLB con soporte UDP
 
 ```yaml
 apiVersion: v1
@@ -862,12 +642,13 @@ kind: Service
 metadata:
   name: udp-nlb
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-enable-tcp-udp-listener: "true"
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
 
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
   selector:
     app: dns-server
   ports:
@@ -883,26 +664,29 @@ spec:
 
 ### Proxy Protocol v2
 
+Proxy Protocol v2 transmite la dirección original del cliente como metadatos binarios de conexión; **no** conserva la dirección origen del paquete IP. El ejemplo desactiva la conservación a nivel de paquete para mostrar la diferencia. El backend debe interpretar Proxy Protocol antes de los datos de aplicación, también en las conexiones de salud correspondientes. Un servidor HTTP/TLS ordinario no procesa ese prefijo sin configuración.
+
+`preserve_client_ip.enabled` controla la conservación del origen donde el tipo/protocolo/ruta lo permita. Con destinos instancia/NodePort, `externalTrafficPolicy: Local` puede evitar un SNAT posterior de kube-proxy, pero no sustituye universalmente la conservación del NLB. La traducción entre familias IP y las rutas transit/hairpin no soportadas necesitan evaluación aparte.
+
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: proxy-protocol-nlb
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
 
     # Enable Proxy Protocol v2
-    service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
 
     # Target Group attributes
     service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: >-
       proxy_protocol_v2.enabled=true,
-      preserve_client_ip.enabled=true
+      preserve_client_ip.enabled=false
 
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
   selector:
     app: proxy-aware-app
   ports:
@@ -912,15 +696,15 @@ spec:
 
 ## IngressClass e IngressClassParams
 
+La clase opcional se llama `alb-platform` para no sobrescribir `alb`, propiedad del chart. Etiquete los namespaces con `alb-enabled=true` y configure Ingress `spec.ingressClassName: alb-platform`. No la haga predeterminada del clúster salvo que esa sea la política. IngressClassParams prevalece sobre las anotaciones correspondientes.
+
 ### Definición de IngressClass
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
 metadata:
-  name: alb
-  annotations:
-    ingressclass.kubernetes.io/is-default-class: "true"
+  name: alb-platform
 spec:
   controller: ingress.k8s.aws/alb
   parameters:
@@ -968,17 +752,16 @@ spec:
   #     - subnet-xxx
   #     - subnet-yyy
   #   tags:
-  #     - key: kubernetes.io/role/elb
-  #       value: "1"
+  #     kubernetes.io/role/elb: ["1"]
 
   # Group settings
   group:
     name: my-default-group
 ```
 
-## TargetGroupBinding
+## TargetGroupBinding {#targetgroupbinding}
 
-El CRD TargetGroupBinding permite conectar directamente Target Groups de AWS existentes a Services de Kubernetes.
+El CRD TargetGroupBinding conecta directamente grupos de destino AWS existentes con Services de Kubernetes.
 
 ### TargetGroupBinding básico
 
@@ -1010,6 +793,10 @@ spec:
           - port: 80
             protocol: TCP
 ```
+
+TGB administra registros, no el ciclo del balanceador/listener existente. Mantenga coherentes puerto Service, protocolo/familia IP del grupo, puerto backend y reglas de seguridad. `nodeSelector` solo filtra destinos de **instancia**, no Pods en modo IP. Limite creación/actualización a operadores de confianza: el IAM del controlador puede permitir referencias a otros grupos de la cuenta.
+
+Si varios clústeres o TGB comparten un grupo, configure `spec.multiClusterTargetGroup: true` **desde la creación en todos los TGB participantes**. `false` presupone propiedad completa y puede dar de baja destinos ajenos. No cambie el indicador a la ligera después: el cambio documentado puede dejar destinos sin gestionar. Usar grupos separados por clúster es otro modelo.
 
 ### TargetGroupBinding avanzado
 
@@ -1049,7 +836,7 @@ spec:
           - port: 8443
             protocol: TCP
 
-  # Node Selector (only Pods on specific nodes as targets)
+  # Node selector applies to instance targets, not IP-mode pod selection
   # nodeSelector:
   #   matchLabels:
   #     node-type: compute
@@ -1084,6 +871,8 @@ spec:
 ```
 
 ## Integración con WAF y Shield
+
+Utilice una Web ACL regional existente en la región del ALB y configure sus reglas previstas. Los valores de instalación habilitan WAF v2 pero deshabilitan la integración con Shield; para utilizar el ejemplo de Shield Advanced, prepare primero la suscripción/permisos necesarios y habilite la integración del controlador con Shield. Su anotación por sí sola no activa una suscripción de pago ni anula una función del controlador deshabilitada. Estas integraciones de ALB no implican que WAF inspeccione tráfico TCP/UDP arbitrario de NLB. El ejemplo de registros de acceso en S3 también requiere un bucket de destino existente y la política de bucket documentada para entrega de registros de ALB.
 
 ### Integración con AWS WAF v2
 
@@ -1143,84 +932,78 @@ spec:
                   number: 80
 ```
 
-## Actualizaciones destacadas de versiones
+## Actualizaciones destacadas
 
-### v2.16 (diciembre de 2025)
+- **v2.16.0 — 2025-11-20:** ALB Target Optimizer y grupos ponderados NLB. Target Optimizer necesita agente y configuración de control de destinos; instalar LBC no lo activa.
+- **v2.17.0 — 2025-12-19:** Global Accelerator mediante el único CRD `aga.k8s.aws/v1beta1` `GlobalAccelerator`, con listeners, grupos y endpoints anidados; Gateway API en candidato a GA. Global Accelerator requiere IAM y configuración adicionales.
+- **v3.5.0 — 2026-08-03:** Conformidad Gateway API v1.6.0 y TCPRoute/UDPRoute v1 estables. Los recursos Gateway de LBC usan `gateway.k8s.aws/v1`; v1beta1 todavía servido está obsoleto.
 
-- **ALB Target Optimizer**: un contenedor sidecar recopila métricas de rendimiento de targets en tiempo real y enruta el tráfico según la capacidad de los targets
-- **NLB Weighted Target Groups**: habilita despliegues Blue/Green y Canary mediante un único NLB
-- **ALB JWT Validation**: realiza validación de JWT a nivel de ALB mediante la anotación `alb.ingress.kubernetes.io/jwt-validation`
-- **NLB QUIC Passthrough**: compatibilidad con el paso de tráfico del protocolo QUIC
+v3.5 admite QUIC/TCP_QUIC y validación JWT de ALB. Son funciones distintas con restricciones de protocolo. JWT solo funciona con HTTPS y su JSON usa **`jwksEndpoint`**, no `jwksUri`. Añada lo siguiente al Ingress HTTPS con certificado válido, JWKS fiable y accesible, e issuer/claims revisados:
 
 ```yaml
-# ALB JWT Validation example
 alb.ingress.kubernetes.io/jwt-validation: >-
-  {"issuer":"https://accounts.example.com","jwksUri":"https://accounts.example.com/.well-known/jwks.json"}
+  {"issuer":"https://accounts.example.com","jwksEndpoint":"https://accounts.example.com/.well-known/jwks.json"}
 ```
 
-### v2.17 (v2.17.0 / v2.17.1, diciembre de 2025 - enero de 2026, Kubernetes 1.22+)
-
-- **Se introdujo AWS Global Accelerator Controller**: administra declarativamente Global Accelerator como recursos de Kubernetes mediante CRD `Accelerator`/`Listener`/`EndpointGroup`/`Endpoint`
-- Se amplió la compatibilidad con el protocolo QUIC
-- Se añadió la opción `--default-load-balancer-scheme` (establece un esquema predeterminado cuando no se especifica la anotación)
-
-> A partir de esta versión, la compatibilidad con Gateway API alcanzó el estado de Release Candidate antes de GA. Consulta la [documentación de Gateway API](./04-gateway-api.md) para Gateway API GA (v3.0.0) y las herramientas de migración posteriores.
+Es un fragmento de anotaciones, no un objeto completo. Valide audience y demás claims requeridas en vez de asumir que una firma válida basta para autorizar. Consulte la [guía de Gateway API](./04-gateway-api.md) para la configuración Gateway independiente.
 
 ## Referencia de anotaciones
 
-### Anotaciones de ALB Ingress
+### Anotaciones de Ingress ALB
 
-| Annotation | Descripción | Predeterminado |
-|------------|-------------|----------------|
+| Anotación | Descripción | Predeterminado |
+|------------|-------------|---------|
 | `alb.ingress.kubernetes.io/scheme` | internet-facing o internal | internal |
 | `alb.ingress.kubernetes.io/target-type` | ip o instance | instance |
-| `alb.ingress.kubernetes.io/subnets` | ID o nombres de Subnet | Detección automática |
-| `alb.ingress.kubernetes.io/security-groups` | ID de Security Group | Creación automática |
-| `alb.ingress.kubernetes.io/listen-ports` | JSON de puertos de Listener | [{"HTTP": 80}] |
-| `alb.ingress.kubernetes.io/certificate-arn` | ARN de certificado ACM | - |
-| `alb.ingress.kubernetes.io/ssl-redirect` | puerto de redirección SSL | - |
-| `alb.ingress.kubernetes.io/ssl-policy` | política SSL | ELBSecurityPolicy-2016-08 |
-| `alb.ingress.kubernetes.io/healthcheck-path` | ruta de Health Check | / |
-| `alb.ingress.kubernetes.io/healthcheck-port` | puerto de Health Check | traffic-port |
-| `alb.ingress.kubernetes.io/healthcheck-protocol` | protocolo de Health Check | HTTP |
-| `alb.ingress.kubernetes.io/healthcheck-interval-seconds` | intervalo de Health Check | 15 |
-| `alb.ingress.kubernetes.io/healthcheck-timeout-seconds` | tiempo de espera de Health Check | 5 |
-| `alb.ingress.kubernetes.io/healthy-threshold-count` | umbral de estado correcto | 2 |
-| `alb.ingress.kubernetes.io/unhealthy-threshold-count` | umbral de estado incorrecto | 2 |
-| `alb.ingress.kubernetes.io/group.name` | nombre del grupo Ingress | - |
-| `alb.ingress.kubernetes.io/group.order` | prioridad dentro del grupo | 0 |
+| `alb.ingress.kubernetes.io/subnets` | ID o nombres de subredes | Detección automática |
+| `alb.ingress.kubernetes.io/security-groups` | ID de grupos de seguridad | Creación automática |
+| `alb.ingress.kubernetes.io/listen-ports` | Puertos de listeners en JSON | HTTP 80, o HTTPS 443 si se especifica certificate-arn |
+| `alb.ingress.kubernetes.io/certificate-arn` | ARN del certificado ACM | - |
+| `alb.ingress.kubernetes.io/ssl-redirect` | Puerto de redirección SSL | - |
+| `alb.ingress.kubernetes.io/ssl-policy` | Política SSL | ELBSecurityPolicy-2016-08 |
+| `alb.ingress.kubernetes.io/healthcheck-path` | Ruta de comprobación de salud | / |
+| `alb.ingress.kubernetes.io/healthcheck-port` | Puerto de comprobación de salud | traffic-port |
+| `alb.ingress.kubernetes.io/healthcheck-protocol` | Protocolo de comprobación de salud | HTTP |
+| `alb.ingress.kubernetes.io/healthcheck-interval-seconds` | Intervalo de comprobación de salud | 15 |
+| `alb.ingress.kubernetes.io/healthcheck-timeout-seconds` | Timeout de comprobación de salud | 5 |
+| `alb.ingress.kubernetes.io/healthy-threshold-count` | Umbral para estado saludable | 2 |
+| `alb.ingress.kubernetes.io/unhealthy-threshold-count` | Umbral para estado no saludable | 2 |
+| `alb.ingress.kubernetes.io/group.name` | Nombre del grupo Ingress | - |
+| `alb.ingress.kubernetes.io/group.order` | Prioridad dentro del grupo | 0 |
 | `alb.ingress.kubernetes.io/ip-address-type` | ipv4 o dualstack | ipv4 |
-| `alb.ingress.kubernetes.io/load-balancer-attributes` | atributos de LB | - |
-| `alb.ingress.kubernetes.io/target-group-attributes` | atributos de TG | - |
-| `alb.ingress.kubernetes.io/tags` | tags de recursos | - |
-| `alb.ingress.kubernetes.io/wafv2-acl-arn` | ARN de WebACL de WAF v2 | - |
-| `alb.ingress.kubernetes.io/shield-advanced-protection` | protección de Shield | false |
-| `alb.ingress.kubernetes.io/auth-type` | tipo de autenticación (none, cognito, oidc) | none |
+| `alb.ingress.kubernetes.io/load-balancer-attributes` | Atributos del LB | - |
+| `alb.ingress.kubernetes.io/target-group-attributes` | Atributos del TG | - |
+| `alb.ingress.kubernetes.io/tags` | Etiquetas de recursos | - |
+| `alb.ingress.kubernetes.io/wafv2-acl-arn` | ARN de WebACL WAF v2 | - |
+| `alb.ingress.kubernetes.io/shield-advanced-protection` | Protección Shield | false |
+| `alb.ingress.kubernetes.io/auth-type` | Tipo de autenticación (none, cognito, oidc) | none |
 
 ### Anotaciones de Service NLB
 
-| Annotation | Descripción | Predeterminado |
-|------------|-------------|----------------|
+| Anotación | Descripción | Predeterminado |
+|------------|-------------|---------|
 | `service.beta.kubernetes.io/aws-load-balancer-type` | external (NLB) o nlb | - |
 | `service.beta.kubernetes.io/aws-load-balancer-nlb-target-type` | ip o instance | instance |
 | `service.beta.kubernetes.io/aws-load-balancer-scheme` | internet-facing o internal | internal |
-| `service.beta.kubernetes.io/aws-load-balancer-subnets` | ID de Subnet | Detección automática |
-| `service.beta.kubernetes.io/aws-load-balancer-ssl-cert` | ARN de certificado ACM | - |
-| `service.beta.kubernetes.io/aws-load-balancer-ssl-ports` | puertos con SSL habilitado | - |
-| `service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy` | política SSL | - |
-| `service.beta.kubernetes.io/aws-load-balancer-backend-protocol` | protocolo de backend | - |
+| `service.beta.kubernetes.io/aws-load-balancer-subnets` | ID de subredes | Detección automática |
+| `service.beta.kubernetes.io/aws-load-balancer-ssl-cert` | ARN del certificado ACM | - |
+| `service.beta.kubernetes.io/aws-load-balancer-ssl-ports` | Puertos con SSL habilitado | - |
+| `service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy` | Política SSL | - |
+| `service.beta.kubernetes.io/aws-load-balancer-backend-protocol` | Protocolo del backend | - |
 | `service.beta.kubernetes.io/aws-load-balancer-proxy-protocol` | Proxy Protocol | - |
-| `service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled` | LB entre zonas | true |
-| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol` | protocolo de Health Check | TCP |
-| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-path` | ruta de Health Check | - |
-| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-port` | puerto de Health Check | - |
-| `service.beta.kubernetes.io/aws-load-balancer-attributes` | atributos de LB | - |
-| `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes` | atributos de TG | - |
-| `service.beta.kubernetes.io/aws-load-balancer-security-groups` | Security Groups | Creación automática |
+| `service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled` | Obsoleta; use aws-load-balancer-attributes | false |
+| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol` | Protocolo de comprobación de salud | TCP |
+| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-path` | Ruta de comprobación de salud | - |
+| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-port` | Puerto de comprobación de salud | - |
+| `service.beta.kubernetes.io/aws-load-balancer-attributes` | Atributos del LB | - |
+| `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes` | Atributos del TG | - |
+| `service.beta.kubernetes.io/aws-load-balancer-security-groups` | Grupos de seguridad | Creación automática |
 
-## Prácticas recomendadas para EKS
+## Buenas prácticas en EKS
 
-### 1. Etiquetado de Subnet
+### 1. Etiquetado de subredes
+
+Las etiquetas de rol permiten seleccionar claramente subredes públicas/privadas. En LBC autogestionado v2.12.1+, si no hay subredes con etiquetas de rol coincidentes, `SubnetDiscoveryByReachability` puede clasificarlas por sus tablas de rutas. También se pueden usar ID explícitos o filtros de IngressClassParams. Auto Mode sigue exigiendo sus etiquetas documentadas. Compruebe filtrado por etiqueta de clúster, IP disponibles y una subred elegible por AZ; un ALB ordinario necesita al menos dos AZ. Etiquetar no cambia rutas ni convierte una subred en pública.
 
 ```bash
 # Public subnets (for internet-facing ALB/NLB)
@@ -1239,7 +1022,7 @@ aws ec2 create-tags \
   --tags Key=kubernetes.io/cluster/my-cluster,Value=shared
 ```
 
-### 2. Administración de Security Groups
+### 2. Gestión de grupos de seguridad
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1253,8 +1036,8 @@ metadata:
     # Explicit security group specification
     alb.ingress.kubernetes.io/security-groups: sg-alb-external
 
-    # Restrict inbound CIDRs
-    alb.ingress.kubernetes.io/inbound-cidrs: "10.0.0.0/8, 172.16.0.0/12"
+    # Configure approved inbound sources on this explicit security group.
+    # inbound-cidrs is ignored when security-groups is specified.
 
     # Additional security groups (for backend communication)
     alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
@@ -1274,7 +1057,9 @@ spec:
                   number: 80
 ```
 
-### 3. Optimización de costos
+### 3. Optimización de costes
+
+IngressGroup comparte ALB y reglas. Úselo solo dentro de una frontera de confianza: quien pueda crear un Ingress que entre en el grupo puede alterar rutas y prioridades. Aplique RBAC/admisión y revise anotaciones combinadas/exclusivas. Pertenecer al grupo no aísla namespaces ni garantiza costes incondicionalmente.
 
 ```yaml
 # Share ALB using Ingress groups
@@ -1335,8 +1120,8 @@ metadata:
     # Specify subnets in 3+ AZs
     alb.ingress.kubernetes.io/subnets: subnet-az-a,subnet-az-b,subnet-az-c
 
-    # Cross-zone load balancing
-    alb.ingress.kubernetes.io/load-balancer-attributes: load_balancing.cross_zone.enabled=true
+    # ALB cross-zone is enabled at the load-balancer level.
+    # Review target-group overrides separately.
 
     # Health check optimization
     alb.ingress.kubernetes.io/healthcheck-interval-seconds: "10"
@@ -1361,18 +1146,20 @@ spec:
                   number: 80
 ```
 
-## Solución de problemas
+## Resolución de problemas
 
-### Problemas comunes
+Obtenga las variables del namespace y del inventario reales. Revise el motivo del evento/error antes de modificar infraestructura. La comprobación opcional con exec necesita curl en la imagen; de lo contrario use un contenedor de diagnóstico aprobado. Proteja logs y credenciales. Un 502 puede deberse a reset, respuesta mal formada o TLS: consulte los detalles del log ALB, sin asumir el mismo estado HTTP para cualquier destino no saludable.
 
-#### 1. ALB no se crea
+### Problemas habituales
+
+#### 1. No se crea el ALB
 
 ```bash
 # Check controller logs
 kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
 
 # Check Ingress events
-kubectl describe ingress <ingress-name>
+kubectl describe ingress "$INGRESS_NAME" -n "$NAMESPACE"
 
 # Common causes:
 # - Insufficient IAM permissions
@@ -1380,21 +1167,21 @@ kubectl describe ingress <ingress-name>
 # - IngressClass not specified
 ```
 
-#### 2. Targets no saludables
+#### 2. Destinos no saludables
 
 ```bash
 # Check Target Group status
 aws elbv2 describe-target-health \
-  --target-group-arn arn:aws:elasticloadbalancing:...
+  --target-group-arn "$TARGET_GROUP_ARN"
 
 # Check Pod logs
-kubectl logs <pod-name>
+kubectl logs "$POD_NAME" -n "$NAMESPACE" --tail=100
 
 # Test health check endpoint
-kubectl exec -it <pod-name> -- curl localhost:8080/health
+kubectl exec "$POD_NAME" -n "$NAMESPACE" -- curl --fail --max-time 5 http://localhost:8080/health
 
 # Check security groups
-aws ec2 describe-security-groups --group-ids sg-xxx
+aws ec2 describe-security-groups --group-ids "$SECURITY_GROUP_ID"
 ```
 
 #### 3. 502 Bad Gateway
@@ -1405,7 +1192,7 @@ aws ec2 describe-security-groups --group-ids sg-xxx
 kubectl get pods -l app=my-app
 
 # 2. Target Group draining
-aws elbv2 describe-target-health --target-group-arn ...
+aws elbv2 describe-target-health --target-group-arn "$TARGET_GROUP_ARN"
 
 # 3. Health check failure
 # - Verify health check path
@@ -1415,11 +1202,11 @@ aws elbv2 describe-target-health --target-group-arn ...
 # - Verify ALB -> Pod communication allowed
 ```
 
-#### 4. Problemas con certificados SSL
+#### 4. Problemas de certificados SSL
 
 ```bash
 # Check ACM certificate status
-aws acm describe-certificate --certificate-arn arn:aws:acm:...
+aws acm describe-certificate --certificate-arn "$ACM_CERTIFICATE_ARN"
 
 # Verify certificate is ISSUED status
 # Check domain validation completed
@@ -1427,7 +1214,7 @@ aws acm describe-certificate --certificate-arn arn:aws:acm:...
 # Verify region (must be same region as ALB)
 ```
 
-### Comandos de depuración
+### Comandos de diagnóstico
 
 ```bash
 # Controller detailed logs
@@ -1435,15 +1222,15 @@ kubectl logs -n kube-system deployment/aws-load-balancer-controller -f
 
 # Ingress status check
 kubectl get ingress -o wide
-kubectl describe ingress <name>
+kubectl describe ingress "$INGRESS_NAME" -n "$NAMESPACE"
 
 # Service status check
 kubectl get svc -o wide
-kubectl describe svc <name>
+kubectl describe svc "$SERVICE_NAME" -n "$NAMESPACE"
 
 # TargetGroupBinding status check
 kubectl get targetgroupbindings -A
-kubectl describe targetgroupbinding <name>
+kubectl describe targetgroupbinding "$TGB_NAME" -n "$NAMESPACE"
 
 # AWS resource check
 aws elbv2 describe-load-balancers --query 'LoadBalancers[?contains(LoadBalancerName, `k8s`)]'
@@ -1455,7 +1242,16 @@ aws elbv2 describe-target-groups --query 'TargetGroups[?contains(TargetGroupName
 ## Referencias
 
 - [Documentación de AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-- [Repositorio de GitHub](https://github.com/kubernetes-sigs/aws-load-balancer-controller)
-- [Guía del usuario de EKS](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
+- [Repositorio GitHub](https://github.com/kubernetes-sigs/aws-load-balancer-controller)
+- [Guía de usuario de EKS](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
 - [Documentación de ALB](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/)
 - [Documentación de NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/)
+
+- [Release LBC v3.5.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.5.0)
+- [Anotaciones Ingress de LBC v3.5.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md)
+- [Anotaciones Service de LBC v3.5.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/annotations.md)
+- [Propiedad de TargetGroupBinding](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
+- [Descubrimiento de subredes](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/subnet_discovery.md)
+- [Pesos y conexiones de listeners NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+- [Requisitos de autenticación ALB](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html)
+- [NLB de EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)

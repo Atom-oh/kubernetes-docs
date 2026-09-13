@@ -1,161 +1,73 @@
-# Avanzado
+# Funciones avanzadas
 
-Esta sección cubre características avanzadas de Istio, como Ambient Mode, Multi-cluster, EnvoyFilter, compatibilidad con gRPC/WebSocket y más.
+> **Última actualización**: September 11, 2026 · Istio 1.31. Estos ejemplos independientes presuponen que existen las cargas de trabajo, Services y controladores indicados. Siga cada capítulo detallado para la instalación/compatibilidad y validación; los fragmentos no constituyen una pila probada en producción.
 
-## Tabla de contenidos
+Esta sección cubre funciones avanzadas de Istio, como el modo Ambient, multiclúster, EnvoyFilter, compatibilidad con gRPC/WebSocket y otras.
 
-1. [Ambient Mode](01-ambient-mode.md)
-2. [Multi-cluster](02-multi-cluster.md)
+## Índice
+
+1. [Modo Ambient](01-ambient-mode.md)
+2. [Multiclúster](02-multi-cluster.md)
 3. [EnvoyFilter](03-envoy-filter.md)
 4. [Caché DNS](04-dns-cache.md)
 5. [gRPC](05-grpc.md)
 6. [WebSocket](06-websocket.md)
-7. [Inyección de Sidecar](07-sidecar-injection.md)
+7. [Inyección de sidecars](07-sidecar-injection.md)
 8. [Integración con Argo Rollouts](08-argo-rollouts.md)
-9. [Argo Rollouts con reconocimiento de zona](09-zone-aware-argo-rollouts.md)
+9. [Argo Rollouts con reconocimiento de zonas](09-zone-aware-argo-rollouts.md)
 10. [Autoescalado con KEDA](10-keda-autoscaling.md)
 
 ## Descripción general
 
-Esta sección cubre características avanzadas de Istio y temas detallados necesarios para entornos de producción.
+Esta sección cubre funciones avanzadas de Istio y temas detallados necesarios para entornos de producción.
 
-### Temas clave
+### Temas principales
 
-```mermaid
-flowchart TB
-    subgraph Deployment["Deployment Modes"]
-        Sidecar[Sidecar Mode<br/>Traditional Approach]
-        Ambient[Ambient Mode<br/>New Architecture]
-    end
+El modo de despliegue, el enrutamiento de protocolos, la personalización, el control del despliegue y el autoescalado son decisiones relacionadas pero distintas. EnvoyFilter no configura ztunnel, que está basado en Rust, y el enrutamiento del tráfico de Istio para Argo Rollouts no depende intrínsecamente de la inyección de sidecars en las aplicaciones.
 
-    subgraph MultiCluster["Multi-cluster"]
-        Primary[Primary Cluster<br/>Control Plane]
-        Remote[Remote Cluster<br/>Workload Only]
-    end
+## 1. Modo Ambient
 
-    subgraph Advanced["Advanced Features"]
-        EnvoyFilter[EnvoyFilter<br/>Customization]
-        DNS[DNS Caching<br/>Performance Optimization]
-        Protocol[gRPC/WebSocket<br/>Protocol Support]
-    end
+Ambient se incluyó por primera vez como alpha en Istio 1.18 y alcanzó GA en 1.24. Separa la superposición segura L4 del nodo del procesamiento L7 opcional basado en waypoints.
 
-    subgraph Integration["Integration"]
-        ArgoRollouts[Argo Rollouts<br/>Progressive Delivery]
-    end
+### Modo Sidecar frente a modo Ambient
 
-    Sidecar --> EnvoyFilter
-    Ambient --> EnvoyFilter
-    Primary --> Remote
-    EnvoyFilter --> Protocol
-    ArgoRollouts -.-> Sidecar
-
-    %% Style definitions
-    classDef deployment fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef multi fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef advanced fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef integration fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class assignments
-    class Sidecar,Ambient deployment;
-    class Primary,Remote multi;
-    class EnvoyFilter,DNS,Protocol advanced;
-    class ArgoRollouts integration;
-```
-
-## 1. Ambient Mode
-
-Una nueva arquitectura de plano de datos introducida en Istio 1.28+.
-
-### Sidecar Mode frente a Ambient Mode
-
-| Característica | Sidecar Mode | Ambient Mode |
+| Característica | Modo Sidecar | Modo Ambient |
 |----------------|-------------|--------------|
-| **Arquitectura** | Proxy Envoy inyectado en cada Pod | ztunnel (a nivel de nodo) + waypoint (opcional) |
-| **Uso de recursos** | Alto (un proxy por Pod) | Bajo (un proxy por nodo) |
-| **Complejidad de Deployment** | Alta (se requiere redeployment) | Baja (aplicación transparente) |
-| **Rendimiento** | Ligeramente más lento (salto adicional) | Más rápido (solo L4 cuando se necesita) |
-| **Características** | Se admiten todas las características | L4 de forma predeterminada; L7 requiere waypoint |
+| **Arquitectura** | Proxy Envoy inyectado en cada pod | ztunnel (a nivel de nodo) + waypoint (opcional) |
+| **Modelo de recursos** | Asignación de Envoy por Pod | ztunnel compartido más cualquier asignación de waypoint; mida el consumo total |
+| **Incorporación** | La inyección generalmente requiere crear nuevos Pods | Incorporación mediante etiquetas con CNI/ztunnel requeridos; la incorporación al waypoint es independiente |
+| **Rendimiento** | Depende de la configuración del proxy/carga de trabajo | Depende de la ruta, el uso de waypoints y la capacidad; no siempre es más rápido |
+| **Funciones** | Conjunto maduro de funciones L4/L7 | L4 de forma predeterminada; L7 requiere waypoint; verifique la compatibilidad de funciones de la versión |
 
-### Arquitectura de Ambient Mode
+### Arquitectura del modo Ambient
 
-```mermaid
-flowchart TB
-    subgraph Pod1["Pod (App Only)"]
-        App1[Application<br/>No Sidecar]
-    end
+![Un pod de aplicación sin sidecar envía tráfico de forma transparente al ztunnel del nodo, que reenvía el tráfico L4 directamente al servicio y solo lo desvía a través de un proxy waypoint opcional cuando se requiere enrutamiento L7.](../../../.gitbook/assets/en-service-mesh-istio-advanced-readme-1.png)
 
-    subgraph Node["Kubernetes Node"]
-        Ztunnel[ztunnel<br/>L4 Proxy<br/>mTLS, Telemetry]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-readme-1.html)
 
-    subgraph Waypoint["Waypoint Proxy (Optional)"]
-        WP[Waypoint<br/>L7 Proxy<br/>Advanced Routing]
-    end
+La figura de arquitectura es conceptual: un recurso debe incorporarse para utilizar un waypoint. El ámbito de tráfico configurado atraviesa entonces ese waypoint; ztunnel no inspecciona las solicitudes HTTP ni decide por solicitud si se necesita L7.
 
-    App1 -->|Transparent| Ztunnel
-    Ztunnel -->|L4 only| Service[Service]
-    Ztunnel -.->|L7 needed| WP
-    WP --> Service
+**Más información**: [Guía detallada del modo Ambient](01-ambient-mode.md)
 
-    %% Style definitions
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+## 2. Multiclúster
 
-    %% Class assignments
-    class App1 pod;
-    class Ztunnel ztunnel;
-    class WP waypoint;
-    class Service service;
-```
+Conecte varios clústeres de Kubernetes como una única malla de servicios.
 
-**Más detalles**: [Guía detallada de Ambient Mode](01-ambient-mode.md)
+### Topología multiclúster
 
-## 2. Multi-cluster
+![El plano de control del clúster primario envía configuración a dos clústeres remotos mientras el Servicio A se comunica directamente por la malla con el servicio de cada clúster remoto.](../../../.gitbook/assets/en-service-mesh-istio-advanced-readme-2.png)
 
-Conecte varios clústeres de Kubernetes como una única service mesh.
-
-### Topología Multi-cluster
-
-```mermaid
-flowchart TB
-    subgraph Primary["Primary Cluster<br/>us-east-1"]
-        CP1[Istiod<br/>Control Plane]
-        Service1[Service A]
-    end
-
-    subgraph Remote1["Remote Cluster 1<br/>us-west-2"]
-        Service2[Service B]
-    end
-
-    subgraph Remote2["Remote Cluster 2<br/>eu-west-1"]
-        Service3[Service C]
-    end
-
-    CP1 -.->|Config Push| Service2
-    CP1 -.->|Config Push| Service3
-    Service1 <-->|Cross-cluster<br/>Communication| Service2
-    Service1 <-->|Cross-cluster<br/>Communication| Service3
-
-    %% Style definitions
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef remote fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class assignments
-    class CP1 primary;
-    class Service2,Service3 remote;
-    class Service1 service;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-readme-2.html)
 
 **Casos de uso**:
-- Deployment multirregión
+- Despliegue multirregión
 - Recuperación ante desastres (DR)
-- Deployment de clúster Blue/Green
-- Aislamiento de entornos (dev/staging/prod)
+- Despliegue azul/verde de clústeres
+- Conexión deliberada de entornos seleccionados; el aislamiento sigue necesitando límites de identidad/red/autorización
 
-**Más detalles**: [Guía de configuración Multi-cluster](02-multi-cluster.md)
+La figura ilustra una topología primario/remoto con conectividad supuesta. Múltiples primarios es otra topología; las redes distintas requieren gateways este-oeste/enrutamiento y configuración de confianza adecuados. Conectar clústeres por sí solo no proporciona recuperación ante desastres ni aísla los entornos.
+
+**Más información**: [Guía de configuración multiclúster](02-multi-cluster.md)
 
 ## 3. EnvoyFilter
 
@@ -163,12 +75,15 @@ Personalice directamente la configuración del proxy Envoy.
 
 ### Casos de uso de EnvoyFilter
 
+Prefiera API compatibles como las cabeceras de VirtualService, AuthorizationPolicy o WasmPlugin cuando expresen el requisito. Este ejemplo Lua ilustra una extensión sidecar sensible a la versión, no una configuración ambient universal ni un sistema de autenticación.
+
+
 ```yaml
-# Add custom header
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: custom-header
+  namespace: default
 spec:
   workloadSelector:
     labels:
@@ -177,62 +92,62 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_OUTBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.lua
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              request_handle:headers():add("x-custom-header", "value")
-            end
+          '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+          default_source_code:
+            inline_string: "function envoy_on_request(request_handle)\n  request_handle:headers():replace(\"x-custom-header\", \"value\")\nend\n"
 ```
 
-**Casos de uso clave**:
+**Principales casos de uso**:
 - Limitación de tasa
 - Autenticación/autorización personalizada
-- Manipulación de encabezados
+- Manipulación de cabeceras
 - Transformación de solicitudes/respuestas
 - Plugins WASM
 
-**Más detalles**: [Guía de EnvoyFilter](03-envoy-filter.md)
+**Más información**: [Guía de EnvoyFilter](03-envoy-filter.md)
 
 ## 4. Caché DNS
 
-Optimice el rendimiento almacenando en caché las consultas DNS.
+El proxy DNS de Istio captura las consultas DNS de las aplicaciones y puede responder localmente a las entradas de la malla/servicios. Un grupo de conexiones DestinationRule no habilita la caché DNS. Combine este fragmento de plantilla de Pod y cree nuevos Pods con sidecar:
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: dns-cache
 spec:
-  host: external-api.example.com
-  trafficPolicy:
-    connectionPool:
-      tcp:
-        maxConnections: 100
-      http:
-        http1MaxPendingRequests: 100
+  template:
+    metadata:
+      annotations:
+        proxy.istio.io/config: "proxyMetadata:\n  ISTIO_META_DNS_CAPTURE: \"true\"\n"
 ```
 
-**Beneficios**:
-- Latencia reducida en las consultas DNS
-- Carga reducida en servidores DNS externos
-- Respuestas DNS coherentes
+**Ventajas**:
+- Menor latencia de consulta DNS
+- Menor carga en servidores DNS externos
+- Respuestas conscientes del registro, sujetas al comportamiento de descubrimiento/TTL/actualización
 
-**Más detalles**: [Guía de caché DNS](04-dns-cache.md)
+La captura DNS en sidecars requiere activación explícita; ambient habilita el proxy DNS de forma predeterminada desde 1.25. La captura, la asignación de direcciones del registro y la actualización del DNS ascendente son comportamientos independientes; la caché no garantiza respuestas DNS permanentemente idénticas ni elimina todas las consultas externas.
+
+**Más información**: [Guía de caché DNS](04-dns-cache.md)
 
 ## 5. Compatibilidad con gRPC
 
-Proporciona routing y balanceo de carga optimizados para el protocolo gRPC.
+gRPC utiliza enrutamiento HTTP/2. Este ejemplo presupone un Service `grpc-service` con un puerto gRPC con nombre 9090 y Pods listos etiquetados con `version: v2`. Las RPC no son intrínsecamente idempotentes, por lo que aquí se deshabilitan explícitamente los reintentos de la malla; los clientes siguen necesitando plazos y propagación del contexto.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: grpc-service
+  namespace: default
 spec:
   hosts:
   - grpc-service
@@ -244,88 +159,95 @@ spec:
     - destination:
         host: grpc-service
         subset: v2
+        port:
+          number: 9090
+    retries:
+      attempts: 0
+  - route:
+    - destination:
+        host: grpc-service
+        port:
+          number: 9090
+    retries:
+      attempts: 0
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: grpc-service
+  namespace: default
+spec:
+  host: grpc-service
+  subsets:
+  - name: v2
+    labels:
+      version: v2
 ```
 
-**Características clave**:
-- Balanceo de carga basado en HTTP/2
-- Comprobaciones de estado de gRPC
-- Deadlines y reintentos
-- Routing basado en metadatos
+**Funciones principales**:
+- Equilibrio de carga basado en HTTP/2
+- Protocolo de estado de la aplicación/sondas de Kubernetes cuando se configuran explícitamente
+- Plazos y reintentos
+- Enrutamiento basado en metadatos
 
-**Más detalles**: [Guía de gRPC](05-grpc.md)
+**Más información**: [Guía de gRPC](05-grpc.md)
 
 ## 6. Compatibilidad con WebSocket
 
-Proporciona manejo especial para conexiones WebSocket.
+Istio admite actualizaciones HTTP a WebSocket. Esto presupone un `my-gateway` existente en `default` para `ws.example.com`, y un Service de backend HTTP8080 que atiende `/ws`. No es necesaria una coincidencia exacta de la cabecera Upgrade sensible a mayúsculas y minúsculas.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: websocket-service
+  namespace: default
 spec:
   hosts:
   - ws.example.com
   http:
   - match:
-    - headers:
-        upgrade:
-          exact: websocket
+    - uri:
+        prefix: /ws
     route:
     - destination:
         host: websocket-service
+        port:
+          number: 8080
+    retries:
+      attempts: 0
+  gateways:
+  - my-gateway
 ```
 
-**Características clave**:
+**Funciones principales**:
 - Mantenimiento de conexiones de larga duración
-- Configuración de Connection Pool
-- Gestión de Idle Timeout
+- Configuración de grupos de conexiones
+- Gestión del tiempo de espera por inactividad
 
-**Más detalles**: [Guía de WebSocket](06-websocket.md)
+Este ejemplo omite el tiempo de espera de la ruta HTTP, que está deshabilitado de forma predeterminada en Istio; eso no deshabilita todos los límites de inactividad o duración máxima del equilibrador de carga/proxy/aplicación. Planifique el drenaje de conexiones y el comportamiento de reconexión durante el despliegue.
 
-## 7. Inyección de Sidecar
+**Más información**: [Guía de WebSocket](06-websocket.md)
+
+## 7. Inyección de sidecars
 
 Cubre los mecanismos de inyección del proxy sidecar y su personalización.
 
 ### Métodos de inyección
 
-```mermaid
-flowchart TB
-    Pod[Pod Creation]
-    Check{Namespace has<br/>label?}
-    Inject[Sidecar Injection]
-    Deploy[Pod Deployment]
-    Skip[Skip Injection]
+![Diagrama de flujo que muestra cómo, al crear un pod, el webhook de inyección comprueba la etiqueta istio-injection del espacio de nombres, inyecta el sidecar Envoy o lo omite, y ambas rutas convergen en el despliegue del pod.](../../../.gitbook/assets/en-service-mesh-istio-advanced-readme-3.png)
 
-    Pod --> Check
-    Check -->|istio-injection=enabled| Inject
-    Check -->|No| Skip
-    Inject --> Deploy
-    Skip --> Deploy
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-readme-3.html)
 
-    %% Style definitions
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef inject fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+El diagrama solo muestra la rama sencilla de la etiqueta del espacio de nombres. La inyección real también depende de las etiquetas del Pod, los selectores de revisión/webhook, las exclusiones y el ciclo de vida de sidecar elegido; cambiar una etiqueta de espacio de nombres no inyecta los Pods que ya están ejecutándose.
 
-    %% Class assignments
-    class Pod,Deploy pod;
-    class Check decision;
-    class Inject inject;
-    class Skip pod;
-```
-
-**Más detalles**: [Guía de inyección de Sidecar](07-sidecar-injection.md)
+**Más información**: [Guía de inyección de sidecars](07-sidecar-injection.md)
 
 ## 8. Integración con Argo Rollouts
 
-Implemente estrategias avanzadas de Deployment integrando Argo Rollouts con Istio.
+Lo siguiente es un **fragmento de estrategia** para un Rollout completo con selector, plantilla de Pod y contenedores. También requiere el controlador, Services estable/canary y una ruta `primary` de VirtualService con destinos coincidentes. El análisis y la reversión automática requieren su propio AnalysisTemplate y política; los pasos por sí solos no configuran el análisis de métricas. Solo el tráfico gestionado por la ruta de enrutamiento de Istio prevista sigue estos pesos.
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: myapp
 spec:
   strategy:
     canary:
@@ -337,24 +259,28 @@ spec:
             - primary
       steps:
       - setWeight: 10
-      - pause: {duration: 2m}
+      - pause:
+          duration: 2m
       - setWeight: 50
-      - pause: {duration: 2m}
+      - pause:
+          duration: 2m
+      stableService: myapp-stable
+      canaryService: myapp-canary
 ```
 
-**Características clave**:
-- Deployment Canary automático basado en métricas
-- Análisis y rollback automático
-- Deployment Blue/Green
-- Progressive Delivery
+**Funciones principales**:
+- Despliegue canary automático basado en métricas
+- Análisis y reversión automática
+- Despliegue azul/verde
+- Entrega progresiva
 
-**Más detalles**: [Guía de integración con Argo Rollouts](08-argo-rollouts.md)
+**Más información**: [Guía de integración con Argo Rollouts](08-argo-rollouts.md)
 
-## 9. Argo Rollouts con reconocimiento de zona
+## 9. Argo Rollouts con reconocimiento de zonas
 
-Realice Deployments Canary con reconocimiento de zona por zona de disponibilidad.
+Realice despliegues canary con reconocimiento de zonas por zona de disponibilidad.
 
-**Más detalles**: [Guía de Argo Rollouts con reconocimiento de zona](09-zone-aware-argo-rollouts.md)
+**Más información**: [Guía de Argo Rollouts con reconocimiento de zonas](09-zone-aware-argo-rollouts.md)
 
 ## 10. Autoescalado con KEDA
 
@@ -362,110 +288,82 @@ Implemente autoescalado basado en métricas de Istio mediante KEDA.
 
 ### KEDA frente a HPA
 
-| Característica | Kubernetes HPA | KEDA |
-|---------|---------------|------|
-| **Fuentes de métricas** | CPU/memoria + métricas personalizadas | Más de 60 scalers (Prometheus, CloudWatch, Kafka, etc.) |
-| **Escalado a cero** | No compatible (mínimo 1) | Compatible (0 Pods posibles) |
-| **Métricas externas** | Requiere Metrics Server | Compatibilidad nativa |
-| **Consultas complejas** | Limitadas | PromQL, CloudWatch Insights |
+| Tema | HPA de Kubernetes | KEDA |
+|---|---|---|
+|Entradas de métricas|API de métricas de recursos/personalizadas/externas|Los escaladores exponen métricas de backend al HPA|
+|Funciones de escalado|Ajuste de réplicas, normalmente con minReplicas 1|Activación/desactivación más un HPA gestionado para 1→N|
+|Métricas externas|Requiere un adaptador de métricas externas|Proporciona su adaptador de API de métricas|
+|Lógica de consultas|Consume valores numéricos de métricas|Consultas PromQL o de métricas/operaciones matemáticas/Metrics Insights de CloudWatch, según el escalador|
+
+Metrics Server proporciona métricas de recursos; no es el adaptador genérico de métricas externas. KEDA 2.20 requiere Kubernetes ≥1.30; verifique la versión elegida, las API y la compatibilidad de la plataforma independientemente de Istio. El escalado a cero también requiere una señal que siga siendo observable con cero réplicas y una ruta de activación viable. CloudWatch Metrics Insights es distinto de CloudWatch Logs Insights.
 
 ### Arquitectura de KEDA
 
-```mermaid
-flowchart TB
-    subgraph IstioMesh[Istio Service Mesh]
-        Service[Service<br/>with Envoy]
-        Envoy[Envoy Proxy]
-        Service --> Envoy
-    end
+![Las métricas de Envoy se recopilan mediante Prometheus o mediante una canalización configurada de ADOT a CloudWatch; KEDA consulta el backend elegido y gestiona un HPA para la carga de trabajo de destino.](../../../.gitbook/assets/en-service-mesh-istio-advanced-readme-4.png)
 
-    subgraph Observability[Observability Stack]
-        Prometheus[Prometheus<br/>Metrics Collection]
-        CloudWatch[CloudWatch<br/>AWS Metrics]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-readme-4.html)
 
-    subgraph Autoscaling[Autoscaling]
-        KEDA[KEDA<br/>Operator]
-        HPA[HPA<br/>Controller]
-        ScaledObject[ScaledObject<br/>Policy]
-    end
+### Estrategias principales de escalado
 
-    Envoy -->|Metrics| Prometheus
-    Envoy -->|Metrics| CloudWatch
+Este ejemplo de la API de KEDA 2.20 presupone un Deployment `reviews` existente en `default`, métricas de la carga de trabajo de destino recopiladas y un endpoint privado de Prometheus accesible. Configure autenticación/TLS compatibles para su backend. Devuelve un único valor agregado y utiliza un objetivo AverageValue de 100 solicitudes/s por réplica.
 
-    Prometheus -->|Query| KEDA
-    CloudWatch -->|Query| KEDA
-
-    KEDA -->|Create/Manage| HPA
-    ScaledObject -->|Define| KEDA
-
-    HPA -->|Scale| Service
-
-    %% Style definitions
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef observability fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef autoscaling fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    %% Class assignments
-    class Service,Envoy istio;
-    class Prometheus,CloudWatch observability;
-    class KEDA,HPA,ScaledObject autoscaling;
-```
-
-### Estrategias de escalado clave
 
 ```yaml
-# RPS-based scaling
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: reviews-rps-scaler
+  namespace: default
 spec:
   scaleTargetRef:
     name: reviews
   triggers:
   - type: prometheus
     metadata:
-      query: |
-        sum(rate(istio_requests_total{
-          destination_workload="reviews"
-        }[1m]))
+      query: sum(rate(istio_requests_total{reporter="destination",destination_workload="reviews",destination_workload_namespace="default"}[1m]))
       threshold: '100'
+      serverAddress: http://prometheus.istio-system.svc.cluster.local:9090
+      ignoreNullValues: 'false'
+    metricType: AverageValue
+  minReplicaCount: 1
+  maxReplicaCount: 10
 ```
 
+El mínimo sigue siendo 1 porque las métricas de tráfico de destino desaparecen cuando el destino no tiene Pods en ejecución; este ejemplo no puede activarse por sí solo desde cero. `ignoreNullValues: false` trata un resultado vacío como un error, en vez de tratar silenciosamente la pérdida de telemetría como cero. No asocie un HPA competidor a la misma carga de trabajo. Las proporciones de latencia/error y los indicadores de disyuntores no son intrínsecamente proporcionales a la capacidad de las réplicas; valide su comportamiento de control en vez de añadirlos como señales de escalado arbitrarias.
+
 **Métricas de escalado**:
-- **RPS (solicitudes por segundo)**: Basado en solicitudes por segundo
-- **Latencia (P50/P95/P99)**: Basada en percentiles de latencia
-- **Tasa de errores**: Basada en la tasa de errores 5xx
-- **Circuit Breaker**: Basado en el estado de Circuit Breaker
-- **Métricas compuestas**: Combinación de varias métricas
+- **RPS (solicitudes por segundo)**: basado en solicitudes por segundo
+- **Latencia (P50/P95/P99)**: basado en percentiles de latencia
+- **Tasa de errores**: basado en la tasa de errores 5xx
+- **Disyuntor**: basado en el estado del disyuntor
+- **Métricas compuestas**: combinación de varias métricas
 
 **Fuentes de métricas**:
-- **Prometheus**: Métricas de Istio/Envoy en tiempo real
-- **AWS CloudWatch**: Métricas de CloudWatch mediante ADOT Collector
+- **Prometheus**: métricas de Istio/Envoy en tiempo real
+- **AWS CloudWatch**: métricas de CloudWatch mediante ADOT Collector
 
-**Más detalles**: [Guía de autoescalado con KEDA](10-keda-autoscaling.md)
+**Más información**: [Guía de autoescalado con KEDA](10-keda-autoscaling.md)
 
-## Ruta de aprendizaje
+## Itinerario de aprendizaje
 
-1. **[Ambient Mode](01-ambient-mode.md)** - Comprensión de la nueva arquitectura
-2. **[Multi-cluster](02-multi-cluster.md)** - Configuración Multi-cluster
+1. **[Modo Ambient](01-ambient-mode.md)** - Comprender la nueva arquitectura
+2. **[Multiclúster](02-multi-cluster.md)** - Configuración multiclúster
 3. **[EnvoyFilter](03-envoy-filter.md)** - Personalización avanzada
-4. **[Inyección de Sidecar](07-sidecar-injection.md)** - Mecanismos de inyección
+4. **[Inyección de sidecars](07-sidecar-injection.md)** - Mecanismos de inyección
 5. **[gRPC](05-grpc.md)** - Compatibilidad con el protocolo gRPC
 6. **[WebSocket](06-websocket.md)** - Compatibilidad con WebSocket
 7. **[Caché DNS](04-dns-cache.md)** - Optimización del rendimiento
-8. **[Argo Rollouts](08-argo-rollouts.md)** - Progressive Delivery
-9. **[Argo Rollouts con reconocimiento de zona](09-zone-aware-argo-rollouts.md)** - Deployment basado en zonas
+8. **[Argo Rollouts](08-argo-rollouts.md)** - Entrega progresiva
+9. **[Argo Rollouts con reconocimiento de zonas](09-zone-aware-argo-rollouts.md)** - Despliegue basado en zonas
 10. **[Autoescalado con KEDA](10-keda-autoscaling.md)** - Autoescalado basado en métricas
 
 ## Referencias
 
-- [Características avanzadas de Istio](https://istio.io/latest/docs/ops/)
-- [Documentación de Ambient Mode](https://istio.io/latest/docs/ops/ambient/)
-- [Documentación Multi-cluster](https://istio.io/latest/docs/setup/install/multicluster/)
+- [Funciones avanzadas de Istio](https://istio.io/latest/docs/ops/)
+- [Documentación del modo Ambient](https://istio.io/latest/docs/ambient/overview/)
+- [Documentación multiclúster](https://istio.io/latest/docs/setup/install/multicluster/)
 - [Referencia de EnvoyFilter](https://istio.io/latest/docs/reference/config/networking/envoy-filter/)
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido en este capítulo, realice el [Cuestionario avanzado de Istio](../../../quizzes/service-mesh/istio/advanced.md).
+Para comprobar lo aprendido en este capítulo, realice el [cuestionario de funciones avanzadas de Istio](../../../quizzes/service-mesh/istio/advanced.md).

@@ -12,7 +12,7 @@ Este contenido de formación proporciona cuestionarios para cada tema junto con 
 - [Tabla de contenido de los materiales de aprendizaje](#table-of-contents) - Materiales de aprendizaje por tema
 - [Colección de cuestionarios](./quizzes/README.md) - Cuestionarios por tema
 
-## Tabla de contenido
+## Tabla de contenido {#table-of-contents}
 
 ### Noticias
 - [Noticias semanales](./news/README.md) - Resúmenes de las últimas noticias del ecosistema Kubernetes/EKS
@@ -210,13 +210,6 @@ Este contenido de formación proporciona cuestionarios para cada tema junto con 
 10. [cert-manager](./security/10-cert-manager.md) | [Cuestionario](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [Cuestionario](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [Cuestionario](./quizzes/security/12-spiffe-spire-quiz.md)
-
-### Container Registry
-1. [Descripción general de Container Registry](./container-registry/README.md)
-2. [Docker Hub](./container-registry/01-docker-hub.md) | [Cuestionario](./quizzes/container-registry/01-docker-hub-quiz.md)
-3. [Amazon ECR](./container-registry/02-amazon-ecr.md) | [Cuestionario](./quizzes/container-registry/02-amazon-ecr-quiz.md)
-4. [Harbor](./container-registry/03-harbor.md) | [Cuestionario](./quizzes/container-registry/03-harbor-quiz.md)
-5. [Buenas prácticas de Container Registry](./container-registry/04-best-practices.md) | [Cuestionario](./quizzes/container-registry/04-best-practices-quiz.md)
 
 ### Platform Engineering
 0. [Descripción general de Platform Engineering](./platform-engineering/00-platform-engineering-overview.md) | [Cuestionario](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)

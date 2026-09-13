@@ -1,1592 +1,1379 @@
-# FinOps 成本可视化平台
+# FinOps 成本可见性平台
 
-> **支持版本**: Kubernetes 1.28+, Kubecost 2.x, OpenCost 1.x
-> **最后更新**: April 25, 2026
+> **最后更新**：2026 年 9 月 12 日。OpenCost 1.121.2 / chart 2.5.31、Kubecost 3.2.4、Kyverno 1.19.1。
+> **验证**：Helm 渲染、Kubernetes 模式、Terraform 模拟提供程序、本地成本计算和策略评估。这不代表已在生产集群安装，也不代表已与实际 AWS 账单核对。
 
-< [上一篇：事件容量规划](./12-event-capacity-planning.md) | [目录](./README.md) | [下一篇：Tekton Pipelines](./14-tekton-pipelines.md) >
-
----
+< [上一篇：活动容量规划](./12-event-capacity-planning.md) | [目录](./README.md) | [下一篇：Tekton 流水线](./14-tekton-pipelines.md) >
 
 ## 概述
 
-大规模运行 Kubernetes 会带来独特的成本管理挑战：工作负载是短暂的、资源是共享的，传统的按服务器成本归因方式不再适用。如果没有有意设计的成本可视化，组织经常会发现云账单增长到预期的 2-5 倍。
+FinOps 让工程、财务、产品和业务团队共同管理技术支出的价值。仅降低成本不是成功标准：服务水平、增长、单位经济效益和可靠归属同样重要。
 
-**FinOps** (Financial Operations) 是一种将财务问责引入云计算可变支出模型的实践。FinOps 生命周期遵循三个迭代阶段：
-
-- **告知**：提供资金花费位置以及由谁花费的可视化
-- **优化**：识别并执行减少浪费、提升效率的机会
-- **运营**：建立能够持续保持成本效率的治理、自动化和文化实践
-
-本指南使用 OpenCost、Kubecost、Prometheus 和 Grafana 在 Kubernetes 上构建一个完整的 FinOps 成本可视化平台。
-
-### 学习目标
-
-- 理解 FinOps 运营模型以及它如何应用于 Kubernetes 环境
-- 部署并配置 OpenCost 和 Kubecost，以实现准确的成本分摊
-- 使用标签、命名空间和成本 API 实现 showback 和 chargeback 系统
-- 构建带有 Slack 告警管道的成本异常检测
-- 启用团队自助式成本仪表板和自动化每周成本报告
-- 使用 VPA 建议和 Goldilocks 建立资源 rightsizing 工作流
-
----
+本章区分 Kubernetes 分摊模型、AWS 计费数据和团队预算，再将它们连接。部署前替换示例集群名、命名空间、桶和 IAM 角色。安装命令会创建真实资源；本文报告的验证在本地进行。
 
 ## 1. FinOps 运营模型
 
-### 1.1 告知、优化、运营循环
+Inform 阶段涵盖数据采集、分摊和可见性。Optimize 阶段将测量转化为改进。Operate 阶段持续维护所有权、预算和审查。这些阶段循环进行。
 
-```mermaid
-graph LR
-    A[Inform] -->|Visibility & Allocation| B[Optimize]
-    B -->|Rightsizing & Savings| C[Operate]
-    C -->|Governance & Automation| A
+![迭代的可见性、经审查的优化、预算和所有权](../.gitbook/assets/en-ops-13-finops-cost-platform-0.png)
 
-    subgraph Inform
-        A1[Cost Allocation]
-        A2[Showback Dashboards]
-        A3[Tagging & Labels]
-    end
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-0.html)
 
-    subgraph Optimize
-        B1[Rightsizing]
-        B2[Spot / Savings Plans]
-        B3[Idle Resource Cleanup]
-    end
+| 角色 | 职责 |
+| --- | --- |
+| 平台 | 可靠采集、成本数据访问控制、升级 |
+| 服务团队 | 标签、资源 requests、性能测试、变更审查 |
+| 财务 / FinOps | 账单核对、共享成本规则、预算和预测 |
+| 产品 / 业务 | 单位经济效益、价值和投资优先级 |
 
-    subgraph Operate
-        C1[Budget Alerts]
-        C2[Policy Enforcement]
-        C3[Regular Reviews]
-    end
-```
+Crawl/Walk/Run 描述特定领域的能力。它们不是通用的 1–3 或 6–12 个月时间表。在自动内部计费或删除前，先建立数据质量和所有权。
 
-**告知阶段**：通过部署成本监控工具、实施标签策略并构建 showback 仪表板来建立可视化能力。这是所有优化工作的基础。
+## 2. 成本数据和安装
 
-**优化阶段**：使用可视化数据识别浪费。这包括对工作负载进行 rightsizing、利用 Spot 实例和 Savings Plans，以及清理闲置资源。
+### 2.1 区分测量口径
 
-**运营阶段**：通过预算告警、策略执行和定期成本审查会议，将成本效率制度化。
+| 测量 | 含义 | 限制 |
+| --- | --- | --- |
+| 当前分摊费率，USD/小时 | 当前分摊和定价模型 | 不是实际月支出 |
+| 时间窗口内分摊模型成本 | 明确时段内的 Kubernetes 归属 | 取决于覆盖、保留期和模型 |
+| CUR 2.0 / Cost Explorer | 基于 AWS 计费的成本 | 刷新延迟、折扣、抵扣、税费及摊销选择 |
+| 线性月末估算 | 截至目前成本 / 已完成天数 × 当月天数 | 不模拟季节性或变化需求 |
 
-### 1.2 组织角色
+EC2 CPU 和内存通常不是独立计费产品。OpenCost 的每核和每 GiB 价格用于分摊实例成本。不要将任意 CPU/RAM 价格或第二次统一合同折扣当作账单。对同一基础设施将 Cloud Cost 总额与 Allocation 总额相加，可能重复统计支出。
 
-| 角色 | 职责 | 主要工具 | 节奏 |
-|------|-----------------|---------------|---------|
-| **FinOps 团队** | 定义成本分摊模型，维护仪表板，推动优化 | Kubecost, Grafana, AWS Cost Explorer | 每日监控，每周报告 |
-| **工程团队** | 设置资源 requests/limits，应用成本标签，审查团队仪表板 | 团队仪表板, VPA, Goldilocks | Sprint 级别审查 |
-| **财务** | 预算规划，预测验证，chargeback 对账 | 月度成本报告，showback 数据 | 月度对账 |
-| **领导层** | 批准预算，设定成本目标，审查单位经济性 | 高管仪表板，趋势报告 | 月度/季度审查 |
-| **平台工程** | 部署并维护成本工具，构建自助式仪表板 | Kubecost, OpenCost, Kyverno, Prometheus | 持续 |
+### 2.2 安装 OpenCost
 
-### 1.3 成熟度级别
+此处假定已有[可观测性技术栈](./09-observability-stack.md)中的 Prometheus Operator 和 ServiceMonitor CRD，以及合适的 `gp3` StorageClass。EKS 存储可使用 EBS CSI 驱动或 Auto Mode 的 StorageClass 配置。示例 `release: prometheus` 必须匹配实际 Prometheus ServiceMonitor 选择器。
 
-| 级别 | 成本分摊 | 优化 | 治理 | 时间线 |
-|-------|----------------|--------------|------------|----------|
-| **爬行** | 命名空间级别分摊，基础标签 | 手动 rightsizing，临时清理 | 无正式策略，响应式告警 | 1-3 个月 |
-| **步行** | 基于标签的分摊，包含共享成本拆分和 showback | VPA 建议，采用 Spot | 标签强制执行，月度审查 | 3-6 个月 |
-| **奔跑** | 使用 CUR 对账的实时 chargeback | 自动化 rightsizing 管道 | 自动化策略，CI/CD 中的成本门禁 | 6-12 个月 |
+之前的七天 Prometheus 保留期无法重建完整月份。月度分析需要足够保留期和存储。延长保留期不能恢复已删除数据。下方 exporter PVC 不替代 Prometheus 存储。
 
----
-
-## 2. OpenCost/Kubecost 深度配置
-
-### 2.1 OpenCost 安装（开源）
-
-OpenCost 需要 Prometheus 提供指标，并暴露自身的成本分摊 API。
+**`opencost-values.yaml`**
 
 ```yaml
-# opencost-values.yaml
-# helm install opencost opencost/opencost -n opencost --create-namespace -f opencost-values.yaml
+serviceAccount:
+  create: true
+  name: opencost
 opencost:
+  mcp:
+    enabled: false
   exporter:
-    defaultClusterId: "production-eks-us-east-1"
-    image:
-      registry: ghcr.io
-      repository: opencost/opencost
-      tag: "1.112.0"
-    aws:
-      spot_data_region: "us-east-1"
-      spot_data_bucket: "my-company-spot-data-feed"
-    prometheus:
-      internal:
-        enabled: true
-        serviceName: prometheus-server
-        namespaceName: monitoring
-        port: 80
+    defaultClusterId: eks-production
     resources:
       requests:
-        cpu: "100m"
-        memory: "256Mi"
+        cpu: 100m
+        memory: 256Mi
       limits:
-        cpu: "500m"
-        memory: "512Mi"
+        memory: 2Gi
     persistence:
       enabled: true
-      storageClass: "gp3"
-      size: "32Gi"
-    cloudCost:
+      accessMode: ReadWriteOnce
+      storageClass: gp3
+      size: 10Gi
+  prometheus:
+    internal:
       enabled: true
-      refreshRateHours: 6
-  ui:
-    enabled: true
-    ingress:
-      enabled: true
-      ingressClassName: "alb"
-      annotations:
-        alb.ingress.kubernetes.io/scheme: "internal"
-        alb.ingress.kubernetes.io/target-type: "ip"
-        alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
-      hosts:
-        - host: "opencost.internal.mycompany.com"
-          paths:
-            - path: /
-              pathType: Prefix
+      serviceName: prometheus-kube-prometheus-prometheus
+      namespaceName: observability
+      port: 9090
+    external:
+      enabled: false
   metrics:
     serviceMonitor:
       enabled: true
-      namespace: monitoring
-serviceAccount:
-  create: true
-  annotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/opencost-role"
+      namespace: opencost
+      additionalLabels:
+        release: prometheus
+      honorLabels: true
+  customPricing:
+    enabled: false
+  cloudCost:
+    enabled: false
+  ui:
+    enabled: true
+    ingress:
+      enabled: false
 ```
 
-### 2.2 Kubecost Enterprise
+```bash
+helm repo add opencost https://opencost.github.io/opencost-helm-chart
+helm repo update opencost
+helm upgrade --install opencost opencost/opencost \
+  --version 2.5.31 --namespace opencost --create-namespace \
+  -f opencost-values.yaml --wait --timeout 10m
+kubectl -n opencost get pods,pvc,svc,servicemonitor
+kubectl -n opencost port-forward service/opencost 9090:9090 9003:9003
+```
 
-Kubecost 在 OpenCost 之上增加了多集群联邦、S3 ETL 存储和高级分摊功能。
+本地 UI 使用端口 `9090`；API 使用 `9003`。`opencost.prometheus` 和 `opencost.cloudCost` 不属于 exporter 的子项。Chart 2.5.31 默认启用 MCP，因此本基线显式禁用。若通过 MCP 暴露成本工具，应单独设计身份验证和访问范围；成本数据 MCP 不同于文档搜索 MCP。
+
+### 2.3 选择 Kubecost 3.x
+
+Kubecost 是独立产品和部署选择。3.x 使用 ClickHouse 存储和 `finops-agent` 采集。不要原样复制 2.x `kubecostModel`、Prometheus 或 ETL 设置。现有 2.x 安装需要官方迁移流程，包括中间代理、重新导入和功能约束。
+
+当前 chart 仓库为 `https://kubecost.github.io/kubecost/`。这是功能受限的安装基线，显式禁用 Cluster Controller、Admission Controller 和预测。不要将其作为现有安装和存储的原地替换命令。
+
+**`kubecost-values.yaml`**
 
 ```yaml
-# kubecost-values.yaml
-# helm install kubecost kubecost/cost-analyzer -n kubecost --create-namespace -f kubecost-values.yaml
 global:
-  prometheus:
-    enabled: false
-    fqdn: "http://prometheus-server.monitoring.svc:80"
-  grafana:
-    enabled: false
-    domainName: "grafana.monitoring.svc"
-
-kubecostProductConfigs:
-  clusterName: "production-eks-us-east-1"
-  currencyCode: "USD"
-  defaultModelPricing:
-    enabled: false
-  sharedNamespaces: "kube-system,kubecost,monitoring,cert-manager,ingress-nginx"
-  shareTenancyCosts: true
-  shareSplit: "weighted"
-
-kubecostModel:
-  etl: true
-  etlBucketConfig:
-    enabled: true
-  federatedETL:
-    enabled: true
-    primaryCluster: true
-  resources:
-    requests:
-      cpu: "200m"
-      memory: "512Mi"
-    limits:
-      cpu: "1000m"
-      memory: "2Gi"
-
-# S3 backend for ETL data
-kubecostS3Config:
+  clusterId: eks-production
+  defaultStorageClass: gp3
+frontend:
   enabled: true
-  bucketName: "mycompany-kubecost-etl"
-  region: "us-east-1"
-
-federatedETL:
-  federatedStore:
-    enabled: true
-    bucket: "mycompany-kubecost-federation"
-    region: "us-east-1"
-
-kubecostAggregator:
+  service:
+    type: ClusterIP
+localStore:
   enabled: true
-  replicas: 1
-  resources:
-    requests:
-      cpu: "500m"
-      memory: "1Gi"
-    limits:
-      cpu: "2000m"
-      memory: "4Gi"
-
+  persistentVolume:
+    enabled: true
+    size: 32Gi
+    storageClass: gp3
+finopsagent:
+  enabled: true
+aggregator:
+  enabled: true
+cloudCost:
+  enabled: false
+networkCosts:
+  enabled: false
+clusterController:
+  enabled: false
+kubecostAdmissionController:
+  enabled: false
+forecasting:
+  enabled: false
 ingress:
-  enabled: true
-  className: "alb"
-  annotations:
-    alb.ingress.kubernetes.io/scheme: "internal"
-    alb.ingress.kubernetes.io/target-type: "ip"
-  hosts:
-    - host: "kubecost.internal.mycompany.com"
-      paths:
-        - path: /
-          pathType: Prefix
-
-serviceAccount:
-  create: true
-  annotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/kubecost-role"
-
-podDisruptionBudget:
-  enabled: true
-  minAvailable: 1
+  enabled: false
+telemetry:
+  enabled: false
 ```
 
-### 2.3 AWS Cost and Usage Report (CUR) 集成
+```bash
+helm repo add kubecost https://kubecost.github.io/kubecost/
+helm repo update kubecost
+helm template kubecost kubecost/kubecost --version 3.2.4 \
+  --namespace kubecost -f kubecost-values.yaml > kubecost-rendered.yaml
+# Review storage, RBAC, images and product entitlements before installation.
+helm install kubecost kubecost/kubecost --version 3.2.4 \
+  --namespace kubecost --create-namespace -f kubecost-values.yaml
+```
 
-CUR 提供最准确的 AWS 账单数据来源，允许将集群内估算值与实际费用进行对账。
+检查 SSO、细粒度 RBAC 和多集群功能的产品许可。存在 SAML/OIDC values 不会为每个部署启用这些功能。`global.acknowledged` 关乎 Enterprise 主版本升级确认，不是一般许可接受。内部 ALB 不验证用户身份。
 
-#### Terraform 配置
+### 2.4 CUR 2.0、Athena 和 OpenCost Cloud Cost
+
+以下 Terraform 定义**新的 CUR 2.0 导出、两个 S3 桶、一个 Athena 工作组和一个 OpenCost IRSA 角色**。管理现有资源前检查所有权和导入。组织范围计费数据需要适当管理账户权限。
+
+不包含 Glue 爬网程序和表创建。遵循 Data Exports Athena 处理流程：等待首次交付，再使用导出的**数据目录**创建和刷新 Glue 表及分区。不要将清单和元数据与数据表混合。提供生成的数据库和表名。Lake Formation 保护需要额外授权。
+
+`COST_AND_USAGE_REPORT` 是 Data Exports SQL 源，不是通用 Athena Glue 表名。检查生成模式：CUR 2.0 使用 `billing_period` 分区，不应假定旧 CUR 的 `year`/`month` 布局。
+
+Data Exports 使用 SSE-S3 交付。不要复制要求直接 KMS 加密交付的配置。若要求 KMS，应同时设计文档规定的交付后加密流程和使用方权限。需要还原的归档存储可能破坏对活动数据的查询。
+
+**`cur.tf`**
 
 ```hcl
-# cur-infrastructure.tf
 terraform {
-  required_version = ">= 1.5.0"
-  required_providers { aws = { source = "hashicorp/aws"; version = "~> 5.0" } }
-}
-
-data "aws_caller_identity" "current" {}
-
-resource "aws_s3_bucket" "cur_bucket" {
-  bucket = "mycompany-cur-reports"
-  tags   = { Purpose = "cost-and-usage-reports", ManagedBy = "terraform" }
-}
-
-resource "aws_s3_bucket_versioning" "cur" {
-  bucket = aws_s3_bucket.cur_bucket.id
-  versioning_configuration { status = "Enabled" }
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "cur" {
-  bucket = aws_s3_bucket.cur_bucket.id
-  rule {
-    id     = "transition-to-ia"
-    status = "Enabled"
-    transition { days = 90;  storage_class = "STANDARD_IA" }
-    transition { days = 365; storage_class = "GLACIER" }
-    expiration { days = 730 }
+  required_version = ">= 1.12.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 6.64.0"
+    }
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "cur" {
-  bucket = aws_s3_bucket.cur_bucket.id
-  rule { apply_server_side_encryption_by_default { sse_algorithm = "aws:kms" }; bucket_key_enabled = true }
+provider "aws" {
+  region = var.region
 }
 
-resource "aws_s3_bucket_public_access_block" "cur" {
-  bucket = aws_s3_bucket.cur_bucket.id
-  block_public_acls = true; block_public_policy = true; ignore_public_acls = true; restrict_public_buckets = true
+provider "aws" {
+  alias  = "billing"
+  region = "us-east-1"
 }
 
-resource "aws_s3_bucket_policy" "cur" {
-  bucket = aws_s3_bucket.cur_bucket.id
+variable "region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+
+variable "cur_bucket" {
+  type = string
+}
+
+variable "results_bucket" {
+  type = string
+  validation {
+    condition     = var.results_bucket != var.cur_bucket
+    error_message = "Use separate CUR source and Athena result buckets."
+  }
+}
+
+variable "oidc_provider_arn" {
+  type = string
+}
+
+variable "oidc_issuer" {
+  type = string
+}
+
+variable "glue_database" {
+  type = string
+}
+
+variable "glue_table" {
+  type = string
+}
+
+data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
+
+locals {
+  account = data.aws_caller_identity.current.account_id
+  arn     = "arn:${data.aws_partition.current.partition}"
+  issuer  = trimprefix(trimsuffix(var.oidc_issuer, "/"), "https://")
+  buckets = { cur = var.cur_bucket, results = var.results_bucket }
+}
+
+resource "aws_s3_bucket" "cost" {
+  for_each      = local.buckets
+  bucket        = each.value
+  force_destroy = false
+}
+
+resource "aws_s3_bucket_public_access_block" "cost" {
+  for_each                = aws_s3_bucket.cost
+  bucket                  = each.value.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "cost" {
+  for_each = aws_s3_bucket.cost
+  bucket   = each.value.id
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "cost" {
+  for_each = aws_s3_bucket.cost
+  bucket   = each.value.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "delivery" {
+  bucket = aws_s3_bucket.cost["cur"].id
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      { Sid = "AllowCURDelivery", Effect = "Allow", Principal = { Service = "billingreports.amazonaws.com" },
-        Action = ["s3:GetBucketAcl", "s3:GetBucketPolicy"], Resource = aws_s3_bucket.cur_bucket.arn },
-      { Sid = "AllowCURWrite", Effect = "Allow", Principal = { Service = "billingreports.amazonaws.com" },
-        Action = "s3:PutObject", Resource = "${aws_s3_bucket.cur_bucket.arn}/*" }
-    ]
-  })
-}
-
-resource "aws_cur_report_definition" "daily_cur" {
-  report_name                = "mycompany-daily-cur"
-  time_unit                  = "DAILY"
-  format                     = "Parquet"
-  compression                = "Parquet"
-  additional_schema_elements = ["RESOURCES"]
-  s3_bucket                  = aws_s3_bucket.cur_bucket.id
-  s3_region                  = "us-east-1"
-  s3_prefix                  = "cur-reports"
-  report_versioning          = "OVERWRITE_REPORT"
-  refresh_closed_reports     = true
-  additional_artifacts       = ["ATHENA"]
-}
-
-# IAM role for Kubecost CUR access via IRSA
-resource "aws_iam_role" "kubecost_cur" {
-  name = "kubecost-cur-reader"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
-      Principal = { Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${var.oidc_provider}" }
-      Action = "sts:AssumeRoleWithWebIdentity"
-      Condition = { StringEquals = {
-        "${var.oidc_provider}:sub" = "system:serviceaccount:kubecost:kubecost-cost-analyzer"
-        "${var.oidc_provider}:aud" = "sts.amazonaws.com"
-      }}
+      Sid       = "AllowDataExports"
+      Effect    = "Allow"
+      Principal = { Service = "bcm-data-exports.amazonaws.com" }
+      Action    = "s3:PutObject"
+      Resource  = "${aws_s3_bucket.cost["cur"].arn}/cur/*"
+      Condition = {
+        StringEquals = { "aws:SourceAccount" = local.account }
+        ArnLike = {
+          "aws:SourceArn" = "${local.arn}:bcm-data-exports:us-east-1:${local.account}:export/*"
+        }
+      }
     }]
   })
 }
 
-resource "aws_iam_role_policy" "kubecost_cur" {
-  name = "kubecost-cur-read"
-  role = aws_iam_role.kubecost_cur.id
+resource "aws_bcmdataexports_export" "cur" {
+  provider = aws.billing
+  depends_on = [
+    aws_s3_bucket_policy.delivery,
+    aws_s3_bucket_public_access_block.cost,
+    aws_s3_bucket_server_side_encryption_configuration.cost
+  ]
+  export {
+    name = "opencost-cur"
+    data_query {
+      query_statement = "SELECT * FROM COST_AND_USAGE_REPORT"
+      table_configurations = {
+        COST_AND_USAGE_REPORT = {
+          BILLING_VIEW_ARN                      = "${local.arn}:billing::${local.account}:billingview/primary"
+          TIME_GRANULARITY                      = "HOURLY"
+          INCLUDE_RESOURCES                     = "TRUE"
+          INCLUDE_MANUAL_DISCOUNT_COMPATIBILITY = "FALSE"
+          INCLUDE_SPLIT_COST_ALLOCATION_DATA    = "FALSE"
+        }
+      }
+    }
+    destination_configurations {
+      s3_destination {
+        s3_bucket = aws_s3_bucket.cost["cur"].bucket
+        s3_prefix = "cur"
+        s3_region = var.region
+        s3_output_configurations {
+          overwrite   = "OVERWRITE_REPORT"
+          format      = "PARQUET"
+          compression = "PARQUET"
+          output_type = "CUSTOM"
+        }
+      }
+    }
+    refresh_cadence {
+      frequency = "SYNCHRONOUS"
+    }
+  }
+}
+
+resource "aws_athena_workgroup" "opencost" {
+  name          = "opencost-cur"
+  force_destroy = false
+  configuration {
+    enforce_workgroup_configuration    = true
+    publish_cloudwatch_metrics_enabled = true
+    bytes_scanned_cutoff_per_query     = 10737418240
+    result_configuration {
+      output_location       = "s3://${aws_s3_bucket.cost["results"].bucket}/opencost/"
+      expected_bucket_owner = local.account
+      encryption_configuration {
+        encryption_option = "SSE_S3"
+      }
+    }
+  }
+}
+
+resource "aws_iam_role" "opencost" {
+  name = "opencost-cur-reader"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = var.oidc_provider_arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${local.issuer}:aud" = "sts.amazonaws.com"
+          "${local.issuer}:sub" = "system:serviceaccount:opencost:opencost"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "opencost" {
+  role = aws_iam_role.opencost.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      { Effect = "Allow", Action = ["s3:GetObject", "s3:ListBucket", "s3:GetBucketLocation"],
-        Resource = [aws_s3_bucket.cur_bucket.arn, "${aws_s3_bucket.cur_bucket.arn}/*"] },
-      { Effect = "Allow", Action = ["athena:StartQueryExecution", "athena:GetQueryExecution", "athena:GetQueryResults"],
-        Resource = "arn:aws:athena:us-east-1:${data.aws_caller_identity.current.account_id}:workgroup/primary" },
-      { Effect = "Allow", Action = ["glue:GetDatabase", "glue:GetTable", "glue:GetPartitions"],
-        Resource = ["arn:aws:glue:us-east-1:${data.aws_caller_identity.current.account_id}:catalog",
-                    "arn:aws:glue:us-east-1:${data.aws_caller_identity.current.account_id}:database/athenacurcfn_*",
-                    "arn:aws:glue:us-east-1:${data.aws_caller_identity.current.account_id}:table/athenacurcfn_*/*"] },
-      { Effect = "Allow", Action = ["pricing:GetProducts", "ec2:DescribeInstances", "ec2:DescribeReservedInstances"], Resource = "*" }
+      {
+        Effect = "Allow"
+        Action = ["athena:StartQueryExecution", "athena:StopQueryExecution",
+        "athena:GetQueryExecution", "athena:GetQueryResults", "athena:GetWorkGroup"]
+        Resource = aws_athena_workgroup.opencost.arn
+      },
+      {
+        Effect = "Allow"
+        Action = ["glue:GetDatabase", "glue:GetDatabases", "glue:GetTable",
+        "glue:GetTables", "glue:GetPartitions"]
+        Resource = [
+          "${local.arn}:glue:${var.region}:${local.account}:catalog",
+          "${local.arn}:glue:${var.region}:${local.account}:database/${var.glue_database}",
+          "${local.arn}:glue:${var.region}:${local.account}:table/${var.glue_database}/${var.glue_table}"
+        ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = "s3:GetBucketLocation"
+        Resource = [for b in aws_s3_bucket.cost : b.arn]
+      },
+      {
+        Effect    = "Allow"
+        Action    = "s3:ListBucket"
+        Resource  = aws_s3_bucket.cost["cur"].arn
+        Condition = { StringLike = { "s3:prefix" = ["cur", "cur/*"] } }
+      },
+      {
+        Effect    = "Allow"
+        Action    = "s3:ListBucket"
+        Resource  = aws_s3_bucket.cost["results"].arn
+        Condition = { StringLike = { "s3:prefix" = ["opencost", "opencost/*"] } }
+      },
+      {
+        Effect   = "Allow"
+        Action   = "s3:GetObject"
+        Resource = "${aws_s3_bucket.cost["cur"].arn}/cur/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:AbortMultipartUpload"]
+        Resource = "${aws_s3_bucket.cost["results"].arn}/opencost/*"
+      }
     ]
   })
 }
 
-variable "oidc_provider" { description = "OIDC provider URL (without https://)" ; type = string }
-output "kubecost_role_arn" { value = aws_iam_role.kubecost_cur.arn }
-output "cur_bucket_name"   { value = aws_s3_bucket.cur_bucket.id }
+output "opencost_role_arn" {
+  value = aws_iam_role.opencost.arn
+}
+
+output "cur_export_arn" {
+  value = aws_bcmdataexports_export.cur.arn
+}
+
+output "athena_results" {
+  value = "s3://${aws_s3_bucket.cost["results"].bucket}/opencost/"
+}
 ```
 
-#### Kubecost 云集成 Values
+`glue_database` 和 `glue_table` 标识查询目标，不创建它。示例 Athena 扫描限制为每查询 10 GiB：调查失败并按数据集调整。每小时记录不意味着每小时交付报告。
 
-```yaml
-# Add to kubecost-values.yaml for CUR reconciliation
-kubecostProductConfigs:
-  cloudIntegrationJSON: |
-    {
-      "aws": [{
-        "athenaBucketName": "mycompany-cur-reports",
-        "athenaRegion": "us-east-1",
-        "athenaDatabase": "athenacurcfn_mycompany_daily_cur",
-        "athenaTable": "mycompany_daily_cur",
-        "athenaWorkgroup": "primary",
-        "projectID": "123456789012"
-      }]
-    }
+此示例使用 **IRSA**。提供现有 OIDC 提供程序 ARN 和签发者，并让信任策略 `sub` 匹配实际 `opencost/opencost` ServiceAccount。EKS Pod Identity 使用不同信任策略和关联，不使用 IRSA 注解。
+
+**`cloud-integration.json`**
+
+```json
+{
+  "aws": {
+    "athena": [
+      {
+        "bucket": "s3://REPLACE_QUERY_RESULTS_BUCKET/opencost/",
+        "region": "ap-northeast-2",
+        "database": "REPLACE_GLUE_DATABASE",
+        "catalog": "AwsDataCatalog",
+        "table": "REPLACE_GLUE_TABLE",
+        "workgroup": "opencost-cur",
+        "account": "123456789012",
+        "authorizer": {
+          "authorizerType": "AWSServiceAccount"
+        }
+      }
+    ]
+  }
+}
 ```
 
-### 2.4 成本准确性调优
-
-#### 自定义定价配置
+**`opencost-cloud-values.yaml`**
 
 ```yaml
-# custom-pricing-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: pricing-configs
-  namespace: kubecost
-data:
-  default-pricing.json: |
-    {
-      "provider": "aws",
-      "description": "Custom pricing with negotiated EDP rates",
-      "CPU": "0.02835",
-      "RAM": "0.00356",
-      "GPU": "0.85",
-      "storage": "0.000054795",
-      "zoneNetworkEgress": "0.00",
-      "regionNetworkEgress": "0.01",
-      "internetNetworkEgress": "0.05",
-      "spotCPU": "0.0085",
-      "spotRAM": "0.00107",
-      "spotLabel": "karpenter.sh/capacity-type",
-      "spotLabelValue": "spot"
-    }
-```
-
-#### 共享成本分摊规则
-
-```yaml
-# shared-cost-allocation-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: allocation-configs
-  namespace: kubecost
-data:
-  shared-costs.json: |
-    {
-      "sharedCosts": [
-        { "name": "Control Plane",       "type": "weighted", "filter": { "namespace": "kube-system" },    "weight": "cpuCost" },
-        { "name": "Monitoring Stack",    "type": "weighted", "filter": { "namespace": "monitoring" },     "weight": "totalCost" },
-        { "name": "Ingress Controllers", "type": "even",     "filter": { "namespace": "ingress-nginx" } },
-        { "name": "Service Mesh",        "type": "weighted", "filter": { "namespace": "istio-system" },   "weight": "networkCost" },
-        { "name": "Cert Manager",        "type": "even",     "filter": { "namespace": "cert-manager" } },
-        { "name": "Platform Tools",      "type": "even",     "filter": { "namespace": "kubecost,argocd,kyverno" } }
-      ],
-      "idleCostDistribution": "weighted"
-    }
-```
-
----
-
-## 3. Showback/Chargeback 实现
-
-Showback 向团队报告成本以提升认知；chargeback 则实际向成本中心计费。两者都需要与组织单位绑定的准确成本分摊。
-
-### 3.1 标签策略
-
-| 标签 | 目的 | 示例值 |
-|-------|---------|---------------|
-| `team` | 将成本归因到工程团队 | `platform`, `checkout`, `payments` |
-| `service` | Service 级别成本跟踪 | `api-gateway`, `order-service` |
-| `environment` | 环境隔离 | `production`, `staging`, `development` |
-| `cost-center` | 财务部门映射 | `CC-1001`, `CC-2005` |
-
-#### Kyverno 标签强制执行策略
-
-```yaml
-# kyverno-cost-labels-policy.yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: require-cost-labels
+serviceAccount:
+  create: true
+  name: opencost
   annotations:
-    policies.kyverno.io/title: Require Cost Attribution Labels
-    policies.kyverno.io/category: FinOps
-    policies.kyverno.io/severity: high
-spec:
-  validationFailureAction: Enforce
-  background: true
-  rules:
-    - name: check-cost-labels-on-resource
-      match:
-        any:
-          - resources:
-              kinds:
-                - Deployment
-                - StatefulSet
-                - DaemonSet
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kube-public
-                - kubecost
-                - monitoring
-                - ingress-nginx
-                - cert-manager
-                - argocd
-                - kyverno
-      validate:
-        message: >-
-          Resource {{request.object.kind}}/{{request.object.metadata.name}} is missing
-          required cost labels. All workloads must have: team, service, environment, cost-center.
-        pattern:
-          metadata:
-            labels:
-              team: "?*"
-              service: "?*"
-              environment: "?*"
-              cost-center: "?*"
-    - name: check-cost-labels-on-pod-template
-      match:
-        any:
-          - resources:
-              kinds:
-                - Deployment
-                - StatefulSet
-                - DaemonSet
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kube-public
-                - kubecost
-                - monitoring
-                - ingress-nginx
-                - cert-manager
-                - argocd
-                - kyverno
-      validate:
-        message: "Pod template must also carry cost labels for accurate pod-level cost attribution."
-        pattern:
-          spec:
-            template:
-              metadata:
-                labels:
-                  team: "?*"
-                  service: "?*"
-                  environment: "?*"
-                  cost-center: "?*"
-    - name: validate-environment-values
-      match:
-        any:
-          - resources:
-              kinds:
-                - Deployment
-                - StatefulSet
-                - DaemonSet
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kube-public
-                - kubecost
-                - monitoring
-      validate:
-        message: "Label 'environment' must be one of: production, staging, development, sandbox."
-        pattern:
-          metadata:
-            labels:
-              environment: "production | staging | development | sandbox"
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/opencost-cur-reader
+opencost:
+  cloudIntegrationSecret: opencost-cloud-integrations
+  cloudCost:
+    enabled: true
 ```
-
-### 3.2 基于命名空间的成本分摊
-
-#### Kubecost Allocation API 示例
 
 ```bash
-# Cost allocation by namespace for the last 7 days
-curl -s "http://kubecost.internal.mycompany.com/model/allocation\
-?window=7d&aggregate=namespace&accumulate=true" \
-  | jq '.data[0] | to_entries[] | {namespace: .key, totalCost: .value.totalCost, cpuCost: .value.cpuCost}'
-
-# Cost allocation by team label for the current month with shared costs
-curl -s "http://kubecost.internal.mycompany.com/model/allocation\
-?window=thismonth&aggregate=label:team&accumulate=true\
-&shareIdle=weighted&shareNamespaces=kube-system,monitoring" \
-  | jq '.data[0] | to_entries | sort_by(-.value.totalCost) | .[] | {team: .key, totalCost: (.value.totalCost | round), cpuEfficiency: (.value.cpuEfficiency * 100 | round)}'
-
-# Daily cost trend for a specific team over 30 days
-curl -s "http://kubecost.internal.mycompany.com/model/allocation\
-?window=30d&aggregate=label:team&step=1d&filterLabels=team:checkout" \
-  | jq '[.data[] | to_entries[] | {date: .key, cost: .value.totalCost}]'
+# Replace all placeholders and account IDs in the files first.
+kubectl -n opencost create secret generic opencost-cloud-integrations \
+  --from-file=cloud-integration.json=cloud-integration.json \
+  --dry-run=client -o yaml | kubectl apply -f -
+helm upgrade opencost opencost/opencost --version 2.5.31 \
+  --namespace opencost -f opencost-values.yaml -f opencost-cloud-values.yaml
 ```
 
-#### 每个团队命名空间的 ResourceQuota
+JSON `bucket` 是 **Athena 查询结果桶**，不是 CUR 源桶。`AWSServiceAccount` 使用 AWS SDK 默认凭证链，不使用静态访问密钥。声称计费集成正常前，应验证源读取、结果写入、Secret 挂载和导入器数据新鲜度。
+
+成本分摊标签键在激活前可能缺失。AWS 当前支持管理账户回填最多 12 个月，条件是该期间标签实际存在于资源上，并存在处理延迟。现在添加标签不会制造历史标签记录。
+
+## 3. 成本展示和内部计费
+
+成本展示让使用团队看到支出。内部计费按约定会计规则分摊并收费。模型值不会自动成为内部账单。先定义时段、币种、直接/共享/闲置/未分配类别、税费、抵扣、退款和取整。
+
+### 3.1 标签和策略
+
+使用命名空间 `team` 标签进行团队聚合，使用 Pod 模板 `team` / `cost-center` 标签做更细归属。Kubernetes 标签和 AWS 成本分摊标签是独立数据。没有团队标签时命名空间分摊仍可能工作，但不保证团队映射。
+
+Kyverno 1.19.1 警告 ClusterPolicy 已弃用。新示例使用 `policies.kyverno.io/v1` 的 CEL `ValidatingPolicy`，要求对应 CRD 和控制器版本。它们针对带 `finops.example.com/enabled=true` 标签的命名空间，并为 Pod 控制器模板生成检查。
+
+**`cost-labels.yaml`**
 
 ```yaml
-# team-namespace-quota.yaml
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: finops-pod-labels
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        finops.example.com/enabled: "true"
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  validations:
+    - expression: >-
+        ['team', 'cost-center'].all(label,
+          object.metadata.?labels[label].orValue('') != '')
+      message: "Add team and cost-center labels to the Pod template."
+```
+
+**`resource-requests.yaml`**
+
+```yaml
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: finops-container-requests
+spec:
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        finops.example.com/enabled: "true"
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  validations:
+    - expression: >-
+        object.spec.containers.all(c,
+          has(c.resources) && has(c.resources.requests) &&
+          ['cpu', 'memory'].all(r,
+            r in c.resources.requests &&
+            quantity(c.resources.requests[r]).isGreaterThan(quantity('0'))))
+      message: "Set positive CPU and memory requests for each regular container."
+```
+
+`Audit` 不阻止违规。审核后台报告和范围，与所有者解决问题，再将选定策略切换为 `Deny`。若需要面向用户的警告，单独选择 `Warn`。本地 CLI 可对 Audit 策略返回测试失败；这不能证明准入会被拒绝。
+
+request 策略检查**每个普通容器的 CPU 和内存 requests 均为正**。初始化容器、Pod 级预算和 limit 策略需要独立策略。统一四核 / 8 GiB limits 不能证明应用容量配置正确。
+
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: team-checkout
+  name: team-backend
   labels:
-    team: checkout
-    cost-center: "CC-2005"
-    environment: production
+    team: backend
+    finops.example.com/enabled: "true"
 ---
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: team-checkout-quota
-  namespace: team-checkout
+  name: team-capacity
+  namespace: team-backend
 spec:
   hard:
-    requests.cpu: "40"
-    requests.memory: "80Gi"
-    limits.cpu: "80"
-    limits.memory: "160Gi"
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    requests.storage: 200Gi
     persistentvolumeclaims: "20"
-    pods: "200"
----
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: team-checkout-limits
-  namespace: team-checkout
-spec:
-  limits:
-    - type: Container
-      default:        { cpu: "500m", memory: "512Mi" }
-      defaultRequest: { cpu: "100m", memory: "128Mi" }
-      max:            { cpu: "8",    memory: "16Gi" }
-      min:            { cpu: "10m",  memory: "16Mi" }
+    pods: "100"
 ```
 
-### 3.3 共享成本分配
+此配额是示例资源上限，不是美元预算，也不是所有云支出的上限。根据当前用量和自动扩缩最大值调整，并为创建请求被拒绝做好计划。
 
-```mermaid
-graph TD
-    A[Total Cluster Cost] --> B[Direct Costs]
-    A --> C[Shared Costs]
-    A --> D[Idle Costs]
+### 3.2 时间窗口分摊 API
 
-    B --> B1[Team A Workloads]
-    B --> B2[Team B Workloads]
-    B --> B3[Team C Workloads]
+此处使用 OpenCost 1.121.2 的 `/allocation/compute`。验证该产品和版本的时段、聚合和响应结构。`includeIdle` 和 `shareIdle` 是布尔值；`shareIdle=weighted` 不是文档规定的布尔形式。
 
-    C --> C1[kube-system]
-    C --> C2[monitoring]
-    C --> C3[ingress-nginx]
-
-    C1 -->|Weighted by CPU| E[Distributed to Teams]
-    C2 -->|Weighted by Total Cost| E
-    C3 -->|Even Split| E
-    D -->|Weighted Distribution| E
+```bash
+curl --fail --silent --show-error --get \
+  'http://127.0.0.1:9003/allocation/compute' \
+  --data-urlencode 'window=2026-09-01T00:00:00Z,2026-09-12T00:00:00Z' \
+  --data-urlencode 'aggregate=namespace' \
+  --data-urlencode 'includeIdle=true' \
+  --data-urlencode 'shareIdle=false'
 ```
 
-| 分配方法 | 何时使用 | 优点 | 缺点 |
-|-------------------|-------------|------|------|
-| **按 CPU 加权** | Control plane 成本 | 与使用量成比例 | 惩罚 CPU 密集型工作负载 |
-| **按总成本加权** | 通用共享服务 | 整体分配公平 | 需要准确的基础分摊 |
-| **平均拆分** | 小型共享服务 | 简单、透明 | 如果团队规模不同则不公平 |
-| **按网络加权** | Ingress、service mesh | 对网络成本更准确 | 网络成本可能波动较大 |
+### 3.3 共享成本分摊和总额守恒
 
-### 3.4 Grafana Showback 仪表板
+这些是**用于计算验证的合成 USD 输入，不是实际账单**。不重叠成本池包含 6,500 直接成本、2,500 共享成本和 1,000 闲置成本。共享成本按直接成本加权；闲置成本平均分配。小数美分使用最大余数法，同余数时按团队名字典序决胜。
 
-以下 Grafana dashboard JSON 提供按团队和按服务的成本面板，并带有团队变量选择器。可通过 Grafana UI 导入，或使用带 `grafana_dashboard: "true"` 标签的 ConfigMap 进行配置。
+![合成 USD 10,000 分摊，取整后保留总额](../.gitbook/assets/en-ops-13-finops-cost-platform-1.png)
+
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-1.html)
+
+```text
+Team     Direct    Shared     Idle      Total
+A        3000.00   1153.85    333.34     4487.19
+B        2000.00    769.23    333.33     3102.56
+C        1500.00    576.92    333.33     2410.25
+Total    6500.00   2500.00   1000.00    10000.00
+```
+
+**`allocation-example.json`**
 
 ```json
 {
-  "description": "FinOps Showback Dashboard",
-  "editable": true,
-  "panels": [
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": { "defaults": { "unit": "currencyUSD", "custom": { "drawStyle": "bars", "fillOpacity": 80, "stacking": { "mode": "normal" } } } },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
-      "id": 1, "title": "Daily Cost by Team", "type": "timeseries",
-      "targets": [{ "expr": "sum by (label_team) (sum by (namespace, label_team) (kubecost_container_cpu_allocation_cost{} * on(namespace) group_left(label_team) kube_namespace_labels{label_team!=\"\"}) + sum by (namespace, label_team) (kubecost_container_memory_allocation_cost{} * on(namespace) group_left(label_team) kube_namespace_labels{label_team!=\"\"}))", "legendFormat": "{{label_team}}" }]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": { "defaults": { "unit": "currencyUSD" } },
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 10 },
-      "id": 2, "title": "Monthly Cost by Service", "type": "bargauge",
-      "targets": [{ "expr": "sum by (label_service) ((kubecost_container_cpu_allocation_cost{} + kubecost_container_memory_allocation_cost{}) * on(pod) group_left(label_service) kube_pod_labels{label_service!=\"\"}) * 730", "legendFormat": "{{label_service}}" }]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
-      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 10 },
-      "id": 3, "title": "Resource Efficiency by Team", "type": "bargauge",
-      "targets": [{ "expr": "sum by (label_team) (rate(container_cpu_usage_seconds_total{namespace!~\"kube-system|monitoring\"}[1h]) * on(namespace) group_left(label_team) kube_namespace_labels{label_team!=\"\"}) / sum by (label_team) (kube_pod_container_resource_requests{resource=\"cpu\", namespace!~\"kube-system|monitoring\"} * on(namespace) group_left(label_team) kube_namespace_labels{label_team!=\"\"})", "legendFormat": "{{label_team}}" }]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": { "defaults": { "unit": "currencyUSD" } },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
-      "id": 4, "title": "Team Cost Summary Table", "type": "table",
-      "targets": [
-        { "expr": "sum by (label_team) (kubecost_container_cpu_allocation_cost{} + kubecost_container_memory_allocation_cost{}) * 730", "format": "table", "instant": true, "refId": "A" },
-        { "expr": "sum by (label_team) (rate(container_cpu_usage_seconds_total{}[1h])) / sum by (label_team) (kube_pod_container_resource_requests{resource=\"cpu\"})", "format": "table", "instant": true, "refId": "B" }
-      ]
-    }
-  ],
-  "schemaVersion": 39, "tags": ["finops", "cost", "showback"],
-  "templating": { "list": [{ "name": "team", "type": "query", "query": "label_values(kube_namespace_labels{label_team!=\"\"}, label_team)", "includeAll": true, "multi": true }] },
-  "time": { "from": "now-30d", "to": "now" },
-  "title": "FinOps Showback Dashboard", "uid": "finops-showback-v1"
+  "description": "Synthetic reconciled expense pool, not an actual account bill.",
+  "currency": "USD",
+  "direct": {
+    "team-a": "3000.00",
+    "team-b": "2000.00",
+    "team-c": "1500.00"
+  },
+  "shared": "2500.00",
+  "idle": "1000.00",
+  "unallocated": "0.00"
 }
 ```
 
----
+**`allocate_costs.py`**
 
-## 4. 成本异常检测
+```python
+"""Allocate one reconciled USD expense pool using explicit, conserved cent amounts."""
+import argparse
+import json
+from decimal import Decimal
+from fractions import Fraction
 
-成本异常表示由错误配置、流量峰值或基础设施变更导致的意外支出变化。尽早检测可防止账单冲击。
 
-### 4.1 Kubecost 告警配置
+def cents(value):
+    if isinstance(value, bool):
+        raise ValueError("Money cannot be boolean")
+    value=Decimal(str(value))
+    if not value.is_finite() or value < 0:
+        raise ValueError("Use finite nonnegative expense amounts; handle refunds explicitly")
+    scaled=value*100
+    if scaled != scaled.to_integral_value():
+        raise ValueError("Settle source amounts to cents under an approved rounding policy first")
+    return int(scaled)
 
-```yaml
-# kubecost-alerts-values.yaml (merge with main Kubecost Helm values)
-kubecostProductConfigs:
-  alertConfigs:
-    enabled: true
-    frontendUrl: "https://kubecost.internal.mycompany.com"
-    alerts:
-      # Budget exceeded - any namespace over $5000/month
-      - type: budget
-        threshold: 5000
-        window: 30d
-        aggregation: namespace
-        slackWebhookUrl: "https://hooks.slack.com/services/T00/B00/XXX"
-        frequencyMinutes: 1440
-      # Budget warning at 80%
-      - type: budget
-        threshold: 4000
-        window: 30d
-        aggregation: namespace
-        slackWebhookUrl: "https://hooks.slack.com/services/T00/B00/XXX"
-        frequencyMinutes: 1440
-      # Cluster efficiency below 40%
-      - type: efficiency
-        threshold: 0.4
-        window: 48h
-        aggregation: cluster
-        slackWebhookUrl: "https://hooks.slack.com/services/T00/B00/XXX"
-        frequencyMinutes: 360
-      # 30% cost increase week over week per team
-      - type: recurringUpdate
-        threshold: 0.30
-        window: 7d
-        aggregation: "label:team"
-        slackWebhookUrl: "https://hooks.slack.com/services/T00/B00/XXX"
-        frequencyMinutes: 10080
-      # Daily spend exceeds 150% of 7-day average
-      - type: spendChange
-        threshold: 0.50
-        window: 1d
-        baselineWindow: 7d
-        aggregation: namespace
-        slackWebhookUrl: "https://hooks.slack.com/services/T00/B00/XXX"
-        frequencyMinutes: 360
+
+def money(value):
+    return f"{Decimal(value)/100:.2f}"
+
+
+def distribute(total, weights):
+    if not weights:
+        raise ValueError("At least one allocation target is required")
+    rational={}
+    for name, weight in weights.items():
+        value=Decimal(str(weight))
+        if not value.is_finite() or value < 0:
+            raise ValueError("Weights must be finite and nonnegative")
+        rational[name]=Fraction(value)
+    denominator=sum(rational.values(),Fraction(0))
+    if denominator==0:
+        if total:
+            raise ValueError("A positive pool cannot be allocated with zero total weight")
+        return {name:0 for name in weights}
+    exact={name:Fraction(total)*weight/denominator for name,weight in rational.items()}
+    result={name:value.numerator//value.denominator for name,value in exact.items()}
+    remainder=total-sum(result.values())
+    # Largest remainder; ties resolved by stable target name.
+    order=sorted(exact,key=lambda name:(-(exact[name]-result[name]),name))
+    for name in order[:remainder]:
+        result[name]+=1
+    assert sum(result.values())==total
+    return result
+
+
+def allocate(config):
+    if config.get("currency")!="USD":
+        raise ValueError("This example accepts a single USD ledger; do not mix currencies")
+    direct={name:cents(value) for name,value in config["direct"].items()}
+    if not direct:
+        raise ValueError("No teams supplied")
+    shared=cents(config["shared"])
+    idle=cents(config["idle"])
+    unallocated=cents(config.get("unallocated","0"))
+    shared_alloc=distribute(shared,direct)
+    idle_alloc=distribute(idle,{name:1 for name in direct})
+    teams={name:{"direct":money(value),"shared":money(shared_alloc[name]),"idle":money(idle_alloc[name]),
+                 "total":money(value+shared_alloc[name]+idle_alloc[name])} for name,value in sorted(direct.items())}
+    source_total=sum(direct.values())+shared+idle+unallocated
+    allocated_total=sum(cents(value["total"]) for value in teams.values())+unallocated
+    assert source_total==allocated_total
+    return {"currency":"USD","policy":"Shared weighted by direct cost; idle split equally; unallocated retained",
+            "rounding":"Exact cents; largest remainder with lexical tie-break",
+            "teams":teams,"unallocated":money(unallocated),"source_total":money(source_total),
+            "allocated_total":money(allocated_total),
+            "limits":["Use one reconciled pool; do not add overlapping Allocation and Cloud Cost totals.",
+                      "This policy is an example, not an inherently fair or mandatory chargeback rule.",
+                      "Refunds, credits, taxes and currency conversion require explicit separate policies."]}
+
+
+if __name__=="__main__":
+    parser=argparse.ArgumentParser()
+    parser.add_argument("input")
+    args=parser.parse_args()
+    try:
+        with open(args.input,encoding="utf-8") as stream:
+            result=allocate(json.load(stream))
+    except (ValueError,KeyError,ArithmeticError) as error:
+        parser.error(str(error))
+    print(json.dumps(result,ensure_ascii=False,indent=2))
 ```
 
-### 4.2 基于 Prometheus 的成本告警
-
-```yaml
-# cost-anomaly-prometheus-rules.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: cost-anomaly-detection
-  namespace: monitoring
-  labels:
-    release: prometheus
-spec:
-  groups:
-    - name: cost-anomaly-detection
-      interval: 30m
-      rules:
-        - alert: ClusterCostSpike
-          expr: |
-            (sum(kubecost_cluster_costs{}) / avg_over_time(sum(kubecost_cluster_costs{})[7d:1h])) > 1.5
-          for: 2h
-          labels:
-            severity: warning
-            category: finops
-          annotations:
-            summary: "Cluster cost spike detected"
-            description: "Current cost is {{ $value | humanizePercentage }} of 7-day average."
-        - alert: NamespaceCostDoubled
-          expr: |
-            (
-              sum by (namespace) (kubecost_container_cpu_allocation_cost{} + kubecost_container_memory_allocation_cost{})
-              / sum by (namespace) (kubecost_container_cpu_allocation_cost{} offset 1d + kubecost_container_memory_allocation_cost{} offset 1d)
-            ) > 2.0
-          for: 1h
-          labels:
-            severity: warning
-            category: finops
-          annotations:
-            summary: "Namespace {{ $labels.namespace }} cost doubled day-over-day"
-        - alert: LowClusterCPUEfficiency
-          expr: |
-            (
-              sum(rate(container_cpu_usage_seconds_total{namespace!~"kube-system|monitoring"}[1h]))
-              / sum(kube_pod_container_resource_requests{resource="cpu", namespace!~"kube-system|monitoring"})
-            ) < 0.30
-          for: 6h
-          labels:
-            severity: warning
-            category: finops
-          annotations:
-            summary: "Cluster CPU efficiency below 30%"
-            description: "Current efficiency: {{ $value | humanizePercentage }}. Review VPA recommendations."
-        - alert: HighIdleCost
-          expr: |
-            (sum(kubecost_cluster_costs{cost_type="idle"}) / sum(kubecost_cluster_costs{})) > 0.20
-          for: 24h
-          labels:
-            severity: info
-            category: finops
-          annotations:
-            summary: "Idle cost exceeds 20% of total cluster cost"
-        - alert: ProjectedMonthlyBudgetExceeded
-          expr: |
-            (sum(kubecost_cluster_costs{}) * 730) > 50000
-          for: 12h
-          labels:
-            severity: critical
-            category: finops
-          annotations:
-            summary: "Projected monthly cost exceeds $50,000 budget"
-            description: "Projected: ${{ $value | printf \"%.0f\" }}. Immediate review required."
+```bash
+python3 allocate_costs.py allocation-example.json
 ```
 
-#### Alertmanager 路由和 Receiver
+将无法归属金额保留为 `unallocated`。此计算器不会自动重新分配负成本或退款。实际会计需要独立抵扣、退款和币种转换规则。示例策略并非对每个组织都天然最公平。
+
+### 3.4 Prometheus 和 Grafana
+
+这些规则假定使用**一个集群的 Prometheus**。集中式 Prometheus/Thanos 查询必须在每次聚合和连接中保留真实集群标识符。仅按节点名连接多个集群可能混合成本。
+
+`node_cpu_hourly_cost` 是每核每小时成本，`node_ram_hourly_cost` 是每 GiB 每小时成本。乘以分摊指标，并用 `max` 对重复抓取去重。不要虚构 `kubecost_container_cpu_cost` 等指标。连接标签前，将此 kube-state-metrics 设置合并到现有可观测性 chart values。
 
 ```yaml
-# alertmanager-finops-config.yaml
-apiVersion: monitoring.coreos.com/v1alpha1
-kind: AlertmanagerConfig
-metadata:
-  name: finops-alerts
-  namespace: monitoring
-spec:
-  route:
-    receiver: "finops-slack"
-    groupBy: ["alertname", "namespace"]
-    groupWait: 30s
-    groupInterval: 5m
-    repeatInterval: 4h
-    matchers:
-      - name: category
-        value: finops
-    routes:
-      - receiver: "finops-slack-critical"
-        matchers:
-          - name: severity
-            value: critical
-        repeatInterval: 1h
-  receivers:
-    - name: "finops-slack"
-      slackConfigs:
-        - apiURL:
-            name: finops-slack-webhook
-            key: webhook-url
-          channel: "#finops-alerts"
-          sendResolved: true
-          title: "[{{ .CommonLabels.severity | toUpper }}] {{ .CommonLabels.alertname }}"
-          text: |
-            {{ range .Alerts }}
-            *Description:* {{ .Annotations.description }}
-            {{ end }}
-    - name: "finops-slack-critical"
-      slackConfigs:
-        - apiURL:
-            name: finops-slack-webhook
-            key: webhook-url
-          channel: "#finops-critical"
-          sendResolved: true
-          title: "[CRITICAL] {{ .CommonLabels.alertname }}"
-          text: |
-            {{ range .Alerts }}
-            *Description:* {{ .Annotations.description }}
-            *Runbook:* {{ .Annotations.runbook_url }}
-            {{ end }}
-          color: "danger"
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: finops-slack-webhook
-  namespace: monitoring
-type: Opaque
-stringData:
-  webhook-url: "https://hooks.slack.com/services/T00/B00/XXXXXXXXXXXXXXXXXXXXXXXX"
+kube-state-metrics:
+  metricLabelsAllowlist:
+    - namespaces=[team]
 ```
 
-### 4.3 AWS Cost Anomaly Detection 集成
+**`cost-rules.yaml`**
 
-AWS Cost Anomaly Detection 提供基于 ML 的异常检测，用于补充 Kubernetes 级别的监控。
+```yaml
+groups:
+  - name: finops-current-rates
+    rules:
+      - record: finops:node_cpu_hourly_cost
+        expr: max by (node) (node_cpu_hourly_cost)
+      - record: finops:node_ram_hourly_cost
+        expr: max by (node) (node_ram_hourly_cost)
+      - record: finops:namespace_cpu_cost_per_hour
+        expr: |
+          sum by (namespace) (
+            max by (namespace, pod, container, node) (container_cpu_allocation{container!=""})
+            * on (node) group_left finops:node_cpu_hourly_cost
+          )
+      - record: finops:namespace_ram_cost_per_hour
+        expr: |
+          sum by (namespace) (
+            max by (namespace, pod, container, node) (container_memory_allocation_bytes{container!=""}) / 1073741824
+            * on (node) group_left finops:node_ram_hourly_cost
+          )
+      - record: finops:namespace_compute_cost_per_hour
+        expr: finops:namespace_cpu_cost_per_hour + finops:namespace_ram_cost_per_hour
+      - record: finops:team_compute_cost_per_hour
+        expr: |
+          sum by (label_team) (
+            finops:namespace_compute_cost_per_hour
+            * on (namespace) group_left (label_team)
+              max by (namespace, label_team) (kube_namespace_labels{label_team!=""})
+          )
+      - alert: OpenCostMetricsUnavailable
+        expr: absent(node_cpu_hourly_cost)
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OpenCost CPU pricing metrics are absent"
+      - alert: KubernetesComputeRateAboveReviewThreshold
+        expr: sum(finops:namespace_compute_cost_per_hour) > 20
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Allocated compute model exceeds the example USD 20/hour threshold"
+```
+
+文件采用 Prometheus 规则文件格式。使用 Operator 时，将其放入 `PrometheusRule.spec`，并设置匹配实际规则选择器的元数据标签。USD 20/小时持续 30 分钟是基于模型数据的示例审查阈值。`for` 要求条件持续存在；不消除误报。
+
+Grafana 面板可使用 `finops:namespace_compute_cost_per_hour` 和 `finops:team_compute_cost_per_hour`，标注为 **USD/小时**。这些是分摊的 CPU/RAM 费率，不是包含所有存储、网络、控制平面和闲置成本的账单。将任何 `* 730` 面板标为固定 730 小时估算。缺失价格必须显示为缺失数据，不能显示为零成本。
+
+无团队标签的命名空间可能从团队聚合中消失。比较完整命名空间总额与团队总额。仪表板变量和文件夹不强制执行数据源授权。使用服务器端数据源权限或独立租户隔离团队，并测试跨团队查询被拒绝。
+
+## 4. 基于计费的异常检测
+
+`DIMENSIONAL` / `SERVICE` Cost Anomaly Detection 监视器覆盖 AWS 服务支出。将其命名为“EKS”不会把范围限制到 EKS。对于使用标签、关联账户或 Cost Categories 的 CUSTOM 监视器，验证支持范围及数据可用性。适当时复用现有监视器 ARN。
+
+此可选配置与前面的 Terraform 文件放在一起。区分 `DAILY` EMAIL 摘要和 `IMMEDIATE` SNS 通知。SNS 交付仍遵循计费更新及异常检测；不是即时支出停止。主题需要单独批准的订阅者。此示例不创建 Slack 订阅。
+
+**`anomaly.tf`**
 
 ```hcl
-# aws-cost-anomaly-detection.tf
-resource "aws_ce_anomaly_monitor" "eks_monitor" {
-  name              = "eks-cost-anomaly-monitor"
-  monitor_type      = "DIMENSIONAL"
-  monitor_dimension = "SERVICE"
+# Optional: supply an existing monitor ARN to avoid duplicating a SERVICE monitor.
+variable "cost_monitor_arn" {
+  type = string
 }
 
-resource "aws_sns_topic" "finops_alerts" {
-  name = "finops-cost-anomaly-alerts"
+variable "notification_email" {
+  type = string
 }
 
-resource "aws_sns_topic_subscription" "finops_email" {
-  topic_arn = aws_sns_topic.finops_alerts.arn
-  protocol  = "email"
-  endpoint  = "finops-team@mycompany.com"
-}
-
-resource "aws_ce_anomaly_subscription" "eks_alerts" {
-  name      = "eks-anomaly-alerts"
-  frequency = "DAILY"
-  monitor_arn_list = [aws_ce_anomaly_monitor.eks_monitor.arn]
-
-  subscriber {
-    type    = "SNS"
-    address = aws_sns_topic.finops_alerts.arn
-  }
-
+resource "aws_ce_anomaly_subscription" "daily" {
+  provider         = aws.billing
+  name             = "daily-cost-anomalies"
+  frequency        = "DAILY"
+  monitor_arn_list = [var.cost_monitor_arn]
   threshold_expression {
     dimension {
       key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
-      values        = ["100"]
       match_options = ["GREATER_THAN_OR_EQUAL"]
+      values        = ["100"]
     }
+  }
+  subscriber {
+    type    = "EMAIL"
+    address = var.notification_email
+  }
+}
+
+resource "aws_sns_topic" "anomalies" {
+  provider = aws.billing
+  name     = "cost-anomalies"
+}
+
+resource "aws_sns_topic_policy" "anomalies" {
+  provider = aws.billing
+  arn      = aws_sns_topic.anomalies.arn
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "costalerts.amazonaws.com" }
+      Action    = "sns:Publish"
+      Resource  = aws_sns_topic.anomalies.arn
+      Condition = {
+        StringEquals = { "aws:SourceAccount" = local.account }
+        ArnLike = {
+          "aws:SourceArn" = "${local.arn}:ce::${local.account}:anomalysubscription/*"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_ce_anomaly_subscription" "immediate" {
+  provider         = aws.billing
+  depends_on       = [aws_sns_topic_policy.anomalies]
+  name             = "immediate-cost-anomalies"
+  frequency        = "IMMEDIATE"
+  monitor_arn_list = [var.cost_monitor_arn]
+  threshold_expression {
+    dimension {
+      key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
+      match_options = ["GREATER_THAN_OR_EQUAL"]
+      values        = ["100"]
+    }
+  }
+  subscriber {
+    type    = "SNS"
+    address = aws_sns_topic.anomalies.arn
   }
 }
 ```
 
----
+创建资源和订阅会产生真实成本及通知影响。对于 KMS 加密 SNS，还需为 `costalerts.amazonaws.com` 配置必要密钥权限，并限制 SourceAccount/SourceArn。按组织情况调整示例 USD 100 阈值。
 
-## 5. 团队自助式成本管理
+AWS Budgets Actions 可执行受支持的 EC2/RDS 操作及 IAM/SCP 操作。更新延迟和操作范围仍适用；这不是立即停止所有支出的硬上限。
 
-自助式成本管理让 FinOps 能够扩展到平台团队之外。当每个工程团队都能独立查看成本并响应预算告警时，FinOps 团队就可以专注于策略。
+## 5. 团队预算和定时报告
 
-### 5.1 按团队的成本仪表板
+### 5.1 显式数值预算
 
-一个变量驱动的 Grafana 仪表板，允许每个团队只查看自己的成本。关键面板及其 PromQL 查询如下：
+`label_replace` 不会将命名空间注解字符串变成数值时间序列。此示例从 JSON 解析显式 USD 预算。缺失预算产生 `null` 比率；零、负数和无效数值预算被拒绝。
 
-```yaml
-# grafana-team-dashboard-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-team-cost-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "true"
-data:
-  team-cost-dashboard.json: |
-    {
-      "panels": [
-        { "id": 1, "title": "Projected Monthly Cost", "type": "stat", "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
-          "fieldConfig": { "defaults": { "unit": "currencyUSD" } },
-          "targets": [{ "expr": "sum(kubecost_container_cpu_allocation_cost{namespace=~\"team-$team.*\"} + kubecost_container_memory_allocation_cost{namespace=~\"team-$team.*\"}) * 730" }] },
-        { "id": 2, "title": "CPU Efficiency", "type": "stat", "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
-          "fieldConfig": { "defaults": { "unit": "percentunit" } },
-          "targets": [{ "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"team-$team.*\"}[1h])) / sum(kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"team-$team.*\"})" }] },
-        { "id": 3, "title": "Memory Efficiency", "type": "stat", "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
-          "fieldConfig": { "defaults": { "unit": "percentunit" } },
-          "targets": [{ "expr": "sum(container_memory_working_set_bytes{namespace=~\"team-$team.*\"}) / sum(kube_pod_container_resource_requests{resource=\"memory\", namespace=~\"team-$team.*\"})" }] },
-        { "id": 4, "title": "Daily Cost Trend", "type": "timeseries", "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
-          "targets": [{ "expr": "sum(kubecost_container_cpu_allocation_cost{namespace=~\"team-$team.*\"} + kubecost_container_memory_allocation_cost{namespace=~\"team-$team.*\"}) * 24", "legendFormat": "Daily Cost" }] },
-        { "id": 5, "title": "Cost by Service", "type": "piechart", "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
-          "targets": [{ "expr": "sum by (label_service) (kubecost_container_cpu_allocation_cost{namespace=~\"team-$team.*\"} + kubecost_container_memory_allocation_cost{namespace=~\"team-$team.*\"}) * 730", "legendFormat": "{{label_service}}" }] }
-      ],
-      "templating": { "list": [{ "name": "team", "type": "query", "query": "label_values(kube_namespace_labels{label_team!=\"\"}, label_team)", "refresh": 2 }] },
-      "title": "Team Cost Self-Service", "uid": "finops-team-self-service-v1"
-    }
+**`budgets.json`**
+
+```json
+{
+  "currency": "USD",
+  "namespaces": {
+    "backend-production": "3000.00",
+    "frontend-production": "2000.00"
+  }
+}
 ```
 
-### 5.2 Slack 成本报告 Bot
+### 5.2 月度模型报告和可选 Slack 交付
 
-每周运行的 CronJob，用于查询 Kubecost 并向 Slack 发布格式化的成本报告。
+此脚本仅使用 Python 3.12 标准库。它查询已完成的 UTC 日期；`--as-of` 是**不包含在内的结束日期**。每月第一天报告上一个完整月份。空数据或多个时间步会失败，不会变为错误的 USD 0 结果。脚本不能证明完整历史覆盖；检查 API 警告和导入器数据新鲜度。
+
+默认创建 JSON 文件，不发送 Slack 消息。交付同时需要 `--send` 和 `--webhook-file`。不同频道需要独立传入 webhook；不使用载荷 `channel` 覆盖。
+
+**`report_costs.py`**
+
+```python
+"""Read-only OpenCost monthly model-cost report and optional reviewed Slack delivery."""
+import argparse
+import calendar
+import json
+from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
+from urllib.parse import urlencode, urlsplit
+from urllib.request import Request, build_opener, HTTPRedirectHandler
+
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def decimal_value(value, name, positive=False):
+    if value is None or isinstance(value, bool):
+        raise ValueError(f"{name}: missing/invalid number")
+    amount=Decimal(str(value))
+    if not amount.is_finite() or (positive and amount <= 0):
+        raise ValueError(f"{name}: invalid finite range")
+    return amount
+
+
+def usd(value):
+    return format(value.quantize(Decimal("0.01"),rounding=ROUND_HALF_UP),"f")
+
+
+def month_window(as_of):
+    end=date.fromisoformat(as_of)
+    month_reference=end if end.day>1 else end-timedelta(days=1)
+    start=month_reference.replace(day=1)
+    completed=(end-start).days
+    return start,end,completed,calendar.monthrange(start.year,start.month)[1]
+
+
+def summarize(payload, budgets, as_of):
+    start,end,days,month_days=month_window(as_of)
+    if not isinstance(payload,dict) or not isinstance(budgets,dict) or not isinstance(budgets.get("namespaces",{}),dict):
+        raise ValueError("Expected API and budget JSON objects")
+    if budgets.get("currency")!="USD":
+        raise ValueError("This report requires an explicitly configured USD cost source and budgets")
+    if payload.get("code",200)!=200 or payload.get("status","success")!="success" or payload.get("errors"):
+        raise ValueError("Cost API reported an error")
+    sets=payload.get("data")
+    if not isinstance(sets,list) or len(sets)!=1 or not isinstance(sets[0],dict) or not sets[0]:
+        raise ValueError("Expected one nonempty whole-window allocation set; missing data is not zero cost")
+    namespace_costs={}
+    for namespace,allocation in sets[0].items():
+        if not isinstance(allocation,dict) or "totalCost" not in allocation:
+            raise ValueError(f"{namespace}: missing allocation cost")
+        namespace_costs[namespace]=decimal_value(allocation["totalCost"],namespace)
+    total=sum(namespace_costs.values(),Decimal(0))
+    rows=[]
+    for namespace,cost in sorted(namespace_costs.items(),key=lambda row:(-row[1],row[0])):
+        budget=budgets.get("namespaces",{}).get(namespace)
+        budget_value=None if budget is None else decimal_value(budget,"budget",positive=True)
+        projected=cost*Decimal(month_days)/Decimal(days)
+        rows.append({
+            "namespace":namespace,
+            "model_cost_to_date_usd":usd(cost),
+            "linear_month_estimate_usd":usd(projected),
+            "budget_usd":None if budget_value is None else usd(budget_value),
+            "model_budget_ratio":None if budget_value is None else str(cost/budget_value),
+            "linear_estimate_budget_ratio":None if budget_value is None else str(projected/budget_value),
+        })
+    return {
+        "source":"OpenCost allocation model, not an AWS invoice",
+        "currency":"USD","window_start":start.isoformat()+"T00:00:00Z",
+        "window_end_exclusive":end.isoformat()+"T00:00:00Z",
+        "completed_calendar_days":days,"days_in_month":month_days,
+        "total_model_cost_to_date_usd":usd(total),
+        "total_linear_month_estimate_usd":usd(total*Decimal(month_days)/Decimal(days)),
+        "namespaces":rows,"api_warnings":payload.get("warnings",[]),
+        "limits":[
+            "Linear estimates assume complete coverage and stable daily cost; inspect retention, gaps and importer freshness.",
+            "Idle and unallocated buckets are retained; this is not automatic chargeback.",
+            "Calendar-to-date model cost, a linear estimate and actual billed cost are different quantities.",
+            "Do not add overlapping cloud-billing and Kubernetes-allocation totals."
+        ]
+    }
+
+
+def get_allocation(base_url, as_of):
+    start,end,_,_=month_window(as_of)
+    parsed=urlsplit(base_url)
+    if parsed.scheme not in ("http","https") or not parsed.netloc or parsed.username or parsed.query or parsed.fragment:
+        raise ValueError("Use an HTTP(S) API base URL without credentials, query or fragment")
+    query=urlencode({
+        "window":start.isoformat()+"T00:00:00Z,"+end.isoformat()+"T00:00:00Z",
+        "aggregate":"namespace","includeIdle":"true","shareIdle":"false","resolution":"1m"
+    })
+    request=Request(base_url.rstrip("/")+"/allocation/compute?"+query,
+                    headers={"Accept":"application/json"},method="GET")
+    with build_opener(NoRedirect).open(request,timeout=30) as response:
+        if response.status != 200:
+            raise ValueError(f"Cost API status {response.status}")
+        body=response.read(10*1024*1024+1)
+    if len(body)>10*1024*1024:
+        raise ValueError("Cost API response exceeded the configured limit")
+    return json.loads(body,parse_float=Decimal)
+
+
+def slack_payload(report):
+    # Dynamic names stay in plain_text blocks to avoid markup/mention interpretation.
+    header=f"Calendar-month Kubernetes model costs — {report['window_end_exclusive'][:10]}"
+    blocks=[{"type":"header","text":{"type":"plain_text","text":header}},
+            {"type":"section","text":{"type":"plain_text","text":
+                f"UTC window: {report['window_start']} to {report['window_end_exclusive']} (exclusive)\n"
+                f"Model cost: USD {report['total_model_cost_to_date_usd']}\n"
+                f"Linear estimate: USD {report['total_linear_month_estimate_usd']}\n"
+                "This is an allocation estimate, not an AWS invoice."}}]
+    for row in report["namespaces"][:10]:
+        text=f"{row['namespace']}: USD {row['model_cost_to_date_usd']}"
+        blocks.append({"type":"section","text":{"type":"plain_text","text":text[:2900]}})
+    omitted=max(0,len(report["namespaces"])-10)
+    if omitted:
+        blocks.append({"type":"section","text":{"type":"plain_text","text":
+            f"{omitted} additional buckets are included in the total. See the full JSON report."}})
+    return {"blocks":blocks}
+
+
+def send_slack(payload, webhook_file):
+    url=Path(webhook_file).read_text().strip()
+    parsed=urlsplit(url)
+    if parsed.scheme!="https" or parsed.hostname not in ("hooks.slack.com","hooks.slack-gov.com"):
+        raise ValueError("Use a trusted HTTPS Slack incoming-webhook URL file")
+    body=json.dumps(payload,ensure_ascii=False).encode()
+    request=Request(url,data=body,headers={"Content-Type":"application/json"},method="POST")
+    with build_opener(NoRedirect).open(request,timeout=15) as response:
+        result=response.read(1024).decode().strip()
+        if response.status!=200 or result!="ok":
+            raise ValueError("Slack did not acknowledge the message")
+
+
+def main():
+    parser=argparse.ArgumentParser()
+    source=parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--input")
+    source.add_argument("--api-url")
+    parser.add_argument("--budgets",required=True)
+    parser.add_argument("--as-of",default=datetime.now(timezone.utc).date().isoformat(),
+                        help="Exclusive UTC reporting end date")
+    parser.add_argument("--report",default="cost-report.json")
+    parser.add_argument("--slack-payload",default="slack-payload.json")
+    parser.add_argument("--print-report",action="store_true",
+                        help="Write model-cost JSON to stdout for controlled log collection")
+    parser.add_argument("--send",action="store_true")
+    parser.add_argument("--webhook-file")
+    args=parser.parse_args()
+    try:
+        if args.send and not args.webhook_file:
+            raise ValueError("--send requires --webhook-file")
+        payload=(json.loads(Path(args.input).read_text(),parse_float=Decimal) if args.input
+                 else get_allocation(args.api_url,args.as_of))
+        budgets=json.loads(Path(args.budgets).read_text(),parse_float=Decimal)
+        report=summarize(payload,budgets,args.as_of)
+        slack=slack_payload(report)
+        Path(args.report).write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n")
+        Path(args.slack_payload).write_text(json.dumps(slack,ensure_ascii=False,indent=2)+"\n")
+        if args.print_report:
+            print(json.dumps(report,ensure_ascii=False))
+        if args.send:
+            send_slack(slack,args.webhook_file)
+        print(f"Report written: {args.report}; Slack delivery: {'requested' if args.send else 'disabled'}")
+    except (ValueError,KeyError,ArithmeticError,OSError) as error:
+        parser.exit(1,f"Cost report failed: {error}\n")
+
+
+if __name__=="__main__":
+    main()
+```
+
+```bash
+python3 report_costs.py \
+  --api-url http://127.0.0.1:9003 \
+  --budgets budgets.json --as-of 2026-09-12 \
+  --report cost-report.json --slack-payload slack-payload.json
+```
+
+合成数据验证模型总成本为 **USD 1,610.10**，线性月末估算为 **USD 4,391.18**。这些不是读者账户中的成本。估算使用九月 30 天中的 11 个已完成日期，而非固定 730 小时预测。
+
+### 5.3 作为 CronJob 运行
+
+将脚本和预算存入 ConfigMap。此 CronJob 每天 **09:00 Asia/Seoul** 运行，将报告打印到 stdout，不发送 Slack 消息。报告边界仍为 UTC。日志含内部成本信息，应配置访问和保留。`emptyDir` 中输出文件随 Pod 删除而消失。
+
+```bash
+kubectl -n opencost create configmap finops-report-code \
+  --from-file=report_costs.py --from-file=budgets.json \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+**`reporter-cronjob.yaml`**
 
 ```yaml
-# slack-cost-report-cronjob.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cost-report-script
-  namespace: kubecost
-data:
-  send-cost-report.sh: |
-    #!/bin/bash
-    set -euo pipefail
-    KUBECOST_URL="${KUBECOST_URL:-http://kubecost-cost-analyzer.kubecost.svc:9090}"
-
-    echo "Generating cost report for window: ${REPORT_WINDOW}"
-
-    ALLOCATION_DATA=$(curl -sf "${KUBECOST_URL}/model/allocation?window=${REPORT_WINDOW}&aggregate=label:team&accumulate=true&shareIdle=weighted&shareNamespaces=kube-system,monitoring")
-
-    TOTAL_COST=$(echo "${ALLOCATION_DATA}" | jq '[.data[0] | to_entries[].value.totalCost] | add | round')
-
-    TEAM_BREAKDOWN=$(echo "${ALLOCATION_DATA}" | jq -r '
-      .data[0] | to_entries | sort_by(-.value.totalCost) | .[]
-      | select(.key != "__idle__" and .key != "__unallocated__")
-      | "| \(.key) | $\(.value.totalCost | round) | \(.value.cpuEfficiency * 100 | round)% | \(.value.ramEfficiency * 100 | round)% |"
-    ')
-
-    SLACK_PAYLOAD=$(cat <<PAYLOAD
-    {
-      "blocks": [
-        { "type": "header", "text": { "type": "plain_text", "text": "Weekly Kubernetes Cost Report - ${CLUSTER_NAME}" } },
-        { "type": "section", "text": { "type": "mrkdwn", "text": "*Report Period:* Last ${REPORT_WINDOW}\n*Total Cluster Cost:* \$${TOTAL_COST}" } },
-        { "type": "divider" },
-        { "type": "section", "text": { "type": "mrkdwn", "text": "*Cost by Team:*\n| Team | Cost | CPU Eff | Mem Eff |\n|------|------|---------|---------|${TEAM_BREAKDOWN}" } },
-        { "type": "section", "text": { "type": "mrkdwn", "text": "<https://kubecost.internal.mycompany.com|View in Kubecost> | <https://grafana.internal.mycompany.com/d/finops-showback-v1|Dashboard>" } }
-      ]
-    }
-    PAYLOAD
-    )
-
-    curl -sf -X POST "${SLACK_WEBHOOK_URL}" -H "Content-Type: application/json" -d "${SLACK_PAYLOAD}"
-    echo "Cost report sent successfully"
----
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: weekly-cost-report
-  namespace: kubecost
+  name: finops-report
+  namespace: opencost
 spec:
-  schedule: "0 9 * * 1"  # Every Monday 9:00 AM UTC
-  timeZone: "America/New_York"
+  schedule: "0 9 * * *"
+  timeZone: Asia/Seoul
   concurrencyPolicy: Forbid
-  successfulJobsHistoryLimit: 4
+  startingDeadlineSeconds: 1800
+  successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 2
   jobTemplate:
     spec:
-      backoffLimit: 2
-      activeDeadlineSeconds: 300
-      template:
-        metadata:
-          labels: { app: cost-report-bot, team: platform }
-        spec:
-          serviceAccountName: cost-report-bot
-          restartPolicy: OnFailure
-          containers:
-            - name: cost-reporter
-              image: curlimages/curl:8.7.1
-              command: ["/bin/sh", "/scripts/send-cost-report.sh"]
-              env:
-                - name: KUBECOST_URL
-                  value: "http://kubecost-cost-analyzer.kubecost.svc:9090"
-                - name: SLACK_WEBHOOK_URL
-                  valueFrom:
-                    secretKeyRef: { name: cost-report-slack-webhook, key: webhook-url }
-                - name: REPORT_WINDOW
-                  value: "7d"
-                - name: CLUSTER_NAME
-                  value: "production-eks-us-east-1"
-              resources:
-                requests: { cpu: "50m", memory: "64Mi" }
-                limits:   { cpu: "200m", memory: "128Mi" }
-              volumeMounts:
-                - { name: scripts, mountPath: /scripts }
-          volumes:
-            - name: scripts
-              configMap: { name: cost-report-script, defaultMode: 0755 }
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: cost-report-bot
-  namespace: kubecost
-```
-
-### 5.3 成本预算设置和告警
-
-```yaml
-# team-budgets-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: team-cost-budgets
-  namespace: kubecost
-data:
-  budgets.json: |
-    {
-      "budgets": [
-        { "team": "checkout",         "monthlyBudget": 8000,  "warningThreshold": 0.80, "criticalThreshold": 0.95, "slackChannel": "#checkout-alerts" },
-        { "team": "payments",         "monthlyBudget": 12000, "warningThreshold": 0.80, "criticalThreshold": 0.95, "slackChannel": "#payments-alerts" },
-        { "team": "search",           "monthlyBudget": 15000, "warningThreshold": 0.80, "criticalThreshold": 0.95, "slackChannel": "#search-alerts" },
-        { "team": "platform",         "monthlyBudget": 20000, "warningThreshold": 0.80, "criticalThreshold": 0.95, "slackChannel": "#platform-alerts" },
-        { "team": "data-engineering", "monthlyBudget": 25000, "warningThreshold": 0.75, "criticalThreshold": 0.90, "slackChannel": "#data-eng-alerts" }
-      ]
-    }
----
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: budget-check
-  namespace: kubecost
-spec:
-  schedule: "0 */6 * * *"  # Every 6 hours
-  concurrencyPolicy: Forbid
-  jobTemplate:
-    spec:
-      backoffLimit: 1
+      backoffLimit: 0
       activeDeadlineSeconds: 180
       template:
         spec:
-          serviceAccountName: cost-report-bot
-          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
           containers:
-            - name: budget-checker
-              image: curlimages/curl:8.7.1
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  set -euo pipefail
-                  KUBECOST_URL="http://kubecost-cost-analyzer.kubecost.svc:9090"
-                  ALLOCATION=$(curl -sf "${KUBECOST_URL}/model/allocation?window=thismonth&aggregate=label:team&accumulate=true&shareIdle=weighted")
-                  DAY_OF_MONTH=$(date +%d)
-                  DAYS_IN_MONTH=$(date -d "$(date +%Y-%m-01) +1 month -1 day" +%d)
-
-                  TEAMS=$(cat /config/budgets.json | jq -r '.budgets[].team')
-                  for TEAM in ${TEAMS}; do
-                    BUDGET=$(jq -r ".budgets[] | select(.team == \"${TEAM}\") | .monthlyBudget" /config/budgets.json)
-                    CRITICAL_PCT=$(jq -r ".budgets[] | select(.team == \"${TEAM}\") | .criticalThreshold" /config/budgets.json)
-                    WARNING_PCT=$(jq -r ".budgets[] | select(.team == \"${TEAM}\") | .warningThreshold" /config/budgets.json)
-                    CHANNEL=$(jq -r ".budgets[] | select(.team == \"${TEAM}\") | .slackChannel" /config/budgets.json)
-                    ACTUAL=$(echo "${ALLOCATION}" | jq -r ".data[0][\"${TEAM}\"].totalCost // 0 | round")
-                    PROJECTED=$(echo "scale=0; ${ACTUAL} * ${DAYS_IN_MONTH} / ${DAY_OF_MONTH}" | bc)
-                    USAGE=$(echo "scale=4; ${PROJECTED} / ${BUDGET}" | bc)
-
-                    if [ "$(echo "${USAGE} >= ${CRITICAL_PCT}" | bc)" = "1" ]; then
-                      curl -sf -X POST "${SLACK_WEBHOOK_URL}" -H "Content-Type: application/json" \
-                        -d "{\"channel\":\"${CHANNEL}\",\"text\":\":rotating_light: CRITICAL - Team *${TEAM}*: Projected \$${PROJECTED}/\$${BUDGET}\"}"
-                    elif [ "$(echo "${USAGE} >= ${WARNING_PCT}" | bc)" = "1" ]; then
-                      curl -sf -X POST "${SLACK_WEBHOOK_URL}" -H "Content-Type: application/json" \
-                        -d "{\"channel\":\"${CHANNEL}\",\"text\":\":warning: Warning - Team *${TEAM}*: Projected \$${PROJECTED}/\$${BUDGET}\"}"
-                    fi
-                  done
-              env:
-                - name: SLACK_WEBHOOK_URL
-                  valueFrom:
-                    secretKeyRef: { name: cost-report-slack-webhook, key: webhook-url }
+            - name: report
+              image: python:3.12.13-slim
+              command: [python, /app/report_costs.py]
+              args:
+                - --print-report
+                - --api-url
+                - http://opencost.opencost.svc.cluster.local:9003
+                - --budgets
+                - /app/budgets.json
+                - --report
+                - /output/cost-report.json
+                - --slack-payload
+                - /output/slack-payload.json
               resources:
-                requests: { cpu: "50m", memory: "64Mi" }
-                limits:   { cpu: "200m", memory: "128Mi" }
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
               volumeMounts:
-                - { name: budget-config, mountPath: /config }
+                - name: app
+                  mountPath: /app
+                  readOnly: true
+                - name: output
+                  mountPath: /output
           volumes:
-            - name: budget-config
-              configMap: { name: team-cost-budgets }
+            - name: app
+              configMap:
+                name: finops-report-code
+            - name: output
+              emptyDir: {}
 ```
 
----
+部署前验证镜像摘要和平台支持，再固定摘要。Python 版本和标准库代码已在本地测试；未拉取容器镜像或在集群执行 CronJob。
 
-## 6. 资源 Rightsizing 自动化
+要启用运维 Slack 交付，将 webhook 作为 Secret 文件挂载，并添加 `--send --webhook-file /secrets/webhook`。绝不要将其放入文档、Git 或日志。`concurrencyPolicy: Forbid` 和 `backoffLimit: 0` 降低重复风险，但不提供恰好一次交付。确认丢失后重试可能重复消息；应决定是否需要交付台账和去重。
 
-Rightsizing 会将资源 requests 和 limits 调整到实际工作负载使用量。过度配置会浪费资金；配置不足会导致 OOM kills 和 throttling。
+## 6. 调整资源规格
 
-### 6.1 VPA 建议工作流
+### 6.1 收集 VPA 建议
 
-以仅建议模式（`updateMode: "Off"`）运行 VPA，以便在不自动应用的情况下建议资源变更。
+此处假定 VPA recommender 和 CRD 已安装。以 `Off` 模式观察，避免多个 VPA 针对同一工作负载。若 Goldilocks 管理 VPA，不要用手动示例重复创建。`target` 是推荐 request；`upperBound` 不是强制容器 limit。
+
+**`vpa.yaml`**
 
 ```yaml
-# vpa-recommendation-mode.yaml
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: order-service-vpa
-  namespace: team-checkout
-  labels:
-    team: checkout
-    finops-rightsizing: "true"
+  name: backend-api
+  namespace: team-backend
 spec:
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: order-service
+    name: backend-api
   updatePolicy:
     updateMode: "Off"
   resourcePolicy:
     containerPolicies:
-      - containerName: order-service
-        minAllowed: { cpu: "50m", memory: "64Mi" }
-        maxAllowed: { cpu: "4", memory: "8Gi" }
-        controlledResources: ["cpu", "memory"]
-        controlledValues: RequestsAndLimits
----
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: payment-processor-vpa
-  namespace: team-payments
-  labels:
-    team: payments
-    finops-rightsizing: "true"
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: payment-processor
-  updatePolicy:
-    updateMode: "Off"
-  resourcePolicy:
-    containerPolicies:
-      - containerName: payment-processor
-        minAllowed: { cpu: "100m", memory: "128Mi" }
-        maxAllowed: { cpu: "8", memory: "16Gi" }
-        controlledResources: ["cpu", "memory"]
-        controlledValues: RequestsAndLimits
+      - containerName: "*"
+        controlledResources: [cpu, memory]
+        controlledValues: RequestsOnly
 ```
 
-审查建议：
+Goldilocks 是可选的按命名空间选择启用的 VPA 建议仪表板。安装前检查当前 chart 依赖、控制器权限和仪表板访问；不要添加重复 recommender。为命名空间添加 `goldilocks.fairwinds.com/enabled=true` 标签，本身不会省钱或批准更改。
+
+### 6.2 生成变更提案
+
+此脚本**不修改集群，也不创建 PR**。它读取 `kubectl` JSON 快照，按名称匹配 Deployment/StatefulSet 容器，并建议至少减少 20% 的 requests。它要求 `kubernetes==36.0.3`，该版本数量解析器已用示例测试。
+
+检查建议是否覆盖足够流量、峰值和恢复场景，以及 CPU request 更改是否影响 HPA 利用率计算。初始化容器和 Pod 级资源仍是独立审查项。不会猜测重复 VPA、未知容器或缺失 requests。
 
 ```bash
-# Get VPA recommendations across all namespaces
-kubectl get vpa -A -o custom-columns=\
-'NAMESPACE:.metadata.namespace,NAME:.metadata.name,TARGET_CPU:.status.recommendation.containerRecommendations[0].target.cpu,TARGET_MEM:.status.recommendation.containerRecommendations[0].target.memory'
+python3 -m venv .venv
+.venv/bin/python -m pip install 'kubernetes==36.0.3'
+kubectl --context YOUR_CONTEXT get deployments,statefulsets -A -o json > workloads.json
+kubectl --context YOUR_CONTEXT get vpa -A -o json > vpas.json
+.venv/bin/python recommend_resources.py \
+  --workloads workloads.json --vpas vpas.json --threshold 0.20 > proposals.json
 ```
 
-### 6.2 Goldilocks 仪表板
+**`recommend_resources.py`**
 
-Goldilocks 会为标记命名空间中的每个 Deployment 运行 VPA，并提供一个 Web 仪表板来比较当前资源与建议资源。
+```python
+#!/usr/bin/env python3
+"""Build review proposals from kubectl JSON snapshots; never patch workloads."""
+import argparse
+import json
+from collections import Counter
+from decimal import Decimal
+from pathlib import Path
 
-```yaml
-# goldilocks-values.yaml
-# helm install goldilocks fairwinds-stable/goldilocks -n goldilocks --create-namespace -f goldilocks-values.yaml
-vpa:
-  enabled: true
-  updater:
-    enabled: false  # Recommendations only
-dashboard:
-  enabled: true
-  replicaCount: 2
-  resources:
-    requests: { cpu: "50m", memory: "64Mi" }
-    limits:   { cpu: "200m", memory: "128Mi" }
-  ingress:
-    enabled: true
-    ingressClassName: "alb"
-    annotations:
-      alb.ingress.kubernetes.io/scheme: "internal"
-    hosts:
-      - host: "goldilocks.internal.mycompany.com"
-        paths:
-          - path: /
-            pathType: Prefix
-controller:
-  enabled: true
-  resources:
-    requests: { cpu: "50m", memory: "64Mi" }
-    limits:   { cpu: "200m", memory: "128Mi" }
+from kubernetes.utils.quantity import parse_quantity
+
+
+def quantity(value):
+    parsed = parse_quantity(str(value))
+    if not parsed.is_finite() or parsed <= 0:
+        raise ValueError("resource quantity must be finite and positive")
+    return parsed
+
+
+def propose(workloads, vpas, threshold=Decimal("0.20")):
+    if not Decimal(0) < threshold < Decimal(1):
+        raise ValueError("threshold must be between zero and one")
+    index = {}
+    for w in workloads.get("items", []):
+        key = (w["metadata"].get("namespace", "default"), w["kind"], w["metadata"]["name"])
+        index[key] = w
+    results = []
+    targets = Counter(
+        (v["metadata"].get("namespace", "default"),
+         v.get("spec", {}).get("targetRef", {}).get("kind"),
+         v.get("spec", {}).get("targetRef", {}).get("name"))
+        for v in vpas.get("items", [])
+    )
+    for v in vpas.get("items", []):
+        namespace = v["metadata"].get("namespace", "default")
+        target = v.get("spec", {}).get("targetRef", {})
+        key = (namespace, target.get("kind"), target.get("name"))
+        row = {"vpa": v["metadata"]["name"], "namespace": namespace,
+               "kind": key[1], "workload": key[2], "proposals": [], "warnings": []}
+        if target.get("apiVersion") != "apps/v1" or key[1] not in ("Deployment", "StatefulSet"):
+            row["warnings"].append("unsupported target: only apps/v1 Deployment/StatefulSet")
+        elif targets[key] > 1:
+            row["warnings"].append("duplicate VPA target: remove overlap before proceeding")
+        elif key not in index:
+            row["warnings"].append("target missing from workload snapshot")
+        else:
+            workload = index[key]
+            pod = workload["spec"]["template"]["spec"]
+            containers = {c["name"]: c for c in pod["containers"]}
+            conditions = v.get("status", {}).get("conditions", [])
+            if not any(c.get("type") == "RecommendationProvided" and c.get("status") == "True" for c in conditions):
+                row["warnings"].append("RecommendationProvided is not True")
+            else:
+                recommendations = v.get("status", {}).get("recommendation", {}).get("containerRecommendations", [])
+                if not recommendations:
+                    row["warnings"].append("recommendations missing")
+                for rec in recommendations:
+                    name = rec.get("containerName")
+                    if name not in containers:
+                        row["warnings"].append(f"unknown container {name}")
+                        continue
+                    container = containers[name]
+                    for resource in ("cpu", "memory"):
+                        current = container.get("resources", {}).get("requests", {}).get(resource)
+                        target_value = rec.get("target", {}).get(resource)
+                        if current is None or target_value is None:
+                            row["warnings"].append(f"{name}/{resource}: missing current request or target")
+                            continue
+                        try:
+                            current_number, target_number = quantity(current), quantity(target_value)
+                            reduction = (current_number - target_number) / current_number
+                            limit = container.get("resources", {}).get("limits", {}).get(resource)
+                            if limit is not None and target_number > quantity(limit):
+                                row["warnings"].append(f"{name}/{resource}: target exceeds existing limit")
+                                continue
+                        except (ValueError, ArithmeticError) as error:
+                            row["warnings"].append(f"{name}/{resource}: invalid quantity ({error})")
+                            continue
+                        if reduction >= threshold:
+                            row["proposals"].append({
+                                "container": name, "resource": resource,
+                                "currentRequest": current, "proposedRequest": target_value,
+                                "requestReductionRatio": str(reduction),
+                                "estimatedBillingSavings": None
+                            })
+                if pod.get("initContainers") or pod.get("resources"):
+                    row["warnings"].append("init containers and Pod-level resources require separate review")
+        results.append(row)
+    return {"mode": "proposal-only", "threshold": str(threshold), "workloads": results,
+            "limitations": ["No PR, patch, or cluster change is created.",
+                            "VPA history, peak load, HPA interaction, and SLOs require human review.",
+                            "Lower requests do not guarantee fewer nodes or billing savings."]}
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--workloads", type=Path, required=True)
+    parser.add_argument("--vpas", type=Path, required=True)
+    parser.add_argument("--threshold", type=Decimal, default=Decimal("0.20"))
+    args = parser.parse_args()
+    print(json.dumps(propose(json.loads(args.workloads.read_text()),
+                             json.loads(args.vpas.read_text()), args.threshold), indent=2))
 ```
 
-为命名空间启用 Goldilocks：
+![只读提案之后，由所有者准备清单、PR 并验证](../.gitbook/assets/en-ops-13-finops-cost-platform-2.png)
 
-```bash
-kubectl label namespace team-checkout goldilocks.fairwinds.com/enabled=true
-kubectl label namespace team-payments goldilocks.fairwinds.com/enabled=true
-kubectl label namespace team-search goldilocks.fairwinds.com/enabled=true
-kubectl label namespace team-platform goldilocks.fairwinds.com/enabled=true
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-2.html)
 
-# Verify
-kubectl get namespaces -l goldilocks.fairwinds.com/enabled=true
-```
+`estimatedBillingSavings` 为 `null`：更小 requests 不保证节点更少或承诺成本更低。所有者编辑真实 Git 清单、运行性能测试、审核 PR，并在发布后观察 SLO。自动化此过程需要仓库文件映射、身份验证、重复 PR 处理、CI 和批准规则。
 
-### 6.3 自动化资源调整管道
+## 7. 闲置候选和治理
 
-对于成熟组织，VPA 建议可以流入自动化管道，为审查创建 pull requests。
+### 7.1 审查列表，而非删除指令
 
-```mermaid
-graph LR
-    A[VPA Recommendations] --> B[CronJob: Collect]
-    B --> C[Compare with Current]
-    C --> D{Change > 20%?}
-    D -->|Yes| E[Generate Patch]
-    E --> F[Open Pull Request]
-    F --> G[Team Review]
-    G --> H[ArgoCD Sync]
-    D -->|No| I[Skip]
-```
-
-```yaml
-# rightsizing-pipeline-cronjob.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: rightsizing-script
-  namespace: kubecost
-data:
-  collect-recommendations.sh: |
-    #!/bin/bash
-    set -euo pipefail
-    OUTPUT_DIR="/tmp/recommendations"
-    mkdir -p "${OUTPUT_DIR}"
-
-    VPAS=$(kubectl get vpa -A -l finops-rightsizing=true -o json)
-
-    echo "${VPAS}" | jq -c '.items[]' | while read -r VPA; do
-      NS=$(echo "${VPA}" | jq -r '.metadata.namespace')
-      TARGET_NAME=$(echo "${VPA}" | jq -r '.spec.targetRef.name')
-      REC_CPU=$(echo "${VPA}" | jq -r '.status.recommendation.containerRecommendations[0].target.cpu // empty')
-      REC_MEM=$(echo "${VPA}" | jq -r '.status.recommendation.containerRecommendations[0].target.memory // empty')
-
-      [ -z "${REC_CPU}" ] && continue
-
-      CURRENT=$(kubectl get deployment "${TARGET_NAME}" -n "${NS}" -o jsonpath='{.spec.template.spec.containers[0].resources.requests}')
-      CUR_CPU=$(echo "${CURRENT}" | jq -r '.cpu // "0"')
-      CUR_MEM=$(echo "${CURRENT}" | jq -r '.memory // "0"')
-
-      echo "${NS}/${TARGET_NAME}: CPU ${CUR_CPU} -> ${REC_CPU}, Memory ${CUR_MEM} -> ${REC_MEM}"
-
-      cat > "${OUTPUT_DIR}/${NS}-${TARGET_NAME}.json" <<EOF
-    {"namespace":"${NS}","name":"${TARGET_NAME}","current":{"cpu":"${CUR_CPU}","memory":"${CUR_MEM}"},"recommended":{"cpu":"${REC_CPU}","memory":"${REC_MEM}"}}
-    EOF
-    done
-
-    echo "Collected $(ls ${OUTPUT_DIR}/*.json 2>/dev/null | wc -l) recommendations"
----
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: rightsizing-recommendations
-  namespace: kubecost
-spec:
-  schedule: "0 6 * * 1"  # Monday 6:00 AM UTC
-  concurrencyPolicy: Forbid
-  jobTemplate:
-    spec:
-      backoffLimit: 1
-      template:
-        spec:
-          serviceAccountName: rightsizing-bot
-          restartPolicy: OnFailure
-          containers:
-            - name: recommender
-              image: bitnami/kubectl:1.30
-              command: ["/bin/bash", "/scripts/collect-recommendations.sh"]
-              resources:
-                requests: { cpu: "100m", memory: "128Mi" }
-                limits:   { cpu: "500m", memory: "256Mi" }
-              volumeMounts:
-                - { name: scripts, mountPath: /scripts }
-          volumes:
-            - name: scripts
-              configMap: { name: rightsizing-script, defaultMode: 0755 }
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: rightsizing-bot
-  namespace: kubecost
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: rightsizing-reader
-rules:
-  - apiGroups: ["autoscaling.k8s.io"]
-    resources: ["verticalpodautoscalers"]
-    verbs: ["get", "list"]
-  - apiGroups: ["apps"]
-    resources: ["deployments", "statefulsets"]
-    verbs: ["get", "list"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: rightsizing-reader-binding
-subjects:
-  - kind: ServiceAccount
-    name: rightsizing-bot
-    namespace: kubecost
-roleRef:
-  kind: ClusterRole
-  name: rightsizing-reader
-  apiGroup: rbac.authorization.k8s.io
-```
-
----
-
-## 7. 成本优化治理
-
-### 7.1 闲置资源自动检测
-
-用于识别消耗资源但没有有意义流量的工作负载的 PromQL 查询：
-
-**7 天内 CPU requests 使用率低于 1% 的 Deployments：**
+此单集群查询寻找没有当前 Pod 卷引用的 Bound PVC。它将 gauge 与 1 比较，同时匹配命名空间和 claim 名称。
 
 ```promql
-(
-  sum by (namespace, deployment) (
-    rate(container_cpu_usage_seconds_total{namespace!~"kube-system|monitoring|kubecost"}[7d])
-  )
-  /
-  sum by (namespace, deployment) (
-    kube_pod_container_resource_requests{resource="cpu", namespace!~"kube-system|monitoring|kubecost"}
-    * on(pod) group_left(deployment) kube_pod_owner{owner_kind="ReplicaSet"}
-  )
-) < 0.01
+(kube_persistentvolumeclaim_status_phase{phase="Bound"} == 1)
+unless on (namespace, persistentvolumeclaim)
+kube_pod_spec_volumes_persistentvolumeclaims_info
 ```
 
-**7 天内 memory requests 使用率低于 10% 的 Deployments：**
+其中可能包含缩至零的 StatefulSet 数据、恢复卷或暂停任务。删除前检查所有权、恢复要求、最近使用、快照和保留策略。Deployment 七天前创建，不证明它连续七天为零副本。验证连续历史、覆盖和缺口。
 
-```promql
-(
-  sum by (namespace, deployment) (
-    avg_over_time(container_memory_working_set_bytes{namespace!~"kube-system|monitoring"}[7d])
-  )
-  /
-  sum by (namespace, deployment) (
-    kube_pod_container_resource_requests{resource="memory", namespace!~"kube-system|monitoring"}
-    * on(pod) group_left(deployment) kube_pod_owner{owner_kind="ReplicaSet"}
-  )
-) < 0.10
-```
+低 CPU 或内存用量可能适合突发或备用工作负载。将 Pod 聚合为 Deployment 需要所有者关系（ReplicaSet → Deployment）、命名空间和集群标识符。仅网络接收量不能识别业务流量或确定资源是否需要。
 
-**7 天内网络流量为零的 Deployments：**
+### 7.2 定期审查
 
-```promql
-sum by (namespace, pod) (
-  increase(container_network_receive_bytes_total{namespace!~"kube-system|monitoring"}[7d])
-) == 0
-```
+| 频率 | 审查内容 |
+| --- | --- |
+| 每日 | 采集缺口、导入器数据新鲜度、异常、预算估算 |
+| 每周 | 闲置候选所有权、VPA 提案、SLO 影响 |
+| 每月 | 账单核对、折扣、抵扣、无法归属成本、共享规则、单位经济效益 |
 
-**已绑定但未被任何 pod 挂载的 PVC：**
+记录时段、币种、模型或计费来源、刷新时间、分摊策略、无法归属金额和批准者。不要假定标签完整就完全准确、减少 requests 就等于节省，或仪表板过滤器能强制团队访问控制。
 
-```promql
-kube_persistentvolumeclaim_status_phase{phase="Bound"}
-unless on(persistentvolumeclaim, namespace) kube_pod_spec_volumes_persistentvolumeclaims_info
-```
+## 8. 参考资料
 
-### 7.2 成本策略（Kyverno）
+- [FinOps Foundation 定义](https://www.finops.org/introduction/what-is-finops/)
+- [OpenCost 1.121.2 发布](https://github.com/opencost/opencost/releases/tag/v1.121.2)
+- [OpenCost Helm chart](https://github.com/opencost/opencost-helm-chart)
+- [OpenCost API](https://opencost.io/docs/integrations/api/)
+- [OpenCost AWS 授权器源码](https://github.com/opencost/opencost/blob/v1.121.2/pkg/cloud/aws/authorizer.go)
+- [Kubecost chart 和迁移](https://github.com/kubecost/cost-analyzer-helm-chart)
+- [AWS Data Exports](https://docs.aws.amazon.com/cur/latest/userguide/what-is-data-exports.html)
+- [Data Exports 加密](https://docs.aws.amazon.com/cur/latest/userguide/data-protection.html)
+- [Data Exports 桶策略](https://docs.aws.amazon.com/cur/latest/userguide/dataexports-s3-bucket.html)
+- [成本分摊标签回填](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-allocation-backfill.html)
+- [成本异常 SNS 权限](https://docs.aws.amazon.com/cost-management/latest/userguide/ad-SNS.html)
+- [Kyverno CEL 迁移](https://kyverno.io/docs/guides/migration-to-cel/)
+- [Kyverno ValidatingPolicy](https://kyverno.io/docs/policy-types/validating-policy/)
+- [Goldilocks](https://goldilocks.docs.fairwinds.com/)
 
-#### 阻止没有资源 Limits 的 Deployments
 
-```yaml
-# kyverno-require-resource-limits.yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: require-resource-limits
-  annotations:
-    policies.kyverno.io/title: Require Resource Limits
-    policies.kyverno.io/category: FinOps
-    policies.kyverno.io/severity: high
-spec:
-  validationFailureAction: Enforce
-  background: true
-  rules:
-    - name: validate-resource-limits
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - kube-public
-      validate:
-        message: >-
-          All containers must define CPU and memory limits.
-          Add resources.limits.cpu and resources.limits.memory to your container spec.
-        foreach:
-          - list: "request.object.spec.containers"
-            deny:
-              conditions:
-                any:
-                  - key: "{{ element.resources.limits.cpu || '' }}"
-                    operator: Equals
-                    value: ""
-                  - key: "{{ element.resources.limits.memory || '' }}"
-                    operator: Equals
-                    value: ""
-```
-
-#### 对过度配置的资源发出警告
-
-```yaml
-# kyverno-warn-over-provisioned.yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: warn-over-provisioned-resources
-  annotations:
-    policies.kyverno.io/title: Warn on Over-Provisioned Resources
-    policies.kyverno.io/category: FinOps
-    policies.kyverno.io/severity: medium
-spec:
-  validationFailureAction: Audit
-  background: true
-  rules:
-    - name: warn-high-cpu-request
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - monitoring
-      validate:
-        message: >-
-          Container '{{ element.name }}' requests {{ element.resources.requests.cpu }} CPU.
-          Requests above 4 CPU cores should be reviewed with VPA recommendations.
-        foreach:
-          - list: "request.object.spec.containers"
-            deny:
-              conditions:
-                all:
-                  - key: "{{ element.resources.requests.cpu || '0' }}"
-                    operator: GreaterThan
-                    value: "4000m"
-    - name: warn-high-memory-request
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                - kube-system
-                - monitoring
-      validate:
-        message: >-
-          Container '{{ element.name }}' requests {{ element.resources.requests.memory }} memory.
-          Requests above 8Gi should be reviewed with VPA recommendations.
-        foreach:
-          - list: "request.object.spec.containers"
-            deny:
-              conditions:
-                all:
-                  - key: "{{ element.resources.requests.memory || '0' }}"
-                    operator: GreaterThan
-                    value: "8Gi"
-```
-
-### 7.3 定期成本审查流程
-
-#### 审查节奏
-
-| 审查类型 | 频率 | 参与者 | 时长 | 关键议程 |
-|------------|-----------|-------------|----------|------------|
-| **团队 Sprint Review** | 每 2 周 | Team lead、工程师 | 15 分钟 | 审查团队仪表板，处理 rightsizing 建议 |
-| **每周 FinOps Standup** | 每周（周一） | FinOps lead、platform eng | 30 分钟 | 分诊异常告警，确定优化行动优先级 |
-| **月度成本审查** | 每月 | Engineering leads、finance | 60 分钟 | 预算与实际对比，优化 ROI，下月预测 |
-| **季度业务审查** | 每季度 | Leadership、FinOps、finance | 90 分钟 | 单位经济性、每客户成本、战略性节省 |
-
-#### 月度审查模板
-
-| 部分 | 内容 | 数据源 |
-|---------|---------|-------------|
-| 高管摘要 | 总支出、MoM 变化、预算状态 | Kubecost 月度报告 |
-| 按团队成本 | 带效率分数的细分 | Kubecost Allocation API |
-| Top 5 成本驱动因素 | 支出最高或增长最快的服务 | Kubecost 趋势分析 |
-| 优化成果 | 通过 rightsizing、清理实现的节省 | 前后对比 |
-| 异常 | 已调查的未解释成本变化 | 异常告警历史 |
-| Rightsizing 待办 | 尚未应用的 VPA 建议 | Goldilocks 仪表板 |
-| 闲置资源 | 识别为可清理的资源 | PromQL 闲置检测查询 |
-| 行动项 | 指定负责人和截止日期 | 上次审查跟进 |
-
----
-
-## 8. 最佳实践
-
-1. **先建立可视化，再进行优化。** 部署 Kubecost 或 OpenCost，并在提出优化建议前收集 2-4 周数据。没有准确的成本数据，优化就是猜测。
-
-2. **从第一天开始强制执行标签。** 从一开始就使用 Kyverno 将成本标签作为准入要求强制执行。事后为数百个工作负载补标签非常痛苦，缺失标签会产生“未分配”成本，削弱对数据的信任。
-
-3. **先在建议模式下使用 VPA。** 在生产环境中启用 VPA 自动更新之前，必须至少先以建议模式运行两周。自动更新会导致 pod 重启，而错误建议可能导致停机。
-
-4. **分离 showback 与 chargeback 的时间线。** 在实施 chargeback 之前，先给团队 2-3 个月的 showback 可视化。这会建立对数据的信任，并给团队优化时间。
-
-5. **透明地核算共享成本。** 使用文档化的方法分配共享基础设施成本，并在仪表板中清晰显示细分。隐藏成本会滋生不信任和争议。
-
-6. **设置带 15-20% 缓冲的预算。** 过紧的预算会造成告警疲劳，并抑制实验。随着团队建立成本管理信心，再逐步收紧。
-
-7. **让成本成为团队级指标，而不是个人级指标。** 将成本问责降到单个工程师层面会产生不良激励和责备文化。保持在团队或服务级别。
-
-8. **自动化审查流程。** 自动化每周 Slack 报告、预算告警和 rightsizing 建议收集。手动流程无法扩展。
-
-### 反模式
-
-| 反模式 | 问题 | 解决方案 |
-|-------------|---------|----------|
-| **成本数据囤积** | 只有平台团队能看到成本；工程师处于盲区 | 部署团队自助式仪表板；自动化每周 Slack 报告 |
-| **只有告警的 FinOps** | 告警触发但无人处理 | 为每个告警配套 runbook 和指定负责人；跟踪解决时间 |
-| **过度优化非生产环境** | 工程时间花在 dev/staging（只占总量很小一部分） | 优先关注生产环境；对非生产环境使用简单策略（夜间 scale-to-zero） |
-| **忽视数据传输成本** | 只关注计算，而网络成本悄然增长 | 在仪表板中包含网络成本；集成 CUR 数据；审查跨 AZ 流量 |
-
----
-
-## 9. 参考资料
-
-### 外部参考资料
-
-- [OpenCost 文档](https://www.opencost.io/docs/) - 开源 Kubernetes 成本监控
-- [Kubecost 文档](https://docs.kubecost.com/) - 企业级 Kubernetes 成本管理
-- [AWS Cost and Usage Report](https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html) - AWS 账单数据导出
-- [FinOps Foundation](https://www.finops.org/) - FinOps 最佳实践和社区
-- [FinOps Framework](https://www.finops.org/framework/) - 告知、优化、运营生命周期
-- [Vertical Pod Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler) - Kubernetes VPA
-- [Goldilocks by Fairwinds](https://goldilocks.docs.fairwinds.com/) - VPA 建议仪表板
-- [Kyverno Policy Library](https://kyverno.io/policies/) - Kubernetes 策略示例
-
-### 内部参考资料
-
-- [EKS 成本优化](../eks/07-eks-cost-optimization.md) - EKS 的 AWS 特定成本优化策略
-- [资源优化](./10-resource-optimization.md) - 详细的资源 requests/limits 调优和框架特定指南
-- [扩缩策略](./06-scaling-strategies.md) - HPA、KEDA、VPA 和 Spot 利用策略
+- [可观测性技术栈](./09-observability-stack.md)
+- [资源优化](./10-resource-optimization.md)
+- [活动容量规划](./12-event-capacity-planning.md)

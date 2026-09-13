@@ -1,14 +1,16 @@
-# Strimzi Operator Quiz
+# Cuestionario sobre Strimzi Operator
 
-Este cuestionario evalúa tu comprensión de los fundamentos de Strimzi Operator, los métodos de instalación, los CRDs principales, los roles de nodos KRaft y las consideraciones de despliegue en EKS.
+> **Última actualización**: 12 de septiembre de 2026, Strimzi 1.2.0 / Kafka 4.3.1.
 
-## Multiple Choice Questions
+Este cuestionario evalúa fundamentos de Strimzi Operator, métodos de instalación, CRD principales, roles KRaft y consideraciones de despliegue EKS.
 
-1. ¿Qué tipo de proyecto de CNCF es Strimzi?
-   - A) Un service mesh
+## Preguntas de opción múltiple
+
+1. ¿Qué tipo de proyecto CNCF es Strimzi?
+   - A) Una malla de servicios
    - B) Un Operator para ejecutar Apache Kafka en Kubernetes
-   - C) Un container runtime
-   - D) Una herramienta de pipeline de CI/CD
+   - C) Un runtime de contenedores
+   - D) Una herramienta de pipelines CI/CD
 
 <details>
 
@@ -17,26 +19,26 @@ Este cuestionario evalúa tu comprensión de los fundamentos de Strimzi Operator
 **Respuesta: B) Un Operator para ejecutar Apache Kafka en Kubernetes**
 
 **Explicación:**
-Strimzi es un proyecto CNCF Incubating que usa el patrón Kubernetes Operator para gestionar el despliegue y el ciclo de vida completo de clusters de Apache Kafka, incluida la instalación, las actualizaciones, el escalado y la gestión de certificados. En lugar de escribir manualmente brokers de Kafka como un StatefulSet, declaras el estado deseado mediante CRDs y el Operator reconcilia el estado real del cluster para que coincida.
+Strimzi 1.2 es un proyecto CNCF en incubación que reconcilia el estado deseado de recursos personalizados. La gestión actual de Pods Kafka usa StrimziPodSet. Un Operator no completa automáticamente todas las políticas operativas ni las garantías de disponibilidad.
 </details>
 
-2. ¿Cuál de las siguientes opciones es la MENOS precisa como desafío de ejecutar Kafka directamente como un StatefulSet sin Strimzi?
-   - A) Gestionar actualizaciones rolling secuenciales
+2. ¿Cuál describe MENOS acertadamente un reto de ejecutar Kafka directamente como StatefulSet sin Strimzi?
+   - A) Gestionar actualizaciones continuas secuenciales
    - B) Emitir y rotar certificados TLS
-   - C) Construir imágenes de container se vuelve imposible
-   - D) Gestionar el movimiento de datos durante el rebalanceo de particiones
+   - C) Se vuelve imposible construir imágenes de contenedor
+   - D) Gestionar movimiento de datos durante el rebalanceo de particiones
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Construir imágenes de container se vuelve imposible**
+**Respuesta: C) Se vuelve imposible construir imágenes de contenedor**
 
 **Explicación:**
-Ejecutar Kafka directamente como un StatefulSet no es imposible en sí mismo. El problema real es la complejidad operativa y la fragilidad: las actualizaciones secuenciales, la rotación de certificados y el movimiento de datos durante el rebalanceo son difíciles de gestionar manualmente y propensos a errores. Strimzi automatiza todo esto mediante CRDs y lógica de Operator.
+La operación directa es posible, pero exige implementar procedimientos de actualización, certificados, almacenamiento y reasignación. Strimzi reconcilia trabajo repetitivo; recuperación de datos y disponibilidad siguen necesitando validación.
 </details>
 
-3. ¿Qué comando agrega el repositorio Helm de Strimzi antes de instalar el Cluster Operator?
+3. ¿Qué comando añade el repositorio Helm de Strimzi antes de instalar Cluster Operator?
    - A) `helm repo add strimzi https://strimzi.io/charts/`
    - B) `helm repo add kafka https://kafka.apache.org/charts/`
    - C) `helm repo add strimzi https://github.com/strimzi/charts/`
@@ -49,26 +51,26 @@ Ejecutar Kafka directamente como un StatefulSet no es imposible en sí mismo. El
 **Respuesta: A) `helm repo add strimzi https://strimzi.io/charts/`**
 
 **Explicación:**
-El repositorio Helm oficial de Strimzi es `https://strimzi.io/charts/`. Después de agregarlo, el Cluster Operator se instala con `helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator --namespace kafka --create-namespace`.
+Añada el repositorio oficial y fije 1.2.0 para una instalación nueva. Las API/CRD beta existentes requieren primero la migración oficial; un namespace nuevo no evita conflictos de CRD con ámbito de clúster.
 </details>
 
-4. ¿Qué scope de namespace observa por defecto el Strimzi Cluster Operator?
-   - A) Todos los namespace del cluster
-   - B) Todos los namespace `kube-system`
-   - C) Solo el namespace en el que está desplegado
+4. ¿Qué namespaces observa por defecto Strimzi Cluster Operator?
+   - A) Todos los namespaces del clúster
+   - B) Todos los namespaces `kube-system`
+   - C) Solo el namespace donde se despliega
    - D) Solo el namespace `default`
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Solo el namespace en el que está desplegado**
+**Respuesta: C) Solo el namespace donde se despliega**
 
 **Explicación:**
-Por defecto, el Cluster Operator solo observa recursos en su propio namespace. Para observar varios namespaces, establece la variable de entorno `STRIMZI_NAMESPACE` en el Operator Deployment con una lista de namespaces separada por comas, o `*` para ampliar el scope de observación a todo el cluster.
+El chart predeterminado observa el namespace de su release. Chart 1.2 lo incluye y deduplica junto con watchNamespaces adicionales y crea RoleBindings. Cambiar solo la variable de entorno puede dejar permisos RBAC ausentes.
 </details>
 
-5. ¿Qué campo dejó de ser necesario una vez que Strimzi 0.45+ hizo que el modo KRaft fuera el predeterminado?
+5. ¿Qué bloque no se admite en despliegues KRaft actuales de Strimzi 1.2?
    - A) `Kafka.spec.kafka.listeners`
    - B) `Kafka.spec.zookeeper`
    - C) `Kafka.spec.entityOperator`
@@ -81,13 +83,13 @@ Por defecto, el Cluster Operator solo observa recursos en su propio namespace. P
 **Respuesta: B) `Kafka.spec.zookeeper`**
 
 **Explicación:**
-Con el modo KRaft como predeterminado, el quorum de controllers gestiona los metadatos directamente sin ZooKeeper, por lo que el bloque anteriormente requerido `Kafka.spec.zookeeper` ya no es necesario. Los roles de broker y controller se definen en su lugar mediante recursos `KafkaNodePool` separados.
+Strimzi 1.2 usa KRaft y no admite el bloque ZooKeeper. KafkaNodePool define roles controller y broker; no necesita anotaciones de activación antiguas.
 </details>
 
 6. ¿Qué valor NO es una entrada válida para `KafkaNodePool.spec.roles`?
    - A) `controller`
    - B) `broker`
-   - C) Un rol dual que combina `controller` y `broker`
+   - C) Un rol doble que combine `controller` y `broker`
    - D) `zookeeper`
 
 <details>
@@ -97,26 +99,26 @@ Con el modo KRaft como predeterminado, el quorum de controllers gestiona los met
 **Respuesta: D) `zookeeper`**
 
 **Explicación:**
-El campo `roles` en un `KafkaNodePool` basado en KRaft solo admite `controller`, `broker` o una combinación de roles dual (`[controller, broker]`). `zookeeper` no es un rol válido: ZooKeeper no existe en absoluto en modo KRaft.
+Los valores reales de enumeración son controller y broker. Ambos pueden listarse como [controller, broker]; dual-role no es una cadena independiente.
 </details>
 
-7. ¿Cuál es la razón principal para ejecutar el pool de nodos controller con 3 nodos?
-   - A) Siempre debe coincidir con la cantidad de brokers
-   - B) El quorum de controllers requiere un voto mayoritario, por lo que un número impar es más seguro
-   - C) Las bibliotecas cliente de Kafka requieren al menos 3 controllers
-   - D) Los límites de volumen de EBS lo requieren
+7. ¿Por qué elegir tres votantes de controlador?
+   - A) Debe coincidir siempre con el número de brokers
+   - B) Queda una mayoría de dos tras fallar un votante
+   - C) Las bibliotecas cliente Kafka exigen al menos 3 controladores
+   - D) Lo exigen los límites de volúmenes EBS
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El quorum de controllers requiere un voto mayoritario, por lo que un número impar es más seguro**
+**Respuesta: B) Queda una mayoría de dos tras fallar un votante**
 
 **Explicación:**
-El quorum de controllers KRaft opera usando un protocolo de consenso similar a Raft que requiere un voto mayoritario para la elección de líder y los commits de metadatos. Un número par de controllers puede provocar escenarios de empate de votos que perjudican la disponibilidad, por lo que son típicas cantidades impares como 3 o 5. Esto se decide independientemente de la cantidad de brokers.
+Tres votantes conservan mayoría de dos tras un fallo. Los grupos pares también tienen mayoría; los impares son eficientes para la misma tolerancia. El número de controladores es independiente del de brokers y sigue dependiendo de conectividad y otras condiciones.
 </details>
 
-8. ¿Cuál es el nombre del provisioner CSI usado al definir una StorageClass de EBS para brokers de Kafka en Amazon EKS?
+8. ¿Cuál es el provisioner StorageClass del controlador Amazon EBS CSI estándar?
    - A) `kubernetes.io/aws-ebs`
    - B) `ebs.csi.aws.com`
    - C) `efs.csi.aws.com`
@@ -129,10 +131,10 @@ El quorum de controllers KRaft opera usando un protocolo de consenso similar a R
 **Respuesta: B) `ebs.csi.aws.com`**
 
 **Explicación:**
-El driver Amazon EBS CSI usa el nombre de provisioner `ebs.csi.aws.com`. `kubernetes.io/aws-ebs` es el provisioner in-tree obsoleto. Los volúmenes `persistent-claim` bajo `KafkaNodePool.spec.storage` referencian una StorageClass respaldada por este provisioner para aprovisionar dinámicamente volúmenes EBS gp3.
+EBS CSI estándar usa ebs.csi.aws.com. EKS Auto Mode usa ebs.csi.eks.amazonaws.com. Cambiar el provisioner no migra PVC existentes.
 </details>
 
-9. ¿Qué campo se agrega a `KafkaNodePool.spec.template.pod` para distribuir los broker Pods de manera uniforme entre AZs?
+9. ¿Qué campo se añade a `KafkaNodePool.spec.template.pod` para distribuir Pods broker entre AZ de forma uniforme?
    - A) `nodeSelector`
    - B) `topologySpreadConstraints`
    - C) `tolerations`
@@ -145,14 +147,14 @@ El driver Amazon EBS CSI usa el nombre de provisioner `ebs.csi.aws.com`. `kubern
 **Respuesta: B) `topologySpreadConstraints`**
 
 **Explicación:**
-`topologySpreadConstraints` es una restricción de scheduling que distribuye Pods de manera uniforme según una `topologyKey` (por ejemplo, `topology.kubernetes.io/zone`). Distribuir brokers de Kafka entre AZs significa que una interrupción de una sola AZ no derriba la disponibilidad de todo el cluster. Establecer `whenUnsatisfiable: DoNotSchedule` aplica la restricción de forma estricta al bloquear cualquier scheduling que la incumpla.
+Los selectores deben coincidir con etiquetas Pod reales. Exigir tres AZ elegibles también necesita condiciones como minDomains: 3; maxSkew: 1 no crea tres AZ. Compruebe por separado planificación y ubicación de réplicas Kafka por rack.
 </details>
 
-10. ¿Qué tipos de listener pueden agregarse a `Kafka.spec.kafka.listeners` cuando clientes externos necesitan alcanzar los brokers de Kafka desde fuera del cluster?
+10. ¿Qué tipos de listener pueden añadirse a `Kafka.spec.kafka.listeners` cuando clientes externos necesitan acceder a brokers desde fuera del clúster?
     - A) `internal` y `clusterip`
     - B) `loadbalancer` o `nodeport`
     - C) Solo `ingress`
-    - D) La exposición externa no es compatible
+    - D) No se admite exposición externa
 
 <details>
 
@@ -161,12 +163,12 @@ El driver Amazon EBS CSI usa el nombre de provisioner `ebs.csi.aws.com`. `kubern
 **Respuesta: B) `loadbalancer` o `nodeport`**
 
 **Explicación:**
-Los listeners de Strimzi admiten los tipos `internal`, `route`, `ingress`, `loadbalancer` y `nodeport`. En EKS, el acceso externo normalmente se proporciona mediante `loadbalancer` (aprovisiona automáticamente un AWS NLB por bootstrap/broker) o `nodeport` (puertos de nodos worker más un load balancer externo). El tipo `loadbalancer` puede ajustarse mediante annotations que controlan la configuración del NLB del AWS Load Balancer Controller, como el esquema interno frente a internet-facing.
+Strimzi crea Services LoadBalancer o NodePorts. El balanceador de nube depende del controlador/clase. El artículo fija la clase AWS Load Balancer Controller y aplica ajustes internos/de destino IP al bootstrap y a cada Service broker.
 </details>
 
-## Short Answer Questions
+## Preguntas de respuesta breve
 
-11. Nombra los dos componentes internos de Strimzi responsables de sincronizar los recursos personalizados `KafkaTopic` y `KafkaUser` con los recursos reales de Kafka.
+11. Nombre los dos componentes internos que sincronizan recursos personalizados `KafkaTopic` y `KafkaUser` con Kafka real.
 
 <details>
 
@@ -175,10 +177,10 @@ Los listeners de Strimzi admiten los tipos `internal`, `route`, `ingress`, `load
 **Respuesta: Topic Operator, User Operator**
 
 **Explicación:**
-El Topic Operator sincroniza unidireccionalmente los recursos personalizados `KafkaTopic` con topics reales de Kafka (el CR es la fuente de verdad), mientras que el User Operator gestiona credenciales de autenticación SCRAM-SHA-512 o TLS y ACLs basándose en recursos personalizados `KafkaUser`. Ambos se agrupan en un único Pod por cluster de Kafka como parte del Entity Operator.
+Topic Operator y User Operator pueden ejecutarse en Entity Operator habilitado; también existen instalaciones independientes. Los CR de tema/usuario necesitan namespace y etiqueta de clúster adecuados.
 </details>
 
-12. ¿Qué variable de entorno configura el Cluster Operator para observar varios namespaces?
+12. ¿Qué variable configura Cluster Operator para observar varios namespaces?
 
 <details>
 
@@ -187,10 +189,10 @@ El Topic Operator sincroniza unidireccionalmente los recursos personalizados `Ka
 **Respuesta: `STRIMZI_NAMESPACE`**
 
 **Explicación:**
-Establecer `STRIMZI_NAMESPACE` en el Cluster Operator Deployment controla el scope de namespaces que observa. Puedes especificar una lista de namespaces separada por comas, o `*` para ampliar el scope de observación a todo el cluster.
+La variable es STRIMZI_NAMESPACE. En instalaciones Helm, use watchNamespaces/watchAnyNamespace y RBAC correspondiente en vez de generar divergencia con kubectl set env.
 </details>
 
-13. ¿Qué tipo de storage en `KafkaNodePool.spec.storage` permite adjuntar varios volúmenes EBS por broker para distribuir la E/S?
+13. ¿Qué tipo de almacenamiento de `KafkaNodePool.spec.storage` permite varios volúmenes EBS por broker para repartir E/S?
 
 <details>
 
@@ -199,10 +201,10 @@ Establecer `STRIMZI_NAMESPACE` en el Cluster Operator Deployment controla el sco
 **Respuesta: JBOD (type: jbod)**
 
 **Explicación:**
-El storage JBOD (Just a Bunch Of Disks) permite que un solo broker use varios volúmenes `persistent-claim`, cada uno identificado por un `id` distinto. Esto distribuye la E/S entre varios volúmenes en lugar de quedar limitado por el techo de throughput de un único volumen EBS.
+JBOD admite varios IDs de volumen. No garantiza equilibrio automático de datos ni elimina límites EBS/red de la instancia. Como máximo un volumen puede seleccionar kraftMetadata: shared.
 </details>
 
-14. ¿Qué condición de status en el recurso `Kafka` indica que brokers/controllers han formado un quorum saludable y que los listeners están activos?
+14. ¿Qué condición indica la última reconciliación Kafka exitosa del Operator?
 
 <details>
 
@@ -211,10 +213,10 @@ El storage JBOD (Just a Bunch Of Disks) permite que un solo broker use varios vo
 **Respuesta: `Ready: True`**
 
 **Explicación:**
-Cuando verificas el status del recurso `Kafka` con `kubectl get kafka -n kafka`, una condición `Ready` establecida en `True` significa que todos los componentes del cluster (brokers, controllers, listeners, Entity Operator) funcionan correctamente.
+Ready=True es la última observación de reconciliación. Compare observedGeneration con generation actual y compruebe readiness Pod, quórum y conectividad real del cliente autenticado.
 </details>
 
-15. ¿Cuál es el nombre del CRD de Strimzi que define un cluster worker separado para ejecutar connectors source/sink, como Debezium?
+15. ¿Qué CRD Strimzi define un clúster independiente de workers para conectores de origen/destino como Debezium?
 
 <details>
 
@@ -223,12 +225,12 @@ Cuando verificas el status del recurso `Kafka` con `kubectl get kafka -n kafka`,
 **Respuesta: `KafkaConnect`**
 
 **Explicación:**
-`KafkaConnect` es el CRD que define un cluster worker de Kafka Connect. Las instancias individuales de connectors se gestionan declarativamente mediante recursos personalizados `KafkaConnector`, que se despliegan en un cluster `KafkaConnect`.
+KafkaConnect define workers Connect y KafkaConnector representa conectores individuales. Configure por separado gestión de recursos de conectores y autenticación/autorización de workers.
 </details>
 
-## Hands-on Questions
+## Preguntas prácticas
 
-16. Escribe la secuencia completa de comandos para instalar el Strimzi Cluster Operator mediante Helm en el namespace `kafka`.
+16. Usando operator-values.yaml del artículo, instale Strimzi 1.2.0 en un namespace kafka nuevo.
 
 <details>
 
@@ -236,26 +238,20 @@ Cuando verificas el status del recurso `Kafka` con `kubectl get kafka -n kafka`,
 
 **Respuesta:**
 ```bash
-# Add the Strimzi Helm repository
 helm repo add strimzi https://strimzi.io/charts/
-helm repo update
-
-# Install the Cluster Operator into the kafka namespace
+helm repo update strimzi
 helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator \
-  --namespace kafka \
-  --create-namespace \
-  --version 0.45.0
-
-# Verify the installation
-kubectl get pods -n kafka
-kubectl get crd | grep strimzi
+  --version 1.2.0 --namespace kafka --create-namespace \
+  -f operator-values.yaml --wait --timeout 10m
+kubectl -n kafka rollout status deployment/strimzi-cluster-operator --timeout=300s
+kubectl get crd kafkas.kafka.strimzi.io kafkanodepools.kafka.strimzi.io
 ```
 
 **Explicación:**
-`helm repo add` registra el repositorio de Strimzi, y `helm repo update` obtiene los metadatos más recientes del chart. Agregar `--create-namespace` a `helm install` crea automáticamente el namespace `kafka` si aún no existe. Después de instalar, usa `kubectl get pods -n kafka` para confirmar que el Pod del Cluster Operator está `Running`, y `kubectl get crd | grep strimzi` para confirmar que CRDs como `Kafka` y `KafkaNodePool` están registrados.
+Los comandos son para una instalación nueva. Fije el chart y verifique disponibilidad del Operator/CRD. Las instalaciones existentes requieren antes conversión v1 y revisión de propiedad/actualización de CRD.
 </details>
 
-17. Escribe un `KafkaNodePool` compuesto por 3 nodos solo broker, cada uno usando un volumen `persistent-claim` de 100Gi basado en gp3.
+17. Escriba un KafkaNodePool de tres brokers con namespace, almacenamiento y restricciones de tres AZ del artículo.
 
 <details>
 
@@ -263,38 +259,55 @@ kubectl get crd | grep strimzi
 
 **Respuesta:**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: broker
+  namespace: kafka
   labels:
     strimzi.io/cluster: my-cluster
 spec:
   replicas: 3
   roles:
-    - broker
+  - broker
   storage:
     type: jbod
     volumes:
-      - id: 0
-        type: persistent-claim
-        size: 100Gi
-        class: gp3-kafka
-        deleteClaim: false
+    - id: 0
+      type: persistent-claim
+      size: 100Gi
+      class: gp3-kafka
+      deleteClaim: false
+      kraftMetadata: shared
   resources:
     requests:
-      cpu: "2"
+      cpu: '2'
       memory: 4Gi
     limits:
-      cpu: "4"
       memory: 4Gi
+  template:
+    pod:
+      metadata:
+        labels:
+          docs.example.com/kafka-role: broker
+      topologySpreadConstraints:
+      - maxSkew: 1
+        minDomains: 3
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        nodeAffinityPolicy: Honor
+        nodeTaintsPolicy: Honor
+        labelSelector:
+          matchLabels:
+            strimzi.io/cluster: my-cluster
+            docs.example.com/kafka-role: broker
 ```
 
 **Explicación:**
-La label `strimzi.io/cluster` debe coincidir con el nombre del recurso `Kafka` al que pertenece este node pool. `roles: [broker]` designa nodos solo broker, y el volumen `persistent-claim` bajo `storage.type: jbod` aprovisiona un persistent volume de 100Gi respaldado por EBS. `class` referencia una StorageClass respaldada por el provisioner `ebs.csi.aws.com`.
+Usa StorageClass estándar gp3-kafka y el requisito de tres AZ. Haga coincidir etiquetas namespace/clúster y conserve PVC con deleteClaim: false. Auto Mode usa otra StorageClass; los pools no garantizan separación de nodos físicos.
 </details>
 
-18. Crea un `KafkaTopic` llamado `orders` con 12 particiones y 3 réplicas, luego escribe los comandos para probarlo con el console producer y consumer.
+18. Suponiendo que el Pod autenticado kafka-client esté listo, cree orders y pruébelo con comandos productor/consumidor TLS/SCRAM.
 
 <details>
 
@@ -302,7 +315,7 @@ La label `strimzi.io/cluster` debe coincidir con el nombre del recurso `Kafka` a
 
 **Respuesta:**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: orders
@@ -313,30 +326,30 @@ spec:
   partitions: 12
   replicas: 3
   config:
+    retention.ms: 604800000
     min.insync.replicas: 2
 ```
 
 ```bash
-# Apply the topic
-kubectl apply -f orders-topic.yaml -n kafka
-kubectl get kafkatopic -n kafka
-
-# Producer test
-kubectl run kafka-producer -n kafka -ti \
-  --image=quay.io/strimzi/kafka:0.45.0-kafka-3.9.0 --rm=true --restart=Never -- \
-  bin/kafka-console-producer.sh --bootstrap-server my-cluster-kafka-bootstrap:9092 --topic orders
-
-# Consumer test
-kubectl run kafka-consumer -n kafka -ti \
-  --image=quay.io/strimzi/kafka:0.45.0-kafka-3.9.0 --rm=true --restart=Never -- \
-  bin/kafka-console-consumer.sh --bootstrap-server my-cluster-kafka-bootstrap:9092 --topic orders --from-beginning
+kubectl apply -f orders-topic.yaml
+kubectl -n kafka wait kafkatopic/orders --for=condition=Ready --timeout=5m
+printf 'strimzi-auth-smoke-test\n' |
+  kubectl -n kafka exec -i kafka-client -- \
+    /opt/kafka/bin/kafka-console-producer.sh \
+    --bootstrap-server my-cluster-kafka-bootstrap.kafka.svc:9093 \
+    --producer.config /client/client.properties --topic orders
+kubectl -n kafka exec kafka-client -- \
+  /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server my-cluster-kafka-bootstrap.kafka.svc:9093 \
+  --consumer.config /client/client.properties --group order-processor \
+  --topic orders --from-beginning --max-messages 1 --timeout-ms 10000
 ```
 
 **Explicación:**
-La label `strimzi.io/cluster` le indica al Topic Operator a qué cluster `Kafka` pertenece este `KafkaTopic`. Después de aplicarlo, `kubectl get kafkatopic -n kafka` confirma que el topic se creó realmente. La prueba de producer/consumer ejecuta la imagen Kafka de Strimzi como un Pod desechable que se conecta al bootstrap Service (`my-cluster-kafka-bootstrap:9092`).
+Deben existir KafkaUser, Secret CA y Pod kafka-client autenticado del artículo. Use propiedades TLS/SCRAM, no el endpoint de texto plano. Compruebe si el primer registro de un tema existente es realmente el recién enviado.
 </details>
 
-19. Escribe un `KafkaUser` con autenticación SCRAM-SHA-512 que solo esté autorizado a Read, Write y Describe el topic `orders`.
+19. Defina un usuario SCRAM para producir/consumir orders, acceder al grupo order-processor y realizar operaciones de productor idempotente.
 
 <details>
 
@@ -344,7 +357,7 @@ La label `strimzi.io/cluster` le indica al Topic Operator a qué cluster `Kafka`
 
 **Respuesta:**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaUser
 metadata:
   name: order-service
@@ -360,14 +373,23 @@ spec:
       - resource:
           type: topic
           name: orders
+          patternType: literal
         operations: [Read, Write, Describe]
+      - resource:
+          type: group
+          name: order-processor
+          patternType: literal
+        operations: [Read]
+      - resource:
+          type: cluster
+        operations: [IdempotentWrite]
 ```
 
 **Explicación:**
-`authentication.type: scram-sha-512` indica al User Operator que genere credenciales SCRAM y las almacene en un Secret. `authorization.type: simple` usa la autorización basada en ACL integrada de Kafka, y la lista `acls` restringe a este usuario únicamente a las operaciones `Read`, `Write` y `Describe` sobre el topic `orders`: implementando el principio de privilegio mínimo declarativamente a nivel de CR.
+Habilite también autenticación del listener y autorizador del clúster. Además de ACL de tema, concede Read al grupo order-processor y capacidad idempotente. Considere identidades distintas de productor/consumidor en servicios reales.
 </details>
 
-20. Agrega `topologySpreadConstraints` al `spec.template.pod` de un `KafkaNodePool` para distribuir los broker Pods de manera uniforme entre AZs.
+20. Escriba un fragmento de plantilla bajo spec del KafkaNodePool broker que coincida con etiquetas reales y exija tres AZ elegibles.
 
 <details>
 
@@ -375,38 +397,29 @@ spec:
 
 **Respuesta:**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
-kind: KafkaNodePool
-metadata:
-  name: broker
-  labels:
-    strimzi.io/cluster: my-cluster
-spec:
-  replicas: 3
-  roles: [broker]
-  template:
-    pod:
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: topology.kubernetes.io/zone
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              strimzi.io/cluster: my-cluster
-              strimzi.io/name: my-cluster-broker
-  storage:
-    type: jbod
-    volumes:
-      - id: 0
-        type: persistent-claim
-        size: 100Gi
-        class: gp3-kafka
+# Merge under KafkaNodePool.spec
+template:
+  pod:
+    metadata:
+      labels:
+        docs.example.com/kafka-role: broker
+    topologySpreadConstraints:
+    - maxSkew: 1
+      minDomains: 3
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: DoNotSchedule
+      nodeAffinityPolicy: Honor
+      nodeTaintsPolicy: Honor
+      labelSelector:
+        matchLabels:
+          strimzi.io/cluster: my-cluster
+          docs.example.com/kafka-role: broker
 ```
 
 **Explicación:**
-`topologyKey: topology.kubernetes.io/zone` distribuye Pods según la label de AZ en los nodos worker de EKS. `maxSkew: 1` permite como máximo una diferencia de 1 Pod en la cantidad entre AZs, y `whenUnsatisfiable: DoNotSchedule` bloquea directamente el scheduling cuando la restricción no puede satisfacerse, garantizando una distribución uniforme. `labelSelector` determina contra qué conjunto de Pods (el mismo broker node pool) se calcula el skew.
+Combine el fragmento bajo spec del KafkaNodePool broker. Las etiquetas metadata coinciden con selectores; minDomains=3 puede dejar Pods Pending si no hay tres AZ elegibles. Las restricciones estrictas pueden bloquear reemplazos tras perder una AZ; la conciencia de rack Kafka es independiente.
 </details>
 
 ---
 
-[Return to Learning Materials](../../../data-on-eks/kafka/02-strimzi-operator.md) | [Next Quiz: Kafka Operations](./03-kafka-operations-quiz.md)
+[Volver al material de aprendizaje](../../../data-on-eks/kafka/02-strimzi-operator.md) | [Siguiente cuestionario: Operaciones Kafka](./03-kafka-operations-quiz.md)

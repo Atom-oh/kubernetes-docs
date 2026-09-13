@@ -1,42 +1,44 @@
 # Strimzi Operator 测验
 
-本测验用于检验你对 Strimzi Operator 基础知识、安装方法、核心 CRDs、KRaft 节点角色以及 EKS 部署注意事项的理解。
+> **最后更新**：2026 年 9 月 12 日，Strimzi 1.2.0 / Kafka 4.3.1。
+
+本测验检验您对 Strimzi Operator 基础、安装方法、核心 CRD、KRaft 节点角色和 EKS 部署注意事项的理解。
 
 ## 选择题
 
-1. Strimzi 是哪种 CNCF 项目？
-   - A) 一个 service mesh
-   - B) 一个用于在 Kubernetes 上运行 Apache Kafka 的 Operator
-   - C) 一个 container runtime
-   - D) 一个 CI/CD pipeline 工具
+1. Strimzi 是哪类 CNCF 项目？
+   - A) 服务网格
+   - B) 在 Kubernetes 上运行 Apache Kafka 的 Operator
+   - C) 容器运行时
+   - D) CI/CD 流水线工具
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：B) 一个用于在 Kubernetes 上运行 Apache Kafka 的 Operator**
+**答案：B) 在 Kubernetes 上运行 Apache Kafka 的 Operator**
 
-**解析：**
-Strimzi 是一个 CNCF Incubating 项目，它使用 Kubernetes Operator 模式来管理 Apache Kafka 集群的部署和完整生命周期，包括安装、升级、扩缩容和证书管理。你无需手动将 Kafka brokers 编写为 StatefulSet，而是通过 CRDs 声明期望状态，Operator 会协调实际集群状态使其与期望状态一致。
+**解释：**
+Strimzi 1.2 是 CNCF 孵化项目，协调自定义资源中的期望状态。当前 Kafka Pod 管理使用 StrimziPodSet。Operator 不会自动完成所有运维策略或可用性保证。
 </details>
 
-2. 以下哪一项作为不使用 Strimzi、直接以 StatefulSet 运行 Kafka 的挑战，最不准确？
+2. 以下哪项最不能准确描述不使用 Strimzi、直接以 StatefulSet 运行 Kafka 的挑战？
    - A) 处理顺序滚动升级
    - B) 签发和轮换 TLS 证书
-   - C) 构建 container images 变得不可能
-   - D) 在 partition 重新平衡期间管理数据移动
+   - C) 无法构建容器镜像
+   - D) 管理分区再平衡期间的数据移动
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：C) 构建 container images 变得不可能**
+**答案：C) 无法构建容器镜像**
 
-**解析：**
-直接以 StatefulSet 运行 Kafka 本身并不是不可能。真正的问题在于运维复杂性和脆弱性：顺序升级、证书轮换以及重新平衡期间的数据移动都很难手动管理，并且容易出错。Strimzi 通过 CRDs 和 Operator 逻辑自动化处理所有这些工作。
+**解释：**
+可以直接运维，但需要实现升级、证书、存储和重新分配流程。Strimzi 协调重复工作；数据恢复和可用性策略仍需验证。
 </details>
 
-3. 在安装 Cluster Operator 之前，哪个命令会添加 Strimzi Helm repository？
+3. 安装 Cluster Operator 前，哪个命令添加 Strimzi Helm 仓库？
    - A) `helm repo add strimzi https://strimzi.io/charts/`
    - B) `helm repo add kafka https://kafka.apache.org/charts/`
    - C) `helm repo add strimzi https://github.com/strimzi/charts/`
@@ -48,27 +50,27 @@ Strimzi 是一个 CNCF Incubating 项目，它使用 Kubernetes Operator 模式�
 
 **答案：A) `helm repo add strimzi https://strimzi.io/charts/`**
 
-**解析：**
-Strimzi 的官方 Helm repository 是 `https://strimzi.io/charts/`。添加后，可使用 `helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator --namespace kafka --create-namespace` 安装 Cluster Operator。
+**解释：**
+添加官方 chart 仓库，并为全新安装固定 1.2.0。现有 beta API/CRD 需要先执行官方迁移流程；新命名空间不能避免集群作用域 CRD 冲突。
 </details>
 
-4. Strimzi Cluster Operator 默认 watch 的 namespace 范围是什么？
-   - A) 集群中的每个 namespace
-   - B) 所有 `kube-system` namespaces
-   - C) 只有它部署到的 namespace
-   - D) 只有 `default` namespace
+4. Strimzi Cluster Operator 默认监视哪个命名空间范围？
+   - A) 集群中的每个命名空间
+   - B) 所有 `kube-system` 命名空间
+   - C) 仅其部署所在命名空间
+   - D) 仅 `default` 命名空间
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：C) 只有它部署到的 namespace**
+**答案：C) 仅其部署所在命名空间**
 
-**解析：**
-默认情况下，Cluster Operator 只 watch 自身 namespace 中的 resources。若要 watch 多个 namespaces，请在 Operator Deployment 上将 `STRIMZI_NAMESPACE` environment variable 设置为逗号分隔的 namespace 列表，或设置为 `*` 以将 watch 范围扩展到整个集群。
+**解释：**
+默认 chart 监视其发布命名空间。Chart 1.2 将该命名空间与额外 watchNamespaces 一起包含并去重，同时创建 RoleBinding。仅更改环境变量可能导致 RBAC 缺失。
 </details>
 
-5. Strimzi 0.45+ 将 KRaft mode 设为默认后，哪个字段变得不再需要？
+5. 当前 Strimzi 1.2 KRaft 部署不支持哪个配置块？
    - A) `Kafka.spec.kafka.listeners`
    - B) `Kafka.spec.zookeeper`
    - C) `Kafka.spec.entityOperator`
@@ -80,14 +82,14 @@ Strimzi 的官方 Helm repository 是 `https://strimzi.io/charts/`。添加后�
 
 **答案：B) `Kafka.spec.zookeeper`**
 
-**解析：**
-由于 KRaft mode 已成为默认模式，controller quorum 可以在没有 ZooKeeper 的情况下直接管理 metadata，因此以前必需的 `Kafka.spec.zookeeper` block 不再需要。Broker 和 controller 角色改为通过单独的 `KafkaNodePool` resources 定义。
+**解释：**
+当前 Strimzi 1.2 使用 KRaft，不支持 ZooKeeper 配置块。KafkaNodePool 定义 controller 和 broker 角色；无需旧版激活注解。
 </details>
 
 6. 哪个值不是 `KafkaNodePool.spec.roles` 的有效条目？
    - A) `controller`
    - B) `broker`
-   - C) 同时组合 `controller` 和 `broker` 的双角色
+   - C) 结合 `controller` 和 `broker` 的双角色
    - D) `zookeeper`
 
 <details>
@@ -96,27 +98,27 @@ Strimzi 的官方 Helm repository 是 `https://strimzi.io/charts/`。添加后�
 
 **答案：D) `zookeeper`**
 
-**解析：**
-基于 KRaft 的 `KafkaNodePool` 上的 `roles` 字段只支持 `controller`、`broker`，或双角色组合（`[controller, broker]`）。`zookeeper` 不是有效角色 — ZooKeeper 在 KRaft mode 中完全不存在。
+**解释：**
+实际枚举值为 controller 和 broker。两者可列为 [controller, broker]；dual-role 不是独立字符串值。
 </details>
 
-7. 以 3 个节点运行 controller node pool 的主要原因是什么？
-   - A) 它必须始终与 broker 数量一致
-   - B) controller quorum 需要多数票，因此奇数数量更安全
-   - C) Kafka client libraries 至少需要 3 个 controllers
-   - D) EBS volume limits 要求如此
+7. 为什么选择三个控制器投票成员？
+   - A) 必须始终匹配代理数
+   - B) 一个投票成员故障后仍保留两个成员的多数派
+   - C) Kafka 客户端库要求至少 3 个控制器
+   - D) EBS 卷限制要求如此
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：B) controller quorum 需要多数票，因此奇数数量更安全**
+**答案：B) 一个投票成员故障后仍保留两个成员的多数派**
 
-**解析：**
-KRaft controller quorum 使用类似 Raft 的 consensus protocol 运行，该协议在 leader election 和 metadata commits 时需要多数票。偶数数量的 controllers 可能导致影响可用性的分票场景，因此通常使用 3 或 5 这样的奇数数量。这一决定与 broker 数量无关。
+**解释：**
+三个投票成员在一个故障后仍保有两个成员的多数派。偶数组也存在多数派；相同容错能力下，奇数规模更高效。控制器数独立于代理数，且仍取决于连通性和其他条件。
 </details>
 
-8. 在 Amazon EKS 上为 Kafka brokers 定义 EBS StorageClass 时使用的 CSI provisioner 名称是什么？
+8. 标准 Amazon EBS CSI 驱动路径的 StorageClass 预置器是什么？
    - A) `kubernetes.io/aws-ebs`
    - B) `ebs.csi.aws.com`
    - C) `efs.csi.aws.com`
@@ -128,11 +130,11 @@ KRaft controller quorum 使用类似 Raft 的 consensus protocol 运行，该协
 
 **答案：B) `ebs.csi.aws.com`**
 
-**解析：**
-Amazon EBS CSI driver 使用 provisioner 名称 `ebs.csi.aws.com`。`kubernetes.io/aws-ebs` 是已弃用的 in-tree provisioner。`KafkaNodePool.spec.storage` 下的 `persistent-claim` volumes 引用由该 provisioner 支持的 StorageClass，以动态配置 EBS gp3 volumes。
+**解释：**
+标准 EBS CSI 使用 ebs.csi.aws.com。EKS Auto Mode 使用 ebs.csi.eks.amazonaws.com。更改 StorageClass 预置器不会迁移现有 PVC。
 </details>
 
-9. 要将 broker Pods 均匀分布到各 AZ，需要向 `KafkaNodePool.spec.template.pod` 添加哪个字段？
+9. 在 `KafkaNodePool.spec.template.pod` 添加哪个字段，可将代理 Pod 均匀分散到可用区？
    - A) `nodeSelector`
    - B) `topologySpreadConstraints`
    - C) `tolerations`
@@ -144,15 +146,15 @@ Amazon EBS CSI driver 使用 provisioner 名称 `ebs.csi.aws.com`。`kubernetes.
 
 **答案：B) `topologySpreadConstraints`**
 
-**解析：**
-`topologySpreadConstraints` 是一种 scheduling constraint，它会基于 `topologyKey`（例如 `topology.kubernetes.io/zone`）均匀分布 Pods。将 Kafka brokers 分布到多个 AZ 意味着单个 AZ 故障不会导致整个集群的可用性中断。设置 `whenUnsatisfiable: DoNotSchedule` 会通过阻止违反约束的调度来严格执行该约束。
+**解释：**
+选择器必须匹配实际 Pod 标签。要求三个符合条件可用区还需要 minDomains: 3 等条件；maxSkew: 1 不会创建三个可用区。分别检查调度和 Kafka 副本机架放置。
 </details>
 
-10. 当 external clients 需要从集群外访问 Kafka brokers 时，可以向 `Kafka.spec.kafka.listeners` 添加哪些 listener types？
+10. 外部客户端需从集群外访问 Kafka 代理时，可在 `Kafka.spec.kafka.listeners` 添加哪些监听器类型？
     - A) `internal` 和 `clusterip`
     - B) `loadbalancer` 或 `nodeport`
-    - C) 只有 `ingress`
-    - D) 不支持 external exposure
+    - C) 仅 `ingress`
+    - D) 不支持外部暴露
 
 <details>
 
@@ -160,25 +162,25 @@ Amazon EBS CSI driver 使用 provisioner 名称 `ebs.csi.aws.com`。`kubernetes.
 
 **答案：B) `loadbalancer` 或 `nodeport`**
 
-**解析：**
-Strimzi listeners 支持 `internal`、`route`、`ingress`、`loadbalancer` 和 `nodeport` 类型。在 EKS 上，external access 通常通过 `loadbalancer`（为 bootstrap/broker 自动配置一个 AWS NLB）或 `nodeport`（worker node ports 加外部 load balancer）提供。`loadbalancer` 类型可以通过 annotations 进行调优，以控制 AWS Load Balancer Controller 的 NLB 设置，例如 internal 与 internet-facing scheme。
+**解释：**
+Strimzi 创建 LoadBalancer Service 或 NodePort。生成的云负载均衡器取决于控制器/类。正文固定 AWS Load Balancer Controller 类，并将内部/IP 目标设置应用到引导和每个代理 Service。
 </details>
 
 ## 简答题
 
-11. 请说出两个内部 Strimzi components，它们负责将 `KafkaTopic` 和 `KafkaUser` custom resources 与实际 Kafka resources 同步。
+11. 写出负责将 `KafkaTopic` 和 `KafkaUser` 自定义资源与实际 Kafka 资源同步的两个 Strimzi 内部组件。
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：Topic Operator, User Operator**
+**答案：Topic Operator、User Operator**
 
-**解析：**
-Topic Operator 会将 `KafkaTopic` custom resources 单向同步到实际 Kafka topics（CR 是真相来源），而 User Operator 会基于 `KafkaUser` custom resources 管理 SCRAM-SHA-512 或 TLS authentication credentials 和 ACLs。两者作为 Entity Operator 的一部分，打包到每个 Kafka 集群的单个 Pod 中。
+**解释：**
+Topic Operator 和 User Operator 可在启用的 Entity Operator 中运行；也有独立安装。主题/用户 CR 需要适当命名空间和集群标签。
 </details>
 
-12. 哪个 environment variable 用于配置 Cluster Operator watch 多个 namespaces？
+12. 哪个环境变量配置 Cluster Operator 监视多个命名空间？
 
 <details>
 
@@ -186,23 +188,23 @@ Topic Operator 会将 `KafkaTopic` custom resources 单向同步到实际 Kafka 
 
 **答案：`STRIMZI_NAMESPACE`**
 
-**解析：**
-在 Cluster Operator Deployment 上设置 `STRIMZI_NAMESPACE` 可控制其 watch 的 namespace 范围。你可以指定逗号分隔的 namespace 列表，或指定 `*` 以将 watch 范围扩展到整个集群。
+**解释：**
+变量是 STRIMZI_NAMESPACE。对于 Helm 管理安装，使用 watchNamespaces/watchAnyNamespace values 和匹配 RBAC，不要通过 kubectl set env 造成漂移。
 </details>
 
-13. `KafkaNodePool.spec.storage` 中哪种 storage type 允许你为每个 broker 挂载多个 EBS volumes 以分散 I/O？
+13. `KafkaNodePool.spec.storage` 中哪种存储类型允许每代理附加多个 EBS 卷，以分散 I/O？
 
 <details>
 
 <summary>显示答案</summary>
 
-**答案：JBOD (type: jbod)**
+**答案：JBOD（type: jbod）**
 
-**解析：**
-JBOD (Just a Bunch Of Disks) storage 允许单个 broker 使用多个 `persistent-claim` volumes，每个 volume 都由不同的 `id` 标识。这样可以将 I/O 分布到多个 volumes，而不是受限于单个 EBS volume 的 throughput ceiling。
+**解释：**
+JBOD 支持多个卷 ID。它不保证自动均衡数据，也不消除实例 EBS/网络限制。最多一个卷可选择 kraftMetadata: shared。
 </details>
 
-14. `Kafka` resource 上的哪个 status condition 表示 brokers/controllers 已形成健康的 quorum 且 listeners 处于活动状态？
+14. 哪个条件表示 Operator 最近一次成功的 Kafka 协调？
 
 <details>
 
@@ -210,11 +212,11 @@ JBOD (Just a Bunch Of Disks) storage 允许单个 broker 使用多个 `persisten
 
 **答案：`Ready: True`**
 
-**解析：**
-当你使用 `kubectl get kafka -n kafka` 检查 `Kafka` resource 的 status 时，`Ready` condition 设置为 `True` 表示所有集群 components（brokers、controllers、listeners、Entity Operator）都在正常工作。
+**解释：**
+Ready=True 是 Operator 最近一次协调观测。比较 observedGeneration 与当前 generation，并检查 Pod 就绪状态、法定人数及实际经过身份验证的客户端连通性。
 </details>
 
-15. 定义用于运行 source/sink connectors（例如 Debezium）的独立 worker cluster 的 Strimzi CRD 名称是什么？
+15. 哪个 Strimzi CRD 定义用于运行 Debezium 等源/接收器连接器的独立工作进程集群？
 
 <details>
 
@@ -222,13 +224,13 @@ JBOD (Just a Bunch Of Disks) storage 允许单个 broker 使用多个 `persisten
 
 **答案：`KafkaConnect`**
 
-**解析：**
-`KafkaConnect` 是定义 Kafka Connect worker cluster 的 CRD。各个 connector instances 通过 `KafkaConnector` custom resources 以 declarative 方式管理，并部署到 `KafkaConnect` cluster 上。
+**解释：**
+KafkaConnect 定义 Connect 工作进程，KafkaConnector 表示单个连接器。分别配置连接器资源管理和工作进程身份验证/授权。
 </details>
 
-## 实操题
+## 实践题
 
-16. 写出通过 Helm 将 Strimzi Cluster Operator 安装到 `kafka` namespace 的完整命令序列。
+16. 使用正文的 operator-values.yaml，将 Strimzi 1.2.0 安装到新的 kafka 命名空间。
 
 <details>
 
@@ -236,26 +238,20 @@ JBOD (Just a Bunch Of Disks) storage 允许单个 broker 使用多个 `persisten
 
 **答案：**
 ```bash
-# Add the Strimzi Helm repository
 helm repo add strimzi https://strimzi.io/charts/
-helm repo update
-
-# Install the Cluster Operator into the kafka namespace
+helm repo update strimzi
 helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator \
-  --namespace kafka \
-  --create-namespace \
-  --version 0.45.0
-
-# Verify the installation
-kubectl get pods -n kafka
-kubectl get crd | grep strimzi
+  --version 1.2.0 --namespace kafka --create-namespace \
+  -f operator-values.yaml --wait --timeout 10m
+kubectl -n kafka rollout status deployment/strimzi-cluster-operator --timeout=300s
+kubectl get crd kafkas.kafka.strimzi.io kafkanodepools.kafka.strimzi.io
 ```
 
-**解析：**
-`helm repo add` 会注册 Strimzi repository，`helm repo update` 会获取最新的 chart metadata。向 `helm install` 添加 `--create-namespace` 会在 `kafka` namespace 尚不存在时自动创建它。安装后，使用 `kubectl get pods -n kafka` 确认 Cluster Operator Pod 为 `Running`，并使用 `kubectl get crd | grep strimzi` 确认 `Kafka` 和 `KafkaNodePool` 等 CRDs 已注册。
+**解释：**
+这些命令用于全新安装。固定 chart 并验证 Operator 可用性/CRD。现有安装需要先完成 v1 转换及 CRD 所有权/升级审核。
 </details>
 
-17. 编写一个由 3 个仅 broker 节点组成的 `KafkaNodePool`，每个节点使用一个基于 gp3 的 100Gi `persistent-claim` volume。
+17. 编写包含三个代理的 KafkaNodePool，使用正文的命名空间、存储和三个可用区约束。
 
 <details>
 
@@ -263,38 +259,55 @@ kubectl get crd | grep strimzi
 
 **答案：**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: broker
+  namespace: kafka
   labels:
     strimzi.io/cluster: my-cluster
 spec:
   replicas: 3
   roles:
-    - broker
+  - broker
   storage:
     type: jbod
     volumes:
-      - id: 0
-        type: persistent-claim
-        size: 100Gi
-        class: gp3-kafka
-        deleteClaim: false
+    - id: 0
+      type: persistent-claim
+      size: 100Gi
+      class: gp3-kafka
+      deleteClaim: false
+      kraftMetadata: shared
   resources:
     requests:
-      cpu: "2"
+      cpu: '2'
       memory: 4Gi
     limits:
-      cpu: "4"
       memory: 4Gi
+  template:
+    pod:
+      metadata:
+        labels:
+          docs.example.com/kafka-role: broker
+      topologySpreadConstraints:
+      - maxSkew: 1
+        minDomains: 3
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        nodeAffinityPolicy: Honor
+        nodeTaintsPolicy: Honor
+        labelSelector:
+          matchLabels:
+            strimzi.io/cluster: my-cluster
+            docs.example.com/kafka-role: broker
 ```
 
-**解析：**
-`strimzi.io/cluster` label 必须与此 node pool 所属的 `Kafka` resource 名称匹配。`roles: [broker]` 指定仅 broker 节点，而 `storage.type: jbod` 下的 `persistent-claim` volume 会配置一个 100Gi、由 EBS 支持的 persistent volume。`class` 引用由 `ebs.csi.aws.com` provisioner 支持的 StorageClass。
+**解释：**
+此处使用正文标准 gp3-kafka StorageClass 和三个可用区要求。匹配命名空间/集群标签，并以 deleteClaim: false 保留 PVC。Auto Mode 使用独立 StorageClass；池不保证物理节点分离。
 </details>
 
-18. 创建一个名为 `orders`、具有 12 个 partitions 和 3 个 replicas 的 `KafkaTopic`，然后写出使用 console producer 和 consumer 测试它的命令。
+18. 假定已启用身份验证的 kafka-client Pod 就绪，创建 orders 并用 TLS/SCRAM 生产者/消费者命令测试。
 
 <details>
 
@@ -302,7 +315,7 @@ spec:
 
 **答案：**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: orders
@@ -313,30 +326,30 @@ spec:
   partitions: 12
   replicas: 3
   config:
+    retention.ms: 604800000
     min.insync.replicas: 2
 ```
 
 ```bash
-# Apply the topic
-kubectl apply -f orders-topic.yaml -n kafka
-kubectl get kafkatopic -n kafka
-
-# Producer test
-kubectl run kafka-producer -n kafka -ti \
-  --image=quay.io/strimzi/kafka:0.45.0-kafka-3.9.0 --rm=true --restart=Never -- \
-  bin/kafka-console-producer.sh --bootstrap-server my-cluster-kafka-bootstrap:9092 --topic orders
-
-# Consumer test
-kubectl run kafka-consumer -n kafka -ti \
-  --image=quay.io/strimzi/kafka:0.45.0-kafka-3.9.0 --rm=true --restart=Never -- \
-  bin/kafka-console-consumer.sh --bootstrap-server my-cluster-kafka-bootstrap:9092 --topic orders --from-beginning
+kubectl apply -f orders-topic.yaml
+kubectl -n kafka wait kafkatopic/orders --for=condition=Ready --timeout=5m
+printf 'strimzi-auth-smoke-test\n' |
+  kubectl -n kafka exec -i kafka-client -- \
+    /opt/kafka/bin/kafka-console-producer.sh \
+    --bootstrap-server my-cluster-kafka-bootstrap.kafka.svc:9093 \
+    --producer.config /client/client.properties --topic orders
+kubectl -n kafka exec kafka-client -- \
+  /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server my-cluster-kafka-bootstrap.kafka.svc:9093 \
+  --consumer.config /client/client.properties --group order-processor \
+  --topic orders --from-beginning --max-messages 1 --timeout-ms 10000
 ```
 
-**解析：**
-`strimzi.io/cluster` label 告诉 Topic Operator 此 `KafkaTopic` 属于哪个 `Kafka` cluster。应用后，`kubectl get kafkatopic -n kafka` 会确认 topic 已实际创建。producer/consumer 测试会将 Strimzi 的 Kafka image 作为一次性 Pod 运行，并连接到 bootstrap Service（`my-cluster-kafka-bootstrap:9092`）。
+**解释：**
+正文的 KafkaUser、CA Secret 和启用身份验证的 kafka-client Pod 必须已存在。使用 TLS/SCRAM 客户端属性，不使用明文端点。检查现有主题第一条记录是否真是刚发送的记录。
 </details>
 
-19. 编写一个使用 SCRAM-SHA-512 authentication 的 `KafkaUser`，并且只授权其对 `orders` topic 执行 Read、Write 和 Describe 操作。
+19. 定义 SCRAM 用户，使其可对 orders 生产/消费、访问 order-processor 组并执行幂等生产者操作。
 
 <details>
 
@@ -344,7 +357,7 @@ kubectl run kafka-consumer -n kafka -ti \
 
 **答案：**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaUser
 metadata:
   name: order-service
@@ -360,14 +373,23 @@ spec:
       - resource:
           type: topic
           name: orders
+          patternType: literal
         operations: [Read, Write, Describe]
+      - resource:
+          type: group
+          name: order-processor
+          patternType: literal
+        operations: [Read]
+      - resource:
+          type: cluster
+        operations: [IdempotentWrite]
 ```
 
-**解析：**
-`authentication.type: scram-sha-512` 会指示 User Operator 生成 SCRAM credentials 并将其存储在 Secret 中。`authorization.type: simple` 使用 Kafka 内置的基于 ACL 的 authorization，`acls` 列表将该用户限制为仅能对 `orders` topic 执行 `Read`、`Write` 和 `Describe` 操作 — 在 CR 级别以 declarative 方式实现 least privilege。
+**解释：**
+还要启用监听器身份验证和集群授权器。除主题 ACL 外，此处授予 order-processor 组 Read 和幂等生产者能力。实际服务应考虑不同的生产者/消费者身份。
 </details>
 
-20. 向 `KafkaNodePool` 的 `spec.template.pod` 添加 `topologySpreadConstraints`，以将 broker Pods 均匀分布到各 AZ。
+20. 在代理 KafkaNodePool spec 下编写模板片段，匹配实际标签并要求三个符合条件可用区。
 
 <details>
 
@@ -375,38 +397,29 @@ spec:
 
 **答案：**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
-kind: KafkaNodePool
-metadata:
-  name: broker
-  labels:
-    strimzi.io/cluster: my-cluster
-spec:
-  replicas: 3
-  roles: [broker]
-  template:
-    pod:
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: topology.kubernetes.io/zone
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              strimzi.io/cluster: my-cluster
-              strimzi.io/name: my-cluster-broker
-  storage:
-    type: jbod
-    volumes:
-      - id: 0
-        type: persistent-claim
-        size: 100Gi
-        class: gp3-kafka
+# Merge under KafkaNodePool.spec
+template:
+  pod:
+    metadata:
+      labels:
+        docs.example.com/kafka-role: broker
+    topologySpreadConstraints:
+    - maxSkew: 1
+      minDomains: 3
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: DoNotSchedule
+      nodeAffinityPolicy: Honor
+      nodeTaintsPolicy: Honor
+      labelSelector:
+        matchLabels:
+          strimzi.io/cluster: my-cluster
+          docs.example.com/kafka-role: broker
 ```
 
-**解析：**
-`topologyKey: topology.kubernetes.io/zone` 会根据 EKS worker nodes 上的 AZ label 分布 Pods。`maxSkew: 1` 允许 AZ 之间的 Pod 数量最多相差 1，`whenUnsatisfiable: DoNotSchedule` 会在无法满足约束时直接阻止调度，从而保证均匀分布。`labelSelector` 决定用于计算 skew 的 Pods 集合（同一个 broker node pool）。
+**解释：**
+将片段合并到代理 KafkaNodePool 的 spec 下。元数据标签匹配选择器；没有三个符合条件可用区时，minDomains=3 可能使 Pod 保持 Pending。可用区丢失后，严格约束可能阻止替代 Pod；Kafka 机架感知是独立机制。
 </details>
 
 ---
 
-[返回学习资料](../../../data-on-eks/kafka/02-strimzi-operator.md) | [下一测验：Kafka Operations](./03-kafka-operations-quiz.md)
+[返回学习资料](../../../data-on-eks/kafka/02-strimzi-operator.md) | [下一测验：Kafka 运维](./03-kafka-operations-quiz.md)

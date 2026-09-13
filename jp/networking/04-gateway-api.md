@@ -1,105 +1,52 @@
 # Kubernetes Gateway API
 
-> **対応バージョン**: Gateway API v1.2+
-> **最終更新**: August 10, 2026
+> **API基準**: Gateway API v1.6 Standard。コントローラーがサポートする正確なバンドルを選択してください。
+> **最終更新**: September 12, 2026
 
 ## 概要
 
-Gateway API は Kubernetes 向けの次世代 Ingress API であり、既存の Ingress API の制限を克服し、より表現力が高く拡張可能なネットワークルーティング機能を提供するよう設計されています。SIG-Network によって開発され、Istio、Cilium、Envoy Gateway などのさまざまな実装でサポートされています。
+Gateway APIはKubernetesの次世代Ingress APIです。既存Ingress APIの制限を克服し、より表現力と拡張性のあるネットワークルーティング機能を提供するために設計されています。SIG-Networkが開発し、Istio、Cilium、Envoy Gatewayなど多様な実装でサポートされています。
 
-### Ingress API の制限
+### Ingress APIの制限
 
 | 問題 | 説明 |
 |---------|-------------|
-| **表現力の制限** | HTTP ルーティング以外の TCP/UDP/gRPC のサポートが不十分 |
-| **ロール分離なし** | インフラ管理者とアプリケーション開発者の権限を分離しにくい |
-| **Annotation の乱用** | 実装固有の機能を Annotation で処理するため、ポータビリティが低下 |
-| **拡張性の制限** | 新しいプロトコルや機能の追加が困難 |
-| **クロス Namespace** | Namespace をまたぐ複雑なルーティング |
+| **表現力の制限** | HTTPルーティング以外のTCP/UDP/gRPCサポートが乏しい |
+| **責務の混在** | RBAC/IngressClassでアクセスを制限できるが、リスナーとルートの関心事の分離が明確でない |
+| **アノテーションの多用** | 実装固有の機能をアノテーションで扱うため移植性が低下 |
+| **拡張性の制限** | 新しいプロトコルや機能を追加しにくい |
+| **名前空間間の連携** | 名前空間をまたぐルーティングが複雑 |
 
-### Gateway API の利点
+### Gateway APIの利点
 
-```mermaid
-graph TB
-    subgraph "Gateway API Features"
-        EXP[Expressiveness<br/>Multiple Protocol Support]
-        ROLE[Role-Based<br/>Permission Separation]
-        PORT[Portability<br/>Standardized Resources]
-        EXT[Extensibility<br/>CRD-Based Extension]
-    end
+![Gateway APIの4つの設計目標: 表現力、責務の分離、移植性、拡張性。](../.gitbook/assets/en-networking-04-gateway-api-0.png)
 
-    EXP --> ROLE
-    ROLE --> PORT
-    PORT --> EXT
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-04-gateway-api-0.html)
 
-    style EXP fill:#4fc3f7
-    style ROLE fill:#81c784
-    style PORT fill:#ffb74d
-    style EXT fill:#ce93d8
-```
+表現力、責務の分離、移植性、拡張性は独立した設計目標です。実際の機能サポートはコントローラーと適合プロファイルに依存します。各リソースを変更できる主体はKubernetes RBACとアドミッションポリシーが制御します。
 
 ## リソースモデル
 
-Gateway API は階層型のリソースモデルを使用します。
+Gateway APIは階層的なリソースモデルを使用します。
 
-```mermaid
-graph TB
-    subgraph "Infrastructure Provider"
-        GC[GatewayClass<br/>Infrastructure Template]
-    end
+![典型的な実装におけるGatewayClass、Gateway、RouteとバックエンドServiceの関係。具体的なGatewayインフラはコントローラー固有。](../.gitbook/assets/en-networking-04-gateway-api-1.png)
 
-    subgraph "Cluster Operator"
-        GW[Gateway<br/>Load Balancer Instance]
-    end
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-04-gateway-api-1.html)
 
-    subgraph "Application Developer"
-        HR[HTTPRoute]
-        GR[GRPCRoute]
-        TR[TCPRoute]
-        TLR[TLSRoute]
-        UR[UDPRoute]
-    end
+図はリソースの関係と一般的なゲートウェイのデプロイモデルを示します。Gatewayが常に1つのクラウドロードバランサーであるとは限りません。IstioはプロキシのDeployment/Serviceをプロビジョニングでき、VPC Latticeはサービスネットワークに対応付けます。**参照先の名前空間**の所有者が、ReferenceGrantで名前空間をまたぐバックエンド/Secretアクセスを許可します。
 
-    subgraph "Backend"
-        SVC1[Service A]
-        SVC2[Service B]
-        SVC3[Service C]
-    end
+### ロールの分離
 
-    GC --> GW
-    GW --> HR
-    GW --> GR
-    GW --> TR
-    GW --> TLR
-    GW --> UR
-
-    HR --> SVC1
-    HR --> SVC2
-    GR --> SVC2
-    TR --> SVC3
-    TLR --> SVC3
-    UR --> SVC3
-
-    style GC fill:#e1f5fe
-    style GW fill:#b3e5fc
-    style HR fill:#c8e6c9
-    style GR fill:#c8e6c9
-    style TR fill:#c8e6c9
-    style TLR fill:#c8e6c9
-    style UR fill:#c8e6c9
-```
-
-### ロール分離
-
-| ロール | 管理対象リソース | 責任 |
+| ロール | 管理リソース | 責務 |
 |------|------------------|----------------|
-| **インフラストラクチャプロバイダー** | GatewayClass | 基本インフラストラクチャ設定の定義 |
-| **クラスターオペレーター** | Gateway, ReferenceGrant | Load Balancer のプロビジョニング、権限管理 |
-| **アプリケーション開発者** | HTTPRoute, GRPCRoute など | アプリケーションのルーティングルールの定義 |
+| **インフラ提供者** | GatewayClass | 基本的なインフラ設定を定義 |
+| **クラスター運用者** | Gateway | GatewayインフラとRouteの接続ポリシー |
+| **参照先名前空間の所有者** | ReferenceGrant | 所有するバックエンド/Secretへの参照を認可 |
+| **アプリケーション開発者** | HTTPRoute、GRPCRouteなど | アプリケーションのルーティングルールを定義 |
 
 ## GatewayClass
 
-GatewayClass は、Gateway の作成時に使用する controller と設定を定義します。
+GatewayClassは、Gateway作成時に使用するコントローラーと設定を定義します。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -107,21 +54,15 @@ kind: GatewayClass
 metadata:
   name: istio
 spec:
-  # Controller that handles this GatewayClass
   controllerName: istio.io/gateway-controller
-
-  # Controller-specific parameters (optional)
-  parametersRef:
-    group: ""
-    kind: ConfigMap
-    name: istio-gateway-config
-    namespace: istio-system
-
-  # Description
-  description: "Istio Gateway Controller for production workloads"
+  description: Istio Gateway Controller for production workloads
 ```
 
-### 実装別 GatewayClass
+GatewayClassはインストール済みコントローラーを選択します。クラスを作成してもコントローラーはインストールされません。以下の定義は選択肢です。`Accepted`条件がtrueのクラスを使い、例のクラス名をクラスターで受け入れられた名前に置き換えてください。
+
+`parametersRef`のサポートとgroup/kindは実装に依存します。Istio 1.31では、GatewayごとのConfigMapをGatewayの名前空間に置き、`Gateway.spec.infrastructure.parametersRef`で指定します。クラス全体のデフォルトは、Istioのルート名前空間で`gateway.istio.io/defaults-for-class`ラベル付きConfigMapを使います。下のALB→Istio例はGatewayごとの形式を示します。
+
+### 実装ごとのGatewayClass
 
 ```yaml
 # Istio
@@ -175,69 +116,61 @@ spec:
 
 ## Gateway
 
-Gateway は実際の Load Balancer インスタンスを定義します。
+Gatewayはトラフィック処理インフラとリスナーを記述します。プロキシワークロード、マネージドロードバランサー、サービスネットワークのどれに対応するかはコントローラーによります。
 
-### 基本的な Gateway 設定
+### 基本的なGateway設定
+
+これらは別々の設定シナリオで、一括適用するRouteの集合ではありません。同じホスト/リスナーでRouteが重なると優先順位が変わる場合があります。選択したコントローラーと互換CRDを先にインストールし、`gateway-system`を作成して、指定されたService、準備済みエンドポイント、TLS Secretを用意してください。証明書は設定したDNS名をカバーする必要があります。プラットフォームに応じてデータプレーンServiceの公開、DNS、ネットワーク制御を設定します。GatewayClassや要求したIPアドレスだけでは外部アドレスは予約されません。
+
+HTTP/gRPC/TCP/TLSの例はIstio 1.31を使用します。Istio 1.31はUDPリスナーを明示的に拒否するため、UDPの例は別のEnvoy Gatewayインスタンスを使用します。Envoy Gateway 1.9にはGateway API 1.6.1と公表されたKubernetesバージョンの組み合わせが必要です。バージョン/チャネル変更前に共有CRDを確認してください。
+
+基本例のNamespaceには`gateway-access: "true"`があります。これは**Namespaceラベル**であり、変更権限はGatewayアクセスを制御する管理者が持つべきです。`allowedRoutes`はアプリケーションクライアントを認証しません。
 
 ```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+  labels:
+    gateway-access: 'true'
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: production-gateway
   namespace: gateway-system
 spec:
-  # GatewayClass to use
   gatewayClassName: istio
-
-  # Listener configuration
   listeners:
-    # HTTP listener
-    - name: http
-      protocol: HTTP
-      port: 80
-      # Allow Routes from all namespaces
-      allowedRoutes:
-        namespaces:
-          from: All
-
-    # HTTPS listener
-    - name: https
-      protocol: HTTPS
-      port: 443
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: tls-cert
-            namespace: gateway-system
-      allowedRoutes:
-        namespaces:
-          from: Selector
-          selector:
-            matchLabels:
-              gateway-access: "true"
-
-    # Host-specific listener
-    - name: api
-      protocol: HTTPS
-      port: 443
-      hostname: "api.example.com"
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: api-tls-cert
-      allowedRoutes:
-        namespaces:
-          from: Same
-
-  # Address configuration (optional)
-  addresses:
-    - type: IPAddress
-      value: "192.168.1.100"
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: 'true'
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: tls-cert
+        namespace: gateway-system
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: 'true'
 ```
 
-### 高度な Gateway 設定
+### 高度なGateway設定
+
+以下は`multi-protocol-gateway`という別のGatewayです。後のgRPC、TLS、TCP Routeは、一致するリスナー名に接続します。データベースと他のTCPの例は別々のリスナーを持つため、1つのL4リスナーを競合せず両方を使用できます。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -245,76 +178,97 @@ kind: Gateway
 metadata:
   name: multi-protocol-gateway
   namespace: gateway-system
-  annotations:
-    # Implementation-specific annotation
-    networking.istio.io/service-type: LoadBalancer
 spec:
   gatewayClassName: istio
-
   listeners:
-    # For HTTP -> HTTPS redirect
-    - name: http-redirect
-      protocol: HTTP
-      port: 80
-      allowedRoutes:
-        namespaces:
-          from: All
-
-    # HTTPS wildcard
-    - name: https-wildcard
-      protocol: HTTPS
-      port: 443
-      hostname: "*.example.com"
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: wildcard-cert
-      allowedRoutes:
-        namespaces:
-          from: All
-        kinds:
-          - kind: HTTPRoute
-
-    # gRPC dedicated
-    - name: grpc
-      protocol: HTTPS
-      port: 443
-      hostname: "grpc.example.com"
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: grpc-cert
-      allowedRoutes:
-        kinds:
-          - kind: GRPCRoute
-
-    # TCP passthrough
-    - name: tcp-passthrough
-      protocol: TLS
-      port: 8443
-      tls:
-        mode: Passthrough
-      allowedRoutes:
-        kinds:
-          - kind: TLSRoute
-
-    # TCP
-    - name: tcp
-      protocol: TCP
-      port: 9000
-      allowedRoutes:
-        kinds:
-          - kind: TCPRoute
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: 'true'
+  - name: https-wildcard
+    protocol: HTTPS
+    port: 443
+    hostname: '*.example.com'
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: wildcard-cert
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: 'true'
+      kinds:
+      - kind: HTTPRoute
+  - name: grpc
+    protocol: HTTPS
+    port: 443
+    hostname: grpc.example.com
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: grpc-cert
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: 'true'
+      kinds:
+      - kind: GRPCRoute
+  - name: tcp-passthrough
+    protocol: TLS
+    port: 8443
+    tls:
+      mode: Passthrough
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: 'true'
+      kinds:
+      - kind: TLSRoute
+  - name: tcp
+    protocol: TCP
+    port: 9000
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: 'true'
+      kinds:
+      - kind: TCPRoute
+  - name: database
+    protocol: TCP
+    port: 5432
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: 'true'
+      kinds:
+      - kind: TCPRoute
 ```
 
-### TLS モード
+### TLSモード
 
-| モード | 説明 | ユースケース |
+終端モードはゲートウェイで下流TLS接続を終端します。バックエンド接続は別に設定し、例えばサポートされるBackendTLSPolicyを通じてHTTPまたはTLSを使用できます。パススルーは`mode: Passthrough`を設定した`TLS`リスナーを使い、バックエンドがTLSを終端します。`HTTPS`リスナーは`mode`だけを変更してもパススルーには切り替えられません。
+
+| モード | 説明 | 用途 |
 |------|-------------|----------|
-| **Terminate** | Gateway で TLS を終端 | 標準 HTTPS |
-| **Passthrough** | TLS を backend に渡す | エンドツーエンド暗号化 |
+| **Terminate** | GatewayでTLS終端 | 標準的なHTTPS |
+| **Passthrough** | バックエンドへTLSを転送 | エンドツーエンド暗号化 |
 
 ```yaml
 # TLS Terminate example
@@ -339,9 +293,9 @@ listeners:
 
 ## HTTPRoute
 
-HTTPRoute は HTTP/HTTPS トラフィックのルーティングルールを定義します。
+HTTPRouteはHTTP/HTTPSトラフィックのルーティングルールを定義します。
 
-### 基本的な HTTPRoute
+### 基本的なHTTPRoute
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -385,7 +339,9 @@ spec:
           port: 80
 ```
 
-### 高度なマッチングルール
+### 高度な一致ルール
+
+1つの`matches`項目内のフィールドはAND、複数の項目はORで結合されます。PathPrefixは任意の文字列プレフィックスではなくパス要素に一致します。RegularExpressionのサポートと構文は実装固有です。下のデモ用テナントヘッダーは、どのクライアントでも送れるルーティングセレクターであり、管理アプリケーションの認証ではありません。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -395,97 +351,84 @@ metadata:
   namespace: production
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
   hostnames:
-    - "api.example.com"
-
+  - api.example.com
   rules:
-    # Exact path matching
-    - matches:
-        - path:
-            type: Exact
-            value: /health
-      backendRefs:
-        - name: health-service
-          port: 80
-
-    # Regex path matching (implementation dependent)
-    - matches:
-        - path:
-            type: RegularExpression
-            value: "/users/[0-9]+"
-      backendRefs:
-        - name: user-service
-          port: 80
-
-    # Header-based routing
-    - matches:
-        - headers:
-            - name: X-Version
-              value: "v2"
-      backendRefs:
-        - name: api-v2-service
-          port: 80
-
-    # Query parameter based
-    - matches:
-        - queryParams:
-            - name: debug
-              value: "true"
-      backendRefs:
-        - name: debug-service
-          port: 80
-
-    # HTTP method based
-    - matches:
-        - method: POST
-          path:
-            type: PathPrefix
-            value: /api/data
-      backendRefs:
-        - name: write-service
-          port: 80
-
-    - matches:
-        - method: GET
-          path:
-            type: PathPrefix
-            value: /api/data
-      backendRefs:
-        - name: read-service
-          port: 80
-
-    # Combined conditions (AND)
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /admin
-          headers:
-            - name: X-Admin-Token
-              type: Exact
-              value: "secret-token"
-      backendRefs:
-        - name: admin-service
-          port: 80
-
-    # Multiple conditions (OR)
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /api
-        - path:
-            type: PathPrefix
-            value: /v1
-      backendRefs:
-        - name: api-service
-          port: 80
+  - matches:
+    - path:
+        type: Exact
+        value: /health
+    backendRefs:
+    - name: health-service
+      port: 80
+  - matches:
+    - path:
+        type: RegularExpression
+        value: /users/[0-9]+
+    backendRefs:
+    - name: user-service
+      port: 80
+  - matches:
+    - headers:
+      - name: X-Version
+        value: v2
+    backendRefs:
+    - name: api-v2-service
+      port: 80
+  - matches:
+    - queryParams:
+      - name: debug
+        value: 'true'
+    backendRefs:
+    - name: debug-service
+      port: 80
+  - matches:
+    - method: POST
+      path:
+        type: PathPrefix
+        value: /api/data
+    backendRefs:
+    - name: write-service
+      port: 80
+  - matches:
+    - method: GET
+      path:
+        type: PathPrefix
+        value: /api/data
+    backendRefs:
+    - name: read-service
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /admin
+      headers:
+      - name: X-Demo-Tenant
+        type: Exact
+        value: operations
+    backendRefs:
+    - name: admin-service
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    - path:
+        type: PathPrefix
+        value: /v1
+    backendRefs:
+    - name: api-service
+      port: 80
 ```
 
-### Filters
+### フィルター
 
-Filters を使用すると、リクエスト／レスポンスを変更できます。
+ヘッダー修飾子はリテラル値を設定します。`X-Example-Source: gateway-demo`は静的マーカーで、生成された一意なリクエストIDではありません。IDにはプロキシ/アプリケーションのトレース機能を使ってください。ミラー例は独自の`/mirror`パスを使うため、前の`/api`ルールに隠されません。GETリクエストをシャドーバックエンドへコピーし、その応答は無視します。副作用を分離し、シャドーサービスにコピーするデータ/認証情報を確認してください。公開キャッシュヘッダーは、公開キャッシュが実際に安全なコンテンツにのみ適しています。
+
+フィルターでリクエスト/レスポンスを変更できます。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -495,97 +438,89 @@ metadata:
   namespace: production
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
   rules:
-    # Request header modification
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /api
-      filters:
-        - type: RequestHeaderModifier
-          requestHeaderModifier:
-            add:
-              - name: X-Request-ID
-                value: "generated-id"
-            set:
-              - name: X-Forwarded-Proto
-                value: "https"
-            remove:
-              - X-Internal-Header
-      backendRefs:
-        - name: api-service
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    filters:
+    - type: RequestHeaderModifier
+      requestHeaderModifier:
+        add:
+        - name: X-Example-Source
+          value: gateway-demo
+        set:
+        - name: X-Api-Version
+          value: v1
+        remove:
+        - X-Internal-Header
+    backendRefs:
+    - name: api-service
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /public
+    filters:
+    - type: ResponseHeaderModifier
+      responseHeaderModifier:
+        add:
+        - name: Cache-Control
+          value: public, max-age=3600
+        set:
+        - name: X-Content-Type-Options
+          value: nosniff
+    backendRefs:
+    - name: public-service
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /old-api
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /new-api
+        hostname: new-api.example.com
+    backendRefs:
+    - name: new-api-service
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /legacy
+    filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        hostname: new.example.com
+        port: 443
+        statusCode: 301
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /modern
+  - matches:
+    - method: GET
+      path:
+        type: PathPrefix
+        value: /mirror
+    filters:
+    - type: RequestMirror
+      requestMirror:
+        backendRef:
+          name: shadow-service
           port: 80
-
-    # Response header modification
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /public
-      filters:
-        - type: ResponseHeaderModifier
-          responseHeaderModifier:
-            add:
-              - name: Cache-Control
-                value: "public, max-age=3600"
-            set:
-              - name: X-Content-Type-Options
-                value: "nosniff"
-      backendRefs:
-        - name: public-service
-          port: 80
-
-    # URL rewrite
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /old-api
-      filters:
-        - type: URLRewrite
-          urlRewrite:
-            path:
-              type: ReplacePrefixMatch
-              replacePrefixMatch: /new-api
-            hostname: "new-api.example.com"
-      backendRefs:
-        - name: new-api-service
-          port: 80
-
-    # Redirect
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /legacy
-      filters:
-        - type: RequestRedirect
-          requestRedirect:
-            scheme: https
-            hostname: "new.example.com"
-            port: 443
-            statusCode: 301
-            path:
-              type: ReplacePrefixMatch
-              replacePrefixMatch: /modern
-
-    # Mirroring
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /api
-      filters:
-        - type: RequestMirror
-          requestMirror:
-            backendRef:
-              name: shadow-service
-              port: 80
-      backendRefs:
-        - name: main-service
-          port: 80
+    backendRefs:
+    - name: main-service
+      port: 80
 ```
 
-### トラフィック分割（重み付け）
+### トラフィック分割（重み）
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -595,30 +530,30 @@ metadata:
   namespace: production
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
   hostnames:
-    - "app.example.com"
-
+  - app.example.com
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        # 90% traffic to stable version
-        - name: app-stable
-          port: 80
-          weight: 90
-
-        # 10% traffic to canary version
-        - name: app-canary
-          port: 80
-          weight: 10
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: app-stable
+      port: 80
+      weight: 90
+    - name: app-canary
+      port: 80
+      weight: 10
 ```
 
-### タイムアウトとリトライ
+### タイムアウトと再試行
+
+v1.6 Standardスキーマには`timeouts`がありますが、`HTTPRoute.rules.retry`はありません。Experimentalスキーマは再試行フィールドを追加し、別のアドミッション/実装要件があります。以下の例はGETリクエストの時間上限だけを設定します。`backendRequest`は、ゼロでない合計`request`上限を超えてはいけません。
+
+再試行フィールドを省略しても、クライアント、ゲートウェイ、メッシュプロキシ、SDKが一切再試行しない証明にはなりません。特に非冪等な書き込みでは、該当する各レイヤーを設定して確認してください。Experimental v1.6の`retry.attempts`は最小値が1のため、再試行回数0は無効化する有効な方法ではありません。実装の文書化された制御とアプリケーションの冪等性動作を使用します。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -628,26 +563,28 @@ metadata:
   namespace: production
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-
+  - name: production-gateway
+    namespace: gateway-system
+    sectionName: https
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /api
-      # Timeout configuration (implementation dependent)
-      timeouts:
-        request: "30s"
-        backendRequest: "25s"
-      backendRefs:
-        - name: api-service
-          port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+      method: GET
+    timeouts:
+      request: 30s
+      backendRequest: 25s
+    backendRefs:
+    - name: api-service
+      port: 80
 ```
 
 ## GRPCRoute
 
-gRPC トラフィックのルーティングルールを定義します。
+バックエンドは想定するgRPC/HTTP2トランスポートを提供し、適切なTLS設定を持つ必要があります。ポート番号だけでは、その動作は設定されません。
+
+gRPCトラフィックのルーティングルールを定義します。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -657,51 +594,42 @@ metadata:
   namespace: production
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-      sectionName: grpc
-
+  - name: multi-protocol-gateway
+    namespace: gateway-system
+    sectionName: grpc
   hostnames:
-    - "grpc.example.com"
-
+  - grpc.example.com
   rules:
-    # Service-based routing
-    - matches:
-        - method:
-            service: "myapp.UserService"
-      backendRefs:
-        - name: user-grpc-service
-          port: 50051
-
-    - matches:
-        - method:
-            service: "myapp.OrderService"
-            method: "CreateOrder"
-      backendRefs:
-        - name: order-grpc-service
-          port: 50052
-
-    # Header-based routing
-    - matches:
-        - headers:
-            - name: x-environment
-              value: "staging"
-      backendRefs:
-        - name: staging-grpc-service
-          port: 50051
-
-    # Default routing
-    - backendRefs:
-        - name: default-grpc-service
-          port: 50051
+  - matches:
+    - method:
+        service: myapp.UserService
+    backendRefs:
+    - name: user-grpc-service
+      port: 50051
+  - matches:
+    - method:
+        service: myapp.OrderService
+        method: CreateOrder
+    backendRefs:
+    - name: order-grpc-service
+      port: 50052
+  - matches:
+    - headers:
+      - name: x-environment
+        value: staging
+    backendRefs:
+    - name: staging-grpc-service
+      port: 50051
+  - backendRefs:
+    - name: default-grpc-service
+      port: 50051
 ```
 
 ## TCPRoute
 
-TCP トラフィックのルーティングを定義します。
+TCPトラフィックのルーティングを定義します。
 
 ```yaml
-# GA in v1 since Gateway API v1.6 (v1alpha2 deprecated)
 apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
@@ -709,16 +637,14 @@ metadata:
   namespace: production
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-      sectionName: tcp
-
+  - name: multi-protocol-gateway
+    namespace: gateway-system
+    sectionName: database
   rules:
-    - backendRefs:
-        - name: database-service
-          port: 5432
+  - backendRefs:
+    - name: database-service
+      port: 5432
 ---
-# Multi-backend TCP routing
 apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
@@ -726,51 +652,69 @@ metadata:
   namespace: production
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-      sectionName: tcp
-
+  - name: multi-protocol-gateway
+    namespace: gateway-system
+    sectionName: tcp
   rules:
-    - backendRefs:
-        - name: tcp-backend-1
-          port: 9000
-          weight: 50
-        - name: tcp-backend-2
-          port: 9000
-          weight: 50
+  - backendRefs:
+    - name: tcp-backend-1
+      port: 9000
+      weight: 50
+    - name: tcp-backend-2
+      port: 9000
+      weight: 50
 ```
 
 ## TLSRoute
 
-TLS パススルートラフィックのルーティングを定義します。
+TLSパススルートラフィックのルーティングを定義します。
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TLSRoute
 metadata:
   name: tls-passthrough-route
   namespace: production
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-      sectionName: tcp-passthrough
-
+  - name: multi-protocol-gateway
+    namespace: gateway-system
+    sectionName: tcp-passthrough
   hostnames:
-    - "secure.example.com"
-
+  - secure.example.com
   rules:
-    - backendRefs:
-        - name: secure-backend
-          port: 8443
+  - backendRefs:
+    - name: secure-backend
+      port: 8443
 ```
 
 ## UDPRoute
 
-UDP トラフィックのルーティングを定義します。
+このシナリオには、受け入れられた`envoy-gateway`クラスを持つインストール済みEnvoy Gatewayコントローラー、互換Gateway APIバンドル、`dns-service` UDPバックエンドが必要です。UDPポート5300を公開し、バックエンドポート53へルーティングします。EnvoyのUDPプロキシは透過的ではなく、バックエンドにはゲートウェイの送信元IP/ポートが見えます。プラットフォームのロードバランサー/ServiceがこのUDP公開をサポートすることを確認してください。
+
+UDPトラフィックのルーティングを定義します。
 
 ```yaml
-# GA in v1 since Gateway API v1.6 (v1alpha2 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: udp-gateway
+  namespace: gateway-system
+spec:
+  gatewayClassName: envoy-gateway
+  listeners:
+  - name: udp
+    protocol: UDP
+    port: 5300
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: 'true'
+      kinds:
+      - kind: UDPRoute
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: UDPRoute
 metadata:
@@ -778,22 +722,24 @@ metadata:
   namespace: production
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-      sectionName: udp
-
+  - name: udp-gateway
+    namespace: gateway-system
+    sectionName: udp
   rules:
-    - backendRefs:
-        - name: dns-service
-          port: 53
+  - backendRefs:
+    - name: dns-service
+      port: 53
 ```
 
 ## ReferenceGrant
 
-ReferenceGrant はクロス Namespace 参照を許可します。
+ReferenceGrantは、**参照されるServiceまたはSecretが存在する名前空間**に、その所有者が作成します。`from`は参照元のgroup/kind/namespaceを選択し、`to.name`で参照先名を制限できます。許可は加算的で、参照を認可するものであり、アプリケーション呼び出し元を認可するものではありません。
+
+名前空間をまたぐRoute→Gateway接続はReferenceGrantではなく、`parentRefs`とGatewayリスナーの`allowedRoutes`による合意を使用します。バックエンドと証明書の参照は下記のReferenceGrantを使います。指定した`shared-api` Serviceと`shared-tls` Secretは存在する必要があり、許可だけでは作成されません。
+
+ReferenceGrantは名前空間をまたぐ参照を許可します。
 
 ```yaml
-# Allow Routes from other namespaces to reference Services in this namespace
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
@@ -801,20 +747,17 @@ metadata:
   namespace: backend-services
 spec:
   from:
-    # HTTPRoute from production namespace
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: production
-    # HTTPRoute from staging namespace too
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: staging
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: production
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: staging
   to:
-    # Can reference Services in this namespace
-    - group: ""
-      kind: Service
+  - group: ''
+    kind: Service
+    name: shared-api
 ---
-# Allow Gateway to reference Secrets (TLS certificates) from another namespace
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
@@ -822,109 +765,119 @@ metadata:
   namespace: cert-management
 spec:
   from:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      namespace: gateway-system
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: gateway-system
   to:
-    - group: ""
-      kind: Secret
+  - group: ''
+    kind: Secret
+    name: shared-tls
 ```
 
 ## 実装の比較
 
-### 主要な実装
+### 主な実装
 
-| 実装 | Controller | 機能 |
+| 実装 | コントローラー | 機能 |
 |----------------|------------|----------|
-| **Istio** | istio.io/gateway-controller | Service Mesh 統合、高度なトラフィック管理 |
-| **Cilium** | io.cilium/gateway-controller | eBPF ベース、高パフォーマンス |
-| **Envoy Gateway** | gateway.envoyproxy.io/gatewayclass-controller | Envoy ベース、標準準拠 |
-| **AWS Gateway API Controller** | application-networking.k8s.aws/gateway-api-controller | VPC Lattice 統合 |
-| **Contour** | projectcontour.io/gateway-controller | Envoy ベース、シンプルな設定 |
-| **NGINX Gateway Fabric** | gateway.nginx.org/nginx-gateway-controller | NGINX ベース |
+| **Istio** | istio.io/gateway-controller | サービスメッシュ統合、高度なトラフィック管理 |
+| **Cilium** | io.cilium/gateway-controller | EnvoyのL7処理を組み合わせたCiliumネットワーキング |
+| **Envoy Gateway** | gateway.envoyproxy.io/gatewayclass-controller | Envoyベース、標準準拠 |
+| **AWS Gateway API Controller** | application-networking.k8s.aws/gateway-api-controller | VPC Lattice統合 |
+| **Contour** | projectcontour.io/gateway-controller | Envoyベース、簡単な設定 |
+| **NGINX Gateway Fabric** | gateway.nginx.org/nginx-gateway-controller | NGINXベース |
 | **Traefik** | traefik.io/gateway-controller | 動的設定 |
 
-### 機能サポート状況
+### バージョンを指定した実装の注意点
 
-| 機能 | Istio | Cilium | Envoy GW | AWS | Contour |
-|---------|-------|--------|----------|-----|---------|
-| HTTPRoute | Yes | Yes | Yes | Yes | Yes |
-| GRPCRoute | Yes | Yes | Yes | Partial | Yes |
-| TCPRoute | Yes | Yes | Yes | No | Yes |
-| TLSRoute | Yes | Yes | Yes | No | Yes |
-| UDPRoute | Yes | Yes | Partial | No | No |
-| ReferenceGrant | Yes | Yes | Yes | Yes | Yes |
-| トラフィック分割 | Yes | Yes | Yes | Yes | Yes |
-| Header の変更 | Yes | Yes | Yes | Partial | Yes |
-| URL Rewrite | Yes | Yes | Yes | Partial | Yes |
-| ミラーリング | Yes | Partial | Yes | No | Yes |
+APIのリリースチャネル、機能のCore/Extended/実装固有というサポートレベル、コントローラーの適合プロファイルは異なる概念です。CRDがフィールドを受け入れても、コントローラーが実装している証明にはなりません。公表された適合結果と、該当する`Accepted`、`ResolvedRefs`、`Programmed`を含むリソース条件を確認してください。
 
-## AWS Load Balancer Controller Gateway API サポート（v3.0 GA）
+| 確認した実装 | 検証範囲と重要な制限 |
+|---|---|
+| Istio **1.31.0** | HTTP/gRPCとv1 TCP/TLSルート。UDPリスナーは明示的に未対応。設定可能なEnvoyデータプレーンであり、Gateway APIの全拡張のサポート保証ではない |
+| Cilium **1.20.1** | TCPRoute/UDPRouteを含むGateway API **1.6.1**。CiliumネットワーキングとL7処理用Envoyを組み合わせる |
+| Envoy Gateway **1.9.1** | Gateway API **1.6.1**。公表Kubernetesマトリックスは**1.33–1.36**。文書化されたトランスポート動作でUDPルーティングとTLSパススルーをサポート |
+| AWS Load Balancer Controller **3.5.0** | Gateway API **1.6.0**。ALBはHTTP/gRPC、NLBはL4ルートを処理。NLBリスナーごとに最古の接続済みL4 Routeだけが対象となるため、リスナーにつきRouteは1つにする |
+| AWS Gateway API Controller **2.1.3** | VPC Lattice統合。v2.1にはGateway API  **1.5+** が必要。HTTPRoute、GRPCRoute、TLSRouteをサポート。TCPリソースアクセスは別のLatticeリソース設定モデルであり、汎用TCPRoute/UDPRouteサポートではない |
+| Contour **1.33.7** | Gateway API **1.3.0**でビルドされ、Kubernetes **1.32–1.34**でリリーステスト済み。HTTP/gRPC/TCP/TLSルートを文書化。新しいバンドルを盲目的に適用せず、対応するチャネル/プロビジョニング設定を使用 |
+| NGINX Gateway Fabric **2.7.0** | Gateway API **1.6.1**、公表Kubernetes最小バージョン**1.32**。v1 TCPRoute/UDPRouteサポートを追加。終了したコミュニティのingress-nginxとは別製品 |
 
-AWS Load Balancer Controller v3.0.0（2026年1月）以降、Gateway API サポートは GA に到達し、GatewayClass/Gateway/HTTPRoute のロール分離モデルを通じて ALB/NLB を宣言的に管理できるようになりました。
+これらの注意点は、バージョンのない機能の有無一覧を置き換えます。個々のフィルター、TLSポリシー、拡張、対応バージョン、運用要件は各実装の文書を確認してください。Contourに同梱された互換性ページには1.33.7専用の行がありません。上のAPI依存関係とKubernetes範囲は、その正確なリリースのモジュールファイルとリリースノートに基づきます。
 
-- **背景**: NGINX Ingress Controller が 2026年3月にサポート終了となることを受け、AWS は LBC v3.0 + Gateway API をネイティブな代替手段として位置付けています。
-- **後方互換性**: 既存の Ingress/Service リソースは完全にサポートされたままです。即時の切り替えは不要であり、段階的に移行できます。
-- **利点**: Header/query ベースのルーティング、重み付けトラフィック分散（Blue/Green、Canary）、TCP/UDP/gRPC をカバーするマルチプロトコル設計。
-- **アップグレード時の注意**: Helm で `enableCertManager=true` を指定してインストールしている場合は、アップグレード前に `keepTLSSecret=false` を設定してください（v3.0.0 以降は自動的に処理されます）。
+## AWS Load Balancer ControllerのGateway APIサポート
 
-### v3.4.0 の移行ツール（2026年6月）
+Gateway APIは**2026-01-23のLBC v3.0.0**でGAになりました。既存のIngressとService APIは引き続きサポートされるため、Gateway移行はコントローラーのアップグレードと独立して計画できます。現在のv3.5.0には、[LBCインストールガイド](./03-aws-lb-controller.md)で説明する互換Gateway APIとLBC Gateway CRDが必要です。EKS Auto Modeには別のマネージド実装があり、自己管理LBCの機能が自動的にAuto Modeにも当てはまるわけではありません。
 
-ダウンタイムなしで、既存の ALB ベース Ingress を Gateway API に移行するためのツールが追加されました。
+終了したコントローラーはKubernetesコミュニティの**ingress-nginx**プロジェクトで、メンテナンスは2026年3月に終了しました。Kubernetes Ingress APIやF5の他のNGINX製品が終了したという意味ではありません。
 
-- **Ingress から Gateway への移行ツール**: 既存の ALB と並行して新しい Gateway API リソースを作成し、ダウンタイムゼロの移行を可能にします
-- **lbc-migrate CLI**: 既存の Ingress Annotation、ルーティングルール、IngressGroups を Gateway API リソースに自動変換します。`--from-cluster` オプションは Cluster を直接分析します
-- **Migration Console**: 移行前に変換後の設定を検証するための Web UI
+v3.0リリースノートの`keepTLSSecret=false`回避策は、cert-managerの所有権バグの影響を受ける**古いバージョンに留まる**利用者向けでした。v3.0へアップグレードする利用者は、追加操作なしで修正を受け取りました。過去の回避策をすべてのアップグレードに適用せず、現在のチャートの証明書管理オプションに従ってください。
 
-> **注意**: Gateway API + NLB の組み合わせでは動作が変更されました。複数の TCP/UDP/TLS Route が単一の Listener にアタッチされている場合、最も古い Route のみがトラフィックを受信します。アップグレード前に L4 Route 設定を確認してください。
+### LBC v3.4.0の移行ツール
 
-（共通ソース: [AWS Load Balancer Controller Releases](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases)）
+**2026-06-03**のリリースで、実際の`lbc-migrate` CLIとMigration Consoleが導入されました。対象は動作中の**LBC Ingress**リソースであり、あらゆるIngress実装向けの汎用変換ツールではありません。
 
-## Ingress から Gateway API への移行
+- `lbc-migrate`はファイルを読み取るか、`--from-cluster`でクラスターリソースを一覧/取得します。サポートされるアノテーションを変換し、Gateway APIリソースを出力します。デフォルト出力にはLBC Gatewayのdry-runアノテーションが付きます。
+- Migration Consoleはコントローラーが生成したリソース計画を比較します。適切な計画アノテーション、機能設定、読み取りアクセスが必要です。計画はアクセス制限や機密情報の削除が必要になり得る設定データとして扱います。
+- レビュー済みの実稼働Gatewayマニフェストを適用すると、**既存ALBと並行して新しいALB**が作成されます。それらを検証し、フロントエンドトラフィックを別途移します。1つのHTTPRoute内のバックエンド重みでは、このフロントエンド移行は行えません。
+
+選択したLBCリリースからビルドしたバイナリでは、ファイルベースの変換を次から始められます。
+
+```bash
+lbc-migrate -f ingress.yaml --output-dir ./gateway-output/
+```
+
+変換ツールは既存Deployment/Serviceを生成せず、すべてのIngressアノテーションを再検証するわけでもありません。未対応アノテーション、Service/IngressClassParamsのオーバーライド、名前空間をまたぐIngressGroup所属、ルール優先順位、TLS設定を確認します。旧ALBにすでに関連付いた外部ターゲットグループは、そのまま新ALBにも同時接続できません。互換性のある複製/切り替え戦略を計画してください。
+
+ツールは移行手順を提供しますが、無停止を保証しません。[バージョン付き移行ガイド](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress2gateway/migrate_from_ingress.md)と[CLIリファレンス](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress2gateway/lbc_migrate_reference.md)を参照してください。
+
+## IngressからGateway APIへの移行
 
 ### 段階的な移行ガイド
 
-#### ステップ 1: 既存の Ingress を分析する
+#### ステップ1: 既存Ingressの分析
+
+以下はIstio Gateway APIへの手動設定変換を説明するための、**過去のコミュニティingress-nginx入力**です。新規ingress-nginxインストールの推奨でも、上のLBC固有変換ツールへの入力でもありません。設定名だけでなく、実際のリクエスト動作を保持してください。
 
 ```yaml
-# Existing Ingress
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: my-ingress
   annotations:
-    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+  namespace: default
 spec:
   tls:
-    - hosts:
-        - api.example.com
-      secretName: api-tls
+  - hosts:
+    - api.example.com
+    secretName: api-tls
   rules:
-    - host: api.example.com
-      http:
-        paths:
-          - path: /api/v1
-            pathType: Prefix
-            backend:
-              service:
-                name: api-v1
-                port:
-                  number: 80
-          - path: /api/v2
-            pathType: Prefix
-            backend:
-              service:
-                name: api-v2
-                port:
-                  number: 80
+  - host: api.example.com
+    http:
+      paths:
+      - path: /api/v1
+        pathType: Prefix
+        backend:
+          service:
+            name: api-v1
+            port:
+              number: 80
+      - path: /api/v2
+        pathType: Prefix
+        backend:
+          service:
+            name: api-v2
+            port:
+              number: 80
 ```
 
-#### ステップ 2: Gateway と GatewayClass を作成する
+#### ステップ2: GatewayとGatewayClassの作成
+
+新Gatewayの名前は`migration-gateway`です。既存の`api-tls` Secretは`default`に残し、その名前空間のReferenceGrantでこのGateway名前空間からの参照を明示的に許可します。`api.example.com`に有効な証明書を用意してください。`default` Namespaceの組み込み名前ラベルを、ルート接続のセレクターに使用します。
 
 ```yaml
-# GatewayClass (Infrastructure Admin)
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
@@ -932,39 +885,64 @@ metadata:
 spec:
   controllerName: istio.io/gateway-controller
 ---
-# Gateway (Cluster Operator)
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: migration-tls
+  namespace: default
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: gateway-system
+  to:
+  - group: ''
+    kind: Secret
+    name: api-tls
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: production-gateway
+  name: migration-gateway
   namespace: gateway-system
 spec:
   gatewayClassName: production
   listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
-      allowedRoutes:
-        namespaces:
-          from: All
-    - name: https
-      protocol: HTTPS
-      port: 443
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: api-tls
-            namespace: gateway-system
-      allowedRoutes:
-        namespaces:
-          from: All
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            kubernetes.io/metadata.name: default
+    hostname: api.example.com
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: api-tls
+        namespace: default
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            kubernetes.io/metadata.name: default
+    hostname: api.example.com
 ```
 
-#### ステップ 3: HTTPRoute を作成する
+#### ステップ3: HTTPRouteの作成
+
+リダイレクトRouteはHTTPリスナーだけに接続します。HTTPS Routeはアプリケーションリクエストを転送します。旧`rewrite-target: /`例は一致したリクエストパス全体を`/`で置き換えるため、変換例は**ReplaceFullPath**を使います。ReplacePrefixMatchではサフィックスが保持され（`/api/v1/users` → `/users`）、動作が変わります。切り替え前にルートパス、サブパス、クエリ文字列、リダイレクトを旧アプリケーションと比較テストしてください。
+
+以下のリダイレクトは、リクエストメソッド/本文を保持するingress-nginxのデフォルト**308**を前提とします。`http-redirect-code`のオーバーライドを確認してください。旧書き換えアノテーションはそのホストの大文字小文字を区別しない正規表現locationも有効にしますが、Gateway API PathPrefixは大文字小文字を区別してパス要素に一致します。そのため`/API/V1`や`/api/v10`では動作が異なる場合があります。この例はより厳格なPathPrefix方針を示し、完全な一致動作の同等性は示しません。旧動作に依存するクライアントがある場合、切り替え前にサポートされる正規表現一致や別の明示的な互換ルールを設計し、テストしてください。
 
 ```yaml
-# HTTPRoute (Application Developer)
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -972,26 +950,22 @@ metadata:
   namespace: default
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-
+  - name: migration-gateway
+    namespace: gateway-system
+    sectionName: http
   hostnames:
-    - "api.example.com"
-
+  - api.example.com
   rules:
-    # HTTP -> HTTPS redirect
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      filters:
-        - type: RequestRedirect
-          requestRedirect:
-            scheme: https
-            statusCode: 301
-
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 308
 ---
-# HTTPRoute for HTTPS
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -999,86 +973,65 @@ metadata:
   namespace: default
 spec:
   parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
-      sectionName: https
-
+  - name: migration-gateway
+    namespace: gateway-system
+    sectionName: https
   hostnames:
-    - "api.example.com"
-
+  - api.example.com
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /api/v1
-      filters:
-        - type: URLRewrite
-          urlRewrite:
-            path:
-              type: ReplacePrefixMatch
-              replacePrefixMatch: /
-      backendRefs:
-        - name: api-v1
-          port: 80
-
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /api/v2
-      filters:
-        - type: URLRewrite
-          urlRewrite:
-            path:
-              type: ReplacePrefixMatch
-              replacePrefixMatch: /
-      backendRefs:
-        - name: api-v2
-          port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/v1
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplaceFullPath
+          replaceFullPath: /
+    backendRefs:
+    - name: api-v1
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/v2
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplaceFullPath
+          replaceFullPath: /
+    backendRefs:
+    - name: api-v2
+      port: 80
 ```
 
-#### ステップ 4: 段階的な移行
+#### ステップ4: フロントエンドトラフィックの移行
 
-```yaml
-# Gradual transition via traffic splitting
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: gradual-migration
-spec:
-  parentRefs:
-    - name: production-gateway
-      namespace: gateway-system
+クライアントを移す前に、新Gatewayのアドレス、証明書、HTTPリダイレクト、ルート一致、バックエンド動作、可観測性を検証します。レビュー済みDNS/ロードバランサールーティングなど、フロントエンドに適した方法で移行し、障害とレイテンシーを監視します。DNSキャッシュ、永続接続、セッションを考慮してください。旧フロントエンドへ戻す検証済みの方法を保持します。
 
-  rules:
-    - backendRefs:
-        # Existing service (gradually decrease)
-        - name: legacy-service
-          port: 80
-          weight: 90
-        # New service (gradually increase)
-        - name: new-service
-          port: 80
-          weight: 10
-```
+HTTPRouteのバックエンド重みは**選択したGatewayの内部**のトラフィックを制御します。その操作は専用のトラフィック分割セクションで説明します。フロントエンド移行では、クライアントの移動と必要なドレイン/ロールバック確認が完了するまで、旧Ingress/コントローラーを保持してください。
 
 ### 移行チェックリスト
 
-- [ ] 既存の Ingress Annotation を分析する
-- [ ] 実装を選択し、GatewayClass を作成する
-- [ ] Gateway リソースを作成し、Listener を設定する
-- [ ] ルーティングルールを HTTPRoute に変換する
-- [ ] ReferenceGrant でクロス Namespace アクセスを設定する
-- [ ] TLS 証明書を移行する
-- [ ] トラフィック分割による段階的な移行
-- [ ] モニタリングとロギングを設定する
-- [ ] 既存の Ingress リソースを削除する
+- [ ] 既存Ingressのアノテーションを分析
+- [ ] 実装を選択しGatewayClassを作成
+- [ ] Gatewayリソースを作成しリスナーを設定
+- [ ] ルーティングルールをHTTPRouteへ変換
+- [ ] 接続用allowedRoutesとバックエンド/Secret参照用ReferenceGrantを設定
+- [ ] TLS証明書を移行
+- [ ] 検証済みロールバック経路を用意してフロントエンドトラフィックを検証・移行
+- [ ] 監視とログ記録を設定
+- [ ] 切り替えとドレイン/ロールバック確認後にのみ旧Ingressリソースを削除
 
-## EKS パターン
+## EKSのパターン
 
 ### AWS Gateway API Controller（VPC Lattice）
 
+[VPC Latticeガイド](./02-vpc-lattice.md)のインストール済みコントローラー、レビュー済み`AWS_IAM`ポリシー付き`my-network`サービスネットワーク、呼び出し元権限、`service-stable:8080`バックエンドを使用します。Gateway名はネットワークを選択し、作成はしません。この別のRouteには独自のLatticeサービスとドメインがあります。以下のIAMAuthPolicyがそのサービスを保護します。調整中はネットワークレベルのポリシーを保持してください。割り当てられたRouteドメインを取得し、ガイドの署名付きHTTPSクライアントを使います。`unused`証明書参照はこのコントローラーの文書化されたAWS管理証明書の動作に従い、汎用のKubernetes Secret読み込みではありません。
+
 ```yaml
-# GatewayClass
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
@@ -1086,59 +1039,110 @@ metadata:
 spec:
   controllerName: application-networking.k8s.aws/gateway-api-controller
 ---
-# Gateway (maps to VPC Lattice Service Network)
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: lattice-gateway
-  namespace: default
+  name: my-network
+  namespace: lattice-demo
 spec:
   gatewayClassName: amazon-vpc-lattice
   listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
-      allowedRoutes:
-        namespaces:
-          from: All
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: unused
 ---
-# HTTPRoute (maps to VPC Lattice Service)
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: lattice-route
+  namespace: lattice-demo
 spec:
   parentRefs:
-    - name: lattice-gateway
+  - name: my-network
+    sectionName: https
   rules:
-    - backendRefs:
-        - name: my-service
-          port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    backendRefs:
+    - name: service-stable
+      port: 8080
+---
+apiVersion: application-networking.k8s.aws/v1alpha1
+kind: IAMAuthPolicy
+metadata:
+  name: lattice-route-auth
+  namespace: lattice-demo
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: lattice-route
+  policy: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::123456789012:role/MyAppRole"},"Action":"vpc-lattice-svcs:Invoke","Resource":"*","Condition":{"StringLike":{"vpc-lattice-svcs:RequestPath":["/api","/api/*"]}}}]}'
 ```
 
-### ALB Controller との使用
+### ALB Controllerとの併用
+
+アプリケーションがIstioのゲートウェイ動作を必要とする場合、この構成はIstioゲートウェイの前にALBを置きます。ConfigMapはIstioの文書化されたインフラパラメーターを通じて、生成ServiceをClusterIPに設定します。ALB IngressはそのServiceと**同じ名前空間**にあり、生成名`internal-gateway-istio`を参照します。
+
+アプリケーションHTTPRouteはラベル付き`production`名前空間にあり、そこにある既存`api-service:80`を指します。ACM ARNを置き換え、LBC/ネットワークの前提条件を設定します。この例ではTLSをALBで終端し、Istioへの接続はHTTPです。実際のゲートウェイトラフィックとヘルスポートをセキュリティ制御で許可してください。15021の`/healthz/ready`はゲートウェイの準備状態を確認し、全アプリケーションの健全性は確認しません。Route条件とアプリケーション応答を別途検証します。
 
 ```yaml
-# Istio Gateway API + ALB Ingress combination
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: internal-gateway-options
+  namespace: istio-system
+data:
+  service: |
+    spec:
+      type: ClusterIP
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: internal-gateway
   namespace: istio-system
-  annotations:
-    # Internal Gateway
-    networking.istio.io/service-type: ClusterIP
 spec:
   gatewayClassName: istio
   listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
-      allowedRoutes:
-        namespaces:
-          from: All
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            gateway-access: 'true'
+  infrastructure:
+    parametersRef:
+      group: ''
+      kind: ConfigMap
+      name: internal-gateway-options
 ---
-# ALB receives external traffic and forwards to Gateway
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: alb-internal-route
+  namespace: production
+spec:
+  parentRefs:
+  - name: internal-gateway
+    namespace: istio-system
+    sectionName: http
+  hostnames:
+  - api.example.com
+  rules:
+  - backendRefs:
+    - name: api-service
+      port: 80
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -1146,71 +1150,61 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
+    alb.ingress.kubernetes.io/healthcheck-port: '15021'
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz/ready
+  namespace: istio-system
 spec:
   ingressClassName: alb
   rules:
-    - host: "*.example.com"
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: internal-gateway
-                port:
-                  number: 80
+  - host: api.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: internal-gateway-istio
+            port:
+              number: 80
 ```
 
-## API チャネルと成熟度
+## APIチャネルと成熟度
 
-Gateway API は、さまざまな成熟度の機能を提供します。
+### チャネルとAPIバージョンは別
 
-### チャネル分類
+| Gateway API v1.6.0バンドル | 含まれるリソース/フィールド |
+|---|---|
+| Standard | GatewayClass、Gateway、HTTPRoute、GRPCRoute、TLSRoute、TCPRoute、UDPRoute、ReferenceGrant、BackendTLSPolicy、ListenerSet |
+| Experimental | Standardの内容に加え、HTTPRouteの再試行/セッション永続化などの実験的フィールドとXBackend、XBackendTrafficPolicy、XMesh |
 
-| チャネル | 成熟度 | リソース |
-|---------|----------|-----------|
-| **Standard** | GA | GatewayClass, Gateway, HTTPRoute, ReferenceGrant, TCPRoute, UDPRoute |
-| **Experimental** | Beta/Alpha | GRPCRoute, TLSRoute |
+現在のStandard例はRouteタイプに`v1`を使用します。v1.6.0 Standardバンドルは、旧TLSRoute/TCPRoute/UDPRouteアルファ版をもう**提供しません**。Experimentalバンドルは一部の非推奨バージョンをまだ提供するため、そこで動くマニフェストがStandardでも動く証明にはなりません。
 
-### バージョンと互換性
+ReferenceGrantは「Standardは常にv1のみ」という見方への有用な反例です。v1.6.0バンドルは`v1`と`v1beta1`を両方提供し、ストレージバージョンは`v1beta1`です。ここでのReferenceGrant例は、提供されているベータ版を維持します。
 
-```yaml
-# Standard channel (stable)
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+新しい実験的Xリソースは`gateway.networking.x-k8s.io`を使用します。既存リソースの実験的フィールドは引き続き`gateway.networking.k8s.io`に存在し得ます。Experimentalチャネル全体が別グループへ移動したわけではありません。互換性保証はStandardと異なり、アドミッションポリシーがチャネル/フィールド境界を保護します。変更を強制するために共有CRDやアドミッションポリシーを削除せず、公表されたアップグレード手順を確認してください。
 
-# Experimental channel
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TLSRoute
-```
+### v1.6リリースの背景
 
-### 2026年8月更新: Gateway API v1.6 — TCPRoute と UDPRoute が Standard に昇格
+Gateway API v1.6.0は**2026-06-29 UTC / 2026-06-30 KST**に公開されました。TCPRouteとUDPRouteはStandardの`v1`へ昇格しました。GRPCRouteとTLSRouteも現在のStandardバンドルに含まれます。最新カタログバージョンを互換性と同一視せず、選択した実装がサポートするバンドル/チャネルを選んでください。
 
-Gateway API v1.6.0 は 2026年6月30日にリリースされ、[2026年8月3日に Kubernetes ブログで発表されました](https://kubernetes.io/blog/2026/08/03/gateway-api-v1-6-release/)。上記の表では、次の 2 つの変更が重要です。
+## Ingress APIとの比較
 
-- **TCPRoute と UDPRoute は Standard（GA）になりました**: どちらも `gateway.networking.k8s.io/v1` API バージョンに移行し、raw L4 ワークロード（データベース、DNS、VoIP、ゲーム、IoT テレメトリ）にポータブルで安定したルーティングモデルを提供します。各リソースの `v1alpha2` バージョンは v1.6 で非推奨となり、将来のリリースで削除されます。
-- **Experimental API group の分離**: experimental リソースは、Standard と Experimental の境界を明確にするため、`gateway.networking.x-k8s.io` という個別の API group に移動し、`X` プレフィックス（例: 新しい `XBackend` リソース）が付きます。
-
-実装は v1.6 を迅速に採用しています。たとえば Cilium 1.20（2026年7月）は、TCPRoute/UDPRoute を含む Gateway API v1.6.1 のサポートを提供しています。
-
-## Ingress API との比較
-
-| 機能 | Ingress | Gateway API |
-|---------|---------|-------------|
-| **ロール分離** | No | Yes（3 層） |
-| **HTTP ルーティング** | Yes | Yes |
-| **TCP/UDP** | No | Yes |
-| **gRPC** | Annotation 経由 | ネイティブ |
-| **TLS パススルー** | 実装依存 | Yes |
-| **トラフィック分割** | Annotation 経由 | ネイティブ |
-| **Header ベースのルーティング** | Annotation 経由 | ネイティブ |
-| **クロス Namespace** | 制限あり | ReferenceGrant |
-| **ポータビリティ** | Annotation 依存 | 標準化 |
-| **拡張性** | No | CRD |
+| 観点 | Ingress | Gateway API |
+|---|---|---|
+| リソースモデル | IngressとIngressClass。リスナー/ルーティングの関心事は大部分が一体 | GatewayClass、Gateway、独立したRouteタイプ |
+| 認可 | Kubernetes RBAC/アドミッションで所有権を制限可能 | RBAC/アドミッションに加え、明示的な接続と参照の合意 |
+| HTTPルーティング | 標準HTTPルーティング | 個別機能のサポートレベルを持つ標準HTTPRouteフィールド |
+| TCP/UDP/gRPC | Ingress APIの範囲外のコントローラー固有拡張 | 専用APIタイプ。実際のサポートはコントローラー/バージョンに依存 |
+| TLSパススルー / トラフィック分割 / 書き換え | コントローラー固有設定 | 対応するRoute/フィルターフィールドと実装サポート要件 |
+| 名前空間をまたぐ参照 | 実装固有の動作 | バックエンド/SecretにReferenceGrant、Gateway接続にallowedRoutes |
+| 移植性 | アノテーションの意味の違いで低下 | 標準フィールドと適合性で向上するが、拡張は引き続き異なる |
 
 ## ベストプラクティス
 
-### 1. ロール分離に従う
+### 1. ロール分離の遵守
 
 ```yaml
 # Infrastructure team: Manage GatewayClass
@@ -1218,7 +1212,7 @@ Gateway API v1.6.0 は 2026年6月30日にリリースされ、[2026年8月3日�
 # App team: Manage HTTPRoute
 ```
 
-### 2. 最小権限の ReferenceGrant
+### 2. 最小権限のReferenceGrant
 
 ```yaml
 # Explicitly allow only required namespaces
@@ -1238,7 +1232,7 @@ spec:
       name: specific-service  # Specific service only
 ```
 
-### 3. Gateway の分離
+### 3. Gatewayの分離
 
 ```yaml
 # Separate Gateway by environment
@@ -1248,7 +1242,7 @@ spec:
 # http-gateway, grpc-gateway
 ```
 
-### 4. モニタリング設定
+### 4. 監視設定
 
 ```yaml
 # Prometheus metrics collection (varies by implementation)
@@ -1259,11 +1253,21 @@ spec:
 
 ---
 
-## 参照
+## 参考資料
 
-- [Gateway API Official Documentation](https://gateway-api.sigs.k8s.io/)
+- [Gateway API公式ドキュメント](https://gateway-api.sigs.k8s.io/)
 - [Gateway API GitHub](https://github.com/kubernetes-sigs/gateway-api)
-- [Istio Gateway API Support](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
-- [Cilium Gateway API](https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/)
-- [AWS Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/)
+- [IstioのGateway APIサポート](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
+- [Cilium Gateway API](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
+- [AWS Gateway API Controller](https://github.com/aws/aws-application-networking-k8s/tree/v2.1.3/docs)
 - [Envoy Gateway](https://gateway.envoyproxy.io/)
+
+- [Gateway API 1.6のバージョン管理](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/docs/concepts/versioning.md)
+- [ReferenceGrantと接続の例外](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/reference/api-types/referencegrant.md)
+- [Envoy Gatewayの互換性](https://github.com/envoyproxy/gateway/blob/v1.9.1/site/content/en/news/releases/matrix.md)
+- [NGINX Gateway Fabric 2.7のリリース](https://github.com/nginx/nginx-gateway-fabric/blob/v2.7.0/CHANGELOG.md)
+- [Contour 1.33.7のリリース](https://github.com/projectcontour/contour/releases/tag/v1.33.7)
+- [コミュニティingress-nginxの終了](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)
+
+- [従来のingress-nginxのリダイレクトと書き換え動作](https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md)
+- [従来のingress-nginxのredirect-code設定](https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md)
