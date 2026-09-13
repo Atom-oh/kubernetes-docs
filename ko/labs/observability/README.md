@@ -1,208 +1,87 @@
-# 실습 시리즈 소개
+# Observability 실습 시리즈
 
-> **난이도**: 고급 (Advanced) **마지막 업데이트**: 2026년 2월 23일
+<span id="eks-및-인프라"></span>
+<span id="gitops-및-배포"></span>
+<span id="msa-서비스-호출-흐름"></span>
+<span id="msa-애플리케이션-구성"></span>
+<span id="observability-기초"></span>
+<span id="observability-도구-커버리지"></span>
+<span id="개요"></span>
+<span id="비용-안내"></span>
+<span id="사전-요구-사항"></span>
+<span id="서비스-메시-및-네트워킹"></span>
+<span id="실습-순서"></span>
+<span id="실습-시리즈-소개"></span>
+<span id="실습-시작하기"></span>
+<span id="아키텍처-개요"></span>
+<span id="참고할-기존-문서"></span>
+<span id="환경-확인-스크립트"></span>
 
-## 개요
+> **난이도**: 고급
+> **마지막 업데이트**: 2026년 9월 13일
+두 EKS 클러스터에서 실제 실행 가능한 합성 주문 애플리케이션과 metrics·logs·traces 경로를 연결합니다. 기본 backend는 Prometheus·Loki·Tempo·Grafana이며 AWS SNS/SQS·Aurora·CloudWatch와 연동합니다. 실습 설정과 운영 HA/용량 검증을 구분합니다.
 
-이 실습 시리즈는 2개의 EKS 클러스터(Managed Cluster + Service Cluster)와 AWS Managed Services를 기반으로 한 **Full-Stack Observability** 환경을 구축합니다. 메트릭, 로그, 트레이스의 3대 축을 중심으로 실제 운영 환경에서 필요한 모든 Observability 컴포넌트를 직접 배포하고 연동합니다.
-
-### 아키텍처 개요
-
-![관리 클러스터의 GitOps와 관측 스택, 서비스 클러스터의 MSA 애플리케이션, AWS 관리형 관측 백엔드로 이어지는 실습 환경 아키텍처.](../../.gitbook/assets/ko-labs-observability-overview-0.png)
+![관리/서비스 클러스터의 역할과 인증 경계](../../.gitbook/assets/ko-labs-observability-overview-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-0.html)
 
-![EKS 관리 클러스터의 ArgoCD·관측 스택과 EKS 서비스 클러스터의 OTel 계측 MSA 애플리케이션이 Aurora, SQS/SNS, 관측 백엔드, MWAA 등 AWS 관리형 서비스와 연동되는 실습 플랫폼 전체 아키텍처를 보여준다.](../../.gitbook/assets/ko-labs-observability-overview-1.png)
+## 준비 사항 {#prerequisites}
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-1.html)
+승인된 임시 AWS 역할, 검토한 private VPC/subnet·route·DNS·SG, EBS CSI/gp3, NetworkPolicy 지원 CNI와 AWS Load Balancer Controller가 필요합니다. 모든 서비스 FullAccess나 장기 access key를 요구하지 않습니다. 버전·권한·할당량은 각 단계에서 다시 확인합니다.
 
-***
+| Tool | Reviewed baseline |
+|---|---|
+| EKS / kubectl | 1.36 / 1.36.2 |
+| eksctl / Helm | 0.229.0 / 3.21.3 |
+| Python / AWS CLI | 3.12 / v2 |
+| k6 / Locust | 2.2.0 / 2.46.5 |
+| Application / controllers | Pinned requirements, image digest and chart versions in examples |
 
-## 사전 요구 사항
+## 실행 코드와 순서 {#sequence}
 
-실습을 시작하기 전에 다음 도구와 환경이 준비되어 있어야 합니다.
+[application](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application), [stack](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/stack), [load-test](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/load-test), [aiops](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops) 예제를 함께 사용합니다. 존재하지 않는 example 저장소를 clone하지 않습니다. 검토한 commit/tag를 고정하고 private LAB_STATE를 보관합니다.
 
-| 항목        | 버전      | 확인 명령어                     |
-| --------- | ------- | -------------------------- |
-| AWS 계정    | -       | AWS Console 로그인 가능         |
-| AWS CLI   | v2.x    | `aws --version`            |
-| eksctl    | v0.170+ | `eksctl version`           |
-| kubectl   | v1.28+  | `kubectl version --client` |
-| Helm      | v3.14+  | `helm version`             |
-| Terraform | v1.7+   | `terraform version`        |
-| k6        | v0.50+  | `k6 version`               |
-| Docker    | v24+    | `docker --version`         |
-| Git       | v2.x    | `git --version`            |
-
-### 환경 확인 스크립트
-
-```bash
-#!/bin/bash
-echo "=== Observability Lab Prerequisites Check ==="
-
-# AWS CLI
-echo -n "AWS CLI: "
-aws --version 2>/dev/null || echo "NOT INSTALLED"
-
-# eksctl
-echo -n "eksctl: "
-eksctl version 2>/dev/null || echo "NOT INSTALLED"
-
-# kubectl
-echo -n "kubectl: "
-kubectl version --client --short 2>/dev/null || echo "NOT INSTALLED"
-
-# Helm
-echo -n "Helm: "
-helm version --short 2>/dev/null || echo "NOT INSTALLED"
-
-# Terraform
-echo -n "Terraform: "
-terraform version -json 2>/dev/null | jq -r '.terraform_version' || echo "NOT INSTALLED"
-
-# k6
-echo -n "k6: "
-k6 version 2>/dev/null || echo "NOT INSTALLED"
-
-# Docker
-echo -n "Docker: "
-docker --version 2>/dev/null || echo "NOT INSTALLED"
-
-# AWS Credentials
-echo -n "AWS Credentials: "
-aws sts get-caller-identity --query "Account" --output text 2>/dev/null && echo "OK" || echo "NOT CONFIGURED"
-```
-
-***
-
-## 비용 안내
-
-이 실습에서 사용하는 AWS 리소스의 예상 시간당 비용입니다 (us-east-1 기준).
-
-| 서비스                       | 구성                            | 예상 시간당 비용               |
-| ------------------------- | ----------------------------- | ----------------------- |
-| EKS Cluster (x2)          | 2 clusters                    | $0.20                   |
-| EC2 (Managed Cluster)     | 3x m5.large                   | $0.288                  |
-| EC2 (Service Cluster)     | 3x m5.large + Karpenter nodes | $0.288 \~ $0.576        |
-| Aurora PostgreSQL         | db.r5.large, Multi-AZ         | $0.48                   |
-| OpenSearch                | 3x m5.large.search            | $0.52                   |
-| Amazon Managed Prometheus | 기본 사용량                        | $0.03                   |
-| Amazon Managed Grafana    | 1 workspace                   | $0.15                   |
-| MWAA (Airflow)            | mw1.small                     | $0.49                   |
-| SQS/SNS                   | 사용량 기반                        | \~$0.01                 |
-| NAT Gateway (x2)          | 2 VPCs                        | $0.09                   |
-| **총 예상 비용**               | -                             | **\~$2.50 \~ $3.00/시간** |
-
-> **주의**: 실습 완료 후 반드시 리소스를 정리하여 불필요한 비용이 발생하지 않도록 합니다. 전체 실습 완료 시 약 **$15 \~ $25** 정도의 비용이 발생할 수 있습니다.
-
-***
-
-## 실습 순서
-
-![관찰 가능성 실습이 인프라 구성부터 분산 추적 분석까지 여섯 단계(Part 1~6)를 순서대로 진행하는 학습 로드맵을 보여준다.](../../.gitbook/assets/ko-labs-observability-overview-2.png)
+![인프라부터 추적 분석까지의 여섯 단계](../../.gitbook/assets/ko-labs-observability-overview-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-2.html)
 
-| Part                                     | 제목                  | 소요 시간 | 주요 내용                                           |
-| ---------------------------------------- | ------------------- | ----- | ----------------------------------------------- |
-| [Part 1](01-infrastructure-setup-lab.md) | 인프라 구성              | 60분   | EKS 클러스터 2개, AWS Managed Services 프로비저닝         |
-| [Part 2](02-observability-stack-lab.md)  | Observability 스택 배포 | 90분   | OTel, Prometheus, Loki, Tempo, Grafana 등        |
-| [Part 3](03-msa-deployment-lab.md)       | MSA 배포 및 카나리        | 60분   | ArgoCD, Argo Rollouts, OTel Instrumentation     |
-| [Part 4](04-load-testing-scaling-lab.md) | 부하 테스트 및 스케일링       | 45분   | k6, KEDA, Karpenter 연동                          |
-| [Part 5](05-alerting-aiops-lab.md)       | 알림 및 AIOps          | 60분   | AlertManager, Grafana OnCall, CW Investigations |
-| [Part 6](06-distributed-tracing-lab.md)  | 분산 추적 분석            | 45분   | Tempo, TraceQL, 메트릭-로그-트레이스 상관관계                |
+| Part | 단계 | 결과 |
+|---|---|---|
+| 1 | [인프라 구성](01-infrastructure-setup-lab.md) | EKS, private DB, SNS fanout, scoped roles |
+| 2 | [관측 스택](02-observability-stack-lab.md) | mTLS collectors/remote-write, Loki/Tempo/Grafana |
+| 3 | [MSA·카나리](03-msa-deployment-lab.md) | Five runnable roles, outbox, revision-only analysis |
+| 4 | [부하·스케일링](04-load-testing-scaling-lab.md) | Measured requests and consumer/node observations |
+| 5 | [알림·AIOps](05-alerting-aiops-lab.md) | Separate-topic diagnostic reporter, human review |
+| 6 | [분산 추적](06-distributed-tracing-lab.md) | Actual metric/exemplar/trace/log correlation, cleanup |
 
-***
+## 애플리케이션과 데이터 흐름 {#application}
 
-## MSA 애플리케이션 구성
+Python 애플리케이션 이미지 하나를 api-gateway, order-service, payment-service, notification, analytics 역할로 별도 배포합니다. 결제·알림은 합성 결과이며 실제 결제/이메일/SMS를 실행하지 않습니다. 주문과 outbox는 같은 transaction, notification/analytics는 각자 queue와 event-ID dedup을 사용합니다. gateway 인증·일반 rate limiting·실제 결제 gateway를 구현했다고 주장하지 않습니다.
 
-실습에서 배포할 MSA 애플리케이션은 5개의 마이크로서비스로 구성됩니다.
-
-| 서비스                      | 언어/프레임워크           | 역할                         | 의존성                            |
-| ------------------------ | ------------------ | -------------------------- | ------------------------------ |
-| **api-gateway**          | Go / Gin           | API 라우팅, 인증, Rate Limiting | order-service, payment-service |
-| **order-service**        | Python / FastAPI   | 주문 생성, 조회, 상태 관리           | Aurora PostgreSQL, SQS         |
-| **payment-service**      | Java / Spring Boot | 결제 처리, 결제 상태 관리            | Aurora PostgreSQL, SNS         |
-| **notification-service** | Node.js / Express  | 알림 발송 (이메일, SMS)           | SQS (Consumer)                 |
-| **analytics-batch**      | Python / Pandas    | 일별 분석 리포트 생성               | Aurora PostgreSQL, MWAA        |
-
-### MSA 서비스 호출 흐름
-
-![클라이언트의 POST /orders와 POST /payments 요청이 API Gateway를 거쳐 order-service·payment-service로 라우팅되어 Aurora에 기록되고, order_created·payment_completed 이벤트가 SQS/SNS로 발행되어 notification-service가 비동기로 소비하는 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-overview-3.png)
+![HTTP·DB outbox·서로 다른 소비자 큐](../../.gitbook/assets/ko-labs-observability-overview-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-3.html)
 
-***
+## 기본 범위와 선택 확장 {#coverage}
 
-## Observability 도구 커버리지
 
-이 실습에서 다루는 Observability 도구 목록입니다.
+![기본 연결 경로와 별도 검증이 필요한 확장](../../.gitbook/assets/ko-labs-observability-overview-1.png)
 
-| 카테고리              | 도구                              | 유형           | 실습 포함   |
-| ----------------- | ------------------------------- | ------------ | ------- |
-| **Metrics**       | Prometheus                      | Self-managed | O       |
-|                   | VictoriaMetrics                 | Self-managed | O       |
-|                   | Mimir                           | Self-managed | O       |
-|                   | Amazon Managed Prometheus (AMP) | AWS Managed  | O       |
-|                   | CloudWatch Metrics              | AWS Managed  | O       |
-| **Logging**       | Loki                            | Self-managed | O       |
-|                   | ClickHouse                      | Self-managed | O       |
-|                   | OpenSearch                      | AWS Managed  | O       |
-|                   | CloudWatch Logs                 | AWS Managed  | O       |
-| **Tracing**       | Tempo                           | Self-managed | O       |
-|                   | OpenTelemetry Collector         | CNCF         | O       |
-|                   | AWS X-Ray                       | AWS Managed  | O       |
-| **Alerting**      | Alertmanager                    | Self-managed | O       |
-|                   | Grafana OnCall                  | Self-managed | O       |
-|                   | CloudWatch Alarms               | AWS Managed  | O       |
-| **Visualization** | Grafana                         | Self-managed | O       |
-|                   | Amazon Managed Grafana (AMG)    | AWS Managed  | O       |
-| **상용 SaaS**       | Datadog                         | 상용           | X (미포함) |
-|                   | Dynatrace                       | 상용           | X (미포함) |
-|                   | New Relic                       | 상용           | X (미포함) |
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-1.html)
 
-***
+| Baseline | Optional separate integration |
+|---|---|
+| Prometheus / CloudWatch metrics | VictoriaMetrics, Mimir, AMP |
+| Loki / CloudWatch Logs | ClickHouse, OpenSearch |
+| OTel / Tempo | X-Ray, Dynatrace |
+| Grafana | Amazon Managed Grafana, commercial tools |
+| Alertmanager / SNS / diagnostic Lambda | Existing on-call platform, CloudWatch Investigations group |
+| Synthetic event consumers | MWAA scheduling/batch analytics, production transaction systems |
 
-## 참고할 기존 문서
+선택 도구를 설치했다는 사실과 실제 수집·조회·권한·비용 검증은 다릅니다. [metrics](../../observability/metrics/README.md), [logging](../../observability/logging/README.md), [tracing](../../observability/tracing/README.md), [Grafana](../../observability/grafana/README.md) 문서에서 해당 확장을 검토합니다. OnCall OSS 보관 처리 등 변경 사항은 Part5에 반영했습니다.
 
-실습을 진행하기 전에 다음 이론 문서를 참고하면 도움이 됩니다.
+## 비용·검증·정리 {#cost-and-cleanup}
 
-### Observability 기초
+리전·노드·NAT·EBS·Aurora ACU/storage/I/O·로그 수집/보존·메시지·KMS·LB·전송·모델 호출을 실제 사용량으로 산정합니다. 월별 사용자 과금과 시간별 인프라 비용을 섞은 고정 총액은 제공하지 않습니다. 단일 writer/backend 실습은 production-grade HA가 아니며 replica 증가가 비용 상한을 보장하지 않습니다.
 
-* [Prometheus 기초](../../observability/metrics/01-prometheus.md)
-* [Grafana 대시보드](../../observability/grafana/README.md)
-* [Logging Stack 개요](../../observability/logging/README.md)
-
-### EKS 및 인프라
-
-* [EKS 클러스터 생성](../../eks/02-eks-cluster-creation-part1.md)
-* [Karpenter 오토스케일링](../../autoscaling/02-karpenter.md)
-* [KEDA 이벤트 기반 스케일링](../../autoscaling/01-keda.md)
-
-### GitOps 및 배포
-
-* [ArgoCD 설치](../../gitops/argocd/01-installation.md)
-* [트래픽 관리](../../gitops/argocd/05-traffic-management.md)
-
-### 서비스 메시 및 네트워킹
-
-* [Cilium CNI](../../networking/cilium/01-introduction.md)
-* [OpenTelemetry 기초](../../observability/tracing/03-opentelemetry.md)
-
-***
-
-## 실습 시작하기
-
-모든 사전 요구 사항이 준비되었다면, [Part 1: 인프라 구성](01-infrastructure-setup-lab.md)부터 시작하세요.
-
-```bash
-# 실습 디렉토리 생성
-mkdir -p ~/observability-lab
-cd ~/observability-lab
-
-# Git 저장소 클론 (실습 코드)
-git clone https://github.com/example/observability-lab-code.git
-cd observability-lab-code
-```
-
-> **Tip**: 각 Part는 이전 Part의 결과물을 기반으로 진행됩니다. 순서대로 진행하는 것을 권장합니다.
+로컬 native/SDK/schema/브라우저 검증과 실제 AWS 실습 결과를 구분합니다. 생성한 리소스·IAM attachment·snapshot·DNS·LB/PVC를 inventory에 기록하고 Part6의 의존성 순서로 정리합니다. 실패를 모두 무시하거나 cluster부터 지워 리소스를 남기지 않습니다.

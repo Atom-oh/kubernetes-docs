@@ -1,0 +1,38 @@
+{{- if .Values.rollouts.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: lab-payment-health
+spec:
+  args:
+  - name: revision
+  metrics:
+  - name: enough-canary-traffic
+    interval: 20s
+    count: 3
+    failureLimit: 1
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 5
+    provider:
+      prometheus:
+        address: {{ .Values.rollouts.prometheusURL | quote }}
+        query: |
+          sum(increase(lab_http_requests_total{service="payment-service",route="POST /payments",revision="{{ "{{args.revision}}" }}"}[2m]))
+  - name: canary-success-ratio
+    interval: 20s
+    count: 3
+    failureLimit: 1
+    successCondition: len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >= 0.99
+    provider:
+      prometheus:
+        address: {{ .Values.rollouts.prometheusURL | quote }}
+        query: |
+          1 - (
+            (
+              sum(rate(lab_http_requests_total{service="payment-service",route="POST /payments",revision="{{ "{{args.revision}}" }}",status=~"5.."}[2m]))
+              or
+              (0 * sum(rate(lab_http_requests_total{service="payment-service",route="POST /payments",revision="{{ "{{args.revision}}" }}"}[2m])))
+            )
+            /
+            (sum(rate(lab_http_requests_total{service="payment-service",route="POST /payments",revision="{{ "{{args.revision}}" }}"}[2m])) > 0)
+          )
+{{- end }}

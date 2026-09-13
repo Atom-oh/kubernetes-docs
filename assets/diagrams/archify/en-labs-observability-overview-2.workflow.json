@@ -7,37 +7,6 @@
     "output": "public/archmaps/en-labs-observability-overview-2.html",
     "animation": "trace",
     "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "foundation",
-        "label": "Foundation (Parts 1-2)",
-        "focus": [
-          "p1",
-          "p2"
-        ],
-        "note": "Provision two EKS clusters and the AWS managed services, then deploy the OTel, Prometheus, Loki, Tempo, and Grafana stack."
-      },
-      {
-        "id": "workload",
-        "label": "Deploy and scale (Parts 3-4)",
-        "focus": [
-          "p2",
-          "p3",
-          "p4"
-        ],
-        "note": "Roll out the MSA as a canary with ArgoCD and Argo Rollouts, then drive k6 load to verify KEDA and Karpenter scaling."
-      },
-      {
-        "id": "operate",
-        "label": "Alerting and tracing (Parts 5-6)",
-        "focus": [
-          "p4",
-          "p5",
-          "p6"
-        ],
-        "note": "Handle alerts with Alertmanager, Grafana OnCall, and CloudWatch Investigations, then analyze traces with Tempo and TraceQL."
-      }
-    ],
     "legend": {
       "entries": {
         "cloud": {
@@ -74,7 +43,7 @@
       "type": "cloud",
       "label": "Infrastructure Setup",
       "sublabel": "2 EKS · AWS managed services",
-      "tag": "Part 1 · 60 min",
+      "tag": "Part 1",
       "width": 168
     },
     {
@@ -84,7 +53,7 @@
       "type": "backend",
       "label": "Observability Stack",
       "sublabel": "OTel · Prometheus · Grafana",
-      "tag": "Part 2 · 90 min",
+      "tag": "Part 2",
       "width": 168
     },
     {
@@ -93,8 +62,8 @@
       "col": 2,
       "type": "frontend",
       "label": "MSA Deploy & Canary",
-      "sublabel": "ArgoCD · Argo Rollouts · OTel",
-      "tag": "Part 3 · 60 min",
+      "sublabel": "Python / Rollouts / OTel",
+      "tag": "Part 3",
       "width": 168
     },
     {
@@ -104,7 +73,7 @@
       "type": "backend",
       "label": "Load Test & Scaling",
       "sublabel": "k6 · KEDA · Karpenter",
-      "tag": "Part 4 · 45 min",
+      "tag": "Part 4",
       "width": 168
     },
     {
@@ -113,8 +82,8 @@
       "col": 4,
       "type": "backend",
       "label": "Alerting & AIOps",
-      "sublabel": "Alertmanager · CW Investigations",
-      "tag": "Part 5 · 60 min",
+      "sublabel": "SNS / diagnostic reporter",
+      "tag": "Part 5",
       "width": 168
     },
     {
@@ -124,7 +93,7 @@
       "type": "backend",
       "label": "Distributed Tracing",
       "sublabel": "Tempo · TraceQL · correlation",
-      "tag": "Part 6 · 45 min",
+      "tag": "Part 6",
       "width": 168
     }
   ],

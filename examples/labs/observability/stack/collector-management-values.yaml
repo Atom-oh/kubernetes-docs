@@ -1,0 +1,97 @@
+fullnameOverride: lab-collector
+mode: deployment
+replicaCount: 1
+image:
+  repository: otel/opentelemetry-collector-contrib
+  tag: 0.160.0
+command:
+  name: otelcol-contrib
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: '1'
+    memory: 512Mi
+ports:
+  otlp:
+    enabled: false
+  otlp-http:
+    enabled: true
+    hostPort: null
+  jaeger-compact:
+    enabled: false
+  jaeger-thrift:
+    enabled: false
+  jaeger-grpc:
+    enabled: false
+  zipkin:
+    enabled: false
+serviceAccount:
+  automountServiceAccountToken: false
+  name: lab-collector
+extraVolumes:
+- name: collector-tls
+  secret:
+    secretName: lab-collector-tls
+extraVolumeMounts:
+- name: collector-tls
+  mountPath: /run/collector-tls
+  readOnly: true
+config:
+  receivers:
+    jaeger: null
+    zipkin: null
+    prometheus: null
+    otlp:
+      protocols:
+        grpc: null
+        http:
+          endpoint: 0.0.0.0:4318
+          tls:
+            cert_file: /run/collector-tls/tls.crt
+            key_file: /run/collector-tls/tls.key
+            client_ca_file: /run/collector-tls/ca.crt
+  processors:
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 384
+      spike_limit_mib: 96
+      limit_percentage: null
+      spike_limit_percentage: null
+    batch:
+      send_batch_size: 512
+      timeout: 1s
+  exporters:
+    debug: null
+    otlp_http/tempo:
+      endpoint: http://lab-tempo.monitoring.svc.cluster.local:4318
+      sending_queue:
+        enabled: true
+        queue_size: 1000
+    otlp_http/loki:
+      endpoint: http://lab-loki.monitoring.svc.cluster.local:3100/otlp
+      sending_queue:
+        enabled: true
+        queue_size: 1000
+  service:
+    pipelines:
+      metrics: null
+      traces:
+        receivers:
+        - otlp
+        processors:
+        - memory_limiter
+        - batch
+        exporters:
+        - otlp_http/tempo
+      logs:
+        receivers:
+        - otlp
+        processors:
+        - memory_limiter
+        - batch
+        exporters:
+        - otlp_http/loki
+podLabels:
+  lab-role: collector-management

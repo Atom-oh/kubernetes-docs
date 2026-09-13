@@ -1,0 +1,37 @@
+{{- if .Values.scaling.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: lab-sqs-auth
+spec:
+  podIdentity:
+    provider: aws
+    identityOwner: keda
+{{- range $role, $url := dict "notification" .Values.notificationQueueURL "analytics" .Values.analyticsQueueURL }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ $role }}
+spec:
+  scaleTargetRef:
+    name: {{ $role }}
+  minReplicaCount: 0
+  maxReplicaCount: {{ $.Values.scaling.maxReplicas }}
+  pollingInterval: 15
+  cooldownPeriod: 60
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 60
+  triggers:
+  - type: aws-sqs-queue
+    authenticationRef:
+      name: lab-sqs-auth
+    metadata:
+      queueURL: {{ required "Both consumer queue URLs are required" $url | quote }}
+      queueLength: "5"
+      awsRegion: {{ $.Values.region | quote }}
+{{- end }}
+{{- end }}

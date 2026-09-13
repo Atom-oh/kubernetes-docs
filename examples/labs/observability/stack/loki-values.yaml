@@ -1,0 +1,61 @@
+fullnameOverride: lab-loki
+deploymentMode: Monolithic
+loki:
+  image:
+    tag: 3.7.7
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+  schemaConfig:
+    configs:
+    - from: '2024-01-01'
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+  limits_config:
+    allow_structured_metadata: true
+    retention_period: 24h
+  compactor:
+    retention_enabled: true
+    delete_request_store: filesystem
+  analytics:
+    reporting_enabled: false
+  podLabels:
+    lab-role: loki
+singleBinary:
+  replicas: 1
+  sidecar: false
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: '1'
+      memory: 1Gi
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: gp3
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+gateway:
+  enabled: false
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+lokiCanary:
+  enabled: false
+test:
+  enabled: false
+minio:
+  enabled: false

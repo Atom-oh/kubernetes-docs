@@ -1,0 +1,159 @@
+fullnameOverride: lab-agent
+mode: daemonset
+service:
+  enabled: true
+  type: ClusterIP
+image:
+  repository: otel/opentelemetry-collector-contrib
+  tag: 0.160.0
+command:
+  name: otelcol-contrib
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: '1'
+    memory: 512Mi
+ports:
+  otlp:
+    enabled: false
+  otlp-http:
+    enabled: true
+    hostPort: null
+  jaeger-compact:
+    enabled: false
+  jaeger-thrift:
+    enabled: false
+  jaeger-grpc:
+    enabled: false
+  zipkin:
+    enabled: false
+serviceAccount:
+  automountServiceAccountToken: true
+extraVolumes:
+- name: collector-tls
+  secret:
+    secretName: lab-collector-tls
+- name: pod-logs
+  hostPath:
+    path: /var/log/pods
+    type: Directory
+extraVolumeMounts:
+- name: collector-tls
+  mountPath: /run/collector-tls
+  readOnly: true
+- name: pod-logs
+  mountPath: /var/log/pods
+  readOnly: true
+config:
+  receivers:
+    jaeger: null
+    zipkin: null
+    prometheus: null
+    otlp:
+      protocols:
+        grpc: null
+        http:
+          endpoint: 0.0.0.0:4318
+    file_log:
+      include:
+      - /var/log/pods/msa_*/*/*.log
+      start_at: end
+      include_file_path: true
+      operators:
+      - id: container-parser
+        type: container
+      - type: json_parser
+        parse_from: body
+        parse_to: body
+        on_error: send
+  processors:
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 384
+      spike_limit_mib: 96
+      limit_percentage: null
+      spike_limit_percentage: null
+    batch:
+      send_batch_size: 512
+      timeout: 1s
+    k8s_attributes:
+      auth_type: serviceAccount
+      extract:
+        metadata:
+        - k8s.namespace.name
+        - k8s.pod.name
+        - k8s.pod.uid
+      pod_association:
+      - sources:
+        - from: resource_attribute
+          name: k8s.pod.uid
+      - sources:
+        - from: connection
+    transform/lab:
+      error_mode: ignore
+      log_statements:
+      - context: log
+        statements:
+        - set(resource.attributes["service.name"], body["service"]) where IsMap(body) and body["service"] != nil
+        - set(severity_text, body["level"]) where IsMap(body) and body["level"] != nil
+  exporters:
+    debug: null
+    otlp_http/management:
+      endpoint: ${env:MANAGEMENT_OTLP_ENDPOINT}
+      tls:
+        ca_file: /run/collector-tls/ca.crt
+        cert_file: /run/collector-tls/tls.crt
+        key_file: /run/collector-tls/tls.key
+      sending_queue:
+        enabled: true
+        queue_size: 1000
+  service:
+    pipelines:
+      metrics: null
+      traces:
+        receivers:
+        - otlp
+        processors:
+        - memory_limiter
+        - k8s_attributes
+        - batch
+        exporters:
+        - otlp_http/management
+      logs:
+        receivers:
+        - file_log
+        processors:
+        - memory_limiter
+        - k8s_attributes
+        - transform/lab
+        - batch
+        exporters:
+        - otlp_http/management
+clusterRole:
+  create: true
+  rules:
+  - apiGroups:
+    - ''
+    resources:
+    - pods
+    - namespaces
+    verbs:
+    - get
+    - list
+    - watch
+extraEnvs:
+- name: MANAGEMENT_OTLP_ENDPOINT
+  value: https://REPLACE_WITH_ROUTABLE_COLLECTOR_DNS:4318
+securityContext:
+  runAsUser: 0
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+    - ALL
+  seccompProfile:
+    type: RuntimeDefault
+podLabels:
+  lab-role: collector-service

@@ -2,383 +2,230 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "MSA Service Map",
-    "locale": "en",
-    "output": "en-labs-observability-03-msa-deployment-lab-10.html",
+    "title": "Synthetic application and event processing",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1240,
-      620
+      1340,
+      730
     ],
-    "views": [
-      {
-        "id": "request-path",
-        "label": "Synchronous request path",
-        "focus": [
-          "client",
-          "gateway",
-          "order",
-          "payment",
-          "aurora"
-        ],
-        "note": "Client requests are routed through the API Gateway to the order and payment services, both of which write to Aurora PostgreSQL."
-      },
-      {
-        "id": "event-path",
-        "label": "Asynchronous event path",
-        "focus": [
-          "order",
-          "sqs",
-          "notification",
-          "payment",
-          "sns"
-        ],
-        "note": "order-service publishes to SQS and payment-service to SNS; notification-service consumes the SQS messages."
-      },
-      {
-        "id": "batch-path",
-        "label": "Batch analytics",
-        "focus": [
-          "mwaa",
-          "analytics"
-        ],
-        "note": "Amazon MWAA triggers analytics-batch on a schedule."
-      },
-      {
-        "id": "telemetry-path",
-        "label": "Telemetry path",
-        "focus": [
-          "order",
-          "payment",
-          "notification",
-          "otel",
-          "backends"
-        ],
-        "note": "Each service's OTel SDK exports traces to the OpenTelemetry Agent, which forwards them to the observability backends."
-      }
-    ]
+    "locale": "en"
   },
   "components": [
     {
-      "id": "client",
-      "type": "external",
-      "label": "Client",
-      "sublabel": "User requests",
-      "pos": [
-        240,
-        180
-      ],
-      "size": [
-        160,
-        60
-      ]
-    },
-    {
       "id": "gateway",
-      "type": "backend",
-      "label": "API Gateway",
-      "sublabel": "Go / Gin :8080",
-      "pos": [
-        240,
-        320
-      ],
-      "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "payment",
-      "type": "backend",
-      "label": "Payment Service",
-      "sublabel": "Java / Spring Boot :8080",
+      "type": "frontend",
+      "label": "api-gateway",
+      "sublabel": "Python / HTTP :8080",
       "pos": [
         40,
-        320
+        170
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ]
     },
     {
       "id": "order",
       "type": "backend",
-      "label": "Order Service",
-      "sublabel": "Python / FastAPI :8000",
+      "label": "order-service",
+      "sublabel": "Python / HTTP :8080",
       "pos": [
-        440,
-        320
+        310,
+        70
       ],
       "size": [
-        160,
-        60
+        210,
+        64
       ]
     },
     {
-      "id": "notification",
+      "id": "payment",
       "type": "backend",
-      "label": "Notification Service",
-      "sublabel": "Node.js / Express :3000",
+      "label": "payment-service",
+      "sublabel": "Python / Rollout :8080",
       "pos": [
-        640,
-        320
+        310,
+        300
       ],
       "size": [
-        160,
-        60
+        210,
+        64
       ]
     },
     {
-      "id": "analytics",
-      "type": "backend",
-      "label": "Analytics Batch",
-      "sublabel": "Python / Pandas",
+      "id": "db",
+      "type": "database",
+      "label": "Aurora PostgreSQL",
+      "sublabel": "order/payment + transactional outbox",
       "pos": [
-        840,
-        320
+        620,
+        70
       ],
       "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "otel",
-      "type": "backend",
-      "label": "OpenTelemetry Agent",
-      "sublabel": "Workload telemetry collection",
-      "pos": [
-        440,
-        40
-      ],
-      "size": [
-        360,
-        60
+        270,
+        64
       ]
     },
     {
       "id": "sns",
       "type": "messagebus",
-      "label": "SNS",
-      "sublabel": "Payment events",
+      "label": "SNS event topic",
+      "sublabel": "publish after DB commit",
       "pos": [
-        40,
-        500
+        620,
+        300
       ],
       "size": [
-        160,
-        60
+        230,
+        64
       ]
     },
     {
-      "id": "aurora",
-      "type": "database",
-      "label": "Aurora PostgreSQL",
-      "sublabel": "Order and payment data",
-      "pos": [
-        440,
-        500
-      ],
-      "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "sqs",
+      "id": "q1",
       "type": "messagebus",
-      "label": "SQS",
-      "sublabel": "Order events",
+      "label": "Notification SQS",
+      "sublabel": "separate queue + DLQ",
       "pos": [
-        640,
-        500
+        1000,
+        100
       ],
       "size": [
-        160,
-        60
+        240,
+        64
       ]
     },
     {
-      "id": "mwaa",
-      "type": "cloud",
-      "label": "Amazon MWAA",
-      "sublabel": "Scheduled analytics workflow",
+      "id": "q2",
+      "type": "messagebus",
+      "label": "Analytics SQS",
+      "sublabel": "separate queue + DLQ",
       "pos": [
-        840,
-        500
+        1000,
+        330
       ],
       "size": [
-        160,
-        60
+        240,
+        64
       ]
     },
     {
-      "id": "backends",
-      "type": "cloud",
-      "label": "Observability Backends",
-      "sublabel": "Metrics / Logs / Traces",
+      "id": "notify",
+      "type": "backend",
+      "label": "notification",
+      "sublabel": "dedup / synthetic result",
       "pos": [
-        1040,
-        500
+        1000,
+        550
       ],
       "size": [
-        160,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "EKS Cluster",
-      "wraps": [
-        "gateway",
-        "payment",
-        "order",
-        "notification",
-        "analytics",
-        "otel"
+        240,
+        64
       ]
     },
     {
-      "kind": "region",
-      "label": "AWS Services",
-      "wraps": [
-        "sns",
-        "aurora",
-        "sqs",
-        "mwaa",
-        "backends"
+      "id": "analytics",
+      "type": "backend",
+      "label": "analytics",
+      "sublabel": "independent dedup/result",
+      "pos": [
+        620,
+        550
+      ],
+      "size": [
+        250,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "client-gateway",
-      "from": "client",
-      "to": "gateway",
-      "label": "HTTP",
-      "variant": "emphasis",
-      "labelAt": [
-        348,
-        280
-      ]
-    },
-    {
-      "id": "gateway-payment",
-      "from": "gateway",
-      "to": "payment",
-      "variant": "emphasis"
-    },
-    {
-      "id": "gateway-order",
+      "id": "e0",
       "from": "gateway",
       "to": "order",
+      "label": "POST/GET orders",
       "variant": "emphasis"
     },
     {
-      "id": "payment-aurora",
-      "from": "payment",
-      "to": "aurora"
+      "id": "e1",
+      "from": "gateway",
+      "to": "payment",
+      "label": "POST payments",
+      "variant": "emphasis"
     },
     {
-      "id": "order-aurora",
+      "id": "e2",
       "from": "order",
-      "to": "aurora",
-      "label": "SQL",
-      "labelAt": [
-        548,
-        440
-      ]
+      "to": "db",
+      "label": "SQL + outbox"
     },
     {
-      "id": "payment-sns",
+      "id": "e3",
       "from": "payment",
-      "to": "sns",
-      "label": "publish",
-      "labelAt": [
-        78,
-        440
-      ]
+      "to": "db",
+      "label": "SQL + outbox",
+      "fromSide": "right",
+      "toSide": "bottom"
     },
     {
-      "id": "order-sqs",
-      "from": "order",
-      "to": "sqs",
-      "label": "publish"
+      "id": "e6",
+      "from": "sns",
+      "to": "q1",
+      "label": "fanout"
     },
     {
-      "id": "sqs-notification",
-      "from": "sqs",
-      "to": "notification",
-      "label": "consume"
+      "id": "e7",
+      "from": "sns",
+      "to": "q2",
+      "label": "fanout"
     },
     {
-      "id": "mwaa-analytics",
-      "from": "mwaa",
+      "id": "e8",
+      "from": "q1",
+      "to": "notify",
+      "label": "consume",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "e9",
+      "from": "q2",
       "to": "analytics",
-      "label": "scheduled trigger"
+      "label": "consume",
+      "fromSide": "bottom",
+      "toSide": "right"
     },
     {
-      "id": "payment-otel",
-      "from": "payment",
-      "to": "otel",
-      "variant": "dashed"
-    },
-    {
-      "id": "order-otel",
-      "from": "order",
-      "to": "otel",
+      "id": "outbox-publish",
+      "from": "db",
+      "to": "sns",
+      "label": "publisher retries outbox",
       "variant": "dashed",
-      "fromSide": "top",
-      "toSide": "bottom"
-    },
-    {
-      "id": "notification-otel",
-      "from": "notification",
-      "to": "otel",
-      "variant": "dashed",
-      "fromSide": "top",
-      "toSide": "bottom"
-    },
-    {
-      "id": "otel-backends",
-      "from": "otel",
-      "to": "backends",
-      "label": "OTLP",
-      "variant": "dashed"
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        800,
+        230
+      ]
     }
   ],
+  "boundaries": [],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Service composition",
+      "title": "Exact semantics",
       "items": [
-        "api-gateway: Go / Gin, request routing and authentication (manual SDK)",
-        "order-service: Python / FastAPI, order CRUD",
-        "payment-service: Java / Spring Boot, payment processing",
-        "notification-service: Node.js / Express, notification delivery",
-        "analytics-batch: Python / Pandas, batch analytics"
-      ]
-    },
-    {
-      "dot": "violet",
-      "title": "Instrumentation",
-      "items": [
-        "order/analytics: opentelemetry-instrument auto-instrumentation",
-        "payment: javaagent auto-instrumentation",
-        "notification: @opentelemetry/auto-instrumentations-node"
+        "Order and outbox share one DB transaction",
+        "SNS publication and DB mark are not atomic"
       ]
     },
     {
       "dot": "amber",
-      "title": "Asynchronous integration",
+      "title": "Synthetic effects",
       "items": [
-        "order-service -> SQS order events -> consumed by notification-service",
-        "payment-service publishes payment events to SNS",
-        "MWAA schedule triggers analytics-batch"
+        "Each consumer deduplicates event IDs",
+        "No real card payment, email or SMS"
       ]
     }
   ]

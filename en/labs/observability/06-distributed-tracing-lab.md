@@ -152,7 +152,7 @@ The current Tempo parser validated 12 accepted queries and rejected three previo
 - [Service graph metrics](https://grafana.com/docs/tempo/latest/metrics-from-traces/service_graphs/)
 - [OTel HTTP spans](https://opentelemetry.io/docs/specs/semconv/http/http-spans/)
 - [OTel database spans](https://opentelemetry.io/docs/specs/semconv/database/database-spans/)
-- [Loki derived fields](https://grafana.com/docs/grafana/latest/datasources/loki/configure-loki-data-source/)
+- [Loki derived fields](https://grafana.com/docs/grafana/latest/datasources/loki/configure/)
 - [Tempo guide](../../observability/tracing/01-tempo.md)
 - [Loki guide](../../observability/logging/01-loki.md)
 - [Series index](./README.md)

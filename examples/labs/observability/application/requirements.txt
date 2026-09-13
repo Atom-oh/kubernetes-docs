@@ -1,0 +1,9 @@
+fastapi==0.141.1
+uvicorn==0.52.4
+SQLAlchemy==2.0.52
+psycopg[binary]==3.3.5
+opentelemetry-sdk==1.44.0
+opentelemetry-exporter-otlp-proto-http==1.44.0
+prometheus-client==0.26.0
+httpx==0.28.1
+boto3==1.43.93

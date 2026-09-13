@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lab-prometheus-probe
+  namespace: monitoring
+data:
+  http.yaml: "tls_config:\n  ca_file: /etc/prometheus/secrets/lab-prometheus-client/ca.crt\n  cert_file: /etc/prometheus/secrets/lab-prometheus-client/tls.crt\n\
+    \  key_file: /etc/prometheus/secrets/lab-prometheus-client/tls.key\n  server_name: lab-monitoring-prometheus.monitoring.svc.cluster.local\n"

@@ -2,61 +2,24 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "MSA Deployment Architecture",
-    "output": "en-labs-observability-03-msa-deployment-lab-0.html",
+    "title": "Service-cluster deployment ownership",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1290,
-      700
-    ],
-    "views": [
-      {
-        "id": "sync-path",
-        "label": "Synchronous request path",
-        "focus": [
-          "gateway",
-          "order",
-          "payment",
-          "aurora"
-        ],
-        "note": "The API Gateway routes requests to the Order and Payment services, both of which write to Aurora PostgreSQL."
-      },
-      {
-        "id": "async-events",
-        "label": "Asynchronous events",
-        "focus": [
-          "order",
-          "sqs",
-          "notification",
-          "payment",
-          "sns"
-        ],
-        "note": "order-service publishes to SQS, payment-service publishes to SNS, and notification-service consumes the SQS queue."
-      },
-      {
-        "id": "batch",
-        "label": "Analytics batch",
-        "focus": [
-          "mwaa",
-          "analytics",
-          "aurora"
-        ],
-        "note": "The MWAA-triggered analytics-batch writes aggregated results back to Aurora PostgreSQL."
-      }
+      1340,
+      730
     ],
     "locale": "en"
   },
   "components": [
     {
       "id": "gateway",
-      "type": "backend",
-      "label": "API Gateway",
-      "sublabel": "Go / Gin · :8080",
-      "tag": "api-gateway",
+      "type": "frontend",
+      "label": "api-gateway",
+      "sublabel": "Python / HTTP :8080",
       "pos": [
-        30,
-        235
+        40,
+        170
       ],
       "size": [
         190,
@@ -66,231 +29,203 @@
     {
       "id": "order",
       "type": "backend",
-      "label": "Order Service",
-      "sublabel": "Python / FastAPI · :8000",
-      "tag": "order-service",
+      "label": "order-service",
+      "sublabel": "Python / HTTP :8080",
       "pos": [
-        300,
-        170
+        310,
+        70
       ],
       "size": [
-        190,
+        210,
         64
       ]
     },
     {
       "id": "payment",
       "type": "backend",
-      "label": "Payment Service",
-      "sublabel": "Java / Spring Boot · :8080",
-      "tag": "payment-service",
+      "label": "payment-service",
+      "sublabel": "Python / Rollout :8080",
       "pos": [
-        300,
+        310,
         300
       ],
       "size": [
-        190,
+        210,
         64
       ]
     },
     {
-      "id": "notification",
-      "type": "backend",
-      "label": "Notification Service",
-      "sublabel": "Node.js / Express · :3000",
-      "tag": "notification-service",
-      "pos": [
-        300,
-        40
-      ],
-      "size": [
-        190,
-        64
-      ]
-    },
-    {
-      "id": "analytics",
-      "type": "backend",
-      "label": "Analytics Batch",
-      "sublabel": "Python / Pandas",
-      "tag": "analytics-batch",
-      "pos": [
-        300,
-        560
-      ],
-      "size": [
-        190,
-        64
-      ]
-    },
-    {
-      "id": "aurora",
+      "id": "db",
       "type": "database",
       "label": "Aurora PostgreSQL",
-      "sublabel": "Order, payment and analytics data",
+      "sublabel": "order/payment + transactional outbox",
       "pos": [
-        1040,
-        170
+        620,
+        70
       ],
       "size": [
-        190,
-        194
-      ]
-    },
-    {
-      "id": "sqs",
-      "type": "messagebus",
-      "label": "SQS Queue",
-      "sublabel": "Order events",
-      "pos": [
-        780,
-        40
-      ],
-      "size": [
-        190,
+        270,
         64
       ]
     },
     {
       "id": "sns",
       "type": "messagebus",
-      "label": "SNS Topic",
-      "sublabel": "Payment result notifications",
+      "label": "SNS event topic",
+      "sublabel": "publish after DB commit",
       "pos": [
-        780,
-        430
+        620,
+        300
       ],
       "size": [
-        190,
+        230,
         64
       ]
     },
     {
-      "id": "mwaa",
-      "type": "cloud",
-      "label": "MWAA",
-      "sublabel": "Managed Airflow",
+      "id": "q1",
+      "type": "messagebus",
+      "label": "Notification SQS",
+      "sublabel": "separate queue + DLQ",
       "pos": [
-        780,
-        560
+        1000,
+        100
       ],
       "size": [
-        190,
+        240,
         64
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Service Cluster (EKS)",
-      "wraps": [
-        "gateway",
-        "order",
-        "payment",
-        "notification",
-        "analytics"
       ]
     },
     {
-      "kind": "region",
-      "label": "AWS Managed Services",
-      "wraps": [
-        "aurora",
-        "sqs",
-        "sns",
-        "mwaa"
+      "id": "q2",
+      "type": "messagebus",
+      "label": "Analytics SQS",
+      "sublabel": "separate queue + DLQ",
+      "pos": [
+        1000,
+        330
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "notify",
+      "type": "backend",
+      "label": "notification",
+      "sublabel": "dedup / synthetic result",
+      "pos": [
+        1000,
+        550
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "analytics",
+      "type": "backend",
+      "label": "analytics",
+      "sublabel": "independent dedup/result",
+      "pos": [
+        620,
+        550
+      ],
+      "size": [
+        250,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "gw-order",
+      "id": "e0",
       "from": "gateway",
       "to": "order",
-      "label": "route orders",
+      "label": "POST/GET orders",
       "variant": "emphasis"
     },
     {
-      "id": "gw-payment",
+      "id": "e1",
       "from": "gateway",
       "to": "payment",
-      "label": "route payments",
+      "label": "POST payments",
       "variant": "emphasis"
     },
     {
-      "id": "order-aurora",
+      "id": "e2",
       "from": "order",
-      "to": "aurora",
-      "label": "INSERT"
+      "to": "db",
+      "label": "SQL + outbox"
     },
     {
-      "id": "payment-aurora",
+      "id": "e3",
       "from": "payment",
-      "to": "aurora",
-      "label": "INSERT"
-    },
-    {
-      "id": "order-sqs",
-      "from": "order",
-      "to": "sqs",
-      "label": "publish event",
-      "variant": "dashed"
-    },
-    {
-      "id": "sqs-notification",
-      "from": "sqs",
-      "to": "notification",
-      "label": "consume",
-      "variant": "dashed"
-    },
-    {
-      "id": "payment-sns",
-      "from": "payment",
-      "to": "sns",
-      "label": "publish payment result",
-      "variant": "dashed"
-    },
-    {
-      "id": "mwaa-analytics",
-      "from": "mwaa",
-      "to": "analytics",
-      "label": "trigger",
-      "variant": "dashed"
-    },
-    {
-      "id": "analytics-aurora",
-      "from": "analytics",
-      "to": "aurora",
-      "label": "write aggregates",
-      "fromSide": "top",
+      "to": "db",
+      "label": "SQL + outbox",
+      "fromSide": "right",
       "toSide": "bottom"
+    },
+    {
+      "id": "e6",
+      "from": "sns",
+      "to": "q1",
+      "label": "fanout"
+    },
+    {
+      "id": "e7",
+      "from": "sns",
+      "to": "q2",
+      "label": "fanout"
+    },
+    {
+      "id": "e8",
+      "from": "q1",
+      "to": "notify",
+      "label": "consume",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "e9",
+      "from": "q2",
+      "to": "analytics",
+      "label": "consume",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "outbox-publish",
+      "from": "db",
+      "to": "sns",
+      "label": "publisher retries outbox",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        800,
+        230
+      ]
     }
   ],
+  "boundaries": [],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Synchronous calls",
+      "title": "Single ownership",
       "items": [
-        "api-gateway validates the JWT, then routes to order-service and payment-service",
-        "Both services INSERT orders and payments into Aurora PostgreSQL"
-      ]
-    },
-    {
-      "dot": "violet",
-      "title": "Asynchronous events",
-      "items": [
-        "order-service → SQS → notification-service (email / SMS)",
-        "payment-service publishes payment results to an SNS Topic",
-        "KEDA scales notification-service on SQS queue depth"
+        "Only the Rollout manages payment-service",
+        "KEDA scales only the two queue consumers"
       ]
     },
     {
       "dot": "amber",
-      "title": "Cluster add-ons",
+      "title": "Telemetry and permissions",
       "items": [
-        "Karpenter NodePool provisions the nodes",
-        "Every service is instrumented with OpenTelemetry and exports to the otel-agent collector (api-gateway via the manual SDK)"
+        "service / route / status / revision",
+        "IRSA and runtime DB grants are scoped to the lab"
       ]
     }
   ]
