@@ -1,10 +1,12 @@
 # OpenTelemetry 测验
 
-测试你对 OpenTelemetry 的理解。
+> **最后更新**: September 13, 2026
+
+测试您对 OpenTelemetry 的理解。
 
 ---
 
-1. OpenTelemetry 支持哪三种信号？
+1. 本指南重点关注哪三种核心信号？
    - A) Logs、Metrics、Events
    - B) Traces、Metrics、Logs
    - C) Spans、Counters、Logs
@@ -16,7 +18,7 @@
 **答案：B) Traces、Metrics、Logs**
 
 **说明：**
-OpenTelemetry 对三种核心可观测性信号进行了标准化：Traces（分布式追踪）、Metrics 和 Logs。通过以集成方式收集并关联这三种信号，你可以实现全面的系统可观测性。
+本指南重点关注 traces、metrics 和 logs。OpenTelemetry 也在开发 profiling 支持；其稳定性因信号、组件和语言而异。关联需要兼容的资源属性和已传播的上下文，而不仅仅是启用三个 exporter。
 
 </details>
 
@@ -34,7 +36,7 @@ OpenTelemetry 对三种核心可观测性信号进行了标准化：Traces（分
 **答案：C) Receivers -> Processors -> Exporters**
 
 **说明：**
-OTEL Collector pipeline 的结构为 Receivers（数据接收）-> Processors（数据处理/转换）-> Exporters（后端传输）。Receivers 接受各种格式的数据，Processors 执行批处理、过滤、添加属性等操作，Exporters 将处理后的数据发送到目标位置。
+OTEL Collector pipeline 的结构为 Receivers（数据采集）-> Processors（数据处理/转换）-> Exporters（后端传输）。Receivers 以各种格式接收数据，Processors 执行批处理、过滤、添加属性等操作，Exporters 则将处理后的数据发送到目标位置。
 
 </details>
 
@@ -43,34 +45,34 @@ OTEL Collector pipeline 的结构为 Receivers（数据接收）-> Processors（
 3. 以下哪项不是 OpenTelemetry 中 auto-instrumentation 的优势？
    - A) 无需修改代码即可进行 instrumentation
    - B) 快速采用
-   - C) 细粒度的业务逻辑追踪
+   - C) 精细的业务逻辑 tracing
    - D) 一致的元数据
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 细粒度的业务逻辑追踪**
+**答案：C) 精细的业务逻辑 tracing**
 
 **说明：**
-auto-instrumentation 无需修改代码，即可自动追踪 HTTP、数据库和消息队列等常见库调用。但是，业务逻辑内的详细操作或自定义 Metrics 需要 manual instrumentation。通常会将 auto-instrumentation 和 manual instrumentation 结合使用。
+Auto-instrumentation 无需修改代码，即可自动追踪 HTTP、数据库和消息队列等常见库调用。但是，业务逻辑中的详细操作或自定义 metrics 需要 manual instrumentation。通常会同时使用 auto-instrumentation 和 manual instrumentation。
 
 </details>
 
 ---
 
-4. 在什么情况下，OTEL Collector 的 tail_sampling processor 比 head-based sampling 更具优势？
+4. 与基于 head 的 sampling 相比，Collector 的 tail_sampling processor 在何时有用？
    - A) 需要尽量减少资源使用时
-   - B) 不能遗漏出现错误或高延迟的请求时
+   - B) 已观测到的 span 状态和持续时间应影响 sampling 时
    - C) 实现需要简单时
-   - D) 需要快速作出采样决策时
+   - D) sampling 决策需要快速完成时
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 不能遗漏出现错误或高延迟的请求时**
+**答案：B) 已观测到的 span 状态和持续时间应影响 sampling 时**
 
 **说明：**
-tail-based sampling 会在请求完成后根据结果（错误、延迟等）决定是否采样。这可确保不会遗漏重要请求（发生错误、响应时间超标）。相比之下，head-based sampling 在请求开始时作出决策，因此实现更简单、资源使用更低，但可能遗漏重要请求。
+使用 Collector 0.160.0 默认的 `trace-complete` 策略时，决策计时器触发后会使用累积的 spans 进行评估；该名称并不能证明请求或 trace 已完成。已被 head sampling 丢弃的 spans 无法恢复。迟到的 spans、容量限制、重试和路由变更都会影响保留结果。有状态的 tail sampling 要求同一 trace 的 spans 到达同一个进行 sampling 的 Collector；它并不能保证保留每个错误或缓慢请求。
 
 </details>
 
@@ -88,13 +90,13 @@ tail-based sampling 会在请求完成后根据结果（错误、延迟等）决
 **答案：B) 标识生成 telemetry 数据的实体**
 
 **说明：**
-Resource 是用于标识生成 telemetry 数据的实体（Service、主机、容器等）的元数据。它包含 service.name、service.version、deployment.environment 等属性，以明确数据来源。此信息会自动附加到所有 telemetry 数据上。
+Resource 用于标识 telemetry 生产者，例如通过 `service.name`、`service.version` 和 `deployment.environment.name`。配置的 SDK/provider 会将其与发出的数据关联。Kubernetes、云或自定义身份属性需要适当的配置或 detector；并非所有属性都会被自动发现。
 
 </details>
 
 ---
 
-6. 在 EKS 中，哪种 OTEL Collector 部署模式最节省资源？
+6. 哪种 Kubernetes workload 通常会在每个符合条件的节点上运行一个 Collector？
    - A) Sidecar 模式
    - B) DaemonSet 模式
    - C) Gateway 模式
@@ -106,13 +108,13 @@ Resource 是用于标识生成 telemetry 数据的实体（Service、主机、�
 **答案：B) DaemonSet 模式**
 
 **说明：**
-DaemonSet 模式每个节点只运行一个 Collector，因此资源效率较高。Sidecar 模式会为每个 Pod 运行一个 Collector，资源开销较大。Gateway 模式是集中式的，但可能成为单点故障。通常建议采用 DaemonSet 进行收集、Gateway 进行处理和传输的组合方式。
+DaemonSet 会在每个符合条件的节点上放置一个 Pod；selector、taint 和调度约束决定节点是否符合条件。它不受 EKS Fargate 支持。Sidecar 与应用 Pod 共享，而 gateway 使用中央层，该层可能有多个副本。没有任何一种模式在所有情况下都最节省资源：应比较实际信号量、节点/Pod 数量、隔离性、可用性和有状态处理需求。DaemonSet 前的 ClusterIP Service 不会自动路由到本地节点。
 
 </details>
 
 ---
 
-7. 使用 OpenTelemetry Operator 进行 auto-instrumentation 注入时，应将哪个 annotation 应用于 Pod？
+7. 使用 OpenTelemetry Operator 进行 auto-instrumentation 注入时，会向 Pod 应用什么 annotation？
    - A) `otel.io/inject: "true"`
    - B) `instrumentation.opentelemetry.io/inject-java: "true"`
    - C) `opentelemetry.io/auto: "enabled"`
@@ -124,31 +126,31 @@ DaemonSet 模式每个节点只运行一个 Collector，因此资源效率较高
 **答案：B) instrumentation.opentelemetry.io/inject-java: "true"**
 
 **说明：**
-OpenTelemetry Operator 使用 `instrumentation.opentelemetry.io/inject-{language}` 格式的 annotations。特定语言的 annotations 包括 inject-java、inject-python、inject-nodejs、inject-dotnet、inject-go 等。instrumentation agents 会自动注入带有这些 annotations 的 Pods。
+Operator 使用特定于语言的注入 annotation。对于 Deployment，请将它们放在 `spec.template.metadata.annotations` 中，并引用正确 namespace 中现有的 Instrumentation resource。成功注入还需要可用的 webhook 以及受支持的语言/runtime 配置。现有的 Pods 不会被追溯性地 instrument；还必须单独检查 Go 和其他语言特定的前提条件。
 
 </details>
 
 ---
 
-8. OTEL Collector 配置中的 memory_limiter processor 有什么作用？
+8. memory_limiter processor 在 OTEL Collector 配置中的作用是什么？
    - A) 数据压缩
-   - B) 内存不足时防止数据丢失
+   - B) 当超过配置的内存阈值时施加 backpressure
    - C) 缓存管理
    - D) 网络缓冲区管理
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 内存不足时防止数据丢失**
+**答案：B) 当超过配置的内存阈值时施加 backpressure**
 
 **说明：**
-memory_limiter processor 会监控并限制 Collector 的内存使用量。当内存使用量达到 limit_mib 时，它会拒绝接收新数据，以防止因 OOM（Out of Memory）导致数据丢失。spike_limit_mib 为突发的内存峰值提供缓冲。
+`limit_mib` 是硬限制；软限制为 `limit_mib - spike_limit_mib`。超过软限制时，processor 会以可重试错误拒绝数据。超过硬限制时，它还会强制执行垃圾回收。上游的重试/backpressure 行为很重要：如果被拒绝的数据未被重试，则可能丢失。请在 container 内存限制之下留出余量；该 processor 既不是持久化存储，也不能绝对保证避免 OOM/数据丢失。
 
 </details>
 
 ---
 
-9. 在 OpenTelemetry 的 W3C Trace Context 标准中，以下哪项不是 traceparent header 的组成部分？
+9. 以下哪项不是 OpenTelemetry 的 W3C Trace Context 标准中 traceparent header 的组成部分？
    - A) version
    - B) trace-id
    - C) parent-id
@@ -160,14 +162,14 @@ memory_limiter processor 会监控并限制 Collector 的内存使用量。当�
 **答案：D) span-name**
 
 **说明：**
-W3C Trace Context 的 traceparent header 格式为 `version-trace_id-parent_id-trace_flags`。version 是格式版本，trace_id 是整个 trace 的标识符，parent_id 是父 Span ID，trace_flags 是采样标志。span-name 存储在 Span 内，不包含在传播 header 中。
+OpenTelemetry 使用 W3C Trace Context 标准。`traceparent` 字段包括 version、trace ID、parent ID 和 trace flags；parent ID 标识发送方 span，flags 包含一个 sampled bit。span name 不会携带在此 header 中。传播上下文本身不会记录或导出 span。
 
 </details>
 
 ---
 
-10. 如何在 OTEL Collector pipeline 中配置将数据发送到多个后端？
-    - A) 为每个后端运行独立的 Collector
+10. 如何在 OTEL Collector pipeline 中配置向多个 backend 发送数据？
+    - A) 为每个 backend 运行单独的 Collectors
     - B) 在 exporters 数组中列出多个 exporter
     - C) 在单个 exporter 中配置多个 endpoint
     - D) 使用 fanout processor
@@ -178,8 +180,10 @@ W3C Trace Context 的 traceparent header 格式为 `version-trace_id-parent_id-t
 **答案：B) 在 exporters 数组中列出多个 exporter**
 
 **说明：**
-在 OTEL Collector pipeline 配置中，在 exporters 数组中列出多个 exporter 会将相同的数据发送到所有后端。例如：`exporters: [otlp/tempo, awsxray, datadog]`。这使得可以通过单个 Collector 同时使用多个可观测性后端。
+列出支持 pipeline 信号的已配置 exporters，例如在包含这些组件的 distribution 中，为 traces 配置 `exporters: [otlp/tempo, awsxray, datadog]`。Fan-out 并非跨 backend 的原子事务：exporter 错误、队列、重试、转换和 backend 接受情况可能导致不同的保留结果。
 
 </details>
 
 ---
+
+[返回指南](../../../observability/tracing/03-opentelemetry.md)

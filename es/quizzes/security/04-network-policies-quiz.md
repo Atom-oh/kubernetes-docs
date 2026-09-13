@@ -1,23 +1,25 @@
-# Cuestionario de Network Policies
+# Cuestionario sobre Network Policies
 
-Este cuestionario evalúa tu comprensión de Kubernetes Network Policies, Cilium Network Policies y la microsegmentación.
+> **Última actualización**: September 13, 2026
+
+Este cuestionario evalúa tu comprensión de las Kubernetes Network Policies, las Cilium Network Policies y la microsegmentación.
 
 ## Preguntas del cuestionario
 
 ### 1. ¿Cuál es el comportamiento predeterminado de Kubernetes NetworkPolicy?
 
 A. Bloquear todo el tráfico
-B. Permitir todo el tráfico
+B. Sin aislamiento de NetworkPolicy en una dirección que no tenga una política selectora
 C. Bloquear solo el tráfico entrante
 D. Bloquear solo el tráfico saliente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Permitir todo el tráfico**
+**Respuesta: B. Sin aislamiento de NetworkPolicy en una dirección que no tenga una política selectora**
 
 **Explicación:**
-Sin NetworkPolicy, Kubernetes permite todo el tráfico entre Pods de forma predeterminada. Cuando creas una NetworkPolicy, habilita el comportamiento de "denegación predeterminada" para los Pods que coinciden con el podSelector de esa política.
+Evalúa ingress y egress por separado. La ausencia de una política selectora para una dirección significa que NetworkPolicy no la aísla; CNI/route/SG/NACL u otras políticas aún pueden bloquear la conectividad. Una política selectora solo de ingress tampoco aísla egress. Para el tráfico de Pod a Pod, tanto el egress del origen como el ingress del destino deben permitir la conexión.
 
 </details>
 
@@ -34,7 +36,7 @@ D. targetPods
 **Respuesta: B. podSelector**
 
 **Explicación:**
-El campo `spec.podSelector` en NetworkPolicy selecciona los Pods a los que se aplica la política:
+El campo `spec.podSelector` de NetworkPolicy selecciona los Pods a los que se aplica la política:
 ```yaml
 spec:
   podSelector:
@@ -42,11 +44,11 @@ spec:
       app: web
 ```
 
-Un podSelector vacío (`{}`) selecciona todos los Pods en el namespace.
+Un podSelector vacío (`{}`) selecciona todos los Pods del namespace.
 
 </details>
 
-### 3. ¿Qué campos definen las reglas de tráfico entrante y saliente en NetworkPolicy?
+### 3. ¿Qué campos definen las reglas entrantes y salientes en NetworkPolicy?
 
 A. inbound/outbound
 B. ingress/egress
@@ -78,39 +80,30 @@ spec:
 
 </details>
 
-### 4. ¿Dónde se definen las reglas HTTP L7 en CiliumNetworkPolicy?
+### 4. ¿Dónde se definen las reglas HTTP de L7 en CiliumNetworkPolicy?
 
 A. spec.http
-B. spec.ingress.toPorts.rules.http
+B. spec.ingress[].toPorts[].rules.http
 C. spec.rules.http
 D. spec.layer7.http
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. spec.ingress.toPorts.rules.http**
+**Respuesta: B. spec.ingress[].toPorts[].rules.http**
 
 **Explicación:**
-Las reglas L7 en CiliumNetworkPolicy se definen en la sección rules dentro de toPorts:
-```yaml
-spec:
-  ingress:
-    - toPorts:
-        - ports:
-            - port: "80"
-          rules:
-            http:
-              - method: GET
-                path: "/api/.*"
-```
+Las reglas HTTP están anidadas bajo `toPorts[].rules.http` de una regla de ingress (o bajo una regla de egress para el filtrado saliente). Requieren una ruta de proxy L7 compatible; TLS de extremo a extremo no se inspecciona automáticamente, y los encabezados role/API-key proporcionados por el usuario no constituyen autenticación. El modo de chaining de AWS VPC CNI de Cilium tiene limitaciones documentadas de L7.
 
 </details>
 
-### 5. ¿Cuál es la NetworkPolicy correcta para implementar una política de denegación predeterminada?
+<span id="_5-what-is-the-correct-networkpolicy-for-implementing-a-default-deny-policy"></span>
+
+### 5. ¿Qué crea una línea base de default-deny para todo el namespace en ambas direcciones?
 
 A. Especificar solo Ingress en policyTypes
 B. Establecer podSelector como vacío y especificar Ingress y Egress en policyTypes
-C. Dejar vacías las reglas ingress y egress
+C. Dejar vacías las reglas de ingress y egress
 D. Tanto B como C
 
 <details>
@@ -119,46 +112,32 @@ D. Tanto B como C
 **Respuesta: D. Tanto B como C**
 
 **Explicación:**
-Ejemplo de política de denegación predeterminada:
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-all
-spec:
-  podSelector: {}  # Select all Pods
-  policyTypes:
-    - Ingress
-    - Egress
-  # No ingress and egress rules = block all traffic
-```
-
-Un podSelector vacío selecciona todos los Pods y, sin reglas, ese tipo de tráfico se bloquea.
+Para una línea base para todo el namespace en **ambas direcciones**, combina B y C. Un selector vacío selecciona todos los Pods del namespace propio de la política, y los tipos explícitos Ingress/Egress sin permisos aíslan ambas direcciones. Otras Kubernetes NetworkPolicies selectoras pueden agregar permisos; una línea base no las reemplaza. También es posible una línea base solo de ingress cuando se pretende ese alcance más limitado.
 
 </details>
 
 ### 6. ¿Cuál es la característica de CiliumClusterwideNetworkPolicy?
 
-A. Se aplica solo a un namespace específico
-B. Se aplica en todo el cluster
+A. Requiere metadata.namespace para seleccionar su alcance
+B. Un recurso con alcance de cluster cuyo selector de endpoints controla sus destinos
 C. Controla solo el tráfico externo
-D. Soporta solo políticas L7
+D. Solo admite políticas L7
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Se aplica en todo el cluster**
+**Respuesta: B. Un recurso con alcance de cluster cuyo selector de endpoints controla sus destinos**
 
 **Explicación:**
-CiliumClusterwideNetworkPolicy se aplica en todo el cluster independientemente del namespace. Es útil para implementar reglas de seguridad comunes (por ejemplo, bloquear el acceso al servicio de metadatos desde todos los namespaces).
+CiliumClusterwideNetworkPolicy no tiene namespace. Su selector de endpoints puede cubrir varios namespaces o limitar explícitamente el destino a un namespace/aplicación. El alcance de cluster no significa que se seleccione cada endpoint, ni que las reglas amplias de permiso `cluster`/`world` sean default deny.
 
 </details>
 
-### 7. ¿Cómo permites todos los Pods desde un namespace específico en NetworkPolicy?
+### 7. ¿Cómo permites todos los Pods de un namespace específico en NetworkPolicy?
 
 A. Usar solo namespaceSelector
 B. Usar solo podSelector
-C. Combinar namespaceSelector con un podSelector vacío
+C. Combinar namespaceSelector con podSelector que requiera app=api
 D. Usar el campo namespace
 
 <details>
@@ -167,19 +146,11 @@ D. Usar el campo namespace
 **Respuesta: A. Usar solo namespaceSelector**
 
 **Explicación:**
-```yaml
-ingress:
-  - from:
-      - namespaceSelector:
-          matchLabels:
-            name: monitoring
-```
-
-Usar solo namespaceSelector permite todos los Pods desde ese namespace. Usar podSelector junto con namespaceSelector selecciona solo Pods específicos dentro de ese namespace.
+Usa `namespaceSelector.matchLabels.kubernetes.io/metadata.name: monitoring` para seleccionar todos los Pods de ese namespace. Agregar un podSelector **vacío** en el mismo peer también los seleccionaría a todos; la opción C, en cambio, restringe los Pods a `app=api`. En un peer, los selectores se combinan mediante AND; las entradas de peer separadas se combinan mediante OR. Una etiqueta `name` personalizada no se crea automáticamente.
 
 </details>
 
-### 8. ¿Qué campo define reglas de egress basadas en FQDN en CiliumNetworkPolicy?
+### 8. ¿Qué campo define las reglas de egress basadas en FQDN en CiliumNetworkPolicy?
 
 A. toFQDNs
 B. toDomains
@@ -192,17 +163,7 @@ D. toEndpoints
 **Respuesta: A. toFQDNs**
 
 **Explicación:**
-toFQDNs de CiliumNetworkPolicy permite tráfico de egress basado en nombres DNS:
-```yaml
-spec:
-  egress:
-    - toFQDNs:
-        - matchName: "api.example.com"
-        - matchPattern: "*.amazonaws.com"
-      toPorts:
-        - ports:
-            - port: "443"
-```
+`toFQDNs` utiliza IPs derivadas de DNS con las reglas de puerto especificadas. Permite la ruta real del resolvedor y las consultas DNS necesarias por separado, incluido TCP además de UDP53. La caché/TTL, los sufijos de búsqueda, las IP de destino compartidas y la autorización TLS/de aplicación siguen siendo relevantes. Una coincidencia de dominio no prueba la identidad del tenant de SaaS.
 
 </details>
 
@@ -219,11 +180,11 @@ D. Tráfico desde fuentes externas
 **Respuesta: B. Tráfico entre contenedores en el mismo Pod (localhost)**
 
 **Explicación:**
-NetworkPolicy se aplica al tráfico de red entre Pods. La comunicación localhost entre contenedores en el mismo Pod está fuera del alcance de NetworkPolicy. Además, los Pods que usan hostNetwork del node tienen algunas limitaciones.
+Los contenedores de un Pod comparten el namespace de red; su comunicación mediante localhost queda fuera de la aplicación ordinaria de Kubernetes NetworkPolicy. El manejo de Node/hostNetwork y los protocolos que no son TCP/UDP/SCTP tienen límites específicos de la implementación. No infieras un aislamiento completo del host a partir de una política de Pod.
 
 </details>
 
-### 10. ¿Cuál es la ventaja de la política basada en Identity de Cilium?
+### 10. ¿Cuál es la ventaja de la política basada en identidad de Cilium?
 
 A. No se ve afectada por cambios de dirección IP
 B. Mayor velocidad de procesamiento
@@ -236,11 +197,11 @@ D. No requiere búsqueda DNS
 **Respuesta: A. No se ve afectada por cambios de dirección IP**
 
 **Explicación:**
-Cilium Identity se genera en función de las etiquetas del Pod. Aunque un Pod se reinicie y su IP cambie, mantiene la misma Identity si tiene las mismas etiquetas. Esto supera las limitaciones de las políticas basadas en IP.
+La política de endpoint basada en etiquetas evita codificar de forma fija IPs transitorias de Pods. El datapath asigna los endpoints actuales a identidades de seguridad según sus conjuntos de etiquetas relevantes. Una identidad numérica puede reasignarse y no es un identificador permanente de aplicación; aún se deben considerar los cambios de etiquetas, el contexto de namespace/cluster y la propagación.
 
 </details>
 
-### 11. ¿Cuál es la política de red correcta para el nivel backend en una arquitectura de 3 niveles?
+### 11. ¿Cuál es la política de red correcta para el nivel de backend en una arquitectura de 3 niveles?
 
 A. Permitir todo el tráfico
 B. Permitir ingress solo desde frontend
@@ -253,11 +214,7 @@ D. Permitir egress solo hacia database
 **Respuesta: C. Permitir ingress desde frontend y permitir egress hacia database**
 
 **Explicación:**
-En la microsegmentación de 3 niveles, para el backend:
-- **Ingress**: Permitir solo desde el nivel frontend
-- **Egress**: Permitir solo hacia el nivel database
-
-Esto sigue el principio de privilegio mínimo y controla claramente el flujo de tráfico entre niveles.
+C describe la ruta de aplicación del backend: ingress desde frontend y egress hacia database en los puertos revisados. Permite también el egress de frontend y el ingress de database, además de las rutas DNS/health/monitoring elegidas cuando sea necesario. De lo contrario, una política default-deny en el otro endpoint aún puede bloquear la conexión. El tráfico de retorno de una conexión permitida se permite implícitamente.
 
 </details>
 
@@ -274,17 +231,10 @@ D. excludeCIDR
 **Respuesta: B. except**
 
 **Explicación:**
-El campo except de ipBlock puede excluir CIDRs específicos:
-```yaml
-ingress:
-  - from:
-      - ipBlock:
-          cidr: 10.0.0.0/8
-          except:
-            - 10.0.1.0/24
-            - 10.0.2.0/24
-```
-
-Esto permite tráfico desde el rango 10.0.0.0/8 excepto 10.0.1.0/24 y 10.0.2.0/24.
+`except` resta CIDRs de la regla de permiso de ese ipBlock. No es una denegación global: otra política selectora puede permitir la dirección excluida. La traducción de direcciones puede cambiar qué IP evalúa un plugin, por lo que debes verificar la ruta real de CNI y del balanceador de carga/Service.
 
 </details>
+
+---
+
+[Network policies guide](../../security/04-network-policies.md)
