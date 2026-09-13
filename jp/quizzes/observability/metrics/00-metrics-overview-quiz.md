@@ -1,185 +1,165 @@
 # メトリクス概要クイズ
 
-基本的なメトリクスの概念と監視ソリューションに関する理解度を確認しましょう。
+> **最終更新**: September 12, 2026
 
----
+1. リセットされる可能性がある累積カウントを表すタイプはどれですか？
 
-1. Prometheus メトリクスの4つの基本タイプのうち、値が増加するのみで、再起動時に 0 にリセットされるタイプはどれですか？
    - A) Gauge
    - B) Counter
-   - C) Histogram
-   - D) Summary
+   - C) 事前計算された p99
+   - D) スクレイプのタイムスタンプ
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Counter**
+**回答: B**
 
-**解説:**
-Counter は累積値を追跡するメトリクスタイプで、値は増加するのみで、再起動時に 0 にリセットされます。HTTP リクエスト数、エラー数、完了したタスク数などの追跡に使用されます。Gauge は増加と減少の両方が可能ですが、Histogram と Summary は分布を測定します。
+Counter は非負の増分を累積します。計測対象の状態が再作成された場合、リセットが発生することがあります。rate() は観測されたリセットを処理しますが、観測されなかった増分を復元することはできません。
 
 </details>
 
----
+2. 5 つのメソッド、20 のルート、10 のステータスは何を意味しますか？
 
-2. Cardinality を正しく説明しているものはどれですか？
-   - A) メトリクスの収集間隔を指す
-   - B) 一意な時系列の組み合わせの数を指す
-   - C) メトリクスデータの圧縮率を指す
-   - D) メトリクスの保持期間を指す
+   - A) すべての Deployment に正確に 1,000 個の保存済み series が存在する
+   - B) すべての組み合わせが可能な場合、アプリケーションラベルの組み合わせは最大 1,000 個
+   - C) 1 日あたり正確に 1,000 個のサンプル
+   - D) リソース使用量に影響しない
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 一意な時系列の組み合わせの数を指す**
+**回答: B**
 
-**解説:**
-Cardinality は、メトリクス内の一意なラベルの組み合わせの数を指します。Cardinality が高いと、ストレージ使用量とクエリパフォーマンスに直接影響します。user_id や request_id のように無限に増加する可能性がある値をラベルとして使用すると、Cardinality が急増します。
+この積は上限です。実際の組み合わせ、target/replica ラベル、histogram bucket、および履歴上の変動によって、実際の series/ストレージ使用量が決まります。
 
 </details>
 
----
+3. 適切な Pushgateway の使用方法はどれですか？
 
-3. Pull モデルと Push モデルについて、正しくない記述はどれですか？
-   - A) Prometheus は Pull ベースのシステムである
-   - B) Pull モデルでは、収集ターゲットと間隔を一元的に制御する
-   - C) Push モデルは短時間で終了するジョブからメトリクスを収集するのに適している
-   - D) Pull モデルは NAT/ファイアウォールの背後にあるターゲットに容易にアクセスできる
+   - A) すべての短命な Pod に 1 つの HOSTNAME grouping key を使用し、自動期限切れに依存する
+   - B) 安定したグループ化、成功タイムスタンプ、明示的な削除ポリシーを備えた、適切なサービスレベルのバッチに使用する
+   - C) gateway up=1 を、すべてのバッチが成功した証拠として扱う
+   - D) バッチが失敗した場合でも成功タイムスタンプを push する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: D) Pull モデルは NAT/ファイアウォールの背後にあるターゲットに容易にアクセスできる**
+**回答: B**
 
-**解説:**
-Pull モデルでは、監視サーバーがターゲットに HTTP リクエストを直接送信してメトリクスを収集するため、NAT/ファイアウォールの背後にあるターゲットへのアクセスが困難になります。一方、Push モデルではターゲットがメトリクスを直接送信できるため、NAT/ファイアウォール環境で有利です。Pushgateway を使用すると、Pull モデルでも短時間で終了するジョブからメトリクスを収集できます。
+Pushgateway はすべての短命な job に対するデフォルトではなく、group に自動 TTL はありません。スクレイプの正常性は、バッチの鮮度とは別です。honor_labels を使用したスクレイプでは、push された job identity が保持されます。
 
 </details>
 
----
+4. Histogram と Summary に関する正しい記述はどれですか？
 
-4. Histogram と Summary の違いを正しく説明しているものはどれですか？
-   - A) Histogram はクライアントで quantile を計算する
-   - B) Summary では複数のインスタンス間で集約できる
-   - C) Histogram はサーバー（クエリ時）で quantile を計算する
-   - D) Summary は Histogram よりストレージ効率が高い
+   - A) Summary の quantile は常に正確である
+   - B) instance の p99 値を平均すると fleet の p99 が得られる
+   - C) 互換性のある classic histogram bucket は結合できる。Summary の sum/count は平均のために結合できる
+   - D) Summary データを集約できることは一切ない
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Histogram はサーバー（クエリ時）で quantile を計算する**
+**回答: C**
 
-**解説:**
-Histogram はデータを bucket に格納し、クエリ時にサーバーで quantile を計算します。Summary はクライアントで quantile を計算して格納します。Histogram では複数のインスタンス間で集約できますが、Summary ではできません。Histogram は SLO/SLI の測定と分散システムに推奨されます。
+Classic bucket は計装された producer によってカウントされ、Prometheus はクエリ時に quantile を計算します。Summary の quantile にはアルゴリズムおよび window に依存する誤差があり、fleet の quantile に集約することはできません。一方、非負の duration の sum/count rate からは fleet の平均を得られます。
 
 </details>
 
----
+5. 新しい Prometheus アプリケーションメトリクスで推奨されない規則はどれですか？
 
-5. 推奨されないメトリクス命名規則はどれですか？
-   - A) snake_case を使用する
-   - B) 単位を接尾辞として含める (_seconds, _bytes)
-   - C) camelCase を使用する
-   - D) アプリケーション/ドメインのプレフィックスを使用する
+   - A) 説明的な prefix を使用する
+   - B) _seconds や _bytes などの unit suffix を使用する
+   - C) 一般的な base-unit 規則よりも camelCase と millisecond 単位を優先する
+   - D) 累積 Counter を識別するために _total を使用する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) camelCase を使用する**
+**回答: C**
 
-**解説:**
-Prometheus スタイルのメトリクス命名規則では、camelCase ではなく snake_case を使用します。`http_requests_total`、`http_request_duration_seconds` のような適切なメトリクス名では、小文字とアンダースコアを使用し、単位を接尾辞として含め、アプリケーション/ドメインのプレフィックスを使用します。
+説明的なアンダースコア区切りの名前と base unit を優先します。_total は Counter のマーカーであり、物理単位ではありません。node_memory_MemAvailable_bytes など、既存の exporter API は公開済みの表記を維持します。
 
 </details>
 
----
+6. Prometheus の retention に関する正しい記述はどれですか？
 
-6. Prometheus に長期ストレージ用の別ソリューションが必要である理由として、適切でないものはどれですか？
-   - A) 圧縮率が低く、ディスク使用量が増加する
-   - B) 単一ノードアーキテクチャのためスケーラビリティに制限がある
-   - C) PromQL は複雑なクエリをサポートしていない
-   - D) ネイティブ HA クラスタリングがサポートされていない
+   - A) 30 日を超えて保持することは決してできない
+   - B) 明示的な時間/サイズの retention 設定がない場合、デフォルトは 15 日である。より長い retention には適切な設定と容量が必要である
+   - C) ローカルデータを圧縮しない
+   - D) Mimir なしでは独立した collection replica は不可能である
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) PromQL は複雑なクエリをサポートしていない**
+**回答: B**
 
-**解説:**
-PromQL は複雑なクエリをサポートする非常に強力なクエリ言語です。Prometheus が長期ストレージに適していない理由には、比較的低い圧縮率、単一ノードアーキテクチャによるスケーラビリティの制限、ネイティブ HA クラスタリングの欠如、長期データに対するクエリ速度の低さがあります。
+デフォルトの retention は上限ではありません。ローカル TSDB はレプリケートされた分散ストアではありません。collection redundancy、query deduplication、durability、および recovery はそれぞれ個別の設計判断です。
 
 </details>
 
----
+7. product/storage に関する誤った主張はどれですか？
 
-7. 正しくないソリューション比較はどれですか？
-   - A) VictoriaMetrics は Prometheus より高い圧縮率を提供する
-   - B) CloudWatch はフルマネージドサービスである
-   - C) Mimir はローカルディスクのみをサポートする
-   - D) Datadog は SaaS モデルで提供される
+   - A) VictoriaMetrics の single-node と cluster の Deployment では運用要件が異なる
+   - B) 従来の CloudWatch メトリクスの resolution は時間の経過とともに粗くなる
+   - C) Mimir の object storage は無制限のスケールを保証し、すべてのローカルストレージ要件を不要にする
+   - D) Datadog メトリクスは query rollup を使用するため、retention はすべてのグラフで元の resolution を保証しない
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Mimir はローカルディスクのみをサポートする**
+**回答: C**
 
-**解説:**
-Grafana Mimir はオブジェクトストレージ（S3、GCS、Azure Blob など）を必要とする分散メトリクスストアです。ローカルディスクの代わりにクラウドオブジェクトストレージを使用して、無制限のスケーラビリティと長期保持を実現します。VictoriaMetrics はローカルディスクとオブジェクトストレージの両方をサポートします。
+Object storage は Mimir のアーキテクチャの一部であり、無制限の容量を保証するものではありません。ingest/local resource、query limit、replication、および運用容量は依然として重要です。バックアップ先や edition 固有の機能を、product の主要ストアと混同しないでください。
 
 </details>
 
----
+8. メトリクスの cardinality を制御できないアプローチはどれですか？
 
-8. 高 Cardinality の問題を防止するための適切でない方法はどれですか？
-   - A) ユーザー ID をメトリクスラベルとして使用しない
-   - B) リクエスト ID をメトリクスラベルとして使用しない
-   - C) HTTP ステータスコードをグループ化する (200 → 2xx)
-   - D) すべてのラベル値を一意に保つ
+   - A) 正規化されたルートテンプレートを使用する
+   - B) user/session ID を通常の label として使用しない
+   - C) 詳細を失っても許容できる場合は status code をグループ化する
+   - D) すべての request に新しい request_id label value を割り当てる
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: D) すべてのラベル値を一意に保つ**
+**回答: D**
 
-**解説:**
-高 Cardinality を防止するには、ラベル値が無限に増加しないようにする必要があります。ユーザー ID、リクエスト ID、セッション ID のように無限に増加する可能性がある値は、ラベルとして使用すべきではありません。HTTP ステータスコードをグループ化し（200 → 2xx）、URL パスを正規化する（/users/123 → /users/{id}）ほうが適切です。
+値がハッシュ化されている場合も含め、異なる label value は異なる series を作成します。必要に応じて、request 固有のコンテキストは適切に制御された logs/traces に含めるべきです。cardinality と機密データの露出は、どちらもレビューが必要です。
 
 </details>
 
----
+9. 正しく対応付けられている Kubernetes メトリクスの役割はどれですか？
 
-9. Kubernetes 環境における主なメトリクスソースと役割の組み合わせとして正しいものはどれですか？
-   - A) node-exporter - Kubernetes オブジェクトの状態メトリクス
-   - B) kube-state-metrics - Node レベルのハードウェアメトリクス
-   - C) cAdvisor - Container レベルのリソースメトリクス
-   - D) metrics-server - 長期メトリクスストレージ
+   - A) node-exporter — Kubernetes API object の status
+   - B) kube-state-metrics — 計測された container CPU usage
+   - C) cAdvisor/kubelet metrics — container resource measurements
+   - D) metrics-server — 長期的な Prometheus TSDB
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) cAdvisor - Container レベルのリソースメトリクス**
+**回答: C**
 
-**解説:**
-cAdvisor（Container Advisor）は、Container ごとの CPU、メモリ、I/O などのリソースメトリクスを収集します。node-exporter は Node レベルのハードウェア/OS メトリクスを提供し、kube-state-metrics は Kubernetes API オブジェクト（Pod、Deployment、Node など）の状態メトリクスを提供し、metrics-server は HPA/VPA 向けのリアルタイムリソースメトリクスを提供します。
+node-exporter は host OS metrics を報告します。kube-state-metrics は API object state を公開し、metrics-server は Resource Metrics API を提供します。Prometheus/vmalert/Mimir rules は alert を評価し、Alertmanager はそれらをルーティングします。vmagent は collector/forwarder であり、クエリ可能な TSDB ではありません。
 
 </details>
 
----
+10. コスト比較をレビュー可能にするものは何ですか？
 
-10. メトリクスソリューションを選択する際の適切でない考慮事項はどれですか？
-    - A) チームの運用能力と規模
-    - B) マルチクラウドの要件
-    - C) コスト構造と予算
-    - D) メトリクス名の長さ
+   - A) team size のみに基づく product ranking
+   - B) sample interval や feature の前提なしの node count
+   - C) 計測された series/sample volume、retention/resolution、HA/query requirements、および選択した feature の現在の pricing
+   - D) metric name/value の長さは決して重要ではないと仮定する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: D) メトリクス名の長さ**
+**回答: C**
 
-**解説:**
-メトリクスソリューションを選択する際は、チームの運用能力、マルチクラウドの要件、コスト構造、スケーラビリティの要件、既存のエコシステムとの統合を考慮する必要があります。メトリクス名の長さはソリューションの選択に影響しません。代わりに、Cardinality、データ保持期間、クエリパフォーマンスが重要な考慮事項です。
+15 秒間隔で 30 日間にわたり実際に export された 100 万 series は、delivery filtering/deduplication 前に 1,728 億サンプルを意味します。infrastructure、index/WAL、replica、query work、custom-metric allowance、および operator effort によりコストは変化します。これは workload の計算であり、provider quote ではありません。
 
 </details>
 
----
+[ガイドに戻る](../../../observability/metrics/README.md)

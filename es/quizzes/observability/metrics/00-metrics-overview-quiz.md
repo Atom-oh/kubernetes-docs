@@ -1,185 +1,165 @@
-# Cuestionario de introducción a las métricas
+# Cuestionario de descripción general de métricas
 
-Pon a prueba tu comprensión de los conceptos básicos de métricas y las soluciones de monitorización.
+> **Última actualización**: September 12, 2026
 
----
+1. ¿Qué tipo representa un recuento acumulativo que puede reiniciarse?
 
-1. Entre los cuatro tipos básicos de métricas de Prometheus, ¿qué tipo solo puede aumentar de valor y se restablece a 0 al reiniciarse?
    - A) Gauge
    - B) Counter
-   - C) Histogram
-   - D) Summary
+   - C) Un p99 precalculado
+   - D) Una marca de tiempo de scrape
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Counter**
+**Respuesta: B**
 
-**Explicación:**
-Counter es un tipo de métrica que realiza un seguimiento de valores acumulativos; estos valores solo pueden aumentar y se restablecen a 0 al reiniciarse. Se utiliza para realizar un seguimiento de los recuentos de solicitudes HTTP, recuentos de errores, recuentos de tareas completadas, etc. Gauge puede aumentar y disminuir, mientras que Histogram y Summary miden distribuciones.
+Un Counter acumula incrementos no negativos. Los reinicios pueden ocurrir cuando se vuelve a crear el estado medido. rate() maneja los reinicios observados, pero no puede recuperar incrementos no observados.
 
 </details>
 
----
+2. ¿Cinco métodos, veinte rutas y diez estados implican qué?
 
-2. ¿Qué afirmación describe correctamente la cardinalidad?
-   - A) Se refiere al intervalo de recopilación de métricas
-   - B) Se refiere al número de combinaciones únicas de series temporales
-   - C) Se refiere a la tasa de compresión de los datos de métricas
-   - D) Se refiere al período de retención de las métricas
+   - A) Exactamente 1.000 series almacenadas en cada Deployment
+   - B) Como máximo 1.000 combinaciones de etiquetas de aplicación si todas las combinaciones son posibles
+   - C) Exactamente 1.000 muestras por día
+   - D) Ningún efecto sobre el uso de recursos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Se refiere al número de combinaciones únicas de series temporales**
+**Respuesta: B**
 
-**Explicación:**
-La cardinalidad se refiere al número de combinaciones únicas de etiquetas en las métricas. Una cardinalidad alta afecta directamente al uso de almacenamiento y al rendimiento de las consultas. Usar como etiquetas valores que pueden crecer infinitamente, como user_id o request_id, provoca que la cardinalidad se dispare.
+El producto es un límite superior. Las combinaciones reales, las etiquetas de target/réplica, los buckets de Histogram y la rotación histórica determinan la huella real de series/almacenamiento.
 
 </details>
 
----
+3. ¿Qué uso de Pushgateway es apropiado?
 
-3. ¿Qué afirmación sobre los modelos Pull y Push NO es correcta?
-   - A) Prometheus es un sistema basado en Pull
-   - B) En el modelo Pull, los objetivos y los intervalos de recopilación se controlan de forma centralizada
-   - C) El modelo Push es adecuado para recopilar métricas de trabajos de corta duración
-   - D) El modelo Pull accede fácilmente a objetivos detrás de NAT/firewalls
+   - A) Usar una clave de agrupación HOSTNAME para cada Pod de corta duración y depender de la expiración automática
+   - B) Usarlo para un batch adecuado de nivel de servicio con agrupación estable, marcas de tiempo de éxito y una política de retirada explícita
+   - C) Tratar gateway up=1 como prueba de que cada batch tuvo éxito
+   - D) Enviar marcas de tiempo de éxito incluso cuando el batch falla
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) El modelo Pull accede fácilmente a objetivos detrás de NAT/firewalls**
+**Respuesta: B**
 
-**Explicación:**
-En el modelo Pull, el servidor de monitorización envía solicitudes HTTP directamente a los objetivos para recopilar métricas, lo que dificulta el acceso a objetivos detrás de NAT/firewalls. En cambio, el modelo Push permite que los objetivos envíen métricas directamente, lo que resulta ventajoso en entornos con NAT/firewalls. Mediante Pushgateway, el modelo Pull también puede recopilar métricas de trabajos de corta duración.
+Pushgateway no es la opción predeterminada para todos los jobs de corta duración y los grupos no tienen TTL automático. Su estado de scrape es independiente de la actualidad del batch. El scrape con honor_labels conserva la identidad del job enviado.
 
 </details>
 
----
+4. ¿Qué afirmación sobre Histogram y Summary es correcta?
 
-4. ¿Qué afirmación describe correctamente la diferencia entre Histogram y Summary?
-   - A) Histogram calcula cuantiles en el cliente
-   - B) Summary permite la agregación entre varias instancias
-   - C) Histogram calcula cuantiles en el servidor (en el momento de la consulta)
-   - D) Summary tiene una mayor eficiencia de almacenamiento que Histogram
+   - A) Los cuantiles de Summary siempre son exactos
+   - B) Promediar valores p99 de instancias produce el p99 de la flota
+   - C) Los buckets de histogramas clásicos compatibles se pueden combinar; sum/count de Summary se puede combinar para una media
+   - D) Ningún dato de Summary puede agregarse jamás
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Histogram calcula cuantiles en el servidor (en el momento de la consulta)**
+**Respuesta: C**
 
-**Explicación:**
-Histogram almacena datos en buckets y calcula cuantiles en el servidor en el momento de la consulta. Summary calcula y almacena cuantiles en el cliente. Histogram permite la agregación entre varias instancias, pero Summary no. Histogram se recomienda para la medición de SLO/SLI y los sistemas distribuidos.
+Los buckets clásicos los cuenta el productor instrumentado; Prometheus calcula los cuantiles en el momento de la consulta. Los cuantiles de Summary tienen un error que depende del algoritmo/ventana y no se pueden agregar para obtener un cuantil de flota, mientras que las tasas sum/count de duración no negativa pueden producir una media de flota.
 
 </details>
 
----
+5. ¿Cuál NO es la convención recomendada para una nueva métrica de aplicación de Prometheus?
 
-5. ¿Cuál NO es una convención recomendada para nombrar métricas?
-   - A) Usar snake_case
-   - B) Incluir unidades como sufijo (_seconds, _bytes)
-   - C) Usar camelCase
-   - D) Usar un prefijo de aplicación/dominio
+   - A) Usar un prefijo descriptivo
+   - B) Usar un sufijo de unidad como _seconds o _bytes
+   - C) Preferir camelCase y unidades de milisegundos en lugar de la convención habitual de unidades base
+   - D) Usar _total para identificar un Counter acumulativo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Usar camelCase**
+**Respuesta: C**
 
-**Explicación:**
-Las convenciones de nomenclatura de métricas de estilo Prometheus usan snake_case en lugar de camelCase. Los buenos nombres de métricas como `http_requests_total`, `http_request_duration_seconds` usan minúsculas y guiones bajos, incluyen las unidades como sufijo y usan prefijos de aplicación/dominio.
+Prefiera nombres descriptivos separados por guiones bajos y unidades base. _total es un marcador de Counter, no una unidad física. Las API de exporter existentes, como node_memory_MemAvailable_bytes, conservan su ortografía publicada.
 
 </details>
 
----
+6. ¿Qué afirmación sobre la retención de Prometheus es correcta?
 
-6. ¿Cuál NO es una razón apropiada por la que Prometheus requiere una solución independiente para el almacenamiento a largo plazo?
-   - A) Una baja tasa de compresión aumenta el uso de disco
-   - B) La arquitectura de un solo nodo limita la escalabilidad
-   - C) PromQL no admite consultas complejas
-   - D) No se admite clustering HA nativo
+   - A) Nunca puede retener más de 30 días
+   - B) El valor predeterminado es 15 días sin configuración explícita de retención por tiempo/tamaño; una retención más prolongada necesita configuración y capacidad adecuadas
+   - C) No comprime los datos locales
+   - D) Las réplicas de recopilación independientes son imposibles sin Mimir
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) PromQL no admite consultas complejas**
+**Respuesta: B**
 
-**Explicación:**
-PromQL es un lenguaje de consulta muy potente que admite consultas complejas. Las razones por las que Prometheus no es adecuado para el almacenamiento a largo plazo incluyen una tasa de compresión relativamente baja, límites de escalabilidad de la arquitectura de un solo nodo, falta de clustering HA nativo y velocidad de consulta lenta para datos a largo plazo.
+La retención predeterminada no es un máximo. La TSDB local no es un almacén distribuido replicado; la redundancia de recopilación, la deduplicación de consultas, la durabilidad y la recuperación son decisiones de diseño independientes.
 
 </details>
 
----
+7. ¿Qué afirmación sobre producto/almacenamiento es incorrecta?
 
-7. ¿Qué comparación de soluciones NO es correcta?
-   - A) VictoriaMetrics proporciona una mayor tasa de compresión que Prometheus
-   - B) CloudWatch es un servicio totalmente administrado
-   - C) Mimir solo admite disco local
-   - D) Datadog se ofrece como modelo SaaS
+   - A) Las implementaciones de nodo único y de clúster de VictoriaMetrics tienen distintos requisitos operativos
+   - B) La resolución de métricas tradicional de CloudWatch se vuelve más gruesa con el tiempo
+   - C) El almacenamiento de objetos de Mimir garantiza escala ilimitada y elimina todos los requisitos de almacenamiento local
+   - D) Las métricas de Datadog usan rollups de consulta, por lo que la retención no garantiza la resolución original en cada gráfico
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Mimir solo admite disco local**
+**Respuesta: C**
 
-**Explicación:**
-Grafana Mimir es un almacén de métricas distribuido que requiere almacenamiento de objetos (S3, GCS, Azure Blob, etc.). Utiliza almacenamiento de objetos en la nube en lugar de disco local para proporcionar escalabilidad ilimitada y retención a largo plazo. VictoriaMetrics admite tanto disco local como almacenamiento de objetos.
+El almacenamiento de objetos forma parte de la arquitectura de Mimir, no es una garantía de capacidad ilimitada. Los recursos de ingesta/locales, los límites de consulta, la replicación y la capacidad operativa siguen siendo importantes. No confunda los destinos de backup ni las características específicas de una edición con el almacén principal de un producto.
 
 </details>
 
----
+8. ¿Qué enfoque no logra controlar la cardinalidad de métricas?
 
-8. ¿Cuál NO es un método apropiado para prevenir problemas de cardinalidad alta?
-   - A) No usar el ID de usuario como etiqueta de métrica
-   - B) No usar el ID de solicitud como etiqueta de métrica
-   - C) Agrupar códigos de estado HTTP (200 → 2xx)
-   - D) Mantener únicos todos los valores de las etiquetas
+   - A) Usar plantillas de rutas normalizadas
+   - B) Evitar los ID de usuario/sesión como etiquetas ordinarias
+   - C) Agrupar códigos de estado cuando sea aceptable perder detalle
+   - D) Asignar un nuevo valor de etiqueta request_id a cada solicitud
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) Mantener únicos todos los valores de las etiquetas**
+**Respuesta: D**
 
-**Explicación:**
-Para prevenir una cardinalidad alta, los valores de las etiquetas no deben crecer infinitamente. Los valores que pueden crecer infinitamente, como el ID de usuario, el ID de solicitud y el ID de sesión, no deben utilizarse como etiquetas. Es mejor agrupar los códigos de estado HTTP (200 → 2xx) y normalizar las rutas URL (/users/123 → /users/{id}).
+Los valores de etiqueta distintos crean series distintas, incluso cuando los valores están hasheados. El contexto específico de la solicitud pertenece a logs/traces controlados adecuadamente cuando sea necesario. Tanto la cardinalidad como la exposición de datos sensibles requieren revisión.
 
 </details>
 
----
+9. ¿Qué rol de métricas de Kubernetes está correctamente asociado?
 
-9. ¿Cuál relaciona correctamente las principales fuentes y funciones de métricas en entornos Kubernetes?
-   - A) node-exporter - métricas de estado de objetos Kubernetes
-   - B) kube-state-metrics - métricas de hardware a nivel de Node
-   - C) cAdvisor - métricas de recursos a nivel de Container
-   - D) metrics-server - almacenamiento de métricas a largo plazo
+   - A) node-exporter — estado de objeto de la API de Kubernetes
+   - B) kube-state-metrics — uso medido de CPU del contenedor
+   - C) métricas de cAdvisor/kubelet — mediciones de recursos del contenedor
+   - D) metrics-server — Prometheus TSDB a largo plazo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) cAdvisor - métricas de recursos a nivel de Container**
+**Respuesta: C**
 
-**Explicación:**
-cAdvisor (Container Advisor) recopila métricas de recursos como CPU, memoria e I/O por Container. node-exporter proporciona métricas de hardware/OS a nivel de Node, kube-state-metrics proporciona métricas de estado de objetos de la API de Kubernetes (Pod, Deployment, Node, etc.), y metrics-server proporciona métricas de recursos en tiempo real para HPA/VPA.
+node-exporter informa métricas del sistema operativo host; kube-state-metrics expone el estado de los objetos de la API; metrics-server sirve la Resource Metrics API. Las reglas de Prometheus/vmalert/Mimir evalúan alertas y Alertmanager las enruta. vmagent es un recopilador/reenviador, no una TSDB consultable.
 
 </details>
 
----
+10. ¿Qué hace que una comparación de costos sea revisable?
 
-10. ¿Cuál NO es una consideración apropiada al seleccionar una solución de métricas?
-    - A) Capacidades operativas y tamaño del equipo
-    - B) Requisitos de multi-cloud
-    - C) Estructura de costes y presupuesto
-    - D) Longitud de los nombres de las métricas
+   - A) Una clasificación de productos basada solo en el tamaño del equipo
+   - B) El número de nodos sin intervalo de muestras ni supuestos de características
+   - C) El volumen medido de series/muestras, los requisitos de retención/resolución, HA/consulta y los precios actuales para las características seleccionadas
+   - D) Suponer que las longitudes del nombre/valor de las métricas nunca importan
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) Longitud de los nombres de las métricas**
+**Respuesta: C**
 
-**Explicación:**
-Al seleccionar una solución de métricas, debes considerar las capacidades operativas del equipo, los requisitos de multi-cloud, la estructura de costes, los requisitos de escalabilidad y la integración con los ecosistemas existentes. La longitud de los nombres de las métricas no afecta a la selección de la solución. En su lugar, la cardinalidad, el período de retención de datos y el rendimiento de las consultas son consideraciones importantes.
+Un millón de series exportadas reales a intervalos de 15 segundos durante 30 días implica 172,8 mil millones de muestras antes del filtrado/deduplicación de entrega. La infraestructura, los índices/WAL, las réplicas, el trabajo de consulta, las asignaciones de métricas personalizadas y el esfuerzo del operador pueden modificar los costos. Este es un cálculo de carga de trabajo, no una cotización de proveedor.
 
 </details>
 
----
+[Volver a la guía](../../../observability/metrics/README.md)
