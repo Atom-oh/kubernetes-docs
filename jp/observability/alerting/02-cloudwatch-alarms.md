@@ -1,141 +1,76 @@
-# CloudWatch Alarms
+# CloudWatch アラーム
 
-> **最終更新**: February 20, 2026
+> **最終更新**: September 13, 2026
+
+CLI と Terraform の例では、**従来の CloudWatch メトリクスアラーム**および複合アラームを扱います。CloudWatch は、OTLP エンドポイント経由で取り込まれたメトリクスに対する **PromQL アラーム**と、Logs Insights クエリ結果に対する**ログアラーム**もサポートしています。PromQL アラームでは `PendingPeriod`/`RecoveryPeriod` を使用します。以下の M-of-N および欠損データ設定は、そのままでは適用されません。アカウント、Region、リソース値は例です。作成または更新コマンドを使用する前に、実際のターゲット、IAM 権限、コスト、受信者を確認してください。`PutMetricAlarm`/`PutCompositeAlarm` は既存のアラーム設定を置き換えるため、更新前に現在の設定を保存してください。
 
 ## 目次
 
-- [CloudWatch Alarms の概要](#cloudwatch-alarms-の概要)
-- [アーキテクチャ](#アーキテクチャ)
-- [Metric Alarms](#metric-alarms)
-- [Composite Alarms](#composite-alarms)
-- [異常検知](#異常検知)
-- [SNS 統合](#sns-統合)
-- [EventBridge 統合](#eventbridge-統合)
-- [Container Insights アラート](#container-insights-アラート)
-- [CloudWatch Alarm アクション](#cloudwatch-alarm-アクション)
-- [コスト最適化](#コスト最適化)
-- [Prometheus Metrics 統合](#prometheus-metrics-統合)
-- [Terraform の例](#terraform-の例)
+- [CloudWatch アラームの概要](#cloudwatch-alarms-overview)
+- [アーキテクチャ](#architecture)
+- [メトリクスアラーム](#metric-alarms)
+- [複合アラーム](#composite-alarms)
+- [異常検出](#anomaly-detection)
+- [SNS 統合](#sns-integration)
+- [EventBridge 統合](#eventbridge-integration)
+- [Container Insights アラート](#container-insights-alerts)
+- [CloudWatch アラームアクション](#cloudwatch-alarm-actions)
+- [コスト最適化](#cost-optimization)
+- [Prometheus メトリクス統合](#prometheus-metrics-integration)
+- [Terraform の例](#terraform-examples)
 
 ---
 
-## CloudWatch Alarms の概要
+<span id="cloudwatch-alarms-overview"></span>
 
-Amazon CloudWatch Alarms は、AWS ネイティブモニタリングサービスのアラート機能です。CloudWatch Metrics に基づいてアラートを作成し、SNS、Lambda、EC2 Auto Scaling などとの統合を通じて自動応答を可能にします。
+## CloudWatch アラームの概要
+
+Amazon CloudWatch Alarms は、AWS ネイティブモニタリングサービスのアラート機能です。CloudWatch メトリクスに基づいてアラートを作成し、SNS、Lambda、EC2 Auto Scaling などとの統合を通じて自動応答を有効にします。
 
 ### 主な機能
 
-1. **Metric Alarms**: 単一のメトリクスに基づくアラート
-2. **Composite Alarms**: 複数のアラーム条件を組み合わせる
-3. **異常検知**: 機械学習ベースの異常検知
-4. **Alarm Actions**: アラート発生時に自動アクションを実行
-5. **AWS Service Integration**: EC2、ECS、EKS、Lambda などとのネイティブ統合
+1. **メトリクスアラーム**: メトリクス、メトリクス演算、または Metrics Insights クエリを評価
+2. **複合アラーム**: 複数のアラーム条件を組み合わせる
+3. **異常検出**: 機械学習ベースの異常検出
+4. **アラームアクション**: アラート発生時に自動アクションを実行
+5. **AWS サービス統合**: EC2、ECS、EKS、Lambda などとのネイティブ統合
 
-### CloudWatch Alarms と Prometheus Alertmanager の比較
+### CloudWatch アラームと Prometheus Alertmanager の比較
 
-| 特性 | CloudWatch Alarms | Prometheus Alertmanager |
+| 特性 | CloudWatch アラーム | Prometheus Alertmanager |
 |----------------|-------------------|-------------------------|
-| **タイプ** | AWS Managed Service | Open Source |
-| **データソース** | CloudWatch Metrics | Prometheus Metrics |
-| **クエリ言語** | CloudWatch Metrics Math | PromQL |
-| **コスト** | アラームごとの料金 | 無料（インフラストラクチャコストのみ） |
-| **複雑なルーティング** | 制限あり | 高度なルーティングをサポート |
+| **タイプ** | AWS マネージドサービス | オープンソース |
+| **データソース** | アラームタイプに応じた CloudWatch メトリクス、OTLP メトリクス、またはログ | Prometheus またはその他のクライアントが評価したアラート |
+| **評価** | アラームタイプに応じたメトリクス演算、PromQL、または Logs Insights | Prometheus が PromQL を評価し、Alertmanager がアラートをグループ化、抑制、ルーティング |
+| **コスト** | アラームタイプ、評価対象メトリクス、クエリ、コントリビューターに依存 | ソフトウェアライセンス料金なし。インフラストラクチャと運用には引き続きコストがかかる |
+| **複雑なルーティング** | 限定的 | 高度なルーティングをサポート |
 | **AWS 統合** | ネイティブ | 追加設定が必要 |
 
 ---
 
+<span id="architecture"></span>
+
 ## アーキテクチャ
 
-### CloudWatch Alarms の動作フロー
+### CloudWatch アラームの動作フロー
 
-```mermaid
-graph TB
-    subgraph Sources["Metric Sources"]
-        EC2[EC2]
-        EKS[EKS]
-        RDS[RDS]
-        Lambda[Lambda]
-        Custom[Custom Metrics]
-    end
+![EC2、EKS、RDS、Lambda、カスタムソースからのメトリクスが CloudWatch Metrics に送られ、アラームはそれらを直接または Metrics Math と Anomaly Detection バンドを介して評価する。アラームは SNS とその他のアクションに分岐し、SNS は通知チャネルに転送する。](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png)
 
-    subgraph CloudWatch["Amazon CloudWatch"]
-        Metrics[Metrics]
-        Alarms[Alarms]
-        Math[Metrics Math]
-        AD[Anomaly Detection]
-    end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-0.html)
 
-    subgraph Actions["Alarm Actions"]
-        SNS[SNS Topic]
-        AS[Auto Scaling]
-        EC2A[EC2 Actions]
-        SSM[Systems Manager]
-    end
+### アラーム状態
 
-    subgraph Notifications["Notification Channels"]
-        Email[Email]
-        SMS[SMS]
-        Lambda2[Lambda Function]
-        HTTP[HTTP/HTTPS]
-    end
+従来のメトリクスアラームは `INSUFFICIENT_DATA` で始まり、その後 `OK` または `ALARM` に評価されます。欠損データが常に `INSUFFICIENT_DATA` を意味するわけではありません。すべての評価データが欠損している場合、`missing` はデータ不足になります。`notBreaching` は欠損ポイントを正常として補完し、`breaching` は異常として補完し、`ignore` は状態を維持します。評価に十分な追加の実データポイントがある場合、CloudWatch は欠損データの補完設定を使用しません。そのため、包括的な `notBreaching` ポリシーにより、停止したハートビートやコレクターが隠れる可能性があります。複合アラームが `INSUFFICIENT_DATA` になるのは、作成直後のみです。
 
-    EC2 --> Metrics
-    EKS --> Metrics
-    RDS --> Metrics
-    Lambda --> Metrics
-    Custom --> Metrics
+![従来のメトリクスアラームは INSUFFICIENT_DATA で始まる。以降の遷移では、しきい値評価と設定済みの欠損データポリシーを区別する。](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png)
 
-    Metrics --> Alarms
-    Metrics --> Math
-    Math --> Alarms
-    Metrics --> AD
-    AD --> Alarms
-
-    Alarms --> SNS
-    Alarms --> AS
-    Alarms --> EC2A
-    Alarms --> SSM
-
-    SNS --> Email
-    SNS --> SMS
-    SNS --> Lambda2
-    SNS --> HTTP
-
-    style CloudWatch fill:#ff9900,color:#ffffff
-    style Actions fill:#3f8624,color:#ffffff
-    style Notifications fill:#146eb4,color:#ffffff
-```
-
-### アラームの状態
-
-CloudWatch Alarms には 3 つの状態があります。
-
-```mermaid
-stateDiagram-v2
-    [*] --> OK: Within threshold
-    OK --> ALARM: Threshold exceeded
-    ALARM --> OK: Returns to normal
-    OK --> INSUFFICIENT_DATA: No data
-    ALARM --> INSUFFICIENT_DATA: No data
-    INSUFFICIENT_DATA --> OK: Data received
-    INSUFFICIENT_DATA --> ALARM: Data received + threshold exceeded
-
-    note right of OK
-        Metric is within normal range
-    end note
-
-    note right of ALARM
-        Threshold exceeded, actions execute
-    end note
-
-    note right of INSUFFICIENT_DATA
-        Insufficient data for evaluation
-    end note
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-1.html)
 
 ---
 
-## Metric Alarms
+<span id="metric-alarms"></span>
+
+## メトリクスアラーム
 
 ### 基本的なアラーム作成（Console/CLI）
 
@@ -156,22 +91,24 @@ aws cloudwatch put-metric-alarm \
   --dimensions Name=InstanceId,Value=i-1234567890abcdef0 \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:alerts \
   --ok-actions arn:aws:sns:ap-northeast-2:123456789012:alerts \
-  --treat-missing-data notBreaching
+  --treat-missing-data missing
 ```
 
-### アラーム設定の構成要素
+### アラーム設定コンポーネント
 
 | パラメータ | 説明 | 例 |
 |-----------|-------------|---------|
 | `metric-name` | 監視するメトリクスの名前 | `CPUUtilization` |
 | `namespace` | メトリクスの名前空間 | `AWS/EC2`, `AWS/EKS` |
-| `statistic` | 統計関数 | `Average`, `Sum`, `Maximum`, `Minimum`, `p99` |
+| `statistic` | 統計関数 | `Average`, `Sum`, `Maximum`, `Minimum`, `SampleCount` |
 | `period` | 評価期間（秒） | `60`, `300`, `3600` |
 | `threshold` | しきい値 | `80` |
 | `comparison-operator` | 比較演算子 | `GreaterThanThreshold` |
-| `evaluation-periods` | 連続評価回数 | `2`（2 回連続で超過した場合にアラート） |
-| `datapoints-to-alarm` | アラームに必要なデータポイント | `3` 件中 `2` 件 |
+| `evaluation-periods` | 評価期間 N の数 | `3`（M は `datapoints-to-alarm`） |
+| `datapoints-to-alarm` | アラームに必要なデータポイント | `3` 個中 `2` |
 | `treat-missing-data` | 欠損データの処理 | `notBreaching`, `breaching`, `ignore`, `missing` |
+
+`--statistic p99` ではなく `--extended-statistic p99` を使用してください。N 個のうち M 個の異常ポイントは連続している必要はありません。M を省略すると N と同じになります。`Period` は集計時間であり、通知間隔ではありません。10、20、30 秒の従来のメトリクスアラーム期間は高解像度であり、対応する高解像度データが必要です。60 秒は標準解像度です。Period×N は 7 日間まで、Period が 1 時間未満の場合は 1 日間までに制限されます。Auto Scaling アクションを除き、通常アクションは状態遷移時に実行されます。
 
 ### 比較演算子
 
@@ -187,7 +124,7 @@ comparison-operators:
   - GreaterThanUpperThreshold      # Above upper bound
 ```
 
-### Metrics Math を使用するアラーム
+### メトリクス演算を使用するアラーム
 
 ```bash
 # Error rate calculation alarm (error count / total requests)
@@ -227,7 +164,7 @@ aws cloudwatch put-metric-alarm \
     },
     {
       "Id": "error_rate",
-      "Expression": "(errors / requests) * 100",
+      "Expression": "IF(requests > 0, 100 * FILL(errors, 0) / requests, 0)",
       "ReturnData": true
     }
   ]' \
@@ -237,7 +174,9 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:alerts
 ```
 
-### Metrics Math 関数
+この式は、ALB によって転送されたリクエストにおけるターゲットの 5xx レスポンスを測定します。ALB が生成したエラーやターゲット選択前の失敗など、ユーザーに見えるすべての失敗を含むわけではありません。リクエストが存在する場合、欠損した 5xx ポイントはゼロで補完されます。リクエストがゼロの場合、ここでは 0% と定義されます。欠損したリクエスト／収集データは別途監視してください。従来のメトリクス演算アラームは、最終的に 1 つの時系列を返す必要があります。`SEARCH` はグラフ用であり、アラーム式には使用できません。`RATE` は、評価範囲が変わるため、スパースなメトリクスでは異なる動作をする場合があります。
+
+### メトリクス演算関数
 
 ```yaml
 # Commonly used functions
@@ -269,36 +208,21 @@ math-functions:
 
 ---
 
-## Composite Alarms
+<span id="composite-alarms"></span>
 
-### Composite Alarm の概念
+## 複合アラーム
 
-Composite Alarms では、複数の Metric Alarms を組み合わせて複雑な条件を定義できます。
+### 複合アラームの概念
 
-```mermaid
-graph TB
-    subgraph MetricAlarms["Metric Alarms"]
-        A1[High CPU Alarm]
-        A2[High Memory Alarm]
-        A3[High Disk Alarm]
-    end
+複合アラームでは、複数のメトリクスアラームを組み合わせて複雑な条件を定義できます。
 
-    subgraph CompositeAlarm["Composite Alarm"]
-        CA[Server Resource<br/>Critical Alarm]
-        Rule["Rule: (CPU AND Memory)<br/>OR Disk"]
-    end
+![3 つのメトリクスアラームと結合ルールが複合アラームに入力され、複合アラームはそれらにまたがるブール条件を評価する。ダウンストリームの SNS/Lambda アクションをトリガーするのは複合アラームのみである。](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-2.png)
 
-    A1 --> CA
-    A2 --> CA
-    A3 --> CA
-    Rule --> CA
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-2.html)
 
-    CA --> Action[SNS/Lambda]
+`CWAgent` のメモリおよびディスクメトリクスには、インストール済みのエージェントと一致する公開済みディメンションセットが必要です。`InstanceId` のみの例が機能するのは、エージェントがその集約を公開している場合のみです。`disk_used_percent` には多くの場合 `path`、`device`、`fstype` もあります。`list-metrics` が返す**完全なディメンションセット**を使用してください。例の子アラームにはアクションがありません。通知を送信するのは複合アラームのみです。
 
-    style CompositeAlarm fill:#ff9900
-```
-
-### Composite Alarms の作成
+### 複合アラームの作成
 
 ```bash
 # Create individual alarms
@@ -339,12 +263,12 @@ aws cloudwatch put-metric-alarm \
 aws cloudwatch put-composite-alarm \
   --alarm-name "ServerResourceCritical" \
   --alarm-description "Server resources are critical" \
-  --alarm-rule "ALARM(HighCPU) AND ALARM(HighMemory) OR ALARM(HighDisk)" \
+  --alarm-rule '(ALARM("HighCPU") AND ALARM("HighMemory")) OR ALARM("HighDisk")' \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:critical-alerts \
   --ok-actions arn:aws:sns:ap-northeast-2:123456789012:alerts
 ```
 
-### アラームルールの構文
+### アラームルール構文
 
 ```yaml
 # Composite Alarm rule syntax
@@ -379,47 +303,33 @@ examples:
 
 ### アラート抑制パターン
 
-```bash
-# Suppress alerts during maintenance
-aws cloudwatch put-composite-alarm \
-  --alarm-name "ProductionAlerts" \
-  --alarm-rule "ALARM(HighCPU) AND NOT ALARM(MaintenanceMode)" \
-  --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:alerts
+`set-alarm-state` は一時的なテストオーバーライドです。メトリクスアラームはすぐに評価済みの状態に戻り、メンテナンスウィンドウを確立しません。次の例では、外部コントローラーが `MaintenanceMode` アラームの状態を継続的に公開することを前提としています。`ActionsSuppressor` は、評価済み状態を変更せずに複合アクションを抑制します。メンテナンスウィンドウをテストする際は、待機／延長期間を含めてください。
 
-# Manually transition MaintenanceMode alarm to ALARM state for suppression
-aws cloudwatch set-alarm-state \
-  --alarm-name "MaintenanceMode" \
-  --state-value ALARM \
-  --state-reason "Scheduled maintenance"
+```bash
+aws cloudwatch put-composite-alarm  \
+  --alarm-name ProductionAlerts  \
+  --alarm-rule 'ALARM("HighCPU")'  \
+  --actions-suppressor MaintenanceMode  \
+  --actions-suppressor-wait-period 60  \
+  --actions-suppressor-extension-period 60  \
+  --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:alerts
 ```
 
 ---
 
-## 異常検知
+<span id="anomaly-detection"></span>
 
-### 異常検知の概要
+## 異常検出
 
-CloudWatch Anomaly Detection は機械学習を使用してメトリクスの通常パターンを学習し、外れ値を検出します。
+### 異常検出の概要
 
-```mermaid
-graph LR
-    subgraph Learning["Learning Phase"]
-        H[Historical Data] --> ML[ML Model]
-        ML --> B[Expected Band]
-    end
+CloudWatch Anomaly Detection は、機械学習を使用してメトリクスの正常パターンを学習し、外れ値を検出します。
 
-    subgraph Detection["Detection Phase"]
-        M[Current Metrics] --> C{Within Band?}
-        B --> C
-        C -->|No| A[Anomaly Alert]
-        C -->|Yes| N[Normal]
-    end
+![学習フェーズでは履歴データで ML モデルをトレーニングして期待バンドを生成し、検出フェーズでは現在のメトリクスをそれと比較して、バンド外では異常アラートを発生させ、バンド内では正常とマークする。](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png)
 
-    style Learning fill:#e3f2fd
-    style Detection fill:#fff3e0
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-3.html)
 
-### 異常検知アラームの作成
+### 異常検出アラームの作成
 
 ```bash
 # Anomaly Detection model creation (automatic)
@@ -456,7 +366,7 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:alerts
 ```
 
-### 異常検知の設定
+### 異常検出の設定
 
 ```yaml
 # ANOMALY_DETECTION_BAND function
@@ -465,17 +375,19 @@ aws cloudwatch put-metric-alarm \
 # - stddev: Standard deviation multiplier (default 2)
 
 examples:
-  # 2 standard deviations (approximately 95% confidence interval)
+  # Width parameter 2: not a guaranteed 95% confidence interval
   - "ANOMALY_DETECTION_BAND(m1, 2)"
 
-  # 3 standard deviations (approximately 99.7% confidence interval)
+  # Width parameter 3: a wider expected band
   - "ANOMALY_DETECTION_BAND(m1, 3)"
 
   # More sensitive detection (1 standard deviation)
   - "ANOMALY_DETECTION_BAND(m1, 1)"
 ```
 
-### モデル学習期間の調整
+パラメータはモデルの期待バンド幅を制御します。これは保証されたガウス分布の 95% または 99.7% 区間ではありません。モデルは最大 2 週間の履歴を使用し、それより少ない履歴でも開始できます。以下の除外日付は形式を示すものです。モデルのトレーニング履歴内にある関連する期間に置き換えてください。
+
+### モデルトレーニング期間の調整
 
 ```bash
 # Add exclusion periods to existing model (maintenance, incident periods, etc.)
@@ -496,6 +408,8 @@ aws cloudwatch put-anomaly-detector \
 
 ---
 
+<span id="sns-integration"></span>
+
 ## SNS 統合
 
 ### SNS Topic の作成
@@ -514,7 +428,7 @@ aws sns subscribe \
 aws sns subscribe \
   --topic-arn arn:aws:sns:ap-northeast-2:123456789012:eks-alerts \
   --protocol sms \
-  --notification-endpoint +821012345678
+  --notification-endpoint "$VERIFIED_SMS_NUMBER"
 
 # Add Lambda subscription
 aws sns subscribe \
@@ -525,96 +439,28 @@ aws sns subscribe \
 
 ### SNS メッセージフィルタリング
 
-```json
-// Subscription filter policy
-{
-  "severity": ["critical", "high"],
-  "environment": ["production"]
-}
-```
+デフォルトの CloudWatch SNS 通知には、例にある `severity` または `environment` メッセージ属性は自動的に含まれません。本文の `NewStateValue` をフィルタリングするには、`FilterPolicyScope=MessageBody` を設定します。このフィルターは `OK` の復旧メッセージを除外します。E メールにはサブスクリプションの確認が必要です。SMS では、検証済み番号、サンドボックス／Region 要件、コストを確認する必要があります。Lambda サブスクリプションには、特定の Topic ARN からの `sns.amazonaws.com` を許可する Lambda リソースポリシーも必要です。
 
 ```bash
-# Apply filter policy
-aws sns set-subscription-attributes \
-  --subscription-arn arn:aws:sns:ap-northeast-2:123456789012:eks-alerts:xxx \
-  --attribute-name FilterPolicy \
-  --attribute-value '{"severity": ["critical", "high"]}'
+aws sns set-subscription-attributes  \
+  --subscription-arn "$SUBSCRIPTION_ARN"  \
+  --attribute-name FilterPolicyScope  \
+  --attribute-value MessageBody
+aws sns set-subscription-attributes  \
+  --subscription-arn "$SUBSCRIPTION_ARN"  \
+  --attribute-name FilterPolicy  \
+  --attribute-value '{"NewStateValue": ["ALARM"]}'
 ```
 
 ### SNS から Slack への統合（Lambda）
 
-```python
-# lambda_function.py
-import json
-import urllib3
-import os
+標準の CloudWatch 通知では、SNS Topic と承認済み Slack チャネルを **Amazon Q Developer in chat applications**（旧 AWS Chatbot）を介して接続します。チャネルの IAM ロールとガードレールポリシーを、その通知用途に限定してください。
 
-http = urllib3.PoolManager()
-
-def lambda_handler(event, context):
-    slack_webhook_url = os.environ['SLACK_WEBHOOK_URL']
-
-    for record in event['Records']:
-        sns_message = json.loads(record['Sns']['Message'])
-
-        # Parse CloudWatch Alarm message
-        alarm_name = sns_message.get('AlarmName', 'Unknown')
-        alarm_description = sns_message.get('AlarmDescription', '')
-        new_state = sns_message.get('NewStateValue', 'Unknown')
-        reason = sns_message.get('NewStateReason', '')
-        timestamp = sns_message.get('StateChangeTime', '')
-
-        # Slack message color
-        if new_state == 'ALARM':
-            color = '#ff0000'
-            emoji = ':rotating_light:'
-        elif new_state == 'OK':
-            color = '#36a64f'
-            emoji = ':white_check_mark:'
-        else:
-            color = '#808080'
-            emoji = ':question:'
-
-        # Compose Slack message
-        slack_message = {
-            "attachments": [
-                {
-                    "color": color,
-                    "title": f"{emoji} {alarm_name}",
-                    "text": alarm_description,
-                    "fields": [
-                        {
-                            "title": "State",
-                            "value": new_state,
-                            "short": True
-                        },
-                        {
-                            "title": "Time",
-                            "value": timestamp,
-                            "short": True
-                        },
-                        {
-                            "title": "Reason",
-                            "value": reason,
-                            "short": False
-                        }
-                    ]
-                }
-            ]
-        }
-
-        # Send to Slack
-        response = http.request(
-            'POST',
-            slack_webhook_url,
-            body=json.dumps(slack_message),
-            headers={'Content-Type': 'application/json'}
-        )
-
-    return {'statusCode': 200}
-```
+カスタム Lambda が必要な場合は、シークレットストアから webhook を取得し、その宛先を検証して、接続／読み取りタイムアウトを設定し、レスポンスステータスを確認します。HTTP 429/5xx を成功として報告しないでください。リトライ、デッドレターパス、重複処理を構成してください。SNS は以下の EventBridge エンベロープではなく、`Records[].Sns.Message` を使用します。この章の検証では実際の Slack メッセージは送信しません。
 
 ---
+
+<span id="eventbridge-integration"></span>
 
 ## EventBridge 統合
 
@@ -647,18 +493,9 @@ aws events put-targets \
 
 ### 自動応答の設定
 
-```mermaid
-graph LR
-    A[CloudWatch Alarm] --> B[EventBridge]
-    B --> C{Event Rule}
-    C --> D[Lambda: Auto Scaling]
-    C --> E[Lambda: Instance Restart]
-    C --> F[Lambda: Slack Notification]
-    C --> G[SSM: Runbook Execution]
-    C --> H[Step Functions: Recovery Workflow]
+![CloudWatch アラームの状態変更が EventBridge を経由してイベントルールに流れ、Lambda 関数、SSM runbook、Step Functions の復旧ワークフローという 5 つの自動応答ターゲットに分岐する。](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png)
 
-    style B fill:#ff9900
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-4.html)
 
 ### EventBridge イベントパターン
 
@@ -666,94 +503,65 @@ graph LR
 {
   "source": ["aws.cloudwatch"],
   "detail-type": ["CloudWatch Alarm State Change"],
+  "account": ["123456789012"],
+  "region": ["ap-northeast-2"],
+  "resources": ["arn:aws:cloudwatch:ap-northeast-2:123456789012:alarm:EKS-Node-HighCPU"],
   "detail": {
-    "alarmName": [{
-      "prefix": "EKS-"
-    }],
-    "state": {
-      "value": ["ALARM"]
-    },
-    "previousState": {
-      "value": ["OK"]
-    },
-    "configuration": {
-      "metrics": [{
-        "metricStat": {
-          "metric": {
-            "namespace": ["AWS/EKS", "ContainerInsights"]
-          }
-        }
-      }]
-    }
+    "alarmName": ["EKS-Node-HighCPU"],
+    "state": {"value": ["ALARM"]}
   }
 }
 ```
 
+`previousState` を `OK` に限定すると、`INSUFFICIENT_DATA → ALARM` を見逃します。正確なアラーム ARN を照合することで、メトリクス演算または複合設定の形式についての前提を避けられます。`put-targets` は Lambda 呼び出し権限を付与しません。ルールの `SourceArn` にスコープを限定した `events.amazonaws.com` 用 Lambda リソースポリシーを追加し、リトライ／デッドレター動作を構成してください。
+
 ### 自動復旧 Lambda の例
 
-```python
-# auto_recovery.py
-import boto3
-import json
+CPU 使用率が高いだけでは、再起動が適切である証拠にはなりません。この例では、復旧の**入力検査段階**を実装します。状態、アカウント、Region、アラーム ARN を確認した後、メトリクス情報を返します。EventBridge の `dimensions` は、SNS アラームメッセージのディメンションリストとは異なり、オブジェクトです。また、式を先頭にしたクエリと、メトリクスを持たない複合アラームも処理します。
 
-ec2 = boto3.client('ec2')
-ecs = boto3.client('ecs')
+Lambda ハンドラーとともに、[テスト済みのイベントノーマライザーとテスト](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/cloudwatch-alarms)をパッケージ化します。
+
+```python
+from event_normalizer import normalize_alarm_event
 
 def lambda_handler(event, context):
-    alarm_name = event['detail']['alarmName']
-    alarm_state = event['detail']['state']['value']
-
-    print(f"Alarm: {alarm_name}, State: {alarm_state}")
-
-    # Automatic response based on alarm name
-    if 'EC2-HighCPU' in alarm_name:
-        # Identify EC2 instance
-        dimensions = event['detail']['configuration']['metrics'][0]['metricStat']['metric']['dimensions']
-        instance_id = next(d['value'] for d in dimensions if d['name'] == 'InstanceId')
-
-        # Reboot instance
-        ec2.reboot_instances(InstanceIds=[instance_id])
-        return {'action': 'reboot', 'instance': instance_id}
-
-    elif 'ECS-ServiceUnhealthy' in alarm_name:
-        # Restart ECS service
-        dimensions = event['detail']['configuration']['metrics'][0]['metricStat']['metric']['dimensions']
-        cluster = next(d['value'] for d in dimensions if d['name'] == 'ClusterName')
-        service = next(d['value'] for d in dimensions if d['name'] == 'ServiceName')
-
-        ecs.update_service(
-            cluster=cluster,
-            service=service,
-            forceNewDeployment=True
-        )
-        return {'action': 'redeploy', 'service': service}
-
-    return {'action': 'none'}
+    return normalize_alarm_event(
+        event,
+        expected_account="123456789012",
+        expected_region="ap-northeast-2",
+    )
 ```
 
+この関数は AWS の変更を実行しません。ペイロード検査は送信者を認証しません。追加する修復処理には、明示的なターゲット許可リスト、現在のアラーム／リソース状態の確認、冪等性、クールダウン、最小権限、ロールバックが必要です。
+
 ---
+
+<span id="container-insights-alerts"></span>
 
 ## Container Insights アラート
 
 ### EKS Container Insights メトリクス
 
-Container Insights を有効にすると、EKS cluster のメトリクスを CloudWatch で確認できます。
+これらの例では、従来の `ContainerInsights` CloudWatch メトリクスパスを使用します。その名前、ディメンション、課金を、拡張オブザーバビリティまたは OTel メトリクスパスと混在させないでください。CloudWatch Agent と Fluent Bit をインストールする[最新の EKS アドオンガイド](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)に従い、クラスターの Kubernetes バージョンおよび Region と互換性のあるアドオンバージョンを選択してください。EKS Pod Identity を使用する場合は、まず IAM とエージェント関連付けを構成してください。
+
+`update-addon` は既存のインストールを更新します。初回インストールには `create-addon` を使用します。既存の設定と Pod Identity 関連付けを維持してください。古い `v1.2.0` を固定したり、レビューしていない `latest` Fluentd マニフェストを適用したりせず、利用可能なバージョンをクエリしてデプロイ計画で 1 つ選択してください。
 
 ```bash
-# Enable Container Insights
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name amazon-cloudwatch-observability \
-  --addon-version v1.2.0-eksbuild.1
-
-# Or install CloudWatch Agent
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml
+aws eks describe-addon-versions  \
+  --addon-name amazon-cloudwatch-observability  \
+  --kubernetes-version "$KUBERNETES_VERSION"  \
+  --region "$AWS_REGION"
+aws cloudwatch list-metrics  \
+  --namespace ContainerInsights  \
+  --metric-name pod_number_of_container_restarts  \
+  --dimensions Name=ClusterName,Value=my-cluster  \
+  --region "$AWS_REGION"
 ```
 
 ### Container Insights アラートの例
 
 ```bash
-# Node CPU utilization alarm
+# Cluster aggregate CPU utilization alarm
 aws cloudwatch put-metric-alarm \
   --alarm-name "EKS-Node-HighCPU" \
   --metric-name node_cpu_utilization \
@@ -769,7 +577,7 @@ aws cloudwatch put-metric-alarm \
 # Pod memory utilization alarm
 aws cloudwatch put-metric-alarm \
   --alarm-name "EKS-Pod-HighMemory" \
-  --metric-name pod_memory_utilization \
+  --metric-name pod_memory_utilization_over_pod_limit \
   --namespace ContainerInsights \
   --dimensions Name=ClusterName,Value=my-cluster Name=Namespace,Value=production \
   --statistic Average \
@@ -779,13 +587,13 @@ aws cloudwatch put-metric-alarm \
   --evaluation-periods 2 \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:eks-alerts
 
-# Pod restart alarm
+# One Pod's cumulative restart count (not a five-minute increase)
 aws cloudwatch put-metric-alarm \
   --alarm-name "EKS-Pod-Restarts" \
   --metric-name pod_number_of_container_restarts \
   --namespace ContainerInsights \
-  --dimensions Name=ClusterName,Value=my-cluster Name=Namespace,Value=production \
-  --statistic Sum \
+  --dimensions Name=ClusterName,Value=my-cluster Name=Namespace,Value=production Name=PodName,Value=my-pod \
+  --statistic Maximum \
   --period 300 \
   --threshold 3 \
   --comparison-operator GreaterThanThreshold \
@@ -793,25 +601,32 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:eks-alerts
 ```
 
-### 主な Container Insights メトリクス
+CPU の例はクラスター集約です。個別ノードでは、完全な `ClusterName`、`NodeName`、`InstanceId` セットを使用します。`pod_memory_utilization` は**ノードメモリ**で除算しますが、`pod_memory_utilization_over_pod_limit` は Pod の制限値で除算します。いずれかのコンテナにメモリ制限がない場合、後者が存在しない可能性があります。`pod_number_of_container_restarts` は累積値であり、`ClusterName`、`Namespace`、`PodName` を使用します。`Maximum > 3` は観測されたライフタイムカウントが 3 を超えたことを意味します。サンプルを合計しても最近の再起動数はカウントされません。Pod の置き換え、リセット、名前の再利用を考慮してください。最近の増分には、リセットを考慮した PromQL の `increase()` または別途定義したデルタメトリクスを使用します。
+
+### 主要な Container Insights メトリクス
 
 | メトリクス | 説明 | ディメンション |
 |--------|-------------|------------|
-| `cluster_node_count` | Cluster の Node 数 | ClusterName |
-| `cluster_failed_node_count` | 失敗した Node 数 | ClusterName |
-| `node_cpu_utilization` | Node CPU 使用率 | ClusterName, NodeName |
-| `node_memory_utilization` | Node メモリ使用率 | ClusterName, NodeName |
-| `node_filesystem_utilization` | Node ディスク使用率 | ClusterName, NodeName |
+| `cluster_node_count` | クラスターノード数 | ClusterName |
+| `cluster_failed_node_count` | 失敗したノード数 | ClusterName |
+| `node_cpu_utilization` | ノード CPU 使用率 | ClusterName, NodeName, InstanceId; または ClusterName |
+| `node_memory_utilization` | ノードメモリ使用率 | ClusterName, NodeName, InstanceId; または ClusterName |
+| `node_filesystem_utilization` | ノードディスク使用率 | ClusterName, NodeName, InstanceId; または ClusterName |
 | `pod_cpu_utilization` | Pod CPU 使用率 | ClusterName, Namespace, PodName |
 | `pod_memory_utilization` | Pod メモリ使用率 | ClusterName, Namespace, PodName |
-| `pod_number_of_container_restarts` | Container 再起動回数 | ClusterName, Namespace, PodName |
+| `pod_number_of_container_restarts` | コンテナ再起動数 | ClusterName, Namespace, PodName |
 | `service_number_of_running_pods` | Service ごとの実行中 Pod 数 | ClusterName, Namespace, Service |
 
 ---
 
-## CloudWatch Alarm アクション
+<span id="cloudwatch-alarm-actions"></span>
+
+## CloudWatch アラームアクション
 
 ### EC2 アクション
+
+直接実行する EC2 アクションは停止、終了、再起動、復旧です。**開始はサポートされません**。これらの例はインスタンスを変更します。サポート対象インスタンス、権限、停止／復旧の影響を確認した上で、明示的に承認されたターゲットにのみ使用してください。欠損データには `missing` を使用し、変更アクションは `ALARM` にのみアタッチします。メトリクス演算アラームおよび複合アラームは、EC2 アクションを直接実行できません。
+
 
 ```bash
 # EC2 instance recovery (on system status check failure)
@@ -825,6 +640,7 @@ aws cloudwatch put-metric-alarm \
   --threshold 1 \
   --comparison-operator GreaterThanOrEqualToThreshold \
   --evaluation-periods 2 \
+  --treat-missing-data missing \
   --alarm-actions arn:aws:automate:ap-northeast-2:ec2:recover
 
 # EC2 instance stop
@@ -838,6 +654,7 @@ aws cloudwatch put-metric-alarm \
   --threshold 5 \
   --comparison-operator LessThanThreshold \
   --evaluation-periods 24 \
+  --treat-missing-data missing \
   --alarm-actions arn:aws:automate:ap-northeast-2:ec2:stop
 ```
 
@@ -872,63 +689,38 @@ aws cloudwatch put-metric-alarm \
 
 ### Systems Manager アクション
 
-```bash
-# Execute SSM Automation
-aws cloudwatch put-metric-alarm \
-  --alarm-name "DiskFull-Cleanup" \
-  --metric-name disk_used_percent \
-  --namespace CWAgent \
-  --dimensions Name=InstanceId,Value=i-1234567890abcdef0 Name=path,Value=/ \
-  --statistic Average \
-  --period 300 \
-  --threshold 90 \
-  --comparison-operator GreaterThanThreshold \
-  --evaluation-periods 1 \
-  --alarm-actions arn:aws:ssm:ap-northeast-2:123456789012:automation-definition/CleanupDisk:$DEFAULT
-```
+`automation-definition/...` ARN は、任意の SSM Automation runbook を実行するためのサポート対象の直接 `AlarmActions` ターゲットではありません。直接 SSM 統合では、OpsItem など API に列挙されたアクションを使用します。Automation は、**EventBridge SSM Automation ターゲット**または明示的な Lambda/Step Functions ワークフローを介してルーティングしてください。ターゲット実行ロール、`ssm:StartAutomationExecution`、runbook パラメータ、Automation ロールはそれぞれ別にスコープを限定します。ディスクしきい値だけで、任意のファイル削除を許可してはなりません。
 
 ---
+
+<span id="cost-optimization"></span>
 
 ## コスト最適化
 
 ### コスト要因
 
+以下の数値は、2026-09-13 に確認した公式料金ページの**米国東部の例**であり、ソウル向けの見積もりではありません。ターゲット Region の最新料金を確認してください。メトリクスアラームは評価対象メトリクスごとに課金され、複合アラームはアラームごとに課金されます。異常検出には、実際のメトリクスと 2 つのバンドメトリクスが含まれます。複合アラームを追加しても子アラームの料金は残ります。これは通知ノイズを減らしますが、自動的にコストを削減するものではありません。
+
+
 | 項目 | コスト |
 |------|------|
-| Standard Resolution アラーム（60 秒） | $0.10/アラーム/月 |
-| High Resolution アラーム（10 秒） | $0.30/アラーム/月 |
-| Anomaly Detection | $0.30/メトリクス/月 |
-| Composite Alarm | $0.50/アラーム/月 |
+| 標準解像度アラーム（60 秒） | $0.10/アラーム/月 |
+| 高解像度アラーム（10 秒） | $0.30/アラーム/月 |
+| 標準異常アラーム: 実際のメトリクス 1 つとバンド 2 つ | $0.30/アラーム/月の例 |
+| 複合アラーム | $0.50/アラーム/月 |
 
 ### コスト最適化戦略
 
-```mermaid
-graph TB
-    A[Cost Optimization] --> B[Minimize Alarm Count]
-    A --> C[Optimize Resolution]
-    A --> D[Use Composite Alarms]
-    A --> E[Remove Unnecessary Alarms]
+![重複、解像度、評価対象メトリクスを見直す。複合アラームは子アラームの料金に追加され、削除には所有者と依存関係の確認が必要である。](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png)
 
-    B --> B1[Consolidate Duplicate Alarms]
-    B --> B2[Replace with Composite]
-
-    C --> C1[Set Resolution by Priority]
-    C --> C2[Minimize High Resolution]
-
-    D --> D1[Combine Multiple Metric Alarms<br/>into One Composite]
-
-    E --> E1[Delete Unused Alarms]
-    E --> E2[Regular Review]
-
-    style A fill:#ff9900
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-5.html)
 
 ### 推奨設定
 
 ```yaml
 # Cost-effective alarm settings
 
-# Critical: High Resolution (fast detection needed)
+# Critical: Standard Resolution (60s; only 10/20/30s is high resolution)
 critical-alerts:
   period: 60  # 1 minute
   evaluation-periods: 2
@@ -946,92 +738,40 @@ info-alerts:
 
 ### アラームクリーンアップスクリプト
 
+このコマンドは、確認対象となる候補を一覧表示するだけです。`INSUFFICIENT_DATA` はアラームが未使用である証拠ではなく、固定の過去日付が「90 日前」を意味することもありません。別途承認された削除の前に、`StateTransitionedTimestamp` からの経過時間、実際の収集、所有者、複合依存関係を確認してください。`StateUpdatedTimestamp` は状態理由が変わったときにも変化します。これは現在の状態にある時間とは異なります。
+
 ```bash
-#!/bin/bash
-# Identify and clean up old alarms
-
-# List alarms in INSUFFICIENT_DATA state for 90+ days
-aws cloudwatch describe-alarms \
-  --state-value INSUFFICIENT_DATA \
-  --query 'MetricAlarms[?StateUpdatedTimestamp<=`2024-11-01`].AlarmName' \
-  --output text
-
-# Delete alarms
-aws cloudwatch delete-alarms \
-  --alarm-names "old-alarm-1" "old-alarm-2"
+aws cloudwatch describe-alarms  \
+  --alarm-types MetricAlarm  \
+  --state-value INSUFFICIENT_DATA  \
+  --query 'MetricAlarms[].{Name:AlarmName,StateSince:StateTransitionedTimestamp,Updated:StateUpdatedTimestamp}'  \
+  --output json
 ```
 
 ---
 
-## Prometheus Metrics 統合
+<span id="prometheus-metrics-integration"></span>
 
-### Amazon Managed Prometheus (AMP) 統合
+## Prometheus メトリクス統合
 
-AMP メトリクスは CloudWatch アラートに使用できます。
+### Amazon Managed Prometheus（AMP）統合
 
-```bash
-# Send AMP workspace metrics to CloudWatch
-# (Periodic query via Lambda)
+AMP に保存されたメトリクスは、従来の CloudWatch メトリクスに自動コピーされません。要件に一致するパスを選択してください。
 
-# Lambda function example
-```
+- **AMP 内のアラート**: ワークスペースの Prometheus アラートルール → マネージド Alertmanager → サポート対象レシーバー（SNS または PagerDuty）を構成します。
+- **CloudWatch PromQL アラーム**: CloudWatch OTLP エンドポイントを介して取り込まれたメトリクスを評価します。これは AMP ワークスペースの直接クエリではありません。
+- **従来の CloudWatch メトリクスの再公開**: 別個のエクスポーターで必要な集計のみを定義します。1 つの一貫した固定済み一時的認証情報セットで署名し、タイムアウト、HTTP ステータス、結果タイプ、有限値、タイムスタンプ、ディメンションを検証します。空の結果、NaN、失敗をゼロまたは成功に変換しないでください。これにより、クエリ、カスタムメトリクス、ランタイムのコストと遅延が追加されます。
 
-```python
-# amp_to_cloudwatch.py
-import boto3
-import requests
-from aws_requests_auth.aws_auth import AWSRequestsAuth
-
-def lambda_handler(event, context):
-    # AMP workspace settings
-    amp_endpoint = "https://aps-workspaces.ap-northeast-2.amazonaws.com/workspaces/ws-xxx/api/v1/query"
-    region = "ap-northeast-2"
-
-    # AWS authentication
-    auth = AWSRequestsAuth(
-        aws_access_key=boto3.Session().get_credentials().access_key,
-        aws_secret_access_key=boto3.Session().get_credentials().secret_key,
-        aws_token=boto3.Session().get_credentials().token,
-        aws_host=f"aps-workspaces.{region}.amazonaws.com",
-        aws_region=region,
-        aws_service="aps"
-    )
-
-    # Execute Prometheus queries
-    queries = [
-        ("eks_node_cpu_usage", 'avg(rate(node_cpu_seconds_total{mode!="idle"}[5m])) * 100'),
-        ("eks_pod_memory_usage", 'avg(container_memory_working_set_bytes) / avg(container_spec_memory_limit_bytes) * 100'),
-    ]
-
-    cloudwatch = boto3.client('cloudwatch')
-
-    for metric_name, query in queries:
-        response = requests.get(
-            amp_endpoint,
-            params={"query": query},
-            auth=auth
-        )
-
-        result = response.json()
-        if result['data']['result']:
-            value = float(result['data']['result'][0]['value'][1])
-
-            # Send metric to CloudWatch
-            cloudwatch.put_metric_data(
-                Namespace='AMP/EKS',
-                MetricData=[{
-                    'MetricName': metric_name,
-                    'Value': value,
-                    'Unit': 'Percent'
-                }]
-            )
-
-    return {'status': 'success'}
-```
+以前の CPU モード平均は合計 CPU 使用率ではありませんでした。関連しない、または無制限の Pod にまたがるメモリ平均の比率は、各 Pod の制限使用率ではありませんでした。必要なラベルとリセットセマンティクスを保持する PromQL を選択し、ルールをテストして実際に収集されたデータを検証してください。
 
 ---
+
+<span id="terraform-examples"></span>
 
 ## Terraform の例
+
+以下のブロックで 1 つの例となるモジュールを構成します。実際のリソース値と SNS Topic ポリシーを設定してから、デプロイ前に `terraform plan` を確認してください。例の検証では provider のスキーマ／構文を対象とし、AWS へのデプロイや実際の通知配信は対象としません。
+
 
 ### 基本アラーム
 
@@ -1066,11 +806,11 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu" {
   alarm_actions = [aws_sns_topic.alerts.arn]
   ok_actions    = [aws_sns_topic.alerts.arn]
 
-  treat_missing_data = "notBreaching"
+  treat_missing_data = "missing"
 }
 ```
 
-### Metrics Math アラーム
+### メトリクス演算アラーム
 
 ```hcl
 resource "aws_cloudwatch_metric_alarm" "alb_error_rate" {
@@ -1114,7 +854,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_error_rate" {
 
   metric_query {
     id          = "error_rate"
-    expression  = "(errors / requests) * 100"
+    expression  = "IF(requests > 0, 100 * FILL(errors, 0) / requests, 0)"
     label       = "Error Rate"
     return_data = true
   }
@@ -1123,7 +863,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_error_rate" {
 }
 ```
 
-### Composite Alarm
+### 複合アラーム
 
 ```hcl
 # Individual alarms
@@ -1197,20 +937,21 @@ resource "aws_cloudwatch_metric_alarm" "eks_pod_restarts" {
   metric_name         = "pod_number_of_container_restarts"
   namespace           = "ContainerInsights"
   period              = 300
-  statistic           = "Sum"
+  statistic           = "Maximum"
   threshold           = 3
-  alarm_description   = "EKS Pod has restarted more than 3 times"
+  alarm_description   = "Observed cumulative restart count exceeds 3; not a 5-minute increase"
 
   dimensions = {
     ClusterName = "my-eks-cluster"
     Namespace   = "production"
+    PodName     = "my-pod"
   }
 
   alarm_actions = [aws_sns_topic.alerts.arn]
 }
 ```
 
-### 異常検知アラーム
+### 異常検出アラーム
 
 ```hcl
 resource "aws_cloudwatch_metric_alarm" "cpu_anomaly" {
@@ -1249,6 +990,25 @@ resource "aws_cloudwatch_metric_alarm" "cpu_anomaly" {
 
 ---
 
+## 参考資料
+
+- [CloudWatch アラームタイプ](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Alarms.html)
+- [PutMetricAlarm API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html)
+- [欠損データの評価](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html)
+- [複合アラームとアクション抑制](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutCompositeAlarm.html)
+- [メトリクス演算](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
+- [異常検出](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Anomaly_Detection.html)
+- [SNS アラームメッセージスキーマ](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html)
+- [SNS フィルターポリシースコープ](https://docs.aws.amazon.com/sns/latest/dg/sns-message-filtering-scope.html)
+- [EventBridge アラームイベント](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch-and-eventbridge.html)
+- [EventBridge ターゲット権限](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
+- [Container Insights メトリクスディメンション](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)
+- [CloudWatch Observability EKS アドオン](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
+- [CloudWatch 料金](https://aws.amazon.com/cloudwatch/pricing/)
+- [PromQL アラーム](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-promql.html)
+- [ログアラーム](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Alarm-On-Logs.html)
+- [AMP アラートレシーバー](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-alertmanager-receiver.html)
+
 ## クイズ
 
-[CloudWatch Alarms クイズ](../../quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)で理解度を確認しましょう。
+[CloudWatch アラームクイズ](../../quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)で理解度を確認してください。
