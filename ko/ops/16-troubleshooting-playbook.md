@@ -24,6 +24,8 @@
 
 ***
 
+<span id="30초-요약-증상--첫-명령--가장-흔한-원인"></span>
+
 ## 30초 요약: 증상 → 첫 명령 → 가장 흔한 원인
 
 증상 칸을 클릭하면 아래 해당 플레이북 섹션으로 이동합니다.
@@ -72,6 +74,8 @@ kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | t
 
 ## 증상별 플레이북
 
+<span id="1-pod가-pending에서-멈춤"></span>
+
 ### 1. Pod가 `Pending`에서 멈춤
 
 **증상**: `Pending`은 스케줄 대기뿐 아니라 이미지 다운로드·초기화 대기도 포함합니다. `.spec.nodeName`과 `PodScheduled` 조건을 먼저 확인합니다. 노드 미배정이면 스케줄러 이벤트를, 이미 배정됐다면 컨테이너 상태·마운트·CNI 이벤트를 확인합니다.
@@ -103,6 +107,8 @@ Warning  FailedScheduling  default-scheduler  0/15 nodes are available: 1 Insuff
 | `node(s) had volume node affinity conflict` | PV(EBS)가 있는 AZ에 스케줄 가능한 노드가 없음 | PV의 `nodeAffinity` zone 확인 후 해당 AZ에 노드 확보 |
 | `node(s) didn't match pod topology spread constraints` / `pod anti-affinity rules` | 분산 제약을 만족하는 노드 없음 | 필요한 노드 추가. topology spread는 가용성 목표를 검토한 후 ScheduleAnyway를 고려하고, pod anti-affinity는 required/preferred 규칙을 별도로 검토 |
 | 이벤트가 전혀 없음 | 스케줄러 자체 문제, 또는 `schedulerName` 오타 | `kubectl get pod <pod> -o jsonpath='{.spec.schedulerName}'` 확인 |
+
+<span id="2-imagepullbackoff--errimagepull"></span>
 
 ### 2. `ImagePullBackOff` / `ErrImagePull`
 
@@ -136,6 +142,8 @@ Warning  Failed   kubelet  Error: ImagePullBackOff
 | `toomanyrequests` | Docker Hub rate limit | ECR pull-through cache로 미러링 |
 
 노드 진단이 필요하면 먼저 kubelet 이벤트·로그와 이미지 pull에 사용되는 자격 증명 공급자를 확인합니다. `crictl pull`은 kubelet의 ECR credential provider나 Pod의 imagePullSecrets를 자동 재사용하지 않으므로 같은 인증 경로를 재현한다고 가정하지 않습니다. Fargate의 이미지 pull에는 Pod 실행 역할이 쓰이며 애플리케이션의 IRSA 역할과 다릅니다.
+
+<span id="3-crashloopbackoff-exit-137-oomkilled-프로브-실패-설정-오류"></span>
 
 ### 3. `CrashLoopBackOff` (exit 137 `OOMKilled`, 프로브 실패, 설정 오류)
 
@@ -200,6 +208,8 @@ Warning  Failed  kubelet  Error: secret "db-credentials" not found
 
 `kubectl get cm,secret -n <ns>`로 이름·네임스페이스를 대조하면 끝납니다. 볼륨 마운트로 참조했다면 `FailedMount` 이벤트(`MountVolume.SetUp failed for volume "cfg" : configmap "app-config" not found`)로 나타납니다.
 
+<span id="4-running인데-ready가-아님--endpoints가-비어-있음"></span>
+
 ### 4. `Running`인데 READY가 아님 / Endpoints가 비어 있음
 
 **증상**: STATUS는 `Running`인데 READY가 `0/1`(사이드카가 있으면 `1/2`). 일반적인 Service 라우팅에서는 not-ready endpoint가 제외됩니다. publishNotReadyAddresses·종료 중 endpoint·LB fail-open 등 설정은 별도 확인하며 사용자 증상은 프록시에 따라 오류 또는 타임아웃일 수 있습니다.
@@ -230,6 +240,8 @@ kubectl get endpointslices -n <ns> -l kubernetes.io/service-name=<svc> -o json |
 | Conditions에 `Ready False`, 사유가 `ReadinessGatesNotReady` | Pod readiness gate 대기 — AWS Load Balancer Controller의 `target-health.elbv2.k8s.aws/*` 게이트가 대표적 | Target Group 헬스체크 실패 원인 확인 → [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) |
 | `1/2` Running, 앱 컨테이너만 Ready | 사이드카(istio-proxy 등) 미준비 또는 사이드카가 앱보다 늦게 떠서 초기 연결 실패 | 사이드카 로그 확인, 주입기·사이드카 버전이 지원하는 시작 순서와 readiness 설정 확인. native sidecar 전환만으로 Ready 실패가 해결되지는 않음 |
 | Ready인데도 EndpointSlice가 비어 있음 | Service 셀렉터가 파드 라벨과 불일치 | → [5. Service 접근 불가](#5-service에-접근이-안-됨) |
+
+<span id="5-service에-접근이-안-됨"></span>
 
 ### 5. Service에 접근이 안 됨
 
@@ -269,6 +281,8 @@ DNS를 파드 관점에서 재현하려면 임시 파드를 하나 띄웁니다:
 NetworkPolicy는 목적지 ingress와 출발지 egress를 모두 확인합니다. containerPort 선언은 실제 listen 소켓을 만들지 않으므로 앱 로그나 소켓 상태를 확인합니다. NodeLocal DNSCache를 쓰면 resolv.conf의 nameserver가 kube-dns ClusterIP와 달라도 정상일 수 있습니다.
 
 **Auto Mode의 DNS 진단**: [현재 Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)는 노드 시스템 서비스인 CoreDNS를 사용하므로 순수 Auto Mode에서 kube-dns Pod/Service가 없다는 것만으로 장애라고 판단하지 않습니다. 혼합 클러스터의 일반 노드에는 CoreDNS Deployment가 필요합니다. 위 Pod/ConfigMap 명령은 Deployment 기반 DNS를 확인하는 절차이며, Auto Mode는 파드의 실제 이름 해석과 노드 DNS 로그·상위 resolver 접근을 함께 확인합니다.
+
+<span id="6-node-notready--kubelet-압박-diskpressure-memorypressure-pidpressure"></span>
 
 ### 6. Node `NotReady` / kubelet 압박 (`DiskPressure`, `MemoryPressure`, `PIDPressure`)
 
@@ -322,6 +336,8 @@ crictl ps -a | head
 
 `kubectl get nodes`에 노드가 **아예 나타나지 않는** 경우(조인 실패: IAM 역할/access entry, 서브넷 라우팅, 보안 그룹, AMI 불일치)는 별도 주제입니다 → [EKS 고급 디버깅 — 노드 조인 실패 진단](../eks/11-eks-advanced-debugging.md#node-join-diagnosis), [EKS 문제 해결 — 노드 및 파드 문제](../eks/09-eks-troubleshooting.md#노드-및-파드-문제). Karpenter 노드라면 [10번](#10-eks-karpenter가-노드를-만들지-않음)의 NodeClaim 확인을 먼저 합니다.
 
+<span id="7-pvc가-pending"></span>
+
 ### 7. PVC가 `Pending`
 
 **증상**: `kubectl get pvc`에 `Pending`, 이를 쓰는 파드는 `pod has unbound immediate PersistentVolumeClaims`로 `Pending`.
@@ -356,6 +372,8 @@ gp3    ebs.csi.aws.com         Delete          WaitForFirstConsumer   true      
 | 파드 쪽 `FailedAttachVolume: Multi-Attach error for volume` | RWO 볼륨이 이전 노드에서 아직 detach 안 됨(노드 장애 후 StatefulSet 재스케줄) | `kubectl get volumeattachments`로 stale attachment 확인. 노드가 사라졌으면 attachment가 정리될 때까지 수 분 대기 |
 
 `WaitForFirstConsumer`, StorageClass, 동적 프로비저닝 개념은 [스토리지](../core/04-storage.md#스토리지-클래스storageclass)에, EBS/EFS CSI 오류 패턴은 [EKS 고급 디버깅 — 스토리지](../eks/11-eks-advanced-debugging.md#6-스토리지-문제-해결)에 있습니다.
+
+<span id="8-eks-irsa--pod-identity-accessdenied"></span>
 
 ### 8. EKS: IRSA / Pod Identity `AccessDenied`
 
@@ -414,6 +432,8 @@ aws iam get-role --role-name <role> --query 'Role.AssumeRolePolicyDocument'
 
 IRSA와 Pod Identity의 동작 원리·설정 방법은 [EKS 보안 모범 사례](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts)와 [EKS 보안](../eks/05-eks-security.md#eks-pod-identity)에, 토큰 만료·webhook 이슈는 [EKS 고급 디버깅 — 컨트롤 플레인 디버깅](../eks/11-eks-advanced-debugging.md#2-컨트롤-플레인-디버깅)에 있습니다.
 
+<span id="9-eks-enivpc-cni-ip-고갈"></span>
+
 ### 9. EKS: ENI/VPC CNI IP 고갈
 
 **증상**: 파드가 `ContainerCreating`에서 멈추고, Events에 `FailedCreatePodSandBox`:
@@ -453,6 +473,8 @@ IPv4 secondary-IP 모드에서 `WARM_ENI_TARGET=1`은 여분 ENI 용량을 유�
 | Security Groups for Pods 사용 중 `vpc.amazonaws.com/pod-eni` 부족 | branch ENI 한계 | 트렁크 ENI를 지원하는 인스턴스로, `ENABLE_POD_ENI=true` 확인 |
 
 IPAM 동작(warm pool, prefix delegation, custom networking)은 [VPC CNI — IP 주소 관리](../networking/01-vpc-cni.md#ip-주소-관리)에, 단계별 IP 고갈 대응은 [EKS 고급 디버깅 — 네트워킹 진단](../eks/11-eks-advanced-debugging.md#5-네트워킹-진단)과 [EKS 문제 해결 — VPC CNI 문제](../eks/09-eks-troubleshooting.md#네트워킹-문제)에 있습니다.
+
+<span id="10-eks-karpenter가-노드를-만들지-않음"></span>
 
 ### 10. EKS: Karpenter가 노드를 만들지 않음
 
@@ -501,6 +523,8 @@ FailedScheduling  karpenter  Failed to schedule pod, incompatible with nodepool 
 | 이벤트 없음, Karpenter 로그도 조용 | 파드가 Karpenter 대상이 아님 (`nodeSelector`가 MNG 라벨을 가리킴, 또는 Karpenter와 무관한 스케줄 제약) | 파드 spec에서 노드 관련 제약 전체를 다시 확인 |
 
 NodePool/EC2NodeClass 구조와 상세 문제 해결은 [Karpenter — 문제 해결](../autoscaling/02-karpenter.md#문제-해결)과 [EKS 고급 디버깅 — Karpenter 프로비저닝 문제](../eks/11-eks-advanced-debugging.md#karpenter-프로비저닝-문제)에 있습니다.
+
+<span id="11-어떤-service도-만들-수-없음-failed-calling-webhook"></span>
 
 ### 11. 어떤 Service도 만들 수 없음: failed calling webhook
 

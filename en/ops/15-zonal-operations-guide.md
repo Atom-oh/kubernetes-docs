@@ -36,6 +36,8 @@ Related guides: [Advanced Infrastructure](02-infrastructure-advanced.md) and [EK
 
 ***
 
+<span id="traffic-layer-target-group--targetgroupbinding--weight-shifting"></span>
+
 ## Traffic Layer: Target Group + TargetGroupBinding + Weight Shifting
 
 ![One load balancer listener distributes new traffic between two target groups; TargetGroupBinding in each cluster registers its pod targets.](../.gitbook/assets/en-ops-15-zonal-operations-guide-0.png)

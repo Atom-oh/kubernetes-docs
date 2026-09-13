@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/security/08-runtime-security.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "af66927c00a8dbcf1d1b4eff5628ed11138192e95adfdc894c393f408d13ed75",
+    "summary": "Read four documents and2542original lines;correctedFalco/Tetragonconfig/rules,additiveNetworkPolicy,Secret-safeaudit,forensicslimits,GuardDutycoverage,24quizanswers;11examples34legacyanchors;boundednativevalidation.",
+    "validationReport": "docs/reviews/2026-09-11/runtime-security-validation.json"
+  },
+  {
+    "path": "en/security/08-runtime-security.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "09376c25001faa3ac78e61dc5b6b90bffbfcd7a5aa127bc524b4a1596a66336d",
+    "summary": "Read four documents and2542original lines;correctedFalco/Tetragonconfig/rules,additiveNetworkPolicy,Secret-safeaudit,forensicslimits,GuardDutycoverage,24quizanswers;11examples34legacyanchors;boundednativevalidation.",
+    "validationReport": "docs/reviews/2026-09-11/runtime-security-validation.json"
+  },
+  {
+    "path": "ko/quizzes/security/08-runtime-security-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "9a19abcce921517948de5512d54a0da424e109f983d0d9c84a6676dc557decbf",
+    "summary": "Read four documents and2542original lines;correctedFalco/Tetragonconfig/rules,additiveNetworkPolicy,Secret-safeaudit,forensicslimits,GuardDutycoverage,24quizanswers;11examples34legacyanchors;boundednativevalidation.",
+    "validationReport": "docs/reviews/2026-09-11/runtime-security-validation.json"
+  },
+  {
+    "path": "en/quizzes/security/08-runtime-security-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "245a35aacface33118eb173f48237d4803dc969af62814e3f4971547a876899e",
+    "summary": "Read four documents and2542original lines;correctedFalco/Tetragonconfig/rules,additiveNetworkPolicy,Secret-safeaudit,forensicslimits,GuardDutycoverage,24quizanswers;11examples34legacyanchors;boundednativevalidation.",
+    "validationReport": "docs/reviews/2026-09-11/runtime-security-validation.json"
+  }
+]

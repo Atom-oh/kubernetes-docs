@@ -26,7 +26,7 @@
           "order",
           "challenge"
         ],
-        "note": "Certificate가 CertificateRequest를 만들고, ACME 발급자면 Order와 Challenge가 이어서 생성되어 도메인을 검증한다."
+        "note": "controller가 CertificateRequest를 만들며 ACME 경로에서는 Order와 필요한 Challenge를 처리한다."
       },
       {
         "id": "result",
@@ -59,7 +59,7 @@
       "type": "security",
       "label": "Issuer",
       "sublabel": "네임스페이스 범위",
-      "tag": "CRD",
+      "tag": "CR",
       "pos": [
         40,
         80
@@ -74,7 +74,7 @@
       "type": "security",
       "label": "Certificate",
       "sublabel": "인증서 요청 명세",
-      "tag": "CRD",
+      "tag": "CR",
       "pos": [
         330,
         80
@@ -89,7 +89,7 @@
       "type": "security",
       "label": "ClusterIssuer",
       "sublabel": "클러스터 범위",
-      "tag": "CRD",
+      "tag": "CR",
       "pos": [
         620,
         80
@@ -204,7 +204,7 @@
       "id": "cert-create-certreq",
       "from": "certificate",
       "to": "certreq",
-      "label": "생성",
+      "label": "controller가 생성",
       "variant": "emphasis",
       "labelAt": [
         415,
@@ -241,7 +241,7 @@
       "id": "certreq-secret",
       "from": "certreq",
       "to": "secret",
-      "label": "저장",
+      "label": "controller가 저장",
       "variant": "emphasis",
       "labelAt": [
         415,
@@ -265,7 +265,7 @@
       "items": [
         "spec.secretName에 지정한 이름의 Secret에 인증서가 저장됨",
         "tls.crt와 tls.key를 담고 있어 Ingress 등이 참조",
-        "renewBefore 시점에 자동 갱신되어 Secret이 교체됨"
+        "실제 수명·갱신 설정에 따라 Secret이 갱신되며 소비자 reload가 필요"
       ]
     }
   ]

@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicyNamespaced
+metadata:
+  name: documentation-outbound-observe
+  namespace: demo-app
+spec:
+  kprobes:
+  - call: tcp_connect
+    syscall: false
+    args:
+    - index: 0
+      type: sock
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: DPort
+        values:
+        - '22'
+        - '4444'
+        - '5555'
+      matchActions:
+      - action: Post

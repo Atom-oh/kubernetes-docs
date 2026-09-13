@@ -602,6 +602,8 @@ spec:
     image: registry.example.com/team/my-app:REPLACE_WITH_TESTED_TAG
 ```
 
+<span id="alloy--loki-통합"></span>
+
 ## Alloy + Loki 통합
 
 Promtail은 **2026년 3월 2일** 지원이 종료되었습니다. 새 배포에는 Alloy 또는 지원되는 클라이언트를 사용합니다. 아래는 기존 Promtail 파일 tail 설정을 Alloy의 Kubernetes API 로그 수집으로 대체하며 Docker 경로·privileged 컨테이너·노드 파일시스템 마운트가 필요하지 않습니다.
@@ -1421,6 +1423,8 @@ spec:
 ```
 
 단일 tenant Loki의 ID는 `fake`이므로 로컬 규칙 파일을 `fake/` 아래에 배치합니다. 로컬 rule storage는 ruler API로 수정할 수 없습니다. 이 알림은 전체 access-log stream을 전제합니다. 에러만 또는 샘플링된 stream으로는 편향 없는 에러율·지연 분위수를 얻을 수 없습니다. 데이터 부재·전송 실패 모니터링도 별도로 구성합니다.
+
+<span id="로그와-메트릭트레이스-연동"></span>
 
 ## 로그와 메트릭/트레이스 연동
 

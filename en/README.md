@@ -256,6 +256,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 3: SageMaker AI and MLflow Execution](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
    - [Part 4: Unified Studio Governance](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [Quiz](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
    - [Part 5: Factual Validation Results](./ai-ml/sagemaker-ai/04-validation-results.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
+12. [LLM Gateway (Inference Gateway) Deep Dive](./ai-ml/08-llm-gateway.md) | [Quiz](./quizzes/ai-ml/08-llm-gateway-quiz.md)
 
 ### Security & Policy
 1. [Policy Management with Kyverno](./security/01-kyverno-policy-management.md) | [Quiz](./quizzes/security/01-kyverno-policy-management-quiz.md)

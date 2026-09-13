@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: runtime-security-demo
+  namespace: demo-app
+  labels:
+    app: runtime-security-demo
+spec:
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: registry.example.com/team/app:REPLACE_WITH_APPROVED_VERSION
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir:
+      sizeLimit: 64Mi

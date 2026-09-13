@@ -1,6 +1,7 @@
 # CloudWatch Metrics
 
-> Reviewed: 2026-09-13. Helm example: amazon-cloudwatch-observability 6.6.0.
+> **Last Updated**: September 13, 2026
+> Helm example: amazon-cloudwatch-observability 6.6.0.
 > Historical April/July announcements below retain their actual dates.
 
 ## Introduction

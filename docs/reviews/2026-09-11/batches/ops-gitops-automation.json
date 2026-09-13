@@ -39,7 +39,8 @@
       "TFE0.80.0 init/validate plus two mock-provider plans passed: explicit approvals and required per-workspace roles",
       "Final Atlantis server config accepted by real0.47.1 with synthetic credentials and downloads disabled; sandbox prevented listener binding; process stopped"
     ],
-    "reviewedSha256": "92deaa2b90ad9910927c23af8e658c8363aa78b475be5f550351c9bca7522eb0"
+    "reviewedSha256": "2ed54362a37fe8df8124d71ed6d99d1a245066cbca9a1c85a298b7846aef2709",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/ops/05-gitops-automation-quiz.md",
@@ -123,7 +124,8 @@
       "TFE0.80.0 init/validate plus two mock-provider plans passed: explicit approvals and required per-workspace roles",
       "Final Atlantis server config accepted by real0.47.1 with synthetic credentials and downloads disabled; sandbox prevented listener binding; process stopped"
     ],
-    "reviewedSha256": "8d1ab9541b230571174126ae39841bef1b1289118e15aaa855015374fc7e92eb"
+    "reviewedSha256": "274a6e557f61dca9d6fb8c9f9055c7a883de89c1f5a004f42e48af5c60214801",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/05-gitops-automation-quiz.md",

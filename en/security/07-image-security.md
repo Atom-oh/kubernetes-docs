@@ -136,6 +136,8 @@ The [complete CloudFormation example](https://github.com/Atom-oh/kubernetes-docs
 <span id="keyless-signing-oidc-based"></span>
 <span id="github-actions-integration"></span>
 
+<span id="image-signing-with-cosignsigstore"></span>
+
 ## Image Signing with Cosign/Sigstore
 
 ### Signing order and trust
@@ -156,7 +158,7 @@ cosign sign --yes "$IMAGE_REF"
 cosign verify   --certificate-identity 'https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main'   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'   "$IMAGE_REF"
 ```
 
-Replace the identity with the approved workflow. --certificate-identity-regexp accepts a regular expression, not a glob. Prefer an exact identity or anchored regexp over permissive expressions such as https://github.com/org/repo/*. Check Cosign 3 bundle/OCI-referrer compatibility with downstream verifiers.
+Replace the identity with the approved workflow. --certificate-identity-regexp accepts a regular expression, not a glob. Prefer an exact identity or anchored regexp over permissive expressions such as `https://github.com/org/repo/*`. Check Cosign 3 bundle/OCI-referrer compatibility with downstream verifiers.
 
 <span id="kyverno-imageverify"></span>
 
@@ -369,6 +371,8 @@ The apps ran directly with Go 1.27.1 and Python 3.12, and all three Dockerfiles 
 - Ensure retention/garbage collection does not remove active digests or needed signature/attestation referrers; test recovery.
 
 <span id="complete-image-security-pipeline"></span>
+
+<span id="cicd-pipeline-integration"></span>
 
 ## CI/CD Pipeline Integration
 

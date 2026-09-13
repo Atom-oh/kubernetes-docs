@@ -203,7 +203,8 @@
       "Full README read; target paths checked against existing files and local link inventory",
       "Relative cross-locale link failed frozen KO build; changed to actual canonical locale URL without disabling dead-link checking."
     ],
-    "reviewedSha256": "939d2d72bbc306719946efb7951aca335ff3e1a8de296d3d1ed3b1ff3d7d7735"
+    "reviewedSha256": "771f5b47f8a55e6e4d482641e39d2fd6c4629dd13e305d7c640f7c77c8676336",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/README.md",
@@ -225,6 +226,7 @@
       "Full README read; target paths checked against existing files and local link inventory",
       "Relative cross-locale link failed frozen KO build; changed to actual canonical locale URL without disabling dead-link checking."
     ],
-    "reviewedSha256": "55c4bb2ae3432d3c78c511ddd84ce868d2a815dc6efa329a4ff74eef140ba754"
+    "reviewedSha256": "42a90c7034f13fc78ed65ee03b40ade243e9257008b050e13b04729fa218174f",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   }
 ]

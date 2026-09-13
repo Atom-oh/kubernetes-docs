@@ -35,7 +35,8 @@
     "validation": [
       "kafka-msk-integration-validation.json"
     ],
-    "reviewedSha256": "8d1713003a3c4a90abfe1799209678d00929f2ff0d51893c1039636ff2b51e32"
+    "reviewedSha256": "96d32cf3b9a5d9cdb33d0138e65579513fa43503c8d127cf29411134714d2718",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",
@@ -111,7 +112,8 @@
     "validation": [
       "kafka-msk-integration-validation.json"
     ],
-    "reviewedSha256": "b145248f30a2ca61d35ccd29a7da76e3da53a048b951e9ba9b02544fbdc94de0"
+    "reviewedSha256": "c7cccfd816490bf32aad69d16e14fafbbf78dee79714ebc5ffb7c38131f9b0d2",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",

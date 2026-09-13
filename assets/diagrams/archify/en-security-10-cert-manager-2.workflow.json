@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "ACME Certificate Issuance Flow",
+    "title": "ACME HTTP/DNS Validation (Let’s Encrypt example)",
     "locale": "en",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -286,7 +286,15 @@
       "items": [
         "Proves domain ownership with a DNS TXT record",
         "Required for wildcard certificates",
-        "On EKS, Route53 + IRSA manages records without static credentials"
+        "Route 53 uses temporary credentials (IRSA/Pod Identity) and DNS permissions"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Validation scope",
+      "items": [
+        "Reused authorizations may not require new challenges",
+        "ACM ACME uses administrator-validated domains and EAB registration"
       ]
     }
   ]

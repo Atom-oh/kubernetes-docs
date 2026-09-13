@@ -5,7 +5,8 @@
     "status": "fixed",
     "reviewedSha256": "3de7e38f887e9309d52d1f281442c0f1f6ad5253b9bef2607a6d0a623a487aaf",
     "summary": "Fullyreadoriginalindex/landingpage;quizindexnowlistsall253currentmainquizfilesineachlocale;emptyobservabilitylegacypagepointstomaintainedseries;Markdownandlocalmain-targetlinkspassed.",
-    "validationReport": "docs/reviews/2026-09-11/navigation-index-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/navigation-index-validation.json",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/README.md",
@@ -13,7 +14,8 @@
     "status": "fixed",
     "reviewedSha256": "06b7441ddb88ea48bf903305b1d32acf7d691a1aeee91e7637357ef1e6a63e9b",
     "summary": "Fullyreadoriginalindex/landingpage;quizindexnowlistsall253currentmainquizfilesineachlocale;emptyobservabilitylegacypagepointstomaintainedseries;Markdownandlocalmain-targetlinkspassed.",
-    "validationReport": "docs/reviews/2026-09-11/navigation-index-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/navigation-index-validation.json",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/lab-guides/labs/observability-end-to-end/README.md",

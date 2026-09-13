@@ -26,7 +26,7 @@
           "order",
           "challenge"
         ],
-        "note": "The Certificate creates a CertificateRequest; for an ACME issuer an Order and a Challenge follow to validate the domain."
+        "note": "The controller creates a CertificateRequest; the ACME path processes Orders and required Challenges."
       },
       {
         "id": "result",
@@ -46,7 +46,7 @@
       "type": "security",
       "label": "Issuer",
       "sublabel": "Namespace scoped",
-      "tag": "CRD",
+      "tag": "CR",
       "pos": [
         40,
         80
@@ -61,7 +61,7 @@
       "type": "security",
       "label": "Certificate",
       "sublabel": "Desired certificate spec",
-      "tag": "CRD",
+      "tag": "CR",
       "pos": [
         330,
         80
@@ -76,7 +76,7 @@
       "type": "security",
       "label": "ClusterIssuer",
       "sublabel": "Cluster scoped",
-      "tag": "CRD",
+      "tag": "CR",
       "pos": [
         620,
         80
@@ -191,7 +191,7 @@
       "id": "cert-create-certreq",
       "from": "certificate",
       "to": "certreq",
-      "label": "creates",
+      "label": "controller creates",
       "variant": "emphasis",
       "labelAt": [
         415,
@@ -228,7 +228,7 @@
       "id": "certreq-secret",
       "from": "certreq",
       "to": "secret",
-      "label": "stores",
+      "label": "controller stores",
       "variant": "emphasis",
       "labelAt": [
         415,
@@ -252,7 +252,7 @@
       "items": [
         "The certificate is stored in the Secret named by spec.secretName",
         "It holds tls.crt and tls.key, referenced by Ingress and others",
-        "Renewed automatically at renewBefore, replacing the Secret contents"
+        "Renewal uses actual lifetime and policy; Secret consumers must reload the update"
       ]
     }
   ]

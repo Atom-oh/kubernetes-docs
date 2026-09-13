@@ -27,6 +27,8 @@ API endpoint는 기본적으로 private입니다. `kubectl` 검증과 GitOps 컨
 
 ***
 
+<span id="3-layer-아키텍처-소개"></span>
+
 ## 3-Layer 아키텍처 소개
 
 ### 왜 레이어를 분리하는가?
@@ -102,6 +104,8 @@ eks-terraform/
 > Kubernetes 리소스(NodePool, Deployment, Service 등)는 ArgoCD를 통한 GitOps 방식으로 관리합니다. 자세한 내용은 [GitOps 멀티 클러스터 배포](04-gitops-multi-cluster.md)를 참조하세요.
 
 ***
+
+<span id="00-shared-공통-설정"></span>
 
 ## 00-shared: 공통 설정
 
@@ -275,6 +279,8 @@ common_tags = {
 ```
 
 ***
+
+<span id="01-network-vpc-구성"></span>
 
 ## 01-network: VPC 구성
 
@@ -657,6 +663,8 @@ output "project_name" {
 ```
 
 ***
+
+<span id="02-cluster-eks-auto-mode"></span>
 
 ## 02-cluster: EKS Auto Mode
 
@@ -1081,6 +1089,8 @@ output "kubernetes_version" {
 ```
 
 ***
+
+<span id="03-platform-add-ons--pod-identity"></span>
 
 ## 03-platform: Add-ons & Pod Identity
 

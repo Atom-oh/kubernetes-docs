@@ -22,7 +22,7 @@
     "validation": [
       "kafka-foundation-validation.json"
     ],
-    "reviewedSha256": "5e3620cff3085118df869fcb76a38a82a1bae3ee709c7e27fa84b3b11bfe00da",
+    "reviewedSha256": "c9038d3e82fccb2fc113e0b6f91a62346c433dfe1432f8496d230d3a93a91ee5",
     "findings": [
       "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
       "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
@@ -31,7 +31,8 @@
       "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
       "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
       "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/data-on-eks/kafka/01-kafka-fundamentals.md",
@@ -90,7 +91,7 @@
     "validation": [
       "kafka-foundation-validation.json"
     ],
-    "reviewedSha256": "fd33b390872cc321f5e1ea57431a4561fa72c3fca64a0cf5237052739abdb8da",
+    "reviewedSha256": "c9b58ece90f9cadb74ae56146c10f8a75c59dc8151b13ad5c619a55956792e71",
     "findings": [
       "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
       "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
@@ -99,7 +100,8 @@
       "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
       "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
       "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/data-on-eks/kafka/README.md",
@@ -124,7 +126,7 @@
     "validation": [
       "kafka-foundation-validation.json"
     ],
-    "reviewedSha256": "92dc71ef1e2ca4aca0cab8fa325a7f82ca57f96b1f23db59482b40bafc2b8892",
+    "reviewedSha256": "1d9b7f579b7cf91fb1bfc91644bff367ad9b292a39dda4bd81208ca92fa6cfe9",
     "findings": [
       "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
       "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
@@ -133,7 +135,8 @@
       "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
       "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
       "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/data-on-eks/kafka/01-kafka-fundamentals.md",
@@ -158,7 +161,7 @@
     "validation": [
       "kafka-foundation-validation.json"
     ],
-    "reviewedSha256": "297ceaf3f41cffdaad36cd65a9869f40e55778650874f374b6de96afa9666824",
+    "reviewedSha256": "ace35a42b2e0a2b8876b72435d57f396811a62863405c75f9267232197596de1",
     "findings": [
       "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
       "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
@@ -167,7 +170,8 @@
       "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
       "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
       "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
@@ -192,7 +196,7 @@
     "validation": [
       "kafka-foundation-validation.json"
     ],
-    "reviewedSha256": "a937c2d013e05b207cef26ec154b668797584c65307a54ba33267b3c1343ac3f",
+    "reviewedSha256": "2945086b12160c0da26373816e6703daa7b4392f51c1874516fe3bbd29347d12",
     "findings": [
       "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
       "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
@@ -201,6 +205,7 @@
       "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
       "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
       "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   }
 ]

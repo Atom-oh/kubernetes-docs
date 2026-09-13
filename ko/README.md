@@ -256,6 +256,7 @@
    - [Part 3: SageMaker AI와 MLflow 실행](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
    - [Part 4: Unified Studio 거버넌스](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [퀴즈](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
    - [Part 5: 실제 검증 결과](./ai-ml/sagemaker-ai/04-validation-results.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
+12. [LLM 게이트웨이(Inference Gateway) 딥다이브](./ai-ml/08-llm-gateway.md) | [퀴즈](./quizzes/ai-ml/08-llm-gateway-quiz.md)
 
 ### Security & Policy
 1. [Kyverno를 사용한 정책 관리](./security/01-kyverno-policy-management.md) | [퀴즈](./quizzes/security/01-kyverno-policy-management-quiz.md)

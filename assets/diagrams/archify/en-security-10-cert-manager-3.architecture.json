@@ -10,35 +10,38 @@
     "views": [
       {
         "id": "csr-path",
-        "label": "1-2. CSR request",
+        "label": "CSR request",
         "focus": [
-          "envoy",
+          "istio-agent",
           "csr-agent",
-          "cm-controller",
           "cert-request"
         ],
-        "note": "The Envoy sidecar sends a CSR to istio-csr, which creates a CertificateRequest in cert-manager."
+        "note": "istio-agent creates the CSR; istio-csr creates a CertificateRequest through the Kubernetes API."
       },
       {
         "id": "issue-path",
-        "label": "3-4. Issuance",
+        "label": "Issuance and approval",
         "focus": [
           "cert-request",
+          "cm-controller",
           "cluster-issuer",
           "ca-backend",
           "svid"
         ],
-        "note": "The CertificateRequest is signed through the ClusterIssuer (istio-ca) by the external PKI, producing a SPIFFE SVID certificate."
+        "note": "The issuer controller checks approval/issuance policy and returns a PKI-signed chain."
       },
       {
-        "id": "return-path",
-        "label": "5. Return and mTLS",
+        "id": "data-path",
+        "label": "SDS and mTLS",
         "focus": [
           "svid",
+          "csr-agent",
+          "istio-agent",
           "envoy",
+          "peer-proxy",
           "app"
         ],
-        "note": "The issued SVID returns to Envoy, which uses it to establish mTLS between workloads."
+        "note": "The agent delivers key/certificate through SDS. mTLS is between workload proxies, separate from the local application hop."
       }
     ]
   },
@@ -50,7 +53,7 @@
       "sublabel": "app container",
       "pos": [
         40,
-        400
+        460
       ],
       "size": [
         160,
@@ -64,7 +67,7 @@
       "sublabel": "workload proxy",
       "pos": [
         40,
-        240
+        260
       ],
       "size": [
         160,
@@ -74,11 +77,11 @@
     {
       "id": "csr-agent",
       "type": "backend",
-      "label": "istio-csr Agent",
+      "label": "istio-csr",
       "sublabel": "gRPC CA server",
       "pos": [
-        280,
-        240
+        350,
+        50
       ],
       "size": [
         170,
@@ -89,10 +92,10 @@
       "id": "cm-controller",
       "type": "backend",
       "label": "cert-manager Controller",
-      "sublabel": "processes CertificateRequest",
+      "sublabel": "Processes approved requests",
       "pos": [
-        610,
-        240
+        600,
+        260
       ],
       "size": [
         200,
@@ -101,12 +104,12 @@
     },
     {
       "id": "cert-request",
-      "type": "backend",
+      "type": "cloud",
       "label": "CertificateRequest",
       "sublabel": "cert-manager.io/v1",
       "pos": [
-        610,
-        400
+        600,
+        50
       ],
       "size": [
         200,
@@ -119,8 +122,8 @@
       "label": "ClusterIssuer",
       "sublabel": "istio-ca",
       "pos": [
-        890,
-        400
+        900,
+        260
       ],
       "size": [
         150,
@@ -134,7 +137,7 @@
       "sublabel": "CA / Vault PKI / AWS PCA",
       "pos": [
         1120,
-        400
+        260
       ],
       "size": [
         180,
@@ -147,11 +150,39 @@
       "label": "SVID Certificate",
       "sublabel": "spiffe://cluster.local/ns/.../sa/...",
       "pos": [
-        890,
-        60
+        900,
+        50
       ],
       "size": [
         250,
+        64
+      ]
+    },
+    {
+      "id": "istio-agent",
+      "type": "backend",
+      "label": "istio-agent",
+      "sublabel": "CSR · SDS",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "peer-proxy",
+      "type": "security",
+      "label": "Peer Envoy",
+      "sublabel": "Another workload Pod",
+      "pos": [
+        900,
+        460
+      ],
+      "size": [
+        190,
         64
       ]
     }
@@ -162,7 +193,8 @@
       "label": "Workload Pod",
       "wraps": [
         "app",
-        "envoy"
+        "envoy",
+        "istio-agent"
       ]
     },
     {
@@ -187,70 +219,140 @@
         "cluster-issuer",
         "ca-backend"
       ]
+    },
+    {
+      "kind": "region",
+      "label": "Peer workload",
+      "wraps": [
+        "peer-proxy"
+      ]
     }
   ],
   "connections": [
     {
-      "id": "envoy-to-csr",
-      "from": "envoy",
+      "id": "agent-to-csr",
+      "from": "istio-agent",
       "to": "csr-agent",
-      "label": "1. CSR request",
+      "label": "1. CSR · workload identity",
       "variant": "emphasis"
     },
     {
-      "id": "csr-to-cm",
+      "id": "csr-to-cr",
       "from": "csr-agent",
-      "to": "cm-controller",
-      "label": "2. Create CertificateRequest",
-      "variant": "emphasis"
+      "to": "cert-request",
+      "label": "2. Create via Kubernetes API",
+      "variant": "emphasis",
+      "labelAt": [
+        560,
+        135
+      ]
     },
     {
-      "id": "cm-to-cr",
+      "id": "controller-watches",
       "from": "cm-controller",
       "to": "cert-request",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "cr-to-issuer",
-      "from": "cert-request",
-      "to": "cluster-issuer",
-      "label": "3. Issuance request",
-      "variant": "emphasis",
-      "labelDy": 54
-    },
-    {
-      "id": "issuer-to-ca",
-      "from": "cluster-issuer",
-      "to": "ca-backend",
-      "label": "sign"
-    },
-    {
-      "id": "ca-to-svid",
-      "from": "ca-backend",
-      "to": "svid",
-      "label": "4. Issue SVID",
+      "label": "watch / reconcile",
+      "variant": "dashed",
       "fromSide": "top",
       "toSide": "bottom"
     },
     {
-      "id": "svid-to-envoy",
+      "id": "controller-issuer",
+      "from": "cm-controller",
+      "to": "cluster-issuer",
+      "label": "3. issuerRef · approval",
+      "variant": "emphasis",
+      "labelAt": [
+        850,
+        345
+      ]
+    },
+    {
+      "id": "issuer-ca",
+      "from": "cluster-issuer",
+      "to": "ca-backend",
+      "label": "sign",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ca-certificate",
+      "from": "ca-backend",
+      "to": "svid",
+      "label": "4. X.509-SVID",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "return-via-csr",
       "from": "svid",
-      "to": "envoy",
-      "label": "5. Return certificate",
+      "to": "csr-agent",
+      "label": "5. Return certificate chain",
       "variant": "dashed",
-      "fromSide": "left",
+      "fromSide": "top",
       "toSide": "top"
     },
     {
-      "id": "envoy-to-app",
-      "from": "envoy",
-      "to": "app",
-      "label": "mTLS",
+      "id": "return-to-agent",
+      "from": "csr-agent",
+      "to": "istio-agent",
+      "label": "6. gRPC response",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "agent-sds",
+      "from": "istio-agent",
+      "to": "envoy",
+      "label": "SDS: key + certificate",
       "variant": "security",
       "fromSide": "bottom",
       "toSide": "top",
-      "labelDy": 24
+      "labelAt": [
+        125,
+        185
+      ]
+    },
+    {
+      "id": "local-app",
+      "from": "envoy",
+      "to": "app",
+      "label": "local app hop",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        120,
+        390
+      ]
+    },
+    {
+      "id": "peer-mtls",
+      "from": "envoy",
+      "to": "peer-proxy",
+      "label": "mTLS between workload proxies",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Trust and renewal",
+      "items": [
+        "Mount/pin the istio-csr serving trust root",
+        "Separate CA rollover from workload renewal"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Configuration scope",
+      "items": [
+        "Sidecar flow; verify Ambient support separately",
+        "External private-CA issuers use their own issuerRef group/kind"
+      ]
     }
   ]
 }

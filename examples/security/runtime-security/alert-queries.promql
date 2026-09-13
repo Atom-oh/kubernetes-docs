@@ -1,0 +1,1 @@
+sum by (priority) (rate(falcosecurity_falcosidekick_falco_events_total[5m]))

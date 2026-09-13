@@ -1,0 +1,21 @@
+config:
+  existingSecret: falcosidekick-output-credentials
+  slack:
+    minimumpriority: warning
+  pagerduty:
+    minimumpriority: critical
+  aws:
+    region: ap-northeast-2
+    cloudwatchlogs:
+      loggroup: /falco/alerts
+      logstream: documentation
+      minimumpriority: warning
+  elasticsearch:
+    minimumpriority: warning
+    checkcert: true
+webui:
+  enabled: false
+serviceMonitor:
+  enabled: true
+image:
+  tag: 2.35.0

@@ -1,15 +1,17 @@
 # Runtime Security Quiz
 
+> **Last Updated**: September 13, 2026
+
 This quiz tests your understanding of Falco, Seccomp, AppArmor, eBPF-based security, and EKS runtime security.
 
 ## Quiz Questions
 
 ### 1. What technology does Falco use to detect runtime threats?
 
-A. Network packet analysis
-B. System call (syscall) monitoring
-C. Log analysis
-D. Memory scanning
+- A. Network packet analysis
+- B. System call (syscall) monitoring
+- C. Log analysis
+- D. Memory scanning
 
 <details>
 <summary>Show Answer</summary>
@@ -17,16 +19,16 @@ D. Memory scanning
 **Answer: B. System call (syscall) monitoring**
 
 **Explanation:**
-Falco uses eBPF or kernel modules to monitor system calls at the kernel level. It detects activities like process execution, file access, and network connections in real-time.
+Falco commonly evaluates Linux syscall events against rules; plugins can provide other event sources. In 0.44.1, container fields come from the container plugin. Verify modern_ebpf kernel/BTF requirements and metadata collection.
 
 </details>
 
 ### 2. What is the main function of Seccomp?
 
-A. Network traffic filtering
-B. Restrict system calls a process can make
-C. File system encryption
-D. User authentication
+- A. Network traffic filtering
+- B. Restrict system calls a process can make
+- C. File system encryption
+- D. User authentication
 
 <details>
 <summary>Show Answer</summary>
@@ -34,16 +36,16 @@ D. User authentication
 **Answer: B. Restrict system calls a process can make**
 
 **Explanation:**
-Seccomp (Secure Computing Mode) restricts the system calls a process can make using a whitelist approach. The process terminates if it attempts an unauthorized syscall.
+Seccomp filters system calls. Rejection can return ERRNO, terminate, or notify depending on the profile action; it does not always kill the process.
 
 </details>
 
 ### 3. What is the recommended default Seccomp profile in Kubernetes 1.27+?
 
-A. Unconfined
-B. RuntimeDefault
-C. Localhost
-D. Docker/default
+- A. Unconfined
+- B. RuntimeDefault
+- C. Localhost
+- D. Docker/default
 
 <details>
 <summary>Show Answer</summary>
@@ -51,23 +53,16 @@ D. Docker/default
 **Answer: B. RuntimeDefault**
 
 **Explanation:**
-RuntimeDefault is the default Seccomp profile provided by the container runtime (containerd, CRI-O):
-```yaml
-securityContext:
-  seccompProfile:
-    type: RuntimeDefault
-```
-
-It provides an appropriate security level for most workloads.
+RuntimeDefault is the profile supplied by the container runtime. Set seccompProfile explicitly or verify kubelet seccompDefault. Kubernetes 1.27+ alone does not apply it automatically to every Pod.
 
 </details>
 
 ### 4. What is the role of the priority field in Falco rules?
 
-A. Determine rule execution order
-B. Specify severity level of alerts
-C. Set resource quota
-D. Set log retention period
+- A. Determine rule execution order
+- B. Specify severity level of alerts
+- C. Set resource quota
+- D. Set log retention period
 
 <details>
 <summary>Show Answer</summary>
@@ -75,45 +70,33 @@ D. Set log retention period
 **Answer: B. Specify severity level of alerts**
 
 **Explanation:**
-The priority in Falco rules specifies the severity of detected events:
-- EMERGENCY, ALERT, CRITICAL, ERROR
-- WARNING, NOTICE, INFORMATIONAL, DEBUG
-
-```yaml
-- rule: Shell in Container
-  priority: WARNING
-```
+priority is event severity, not evaluation order. The standard levels are EMERGENCY, ALERT, CRITICAL, ERROR, WARNING, NOTICE, INFORMATIONAL, and DEBUG. A complete rule also needs fields such as desc, condition, and output.
 
 </details>
 
 ### 5. What happens in AppArmor's complain mode?
 
-A. Block all access
-B. Only log policy violations
-C. Disable profile
-D. Send alerts only
+- A. Block all access
+- B. Log ordinary violations; explicit deny can still block
+- C. Disable profile
+- D. Send alerts only
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Only log policy violations**
+**Answer: B. Log ordinary violations; explicit deny can still block**
 
 **Explanation:**
-AppArmor modes:
-- **enforce**: Block and log on policy violation
-- **complain**: Only log on policy violation (for debugging)
-- **unconfined**: No profile applied
-
-Complain mode is useful for testing new profiles.
+Complain mode normally logs policy violations while allowing them, but explicit deny rules can still block access. It is not unconditional permission for all access. Verify kernel support and the loaded profile.
 
 </details>
 
 ### 6. What is NOT a threat detected by Amazon GuardDuty EKS Runtime Monitoring?
 
-A. Cryptocurrency mining
-B. Privilege escalation
-C. Code quality issues
-D. Container escape attempts
+- A. Cryptocurrency mining
+- B. Privilege escalation
+- C. Code quality issues
+- D. Container escape attempts
 
 <details>
 <summary>Show Answer</summary>
@@ -121,23 +104,16 @@ D. Container escape attempts
 **Answer: C. Code quality issues**
 
 **Explanation:**
-GuardDuty EKS Runtime Monitoring detection types:
-- PrivilegeEscalation
-- Execution (malicious code)
-- CryptoCurrency (mining)
-- CredentialAccess
-- DefenseEvasion
-
-Code quality is a development quality issue, not a security threat.
+GuardDuty Runtime Monitoring detects security threats, not code-quality defects. Current EKS support covers EC2 and Auto Mode, but excludes EKS Hybrid Nodes and EKS Fargate. Check OS/kernel/agent requirements and coverage health.
 
 </details>
 
 ### 7. What is the main function of Cilium Tetragon?
 
-A. Container image scanning
-B. eBPF-based security observability
-C. Network policy management
-D. Secrets management
+- A. Container image scanning
+- B. eBPF-based security observability
+- C. Network policy management
+- D. Secrets management
 
 <details>
 <summary>Show Answer</summary>
@@ -145,20 +121,16 @@ D. Secrets management
 **Answer: B. eBPF-based security observability**
 
 **Explanation:**
-Tetragon is Cilium's eBPF-based security observability tool:
-- Process execution monitoring
-- Network activity tracking
-- File access monitoring
-- Policy-based real-time response (e.g., process termination)
+Tetragon provides process events, file/network hooks, and supported actions. It does not require Cilium CNI installation. Verify hook support, selector scope, and false positives; test Post/monitor behavior before enforcement.
 
 </details>
 
 ### 8. What condition detects shell execution inside a container in Falco?
 
-A. container and shell_procs
-B. spawned_process and container and shell_procs
-C. exec and shell
-D. process.name = bash
+- A. container and shell_procs
+- B. spawned_process and container and shell_procs
+- C. exec and shell
+- D. process.name = bash
 
 <details>
 <summary>Show Answer</summary>
@@ -166,27 +138,16 @@ D. process.name = bash
 **Answer: B. spawned_process and container and shell_procs**
 
 **Explanation:**
-Falco rule example:
-```yaml
-- rule: Shell in Container
-  condition: >
-    spawned_process and
-    container and
-    shell_procs
-  output: "Shell spawned in container"
-  priority: WARNING
-```
-
-`spawned_process` means new process creation, `container` means container environment, `shell_procs` means shell processes (bash, sh, etc.).
+This expression depends on loaded spawned_process, container, and shell_procs macros from the ruleset. A shell may be legitimate and does not prove compromise. The guide defines independent macros and unique rule names.
 
 </details>
 
 ### 9. How do you set a read-only root filesystem for a Pod?
 
-A. readOnlyRootFilesystem: true
-B. rootfs: readonly
-C. filesystem.readonly: true
-D. immutableRoot: true
+- A. readOnlyRootFilesystem: true
+- B. rootfs: readonly
+- C. filesystem.readonly: true
+- D. immutableRoot: true
 
 <details>
 <summary>Show Answer</summary>
@@ -194,21 +155,16 @@ D. immutableRoot: true
 **Answer: A. readOnlyRootFilesystem: true**
 
 **Explanation:**
-```yaml
-securityContext:
-  readOnlyRootFilesystem: true
-```
-
-This setting makes the container's root filesystem read-only, preventing malicious code from modifying files. Mount emptyDir volumes for paths that need write access.
+readOnlyRootFilesystem belongs to the container securityContext. Writable volumes or /tmp can be supplied separately. It does not prevent malicious use of writable volumes, network access, or memory.
 
 </details>
 
 ### 10. What does the "Defense in Depth" strategy mean in runtime security?
 
-A. Rely on a single security layer
-B. Apply multiple overlapping security layers
-C. Focus only on defense
-D. Protect only external boundaries
+- A. Rely on a single security layer
+- B. Apply multiple overlapping security layers
+- C. Focus only on defense
+- D. Protect only external boundaries
 
 <details>
 <summary>Show Answer</summary>
@@ -216,21 +172,18 @@ D. Protect only external boundaries
 **Answer: B. Apply multiple overlapping security layers**
 
 **Explanation:**
-Defense in Depth uses multiple security layers:
-1. Build time: Image scanning, vulnerability analysis
-2. Deploy time: Admission Control, PSS/PSA
-3. Runtime: Falco, Seccomp, AppArmor
-
-If one layer is breached, other layers provide protection.
+Combine controls while checking each layer’s scope and failure modes. Image/signature checks, admission/permissions, seccomp/AppArmor, runtime detection, networking, and recovery complement each other; installing more tools alone is not a guarantee.
 
 </details>
 
-### 11. What command shows traffic blocked by policies in Hubble?
+<span id="_11-what-command-shows-traffic-blocked-by-policies-in-hubble"></span>
 
-A. hubble observe --blocked
-B. hubble observe --verdict DROPPED
-C. hubble observe --denied
-D. hubble observe --policy-violation
+### 11. Which Hubble command filters dropped flows?
+
+- A. hubble observe --blocked
+- B. hubble observe --verdict DROPPED
+- C. hubble observe --denied
+- D. hubble observe --policy-violation
 
 <details>
 <summary>Show Answer</summary>
@@ -238,20 +191,16 @@ D. hubble observe --policy-violation
 **Answer: B. hubble observe --verdict DROPPED**
 
 **Explanation:**
-```bash
-hubble observe --verdict DROPPED
-```
-
-`--verdict DROPPED` filters traffic denied by network policies. You can monitor and analyze policy violations in real-time.
+--verdict DROPPED selects dropped flows. Not every drop is a NetworkPolicy denial; inspect drop reasons and policy verdicts. The option alone does not establish the policy-specific cause implied by the original question.
 
 </details>
 
 ### 12. Which is NOT a runtime security best practice?
 
-A. Apply RuntimeDefault Seccomp to all workloads
-B. Deploy Falco as DaemonSet on all nodes
-C. Run containers as root
-D. Use read-only root filesystem
+- A. Use RuntimeDefault after checking workload compatibility
+- B. Verify Falco collection on supported nodes
+- C. Run containers as root
+- D. Use read-only root filesystem
 
 <details>
 <summary>Show Answer</summary>
@@ -259,14 +208,6 @@ D. Use read-only root filesystem
 **Answer: C. Run containers as root**
 
 **Explanation:**
-Runtime security best practices:
-- Apply RuntimeDefault Seccomp
-- Deploy Falco
-- Read-only root filesystem
-- **Run as non-root user** (runAsNonRoot: true)
-- Remove unnecessary capabilities
-- Enable GuardDuty runtime monitoring
-
-Running as root is dangerous because container escape gives elevated privileges on the host.
+Reduce unnecessary root privileges. RuntimeDefault and readOnlyRootFilesystem still require workload/node compatibility. Falco DaemonSets cannot run on every node type such as Fargate. Feature enablement and healthy GuardDuty coverage are separate checks.
 
 </details>

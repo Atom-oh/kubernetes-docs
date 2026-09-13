@@ -136,6 +136,8 @@ Enhanced findings는 `source: aws.inspector2`, `detail-type: Inspector2 Finding`
 <span id="키리스-서명-oidc-기반"></span>
 <span id="github-actions-통합"></span>
 
+<span id="cosignsigstore를-사용한-이미지-서명"></span>
+
 ## Cosign/Sigstore를 사용한 이미지 서명
 
 ### 서명 순서와 신뢰 기준
@@ -156,7 +158,7 @@ cosign sign --yes "$IMAGE_REF"
 cosign verify   --certificate-identity 'https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main'   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'   "$IMAGE_REF"
 ```
 
-Identity 값은 실제 승인된 workflow로 바꿉니다. `--certificate-identity-regexp`는 glob이 아닌 정규식입니다. `https://github.com/org/repo/*` 같은 느슨한 식으로 모든 workflow를 승인하지 말고 정확한 identity 또는 경계를 고정한 regexp를 사용합니다. Cosign 3의 bundle/OCI referrer와 소비하는 verifier의 지원도 함께 확인합니다.
+Identity 값은 실제 승인된 workflow로 바꿉니다. `--certificate-identity-regexp`는 glob이 아닌 정규식입니다. ``https://github.com/org/repo/*`` 같은 느슨한 식으로 모든 workflow를 승인하지 말고 정확한 identity 또는 경계를 고정한 regexp를 사용합니다. Cosign 3의 bundle/OCI referrer와 소비하는 verifier의 지원도 함께 확인합니다.
 
 <span id="kyverno-imageverify"></span>
 
@@ -369,6 +371,8 @@ Go1.27.1과 Python3.12에서 앱을 직접 실행했고, 세 Dockerfile의 HIGH/
 - Retention/garbage collection이 실행 중인 digest와 서명·attestation/referrer를 삭제하지 않도록 복구 경로를 확인합니다.
 
 <span id="완전한-이미지-보안-파이프라인"></span>
+
+<span id="cicd-파이프라인-통합"></span>
 
 ## CI/CD 파이프라인 통합
 

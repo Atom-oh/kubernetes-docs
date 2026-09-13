@@ -428,6 +428,8 @@ The examples below use sidecar APIs. Do not apply all overlapping routing/policy
 
 Istio uses Kubernetes Custom Resource Definitions (CRDs) to manage configuration.
 
+<span id="1-virtualservice"></span>
+
 ### 1. VirtualService
 
 VirtualService defines how requests are routed to services.

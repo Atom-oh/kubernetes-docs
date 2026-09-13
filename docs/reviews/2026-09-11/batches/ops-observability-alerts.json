@@ -55,7 +55,8 @@
       "Used distinct modernSlackincomingwebhookfiles for channels and explicitPagerDutyv2routingkey; oldservice_key/service_key_file remainsvalidv1integration, notunsupportedfield.",
       "Made info-onlymute useexplicitAsia/Seoul interval; delay/repeat are notdaily digest; send_resolved/resolve_timeout semantics qualified."
     ],
-    "reviewedSha256": "c7485c44911646573ffa6715ef92d50246ee01053a4cecd4d8cc0166a40cd68b"
+    "reviewedSha256": "5af7823568a75ecb43c6fee75a2135c47d43dca2211d1ba4e2077106da2cb1cf",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/ops/07-observability-alerts-quiz.md",
@@ -171,7 +172,8 @@
       "Used distinct modernSlackincomingwebhookfiles for channels and explicitPagerDutyv2routingkey; oldservice_key/service_key_file remainsvalidv1integration, notunsupportedfield.",
       "Made info-onlymute useexplicitAsia/Seoul interval; delay/repeat are notdaily digest; send_resolved/resolve_timeout semantics qualified."
     ],
-    "reviewedSha256": "8a80850ef1fd89b52b2f323de005c48715ba1f45663eaf48dd1be200330db8f7"
+    "reviewedSha256": "0e84a34ac3aff5efc510a642f00f88067098f026c00ca0f4530c5d3646691185",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/07-observability-alerts-quiz.md",

@@ -37,6 +37,8 @@
 
 ---
 
+<span id="1-핵심-개념"></span>
+
 ## 1. 핵심 개념
 
 ### SPIFFE ID
@@ -125,6 +127,8 @@ Trust Bundle은 특정 Trust Domain의 루트 CA 인증서들을 포함하는 �
 
 ---
 
+<span id="2-spire-아키텍처"></span>
+
 ## 2. SPIRE 아키텍처
 
 ### 컴포넌트 개요
@@ -158,6 +162,8 @@ SPIRE Agent는 각 노드에서 실행되며 다음 기능을 수행합니다:
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-12-spiffe-spire-1.html)
 
 ---
+
+<span id="3-설치-및-구성"></span>
 
 ## 3. 설치 및 구성
 
@@ -256,6 +262,8 @@ kubectl exec -n spire-system spire-server-0 -- \
 
 ---
 
+<span id="4-노드-어테스테이션"></span>
+
 ## 4. 노드 어테스테이션
 
 노드 어테스테이션은 SPIRE Agent가 실행되는 노드의 신원을 확인하는 프로세스입니다.
@@ -347,6 +355,8 @@ plugins {
 ```
 
 ---
+
+<span id="5-워크로드-어테스테이션"></span>
 
 ## 5. 워크로드 어테스테이션
 
@@ -445,6 +455,8 @@ kubectl exec -n spire-system spire-server-0 -- \
 ```
 
 ---
+
+<span id="6-kubernetes-통합"></span>
 
 ## 6. Kubernetes 통합
 
@@ -620,6 +632,8 @@ static_resources:
 
 ---
 
+<span id="7-서비스-메시-연동"></span>
+
 ## 7. 서비스 메시 연동
 
 ### Istio + SPIRE
@@ -737,6 +751,8 @@ linkerd install --identity-external-issuer \
 
 ---
 
+<span id="8-페더레이션"></span>
+
 ## 8. 페더레이션
 
 페더레이션은 서로 다른 Trust Domain 간에 신뢰를 설정하여 크로스 클러스터 또는 멀티 클라우드 환경에서 워크로드 간 인증을 가능하게 합니다.
@@ -839,6 +855,8 @@ kubectl exec -n spire-system spire-server-0 -- \
 ```
 
 ---
+
+<span id="9-eks-통합"></span>
 
 ## 9. EKS 통합
 
@@ -943,6 +961,8 @@ data:
 ```
 
 ---
+
+<span id="10-모범-사례"></span>
 
 ## 10. 모범 사례
 
@@ -1059,6 +1079,8 @@ kubectl logs -n spire-system -l app.kubernetes.io/name=server --tail=100 | grep 
 - [ ] 워크로드 어테스테이션 셀렉터 세분화
 
 ---
+
+<span id="11-요약-및-참고-자료"></span>
 
 ## 11. 요약 및 참고 자료
 

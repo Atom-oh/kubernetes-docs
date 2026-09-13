@@ -27,7 +27,8 @@
     "validation": [
       "kafka-connect-mirrormaker-validation.json"
     ],
-    "reviewedSha256": "3a1b3e0ec9a5b055f0ac439cb9acbed49ccb4496efde3fc38b66c0a5e402f6cb"
+    "reviewedSha256": "03e429c88b34981baeeb3f7fc1e17f295835f8ae945db7cf2ead91531f249d7c",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md",
@@ -87,7 +88,8 @@
     "validation": [
       "kafka-connect-mirrormaker-validation.json"
     ],
-    "reviewedSha256": "d18f304bc17847ad345ee82aea5cf788f979535441bf04b40bf01da840798b64"
+    "reviewedSha256": "00c5cf3fdf5c29855d86fa12b9064ee46d3171a5fb1d5d0568c021d34e4af3d5",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md",
