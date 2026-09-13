@@ -1,511 +1,257 @@
 # Grafana Loki
 
-> **Supported Versions**: Loki 3.x
-> **Last Updated**: February 20, 2026
+> **Last Updated**: September 13, 2026
+> **Example baseline**: Loki 3.7.7 / community Helm chart 18.12.1. Local configuration, rendering and LogQL checks; no EKS deployment, S3 access, load test or HA/failover test.
 
-Grafana Loki is a horizontally scalable log aggregation system inspired by Prometheus. It provides cost-effective log storage and querying by indexing only labels rather than log content.
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Deployment Modes](#deployment-modes)
-4. [Helm Installation](#helm-installation)
-5. [S3 Backend Configuration](#s3-backend-configuration)
-6. [LogQL Queries](#logql-queries)
-7. [Label Design](#label-design)
-8. [Performance Tuning](#performance-tuning)
-9. [Retention Policies](#retention-policies)
-10. [Troubleshooting](#troubleshooting)
-
----
+Loki stores logs as compressed chunks and indexes stream labels. This can reduce index overhead, but does not establish a universal cost or query-speed advantage over Elasticsearch/OpenSearch. Compare ingestion, retention, query selectivity, object requests, compute, caches and operational requirements with a representative workload.
 
 ## Overview
 
-### Loki's Core Philosophy
+| Capability | Meaning and boundary |
+|---|---|
+| Label index | Select streams before scanning their log content. Parsing JSON and scanning chunks still require work. |
+| Object storage | Production storage can use S3 and other supported backends. Local filesystem storage is useful for small experiments, but is not a shared distributed object store. |
+| LogQL | Supports log pipelines and metrics derived from logs. It is not interchangeable with PromQL or SQL. |
+| Multi-tenancy | Tenant IDs separate data and limits. An authenticating proxy must decide which tenant a caller may access. |
+| Scaling and replication | Depend on the deployment mode, ring, quorum, storage and failure domains. Replicas and WAL alone do not guarantee lossless delivery. |
 
-Loki was designed with the philosophy of "handling logs like Prometheus":
-
-- **Label-based indexing**: Only indexes metadata (labels), not log content
-- **Cost efficiency**: 10x+ cheaper operating costs compared to Elasticsearch
-- **Simplicity**: Eliminates complexity of full-text search engines
-- **Grafana integration**: Unified analysis of logs, metrics, and traces
-
-### Key Features
-
-| Feature | Description |
-|---------|-------------|
-| **Horizontal scaling** | Each component can be scaled independently |
-| **Multi-tenancy** | Supports tenant-level data isolation |
-| **Object storage** | Leverages cheap storage like S3, GCS, Azure Blob |
-| **LogQL** | Intuitive PromQL-style query language |
-| **High availability** | Built-in replication and failover |
-
-### Loki vs Elasticsearch
-
-```
-+---------------------+------------------+------------------+
-|       Item          |      Loki        |   Elasticsearch  |
-+---------------------+------------------+------------------+
-| Indexing method     | Labels only      | Full-text        |
-| Storage cost        | Low (object)     | High (SSD rec.)  |
-| Query complexity    | Simple (LogQL)   | Complex (Lucene) |
-| Full-text search    | Limited          | Excellent        |
-| Operational complex.| Low              | High             |
-| Memory requirements | Low              | High             |
-| Grafana integration | Native           | Plugin           |
-+---------------------+------------------+------------------+
-```
-
----
+Elasticsearch/OpenSearch has a different indexing and search model. Loki can search log text, but ordinarily first narrows the label/time range and scans matching chunks. Avoid fixed “10× cheaper,” “always faster,” or memory rankings without a reproducible comparison.
 
 ## Architecture
 
-### Component Overview
+The diagram shows a conventional TSDB/chunk deployment, not every optional or experimental Loki component. Query arrows point toward the service being requested; responses return along the same path.
 
-![Loki component overview showing the write path from log agents through the Distributor and Ingester into S3, the read path from Grafana through the Query Frontend and Scheduler to the Querier merging Ingester, S3 and cache results, and the Compactor optimizing S3.](../../.gitbook/assets/en-observability-logging-01-loki-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-01-loki-0.html)
-
-### Component Details
-
-#### 1. Distributor
-
-The first component to receive log streams from clients.
-
-**Responsibilities:**
-- Log stream validation
-- Label normalization
-- Rate limiting
-- Routing to Ingesters via consistent hashing
-
-```yaml
-# Distributor configuration example
-distributor:
-  ring:
-    kvstore:
-      store: memberlist
-  rate_limit_strategy: local
-  rate_limit:
-    enabled: true
-    # Max streams per second per tenant
-    ingestion_rate_limit_mb: 4
-    ingestion_burst_size_mb: 6
+```mermaid
+flowchart TB
+  A["Alloy / Fluent Bit / other supported client"] -->|TLS and authenticated push| G["Authenticating gateway: assign tenant"]
+  U["Grafana / LogCLI"] -->|TLS and authenticated query| G
+  G -->|write API| D["Distributor: validate, limit, route"]
+  D -->|replicated streams| I["Ingester: WAL and chunks"]
+  I -->|chunks and TSDB index| S["Object storage"]
+  G -->|read API| F["Query frontend"]
+  F -->|queue work| Q["Query scheduler"]
+  Q -->|dispatch| R["Querier"]
+  R -->|recent-log query| I
+  R -->|index lookup| X["Index gateway"]
+  X -->|index objects| S
+  R -->|chunk reads| S
+  F -->|query-result cache| C["Optional caches"]
+  R -->|chunk cache| C
+  P["Compactor: index compaction and retention"] -->|rewrite index; delete marked chunks| S
 ```
 
-#### 2. Ingester
+| Component | Responsibilities |
+|---|---|
+| Distributor | Validates streams, applies tenant/per-stream ingestion limits and routes writes through the ring. Byte-rate limits are not a streams-per-second setting. |
+| Ingester | Buffers streams, writes a WAL when enabled, builds/flushes chunks and serves recent data. Persistent WAL storage reduces a failure risk; it does not replace replication, backups or client retry planning. |
+| Querier | Reads recent data from ingesters and historical data through the index/object-store paths, then evaluates LogQL and merges results. |
+| Query frontend / scheduler | Splits and queues query work; optional result caching and controlled retries. The runtime configuration key is `frontend`; Helm's workload key is `queryFrontend`. |
+| Index gateway | Serves index lookups in a distributed deployment. It is distinct from the chunk store. |
+| Compactor | Compacts **index files** and, when enabled, removes expired index references and asynchronously deletes marked chunks. It is not a general small-log-chunk merger. |
 
-Buffers log data in memory and writes to long-term storage.
+## Deployment modes
 
-**Responsibilities:**
-- Log data chunk creation
-- WAL (Write-Ahead Log) management
-- Flushing chunks to storage
-- Serving real-time queries
+| Mode | Selection guidance |
+|---|---|
+| Monolithic, `-target=all` | Convenient for small installations and experiments. Chart 18.12.1 calls the mode `Monolithic`; its workload values remain under `singleBinary`. The chart default is not evidence of production suitability. |
+| Simple Scalable (SSD) | Historical read/write/backend groups. SSD is deprecated and scheduled for removal in Loki 4.0. Plan an explicit migration rather than selecting it as the default for new production EKS installations. |
+| Microservices, chart `Distributed` | Separate distributors, ingesters, queriers, frontend, scheduler, index gateway and compactor. Current Helm guidance recommends this for production scalability/HA, with higher operational complexity. |
 
-```yaml
-# Ingester configuration example
-ingester:
-  lifecycler:
-    ring:
-      replication_factor: 3
-      kvstore:
-        store: memberlist
-    heartbeat_period: 5s
-  chunk_idle_period: 30m
-  chunk_block_size: 262144
-  chunk_retain_period: 1m
-  max_transfer_retries: 0
-  wal:
-    enabled: true
-    dir: /var/loki/wal
-```
+The old `<100GB`, `100GB–10TB`, and `>10TB` categories were not measured capacities. Size for peak bytes/sec, active streams, query concurrency, retention, chunk utilization and failure recovery. Do not turn approximate sizing guidance into a guarantee.
 
-#### 3. Querier
+## Helm installation
 
-Executes LogQL queries and returns results.
+### Prerequisites and ownership
 
-**Responsibilities:**
-- Query real-time data from Ingesters
-- Query historical data from long-term storage
-- Merge and deduplicate results
+The following is a **configuration starting point for a new installation**, not a complete production platform:
+
+- Chart 18.12.1 declares Kubernetes `>=1.25.0-0`; the manifest check used Kubernetes 1.36.2. This is not a test of every Kubernetes/EKS version or platform.
+- Provision private buckets, a scoped IAM role, an EKS OIDC provider for IRSA, and an appropriate existing `gp3` StorageClass. That class name is an assumption, not an EKS built-in guarantee. EBS CSI/Auto Mode provisioner, node OS, AZ capacity, PVC binding and quotas must match the actual cluster.
+- Prepare `loki-gateway-auth` with a `.htpasswd` key and `loki-gateway-tls` with `tls.crt`/`tls.key`. Use a trusted certificate for the gateway's actual DNS names. Supply secrets through your secret-management workflow; do not commit passwords or private keys to values files.
+- The gateway maps the authenticated username to `X-Scope-OrgID`, overriding a caller-supplied tenant header. Restrict direct access to Loki component ports with network policy/security boundaries and namespace RBAC. A tenant header alone is not authentication; bypassing the gateway bypasses its authorization.
+- The gateway uses HTTPS and a ClusterIP Service, with ingress disabled. Internal Loki component traffic still needs the transport/network controls appropriate to the environment. No ALB, public endpoint or complete network policy is provisioned here.
+
+### Versioned distributed values
+
+Save as `values-eks.yaml`. Replace the example account, role and bucket names consistently. The schema start date is for a **new** store; preserve all existing schema entries during upgrades.
 
 ```yaml
-# Querier configuration example
-querier:
-  max_concurrent: 10
-  query_timeout: 5m
-  engine:
-    timeout: 5m
-    max_look_back_period: 30d
-```
-
-#### 4. Query Frontend
-
-Handles query optimization and caching.
-
-**Responsibilities:**
-- Split large queries
-- Cache results
-- Manage query queues
-- Handle retries
-
-```yaml
-# Query Frontend configuration example
-query_frontend:
-  max_outstanding_per_tenant: 2048
-  compress_responses: true
-  log_queries_longer_than: 5s
-  query_stats_enabled: true
-```
-
-#### 5. Compactor
-
-Optimizes stored data.
-
-**Responsibilities:**
-- Merge small chunks into larger chunks
-- Optimize indexes
-- Apply retention policies (data deletion)
-
-```yaml
-# Compactor configuration example
-compactor:
-  working_directory: /var/loki/compactor
-  shared_store: s3
-  compaction_interval: 10m
-  retention_enabled: true
-  retention_delete_delay: 2h
-  retention_delete_worker_count: 150
-```
-
----
-
-## Deployment Modes
-
-Loki offers three deployment modes:
-
-### 1. Monolithic Mode
-
-All components run in a single process.
-
-```yaml
-# values-monolithic.yaml
-deploymentMode: SingleBinary
-
-singleBinary:
-  replicas: 1
-  resources:
-    limits:
-      cpu: 2
-      memory: 4Gi
-    requests:
-      cpu: 1
-      memory: 2Gi
-
-loki:
-  auth_enabled: false
-  commonConfig:
-    replication_factor: 1
-```
-
-**Best for:**
-- Development/test environments
-- Daily log volume < 100GB
-- Quick prototyping
-
-### 2. Simple Scalable Mode (Recommended)
-
-Provides scalability by separating read/write paths.
-
-```yaml
-# values-simple-scalable.yaml
-deploymentMode: SimpleScalable
-
-read:
-  replicas: 3
-  resources:
-    limits:
-      cpu: 2
-      memory: 4Gi
-    requests:
-      cpu: 1
-      memory: 2Gi
-
-write:
-  replicas: 3
-  resources:
-    limits:
-      cpu: 2
-      memory: 4Gi
-    requests:
-      cpu: 1
-      memory: 2Gi
-
-backend:
-  replicas: 2
-  resources:
-    limits:
-      cpu: 1
-      memory: 2Gi
-    requests:
-      cpu: 500m
-      memory: 1Gi
-```
-
-**Best for:**
-- Production environments
-- Daily log volume 100GB ~ 10TB
-- Most EKS clusters
-
-### 3. Microservices Mode
-
-Deploys each component independently.
-
-```yaml
-# values-microservices.yaml
 deploymentMode: Distributed
-
-distributor:
-  replicas: 3
-  autoscaling:
-    enabled: true
-    minReplicas: 3
-    maxReplicas: 10
-
-ingester:
-  replicas: 3
-  autoscaling:
-    enabled: true
-    minReplicas: 3
-    maxReplicas: 20
-  persistence:
-    enabled: true
-    size: 50Gi
-
-querier:
-  replicas: 3
-  autoscaling:
-    enabled: true
-    minReplicas: 3
-    maxReplicas: 15
-
-queryFrontend:
-  replicas: 2
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 5
-
-compactor:
-  replicas: 1
-```
-
-**Best for:**
-- Large-scale production environments
-- Daily log volume > 10TB
-- Fine-grained per-component resource management
-
----
-
-## Helm Installation
-
-### Prerequisites
-
-```bash
-# Add Helm repository
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-
-# Create namespace
-kubectl create namespace loki
-```
-
-### Simple Scalable Mode Installation (Recommended for EKS)
-
-```yaml
-# values-eks-production.yaml
-deploymentMode: SimpleScalable
-
 loki:
-  auth_enabled: false
-
+  image:
+    tag: 3.7.7
+  auth_enabled: true
+  analytics:
+    reporting_enabled: false
+  commonConfig:
+    replication_factor: 3
   schemaConfig:
     configs:
-      - from: "2024-01-01"
-        store: tsdb
-        object_store: s3
-        schema: v13
-        index:
-          prefix: loki_index_
-          period: 24h
-
+    - from: '2026-09-01'
+      store: tsdb
+      object_store: s3
+      schema: v13
+      index:
+        prefix: loki_index_
+        period: 24h
   storage:
     type: s3
     bucketNames:
-      chunks: my-loki-chunks
-      ruler: my-loki-ruler
-      admin: my-loki-admin
+      chunks: example-loki-chunks-123456789012
+      ruler: example-loki-ruler-123456789012
     s3:
       region: ap-northeast-2
-      # endpoint auto-configured when using IRSA
-
-  commonConfig:
-    replication_factor: 3
-
+  ingester:
+    chunk_encoding: snappy
+    wal:
+      enabled: true
+      dir: /var/loki/wal
+  compactor:
+    working_directory: /var/loki/compactor
+    retention_enabled: true
+    delete_request_store: s3
+    retention_delete_delay: 2h
   limits_config:
-    retention_period: 744h  # 31 days
-    max_query_length: 721h
-    max_query_parallelism: 32
+    retention_period: 744h
+    allow_structured_metadata: true
+    ingestion_rate_strategy: global
     ingestion_rate_mb: 10
     ingestion_burst_size_mb: 20
     per_stream_rate_limit: 5MB
     per_stream_rate_limit_burst: 15MB
-
-  rulerConfig:
-    storage:
-      type: s3
-      s3:
-        bucketnames: my-loki-ruler
-
-# Read path
+  runtimeConfig:
+    overrides:
+      development:
+        retention_period: 168h
+serviceAccount:
+  create: true
+  name: loki
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/loki-s3
+singleBinary:
+  replicas: 0
 read:
-  replicas: 3
-  resources:
-    limits:
-      cpu: 2
-      memory: 4Gi
-    requests:
-      cpu: 1
-      memory: 2Gi
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: read
-            topologyKey: topology.kubernetes.io/zone
-
-# Write path
+  replicas: 0
 write:
-  replicas: 3
-  resources:
-    limits:
-      cpu: 2
-      memory: 4Gi
-    requests:
-      cpu: 1
-      memory: 2Gi
-  persistence:
-    enabled: true
-    size: 50Gi
-    storageClass: gp3
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: write
-            topologyKey: topology.kubernetes.io/zone
-
-# Backend
+  replicas: 0
 backend:
-  replicas: 2
-  resources:
-    limits:
-      cpu: 1
-      memory: 2Gi
-    requests:
-      cpu: 500m
-      memory: 1Gi
+  replicas: 0
+ingester:
+  replicas: 3
+  zoneAwareReplication:
+    enabled: false
   persistence:
     enabled: true
-    size: 20Gi
-    storageClass: gp3
-
-# Gateway
+    claims:
+    - name: data
+      accessModes:
+      - ReadWriteOnce
+      size: 50Gi
+      storageClass: gp3
+distributor:
+  replicas: 2
+querier:
+  replicas: 2
+queryFrontend:
+  replicas: 2
+queryScheduler:
+  replicas: 2
+indexGateway:
+  replicas: 2
+compactor:
+  replicas: 1
+  persistence:
+    enabled: true
+    claims:
+    - name: data
+      accessModes:
+      - ReadWriteOnce
+      size: 20Gi
+      storageClass: gp3
+ruler:
+  enabled: false
 gateway:
   enabled: true
   replicas: 2
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
+  service:
+    type: ClusterIP
+    port: 443
   ingress:
+    enabled: false
+  basicAuth:
     enabled: true
-    ingressClassName: alb
-    annotations:
-      alb.ingress.kubernetes.io/scheme: internal
-      alb.ingress.kubernetes.io/target-type: ip
-    hosts:
-      - host: loki.internal.example.com
-        paths:
-          - path: /
-            pathType: Prefix
+    existingSecret: loki-gateway-auth
+  nginxConfig:
+    locationSnippet: proxy_set_header X-Scope-OrgID $remote_user;
+    ssl: true
+    serverSnippet: 'ssl_certificate /etc/nginx/tls/tls.crt;
 
-# Results caching
-resultsCache:
-  enabled: true
-  defaultValidity: 12h
-  # External Redis recommended for production
-  # host: redis.example.com:6379
+      ssl_certificate_key /etc/nginx/tls/tls.key;
 
-# Chunks caching
+      ssl_protocols TLSv1.2 TLSv1.3;'
+  containerPort: 8443
+  metrics:
+    enabled: false
+  extraVolumes:
+  - name: gateway-tls
+    secret:
+      secretName: loki-gateway-tls
+  extraVolumeMounts:
+  - name: gateway-tls
+    mountPath: /etc/nginx/tls
+    readOnly: true
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+      scheme: HTTPS
+    initialDelaySeconds: 15
+    timeoutSeconds: 1
 chunksCache:
-  enabled: true
-  defaultValidity: 12h
-
-# Monitoring
-monitoring:
-  serviceMonitor:
-    enabled: true
-    labels:
-      release: prometheus
-  selfMonitoring:
-    enabled: true
-    grafanaAgent:
-      installOperator: false
-
-# Disable tests
+  enabled: false
+resultsCache:
+  enabled: false
+sidecar:
+  rules:
+    enabled: false
+lokiCanary:
+  enabled: false
 test:
   enabled: false
 ```
 
-### Run Installation
+The `loki.*` fields configure the application; top-level `ingester`, `querier`, `compactor` and other component fields configure Kubernetes workloads. The example deliberately uses one compactor and three ingesters. It disables zone-aware replication, so it makes **no AZ-resilience claim**. Add appropriate requests/limits, anti-affinity/topology spread, PDBs and tested capacity before production; do not copy the old fixed CPU/memory sizing table.
+
+The ruler is disabled here. The optional ruler bucket is shown for a later rule configuration; it is not an administrative bucket required by open-source Loki. The enterprise `admin` bucket is not required for this example. Caches and synthetic canary/test workloads are disabled to keep the example's scope clear; plan and enable them separately with suitable capacity and authentication.
 
 ```bash
-# Install
-helm install loki grafana/loki \
-  --namespace loki \
-  --values values-eks-production.yaml \
-  --version 6.x.x
+helm repo add grafana-community https://grafana-community.github.io/helm-charts
+helm repo update grafana-community
 
-# Upgrade
-helm upgrade loki grafana/loki \
-  --namespace loki \
-  --values values-eks-production.yaml
+# Review the rendered resources before installing.
+helm template loki grafana-community/loki \
+  --version 18.12.1 --namespace loki \
+  --values values-eks.yaml > loki-rendered.yaml
 
-# Check status
-kubectl get pods -n loki
-kubectl get svc -n loki
+# Creates/updates resources; run only against the intended cluster.
+helm upgrade --install loki grafana-community/loki \
+  --version 18.12.1 --namespace loki --create-namespace \
+  --values values-eks.yaml
+
+kubectl get pods,services,pvc -n loki
 ```
 
----
+For an existing release, review the intervening chart/Loki upgrade notes, values changes, schema compatibility and rollback limits first. Replacing an old chart's values with this file is not an in-place migration procedure.
 
-## S3 Backend Configuration
+## S3 backend and workload identity
 
-### IRSA (IAM Roles for Service Accounts) Setup
+### IAM and ServiceAccount
 
-```bash
-# 1. Create IAM policy
-cat > loki-s3-policy.json << 'EOF'
+This example uses IRSA. EKS Pod Identity is another option when the node platform, agent and the application's AWS SDK credential chain support it; IRSA is not the only secure choice. Do not embed S3 access keys in Loki YAML or inherit broad node-role permissions.
+
+An illustrative same-account policy for the named buckets is:
+
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -516,96 +262,82 @@ cat > loki-s3-policy.json << 'EOF'
         "s3:GetBucketLocation"
       ],
       "Resource": [
-        "arn:aws:s3:::my-loki-chunks",
-        "arn:aws:s3:::my-loki-ruler",
-        "arn:aws:s3:::my-loki-admin"
-      ]
+        "arn:aws:s3:::example-loki-chunks-123456789012",
+        "arn:aws:s3:::example-loki-ruler-123456789012"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceAccount": "123456789012"
+        }
+      }
     },
     {
       "Effect": "Allow",
       "Action": [
-        "s3:PutObject",
         "s3:GetObject",
+        "s3:PutObject",
         "s3:DeleteObject"
       ],
       "Resource": [
-        "arn:aws:s3:::my-loki-chunks/*",
-        "arn:aws:s3:::my-loki-ruler/*",
-        "arn:aws:s3:::my-loki-admin/*"
-      ]
+        "arn:aws:s3:::example-loki-chunks-123456789012/*",
+        "arn:aws:s3:::example-loki-ruler-123456789012/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceAccount": "123456789012"
+        }
+      }
     }
   ]
 }
-EOF
+```
 
-aws iam create-policy \
-  --policy-name LokiS3Policy \
-  --policy-document file://loki-s3-policy.json
+The compactor needs object deletion for retention. Separate component roles can narrow privileges further. With SSE-KMS, add the specific KMS permissions and key policy needed by the selected encryption configuration; `s3:*` or a broadly trusted role is not a substitute.
 
-# 2. Setup IRSA
+An IRSA role must trust the cluster's exact OIDC provider, with `aud=sts.amazonaws.com` and `sub=system:serviceaccount:loki:loki`. After creating/reviewing that scoped policy and associating the OIDC provider, an administrator can create **only the role**:
+
+```bash
 eksctl create iamserviceaccount \
-  --cluster=my-cluster \
-  --namespace=loki \
-  --name=loki \
-  --attach-policy-arn=arn:aws:iam::123456789012:policy/LokiS3Policy \
+  --cluster="$CLUSTER_NAME" --region="$AWS_REGION" \
+  --namespace=loki --name=loki \
+  --role-only --role-name=loki-s3 \
+  --attach-policy-arn="$LOKI_S3_POLICY_ARN" \
   --approve
 ```
 
-### S3 Bucket Creation (Terraform)
+Set those variables explicitly for the intended account/cluster. Helm owns the ServiceAccount through `serviceAccount.create: true`; do not also create the same ServiceAccount with eksctl. If an external system owns it, use `create: false` and ensure its name, annotation and role trust match.
+
+### Private bucket example
+
+This Terraform fragment is a resource example, not a tested apply or complete root module. Use your reviewed AWS provider configuration and globally unique names. Both buckets receive encryption and Block Public Access.
 
 ```hcl
-# s3.tf
-resource "aws_s3_bucket" "loki_chunks" {
-  bucket = "my-loki-chunks"
-
-  tags = {
-    Name        = "Loki Chunks"
-    Environment = "production"
+variable "loki_buckets" {
+  type = map(string)
+  default = {
+    chunks = "example-loki-chunks-123456789012"
+    ruler  = "example-loki-ruler-123456789012"
   }
 }
 
-resource "aws_s3_bucket" "loki_ruler" {
-  bucket = "my-loki-ruler"
-
-  tags = {
-    Name        = "Loki Ruler"
-    Environment = "production"
-  }
+resource "aws_s3_bucket" "loki" {
+  for_each      = var.loki_buckets
+  bucket        = each.value
+  force_destroy = false
 }
 
-resource "aws_s3_bucket_versioning" "loki_chunks" {
-  bucket = aws_s3_bucket.loki_chunks.id
-  versioning_configuration {
-    status = "Disabled"
-  }
+resource "aws_s3_bucket_public_access_block" "loki" {
+  for_each                = aws_s3_bucket.loki
+  bucket                  = each.value.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "loki_chunks" {
-  bucket = aws_s3_bucket.loki_chunks.id
-
-  rule {
-    id     = "transition-to-ia"
-    status = "Enabled"
-
-    transition {
-      days          = 30
-      storage_class = "STANDARD_IA"
-    }
-
-    transition {
-      days          = 90
-      storage_class = "GLACIER"
-    }
-
-    expiration {
-      days = 365
-    }
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "loki_chunks" {
-  bucket = aws_s3_bucket.loki_chunks.id
-
+resource "aws_s3_bucket_server_side_encryption_configuration" "loki" {
+  for_each = aws_s3_bucket.loki
+  bucket   = each.value.id
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -613,674 +345,325 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "loki_chunks" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "loki_chunks" {
-  bucket = aws_s3_bucket.loki_chunks.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+resource "aws_s3_bucket_versioning" "loki" {
+  for_each = aws_s3_bucket.loki
+  bucket   = each.value.id
+  versioning_configuration {
+    status = "Disabled"
+  }
 }
 ```
 
-### Loki Storage Configuration
+A new bucket is unversioned unless configured otherwise. The AWS Terraform provider accepts `status = "Disabled"` when creating/importing an unversioned bucket, as in this example. It cannot change an already `Enabled` or `Suspended` bucket back to `Disabled`; use the appropriate supported transition and preserve existing state. If versioning is enabled, object deletion can leave older versions: plan noncurrent-version cleanup and legal holds separately from Loki's query retention.
 
-```yaml
-# loki-config.yaml
-storage_config:
-  tsdb_shipper:
-    active_index_directory: /var/loki/tsdb-index
-    cache_location: /var/loki/tsdb-cache
-    shared_store: s3
+Do not transition live Loki chunks to restore-required Glacier classes. Queries require immediate object reads; restoring archived objects is not part of the normal Loki read path. Do not expire the entire bucket with an unscoped age rule: index files, cluster state and delete-request/ruler data have different lifecycles. If using a lifecycle safety net, scope it to confirmed chunk prefixes and set expiration beyond retention **plus deletion delay**. Compactor retention is usually the primary deletion mechanism.
 
-  aws:
-    s3: s3://ap-northeast-2/my-loki-chunks
-    bucketnames: my-loki-chunks
-    region: ap-northeast-2
-    # access_key_id and secret_access_key not needed with IRSA
-    s3forcepathstyle: false
-    insecure: false
-    sse_encryption: true
+The chart generates S3/TSDB runtime configuration. Do not append legacy `tsdb_shipper.shared_store`, `boltdb_shipper.shared_store`, `compactor.shared_store` or `storage_config.aws.sse_encryption`; Loki 3.7.7 rejects those fields. Use the pinned storage/encryption configuration reference.
 
-  boltdb_shipper:
-    active_index_directory: /var/loki/boltdb-index
-    cache_location: /var/loki/boltdb-cache
-    shared_store: s3
-```
+## LogQL
 
----
+### Selectors, filters and parsers
 
-## LogQL Queries
-
-### Basic Syntax
-
-LogQL supports two types of queries:
-
-1. **Log queries**: Return log lines
-2. **Metric queries**: Return calculated values from logs
-
-### Stream Selectors
+Every selector needs a matcher that cannot match an empty value. Negative matchers alone can select missing labels; include a positive nonempty matcher. These are independent queries, not one multi-statement program.
 
 ```logql
-# Basic stream selection
 {namespace="production"}
 
-# Multiple label combinations
-{namespace="production", app="nginx"}
+{namespace="production", app=~"nginx|apache"}
 
-# Label matching operators
-{namespace="production", app=~"nginx|apache"}  # Regex match
-{namespace!="kube-system"}                      # Negation
-{app!~"test.*"}                                 # Regex negation
+{namespace=~".+", namespace!="kube-system"}
+
+{app=~".+", app!~"test.*"}
 ```
 
-### Line Filters
+Line filters are case-sensitive; regular-expression line filters can match a substring. Put selective filters early when doing so preserves the intended meaning. Excluding health-check text from a query is different from deleting those logs at ingestion.
 
 ```logql
-# Contains
 {app="nginx"} |= "error"
 
-# Does not contain
 {app="nginx"} != "healthcheck"
 
-# Regex match
 {app="nginx"} |~ "status=[45][0-9]{2}"
 
-# Regex does not match
 {app="nginx"} !~ "GET /health"
 
-# Chaining
-{app="nginx"} |= "error" != "timeout" |~ "user_id=\\d+"
+{app="nginx"} |= "error" != "timeout"
+
+{namespace="production"} |= "OOMKilled" or "CrashLoopBackOff"
 ```
 
-### Parsers
+The last query searches collected text; Kubernetes reasons/events do not automatically appear in application logs. Collect the appropriate event/runtime source before relying on it.
 
 ```logql
-# JSON parser
 {app="api"} | json
 
-# Extract specific fields only
-{app="api"} | json level, message, user_id
+{app="api"} | json level, message, request_id
 
-# Logfmt parser
 {app="api"} | logfmt
 
-# Regex parser
 {app="nginx"} | regexp `(?P<ip>[\d.]+) - - \[(?P<timestamp>[^\]]+)\]`
 
-# Pattern parser (faster)
 {app="nginx"} | pattern `<ip> - - [<_>] "<method> <path> <_>" <status> <size>`
 
-# Unpack (Promtail pack stage result)
-{app="api"} | unpack
+{app="packed"} | unpack
 ```
 
-### Label Filters
+`json` supports named extraction; the short `json level, message` form remains valid in 3.7.7. `unpack` requires lines produced by a compatible pack stage, not arbitrary JSON. Pattern and regexp parsers must match the actual log format; neither has a universal speed guarantee.
 
 ```logql
-# Filter after JSON parsing
-{app="api"} | json | level="error"
+{app="api"} | json | level="error" | __error__=""
 
-# Numeric comparison
-{app="api"} | json | response_time > 1000
+{app="api"} | json | response_time > 1000 | __error__=""
 
-# Multiple conditions
-{app="api"} | json | level="error" and user_id!=""
+{app="api"} | json | level="error" and request_id!="" | __error__=""
 
-# IP filtering
-{app="nginx"} | pattern `<ip> - -` | ip != "10.0.0.1"
-```
+{app="nginx"} | pattern `<ip> - - <_>` | ip != ip("10.0.0.1")
 
-### Line Format
-
-```logql
-# Reconstruct log line
 {app="api"} | json | line_format "{{.level}}: {{.message}}"
 
-# Conditional format
 {app="api"} | json | line_format `{{ if eq .level "error" }}ERROR: {{ end }}{{.message}}`
 
-# Template functions
 {app="api"} | json | line_format `{{ .timestamp | toDate "2006-01-02T15:04:05Z07:00" | date "15:04:05" }}`
 ```
 
-### Metric Queries
+The numeric `response_time` examples assume milliseconds; do not apply that threshold to seconds or a differently named field. Parsing/type conversion can attach `__error__`. Filtering errors explicitly discards those records from the calculation; monitor rejected/malformed records separately.
+
+### Metrics derived from logs
 
 ```logql
-# Log lines per second
 rate({app="nginx"}[5m])
 
-# Error ratio
-sum(rate({app="nginx"} |= "error" [5m])) / sum(rate({app="nginx"}[5m]))
+(sum(rate({app="api"} | json | __error__="" | level="error" [5m])) or vector(0))
+/
+sum(rate({app="api"} | json | __error__="" [5m]))
 
-# Response time percentiles
 quantile_over_time(0.99,
-  {app="api"} | json | unwrap response_time [5m]
+  {app="api"} | json | unwrap response_time | __error__="" [5m]
 ) by (endpoint)
 
-# Top 10 errors
 topk(10, sum by (error_type) (
-  count_over_time({app="api"} | json | level="error" [1h])
+  count_over_time({app="api"} | json | __error__="" | level="error" [1h])
 ))
 
-# Average response size
 avg_over_time(
-  {app="nginx"} | pattern `<_> <_> <size>` | unwrap size [5m]
+  {app="nginx"} | pattern `<_> - - [<_>] "<_> <path> <_>" <_> <size>`
+  | unwrap size | __error__="" [5m]
 ) by (path)
 
-# Error count aggregation
-sum(count_over_time({namespace="production"} |= "error" [1h])) by (app)
+sum by (app) (count_over_time({namespace="production"} |= "error" [1h]))
 
-# Absent log detection
 absent_over_time({app="critical-service"}[5m])
 ```
 
-### Practical Query Examples
+The error ratio is the fraction of **successfully parsed log lines** with `level="error"`, not automatically an HTTP-request error rate. The numerator's zero fallback handles no matching error lines when valid logs exist. No traffic/missing telemetry remains a separate no-data or nonfinite condition, not proof of health. For an HTTP SLI, define one access event per request, valid status codes, sampling and collection coverage.
+
+Apply the `__error__=""` filter **after** `unwrap` so numeric conversion errors are excluded. `absent_over_time` detects absence in the selected data; it does not distinguish a quiet application from a failed collector. LogQL also supports vector aggregation such as `count(...)`; that is different from using a log-stream expression as a metric vector.
 
 ```logql
-# Analyze Kubernetes pod restart causes
-{namespace="production"} |= "OOMKilled" or |= "CrashLoopBackOff"
+{app="api"} | json | response_time > 5000 | __error__="" | line_format `{{.method}} {{.path}}: {{.response_time}}ms`
 
-# Find slow API requests
-{app="api"} | json | response_time > 5000 | line_format `{{.method}} {{.path}}: {{.response_time}}ms`
+{app="api"} | json | request_id="example-request" | __error__=""
 
-# Track specific user activity
-{app="api"} | json | user_id="user-12345" | line_format `{{.timestamp}} {{.action}}`
+{app="nginx"} | pattern `<_> - - [<_>] "<method> <path> <_>" <status> <_>`
+| status >= 500 and status < 600 | __error__=""
 
-# HTTP 5xx error analysis
-{app="nginx"} | pattern `<_> "<method> <path> <_>" <status>` | status >= 500
-
-# Error patterns by time
 sum by (hour) (
-  count_over_time({app="api"} |= "error" [1h])
-  | label_format hour="{{ __timestamp__ | date \"15\" }}"
+  count_over_time({app="api"} |= "error" | label_format hour=`{{ __timestamp__ | date "15" }}` [24h])
 )
 
-# Detect error spike after deployment
-sum(increase(
-  count_over_time({app="api"} |= "error" [5m])
-)) > 100
+sum(count_over_time({app="api"} |= "error" [5m])) > 100
 ```
 
----
+Hour-of-day grouping uses the entry timestamp and can combine different days; choose a deliberate time range/timezone and use Grafana range-query steps for a chronological chart. The final expression is an illustrative count threshold. It neither detects a deployment nor proves a statistically significant spike. `increase(count_over_time(...))` is not a valid LogQL replacement.
 
-## Label Design
+## Label design and collectors
 
-### Label Design Principles
+Keep bounded, useful indexed labels such as cluster, namespace, service/app and environment. Even familiar label names are not inherently low-cardinality: measure the actual combinations and churn. Request IDs, user IDs, timestamps, pod UIDs/names and client IPs are usually poor index labels; retain necessary values in log content or structured metadata under your privacy/access policy.
 
-Good label design is key to Loki performance.
+| Example | Stream implication |
+|---|---|
+| 2 namespaces and 3 apps, but each app exists in only one namespace | 3 observed combinations, not automatically 6 |
+| Every app occurs in both namespaces | Up to 6 combinations before other labels |
+| A unique request ID added to the label set | Potentially a new stream per request |
 
-#### Recommended Labels
+The product of per-label cardinalities is an **upper bound** when all combinations can occur, not an exact stream count. Stream count, ingestion rate, chunk size, query selectivity, caches and storage latency all influence resource use. The old `<100,000 streams/cluster`, `<10,000/tenant` and `<1,000 values/label` were not universal limits.
 
-```yaml
-# Good labels (low cardinality)
-labels:
-  - namespace     # ~10-50 values
-  - app           # ~50-200 values
-  - environment   # dev, staging, production
-  - component     # api, worker, scheduler
-  - log_level     # debug, info, warn, error
+Promtail reached end of life on **March 2, 2026**; use a maintained client such as Alloy and review the migration guide. `lambda-promtail` has a separate lifecycle. A migrated scrape configuration also needs working discovery, RBAC, paths/CRI framing, positions, retries and output authentication; relabel rules alone are not a collector.
+
+For an existing Alloy pipeline, the following **processing fragment** extracts fields before using them as labels/structured metadata. It assumes `loki.write.default` already exists and that an upstream component forwards plain application JSON to `loki.process.app.receiver`. It is not a complete configuration or a CRI parser.
+
+```alloy
+loki.process "app" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.json {
+    expressions = {
+      level      = "level",
+      request_id = "request_id",
+    }
+  }
+
+  stage.labels {
+    values = { level = "level" }
+  }
+
+  stage.structured_metadata {
+    values = { request_id = "request_id" }
+  }
+}
 ```
 
-#### Labels to Avoid
+The indexed `level` must have a controlled set of values; application-provided data is not trusted tenant or cluster identity. Structured metadata requires a compatible schema (v13 in this example) and `allow_structured_metadata`. It is not a privacy redaction feature. Collector secret references and file permissions must be configured separately.
 
-```yaml
-# Bad labels (high cardinality)
-labels:
-  - pod_name      # Thousands of unique values
-  - request_id    # Unique per request
-  - user_id       # Millions of users
-  - timestamp     # Never use as label
-  - ip_address    # Very high cardinality
-```
+## Performance tuning
 
-### Cardinality Management
-
-![Flowchart showing how the number of labels and the cardinality of each label's values multiply into total stream count, which is the single factor driving index size, query performance, and memory usage.](../../.gitbook/assets/en-observability-logging-01-loki-1.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-01-loki-1.html)
-
-**Stream Count Calculation:**
-```
-Total streams = namespace values x app values x component values x ...
-```
-
-**Recommendations:**
-- Total streams per cluster: < 100,000
-- Active streams per tenant: < 10,000
-- Unique values per label: < 1,000
-
-### Promtail Label Configuration
-
-```yaml
-# promtail-config.yaml
-scrape_configs:
-  - job_name: kubernetes-pods
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      # Namespace label
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-
-      # App label (from Kubernetes labels)
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        target_label: app
-
-      # Component label
-      - source_labels: [__meta_kubernetes_pod_label_component]
-        target_label: component
-
-      # Container name
-      - source_labels: [__meta_kubernetes_pod_container_name]
-        target_label: container
-
-      # Do not add pod_name as label (high cardinality)
-      # Include in log line instead
-
-    pipeline_stages:
-      - json:
-          expressions:
-            level: level
-      - labels:
-          level:
-```
-
-### Dynamic Labeling
-
-```yaml
-# Extract labels from log content
-pipeline_stages:
-  - json:
-      expressions:
-        level: level
-        service: service
-
-  - labels:
-      level:
-      service:
-
-  # High cardinality values as structured metadata
-  - structured_metadata:
-      user_id:
-      request_id:
-```
-
----
-
-## Performance Tuning
-
-### Ingester Tuning
+These are **Loki runtime fragments**, not Helm workload replicas/resources. With this chart, place them under `loki.structuredConfig`, or use the documented corresponding `loki.ingester`, `loki.frontend`, `loki.querier` and `loki.limits_config` values. Render and validate the final merged configuration.
 
 ```yaml
 ingester:
-  # Chunk settings
-  chunk_idle_period: 30m      # Wait time before flushing idle stream
-  chunk_block_size: 262144    # Chunk block size (256KB)
-  chunk_target_size: 1572864  # Target chunk size (1.5MB)
-  chunk_retain_period: 1m     # Memory retention time after flush
-
-  # Concurrency
-  max_chunk_age: 2h           # Maximum chunk age
-  concurrent_flushes: 32      # Concurrent flush count
-
-  # WAL
+  chunk_idle_period: 30m
+  chunk_block_size: 262144
+  chunk_target_size: 1572864
+  chunk_retain_period: 1m
+  max_chunk_age: 2h
+  concurrent_flushes: 32
   wal:
     enabled: true
     dir: /var/loki/wal
     flush_on_shutdown: true
-    replay_memory_ceiling: 4GB
-```
-
-### Querier Tuning
-
-```yaml
+    replay_memory_ceiling: 512MB
 querier:
-  max_concurrent: 16          # Concurrent queries
-  query_timeout: 5m           # Query timeout
-
-  engine:
-    timeout: 5m
-    max_look_back_period: 30d
-
-query_range:
-  align_queries_with_step: true
-  cache_results: true
-  max_retries: 5
-  parallelise_shardable_queries: true
-
-  results_cache:
-    cache:
-      embedded_cache:
-        enabled: true
-        max_size_mb: 500
-```
-
-### Frontend Tuning
-
-```yaml
-query_frontend:
-  max_outstanding_per_tenant: 4096
+  max_concurrent: 4
+frontend:
+  max_outstanding_per_tenant: 2048
   compress_responses: true
-  log_queries_longer_than: 10s
-
-  # Query splitting
-  split_queries_by_interval: 30m
-
+  log_queries_longer_than: 5s
 query_scheduler:
   max_outstanding_requests_per_tenant: 2048
-  grpc_client_config:
-    max_recv_msg_size: 104857600  # 100MB
-```
-
-### Resource Guidelines
-
-```yaml
-# Small (daily < 100GB)
-write:
-  replicas: 2
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      cpu: 1
-      memory: 2Gi
-
-read:
-  replicas: 2
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      cpu: 1
-      memory: 2Gi
-
----
-# Medium (daily 100GB - 1TB)
-write:
-  replicas: 3
-  resources:
-    requests:
-      cpu: 1
-      memory: 2Gi
-    limits:
-      cpu: 2
-      memory: 4Gi
-
-read:
-  replicas: 3
-  resources:
-    requests:
-      cpu: 1
-      memory: 2Gi
-    limits:
-      cpu: 2
-      memory: 4Gi
-
----
-# Large (daily > 1TB)
-write:
-  replicas: 5
-  autoscaling:
-    enabled: true
-    minReplicas: 5
-    maxReplicas: 20
-  resources:
-    requests:
-      cpu: 2
-      memory: 4Gi
-    limits:
-      cpu: 4
-      memory: 8Gi
-
-read:
-  replicas: 5
-  autoscaling:
-    enabled: true
-    minReplicas: 5
-    maxReplicas: 15
-  resources:
-    requests:
-      cpu: 2
-      memory: 4Gi
-    limits:
-      cpu: 4
-      memory: 8Gi
-```
-
----
-
-## Retention Policies
-
-### Global Retention Policy
-
-```yaml
-# loki-config.yaml
 limits_config:
-  retention_period: 744h  # 31 days (default)
-
-compactor:
-  working_directory: /var/loki/compactor
-  shared_store: s3
-  retention_enabled: true
-  retention_delete_delay: 2h
-  retention_delete_worker_count: 150
-  delete_request_store: s3
+  query_timeout: 5m
+  max_query_length: 744h
+  max_query_lookback: 744h
+  max_query_parallelism: 32
+  tsdb_max_query_parallelism: 32
+  split_queries_by_interval: 15m
+  max_global_streams_per_user: 5000
 ```
 
-### Per-Tenant Retention Policy
+- Ingestion limits belong to `limits_config`; the global tenant rate is distributed across healthy distributors, while burst and per-stream behavior are distinct. Inspect the returned 429 reason and discarded-samples/bytes metrics before raising limits.
+- `chunk_idle_period` controls flushing after no new data arrives for a stream. Smaller chunks can increase object requests, index work and storage overhead. A memory limit can cause OOM termination; it does not prevent excessive memory demand.
+- WAL replay needs adequate persistent storage and memory. `replay_memory_ceiling` is not a cap on total process RSS. Planned ingester downscaling needs graceful termination/draining and verified data availability; a CPU-only HPA is not sufficient.
+- Query timeout, splitting, TSDB parallelism and concurrency interact with fan-out and storage load. More queued requests or replicas can make an overloaded backend worse.
+- This chart's result/chunk caches use Memcached by default. A comment naming a Redis host does not configure an external Redis cache. Size/cache-test separately and keep cache ports private.
+
+## Retention
+
+Retention is not enabled merely by setting a duration. The example uses TSDB v13 with a 24h index period, enables the compactor's retention processing and supplies `delete_request_store`. Compactor marker state must survive restarts; this example uses a PVC. Actual deletion occurs asynchronously after index updates and the delete delay.
+
+`744h` is an illustrative 31-day policy, **not Loki's default**. With retention disabled or a zero retention period, logs are not automatically retained for only 31 days. Backup/versioning/legal-hold requirements are separate.
+
+Merge this optional Helm overlay only after choosing the policy:
 
 ```yaml
-# runtime-config.yaml
-overrides:
-  tenant-production:
-    retention_period: 2160h   # 90 days
-
-  tenant-development:
-    retention_period: 168h    # 7 days
-
-  tenant-compliance:
-    retention_period: 8760h   # 365 days
-```
-
-### Per-Stream Retention Policy
-
-```yaml
-limits_config:
-  retention_stream:
-    - selector: '{namespace="production", level="error"}'
-      priority: 1
-      period: 2160h  # 90 days - production errors
-
+loki:
+  limits_config:
+    retention_period: 744h
+    retention_stream:
     - selector: '{namespace="development"}'
-      priority: 2
-      period: 72h    # 3 days - development
-
-    - selector: '{app="audit-log"}'
       priority: 1
-      period: 8760h  # 365 days - audit logs
+      period: 72h
+  runtimeConfig:
+    overrides:
+      production:
+        retention_period: 2160h
+        retention_stream:
+        - selector: '{namespace="production",level="error"}'
+          priority: 2
+          period: 2160h
+        - selector: '{app="audit-log"}'
+          priority: 1
+          period: 8760h
+      development:
+        retention_period: 168h
 ```
 
----
+`loki.runtimeConfig` renders the runtime override file and its mount; a loose `runtime-config.yaml` file is not automatically loaded. With gateway username-to-tenant mapping, a username such as `development` selects the corresponding override.
 
-## Troubleshooting
+Tenant stream rules take precedence over global stream rules; among matching rules in the relevant list, larger priority wins, and equal priorities select the shorter period. Then tenant/global duration fallbacks apply. Selectors match **indexed stream labels**, not parsed JSON fields or structured metadata. For example, the `level="error"` policy above needs `level` indexed at ingestion. Retention changes are not a way to restore already deleted logs; plan changes against the pinned release and test the deletion window.
 
-### Common Issues and Solutions
+## Troubleshooting and monitoring
 
-#### 1. "too many outstanding requests"
+| Symptom | Checks before changing limits |
+|---|---|
+| Outstanding-query limit | Query fan-out, scheduler queues, querier concurrency, slow object storage and expensive ranges. Increasing queue depth can merely delay failure. |
+| Ingestion 429 | Distinguish tenant byte rate/burst, per-stream rate and active-stream limits. Clients need bounded retries/backoff and a delivery-loss policy. |
+| Stream-limit rejection | Inspect actual label combinations and churn; use the correct local/global stream-limit setting for the deployment. Do not treat 10,000 as a universal default. |
+| Ingester OOM | Active streams, chunks, WAL replay, cache/buffer sizes and node/container limits. Avoid duplicate `ingester:` YAML keys or mixing Helm resources into runtime YAML. |
+| S3 errors | Effective workload identity, bucket/region, account/resource restrictions, KMS policy, DNS/endpoints and object availability. Do not “fix” them with public buckets or static access keys. |
+| “Ingester is shutting down” on writes | Check actual lifecycle state **and WAL disk pressure**:3.7.7 can return the same error when the WAL disk-full threshold(default0.9) throttles writes. Recover capacity; do not blindly disable the safeguard. |
+| No org ID / unexpected tenant | Gateway authentication, header overwrite and direct-backend bypass. `auth_enabled: true` requires a tenant ID; it does not validate a password. |
 
-```yaml
-# Symptom: Query failures, 503 errors
-# Cause: Frontend/scheduler overload
-
-# Solution
-query_frontend:
-  max_outstanding_per_tenant: 4096  # Increase from default 2048
-
-query_scheduler:
-  max_outstanding_requests_per_tenant: 2048
-
-# Or increase querier replicas
-querier:
-  replicas: 5  # From 3 to 5
-```
-
-#### 2. "rate limit exceeded"
-
-```yaml
-# Symptom: Log collection failures, 429 errors
-# Cause: Ingestion rate limit exceeded
-
-# Solution
-limits_config:
-  ingestion_rate_mb: 20           # Increase from default 4
-  ingestion_burst_size_mb: 30     # Increase from default 6
-  per_stream_rate_limit: 10MB     # Per-stream limit
-  per_stream_rate_limit_burst: 30MB
-```
-
-#### 3. "max streams limit exceeded"
-
-```yaml
-# Symptom: New stream creation fails
-# Cause: High cardinality labels
-
-# Solution 1: Increase limit (temporary)
-limits_config:
-  max_streams_per_user: 20000     # Default 10000
-
-# Solution 2: Reduce label cardinality (recommended)
-# Remove high cardinality labels in promtail config
-```
-
-#### 4. Query Performance Degradation
+Use a securely configured LogCLI connection or an authenticated HTTPS gateway. For example, keep credentials in a protected netrc file and use your trusted CA rather than putting a password in a command or disabling certificate verification:
 
 ```bash
-# Diagnostics
-# 1. Check query stats
-curl -s "http://loki:3100/loki/api/v1/query_range" \
-  -G --data-urlencode 'query={app="nginx"}' \
-  --data-urlencode 'start=1h' | jq '.data.stats'
+curl --fail --silent --show-error \
+  --netrc-file "$LOKI_NETRC_FILE" --cacert "$LOKI_CA_FILE" \
+  --get "$LOKI_GATEWAY_URL/loki/api/v1/query_range" \
+  --data-urlencode 'query={app="nginx"}' \
+  --data-urlencode 'since=1h' \
+  --data-urlencode 'limit=100' | jq '.data.stats'
 
-# 2. Check stream count
-curl -s "http://loki:3100/loki/api/v1/series" \
-  -G --data-urlencode 'match[]={namespace="production"}' | jq '.data | length'
+curl --fail --silent --show-error \
+  --netrc-file "$LOKI_NETRC_FILE" --cacert "$LOKI_CA_FILE" \
+  --get "$LOKI_GATEWAY_URL/loki/api/v1/series" \
+  --data-urlencode 'match[]={namespace="production"}' \
+  --data-urlencode 'since=1h' | jq '.data | length'
 ```
 
-```yaml
-# Solution
-query_range:
-  parallelise_shardable_queries: true
-  split_queries_by_interval: 15m  # From 30m to 15m
+Set the URL to the intended HTTPS gateway, restrict credential-file permissions and bound the query window. `start` expects an absolute supported timestamp; use `since=1h` for a relative range. A series API count is the matching series in the requested interval, not necessarily the current in-memory active-stream count.
 
-limits_config:
-  max_query_parallelism: 64       # From 32 to 64
-```
-
-#### 5. Ingester OOM
-
-```yaml
-# Symptom: Ingester pod restarts, OOM Killed
-# Cause: Insufficient memory settings or chunk configuration issues
-
-# Solution 1: Increase memory
-ingester:
-  resources:
-    limits:
-      memory: 8Gi   # Increase from 4Gi
-    requests:
-      memory: 4Gi
-
-# Solution 2: Adjust chunk settings
-ingester:
-  chunk_idle_period: 15m     # Decrease from 30m
-  chunk_target_size: 1048576 # Smaller chunks
-  max_chunk_age: 1h          # Decrease from 2h
-```
-
-### Useful Diagnostic Commands
+For administrative diagnostics, select the actual Pod and use a local port-forward:
 
 ```bash
-# Check Loki status
-kubectl exec -it loki-read-0 -n loki -- wget -qO- http://localhost:3100/ready
+kubectl get pods -n loki -l app.kubernetes.io/instance=loki
+kubectl port-forward -n loki pod/REPLACE_WITH_ACTUAL_POD 13100:3100
 
-# Check ring membership
-kubectl exec -it loki-write-0 -n loki -- wget -qO- http://localhost:3100/ring
-
-# Check flush status
-kubectl exec -it loki-write-0 -n loki -- wget -qO- http://localhost:3100/flush
-
-# Check metrics
-kubectl exec -it loki-write-0 -n loki -- wget -qO- http://localhost:3100/metrics | grep loki_ingester
-
-# Check configuration
-kubectl exec -it loki-read-0 -n loki -- wget -qO- http://localhost:3100/config
+# In a second terminal; local administrative connection.
+curl --fail http://127.0.0.1:13100/ready
+curl --fail http://127.0.0.1:13100/metrics
 ```
 
-### Grafana Dashboard Setup
+Readiness is not proof of end-to-end storage/query health. Ring endpoints depend on the selected component. Treat `/config` output as sensitive operational information. **`POST /flush` triggers flushing; it is not a status endpoint**, so it is omitted from the diagnostic commands.
 
-```json
-{
-  "annotations": {
-    "list": []
-  },
-  "panels": [
-    {
-      "title": "Ingestion Rate",
-      "targets": [
-        {
-          "expr": "sum(rate(loki_distributor_bytes_received_total[5m]))",
-          "legendFormat": "bytes/s"
-        }
-      ]
-    },
-    {
-      "title": "Active Streams",
-      "targets": [
-        {
-          "expr": "sum(loki_ingester_memory_streams)",
-          "legendFormat": "streams"
-        }
-      ]
-    },
-    {
-      "title": "Query Latency",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.99, sum(rate(loki_request_duration_seconds_bucket{route=~\"loki_api_v1_query.*\"}[5m])) by (le))",
-          "legendFormat": "p99"
-        }
-      ]
-    }
-  ]
-}
+These are Prometheus expressions against **scraped Loki metrics**, not LogQL or a complete importable Grafana dashboard:
+
+```promql
+sum(rate(loki_distributor_bytes_received_total[5m]))
+
+sum(loki_ingester_memory_streams)
+
+histogram_quantile(0.99,
+  sum by (le) (rate(loki_request_duration_seconds_bucket{route=~"loki_api_v1_query.*"}[5m]))
+)
 ```
 
----
+Distributor bytes describe data reaching distributors; they do not alone prove durable ingestion. Summing ingester streams counts replicas too. Confirm the actual route labels before using the latency selector, and distinguish no samples from zero latency.
 
-## Best Practices Summary
+## Validation and references
 
-### Do's
+The audit used the official Loki 3.7.7 binary and chart 18.12.1, verified against release SHA digests, for local configuration/Helm/LogQL checks. These checks do not establish EKS permissions, TLS secret validity, delivery guarantees, S3 retention execution, production capacity or AZ failover. The Alloy fragment and Terraform resource example require integration validation in their complete configurations.
 
-1. **Keep labels minimal**: Use only namespace, app, component, level
-2. **Adopt JSON logging**: Reduce parsing overhead with structured logs
-3. **Configure S3 lifecycle**: Set up tiering for cost optimization
-4. **Use IRSA**: Use IAM Role instead of Access Keys
-5. **Enable caching**: Improve performance with query result and chunk caching
-6. **Set up monitoring**: Collect Loki's own metrics and configure alerts
-
-### Don'ts
-
-1. **Avoid high cardinality labels**: pod_name, request_id, etc.
-2. **Avoid unlimited query ranges**: Time range limits are essential
-3. **Avoid single node deployment**: Minimum 3 replicas for production
-4. **Don't disable WAL**: Essential for data loss prevention
-5. **Don't deploy without resource limits**: Prevent OOM
-
----
+- [Versioned community chart values](https://raw.githubusercontent.com/grafana-community/helm-charts/loki-18.12.1/charts/loki/values.yaml)
+- [Helm installation and deployment recommendations](https://grafana.com/docs/loki/latest/setup/install/helm/)
+- [Deployment modes](https://grafana.com/docs/loki/latest/get-started/deployment-modes/) and [upgrade guidance](https://grafana.com/docs/loki/latest/setup/upgrade/)
+- [Components](https://grafana.com/docs/loki/latest/get-started/components/) and [configuration reference](https://grafana.com/docs/loki/latest/configure/)
+- [Authentication](https://grafana.com/docs/loki/latest/operations/authentication/) and [tenant isolation](https://grafana.com/docs/loki/latest/operations/multi-tenancy/)
+- [Log queries](https://grafana.com/docs/loki/latest/query/log_queries/), [metric queries](https://grafana.com/docs/loki/latest/query/metric_queries/) and [HTTP API](https://grafana.com/docs/loki/latest/reference/loki-http-api/)
+- [Cardinality](https://grafana.com/docs/loki/latest/get-started/labels/cardinality/) and [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/)
+- [Retention and object-store lifecycle](https://grafana.com/docs/loki/latest/operations/storage/retention/)
+- [Promtail lifecycle](https://grafana.com/docs/loki/latest/send-data/promtail/) and [Alloy migration](https://grafana.com/docs/alloy/latest/set-up/migrate/from-promtail/)
+- [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) and [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
 
 ## Quiz
 
-Test your knowledge with the [Loki Quiz](../../quizzes/observability/logging/01-loki-quiz.md).
+Test the distinctions above with the [Loki quiz](../../quizzes/observability/logging/01-loki-quiz.md).

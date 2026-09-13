@@ -1,193 +1,185 @@
 # Log Collectors Comparison Quiz
 
-Test your understanding of log collectors (FluentBit, Promtail, Alloy, OTEL Collector).
+> **Last Updated**: September 13, 2026
 
----
+1. How should collector resource requirements be compared?
 
-1. Which of the following log collectors has the lowest memory usage?
-
-   - A) Promtail
-   - B) FluentBit
-   - C) Grafana Alloy
-   - D) OpenTelemetry Collector
+   - A) Assume a fixed memory ranking from implementation language
+   - B) Benchmark the same records, processing, destinations and failure settings
+   - C) Treat every Go collector as identical
+   - D) Use a single published events/second number
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) FluentBit**
+**Answer: B) Benchmark the same records, processing, destinations and failure settings**
 
-**Explanation:**
-FluentBit is written in C and has the lowest memory usage at approximately 10-50MB. The others are written in Go and use approximately 50-100MB of memory.
+Buffer limits, metadata caches, batching, retries and concurrency affect resource use. A language or compression format alone does not establish a throughput guarantee.
 
 </details>
 
 ---
 
-2. Which FluentBit FILTER adds Kubernetes metadata (namespace, pod_name, etc.) to logs?
+2. Which Fluent Bit filter adds Pod and namespace metadata?
 
-   - A) [FILTER] Name modify
-   - B) [FILTER] Name kubernetes
-   - C) [FILTER] Name parser
-   - D) [FILTER] Name record_modifier
+   - A) modify
+   - B) parser
+   - C) kubernetes
+   - D) record_modifier only
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) [FILTER] Name kubernetes**
+**Answer: C) kubernetes**
 
-**Explanation:**
-FluentBit's `kubernetes` filter automatically adds metadata such as pod, namespace, and labels to logs through the Kubernetes API.
+The kubernetes filter needs correct tags and authorized metadata access. Enabling Use_Kubelet requires its own kubelet connectivity and permission checks.
 
 </details>
 
 ---
 
-3. What is Promtail's main limitation?
+3. What is the correct current approach to Promtail?
 
-   - A) No JSON parsing support
-   - B) Cannot send to destinations other than Loki
-   - C) Cannot be used in Kubernetes environments
-   - D) Cannot handle multiline logs
+   - A) Migrate: it reached EOL on March 2, 2026
+   - B) Choose it for every new Loki deployment
+   - C) Assume existing installations still receive future updates
+   - D) The retirement also automatically includes lambda-promtail
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Cannot send to destinations other than Loki**
+**Answer: A) Migrate: it reached EOL on March 2, 2026**
 
-**Explanation:**
-Promtail is designed as a dedicated agent for Grafana Loki and does not support sending to other destinations like OpenSearch or CloudWatch. If multiple destinations are needed, use FluentBit or OTEL Collector.
+The official lifecycle notice directs migration to Alloy or another supported client and explicitly excludes the separate lambda-promtail client from that notice.
 
 </details>
 
 ---
 
-4. What configuration language does Grafana Alloy use?
+4. What syntax does Grafana Alloy use?
 
-   - A) YAML
-   - B) JSON
-   - C) River (HCL-like)
-   - D) INI
+   - A) Any Kubernetes YAML without conversion
+   - B) Alloy configuration syntax, formerly River
+   - C) Terraform HCL with all Terraform providers
+   - D) Only INI
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) River (HCL-like)**
+**Answer: B) Alloy configuration syntax, formerly River**
 
-**Explanation:**
-Grafana Alloy uses River, a configuration language similar to HCL (HashiCorp Configuration Language). It is more expressive than YAML and allows defining reusable components.
+The syntax is HCL-like, but an Alloy component graph is not an interchangeable Terraform file. Validate it with the selected Alloy binary.
 
 </details>
 
 ---
 
-5. What is the order of pipeline components in OpenTelemetry Collector?
+5. What is the usual Collector pipeline order?
 
-   - A) Processors → Receivers → Exporters
-   - B) Receivers → Exporters → Processors
+   - A) Exporters → Receivers → Processors
+   - B) Processors → Exporters → Receivers
    - C) Receivers → Processors → Exporters
-   - D) Exporters → Processors → Receivers
+   - D) All components run in an arbitrary order
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
 **Answer: C) Receivers → Processors → Exporters**
 
-**Explanation:**
-OTEL Collector pipelines are composed in the order: Receivers (receive data) → Processors (process/transform data) → Exporters (send data).
+Connectors can link pipelines. The current Loki path uses OTLP HTTP; the removed loki exporter is not present in Contrib0.160.0.
 
 </details>
 
 ---
 
-6. What scripting language can be used in FluentBit to implement complex log processing logic?
+6. What does the example Lua transform guarantee?
 
-   - A) Python
-   - B) JavaScript
-   - C) Lua
-   - D) Ruby
+   - A) Removal of every possible secret from arbitrary text
+   - B) Deletion of original node log files
+   - C) Exactly-once delivery
+   - D) Redaction of selected structured keys and removal of the raw duplicate
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Lua**
+**Answer: D) Redaction of selected structured keys and removal of the raw duplicate**
 
-**Explanation:**
-FluentBit supports Lua scripting to implement complex log processing logic (field transformation, conditional processing, sensitive data masking, etc.). Use the `[FILTER] Name lua` filter.
+It is not a general PII detector or a fail-closed boundary. Plaintext and free-text message values may still contain sensitive data.
 
 </details>
 
 ---
 
-7. What pipeline_stages setting in Promtail configuration excludes specific logs?
+7. Which names correctly distinguish legacy Promtail and Alloy drop stages?
 
-   - A) stage.filter
-   - B) stage.drop
-   - C) stage.exclude
-   - D) stage.ignore
+   - A) Both use stage.drop as the Promtail YAML key
+   - B) Promtail YAML drop; Alloy stage.drop
+   - C) Promtail filter.exclude; Alloy ignore
+   - D) Neither supports dropping records
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) stage.drop**
+**Answer: B) Promtail YAML drop; Alloy stage.drop**
 
-**Explanation:**
-Promtail's `stage.drop` excludes log lines matching regex or conditions. Example: Use `expression: "healthcheck|readiness"` to exclude healthcheck logs.
+Parser, template, labels and output stages also have ordering and field-retention effects. Do not treat a stage catalogue as one universal processing chain.
 
 </details>
 
 ---
 
-8. Which collector is most suitable when you need to send logs to both CloudWatch Logs and OpenSearch in AWS environments?
+8. Which are native Fluent Bit output plugin names for the two AWS destinations?
 
-   - A) Promtail
-   - B) FluentBit
-   - C) Grafana Alloy
-   - D) Logstash
+   - A) cloudwatch_logs and opensearch
+   - B) cloudwatch and elastic only
+   - C) stage.cloudwatch and stage.opensearch
+   - D) Loki tenant_id creates both AWS destinations
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) FluentBit**
+**Answer: A) cloudwatch_logs and opensearch**
 
-**Explanation:**
-FluentBit natively supports both `cloudwatch_logs` and `opensearch` output plugins. It can be easily deployed using the `aws-for-fluent-bit` image provided by AWS. Promtail and Alloy are optimized for Loki.
+Plugin availability does not grant IAM permissions. Match the real ServiceAccount identity, Region, endpoint, TLS and pre-created resource ownership.
 
 </details>
 
 ---
 
-9. Which processor in OpenTelemetry Collector limits memory usage?
+9. What does memory_limiter do when under memory pressure?
 
-   - A) batch
-   - B) memory_limiter
-   - C) resource
-   - D) filter
+   - A) Guarantees that the process can never OOM
+   - B) Creates additional node memory
+   - C) Can refuse data with retryable errors and request garbage collection
+   - D) Persists every source record automatically
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) memory_limiter**
+**Answer: C) Can refuse data with retryable errors and request garbage collection**
 
-**Explanation:**
-The `memory_limiter` processor monitors OTEL Collector's memory usage and temporarily pauses data collection when the configured limit is reached to prevent OOM.
+Receiver retry behavior, limits and queues matter. The bounded filelog retry window can expire and discard a failed batch.
 
 </details>
 
 ---
 
-10. What is the recommended migration target when you need to also collect metrics and traces from an existing Promtail environment?
+10. What must follow a successful Promtail-to-Alloy conversion?
 
-    - A) FluentBit
-    - B) Logstash
-    - C) Grafana Alloy
-    - D) Filebeat
+   - A) Immediately declare identical delivery and metrics
+   - B) Ignore all diagnostic warnings
+   - C) Run both agents on the same logs indefinitely
+   - D) Verify parsing, state, ownership, authentication, self-metrics and real backend records
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Grafana Alloy**
+**Answer: D) Verify parsing, state, ownership, authentication, self-metrics and real backend records**
 
-**Explanation:**
-Grafana Alloy is the successor project to Promtail, including all Promtail functionality while also being able to collect metrics (Prometheus) and traces (Tempo). Promtail configurations can be easily migrated to River syntax.
+The converter can change a global rate limit to per-pipeline limits and does not validate host mounts or Kubernetes permissions. Choose file or API ownership to avoid duplicate collection.
 
 </details>
+
+---
+
+[Return to the guide](../../../observability/logging/05-collectors.md)

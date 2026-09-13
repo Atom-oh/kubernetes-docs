@@ -1,0 +1,1470 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T06:07:51.316891+00:00",
+  "scope": [
+    "en/observability/logging/04-clickhouse.md",
+    "en/quizzes/observability/logging/04-clickhouse-quiz.md",
+    "ko/observability/logging/04-clickhouse.md",
+    "ko/quizzes/observability/logging/04-clickhouse-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/logging/04-clickhouse.md": {
+      "lines": 1122,
+      "sha256": "87d0383883540ee95e6ff4872d8405147b64705b1a0197da3ecc4e41cbf98edc"
+    },
+    "en/quizzes/observability/logging/04-clickhouse-quiz.md": {
+      "lines": 193,
+      "sha256": "17b09ba91fa53b07f17707d984bc6c4f24cf4301530dc1ff26d6e0c3936db195"
+    },
+    "ko/observability/logging/04-clickhouse.md": {
+      "lines": 1120,
+      "sha256": "005ca4bd990250d2ccf0aa3d11c10027413e3cd6696b58fdbd9038be530b8d86"
+    },
+    "ko/quizzes/observability/logging/04-clickhouse-quiz.md": {
+      "lines": 193,
+      "sha256": "ab089d9ace883173c0abe8694304d2cbc61a97ab68026bf40089ddadfb1aaf01"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/logging/04-clickhouse.md",
+        "sha256": "6ba36f08c9dfa7f166cd2ad88ffa5d4182c82bd67ed176f08a558aebc2d3442e",
+        "lines": 712,
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "sha256": "e88d4011dfe56cf8b31ab1bead712532c2873e64d21386ebfe3c92db4f22f8d0",
+        "lines": 185,
+        "passed": true
+      },
+      {
+        "path": "ko/observability/logging/04-clickhouse.md",
+        "sha256": "decc462392e19e46c9f9476e4a3b0969c4d91d645eb6978f8d6e784f6ac6b0f8",
+        "lines": 712,
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "sha256": "c6720740f00f37ab0fbaab15731a4e768132cd3d52723c3cb1437d734d9ae970",
+        "lines": 185,
+        "passed": true
+      }
+    ],
+    "checks": [
+      {
+        "name": "native7checks",
+        "passed": true
+      },
+      {
+        "name": "native20querycases",
+        "passed": true
+      },
+      {
+        "name": "samplingdeterministicnotexact10percent",
+        "passed": true
+      },
+      {
+        "name": "coldvolumelocal",
+        "passed": true
+      },
+      {
+        "name": "currentMarkdownVue en/observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "name": "headingIDpreservation en/observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "name": "uniqueIDs en/observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "name": "no unresolved placeholders en/observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "name": "local reference en/observability/logging/04-clickhouse.md ../../.gitbook/assets/en-observability-logging-04-clickhouse-0.png",
+        "passed": true
+      },
+      {
+        "name": "local reference en/observability/logging/04-clickhouse.md ../../.gitbook/assets/en-observability-logging-04-clickhouse-1.png",
+        "passed": true
+      },
+      {
+        "name": "local reference en/observability/logging/04-clickhouse.md ../../quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "currentMarkdownVue en/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "headingIDpreservation en/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "uniqueIDs en/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "no unresolved placeholders en/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "10answers40choices en/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "numericJSONtypeguardexplained en/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local reference en/quizzes/observability/logging/04-clickhouse-quiz.md ../../../observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "name": "currentMarkdownVue ko/observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "name": "headingIDpreservation ko/observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "name": "uniqueIDs ko/observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "name": "no unresolved placeholders ko/observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "name": "local reference ko/observability/logging/04-clickhouse.md ../../.gitbook/assets/ko-observability-logging-04-clickhouse-0.png",
+        "passed": true
+      },
+      {
+        "name": "local reference ko/observability/logging/04-clickhouse.md ../../.gitbook/assets/ko-observability-logging-04-clickhouse-1.png",
+        "passed": true
+      },
+      {
+        "name": "local reference ko/observability/logging/04-clickhouse.md ../../quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "currentMarkdownVue ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "headingIDpreservation ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "uniqueIDs ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "no unresolved placeholders ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "10answers40choices ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "numericJSONtypeguardexplained ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local reference ko/quizzes/observability/logging/04-clickhouse-quiz.md ../../../observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "name": "bilingualcodeparity",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact schema.sql",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact buffer.sql",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact roles.sql",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact sample.sql",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact tiered.sql",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact archive.sql",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact archive-read.sql",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact vector.yaml",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact cluster.yaml",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact grafana.yaml",
+        "passed": true
+      },
+      {
+        "name": "publishedfixtureexact render-grafana.py",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact recent-errors",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact per-minute",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact pods",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact latency",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact patterns",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact trace",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact backoff",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact volume",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact grafana-series",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact grafana-errors",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact heartbeat",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact parts",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact replicas",
+        "passed": true
+      },
+      {
+        "name": "publishedqueryexact distribution",
+        "passed": true
+      },
+      {
+        "name": "Altinity0.27.3CHIofficialCRD",
+        "passed": true
+      },
+      {
+        "name": "operatorofficialarchiveSHA",
+        "passed": true
+      },
+      {
+        "name": "operatorHelmrendercontainsdeployment",
+        "passed": true
+      },
+      {
+        "name": "operatorHelmrendercontainsCRDs",
+        "passed": true
+      },
+      {
+        "name": "all18externalreferencesHTTP200",
+        "passed": true
+      },
+      {
+        "name": "recognizedmetadata4",
+        "passed": true
+      },
+      {
+        "name": "scopeddiffcheck",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "native": {
+      "scope": "Actual ClickHouse local 26.3.33.24 and Vector 0.58.0; synthetic local data only.",
+      "limits": [
+        "ReplicatedMergeTree replaced with local MergeTree only for execution; original DDL parsed unchanged.",
+        "TTL removed only from execution fixture to retain historical synthetic events.",
+        "No server, Keeper, Kubernetes source, S3, Kafka, TLS, IAM or distributed delivery executed."
+      ],
+      "checks": [
+        {
+          "name": "vrl-projection",
+          "exitCode": 0,
+          "expectedExitCode": 0,
+          "passed": true,
+          "stdoutSha256": "c283decd600503ffecd5a08b1375e8bdeeecd9d9c94fcaba3d3e3fd590a26a0a"
+        },
+        {
+          "name": "projection-10-cases-typed-schema-and-metadata-trust",
+          "passed": true
+        },
+        {
+          "name": "vector-config",
+          "exitCode": 0,
+          "expectedExitCode": 0,
+          "passed": true,
+          "stdoutSha256": "053cea058aa1a2aee99b6e4ff4275653383996e353543bfdbbe70e966a332b04"
+        },
+        {
+          "name": "schema.sql-format",
+          "exitCode": 0,
+          "expectedExitCode": 0,
+          "passed": true,
+          "stdoutSha256": "f63494d2fa59d17b425a2b0618b8b468485a1f697e91e89be923a72ade24cb21"
+        },
+        {
+          "name": "buffer.sql-format",
+          "exitCode": 0,
+          "expectedExitCode": 0,
+          "passed": true,
+          "stdoutSha256": "b214ad74b95acd54e9ca494483506f58f9f1f0c36686923424f1f0222fad7810"
+        },
+        {
+          "name": "sql-schema-projection",
+          "exitCode": 0,
+          "expectedExitCode": 0,
+          "passed": true,
+          "stdoutSha256": "b628932d13d5660345b26e6482de6c4462f97803a71090f77c7fde176480c4ef"
+        },
+        {
+          "name": "native-local-MergeTree-projection-null-latency",
+          "passed": true
+        }
+      ]
+    },
+    "queries": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "queries-setup",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-recent-errors",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-per-minute",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-pods",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-latency",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-patterns",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-trace",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-backoff",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-volume",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-grafana-series",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-grafana-errors",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-heartbeat",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-parts",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-replicas",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "query-distribution",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "error/latency/absent-heartbeat-result-semantics",
+          "passed": true
+        },
+        {
+          "name": "sampling",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "sampling-not-supported",
+          "exitCode": 141,
+          "passed": true
+        },
+        {
+          "name": "local-cold-volume",
+          "exitCode": 0,
+          "passed": true
+        },
+        {
+          "name": "GrafanaSecretfile-renderer-dollar-escaping-mode600-no-stdout",
+          "passed": true
+        }
+      ],
+      "queryCount": 14,
+      "sampledRows": [
+        991,
+        991
+      ],
+      "coldParts": [
+        {
+          "disk_name": "audit_cold",
+          "rows": 1
+        }
+      ],
+      "limits": [
+        "Only local synthetic data; Distributed replaced by local MergeTree.",
+        "Grafana macros expanded into explicit fixed fixture SQL; no Grafana query execution.",
+        "S3 disk replaced by a local cold disk; no AWS access or storage-policy HA proof.",
+        "Renderer CA is synthetic and was never used in a TLS handshake.",
+        "System replication/distribution queries ran against local empty system tables; not proof of cluster health."
+      ]
+    },
+    "images": [
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-04-clickhouse-0.png",
+        "sha256": "9deadb1b0c1f6351c2fc4569c5f2fa91ef4426da14115d1441dfe6d3ee6c9faf",
+        "size": [
+          1600,
+          1080
+        ],
+        "disposition": "Retainedconceptualfigure;per-replicaPVC/Keeperrole/Kafkapoll/TTLparts-vsarchiveclarifiedincaption;personallyviewed."
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-04-clickhouse-1.png",
+        "sha256": "9eefe4c8b0e01110cbaaf7ad36ea95d2a2df5b0701b0803f0c6a2e1b044f2cff",
+        "size": [
+          1600,
+          1080
+        ],
+        "disposition": "Retainedconceptualfigure;per-replicaPVC/Keeperrole/Kafkapoll/TTLparts-vsarchiveclarifiedincaption;personallyviewed."
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-04-clickhouse-0.png",
+        "sha256": "c00708747ff2b062715c36674cff6ddacf18f35c1daedbb69707b39cdfa20c69",
+        "size": [
+          1600,
+          1080
+        ],
+        "disposition": "Retainedconceptualfigure;per-replicaPVC/Keeperrole/Kafkapoll/TTLparts-vsarchiveclarifiedincaption;personallyviewed."
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-04-clickhouse-1.png",
+        "sha256": "cb97454c3a3e4aadf4a60fb4bf031f848ca2d4686027da93af158383a696d48c",
+        "size": [
+          1600,
+          1080
+        ],
+        "disposition": "Retainedconceptualfigure;per-replicaPVC/Keeperrole/Kafkapoll/TTLparts-vsarchiveclarifiedincaption;personallyviewed."
+      }
+    ],
+    "localLinks": [
+      "en/.gitbook/assets/en-observability-logging-04-clickhouse-0.png",
+      "en/.gitbook/assets/en-observability-logging-04-clickhouse-1.png",
+      "en/quizzes/observability/logging/04-clickhouse-quiz.md",
+      "en/observability/logging/04-clickhouse.md",
+      "ko/.gitbook/assets/ko-observability-logging-04-clickhouse-0.png",
+      "ko/.gitbook/assets/ko-observability-logging-04-clickhouse-1.png",
+      "ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+      "ko/observability/logging/04-clickhouse.md"
+    ],
+    "externalLinks": [
+      {
+        "url": "https://github.com/Altinity/clickhouse-operator/blob/release-0.27.3/docs/chk-examples/30-secure-cluster.yaml",
+        "status": 200,
+        "finalURL": "https://github.com/Altinity/clickhouse-operator/blob/release-0.27.3/docs/chk-examples/30-secure-cluster.yaml",
+        "bytes": 263218
+      },
+      {
+        "url": "https://github.com/Altinity/clickhouse-operator/blob/release-0.27.3/docs/keeper_reference.md",
+        "status": 200,
+        "finalURL": "https://github.com/Altinity/clickhouse-operator/blob/release-0.27.3/docs/keeper_reference.md",
+        "bytes": 305938
+      },
+      {
+        "url": "https://github.com/Altinity/clickhouse-operator/releases/tag/release-0.27.3",
+        "status": 200,
+        "finalURL": "https://github.com/Altinity/clickhouse-operator/releases/tag/release-0.27.3",
+        "bytes": 214164
+      },
+      {
+        "url": "https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/engines/table-engines/integrations/kafka.md",
+        "status": 200,
+        "finalURL": "https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/engines/table-engines/integrations/kafka.md",
+        "bytes": 388228
+      },
+      {
+        "url": "https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/engines/table-engines/special/buffer.md",
+        "status": 200,
+        "finalURL": "https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/engines/table-engines/special/buffer.md",
+        "bytes": 310048
+      },
+      {
+        "url": "https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/sql-reference/statements/select/sample.md",
+        "status": 200,
+        "finalURL": "https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/sql-reference/statements/select/sample.md",
+        "bytes": 293812
+      },
+      {
+        "url": "https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/sql-reference/table-functions/s3.md",
+        "status": 200,
+        "finalURL": "https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/sql-reference/table-functions/s3.md",
+        "bytes": 454584
+      },
+      {
+        "url": "https://github.com/ClickHouse/ClickHouse/releases/tag/v26.3.33.24-lts",
+        "status": 200,
+        "finalURL": "https://github.com/ClickHouse/ClickHouse/releases/tag/v26.3.33.24-lts",
+        "bytes": 220667
+      },
+      {
+        "url": "https://github.com/grafana/clickhouse-datasource/blob/v4.21.2/docs/sources/alerting.md",
+        "status": 200,
+        "finalURL": "https://github.com/grafana/clickhouse-datasource/blob/v4.21.2/docs/sources/alerting.md",
+        "bytes": 340518
+      },
+      {
+        "url": "https://github.com/grafana/clickhouse-datasource/blob/v4.21.2/docs/sources/configure.md",
+        "status": 200,
+        "finalURL": "https://github.com/grafana/clickhouse-datasource/blob/v4.21.2/docs/sources/configure.md",
+        "bytes": 473136
+      },
+      {
+        "url": "https://github.com/hyperdxio/hyperdx",
+        "status": 200,
+        "finalURL": "https://github.com/hyperdxio/hyperdx",
+        "bytes": 394230
+      },
+      {
+        "url": "https://vector.dev/docs/reference/configuration/secrets/",
+        "status": 200,
+        "finalURL": "https://vector.dev/docs/reference/configuration/secrets/",
+        "bytes": 199739
+      },
+      {
+        "url": "https://vector.dev/docs/reference/configuration/sinks/clickhouse/",
+        "status": 200,
+        "finalURL": "https://vector.dev/docs/reference/configuration/sinks/clickhouse/",
+        "bytes": 328123
+      },
+      {
+        "url": "https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/",
+        "status": 200,
+        "finalURL": "https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/",
+        "bytes": 306216
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-0.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-0.html",
+        "bytes": 718365
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-1.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-1.html",
+        "bytes": 707542
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-04-clickhouse-0.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-04-clickhouse-0.html",
+        "bytes": 718478
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-04-clickhouse-1.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-04-clickhouse-1.html",
+        "bytes": 707601
+      }
+    ],
+    "counts": {
+      "documents": 4,
+      "answers": 20,
+      "choices": 80,
+      "codeBlocksPerGuide": 22,
+      "staticContracts": 65,
+      "nativeChecks": 7,
+      "queryChecks": 20,
+      "vrlCases": 10,
+      "queries": 14,
+      "operatorResources": 25,
+      "preservedGuideIDs": 84
+    },
+    "limits": [
+      "NoAWS/Kubernetesdeployment,Keeper/Kafkaserver,S3requests,TLS/IAMhandshake,HAorcapacitytest.",
+      "Topologyrequiresreviewedsite-ownedsecuritytemplate,Keeper,Service,SAandStorageClass;CRD/Helmrendersarenotreconciliationproof.",
+      "FluentBitsectionisacontract/prerequisiteguide;onlyVectornormalizationconfigurationwasexecuted.",
+      "Replicated/DistributedDDLparsed;localexecutionusesMergeTreeandfixedsyntheticdates/Grafanamacroexpansions.",
+      "ColdS3policytestedonlywithlocaldiskanalogue;archiveSQLsyntaxonly;noobjectexportorrestoreperformed.",
+      "Originalfiguresretainedwithqualifiedcaptions;legacyroot3tierHTMLasset/foreigntranslationsnotedited."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/logging/04-clickhouse.md",
+        "sha256": "6ba36f08c9dfa7f166cd2ad88ffa5d4182c82bd67ed176f08a558aebc2d3442e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "clickhouse"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h3",
+            "id": "clickhouse-features"
+          },
+          {
+            "tag": "h3",
+            "id": "why-choose-clickhouse-for-log-analytics"
+          },
+          {
+            "tag": "h3",
+            "id": "comparison-with-other-solutions"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "clickhouse-cluster-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "data-flow"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "install-clickhouse-operator"
+          },
+          {
+            "tag": "h3",
+            "id": "clickhouse-cluster-definition"
+          },
+          {
+            "tag": "h3",
+            "id": "zookeeper-or-clickhouse-keeper-deployment"
+          },
+          {
+            "tag": "h2",
+            "id": "log-ingestion-pipeline"
+          },
+          {
+            "tag": "h3",
+            "id": "buffer-→-store-→-distributed-3-tier-design"
+          },
+          {
+            "tag": "h3",
+            "id": "log-table-schema"
+          },
+          {
+            "tag": "h3",
+            "id": "ingestion-via-vector"
+          },
+          {
+            "tag": "h3",
+            "id": "ingestion-via-fluentbit"
+          },
+          {
+            "tag": "h3",
+            "id": "buffering-via-kafka-large-scale-environments"
+          },
+          {
+            "tag": "h2",
+            "id": "sql-queries"
+          },
+          {
+            "tag": "h3",
+            "id": "basic-queries"
+          },
+          {
+            "tag": "h3",
+            "id": "advanced-analytics-queries"
+          },
+          {
+            "tag": "h3",
+            "id": "real-time-dashboard-queries"
+          },
+          {
+            "tag": "h2",
+            "id": "grafana-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "clickhouse-datasource-setup"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana-dashboard-panels"
+          },
+          {
+            "tag": "h3",
+            "id": "alert-rules"
+          },
+          {
+            "tag": "h2",
+            "id": "hyperdx-clickhouse-native-viewer"
+          },
+          {
+            "tag": "h3",
+            "id": "key-advantages"
+          },
+          {
+            "tag": "h3",
+            "id": "log-viewer-comparison"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "table-design-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "parts-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "query-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "system-configuration-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "resource-guidelines"
+          },
+          {
+            "tag": "h2",
+            "id": "s3-archiving-and-long-term-retention"
+          },
+          {
+            "tag": "h3",
+            "id": "archiving-pipeline"
+          },
+          {
+            "tag": "h3",
+            "id": "direct-s3-archiving"
+          },
+          {
+            "tag": "h3",
+            "id": "watermark-based-progress-tracking"
+          },
+          {
+            "tag": "h3",
+            "id": "querying-archived-data-directly"
+          },
+          {
+            "tag": "h2",
+            "id": "references-and-validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "clickhouse",
+          "table-of-contents",
+          "overview",
+          "clickhouse-features",
+          "why-choose-clickhouse-for-log-analytics",
+          "comparison-with-other-solutions",
+          "architecture",
+          "clickhouse-cluster-architecture",
+          "data-flow",
+          "kubernetes-deployment",
+          "install-clickhouse-operator",
+          "clickhouse-cluster-definition",
+          "zookeeper-or-clickhouse-keeper-deployment",
+          "log-ingestion-pipeline",
+          "buffer-→-store-→-distributed-3-tier-design",
+          "log-table-schema",
+          "ingestion-via-vector",
+          "ingestion-via-fluentbit",
+          "buffering-via-kafka-large-scale-environments",
+          "sql-queries",
+          "basic-queries",
+          "advanced-analytics-queries",
+          "real-time-dashboard-queries",
+          "grafana-integration",
+          "clickhouse-datasource-setup",
+          "grafana-dashboard-panels",
+          "alert-rules",
+          "hyperdx-clickhouse-native-viewer",
+          "key-advantages",
+          "log-viewer-comparison",
+          "performance-optimization",
+          "table-design-optimization",
+          "parts-optimization",
+          "query-optimization",
+          "system-configuration-optimization",
+          "resource-guidelines",
+          "s3-archiving-and-long-term-retention",
+          "archiving-pipeline",
+          "direct-s3-archiving",
+          "watermark-based-progress-tracking",
+          "querying-archived-data-directly",
+          "references-and-validation-scope",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/logging/04-clickhouse.md",
+        "sha256": "decc462392e19e46c9f9476e4a3b0969c4d91d645eb6978f8d6e784f6ac6b0f8",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "clickhouse"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h3",
+            "id": "clickhouse의-특징"
+          },
+          {
+            "tag": "h3",
+            "id": "로그-분석에-clickhouse를-선택하는-이유"
+          },
+          {
+            "tag": "h3",
+            "id": "다른-솔루션과의-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "clickhouse-클러스터-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "데이터-흐름"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "clickhouse-operator-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "clickhouse-클러스터-정의"
+          },
+          {
+            "tag": "h3",
+            "id": "zookeeper-또는-clickhouse-keeper-배포"
+          },
+          {
+            "tag": "h2",
+            "id": "로그-수집-파이프라인"
+          },
+          {
+            "tag": "h3",
+            "id": "buffer-→-store-→-distributed-3계층-설계"
+          },
+          {
+            "tag": "h3",
+            "id": "로그-테이블-스키마"
+          },
+          {
+            "tag": "h3",
+            "id": "vector를-통한-수집"
+          },
+          {
+            "tag": "h3",
+            "id": "fluentbit을-통한-수집"
+          },
+          {
+            "tag": "h3",
+            "id": "kafka를-통한-버퍼링-대규모-환경"
+          },
+          {
+            "tag": "h2",
+            "id": "sql-쿼리"
+          },
+          {
+            "tag": "h3",
+            "id": "기본-쿼리"
+          },
+          {
+            "tag": "h3",
+            "id": "고급-분석-쿼리"
+          },
+          {
+            "tag": "h3",
+            "id": "실시간-대시보드용-쿼리"
+          },
+          {
+            "tag": "h2",
+            "id": "grafana-연동"
+          },
+          {
+            "tag": "h3",
+            "id": "clickhouse-데이터소스-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana-대시보드-패널"
+          },
+          {
+            "tag": "h3",
+            "id": "알림-규칙"
+          },
+          {
+            "tag": "h2",
+            "id": "hyperdx-clickhouse-네이티브-뷰어"
+          },
+          {
+            "tag": "h3",
+            "id": "핵심-장점"
+          },
+          {
+            "tag": "h3",
+            "id": "로그-뷰어-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "성능-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "테이블-설계-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "parts-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "쿼리-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "시스템-설정-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "리소스-가이드라인"
+          },
+          {
+            "tag": "h2",
+            "id": "s3-아카이빙-및-장기-보관"
+          },
+          {
+            "tag": "h3",
+            "id": "아카이빙-파이프라인"
+          },
+          {
+            "tag": "h3",
+            "id": "s3-직접-아카이빙"
+          },
+          {
+            "tag": "h3",
+            "id": "워터마크-기반-진행-상태-추적"
+          },
+          {
+            "tag": "h3",
+            "id": "아카이브-데이터-직접-쿼리"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료와-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "clickhouse",
+          "목차",
+          "개요",
+          "clickhouse의-특징",
+          "로그-분석에-clickhouse를-선택하는-이유",
+          "다른-솔루션과의-비교",
+          "아키텍처",
+          "clickhouse-클러스터-아키텍처",
+          "데이터-흐름",
+          "kubernetes-배포",
+          "clickhouse-operator-설치",
+          "clickhouse-클러스터-정의",
+          "zookeeper-또는-clickhouse-keeper-배포",
+          "로그-수집-파이프라인",
+          "buffer-→-store-→-distributed-3계층-설계",
+          "로그-테이블-스키마",
+          "vector를-통한-수집",
+          "fluentbit을-통한-수집",
+          "kafka를-통한-버퍼링-대규모-환경",
+          "sql-쿼리",
+          "기본-쿼리",
+          "고급-분석-쿼리",
+          "실시간-대시보드용-쿼리",
+          "grafana-연동",
+          "clickhouse-데이터소스-설정",
+          "grafana-대시보드-패널",
+          "알림-규칙",
+          "hyperdx-clickhouse-네이티브-뷰어",
+          "핵심-장점",
+          "로그-뷰어-비교",
+          "성능-최적화",
+          "테이블-설계-최적화",
+          "parts-최적화",
+          "쿼리-최적화",
+          "시스템-설정-최적화",
+          "리소스-가이드라인",
+          "s3-아카이빙-및-장기-보관",
+          "아카이빙-파이프라인",
+          "s3-직접-아카이빙",
+          "워터마크-기반-진행-상태-추적",
+          "아카이브-데이터-직접-쿼리",
+          "참고-자료와-검증-범위",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "sha256": "e88d4011dfe56cf8b31ab1bead712532c2873e64d21386ebfe3c92db4f22f8d0",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "clickhouse-for-log-analytics-quiz"
+          }
+        ],
+        "renderedIds": [
+          "clickhouse-for-log-analytics-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+        "sha256": "c6720740f00f37ab0fbaab15731a4e768132cd3d52723c3cb1437d734d9ae970",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "clickhouse-for-log-analytics-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "clickhouse-for-log-analytics-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://api.github.com/repos/ClickHouse/ClickHouse/releases/tags/v26.3.33.24-lts",
+      "cacheKey": "901888c013e5",
+      "fetchedAt": "2026-09-13T05:20:26.433513+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/ClickHouse/ClickHouse/releases/tags/v26.3.33.24-lts",
+      "sha256": "0b248ed4707c6353877de8486010a070736ae176c56213b8ed45880ee9fe8206"
+    },
+    {
+      "url": "https://api.github.com/repos/Altinity/clickhouse-operator/releases/latest",
+      "cacheKey": "3bc9bd756e37",
+      "fetchedAt": "2026-09-13T05:16:38.699286+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/Altinity/clickhouse-operator/releases/latest",
+      "sha256": "23618554cd875679f39673075af76d43625a9279ac49569b010b02ded2eba10b"
+    },
+    {
+      "url": "https://api.github.com/repos/Altinity/clickhouse-operator/git/trees/release-0.27.3?recursive=1",
+      "cacheKey": "94e9631b20c6",
+      "fetchedAt": "2026-09-13T05:20:26.257292+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/Altinity/clickhouse-operator/git/trees/release-0.27.3?recursive=1",
+      "sha256": "cfb05fbd1e37f1e15a3d0dbc634b7df390821ed17a9454ad6f58b2a19dcef65f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Altinity/clickhouse-operator/release-0.27.3/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhouseinstallations.clickhouse.altinity.com.yaml",
+      "cacheKey": "86945f82a1fa",
+      "fetchedAt": "2026-09-13T05:35:37.561111+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/Altinity/clickhouse-operator/release-0.27.3/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhouseinstallations.clickhouse.altinity.com.yaml",
+      "sha256": "f1dae530b066fd43a0e65be16f10f95eddca6b523c0011baf93754d5cd8b455d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Altinity/clickhouse-operator/release-0.27.3/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhousekeeperinstallations.clickhouse-keeper.altinity.com.yaml",
+      "cacheKey": "4ce132b4e02c",
+      "fetchedAt": "2026-09-13T05:35:37.601613+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/Altinity/clickhouse-operator/release-0.27.3/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhousekeeperinstallations.clickhouse-keeper.altinity.com.yaml",
+      "sha256": "50bcd8df813d8eeea4a730e8723f233713c6a06fda9d17126af27c5a461d49c2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Altinity/clickhouse-operator/release-0.27.3/docs/keeper_reference.md",
+      "cacheKey": "102c197ba844",
+      "fetchedAt": "2026-09-13T05:31:50.321778+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/Altinity/clickhouse-operator/release-0.27.3/docs/keeper_reference.md",
+      "sha256": "fdcd5b66440ef33ad64e898fe3bbc7338f660163fda0c11815198fb2953f6873"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Altinity/clickhouse-operator/release-0.27.3/docs/chk-examples/30-secure-cluster.yaml",
+      "cacheKey": "0b6909a9c9c6",
+      "fetchedAt": "2026-09-13T05:31:50.554424+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/Altinity/clickhouse-operator/release-0.27.3/docs/chk-examples/30-secure-cluster.yaml",
+      "sha256": "59e552250b82fa977934d19545d6b5655c344f33abf15a78e70961cae8f2a3ad"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/engines/table-engines/special/buffer.md",
+      "cacheKey": "c6f851c3acb4",
+      "fetchedAt": "2026-09-13T05:23:20.529802+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/engines/table-engines/special/buffer.md",
+      "sha256": "4e8ed6a1feb2aa52a5a2a4588b3ecb8b8ba68dec83a27b9280790c81f51a60e4"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/engines/table-engines/mergetree-family/mergetree.md",
+      "cacheKey": "9bf2cb94edd1",
+      "fetchedAt": "2026-09-13T05:31:50.872201+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/engines/table-engines/mergetree-family/mergetree.md",
+      "sha256": "c3e3aa36011a141800b118939116551d6b5c95ecf781bb8d8ec44f39119973c1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/sql-reference/statements/select/sample.md",
+      "cacheKey": "77c661e6f5f5",
+      "fetchedAt": "2026-09-13T05:31:50.631620+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/sql-reference/statements/select/sample.md",
+      "sha256": "aa16d1a33d3312895cbf47d1ede82586dfb4df0a3507111d6cc8823a5446a979"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/sql-reference/table-functions/s3.md",
+      "cacheKey": "159b39fbdc67",
+      "fetchedAt": "2026-09-13T05:31:51.029767+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/sql-reference/table-functions/s3.md",
+      "sha256": "2431bdd229dca7eac954505519e65265d18e03c097199cef8b022b9b0f59992e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/engines/table-engines/integrations/kafka.md",
+      "cacheKey": "73fcd7b4b2d5",
+      "fetchedAt": "2026-09-13T05:35:37.843450+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/engines/table-engines/integrations/kafka.md",
+      "sha256": "3203f84f048ca009b9f90eec080070e282108d50d7ba6ea5bc93169f873eac70"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/operations/storing-data.md",
+      "cacheKey": "74cda0ccdccb",
+      "fetchedAt": "2026-09-13T05:36:27.722320+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/operations/storing-data.md",
+      "sha256": "33f614bd0d7a4e3c6ee6f1fcc08f9f538d0ab2f110933bf6da9f69a3cec7da2d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/operations/settings/settings-users.md",
+      "cacheKey": "052a35859367",
+      "fetchedAt": "2026-09-13T05:36:47.642212+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/operations/settings/settings-users.md",
+      "sha256": "3090f9426c43bdc2966164973f656106975dba7adb2b83e694dea0ead862df9c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/sql-reference/functions/json-functions.md",
+      "cacheKey": "7e9605d37ac0",
+      "fetchedAt": "2026-09-13T06:05:21.755310+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/v26.3.33.24-lts/docs/en/sql-reference/functions/json-functions.md",
+      "sha256": "957fef1200e01d1d2a8bc6b685146a1418c4d936418ddfe9ecb18479516293d4"
+    },
+    {
+      "url": "https://hub.docker.com/v2/repositories/clickhouse/clickhouse-server/tags/26.3.33.24",
+      "cacheKey": "2055df6e775d",
+      "fetchedAt": "2026-09-13T06:02:31.760642+00:00",
+      "status": 200,
+      "finalURL": "https://hub.docker.com/v2/repositories/clickhouse/clickhouse-server/tags/26.3.33.24",
+      "sha256": "889da46e71a7f7c01c1dad33ccbb2389ef67fc3f670efdc48dbbe73359c39c95"
+    },
+    {
+      "url": "https://api.github.com/repos/vectordotdev/vector/releases?per_page=30",
+      "cacheKey": "ebf803611cac",
+      "fetchedAt": "2026-09-13T05:19:34.849473+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/vectordotdev/vector/releases?per_page=30",
+      "sha256": "67d4dd94613b598a441b3de01990e3d0cc50c55f365dd0e2013b8e98d0bb08d0"
+    },
+    {
+      "url": "https://vector.dev/docs/reference/configuration/sinks/clickhouse/",
+      "cacheKey": "596fd2861968",
+      "fetchedAt": "2026-09-13T05:19:35.156719+00:00",
+      "status": 200,
+      "finalURL": "https://vector.dev/docs/reference/configuration/sinks/clickhouse/",
+      "sha256": "c211186847f25a1b7b3ffc82e0b89022a2f8d771afd6028f25643d32660fd52b"
+    },
+    {
+      "url": "https://vector.dev/docs/reference/configuration/secrets/",
+      "cacheKey": "535a27a38885",
+      "fetchedAt": "2026-09-13T05:23:20.573367+00:00",
+      "status": 200,
+      "finalURL": "https://vector.dev/docs/reference/configuration/secrets/",
+      "sha256": "7960d96533acc39ae1ef706b596b26f1d3ee75a99b7ce9710905b60acf794903"
+    },
+    {
+      "url": "https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/",
+      "cacheKey": "081afea038dc",
+      "fetchedAt": "2026-09-13T05:31:50.934407+00:00",
+      "status": 200,
+      "finalURL": "https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/",
+      "sha256": "27833bdee3e9f9033001bb2be99587bbd2dc4046a9133a13e3fa42459fc77509"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/vectordotdev/vector/v0.58.0/src/sources/kubernetes_logs/mod.rs",
+      "cacheKey": "ac93b2f786bc",
+      "fetchedAt": "2026-09-13T05:35:37.369938+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/vectordotdev/vector/v0.58.0/src/sources/kubernetes_logs/mod.rs",
+      "sha256": "2204a9b8fd86ebc8de8c8e0fcbafef9025d48529b50bef5a92facd2d6eb0ea49"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/vectordotdev/vector/v0.58.0/src/sinks/clickhouse/config.rs",
+      "cacheKey": "5e2f5b0ed4c7",
+      "fetchedAt": "2026-09-13T05:35:37.321938+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/vectordotdev/vector/v0.58.0/src/sinks/clickhouse/config.rs",
+      "sha256": "e37ebf76b9ab95e6050075c1ea6364a6968207ddefd1081d4d93365cd9f8758b"
+    },
+    {
+      "url": "https://api.github.com/repos/grafana/clickhouse-datasource/releases/latest",
+      "cacheKey": "c15091b779e5",
+      "fetchedAt": "2026-09-13T05:16:39.281981+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/grafana/clickhouse-datasource/releases/latest",
+      "sha256": "9cbed0ec9b2503334a17515cd7b10987385311f98fcb3a0713538a9996a55707"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/clickhouse-datasource/v4.21.2/src/types/config.ts",
+      "cacheKey": "8951436485cf",
+      "fetchedAt": "2026-09-13T05:31:51.170174+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/clickhouse-datasource/v4.21.2/src/types/config.ts",
+      "sha256": "191c463cb198815459806613844e12b058d4c454f23c4f6b9b43248096aeccce"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/clickhouse-datasource/v4.21.2/docs/sources/configure.md",
+      "cacheKey": "6509961125e1",
+      "fetchedAt": "2026-09-13T05:36:47.400535+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/clickhouse-datasource/v4.21.2/docs/sources/configure.md",
+      "sha256": "948dfd7fc394700954fd2fa1aa5d16eaa2e5eea98aaf503ae2a9045bcd1b8ea5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/clickhouse-datasource/v4.21.2/docs/sources/alerting.md",
+      "cacheKey": "b5e9f0d637a9",
+      "fetchedAt": "2026-09-13T05:36:48.201393+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/clickhouse-datasource/v4.21.2/docs/sources/alerting.md",
+      "sha256": "0a6fa86f095d755b5244a300d6423b9638de0bb8078b9df3ddf0ecda2ee1a89b"
+    },
+    {
+      "url": "https://grafana.com/docs/grafana/latest/administration/provisioning/",
+      "cacheKey": "c8d9aead1d65",
+      "fetchedAt": "2026-09-13T05:36:27.496292+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/grafana/latest/administration/provisioning/",
+      "sha256": "fc51878d6e3033dd796e2a489708527395e9f5b5c65ab0876ec139100a1e376a"
+    },
+    {
+      "url": "https://api.github.com/repos/hyperdxio/hyperdx/releases?per_page=30",
+      "cacheKey": "d25e4c494150",
+      "fetchedAt": "2026-09-13T05:19:34.695329+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/hyperdxio/hyperdx/releases?per_page=30",
+      "sha256": "f34abdbd87dda4d89de6efa4c6ed65c7e9166dc7d5fbc33b52c7fa6c29a7dc92"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hyperdxio/hyperdx/main/README.md",
+      "cacheKey": "f1ac0c5fac4c",
+      "fetchedAt": "2026-09-13T06:02:31.701905+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/hyperdxio/hyperdx/main/README.md",
+      "sha256": "53adc4704c3ca940aff8d57ee40074a2294ca9634afbfccebe044fa322c087fc"
+    }
+  ],
+  "findings": [
+    "Read all4originals completely:1122ENguide/1120KOguide/193eachquiz;preservedoriginalsnapshotsandall84guideheadingIDs.",
+    "PinnedcurrentreviewbaselinesClickHouse26.3.33.24LTS/Altinity0.27.3/Vector0.58.0/Grafanaplugin4.21.2; distinguishedHyperDXapp/API2.38.0fromCLI andVectordevelopmentutilityreleases. NoarbitraryK8s/EKScompatibilityclaim.",
+    "Replacedmovingmasteroperatorbundle,24.1serverandbrokenZooKeeperZOO_MY_ID=Podnamewithversionedchart+CRD-validtopologyandexplicitexistingKeeper/securitytemplate/SA/StorageClass/Serviceprerequisites. No untestedcompleteHA/TLSdeploymentclaim.",
+    "Removedplaintextadminpassword/Base64header/::0guidance;separatedwriter/reader/admin,Secretfilemounts,CA/hostnameverificationandread-onlyGrafanaquery-settingpermissions.",
+    "FixedellipsisBufferDDL,duplicateDistributedtablenamepointingdifferentstoresandmissingCREATEDATABASE;oneconsistentapplication_logs/localandDistributedcontract. BufferisoptionalRAM,allminimumORanymaximumthresholdsperlayer,crash/deduplicationlimits;batchingpreferred.",
+    "Vectoractual0.58compilerreproducedoriginalE103falliblemergeandE110matchtypeerrors;replacedrootmergewithten-columnprojection,preservedtrustedKubernetesmetadata,validrawJSON,typedtimestamps,explicitSECRETbackendandbest-effortsource/diskbufferlimits.",
+    "Actual26.3JSONExtractNullableFloat64coercesboolean/numericstrings;addedJSONType(Int64/UInt64/Double)guardbeforeextraction. TenVRL/SQLrecordcaseskeepmissing/nonnumericmeasurementsoutoflatencyaggregates;quizexplanationaligned.",
+    "FluentBitsectionretainsHTTP/CRI/schema/TLScontractbutdoesnotpretendanunprovidedtransform/DaemonSetwasvalidated. Kafkaengine/default-column,consumer-group,offset/durableinsertandloss/duplicateboundariescorrected.",
+    "Corrected14SQLexamples:cross-midnighttimefilters,exactuniqExactvsapproximateuniq,logerrorpercentagevsrequesterrors,NULLlatency,backoffeventsnotrestartcounts,textbytesnotstoredcost,staticSELECTnotlivestream.",
+    "Replacedinventedclickhouse_custom_queryPrometheusmetricandmixedalertingschemaswithGrafananumericSQL/Reduce/Threshold/heartbeatworkflow;explicitnodata/ingestionlagandread-onlysettings. File-to-fileSecretprovisionerpreservesliteral$$;publishedfencesmatchtestedartifacts.",
+    "CorrectedSAMPLEBY/primary-keyrequirementanddeterministicsampleintervalsemantics;native10000rowsyield991twice,notexact1000. Fixedhourpartition90-daycount2160 andqueryprofilevsserverXMLsettings;removedunmeasuredcompression/throughput/costguarantees.",
+    "DistinguishedS3coldpartstoragefromindependentParquetarchives;explicitstorage_policyandcoldvolume,asynchronousTTL,per-replicaownership,IAMproviderprerequisites. Locallocal-diskanalogueverified;noAWSexportclaimed.",
+    "ArchiveSQLnowhasPARTITIONBYfor_partition_id,Distributedshardcoverage,uniqueownedrunprefix,overwriteguardsandcompletionmanifest/lease/latearrivalrequirements. MergeTreewatermarkisnotuniquelock;2025Januaryhistoricalexampledatesretainedwithretentioncaveat.",
+    "HyperDXcustomschemasarevalidwithexplicitmapping;removedautomaticBufferdiscovery/20xclaimsandsimplisticSigNozcomparison. Existingfourfiguresretainedwithper-replicaPVC/Keeperqueryrole/Kafkapoll/coldparts-vsarchivecaptions;legacyroot3tierHTMLlinkremovedasredundantmisleadingguidance.",
+    "Rewrote20quizanswers/80choicesandrecognizedLastUpdatedheaders;all18externalreference/viewerURLsHTTP200,localreferencesvalid. Noforeignprose/assets/sharedscriptsedited."
+  ],
+  "figures": {
+    "retained": [
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-04-clickhouse-0.png",
+        "sha256": "9deadb1b0c1f6351c2fc4569c5f2fa91ef4426da14115d1441dfe6d3ee6c9faf",
+        "size": [
+          1600,
+          1080
+        ],
+        "disposition": "Retainedconceptualfigure;per-replicaPVC/Keeperrole/Kafkapoll/TTLparts-vsarchiveclarifiedincaption;personallyviewed."
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-04-clickhouse-1.png",
+        "sha256": "9eefe4c8b0e01110cbaaf7ad36ea95d2a2df5b0701b0803f0c6a2e1b044f2cff",
+        "size": [
+          1600,
+          1080
+        ],
+        "disposition": "Retainedconceptualfigure;per-replicaPVC/Keeperrole/Kafkapoll/TTLparts-vsarchiveclarifiedincaption;personallyviewed."
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-04-clickhouse-0.png",
+        "sha256": "c00708747ff2b062715c36674cff6ddacf18f35c1daedbb69707b39cdfa20c69",
+        "size": [
+          1600,
+          1080
+        ],
+        "disposition": "Retainedconceptualfigure;per-replicaPVC/Keeperrole/Kafkapoll/TTLparts-vsarchiveclarifiedincaption;personallyviewed."
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-04-clickhouse-1.png",
+        "sha256": "cb97454c3a3e4aadf4a60fb4bf031f848ca2d4686027da93af158383a696d48c",
+        "size": [
+          1600,
+          1080
+        ],
+        "disposition": "Retainedconceptualfigure;per-replicaPVC/Keeperrole/Kafkapoll/TTLparts-vsarchiveclarifiedincaption;personallyviewed."
+      }
+    ],
+    "scopeExternalFollowup": "assets/clickhouse-3tier-pipeline.htmlandforeigntranslationsremainoutsideworkerwrites;EN/KOredundantlinkremovedandcorrectengine/durabilityexplanationretained."
+  },
+  "artifactDirectory": ".vitepress/cache/observability-clickhouse-audit",
+  "limits": [
+    "NoAWS/Kubernetesdeployment,Keeper/Kafkaserver,S3requests,TLS/IAMhandshake,HAorcapacitytest.",
+    "Topologyrequiresreviewedsite-ownedsecuritytemplate,Keeper,Service,SAandStorageClass;CRD/Helmrendersarenotreconciliationproof.",
+    "FluentBitsectionisacontract/prerequisiteguide;onlyVectornormalizationconfigurationwasexecuted.",
+    "Replicated/DistributedDDLparsed;localexecutionusesMergeTreeandfixedsyntheticdates/Grafanamacroexpansions.",
+    "ColdS3policytestedonlywithlocaldiskanalogue;archiveSQLsyntaxonly;noobjectexportorrestoreperformed.",
+    "Originalfiguresretainedwithqualifiedcaptions;legacyroot3tierHTMLasset/foreigntranslationsnotedited."
+  ],
+  "sourceAccessNotes": [
+    "ClickHousewebsiteandFluentBitmanualreturned403fromcurl;usedofficialpinnedClickHouseGitHubdocs/releasebinaryandpriorcollectorprimaryevidence.403notclassifiedas404.",
+    "GuessedGrafanaconfigurationpath404replacedbyverifiedconfigure/pinnedconfigure.mdreference;allpublished18URLsHTTP200.",
+    "No fullVitePressbuild;per-processcleanenv/privateEBSTMPDIR/CPU2andNode512used."
+  ]
+}

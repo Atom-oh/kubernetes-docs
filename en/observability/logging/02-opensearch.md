@@ -1,328 +1,284 @@
 # Amazon OpenSearch Service
 
-> **Last Updated**: June 30, 2026
+> **Last Updated**: September 13, 2026
+> **Example baseline**: provisioned OpenSearch Service 3.5; Terraform 1.15.7/AWS provider 6.64.0; AWS for Fluent Bit 3.4.15 (Fluent Bit 5.0.9). Local configuration checks only; no domain, collector, SAML session or data-delivery test was deployed.
 
-Amazon OpenSearch Service is a fully managed search and analytics service used for real-time application monitoring, log analytics, and website search. It's based on OpenSearch, a fork of Elasticsearch, and provides powerful full-text search capabilities.
+Amazon OpenSearch Service manages search clusters and supports selected OpenSearch and legacy Elasticsearch OSS versions. This chapter covers a VPC domain and the traditional hot/UltraWarm/cold tiers. Serverless collections and newer optimized-instance storage options have separate configuration, API and availability requirements.
 
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Domain Creation](#domain-creation)
-4. [Index Management](#index-management)
-5. [Data Ingestion](#data-ingestion)
-6. [OpenSearch Dashboards](#opensearch-dashboards)
-7. [Security Configuration](#security-configuration)
-8. [Cost Optimization](#cost-optimization)
-9. [Limitations in Large-scale Log Environments](#limitations-in-large-scale-log-environments)
-10. [Comparison with Loki](#comparison-with-loki)
-
----
+<span id="table-of-contents"></span>
+<span id="opensearch-vs-elasticsearch"></span>
+<span id="amazon-opensearch-service-features"></span>
+<span id="key-use-cases"></span>
 
 ## Overview
 
-### OpenSearch vs Elasticsearch
+OpenSearch is an Apache-2.0-licensed search project. Its Elasticsearch 7.10 lineage does not imply compatibility with every current Elasticsearch client, plugin or API. Elastic's current source-license choices include AGPLv3 for eligible source portions alongside SSPL/Elastic License 2.0; check the exact component and distribution rather than treating Elasticsearch as a single unchanged licensing model.
 
-OpenSearch is an open-source project created by AWS in 2021 by forking Elasticsearch 7.10.
+The AWS support table currently lists OpenSearch 3.5 among supported versions. The earlier 2.11 example is **still under standard support through November 7, 2027**; it is not unsupported simply because a newer version exists. For an existing domain, check supported upgrade paths, breaking changes, snapshots and client compatibility before requesting a version upgrade.
 
-| Characteristic | OpenSearch | Elasticsearch |
-|----------------|-----------|---------------|
-| License | Apache 2.0 | SSPL/Elastic License |
-| Managed Service | Amazon OpenSearch Service | Elastic Cloud |
-| Compatibility | ES 7.10 API compatible | Latest version |
-| Plugins | OpenSearch plugins | Elastic plugins |
-| Dashboard | OpenSearch Dashboards | Kibana |
+OpenSearch Service can support log analytics, full-text search, aggregations and security-analysis workflows. Enabling a service or retaining audit logs does not itself satisfy a compliance requirement.
 
-### Amazon OpenSearch Service Features
-
-```
-+-------------------------------------------------------------+
-|               Amazon OpenSearch Service                      |
-+-------------------------------------------------------------+
-|  Fully managed        |  Multi-AZ deployment  |  Auto snapshots |
-|  Auto patching        |  Encryption (rest/transit) |  VPC integration |
-|  Fine-grained Access  |  SAML authentication  |  CloudWatch      |
-|  UltraWarm/Cold storage |  Serverless option  |  Cross-cluster   |
-+-------------------------------------------------------------+
-```
-
-### Key Use Cases
-
-1. **Log Analytics**: Application, infrastructure, and security log analysis
-2. **Full-text Search**: Website, document, and product search
-3. **Security Analytics**: SIEM, threat detection, compliance
-4. **Real-time Monitoring**: Application performance monitoring
-5. **Business Analytics**: Clickstream, user behavior analysis
-
----
+<span id="node-types"></span>
 
 ## Architecture
 
 ### OpenSearch Cluster Architecture
 
-![Application, FluentBit, and Kinesis Data Firehose feed logs into the data nodes of a multi-AZ OpenSearch cluster managed by dedicated master nodes; data nodes write hot data to EBS and roll aging data into UltraWarm, which migrates it on to S3-backed cold storage.](../../.gitbook/assets/en-observability-logging-02-opensearch-0.png)
+![Conceptual provisioned-domain ingestion and traditional hot/UltraWarm/cold storage flow.](../../.gitbook/assets/en-observability-logging-02-opensearch-0.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-0.html)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-0.html)
 
-### Node Types
+The diagram is schematic, not an exact replica/AZ layout or a sizing recommendation. Its “Master” label means the dedicated cluster-management role; AWS configuration fields still use `dedicated_master_*`. “Kinesis Data Firehose” is the former name of **Amazon Data Firehose**. Both UltraWarm and cold storage use S3-backed storage; cold data must be attached to UltraWarm before querying.
 
-> **Reference**: For AWS instance type performance benchmarks, see [AWS Instance Benchmark](https://benchmark.aws.atomai.click/).
+| Role or tier | Function |
+|---|---|
+| Dedicated cluster-manager nodes | Cluster state, metadata and shard-allocation management. Three is the conventional dedicated-manager configuration; these are not data replicas. |
+| Data nodes / hot storage | Indexing and querying. EBS availability and limits depend on the selected instance family. |
+| UltraWarm | Read-only indexes backed by S3, with warm-node caching/compute. Check engine, instance and dedicated-manager prerequisites. |
+| Cold storage | Detached index storage with a separate lifecycle. Reattach selected indexes to UltraWarm to query them. |
 
-| Node Type | Role | Recommended Instance |
-|-----------|------|---------------------|
-| **Master** | Cluster management, index metadata | m6g.large.search (3) |
-| **Data** | Data storage, search/indexing | r6g.xlarge.search |
-| **UltraWarm** | Read-only, cost-effective storage | ultrawarm1.medium |
-| **Cold** | S3-based archive | - |
+Multi-AZ with Standby has additional topology and replica requirements. Merely enabling zone awareness does not enable Standby or establish its availability guarantees. Review current instance restrictions, including VPC Encryption Controls and storage compatibility. The original r6g/m6g sizes are example inputs, not a benchmark.
+
+Supplementary resource: [AWS Instance Benchmark](https://benchmark.aws.atomai.click/). Service capacity still requires a representative OpenSearch workload test.
 
 ### Data Flow
 
-![An application sends logs through FluentBit into OpenSearch, which indexes them to EBS as hot data, then an ISM policy moves data older than 7 days to UltraWarm and data older than 30 days on to S3-backed cold storage.](../../.gitbook/assets/en-observability-logging-02-opensearch-1.png)
+![Illustrative daily-index lifecycle: ingestion to hot storage, then an ISM transition to UltraWarm and cold storage.](../../.gitbook/assets/en-observability-logging-02-opensearch-1.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-1.html)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-1.html)
 
----
+The 7/30-day labels are example **index-age conditions**, not automatic defaults or exact event-age retention. ISM runs periodically and migration is asynchronous. Late or replayed events can target an older read-only index with date-based indexing; decide how to route or archive them before enabling migration.
+
+<span id="creation-via-aws-console"></span>
 
 ## Domain Creation
 
-### Creation via AWS Console
+### Prerequisites
 
-```
-1. Access OpenSearch Service console
-2. Click "Create domain"
-3. Settings:
-   - Deployment type: Production
-   - Version: OpenSearch 2.x
-   - Data nodes: r6g.xlarge.search x 3
-   - Master nodes: m6g.large.search x 3
-   - EBS: gp3, 500GB per node
-   - Network: VPC access
-   - Encryption: Enable at-rest and in-transit encryption
-   - Enable Fine-grained access control
-```
+Prepare three private subnets in distinct AZs of the same VPC, reachable client security groups, an existing service-linked role, and approved administrator/writer/reader IAM roles. The example validates distinct subnet IDs, but does not remotely verify their AZs, routes, capacity or ownership.
+
+The Terraform profile uses **IAM-signed API requests** and an IAM master role. It avoids an internal master password in Terraform state. Configure FGAC role mappings before sending logs. Browser SSO is a separate access profile discussed below; an IAM-principal domain policy requires SigV4 and does not automatically accept unsigned SAML browser requests.
 
 ### Creation via Terraform
 
+The example uses the commercial AWS partition and Seoul Region. Replace inputs consistently and check regional availability. It creates resources if applied; the audit ran local validation only.
+
 ```hcl
-# opensearch.tf
-
-# VPC and subnet data
-data "aws_vpc" "main" {
-  tags = {
-    Name = "main-vpc"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.64.0"
+    }
   }
 }
 
-data "aws_subnets" "private" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.main.id]
-  }
-  filter {
-    name   = "tag:Type"
-    values = ["private"]
+variable "region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+
+variable "account_id" {
+  type = string
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.account_id))
+    error_message = "Use the owning AWS account ID."
   }
 }
 
-# Security group
-resource "aws_security_group" "opensearch" {
-  name        = "opensearch-sg"
-  description = "Security group for OpenSearch domain"
-  vpc_id      = data.aws_vpc.main.id
+variable "vpc_id" {
+  type = string
+}
 
-  ingress {
-    description = "HTTPS from VPC"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.main.cidr_block]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "opensearch-sg"
+variable "subnet_ids" {
+  type = list(string)
+  validation {
+    condition     = length(var.subnet_ids) == 3 && length(distinct(var.subnet_ids)) == 3
+    error_message = "Provide three distinct subnet IDs, one in each intended AZ."
   }
 }
 
-# OpenSearch domain
-resource "aws_opensearch_domain" "main" {
-  domain_name    = "logs-production"
-  engine_version = "OpenSearch_2.11"
+variable "client_security_group_ids" {
+  type = set(string)
+}
+
+variable "admin_role_arn" {
+  type = string
+}
+
+variable "writer_role_arns" {
+  type = set(string)
+}
+
+variable "reader_role_arns" {
+  type    = set(string)
+  default = []
+}
+
+provider "aws" {
+  region = var.region
+}
+
+locals {
+  domain_name = "logs-production"
+  domain_arn  = "arn:aws:es:${var.region}:${var.account_id}:domain/${local.domain_name}"
+  log_types   = toset(["INDEX_SLOW_LOGS", "SEARCH_SLOW_LOGS", "ES_APPLICATION_LOGS", "AUDIT_LOGS"])
+  callers     = setunion(toset([var.admin_role_arn]), var.writer_role_arns, var.reader_role_arns)
+}
+
+resource "aws_security_group" "search" {
+  name_prefix = "logs-search-"
+  description = "OpenSearch HTTPS from approved client security groups"
+  vpc_id      = var.vpc_id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "clients" {
+  for_each                     = var.client_security_group_ids
+  security_group_id            = aws_security_group.search.id
+  referenced_security_group_id = each.value
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_security_group_egress_rule" "outbound" {
+  security_group_id = aws_security_group.search.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
+}
+
+resource "aws_cloudwatch_log_group" "search" {
+  for_each          = local.log_types
+  name              = "/aws/opensearch/${local.domain_name}/${lower(each.value)}"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_resource_policy" "search" {
+  policy_name = "logs-production-opensearch"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "es.amazonaws.com" }
+      Action    = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      Resource  = [for group in aws_cloudwatch_log_group.search : "${group.arn}:*"]
+      Condition = {
+        StringEquals = { "aws:SourceAccount" = var.account_id }
+        ArnEquals    = { "aws:SourceArn" = local.domain_arn }
+      }
+    }]
+  })
+}
+
+resource "aws_opensearch_domain" "logs" {
+  domain_name    = local.domain_name
+  engine_version = "OpenSearch_3.5"
 
   cluster_config {
-    instance_type            = "r6g.xlarge.search"
-    instance_count           = 3
-    zone_awareness_enabled   = true
-    dedicated_master_enabled = true
-    dedicated_master_type    = "m6g.large.search"
-    dedicated_master_count   = 3
-
+    instance_type                 = "r6g.xlarge.search"
+    instance_count                = 3
+    dedicated_master_enabled      = true
+    dedicated_master_type         = "m6g.large.search"
+    dedicated_master_count        = 3
+    zone_awareness_enabled        = true
+    multi_az_with_standby_enabled = false
     zone_awareness_config {
       availability_zone_count = 3
     }
-
-    # UltraWarm settings
     warm_enabled = true
     warm_type    = "ultrawarm1.medium.search"
     warm_count   = 2
-
-    # Cold Storage settings
     cold_storage_options {
       enabled = true
     }
   }
 
-  # EBS settings
   ebs_options {
     ebs_enabled = true
     volume_type = "gp3"
     volume_size = 500
-    iops        = 3000
-    throughput  = 250
   }
 
-  # VPC settings
   vpc_options {
-    subnet_ids         = slice(data.aws_subnets.private.ids, 0, 3)
-    security_group_ids = [aws_security_group.opensearch.id]
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [aws_security_group.search.id]
   }
 
-  # Encryption settings
   encrypt_at_rest {
     enabled = true
   }
-
   node_to_node_encryption {
     enabled = true
   }
-
   domain_endpoint_options {
     enforce_https       = true
-    tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
+    tls_security_policy = "Policy-Min-TLS-1-2-PFS-2023-10"
   }
-
-  # Fine-grained Access Control
   advanced_security_options {
     enabled                        = true
-    internal_user_database_enabled = true
+    internal_user_database_enabled = false
     master_user_options {
-      master_user_name     = "admin"
-      master_user_password = var.opensearch_master_password
+      master_user_arn = var.admin_role_arn
     }
   }
 
-  # Advanced settings
-  advanced_options = {
-    "rest.action.multi.allow_explicit_index" = "true"
-    "indices.fielddata.cache.size"           = "20"
-    "indices.query.bool.max_clause_count"    = "1024"
-  }
-
-  # Auto snapshots
-  snapshot_options {
-    automated_snapshot_start_hour = 23
-  }
-
-  # Logging
-  log_publishing_options {
-    cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_index_slow.arn
-    log_type                 = "INDEX_SLOW_LOGS"
-    enabled                  = true
-  }
-
-  log_publishing_options {
-    cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_search_slow.arn
-    log_type                 = "SEARCH_SLOW_LOGS"
-    enabled                  = true
-  }
-
-  log_publishing_options {
-    cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_error.arn
-    log_type                 = "ES_APPLICATION_LOGS"
-    enabled                  = true
-  }
-
-  tags = {
-    Environment = "production"
-    Application = "logging"
-  }
-
-  depends_on = [aws_iam_service_linked_role.opensearch]
-}
-
-# CloudWatch log groups
-resource "aws_cloudwatch_log_group" "opensearch_index_slow" {
-  name              = "/aws/opensearch/logs-production/index-slow-logs"
-  retention_in_days = 30
-}
-
-resource "aws_cloudwatch_log_group" "opensearch_search_slow" {
-  name              = "/aws/opensearch/logs-production/search-slow-logs"
-  retention_in_days = 30
-}
-
-resource "aws_cloudwatch_log_group" "opensearch_error" {
-  name              = "/aws/opensearch/logs-production/error-logs"
-  retention_in_days = 30
-}
-
-# Service-linked role
-resource "aws_iam_service_linked_role" "opensearch" {
-  aws_service_name = "opensearchservice.amazonaws.com"
-}
-
-# CloudWatch log resource policy
-resource "aws_cloudwatch_log_resource_policy" "opensearch" {
-  policy_name = "opensearch-log-policy"
-
-  policy_document = jsonencode({
+  access_policies = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "es.amazonaws.com"
-        }
-        Action = [
-          "logs:PutLogEvents",
-          "logs:CreateLogStream"
-        ]
-        Resource = [
-          "${aws_cloudwatch_log_group.opensearch_index_slow.arn}:*",
-          "${aws_cloudwatch_log_group.opensearch_search_slow.arn}:*",
-          "${aws_cloudwatch_log_group.opensearch_error.arn}:*"
-        ]
-      }
-    ]
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { AWS = sort(tolist(local.callers)) }
+      Action    = ["es:ESHttp*"]
+      Resource  = "${local.domain_arn}/*"
+    }]
   })
+
+  dynamic "log_publishing_options" {
+    for_each = aws_cloudwatch_log_group.search
+    content {
+      cloudwatch_log_group_arn = log_publishing_options.value.arn
+      log_type                 = log_publishing_options.key
+      enabled                  = true
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_resource_policy.search]
 }
 
-# Outputs
-output "opensearch_endpoint" {
-  value = aws_opensearch_domain.main.endpoint
+output "domain_endpoint" {
+  value = aws_opensearch_domain.logs.endpoint
 }
 
-output "opensearch_dashboard_endpoint" {
-  value = aws_opensearch_domain.main.dashboard_endpoint
+output "dashboards_endpoint" {
+  value = aws_opensearch_domain.logs.dashboard_endpoint
 }
 ```
 
----
+The initial sizes, 500GiB EBS volumes and 30-day CloudWatch retention are illustrative. The profile explicitly uses Multi-AZ **without Standby**. Outbound security-group access remains broad in this reference; design egress restrictions for the actual supported connections before production.
+
+The domain access policy admits the named IAM roles to HTTP operations; **FGAC** must restrict their index/cluster permissions. URI-based IAM permissions alone do not constrain index names embedded in bulk request bodies. Give the collector role only the intended writer mapping.
+
+The platform's service-linked role is an account-level dependency. Reuse or import it through its owning infrastructure state rather than trying to create the same role on every deployment.
+
+OpenSearch domains receive hourly automated snapshots retained for 14 days (up to 336). The old `automated_snapshot_start_hour` example applies to much older Elasticsearch versions, not this OpenSearch profile. Snapshots are recovery mechanisms, not a substitute for a tested retention/restore plan. Red cluster status can prevent snapshots.
+
+CloudWatch publishing needs the scoped resource policy before domain configuration. Publishing slow-log destinations does not enable all slow-log thresholds, and audit-log publishing does not configure every audit event. Configure the corresponding engine/audit settings deliberately; queries and document contents in logs also need access and retention controls.
+
+<span id="index-aliases"></span>
 
 ## Index Management
 
+The main collector below writes **daily indexes** named `logs-production-YYYY.MM.DD`. The template, ISM pattern and query examples use that pattern. A separate rollover exercise follows; do not silently combine the two writer strategies.
+
+The following request blocks use OpenSearch Dashboards Dev Tools syntax. They are not standalone JSON files or commands executed by the audit. Use an authorized data-plane client and the intended domain.
+
 ### Index Templates
 
-```json
+```http
 PUT _index_template/logs-template
 {
-  "index_patterns": ["logs-*"],
+  "index_patterns": [
+    "logs-production-*"
+  ],
   "priority": 100,
   "template": {
     "settings": {
@@ -330,82 +286,118 @@ PUT _index_template/logs-template
       "number_of_replicas": 1,
       "refresh_interval": "5s",
       "index.codec": "best_compression",
-      "index.mapping.total_fields.limit": 2000,
-      "index.translog.durability": "async",
-      "index.translog.sync_interval": "30s"
+      "index.translog.durability": "request"
     },
     "mappings": {
+      "dynamic": false,
       "properties": {
         "@timestamp": {
           "type": "date"
         },
-        "level": {
+        "cluster_name": {
           "type": "keyword"
         },
-        "message": {
+        "environment": {
+          "type": "keyword"
+        },
+        "stream": {
+          "type": "keyword"
+        },
+        "log": {
           "type": "text",
-          "analyzer": "standard"
+          "index": false
         },
         "kubernetes": {
           "properties": {
-            "namespace": { "type": "keyword" },
-            "pod_name": { "type": "keyword" },
-            "container_name": { "type": "keyword" },
-            "labels": { "type": "object" }
+            "namespace_name": {
+              "type": "keyword"
+            },
+            "pod_name": {
+              "type": "keyword"
+            },
+            "container_name": {
+              "type": "keyword"
+            },
+            "host": {
+              "type": "keyword"
+            }
           }
         },
-        "trace_id": {
-          "type": "keyword"
-        },
-        "span_id": {
-          "type": "keyword"
-        },
-        "http": {
+        "app": {
           "properties": {
-            "method": { "type": "keyword" },
-            "status_code": { "type": "integer" },
-            "path": { "type": "keyword" },
-            "response_time_ms": { "type": "float" }
-          }
-        }
-      },
-      "dynamic_templates": [
-        {
-          "strings_as_keywords": {
-            "match_mapping_type": "string",
-            "mapping": {
-              "type": "keyword",
-              "ignore_above": 1024
+            "level": {
+              "type": "keyword"
+            },
+            "message": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "error_type": {
+              "type": "keyword"
+            },
+            "trace_id": {
+              "type": "keyword"
+            },
+            "span_id": {
+              "type": "keyword"
+            },
+            "request_id": {
+              "type": "keyword"
+            },
+            "http": {
+              "properties": {
+                "method": {
+                  "type": "keyword"
+                },
+                "status_code": {
+                  "type": "integer"
+                },
+                "path": {
+                  "type": "keyword"
+                },
+                "response_time_ms": {
+                  "type": "float"
+                }
+              }
             }
           }
         }
-      ]
+      }
     }
   }
 }
 ```
 
-### ISM (Index State Management) Policies
+The Kubernetes filter produces `kubernetes.namespace_name`, not `kubernetes.namespace`. Application JSON is nested under `app` to keep it separate from collector metadata. Applications must emit the documented fields and units; examples use lowercase `app.level` and milliseconds in `app.http.response_time_ms`.
 
-ISM policies automatically manage index lifecycle.
+An illustrative one-line application record before collector enrichment is:
 
 ```json
+{"level":"error","message":"request failed","error_type":"upstream_timeout","http":{"method":"GET","path":"/orders","status_code":503,"response_time_ms":1250}}
+```
+
+The `message.keyword` subfield is explicitly defined as `app.message.keyword`; a `text` mapping alone does not create it automatically. Values above its `ignore_above` limit are not indexed in that subfield. Consider a bounded `error_type` taxonomy for aggregations instead of arbitrary messages.
+
+`dynamic: false` limits new mapped fields but **does not remove unknown fields from `_source`**. The raw `log` field is stored without a search index. Review duplication, redaction and access to raw data. `translog.durability: request` is a safer baseline than an unexplained async/30s durability tradeoff; neither setting guarantees recovery from every storage or replica failure.
+
+### ISM (Index State Management) Policies
+
+```http
 PUT _plugins/_ism/policies/logs-lifecycle
 {
   "policy": {
-    "description": "Log index lifecycle management",
+    "description": "Illustrative daily-index hot/warm/cold retention; confirm ownership and late-arrival handling.",
+    "schema_version": 1,
     "default_state": "hot",
     "states": [
       {
         "name": "hot",
-        "actions": [
-          {
-            "rollover": {
-              "min_index_age": "1d",
-              "min_primary_shard_size": "30gb"
-            }
-          }
-        ],
+        "actions": [],
         "transitions": [
           {
             "state_name": "warm",
@@ -419,13 +411,7 @@ PUT _plugins/_ism/policies/logs-lifecycle
         "name": "warm",
         "actions": [
           {
-            "warm_migration": {},
-            "replica_count": {
-              "number_of_replicas": 0
-            },
-            "force_merge": {
-              "max_num_segments": 1
-            }
+            "warm_migration": {}
           }
         ],
         "transitions": [
@@ -459,14 +445,17 @@ PUT _plugins/_ism/policies/logs-lifecycle
         "name": "delete",
         "actions": [
           {
-            "delete": {}
+            "cold_delete": {}
           }
-        ]
+        ],
+        "transitions": []
       }
     ],
     "ism_template": [
       {
-        "index_patterns": ["logs-*"],
+        "index_patterns": [
+          "logs-production-*"
+        ],
         "priority": 100
       }
     ]
@@ -474,41 +463,156 @@ PUT _plugins/_ism/policies/logs-lifecycle
 }
 ```
 
-### Index Aliases
+This policy attaches to newly created matching indexes. Existing indexes need a deliberate policy-attachment operation; inspect `_plugins/_ism/explain/INDEX` and policy versions before changing them.
 
-```json
-# Create alias for rollover
-PUT logs-production-000001
+Each action object has one action (with its supported retry/timeout metadata). Managed `warm_migration`, `cold_migration` and **`cold_delete`** differ from self-managed ISM operations. Cold indexes require `cold_delete`, and ISM cold migration needs an explicit timestamp field. Do not combine warm migration, replica changes and force merge into one action object.
+
+ISM normally evaluates jobs every 5–8 minutes and does not run them while cluster status is red. Index age is measured from index creation. The example 90-day deletion is an organizational choice, not a universal legal requirement or an exact per-record expiry. Verify late-data behavior, snapshots and recovery before enabling deletion.
+
+### Index Aliases and Rollover
+
+This independent exercise uses the prefix `rollover-logs-*` and a writer alias. It does not change the daily collector configuration.
+
+```http
+PUT _index_template/rollover-logs
 {
-  "aliases": {
-    "logs-production": {
-      "is_write_index": true
+  "index_patterns": [
+    "rollover-logs-*"
+  ],
+  "priority": 100,
+  "template": {
+    "settings": {
+      "number_of_shards": 3,
+      "number_of_replicas": 1,
+      "plugins.index_state_management.rollover_alias": "rollover-logs-write"
     },
-    "logs-production-read": {}
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "message": {
+          "type": "text"
+        }
+      }
+    }
   }
 }
 
-# Query alias
-GET _alias/logs-production
+PUT _plugins/_ism/policies/rollover-logs
+{
+  "policy": {
+    "description": "Independent rollover example; not attached to date-based collector indexes.",
+    "schema_version": 1,
+    "default_state": "write",
+    "states": [
+      {
+        "name": "write",
+        "actions": [
+          {
+            "rollover": {
+              "min_index_age": "1d",
+              "min_primary_shard_size": "30gb"
+            }
+          }
+        ],
+        "transitions": []
+      }
+    ],
+    "ism_template": [
+      {
+        "index_patterns": [
+          "rollover-logs-*"
+        ],
+        "priority": 100
+      }
+    ]
+  }
+}
 
-# Manual rollover (for testing)
-POST logs-production/_rollover
+PUT rollover-logs-000001
+{
+  "aliases": {
+    "rollover-logs-write": {
+      "is_write_index": true
+    }
+  }
+}
+
+POST rollover-logs-write/_doc
+{
+  "@timestamp": "2026-09-13T00:00:00Z",
+  "message": "synthetic rollover example"
+}
+
+GET _plugins/_ism/explain/rollover-logs-000001
+
+POST rollover-logs-write/_rollover
 {
   "conditions": {
     "max_age": "1d",
-    "max_primary_shard_size": "30gb"
+    "max_size": "90gb"
   }
 }
 ```
 
----
+Automatic ISM rollover needs the rollover alias setting, a suitable numbered index and the write alias. A daily-date writer will not use that alias merely because an alias exists.
+
+ISM's `min_primary_shard_size: 30gb` concerns a single primary shard. OpenSearch 3.5's rollover REST parser accepts `max_age`, `max_docs` and `max_size`; `max_size` measures **total primary-shard storage**, excluding replicas. The 90GB REST example is therefore not the same condition as a 30GB per-primary-shard threshold. Rollover conditions are alternatives, not a requirement to satisfy every threshold simultaneously.
+
+<span id="direct-ingestion-from-fluentbit-to-opensearch"></span>
+<span id="fluentbit-daemonset-using-irsa"></span>
 
 ## Data Ingestion
 
-### Direct Ingestion from FluentBit to OpenSearch
+### Direct Ingestion from Fluent Bit
+
+The following six resources form a reference collector configuration for eligible **Linux EC2 nodes**. Fargate uses its platform log router; Windows and other node platforms require their own paths and deployment model. Confirm host paths, admission-policy exceptions and resource needs before deploying a node log reader.
+
+Set the real domain hostname, Region and IRSA role. The role's OIDC trust must match `system:serviceaccount:logging:fluent-bit`; also authorize its IAM/data-plane access and FGAC writer role. Pod Identity is an alternative only with compatible node/agent/SDK support.
 
 ```yaml
-# fluent-bit-configmap.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logging
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit
+  namespace: logging
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/FluentBitOpenSearchRole
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fluent-bit-metadata
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - namespaces
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: fluent-bit-metadata
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fluent-bit-metadata
+subjects:
+- kind: ServiceAccount
+  name: fluent-bit
+  namespace: logging
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -517,84 +621,66 @@ metadata:
 data:
   fluent-bit.conf: |
     [SERVICE]
-        Flush         5
-        Log_Level     info
-        Daemon        off
-        Parsers_File  parsers.conf
-        HTTP_Server   On
-        HTTP_Listen   0.0.0.0
-        HTTP_Port     2020
+        Flush          5
+        Log_Level      info
+        HTTP_Server    Off
+        storage.path   /buffers/storage
+        storage.sync   normal
 
     [INPUT]
-        Name              tail
-        Tag               kube.*
-        Path              /var/log/containers/*.log
-        Parser            docker
-        DB                /var/log/flb_kube.db
-        Mem_Buf_Limit     50MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
+        Name               tail
+        Tag                kube.*
+        Path               /var/log/containers/*.log
+        Exclude_Path       /var/log/containers/fluent-bit-*_logging_fluent-bit-*.log
+        multiline.parser   docker, cri
+        DB                 /buffers/tail.db
+        Mem_Buf_Limit      50MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
 
     [FILTER]
         Name                kubernetes
         Match               kube.*
-        Kube_URL            https://kubernetes.default.svc:443
-        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     kube.var.log.containers.
         Merge_Log           On
-        K8S-Logging.Parser  On
-        K8S-Logging.Exclude On
+        Merge_Log_Key       app
+        Keep_Log            On
+        Labels              Off
+        Annotations         Off
+        K8S-Logging.Parser  Off
+        K8S-Logging.Exclude Off
 
     [FILTER]
         Name    modify
-        Match   *
-        Add     cluster_name eks-production
-        Add     environment production
+        Match   kube.*
+        Set     cluster_name example-eks
+        Set     environment example
 
     [OUTPUT]
-        Name            opensearch
-        Match           *
-        Host            vpc-logs-production-xxxxx.ap-northeast-2.es.amazonaws.com
-        Port            443
-        TLS             On
-        AWS_Auth        On
-        AWS_Region      ap-northeast-2
-        Index           logs-production
-        Type            _doc
-        Logstash_Format On
-        Logstash_Prefix logs-production
-        Retry_Limit     5
-        Buffer_Size     5MB
-        Generate_ID     On
-        # Compression saves network costs
-        Compress        gzip
-
-  parsers.conf: |
-    [PARSER]
-        Name        docker
-        Format      json
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-
-    [PARSER]
-        Name        json
-        Format      json
-        Time_Key    timestamp
-        Time_Format %Y-%m-%dT%H:%M:%S.%LZ
-```
-
-### FluentBit DaemonSet (Using IRSA)
-
-```yaml
-# fluent-bit-daemonset.yaml
+        Name                    opensearch
+        Match                   kube.*
+        Host                    REPLACE_WITH_DOMAIN_ENDPOINT
+        Port                    443
+        tls                     On
+        tls.verify              On
+        AWS_Auth                On
+        AWS_Region              ap-northeast-2
+        Suppress_Type_Name      On
+        Logstash_Format         On
+        Logstash_Prefix         logs-production
+        Time_Key                @timestamp
+        Generate_ID             On
+        Retry_Limit             5
+        Buffer_Size             5MB
+        Compress                gzip
+        storage.total_limit_size 1G
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: fluent-bit
   namespace: logging
-  labels:
-    app: fluent-bit
 spec:
   selector:
     matchLabels:
@@ -605,89 +691,140 @@ spec:
         app: fluent-bit
     spec:
       serviceAccountName: fluent-bit
+      nodeSelector:
+        kubernetes.io/os: linux
       tolerations:
-        - key: node-role.kubernetes.io/master
-          operator: Exists
-          effect: NoSchedule
-        - operator: Exists
-          effect: NoExecute
-        - operator: Exists
-          effect: NoSchedule
+      - operator: Exists
+        effect: NoSchedule
       containers:
-        - name: fluent-bit
-          image: public.ecr.aws/aws-observability/aws-for-fluent-bit:2.31.12
-          resources:
-            limits:
-              cpu: 500m
-              memory: 500Mi
-            requests:
-              cpu: 100m
-              memory: 100Mi
-          volumeMounts:
-            - name: varlog
-              mountPath: /var/log
-              readOnly: true
-            - name: varlibdockercontainers
-              mountPath: /var/lib/docker/containers
-              readOnly: true
-            - name: fluent-bit-config
-              mountPath: /fluent-bit/etc/
-          env:
-            - name: AWS_REGION
-              value: ap-northeast-2
+      - name: fluent-bit
+        image: public.ecr.aws/aws-observability/aws-for-fluent-bit:3.4.15@sha256:88e1b56cedb230486afeca6eeb26c5f6bd59c48879d0054d1674d5a58838c607
+        args:
+        - -c
+        - /fluent-bit/custom/fluent-bit.conf
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log
+          readOnly: true
+        - name: buffers
+          mountPath: /buffers
+        - name: config
+          mountPath: /fluent-bit/custom
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        command:
+        - /fluent-bit/bin/fluent-bit
       volumes:
-        - name: varlog
-          hostPath:
-            path: /var/log
-        - name: varlibdockercontainers
-          hostPath:
-            path: /var/lib/docker/containers
-        - name: fluent-bit-config
-          configMap:
-            name: fluent-bit-config
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: fluent-bit
-  namespace: logging
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/FluentBitOpenSearchRole
+      - name: logs
+        hostPath:
+          path: /var/log
+          type: Directory
+      - name: buffers
+        hostPath:
+          path: /var/lib/fluent-bit-opensearch
+          type: DirectoryOrCreate
+      - name: config
+        configMap:
+          name: fluent-bit-config
+      - name: tmp
+        emptyDir: {}
 ```
 
-### Ingestion via Kinesis Data Firehose
+The image index is pinned and its Linux amd64/arm64 metadata was checked. This image's default CMD is an entrypoint script; the example explicitly invokes `/fluent-bit/bin/fluent-bit` with the **native OpenSearch output**. It does not load the legacy Go output plugins or test the image at runtime.
+
+Important configuration relationships:
+
+- `multiline.parser docker, cri` handles supported container framing; the Kubernetes filter then merges application JSON under `app`.
+- The read-only `/var/log` mount is for log input. The Tail DB and filesystem buffers use a separate writable node path. They survive a Pod restart only while that node/path survives; they are not cross-node durable storage.
+- Metadata RBAC is limited to read operations on Pods/namespaces. The agent itself reads node logs, so protect its namespace, role and configuration.
+- Application annotations cannot silently override parsing or exclude logs in this example. Collector-generated cluster/environment values are set deliberately. Exclude the collector's own logs from this pipeline to reduce feedback loops.
+- `Suppress_Type_Name On` is required for the typeless OpenSearch 2.x/3.x API. `Type _doc` is not a compatible substitute.
+- `Logstash_Format On` creates date-based index names and the `@timestamp` field. It does not write to the optional rollover alias.
+- Retries, `Generate_ID`, memory buffers and the output's storage cap are not an exactly-once or lossless-delivery guarantee. Test partial bulk errors, oversize lines, restart offsets, the retry limit, disk pressure and late records. The output cap does not cap all node disk usage.
+
+The retained raw log can contain data also present under `app`. Redact prohibited content before storage and monitor rejected records. Do not enable request-body tracing as a permanent diagnostic setting.
+
+<span id="ingestion-via-kinesis-data-firehose"></span>
+
+### Ingestion via Amazon Data Firehose
+
+Data Firehose is an alternative managed delivery path with buffering, retry and backup controls; it is not automatically the cheapest or simplest choice for every workload. Its Terraform resource remains named `aws_kinesis_firehose_delivery_stream`.
+
+This optional resource file uses the domain above and existing approved delivery-role, subnet, security-group and private backup-bucket inputs:
 
 ```hcl
-# firehose.tf
-resource "aws_kinesis_firehose_delivery_stream" "opensearch" {
+variable "firehose_role_arn" {
+  type = string
+}
+
+variable "firehose_subnet_ids" {
+  type = list(string)
+}
+
+variable "firehose_security_group_ids" {
+  type = list(string)
+}
+
+variable "backup_bucket_arn" {
+  type = string
+}
+
+resource "aws_cloudwatch_log_group" "firehose" {
+  name              = "/aws/kinesisfirehose/logs-to-opensearch"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_stream" "firehose" {
+  name           = "opensearch-delivery"
+  log_group_name = aws_cloudwatch_log_group.firehose.name
+}
+
+resource "aws_kinesis_firehose_delivery_stream" "logs" {
   name        = "logs-to-opensearch"
   destination = "opensearch"
 
   opensearch_configuration {
-    domain_arn            = aws_opensearch_domain.main.arn
-    role_arn              = aws_iam_role.firehose.arn
-    index_name            = "logs"
+    domain_arn            = aws_opensearch_domain.logs.arn
+    role_arn              = var.firehose_role_arn
+    index_name            = "logs-production-firehose"
     index_rotation_period = "OneDay"
     buffering_interval    = 60
     buffering_size        = 5
     retry_duration        = 300
+    s3_backup_mode        = "FailedDocumentsOnly"
 
     vpc_config {
-      subnet_ids         = data.aws_subnets.private.ids
-      security_group_ids = [aws_security_group.firehose.id]
-      role_arn           = aws_iam_role.firehose_vpc.arn
+      subnet_ids         = var.firehose_subnet_ids
+      security_group_ids = var.firehose_security_group_ids
+      role_arn           = var.firehose_role_arn
     }
 
     cloudwatch_logging_options {
       enabled         = true
       log_group_name  = aws_cloudwatch_log_group.firehose.name
-      log_stream_name = "opensearch-delivery"
+      log_stream_name = aws_cloudwatch_log_stream.firehose.name
     }
 
     s3_configuration {
-      role_arn           = aws_iam_role.firehose.arn
-      bucket_arn         = aws_s3_bucket.backup.arn
-      prefix             = "failed/"
+      role_arn           = var.firehose_role_arn
+      bucket_arn         = var.backup_bucket_arn
+      prefix             = "opensearch-failed/"
       buffering_size     = 10
       buffering_interval = 400
       compression_format = "GZIP"
@@ -696,73 +833,92 @@ resource "aws_kinesis_firehose_delivery_stream" "opensearch" {
 }
 ```
 
----
+The delivery role needs the relevant OpenSearch/FGAC, S3, CloudWatch and VPC/ENI permissions, plus any required KMS permissions; its trust and the deployer's `iam:PassRole` permissions are separate. Include the delivery role in the domain's caller inputs and writer mapping, and permit its VPC connections to port 443.
+
+`FailedDocumentsOnly` chooses the backup mode; naming an S3 prefix `failed/` alone does not do that. Test failures and replay from the private backup bucket. Firehose records need a schema compatible with the index mapping, including timestamps; the service does not automatically create the Kubernetes metadata/application envelope shown here.
+
+<span id="dashboard-access-setup"></span>
+<span id="create-index-pattern"></span>
+<span id="visualization-creation"></span>
 
 ## OpenSearch Dashboards
 
-### Dashboard Access Setup
+### Access and Index Patterns
 
-```bash
-# SSH tunnel (for dev/test)
-ssh -i key.pem -L 9200:vpc-logs-production-xxx.ap-northeast-2.es.amazonaws.com:443 ec2-user@bastion
+Use approved VPC connectivity and an authentication method compatible with the domain access policy. A plain SSH tunnel does not by itself preserve the original TLS hostname, SSO redirects or SigV4 signing. Do not disable certificate verification to make `https://localhost:9200` appear to work. An ALB is not a complete native domain/Dashboards integration recipe.
 
-# Or access via ALB (recommended for production)
-```
-
-### Create Index Pattern
-
-```
-1. Access OpenSearch Dashboards
-2. Management > Stack Management > Index Patterns
-3. Click "Create index pattern"
-4. Index pattern: logs-*
-5. Time field: @timestamp
-6. Click "Create index pattern"
-```
+After configuring authenticated access, create a data view/index pattern for `logs-production-*` and select `@timestamp`. Menu names vary by the Dashboards version and enabled experience.
 
 ### Search Query Examples
 
-```json
-# Search error logs
-GET logs-*/_search
+```http
+GET logs-production-*/_search
 {
   "query": {
     "bool": {
-      "must": [
-        { "match": { "level": "error" } },
-        { "range": { "@timestamp": { "gte": "now-1h" } } }
-      ],
       "filter": [
-        { "term": { "kubernetes.namespace": "production" } }
+        {
+          "term": {
+            "app.level": "error"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-1h"
+            }
+          }
+        },
+        {
+          "term": {
+            "kubernetes.namespace_name": "production"
+          }
+        }
       ]
     }
   },
   "sort": [
-    { "@timestamp": { "order": "desc" } }
+    {
+      "@timestamp": {
+        "order": "desc"
+      }
+    }
   ],
   "size": 100
 }
 
-# Aggregation query - errors by namespace
-GET logs-*/_search
+GET logs-production-*/_search
 {
   "size": 0,
   "query": {
-    "range": {
-      "@timestamp": { "gte": "now-24h" }
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "app.level": "error"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-24h"
+            }
+          }
+        }
+      ]
     }
   },
   "aggs": {
     "by_namespace": {
       "terms": {
-        "field": "kubernetes.namespace",
+        "field": "kubernetes.namespace_name",
         "size": 20
       },
       "aggs": {
-        "by_level": {
+        "by_type": {
           "terms": {
-            "field": "level",
-            "size": 5
+            "field": "app.error_type",
+            "size": 10
           }
         }
       }
@@ -770,108 +926,86 @@ GET logs-*/_search
   }
 }
 
-# Response time percentiles
-GET logs-*/_search
+GET logs-production-*/_search
 {
   "size": 0,
   "query": {
     "bool": {
-      "must": [
-        { "exists": { "field": "http.response_time_ms" } },
-        { "range": { "@timestamp": { "gte": "now-1h" } } }
+      "filter": [
+        {
+          "exists": {
+            "field": "app.http.response_time_ms"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-1h"
+            }
+          }
+        }
       ]
     }
   },
   "aggs": {
     "response_time_percentiles": {
       "percentiles": {
-        "field": "http.response_time_ms",
-        "percents": [50, 75, 90, 95, 99]
+        "field": "app.http.response_time_ms",
+        "percents": [
+          50,
+          75,
+          90,
+          95,
+          99
+        ]
       }
     }
   }
 }
 ```
 
-### Visualization Creation
+These examples use filter context for exact keyword/time conditions. The second query really filters errors before aggregating namespaces. Terms aggregation returns a selected top-N set and can have distributed approximation/omitted buckets; it is not a complete count of every namespace. Percentiles are approximate and use the mapped millisecond field.
 
-```
-# Pie Chart: Log level distribution
-1. Visualize > Create visualization > Pie
-2. Index pattern: logs-*
-3. Buckets > Split slices > Terms > level
-4. Save
+For visualizations, choose `app.level`, a time histogram on `@timestamp`, or the explicitly mapped `app.message.keyword`/`app.error_type` fields. A field name mentioned in a dashboard does not create its mapping.
 
-# Line Chart: Errors over time
-1. Visualize > Create visualization > Line
-2. Index pattern: logs-*
-3. Y-axis: Count
-4. X-axis: Date Histogram > @timestamp
-5. Add filter: level: error
-6. Save
-
-# Data Table: Top error messages
-1. Visualize > Create visualization > Data table
-2. Index pattern: logs-*
-3. Bucket: Terms > message.keyword (Top 10)
-4. Add filter: level: error
-5. Save
-```
-
----
+<span id="fine-grained-access-control-fgac"></span>
+<span id="document-level-security-dls"></span>
+<span id="field-level-security-fls"></span>
 
 ## Security Configuration
 
-### Fine-Grained Access Control (FGAC)
+### Fine-Grained Access Control
 
-```json
-# Create role
-PUT _plugins/_security/api/roles/logs-reader
+Network access, the domain resource policy and FGAC are separate layers. The Terraform IAM-principal policy requires SigV4. Neither a security-group rule nor a successful IAM request automatically grants index access.
+
+An administrator can define a writer role for the collector and a namespace-restricted reader:
+
+```http
+PUT _plugins/_security/api/roles/logs-writer
 {
   "cluster_permissions": [
-    "cluster_composite_ops_ro"
+    "cluster_composite_ops"
   ],
   "index_permissions": [
     {
-      "index_patterns": ["logs-*"],
+      "index_patterns": [
+        "logs-production-*"
+      ],
       "allowed_actions": [
-        "read",
-        "search"
+        "create_index",
+        "write"
       ]
     }
   ]
 }
 
-# Role mapping (IAM role)
-PUT _plugins/_security/api/rolesmapping/logs-reader
+PUT _plugins/_security/api/rolesmapping/logs-writer
 {
   "backend_roles": [
-    "arn:aws:iam::123456789012:role/DeveloperRole"
-  ],
-  "users": [
-    "developer@example.com"
+    "arn:aws:iam::123456789012:role/FluentBitOpenSearchRole"
   ]
 }
 
-# Admin role
-PUT _plugins/_security/api/roles/logs-admin
-{
-  "cluster_permissions": [
-    "cluster_all"
-  ],
-  "index_permissions": [
-    {
-      "index_patterns": ["logs-*"],
-      "allowed_actions": ["indices_all"]
-    }
-  ]
-}
-```
-
-### Document-Level Security (DLS)
-
-```json
-# Role that can only access specific namespace
 PUT _plugins/_security/api/roles/team-a-logs
 {
   "cluster_permissions": [
@@ -879,266 +1013,157 @@ PUT _plugins/_security/api/roles/team-a-logs
   ],
   "index_permissions": [
     {
-      "index_patterns": ["logs-*"],
-      "dls": "{\"bool\": {\"must\": [{\"term\": {\"kubernetes.namespace\": \"team-a\"}}]}}",
-      "allowed_actions": ["read", "search"]
+      "index_patterns": [
+        "logs-production-*"
+      ],
+      "dls": "{\"term\":{\"kubernetes.namespace_name\":\"team-a\"}}",
+      "allowed_actions": [
+        "read"
+      ]
     }
+  ]
+}
+
+PUT _plugins/_security/api/rolesmapping/team-a-logs
+{
+  "backend_roles": [
+    "arn:aws:iam::123456789012:role/TeamAReaderRole"
   ]
 }
 ```
 
-### Field-Level Security (FLS)
+Replace role ARNs with the approved identities. The writer mapping must also include a Firehose delivery role if that path is used. Do not grant routine readers `cluster_all` or the master role. IAM backend-role mappings and internal/SAML usernames are different identity mechanisms.
 
-```json
-# Hide sensitive fields
-PUT _plugins/_security/api/roles/logs-restricted
+### Document-Level Security and Field-Level Security
+
+DLS filters documents by stored fields. In this example, namespace metadata must come from the trusted collector; application-supplied strings are not proof of tenant identity.
+
+For a more restricted reader, the following **combined** role keeps the namespace restriction and includes only selected response fields:
+
+```http
+PUT _plugins/_security/api/roles/team-a-limited
 {
   "cluster_permissions": [
     "cluster_composite_ops_ro"
   ],
   "index_permissions": [
     {
-      "index_patterns": ["logs-*"],
-      "fls": ["~user_id", "~ip_address", "~session_token"],
-      "allowed_actions": ["read", "search"]
+      "index_patterns": [
+        "logs-production-*"
+      ],
+      "fls": [
+        "@timestamp",
+        "kubernetes.namespace_name",
+        "app.level",
+        "app.message"
+      ],
+      "allowed_actions": [
+        "read"
+      ],
+      "dls": "{\"term\":{\"kubernetes.namespace_name\":\"team-a\"}}"
     }
   ]
 }
 ```
 
+Use the intended role mapping rather than adding a restricted role to an identity that already has broader access. Evaluate the complete set of effective roles. The raw `log` field is intentionally absent from this allowlist because it may duplicate otherwise hidden JSON fields.
+
+FLS controls returned fields, not the contents of an allowed message string. It does not delete information from `_source`, snapshots or log archives. Test search, get, multi-search and aggregation access, and prevent prohibited data from being logged in the first place.
+
 ### SAML Authentication Setup
 
-```yaml
-# opensearch-security-config.yaml
-config:
-  dynamic:
-    authc:
-      saml_auth_domain:
-        enabled: true
-        order: 1
-        http_authenticator:
-          type: saml
-          challenge: true
-          config:
-            idp:
-              metadata_url: https://example.okta.com/app/xxx/sso/saml/metadata
-              entity_id: http://www.okta.com/xxx
-            sp:
-              entity_id: https://vpc-logs-production-xxx.ap-northeast-2.es.amazonaws.com
-            kibana_url: https://vpc-logs-production-xxx.ap-northeast-2.es.amazonaws.com/_dashboards
-            roles_key: Role
-            exchange_key: your-exchange-key
-        authentication_backend:
-          type: noop
+Managed OpenSearch Service SAML is configured through the **AWS domain configuration API**, not by uploading a self-managed `opensearch-security/config.yml`.
+
+The following local helper serializes approved IdP XML without hand-escaping it. Replace the example administrative group and role-attribute key with the IdP configuration you reviewed:
+
+```python
+from pathlib import Path
+import json
+import xml.etree.ElementTree as ET
+
+metadata = Path("idp-metadata.xml").read_text(encoding="utf-8")
+root = ET.fromstring(metadata)
+if root.tag.rsplit("}", 1)[-1] != "EntityDescriptor" or not root.get("entityID"):
+    raise ValueError("Provide approved metadata for one IdP EntityDescriptor")
+options = {
+    "SAMLOptions": {
+        "Enabled": True,
+        "Idp": {"EntityId": root.get("entityID"), "MetadataContent": metadata},
+        "MasterBackendRole": "opensearch-admin",
+        "RolesKey": "Role",
+        "SessionTimeoutMinutes": 60,
+    }
+}
+Path("advanced-security-saml.json").write_text(json.dumps(options, indent=2) + "\n")
 ```
 
----
+```bash
+aws opensearch update-domain-config \
+  --domain-name logs-production --region ap-northeast-2 \
+  --advanced-security-options file://advanced-security-saml.json
+```
+
+This is a payload example, not an end-to-end SSO deployment. Validate metadata trust, entity ID, certificates, ACS/Dashboards URLs and mappings. SAML browser traffic needs a matching domain access-policy design; enabling `SAMLOptions` does not turn that traffic into SigV4 for the IAM-only policy above. Follow one coherent authentication profile and test administrator recovery before changing an existing domain.
+
+<span id="storage-tiering"></span>
+<span id="cost-comparison-based-on-100gb-day"></span>
+<span id="index-optimization"></span>
+<span id="reserved-instances"></span>
 
 ## Cost Optimization
 
-### Storage Tiering
+### Storage and Index Settings
 
-```
-Hot (EBS gp3)    ->    UltraWarm    ->    Cold Storage (S3)
-     |                    |                    |
-  Day 0-7            Day 7-30            Day 30-90
-     |                    |                    |
- Fast queries        Read-only            Archive
- High cost          Medium cost          Low cost
-```
+Price the selected Region, node families/counts, replicas, EBS, warm-node compute/storage, cold storage and data-transfer/ingestion paths. The earlier 100GB/day dollar totals and fixed savings percentages lacked enough assumptions to reproduce; they are not a current budget or measured comparison.
 
-### Cost Comparison (Based on 100GB/day)
+Index compression, refresh interval, shard counts and field mappings trade storage/CPU, search freshness, query capability and recovery cost. Set static options such as `index.codec` in the creation template; do not blindly send static-setting changes to every open production index. Dropping text positions or disabling fields can break queries.
 
-```
-+-----------------+--------------+--------------+--------------+
-|  Storage Tier   |  Retention   | Monthly Cost |  Cost per GB |
-+-----------------+--------------+--------------+--------------+
-| Hot (EBS gp3)   |    7 days    |   ~$500      |   $0.10/GB   |
-| UltraWarm       |   23 days    |   ~$350      |   $0.024/GB  |
-| Cold Storage    |   60 days    |   ~$120      |   $0.01/GB   |
-+-----------------+--------------+--------------+--------------+
-| Total (90-day)  |              |   ~$970/mo   |              |
-| Hot only        |   90 days    |  ~$2,700/mo  |              |
-| Savings         |              |  ~$1,730/mo  |    64% saved |
-+-----------------+--------------+--------------+--------------+
-```
+Reserved Instance savings depend on eligible usage, Region, term and payment choice. A one-year horizon alone does not justify a purchase, and a node discount does not make all storage/delivery charges disappear. Use current pricing and measured demand rather than the old fixed 21/24/36% figures.
 
-### Index Optimization
-
-```json
-# Compression settings
-PUT logs-*/_settings
-{
-  "index": {
-    "codec": "best_compression"
-  }
-}
-
-# Adjust refresh interval (during ingestion)
-PUT logs-*/_settings
-{
-  "index": {
-    "refresh_interval": "30s"
-  }
-}
-
-# Disable unnecessary fields
-PUT _index_template/logs-optimized
-{
-  "index_patterns": ["logs-*"],
-  "template": {
-    "mappings": {
-      "_source": {
-        "enabled": true
-      },
-      "properties": {
-        "message": {
-          "type": "text",
-          "norms": false,
-          "index_options": "docs"
-        }
-      }
-    }
-  }
-}
-```
-
-### Reserved Instances
-
-```bash
-# RI purchase recommendations
-# - Purchase RI if planning to use for 1+ years
-# - All Upfront option is cheapest (up to 36% savings)
-# - Partial Upfront: 24% savings
-# - No Upfront: 21% savings
-```
-
----
+<span id="inverted-index-inefficiency"></span>
+<span id="aggregation-query-performance-degradation"></span>
+<span id="scaling-cost-issues"></span>
+<span id="clickhouse-migration-decision-criteria"></span>
 
 ## Limitations in Large-scale Log Environments
 
-OpenSearch excels at full-text search, but structural limitations emerge when log volume grows rapidly.
+OpenSearch combines inverted indexes with **column-oriented doc values** for many aggregations and sorts. It does not universally reread every full `_source` document for an aggregation. Mapping, selectivity, shards, caches, segment layout and concurrent work affect performance.
 
-### Inverted Index Inefficiency
+The original OpenSearch/ClickHouse latency and compression figures had no reproducible hardware, versions, data or queries. Do not turn them into a universal 100GB migration threshold or an assertion that 90% of all organizations' queries have one pattern.
 
-| Aspect | OpenSearch (Inverted Index) | ClickHouse (Columnar) |
-|--------|---------------------------|---------------------|
-| **Compression ratio** | 1.5-2x size increase (including index) | 5-10x compression vs original |
-| **Aggregation queries** | Requires full document scan | Fast column-level scan |
-| **Storage cost** | High (index + original) | Low (columnar compression) |
-| **INSERT cost** | High indexing CPU overhead | Lightweight columnar append |
+Compare representative full-text, filter, aggregation and investigative queries on the same data, retention, durability and concurrency requirements. Evaluate ingest/backfill cost, schema evolution, permissions, dashboards, operational skills and rollback. A dual-write experiment needs reconciliation and cost controls; a fixed two-week or two-month schedule is not a guarantee.
 
-### Aggregation Query Performance Degradation
-
-For frequently used aggregation queries in log analytics (ERROR count in last hour, error rate by service, etc.), OpenSearch must read all matching documents, causing performance to degrade sharply as data grows.
-
-```
-Query: "Aggregate ERROR log count by service for the last hour"
-
-OpenSearch: Look up document IDs from index → Read each document → Aggregate
-           100GB scale: ~2s / 1TB scale: ~25s / 10TB scale: timeout
-
-ClickHouse: Scan only timestamp, level, service columns → Aggregate
-           100GB scale: ~0.3s / 1TB scale: ~1s / 10TB scale: ~8s
-```
-
-### Scaling Cost Issues
-
-| Daily Log Volume | OpenSearch Monthly Cost (est.) | ClickHouse Monthly Cost (est.) | Ratio |
-|-----------------|-------------------------------|-------------------------------|-------|
-| 100GB | ~$970 | ~$400 | 2.4x |
-| 500GB | ~$4,500 | ~$1,200 | 3.8x |
-| 1TB | ~$9,000 | ~$2,000 | 4.5x |
-| 10TB | ~$80,000+ | ~$10,000 | 8x+ |
-
-> **Key Insight**: When analyzing log query patterns, over 90% of queries in most environments are "time range + field condition" based. This pattern is far more efficient with columnar storage than inverted indexes.
-
-### ClickHouse Migration Decision Criteria
-
-Use the following criteria to determine whether to keep OpenSearch or consider migrating to ClickHouse.
-
-| Criteria | Keep OpenSearch | Consider ClickHouse |
-|----------|----------------|-------------------|
-| **Daily log volume** | Under 100GB | Over 100GB |
-| **Primary query pattern** | Full-text search (keyword-based) | Time range + field conditions |
-| **Aggregation query ratio** | Low (under 20% of total) | High (over 50% of total) |
-| **Cost sensitivity** | Low | High |
-| **Full-text search need** | Essential (core feature) | Optional (nice to have) |
-| **Team SQL proficiency** | Low | High |
-
-**Migration Considerations:**
-
-```
-Phase 1: Query Pattern Analysis (2 weeks)
-  └── Analyze actual query logs for full-text search vs field-condition query ratio
-
-Phase 2: Parallel Operation (1-2 months)
-  └── Dual-write same logs to both OpenSearch + ClickHouse
-  └── Compare query performance and costs
-
-Phase 3: Gradual Migration
-  └── Aggregation/dashboard queries → Migrate to ClickHouse first
-  └── Queries requiring full-text search → Keep OpenSearch or use ClickHouse tokenbf index
-```
-
----
+<span id="feature-comparison"></span>
+<span id="recommendations-by-use-case"></span>
+<span id="migration-considerations"></span>
 
 ## Comparison with Loki
 
-### Feature Comparison
+| Area | OpenSearch | Loki |
+|---|---|---|
+| Index/query model | Mapped fields, inverted indexes and doc values; Query DSL and supported SQL/PPL features | Stream-label index, chunk scanning and LogQL pipelines/metrics |
+| Text search | Analyzers, relevance and full-text query capabilities | Text filtering/search within selected streams and time ranges |
+| Access control | Network/IAM/FGAC and configured document/field controls | Authenticating gateway, tenant authorization and policy/operational controls |
+| Cost and operations | Depend on the provisioned/managed model and workload | Depend on deployment mode, streams, object storage, caches and queries |
+| Migration | Rebuild mappings/queries and validate permissions/data correctness | Redesign labels/metadata/queries and validate permissions/data correctness |
 
-| Feature | OpenSearch | Loki |
-|---------|-----------|------|
-| **Full-text search** | Excellent (Lucene-based) | Limited (labels+grep) |
-| **Query language** | Query DSL, SQL | LogQL |
-| **Indexing** | Full-text | Labels only |
-| **Storage cost** | High | Low (object storage) |
-| **Complex aggregations** | Excellent | Basic |
-| **Dashboard** | OpenSearch Dashboards | Grafana |
-| **Operational complexity** | High | Low |
-| **Scalability** | Horizontal | Horizontal |
-| **Multi-tenancy** | FGAC | Native |
+Neither product is automatically the compliance choice, the cheapest choice or operationally simple. Loki still supports text search and derived metrics; a migration changes semantics and capabilities rather than fitting a fixed 3–5× cost or 60–80% savings rule.
 
-### Recommendations by Use Case
+## Validation and References
 
-```
-OpenSearch recommended:
-+-- Full-text search is required
-+-- Complex analytics/aggregation queries needed
-+-- Compliance requirements (audit logs)
-+-- Security analytics (SIEM)
-+-- Migrating from existing ELK stack
+Local checks cover the Terraform resource configuration and published data/configuration contracts. They do not prove live AWS authorization, supported SKU capacity in a Region, collector delivery, ISM transitions/deletion, SAML authentication or query performance. The image index/configuration metadata was inspected without pulling executable layers or running a container.
 
-Loki recommended:
-+-- Cost is top priority
-+-- Already using Grafana
-+-- Simple log search/filtering
-+-- Need Prometheus integration
-+-- Want to reduce operational burden
-```
-
-### Migration Considerations
-
-```yaml
-# Migrating from Loki to OpenSearch
-considerations:
-  - Query rewriting needed (LogQL -> Query DSL)
-  - Dashboard rebuild (Grafana -> OpenSearch Dashboards)
-  - Index template/mapping design
-  - Expected cost increase (3-5x)
-  - Increased operational complexity
-
-# Migrating from OpenSearch to Loki
-considerations:
-  - Loss of full-text search capabilities
-  - Limited complex aggregation queries
-  - Existing dashboard/alert rebuild
-  - Cost savings (60-80%)
-  - Operational simplification
-```
-
----
+- [Service/version support](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html)
+- [Supported instance types](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html) and [Multi-AZ](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-multiaz.html)
+- [VPC access](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html), [access policies](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ac.html) and [FGAC](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html)
+- [UltraWarm](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html), [cold storage](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cold-storage.html), [managed ISM](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ism.html) and [ISM policy reference](https://docs.opensearch.org/latest/im-plugin/ism/policies/)
+- [Rollover API](https://docs.opensearch.org/latest/api-reference/index-apis/rollover/) and [doc values](https://docs.opensearch.org/latest/field-types/mapping-parameters/doc-values/)
+- [Snapshots](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-snapshots.html), [CloudWatch logs](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html) and [SAML](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/saml.html)
+- [AWS for Fluent Bit release history](https://github.com/aws/aws-for-fluent-bit/blob/mainline/CHANGELOG.md) and [OpenSearch output configuration](https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/opensearch.md)
+- [Data Firehose destination configuration](https://docs.aws.amazon.com/firehose/latest/dev/create-destination.html)
+- [Current service pricing](https://aws.amazon.com/opensearch-service/pricing/)
+- [Elastic licensing FAQ](https://www.elastic.co/pricing/faq/licensing)
 
 ## Quiz
 
-Test your knowledge with the [OpenSearch Quiz](../../quizzes/observability/logging/02-opensearch-quiz.md).
+Test the distinctions in the [OpenSearch quiz](../../quizzes/observability/logging/02-opensearch-quiz.md).

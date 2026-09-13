@@ -1,325 +1,284 @@
 # Amazon OpenSearch Service
 
-> **마지막 업데이트**: 2026년 6월 30일
+> **마지막 업데이트**: 2026년 9월 13일
+> **예제 기준**: 프로비저닝형 OpenSearch Service 3.5, Terraform 1.15.7/AWS provider 6.64.0, AWS for Fluent Bit 3.4.15(Fluent Bit 5.0.9). 로컬 설정 검사이며 도메인·수집기·SAML 세션·실제 데이터 전달을 배포 시험하지 않았습니다.
 
-Amazon OpenSearch Service는 완전관리형 검색 및 분석 서비스로, 실시간 애플리케이션 모니터링, 로그 분석, 웹사이트 검색 등에 활용됩니다. Elasticsearch의 포크인 OpenSearch를 기반으로 하며, 강력한 전문 검색(Full-text Search) 기능을 제공합니다.
+Amazon OpenSearch Service는 검색 클러스터를 관리하며 선택된 OpenSearch 및 legacy Elasticsearch OSS 버전을 지원합니다. 이 장은 VPC 도메인과 기존 hot/UltraWarm/cold 계층을 다룹니다. Serverless collection과 새 optimized-instance 저장소 방식은 별도 설정·API·가용성 조건이 있습니다.
 
-## 목차
-
-1. [개요](#개요)
-2. [아키텍처](#아키텍처)
-3. [도메인 생성](#도메인-생성)
-4. [인덱스 관리](#인덱스-관리)
-5. [데이터 수집](#데이터-수집)
-6. [OpenSearch Dashboards](#opensearch-dashboards)
-7. [보안 설정](#보안-설정)
-8. [비용 최적화](#비용-최적화)
-9. [대규모 로그 환경에서의 한계](#대규모-로그-환경에서의-한계)
-10. [Loki와의 비교](#loki와의-비교)
-
----
+<span id="목차"></span>
+<span id="opensearch-vs-elasticsearch"></span>
+<span id="amazon-opensearch-service-특징"></span>
+<span id="주요-사용-사례"></span>
 
 ## 개요
 
-### OpenSearch vs Elasticsearch
+OpenSearch는 Apache 2.0 라이선스의 검색 프로젝트입니다. Elasticsearch 7.10 계열에서 시작했어도 현재의 모든 Elasticsearch client·plugin·API와 호환되는 것은 아닙니다. Elastic은 해당 소스 부분에 AGPLv3 선택권을 추가했으며 SSPL/Elastic License 2.0도 사용합니다. 실제 컴포넌트·배포물의 라이선스를 확인합니다.
 
-OpenSearch는 2021년 AWS가 Elasticsearch 7.10을 포크하여 만든 오픈소스 프로젝트입니다.
+현재 AWS 지원 표에는 OpenSearch 3.5가 포함됩니다. 기존 2.11 예제도 **2027년 11월 7일까지 표준 지원 대상**이므로 새 버전이 있다는 이유만으로 지원 종료라고 판단하지 않습니다. 기존 도메인은 지원되는 업그레이드 경로, 호환성을 깨는 변경, 스냅샷과 client 호환성을 확인한 뒤 업그레이드합니다.
 
-| 특성 | OpenSearch | Elasticsearch |
-|------|-----------|---------------|
-| 라이선스 | Apache 2.0 | SSPL/Elastic License |
-| 관리형 서비스 | Amazon OpenSearch Service | Elastic Cloud |
-| 호환성 | ES 7.10 API 호환 | 최신 버전 |
-| 플러그인 | OpenSearch 플러그인 | Elastic 플러그인 |
-| 대시보드 | OpenSearch Dashboards | Kibana |
+로그 분석, 전문 검색, 집계와 보안 분석에 활용할 수 있습니다. 서비스를 켜거나 감사 로그를 보존하는 것만으로 규정 준수가 충족되지는 않습니다.
 
-### Amazon OpenSearch Service 특징
-
-| 카테고리 | 기능 |
-|----------|------|
-| 관리 | 완전 관리형, 자동 패칭, 자동 스냅샷 |
-| 가용성 | 다중 AZ 배포, Cross-cluster |
-| 보안 | 암호화 (저장/전송), VPC 통합, Fine-grained Access, SAML 인증 |
-| 스토리지 | UltraWarm/Cold 스토리지, Serverless 옵션 |
-| 모니터링 | CloudWatch 통합 |
-
-### 주요 사용 사례
-
-1. **로그 분석**: 애플리케이션, 인프라, 보안 로그 분석
-2. **전문 검색**: 웹사이트, 문서, 제품 검색
-3. **보안 분석**: SIEM, 위협 탐지, 규정 준수
-4. **실시간 모니터링**: 애플리케이션 성능 모니터링
-5. **비즈니스 분석**: 클릭스트림, 사용자 행동 분석
-
----
+<span id="노드-유형"></span>
 
 ## 아키텍처
 
 ### OpenSearch 클러스터 아키텍처
 
-![애플리케이션, FluentBit, Kinesis Data Firehose가 VPC 내 Multi-AZ OpenSearch 클러스터의 Data Node로 로그를 전송하고, Master Node가 클러스터를 관리하며, Data Node가 Hot 데이터를 EBS에 저장하고 UltraWarm을 거쳐 S3 Cold Storage로 데이터를 이동시키는 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-02-opensearch-0.png)
+![프로비저닝형 도메인의 수집 경로와 기존 hot/UltraWarm/cold 저장소 계층 개념도.](../../.gitbook/assets/ko-observability-logging-02-opensearch-0.png)
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-02-opensearch-0.html)
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-02-opensearch-0.html)
 
-### 노드 유형
+개념도이며 정확한 replica·AZ 배치나 용량 권장치가 아닙니다. 그림의 “Master”는 전용 클러스터 관리 역할을 뜻하며 AWS 설정 필드는 여전히 `dedicated_master_*`를 사용합니다. “Kinesis Data Firehose”는 **Amazon Data Firehose**의 이전 이름입니다. UltraWarm과 cold는 모두 S3 기반이고 cold 데이터는 조회 전에 UltraWarm에 연결해야 합니다.
 
-> **참고**: AWS 인스턴스 타입별 성능 벤치마크는 [AWS Instance Benchmark](https://benchmark.aws.atomai.click/)에서 확인할 수 있습니다.
+| 역할·계층 | 기능 |
+|---|---|
+| 전용 cluster-manager node | 클러스터 상태·메타데이터·샤드 배치를 관리합니다. 일반적인 전용 관리자 구성은 3개이며 데이터 replica와는 다릅니다. |
+| Data node / hot | 색인·검색을 담당합니다. EBS 지원과 한도는 인스턴스 계열에 따라 다릅니다. |
+| UltraWarm | S3 기반 읽기 전용 인덱스와 warm-node 캐시·컴퓨팅입니다. 엔진·인스턴스·전용 관리자 조건을 확인합니다. |
+| Cold | 분리된 인덱스 저장소와 별도 수명 주기입니다. 선택한 인덱스를 UltraWarm으로 연결한 뒤 조회합니다. |
 
-| 노드 유형 | 역할 | 권장 인스턴스 |
-|----------|------|--------------|
-| **Master** | 클러스터 관리, 인덱스 메타데이터 | m6g.large.search (3개) |
-| **Data** | 데이터 저장, 검색/인덱싱 | r6g.xlarge.search |
-| **UltraWarm** | 읽기 전용, 비용 효율적 저장 | ultrawarm1.medium |
-| **Cold** | S3 기반 아카이브 | - |
+Multi-AZ with Standby에는 추가 토폴로지·replica 조건이 있습니다. Zone awareness만 켜서 Standby나 그 가용성 보장이 생기지는 않습니다. VPC Encryption Controls·스토리지 호환성을 포함한 현재 인스턴스 제한을 확인합니다. 기존 r6g/m6g 크기는 예시 입력이며 벤치마크가 아닙니다.
+
+보조 자료: [AWS Instance Benchmark](https://benchmark.aws.atomai.click/). 서비스 용량은 대표 OpenSearch 워크로드로 별도 시험해야 합니다.
 
 ### 데이터 흐름
 
-![애플리케이션의 로그가 FluentBit의 Bulk API 호출로 OpenSearch에 색인되고, 7일 후 ISM 정책에 따라 UltraWarm으로, 30일 후 다시 S3 Cold Storage로 자동 이동하는 라이프사이클을 보여준다.](../../.gitbook/assets/ko-observability-logging-02-opensearch-1.png)
+![날짜별 인덱스의 예시 수명 주기: hot 수집 후 ISM 조건에 따라 UltraWarm과 cold로 이동.](../../.gitbook/assets/ko-observability-logging-02-opensearch-1.png)
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-02-opensearch-1.html)
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-02-opensearch-1.html)
 
----
+7일·30일은 **인덱스 나이 조건** 예시이며 자동 기본값이나 개별 이벤트의 정확한 보존 시간이 아닙니다. ISM은 주기적으로 실행되고 이동은 비동기입니다. 날짜 기반 색인에서는 늦게 도착하거나 재전송한 이벤트가 이미 읽기 전용인 과거 인덱스를 대상으로 할 수 있으므로 이동 전에 처리·보관 방식을 결정합니다.
+
+<span id="aws-console을-통한-생성"></span>
 
 ## 도메인 생성
 
-### AWS Console을 통한 생성
+### 사전 조건
 
-```
-1. OpenSearch Service 콘솔 접속
-2. "도메인 생성" 클릭
-3. 설정:
-   - 배포 유형: 프로덕션
-   - 버전: OpenSearch 2.x
-   - 데이터 노드: r6g.xlarge.search x 3
-   - 마스터 노드: m6g.large.search x 3
-   - EBS: gp3, 500GB per node
-   - 네트워크: VPC 액세스
-   - 암호화: 저장 및 전송 중 암호화 활성화
-   - Fine-grained access control 활성화
-```
+같은 VPC의 서로 다른 AZ에 있는 private subnet 3개, 접근 가능한 승인 client 보안 그룹, 기존 service-linked role과 administrator/writer/reader IAM 역할을 준비합니다. 예제는 subnet ID의 중복을 검사하지만 실제 AZ·경로·용량·소유권을 원격 검증하지 않습니다.
+
+Terraform 예제는 **IAM 서명 API 요청**과 IAM master role을 사용해 내부 master password를 Terraform state에 넣지 않습니다. 로그 전송 전에 FGAC 역할을 매핑해야 합니다. 브라우저 SSO는 뒤에서 다루는 별도 접근 구성입니다. IAM principal을 명시한 domain policy에는 SigV4가 필요하며 서명 없는 SAML 브라우저 요청이 자동 허용되지는 않습니다.
 
 ### Terraform을 통한 생성
 
+상용 AWS partition·서울 Region 예제입니다. 입력을 일관되게 교체하고 Region별 가용성을 확인합니다. Apply하면 리소스를 생성하지만 감사에서는 로컬 검증만 수행했습니다.
+
 ```hcl
-# opensearch.tf
-
-# VPC 및 서브넷 데이터
-data "aws_vpc" "main" {
-  tags = {
-    Name = "main-vpc"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.64.0"
+    }
   }
 }
 
-data "aws_subnets" "private" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.main.id]
-  }
-  filter {
-    name   = "tag:Type"
-    values = ["private"]
+variable "region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+
+variable "account_id" {
+  type = string
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.account_id))
+    error_message = "Use the owning AWS account ID."
   }
 }
 
-# 보안 그룹
-resource "aws_security_group" "opensearch" {
-  name        = "opensearch-sg"
-  description = "Security group for OpenSearch domain"
-  vpc_id      = data.aws_vpc.main.id
+variable "vpc_id" {
+  type = string
+}
 
-  ingress {
-    description = "HTTPS from VPC"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.main.cidr_block]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "opensearch-sg"
+variable "subnet_ids" {
+  type = list(string)
+  validation {
+    condition     = length(var.subnet_ids) == 3 && length(distinct(var.subnet_ids)) == 3
+    error_message = "Provide three distinct subnet IDs, one in each intended AZ."
   }
 }
 
-# OpenSearch 도메인
-resource "aws_opensearch_domain" "main" {
-  domain_name    = "logs-production"
-  engine_version = "OpenSearch_2.11"
+variable "client_security_group_ids" {
+  type = set(string)
+}
+
+variable "admin_role_arn" {
+  type = string
+}
+
+variable "writer_role_arns" {
+  type = set(string)
+}
+
+variable "reader_role_arns" {
+  type    = set(string)
+  default = []
+}
+
+provider "aws" {
+  region = var.region
+}
+
+locals {
+  domain_name = "logs-production"
+  domain_arn  = "arn:aws:es:${var.region}:${var.account_id}:domain/${local.domain_name}"
+  log_types   = toset(["INDEX_SLOW_LOGS", "SEARCH_SLOW_LOGS", "ES_APPLICATION_LOGS", "AUDIT_LOGS"])
+  callers     = setunion(toset([var.admin_role_arn]), var.writer_role_arns, var.reader_role_arns)
+}
+
+resource "aws_security_group" "search" {
+  name_prefix = "logs-search-"
+  description = "OpenSearch HTTPS from approved client security groups"
+  vpc_id      = var.vpc_id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "clients" {
+  for_each                     = var.client_security_group_ids
+  security_group_id            = aws_security_group.search.id
+  referenced_security_group_id = each.value
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_security_group_egress_rule" "outbound" {
+  security_group_id = aws_security_group.search.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
+}
+
+resource "aws_cloudwatch_log_group" "search" {
+  for_each          = local.log_types
+  name              = "/aws/opensearch/${local.domain_name}/${lower(each.value)}"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_resource_policy" "search" {
+  policy_name = "logs-production-opensearch"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "es.amazonaws.com" }
+      Action    = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      Resource  = [for group in aws_cloudwatch_log_group.search : "${group.arn}:*"]
+      Condition = {
+        StringEquals = { "aws:SourceAccount" = var.account_id }
+        ArnEquals    = { "aws:SourceArn" = local.domain_arn }
+      }
+    }]
+  })
+}
+
+resource "aws_opensearch_domain" "logs" {
+  domain_name    = local.domain_name
+  engine_version = "OpenSearch_3.5"
 
   cluster_config {
-    instance_type            = "r6g.xlarge.search"
-    instance_count           = 3
-    zone_awareness_enabled   = true
-    dedicated_master_enabled = true
-    dedicated_master_type    = "m6g.large.search"
-    dedicated_master_count   = 3
-
+    instance_type                 = "r6g.xlarge.search"
+    instance_count                = 3
+    dedicated_master_enabled      = true
+    dedicated_master_type         = "m6g.large.search"
+    dedicated_master_count        = 3
+    zone_awareness_enabled        = true
+    multi_az_with_standby_enabled = false
     zone_awareness_config {
       availability_zone_count = 3
     }
-
-    # UltraWarm 설정
     warm_enabled = true
     warm_type    = "ultrawarm1.medium.search"
     warm_count   = 2
-
-    # Cold Storage 설정
     cold_storage_options {
       enabled = true
     }
   }
 
-  # EBS 설정
   ebs_options {
     ebs_enabled = true
     volume_type = "gp3"
     volume_size = 500
-    iops        = 3000
-    throughput  = 250
   }
 
-  # VPC 설정
   vpc_options {
-    subnet_ids         = slice(data.aws_subnets.private.ids, 0, 3)
-    security_group_ids = [aws_security_group.opensearch.id]
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [aws_security_group.search.id]
   }
 
-  # 암호화 설정
   encrypt_at_rest {
     enabled = true
   }
-
   node_to_node_encryption {
     enabled = true
   }
-
   domain_endpoint_options {
     enforce_https       = true
-    tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
+    tls_security_policy = "Policy-Min-TLS-1-2-PFS-2023-10"
   }
-
-  # Fine-grained Access Control
   advanced_security_options {
     enabled                        = true
-    internal_user_database_enabled = true
+    internal_user_database_enabled = false
     master_user_options {
-      master_user_name     = "admin"
-      master_user_password = var.opensearch_master_password
+      master_user_arn = var.admin_role_arn
     }
   }
 
-  # 고급 설정
-  advanced_options = {
-    "rest.action.multi.allow_explicit_index" = "true"
-    "indices.fielddata.cache.size"           = "20"
-    "indices.query.bool.max_clause_count"    = "1024"
-  }
-
-  # 자동 스냅샷
-  snapshot_options {
-    automated_snapshot_start_hour = 23
-  }
-
-  # 로깅
-  log_publishing_options {
-    cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_index_slow.arn
-    log_type                 = "INDEX_SLOW_LOGS"
-    enabled                  = true
-  }
-
-  log_publishing_options {
-    cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_search_slow.arn
-    log_type                 = "SEARCH_SLOW_LOGS"
-    enabled                  = true
-  }
-
-  log_publishing_options {
-    cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_error.arn
-    log_type                 = "ES_APPLICATION_LOGS"
-    enabled                  = true
-  }
-
-  tags = {
-    Environment = "production"
-    Application = "logging"
-  }
-
-  depends_on = [aws_iam_service_linked_role.opensearch]
-}
-
-# CloudWatch 로그 그룹
-resource "aws_cloudwatch_log_group" "opensearch_index_slow" {
-  name              = "/aws/opensearch/logs-production/index-slow-logs"
-  retention_in_days = 30
-}
-
-resource "aws_cloudwatch_log_group" "opensearch_search_slow" {
-  name              = "/aws/opensearch/logs-production/search-slow-logs"
-  retention_in_days = 30
-}
-
-resource "aws_cloudwatch_log_group" "opensearch_error" {
-  name              = "/aws/opensearch/logs-production/error-logs"
-  retention_in_days = 30
-}
-
-# 서비스 연결 역할
-resource "aws_iam_service_linked_role" "opensearch" {
-  aws_service_name = "opensearchservice.amazonaws.com"
-}
-
-# CloudWatch 로그 리소스 정책
-resource "aws_cloudwatch_log_resource_policy" "opensearch" {
-  policy_name = "opensearch-log-policy"
-
-  policy_document = jsonencode({
+  access_policies = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "es.amazonaws.com"
-        }
-        Action = [
-          "logs:PutLogEvents",
-          "logs:CreateLogStream"
-        ]
-        Resource = [
-          "${aws_cloudwatch_log_group.opensearch_index_slow.arn}:*",
-          "${aws_cloudwatch_log_group.opensearch_search_slow.arn}:*",
-          "${aws_cloudwatch_log_group.opensearch_error.arn}:*"
-        ]
-      }
-    ]
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { AWS = sort(tolist(local.callers)) }
+      Action    = ["es:ESHttp*"]
+      Resource  = "${local.domain_arn}/*"
+    }]
   })
+
+  dynamic "log_publishing_options" {
+    for_each = aws_cloudwatch_log_group.search
+    content {
+      cloudwatch_log_group_arn = log_publishing_options.value.arn
+      log_type                 = log_publishing_options.key
+      enabled                  = true
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_resource_policy.search]
 }
 
-# 출력
-output "opensearch_endpoint" {
-  value = aws_opensearch_domain.main.endpoint
+output "domain_endpoint" {
+  value = aws_opensearch_domain.logs.endpoint
 }
 
-output "opensearch_dashboard_endpoint" {
-  value = aws_opensearch_domain.main.dashboard_endpoint
+output "dashboards_endpoint" {
+  value = aws_opensearch_domain.logs.dashboard_endpoint
 }
 ```
 
----
+초기 인스턴스 크기, EBS 500GiB, CloudWatch 30일 보존은 예시입니다. 이 구성은 명시적으로 **Standby 없는 Multi-AZ**를 사용합니다. 참고 예제의 outbound 보안 그룹은 여전히 광범위하므로 운영 전 실제 지원 연결에 맞게 egress 통제를 설계합니다.
+
+Domain policy는 지정 IAM 역할의 HTTP 요청을 허용하고 **FGAC**가 인덱스·클러스터 권한을 제한해야 합니다. URI 기반 IAM 권한만으로 bulk body 안의 인덱스 이름을 통제할 수는 없습니다. Collector에는 의도한 writer 역할만 매핑합니다.
+
+Service-linked role은 계정 단위 의존성입니다. 배포할 때마다 같은 역할을 새로 만들지 말고 해당 역할을 소유하는 인프라 state에서 재사용·import합니다.
+
+OpenSearch 도메인의 자동 스냅샷은 시간 단위로 생성되어 14일간 최대 336개 보존됩니다. 기존 `automated_snapshot_start_hour` 예제는 훨씬 오래된 Elasticsearch 버전용이며 이 OpenSearch 구성에 해당하지 않습니다. 스냅샷은 복구 수단이며 보존·복원 시험을 대신하지 않습니다. Red 상태에서는 스냅샷이 실패할 수 있습니다.
+
+CloudWatch 게시에는 도메인 설정 전에 범위를 제한한 resource policy가 필요합니다. Slow-log 목적지를 켜는 것만으로 모든 slow-log 임계값이 활성화되거나 audit 이벤트가 설정되지는 않습니다. 엔진·감사 설정을 별도로 정하고, 로그에 포함되는 쿼리·문서 내용의 접근·보존도 통제합니다.
+
+<span id="인덱스-앨리어스"></span>
 
 ## 인덱스 관리
 
+아래 주 수집 경로는 `logs-production-YYYY.MM.DD` 형태의 **날짜별 인덱스**입니다. Template·ISM·쿼리는 해당 pattern을 사용합니다. 뒤의 rollover 실습은 별도이며 두 쓰기 전략을 암묵적으로 섞지 않습니다.
+
+다음 요청 블록은 OpenSearch Dashboards Dev Tools 문법입니다. 독립 JSON 파일이나 감사에서 실행한 명령이 아닙니다. 승인된 data-plane client와 의도한 도메인을 사용합니다.
+
 ### 인덱스 템플릿
 
-```json
+```http
 PUT _index_template/logs-template
 {
-  "index_patterns": ["logs-*"],
+  "index_patterns": [
+    "logs-production-*"
+  ],
   "priority": 100,
   "template": {
     "settings": {
@@ -327,82 +286,118 @@ PUT _index_template/logs-template
       "number_of_replicas": 1,
       "refresh_interval": "5s",
       "index.codec": "best_compression",
-      "index.mapping.total_fields.limit": 2000,
-      "index.translog.durability": "async",
-      "index.translog.sync_interval": "30s"
+      "index.translog.durability": "request"
     },
     "mappings": {
+      "dynamic": false,
       "properties": {
         "@timestamp": {
           "type": "date"
         },
-        "level": {
+        "cluster_name": {
           "type": "keyword"
         },
-        "message": {
+        "environment": {
+          "type": "keyword"
+        },
+        "stream": {
+          "type": "keyword"
+        },
+        "log": {
           "type": "text",
-          "analyzer": "standard"
+          "index": false
         },
         "kubernetes": {
           "properties": {
-            "namespace": { "type": "keyword" },
-            "pod_name": { "type": "keyword" },
-            "container_name": { "type": "keyword" },
-            "labels": { "type": "object" }
+            "namespace_name": {
+              "type": "keyword"
+            },
+            "pod_name": {
+              "type": "keyword"
+            },
+            "container_name": {
+              "type": "keyword"
+            },
+            "host": {
+              "type": "keyword"
+            }
           }
         },
-        "trace_id": {
-          "type": "keyword"
-        },
-        "span_id": {
-          "type": "keyword"
-        },
-        "http": {
+        "app": {
           "properties": {
-            "method": { "type": "keyword" },
-            "status_code": { "type": "integer" },
-            "path": { "type": "keyword" },
-            "response_time_ms": { "type": "float" }
-          }
-        }
-      },
-      "dynamic_templates": [
-        {
-          "strings_as_keywords": {
-            "match_mapping_type": "string",
-            "mapping": {
-              "type": "keyword",
-              "ignore_above": 1024
+            "level": {
+              "type": "keyword"
+            },
+            "message": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "error_type": {
+              "type": "keyword"
+            },
+            "trace_id": {
+              "type": "keyword"
+            },
+            "span_id": {
+              "type": "keyword"
+            },
+            "request_id": {
+              "type": "keyword"
+            },
+            "http": {
+              "properties": {
+                "method": {
+                  "type": "keyword"
+                },
+                "status_code": {
+                  "type": "integer"
+                },
+                "path": {
+                  "type": "keyword"
+                },
+                "response_time_ms": {
+                  "type": "float"
+                }
+              }
             }
           }
         }
-      ]
+      }
     }
   }
 }
 ```
 
-### ISM (Index State Management) 정책
+Kubernetes filter의 필드는 `kubernetes.namespace`가 아닌 `kubernetes.namespace_name`입니다. 앱 JSON은 수집기 메타데이터와 구분하도록 `app` 아래에 넣습니다. 애플리케이션이 정해진 필드·단위를 제공해야 하며 예제는 소문자 `app.level`과 밀리초 `app.http.response_time_ms`를 사용합니다.
 
-ISM 정책을 통해 인덱스 라이프사이클을 자동으로 관리합니다.
+수집기 메타데이터 추가 전 애플리케이션이 출력하는 한 줄 JSON 예시입니다.
 
 ```json
+{"level":"error","message":"request failed","error_type":"upstream_timeout","http":{"method":"GET","path":"/orders","status_code":503,"response_time_ms":1250}}
+```
+
+`message.keyword`에 해당하는 `app.message.keyword`를 명시적으로 정의했습니다. `text` mapping만으로 이 하위 필드가 자동 생성되지는 않습니다. `ignore_above`를 넘는 값은 해당 subfield에 인덱싱되지 않습니다. 임의 메시지 대신 범위가 제한된 `error_type` 분류를 집계하는 방법도 검토합니다.
+
+`dynamic: false`는 새 mapped field를 제한하지만 **알 수 없는 필드를 `_source`에서 제거하지 않습니다**. 원문 `log`는 검색 인덱스 없이 저장합니다. 중복, 사전 삭제·마스킹과 원문 접근을 검토합니다. 설명 없는 async/30s 내구성 절충보다 `translog.durability: request`를 기준으로 삼았지만, 어느 설정도 모든 저장소·replica 장애의 복구를 보장하지는 않습니다.
+
+### ISM (Index State Management) 정책
+
+```http
 PUT _plugins/_ism/policies/logs-lifecycle
 {
   "policy": {
-    "description": "로그 인덱스 라이프사이클 관리",
+    "description": "Illustrative daily-index hot/warm/cold retention; confirm ownership and late-arrival handling.",
+    "schema_version": 1,
     "default_state": "hot",
     "states": [
       {
         "name": "hot",
-        "actions": [
-          {
-            "rollover": {
-              "min_index_age": "1d",
-              "min_primary_shard_size": "30gb"
-            }
-          }
-        ],
+        "actions": [],
         "transitions": [
           {
             "state_name": "warm",
@@ -416,13 +411,7 @@ PUT _plugins/_ism/policies/logs-lifecycle
         "name": "warm",
         "actions": [
           {
-            "warm_migration": {},
-            "replica_count": {
-              "number_of_replicas": 0
-            },
-            "force_merge": {
-              "max_num_segments": 1
-            }
+            "warm_migration": {}
           }
         ],
         "transitions": [
@@ -456,14 +445,17 @@ PUT _plugins/_ism/policies/logs-lifecycle
         "name": "delete",
         "actions": [
           {
-            "delete": {}
+            "cold_delete": {}
           }
-        ]
+        ],
+        "transitions": []
       }
     ],
     "ism_template": [
       {
-        "index_patterns": ["logs-*"],
+        "index_patterns": [
+          "logs-production-*"
+        ],
         "priority": 100
       }
     ]
@@ -471,41 +463,156 @@ PUT _plugins/_ism/policies/logs-lifecycle
 }
 ```
 
-### 인덱스 앨리어스
+정책은 새로 생성되는 일치 인덱스에 연결됩니다. 기존 인덱스에는 별도 연결 작업이 필요하므로 변경 전에 `_plugins/_ism/explain/INDEX`와 정책 버전을 확인합니다.
 
-```json
-# 롤오버용 앨리어스 생성
-PUT logs-production-000001
+각 action 객체에는 작업 하나와 지원되는 retry/timeout 메타데이터를 둡니다. 관리형 `warm_migration`, `cold_migration`, **`cold_delete`**는 자체 설치 ISM과 다릅니다. Cold 인덱스 삭제에는 `cold_delete`가 필요하고 ISM cold migration에는 timestamp field를 명시해야 합니다. Warm 이동·replica 변경·force merge를 한 action 객체에 넣지 않습니다.
+
+ISM은 보통 5–8분마다 작업을 평가하며 red 클러스터에서는 실행하지 않습니다. 인덱스 나이는 생성 시점부터 계산합니다. 예제의 90일 삭제는 조직이 선택하는 정책이며 보편적인 법적 요건이나 레코드별 정확한 만료 시간이 아닙니다. 삭제 활성화 전에 지연 데이터·스냅샷·복구를 시험합니다.
+
+### 인덱스 앨리어스와 Rollover
+
+다음 독립 예제는 `rollover-logs-*` prefix와 writer alias를 사용합니다. 날짜 기반 수집기 설정은 바꾸지 않습니다.
+
+```http
+PUT _index_template/rollover-logs
 {
-  "aliases": {
-    "logs-production": {
-      "is_write_index": true
+  "index_patterns": [
+    "rollover-logs-*"
+  ],
+  "priority": 100,
+  "template": {
+    "settings": {
+      "number_of_shards": 3,
+      "number_of_replicas": 1,
+      "plugins.index_state_management.rollover_alias": "rollover-logs-write"
     },
-    "logs-production-read": {}
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "message": {
+          "type": "text"
+        }
+      }
+    }
   }
 }
 
-# 앨리어스 조회
-GET _alias/logs-production
+PUT _plugins/_ism/policies/rollover-logs
+{
+  "policy": {
+    "description": "Independent rollover example; not attached to date-based collector indexes.",
+    "schema_version": 1,
+    "default_state": "write",
+    "states": [
+      {
+        "name": "write",
+        "actions": [
+          {
+            "rollover": {
+              "min_index_age": "1d",
+              "min_primary_shard_size": "30gb"
+            }
+          }
+        ],
+        "transitions": []
+      }
+    ],
+    "ism_template": [
+      {
+        "index_patterns": [
+          "rollover-logs-*"
+        ],
+        "priority": 100
+      }
+    ]
+  }
+}
 
-# 수동 롤오버 (테스트용)
-POST logs-production/_rollover
+PUT rollover-logs-000001
+{
+  "aliases": {
+    "rollover-logs-write": {
+      "is_write_index": true
+    }
+  }
+}
+
+POST rollover-logs-write/_doc
+{
+  "@timestamp": "2026-09-13T00:00:00Z",
+  "message": "synthetic rollover example"
+}
+
+GET _plugins/_ism/explain/rollover-logs-000001
+
+POST rollover-logs-write/_rollover
 {
   "conditions": {
     "max_age": "1d",
-    "max_primary_shard_size": "30gb"
+    "max_size": "90gb"
   }
 }
 ```
 
----
+자동 ISM rollover에는 rollover alias 설정, 번호가 붙은 인덱스와 write alias가 필요합니다. Alias가 존재한다고 날짜 기반 writer가 그 alias를 사용하지는 않습니다.
+
+ISM의 `min_primary_shard_size: 30gb`는 primary shard 하나에 대한 조건입니다. OpenSearch 3.5 rollover REST parser는 `max_age`, `max_docs`, `max_size`를 받으며 `max_size`는 replica를 제외한 **전체 primary shard 크기**입니다. 따라서 REST 예제의 90GB와 primary 하나의 30GB는 같은 조건이 아닙니다. Rollover 조건은 모두 충족해야 하는 것이 아니라 대안 조건입니다.
+
+<span id="fluentbit에서-opensearch로-직접-전송"></span>
+<span id="fluentbit-daemonset-irsa-사용"></span>
 
 ## 데이터 수집
 
-### FluentBit에서 OpenSearch로 직접 전송
+### Fluent Bit에서 직접 전송
+
+다음 6개 리소스는 적격 **Linux EC2 Node**의 참고 수집기 설정입니다. Fargate는 플랫폼 로그 라우터를 사용하고 Windows·다른 플랫폼에는 별도 경로·배포 방식이 필요합니다. Node 로그를 읽는 agent 배포 전 host path, admission 정책 예외와 자원을 확인합니다.
+
+실제 domain hostname, Region, IRSA role을 설정합니다. 역할의 OIDC trust는 `system:serviceaccount:logging:fluent-bit`와 맞아야 하며 IAM/data-plane 접근 및 FGAC writer 역할도 필요합니다. Pod Identity는 node/agent/SDK가 지원할 때 별도로 선택할 수 있습니다.
 
 ```yaml
-# fluent-bit-configmap.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logging
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit
+  namespace: logging
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/FluentBitOpenSearchRole
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fluent-bit-metadata
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - namespaces
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: fluent-bit-metadata
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fluent-bit-metadata
+subjects:
+- kind: ServiceAccount
+  name: fluent-bit
+  namespace: logging
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -514,84 +621,66 @@ metadata:
 data:
   fluent-bit.conf: |
     [SERVICE]
-        Flush         5
-        Log_Level     info
-        Daemon        off
-        Parsers_File  parsers.conf
-        HTTP_Server   On
-        HTTP_Listen   0.0.0.0
-        HTTP_Port     2020
+        Flush          5
+        Log_Level      info
+        HTTP_Server    Off
+        storage.path   /buffers/storage
+        storage.sync   normal
 
     [INPUT]
-        Name              tail
-        Tag               kube.*
-        Path              /var/log/containers/*.log
-        Parser            docker
-        DB                /var/log/flb_kube.db
-        Mem_Buf_Limit     50MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
+        Name               tail
+        Tag                kube.*
+        Path               /var/log/containers/*.log
+        Exclude_Path       /var/log/containers/fluent-bit-*_logging_fluent-bit-*.log
+        multiline.parser   docker, cri
+        DB                 /buffers/tail.db
+        Mem_Buf_Limit      50MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
 
     [FILTER]
         Name                kubernetes
         Match               kube.*
-        Kube_URL            https://kubernetes.default.svc:443
-        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     kube.var.log.containers.
         Merge_Log           On
-        K8S-Logging.Parser  On
-        K8S-Logging.Exclude On
+        Merge_Log_Key       app
+        Keep_Log            On
+        Labels              Off
+        Annotations         Off
+        K8S-Logging.Parser  Off
+        K8S-Logging.Exclude Off
 
     [FILTER]
         Name    modify
-        Match   *
-        Add     cluster_name eks-production
-        Add     environment production
+        Match   kube.*
+        Set     cluster_name example-eks
+        Set     environment example
 
     [OUTPUT]
-        Name            opensearch
-        Match           *
-        Host            vpc-logs-production-xxxxx.ap-northeast-2.es.amazonaws.com
-        Port            443
-        TLS             On
-        AWS_Auth        On
-        AWS_Region      ap-northeast-2
-        Index           logs-production
-        Type            _doc
-        Logstash_Format On
-        Logstash_Prefix logs-production
-        Retry_Limit     5
-        Buffer_Size     5MB
-        Generate_ID     On
-        # 압축으로 네트워크 비용 절감
-        Compress        gzip
-
-  parsers.conf: |
-    [PARSER]
-        Name        docker
-        Format      json
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-
-    [PARSER]
-        Name        json
-        Format      json
-        Time_Key    timestamp
-        Time_Format %Y-%m-%dT%H:%M:%S.%LZ
-```
-
-### FluentBit DaemonSet (IRSA 사용)
-
-```yaml
-# fluent-bit-daemonset.yaml
+        Name                    opensearch
+        Match                   kube.*
+        Host                    REPLACE_WITH_DOMAIN_ENDPOINT
+        Port                    443
+        tls                     On
+        tls.verify              On
+        AWS_Auth                On
+        AWS_Region              ap-northeast-2
+        Suppress_Type_Name      On
+        Logstash_Format         On
+        Logstash_Prefix         logs-production
+        Time_Key                @timestamp
+        Generate_ID             On
+        Retry_Limit             5
+        Buffer_Size             5MB
+        Compress                gzip
+        storage.total_limit_size 1G
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: fluent-bit
   namespace: logging
-  labels:
-    app: fluent-bit
 spec:
   selector:
     matchLabels:
@@ -602,89 +691,140 @@ spec:
         app: fluent-bit
     spec:
       serviceAccountName: fluent-bit
+      nodeSelector:
+        kubernetes.io/os: linux
       tolerations:
-        - key: node-role.kubernetes.io/master
-          operator: Exists
-          effect: NoSchedule
-        - operator: Exists
-          effect: NoExecute
-        - operator: Exists
-          effect: NoSchedule
+      - operator: Exists
+        effect: NoSchedule
       containers:
-        - name: fluent-bit
-          image: public.ecr.aws/aws-observability/aws-for-fluent-bit:2.31.12
-          resources:
-            limits:
-              cpu: 500m
-              memory: 500Mi
-            requests:
-              cpu: 100m
-              memory: 100Mi
-          volumeMounts:
-            - name: varlog
-              mountPath: /var/log
-              readOnly: true
-            - name: varlibdockercontainers
-              mountPath: /var/lib/docker/containers
-              readOnly: true
-            - name: fluent-bit-config
-              mountPath: /fluent-bit/etc/
-          env:
-            - name: AWS_REGION
-              value: ap-northeast-2
+      - name: fluent-bit
+        image: public.ecr.aws/aws-observability/aws-for-fluent-bit:3.4.15@sha256:88e1b56cedb230486afeca6eeb26c5f6bd59c48879d0054d1674d5a58838c607
+        args:
+        - -c
+        - /fluent-bit/custom/fluent-bit.conf
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log
+          readOnly: true
+        - name: buffers
+          mountPath: /buffers
+        - name: config
+          mountPath: /fluent-bit/custom
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        command:
+        - /fluent-bit/bin/fluent-bit
       volumes:
-        - name: varlog
-          hostPath:
-            path: /var/log
-        - name: varlibdockercontainers
-          hostPath:
-            path: /var/lib/docker/containers
-        - name: fluent-bit-config
-          configMap:
-            name: fluent-bit-config
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: fluent-bit
-  namespace: logging
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/FluentBitOpenSearchRole
+      - name: logs
+        hostPath:
+          path: /var/log
+          type: Directory
+      - name: buffers
+        hostPath:
+          path: /var/lib/fluent-bit-opensearch
+          type: DirectoryOrCreate
+      - name: config
+        configMap:
+          name: fluent-bit-config
+      - name: tmp
+        emptyDir: {}
 ```
 
-### Kinesis Data Firehose를 통한 수집
+이미지 index를 digest로 고정하고 Linux amd64/arm64 메타데이터를 확인했습니다. 이 이미지의 기본 CMD는 entrypoint script이므로 예제는 `/fluent-bit/bin/fluent-bit`와 **native OpenSearch output**을 명시적으로 사용합니다. Legacy Go output plugin을 로드하거나 이미지 runtime을 시험한 구성이 아닙니다.
+
+설정 사이의 중요한 관계는 다음과 같습니다.
+
+- `multiline.parser docker, cri`가 지원 container framing을 처리하고, Kubernetes filter가 앱 JSON을 `app` 아래에 병합합니다.
+- 읽기 전용 `/var/log`는 입력용입니다. Tail DB·파일시스템 버퍼는 별도 writable Node 경로를 사용합니다. 해당 Node·경로가 남아 있을 때만 Pod 재시작 후 유지되며 Node 간 영속 저장소가 아닙니다.
+- Metadata RBAC는 Pod·namespace 읽기 작업으로 제한합니다. Agent는 Node 로그를 읽으므로 namespace·역할·설정을 보호합니다.
+- 앱 annotation이 파싱을 바꾸거나 로그를 제외하지 못하도록 했고, cluster/environment 값은 수집기가 지정합니다. Feedback loop를 줄이기 위해 수집기 자신의 로그는 이 경로에서 제외합니다.
+- Typeless OpenSearch 2.x/3.x API에는 `Suppress_Type_Name On`이 필요합니다. `Type _doc`는 호환 대안이 아닙니다.
+- `Logstash_Format On`이 날짜 기반 인덱스와 `@timestamp`를 만듭니다. 선택적 rollover alias로 쓰는 설정이 아닙니다.
+- Retry, `Generate_ID`, 메모리 버퍼와 output 저장 한도는 exactly-once·무손실 보장이 아닙니다. 부분 bulk 오류, 긴 라인, 재시작 offset, 재시도 한도, 디스크 압력과 지연 데이터를 시험합니다. Output 한도는 Node 디스크 전체의 상한이 아닙니다.
+
+원문 `log`에는 `app`에 있는 데이터가 중복될 수 있습니다. 저장하면 안 되는 내용을 먼저 제거하고 거부 기록을 모니터링합니다. 요청 body tracing을 상시 진단 설정으로 켜지 않습니다.
+
+<span id="kinesis-data-firehose를-통한-수집"></span>
+
+### Amazon Data Firehose를 통한 수집
+
+Data Firehose는 buffering·retry·backup 통제를 제공하는 관리형 전송 대안이며 모든 워크로드에서 가장 저렴하거나 간단한 방식은 아닙니다. Terraform 리소스 이름은 여전히 `aws_kinesis_firehose_delivery_stream`입니다.
+
+다음 선택적 리소스 파일은 앞의 도메인과 기존의 승인 delivery role·subnet·보안 그룹·비공개 backup bucket 입력을 사용합니다.
 
 ```hcl
-# firehose.tf
-resource "aws_kinesis_firehose_delivery_stream" "opensearch" {
+variable "firehose_role_arn" {
+  type = string
+}
+
+variable "firehose_subnet_ids" {
+  type = list(string)
+}
+
+variable "firehose_security_group_ids" {
+  type = list(string)
+}
+
+variable "backup_bucket_arn" {
+  type = string
+}
+
+resource "aws_cloudwatch_log_group" "firehose" {
+  name              = "/aws/kinesisfirehose/logs-to-opensearch"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_stream" "firehose" {
+  name           = "opensearch-delivery"
+  log_group_name = aws_cloudwatch_log_group.firehose.name
+}
+
+resource "aws_kinesis_firehose_delivery_stream" "logs" {
   name        = "logs-to-opensearch"
   destination = "opensearch"
 
   opensearch_configuration {
-    domain_arn            = aws_opensearch_domain.main.arn
-    role_arn              = aws_iam_role.firehose.arn
-    index_name            = "logs"
+    domain_arn            = aws_opensearch_domain.logs.arn
+    role_arn              = var.firehose_role_arn
+    index_name            = "logs-production-firehose"
     index_rotation_period = "OneDay"
     buffering_interval    = 60
     buffering_size        = 5
     retry_duration        = 300
+    s3_backup_mode        = "FailedDocumentsOnly"
 
     vpc_config {
-      subnet_ids         = data.aws_subnets.private.ids
-      security_group_ids = [aws_security_group.firehose.id]
-      role_arn           = aws_iam_role.firehose_vpc.arn
+      subnet_ids         = var.firehose_subnet_ids
+      security_group_ids = var.firehose_security_group_ids
+      role_arn           = var.firehose_role_arn
     }
 
     cloudwatch_logging_options {
       enabled         = true
       log_group_name  = aws_cloudwatch_log_group.firehose.name
-      log_stream_name = "opensearch-delivery"
+      log_stream_name = aws_cloudwatch_log_stream.firehose.name
     }
 
     s3_configuration {
-      role_arn           = aws_iam_role.firehose.arn
-      bucket_arn         = aws_s3_bucket.backup.arn
-      prefix             = "failed/"
+      role_arn           = var.firehose_role_arn
+      bucket_arn         = var.backup_bucket_arn
+      prefix             = "opensearch-failed/"
       buffering_size     = 10
       buffering_interval = 400
       compression_format = "GZIP"
@@ -693,73 +833,92 @@ resource "aws_kinesis_firehose_delivery_stream" "opensearch" {
 }
 ```
 
----
+Delivery role에는 필요한 OpenSearch/FGAC, S3, CloudWatch, VPC/ENI 및 KMS 권한이 있어야 합니다. 역할 trust와 배포자의 `iam:PassRole`은 별도입니다. Delivery role을 domain caller 입력·writer mapping에 포함하고 VPC 연결이 도메인 443 포트에 도달하도록 구성합니다.
+
+Backup mode는 `FailedDocumentsOnly`로 선택합니다. S3 prefix 이름을 `failed/`로 정하는 것만으로 실패 데이터만 저장하는 것은 아닙니다. 비공개 backup bucket의 실패·재전송을 시험합니다. Firehose 입력도 timestamp를 포함해 mapping과 맞아야 하며 서비스가 이 예제의 Kubernetes metadata·application envelope를 자동 생성하지는 않습니다.
+
+<span id="대시보드-접근-설정"></span>
+<span id="인덱스-패턴-생성"></span>
+<span id="시각화-생성"></span>
 
 ## OpenSearch Dashboards
 
-### 대시보드 접근 설정
+### 접근과 인덱스 패턴
 
-```bash
-# SSH 터널 (개발/테스트용)
-ssh -i key.pem -L 9200:vpc-logs-production-xxx.ap-northeast-2.es.amazonaws.com:443 ec2-user@bastion
+승인된 VPC 연결과 domain policy에 맞는 인증을 사용합니다. 단순 SSH 터널만으로 원래 TLS hostname, SSO redirect, SigV4 서명이 유지되지는 않습니다. `https://localhost:9200`에 접속하기 위해 인증서 검증을 끄지 않습니다. ALB 하나가 완전한 domain/Dashboards 연동 구성은 아닙니다.
 
-# 또는 ALB를 통한 접근 (프로덕션 권장)
-```
-
-### 인덱스 패턴 생성
-
-```
-1. OpenSearch Dashboards 접속
-2. Management > Stack Management > Index Patterns
-3. "Create index pattern" 클릭
-4. Index pattern: logs-*
-5. Time field: @timestamp
-6. "Create index pattern" 클릭
-```
+인증된 접근을 구성한 뒤 `logs-production-*` data view/index pattern을 만들고 시간 필드로 `@timestamp`를 선택합니다. 메뉴 이름은 Dashboards 버전과 활성화한 UI에 따라 다릅니다.
 
 ### 검색 쿼리 예시
 
-```json
-# 에러 로그 검색
-GET logs-*/_search
+```http
+GET logs-production-*/_search
 {
   "query": {
     "bool": {
-      "must": [
-        { "match": { "level": "error" } },
-        { "range": { "@timestamp": { "gte": "now-1h" } } }
-      ],
       "filter": [
-        { "term": { "kubernetes.namespace": "production" } }
+        {
+          "term": {
+            "app.level": "error"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-1h"
+            }
+          }
+        },
+        {
+          "term": {
+            "kubernetes.namespace_name": "production"
+          }
+        }
       ]
     }
   },
   "sort": [
-    { "@timestamp": { "order": "desc" } }
+    {
+      "@timestamp": {
+        "order": "desc"
+      }
+    }
   ],
   "size": 100
 }
 
-# 집계 쿼리 - 네임스페이스별 에러 수
-GET logs-*/_search
+GET logs-production-*/_search
 {
   "size": 0,
   "query": {
-    "range": {
-      "@timestamp": { "gte": "now-24h" }
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "app.level": "error"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-24h"
+            }
+          }
+        }
+      ]
     }
   },
   "aggs": {
     "by_namespace": {
       "terms": {
-        "field": "kubernetes.namespace",
+        "field": "kubernetes.namespace_name",
         "size": 20
       },
       "aggs": {
-        "by_level": {
+        "by_type": {
           "terms": {
-            "field": "level",
-            "size": 5
+            "field": "app.error_type",
+            "size": 10
           }
         }
       }
@@ -767,108 +926,86 @@ GET logs-*/_search
   }
 }
 
-# 응답 시간 백분위수
-GET logs-*/_search
+GET logs-production-*/_search
 {
   "size": 0,
   "query": {
     "bool": {
-      "must": [
-        { "exists": { "field": "http.response_time_ms" } },
-        { "range": { "@timestamp": { "gte": "now-1h" } } }
+      "filter": [
+        {
+          "exists": {
+            "field": "app.http.response_time_ms"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-1h"
+            }
+          }
+        }
       ]
     }
   },
   "aggs": {
     "response_time_percentiles": {
       "percentiles": {
-        "field": "http.response_time_ms",
-        "percents": [50, 75, 90, 95, 99]
+        "field": "app.http.response_time_ms",
+        "percents": [
+          50,
+          75,
+          90,
+          95,
+          99
+        ]
       }
     }
   }
 }
 ```
 
-### 시각화 생성
+정확한 keyword·시간 조건을 filter context에서 평가합니다. 두 번째 쿼리는 실제로 error만 필터링한 뒤 namespace를 집계합니다. Terms aggregation은 top-N이며 분산 근사·제외 bucket이 존재할 수 있으므로 모든 namespace의 완전한 건수와 같지 않습니다. Percentile은 근사치이며 mapping의 밀리초 필드를 사용합니다.
 
-```
-# Pie Chart: 로그 레벨 분포
-1. Visualize > Create visualization > Pie
-2. Index pattern: logs-*
-3. Buckets > Split slices > Terms > level
-4. Save
+시각화에는 `app.level`, `@timestamp`의 시간 histogram, 명시적으로 mapping한 `app.message.keyword`/`app.error_type`을 사용합니다. 대시보드에서 필드 이름을 쓰는 것만으로 mapping이 생성되지는 않습니다.
 
-# Line Chart: 시간별 에러 추이
-1. Visualize > Create visualization > Line
-2. Index pattern: logs-*
-3. Y-axis: Count
-4. X-axis: Date Histogram > @timestamp
-5. Add filter: level: error
-6. Save
-
-# Data Table: 상위 에러 메시지
-1. Visualize > Create visualization > Data table
-2. Index pattern: logs-*
-3. Bucket: Terms > message.keyword (Top 10)
-4. Add filter: level: error
-5. Save
-```
-
----
+<span id="fine-grained-access-control-fgac"></span>
+<span id="문서-수준-보안-dls"></span>
+<span id="필드-수준-보안-fls"></span>
 
 ## 보안 설정
 
-### Fine-Grained Access Control (FGAC)
+### Fine-Grained Access Control
 
-```json
-# 역할 생성
-PUT _plugins/_security/api/roles/logs-reader
+네트워크 접근, domain resource policy와 FGAC는 별도 계층입니다. Terraform의 IAM principal policy에는 SigV4가 필요합니다. 보안 그룹 허용이나 IAM 요청 성공만으로 인덱스 접근 권한이 생기지 않습니다.
+
+관리자가 수집기 writer와 namespace 범위 reader를 정의할 수 있습니다.
+
+```http
+PUT _plugins/_security/api/roles/logs-writer
 {
   "cluster_permissions": [
-    "cluster_composite_ops_ro"
+    "cluster_composite_ops"
   ],
   "index_permissions": [
     {
-      "index_patterns": ["logs-*"],
+      "index_patterns": [
+        "logs-production-*"
+      ],
       "allowed_actions": [
-        "read",
-        "search"
+        "create_index",
+        "write"
       ]
     }
   ]
 }
 
-# 역할 매핑 (IAM 역할)
-PUT _plugins/_security/api/rolesmapping/logs-reader
+PUT _plugins/_security/api/rolesmapping/logs-writer
 {
   "backend_roles": [
-    "arn:aws:iam::123456789012:role/DeveloperRole"
-  ],
-  "users": [
-    "developer@example.com"
+    "arn:aws:iam::123456789012:role/FluentBitOpenSearchRole"
   ]
 }
 
-# 관리자 역할
-PUT _plugins/_security/api/roles/logs-admin
-{
-  "cluster_permissions": [
-    "cluster_all"
-  ],
-  "index_permissions": [
-    {
-      "index_patterns": ["logs-*"],
-      "allowed_actions": ["indices_all"]
-    }
-  ]
-}
-```
-
-### 문서 수준 보안 (DLS)
-
-```json
-# 특정 네임스페이스만 접근 가능한 역할
 PUT _plugins/_security/api/roles/team-a-logs
 {
   "cluster_permissions": [
@@ -876,261 +1013,157 @@ PUT _plugins/_security/api/roles/team-a-logs
   ],
   "index_permissions": [
     {
-      "index_patterns": ["logs-*"],
-      "dls": "{\"bool\": {\"must\": [{\"term\": {\"kubernetes.namespace\": \"team-a\"}}]}}",
-      "allowed_actions": ["read", "search"]
+      "index_patterns": [
+        "logs-production-*"
+      ],
+      "dls": "{\"term\":{\"kubernetes.namespace_name\":\"team-a\"}}",
+      "allowed_actions": [
+        "read"
+      ]
     }
+  ]
+}
+
+PUT _plugins/_security/api/rolesmapping/team-a-logs
+{
+  "backend_roles": [
+    "arn:aws:iam::123456789012:role/TeamAReaderRole"
   ]
 }
 ```
 
-### 필드 수준 보안 (FLS)
+ARN은 승인된 실제 identity로 교체합니다. Firehose를 사용하면 delivery role도 writer mapping에 추가해야 합니다. 일반 reader에게 `cluster_all`이나 master role을 주지 않습니다. IAM backend-role mapping과 내부 사용자·SAML username은 다른 신원 체계입니다.
 
-```json
-# 민감한 필드 숨기기
-PUT _plugins/_security/api/roles/logs-restricted
+### 문서 수준 보안과 필드 수준 보안
+
+DLS는 저장된 필드로 문서를 필터링합니다. 이 예제에서는 신뢰된 수집기가 namespace metadata를 만들어야 하며 앱이 제공한 문자열 자체가 테넌트 신원의 증거는 아닙니다.
+
+다음 **결합 역할**은 namespace 제한을 유지하면서 선택한 응답 필드만 허용합니다.
+
+```http
+PUT _plugins/_security/api/roles/team-a-limited
 {
   "cluster_permissions": [
     "cluster_composite_ops_ro"
   ],
   "index_permissions": [
     {
-      "index_patterns": ["logs-*"],
-      "fls": ["~user_id", "~ip_address", "~session_token"],
-      "allowed_actions": ["read", "search"]
+      "index_patterns": [
+        "logs-production-*"
+      ],
+      "fls": [
+        "@timestamp",
+        "kubernetes.namespace_name",
+        "app.level",
+        "app.message"
+      ],
+      "allowed_actions": [
+        "read"
+      ],
+      "dls": "{\"term\":{\"kubernetes.namespace_name\":\"team-a\"}}"
     }
   ]
 }
 ```
 
+더 넓은 권한이 있는 identity에 제한 역할만 추가하지 말고 의도한 역할을 매핑하며, 전체 effective role을 평가합니다. 원문 `log`는 숨긴 JSON 필드를 중복 포함할 수 있어 allowlist에서 제외했습니다.
+
+FLS는 반환 필드를 통제하며 허용된 message 문자열 내부의 내용을 가리지 않습니다. `_source`, 스냅샷·보관 파일에서 정보를 삭제하지도 않습니다. Search/get/multi-search/aggregation 접근을 시험하고, 수집하면 안 되는 정보는 처음부터 기록하지 않습니다.
+
 ### SAML 인증 설정
 
-```yaml
-# opensearch-security-config.yaml
-config:
-  dynamic:
-    authc:
-      saml_auth_domain:
-        enabled: true
-        order: 1
-        http_authenticator:
-          type: saml
-          challenge: true
-          config:
-            idp:
-              metadata_url: https://example.okta.com/app/xxx/sso/saml/metadata
-              entity_id: http://www.okta.com/xxx
-            sp:
-              entity_id: https://vpc-logs-production-xxx.ap-northeast-2.es.amazonaws.com
-            kibana_url: https://vpc-logs-production-xxx.ap-northeast-2.es.amazonaws.com/_dashboards
-            roles_key: Role
-            exchange_key: your-exchange-key
-        authentication_backend:
-          type: noop
+관리형 OpenSearch Service의 SAML은 자체 설치용 `opensearch-security/config.yml` 업로드가 아니라 **AWS domain configuration API**로 설정합니다.
+
+다음 로컬 helper는 승인된 IdP XML을 수동 escape 없이 JSON으로 직렬화합니다. 예제 관리자 그룹·role attribute key는 검토한 실제 IdP 설정으로 교체합니다.
+
+```python
+from pathlib import Path
+import json
+import xml.etree.ElementTree as ET
+
+metadata = Path("idp-metadata.xml").read_text(encoding="utf-8")
+root = ET.fromstring(metadata)
+if root.tag.rsplit("}", 1)[-1] != "EntityDescriptor" or not root.get("entityID"):
+    raise ValueError("Provide approved metadata for one IdP EntityDescriptor")
+options = {
+    "SAMLOptions": {
+        "Enabled": True,
+        "Idp": {"EntityId": root.get("entityID"), "MetadataContent": metadata},
+        "MasterBackendRole": "opensearch-admin",
+        "RolesKey": "Role",
+        "SessionTimeoutMinutes": 60,
+    }
+}
+Path("advanced-security-saml.json").write_text(json.dumps(options, indent=2) + "\n")
 ```
 
----
+```bash
+aws opensearch update-domain-config \
+  --domain-name logs-production --region ap-northeast-2 \
+  --advanced-security-options file://advanced-security-saml.json
+```
+
+Payload 예제이며 완전한 SSO 배포가 아닙니다. Metadata 신뢰, entity ID, 인증서, ACS/Dashboards URL과 mapping을 검증합니다. SAML 브라우저 트래픽에는 맞는 domain access policy가 필요합니다. `SAMLOptions`를 켜도 앞의 IAM-only policy에 필요한 SigV4 요청으로 바뀌지 않습니다. 일관된 인증 구성을 선택하고 기존 도메인 변경 전 관리자 복구를 시험합니다.
+
+<span id="스토리지-티어링"></span>
+<span id="비용-비교-100gb-일-기준"></span>
+<span id="인덱스-최적화"></span>
+<span id="reserved-instance"></span>
 
 ## 비용 최적화
 
-### 스토리지 티어링
+### 스토리지와 인덱스 설정
 
-```
-Hot (EBS gp3)    →    UltraWarm    →    Cold Storage (S3)
-     │                    │                    │
-  Day 0-7            Day 7-30            Day 30-90
-     │                    │                    │
- 빠른 쿼리           읽기 전용           아카이브
- 높은 비용           중간 비용           낮은 비용
-```
+선택한 Region, 인스턴스 계열·개수, replica, EBS, warm 컴퓨팅·저장소, cold, 전송·수집 경로를 함께 산정합니다. 기존 100GB/일 달러 합계·고정 절감률은 재현에 필요한 가정이 부족해 현재 예산이나 측정 비교가 아닙니다.
 
-### 비용 비교 (100GB/일 기준)
+압축, refresh interval, shard 수와 mapping은 저장·CPU, 검색 freshness, 쿼리 기능과 복구 비용을 절충합니다. `index.codec` 같은 static 설정은 생성 template에 두고 모든 열린 운영 인덱스에 무작정 변경 요청을 보내지 않습니다. Text position을 제거하거나 필드를 끄면 쿼리가 깨질 수 있습니다.
 
-| 스토리지 티어 | 저장 기간 | 월간 비용 | GB당 비용 |
-|---------------|-----------|-----------|-----------|
-| Hot (EBS gp3) | 7일 | ~$500 | $0.10/GB |
-| UltraWarm | 23일 | ~$350 | $0.024/GB |
-| Cold Storage | 60일 | ~$120 | $0.01/GB |
-| **총 (90일 보존)** | - | **~$970/월** | - |
-| Hot만 사용 시 | 90일 | ~$2,700/월 | - |
-| **절감액** | - | **~$1,730/월** | **64% 절감** |
+Reserved Instance 할인은 대상 사용량·Region·기간·결제 방식에 따라 다릅니다. 1년 사용 계획만으로 구매를 결정하거나 node 할인이 모든 저장·전송 비용에 적용된다고 가정하지 않습니다. 기존 고정 21/24/36% 대신 현재 가격·실측 수요로 판단합니다.
 
-### 인덱스 최적화
-
-```json
-# 압축 설정
-PUT logs-*/_settings
-{
-  "index": {
-    "codec": "best_compression"
-  }
-}
-
-# 리프레시 간격 조정 (수집 시)
-PUT logs-*/_settings
-{
-  "index": {
-    "refresh_interval": "30s"
-  }
-}
-
-# 불필요한 필드 비활성화
-PUT _index_template/logs-optimized
-{
-  "index_patterns": ["logs-*"],
-  "template": {
-    "mappings": {
-      "_source": {
-        "enabled": true
-      },
-      "properties": {
-        "message": {
-          "type": "text",
-          "norms": false,
-          "index_options": "docs"
-        }
-      }
-    }
-  }
-}
-```
-
-### Reserved Instance
-
-```bash
-# RI 구매 권장 사항
-# - 1년 이상 사용 예정인 경우 RI 구매
-# - All Upfront 옵션이 가장 저렴 (최대 36% 절감)
-# - Partial Upfront: 24% 절감
-# - No Upfront: 21% 절감
-```
-
----
+<span id="역인덱스-구조의-비효율"></span>
+<span id="집계-쿼리-성능-저하"></span>
+<span id="스케일링-비용-문제"></span>
+<span id="clickhouse-마이그레이션-판단-기준"></span>
 
 ## 대규모 로그 환경에서의 한계
 
-OpenSearch는 전문 검색에 강점이 있지만, 로그 볼륨이 급격히 증가하는 환경에서는 구조적 한계가 드러납니다.
+OpenSearch는 역인덱스뿐 아니라 여러 집계·정렬에 **컬럼형 doc values**를 사용합니다. 집계할 때 항상 모든 `_source` 문서 전체를 다시 읽는 구조가 아닙니다. Mapping, 선택도, shard, cache, segment 배치와 동시 작업에 따라 성능이 달라집니다.
 
-### 역인덱스 구조의 비효율
+기존 OpenSearch/ClickHouse 지연·압축 수치에는 재현 가능한 하드웨어·버전·데이터·쿼리 근거가 없었습니다. 이를 보편적인 100GB 전환 기준이나 모든 조직의 쿼리 90%가 같은 패턴이라는 주장으로 사용하지 않습니다.
 
-| 항목 | OpenSearch (역인덱스) | ClickHouse (컬럼형) |
-|------|---------------------|-------------------|
-| **압축률** | 원본 대비 1.5-2배 증가 (인덱스 포함) | 원본 대비 5-10배 압축 |
-| **집계 쿼리** | 전체 문서 스캔 필요 | 컬럼 단위 스캔으로 빠름 |
-| **스토리지 비용** | 높음 (인덱스 + 원본) | 낮음 (컬럼 압축) |
-| **INSERT 비용** | 인덱싱 CPU 부하 높음 | 컬럼 append로 가벼움 |
+같은 데이터·보존·내구성·동시성 조건에서 대표 전문 검색, 필터, 집계·조사 쿼리를 비교합니다. 수집·backfill 비용, 스키마 변경, 권한, 대시보드, 운영 역량과 롤백을 평가합니다. 이중 적재 실험에는 정합성·비용 통제가 필요하며 고정 2주·2개월 일정이 보장은 아닙니다.
 
-### 집계 쿼리 성능 저하
-
-로그 분석에서 자주 사용하는 집계 쿼리(최근 1시간 ERROR 수, 서비스별 에러율 등)에서 OpenSearch는 모든 매칭 문서를 읽어야 하므로 데이터가 커질수록 성능이 급격히 저하됩니다.
-
-```
-쿼리: "최근 1시간 ERROR 로그 수를 서비스별로 집계"
-
-OpenSearch: 인덱스에서 문서 ID 조회 → 각 문서 읽기 → 집계
-           100GB 규모: ~2초 / 1TB 규모: ~25초 / 10TB 규모: 타임아웃
-
-ClickHouse: timestamp, level, service 컬럼만 스캔 → 집계
-           100GB 규모: ~0.3초 / 1TB 규모: ~1초 / 10TB 규모: ~8초
-```
-
-### 스케일링 비용 문제
-
-| 일 로그량 | OpenSearch 월 비용 (추정) | ClickHouse 월 비용 (추정) | 비율 |
-|----------|------------------------|------------------------|------|
-| 100GB | ~$970 | ~$400 | 2.4x |
-| 500GB | ~$4,500 | ~$1,200 | 3.8x |
-| 1TB | ~$9,000 | ~$2,000 | 4.5x |
-| 10TB | ~$80,000+ | ~$10,000 | 8x+ |
-
-> **핵심**: 로그 조회 패턴을 분석하면, 대부분의 환경에서 90% 이상이 "시간 범위 + 필드 조건" 기반 조회입니다. 이 패턴은 역인덱스보다 컬럼형 스토리지가 훨씬 효율적입니다.
-
-### ClickHouse 마이그레이션 판단 기준
-
-아래 기준으로 OpenSearch를 유지할지, ClickHouse로 전환할지 판단할 수 있습니다.
-
-| 기준 | OpenSearch 유지 | ClickHouse 전환 고려 |
-|------|----------------|-------------------|
-| **일 로그량** | 100GB 미만 | 100GB 이상 |
-| **주요 조회 패턴** | 전문 검색 (키워드 기반) | 시간 범위 + 필드 조건 |
-| **집계 쿼리 비율** | 낮음 (전체의 20% 미만) | 높음 (전체의 50% 이상) |
-| **비용 민감도** | 낮음 | 높음 |
-| **전문 검색 필요성** | 필수 (핵심 기능) | 선택적 (있으면 좋음) |
-| **팀 SQL 역량** | 낮음 | 높음 |
-
-**마이그레이션 시 고려사항:**
-
-```
-1단계: 조회 패턴 분석 (2주)
-  └── 실제 쿼리 로그에서 전문 검색 vs 필드 조건 조회 비율 확인
-
-2단계: 병렬 운영 (1-2개월)
-  └── 동일 로그를 OpenSearch + ClickHouse에 이중 적재
-  └── 쿼리 성능 및 비용 비교
-
-3단계: 단계적 전환
-  └── 집계/대시보드 쿼리 → ClickHouse 우선 전환
-  └── 전문 검색이 필요한 일부 → OpenSearch 유지 또는 ClickHouse tokenbf 인덱스 활용
-```
-
----
+<span id="기능-비교"></span>
+<span id="사용-사례별-권장"></span>
+<span id="마이그레이션-고려사항"></span>
 
 ## Loki와의 비교
 
-### 기능 비교
+| 영역 | OpenSearch | Loki |
+|---|---|---|
+| 인덱스·쿼리 모델 | Mapped field, 역인덱스·doc values, Query DSL과 지원 SQL/PPL 기능 | 스트림 레이블 인덱스, 청크 스캔, LogQL 파이프라인·메트릭 |
+| 텍스트 검색 | Analyzer, relevance와 전문 검색 기능 | 선택한 스트림·시간 범위에서 본문 필터링·검색 |
+| 접근 통제 | Network/IAM/FGAC와 구성한 문서·필드 권한 | 인증 gateway, 테넌트 인가와 정책·운영 통제 |
+| 비용·운영 | 프로비저닝·관리 모델과 워크로드에 따라 달라짐 | 배포 모드, 스트림, 객체 저장소, 캐시와 쿼리에 따라 달라짐 |
+| 이전 | Mapping·쿼리를 재구성하고 권한·데이터 정합성 확인 | 레이블·metadata·쿼리를 재설계하고 권한·데이터 정합성 확인 |
 
-| 기능 | OpenSearch | Loki |
-|------|-----------|------|
-| **전문 검색** | 우수 (Lucene 기반) | 제한적 (레이블+grep) |
-| **쿼리 언어** | Query DSL, SQL | LogQL |
-| **인덱싱** | 전체 텍스트 | 레이블만 |
-| **스토리지 비용** | 높음 | 낮음 (객체 스토리지) |
-| **복잡한 집계** | 우수 | 기본적 |
-| **대시보드** | OpenSearch Dashboards | Grafana |
-| **운영 복잡성** | 높음 | 낮음 |
-| **확장성** | 수평 확장 | 수평 확장 |
-| **멀티테넌시** | FGAC | 네이티브 |
+어느 제품도 자동으로 규정 준수·최저 비용·간단한 운영을 보장하지 않습니다. Loki도 텍스트 검색과 파생 메트릭을 지원합니다. 이전은 의미·기능의 변화이며 고정 3–5배 비용 또는 60–80% 절감 공식이 아닙니다.
 
-### 사용 사례별 권장
+## 검증과 참고 자료
 
-```
-OpenSearch 권장:
-├── 전문 검색이 필수인 경우
-├── 복잡한 분석/집계 쿼리가 많은 경우
-├── 규정 준수 요구사항 (감사 로그)
-├── 보안 분석 (SIEM)
-└── 기존 ELK 스택 마이그레이션
+로컬 검사는 Terraform 리소스 설정과 공개한 데이터·설정 관계를 다룹니다. 실제 AWS 인가, Region별 SKU 용량, 수집기 전달, ISM 이동·삭제, SAML 인증·쿼리 성능을 입증하지 않습니다. 이미지 index·configuration metadata는 읽었지만 실행 layer를 내려받거나 컨테이너를 실행하지 않았습니다.
 
-Loki 권장:
-├── 비용이 최우선인 경우
-├── 이미 Grafana를 사용 중인 경우
-├── 단순한 로그 검색/필터링
-├── Prometheus와 통합 필요
-└── 운영 부담을 줄이고 싶은 경우
-```
-
-### 마이그레이션 고려사항
-
-```yaml
-# Loki에서 OpenSearch로 마이그레이션 시
-considerations:
-  - 쿼리 재작성 필요 (LogQL → Query DSL)
-  - 대시보드 재구성 (Grafana → OpenSearch Dashboards)
-  - 인덱스 템플릿/매핑 설계
-  - 비용 증가 예상 (3-5배)
-  - 운영 복잡성 증가
-
-# OpenSearch에서 Loki로 마이그레이션 시
-considerations:
-  - 전문 검색 기능 손실
-  - 복잡한 집계 쿼리 제한
-  - 기존 대시보드/알림 재구성
-  - 비용 절감 (60-80%)
-  - 운영 단순화
-```
-
----
+- [서비스·버전 지원](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html)
+- [지원 인스턴스](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html)와 [Multi-AZ](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-multiaz.html)
+- [VPC 접근](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html), [접근 정책](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ac.html), [FGAC](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html)
+- [UltraWarm](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html), [cold](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cold-storage.html), [관리형 ISM](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ism.html), [ISM 정책](https://docs.opensearch.org/latest/im-plugin/ism/policies/)
+- [Rollover API](https://docs.opensearch.org/latest/api-reference/index-apis/rollover/)와 [doc values](https://docs.opensearch.org/latest/field-types/mapping-parameters/doc-values/)
+- [스냅샷](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-snapshots.html), [CloudWatch 로그](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html), [SAML](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/saml.html)
+- [AWS for Fluent Bit 릴리스](https://github.com/aws/aws-for-fluent-bit/blob/mainline/CHANGELOG.md)와 [OpenSearch output](https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/opensearch.md)
+- [Data Firehose 목적지 설정](https://docs.aws.amazon.com/firehose/latest/dev/create-destination.html)
+- [현재 서비스 가격](https://aws.amazon.com/opensearch-service/pricing/)
+- [Elastic 라이선스 FAQ](https://www.elastic.co/pricing/faq/licensing)
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [OpenSearch 퀴즈](../../quizzes/observability/logging/02-opensearch-quiz.md)를 풀어보세요.
+[OpenSearch 퀴즈](../../quizzes/observability/logging/02-opensearch-quiz.md)에서 위 차이를 확인합니다.

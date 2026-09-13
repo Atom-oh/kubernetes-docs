@@ -1,10 +1,12 @@
 # CloudWatch Logs Quiz
 
-Test your understanding of Amazon CloudWatch Logs.
+> **Last Updated**: September 13, 2026
+
+[Guide](../../../observability/logging/03-cloudwatch-logs.md)
 
 ---
 
-1. Which is NOT a supported log type in EKS control plane logging?
+1. Which is not an EKS control-plane log type?
 
    - A) api
    - B) audit
@@ -12,37 +14,35 @@ Test your understanding of Amazon CloudWatch Logs.
    - D) scheduler
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) worker**
+**Answer: C**
 
-**Explanation:**
-The EKS control plane supports 5 log types: api, audit, authenticator, controllerManager, and scheduler. Worker node logs are not control plane logs and must be collected separately through Container Insights or FluentBit.
+The five types are api, audit, authenticator, controllerManager and scheduler. Worker/application logs and Auto Mode managed-component delivery are separate paths.
 
 </details>
 
 ---
 
-2. Which is the most expensive item in CloudWatch Logs pricing structure?
+2. How should CloudWatch Logs cost drivers be compared?
 
-   - A) Storage
-   - B) Ingestion
-   - C) Query (Logs Insights)
-   - D) S3 Export
+   - A) Ingestion is always the largest monthly charge
+   - B) Storage is always free
+   - C) Every S3 delivery path is free
+   - D) Compare actual volume, retention, scans, class, Region and downstream charges
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Ingestion**
+**Answer: D**
 
-**Explanation:**
-CloudWatch Logs ingestion costs $0.50/GB, which is much higher than storage ($0.03/GB/month) or queries ($0.005/GB scanned). Therefore, filtering unnecessary logs is important for cost optimization.
+A price per ingested GB cannot alone be ranked against GB-month storage or repeated scan volume. The guide's $1,575 example is hypothetical arithmetic, not current Seoul pricing or a complete bill.
 
 </details>
 
 ---
 
-3. What command in CloudWatch Logs Insights extracts specific fields?
+3. Which Logs Insights QL command extracts fields using a glob or regular expression?
 
    - A) extract
    - B) parse
@@ -50,56 +50,53 @@ CloudWatch Logs ingestion costs $0.50/GB, which is much higher than storage ($0.
    - D) filter
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) parse**
+**Answer: B**
 
-**Explanation:**
-In CloudWatch Logs Insights, the `parse` command extracts fields matching specific patterns from log messages. Example: `parse @message '"level":"*"' as level`
+parse extracts fields; jsonParse can parse a JSON message. The collector envelope places application fields under log_processed. Do not assume arbitrary JSON key order in a glob.
 
 </details>
 
 ---
 
-4. What is the log group path format for logs collected through Container Insights?
+4. Which group is used by the manual application collector in this guide?
 
-   - A) `/aws/eks/cluster-name/logs`
-   - B) `/aws/containerinsights/cluster-name/application`
-   - C) `/var/log/containers/cluster-name`
-   - D) `/kubernetes/cluster-name/logs`
+   - A) /aws/containerinsights/example-eks/application
+   - B) /aws/eks/example-eks/logs
+   - C) /var/log/containers/example-eks
+   - D) Every cluster uses one immutable universal group name
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) `/aws/containerinsights/cluster-name/application`**
+**Answer: A**
 
-**Explanation:**
-Container Insights creates log groups under the `/aws/containerinsights/{cluster-name}/` path, including application, host, dataplane, and performance log groups.
+The configured application group differs from /aws/eks/example-eks/cluster for control-plane logs. The group is prepared first; the collector does not create it or change retention.
 
 </details>
 
 ---
 
-5. What CloudWatch Logs feature delivers logs to Lambda functions for real-time log processing?
+5. Which statement about subscription delivery is correct?
 
-   - A) Log Stream
-   - B) Metric Filter
-   - C) Subscription Filter
-   - D) Log Insight
+   - A) An S3 bucket ARN is a direct subscription-filter destination
+   - B) CloudWatch subscription batches work through Firehose's OpenSearch destination
+   - C) A subscription can send to Lambda, Kinesis or Firehose; S3 archiving through Firehose is a separate downstream step
+   - D) Subscriptions guarantee exactly-once delivery and backfill all history
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Subscription Filter**
+**Answer: C**
 
-**Explanation:**
-Subscription Filters deliver logs from log groups in real-time to other services (Lambda, Kinesis Data Firehose, Kinesis Data Streams). You can specify filter patterns to deliver only specific logs.
+The destination API and input format matter. CloudWatch Logs→Firehose→OpenSearch is specifically unsupported. Subscriptions are asynchronous and at least once; export tasks and vended-log delivery are different APIs.
 
 </details>
 
 ---
 
-6. What is the name of the FluentBit OUTPUT plugin for sending logs to CloudWatch Logs?
+6. What is the native C Fluent Bit output plugin for CloudWatch Logs?
 
    - A) cloudwatch
    - B) cloudwatch_logs
@@ -107,87 +104,82 @@ Subscription Filters deliver logs from log groups in real-time to other services
    - D) cw_logs
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) cloudwatch_logs**
+**Answer: B**
 
-**Explanation:**
-FluentBit's CloudWatch Logs output plugin is named `cloudwatch_logs`. It is included by default in the `aws-for-fluent-bit` image provided by AWS.
-
-</details>
-
----
-
-7. What is the correct CloudWatch Logs Insights query to aggregate log counts by time period?
-
-   - A) `stats count(*) group by hour`
-   - B) `stats count(*) as log_count by bin(1h)`
-   - C) `select count(*) from logs group by hour`
-   - D) `aggregate count by time(1h)`
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) `stats count(*) as log_count by bin(1h)`**
-
-**Explanation:**
-In CloudWatch Logs Insights, time-based aggregation uses the `stats` command and `bin()` function. `bin(1h)` groups data into 1-hour intervals.
+cloudwatch_logs is the native plugin. cloudwatch names the older Go plugin. Credentials, the actual ServiceAccount, output group and IAM policy still need to match.
 
 </details>
 
 ---
 
-8. Which is NOT a recommended strategy for CloudWatch Logs cost optimization?
+7. Which QL query counts events per hour and sorts the resulting time buckets?
 
-   - A) Filtering unnecessary logs (healthcheck, etc.)
-   - B) Setting different retention periods by environment
-   - C) Collecting all logs at DEBUG level
-   - D) Archiving long-retention logs to S3
+   - A) stats count(*) group by hour
+   - B) stats count(*) as log_count by bin(1h) as bucket | sort bucket asc
+   - C) select count(*) from logs group by hour
+   - D) stats count(*) by bin(1h) | sort @message
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Collecting all logs at DEBUG level**
+**Answer: B**
 
-**Explanation:**
-DEBUG level logs are very detailed and significantly increase log volume. In production environments, collecting only INFO level and above helps with cost optimization.
+stats changes the available output fields, so sort its bucket alias. The latency percentile function is pct, not percentile, and case-insensitive regex uses (?i) inside the slashes.
 
 </details>
 
 ---
 
-9. What is the primary purpose of using Metric Filters in CloudWatch Logs?
+8. Which logging policy is unsafe as a default cost-control approach?
 
-   - A) Exporting logs to S3
-   - B) Creating CloudWatch metrics from log patterns
-   - C) Setting log retention periods
-   - D) Configuring log encryption
+   - A) Review filters against records that must be kept
+   - B) Set retention through the log group's single owner
+   - C) Keep all DEBUG output indefinitely and indiscriminately drop security-relevant records to compensate
+   - D) Measure ingestion and scans before changing the design
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Creating CloudWatch metrics from log patterns**
+**Answer: C**
 
-**Explanation:**
-Metric Filters detect specific patterns (e.g., ERROR) in logs and create CloudWatch metrics. Based on these metrics, you can set up CloudWatch Alarms to receive notifications.
+Volume controls must preserve required diagnostics and security records. LOG_LEVEL in a ConfigMap has an effect only if the application consumes it. Retention changes can remove data.
 
 </details>
 
 ---
 
-10. Which permission is NOT required for IRSA (IAM Roles for Service Accounts) when setting up Container Insights on an EKS cluster?
+9. What does a metric filter do, and what does a zero default mean?
 
-    - A) logs:CreateLogGroup
-    - B) logs:PutLogEvents
-    - C) s3:PutObject
-    - D) cloudwatch:PutMetricData
+   - A) It exports every historical record to S3
+   - B) It derives metrics from new matching logs; default zero applies when logs arrive but no records match
+   - C) It always emits zero even when no logs arrive
+   - D) It supports every feature in every log class
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) s3:PutObject**
+**Answer: B**
 
-**Explanation:**
-The basic Container Insights setup does not require S3 permissions. Only CloudWatch Logs (logs:*) and CloudWatch Metrics (cloudwatch:PutMetricData) permissions are needed. S3 permissions are only required when setting up separate log exports to S3.
+This chapter uses a Standard-class JSON filter on $.log_processed.level. With no incoming logs, data can be missing. The alarm checks an error count in two five-minute periods, not an error rate or proof of service health.
+
+</details>
+
+---
+
+10. Which IAM/ownership arrangement fits the manual logs-only collector?
+
+   - A) Give all Pods an administrator role
+   - B) Attach a policy to cloudwatch-agent while deploying an unrelated ServiceAccount
+   - C) Use only s3:PutObject
+   - D) Precreate the group, authorize logs:CreateLogStream/logs:PutLogEvents on its ARN, and map the actual collector ServiceAccount
+
+<details>
+<summary>Show answer</summary>
+
+**Answer: D**
+
+The manual profile uses logging/fluent-bit-cloudwatch and an approved IRSA trust. It does not need PutMetricData or broad logs:* for this path. The full observability chart is a separate profile whose Fluent Bit Pods use cloudwatch-agent.
 
 </details>
