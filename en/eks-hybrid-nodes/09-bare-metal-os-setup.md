@@ -338,9 +338,10 @@ The following playbook is a **read-only preflight for already prepared hosts**. 
     ansible.builtin.command:
       argv: [/usr/local/bin/nodeadm, --version]
     changed_when: false
-  - name: Check services
+  - name: Check each required service
     ansible.builtin.command:
-      argv: [systemctl, is-active, containerd, kubelet]
+      argv: [systemctl, is-active, --quiet, "{{ item }}"]
+    loop: [containerd, kubelet]
     changed_when: false
 ```
 
@@ -402,7 +403,9 @@ cat /etc/os-release
 uname -m -r
 /usr/local/bin/nodeadm --version
 containerd --version
-systemctl is-active containerd kubelet
+for service in containerd kubelet; do
+  systemctl is-active --quiet "$service"
+done
 ```
 
 ```bash

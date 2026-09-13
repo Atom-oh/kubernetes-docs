@@ -36,8 +36,9 @@
       "4VitePress/Vuecompiles,all112originalfragmentsretainedwith21explicitaliases;12pairedquestionsaligned.",
       "Proof:.vitepress/cache/core-audit/eks-hybrid-bare-metal/final-validation.json"
     ],
-    "reviewedSha256": "b23f2affd93501673b228b00de7f6efacf352d6a0b046fc3109420a23a711309",
-    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json"
+    "reviewedSha256": "32f9f4299a60249ce7f2ab02de966670703525204fc4ddabf1a4cdbd09619aa3",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json",
+    "reviewFix": "Checkeachrequiredserviceindependently;10pairedmixedstatecasesvalidateshell+Ansiblecommands;nohostservicechanges."
   },
   {
     "path": "en/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md",
@@ -74,7 +75,8 @@
       "Proof:.vitepress/cache/core-audit/eks-hybrid-bare-metal/final-validation.json"
     ],
     "reviewedSha256": "885681daff650428b3d58e3df889a8132809e84eeb9007ddcb5168168f5ff503",
-    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json",
+    "reviewFix": "Checkeachrequiredserviceindependently;10pairedmixedstatecasesvalidateshell+Ansiblecommands;nohostservicechanges."
   },
   {
     "path": "ko/eks-hybrid-nodes/09-bare-metal-os-setup.md",
@@ -113,8 +115,9 @@
       "4VitePress/Vuecompiles,all112originalfragmentsretainedwith21explicitaliases;12pairedquestionsaligned.",
       "Proof:.vitepress/cache/core-audit/eks-hybrid-bare-metal/final-validation.json"
     ],
-    "reviewedSha256": "e125d73c63d467d625498727bbcba6ac420d0f56052adb2571deebe6a40a65b6",
-    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json"
+    "reviewedSha256": "f053f33e711e211a27959aaad1ca5693cfc3184872f87f6411ba34dc593de63d",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json",
+    "reviewFix": "Checkeachrequiredserviceindependently;10pairedmixedstatecasesvalidateshell+Ansiblecommands;nohostservicechanges."
   },
   {
     "path": "ko/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md",
@@ -151,6 +154,7 @@
       "Proof:.vitepress/cache/core-audit/eks-hybrid-bare-metal/final-validation.json"
     ],
     "reviewedSha256": "0258e8113ba1f2c5e7dbdb1e9ba135ccb8535a99d24e5eaab94c5de8ea4c36f6",
-    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json",
+    "reviewFix": "Checkeachrequiredserviceindependently;10pairedmixedstatecasesvalidateshell+Ansiblecommands;nohostservicechanges."
   }
 ]

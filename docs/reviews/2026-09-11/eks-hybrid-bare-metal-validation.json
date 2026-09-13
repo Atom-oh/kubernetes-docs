@@ -106,5 +106,146 @@
     "originalReport": ".vitepress/cache/core-audit/eks-hybrid-bare-metal/final-validation.json",
     "originalSha256": "b899c8fee952e948bc1c3cb3822687c3b24fc01771b2b8b1ba1805d8ab89ddac",
     "adoption": "Existingdomainworkerfullread/nativeevidence preserved;current4MDhashesmatchreviewedbatchrows. No new native/cloud execution claimed."
+  },
+  "reviewFix": {
+    "finding": "HYB-R1-001",
+    "validation": {
+      "status": "passed",
+      "finding": "HYB-R1-001",
+      "cases": [
+        {
+          "locale": "ko",
+          "services": {
+            "containerd": "active",
+            "kubelet": "active"
+          },
+          "shellPassed": true,
+          "ansibleItemResults": [
+            0,
+            0
+          ],
+          "expectedPassed": true
+        },
+        {
+          "locale": "ko",
+          "services": {
+            "containerd": "active",
+            "kubelet": "inactive"
+          },
+          "shellPassed": false,
+          "ansibleItemResults": [
+            0,
+            3
+          ],
+          "expectedPassed": false
+        },
+        {
+          "locale": "ko",
+          "services": {
+            "containerd": "inactive",
+            "kubelet": "active"
+          },
+          "shellPassed": false,
+          "ansibleItemResults": [
+            3,
+            0
+          ],
+          "expectedPassed": false
+        },
+        {
+          "locale": "ko",
+          "services": {
+            "containerd": "active",
+            "kubelet": "missing"
+          },
+          "shellPassed": false,
+          "ansibleItemResults": [
+            0,
+            3
+          ],
+          "expectedPassed": false
+        },
+        {
+          "locale": "ko",
+          "services": {
+            "containerd": "inactive",
+            "kubelet": "inactive"
+          },
+          "shellPassed": false,
+          "ansibleItemResults": [
+            3,
+            3
+          ],
+          "expectedPassed": false
+        },
+        {
+          "locale": "en",
+          "services": {
+            "containerd": "active",
+            "kubelet": "active"
+          },
+          "shellPassed": true,
+          "ansibleItemResults": [
+            0,
+            0
+          ],
+          "expectedPassed": true
+        },
+        {
+          "locale": "en",
+          "services": {
+            "containerd": "active",
+            "kubelet": "inactive"
+          },
+          "shellPassed": false,
+          "ansibleItemResults": [
+            0,
+            3
+          ],
+          "expectedPassed": false
+        },
+        {
+          "locale": "en",
+          "services": {
+            "containerd": "inactive",
+            "kubelet": "active"
+          },
+          "shellPassed": false,
+          "ansibleItemResults": [
+            3,
+            0
+          ],
+          "expectedPassed": false
+        },
+        {
+          "locale": "en",
+          "services": {
+            "containerd": "active",
+            "kubelet": "missing"
+          },
+          "shellPassed": false,
+          "ansibleItemResults": [
+            0,
+            3
+          ],
+          "expectedPassed": false
+        },
+        {
+          "locale": "en",
+          "services": {
+            "containerd": "inactive",
+            "kubelet": "inactive"
+          },
+          "shellPassed": false,
+          "ansibleItemResults": [
+            3,
+            3
+          ],
+          "expectedPassed": false
+        }
+      ],
+      "scope": "Actual corrected Markdown shell loops and parsed Ansible argv/loop with systemctl command double; no real service queries/restarts, no host changes. Double models documented any-active behavior."
+    },
+    "scope": "Onlyserviceprobecommandschanged;priorOS/schema/pricingevidencepreservedwithoutclaimingnewhostexecution."
   }
 }
