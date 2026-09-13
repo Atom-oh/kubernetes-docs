@@ -20,6 +20,8 @@ Amazon EKS 클러스터의 안정적인 운영을 위해서는 체계적인 장�
 
 ---
 
+<span id="1-장애-대응-프레임워크"></span>
+
 ## 1. 장애 대응 프레임워크
 
 ### 첫 5분 체크리스트 (Initial Triage)
@@ -130,6 +132,8 @@ LoadBalancer 목록은 Service JSON을 로컬 filter합니다. `spec.type`은 �
 -->
 
 ---
+
+<span id="2-컨트롤-플레인-디버깅"></span>
 
 ## 2. 컨트롤 플레인 디버깅
 
@@ -406,6 +410,8 @@ PRESERVE는 conflict 처리에서 기존 custom 설정 보존을 요청하지만
 
 ---
 
+<span id="3-노드-레벨-문제-해결"></span>
+
 ## 3. 노드 레벨 문제 해결
 
 <a id="node-join-diagnosis"></a>
@@ -625,6 +631,8 @@ Bootstrap gate는 controller와 scheduling의 경합 전에 새 node가 일치�
 [Release v0.5.0](https://github.com/kubernetes-sigs/node-readiness-controller/releases/tag/v0.5.0) · [Enforcement and dry-run semantics](https://github.com/kubernetes-sigs/node-readiness-controller/blob/v0.5.0/docs/book/src/user-guide/concepts.md) · [Reporter configuration](https://github.com/kubernetes-sigs/node-readiness-controller/blob/v0.5.0/docs/book/src/reference/reporter-configuration.md)
 
 ---
+
+<span id="4-워크로드-디버깅"></span>
 
 ## 4. 워크로드 디버깅
 
@@ -846,6 +854,8 @@ Placeholder image·health endpoint를 실제 앱 계약으로 교체합니다. S
 [Pod lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/) · [Debug running Pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/) · [HPA behavior](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) · [VPA modes](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
 
 ---
+
+<span id="5-네트워킹-진단"></span>
 
 ## 5. 네트워킹 진단
 
@@ -1089,6 +1099,8 @@ iperf3 -c "$IPERF_SERVER" -p 5201 -t 10 -P 1 -b 10M
 
 ---
 
+<span id="6-스토리지-문제-해결"></span>
+
 ## 6. 스토리지 문제 해결
 
 ### Driver·권한 식별
@@ -1240,6 +1252,8 @@ WaitForFirstConsumer만으로 기존 EBS를 다른 AZ에 attach할 수 없습니
 [EBS CSI/IAM](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html) · [Managed-policy scopes](https://docs.aws.amazon.com/eks/latest/userguide/security-iam-awsmanpol.html) · [Auto Mode parameters](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html) · [PV lifecycle](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) · [EFS CSI](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
 
 ---
+
+<span id="7-관측성-아키텍처"></span>
 
 ## 7. 관측성 아키텍처
 
@@ -1685,6 +1699,8 @@ OTLP client는 certificate를 신뢰하고 생성 Service·protocol·4317/4318 p
 
 ---
 
+<span id="8-장애-감지-아키텍처"></span>
+
 ## 8. 장애 감지 아키텍처
 
 ### 4계층 감지 Pipeline
@@ -2012,6 +2028,8 @@ EXPECTED_ALARM_ARN에는 정확한 소유 alarm을 지정합니다. 한 시간 a
 
 ---
 
+<span id="9-빠른-참조"></span>
+
 ## 9. 빠른 참조
 
 ### 증상 해석 후 변경 선택
@@ -2103,6 +2121,8 @@ Digest는 별도로 검토한 artifact 기록과 비교합니다. Sha256sum 출�
 [Kubeconform](https://github.com/yannh/kubeconform) · [K9s](https://github.com/derailed/k9s) · [eks-node-viewer](https://github.com/awslabs/eks-node-viewer) · [EKS troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)
 
 ---
+
+<span id="10-다음-단계"></span>
 
 ## 10. 다음 단계
 

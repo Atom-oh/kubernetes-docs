@@ -218,6 +218,8 @@ spec:
   - 198.51.100.32
 ```
 
+<span id="인그레스ingress"></span>
+
 ## 인그레스(Ingress)
 
 인그레스는 클러스터 외부에서 클러스터 내부 서비스로의 HTTP 및 HTTPS 경로를 노출하는 API 객체입니다. 인그레스는 로드 밸런싱, SSL 종료, 이름 기반 가상 호스팅을 제공합니다.
@@ -392,6 +394,8 @@ spec:
 ```
 
 이 인그레스는 AWS ALB를 사용하여 `example.com`에 대한 요청을 처리합니다.
+
+<span id="엔드포인트endpoints"></span>
 
 ## 엔드포인트(Endpoints)
 
@@ -766,6 +770,8 @@ spec:
 ```
 
 이 서비스 프로필은 `nginx` 서비스에 대한 경로와 재시도 정책을 정의합니다.
+
+<span id="cnicontainer-network-interface"></span>
 
 ## CNI(Container Network Interface)
 

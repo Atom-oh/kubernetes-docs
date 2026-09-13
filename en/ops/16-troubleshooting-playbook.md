@@ -24,6 +24,8 @@ Deep root-cause analysis (control plane logs, CloudWatch Logs Insights queries, 
 
 ***
 
+<span id="30-second-summary-symptom--first-command--most-common-cause"></span>
+
 ## 30-Second Summary: Symptom → First Command → Most Common Cause
 
 Each symptom cell links to its playbook section below.
@@ -72,6 +74,8 @@ kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | t
 
 ## Playbook by Symptom
 
+<span id="1-pod-stuck-in-pending"></span>
+
 ### 1. Pod stuck in `Pending`
 
 **Symptom**: `Pending` includes both waiting for scheduling and image download/container setup. Check `.spec.nodeName` and the `PodScheduled` condition first. For an unbound pod inspect scheduling events; for a bound pod inspect container, mount, and CNI states.
@@ -103,6 +107,8 @@ Do not infer from this summary alone that the CPU and memory failures must refer
 | `node(s) had volume node affinity conflict` | No schedulable node in the AZ where the PV (EBS) lives | Read the PV's `nodeAffinity` zone and provide capacity in that AZ |
 | `node(s) didn't match pod topology spread constraints` / `pod anti-affinity rules` | No node satisfies the spread constraint | Add suitable nodes. For topology spread, consider ScheduleAnyway only after reviewing availability goals; pod anti-affinity has separate required/preferred rules |
 | No events at all | Scheduler problem, or a misspelled `schedulerName` | Check `kubectl get pod <pod> -o jsonpath='{.spec.schedulerName}'` |
+
+<span id="2-imagepullbackoff--errimagepull"></span>
 
 ### 2. `ImagePullBackOff` / `ErrImagePull`
 
@@ -136,6 +142,8 @@ A healthy pull leaves the pair `Pulling image "..."` → `Successfully pulled im
 | `toomanyrequests` | Docker Hub rate limit | Mirror through an ECR pull-through cache |
 
 For node diagnosis, first inspect kubelet events/logs and the credential provider used for image pulls. `crictl pull` does not automatically reuse kubelet’s ECR credential provider or a Pod’s imagePullSecrets, so it does not reproduce the same authentication path. Fargate image pulls use the pod execution role, separately from the application’s IRSA role.
+
+<span id="3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors"></span>
 
 ### 3. `CrashLoopBackOff` (exit 137 `OOMKilled`, probe failures, config errors)
 
@@ -200,6 +208,8 @@ Warning  Failed  kubelet  Error: secret "db-credentials" not found
 
 Compare names and namespaces with `kubectl get cm,secret -n <ns>` and you are done. If the reference is a volume mount, it shows up instead as a `FailedMount` event (`MountVolume.SetUp failed for volume "cfg" : configmap "app-config" not found`).
 
+<span id="4-running-but-not-ready--empty-endpoints"></span>
+
 ### 4. `Running` but not Ready / empty Endpoints
 
 **Symptom**: STATUS is `Running` but READY is `0/1` (`1/2` with a sidecar). Ordinary Service routing excludes not-ready endpoints. Check exceptions such as publishNotReadyAddresses, terminating endpoints, and LB fail-open separately; clients may see errors or timeouts depending on the proxy.
@@ -230,6 +240,8 @@ An unset `ready` is unknown and must be interpreted as ready by consumers. `publ
 | Condition `Ready False` with reason `ReadinessGatesNotReady` | Waiting on a pod readiness gate — typically the AWS Load Balancer Controller's `target-health.elbv2.k8s.aws/*` gate | Find out why the Target Group health check fails → [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) |
 | `1/2` Running, only the app container Ready | Sidecar (istio-proxy, etc.) not ready, or the sidecar started after the app and initial connections failed | Check sidecar logs; check injector/version-supported startup ordering and readiness; native-sidecar conversion alone does not fix readiness |
 | Ready, yet the EndpointSlice is empty | Service selector does not match the pod labels | → [5. Service unreachable](#5-service-is-unreachable) |
+
+<span id="5-service-is-unreachable"></span>
 
 ### 5. Service is unreachable
 
@@ -269,6 +281,8 @@ To reproduce DNS from a pod's point of view, start a throwaway pod: `kubectl run
 Check both destination ingress and source egress NetworkPolicies. Declaring containerPort does not create a listening socket; inspect app logs or socket state. With NodeLocal DNSCache, resolv.conf can correctly use a nameserver other than the kube-dns ClusterIP.
 
 **Auto Mode DNS:** [Current Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html) runs CoreDNS as a node system service. Missing kube-dns Pods/Service alone does not indicate failure on pure Auto Mode. Mixed clusters need the CoreDNS Deployment for ordinary nodes. The Pod/ConfigMap commands above inspect Deployment-based DNS; for Auto Mode, check actual pod resolution, node DNS logs, and upstream resolver reachability.
+
+<span id="6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure"></span>
 
 ### 6. Node `NotReady` / kubelet pressure (`DiskPressure`, `MemoryPressure`, `PIDPressure`)
 
@@ -322,6 +336,8 @@ crictl ps -a | head
 
 A node that **never appears** in `kubectl get nodes` (join failure: IAM role/access entry, subnet routing, security group, AMI mismatch) is a separate topic → [EKS Advanced Debugging — Node Join Failure Diagnosis](../eks/11-eks-advanced-debugging.md#node-join-diagnosis), [EKS Troubleshooting — Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues). For Karpenter nodes, start with the NodeClaim check in [section 10](#10-eks-karpenter-does-not-launch-a-node).
 
+<span id="7-pvc-stuck-in-pending"></span>
+
 ### 7. PVC stuck in `Pending`
 
 **Symptom**: `kubectl get pvc` shows `Pending`, and the pod using it is `Pending` with `pod has unbound immediate PersistentVolumeClaims`.
@@ -356,6 +372,8 @@ The StorageClass list is an environment example. Distinguish Auto Mode’s ebs.c
 | Pod-side `FailedAttachVolume: Multi-Attach error for volume` | An RWO volume is still attached to the previous node (StatefulSet rescheduled after node failure) | Check stale attachments with `kubectl get volumeattachments`. If the node is gone, wait a few minutes for cleanup |
 
 `WaitForFirstConsumer`, StorageClass and dynamic provisioning concepts are in [Storage](../core/04-storage.md#storage-classes); EBS/EFS CSI error patterns are in [EKS Advanced Debugging — Storage Troubleshooting](../eks/11-eks-advanced-debugging.md#6-storage-troubleshooting).
+
+<span id="8-eks-irsa--pod-identity-accessdenied"></span>
 
 ### 8. EKS: IRSA / Pod Identity `AccessDenied`
 
@@ -414,6 +432,8 @@ aws iam get-role --role-name <role> --query 'Role.AssumeRolePolicyDocument'
 
 How IRSA and Pod Identity work and how to set them up is in [EKS Security Best Practices](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts) and [EKS Security](../eks/05-eks-security.md#eks-pod-identity); token expiry and webhook issues are in [EKS Advanced Debugging — Control Plane Debugging](../eks/11-eks-advanced-debugging.md#2-control-plane-debugging).
 
+<span id="9-eks-enivpc-cni-ip-exhaustion"></span>
+
 ### 9. EKS: ENI/VPC CNI IP exhaustion
 
 **Symptom**: pods stall in `ContainerCreating` with `FailedCreatePodSandBox` in Events:
@@ -453,6 +473,8 @@ In IPv4 secondary-IP mode, `WARM_ENI_TARGET=1` is the default target for spare E
 | Using Security Groups for Pods and short of `vpc.amazonaws.com/pod-eni` | Branch ENI limit | Move to instances that support trunk ENIs; confirm `ENABLE_POD_ENI=true` |
 
 IPAM behavior (warm pool, prefix delegation, custom networking) is in [VPC CNI — IP Address Management](../networking/01-vpc-cni.md#ip-address-management); step-by-step IP exhaustion handling is in [EKS Advanced Debugging — Networking Diagnostics](../eks/11-eks-advanced-debugging.md#5-networking-diagnostics) and [EKS Troubleshooting — VPC CNI Issues](../eks/09-eks-troubleshooting.md#networking-issues).
+
+<span id="10-eks-karpenter-does-not-launch-a-node"></span>
 
 ### 10. EKS: Karpenter does not launch a node
 
@@ -501,6 +523,8 @@ The recorded example has CPU_LIMIT 8 / CPU_USED 8, but `exceed limits` does not 
 | No events, Karpenter logs quiet | The pod is not a Karpenter candidate (`nodeSelector` points at MNG labels, or scheduling constraints unrelated to Karpenter) | Re-check every node-related constraint in the pod spec |
 
 NodePool/EC2NodeClass structure and detailed troubleshooting are in [Karpenter — Troubleshooting](../autoscaling/02-karpenter.md#troubleshooting) and [EKS Advanced Debugging — Karpenter Provisioning Issues](../eks/11-eks-advanced-debugging.md#karpenter-provisioning-issues).
+
+<span id="11-no-service-can-be-created-failed-calling-webhook"></span>
 
 ### 11. No Service can be created: failed calling webhook
 

@@ -897,6 +897,8 @@ spec:
 
 ---
 
+<span id="siemsoar-integration"></span>
+
 ## SIEM/SOAR Integration
 
 ### Falco to Elasticsearch

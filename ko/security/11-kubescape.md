@@ -727,6 +727,8 @@ Priority 3 - Medium (Within 1 Week):
 
 ---
 
+<span id="cicd-통합"></span>
+
 ## CI/CD 통합
 
 ### CI/CD 워크플로우

@@ -1049,6 +1049,8 @@ spec:
             podTemplateHashValue: Latest
 ```
 
+<span id="bluegreen-배포"></span>
+
 ## Blue/Green 배포
 
 Blue/Green 배포는 두 개의 동일한 프로덕션 환경을 유지하고, 순간적으로 트래픽을 전환합니다. Argo Rollouts와 Istio를 함께 사용하면 안전한 전환과 자동 롤백을 구현할 수 있습니다.
@@ -1407,6 +1409,8 @@ kubectl argo rollouts undo reviews
 # 특정 리비전으로 롤백
 kubectl argo rollouts undo reviews --to-revision=3
 ```
+
+<span id="ab-테스트"></span>
 
 ## A/B 테스트
 

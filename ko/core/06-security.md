@@ -116,6 +116,8 @@ Kubernetes 보안은 다음과 같은 주요 영역으로 구성됩니다:
 4. **보안 강화**: 기본 설정보다 더 강력한 보안 설정 적용
 5. **지속적인 모니터링**: 보안 이벤트 감지 및 대응
 
+<span id="인증authentication"></span>
+
 ## 인증(Authentication)
 
 Kubernetes API 서버에 접근하기 위해서는 인증 과정을 거쳐야 합니다. Kubernetes는 다양한 인증 방법을 지원합니다:
@@ -182,6 +184,8 @@ users:
 ### 인증 프록시
 
 API 서버 앞에 인증 프록시를 배치하여 사용자 인증을 처리하는 방법입니다. 프록시는 인증된 사용자의 정보를 HTTP 헤더에 포함하여 API 서버로 전달합니다.
+
+<span id="권한-부여authorization"></span>
 
 ## 권한 부여(Authorization)
 
@@ -273,6 +277,8 @@ Node 권한 부여는 kubelet이 API 서버에 접근할 때 사용되는 특수
 
 외부 서비스를 통해 권한 부여 결정을 내리는 방식입니다. API 서버는 권한 부여 요청을 외부 서비스에 전달하고, 해당 서비스는 요청을 허용할지 거부할지 결정합니다.
 
+<span id="보안-컨텍스트security-context"></span>
+
 ## 보안 컨텍스트(Security Context)
 
 보안 컨텍스트는 포드나 컨테이너 수준에서 보안 설정을 정의합니다. 이를 통해 권한, 액세스 제어, 기능 등을 세밀하게 제어할 수 있습니다.
@@ -316,6 +322,8 @@ spec:
 - `capabilities`: Linux 커널 기능을 추가하거나 제거
 - `readOnlyRootFilesystem`: 루트 파일 시스템을 읽기 전용으로 마운트
 
+<span id="포드-보안-표준pod-security-standards"></span>
+
 ### 포드 보안 표준(Pod Security Standards)
 
 PodSecurityPolicy는 v1.25에서 제거되었습니다. v1.25에서 Stable이 된 Pod Security Admission이 네임스페이스 레이블로 Pod Security Standards를 집행할 수 있습니다. 표준은 정책 정의이며 `PodSecurityStandard` API 리소스가 아닙니다. 세 수준을 정의합니다:
@@ -337,6 +345,8 @@ metadata:
 ```
 
 Restricted Linux 워크로드에는 `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, 허용된 seccomp 프로필, capability 제거와 호스트 접근 제한 등이 필요합니다. `readOnlyRootFilesystem`은 유용한 강화 설정이지만 Restricted 자체의 필수 항목은 아닙니다. 정책 버전을 고정하려면 `*-version` 네임스페이스 레이블을 지정하세요.
+
+<span id="네트워크-정책network-policy"></span>
 
 ## 네트워크 정책(Network Policy)
 
@@ -463,6 +473,8 @@ plugins:
 ```
 
 ImagePolicyWebhook에는 실행 중인 정책 백엔드와 자체 관리형 API 서버의 admission 설정이 필요하며 이 파일만으로 레지스트리 규칙이 집행되지 않습니다. EKS는 임의의 API 서버 플래그를 노출하지 않으므로 지원되는 admission 웹훅·정책 컨트롤러를 사용하세요.
+
+<span id="감사audit"></span>
 
 ## 감사(Audit)
 
