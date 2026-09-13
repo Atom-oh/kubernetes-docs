@@ -1,183 +1,167 @@
 # Cuestionario de Datadog
 
-Un cuestionario para evaluar tu comprensión de Datadog.
+> **Última actualización**: September 13, 2026
 
----
+1. ¿Qué sigue siendo responsabilidad del equipo con Datadog SaaS?
 
-1. ¿Cuál es el modelo de despliegue principal de Datadog?
-   - A) Solo autohospedado
-   - B) SaaS (Software as a Service)
-   - C) Solo on-premises
-   - D) Híbrido obligatorio
+   - A) Nada después de instalar el Agent
+   - B) Solo seleccionar un color de dashboard
+   - C) Collectors, identidad, instrumentación, manejo de datos, monitors y costo
+   - D) Los servidores físicos de bases de datos de Datadog
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) SaaS (Software as a Service)**
+**Respuesta: C**
 
-**Explicación:**
-Datadog es una plataforma de observabilidad unificada proporcionada como un modelo SaaS. Los usuarios solo necesitan desplegar el Datadog Agent, mientras que el almacenamiento, el procesamiento y la visualización de datos son gestionados por la infraestructura cloud de Datadog. Esto permite utilizar potentes capacidades de monitorización sin sobrecarga operativa.
+SaaS administra el backend. APM, profiling, logs y otros productos tienen derechos y facturación distintos; un Agent no incluye todo.
+
+</details>
+
+2. ¿Qué afirmación sobre credenciales/integración es correcta?
+
+   - A) La ingestión básica del Agent necesita una API key; las application keys y los roles de cuenta de AWS sirven para funcionalidades adicionales y específicas
+   - B) Cada Agent necesita una application key y un rol amplio de lectura de AWS
+   - C) Agregar IRSA configura automáticamente la integración de AWS de Datadog SaaS
+   - D) Un nombre de service account adivinado es suficiente
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: A**
+
+El proveedor de métricas externas necesita permisos de API/configuración de key adicionales. La integración de AWS de SaaS usa un rol autorizado entre cuentas/external ID. Resuelva el Agent SA representado real.
+
+</details>
+
+3. ¿admission.datadoghq.com/enabled=true por sí solo prueba la inyección del SDK de APM?
+
+   - A) Sí, incluidos automáticamente todos los lenguajes/versiones
+   - B) No; configure las anotaciones del SDK o los destinos de SSI y, después, verifique los Pods recién admitidos y los datos de traces reales
+   - C) Sí, incluso en el namespace de Cluster Agent
+   - D) Sí, si existe un trace socket
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B**
+
+La configuración de mutación/conexión y la inyección de bibliotecas son distintas. La inyección local actual excluye kube-system y el namespace de Cluster Agent. La compatibilidad de bibliotecas, runtime, mount y seguridad sigue siendo importante.
+
+</details>
+
+4. ¿Cómo debe un Pod de aplicación alcanzar el Agent DogStatsD del nodo?
+
+   - A) Usar siempre el localhost de la aplicación
+   - B) Poner la API key en cada paquete UDP
+   - C) Crear un ConfigMap no relacionado
+   - D) Usar el endpoint accesible configurado, como un directorio Linux UDS montado
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D**
+
+El localhost de la aplicación no es un Agent de nodo. Las rutas UDS, los permisos y los formatos de argumentos del SDK deben coincidir. Los datagramas no confirman la ingestión de SaaS; los contadores no son un registro exactamente una vez.
+
+</details>
+
+5. ¿Qué interpretación de métricas es correcta?
+
+   - A) kubernetes.cpu.usage.total es un porcentaje
+   - B) Todas las métricas faltantes del catálogo heredado fueron eliminadas
+   - C) kubernetes.cpu.usage.total está en nanocores; las métricas de reinicio de Kubelet son gauges acumulativos
+   - D) Sumar muestras de reinicios repetidas cuenta los reinicios nuevos
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C**
+
+system.cpu.idle es un porcentaje. Kubelet y State Core tienen nombres de métricas y tags válidos distintos. El monitor de reinicios de ejemplo evalúa explícitamente un total; los aumentos recientes necesitan validación que considere los reinicios del contador.
+
+</details>
+
+6. ¿Qué calcula la ruta de proporción de errores .as_count()?
+
+   - A) La proporción de conteos de errores y totales agregados en el tiempo
+   - B) Una suma de cada proporción de intervalo de tiempo
+   - C) Un p95 global
+   - D) Éxito automático del 100 % cuando no hay tráfico
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: A**
+
+Use agregación sum y grupos coincidentes. El helper emite explícitamente conteos de buenos/errores en cero. Sin tráfico, datos faltantes y tráfico sin errores siguen siendo estados diferentes.
+
+</details>
+
+7. ¿Qué afirmación sobre la configuración de OpenMetrics/log es correcta?
+
+   - A) Cualquier ConfigMap se monta automáticamente
+   - B) Use anotaciones de contenedor/campos de check actuales coincidentes; las reglas de Grok de Logs usan match_rules/support_rules
+   - C) prometheus.enabled en la raíz del chart configura todo
+   - D) Las keys camelCase y snake_case de Grok son equivalentes
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B**
+
+El check actual de OpenMetrics usa openmetrics_endpoint. datadog.confd proporciona el montaje administrado por el chart; los ConfigMaps independientes no se instalan por sí mismos. La validación del esquema de solicitud no es un scrape en vivo ni un parse de Grok.
+
+</details>
+
+8. ¿Qué debe preservar la correlación manual de trace-log?
+
+   - A) Solo dd.trace_id, eliminando todos los demás campos MDC
+   - B) Una conversión numérica arbitraria de un ID de 128 bits
+   - C) Un trace ID exitoso codificado de forma rígida
+   - D) El contexto MDC previo del llamador, IDs de cadena y los requisitos de instrumentación/datos reales
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D**
+
+El helper restaura el contexto incluso cuando el código de la aplicación genera un error. Es síncrono. La inyección/parse automáticos, los tags de servicio coherentes y los traces disponibles son requisitos independientes.
+
+</details>
+
+9. ¿Qué tiene de incorrecto calcular el precio de 50 servicios como 50 hosts de APM?
+
+   - A) APM siempre es gratis
+   - B) La ingestión de logs constituye toda la factura de logs
+   - C) Los servicios y los hosts facturables son unidades diferentes; se deben contar las asignaciones y el uso del producto/contrato
+   - D) Cada clúster tiene un host
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C**
+
+La estimación anterior no era una factura medida. La indexación/retención, las asignaciones de spans, las custom metrics y otros productos importan. nonLocalTraffic es conectividad, no una cuota de costos.
+
+</details>
+
+10. ¿Qué práctica de Watchdog/SLO/diagnóstico es correcta?
+
+   - A) Un insight de Watchdog prueba que se entregó una página
+   - B) Haga coincidir el modelo SLO y la política de buenos/totales, pruebe el enrutamiento e inspeccione los bundles de diagnóstico locales antes de compartirlos
+   - C) Un flare local autoriza automáticamente la carga
+   - D) Vuelque todos los valores de entorno DD_ cuando falten traces
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B**
+
+Datadog admite SLOs de métricas, monitor y time-slice. El comportamiento de notificación y sin datos necesita validación. Los volcados de env pueden exponer keys; --local mantiene local la recopilación inicial del flare.
 
 </details>
 
 ---
 
-2. ¿Cuál es el rol de Datadog Cluster Agent?
-   - A) Recopilación de logs de contenedores
-   - B) Recopilación de métricas y eventos a nivel de clúster
-   - C) Procesamiento de trazas de APM
-   - D) Renderizado de dashboards
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Recopilación de métricas y eventos a nivel de clúster**
-
-**Explicación:**
-Datadog Cluster Agent recopila métricas y eventos a nivel de clúster de los clústeres de Kubernetes. También proporciona un rol de servidor de métricas personalizado para HPA (Horizontal Pod Autoscaler) y la inyección automática de instrumentación de APM mediante Admission Controller.
-
-</details>
-
----
-
-3. ¿Cómo se habilita la instrumentación automática de APM en Datadog?
-   - A) Se requiere modificar el código de la aplicación
-   - B) Usar Admission Controller y labels de Pod
-   - C) Desplegar un servidor de APM independiente
-   - D) Inyectar bibliotecas manualmente
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Usar Admission Controller y labels de Pod**
-
-**Explicación:**
-Cuando Datadog Admission Controller está habilitado, las bibliotecas de instrumentación de APM se inyectan automáticamente en los Pods con el label `admission.datadoghq.com/enabled: "true"`. Admite lenguajes principales, incluidos Java, Python, Node.js, .NET y Ruby, lo que permite comenzar el tracing sin modificaciones de código.
-
-</details>
-
----
-
-4. ¿Cuál es el rol de DogStatsD?
-   - A) Recopilación de logs
-   - B) Recopilación de métricas personalizadas (compatible con StatsD)
-   - C) Creación de dashboards
-   - D) Enrutamiento de alertas
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Recopilación de métricas personalizadas (compatible con StatsD)**
-
-**Explicación:**
-DogStatsD es un daemon de recopilación de métricas compatible con StatsD incluido en Datadog Agent. Las aplicaciones pueden enviar métricas personalizadas (contadores, gauges, histogramas, distribuciones) mediante UDP. Es compatible con el protocolo StatsD con funcionalidad de tags añadida.
-
-</details>
-
----
-
-5. ¿Cómo se conectan las trazas y los logs en Datadog?
-   - A) Cargar archivos de logs manualmente
-   - B) Incluir trace_id y span_id en los logs
-   - C) Desplegar un servicio de conexión independiente
-   - D) Hacer coincidir las marcas de tiempo de logs y trazas
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Incluir trace_id y span_id en los logs**
-
-**Explicación:**
-Para conectar trazas y logs en Datadog, los logs deben incluir `dd.trace_id` y `dd.span_id`. Las bibliotecas de Datadog APM pueden inyectar automáticamente esta información mediante MDC (Mapped Diagnostic Context). Esto permite ver los logs relacionados directamente desde APM.
-
-</details>
-
----
-
-6. ¿Cuál es la unidad de facturación para la monitorización de infraestructura en la estructura de costes de Datadog?
-   - A) Número de métricas
-   - B) Número de hosts
-   - C) Número de llamadas a la API
-   - D) Volumen de transferencia de datos
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Número de hosts**
-
-**Explicación:**
-La monitorización de infraestructura de Datadog se factura según el número de hosts. Cada nodo, instancia y host de contenedores es un elemento facturable. APM, la gestión de logs y otras funcionalidades tienen estructuras de facturación independientes, y la facturación basada en hosts facilita la previsión de costes.
-
-</details>
-
----
-
-7. ¿Cuál es la función de Datadog Watchdog?
-   - A) Configuración manual de alertas
-   - B) Detección automática de anomalías basada en IA
-   - C) Búsqueda de logs
-   - D) Creación de dashboards
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Detección automática de anomalías basada en IA**
-
-**Explicación:**
-Watchdog es la funcionalidad de detección automática de anomalías basada en IA/ML de Datadog. Detecta automáticamente patrones anómalos en datos de infraestructura, APM y logs, y genera alertas. Puedes identificar anomalías sin establecer umbrales manualmente.
-
-</details>
-
----
-
-8. ¿Cómo se recopilan métricas de Prometheus con Datadog Agent?
-   - A) Se requiere un servidor de Prometheus independiente
-   - B) Configurar el descubrimiento automático con anotaciones de Pod
-   - C) Registrar manualmente cada endpoint
-   - D) Reemplazar Prometheus con Datadog
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Configurar el descubrimiento automático con anotaciones de Pod**
-
-**Explicación:**
-Datadog Agent utiliza las anotaciones `ad.datadoghq.com/<container>.checks` para descubrir y recopilar automáticamente endpoints de métricas de Prometheus. La configuración es similar a los ajustes de scrape de Prometheus, y las métricas se pueden recopilar sin un servidor de Prometheus independiente.
-
-</details>
-
----
-
-9. ¿Qué tipos de métricas se pueden utilizar al configurar un SLO (Service Level Objective) en Datadog?
-   - A) Solo eventos de logs
-   - B) Basadas en métricas, basadas en monitores, basadas en intervalos de tiempo
-   - C) Solo trazas de APM
-   - D) Solo métricas de infraestructura
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Basadas en métricas, basadas en monitores, basadas en intervalos de tiempo**
-
-**Explicación:**
-Datadog SLO admite tres tipos: basado en métricas (recuentos de éxito/error), basado en monitores (estado de monitores existentes) y basado en intervalos de tiempo (estado por intervalo de tiempo). Se pueden utilizar diversas fuentes de datos, incluidas las trazas de APM, las métricas personalizadas y las métricas basadas en logs.
-
-</details>
-
----
-
-10. ¿Cuál NO es una estrategia válida de optimización de costes de Datadog?
-    - A) Ajustar la tasa de muestreo de trazas de APM
-    - B) Filtrar logs innecesarios
-    - C) Recopilar todas las métricas con la máxima resolución
-    - D) Gestionar la cardinalidad de las métricas personalizadas
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) Recopilar todas las métricas con la máxima resolución**
-
-**Explicación:**
-Para la optimización de costes de Datadog, son importantes el muestreo de trazas de APM, el filtrado de logs y la gestión de la cardinalidad de las métricas personalizadas. Recopilar todas las métricas con la máxima resolución hace que los costes se disparen. Recopila selectivamente solo las métricas necesarias y aplica el muestreo adecuado.
-
-</details>
+[Volver a la guía](../../../observability/metrics/05-datadog.md)

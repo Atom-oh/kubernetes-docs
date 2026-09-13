@@ -1,531 +1,354 @@
 # 分散トレーシングの概要
 
-> **最終更新**: February 20, 2026
+> **最終更新**: September 13, 2026
 
 ## はじめに
 
-分散トレーシング（Distributed Tracing）は、マイクロサービスアーキテクチャにおいて、リクエストが複数の Service を通過する際の完全な経路を追跡する手法です。単一のリクエストが数十の Service を通過する可能性がある現代のシステムでは、分散トレーシングはパフォーマンスのボトルネックを特定し、問題をトラブルシューティングするために不可欠です。
+分散トレーシングは、プロセス境界をまたぐインストルメント化された操作を記録し、伝播されたコンテキストを通じて関連付けます。保存された trace は、すべての操作またはリクエストがキャプチャされたことの証明ではなく、**観測された Span の集合**です。インストルメンテーション、サンプリング、エクスポート、ストレージ、保持によって、可視化される内容が決まります。
 
-## 分散トレーシングの必要性
+## 分散トレーシングが必要な理由
 
 ### 従来のモニタリングの限界
 
-マイクロサービス環境では、従来のログとメトリクスだけでは次の質問に答えられません。
+共有コンテキストのないログとメトリクスでは、リクエストの経路とタイミングの再構成が困難になることがあります。trace は、因果関係を表現することで、これらのシグナルを補完します。
 
-- リクエストはどの Service を通過したか？
-- 各 Service にはどのくらいの時間がかかったか？
-- エラーはどこで発生したか？
-- Service 間にはどのような依存関係があるか？
+- どのインストルメント化された Service が関与したか？
+- どの操作が遅延または失敗したか？
+- どの処理が重複、待機、または再試行したか？
+- どの追加ログとリソースメトリクスが診断を裏付けるか？
 
-```mermaid
-flowchart TD
-    subgraph Problem["Problem: Complex Request Flow"]
-        U[User] --> A[API Gateway]
-        A --> B[Auth Service]
-        A --> C[Product Service]
-        C --> D[Inventory Service]
-        C --> E[Pricing Service]
-        A --> F[Order Service]
-        F --> G[Payment Service]
-        F --> H[Notification Service]
-        G --> I[Fraud Detection]
-    end
+![Service と下流の依存関係にまたがる、説明用のリクエストのファンアウト。](../../.gitbook/assets/en-observability-tracing-readme-0.png)
 
-    Q1[Where did latency occur?]
-    Q2[What's the root cause of errors?]
-    Q3[What are the service dependencies?]
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-0.html)
 
-    Problem -.-> Q1
-    Problem -.-> Q2
-    Problem -.-> Q3
-
-    classDef user fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef question fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class U user
-    class A,B,C,D,E,F,G,H,I service
-    class Q1,Q2,Q3 question
-```
+この図は、相関付けが役立つ理由を示しています。適切に相関付けされたログではこれらの質問に決して答えられない、あるいは trace 単独で根本原因を証明できる、という意味ではありません。
 
 ## コアコンセプト
 
 ### 1. Trace
 
-Trace は、単一のリクエストがたどる完全な経路を表します。リクエストがシステムを通過する際に生成されるすべての操作の集合です。
+trace は、TraceID を共有する Span をグループ化します。親子関係は、その trace に因果的に関連する処理を表します。インストルメンテーションの欠落またはデータ損失により、ギャップが残る場合があります。
 
-```mermaid
-flowchart LR
-    subgraph Trace["Trace: Complete Request Journey"]
-        direction LR
-        S1[API Gateway<br/>150ms]
-        S2[User Service<br/>50ms]
-        S3[Order Service<br/>200ms]
-        S4[Payment Service<br/>300ms]
-        S5[Notification<br/>100ms]
-    end
+ルート開始からの相対時間（ミリ秒）による、この**説明用のタイムライン**を考えてみましょう。
 
-    S1 --> S2
-    S1 --> S3
-    S3 --> S4
-    S3 --> S5
+| Span | 開始 | 終了 | 所要時間 |
+|---|---:|---:|---:|
+| API gateway root | 0 | 650 | 650 |
+| User service | 20 | 70 | 50 |
+| Order service | 100 | 600 | 500 |
+| Payment service, child of Order | 250 | 550 | 300 |
+| Notification service, child of Order | 500 | 600 | 100 |
 
-    Total[Total Duration: 500ms]
-
-    Trace --> Total
-
-    classDef span fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef total fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class S1,S2,S3,S4,S5 span
-    class Total total
-```
+観測ウィンドウは 650ms です。親の所要時間には子の処理が含まれ、一部の子は重複するため、すべての Span の所要時間を合計すると 1,600ms になります。「クリティカルパス」を算出するために、包含的な親の所要時間をその子孫に加算しないでください。非同期処理とクロックスキューを含め、実際の開始/終了時刻と依存関係を分析してください。
 
 ### 2. Span
 
-Span は、作業の単一単位を表します。各 Span には次の情報が含まれます。
+Span は、1 つのインストルメント化された操作を記述します。
 
-| フィールド | 説明 | 例 |
-|-------|-------------|---------|
-| **TraceID** | Trace 全体の一意な識別子 | `abc123def456` |
-| **SpanID** | 個々の Span の一意な識別子 | `span789` |
-| **ParentSpanID** | 親 Span の識別子 | `span456` |
-| **Operation Name** | 操作の名前 | `HTTP GET /api/users` |
-| **Start Time** | 開始タイムスタンプ | `2025-02-15T10:30:00Z` |
-| **Duration** | 所要時間 | `150ms` |
-| **Tags** | メタデータ | `http.status_code=200` |
-| **Logs** | イベント記録 | `error: connection timeout` |
+| フィールド | 意味 | 例 |
+|---|---|---|
+| TraceID | trace の識別子 | `4bf92f3577b34da6a3ce929d0e0e4736` |
+| SpanID | この Span の識別子 | `00f067aa0ba902b7` |
+| ParentSpanID | 親の Span 識別子。root では存在しない | `b7ad6b7169203331` |
+| Name | 低カーディナリティの操作名 | `GET /api/users/{id}` |
+| Start / end | タイムスタンプ。所要時間はその差分から得られる | `2025-02-15T10:30:00Z` は説明用のタイムスタンプ |
+| Attributes | 型付きメタデータ | `http.response.status_code=200` |
+| Events | Span に関連付けられたタイムスタンプ付きイベント | 記録された例外イベント |
+| Status | `UNSET`、`OK`、または `ERROR` | インストルメンテーションで別途指定されない限り、成功した HTTP リクエストの Span status は UNSET のままにする |
 
-```mermaid
-flowchart TD
-    subgraph SpanStructure["Span Structure"]
-        direction TB
-
-        subgraph Header["Header Information"]
-            TID[TraceID: abc123]
-            SID[SpanID: span001]
-            PID[ParentSpanID: null]
-        end
-
-        subgraph Timing["Timing Information"]
-            ST[Start: 10:30:00.000]
-            DUR[Duration: 150ms]
-        end
-
-        subgraph Metadata["Metadata"]
-            OP[Operation: HTTP GET /users]
-            TAGS[Tags: service=api, http.method=GET]
-            LOGS[Logs: request received, response sent]
-        end
-
-        subgraph Status["Status"]
-            CODE[Status: OK]
-        end
-    end
-
-    Header --> Timing
-    Timing --> Metadata
-    Metadata --> Status
-
-    classDef header fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef timing fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef metadata fill:#34A853,stroke:#333,stroke-width:1px,color:white
-    classDef status fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class TID,SID,PID header
-    class ST,DUR timing
-    class OP,TAGS,LOGS metadata
-    class CODE status
-```
+OpenTelemetry は、Span event をすべてのアプリケーションログのコピーとして扱うのではなく、**attributes** と **events** を使用します。初期 attributes/links は Span 作成時に存在する場合があります。続いて、さらに events/attributes/status の更新を行えます。Span の開始時点では所要時間は不明です。例外の記録と error status の設定は、別個の API 操作です。
 
 ### 3. Span の関係と階層
 
-Span は親子関係を形成し、ツリー構造を作成します。
+![trace 内の root、child、grandchild の関係を示す説明図。](../../.gitbook/assets/en-observability-tracing-readme-3.png)
 
-```mermaid
-flowchart TD
-    subgraph TraceTree["Trace Tree Structure"]
-        ROOT[Root Span<br/>API Gateway<br/>TraceID: abc123<br/>SpanID: span001]
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-3.html)
 
-        CHILD1[Child Span<br/>Auth Service<br/>SpanID: span002<br/>Parent: span001]
-
-        CHILD2[Child Span<br/>Order Service<br/>SpanID: span003<br/>Parent: span001]
-
-        GRANDCHILD1[Grandchild Span<br/>Payment Service<br/>SpanID: span004<br/>Parent: span003]
-
-        GRANDCHILD2[Grandchild Span<br/>Inventory Service<br/>SpanID: span005<br/>Parent: span003]
-    end
-
-    ROOT --> CHILD1
-    ROOT --> CHILD2
-    CHILD2 --> GRANDCHILD1
-    CHILD2 --> GRANDCHILD2
-
-    classDef root fill:#E6522C,stroke:#333,stroke-width:2px,color:white
-    classDef child fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef grandchild fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class ROOT root
-    class CHILD1,CHILD2 child
-    class GRANDCHILD1,GRANDCHILD2 grandchild
-```
+図中の `span001`–`span005` は、有効なワイヤ形式の SpanID ではなく、**記号的なラベル**です。Span が持てる親は最大 1 つです。**Links** は、同一または異なる trace の Span を関連付けられます。これは非同期メッセージング、バッチ、複数の因果的入力を持つ処理で役立ちます。この単純なツリーにはそれらの links は示していません。
 
 ### 4. SpanContext
 
-SpanContext は、Service 間で伝播される Trace 情報です。
+SpanContext は、不変の trace ID/伝播情報です。この YAML は概念的な表現であり、SDK 設定ファイルではありません。
 
 ```yaml
-# SpanContext Components
 SpanContext:
-  trace_id: "abc123def456789"      # Trace identifier
-  span_id: "span789"               # Current Span identifier
-  trace_flags: "01"                # Sampling flag
-  trace_state: "vendor=value"      # Vendor-specific additional info
+  trace_id: "4bf92f3577b34da6a3ce929d0e0e4736"
+  span_id: "00f067aa0ba902b7"
+  trace_flags: "01"
+  trace_state: "vendor=value"
+  is_remote: false
 ```
+
+OpenTelemetry の TraceID は 16 バイトで、32 個の小文字 16 進文字として表示されます。SpanID は 8 バイトで、16 個の文字として表示されます。有効な SpanContext にはゼロ以外の ID があります。`is_remote` は、抽出されたリモート親とローカルで作成された Span を区別します。`01` は sampled bit を設定します。このフラグは、backend が trace を保存したことの証明ではありません。
+
+Baggage は SpanContext および `tracestate` とは別物です。認証情報や個人情報を伝播コンテキストに配置せず、呼び出し元が指定した trace ID を認証として扱わないでください。
 
 ## コンテキスト伝播
 
-Service 間で Trace コンテキストを渡す方法です。
+伝播は境界をまたいで ID を運びます。それ自体が操作をインストルメント化したり Span をエクスポートしたりするわけではありません。フレームワーク/SDK の propagator を使用して、ヘッダーの inject と extract、および active context の適切な attach/detach を行ってください。
 
 ### W3C Trace Context（推奨）
 
-W3C 標準ヘッダーを使用した伝播：
-
 ```http
-# HTTP Request Headers
-traceparent: 00-abc123def456789012345678901234-span12345678-01
-tracestate: rojo=00f067aa0ba902b7,congo=t61rcWkgMzE
+traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+tracestate: vendor=value
 ```
 
-**traceparent の形式：**
+バージョン `00` のフィールドは次のとおりです。
+
+```text
+version(2 hex)-trace_id(32 hex)-parent_id(16 hex)-trace_flags(2 hex)
 ```
-version-trace_id-parent_id-trace_flags
-00     -abc123...-span1234...-01
-```
+
+ワイヤ上の `parent_id` は**送信側 Span の SpanID**であり、受信側が child を作成する際にリモート親として使用されます。送信側自身の ParentSpanID ではありません。無効な長さ、16 進数以外の ID、すべてゼロの ID を例にコピーしてはいけません。任意の文字列からヘッダーを構成するのではなく、実装の検証ルールを使用してください。
 
 ### B3 伝播（Zipkin 互換）
 
-Zipkin で使用される伝播形式：
+B3 では、64 ビットまたは 128 ビットの TraceID と、64 ビットの SpanID を使用できます。次の 2 つの例は、同じ sampled context を運びます。
 
 ```http
-# Single header format
-b3: abc123def456789-span12345678-1-parent12345678
+b3: 4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-1
+```
 
-# Multi-header format
-X-B3-TraceId: abc123def456789
-X-B3-SpanId: span12345678
-X-B3-ParentSpanId: parent12345678
+```http
+X-B3-TraceId: 4bf92f3577b34da6a3ce929d0e0e4736
+X-B3-SpanId: 00f067aa0ba902b7
 X-B3-Sampled: 1
 ```
 
+任意指定の ParentSpanID には固有のルールがあり、ここでは省略しています。B3 は sampling-only および debug 形式もサポートしています。HTTP ヘッダー名では大文字/小文字は区別されません。他のトランスポートでは名前の正規化が必要になる場合があります。両方の B3 形式が存在する場合、仕様に従い single-header 形式が優先されます。
+
 ### 伝播形式の比較
 
-| 形式 | ヘッダー | 利点 | 欠点 |
-|--------|---------|------------|---------------|
-| **W3C Trace Context** | `traceparent`, `tracestate` | 標準的、拡張可能 | 比較的新しい |
-| **B3 Single** | `b3` | シンプル、単一ヘッダー | Zipkin 固有 |
-| **B3 Multi** | `X-B3-*` | デバッグが容易 | ヘッダーが多い |
-| **Jaeger** | `uber-trace-id` | Jaeger に最適化 | ベンダーロックイン |
+| 形式 | 一般的なフィールド | 選定時の考慮事項 |
+|---|---|---|
+| W3C Trace Context | `traceparent`, `tracestate` | 標準に基づく相互運用性 |
+| B3 single | `b3` | 既存の Zipkin/B3 統合 |
+| B3 multi | `X-B3-*` | 既存の統合と個別に可視化されるフィールド |
+| Jaeger legacy | `uber-trace-id` | レガシー互換性。インストール済み propagator を検証する |
+
+両端を一貫して設定し、HTTP/gRPC/メッセージングの境界をテストしてください。異なる親を extract する、同時に競合する propagator は避けてください。標準化されたヘッダーであっても、proxy、queue、または非同期タスクが保持することを保証するものではありません。
 
 ## サンプリング戦略
 
-すべてのリクエストをトレースすると、コストとパフォーマンスの問題が発生します。サンプリングはこれを管理します。
+サンプリングは、保持データとオーバーヘッドを削減できます。また、trace から回答できる質問も変化させます。判断時点、確率/ポリシー、欠落データ時の動作を明示してください。
 
 ### Head-based Sampling
 
-リクエスト開始時にサンプリングを決定します。
+![最終的なリクエスト結果が判明する前の、root における説明用の head-sampling 判断。](../../.gitbook/assets/en-observability-tracing-readme-4.png)
 
-```mermaid
-flowchart LR
-    subgraph HeadBased["Head-based Sampling"]
-        REQ[Request Received]
-        DEC{Sampling<br/>Decision}
-        TRACE[Collect Trace]
-        SKIP[Skip Trace]
-    end
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-4.html)
 
-    REQ --> DEC
-    DEC -->|10% Sample| TRACE
-    DEC -->|90% Skip| SKIP
+10%/90% の分割は、少数回の実行における正確な件数ではなく、設定された確率です。この図は、インストルメンテーション、伝播、配信が機能することを前提としています。「collected」は、すべての child Span が使用可能であることを無条件に保証するものではありません。
 
-    classDef request fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef trace fill:#34A853,stroke:#333,stroke-width:1px,color:white
-    classDef skip fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
+標準環境変数をサポートする SDK/autoconfiguration の仕組みでは、次のようにします。
 
-    class REQ request
-    class DEC decision
-    class TRACE trace
-    class SKIP skip
+```bash
+export OTEL_TRACES_SAMPLER=parentbased_traceidratio
+export OTEL_TRACES_SAMPLER_ARG=0.1
 ```
 
-**利点：**
-- 実装がシンプル
-- オーバーヘッドが低い
-- 一貫したサンプリング判断
+ParentBased は親の判断を尊重します。比率は、その設定された delegate を使用する root に適用されます。したがって、ローカルの root 比率がゼロであっても、sampled のリモート親は sampled の child 判断を生成できます。選択した言語 SDK の設定サポートを確認してください。作り物の `sampling: {type, ratio}` YAML オブジェクトを、汎用的な SDK 設定として示さないでください。
 
-**欠点：**
-- 重要なリクエストを見逃す可能性がある
-- エラーやレイテンシーを伴うリクエストをスキップする可能性がある
-
-**設定例：**
-```yaml
-# OpenTelemetry SDK Configuration
-sampling:
-  type: parentbased_traceidratio
-  ratio: 0.1  # 10% sampling
-```
+Head sampling は比較的単純ですが、将来のエラーやレイテンシーを知ることはできません。sampled されなかったリクエストが後に重要になる場合があり、tail sampling では上流で一度も記録/エクスポートされなかった Span を再作成できません。
 
 ### Tail-based Sampling
 
-リクエスト完了後に、結果に基づいてサンプリングを決定します。
+Tail sampling は、ポリシーに対して**受信した** trace データを評価します。すべての Span が完全であるという絶対確実な通知を受け取るわけではありません。
 
 ```mermaid
-flowchart LR
-    subgraph TailBased["Tail-based Sampling"]
-        REQ[Request Received]
-        COLLECT[Collect All Spans]
-        ANALYZE{Analyze<br/>Error? Latency?}
-        KEEP[Keep]
-        DROP[Drop]
-    end
-
-    REQ --> COLLECT
-    COLLECT --> ANALYZE
-    ANALYZE -->|Error or Latency| KEEP
-    ANALYZE -->|Normal| DROP
-
-    classDef request fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef collect fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef analyze fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef keep fill:#34A853,stroke:#333,stroke-width:1px,color:white
-    classDef drop fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
-
-    class REQ request
-    class COLLECT collect
-    class ANALYZE analyze
-    class KEEP keep
-    class DROP drop
+flowchart TD
+    S["Exported spans"] --> R["Route each TraceID to one sampler"]
+    R --> B["Bounded trace buffer"]
+    B --> P["Timer / configured policy evaluation"]
+    P --> K["Keep matching traces"]
+    P --> D["Drop nonmatching traces"]
 ```
 
-**利点：**
-- 重要なリクエスト（エラー、レイテンシー）を見逃さない
-- よりインテリジェントなサンプリング
-- コスト効率が高い
+Collector Contrib **0.160.0** はこの processor フラグメントをサポートします。完全な traces pipeline に統合してください。
 
-**欠点：**
-- 実装が複雑
-- メモリ使用量が多い
-- すべての Span を一時的に保存する必要がある
-
-**OTEL Collector Tail Sampling の設定：**
 ```yaml
 processors:
   tail_sampling:
     decision_wait: 10s
-    num_traces: 100000
+    num_traces: 10000
     policies:
-      # Collect all error requests
-      - name: errors
-        type: status_code
-        status_code:
-          status_codes: [ERROR]
-      # Collect slow requests
-      - name: slow-requests
-        type: latency
-        latency:
-          threshold_ms: 1000
-      # 10% sampling for the rest
-      - name: probabilistic
-        type: probabilistic
-        probabilistic:
-          sampling_percentage: 10
+    - name: errors
+      type: status_code
+      status_code:
+        status_codes:
+        - ERROR
+    - name: slow-requests
+      type: latency
+      latency:
+        threshold_ms: 1000
+    - name: probabilistic
+      type: probabilistic
+      probabilistic:
+        sampling_percentage: 10
 ```
+
+デフォルトの `trace-complete` 戦略では、評価は timer path 上で蓄積された Span を使用します。`decision_wait` は、リクエストの完了を保証するものではなく、受信した trace データから開始されます。現在の processor には、異なる `span-ingest` 戦略もあります。そのポリシー互換性とタイミングは異なります。
+
+status policy は、すべてのアプリケーションエラー文字列ではなく、観測された Span status `ERROR` に一致します。latency policy は、受信した trace 内の最も早い開始時刻と最も遅い終了時刻を使用します。probabilistic policy は追加の対象 trace を保持できるため、通常の trace が常に破棄されるわけではありません。
+
+TraceID のすべての Span を同じ sampler インスタンスにルーティングしてください。遅延到着、decision cache、再起動、上流の sampling/export 失敗、trace 数/バイト制限、buffer eviction を考慮してください。`num_traces` はプロセスメモリの上限ではありません。トラフィックと Span サイズに基づいてサイズを決め、drop/eviction/late-span メトリクスを監視してください。**Tail sampling では、重要なリクエストを見逃さないことを保証できません。**
 
 ### サンプリング戦略の比較
 
-| 戦略 | 判断時点 | リソース使用量 | 正確性 | ユースケース |
-|----------|---------------|----------------|----------|----------|
-| **Head-based** | リクエスト開始時 | 低 | 中 | ほとんどのケース |
-| **Tail-based** | リクエスト完了時 | 高 | 高 | エラー／レイテンシー重視 |
-| **Adaptive** | 動的 | 中 | 高 | トラフィック変動が大きい場合 |
+| 戦略 | 判断情報 | トレードオフ |
+|---|---|---|
+| Head | Span 作成時/親の判断時に利用可能な情報 | バッファリングの必要性は低いが、将来の結果を見逃す可能性がある |
+| Tail | 受信した Span と設定済みのポリシー/タイミング | より多くの状態とルーティングが必要。未完全な trace は依然として発生しうる |
+| Adaptive | 観測されたトラフィックまたは予算に応じて変化するポリシー | 製品/実装固有。制御ループと制限を検証する |
 
-## Trace・Log・Metric の相関
+普遍的な「精度: 中/高」の順位付けはありません。保持された母集団が、意図した診断上または統計上の質問に答えられるかを評価してください。すべての error trace を sampling すると、error の割合に意図的なバイアスをかける可能性があります。
 
-### TraceID による Log の関連付け
+## Trace-Log-Metric の相関付け
+
+### TraceID によるログのリンク
+
+フレームワークでサポートされている logging instrumentation を優先してください。SLF4J MDC を手動で使用する場合、操作が例外を送出しても以前の context を復元してください。
 
 ```java
-// Java logging example (SLF4J + MDC)
+import java.util.Map;
 import org.slf4j.MDC;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
 
-public void processOrder(Order order) {
-    Span span = Span.current();
-    MDC.put("traceId", span.getSpanContext().getTraceId());
-    MDC.put("spanId", span.getSpanContext().getSpanId());
+public final class TraceMdc {
+    private TraceMdc() {}
 
-    logger.info("Processing order: {}", order.getId());
-    // Log output: {"traceId": "abc123", "spanId": "span456", "message": "Processing order: 12345"}
+    public static void run(Runnable operation) {
+        Map<String, String> previous = MDC.getCopyOfContextMap();
+        try {
+            SpanContext context = Span.current().getSpanContext();
+            if (context.isValid()) {
+                MDC.put("traceId", context.getTraceId());
+                MDC.put("spanId", context.getSpanId());
+            } else {
+                MDC.remove("traceId");
+                MDC.remove("spanId");
+            }
+            operation.run();
+        } finally {
+            if (previous == null) {
+                MDC.clear();
+            } else {
+                MDC.setContextMap(previous);
+            }
+        }
+    }
 }
 ```
 
-### Exemplars による Metric の関連付け
+必要な OpenTelemetry/SLF4J 依存関係と互換性のある logging backend を用いて、`TraceMdc.run(() -> logger.info("Processing order"));` を使用してください。encoder/pattern を設定して `traceId` と `spanId` を含めてください。MDC に値を設定するだけでは、出力に表示されません。
 
-```yaml
-# Linking TraceID to Prometheus metrics
-http_request_duration_seconds_bucket{le="0.5"} 1000 # {traceID="abc123"}
-http_request_duration_seconds_bucket{le="1.0"} 1500 # {traceID="def456"}
+この有効性チェックにより、inactive context からすべてゼロの ID をログ記録することを回避します。MDC は thread-local です。OpenTelemetry context と MDC を非同期処理に伝播するには、適切なフレームワークの仕組みが必要です。この helper は同期ログ記録をスコープ対象とし、任意の thread hand-off を解決できるとは主張しません。
+
+### Exemplar によるメトリクスのリンク
+
+これは YAML ではなく、**OpenMetrics exposition text** です。exemplar にはラベルと観測値があり、任意でタイムスタンプを続けられます。
+
+```text
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{le="0.5"} 1 # {trace_id="4bf92f3577b34da6a3ce929d0e0e4736"} 0.42
+http_request_duration_seconds_bucket{le="+Inf"} 1
+http_request_duration_seconds_sum 0.42
+http_request_duration_seconds_count 1
+# EOF
 ```
 
-### Grafana での相関
+この exemplar は、histogram bucket 内の代表的な 0.42 秒の観測値 1 つです。このリクエストが正確な p99 境界であったことの証明ではありません。exporter/remote-write の保持、backend の exemplar ストレージ、Grafana datasource のリンクのすべてが機能する必要があります。trace sampling/retention により、trace が利用できない exemplar が残ることがあります。
 
-```mermaid
-flowchart LR
-    subgraph Correlation["Grafana Correlation"]
-        M[Metrics Dashboard<br/>Response Time Spike]
-        E[Exemplar<br/>TraceID: abc123]
-        T[Tempo<br/>Trace Details]
-        L[Loki<br/>Related Logs]
-    end
+### Grafana での相関付け
 
-    M -->|Click Exemplar| E
-    E -->|View Trace| T
-    T -->|Log Link| L
-    L -->|Metric Link| M
+![メトリクスの exemplar から trace と関連ログへの、概念的なナビゲーション。](../../.gitbook/assets/en-observability-tracing-readme-6.png)
 
-    classDef metric fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef exemplar fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef trace fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef log fill:#34A853,stroke:#333,stroke-width:1px,color:white
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-6.html)
 
-    class M metric
-    class E exemplar
-    class T trace
-    class L log
-```
+この古い図にある短い `abc123` は省略形であり、有効な W3C TraceID ではありません。実際のデータでは完全な ID を使用してください。`trace_id`/`traceId`/`traceID`、datasource UID、time padding、resource/log label mapping を整合させてください。すべてのシグナルにまたがって実際のリクエストを 1 つ検証してください。ナビゲーションリンクだけでは、相関付けが成功したことは証明されません。
 
 ## ソリューションの比較
 
 ### 分散トレーシングソリューションの比較
 
-| 機能 | Tempo | X-Ray | Jaeger | Datadog APM | Dynatrace |
-|---------|-------|-------|--------|-------------|-----------|
-| **タイプ** | オープンソース | AWS マネージド | オープンソース | 商用 SaaS | 商用 SaaS |
-| **ストレージ** | Object Storage | AWS 内部 | Cassandra/ES | Datadog | Dynatrace |
-| **クエリ言語** | TraceQL | Filter Expressions | - | - | DQL |
-| **サンプリング** | Head/Tail | ルールベース | Head | 動的 | 動的 |
-| **OTEL サポート** | ネイティブ | ネイティブ | ネイティブ | ネイティブ | ネイティブ |
-| **Service Map** | Grafana 統合 | 組み込み | 組み込み | 組み込み | 組み込み |
-| **AI 分析** | なし | なし | なし | Watchdog | Davis AI |
-| **コスト** | ストレージコストのみ | 使用量ベース | インフラストラクチャコスト | Host/span ベース | Host ベース |
-| **EKS 統合** | 手動設定 | ネイティブ | 手動設定 | Agent デプロイ | OneAgent |
+| ソリューション | 評価するモデル / 機能 | デプロイとコストに関する考慮事項 |
+|---|---|---|
+| [Tempo](https://github.com/grafana/tempo/tree/v3.0.3) | TraceQL と Grafana 統合 | コンピューティング、取り込み、ストレージ、クエリ、リクエスト、ネットワーキング。「ストレージコストのみ」ではない |
+| [AWS X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html) | AWS マネージドのリクエストトレーシングとフィルタリング | サポートされるインストルメンテーション/OTel パス、IAM、クォータ、保持、使用量課金 |
+| [Jaeger](https://www.jaegertracing.io/docs/2.20/architecture/) | Query/UI と設定可能な collector/storage アーキテクチャ | サポートされる storage、取り込みトポロジー、collector processor を選択する。本質的に head-sampling 専用ではない |
+| [Datadog APM](https://docs.datadoghq.com/tracing/) | マネージド APM/search/analytics | Agent/OTel mapping、retention/indexing/sampling、実際のプラン条件 |
+| [Dynatrace](https://docs.dynatrace.com/docs/observe/application-observability/distributed-tracing) | OneAgent/OTel ingestion、Grail/DQL の tracing 機能 | デプロイモード、権限、保持、処理、実際の消費量/プラン条件 |
+
+sampling は SDK、collector、backend 固有のコンポーネントで実行できます。「Native OTel support」は、すべての signal attribute、span link、sampling policy、resource limit が製品間で同一であることを意味しません。AI 支援機能は周辺プラットフォームとプランに依存します。これを storage backend の恒久的な yes/no 特性に還元しないでください。
 
 ### 選定ガイド
 
-```mermaid
-flowchart TD
-    START[Select Distributed Tracing Solution]
-
-    Q1{Need AWS Native<br/>Integration?}
-    Q2{Cost Priority?}
-    Q3{Need AI Analysis?}
-    Q4{Using Grafana<br/>Stack?}
-
-    XRAY[AWS X-Ray]
-    TEMPO[Grafana Tempo]
-    JAEGER[Jaeger]
-    DATADOG[Datadog APM]
-    DYNATRACE[Dynatrace]
-
-    START --> Q1
-    Q1 -->|Yes| XRAY
-    Q1 -->|No| Q2
-    Q2 -->|Yes| Q4
-    Q4 -->|Yes| TEMPO
-    Q4 -->|No| JAEGER
-    Q2 -->|No| Q3
-    Q3 -->|Yes| DYNATRACE
-    Q3 -->|No| DATADOG
-
-    classDef question fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef solution fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-
-    class Q1,Q2,Q3,Q4 question
-    class TEMPO,JAEGER,DATADOG,DYNATRACE solution
-    class XRAY aws
-```
+相互運用性、調査ワークフロー、セキュリティ/データレジデンシー、運用上の所有責任、予想ボリュームから始めてください。実際の ingestion/query パスをプロトタイプ化し、同じ retention と信頼性要件の下で総運用コストを比較してください。オープンソースであることも、既存の Grafana stack も、最低コストを保証するものではありません。
 
 ## ベストプラクティス
 
-### 1. Instrumentation 戦略
+### 1. インストルメンテーション戦略
 
-```yaml
-# Recommended instrumentation scope
-instrumentation:
-  # Always instrument
-  always:
-    - HTTP requests/responses
-    - gRPC calls
-    - Database queries
-    - Message queue operations
-    - External API calls
+サポートされているライブラリを使用して、HTTP/gRPC、database client、messaging、external API といった意味のある Service 境界をインストルメント化してください。具体的な診断上の質問に答える場合は、internal/cache/file Span を追加してください。小さな関数ごとに自動的に Span を作成したり、機密性の高い request/query body を公開したりしないでください。
 
-  # Optional instrumentation
-  optional:
-    - Internal function calls
-    - Cache operations
-    - File I/O
-```
+export とともに、context propagation、span kind、error-status の動作、asynchronous link を計画してください。インストルメンテーションのカバレッジと sampling 判断は、別個の制御です。
 
 ### 2. Span の命名規則
 
-```yaml
-# Good examples
-- "HTTP GET /api/users/{id}"
-- "PostgreSQL SELECT users"
-- "Redis GET user:123"
-- "Kafka SEND orders"
+選択した semantic convention に基づく低カーディナリティの名前を使用してください。
 
-# Bad examples
-- "http call"
-- "db query"
-- "process"
-- "span1"
+```text
+GET /api/users/{id}
+SELECT users
+GET
+send orders
 ```
+
+Redis 形式の `GET` 名に、`user:123` のような実際のキーを埋め込んではいけません。適切で機密性のない context を attributes に保存してください。ランダム ID、リテラル SQL 値、URL 全体を Span 名に含めないでください。
 
 ### 3. Tag の標準化
 
+現在の convention については、SDK が出力する schema と migration mode を確認してください。
+
 ```yaml
-# OpenTelemetry Semantic Conventions
-tags:
-  # HTTP
-  http.method: GET
-  http.url: https://api.example.com/users
-  http.status_code: 200
-
-  # Database
-  db.system: postgresql
-  db.statement: SELECT * FROM users
-  db.operation: SELECT
-
-  # Service
+attributes:
+  http.request.method: GET
+  http.response.status_code: 200
+  http.route: /api/users/{id}
+  db.system.name: postgresql
+  db.operation.name: SELECT
+resource:
   service.name: user-service
   service.version: 1.2.3
 ```
 
+これは汎用的なインストルメンテーション設定ではなく、attributes の例を説明しています。古いデータでは `http.method`、`http.status_code`、`db.system`、`db.operation`、または `db.statement` を使用している可能性があります。query の名前を変更しても、そのデータは変換されません。`db.query.text` は、レビュー済みのサニタイズポリシーの下でのみキャプチャしてください。リテラル値や認証情報を公開しない、有用な要約を優先してください。
+
 ## 次のステップ
 
-分散トレーシングの概念を理解したら、以下のセクションで特定のツールの使用方法を学びます。
+- [Grafana Tempo](./01-tempo.md)
+- [AWS X-Ray](./02-xray.md)
+- [OpenTelemetry](./03-opentelemetry.md)
+- [Dynatrace](./04-dynatrace.md)
 
-- [Grafana Tempo](./01-tempo.md): Grafana スタックの分散トレーシングバックエンド
-- [AWS X-Ray](./02-xray.md): AWS ネイティブの分散トレーシング
-- [OpenTelemetry](./03-opentelemetry.md): 標準化された Instrumentation フレームワーク
-- [Dynatrace](./04-dynatrace.md): AI 搭載の APM ソリューション
+## 参照資料と検証範囲
+
+- [W3C Trace Context](https://www.w3.org/TR/trace-context/)
+- [B3 伝播](https://github.com/openzipkin/b3-propagation)
+- [OpenTelemetry Trace API](https://opentelemetry.io/docs/specs/otel/trace/api/)
+- [SDK 環境変数](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/)
+- [Collector 0.160 の tail sampling](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/processor/tailsamplingprocessor/README.md)
+- [OpenMetrics 仕様](https://github.com/prometheus/OpenMetrics/blob/main/specification/OpenMetrics.md)
+- [SLF4J MDC API](https://www.slf4j.org/apidocs/org/slf4j/MDC.html)
+- [HTTP semantic conventions](https://opentelemetry.io/docs/specs/semconv/http/http-spans/)
+- [Database semantic conventions](https://opentelemetry.io/docs/specs/semconv/db/database-spans/)
+
+ネイティブチェックでは、OpenTelemetry Python API/SDK/B3 1.44.0、prometheus-client の OpenMetrics parser、および Collector Contrib 0.160.0 を合成ローカルデータとともに使用しました。Java MDC コードは、Java runtime を実行せず、API と言語セマンティクスに照らして確認しました。実際の分散アプリケーション、vendor backend、trace-affinity cluster、performance benchmark、cloud deployment はテストしていません。
 
 ## クイズ
 
-ツール固有のクイズで知識を確認しましょう。
 - [Tempo クイズ](../../quizzes/observability/tracing/01-tempo-quiz.md)
 - [X-Ray クイズ](../../quizzes/observability/tracing/02-xray-quiz.md)
 - [OpenTelemetry クイズ](../../quizzes/observability/tracing/03-opentelemetry-quiz.md)

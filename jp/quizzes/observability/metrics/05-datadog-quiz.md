@@ -1,183 +1,167 @@
 # Datadog クイズ
 
-Datadog に関する理解度を確認するクイズです。
+> **最終更新**: September 13, 2026
 
----
+1. Datadog SaaS でチームに残る責任は何ですか？
 
-1. Datadog の主要なデプロイメントモデルは何ですか？
-   - A) セルフホストのみ
-   - B) SaaS (Software as a Service)
-   - C) オンプレミスのみ
-   - D) ハイブリッドが必須
+   - A) Agent をインストールした後は何もない
+   - B) ダッシュボードの色を選ぶことだけ
+   - C) Collector、identity、instrumentation、データ処理、monitor、コスト
+   - D) Datadog の物理データベースサーバー
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) SaaS (Software as a Service)**
+**回答: C**
 
-**解説:**
-Datadog は SaaS モデルで提供される統合オブザーバビリティプラットフォームです。ユーザーは Datadog Agent をデプロイするだけでよく、データの保存、処理、可視化は Datadog のクラウドインフラストラクチャによって処理されます。これにより、運用上の負荷をかけずに強力な監視機能を利用できます。
+SaaS はバックエンドを管理します。APM、profiling、logs、その他の製品にはそれぞれ異なる権限と課金があり、Agent がすべてを含むわけではありません。
+
+</details>
+
+2. credential/integration に関する正しい記述はどれですか？
+
+   - A) 基本的な Agent ingestion には API key が必要で、application key と AWS account role は追加の特定機能に使用される
+   - B) すべての Agent には application key と広範な AWS 読み取り role が必要である
+   - C) IRSA を追加すると Datadog SaaS AWS integration が自動的に設定される
+   - D) 推測した service-account 名で十分である
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: A**
+
+external metrics provider には追加の API permission/key 設定が必要です。SaaS AWS integration では、承認済みの cross-account role/external ID を使用します。実際にレンダリングされた Agent SA を確認してください。
+
+</details>
+
+3. admission.datadoghq.com/enabled=true だけで APM SDK injection が証明されますか？
+
+   - A) はい。すべての language/version を自動的に含みます
+   - B) いいえ。SDK annotation または SSI target を設定し、新たに admission された Pod と実際の trace データを検証してください
+   - C) はい。Cluster Agent namespace 内でも同様です
+   - D) はい。trace socket が存在すれば可能です
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: B**
+
+mutation/connection 設定と library injection は別のものです。現在のローカル injection は kube-system と Cluster Agent namespace を除外します。library、runtime、mount、security の互換性も依然として重要です。
+
+</details>
+
+4. application Pod は node DogStatsD Agent にどのように到達すべきですか？
+
+   - A) 常に application の localhost を使用する
+   - B) すべての UDP packet に API key を含める
+   - C) 無関係な ConfigMap を作成する
+   - D) mount された Linux UDS directory など、設定済みで到達可能な endpoint を使用する
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: D**
+
+application の localhost は node Agent ではありません。UDS path、permission、SDK argument format は一致している必要があります。datagram は SaaS ingestion を確認応答せず、counter は exactly-once ledger ではありません。
+
+</details>
+
+5. 正しい metric の解釈はどれですか？
+
+   - A) kubernetes.cpu.usage.total は percent である
+   - B) 存在しないすべての legacy-catalogue metric は削除された
+   - C) kubernetes.cpu.usage.total は nanocore であり、Kubelet restart metric は累積 gauge である
+   - D) 繰り返し取得した restart sample を合計すると、新しい restart を数えられる
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: C**
+
+system.cpu.idle は percent です。Kubelet と State Core には、有効な metric 名と tag がそれぞれ異なります。restart monitor の例では明示的に total を評価しており、最近の増加には reset を考慮した検証が必要です。
+
+</details>
+
+6. .as_count() の error-ratio path は何を計算しますか？
+
+   - A) 時間集計された error count と total count の比率
+   - B) すべての time-bucket ratio の合計
+   - C) グローバルな p95
+   - D) traffic がゼロの場合の自動的な 100% success
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: A**
+
+sum aggregation と一致する group を使用します。helper は good/error count がゼロであることを明示的に出力します。traffic がゼロ、data が欠損、error がない traffic はそれぞれ異なる状態です。
+
+</details>
+
+7. 正しい OpenMetrics/log 設定の記述はどれですか？
+
+   - A) 任意の ConfigMap は自動的に mount される
+   - B) 一致する container annotation/current check field を使用する。Logs Grok rule では match_rules/support_rules を使用する
+   - C) chart root の prometheus.enabled がすべてを設定する
+   - D) Grok の camelCase key と snake_case key は同等である
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: B**
+
+現在の OpenMetrics check は openmetrics_endpoint を使用します。datadog.confd は chart 所有の mount を提供し、standalone ConfigMap は自動的にはインストールされません。request-schema validation は live scrape や Grok parse ではありません。
+
+</details>
+
+8. 手動の trace-log correlation で保持すべきものは何ですか？
+
+   - A) dd.trace_id だけを残し、他のすべての MDC field を削除する
+   - B) 128-bit ID を任意に numeric cast した値
+   - C) ハードコードされた成功した trace ID
+   - D) 呼び出し元の既存 MDC context、string ID、実際の instrumentation/data の前提条件
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: D**
+
+helper は application code が例外を送出した場合でも context を復元します。これは同期的です。自動 injection/parsing、一貫した service tag、利用可能な trace は別の要件です。
+
+</details>
+
+9. 50 個の service を 50 台の APM host として価格計算することの問題は何ですか？
+
+   - A) APM は常に無料である
+   - B) log ingestion が log 請求額のすべてである
+   - C) service と請求対象 host は異なる単位であり、製品/contract の allotment と usage を数える必要がある
+   - D) すべての cluster には host が 1 台ある
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: C**
+
+以前の見積もりは実測された請求額ではありませんでした。indexing/retention、span allotment、custom metric、その他の製品も重要です。nonLocalTraffic は到達可能性であり、cost quota ではありません。
+
+</details>
+
+10. 正しい Watchdog/SLO/diagnostic の実践はどれですか？
+
+   - A) Watchdog insight によって page が配信されたことが証明される
+   - B) SLO model と good/total policy を一致させ、routing をテストし、共有前にローカル diagnostic bundle を確認する
+   - C) ローカル flare は自動的に upload を許可する
+   - D) trace がない場合はすべての DD_ environment value を出力する
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: B**
+
+Datadog は metric-、monitor-、time-slice SLO をサポートします。notification と no-data の挙動には検証が必要です。env dump には key が露出する可能性があり、--local は最初の flare collection をローカルに保持します。
 
 </details>
 
 ---
 
-2. Datadog Cluster Agent の役割は何ですか？
-   - A) コンテナログの収集
-   - B) クラスターレベルのメトリクスおよびイベントの収集
-   - C) APM トレースの処理
-   - D) ダッシュボードのレンダリング
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) クラスターレベルのメトリクスおよびイベントの収集**
-
-**解説:**
-Datadog Cluster Agent は Kubernetes クラスターからクラスター レベルのメトリクスとイベントを収集します。また、HPA (Horizontal Pod Autoscaler) 用のカスタムメトリクスサーバーとしての役割や、Admission Controller による自動 APM インストルメンテーションのインジェクションも提供します。
-
-</details>
-
----
-
-3. Datadog で自動 APM インストルメンテーションを有効にするにはどうしますか？
-   - A) アプリケーションコードの変更が必要
-   - B) Admission Controller と Pod ラベルを使用する
-   - C) 別途 APM サーバーをデプロイする
-   - D) ライブラリを手動でインジェクションする
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) Admission Controller と Pod ラベルを使用する**
-
-**解説:**
-Datadog Admission Controller を有効にすると、`admission.datadoghq.com/enabled: "true"` ラベルを持つ Pod に APM インストルメンテーションライブラリが自動的にインジェクションされます。Java、Python、Node.js、.NET、Ruby などの主要な言語をサポートしており、コードを変更せずにトレーシングを開始できます。
-
-</details>
-
----
-
-4. DogStatsD の役割は何ですか？
-   - A) ログの収集
-   - B) カスタムメトリクスの収集 (StatsD 互換)
-   - C) ダッシュボードの作成
-   - D) アラートのルーティング
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) カスタムメトリクスの収集 (StatsD 互換)**
-
-**解説:**
-DogStatsD は Datadog Agent に含まれる StatsD 互換のメトリクス収集デーモンです。アプリケーションは UDP 経由でカスタムメトリクス (カウンター、ゲージ、ヒストグラム、ディストリビューション) を送信できます。タグ機能が追加された StatsD プロトコルと互換性があります。
-
-</details>
-
----
-
-5. Datadog でトレースとログを関連付けるにはどうしますか？
-   - A) ログファイルを手動でアップロードする
-   - B) ログに trace_id と span_id を含める
-   - C) 別途接続サービスをデプロイする
-   - D) ログとトレースのタイムスタンプを照合する
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) ログに trace_id と span_id を含める**
-
-**解説:**
-Datadog でトレースとログを関連付けるには、ログに `dd.trace_id` と `dd.span_id` を含める必要があります。Datadog APM ライブラリは、MDC (Mapped Diagnostic Context) を通じてこの情報を自動的にインジェクションできます。これにより、APM から関連するログを直接表示できます。
-
-</details>
-
----
-
-6. Datadog のコスト構造において、インフラストラクチャ監視の課金単位は何ですか？
-   - A) メトリクス数
-   - B) ホスト数
-   - C) API 呼び出し数
-   - D) データ転送量
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) ホスト数**
-
-**解説:**
-Datadog のインフラストラクチャ監視はホスト数に基づいて課金されます。各ノード、インスタンス、コンテナホストが課金対象です。APM、ログ管理、その他の機能にはそれぞれ別の課金体系があり、ホストベースの課金によりコスト予測が容易になります。
-
-</details>
-
----
-
-7. Datadog Watchdog の機能は何ですか？
-   - A) 手動でのアラート設定
-   - B) AI ベースの自動異常検出
-   - C) ログ検索
-   - D) ダッシュボードの作成
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) AI ベースの自動異常検出**
-
-**解説:**
-Watchdog は Datadog の AI/ML ベースの自動異常検出機能です。インフラストラクチャ、APM、ログデータ内の異常なパターンを自動的に検出し、アラートを生成します。しきい値を手動で設定することなく異常を特定できます。
-
-</details>
-
----
-
-8. Datadog Agent で Prometheus メトリクスを収集するにはどうしますか？
-   - A) 別途 Prometheus サーバーが必要
-   - B) Pod アノテーションで自動検出を設定する
-   - C) 各エンドポイントを手動で登録する
-   - D) Prometheus を Datadog に置き換える
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) Pod アノテーションで自動検出を設定する**
-
-**解説:**
-Datadog Agent は `ad.datadoghq.com/<container>.checks` アノテーションを使用して、Prometheus メトリクスエンドポイントを自動検出して収集します。設定は Prometheus のスクレイプ設定に類似しており、別途 Prometheus サーバーを用意せずにメトリクスを収集できます。
-
-</details>
-
----
-
-9. Datadog で SLO (Service Level Objective) を設定する際に使用できるメトリクスの種類は何ですか？
-   - A) ログイベントのみ
-   - B) メトリクスベース、モニターベース、タイムスライスベース
-   - C) APM トレースのみ
-   - D) インフラストラクチャメトリクスのみ
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: B) メトリクスベース、モニターベース、タイムスライスベース**
-
-**解説:**
-Datadog SLO は、メトリクスベース (成功/失敗のカウント)、モニターベース (既存モニターのステータス)、タイムスライスベース (時間間隔ごとのステータス) の 3 種類をサポートしています。APM トレース、カスタムメトリクス、ログベースのメトリクスなど、さまざまなデータソースを利用できます。
-
-</details>
-
----
-
-10. 有効ではない Datadog のコスト最適化戦略はどれですか？
-    - A) APM トレースのサンプリングレートを調整する
-    - B) 不要なログをフィルタリングする
-    - C) すべてのメトリクスを最高解像度で収集する
-    - D) カスタムメトリクスのカーディナリティを管理する
-
-<details>
-<summary>回答を表示</summary>
-
-**回答: C) すべてのメトリクスを最高解像度で収集する**
-
-**解説:**
-Datadog のコスト最適化では、APM トレースのサンプリング、ログフィルタリング、カスタムメトリクスのカーディナリティ管理が重要です。すべてのメトリクスを最高解像度で収集すると、コストが急増します。必要なメトリクスのみを選択的に収集し、適切なサンプリングを適用してください。
-
-</details>
+[ガイドに戻る](../../../observability/metrics/05-datadog.md)
