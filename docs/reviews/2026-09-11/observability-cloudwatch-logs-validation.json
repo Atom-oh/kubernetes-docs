@@ -1,0 +1,1465 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T04:17:31.620650+00:00",
+  "scope": [
+    "en/observability/logging/03-cloudwatch-logs.md",
+    "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+    "ko/observability/logging/03-cloudwatch-logs.md",
+    "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/logging/03-cloudwatch-logs.md": {
+      "lines": 856,
+      "sha256": "30d926ed1c326a9f28618bef2fd9257e110706f42a85c3f5e38a196468b196ae"
+    },
+    "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md": {
+      "lines": 193,
+      "sha256": "7b1d86b53111ae6553a3003bc2e8ef7bad480adbe5be462bd4a46b7cb78a3695"
+    },
+    "ko/observability/logging/03-cloudwatch-logs.md": {
+      "lines": 852,
+      "sha256": "bdb64eae7c606245114e637d8c8ca7412ab498cf995f9849d7984e4a8e2191e9"
+    },
+    "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md": {
+      "lines": 193,
+      "sha256": "4f5752bcbe30f1a65629679829d0eb3799504e969a6db317418fef24a50d08ec"
+    }
+  },
+  "checks": {
+    "passed": true,
+    "files": [
+      {
+        "path": "en/observability/logging/03-cloudwatch-logs.md",
+        "sha256": "5eff47cd3d8f7a6990c437e4fc0b598049fd4bae05663d4187021416a207a9c8",
+        "passed": true,
+        "lines": 952
+      },
+      {
+        "path": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+        "sha256": "139f5e8d0d912cfdb2c5a8dcb1f8b23e289ddb95d0bccdce2de2647007bda1f9",
+        "passed": true,
+        "lines": 185
+      },
+      {
+        "path": "ko/observability/logging/03-cloudwatch-logs.md",
+        "sha256": "77b04e667bc672fe0757f73df4dbbbfee91623871c294805932e3d568c8178f7",
+        "passed": true,
+        "lines": 952
+      },
+      {
+        "path": "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+        "sha256": "c2949c9c6783f1592e7d68cfb45dfcb9cc19bb72cbe1d6ac5087b4adffd8eb7a",
+        "passed": true,
+        "lines": 185
+      }
+    ],
+    "checks": [
+      {
+        "case": "official-Kubernetes-schema-and-negative-type",
+        "passed": true,
+        "kind": "Namespace"
+      },
+      {
+        "case": "official-Kubernetes-schema-and-negative-type",
+        "passed": true,
+        "kind": "ServiceAccount"
+      },
+      {
+        "case": "official-Kubernetes-schema-and-negative-type",
+        "passed": true,
+        "kind": "ClusterRole"
+      },
+      {
+        "case": "official-Kubernetes-schema-and-negative-type",
+        "passed": true,
+        "kind": "ClusterRoleBinding"
+      },
+      {
+        "case": "official-Kubernetes-schema-and-negative-type",
+        "passed": true,
+        "kind": "ConfigMap"
+      },
+      {
+        "case": "official-Kubernetes-schema-and-negative-type",
+        "passed": true,
+        "kind": "DaemonSet"
+      },
+      {
+        "case": "six-resources-consistent-config",
+        "passed": true
+      },
+      {
+        "case": "serviceaccount-RBAC-reference",
+        "passed": true
+      },
+      {
+        "case": "native-command-and-config-mounted",
+        "passed": true
+      },
+      {
+        "case": "Linux-no-hostnetwork",
+        "passed": true
+      },
+      {
+        "case": "grace-period-consistent",
+        "passed": true
+      },
+      {
+        "case": "state-writable-separate-from-input",
+        "passed": true,
+        "field": "storage.path"
+      },
+      {
+        "case": "state-writable-separate-from-input",
+        "passed": true,
+        "field": "DB"
+      },
+      {
+        "case": "precreated-group-and-no-reserved-agent-string",
+        "passed": true
+      },
+      {
+        "case": "framing-and-trusted-envelope",
+        "passed": true
+      },
+      {
+        "case": "native-plugin-minimal-write-API-evidence",
+        "passed": true
+      },
+      {
+        "case": "validated-terraform-bytes",
+        "passed": true,
+        "file": "log-groups.tf"
+      },
+      {
+        "case": "validated-terraform-bytes",
+        "passed": true,
+        "file": "firehose.tf"
+      },
+      {
+        "case": "validated-terraform-bytes",
+        "passed": true,
+        "file": "alerts.tf"
+      },
+      {
+        "case": "native-Terraform-schema",
+        "passed": true
+      },
+      {
+        "case": "native-Helm-values-hash",
+        "passed": true
+      },
+      {
+        "case": "chart-FluentBit-ServiceAccount",
+        "passed": true
+      },
+      {
+        "case": "JSON-metric-subscription-same-field",
+        "passed": true
+      },
+      {
+        "case": "actual-record-contract",
+        "passed": true
+      },
+      {
+        "case": "default-zero-no-dimensions",
+        "passed": true
+      },
+      {
+        "case": "two-five-minute-count-periods",
+        "passed": true
+      },
+      {
+        "case": "lambda-permission-source-account-and-ARN",
+        "passed": true
+      },
+      {
+        "case": "no-extra-compression-on-gzipped-input",
+        "passed": true
+      },
+      {
+        "case": "source-limits-prove-no-CWL-Firehose-OpenSearch",
+        "passed": true
+      },
+      {
+        "case": "AutoMode-vended-logtypes",
+        "passed": true
+      },
+      {
+        "case": "class-immutability-and-delivery-two-days",
+        "passed": true
+      },
+      {
+        "case": "official-regex-case-flag",
+        "passed": true
+      },
+      {
+        "case": "official-percentile-function",
+        "passed": true
+      },
+      {
+        "case": "official-json-map-access",
+        "passed": true
+      },
+      {
+        "case": "SOURCE-logGroups-accountIdentifier",
+        "passed": true
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "basic-text"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "application-json"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "regex-field"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "api-errors"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "audit-user"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "auth-failure"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "pod-events"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "errors-by-namespace"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "slow-responses"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "volume-by-hour"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "error-types"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "latency-percentiles"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "backoff-log-events"
+      },
+      {
+        "case": "obsolete-query-forms-removed",
+        "passed": true,
+        "query": "multi-group-source"
+      },
+      {
+        "case": "hour-bucket-sort-alias",
+        "passed": true
+      },
+      {
+        "case": "error-count-query-actually-filters",
+        "passed": true
+      },
+      {
+        "case": "backoff-named-as-log-events",
+        "passed": true
+      },
+      {
+        "case": "published-lambda-tested-bytes",
+        "passed": true
+      },
+      {
+        "case": "hypothetical-cost-unit-arithmetic",
+        "passed": true
+      },
+      {
+        "case": "usage-metric-versus-Lambda-billing",
+        "passed": true
+      },
+      {
+        "case": "current-Markdown-render-hash",
+        "passed": true,
+        "path": "en/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "no-template-markers",
+        "passed": true,
+        "path": "en/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "all-old-heading-IDs-preserved",
+        "passed": true,
+        "path": "en/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "native-helper-embedded",
+        "passed": true,
+        "path": "en/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "shell-syntax-only-no-execution",
+        "passed": true,
+        "path": "en/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "shell-syntax-only-no-execution",
+        "passed": true,
+        "path": "en/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "shell-syntax-only-no-execution",
+        "passed": true,
+        "path": "en/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "shell-syntax-only-no-execution",
+        "passed": true,
+        "path": "en/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "all14queries-published",
+        "passed": true,
+        "path": "en/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "local-link-exists",
+        "passed": true,
+        "path": "en/observability/logging/03-cloudwatch-logs.md",
+        "target": "../../quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      },
+      {
+        "case": "current-Markdown-render-hash",
+        "passed": true,
+        "path": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      },
+      {
+        "case": "no-template-markers",
+        "passed": true,
+        "path": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      },
+      {
+        "case": "10correct-answer-keys",
+        "passed": true,
+        "path": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      },
+      {
+        "case": "40renderable-choice-items",
+        "passed": true,
+        "path": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      },
+      {
+        "case": "local-link-exists",
+        "passed": true,
+        "path": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+        "target": "../../../observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "current-Markdown-render-hash",
+        "passed": true,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "no-template-markers",
+        "passed": true,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "all-old-heading-IDs-preserved",
+        "passed": true,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "native-helper-embedded",
+        "passed": true,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "shell-syntax-only-no-execution",
+        "passed": true,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "shell-syntax-only-no-execution",
+        "passed": true,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "shell-syntax-only-no-execution",
+        "passed": true,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "shell-syntax-only-no-execution",
+        "passed": true,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "all14queries-published",
+        "passed": true,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "local-link-exists",
+        "passed": true,
+        "path": "ko/observability/logging/03-cloudwatch-logs.md",
+        "target": "../../quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      },
+      {
+        "case": "current-Markdown-render-hash",
+        "passed": true,
+        "path": "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      },
+      {
+        "case": "no-template-markers",
+        "passed": true,
+        "path": "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      },
+      {
+        "case": "10correct-answer-keys",
+        "passed": true,
+        "path": "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      },
+      {
+        "case": "40renderable-choice-items",
+        "passed": true,
+        "path": "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md"
+      },
+      {
+        "case": "local-link-exists",
+        "passed": true,
+        "path": "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+        "target": "../../../observability/logging/03-cloudwatch-logs.md"
+      },
+      {
+        "case": "all-bilingual-executable-fences-identical",
+        "passed": true
+      },
+      {
+        "case": "two-native-Mermaid-renders",
+        "passed": true
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://aws.amazon.com/cloudwatch/pricing/"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-operations-functions.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutSubscriptionFilter.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs-decompression.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://docs.aws.amazon.com/sns/latest/api/API_Publish.html"
+      },
+      {
+        "case": "official-reference-cached-200",
+        "passed": true,
+        "url": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/cloudwatch.md"
+      }
+    ],
+    "counts": {
+      "documents": 4,
+      "answers": 20,
+      "choiceItems": 80,
+      "nativeSourceContractCases": 107,
+      "lambdaSDKCases": 22,
+      "queries": 14,
+      "terraformFiles": 3,
+      "helmResources": 34,
+      "preservedHeadingAliases": 38,
+      "mermaid": 2,
+      "localLinks": 4,
+      "externalReferences": 20
+    },
+    "references": [
+      {
+        "url": "https://aws.amazon.com/cloudwatch/pricing/",
+        "key": "d3ee07d77954",
+        "status": 200,
+        "finalURL": "https://aws.amazon.com/cloudwatch/pricing/",
+        "fetchedAt": "2026-09-12T23:26:06.817494+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html",
+        "key": "ea2061d99ad3",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html",
+        "fetchedAt": "2026-09-13T03:55:48.011868+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html",
+        "key": "eb9c38c41f79",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html",
+        "fetchedAt": "2026-09-13T03:55:48.222367+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html",
+        "key": "71f56ab17bbf",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html",
+        "fetchedAt": "2026-09-13T03:55:48.014999+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-operations-functions.html",
+        "key": "ab5ffc494266",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-operations-functions.html",
+        "fetchedAt": "2026-09-13T03:57:42.828246+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html",
+        "key": "16fd6f626ae4",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html",
+        "fetchedAt": "2026-09-13T03:57:42.623421+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html",
+        "key": "69e0a0732ab4",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html",
+        "fetchedAt": "2026-09-13T03:55:47.800699+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html",
+        "key": "18614a309935",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html",
+        "fetchedAt": "2026-09-13T03:55:48.870939+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html",
+        "key": "9df5585e9bb2",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html",
+        "fetchedAt": "2026-09-13T03:57:42.597356+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html",
+        "key": "f9c0c0a5cb10",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html",
+        "fetchedAt": "2026-09-13T03:55:48.228792+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html",
+        "key": "de169cfa93c4",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html",
+        "fetchedAt": "2026-09-13T03:57:42.809064+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+        "key": "ad9fe58c3d55",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+        "fetchedAt": "2026-09-13T03:57:43.022787+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutSubscriptionFilter.html",
+        "key": "946702aa8489",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutSubscriptionFilter.html",
+        "fetchedAt": "2026-09-13T03:55:48.428989+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+        "key": "ea616723b050",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+        "fetchedAt": "2026-09-13T03:57:42.414325+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+        "key": "7acc47fd7b9d",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+        "fetchedAt": "2026-09-13T03:55:47.805486+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html",
+        "key": "c8f6a1a88432",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html",
+        "fetchedAt": "2026-09-13T03:57:42.392438+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs-decompression.html",
+        "key": "3412eb1fbee0",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs-decompression.html",
+        "fetchedAt": "2026-09-13T03:57:42.203826+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs.html",
+        "key": "090a527ab043",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs.html",
+        "fetchedAt": "2026-09-13T03:57:42.182274+00:00"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/sns/latest/api/API_Publish.html",
+        "key": "f1beb1ad2664",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/sns/latest/api/API_Publish.html",
+        "fetchedAt": "2026-09-13T03:55:49.269277+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/cloudwatch.md",
+        "key": "88a08914b999",
+        "status": 200,
+        "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/cloudwatch.md",
+        "fetchedAt": "2026-09-13T03:55:49.215331+00:00"
+      }
+    ],
+    "limits": [
+      "No managed CloudWatch query/filter execution; QL and filter checks are source-linked syntax/data contracts, not a native service parser.",
+      "Kubernetes schema, Terraform validate and Helm render only; no API admission, install, IAM association or collector runtime.",
+      "22Lambda/SDK cases use synthetic payloads and SNSStubber; no real AWS request or notification.",
+      "No cloud mutations, full site build, container/image execution, GPU or other AI.",
+      "Two incorrect PNG references replaced by accurate inlineMermaid; old assets/foreign translations not edited."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/logging/03-cloudwatch-logs.md",
+        "sha256": "5eff47cd3d8f7a6990c437e4fc0b598049fd4bae05663d4187021416a207a9c8",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloudwatch-logs"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h3",
+            "id": "features-and-log-classes"
+          },
+          {
+            "tag": "h3",
+            "id": "key-concepts"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-control-plane-logging"
+          },
+          {
+            "tag": "h3",
+            "id": "log-types"
+          },
+          {
+            "tag": "h3",
+            "id": "enable-and-observe-the-update"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform-ownership-and-retention"
+          },
+          {
+            "tag": "h3",
+            "id": "log-group-structure"
+          },
+          {
+            "tag": "h2",
+            "id": "container-insights"
+          },
+          {
+            "tag": "h3",
+            "id": "installation-choices"
+          },
+          {
+            "tag": "h3",
+            "id": "collected-logs-and-platforms"
+          },
+          {
+            "tag": "h2",
+            "id": "fluentbit-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "manual-application-log-collector"
+          },
+          {
+            "tag": "h3",
+            "id": "record-contract-and-host-sources"
+          },
+          {
+            "tag": "h2",
+            "id": "cloudwatch-logs-insights"
+          },
+          {
+            "tag": "h3",
+            "id": "basic-query-syntax"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-log-query-examples"
+          },
+          {
+            "tag": "h3",
+            "id": "application-log-queries"
+          },
+          {
+            "tag": "h3",
+            "id": "advanced-queries"
+          },
+          {
+            "tag": "h2",
+            "id": "subscription-filters"
+          },
+          {
+            "tag": "h3",
+            "id": "archive-to-s3-through-firehose"
+          },
+          {
+            "tag": "h3",
+            "id": "process-with-lambda"
+          },
+          {
+            "tag": "h3",
+            "id": "metric-filters-and-alarms"
+          },
+          {
+            "tag": "h3",
+            "id": "export-tasks-and-s3-lifecycle"
+          },
+          {
+            "tag": "h2",
+            "id": "cost-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "cost-structure"
+          },
+          {
+            "tag": "h3",
+            "id": "filtering-retention-and-log-levels"
+          },
+          {
+            "tag": "h3",
+            "id": "cost-monitoring"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "cloudwatch-logs",
+          "table-of-contents",
+          "overview",
+          "cloudwatch-logs-features",
+          "features-and-log-classes",
+          "terminology",
+          "key-concepts",
+          "mermaid-139",
+          "eks-control-plane-logging",
+          "log-types",
+          "enable-via-aws-cli",
+          "enable-and-observe-the-update",
+          "configure-with-terraform",
+          "terraform-ownership-and-retention",
+          "log-group-structure",
+          "container-insights",
+          "container-insights-overview",
+          "installation-methods",
+          "cloudwatch-agent-fluentbit-recommended",
+          "install-via-helm-chart",
+          "irsa-setup",
+          "installation-choices",
+          "collected-logs",
+          "collected-logs-and-platforms",
+          "fluentbit-integration",
+          "fluentbit-configmap",
+          "fluentbit-daemonset",
+          "manual-application-log-collector",
+          "record-contract-and-host-sources",
+          "cloudwatch-logs-insights",
+          "basic-query-syntax",
+          "eks-log-query-examples",
+          "application-log-queries",
+          "advanced-queries",
+          "subscription-filters",
+          "export-to-s3",
+          "archive-to-s3-through-firehose",
+          "process-with-lambda",
+          "create-alerts-with-metric-filters",
+          "metric-filters-and-alarms",
+          "_3-archive-to-s3",
+          "export-tasks-and-s3-lifecycle",
+          "cost-optimization",
+          "cost-structure",
+          "cost-reduction-strategies",
+          "_1-log-filtering",
+          "_2-retention-period-optimization",
+          "_4-adjust-log-levels",
+          "filtering-retention-and-log-levels",
+          "cost-monitoring",
+          "validation-and-references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/logging/03-cloudwatch-logs.md",
+        "sha256": "77b04e667bc672fe0757f73df4dbbbfee91623871c294805932e3d568c8178f7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloudwatch-logs"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h3",
+            "id": "기능과-로그-클래스"
+          },
+          {
+            "tag": "h3",
+            "id": "핵심-개념"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-컨트롤-플레인-로깅"
+          },
+          {
+            "tag": "h3",
+            "id": "로그-유형"
+          },
+          {
+            "tag": "h3",
+            "id": "활성화와-업데이트-확인"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform-소유권과-보존"
+          },
+          {
+            "tag": "h3",
+            "id": "로그-그룹-구조"
+          },
+          {
+            "tag": "h2",
+            "id": "container-insights"
+          },
+          {
+            "tag": "h3",
+            "id": "설치-선택지"
+          },
+          {
+            "tag": "h3",
+            "id": "수집-로그와-플랫폼"
+          },
+          {
+            "tag": "h2",
+            "id": "fluentbit-연동"
+          },
+          {
+            "tag": "h3",
+            "id": "수동-애플리케이션-로그-수집기"
+          },
+          {
+            "tag": "h3",
+            "id": "레코드-구조와-host-소스"
+          },
+          {
+            "tag": "h2",
+            "id": "cloudwatch-logs-insights"
+          },
+          {
+            "tag": "h3",
+            "id": "기본-쿼리-문법"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-로그-쿼리-예시"
+          },
+          {
+            "tag": "h3",
+            "id": "애플리케이션-로그-쿼리"
+          },
+          {
+            "tag": "h3",
+            "id": "고급-쿼리"
+          },
+          {
+            "tag": "h2",
+            "id": "subscription-filters"
+          },
+          {
+            "tag": "h3",
+            "id": "firehose를-통한-s3-보관"
+          },
+          {
+            "tag": "h3",
+            "id": "lambda로-처리"
+          },
+          {
+            "tag": "h3",
+            "id": "metric-filter와-alarm"
+          },
+          {
+            "tag": "h3",
+            "id": "export-task와-s3-lifecycle"
+          },
+          {
+            "tag": "h2",
+            "id": "비용-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "비용-구조"
+          },
+          {
+            "tag": "h3",
+            "id": "필터링·보존·로그-레벨"
+          },
+          {
+            "tag": "h3",
+            "id": "비용-모니터링"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "cloudwatch-logs",
+          "목차",
+          "개요",
+          "cloudwatch-logs-특징",
+          "기능과-로그-클래스",
+          "용어-정리",
+          "핵심-개념",
+          "mermaid-139",
+          "eks-컨트롤-플레인-로깅",
+          "로그-유형",
+          "aws-cli로-활성화",
+          "활성화와-업데이트-확인",
+          "terraform으로-설정",
+          "terraform-소유권과-보존",
+          "로그-그룹-구조",
+          "container-insights",
+          "container-insights-개요",
+          "설치-방법",
+          "cloudwatch-agent-fluentbit-권장",
+          "helm-차트로-설치",
+          "irsa-설정",
+          "설치-선택지",
+          "수집되는-로그",
+          "수집-로그와-플랫폼",
+          "fluentbit-연동",
+          "fluentbit-configmap",
+          "fluentbit-daemonset",
+          "수동-애플리케이션-로그-수집기",
+          "레코드-구조와-host-소스",
+          "cloudwatch-logs-insights",
+          "기본-쿼리-문법",
+          "eks-로그-쿼리-예시",
+          "애플리케이션-로그-쿼리",
+          "고급-쿼리",
+          "subscription-filters",
+          "s3로-내보내기",
+          "firehose를-통한-s3-보관",
+          "lambda로-처리",
+          "metric-filter로-알림-생성",
+          "metric-filter와-alarm",
+          "_3-s3로-아카이브",
+          "export-task와-s3-lifecycle",
+          "비용-최적화",
+          "비용-구조",
+          "비용-절감-전략",
+          "_1-로그-필터링",
+          "_2-보존-기간-최적화",
+          "_4-로그-레벨-조정",
+          "필터링·보존·로그-레벨",
+          "비용-모니터링",
+          "검증과-참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+        "sha256": "139f5e8d0d912cfdb2c5a8dcb1f8b23e289ddb95d0bccdce2de2647007bda1f9",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloudwatch-logs-quiz"
+          }
+        ],
+        "renderedIds": [
+          "cloudwatch-logs-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+        "sha256": "c2949c9c6783f1592e7d68cfb45dfcb9cc19bb72cbe1d6ac5087b4adffd8eb7a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloudwatch-logs-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "cloudwatch-logs-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+      "cacheKey": "7acc47fd7b9d",
+      "fetchedAt": "2026-09-13T03:55:47.805486+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+      "sha256": "95bbcc12dd12cee13b8b89faa351ff5d31f8697f90331938a5bb7bd91f7398eb"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html",
+      "cacheKey": "69e0a0732ab4",
+      "fetchedAt": "2026-09-13T03:55:47.800699+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html",
+      "sha256": "e068cd7f0c7b72790480a5babbbbe2928a8a0b597b75bf9536caf70ac7e8cd0d"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html",
+      "cacheKey": "ea2061d99ad3",
+      "fetchedAt": "2026-09-13T03:55:48.011868+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html",
+      "sha256": "9f81a78a308703ae8f2afbda910d4b670c9672fd7e41fe5a7308fab3e8d0d7e3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html",
+      "cacheKey": "71f56ab17bbf",
+      "fetchedAt": "2026-09-13T03:55:48.014999+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html",
+      "sha256": "4d6a377550c64a9ee2566edded5a0bdc4a7d2c31d4571395d61f27cb46902a7a"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html",
+      "cacheKey": "eb9c38c41f79",
+      "fetchedAt": "2026-09-13T03:55:48.222367+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Source.html",
+      "sha256": "24a32c8e227337a109ceacfe0611b1432bf08fed4fb391e62f342fcacf9b0458"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html",
+      "cacheKey": "f9c0c0a5cb10",
+      "fetchedAt": "2026-09-13T03:55:48.228792+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html",
+      "sha256": "705d6d0b002d985578b8ec47db5781fabb16a0c69664e816ba16b3ba5dcf4d62"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutSubscriptionFilter.html",
+      "cacheKey": "946702aa8489",
+      "fetchedAt": "2026-09-13T03:55:48.428989+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutSubscriptionFilter.html",
+      "sha256": "541fee4fea77af6c615e4bf6d8f2342aa6612cacda3356ca1c7e1b0b79322795"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html",
+      "cacheKey": "18614a309935",
+      "fetchedAt": "2026-09-13T03:55:48.870939+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html",
+      "sha256": "8b8c053cc85b2bd835727262770ba1a79d99e934330eabf0c00e006fefcd3191"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntaxForMetricFilters.html",
+      "cacheKey": "a613a0305091",
+      "fetchedAt": "2026-09-13T03:55:49.007641+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntaxForMetricFilters.html",
+      "sha256": "217002543342e8de4f5bd9c6e5653d9e2594b1d53a9b30c819c7d10f420d0366"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/cloudwatch.md",
+      "cacheKey": "88a08914b999",
+      "fetchedAt": "2026-09-13T03:55:49.215331+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/cloudwatch.md",
+      "sha256": "a2a48900f507a94e962525bd48eced71c6ef66c54ff5dcea112e5a8b368b7c23"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/sns/latest/api/API_Publish.html",
+      "cacheKey": "f1beb1ad2664",
+      "fetchedAt": "2026-09-13T03:55:49.269277+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/sns/latest/api/API_Publish.html",
+      "sha256": "79ad1a894074d2458793e9dd843edb5468b49eee1afa062755f69cb29b8d9fd1"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html",
+      "cacheKey": "1442aa4cf9d0",
+      "fetchedAt": "2026-09-13T03:55:49.369503+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html",
+      "sha256": "e13db9d9c821e8195c1c5e20b59ab732a32c780a17c0489caac3571cbb542da0"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs.html",
+      "cacheKey": "090a527ab043",
+      "fetchedAt": "2026-09-13T03:57:42.182274+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs.html",
+      "sha256": "43ff44222c3ab9c1cb64e2c5038193c5e1db14084b5cb81576b076f840c92752"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs-decompression.html",
+      "cacheKey": "3412eb1fbee0",
+      "fetchedAt": "2026-09-13T03:57:42.203826+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs-decompression.html",
+      "sha256": "4d93d05c61493b786a6f7e32d0bc1a4f889feeb38b97db329b2c7961c6290bbc"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html",
+      "cacheKey": "c8f6a1a88432",
+      "fetchedAt": "2026-09-13T03:57:42.392438+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html",
+      "sha256": "05697bbe14fb0e965939fab26845f5aa7ba2c8e7307b138ec8e448c18484615c"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+      "cacheKey": "ea616723b050",
+      "fetchedAt": "2026-09-13T03:57:42.414325+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+      "sha256": "aae9dc73f38f23868e4849d04ad94d2b5402f9188acae25eaeae9d3e9fb10915"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html",
+      "cacheKey": "9df5585e9bb2",
+      "fetchedAt": "2026-09-13T03:57:42.597356+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/S3Export.html",
+      "sha256": "a21b4ed67d4d2839c946c146e47dd4d634b84774e992e5125b84c7189e109c12"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html",
+      "cacheKey": "16fd6f626ae4",
+      "fetchedAt": "2026-09-13T03:57:42.623421+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html",
+      "sha256": "81397ac746f257e5e86237a66ab0d8288f9d62485947d7892a9846a62ec968ca"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html",
+      "cacheKey": "de169cfa93c4",
+      "fetchedAt": "2026-09-13T03:57:42.809064+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html",
+      "sha256": "6c16e18e2ab42ba285af0fbce6b5b582eece9a164d810d052a86e8dd8e9ed8de"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-operations-functions.html",
+      "cacheKey": "ab5ffc494266",
+      "fetchedAt": "2026-09-13T03:57:42.828246+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-operations-functions.html",
+      "sha256": "0b435367c0496c4600cd48c8f17c63e916fe3f2ac49a7067f20fac59fa9d72bb"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "cacheKey": "ad9fe58c3d55",
+      "fetchedAt": "2026-09-13T03:57:43.022787+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "sha256": "d2462be4d4b563d98d33fd8e36ae1ac75769965f81f9a52b4da7abf826b9a85f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/inputs/systemd.md",
+      "cacheKey": "0e72c2c7bf16",
+      "fetchedAt": "2026-09-13T03:57:43.045359+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/inputs/systemd.md",
+      "sha256": "43aeca18a329ca074bf35600ee46f3b326aded4609109b8dfaea7f723b93e549"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.0.9/plugins/out_cloudwatch_logs/cloudwatch_api.c",
+      "cacheKey": "d58e14bf5192",
+      "fetchedAt": "2026-09-13T04:10:40.741069+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.0.9/plugins/out_cloudwatch_logs/cloudwatch_api.c",
+      "sha256": "ffdf6d06737e4fc57091a1b143d29d45a411ce8bea7be241fc63c1d0d2b95ef2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.0.9/plugins/out_cloudwatch_logs/cloudwatch_logs.c",
+      "cacheKey": "d3ec0398533a",
+      "fetchedAt": "2026-09-13T04:10:40.729951+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.0.9/plugins/out_cloudwatch_logs/cloudwatch_logs.c",
+      "sha256": "98e2da8ec3dbad7cd8488bff6ade080113d69ae65a902d5de60084a7a9cbcb68"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/filters/grep.md",
+      "cacheKey": "d0931812710d",
+      "fetchedAt": "2026-09-13T04:10:40.937444+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/filters/grep.md",
+      "sha256": "6b9084b90f76ed355c51d357a8edb2ee8cbc78b5feedf6f10566a1a2b641cdc1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "cacheKey": "b0fb38bb7c6c",
+      "fetchedAt": "2026-09-12T14:09:04.173705+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "sha256": "dcede2063da1d7ad62ecb5af8adb6d7fabd0b52385a7fa0048afb491dac90450"
+    },
+    {
+      "url": "https://aws.amazon.com/cloudwatch/pricing/",
+      "cacheKey": "d3ee07d77954",
+      "fetchedAt": "2026-09-12T23:26:06.817494+00:00",
+      "status": 200,
+      "finalURL": "https://aws.amazon.com/cloudwatch/pricing/",
+      "sha256": "dec89303d1f28a7523420187cb323c4b6b8b4cf6faff5a717b40e141fe898b34"
+    },
+    {
+      "url": "https://github.com/aws-observability/helm-charts/releases/tag/amazon-cloudwatch-observability-6.6.0",
+      "cacheKey": "767db13c6f44",
+      "fetchedAt": "2026-09-13T00:02:00.450763+00:00",
+      "status": 200,
+      "finalURL": "https://github.com/aws-observability/helm-charts/releases/tag/amazon-cloudwatch-observability-6.6.0",
+      "sha256": "0028dde98b875b2342d2e80459fa5da4dd40cb6e6a63452e4058f1caf6efaab6"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-observability/helm-charts/main/charts/amazon-cloudwatch-observability/Chart.yaml",
+      "cacheKey": "94c8a765a982",
+      "fetchedAt": "2026-09-12T23:29:55.016807+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws-observability/helm-charts/main/charts/amazon-cloudwatch-observability/Chart.yaml",
+      "sha256": "64a9063ba3a497a8b165ffbdcdb0633b47ba5802285fe542e5fa638e2cab8b89"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-observability/helm-charts/main/charts/amazon-cloudwatch-observability/values.yaml",
+      "cacheKey": "0d90e708a78c",
+      "fetchedAt": "2026-09-12T23:29:55.036796+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws-observability/helm-charts/main/charts/amazon-cloudwatch-observability/values.yaml",
+      "sha256": "bea2da81209fe0a1e0f2dbe9c122cf09c40ddb698a8528d7a12c92ab2d52e840"
+    },
+    {
+      "url": "https://api.github.com/repos/aws/aws-for-fluent-bit/releases?per_page=40",
+      "cacheKey": "94e808d15e38",
+      "fetchedAt": "2026-09-13T02:39:35.712739+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/aws/aws-for-fluent-bit/releases?per_page=40",
+      "sha256": "c7523d0af4868604174c6e96841a8c2179da545c56e0742a231c7d12ac327576"
+    }
+  ],
+  "findings": [
+    "Read all4originalfiles (856+852+193+193lines); removed obsoleteEKS1.29/new-cluster/public-endpoint setup and conflicting duplicateownership of the samecontrol-plane loggroup. Currentexistingclusterlogging uses explicitasynchronousupdate status andowner/import/retention guidance.",
+    "Replaced unsubstitutedquickstart/oldADOTexporterchart guidance with compatibleadd-onversiondiscovery and verifiedCloudWatchObservabilitychart6.6.0; checkedFluentBitDaemonSetusescloudwatch-agentSA. SeparatemanualcollectorhasmatchingIRSA/RBAC andprecreatedgroup-scopedCreateLogStream/PutLogEvents rights.",
+    "Pinned manualAWSforFluentBit3.4.15 image; explicitnativebinary, writableDB/buffers, CRI/Dockerframing, APIservermetadata, finitegrace/retry andlog_processedJSONcontract. RemoveduniversalDocker/textfile/hostnetworkassumptions andreservedextra_user_agent misuse.",
+    "AddedcurrentStandard/InfrequentAccess/Deliveryclassboundaries andimmutableclass/two-dayDeliveryretention; separatedAutoMode4managedcomponentvendedlogtypes anddeliveryAPIfromcontrolplane/subscriptionlogs.",
+    "Corrected14LogsInsightsQLexamples: (?i)regex,pct(),jsonParse/mapfields,properstatsbucketalias,SOURCElogGroups/accountIdentifier andAPI-onlyscope;backofflogsareeventsnotrestartcounts. Managedquerieswerenotexecuted.",
+    "CorrectedSubscriptionS3destinationandunsupportedCloudWatchLogs->Firehose->OpenSearchdiagram; distinguishedS3export,vendeddeliveryandcontinuousFirehosearchive. AvoidedextraGZIPcompression; documenteddecompression/messageextractionmetadata andinputlimits.",
+    "FixedLambdaCONTROL_MESSAGEhandling, boundedpayloadparse, SNSbyte/subjectlimits andrawlognotificationexposure; tested22syntheticSDK/handlercasesincludingfailurepropagation/duplicates. Persistentdeduplicationandcloudpermissionsareexplicitlynotproven.",
+    "UnifiedJSONmetric/subscriptionfilter withthecollector; Lambda permissionprecedence/sourceaccount/ARN checked. Alarmiscountover2five-minuteperiods;default0doesnotfillno-inputperiods.",
+    "ReplacedunsupportedSeoul/freeS3/universalpricingclaims withexplicitlyhypotheticalconsistentGB/GB-month/scansarithmetic ($1575),complete-monthexclusiveEnd,realAWS/LogsIncomingBytes/IncomingLogEvents andretention/lifecycleownershipguidance.",
+    "Rewrote20quizanswers; preserved38legacyheadingIDsatsemanticsections; replaced2incorrectPNG/viewerreferenceswith2validatedinlineMermaidflows. Oldassetsandforeigntranslationsremainunchanged."
+  ],
+  "figures": {
+    "oldViewed": [
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-03-cloudwatch-logs-0.png",
+        "sha256": "92ee033ebd55a1a2b5191256eb70fce56cfeb39f548c95b2194fbd4dd1ae09b7",
+        "disposition": "Wrong subscriptionS3/OpenSearch flow;reference replaced bycorrectinlineMermaid;assetpreserved."
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-03-cloudwatch-logs-0.png",
+        "sha256": "7c30aafdfdcce201a95fbeddfcb92aad6795f7a9a446d2ee82d5b815653d0930",
+        "disposition": "Wrong subscriptionS3/OpenSearch flow;reference replaced bycorrectinlineMermaid;assetpreserved."
+      }
+    ],
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "Native local browser parse/render; no VitePress build/server",
+      "results": [
+        {
+          "path": "en/observability/logging/03-cloudwatch-logs.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 13,
+          "edges": 13,
+          "consoleErrors": []
+        },
+        {
+          "path": "ko/observability/logging/03-cloudwatch-logs.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 13,
+          "edges": 13,
+          "consoleErrors": []
+        }
+      ]
+    },
+    "newFiguresPersonallyViewed": [
+      "figures/cloudwatch_logs_en_0.png",
+      "figures/cloudwatch_logs_ko_0.png"
+    ]
+  },
+  "artifactDirectory": ".vitepress/cache/observability-cloudwatch-logs-audit",
+  "limits": [
+    "No managed CloudWatch query/filter execution; QL and filter checks are source-linked syntax/data contracts, not a native service parser.",
+    "Kubernetes schema, Terraform validate and Helm render only; no API admission, install, IAM association or collector runtime.",
+    "22Lambda/SDK cases use synthetic payloads and SNSStubber; no real AWS request or notification.",
+    "No cloud mutations, full site build, container/image execution, GPU or other AI.",
+    "Two incorrect PNG references replaced by accurate inlineMermaid; old assets/foreign translations not edited."
+  ],
+  "sourceAccessNotes": [
+    "SubscriptionFilters-Firehose.html,SubscriptionFilters-Lambda.html,ExportingLogDataToS3.html redirected toguideindex;notcited. CorrectcentralSubscriptionFilters.html andS3Export.htmlused.",
+    "Helmarchive reused byverifiedSHA256 fromclosedCloudWatchMetrics audit; currentvalues rendered locally. No archive/webhookkey publication or cluster install."
+  ]
+}

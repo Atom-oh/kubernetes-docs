@@ -47,7 +47,7 @@
       },
       {
         "id": "export",
-        "label": "내보내기 (Exporters)",
+        "label": "상태와 전송",
         "focus": [
           "memory_limiter",
           "batch",
@@ -55,7 +55,7 @@
           "otlphttp",
           "debug"
         ],
-        "note": "batch로 묶인 로그는 Loki와 OTLP/HTTP 백엔드로 나간다. debug 익스포터는 별도 logs/debug 파이프라인에서 memory_limiter만 거친 filelog 로그를 콘솔에 출력한다."
+        "note": "영속 offset과 exporter queue를 별도로 구성하고 인증된 OTLP/Loki 경로로 전송한다. 민감 값 처리 전 debug출력 경로를 만들지 않는다."
       }
     ]
   },
@@ -78,7 +78,7 @@
       "id": "filelog",
       "type": "external",
       "label": "filelog",
-      "sublabel": "/var/log/pods/*.log",
+      "sublabel": "Container / CRI log files",
       "pos": [
         60,
         195
@@ -189,8 +189,8 @@
     {
       "id": "loki",
       "type": "cloud",
-      "label": "loki",
-      "sublabel": "Loki 백엔드",
+      "label": "otlp_http/loki",
+      "sublabel": "인증된 Loki OTLP",
       "pos": [
         880,
         240
@@ -202,9 +202,9 @@
     },
     {
       "id": "otlphttp",
-      "type": "cloud",
-      "label": "otlphttp",
-      "sublabel": "OTLP/HTTP 백엔드",
+      "type": "database",
+      "label": "Persistent queue",
+      "sublabel": "file_storage",
       "pos": [
         880,
         330
@@ -216,12 +216,12 @@
     },
     {
       "id": "debug",
-      "type": "cloud",
-      "label": "debug",
-      "sublabel": "디버그 출력",
+      "type": "database",
+      "label": "Persistent offsets",
+      "sublabel": "수집 위치 상태",
       "pos": [
-        880,
-        60
+        60,
+        510
       ],
       "size": [
         180,
@@ -253,10 +253,16 @@
     },
     {
       "kind": "region",
-      "label": "Exporters",
+      "label": "영속 상태와 전송",
       "wraps": [
         "loki",
-        "otlphttp",
+        "otlphttp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Reader 상태",
+      "wraps": [
         "debug"
       ]
     }
@@ -308,21 +314,18 @@
       "variant": "emphasis"
     },
     {
-      "id": "out-loki",
+      "id": "batch-queue",
       "from": "batch",
-      "to": "loki",
+      "to": "otlphttp",
       "variant": "emphasis"
     },
     {
-      "id": "out-otlphttp",
-      "from": "batch",
-      "to": "otlphttp"
-    },
-    {
-      "id": "out-debug",
-      "from": "memory_limiter",
-      "to": "debug",
-      "variant": "dashed"
+      "id": "queue-loki",
+      "from": "otlphttp",
+      "to": "loki",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
     }
   ],
   "cards": [
@@ -337,10 +340,12 @@
     },
     {
       "dot": "cyan",
-      "title": "OTLP Proto 인코딩",
+      "title": "검증할 전달 조건",
       "items": [
-        "필드명을 숫자 태그로 치환해 JSON 대비 40-60% 전송 용량 절감",
-        "1,000건 ≈ 7 메시지(150건/배치)로 메시지 수 감소"
+        "Offset과 exporter queue는 서로 다른 상태",
+        "재시도·중복·정지·백엔드 저장 결과를 검증",
+        "고정 압축률·메시지 감소율을 보장하지 않음",
+        "Offset은 file reader, queue 상태는 exporter에 적용"
       ]
     }
   ]

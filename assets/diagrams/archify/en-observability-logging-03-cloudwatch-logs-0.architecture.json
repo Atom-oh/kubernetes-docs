@@ -20,7 +20,7 @@
           "lg",
           "ls"
         ],
-        "note": "Logs from EKS, applications, and Lambda land in one Log Group and are stored in per-source Log Streams."
+        "note": "Configure source-specific groups/streams; managed control-plane and application collection paths differ."
       },
       {
         "id": "query-alarm",
@@ -43,7 +43,7 @@
           "os",
           "lambda2"
         ],
-        "note": "Subscription Filters deliver logs in real time to S3, Kinesis Data Firehose (→ OpenSearch), and Lambda."
+        "note": "Subscriptions target Firehose, Kinesis Data Streams or Lambda. S3 delivery uses Firehose or a separate asynchronous export task."
       }
     ]
   },
@@ -52,7 +52,7 @@
       "id": "src",
       "type": "external",
       "label": "Log Sources",
-      "sublabel": "EKS cluster · Application · Lambda",
+      "sublabel": "EKS cluster \u00b7 Application \u00b7 Lambda",
       "pos": [
         40,
         250
@@ -65,8 +65,8 @@
     {
       "id": "lg",
       "type": "cloud",
-      "label": "Log Group",
-      "sublabel": "/aws/eks/cluster/logs",
+      "label": "Source-specific Log Groups",
+      "sublabel": "Retention / access boundaries",
       "pos": [
         300,
         250
@@ -80,7 +80,7 @@
       "id": "ls",
       "type": "database",
       "label": "Log Streams",
-      "sublabel": "Log Stream 1 · 2 · 3",
+      "sublabel": "Log Stream 1 \u00b7 2 \u00b7 3",
       "pos": [
         300,
         380
@@ -108,7 +108,7 @@
       "id": "metric",
       "type": "cloud",
       "label": "Metric Filters",
-      "sublabel": "Logs → metrics",
+      "sublabel": "Standard class \u2192 CW metrics",
       "pos": [
         580,
         190
@@ -136,7 +136,7 @@
       "id": "sub",
       "type": "messagebus",
       "label": "Subscription Filters",
-      "sublabel": "Real-time streaming",
+      "sublabel": "Standard class",
       "pos": [
         580,
         450
@@ -148,9 +148,9 @@
     },
     {
       "id": "s3",
-      "type": "database",
-      "label": "S3",
-      "sublabel": "Long-term retention",
+      "type": "messagebus",
+      "label": "Kinesis Data Streams",
+      "sublabel": "Subscription destination",
       "pos": [
         860,
         340
@@ -163,7 +163,7 @@
     {
       "id": "kdf",
       "type": "messagebus",
-      "label": "Kinesis Data Firehose",
+      "label": "Amazon Data Firehose",
       "sublabel": "Delivery stream",
       "pos": [
         860,
@@ -191,8 +191,8 @@
     {
       "id": "os",
       "type": "database",
-      "label": "OpenSearch",
-      "sublabel": "Search · analytics",
+      "label": "S3 archive",
+      "sublabel": "Firehose delivery",
       "pos": [
         1120,
         450
@@ -248,8 +248,8 @@
     },
     {
       "id": "lg-insights",
-      "from": "lg",
-      "to": "insights",
+      "from": "insights",
+      "to": "lg",
       "label": "Query"
     },
     {
@@ -289,7 +289,19 @@
       "id": "kdf-os",
       "from": "kdf",
       "to": "os",
-      "label": "Load"
+      "label": "Archive",
+      "labelDy": -28
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Paths and permissions",
+      "items": [
+        "Subscriptions do not directly deliver to S3",
+        "Metric filters create CloudWatch metrics used by alarms",
+        "Verify source/destination permissions, format and quotas"
+      ]
     }
   ]
 }

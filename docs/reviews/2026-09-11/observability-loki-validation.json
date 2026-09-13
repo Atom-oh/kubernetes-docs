@@ -1,0 +1,3507 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T01:59:09.915439+00:00",
+  "scope": [
+    "en/observability/logging/01-loki.md",
+    "en/quizzes/observability/logging/01-loki-quiz.md",
+    "ko/observability/logging/01-loki.md",
+    "ko/quizzes/observability/logging/01-loki-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/logging/01-loki.md": {
+      "lines": 1286,
+      "sha256": "a8eaea3d5ebf6cacf6136b608942886efd16fd126a3ffa2609d69cd399a36353"
+    },
+    "en/quizzes/observability/logging/01-loki-quiz.md": {
+      "lines": 193,
+      "sha256": "660dc8d14acefa356806399b7f588daba3adb2e305696f4f4ec9319f8bda8698"
+    },
+    "ko/observability/logging/01-loki.md": {
+      "lines": 1282,
+      "sha256": "831d54db11c07182cfeea5560f03b3bee3132be03e5d8a468b9c554edef0f053"
+    },
+    "ko/quizzes/observability/logging/01-loki-quiz.md": {
+      "lines": 193,
+      "sha256": "7c8a59e3be69804972bb97f0c902daadae47476fb955a62cf644e90ec60f7f30"
+    }
+  },
+  "checks": {
+    "passed": true,
+    "files": [
+      {
+        "path": "en/observability/logging/01-loki.md",
+        "sha256": "ad4994c927cc1cde45a9cd472aab771d08bc7c31e4e4f0a0a4b49cafe415c23c",
+        "lines": 669,
+        "codeBlocks": {
+          "mermaid": 1,
+          "yaml": 3,
+          "bash": 4,
+          "json": 1,
+          "hcl": 1,
+          "logql": 6,
+          "alloy": 1,
+          "promql": 1
+        },
+        "quizQuestions": 0
+      },
+      {
+        "path": "en/quizzes/observability/logging/01-loki-quiz.md",
+        "sha256": "37f0c76ff8c0ccec4a937a8f0f0b7b7971b7f8e657e1459f42fc3daa18058a02",
+        "lines": 185,
+        "codeBlocks": {},
+        "quizQuestions": 10
+      },
+      {
+        "path": "ko/observability/logging/01-loki.md",
+        "sha256": "757725fd9a0bb53b05cd355a3e1dad148cffb05c1307d922a538bc145954220a",
+        "lines": 669,
+        "codeBlocks": {
+          "mermaid": 1,
+          "yaml": 3,
+          "bash": 4,
+          "json": 1,
+          "hcl": 1,
+          "logql": 6,
+          "alloy": 1,
+          "promql": 1
+        },
+        "quizQuestions": 0
+      },
+      {
+        "path": "ko/quizzes/observability/logging/01-loki-quiz.md",
+        "sha256": "ab575c179cdb96d77c1654fc6bf8118c6fc17f908a429b1e2c70f116eb7d5ee4",
+        "lines": 185,
+        "codeBlocks": {},
+        "quizQuestions": 10
+      }
+    ],
+    "links": [
+      {
+        "source": "en/observability/logging/01-loki.md",
+        "target": "en/quizzes/observability/logging/01-loki-quiz.md",
+        "passed": true
+      },
+      {
+        "source": "en/quizzes/observability/logging/01-loki-quiz.md",
+        "target": "en/observability/logging/01-loki.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/logging/01-loki.md",
+        "target": "ko/quizzes/observability/logging/01-loki-quiz.md",
+        "passed": true
+      },
+      {
+        "source": "ko/quizzes/observability/logging/01-loki-quiz.md",
+        "target": "ko/observability/logging/01-loki.md",
+        "passed": true
+      }
+    ],
+    "sourceLinkKeys": [
+      "095df313c905",
+      "58a56c4bd3c9",
+      "2fa428a81226",
+      "bce61e9d91bd",
+      "21c31dfc02bb",
+      "9e8107690aeb",
+      "7bed27ea4838",
+      "2d49abc5d6c4",
+      "721771ce3185",
+      "ae555189404a",
+      "fe0bd3cabd6d",
+      "beda09c53647",
+      "3125c370c0d6",
+      "f3c6dfbe0103",
+      "202de6653ee5",
+      "ae37ee337e65",
+      "bd1e1487293d",
+      "636c444cd143"
+    ],
+    "bilingualCodeAndAnswerParity": true,
+    "yamlDuplicateKeysRejected": true,
+    "configurations": {
+      "passed": true,
+      "helmVersion": "3.21.3",
+      "chart": "18.12.1",
+      "loki": "3.7.7",
+      "kubernetesRenderVersion": "1.36.2",
+      "cases": [
+        {
+          "case": "base-helm-template",
+          "passed": true,
+          "stderr": ""
+        },
+        {
+          "case": "base-native-config",
+          "passed": true,
+          "output": "level=info ts=2026-09-13T01:52:58.987398505Z caller=main.go:109 msg=\"config is valid\"\n"
+        },
+        {
+          "case": "distributed-workloads",
+          "passed": true,
+          "objects": 34,
+          "replicas": {
+            "loki-distributor": 2,
+            "loki-gateway": 2,
+            "loki-querier": 2,
+            "loki-query-frontend": 2,
+            "loki-query-scheduler": 2,
+            "loki-compactor": 1,
+            "loki-index-gateway": 2,
+            "loki-ingester": 3
+          }
+        },
+        {
+          "case": "loki-image-version",
+          "passed": true,
+          "images": [
+            "docker.io/grafana/loki:3.7.7",
+            "docker.io/nginxinc/nginx-unprivileged:1.31-alpine"
+          ]
+        },
+        {
+          "case": "wal-compactor-pvcs",
+          "passed": true
+        },
+        {
+          "case": "tls-gateway-and-probe",
+          "passed": true
+        },
+        {
+          "case": "existing-secrets-no-plaintext",
+          "passed": true
+        },
+        {
+          "case": "authenticated-tenant-overwrite",
+          "passed": true
+        },
+        {
+          "case": "no-ingress-lb",
+          "passed": true
+        },
+        {
+          "case": "irsa-sa-ownership",
+          "passed": true
+        },
+        {
+          "case": "retention-helm-template",
+          "passed": true,
+          "stderr": ""
+        },
+        {
+          "case": "retention-native-config",
+          "passed": true,
+          "output": "level=info ts=2026-09-13T01:52:59.333762227Z caller=main.go:109 msg=\"config is valid\"\n"
+        },
+        {
+          "case": "runtime-overrides-mounted",
+          "passed": true
+        },
+        {
+          "case": "runtime-tuning-native",
+          "passed": true,
+          "output": ""
+        },
+        {
+          "case": "scoped-iam-resources",
+          "passed": true
+        }
+      ],
+      "fixtureHashes": {
+        "values-eks.yaml": "8a4bb13c97f0fef5e53c45fe013c76d09c0e046c109f1fc5b1b5ea930c3fa49f",
+        "runtime-tuning.yaml": "cc989373f3bfadc0887905b9db2b184a4018df503bc48c101bcf95c14ebfc48c",
+        "values-retention.yaml": "84ba65f2449eaceb254cb33028392e9f981acec27ff148ff9d689b38c565b6d1",
+        "loki-s3-policy.json": "d0b66b40c1d5e98c2160833ccdf06e7297d3cd5b111ce96a3c2840280012a5c1"
+      },
+      "limits": [
+        "Helm/render/native-config checks only. No cloud, server-side K8s admission, actual IAM credential exchange, S3 API, TLS handshake or Nginx process started.",
+        "TLS Secret data/CA/DNS validity, direct-backend network isolation, node storage/failure-domain scheduling and capacity must be validated in the complete deployment."
+      ]
+    },
+    "nativeLogQL": {
+      "version": "3.7.7",
+      "publishedSourceSha256": "ad4994c927cc1cde45a9cd472aab771d08bc7c31e4e4f0a0a4b49cafe415c23c",
+      "passed": true,
+      "queryCount": 35,
+      "parser": [
+        {
+          "query": "{namespace=\"production\"}",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{namespace=\\\"production\\\"}\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{namespace=\"production\", app=~\"nginx|apache\"}",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{namespace=\\\"production\\\", app=~\\\"nginx|apache\\\"}\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{namespace=~\".+\", namespace!=\"kube-system\"}",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{namespace=~\\\".+\\\", namespace!=\\\"kube-system\\\"}\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=~\".+\", app!~\"test.*\"}",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=~\\\".+\\\", app!~\\\"test.*\\\"}\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"nginx\"} |= \"error\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} |= \\\"error\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"nginx\"} != \"healthcheck\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} != \\\"healthcheck\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"nginx\"} |~ \"status=[45][0-9]{2}\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} |~ \\\"status=[45][0-9]{2}\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"nginx\"} !~ \"GET /health\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} !~ \\\"GET /health\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"nginx\"} |= \"error\" != \"timeout\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} |= \\\"error\\\" != \\\"timeout\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{namespace=\"production\"} |= \"OOMKilled\" or \"CrashLoopBackOff\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{namespace=\\\"production\\\"} |= \\\"OOMKilled\\\" or \\\"CrashLoopBackOff\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | json",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | json level, message, request_id",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json level=\\\"level\\\",message=\\\"message\\\",request_id=\\\"request_id\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | logfmt",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | logfmt\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"nginx\"} | regexp `(?P<ip>[\\d.]+) - - \\[(?P<timestamp>[^\\]]+)\\]`",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} | regexp \\\"(?P\\u003cip\\u003e[\\\\\\\\d.]+) - - \\\\\\\\[(?P\\u003ctimestamp\\u003e[^\\\\\\\\]]+)\\\\\\\\]\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"nginx\"} | pattern `<ip> - - [<_>] \"<method> <path> <_>\" <status> <size>`",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} | pattern \\\"\\u003cip\\u003e - - [\\u003c_\\u003e] \\\\\\\"\\u003cmethod\\u003e \\u003cpath\\u003e \\u003c_\\u003e\\\\\\\" \\u003cstatus\\u003e \\u003csize\\u003e\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"packed\"} | unpack",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"packed\\\"} | unpack\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | json | level=\"error\" | __error__=\"\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | level=\\\"error\\\" | __error__=\\\"\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | json | response_time > 1000 | __error__=\"\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | response_time\\u003e1000 | __error__=\\\"\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | json | level=\"error\" and request_id!=\"\" | __error__=\"\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | ( level=\\\"error\\\" , request_id!=\\\"\\\" ) | __error__=\\\"\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"nginx\"} | pattern `<ip> - - <_>` | ip != ip(\"10.0.0.1\")",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} | pattern \\\"\\u003cip\\u003e - - \\u003c_\\u003e\\\" | ip!=ip(\\\"10.0.0.1\\\")\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | json | line_format \"{{.level}}: {{.message}}\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | line_format \\\"{{.level}}: {{.message}}\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | json | line_format `{{ if eq .level \"error\" }}ERROR: {{ end }}{{.message}}`",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | line_format \\\"{{ if eq .level \\\\\\\"error\\\\\\\" }}ERROR: {{ end }}{{.message}}\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | json | line_format `{{ .timestamp | toDate \"2006-01-02T15:04:05Z07:00\" | date \"15:04:05\" }}`",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"}\\n  | json\\n  | line_format \\\"{{ .timestamp | toDate \\\\\\\"2006-01-02T15:04:05Z07:00\\\\\\\" | date \\\\\\\"15:04:05\\\\\\\" }}\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "rate({app=\"nginx\"}[5m])",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"rate({app=\\\"nginx\\\"}[5m])\"}\n",
+          "passed": true
+        },
+        {
+          "query": "(sum(rate({app=\"api\"} | json | __error__=\"\" | level=\"error\" [5m])) or vector(0))\n/\nsum(rate({app=\"api\"} | json | __error__=\"\" [5m]))",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"  (sum(rate({app=\\\"api\\\"} | json | __error__=\\\"\\\" | level=\\\"error\\\"[5m])) or vector(0.000000))\\n/\\n  sum(rate({app=\\\"api\\\"} | json | __error__=\\\"\\\"[5m]))\"}\n",
+          "passed": true
+        },
+        {
+          "query": "quantile_over_time(0.99,\n  {app=\"api\"} | json | unwrap response_time | __error__=\"\" [5m]\n) by (endpoint)",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"quantile_over_time(0.99,{app=\\\"api\\\"} | json | unwrap response_time | __error__=\\\"\\\"[5m]) by (endpoint)\"}\n",
+          "passed": true
+        },
+        {
+          "query": "topk(10, sum by (error_type) (\n  count_over_time({app=\"api\"} | json | __error__=\"\" | level=\"error\" [1h])\n))",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"topk(10,sum by (error_type)(count_over_time({app=\\\"api\\\"} | json | __error__=\\\"\\\" | level=\\\"error\\\"[1h])))\"}\n",
+          "passed": true
+        },
+        {
+          "query": "avg_over_time(\n  {app=\"nginx\"} | pattern `<_> - - [<_>] \"<_> <path> <_>\" <_> <size>`\n  | unwrap size | __error__=\"\" [5m]\n) by (path)",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"avg_over_time(\\n  {app=\\\"nginx\\\"} | pattern \\\"\\u003c_\\u003e - - [\\u003c_\\u003e] \\\\\\\"\\u003c_\\u003e \\u003cpath\\u003e \\u003c_\\u003e\\\\\\\" \\u003c_\\u003e \\u003csize\\u003e\\\"\\n    | unwrap size\\n    | __error__=\\\"\\\" [5m]\\n) by (path)\"}\n",
+          "passed": true
+        },
+        {
+          "query": "sum by (app) (count_over_time({namespace=\"production\"} |= \"error\" [1h]))",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"sum by (app)(count_over_time({namespace=\\\"production\\\"} |= \\\"error\\\"[1h]))\"}\n",
+          "passed": true
+        },
+        {
+          "query": "absent_over_time({app=\"critical-service\"}[5m])",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"absent_over_time({app=\\\"critical-service\\\"}[5m])\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | json | response_time > 5000 | __error__=\"\" | line_format `{{.method}} {{.path}}: {{.response_time}}ms`",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"}\\n  | json\\n  | response_time\\u003e5000\\n  | __error__=\\\"\\\"\\n  | line_format \\\"{{.method}} {{.path}}: {{.response_time}}ms\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"api\"} | json | request_id=\"example-request\" | __error__=\"\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | request_id=\\\"example-request\\\" | __error__=\\\"\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "{app=\"nginx\"} | pattern `<_> - - [<_>] \"<method> <path> <_>\" <status> <_>`\n| status >= 500 and status < 600 | __error__=\"\"",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"}\\n  | pattern \\\"\\u003c_\\u003e - - [\\u003c_\\u003e] \\\\\\\"\\u003cmethod\\u003e \\u003cpath\\u003e \\u003c_\\u003e\\\\\\\" \\u003cstatus\\u003e \\u003c_\\u003e\\\"\\n  | ( status\\u003e=500 , status\\u003c600 )\\n  | __error__=\\\"\\\"\"}\n",
+          "passed": true
+        },
+        {
+          "query": "sum by (hour) (\n  count_over_time({app=\"api\"} |= \"error\" | label_format hour=`{{ __timestamp__ | date \"15\" }}` [24h])\n)",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"sum by (hour)(\\n  count_over_time({app=\\\"api\\\"} |= \\\"error\\\" | label_format hour=\\\"{{ __timestamp__ | date \\\\\\\"15\\\\\\\" }}\\\"[1d])\\n)\"}\n",
+          "passed": true
+        },
+        {
+          "query": "sum(count_over_time({app=\"api\"} |= \"error\" [5m])) > 100",
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":\"(sum(count_over_time({app=\\\"api\\\"} |= \\\"error\\\"[5m])) \\u003e 100)\"}\n",
+          "passed": true
+        }
+      ],
+      "cases": [
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{namespace=\"production\"}",
+          "response": "{\"status\":\"success\",\"data\":\"{namespace=\\\"production\\\"}\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{namespace=\"production\", app=~\"nginx|apache\"}",
+          "response": "{\"status\":\"success\",\"data\":\"{namespace=\\\"production\\\", app=~\\\"nginx|apache\\\"}\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{namespace=~\".+\", namespace!=\"kube-system\"}",
+          "response": "{\"status\":\"success\",\"data\":\"{namespace=~\\\".+\\\", namespace!=\\\"kube-system\\\"}\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=~\".+\", app!~\"test.*\"}",
+          "response": "{\"status\":\"success\",\"data\":\"{app=~\\\".+\\\", app!~\\\"test.*\\\"}\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"nginx\"} |= \"error\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} |= \\\"error\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"nginx\"} != \"healthcheck\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} != \\\"healthcheck\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"nginx\"} |~ \"status=[45][0-9]{2}\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} |~ \\\"status=[45][0-9]{2}\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"nginx\"} !~ \"GET /health\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} !~ \\\"GET /health\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"nginx\"} |= \"error\" != \"timeout\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} |= \\\"error\\\" != \\\"timeout\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{namespace=\"production\"} |= \"OOMKilled\" or \"CrashLoopBackOff\"",
+          "response": "{\"status\":\"success\",\"data\":\"{namespace=\\\"production\\\"} |= \\\"OOMKilled\\\" or \\\"CrashLoopBackOff\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | json",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | json level, message, request_id",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json level=\\\"level\\\",message=\\\"message\\\",request_id=\\\"request_id\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | logfmt",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | logfmt\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"nginx\"} | regexp `(?P<ip>[\\d.]+) - - \\[(?P<timestamp>[^\\]]+)\\]`",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} | regexp \\\"(?P\\u003cip\\u003e[\\\\\\\\d.]+) - - \\\\\\\\[(?P\\u003ctimestamp\\u003e[^\\\\\\\\]]+)\\\\\\\\]\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"nginx\"} | pattern `<ip> - - [<_>] \"<method> <path> <_>\" <status> <size>`",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} | pattern \\\"\\u003cip\\u003e - - [\\u003c_\\u003e] \\\\\\\"\\u003cmethod\\u003e \\u003cpath\\u003e \\u003c_\\u003e\\\\\\\" \\u003cstatus\\u003e \\u003csize\\u003e\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"packed\"} | unpack",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"packed\\\"} | unpack\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | json | level=\"error\" | __error__=\"\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | level=\\\"error\\\" | __error__=\\\"\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | json | response_time > 1000 | __error__=\"\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | response_time\\u003e1000 | __error__=\\\"\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | json | level=\"error\" and request_id!=\"\" | __error__=\"\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | ( level=\\\"error\\\" , request_id!=\\\"\\\" ) | __error__=\\\"\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"nginx\"} | pattern `<ip> - - <_>` | ip != ip(\"10.0.0.1\")",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"} | pattern \\\"\\u003cip\\u003e - - \\u003c_\\u003e\\\" | ip!=ip(\\\"10.0.0.1\\\")\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | json | line_format \"{{.level}}: {{.message}}\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | line_format \\\"{{.level}}: {{.message}}\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | json | line_format `{{ if eq .level \"error\" }}ERROR: {{ end }}{{.message}}`",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | line_format \\\"{{ if eq .level \\\\\\\"error\\\\\\\" }}ERROR: {{ end }}{{.message}}\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | json | line_format `{{ .timestamp | toDate \"2006-01-02T15:04:05Z07:00\" | date \"15:04:05\" }}`",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"}\\n  | json\\n  | line_format \\\"{{ .timestamp | toDate \\\\\\\"2006-01-02T15:04:05Z07:00\\\\\\\" | date \\\\\\\"15:04:05\\\\\\\" }}\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "rate({app=\"nginx\"}[5m])",
+          "response": "{\"status\":\"success\",\"data\":\"rate({app=\\\"nginx\\\"}[5m])\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "(sum(rate({app=\"api\"} | json | __error__=\"\" | level=\"error\" [5m])) or vector(0))\n/\nsum(rate({app=\"api\"} | json | __error__=\"\" [5m]))",
+          "response": "{\"status\":\"success\",\"data\":\"  (sum(rate({app=\\\"api\\\"} | json | __error__=\\\"\\\" | level=\\\"error\\\"[5m])) or vector(0.000000))\\n/\\n  sum(rate({app=\\\"api\\\"} | json | __error__=\\\"\\\"[5m]))\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "quantile_over_time(0.99,\n  {app=\"api\"} | json | unwrap response_time | __error__=\"\" [5m]\n) by (endpoint)",
+          "response": "{\"status\":\"success\",\"data\":\"quantile_over_time(0.99,{app=\\\"api\\\"} | json | unwrap response_time | __error__=\\\"\\\"[5m]) by (endpoint)\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "topk(10, sum by (error_type) (\n  count_over_time({app=\"api\"} | json | __error__=\"\" | level=\"error\" [1h])\n))",
+          "response": "{\"status\":\"success\",\"data\":\"topk(10,sum by (error_type)(count_over_time({app=\\\"api\\\"} | json | __error__=\\\"\\\" | level=\\\"error\\\"[1h])))\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "avg_over_time(\n  {app=\"nginx\"} | pattern `<_> - - [<_>] \"<_> <path> <_>\" <_> <size>`\n  | unwrap size | __error__=\"\" [5m]\n) by (path)",
+          "response": "{\"status\":\"success\",\"data\":\"avg_over_time(\\n  {app=\\\"nginx\\\"} | pattern \\\"\\u003c_\\u003e - - [\\u003c_\\u003e] \\\\\\\"\\u003c_\\u003e \\u003cpath\\u003e \\u003c_\\u003e\\\\\\\" \\u003c_\\u003e \\u003csize\\u003e\\\"\\n    | unwrap size\\n    | __error__=\\\"\\\" [5m]\\n) by (path)\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "sum by (app) (count_over_time({namespace=\"production\"} |= \"error\" [1h]))",
+          "response": "{\"status\":\"success\",\"data\":\"sum by (app)(count_over_time({namespace=\\\"production\\\"} |= \\\"error\\\"[1h]))\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "absent_over_time({app=\"critical-service\"}[5m])",
+          "response": "{\"status\":\"success\",\"data\":\"absent_over_time({app=\\\"critical-service\\\"}[5m])\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | json | response_time > 5000 | __error__=\"\" | line_format `{{.method}} {{.path}}: {{.response_time}}ms`",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"}\\n  | json\\n  | response_time\\u003e5000\\n  | __error__=\\\"\\\"\\n  | line_format \\\"{{.method}} {{.path}}: {{.response_time}}ms\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"api\"} | json | request_id=\"example-request\" | __error__=\"\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"api\\\"} | json | request_id=\\\"example-request\\\" | __error__=\\\"\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "{app=\"nginx\"} | pattern `<_> - - [<_>] \"<method> <path> <_>\" <status> <_>`\n| status >= 500 and status < 600 | __error__=\"\"",
+          "response": "{\"status\":\"success\",\"data\":\"{app=\\\"nginx\\\"}\\n  | pattern \\\"\\u003c_\\u003e - - [\\u003c_\\u003e] \\\\\\\"\\u003cmethod\\u003e \\u003cpath\\u003e \\u003c_\\u003e\\\\\\\" \\u003cstatus\\u003e \\u003c_\\u003e\\\"\\n  | ( status\\u003e=500 , status\\u003c600 )\\n  | __error__=\\\"\\\"\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "sum by (hour) (\n  count_over_time({app=\"api\"} |= \"error\" | label_format hour=`{{ __timestamp__ | date \"15\" }}` [24h])\n)",
+          "response": "{\"status\":\"success\",\"data\":\"sum by (hour)(\\n  count_over_time({app=\\\"api\\\"} |= \\\"error\\\" | label_format hour=\\\"{{ __timestamp__ | date \\\\\\\"15\\\\\\\" }}\\\"[1d])\\n)\"}\n"
+        },
+        {
+          "case": "published-query-parse",
+          "passed": true,
+          "query": "sum(count_over_time({app=\"api\"} |= \"error\" [5m])) > 100",
+          "response": "{\"status\":\"success\",\"data\":\"(sum(count_over_time({app=\\\"api\\\"} |= \\\"error\\\"[5m])) \\u003e 100)\"}\n"
+        },
+        {
+          "case": "native-local-push",
+          "passed": true,
+          "tenant": "audit-81e6ccc7c657",
+          "status": 204,
+          "response": "",
+          "attempts": [
+            {
+              "status": 204,
+              "response": ""
+            }
+          ]
+        },
+        {
+          "case": "native-local-push",
+          "passed": true,
+          "tenant": "audit-81e6ccc7c657-healthy",
+          "status": 204,
+          "response": "",
+          "attempts": [
+            {
+              "status": 204,
+              "response": ""
+            }
+          ]
+        },
+        {
+          "case": "native-local-push",
+          "passed": true,
+          "tenant": "audit-81e6ccc7c657-errors",
+          "status": 204,
+          "response": "",
+          "attempts": [
+            {
+              "status": 204,
+              "response": ""
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{namespace=\"production\"}",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "{\"level\": \"error\", \"message\": \"error timeout\", \"response_time\": 6000, \"endpoint\": \"/orders\", \"error_type\": \"Timeout\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ],
+                [
+                  "1789264490284374552",
+                  "{\"level\": \"error\", \"message\": \"error upstream\", \"response_time\": 1000, \"endpoint\": \"/orders\", \"request_id\": \"example-request\", \"error_type\": \"Upstream\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264492284374552",
+                  "{\"level\": \"info\", \"message\": \"bad duration\", \"response_time\": \"bad\", \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ],
+                [
+                  "1789264489284374552",
+                  "{\"level\": \"info\", \"message\": \"ok\", \"response_time\": 100, \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264493284374552",
+                  "malformed JSON"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "nginx"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ],
+                [
+                  "1789264499284374552",
+                  "10.0.0.1 - - [13/Sep/2026:01:00:00 +0000] \"GET /orders HTTP/1.1\" 200 100"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "packed",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "packed"
+              },
+              "values": [
+                [
+                  "1789264509284374552",
+                  "{\"_entry\": \"unpacked message\", \"original\": \"value\"}"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{namespace=\"production\", app=~\"nginx|apache\"}",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "nginx"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ],
+                [
+                  "1789264499284374552",
+                  "10.0.0.1 - - [13/Sep/2026:01:00:00 +0000] \"GET /orders HTTP/1.1\" 200 100"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{namespace=~\".+\", namespace!=\"kube-system\"}",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "{\"level\": \"error\", \"message\": \"error timeout\", \"response_time\": 6000, \"endpoint\": \"/orders\", \"error_type\": \"Timeout\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ],
+                [
+                  "1789264490284374552",
+                  "{\"level\": \"error\", \"message\": \"error upstream\", \"response_time\": 1000, \"endpoint\": \"/orders\", \"request_id\": \"example-request\", \"error_type\": \"Upstream\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264492284374552",
+                  "{\"level\": \"info\", \"message\": \"bad duration\", \"response_time\": \"bad\", \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ],
+                [
+                  "1789264489284374552",
+                  "{\"level\": \"info\", \"message\": \"ok\", \"response_time\": 100, \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264493284374552",
+                  "malformed JSON"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "nginx"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ],
+                [
+                  "1789264499284374552",
+                  "10.0.0.1 - - [13/Sep/2026:01:00:00 +0000] \"GET /orders HTTP/1.1\" 200 100"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "packed",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "packed"
+              },
+              "values": [
+                [
+                  "1789264509284374552",
+                  "{\"_entry\": \"unpacked message\", \"original\": \"value\"}"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=~\".+\", app!~\"test.*\"}",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "{\"level\": \"error\", \"message\": \"error timeout\", \"response_time\": 6000, \"endpoint\": \"/orders\", \"error_type\": \"Timeout\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ],
+                [
+                  "1789264490284374552",
+                  "{\"level\": \"error\", \"message\": \"error upstream\", \"response_time\": 1000, \"endpoint\": \"/orders\", \"request_id\": \"example-request\", \"error_type\": \"Upstream\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264492284374552",
+                  "{\"level\": \"info\", \"message\": \"bad duration\", \"response_time\": \"bad\", \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ],
+                [
+                  "1789264489284374552",
+                  "{\"level\": \"info\", \"message\": \"ok\", \"response_time\": 100, \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264493284374552",
+                  "malformed JSON"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "nginx"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ],
+                [
+                  "1789264499284374552",
+                  "10.0.0.1 - - [13/Sep/2026:01:00:00 +0000] \"GET /orders HTTP/1.1\" 200 100"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "packed",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "packed"
+              },
+              "values": [
+                [
+                  "1789264509284374552",
+                  "{\"_entry\": \"unpacked message\", \"original\": \"value\"}"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"nginx\"} |= \"error\"",
+          "status": 200,
+          "result": []
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"nginx\"} != \"healthcheck\"",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "nginx"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ],
+                [
+                  "1789264499284374552",
+                  "10.0.0.1 - - [13/Sep/2026:01:00:00 +0000] \"GET /orders HTTP/1.1\" 200 100"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"nginx\"} |~ \"status=[45][0-9]{2}\"",
+          "status": 200,
+          "result": []
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"nginx\"} !~ \"GET /health\"",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "nginx"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ],
+                [
+                  "1789264499284374552",
+                  "10.0.0.1 - - [13/Sep/2026:01:00:00 +0000] \"GET /orders HTTP/1.1\" 200 100"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"nginx\"} |= \"error\" != \"timeout\"",
+          "status": 200,
+          "result": []
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{namespace=\"production\"} |= \"OOMKilled\" or \"CrashLoopBackOff\"",
+          "status": 200,
+          "result": []
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | json",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "__error__": "JSONParserErr",
+                "__error_details__": "Value looks like object, but can't find closing '}' symbol",
+                "app": "api",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264493284374552",
+                  "malformed JSON"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Timeout",
+                "level": "error",
+                "message": "error timeout",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "6000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "{\"level\": \"error\", \"message\": \"error timeout\", \"response_time\": 6000, \"endpoint\": \"/orders\", \"error_type\": \"Timeout\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Upstream",
+                "level": "error",
+                "message": "error upstream",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "request_id": "example-request",
+                "response_time": "1000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264490284374552",
+                  "{\"level\": \"error\", \"message\": \"error upstream\", \"response_time\": 1000, \"endpoint\": \"/orders\", \"request_id\": \"example-request\", \"error_type\": \"Upstream\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "endpoint": "/orders",
+                "level": "info",
+                "message": "bad duration",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "bad",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264492284374552",
+                  "{\"level\": \"info\", \"message\": \"bad duration\", \"response_time\": \"bad\", \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "endpoint": "/orders",
+                "level": "info",
+                "message": "ok",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "100",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264489284374552",
+                  "{\"level\": \"info\", \"message\": \"ok\", \"response_time\": 100, \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | json level, message, request_id",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "__error__": "JSONParserErr",
+                "app": "api",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264493284374552",
+                  "malformed JSON"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "level": "error",
+                "message": "error timeout",
+                "namespace": "production",
+                "request_id": "",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "{\"level\": \"error\", \"message\": \"error timeout\", \"response_time\": 6000, \"endpoint\": \"/orders\", \"error_type\": \"Timeout\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "level": "error",
+                "message": "error upstream",
+                "namespace": "production",
+                "request_id": "example-request",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264490284374552",
+                  "{\"level\": \"error\", \"message\": \"error upstream\", \"response_time\": 1000, \"endpoint\": \"/orders\", \"request_id\": \"example-request\", \"error_type\": \"Upstream\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "level": "info",
+                "message": "bad duration",
+                "namespace": "production",
+                "request_id": "",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264492284374552",
+                  "{\"level\": \"info\", \"message\": \"bad duration\", \"response_time\": \"bad\", \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "level": "info",
+                "message": "ok",
+                "namespace": "production",
+                "request_id": "",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264489284374552",
+                  "{\"level\": \"info\", \"message\": \"ok\", \"response_time\": 100, \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | logfmt",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "{\"level\": \"error\", \"message\": \"error timeout\", \"response_time\": 6000, \"endpoint\": \"/orders\", \"error_type\": \"Timeout\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ],
+                [
+                  "1789264490284374552",
+                  "{\"level\": \"error\", \"message\": \"error upstream\", \"response_time\": 1000, \"endpoint\": \"/orders\", \"request_id\": \"example-request\", \"error_type\": \"Upstream\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264492284374552",
+                  "{\"level\": \"info\", \"message\": \"bad duration\", \"response_time\": \"bad\", \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ],
+                [
+                  "1789264489284374552",
+                  "{\"level\": \"info\", \"message\": \"ok\", \"response_time\": 100, \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264493284374552",
+                  "malformed JSON"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"nginx\"} | regexp `(?P<ip>[\\d.]+) - - \\[(?P<timestamp>[^\\]]+)\\]`",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "ip": "10.0.0.1",
+                "namespace": "production",
+                "service_name": "nginx",
+                "timestamp": "13/Sep/2026:01:00:00 +0000"
+              },
+              "values": [
+                [
+                  "1789264499284374552",
+                  "10.0.0.1 - - [13/Sep/2026:01:00:00 +0000] \"GET /orders HTTP/1.1\" 200 100"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "ip": "10.0.0.2",
+                "namespace": "production",
+                "service_name": "nginx",
+                "timestamp": "13/Sep/2026:01:00:01 +0000"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"nginx\"} | pattern `<ip> - - [<_>] \"<method> <path> <_>\" <status> <size>`",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "ip": "10.0.0.1",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "service_name": "nginx",
+                "size": "100",
+                "status": "200"
+              },
+              "values": [
+                [
+                  "1789264499284374552",
+                  "10.0.0.1 - - [13/Sep/2026:01:00:00 +0000] \"GET /orders HTTP/1.1\" 200 100"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "ip": "10.0.0.2",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "service_name": "nginx",
+                "size": "300",
+                "status": "503"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"packed\"} | unpack",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "packed",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "original": "value",
+                "service_name": "packed"
+              },
+              "values": [
+                [
+                  "1789264509284374552",
+                  "unpacked message"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | json | level=\"error\" | __error__=\"\"",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Timeout",
+                "level": "error",
+                "message": "error timeout",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "6000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "{\"level\": \"error\", \"message\": \"error timeout\", \"response_time\": 6000, \"endpoint\": \"/orders\", \"error_type\": \"Timeout\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Upstream",
+                "level": "error",
+                "message": "error upstream",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "request_id": "example-request",
+                "response_time": "1000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264490284374552",
+                  "{\"level\": \"error\", \"message\": \"error upstream\", \"response_time\": 1000, \"endpoint\": \"/orders\", \"request_id\": \"example-request\", \"error_type\": \"Upstream\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | json | response_time > 1000 | __error__=\"\"",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Timeout",
+                "level": "error",
+                "message": "error timeout",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "6000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "{\"level\": \"error\", \"message\": \"error timeout\", \"response_time\": 6000, \"endpoint\": \"/orders\", \"error_type\": \"Timeout\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | json | level=\"error\" and request_id!=\"\" | __error__=\"\"",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Upstream",
+                "level": "error",
+                "message": "error upstream",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "request_id": "example-request",
+                "response_time": "1000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264490284374552",
+                  "{\"level\": \"error\", \"message\": \"error upstream\", \"response_time\": 1000, \"endpoint\": \"/orders\", \"request_id\": \"example-request\", \"error_type\": \"Upstream\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"nginx\"} | pattern `<ip> - - <_>` | ip != ip(\"10.0.0.1\")",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "ip": "10.0.0.2",
+                "namespace": "production",
+                "service_name": "nginx"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | json | line_format \"{{.level}}: {{.message}}\"",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "__error__": "JSONParserErr",
+                "__error_details__": "Value looks like object, but can't find closing '}' symbol",
+                "app": "api",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264493284374552",
+                  ": "
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Timeout",
+                "level": "error",
+                "message": "error timeout",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "6000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "error: error timeout"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Upstream",
+                "level": "error",
+                "message": "error upstream",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "request_id": "example-request",
+                "response_time": "1000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264490284374552",
+                  "error: error upstream"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "endpoint": "/orders",
+                "level": "info",
+                "message": "bad duration",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "bad",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264492284374552",
+                  "info: bad duration"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "endpoint": "/orders",
+                "level": "info",
+                "message": "ok",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "100",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264489284374552",
+                  "info: ok"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | json | line_format `{{ if eq .level \"error\" }}ERROR: {{ end }}{{.message}}`",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "__error__": "JSONParserErr",
+                "__error_details__": "Value looks like object, but can't find closing '}' symbol",
+                "app": "api",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264493284374552",
+                  ""
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Timeout",
+                "level": "error",
+                "message": "error timeout",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "6000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "ERROR: error timeout"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Upstream",
+                "level": "error",
+                "message": "error upstream",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "request_id": "example-request",
+                "response_time": "1000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264490284374552",
+                  "ERROR: error upstream"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "endpoint": "/orders",
+                "level": "info",
+                "message": "bad duration",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "bad",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264492284374552",
+                  "bad duration"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "endpoint": "/orders",
+                "level": "info",
+                "message": "ok",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "100",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264489284374552",
+                  "ok"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | json | line_format `{{ .timestamp | toDate \"2006-01-02T15:04:05Z07:00\" | date \"15:04:05\" }}`",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "__error__": "JSONParserErr",
+                "__error_details__": "Value looks like object, but can't find closing '}' symbol",
+                "app": "api",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264493284374552",
+                  "00:00:00"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Timeout",
+                "level": "error",
+                "message": "error timeout",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "6000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "01:00:00"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Upstream",
+                "level": "error",
+                "message": "error upstream",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "request_id": "example-request",
+                "response_time": "1000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264490284374552",
+                  "01:00:00"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "endpoint": "/orders",
+                "level": "info",
+                "message": "bad duration",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "bad",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264492284374552",
+                  "01:00:00"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "endpoint": "/orders",
+                "level": "info",
+                "message": "ok",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "100",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264489284374552",
+                  "01:00:00"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "rate({app=\"nginx\"}[5m])",
+          "status": 200,
+          "result": [
+            {
+              "metric": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "nginx"
+              },
+              "value": [
+                1789264519.342,
+                "0.006666666666666667"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "(sum(rate({app=\"api\"} | json | __error__=\"\" | level=\"error\" [5m])) or vector(0))\n/\nsum(rate({app=\"api\"} | json | __error__=\"\" [5m]))",
+          "status": 200,
+          "result": [
+            {
+              "metric": {},
+              "value": [
+                1789264519.347,
+                "0.5"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "quantile_over_time(0.99,\n  {app=\"api\"} | json | unwrap response_time | __error__=\"\" [5m]\n) by (endpoint)",
+          "status": 200,
+          "result": [
+            {
+              "metric": {
+                "endpoint": "/orders"
+              },
+              "value": [
+                1789264519.35,
+                "5900"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "topk(10, sum by (error_type) (\n  count_over_time({app=\"api\"} | json | __error__=\"\" | level=\"error\" [1h])\n))",
+          "status": 200,
+          "result": [
+            {
+              "metric": {
+                "error_type": "Timeout"
+              },
+              "value": [
+                1789264519.352,
+                "1"
+              ]
+            },
+            {
+              "metric": {
+                "error_type": "Upstream"
+              },
+              "value": [
+                1789264519.352,
+                "1"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "avg_over_time(\n  {app=\"nginx\"} | pattern `<_> - - [<_>] \"<_> <path> <_>\" <_> <size>`\n  | unwrap size | __error__=\"\" [5m]\n) by (path)",
+          "status": 200,
+          "result": [
+            {
+              "metric": {
+                "path": "/orders"
+              },
+              "value": [
+                1789264519.354,
+                "200"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "sum by (app) (count_over_time({namespace=\"production\"} |= \"error\" [1h]))",
+          "status": 200,
+          "result": [
+            {
+              "metric": {
+                "app": "api"
+              },
+              "value": [
+                1789264519.357,
+                "2"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "absent_over_time({app=\"critical-service\"}[5m])",
+          "status": 200,
+          "result": [
+            {
+              "metric": {
+                "app": "critical-service"
+              },
+              "value": [
+                1789264519.359,
+                "1"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | json | response_time > 5000 | __error__=\"\" | line_format `{{.method}} {{.path}}: {{.response_time}}ms`",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Timeout",
+                "level": "error",
+                "message": "error timeout",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "response_time": "6000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "GET /orders: 6000ms"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"api\"} | json | request_id=\"example-request\" | __error__=\"\"",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "endpoint": "/orders",
+                "error_type": "Upstream",
+                "level": "error",
+                "message": "error upstream",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "request_id": "example-request",
+                "response_time": "1000",
+                "service_name": "api",
+                "timestamp": "2026-09-13T01:00:00Z"
+              },
+              "values": [
+                [
+                  "1789264490284374552",
+                  "{\"level\": \"error\", \"message\": \"error upstream\", \"response_time\": 1000, \"endpoint\": \"/orders\", \"request_id\": \"example-request\", \"error_type\": \"Upstream\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "{app=\"nginx\"} | pattern `<_> - - [<_>] \"<method> <path> <_>\" <status> <_>`\n| status >= 500 and status < 600 | __error__=\"\"",
+          "status": 200,
+          "result": [
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "service_name": "nginx",
+                "status": "503"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "sum by (hour) (\n  count_over_time({app=\"api\"} |= \"error\" | label_format hour=`{{ __timestamp__ | date \"15\" }}` [24h])\n)",
+          "status": 200,
+          "result": [
+            {
+              "metric": {
+                "hour": "01"
+              },
+              "value": [
+                1789264519.367,
+                "2"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "published-query-execution",
+          "passed": true,
+          "query": "sum(count_over_time({app=\"api\"} |= \"error\" [5m])) > 100",
+          "status": 200,
+          "result": []
+        },
+        {
+          "case": "ratio-mixed",
+          "passed": true,
+          "expected": 0.5,
+          "result": [
+            {
+              "metric": {},
+              "value": [
+                1789264519.394,
+                "0.5"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "ratio--healthy",
+          "passed": true,
+          "expected": 0.0,
+          "result": [
+            {
+              "metric": {},
+              "value": [
+                1789264519.397,
+                "0"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "ratio--errors",
+          "passed": true,
+          "expected": 1.0,
+          "result": [
+            {
+              "metric": {},
+              "value": [
+                1789264519.399,
+                "1"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "missing-data-not-healthy-zero",
+          "passed": true,
+          "result": []
+        },
+        {
+          "case": "numeric-unwrapping-filter",
+          "passed": true,
+          "expected": 5900.0,
+          "result": [
+            {
+              "metric": {
+                "endpoint": "/orders"
+              },
+              "value": [
+                1789264519.405,
+                "5900"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "unfiltered-conversion-error-rejected",
+          "passed": true,
+          "status": 400,
+          "response": "pipeline error: 'SampleExtractionErr' for series: '{__error__=\"SampleExtractionErr\", __error_details__=\"strconv.ParseFloat: parsing \\\"bad\\\": invalid syntax\", app=\"api\", detected_level=\"info\", endpoint=\"/orders\", namespace=\"production\", response_time=\"bad\", service_name=\"api\"}'.\nUse a label filter to intentionally skip this error. (e.g | __error__!=\"SampleExtractionErr\").\nTo skip all potential errors you can match empty errors.(e.g __error__=\"\")\nThe label filter can also be specified after unwrap. (e.g | unwrap latency | __error__=\"\" )\n"
+        },
+        {
+          "case": "nginx-size-average-with-path",
+          "passed": true,
+          "result": [
+            {
+              "metric": {
+                "path": "/orders"
+              },
+              "value": [
+                1789264519.411,
+                "200"
+              ]
+            }
+          ]
+        },
+        {
+          "case": "status5xx-filter",
+          "passed": true,
+          "result": [
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "method": "GET",
+                "namespace": "production",
+                "path": "/orders",
+                "service_name": "nginx",
+                "status": "503"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "ip-address-filter",
+          "passed": true,
+          "result": [
+            {
+              "stream": {
+                "app": "nginx",
+                "detected_level": "unknown",
+                "ip": "10.0.0.2",
+                "namespace": "production",
+                "service_name": "nginx"
+              },
+              "values": [
+                [
+                  "1789264500284374552",
+                  "10.0.0.2 - - [13/Sep/2026:01:00:01 +0000] \"GET /orders HTTP/1.1\" 503 300"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "short-json-extraction-supported",
+          "passed": true,
+          "result": [
+            {
+              "stream": {
+                "__error__": "JSONParserErr",
+                "app": "api",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264493284374552",
+                  "malformed JSON"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "level": "error",
+                "message": "error timeout",
+                "namespace": "production",
+                "request_id": "",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264491284374552",
+                  "{\"level\": \"error\", \"message\": \"error timeout\", \"response_time\": 6000, \"endpoint\": \"/orders\", \"error_type\": \"Timeout\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "error",
+                "level": "error",
+                "message": "error upstream",
+                "namespace": "production",
+                "request_id": "example-request",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264490284374552",
+                  "{\"level\": \"error\", \"message\": \"error upstream\", \"response_time\": 1000, \"endpoint\": \"/orders\", \"request_id\": \"example-request\", \"error_type\": \"Upstream\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "level": "info",
+                "message": "bad duration",
+                "namespace": "production",
+                "request_id": "",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264492284374552",
+                  "{\"level\": \"info\", \"message\": \"bad duration\", \"response_time\": \"bad\", \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            },
+            {
+              "stream": {
+                "app": "api",
+                "detected_level": "info",
+                "level": "info",
+                "message": "ok",
+                "namespace": "production",
+                "request_id": "",
+                "service_name": "api"
+              },
+              "values": [
+                [
+                  "1789264489284374552",
+                  "{\"level\": \"info\", \"message\": \"ok\", \"response_time\": 100, \"endpoint\": \"/orders\", \"timestamp\": \"2026-09-13T01:00:00Z\", \"method\": \"GET\", \"path\": \"/orders\"}"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "pack-unpack-format",
+          "passed": true,
+          "result": [
+            {
+              "stream": {
+                "app": "packed",
+                "detected_level": "unknown",
+                "namespace": "production",
+                "original": "value",
+                "service_name": "packed"
+              },
+              "values": [
+                [
+                  "1789264509284374552",
+                  "unpacked message"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "case": "empty-compatible-selector-rejected",
+          "passed": true,
+          "query": "{namespace!=\"kube-system\"}",
+          "status": 400,
+          "response": "parse error : queries require at least one regexp or equality matcher that does not have an empty-compatible value. For instance, app=~\".*\" does not meet this requirement, but app=~\".+\" will"
+        },
+        {
+          "case": "empty-compatible-selector-rejected",
+          "passed": true,
+          "query": "{app!~\"test.*\"}",
+          "status": 400,
+          "response": "parse error : queries require at least one regexp or equality matcher that does not have an empty-compatible value. For instance, app=~\".*\" does not meet this requirement, but app=~\".+\" will"
+        },
+        {
+          "case": "relative-start-rejected",
+          "passed": true,
+          "status": 400,
+          "response": "could not parse 'start' parameter: strconv.ParseInt: parsing \"1h\": invalid syntax"
+        },
+        {
+          "case": "series-relative-since",
+          "passed": true,
+          "status": 200,
+          "response": "{\"status\":\"success\",\"data\":[{\"app\":\"api\",\"namespace\":\"production\",\"service_name\":\"api\"},{\"app\":\"nginx\",\"namespace\":\"production\",\"service_name\":\"nginx\"},{\"service_name\":\"packed\",\"app\":\"packed\",\"namespace\":\"production\"}]}\n"
+        },
+        {
+          "case": "missing-tenant-header-rejected",
+          "passed": true,
+          "status": 401,
+          "response": "no org id\n"
+        },
+        {
+          "case": "metrics-endpoint",
+          "passed": true
+        },
+        {
+          "case": "published-metric-exists",
+          "passed": true,
+          "metric": "loki_distributor_bytes_received_total"
+        },
+        {
+          "case": "published-metric-exists",
+          "passed": true,
+          "metric": "loki_ingester_memory_streams"
+        },
+        {
+          "case": "published-metric-exists",
+          "passed": true,
+          "metric": "loki_request_duration_seconds_bucket"
+        },
+        {
+          "case": "query-route-label-exists",
+          "passed": true
+        }
+      ],
+      "limits": [
+        "Loopback-only process, local filesystem, synthetic logs, analytics/tracing disabled.",
+        "Private fixture WAL disk threshold0.95 because host usage exceeded default0.9; less than100syntheticlines, free-space checked. Published deployment threshold unchanged.",
+        "No cloud/GPU/full build, live-cluster delivery, S3 authorization/retention, HA or load test.",
+        "No flush/delete/shutdown API endpoint was invoked; the owned child process was terminated."
+      ]
+    },
+    "additional": {
+      "passed": true,
+      "cases": [
+        {
+          "case": "promtool3.14native-three-expressions",
+          "passed": true,
+          "output": "Checking /home/atomoh/kubernetes-docs/.vitepress/cache/observability-loki-audit/metrics-rules.yaml\n  SUCCESS: 3 rules found\n\n"
+        },
+        {
+          "case": "HCL2-parse-four-resources",
+          "passed": true
+        },
+        {
+          "case": "eksctl-role-only-cli-help",
+          "passed": true
+        },
+        {
+          "case": "provider-Disabled-creation-import-source",
+          "passed": true,
+          "sourceKey": "fbb3eaaf0718"
+        },
+        {
+          "case": "Alloy-stage-reference-contract",
+          "passed": true,
+          "sourceKey": "db54269bc128",
+          "scope": "Source/structure only; full Alloy pipeline not executed."
+        }
+      ],
+      "sourceHashes": {
+        "s3.tf": "621e415715b226878aa6162dab955f7db8bf43141b94eca8456a86aab8fbeeab",
+        "processing.alloy": "ab780be82e9ef4b348d17352cac838e6c832a317cf50d8f6cb54ff21ee9063e5",
+        "metrics-rules.yaml": "ffcc4bc43e1004a054eba58c11e608d3bb3b7acab6c4a5c2bfd9447cbe500b73"
+      },
+      "limits": [
+        "No Terraform plan/apply/provider API, eksctl cluster operation, or Alloy runtime executed."
+      ]
+    },
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "Native local browser parse/render; no VitePress build/server",
+      "results": [
+        {
+          "path": "en/observability/logging/01-loki.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 12,
+          "edges": 15,
+          "consoleErrors": [],
+          "closureSourceSha256": "ad4994c927cc1cde45a9cd472aab771d08bc7c31e4e4f0a0a4b49cafe415c23c",
+          "closureMermaidSha256": "0ab5d8c6e47398f924141d3b4371ac034a9b7ed8afdee9cbaa5c08a3449fe3d6"
+        },
+        {
+          "path": "ko/observability/logging/01-loki.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 12,
+          "edges": 15,
+          "consoleErrors": [],
+          "closureSourceSha256": "757725fd9a0bb53b05cd355a3e1dad148cffb05c1307d922a538bc145954220a",
+          "closureMermaidSha256": "1133d8be31e66f4af6e922e7f68e9c4309645245029c352488d3408fcbad3f8e"
+        }
+      ]
+    },
+    "metadata": {
+      "results": [
+        {
+          "path": "en/observability/logging/01-loki.md",
+          "lastUpdated": "2026-09-13",
+          "sha256": "ad4994c927cc1cde45a9cd472aab771d08bc7c31e4e4f0a0a4b49cafe415c23c",
+          "passed": true
+        },
+        {
+          "path": "en/quizzes/observability/logging/01-loki-quiz.md",
+          "lastUpdated": "2026-09-13",
+          "sha256": "37f0c76ff8c0ccec4a937a8f0f0b7b7971b7f8e657e1459f42fc3daa18058a02",
+          "passed": true
+        },
+        {
+          "path": "ko/observability/logging/01-loki.md",
+          "lastUpdated": "2026-09-13",
+          "sha256": "757725fd9a0bb53b05cd355a3e1dad148cffb05c1307d922a538bc145954220a",
+          "passed": true
+        },
+        {
+          "path": "ko/quizzes/observability/logging/01-loki-quiz.md",
+          "lastUpdated": "2026-09-13",
+          "sha256": "ab575c179cdb96d77c1654fc6bf8118c6fc17f908a429b1e2c70f116eb7d5ee4",
+          "passed": true
+        }
+      ]
+    },
+    "scopedDiffCheck": true,
+    "limits": [
+      "No cloud/GPU/fullbuild, live Kubernetes/S3/TLS authentication, IAM authorization, load, HA or retention-deletion test.",
+      "Loki native tests use loopback, synthetic logs and a local filesystem. Private WAL threshold0.95 and free-space guard accommodate the host; published deployment retains the default.",
+      "Terraform resource syntax/provider-source semantics and Alloy stage structure were checked; no Terraform plan/apply or complete Alloy runtime was executed.",
+      "4originalPNGs personally viewed; incorrect Compactor chunk-merging and exact cardinality-product claims replaced with2inlineMermaid diagrams and an observed-combination table. Shared/foreign image sync remains parent-owned."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/logging/01-loki.md",
+        "sha256": "ad4994c927cc1cde45a9cd472aab771d08bc7c31e4e4f0a0a4b49cafe415c23c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-loki"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "deployment-modes"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-installation"
+          },
+          {
+            "tag": "h3",
+            "id": "prerequisites-and-ownership"
+          },
+          {
+            "tag": "h3",
+            "id": "versioned-distributed-values"
+          },
+          {
+            "tag": "h2",
+            "id": "s3-backend-and-workload-identity"
+          },
+          {
+            "tag": "h3",
+            "id": "iam-and-serviceaccount"
+          },
+          {
+            "tag": "h3",
+            "id": "private-bucket-example"
+          },
+          {
+            "tag": "h2",
+            "id": "logql"
+          },
+          {
+            "tag": "h3",
+            "id": "selectors-filters-and-parsers"
+          },
+          {
+            "tag": "h3",
+            "id": "metrics-derived-from-logs"
+          },
+          {
+            "tag": "h2",
+            "id": "label-design-and-collectors"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-tuning"
+          },
+          {
+            "tag": "h2",
+            "id": "retention"
+          },
+          {
+            "tag": "h2",
+            "id": "troubleshooting-and-monitoring"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "grafana-loki",
+          "overview",
+          "architecture",
+          "mermaid-77",
+          "deployment-modes",
+          "helm-installation",
+          "prerequisites-and-ownership",
+          "versioned-distributed-values",
+          "s3-backend-and-workload-identity",
+          "iam-and-serviceaccount",
+          "private-bucket-example",
+          "logql",
+          "selectors-filters-and-parsers",
+          "metrics-derived-from-logs",
+          "label-design-and-collectors",
+          "performance-tuning",
+          "retention",
+          "troubleshooting-and-monitoring",
+          "validation-and-references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/logging/01-loki-quiz.md",
+        "sha256": "37f0c76ff8c0ccec4a937a8f0f0b7b7971b7f8e657e1459f42fc3daa18058a02",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-loki-quiz"
+          }
+        ],
+        "renderedIds": [
+          "grafana-loki-quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/logging/01-loki.md",
+        "sha256": "757725fd9a0bb53b05cd355a3e1dad148cffb05c1307d922a538bc145954220a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-loki"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "배포-모드"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "사전-조건과-소유권"
+          },
+          {
+            "tag": "h3",
+            "id": "버전을-고정한-분산-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "s3-백엔드와-워크로드-자격-증명"
+          },
+          {
+            "tag": "h3",
+            "id": "iam과-serviceaccount"
+          },
+          {
+            "tag": "h3",
+            "id": "비공개-버킷-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "logql"
+          },
+          {
+            "tag": "h3",
+            "id": "선택자·필터·파서"
+          },
+          {
+            "tag": "h3",
+            "id": "로그-기반-메트릭"
+          },
+          {
+            "tag": "h2",
+            "id": "레이블-설계와-수집기"
+          },
+          {
+            "tag": "h2",
+            "id": "성능-튜닝"
+          },
+          {
+            "tag": "h2",
+            "id": "보존-정책"
+          },
+          {
+            "tag": "h2",
+            "id": "트러블슈팅과-모니터링"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "grafana-loki",
+          "개요",
+          "아키텍처",
+          "mermaid-77",
+          "배포-모드",
+          "helm-설치",
+          "사전-조건과-소유권",
+          "버전을-고정한-분산-설정",
+          "s3-백엔드와-워크로드-자격-증명",
+          "iam과-serviceaccount",
+          "비공개-버킷-예제",
+          "logql",
+          "선택자·필터·파서",
+          "로그-기반-메트릭",
+          "레이블-설계와-수집기",
+          "성능-튜닝",
+          "보존-정책",
+          "트러블슈팅과-모니터링",
+          "검증과-참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/logging/01-loki-quiz.md",
+        "sha256": "ab575c179cdb96d77c1654fc6bf8118c6fc17f908a429b1e2c70f116eb7d5ee4",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-loki-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "grafana-loki-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html",
+      "cacheKey": "095df313c905",
+      "fetchedAt": "2026-09-13T01:40:26.504951+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html",
+      "sha256": "0093fe2759ad1cfc3f1f43719a6df2699637280cda1d044242b1311fcbbb9e9c"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "cacheKey": "58a56c4bd3c9",
+      "fetchedAt": "2026-09-13T01:40:26.300087+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "sha256": "79a8583d24b8838bf6298ee8fe087d244b48473bf79a86ca64b9f8c42f5487ff"
+    },
+    {
+      "url": "https://grafana.com/docs/alloy/latest/set-up/migrate/from-promtail/",
+      "cacheKey": "2fa428a81226",
+      "fetchedAt": "2026-09-13T01:45:19.043699+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/alloy/latest/set-up/migrate/from-promtail/",
+      "sha256": "7fadbb0aaaa7a48fded540f7a9414c343b5c9f7808cfc4384cf551fc62d0115b"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/configure/",
+      "cacheKey": "bce61e9d91bd",
+      "fetchedAt": "2026-09-13T01:39:55.177255+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/configure/",
+      "sha256": "39e957aa7aeee45d3fcfadd8efa425179ede6aaefae8cc8cf53fb370ef157157"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/get-started/components/",
+      "cacheKey": "21c31dfc02bb",
+      "fetchedAt": "2026-09-13T01:45:18.438889+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/get-started/components/",
+      "sha256": "f725ed2f6bbcdff2aa42d7588477e83234feed6019e36845d35c0f788683b0b4"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/get-started/deployment-modes/",
+      "cacheKey": "9e8107690aeb",
+      "fetchedAt": "2026-09-13T01:39:54.929152+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/get-started/deployment-modes/",
+      "sha256": "6a81f4f289cd7b03587e04f65e6cfd9ee3d134abcbfaa314d8cdad52c4f5d950"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/get-started/labels/cardinality/",
+      "cacheKey": "7bed27ea4838",
+      "fetchedAt": "2026-09-13T01:40:26.140592+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/get-started/labels/cardinality/",
+      "sha256": "496d3d21031dfb4d0cd8f0395a6608992c661a216c650b4fb84f0d676da6b0bf"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/",
+      "cacheKey": "2d49abc5d6c4",
+      "fetchedAt": "2026-09-13T01:40:26.590007+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/",
+      "sha256": "8b6fe3c236083f78b2dba312465204734a2c275ac8b51dd3bd4e68e6a3a17be1"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/operations/authentication/",
+      "cacheKey": "721771ce3185",
+      "fetchedAt": "2026-09-13T01:40:26.129501+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/operations/authentication/",
+      "sha256": "858baf38932f9cb71a0176788efcfbbdec742a19c6fc07618a541a3b3d3b17da"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/operations/multi-tenancy/",
+      "cacheKey": "ae555189404a",
+      "fetchedAt": "2026-09-13T01:39:55.449910+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/operations/multi-tenancy/",
+      "sha256": "45c60268f73501ece1895666970bf27c1a1a9b20d06ad807a9a2d8eceee37940"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/operations/storage/retention/",
+      "cacheKey": "fe0bd3cabd6d",
+      "fetchedAt": "2026-09-13T01:39:55.271784+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/operations/storage/retention/",
+      "sha256": "2c9255d9f2f745288080bb45045bf3f21d220d9cd9e3d389c5b4866f24e685a5"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/query/log_queries/",
+      "cacheKey": "beda09c53647",
+      "fetchedAt": "2026-09-13T01:39:55.571474+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/query/log_queries/",
+      "sha256": "eb238a02466c781d9fc746ce2f4b8965561e4aee44cff0e68c11c0e41871ae0b"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/query/metric_queries/",
+      "cacheKey": "3125c370c0d6",
+      "fetchedAt": "2026-09-13T01:39:55.938242+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/query/metric_queries/",
+      "sha256": "4e642c2c325071be0abf68dfd9722f0dad5b02b9bfc89d3168956e93b8ed3ada"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/reference/loki-http-api/",
+      "cacheKey": "f3c6dfbe0103",
+      "fetchedAt": "2026-09-13T01:39:56.196722+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/reference/loki-http-api/",
+      "sha256": "c53e56ad0a809f9be94cbe79e4a9227fabf07ba64d1ecf0a9b3dbe233ea37fa3"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/send-data/promtail/",
+      "cacheKey": "202de6653ee5",
+      "fetchedAt": "2026-09-13T01:04:02.530229+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/send-data/promtail/",
+      "sha256": "da034919a6d02c32274dc79f05bd367212617cb59bcecf3539d1f29a880bf20d"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/setup/install/helm/",
+      "cacheKey": "ae37ee337e65",
+      "fetchedAt": "2026-09-13T01:39:54.652688+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/setup/install/helm/",
+      "sha256": "eeabe615587c9991ca2daf4bd2ea6aa2df9e29d31605d8c3bd26cd99cb01a471"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/setup/upgrade/",
+      "cacheKey": "bd1e1487293d",
+      "fetchedAt": "2026-09-13T01:45:18.357086+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/setup/upgrade/",
+      "sha256": "bd6d675e3cc9c444f1aa07c590a558eb3d45ccd69530f786c3ef06031c574816"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana-community/helm-charts/loki-18.12.1/charts/loki/values.yaml",
+      "cacheKey": "636c444cd143",
+      "fetchedAt": "2026-09-13T01:40:25.818503+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana-community/helm-charts/loki-18.12.1/charts/loki/values.yaml",
+      "sha256": "6c8aab262dde9e20c3d314ad23d6c11e28a0a02ff1c4004bb7bcb2a620136391"
+    },
+    {
+      "url": "https://api.github.com/repos/grafana/loki/releases/tags/v3.7.7",
+      "cacheKey": "8144ccb761d2",
+      "fetchedAt": "2026-09-13T01:39:56.420764+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/grafana/loki/releases/tags/v3.7.7",
+      "sha256": "61d5aaa272bef6601b477b02a478a0499c60fd4c1f4aa962cb0799e3b0578ba2"
+    },
+    {
+      "url": "https://api.github.com/repos/grafana-community/helm-charts/releases/tags/loki-18.12.1",
+      "cacheKey": "e2b403691a41",
+      "fetchedAt": "2026-09-13T01:40:25.571068+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/grafana-community/helm-charts/releases/tags/loki-18.12.1",
+      "sha256": "73eb588e5c3cd9d388c4ac780bbd44152ebe11f97816e435321dce43151cfa57"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana-community/helm-charts/loki-18.12.1/charts/loki/Chart.yaml",
+      "cacheKey": "93b1cdcd9861",
+      "fetchedAt": "2026-09-13T01:40:25.584101+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana-community/helm-charts/loki-18.12.1/charts/loki/Chart.yaml",
+      "sha256": "f5b09bddd1bbcf34a9d3896eeb1c584bcd8141de919f98384ebe0009e111f566"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/go.mod",
+      "cacheKey": "0124364350d3",
+      "fetchedAt": "2026-09-13T01:45:18.094901+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/go.mod",
+      "sha256": "7ab12e14dde212bedf408cf4e158589086467e757d1586f1b850122b480787c3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/pkg/ingester/ingester.go",
+      "cacheKey": "f25cecca627a",
+      "fetchedAt": "2026-09-13T01:53:16.328397+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/pkg/ingester/ingester.go",
+      "sha256": "eda0954d0168cc19f29b7c95455d8dd47e59acad6925a756e5a29c4b809bee7a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/pkg/loki/modules.go",
+      "cacheKey": "468f5340dc8f",
+      "fetchedAt": "2026-09-13T01:53:16.336092+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/pkg/loki/modules.go",
+      "sha256": "6a4b5bc90a287cb273d29900b9a2c9fea04c0349c2f1b1db83f7ed01c138b57f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/cmd/loki/loki-local-config.yaml",
+      "cacheKey": "d67a7e36932d",
+      "fetchedAt": "2026-09-13T01:53:16.640358+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/cmd/loki/loki-local-config.yaml",
+      "sha256": "b0512247b74062a2df69acdd26f1292fb7750d41330b3ee34d36d7511456ef90"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/website/docs/r/s3_bucket_versioning.html.markdown",
+      "cacheKey": "fbb3eaaf0718",
+      "fetchedAt": "2026-09-13T01:51:16.922471+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/website/docs/r/s3_bucket_versioning.html.markdown",
+      "sha256": "b7ed30a27c3d4c2a2b7eef2b13e9956ae1de4348d8030598c353b9134c8057ee"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/internal/service/s3/bucket_versioning.go",
+      "cacheKey": "1c77907d2edb",
+      "fetchedAt": "2026-09-13T01:51:16.930932+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/internal/service/s3/bucket_versioning.go",
+      "sha256": "ea990ade2e5e7b1cdacaaf9f43492371fc4517381655df10e16730e0b6ad8f6d"
+    },
+    {
+      "url": "https://grafana.com/docs/alloy/latest/reference/components/loki/loki.process/",
+      "cacheKey": "db54269bc128",
+      "fetchedAt": "2026-09-13T01:45:19.070488+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/alloy/latest/reference/components/loki/loki.process/",
+      "sha256": "e416bfed96fd2003ebbb9a16abddd961be95fce2f9ac6a0361e50231a1782081"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html",
+      "cacheKey": "f079a32c5149",
+      "fetchedAt": "2026-09-13T01:45:19.218025+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html",
+      "sha256": "9d800480d711accd3fba613a27fa15ef52fa2a96e5b9a9896ecaa480879bcf2c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/pkg/distributor/distributor.go",
+      "cacheKey": "17e2189860b3",
+      "fetchedAt": "2026-09-13T01:45:19.617507+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/pkg/distributor/distributor.go",
+      "sha256": "7cf4c10defcab47da2e9a3f94d9cd488dcda9d77dff2fd52f705fd976e834471"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/pkg/ingester/metrics.go",
+      "cacheKey": "dbb44e5d6e99",
+      "fetchedAt": "2026-09-13T01:45:19.531888+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/pkg/ingester/metrics.go",
+      "sha256": "051f3c8bb46c7965f49960a451becf773f45554e37d5c3375a24fc20cd06c3ef"
+    }
+  ],
+  "findings": [
+    "Pinned Loki3.7.7/communitychart18.12.1; chartdefaultMonolithic versus deprecatedSSD distinguished. Removed 6.x.x placeholder/unpinned upgrade and invented GB/day capacity tiers; no latest-equals-compatibility claim.",
+    "Native Loki rejected11of16original runtime-like fragments: distributor rate_limit fields, max_transfer_retries, query_frontend root, querier timeout placement, shared_store, sse_encryption, runtime replicas and split placement. Consolidated correct chart/runtime settings and preserved valid ingester controls.",
+    "Distributed chart values use TLS/privategateway/Secretreferences; render checks verify username-to-tenant header overwrite, workload IRSA ServiceAccount, PVCs and runtime overrides. Direct-backend isolation, real TLS secrets, storage/AZ/capacity remain deployment prerequisites, not tested guarantees.",
+    "IRSA role-only creation avoids eksctl/Helm ServiceAccount ownership collision; PodIdentity alternative qualified. Same-account bucket/object policy, encryption/BPA on both buckets, no unnecessaryOSSadminbucket, no live-chunkGlacier or unscoped bucketexpiration.",
+    "TerraformDisabled IS valid for creating/importing unversioned buckets; preserved after verifying provider docs/Go source. Enabled/Suspended->Disabled transition is unsupported. This rejected candidate is not counted as an original defect.",
+    "Corrected3invalidLogQLqueryforms(lineOR,postaggregationlabel_format,increasecount_over_time), nonempty selectors, conversion-error filtering, and missing-numerator ratio semantics. Native35queries parse+execute; healthy0/allerror1/mixed0.5/missingnothealthy/quantile5900/average200 checked. ShortJSONextraction and count-vector aggregation remain supported.",
+    "Compactor compacts index files, not generic log chunks. Corrected31-daydefault claim, runtimefileloading, streamselector/priority semantics and asynchronousretention/PVCmarkerstate. Structuredmetadata/parsedfields are not indexed retention selectors.",
+    "PromtailEOL2026-03-02 with separate lambda-promtail lifecycle; replaced incomplete Promtail guidance with scopedAlloyprocessing fragment that extracts request_id before metadata use. Cardinalityproduct is upperbound and resources depend on morethanstreamcount.",
+    "Removed flush-as-status; use readonlydiagnostics, absolute start/relative since, protected HTTPScredentialfile and realmetricsemantics. Nativefound IngesterIsShuttingDown also signals default90percentWALdiskthrottle; documented distinction, kept production safeguard, privateboundedfixture95percentonly.",
+    "All4originalPNGspersonallyviewed; incorrectCompactorchunkmerge/exactcardinalityproduct claims replaced by2validatedMermaiddiagrams and observed-combination table. Sharedassets/foreigntranslations remainparentfollowup.",
+    "All20quizquestions fullyreviewed/reconciled; nativecommands/examples and EN/KO code/answerparity verified. RecognizedLastUpdated metadata returns2026-09-13for4sources."
+  ],
+  "figures": {
+    "originalPNGsViewed": [
+      "en/.gitbook/assets/en-observability-logging-01-loki-0.png",
+      "en/.gitbook/assets/en-observability-logging-01-loki-1.png",
+      "ko/.gitbook/assets/ko-observability-logging-01-loki-0.png",
+      "ko/.gitbook/assets/ko-observability-logging-01-loki-1.png"
+    ],
+    "replacement": "2inlineMermaidTSDBcomponentflows plus observed-cardinality table",
+    "newRenderedPNGsViewed": [
+      ".vitepress/cache/observability-loki-audit/figures/loki_en_0.png",
+      ".vitepress/cache/observability-loki-audit/figures/loki_ko_0.png"
+    ],
+    "scopeExternalFollowup": "Parent shared/foreign diagram sync should remove chunk-merging and exact-cardinality-product claims; no shared assets/foreign prose edited."
+  },
+  "artifactDirectory": ".vitepress/cache/observability-loki-audit",
+  "limits": [
+    "No cloud/GPU/fullbuild, live Kubernetes/S3/TLS authentication, IAM authorization, load, HA or retention-deletion test.",
+    "Loki native tests use loopback, synthetic logs and a local filesystem. Private WAL threshold0.95 and free-space guard accommodate the host; published deployment retains the default.",
+    "Terraform resource syntax/provider-source semantics and Alloy stage structure were checked; no Terraform plan/apply or complete Alloy runtime was executed.",
+    "4originalPNGs personally viewed; incorrect Compactor chunk-merging and exact cardinality-product claims replaced with2inlineMermaid diagrams and an observed-combination table. Shared/foreign image sync remains parent-owned."
+  ],
+  "sourceAccessNotes": [],
+  "reviewFix": {
+    "finding": "LOGGING-R1-001",
+    "change": "Tenant-facing Nginx uses explicitdataAPIallowlist;admin/config/ring/memberlist/ingester/flush/ruler/delete pathsdenybeforebackend;rootreadinessremainspublicnonsensitive.",
+    "native": {
+      "status": "passed",
+      "cases": [
+        {
+          "path": "/",
+          "method": "GET",
+          "auth": "none",
+          "status": 200,
+          "backendReached": false
+        },
+        {
+          "path": "/loki/api/v1/query?query=test",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/query_range?query=test",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/labels",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/label/service/values",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/series",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/index/stats",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/push",
+          "method": "POST",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/otlp/v1/logs",
+          "method": "POST",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/query",
+          "method": "GET",
+          "auth": "none",
+          "status": 401,
+          "backendReached": false
+        },
+        {
+          "path": "/loki/api/v1/query",
+          "method": "GET",
+          "auth": "wrong",
+          "status": 401,
+          "backendReached": false
+        },
+        {
+          "path": "/ingester/shutdown",
+          "method": "POST",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/flush",
+          "method": "POST",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/config",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/memberlist",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/distributor/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/scheduler/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/indexgateway/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/compactor/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/ruler/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/loki/api/v1/delete",
+          "method": "POST",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/loki/api/v1/rules",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/ui",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/stub_status",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/ingester%2fshutdown",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "//ingester/shutdown",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        }
+      ],
+      "imageId": "sha256:dc8131a57e4eefe6a6cc8344d03efb8085d12158abd9dea2b96457b63b71a5f3",
+      "architecture": "arm64",
+      "scope": "Actual pinned-chart Nginx config and matching image; loopbackTLS withhostnameverification/basicAuth/mockbackends. Onlylisten/upstreams/resolver/files andworker count changedforfixture. All adminattempts blockedbeforemockbackend; clienttenantheadersoverwritten. NoAWS/cluster/Lokishutdownexecuted."
+    },
+    "markdown": {
+      "nodeHeapMiB": 512,
+      "scope": "Explicit documents only; no site build",
+      "results": [
+        {
+          "path": "ko/observability/logging/01-loki.md",
+          "sha256": "5c83f568e1243f0173f92526df1b55b7112764c3baf9b36325df273de01e65d0",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "grafana-loki"
+            },
+            {
+              "tag": "h2",
+              "id": "개요"
+            },
+            {
+              "tag": "h2",
+              "id": "아키텍처"
+            },
+            {
+              "tag": "h2",
+              "id": "배포-모드"
+            },
+            {
+              "tag": "h2",
+              "id": "helm-설치"
+            },
+            {
+              "tag": "h3",
+              "id": "사전-조건과-소유권"
+            },
+            {
+              "tag": "h3",
+              "id": "버전을-고정한-분산-설정"
+            },
+            {
+              "tag": "h2",
+              "id": "s3-백엔드와-워크로드-자격-증명"
+            },
+            {
+              "tag": "h3",
+              "id": "iam과-serviceaccount"
+            },
+            {
+              "tag": "h3",
+              "id": "비공개-버킷-예제"
+            },
+            {
+              "tag": "h2",
+              "id": "logql"
+            },
+            {
+              "tag": "h3",
+              "id": "선택자·필터·파서"
+            },
+            {
+              "tag": "h3",
+              "id": "로그-기반-메트릭"
+            },
+            {
+              "tag": "h2",
+              "id": "레이블-설계와-수집기"
+            },
+            {
+              "tag": "h2",
+              "id": "성능-튜닝"
+            },
+            {
+              "tag": "h2",
+              "id": "보존-정책"
+            },
+            {
+              "tag": "h2",
+              "id": "트러블슈팅과-모니터링"
+            },
+            {
+              "tag": "h2",
+              "id": "검증과-참고-자료"
+            },
+            {
+              "tag": "h2",
+              "id": "퀴즈"
+            }
+          ],
+          "renderedIds": [
+            "grafana-loki",
+            "개요",
+            "아키텍처",
+            "mermaid-77",
+            "배포-모드",
+            "helm-설치",
+            "사전-조건과-소유권",
+            "버전을-고정한-분산-설정",
+            "s3-백엔드와-워크로드-자격-증명",
+            "iam과-serviceaccount",
+            "비공개-버킷-예제",
+            "logql",
+            "선택자·필터·파서",
+            "로그-기반-메트릭",
+            "레이블-설계와-수집기",
+            "성능-튜닝",
+            "보존-정책",
+            "트러블슈팅과-모니터링",
+            "검증과-참고-자료",
+            "퀴즈"
+          ]
+        },
+        {
+          "path": "en/observability/logging/01-loki.md",
+          "sha256": "8416385d76e60115a2e5a8e283df18249c584cda3398c33cfa7c4c60a0c82cc0",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "grafana-loki"
+            },
+            {
+              "tag": "h2",
+              "id": "overview"
+            },
+            {
+              "tag": "h2",
+              "id": "architecture"
+            },
+            {
+              "tag": "h2",
+              "id": "deployment-modes"
+            },
+            {
+              "tag": "h2",
+              "id": "helm-installation"
+            },
+            {
+              "tag": "h3",
+              "id": "prerequisites-and-ownership"
+            },
+            {
+              "tag": "h3",
+              "id": "versioned-distributed-values"
+            },
+            {
+              "tag": "h2",
+              "id": "s3-backend-and-workload-identity"
+            },
+            {
+              "tag": "h3",
+              "id": "iam-and-serviceaccount"
+            },
+            {
+              "tag": "h3",
+              "id": "private-bucket-example"
+            },
+            {
+              "tag": "h2",
+              "id": "logql"
+            },
+            {
+              "tag": "h3",
+              "id": "selectors-filters-and-parsers"
+            },
+            {
+              "tag": "h3",
+              "id": "metrics-derived-from-logs"
+            },
+            {
+              "tag": "h2",
+              "id": "label-design-and-collectors"
+            },
+            {
+              "tag": "h2",
+              "id": "performance-tuning"
+            },
+            {
+              "tag": "h2",
+              "id": "retention"
+            },
+            {
+              "tag": "h2",
+              "id": "troubleshooting-and-monitoring"
+            },
+            {
+              "tag": "h2",
+              "id": "validation-and-references"
+            },
+            {
+              "tag": "h2",
+              "id": "quiz"
+            }
+          ],
+          "renderedIds": [
+            "grafana-loki",
+            "overview",
+            "architecture",
+            "mermaid-77",
+            "deployment-modes",
+            "helm-installation",
+            "prerequisites-and-ownership",
+            "versioned-distributed-values",
+            "s3-backend-and-workload-identity",
+            "iam-and-serviceaccount",
+            "private-bucket-example",
+            "logql",
+            "selectors-filters-and-parsers",
+            "metrics-derived-from-logs",
+            "label-design-and-collectors",
+            "performance-tuning",
+            "retention",
+            "troubleshooting-and-monitoring",
+            "validation-and-references",
+            "quiz"
+          ]
+        }
+      ]
+    },
+    "sourceHashes": {
+      "ko/observability/logging/01-loki.md": "5c83f568e1243f0173f92526df1b55b7112764c3baf9b36325df273de01e65d0",
+      "en/observability/logging/01-loki.md": "8416385d76e60115a2e5a8e283df18249c584cda3398c33cfa7c4c60a0c82cc0"
+    },
+    "limits": "Mockbackendsverifyproxyboundary;noactualLokiadminactionorEKSnetworktest."
+  }
+}

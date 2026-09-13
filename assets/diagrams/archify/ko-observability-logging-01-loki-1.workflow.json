@@ -15,7 +15,7 @@
           "valueKinds",
           "streams"
         ],
-        "note": "총 스트림 수 = namespace 값 수 × app 값 수 × component 값 수 × … — 라벨 수와 라벨값 종류가 곱해집니다."
+        "note": "실제 stream 수는 관찰한 라벨 조합이다. 각 라벨 값 수의 곱은 가능한 조합의 상한일 뿐 정확한 실측값이 아니다."
       },
       {
         "id": "impact",
@@ -26,7 +26,7 @@
           "queryPerf",
           "memory"
         ],
-        "note": "스트림 수 하나가 인덱스 크기, 쿼리 성능, 메모리 사용량을 함께 결정합니다."
+        "note": "Stream 수는 chunk 이용률·수집률·query 범위·cache·하드웨어와 함께 비용과 성능에 영향을 준다."
       }
     ],
     "legend": {
@@ -87,8 +87,7 @@
       "col": 2,
       "type": "database",
       "label": "총 스트림 수",
-      "sublabel": "라벨별 값 수의 곱",
-      "tag": "클러스터당 < 100,000",
+      "sublabel": "실제로 관찰한 라벨 조합",
       "width": 190
     },
     {

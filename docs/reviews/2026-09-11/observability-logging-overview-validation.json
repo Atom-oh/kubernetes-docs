@@ -1,0 +1,720 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T01:38:29.041068+00:00",
+  "scope": [
+    "en/observability/logging/README.md",
+    "en/quizzes/observability/logging/README-quiz.md",
+    "ko/observability/logging/README.md",
+    "ko/quizzes/observability/logging/README-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/logging/README.md": {
+      "lines": 490,
+      "sha256": "e9f72ca91136e9e856f1b01e10b12c31f320ec323ce4bef922f73ea2afabd47c"
+    },
+    "en/quizzes/observability/logging/README-quiz.md": {
+      "lines": 195,
+      "sha256": "767693588f6ac812da1eb71f80baab53858ad2e64bb48c7da76d126be2b1291d"
+    },
+    "ko/observability/logging/README.md": {
+      "lines": 479,
+      "sha256": "b555d47f34a71eb5b58fada032e8c7c7cb406d2395628a528d5d922227c4d239"
+    },
+    "ko/quizzes/observability/logging/README-quiz.md": {
+      "lines": 193,
+      "sha256": "42854e653277484c02dfd440981f0f56f9c6d36c8fe04e0b3010d80dbcab61e1"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/logging/README.md",
+        "sha256": "e64266a9b6ce7f776a89a13398c8f3faff66b805d9cd22a61fcea2105eace984",
+        "lines": 348,
+        "codeBlocks": {
+          "json": 2,
+          "python": 1,
+          "mermaid": 1,
+          "text": 2,
+          "bash": 1
+        },
+        "quizQuestions": 0
+      },
+      {
+        "path": "en/quizzes/observability/logging/README-quiz.md",
+        "sha256": "ae10d255c28d7d5eebf4dbffa39950fb6eb69adf9610e439970b6660ff3def6e",
+        "lines": 167,
+        "codeBlocks": {},
+        "quizQuestions": 10
+      },
+      {
+        "path": "ko/observability/logging/README.md",
+        "sha256": "557df4ab71efd7975a843804768df785659f2dc52f2f82624c6af8016045f51e",
+        "lines": 338,
+        "codeBlocks": {
+          "json": 2,
+          "python": 1,
+          "mermaid": 1,
+          "text": 2,
+          "bash": 1
+        },
+        "quizQuestions": 0
+      },
+      {
+        "path": "ko/quizzes/observability/logging/README-quiz.md",
+        "sha256": "314a90528fcc9f5ea64f3556ea38136c635b580077f3919c377074e3cfe223cc",
+        "lines": 167,
+        "codeBlocks": {},
+        "quizQuestions": 10
+      }
+    ],
+    "passed": true,
+    "links": [
+      {
+        "source": "en/observability/logging/README.md",
+        "target": "en/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/logging/README.md",
+        "target": "en/observability/metrics/04-cloudwatch-metrics.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/logging/README.md",
+        "target": "en/observability/logging/01-loki.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/logging/README.md",
+        "target": "en/observability/logging/02-opensearch.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/logging/README.md",
+        "target": "en/observability/logging/03-cloudwatch-logs.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/logging/README.md",
+        "target": "en/observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/logging/README.md",
+        "target": "en/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/logging/README.md",
+        "target": "en/quizzes/observability/logging/README-quiz.md",
+        "passed": true
+      },
+      {
+        "source": "en/quizzes/observability/logging/README-quiz.md",
+        "target": "en/observability/logging/README.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/logging/README.md",
+        "target": "ko/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/logging/README.md",
+        "target": "ko/observability/metrics/04-cloudwatch-metrics.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/logging/README.md",
+        "target": "ko/observability/logging/01-loki.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/logging/README.md",
+        "target": "ko/observability/logging/02-opensearch.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/logging/README.md",
+        "target": "ko/observability/logging/03-cloudwatch-logs.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/logging/README.md",
+        "target": "ko/observability/logging/04-clickhouse.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/logging/README.md",
+        "target": "ko/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/logging/README.md",
+        "target": "ko/quizzes/observability/logging/README-quiz.md",
+        "passed": true
+      },
+      {
+        "source": "ko/quizzes/observability/logging/README-quiz.md",
+        "target": "ko/observability/logging/README.md",
+        "passed": true
+      }
+    ],
+    "bilingualCodeAndAnswerParity": true,
+    "examples": {
+      "cases": [
+        {
+          "case": "one-json-record-roundtrip",
+          "passed": true
+        },
+        {
+          "case": "one-json-record-roundtrip",
+          "passed": true
+        },
+        {
+          "case": "one-json-record-roundtrip",
+          "passed": true
+        },
+        {
+          "case": "example-timestamp-and-trace-format",
+          "passed": true
+        },
+        {
+          "case": "old-or-zero-trace-identifiers-rejected",
+          "examples": 4,
+          "passed": true
+        },
+        {
+          "case": "eks-update-input-shape",
+          "passed": true
+        },
+        {
+          "case": "string-boolean-update-rejected",
+          "passed": true
+        },
+        {
+          "case": "filter-fragment-scope",
+          "passed": true,
+          "note": "Source/structure only; no Fluent Bit process, tag discovery or delivery executed."
+        }
+      ],
+      "sourceHashes": {
+        "record.json": "3bcfd0974f44f6a3bd1eeaed3e1084809439f7b045abd78e539d84331fee76ba",
+        "encode_log.py": "3eb396e8437e028d3e266580f5f4317cdf9ccaa54a1811e45f6c90c7311bc02d",
+        "filters.conf": "9013b35b267b056542637cabf01f6f14aadb3881e432056ecf95e25db8aaebb8",
+        "control-plane-logging.json": "da0562b9a308e6cceb59bbc2721d7556f780e99b5b85143b64d71c92925aa92b"
+      },
+      "passed": true,
+      "scope": "Native Python JSON serialization and botocore input types; trace-format and filter-source contracts. No cloud or collector execution."
+    },
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "Native local browser parse/render; no VitePress build/server",
+      "results": [
+        {
+          "path": "en/observability/logging/README.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 10,
+          "edges": 10,
+          "consoleErrors": []
+        },
+        {
+          "path": "ko/observability/logging/README.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 10,
+          "edges": 10,
+          "consoleErrors": []
+        }
+      ]
+    },
+    "metadata": {
+      "results": [
+        {
+          "path": "en/observability/logging/README.md",
+          "sha256": "e64266a9b6ce7f776a89a13398c8f3faff66b805d9cd22a61fcea2105eace984",
+          "lastUpdated": "2026-09-13",
+          "passed": true
+        },
+        {
+          "path": "en/quizzes/observability/logging/README-quiz.md",
+          "sha256": "ae10d255c28d7d5eebf4dbffa39950fb6eb69adf9610e439970b6660ff3def6e",
+          "lastUpdated": "2026-09-13",
+          "passed": true
+        },
+        {
+          "path": "ko/observability/logging/README.md",
+          "sha256": "557df4ab71efd7975a843804768df785659f2dc52f2f82624c6af8016045f51e",
+          "lastUpdated": "2026-09-13",
+          "passed": true
+        },
+        {
+          "path": "ko/quizzes/observability/logging/README-quiz.md",
+          "sha256": "314a90528fcc9f5ea64f3556ea38136c635b580077f3919c377074e3cfe223cc",
+          "lastUpdated": "2026-09-13",
+          "passed": true
+        }
+      ]
+    },
+    "sourceLinkKeys": [
+      "35255ba80cf5",
+      "69e0a0732ab4",
+      "7acc47fd7b9d",
+      "13c047a8c6d3",
+      "72fa1a494074",
+      "bb8c8bde4633",
+      "d5895c45c8f2",
+      "738c7fb12953",
+      "a566f8adc61e",
+      "b6975b359d7d",
+      "fd088ab35850",
+      "202de6653ee5",
+      "16136ba90f75",
+      "b7b8ba421326",
+      "e792035f6caa",
+      "7adae090d59a",
+      "6a0029787a22"
+    ],
+    "scopedDiffCheck": true,
+    "limits": [
+      "No cloud mutation, Kubernetes/collector deployment, actual log delivery/retention/recovery or pricing/compliance determination.",
+      "Fluent Bit classic-filter fragment source/structure checked; no Fluent Bit process or complete input/output pipeline tested.",
+      "EKS request validated against the local SDK input model, not service-side authorization or resource availability.",
+      "4originalPNGspersonallyviewed;wrongqueryarrows/managedcontrolplanepathandunsupportedcost/decisionclaimsreplacedinownedMarkdown with2Mermaiddiagramsandcriteria. Shared/foreignsync remainsparent."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/logging/README.md",
+        "sha256": "e64266a9b6ce7f776a89a13398c8f3faff66b805d9cd22a61fcea2105eace984",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "logging"
+          },
+          {
+            "tag": "h2",
+            "id": "logging-fundamentals"
+          },
+          {
+            "tag": "h3",
+            "id": "structured-records-still-require-parsing"
+          },
+          {
+            "tag": "h3",
+            "id": "severity-is-not-a-universal-0–5-scale"
+          },
+          {
+            "tag": "h2",
+            "id": "collection-and-processing"
+          },
+          {
+            "tag": "h3",
+            "id": "default-linux-log-paths-and-lifecycle"
+          },
+          {
+            "tag": "h3",
+            "id": "fluent-bit-processing-fragment"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-logging-paths"
+          },
+          {
+            "tag": "h3",
+            "id": "control-plane-logs"
+          },
+          {
+            "tag": "h3",
+            "id": "fargate-and-container-insights"
+          },
+          {
+            "tag": "h2",
+            "id": "storage-retention-and-cost-decisions"
+          },
+          {
+            "tag": "h3",
+            "id": "retention-requires-a-policy-for-the-actual-records"
+          },
+          {
+            "tag": "h3",
+            "id": "compare-like-for-like-costs"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps-and-validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "logging",
+          "logging-fundamentals",
+          "structured-records-still-require-parsing",
+          "severity-is-not-a-universal-0–5-scale",
+          "collection-and-processing",
+          "mermaid-114",
+          "default-linux-log-paths-and-lifecycle",
+          "fluent-bit-processing-fragment",
+          "eks-logging-paths",
+          "control-plane-logs",
+          "fargate-and-container-insights",
+          "storage-retention-and-cost-decisions",
+          "retention-requires-a-policy-for-the-actual-records",
+          "compare-like-for-like-costs",
+          "next-steps-and-validation-scope",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/observability/logging/README.md",
+        "sha256": "557df4ab71efd7975a843804768df785659f2dc52f2f82624c6af8016045f51e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "로깅-개요"
+          },
+          {
+            "tag": "h2",
+            "id": "로깅-기본-개념"
+          },
+          {
+            "tag": "h3",
+            "id": "구조화된-record도-parsing이-필요함"
+          },
+          {
+            "tag": "h3",
+            "id": "severity는-보편적인-0–5-척도가-아님"
+          },
+          {
+            "tag": "h2",
+            "id": "수집과-처리"
+          },
+          {
+            "tag": "h3",
+            "id": "linux-기본-log-경로와-수명"
+          },
+          {
+            "tag": "h3",
+            "id": "fluent-bit-처리-fragment"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-로깅-경로"
+          },
+          {
+            "tag": "h3",
+            "id": "control-plane-log"
+          },
+          {
+            "tag": "h3",
+            "id": "fargate와-container-insights"
+          },
+          {
+            "tag": "h2",
+            "id": "저장·retention·비용-결정"
+          },
+          {
+            "tag": "h3",
+            "id": "실제-record에-대한-retention-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "같은-조건의-비용-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계와-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "로깅-개요",
+          "로깅-기본-개념",
+          "구조화된-record도-parsing이-필요함",
+          "severity는-보편적인-0–5-척도가-아님",
+          "수집과-처리",
+          "mermaid-114",
+          "linux-기본-log-경로와-수명",
+          "fluent-bit-처리-fragment",
+          "eks-로깅-경로",
+          "control-plane-log",
+          "fargate와-container-insights",
+          "저장·retention·비용-결정",
+          "실제-record에-대한-retention-정책",
+          "같은-조건의-비용-비교",
+          "다음-단계와-검증-범위",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/logging/README-quiz.md",
+        "sha256": "ae10d255c28d7d5eebf4dbffa39950fb6eb69adf9610e439970b6660ff3def6e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "logging-overview-quiz"
+          }
+        ],
+        "renderedIds": [
+          "logging-overview-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/logging/README-quiz.md",
+        "sha256": "314a90528fcc9f5ea64f3556ea38136c635b580077f3919c377074e3cfe223cc",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "로깅-개요-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "로깅-개요-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://kubernetes.io/docs/concepts/cluster-administration/logging/",
+      "cacheKey": "16136ba90f75",
+      "fetchedAt": "2026-09-13T01:04:00.998821+00:00",
+      "status": 200,
+      "finalURL": "https://kubernetes.io/docs/concepts/cluster-administration/logging/",
+      "sha256": "275210e86150a13ea5c72363d5f7b4157b0ee6ee87532d3ed7b92b1e8604a8c3"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/",
+      "cacheKey": "b7b8ba421326",
+      "fetchedAt": "2026-09-13T01:04:00.193749+00:00",
+      "status": 200,
+      "finalURL": "https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/",
+      "sha256": "95106fb06906373124630884d9ce703486f7e93bdc5c4b40290aeb4064d6aeaa"
+    },
+    {
+      "url": "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/",
+      "cacheKey": "e792035f6caa",
+      "fetchedAt": "2026-09-13T01:04:02.716557+00:00",
+      "status": 200,
+      "finalURL": "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/",
+      "sha256": "964822c4368a0c11367d2e2445c3c5fd5434a67b36847f88a087617960ca0acd"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/specs/otel/logs/data-model/",
+      "cacheKey": "7adae090d59a",
+      "fetchedAt": "2026-09-13T01:04:01.470018+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/specs/otel/logs/data-model/",
+      "sha256": "53118bcd7e08d08057b8994a2ceeb4c7da49f6838ceadf1cb4839a730d67deac"
+    },
+    {
+      "url": "https://www.w3.org/TR/trace-context/",
+      "cacheKey": "6a0029787a22",
+      "fetchedAt": "2026-09-13T01:04:01.544698+00:00",
+      "status": 200,
+      "finalURL": "https://www.w3.org/TR/trace-context/",
+      "sha256": "9e7228d2a91c5aa4bef6e7f610366a2000274ee51699053e10c8ac3f0b8965be"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+      "cacheKey": "7acc47fd7b9d",
+      "fetchedAt": "2026-09-13T01:04:01.687476+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+      "sha256": "95bbcc12dd12cee13b8b89faa351ff5d31f8697f90331938a5bb7bd91f7398eb"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html",
+      "cacheKey": "13c047a8c6d3",
+      "fetchedAt": "2026-09-13T01:04:01.894124+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html",
+      "sha256": "1b11aecb09f61e3a4aab7f7d61a1db50fdb3c0b06f707ba1fac45f7d0b06f152"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html",
+      "cacheKey": "bb8c8bde4633",
+      "fetchedAt": "2026-09-13T01:04:02.216354+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html",
+      "sha256": "04b50013c3bf3aeec02f39d1e0ab702bbbb5b76c5a82de9cd71ba5abc4de1cc8"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/send-data/promtail/",
+      "cacheKey": "202de6653ee5",
+      "fetchedAt": "2026-09-13T01:04:02.530229+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/send-data/promtail/",
+      "sha256": "da034919a6d02c32274dc79f05bd367212617cb59bcecf3539d1f29a880bf20d"
+    },
+    {
+      "url": "https://api.github.com/repos/fluent/fluent-bit-docs/contents/",
+      "cacheKey": "88e6b0701f69",
+      "fetchedAt": "2026-09-13T01:05:55.086584+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/fluent/fluent-bit-docs/contents/",
+      "sha256": "0950004fa9acbd5bc311f11831ffbf7a1324b4a2954398788cfbb38bb4b2e39f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/pkg/kubelet/kuberuntime/legacy.go",
+      "cacheKey": "5445afc7c7a8",
+      "fetchedAt": "2026-09-13T01:05:55.100115+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/pkg/kubelet/kuberuntime/legacy.go",
+      "sha256": "2e79bf04827ea90235115b5176897fcb009dd29ed74e236b07d5fb17409cd985"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-overview.html",
+      "cacheKey": "72fa1a494074",
+      "fetchedAt": "2026-09-13T01:05:55.242087+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-overview.html",
+      "sha256": "565c37f5ab45ccf2e77ddd60e6db8cdb691e4e8a8352da79ac9b89edc34254f1"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html",
+      "cacheKey": "35255ba80cf5",
+      "fetchedAt": "2026-09-13T01:05:55.311599+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html",
+      "sha256": "a8f9688d11ea02b2877a7d5cbf0bdc4f45f0a5a029925d241094f536d18fcb7b"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/get-started/overview/",
+      "cacheKey": "fd088ab35850",
+      "fetchedAt": "2026-09-13T01:05:55.504411+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/get-started/overview/",
+      "sha256": "087feab2859f2afa04ced0fa70eb9bca1f7987c7663e7b217f80caacaa8b6b4b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/filters/kubernetes.md",
+      "cacheKey": "a0f0c521896d",
+      "fetchedAt": "2026-09-13T01:08:07.717255+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/filters/kubernetes.md",
+      "sha256": "0afc4b76771b83fbc59da1a7bf99b67ca8107b4313292464e15ce8407cd7f6a8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/filters/grep.md",
+      "cacheKey": "d0931812710d",
+      "fetchedAt": "2026-09-13T01:08:07.688276+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/filters/grep.md",
+      "sha256": "6b9084b90f76ed355c51d357a8edb2ee8cbc78b5feedf6f10566a1a2b641cdc1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/filters/modify.md",
+      "cacheKey": "eba5be8d1202",
+      "fetchedAt": "2026-09-13T01:08:07.903421+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/filters/modify.md",
+      "sha256": "28ca9cde0fad4a74d8260058d946d79223986973d443d5a86332e61049c2276a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/master/README.md",
+      "cacheKey": "c53671b9acb9",
+      "fetchedAt": "2026-09-13T01:08:08.138704+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/ClickHouse/ClickHouse/master/README.md",
+      "sha256": "fc0dc660418c194a1f54bcd7f8013d226e2e96095e5022ff5901a1649c3f736a"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html",
+      "cacheKey": "69e0a0732ab4",
+      "fetchedAt": "2026-09-12T23:29:55.644557+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html",
+      "sha256": "e068cd7f0c7b72790480a5babbbbe2928a8a0b597b75bf9536caf70ac7e8cd0d"
+    },
+    {
+      "url": "https://github.com/ClickHouse/ClickHouse",
+      "cacheKey": "d5895c45c8f2",
+      "fetchedAt": "2026-09-13T01:37:58.378626+00:00",
+      "status": 200,
+      "finalURL": "https://github.com/ClickHouse/ClickHouse",
+      "sha256": "91c2628e9a0a59ab1a94c54dcb308c5cc168f478797b074dc1abd855ebb6ebfc"
+    },
+    {
+      "url": "https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/kubernetes.md",
+      "cacheKey": "738c7fb12953",
+      "fetchedAt": "2026-09-13T01:37:58.589141+00:00",
+      "status": 200,
+      "finalURL": "https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/kubernetes.md",
+      "sha256": "1983f1639fbeb37b2d535ee46c22b61a4a85d15fb34f77f71ed0d18c4a29772a"
+    },
+    {
+      "url": "https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/modify.md",
+      "cacheKey": "a566f8adc61e",
+      "fetchedAt": "2026-09-13T01:37:58.859476+00:00",
+      "status": 200,
+      "finalURL": "https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/modify.md",
+      "sha256": "b89d136a6a54ca072b97fd79cc6ddcc5ef828846b30e0ab9e6e2215317360a24"
+    },
+    {
+      "url": "https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/kuberuntime/legacy.go",
+      "cacheKey": "b6975b359d7d",
+      "fetchedAt": "2026-09-13T01:37:59.079301+00:00",
+      "status": 200,
+      "finalURL": "https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/kuberuntime/legacy.go",
+      "sha256": "c4f7fdcd47544d5b5f196b9a7197f95c357159029286b785f5a732aa7ea30bfe"
+    }
+  ],
+  "findings": [
+    "Corrected Linux pod-log path and compatibility symlink direction; rotation/previous-container logs do not replace central retention. DaemonSet scope, sidecar/emptyDir loss and delivery duplicates/loss are qualified.",
+    "Replaced invented universal severity0–5 with OTel1–24/0unspecified; valid nonzero32/16hex trace/span examples, safe optional context and one-JSON-event framing. Synthetic2025 timestamp retained as formatting illustration.",
+    "Fluent Bit Kubernetes/modify filter uses classic config and trusted metadata; parses app JSON under app while preserving raw log. Fragment is explicitly incomplete; no runtime delivery or automatic privacy guarantee claimed.",
+    "EKS control-plane logs go directly to CloudWatch and require explicit asynchronous configuration. Fargate builtin router uses aws-logging/aws-observability,5300-character limit,pod execution permissions and new-Pod configuration scope.",
+    "Corrected audit policy coverage, Container Insights/application-log separation, OpenSearch UltraWarm/Serverless S3 and CW Logs query-language/log-class distinctions.",
+    "Removed unsupported universal financial/HIPAA retention and unverified cost/performance/selection guarantees. Historical2025 cost illustration remains identified as non-reproducible; no benchmark retagging.",
+    "Promtail end of life2026-03-02 recorded with separate lambda-promtail exception; collector selection now points to maintained options.",
+    "All20quizanswers aligned and checked across locales; broken own-repository quiz URL replaced with relative target. LastUpdated metadata parser returns2026-09-13 for all4.",
+    "Viewed4existingPNGs; wrong query arrows/control-plane collection path and unsupported cost-winner claims replaced in owned Markdown by2validatedMermaid diagrams/tables. Shared assets and foreign translations remain parent followup."
+  ],
+  "figures": {
+    "originalPNGsViewed": [
+      "en/.gitbook/assets/en-observability-logging-readme-0.png",
+      "en/.gitbook/assets/en-observability-logging-readme-1.png",
+      "ko/.gitbook/assets/ko-observability-logging-readme-0.png",
+      "ko/.gitbook/assets/ko-observability-logging-readme-1.png"
+    ],
+    "replacement": "2inlineMermaidfiguresandstorage/selectiontables",
+    "replacementEvidence": ".vitepress/cache/observability-logging-overview-audit/mermaid-validation.json",
+    "scopeExternalFollowup": "Parent should regenerate/sync shared/foreign figures from corrected source; original assets not edited."
+  },
+  "artifactDirectory": ".vitepress/cache/observability-logging-overview-audit",
+  "limits": [
+    "No cloud mutation, Kubernetes/collector deployment, actual log delivery/retention/recovery or pricing/compliance determination.",
+    "Fluent Bit classic-filter fragment source/structure checked; no Fluent Bit process or complete input/output pipeline tested.",
+    "EKS request validated against the local SDK input model, not service-side authorization or resource availability.",
+    "4originalPNGspersonallyviewed;wrongqueryarrows/managedcontrolplanepathandunsupportedcost/decisionclaimsreplacedinownedMarkdown with2Mermaiddiagramsandcriteria. Shared/foreignsync remainsparent."
+  ],
+  "sourceAccessNotes": [
+    "FluentBitdocumentationHTMLandClickHousesite403;useofficialGitHubsources,notinferredpass."
+  ]
+}

@@ -1,1122 +1,712 @@
 # ClickHouse
 
-> **Last Updated**: June 30, 2026
+> **Last Updated**: September 13, 2026
 
-ClickHouse is an open-source columnar database optimized for OLAP (Online Analytical Processing) workloads. It provides excellent query performance and compression ratios for large-scale log analytics.
+ClickHouse is a columnar analytical database. It suits log workloads that need SQL filtering, aggregation and joins, provided the ingestion schema, retention and operating model fit the workload.
 
 ## Table of Contents
 
-1. [Overview](04-clickhouse.md#overview)
-2. [Architecture](04-clickhouse.md#architecture)
-3. [Kubernetes Deployment](04-clickhouse.md#kubernetes-deployment)
-4. [Log Ingestion Pipeline](04-clickhouse.md#log-ingestion-pipeline)
-5. [SQL Queries](04-clickhouse.md#sql-queries)
-6. [Grafana Integration](04-clickhouse.md#grafana-integration)
-7. [Performance Optimization](04-clickhouse.md#performance-optimization)
-8. [S3 Archiving and Long-term Retention](04-clickhouse.md#s3-archiving-and-long-term-retention)
-9. [HyperDX (ClickHouse Native Viewer)](04-clickhouse.md#hyperdx-clickhouse-native-viewer)
-
-***
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+3. [Kubernetes deployment](#kubernetes-deployment)
+4. [Log ingestion pipeline](#log-ingestion-pipeline)
+5. [SQL queries](#sql-queries)
+6. [Grafana integration](#grafana-integration)
+7. [HyperDX](#hyperdx-clickhouse-native-viewer)
+8. [Performance optimization](#performance-optimization)
+9. [S3 archiving](#s3-archiving-and-long-term-retention)
 
 ## Overview
 
 ### ClickHouse Features
 
-| Feature                 | Description                                       |
-| ----------------------- | ------------------------------------------------- |
-| **Columnar storage**    | Data storage optimized for analytical queries     |
-| **High compression**    | 10:1+ compression ratios for storage cost savings |
-| **Fast queries**        | Scan billions of rows in seconds                  |
-| **SQL support**         | Write queries in standard SQL                     |
-| **Horizontal scaling**  | Distributed processing via sharding               |
-| **Real-time ingestion** | Ingest millions of rows per second                |
+| Feature | Practical implication |
+|---|---|
+| Columnar storage | Read selected columns rather than every field of every record |
+| Compression and codecs | Repeated values and suitable ordering can reduce storage; measure your own data |
+| SQL analytics | Use ClickHouse SQL functions, aggregates and joins; it is not a drop-in implementation of every SQL dialect |
+| Sharding | Distribute rows across servers; choose a key that avoids hot shards |
+| Replication | ReplicatedMergeTree coordinates replicas through Keeper/ZooKeeper |
+| Batched ingestion | Control insert frequency and part creation rather than assuming a fixed rows/second rate |
 
 ### Why Choose ClickHouse for Log Analytics
 
-```
-+-------------------------------------------------------------+
-|                    Log Analytics Requirements                |
-+-------------------------------------------------------------+
-|  [x] Large-scale data (TB+ per day)                         |
-|  [x] Complex aggregation queries (GROUP BY, JOIN)           |
-|  [x] SQL-based analysis                                     |
-|  [x] Low storage costs                                      |
-|  [x] Fast query response (seconds)                          |
-|  [x] BI tool integration                                    |
-+-------------------------------------------------------------+
-                          |
-              ClickHouse is a suitable choice
-```
+Evaluate ClickHouse when logs are structured and repeated analytical queries dominate. Benchmark representative filters, text searches, retention, concurrent readers and ingest bursts. Compression above 10:1, scanning billions of rows in seconds and particular cost savings are workload-dependent results, not guarantees for this configuration.
+
+This guide uses **ClickHouse 26.3.33.24 LTS**, **Altinity Operator 0.27.3**, **Vector 0.58.0** and **Grafana ClickHouse datasource 4.21.2** as explicit review baselines. Release publication does not prove that an arbitrary Kubernetes/EKS version, storage class or combination is production-compatible. Validate your cluster and upgrade path separately.
 
 ### Comparison with Other Solutions
 
-| Item                       | ClickHouse          | Elasticsearch  | Loki        |
-| -------------------------- | ------------------- | -------------- | ----------- |
-| **Query language**         | SQL                 | Query DSL      | LogQL       |
-| **Storage method**         | Columnar            | Document-based | Chunk-based |
-| **Compression ratio**      | Very high           | Low            | High        |
-| **Full-text search**       | Limited             | Excellent      | Limited     |
-| **Aggregation queries**    | Excellent           | Good           | Basic       |
-| **Learning curve**         | Low if SQL familiar | Medium         | Low         |
-| **Operational complexity** | Medium              | High           | Low         |
+| System | Query and storage model | Evaluate |
+|---|---|---|
+| ClickHouse | SQL over columnar tables | Sort keys, projections/indexes, aggregation and insert/merge behavior |
+| OpenSearch / Elasticsearch | Document search and analytics | Text analysis, mappings, indexing costs and search requirements |
+| Loki | LogQL over label-indexed log streams/chunks | Label cardinality, query scans, retention and operational mode |
 
-***
+Avoid universal rankings for compression, query speed or operating complexity. Each system has multiple deployment modes and indexing/query options. Compare the same data, queries, replicas and retention.
 
 ## Architecture
 
 ### ClickHouse Cluster Architecture
 
-![Architecture diagram of a ClickHouse log pipeline: log collectors buffer through an optional Kafka topic into a ZooKeeper-coordinated ClickHouse cluster, which writes to EBS, tiers cold data to S3, and serves Grafana and Superset queries.](../../.gitbook/assets/en-observability-logging-04-clickhouse-0.png)
+![Conceptual log pipeline with optional Kafka, three ClickHouse shards with replicas, coordination, storage and query clients.](../../.gitbook/assets/en-observability-logging-04-clickhouse-0.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-0.html)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-0.html)
+
+The diagram summarizes a topology, not a tested capacity plan. Each ClickHouse replica needs its **own data volume**; the EBS symbol does not mean that six replicas share one writable EBS filesystem. Keeper/ZooKeeper coordinates replication and distributed DDL. A ClickHouse query initiator and the `Distributed` engine perform distributed queries; Keeper is not the query router.
 
 ### Data Flow
 
-![Sequence diagram showing a log's path from an application through FluentBit and an optional Kafka buffer into ClickHouse, which stores it in a MergeTree table and, on a TTL policy, asynchronously moves cold data to S3.](../../.gitbook/assets/en-observability-logging-04-clickhouse-1.png)
+![Application log data flows through a collector and optional Kafka to ClickHouse; an explicit storage policy can move table parts to S3.](../../.gitbook/assets/en-observability-logging-04-clickhouse-1.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-1.html)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-1.html)
 
-***
+Arrows show data movement. In the Kafka-engine variant, ClickHouse consumers poll Kafka; the picture does not imply that Kafka pushes inserts or guarantees exactly-once delivery. S3 cold table parts and independent Parquet archives are different mechanisms.
 
 ## Kubernetes Deployment
 
 ### Install ClickHouse Operator
 
-```bash
-# Install Altinity ClickHouse Operator
-kubectl apply -f https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/operator/clickhouse-operator-install-bundle.yaml
+Use the versioned official chart rather than applying a moving `master` bundle:
 
-# Verify installation
-kubectl get pods -n kube-system | grep clickhouse
+```bash
+helm upgrade --install clickhouse-operator \
+  https://github.com/Altinity/clickhouse-operator/releases/download/release-0.27.3/altinity-clickhouse-operator-0.27.3.tgz \
+  --namespace clickhouse-operator --create-namespace
+
+kubectl -n clickhouse-operator get deployments,pods
+kubectl get crd clickhouseinstallations.clickhouse.altinity.com \
+  clickhousekeeperinstallations.clickhouse-keeper.altinity.com
 ```
+
+Inspect rendered RBAC, watched namespaces and CRD installation/upgrade behavior before applying. The local review rendered this chart and checked its official release checksum; it did not install an operator or validate reconciliation against a cluster.
 
 ### ClickHouse Cluster Definition
 
+The following is a **topology example with mandatory existing dependencies**, not a complete secure installation:
+
+- Namespace `clickhouse`, ServiceAccount `clickhouse-server` and the appropriate CSI-backed `gp3` StorageClass must exist. Storage class names are local choices; EKS Auto Mode storage and conventional EBS CSI require the corresponding provisioner and topology settings.
+- A site-owned ClickHouseInstallationTemplate named `log-security` must configure mounted Secret files, accounts, TLS, probes and authenticated internal communication. Ensure its settings/mounts also apply to the `logs-server` pod template below.
+- A healthy `logs-keeper` ClickHouseKeeperInstallation must already provide the intended TLS endpoints and quorum.
+- Provide an internal TLS Service named `logs-clickhouse` in namespace `clickhouse`, exposing HTTPS 8443. Its certificate must match the client DNS name. Confirm actual operator-generated selectors and endpoints; a CHI name alone does not create this particular service name.
+- Allocate failure domains, disruption budgets and resources from measured requirements. The 3×2 layout and per-replica 100Gi/8Gi limits below are illustrative, not a throughput or availability promise.
+
 ```yaml
-# clickhouse-cluster.yaml
-apiVersion: "clickhouse.altinity.com/v1"
-kind: "ClickHouseInstallation"
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallation
 metadata:
-  name: logs-cluster
+  name: logs-demo
   namespace: clickhouse
 spec:
+  # Required site-owned template: users, TLS, probes and internal authentication.
+  useTemplates:
+    - name: log-security
+  defaults:
+    templates:
+      podTemplate: logs-server
+      dataVolumeClaimTemplate: logs-data
   configuration:
     zookeeper:
-      nodes:
-        - host: zookeeper.clickhouse.svc.cluster.local
-          port: 2181
+      keeper:
+        name: logs-keeper
+        serviceType: replicas
     clusters:
-      - name: logs
+      - name: logscluster
+        secure: "yes"
+        insecure: "no"
         layout:
           shardsCount: 3
           replicasCount: 2
-        templates:
-          podTemplate: clickhouse-pod
-          volumeClaimTemplate: storage
-          serviceTemplate: svc-template
-
-    settings:
-      # Log analytics optimized settings
-      max_concurrent_queries: 100
-      max_connections: 4096
-      max_server_memory_usage_to_ram_ratio: 0.9
-      background_pool_size: 16
-      background_schedule_pool_size: 16
-
-    files:
-      config.d/storage.xml: |
-        <clickhouse>
-          <storage_configuration>
-            <disks>
-              <default>
-                <keep_free_space_bytes>10737418240</keep_free_space_bytes>
-              </default>
-              <s3>
-                <type>s3</type>
-                <endpoint>https://s3.ap-northeast-2.amazonaws.com/my-clickhouse-data/</endpoint>
-                <use_environment_credentials>true</use_environment_credentials>
-              </s3>
-            </disks>
-            <policies>
-              <tiered>
-                <volumes>
-                  <hot>
-                    <disk>default</disk>
-                  </hot>
-                  <cold>
-                    <disk>s3</disk>
-                  </cold>
-                </volumes>
-                <move_factor>0.2</move_factor>
-              </tiered>
-            </policies>
-          </storage_configuration>
-        </clickhouse>
-
-    users:
-      admin/password: "secure-password-here"
-      admin/networks/ip: "::/0"
-      admin/profile: default
-      admin/quota: default
-
-      readonly/password: "readonly-password"
-      readonly/networks/ip: "::/0"
-      readonly/profile: readonly
-      readonly/quota: default
-
-    profiles:
-      readonly/readonly: 1
-      default/max_memory_usage: 10000000000
-      default/max_execution_time: 300
-
   templates:
     podTemplates:
-      - name: clickhouse-pod
+      - name: logs-server
         spec:
+          serviceAccountName: clickhouse-server
           containers:
             - name: clickhouse
-              image: clickhouse/clickhouse-server:24.1
+              image: clickhouse/clickhouse-server:26.3.33.24
               resources:
                 requests:
                   cpu: "2"
-                  memory: "8Gi"
+                  memory: 4Gi
                 limits:
-                  cpu: "4"
-                  memory: "16Gi"
-              ports:
-                - name: http
-                  containerPort: 8123
-                - name: tcp
-                  containerPort: 9000
-                - name: interserver
-                  containerPort: 9009
-          affinity:
-            podAntiAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-                - weight: 100
-                  podAffinityTerm:
-                    labelSelector:
-                      matchLabels:
-                        clickhouse.altinity.com/cluster: logs
-                    topologyKey: topology.kubernetes.io/zone
-
+                  memory: 8Gi
     volumeClaimTemplates:
-      - name: storage
+      - name: logs-data
         spec:
-          accessModes:
-            - ReadWriteOnce
+          accessModes: [ReadWriteOnce]
           storageClassName: gp3
           resources:
             requests:
-              storage: 500Gi
-
-    serviceTemplates:
-      - name: svc-template
-        spec:
-          ports:
-            - name: http
-              port: 8123
-            - name: tcp
-              port: 9000
-          type: ClusterIP
+              storage: 100Gi
 ```
+
+Use separate `log_writer`, `log_reader` and administrative identities. Mount credential/configuration files from Secrets; do not put passwords in ConfigMaps, source code, shell command arguments or broad environment dumps. Restrict account networks and NetworkPolicies to the actual collector/query/replica paths. Do not copy permissive `::/0` users, expired example certificates or certificate-verification bypasses.
+
+TLS port exposure alone is insufficient: verify certificate loading, hostname/CA checks, replica traffic and readiness probes. Do not apply the topology until the security template, volumes and dependencies have been reviewed together. Local CRD validation checks shape, not admission, scheduling, TLS or operator behavior.
 
 ### ZooKeeper (or ClickHouse Keeper) Deployment
 
-```yaml
-# zookeeper.yaml
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: zookeeper
-  namespace: clickhouse
-spec:
-  serviceName: zookeeper
-  replicas: 3
-  selector:
-    matchLabels:
-      app: zookeeper
-  template:
-    metadata:
-      labels:
-        app: zookeeper
-    spec:
-      containers:
-        - name: zookeeper
-          image: zookeeper:3.8
-          ports:
-            - containerPort: 2181
-              name: client
-            - containerPort: 2888
-              name: follower
-            - containerPort: 3888
-              name: election
-          env:
-            - name: ZOO_MY_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: ZOO_SERVERS
-              value: "server.1=zookeeper-0.zookeeper:2888:3888;2181 server.2=zookeeper-1.zookeeper:2888:3888;2181 server.3=zookeeper-2.zookeeper:2888:3888;2181"
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1Gi
-            limits:
-              cpu: 1
-              memory: 2Gi
-          volumeMounts:
-            - name: data
-              mountPath: /data
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: gp3
-        resources:
-          requests:
-            storage: 20Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: zookeeper
-  namespace: clickhouse
-spec:
-  ports:
-    - port: 2181
-      name: client
-  clusterIP: None
-  selector:
-    app: zookeeper
-```
+For a new deployment, consider ClickHouse Keeper and the operator's `ClickHouseKeeperInstallation` support. The pinned operator can resolve a CHK reference using `zookeeper.keeper.name`; secure Keeper service ports are detected during reconciliation. Use the official [Keeper reference](https://github.com/Altinity/clickhouse-operator/blob/release-0.27.3/docs/keeper_reference.md) and [TLS configuration example](https://github.com/Altinity/clickhouse-operator/blob/release-0.27.3/docs/chk-examples/30-secure-cluster.yaml) as configuration references, reviewing their example image/settings before reuse.
 
-***
+Three voting members require a majority of two. Persistent state, peer connectivity, certificates and scheduling across failure domains still need validation. Do not pass a Pod name such as `zookeeper-0` to a ZooKeeper image's numeric `ZOO_MY_ID`.
+
+```bash
+kubectl -n clickhouse get chk logs-keeper
+kubectl -n clickhouse get chi logs-demo
+kubectl -n clickhouse get pods,pvc,services,endpointslices
+kubectl -n clickhouse get events --sort-by=.metadata.creationTimestamp
+```
 
 ## Log Ingestion Pipeline
 
 ### Buffer → Store → Distributed 3-Tier Design
 
-> **Interactive Visualization**: See the [ClickHouse 3-Tier Pipeline Animation](https://github.com/Atom-oh/kubernetes-docs/blob/main/assets/clickhouse-3tier-pipeline.html) to visually explore the Buffer → Store → Distributed data flow.
+These are engine responsibilities, not three independent durable copies. `MergeTree` stores parts; `ReplicatedMergeTree` adds replication; `Distributed` routes reads/inserts across shards. The optional `Buffer` engine holds data in process memory before forwarding it to a destination table.
 
-In large-scale log environments (TB+ per day), concentrated INSERT requests create many small Parts, causing Merge overhead to spike. A 3-tier design using the Buffer engine solves this problem.
+Use one consistent destination: `logs.application_logs` on each shard and `logs.application_logs_distributed` for cluster-wide access. Creating the same Distributed table twice with `IF NOT EXISTS` does not retarget the existing table. Inspect `SHOW CREATE TABLE` and migrate deliberately.
 
-```
-Buffer Table (Memory)  →  Store Table (ReplicatedMergeTree)  →  Distributed Table (Query Router)
-    Receives INSERTs          Actual data storage                   Client query entry point
-    Accumulates in memory     Flushes as large Parts                Distributes across shards
-```
+Prefer collector-side batching first. ClickHouse asynchronous inserts are another option: when enabled, `wait_for_async_insert=1` waits for the buffered insert to be processed; acknowledge-before-flush modes weaken delivery/error feedback. Test the selected engine, user settings and retries together. The Vector example below uses synchronous batched inserts and a writer profile with foreground Distributed forwarding.
 
-**Buffer Engine Role:**
-
-* Accumulates INSERT requests in memory and flushes to the Store table when conditions (time/rows/bytes) are met
-* Batches many small INSERTs during peak into large Parts → minimizes Merge overhead
-* Prevents `Too many parts` errors from Part count explosion
+For comparison only, this optional Buffer table targets the same local storage table:
 
 ```sql
--- 1. Store table (actual data storage)
-CREATE TABLE logs.store_application_logs ON CLUSTER logs
-(
-    -- Schema same as application_logs
-    ...
-)
-ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/logs.store_application_logs', '{replica}')
-PARTITION BY (toYYYYMMDD(timestamp) * 100 + toHour(timestamp))
-ORDER BY (namespace, service, timestamp)
-TTL timestamp + INTERVAL 90 DAY
-SETTINGS
-    index_granularity = 8192,
-    ttl_only_drop_parts = 1;
-
--- 2. Buffer table (receives INSERTs)
-CREATE TABLE logs.buffer_application_logs AS logs.store_application_logs
+CREATE TABLE logs.application_logs_buffer ON CLUSTER logscluster
+AS logs.application_logs
 ENGINE = Buffer(
-    'logs',                    -- database
-    'store_application_logs',  -- target table
-    16,                        -- num_layers (parallel buffers)
-    1,                         -- min_time (seconds) - flush after minimum 1s
-    30,                        -- max_time (seconds) - flush after maximum 30s
-    500000,                    -- min_rows
-    5000000,                   -- max_rows
-    500000000,                 -- min_bytes (~500MB)
-    1000000000                 -- max_bytes (~1GB)
-);
-
--- 3. Distributed table (query entry point)
-CREATE TABLE logs.application_logs_distributed ON CLUSTER logs
-AS logs.store_application_logs
-ENGINE = Distributed(logs, logs, store_application_logs, rand());
+    logs, application_logs, 4,
+    1, 10,
+    1000, 10000,
+    1000000, 10000000);
 ```
 
-> **Note**: Buffer table data resides in memory, so unflushed data may be lost if ClickHouse terminates abnormally. When used with Kafka, data can be recovered through reprocessing.
+`Buffer` flushes when **all minimum thresholds** are reached or **any maximum threshold** is reached. Limits apply per buffer layer. Four layers × 10,000,000 bytes is a rough threshold budget, not a process-memory cap; source blocks, copies, queries and caches add memory. A crash can lose unflushed rows, and reordered blocks can defeat replicated insert deduplication. Do not route the default pipeline through this example or describe it as durable Kafka replay protection.
 
 ### Log Table Schema
 
-```sql
--- Create log table (production-optimized version)
-CREATE TABLE IF NOT EXISTS logs.application_logs ON CLUSTER logs
-(
-    -- DoubleDelta CODEC: optimal compression for time-series timestamps
-    timestamp DateTime64(3) CODEC(DoubleDelta, LZ4),
-    date Date DEFAULT toDate(timestamp),
-    level LowCardinality(String),
-    message String,
-    logger String,
+Execute cluster DDL with an administrative identity after verifying cluster name `logscluster`, Keeper and the `{shard}`/`{replica}` macros:
 
-    -- Kubernetes metadata
+```sql
+CREATE DATABASE IF NOT EXISTS logs ON CLUSTER logscluster;
+
+CREATE TABLE IF NOT EXISTS logs.application_logs ON CLUSTER logscluster
+(
+    timestamp DateTime64(3, 'UTC') CODEC(Delta, ZSTD(1)),
+    date Date MATERIALIZED toDate(timestamp),
+    level LowCardinality(String),
     namespace LowCardinality(String),
+    service LowCardinality(String),
     pod_name String,
     container_name LowCardinality(String),
     node_name LowCardinality(String),
-
-    -- Trace information
+    message String CODEC(ZSTD(1)),
     trace_id String,
-    span_id String,
-
-    -- Additional fields
-    service LowCardinality(String),
-    environment LowCardinality(String),
-
-    -- Materialized columns: auto-extract frequently used fields from JSON at INSERT time
-    -- Enables direct column access without JSON parsing at query time → major performance gain
-    app_name String MATERIALIZED JSONExtractString(raw_json, 'app_name'),
-    error_code String MATERIALIZED JSONExtractString(raw_json, 'error_code'),
-    response_time Float64 MATERIALIZED JSONExtractFloat(raw_json, 'response_time_ms'),
-
-    -- JSON raw (optional)
-    raw_json String CODEC(ZSTD(3)),
-
-    INDEX idx_trace_id trace_id TYPE bloom_filter GRANULARITY 4,
-    INDEX idx_message message TYPE tokenbf_v1(10240, 3, 0) GRANULARITY 4
+    raw_json String CODEC(ZSTD(1)),
+    response_time_ms Nullable(Float64)
+        MATERIALIZED if(
+            JSONType(raw_json, 'response_time_ms') IN ('Int64', 'UInt64', 'Double'),
+            JSONExtract(raw_json, 'response_time_ms', 'Nullable(Float64)'),
+            NULL)
 )
-ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/logs.application_logs', '{replica}')
--- Hourly partitioning: finer granularity than monthly (toYYYYMM)
--- → Enables whole-Part deletion for TTL, more precise data management
-PARTITION BY (toYYYYMMDD(date) * 100 + toHour(timestamp))
+ENGINE = ReplicatedMergeTree(
+    '/clickhouse/logs-demo/tables/{shard}/application_logs', '{replica}')
+PARTITION BY date
 ORDER BY (namespace, service, timestamp)
-TTL date + INTERVAL 90 DAY
-SETTINGS
-    index_granularity = 8192,
-    -- Drop whole Parts: dramatically more efficient TTL processing vs row-level deletion
-    ttl_only_drop_parts = 1;
+TTL toDateTime(timestamp) + INTERVAL 90 DAY DELETE;
 
--- Create distributed table
-CREATE TABLE IF NOT EXISTS logs.application_logs_distributed ON CLUSTER logs
+CREATE TABLE IF NOT EXISTS logs.application_logs_distributed ON CLUSTER logscluster
 AS logs.application_logs
-ENGINE = Distributed(logs, logs, application_logs, rand());
+ENGINE = Distributed(
+    'logscluster', 'logs', 'application_logs',
+    cityHash64(namespace, service, pod_name));
 ```
+
+The collector sends the ten ordinary columns; ClickHouse computes `date` and nullable `response_time_ms`. Missing or nonnumeric response times remain `NULL`, so non-request logs are not counted as zero-latency requests. `raw_json` is valid application JSON, separate from trusted Kubernetes metadata. Apply redaction before ingestion if the application can emit secrets or personal data.
+
+Daily partitions suit this example's retention management; they are not universally optimal. The Keeper path is specific to this installation. Reusing it across unrelated installations can mix replication identities. `IF NOT EXISTS` is not a schema migration.
+
+For **SQL-managed accounts already provisioned through your secret process**, configure grants/profiles on every participating server. File-managed users need equivalent file-managed permissions instead of assuming `ALTER USER` can modify them:
+
+```sql
+-- Users and credentials already exist through the site-owned secret configuration.
+GRANT INSERT ON logs.application_logs TO log_writer;
+GRANT INSERT ON logs.application_logs_distributed TO log_writer;
+GRANT SELECT ON logs.application_logs TO log_reader;
+GRANT SELECT ON logs.application_logs_distributed TO log_reader;
+
+CREATE SETTINGS PROFILE logs_readonly
+SETTINGS readonly = 1, max_execution_time = 60 CHANGEABLE_IN_READONLY;
+ALTER USER log_reader SETTINGS PROFILE logs_readonly;
+
+CREATE SETTINGS PROFILE logs_writer
+SETTINGS distributed_foreground_insert = 1, async_insert = 0;
+ALTER USER log_writer SETTINGS PROFILE logs_writer;
+```
+
+The writer's foreground Distributed insert waits for shard forwarding, but does not imply a chosen replica quorum, universal retry deduplication or protection from every storage failure. Review quorum, failure/retry semantics and permissions independently. Keep the Grafana reader read-only while permitting its required query timeout setting.
 
 ### Ingestion via Vector
 
+This is the Vector **0.58.0 configuration file**. A DaemonSet, ServiceAccount/RBAC, read-only `/var/log/pods` access and writable `/var/lib/vector` must be supplied separately. Set the nonsecret `VECTOR_SELF_NODE_NAME` from the Pod's `spec.nodeName` using the Downward API. This source reads that variable itself; global environment interpolation is not needed.
+
+Mount a Secret key `password` under `/etc/vector/clickhouse-auth`, and the trusted CA at `/etc/vector/clickhouse-tls/ca.crt`. Vector 0.58 uses the explicit `SECRET[backend.key]` backend below. Do not assume older `${CLICKHOUSE_PASSWORD}` interpolation is enabled by default.
+
 ```yaml
-# vector-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vector-config
-  namespace: logging
-data:
-  vector.yaml: |
-    sources:
-      kubernetes_logs:
-        type: kubernetes_logs
-        auto_partial_merge: true
-        ignore_older_secs: 600
+data_dir: /var/lib/vector
 
-    transforms:
-      parse_json:
-        type: remap
-        inputs:
-          - kubernetes_logs
-        source: |
-          # Attempt JSON parsing
-          parsed, err = parse_json(.message)
-          if err == null {
-            . = merge(., parsed)
-          }
+secret:
+  clickhouse_auth:
+    type: directory
+    path: /etc/vector/clickhouse-auth
+    remove_trailing_whitespace: true
 
-          # Normalize fields
-          .timestamp = .timestamp || now()
-          .level = .level || "INFO"
-          .namespace = .kubernetes.pod_namespace
-          .pod_name = .kubernetes.pod_name
-          .container_name = .kubernetes.container_name
-          .node_name = .kubernetes.pod_node_name
-          .service = .kubernetes.pod_labels.app || "unknown"
-          .environment = .kubernetes.pod_labels.environment || "unknown"
+sources:
+  kubernetes:
+    type: kubernetes_logs
+    auto_partial_merge: true
 
-      filter_noise:
-        type: filter
-        inputs:
-          - parse_json
-        condition: |
-          !includes(["kube-system", "kube-public"], .namespace) &&
-          !match(.message, r'healthcheck|readiness|liveness')
+transforms:
+  project:
+    type: remap
+    inputs: [kubernetes]
+    source: |
+      raw = string(.message) ?? ""
+      parsed, err = parse_json(raw)
+      app = if err == null && is_object(parsed) { object!(parsed) } else { {} }
+      namespace = string(.kubernetes.pod_namespace) ?? "unknown"
+      service = string(.kubernetes.pod_labels."app.kubernetes.io/name") ??
+        string(.kubernetes.pod_labels.app) ?? "unknown"
+      pod = string(.kubernetes.pod_name) ?? "unknown"
+      container = string(.kubernetes.container_name) ?? "unknown"
+      node = string(.kubernetes.pod_node_name) ?? "unknown"
+      event_time = if is_timestamp(.timestamp) { timestamp!(.timestamp) } else {
+        parse_timestamp(string(.timestamp) ?? "", format: "%+") ?? now()
+      }
+      . = {
+        "timestamp": event_time,
+        "level": downcase(string(app.level) ?? "unknown"),
+        "namespace": namespace,
+        "service": service,
+        "pod_name": pod,
+        "container_name": container,
+        "node_name": node,
+        "message": string(app.message) ?? raw,
+        "trace_id": string(app.trace_id) ?? "",
+        "raw_json": encode_json(app)
+      }
 
-    sinks:
-      clickhouse:
-        type: clickhouse
-        inputs:
-          - filter_noise
-        endpoint: http://clickhouse.clickhouse.svc.cluster.local:8123
-        database: logs
-        table: application_logs
-        auth:
-          strategy: basic
-          user: admin
-          password: ${CLICKHOUSE_PASSWORD}
-        encoding:
-          timestamp_format: unix
-        batch:
-          max_bytes: 10485760
-          max_events: 10000
-          timeout_secs: 5
-        compression: gzip
-        healthcheck:
-          enabled: true
+sinks:
+  clickhouse:
+    type: clickhouse
+    inputs: [project]
+    endpoint: https://logs-clickhouse.clickhouse.svc.cluster.local:8443
+    database: logs
+    table: application_logs_distributed
+    format: json_each_row
+    date_time_best_effort: true
+    skip_unknown_fields: false
+    auth:
+      strategy: basic
+      user: log_writer
+      password: "SECRET[clickhouse_auth.password]"
+    tls:
+      ca_file: /etc/vector/clickhouse-tls/ca.crt
+      verify_certificate: true
+      verify_hostname: true
+    batch:
+      max_events: 10000
+      timeout_secs: 2
+    buffer:
+      type: disk
+      max_size: 536870912
+      when_full: block
+    query_settings:
+      async_insert_settings:
+        enabled: false
 ```
+
+The transform projects a fixed schema rather than merging arbitrary application JSON into the event root. An application-provided `kubernetes`/`namespace` field cannot overwrite Kubernetes metadata. Malformed JSON remains readable in `message`; its parsed application object becomes `{}`. The timestamp is the collector event timestamp, not an untrusted application's claimed event time.
+
+The 512MiB disk buffer requires actual writable persistent storage and a capacity policy. Backpressure does not stop kubelet log rotation indefinitely. `kubernetes_logs` is a best-effort file source, without end-to-end acknowledgement support; do not claim exactly-once or guaranteed lossless delivery because a sink has a disk buffer. This host-log collection model also does not cover EKS Fargate nodes.
+
+The review compiled this configuration without environment/health checks and executed ten synthetic VRL cases. Actual Kubernetes access, Secret mounts, TLS handshakes and ClickHouse delivery still require deployment validation.
 
 ### Ingestion via FluentBit
 
-```yaml
-# fluent-bit-clickhouse.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: logging
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         5
-        Log_Level     info
-        Daemon        off
-        Parsers_File  parsers.conf
-        HTTP_Server   On
-        HTTP_Listen   0.0.0.0
-        HTTP_Port     2020
+Fluent Bit's HTTP output can send newline-delimited JSON to ClickHouse's HTTP insert interface. Reuse a correctly installed collector with CRI/Docker framing, Kubernetes metadata, RBAC and a writable tail database/buffer. The outer CRI record is not application JSON.
 
-    [INPUT]
-        Name              tail
-        Tag               kube.*
-        Path              /var/log/containers/*.log
-        Parser            docker
-        DB                /var/log/flb_kube.db
-        Mem_Buf_Limit     50MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
+Before using HTTP output, transform each record to the same ten-column contract shown above, and configure timestamp input parsing consistently. A raw Kubernetes record with nested `kubernetes`, arbitrary application keys and the wrong timestamp field is not the table schema. Do not hide the mismatch by blindly dropping unknown columns.
 
-    [FILTER]
-        Name                kubernetes
-        Match               kube.*
-        Kube_URL            https://kubernetes.default.svc:443
-        Merge_Log           On
-        K8S-Logging.Parser  On
-
-    [FILTER]
-        Name    modify
-        Match   *
-        Add     environment production
-        Add     cluster_name my-cluster
-
-    [OUTPUT]
-        Name          http
-        Match         *
-        Host          clickhouse.clickhouse.svc.cluster.local
-        Port          8123
-        URI           /?query=INSERT%20INTO%20logs.application_logs%20FORMAT%20JSONEachRow
-        Format        json_lines
-        json_date_key timestamp
-        json_date_format iso8601
-        Header        Authorization Basic YWRtaW46cGFzc3dvcmQ=
-
-  parsers.conf: |
-    [PARSER]
-        Name        docker
-        Format      json
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-```
+Use HTTPS with certificate verification and a separately managed writer credential. Render a protected Secret-backed configuration file if the selected Fluent Bit version requires a password string in its HTTP output configuration; do not publish a static Base64 `admin:password` header. The Vector path is the complete normalization example here; this section does not claim an unprovided Fluent Bit transform/DaemonSet has been tested.
 
 ### Buffering via Kafka (Large-scale Environments)
 
-```sql
--- Kafka engine table
-CREATE TABLE IF NOT EXISTS logs.kafka_logs ON CLUSTER logs
-(
-    timestamp DateTime64(3),
-    level String,
-    message String,
-    namespace String,
-    pod_name String,
-    container_name String,
-    service String,
-    raw_json String
-)
-ENGINE = Kafka()
-SETTINGS
-    kafka_broker_list = 'kafka.kafka.svc.cluster.local:9092',
-    kafka_topic_list = 'logs',
-    kafka_group_name = 'clickhouse-consumer',
-    kafka_format = 'JSONEachRow',
-    kafka_num_consumers = 3,
-    kafka_max_block_size = 65536;
+Kafka can absorb bursts and provide replay within its configured retention. Provision authentication/TLS, replication, acknowledgements and disk capacity for the required outage window; Kafka does not automatically prevent every loss or duplicate.
 
--- Materialized View to store in actual table
-CREATE MATERIALIZED VIEW IF NOT EXISTS logs.kafka_to_logs ON CLUSTER logs
-TO logs.application_logs
-AS SELECT
-    timestamp,
-    toDate(timestamp) as date,
-    level,
-    message,
-    '' as logger,
-    namespace,
-    pod_name,
-    container_name,
-    '' as node_name,
-    '' as trace_id,
-    '' as span_id,
-    service,
-    'production' as environment,
-    raw_json
-FROM logs.kafka_logs;
-```
+The ClickHouse Kafka engine consumes a topic through a consumer group, and a materialized view transfers parsed rows into the **same** storage table. Keep one intentional group/partition assignment across consumers, avoid inserting every message into every shard, and monitor lag, parser failures and rejected messages. Credentials belong in managed server configuration, not SQL examples.
 
-***
+Kafka-engine tables do not support the ordinary default columns used above. Define only the incoming fields there and compute defaults/materialized values in the destination/view. Offset commits, downstream insert acknowledgement and retry behavior must be tested together. Avoid a memory Buffer destination when acknowledging durable processing is required; do not enable experimental Keeper-backed offset storage as an unqualified production default.
 
 ## SQL Queries
 
 ### Basic Queries
 
+Recent errors use a relative timestamp range that still works across midnight:
+
 ```sql
--- Query recent error logs
-SELECT
-    timestamp,
-    namespace,
-    service,
-    message
+SELECT timestamp, namespace, service, pod_name, message
 FROM logs.application_logs_distributed
-WHERE level = 'ERROR'
-  AND timestamp >= now() - INTERVAL 1 HOUR
-ORDER BY timestamp DESC
-LIMIT 100;
-
--- Errors by service
-SELECT
-    service,
-    count() as error_count,
-    uniq(pod_name) as affected_pods
-FROM logs.application_logs_distributed
-WHERE level = 'ERROR'
-  AND date = today()
-GROUP BY service
-ORDER BY error_count DESC;
-
--- Log volume by time
-SELECT
-    toStartOfHour(timestamp) as hour,
-    count() as log_count,
-    sum(length(message)) as total_bytes
-FROM logs.application_logs_distributed
-WHERE date >= today() - 7
-GROUP BY hour
-ORDER BY hour;
+WHERE timestamp >= now() - INTERVAL 1 HOUR
+  AND namespace = 'production' AND level = 'error'
+ORDER BY timestamp DESC LIMIT 100;
 ```
+
+Count log events and exact distinct Pod names:
+
+```sql
+SELECT toStartOfMinute(timestamp) AS minute, service,
+       count() AS log_events, countIf(level = 'error') AS error_events,
+       round(100.0 * error_events / nullIf(log_events, 0), 2) AS error_log_percent
+FROM logs.application_logs_distributed
+WHERE timestamp >= now() - INTERVAL 1 HOUR
+  AND namespace = 'production'
+GROUP BY minute, service ORDER BY minute, service;
+
+SELECT namespace, service, uniqExact(pod_name) AS distinct_pods_with_logs
+FROM logs.application_logs_distributed
+WHERE timestamp >= now() - INTERVAL 1 HOUR
+GROUP BY namespace, service ORDER BY distinct_pods_with_logs DESC;
+```
+
+`error_log_percent` is the percentage of **log events** marked error. It is not an HTTP request failure ratio unless the logging contract guarantees one relevant record per request. `uniqExact` is exact; `uniq` is approximate. Both queries describe observed logs, not the number of currently running Pods.
 
 ### Advanced Analytics Queries
 
 ```sql
--- Error rate trend (5-minute intervals)
-SELECT
-    toStartOfFiveMinutes(timestamp) as time_bucket,
-    service,
-    countIf(level = 'ERROR') as errors,
-    count() as total,
-    round(errors / total * 100, 2) as error_rate
+SELECT service, count(response_time_ms) AS measured_events,
+       quantileExact(0.95)(response_time_ms) AS p95_ms
 FROM logs.application_logs_distributed
-WHERE date = today()
-  AND namespace = 'production'
-GROUP BY time_bucket, service
-HAVING total > 100
-ORDER BY time_bucket, error_rate DESC;
+WHERE timestamp >= now() - INTERVAL 1 HOUR
+  AND namespace = 'production' AND isNotNull(response_time_ms)
+GROUP BY service;
 
--- Error message pattern analysis
-SELECT
-    extractAll(message, 'Exception|Error|Failed|Timeout')[1] as error_type,
-    count() as occurrences,
-    groupArray(10)(message) as sample_messages
+SELECT extract(message, '(TimeoutException|ConnectionError|OutOfMemoryError)') AS error_type,
+       count() AS log_events
 FROM logs.application_logs_distributed
-WHERE level = 'ERROR'
-  AND date >= today() - 7
-GROUP BY error_type
-ORDER BY occurrences DESC
-LIMIT 20;
+WHERE timestamp >= now() - INTERVAL 1 DAY AND level = 'error'
+GROUP BY error_type ORDER BY log_events DESC;
 
--- Pod restart pattern detection
-SELECT
-    namespace,
-    pod_name,
-    min(timestamp) as first_seen,
-    max(timestamp) as last_seen,
-    count() as log_count,
-    countIf(message LIKE '%CrashLoopBackOff%' OR message LIKE '%OOMKilled%') as crash_indicators
+SELECT timestamp, service, pod_name, message
 FROM logs.application_logs_distributed
-WHERE date >= today() - 1
-GROUP BY namespace, pod_name
-HAVING crash_indicators > 0
-ORDER BY crash_indicators DESC;
-
--- Slow request analysis (extract response_time from JSON logs)
-SELECT
-    service,
-    quantile(0.50)(JSONExtractFloat(raw_json, 'response_time_ms')) as p50,
-    quantile(0.90)(JSONExtractFloat(raw_json, 'response_time_ms')) as p90,
-    quantile(0.99)(JSONExtractFloat(raw_json, 'response_time_ms')) as p99,
-    count() as request_count
-FROM logs.application_logs_distributed
-WHERE date = today()
-  AND JSONHas(raw_json, 'response_time_ms')
-GROUP BY service
-ORDER BY p99 DESC;
-
--- Distributed tracing by trace_id
-SELECT
-    timestamp,
-    service,
-    pod_name,
-    span_id,
-    level,
-    message
-FROM logs.application_logs_distributed
-WHERE trace_id = 'abc123def456'
+WHERE timestamp >= now() - INTERVAL 1 DAY
+  AND trace_id = '0123456789abcdef0123456789abcdef'
 ORDER BY timestamp;
 ```
+
+Latency aggregates include only events carrying a numeric response time. `quantileExact` is useful for explaining this bounded example but can consume significant memory; evaluate approximate aggregates for larger workloads. `extract` returns an empty string when no pattern matches, leaving an explicit unmatched group.
+
+The trace ID is a 32-hex-character example, not a real trace. Correct propagation and matching fields across services are prerequisites. Sensitive query text, credentials and customer identifiers should not become unrestricted log fields.
 
 ### Real-time Dashboard Queries
 
 ```sql
--- Real-time log stream (live tailing)
-SELECT
-    timestamp,
-    level,
-    namespace,
-    service,
-    substring(message, 1, 200) as message_preview
+SELECT toStartOfHour(timestamp) AS hour, namespace,
+       count() AS log_events, sum(length(message)) AS message_bytes
 FROM logs.application_logs_distributed
-WHERE timestamp >= now() - INTERVAL 5 MINUTE
-ORDER BY timestamp DESC
-LIMIT 100;
+WHERE timestamp >= now() - INTERVAL 1 DAY
+GROUP BY hour, namespace ORDER BY hour;
 
--- Service status summary
-SELECT
-    service,
-    countIf(timestamp >= now() - INTERVAL 5 MINUTE) as logs_5m,
-    countIf(level = 'ERROR' AND timestamp >= now() - INTERVAL 5 MINUTE) as errors_5m,
-    countIf(level = 'ERROR' AND timestamp >= now() - INTERVAL 1 HOUR) as errors_1h
+SELECT namespace, pod_name, count() AS backoff_log_events
 FROM logs.application_logs_distributed
-WHERE date = today()
-GROUP BY service
-ORDER BY errors_5m DESC;
+WHERE timestamp >= now() - INTERVAL 1 DAY
+  AND positionCaseInsensitive(message, 'Back-off restarting failed container') > 0
+GROUP BY namespace, pod_name;
 ```
 
-***
+`message_bytes` counts message text bytes, not compressed table storage or network billing. Matching “Back-off” messages counts log events, not authoritative container restart counts; use Kubernetes state metrics for that. A SQL `SELECT` is a snapshot query. A dashboard becomes periodically refreshed through its refresh interval, not through a special live-stream property of this query.
 
 ## Grafana Integration
 
 ### ClickHouse Datasource Setup
 
+Install/pin `grafana-clickhouse-datasource` **4.21.2** using your Grafana deployment mechanism and check that plugin's Grafana requirements. The provisioning template uses a hostname without scheme, numeric port, HTTP protocol plus TLS, and credentials under `secureJsonData`.
+
 ```yaml
-# grafana-datasource.yaml
 apiVersion: 1
 datasources:
   - name: ClickHouse
+    uid: clickhouse-logs
     type: grafana-clickhouse-datasource
-    url: http://clickhouse.clickhouse.svc.cluster.local:8123
+    access: proxy
     jsonData:
-      defaultDatabase: logs
-      dialTimeout: 10s
-      queryTimeout: 300s
-      validateSql: true
+      host: logs-clickhouse.clickhouse.svc.cluster.local
+      port: 8443
       protocol: http
-    secureJsonData:
-      username: readonly
-      password: ${CLICKHOUSE_READONLY_PASSWORD}
+      secure: true
+      tlsSkipVerify: false
+      tlsAuthWithCACert: true
+      username: log_reader
+      defaultDatabase: logs
+      logs:
+        defaultDatabase: logs
+        defaultTable: application_logs_distributed
+        timeColumn: timestamp
+        levelColumn: level
+        messageColumn: message
+    # Filled by the file-to-file renderer before provisioning.
+    secureJsonData: {}
 ```
+
+Populate the empty credential map **before provisioning**. For example, the following file-to-file renderer reads a mounted password and CA; it needs Python with PyYAML. It writes no secret to stdout and escapes literal `$` characters for Grafana provisioning. Treat the resulting entire file as a Secret, not a ConfigMap or a Git-tracked artifact.
+
+```python
+"""Render a complete Secret-backed provisioning file; requires PyYAML."""
+import os
+from pathlib import Path
+import sys
+import tempfile
+import yaml
+
+template, password_path, ca_path, output = map(Path, sys.argv[1:])
+config = yaml.safe_load(template.read_text())
+password = password_path.read_text().rstrip("\r\n")
+ca = ca_path.read_text()
+if not password or "-----BEGIN CERTIFICATE-----" not in ca:
+    raise ValueError("A nonempty password and PEM CA file are required")
+# Grafana provisioning expands $ variables even in quoted YAML scalars.
+# Escape literal dollars; do not interpolate secrets through process environment.
+config["datasources"][0]["secureJsonData"] = {
+    "password": password.replace("$", "$$"),
+    "tlsCACert": ca.replace("$", "$$"),
+}
+fd, temporary = tempfile.mkstemp(prefix=".clickhouse-", dir=output.parent)
+try:
+    with os.fdopen(fd, "w") as stream:
+        yaml.safe_dump(config, stream, sort_keys=False)
+    os.replace(temporary, output)
+finally:
+    if os.path.exists(temporary):
+        os.unlink(temporary)
+```
+
+```bash
+python3 render-grafana.py grafana-template.yaml \
+  /run/secrets/clickhouse/password /run/secrets/clickhouse/ca.crt \
+  /run/grafana-provisioning/clickhouse.yaml
+```
+
+The target directory must exist on a protected writable volume. Arrange file ownership/read permissions for the Grafana process and mount the completed file in its datasource provisioning directory. A Secret update does not by itself prove Grafana reloaded a datasource. Test the read-only account, CA validation and a real query; “Save & test” alone does not prove every query setting is permitted.
 
 ### Grafana Dashboard Panels
 
-```json
-{
-  "panels": [
-    {
-      "title": "Log Volume",
-      "type": "timeseries",
-      "datasource": "ClickHouse",
-      "targets": [
-        {
-          "rawSql": "SELECT toStartOfMinute(timestamp) as time, count() as count FROM logs.application_logs_distributed WHERE $__timeFilter(timestamp) GROUP BY time ORDER BY time",
-          "format": "time_series"
-        }
-      ]
-    },
-    {
-      "title": "Error Rate by Service",
-      "type": "barchart",
-      "datasource": "ClickHouse",
-      "targets": [
-        {
-          "rawSql": "SELECT service, countIf(level='ERROR') as errors, count() as total, round(errors/total*100, 2) as error_rate FROM logs.application_logs_distributed WHERE $__timeFilter(timestamp) GROUP BY service ORDER BY error_rate DESC LIMIT 10",
-          "format": "table"
-        }
-      ]
-    },
-    {
-      "title": "Log Stream",
-      "type": "logs",
-      "datasource": "ClickHouse",
-      "targets": [
-        {
-          "rawSql": "SELECT timestamp as time, level, concat(namespace, '/', service) as labels, message as line FROM logs.application_logs_distributed WHERE $__timeFilter(timestamp) ORDER BY timestamp DESC LIMIT 500",
-          "format": "logs"
-        }
-      ]
-    }
-  ]
-}
+Choose **Time series** for a time-plus-number query:
+
+```sql
+SELECT $__timeInterval(timestamp) AS time, count() AS log_events
+FROM logs.application_logs_distributed
+WHERE $__timeFilter(timestamp) AND namespace = 'production'
+GROUP BY time ORDER BY time;
 ```
+
+Use Logs/Explore with the configured timestamp, level and message columns for individual records. Grafana expands its macros before sending SQL; `$__timeFilter` is not executable ClickHouse SQL by itself.
 
 ### Alert Rules
 
-```yaml
-# clickhouse-alert-rules.yaml
-apiVersion: 1
-groups:
-  - name: clickhouse-logs
-    rules:
-      - alert: HighErrorRate
-        expr: |
-          clickhouse_custom_query{query="SELECT countIf(level='ERROR')/count()*100 FROM logs.application_logs_distributed WHERE timestamp >= now() - INTERVAL 5 MINUTE"} > 5
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High error rate detected"
-          description: "Error rate is above 5% in the last 5 minutes"
+Use Grafana Alerting with this datasource rather than inventing a Prometheus metric named `clickhouse_custom_query{query="..."}`:
 
-      - alert: LogIngestionStopped
-        expr: |
-          clickhouse_custom_query{query="SELECT count() FROM logs.application_logs_distributed WHERE timestamp >= now() - INTERVAL 5 MINUTE"} == 0
-        for: 10m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Log ingestion stopped"
-          description: "No logs received in the last 10 minutes"
+```sql
+SELECT countIf(level = 'error') AS value
+FROM logs.application_logs_distributed
+WHERE $__timeFilter(timestamp) AND namespace = 'production';
 ```
 
-***
+Choose Table format for the single numeric row, then Reduce/Last and a threshold such as “above 10.” Define the evaluation interval, time range, pending period and contact policy explicitly. Ten is an exercise threshold, not a production recommendation. Export provisioning from the configured Grafana version instead of mixing Prometheus `groups/rules/expr` with Grafana's alerting schema.
+
+`countIf` can return zero when no rows were ingested. Monitor ingestion separately, for example with a scheduled synthetic heartbeat:
+
+```sql
+SELECT $__timeInterval(timestamp) AS time, count() AS value
+FROM logs.application_logs_distributed
+WHERE $__timeFilter(timestamp) AND service = 'log-heartbeat'
+GROUP BY time ORDER BY time;
+```
+
+This query returns no time-series rows when no heartbeat is present. Configure No Data and execution errors deliberately, account for ingestion lag, and test notification delivery.
 
 ## HyperDX (ClickHouse Native Viewer)
 
-HyperDX is a native log viewer that queries ClickHouse directly. Unlike Grafana or Signoz, it leverages ClickHouse's columnar storage structure directly, delivering high performance for field-specific searches.
-
 ### Key Advantages
 
-| Feature                   | Description                                                            |
-| ------------------------- | ---------------------------------------------------------------------- |
-| **Field-specific search** | `ServiceName:payment` style searches are 20x+ faster than LIKE queries |
-| **ClickHouse native**     | Queries ClickHouse directly without separate indexing layers           |
-| **Auto schema detection** | Automatically recognizes Buffer/Store/View separated structures        |
-| **OTEL compatible**       | Native support for OpenTelemetry log schema                            |
+HyperDX is the observability UI used in ClickStack. It supports configuring sources over existing ClickHouse tables; using a custom schema is not inherently unsupported. Explicitly map timestamp, message/body, severity, service and trace fields to your schema, set a connection and restricted user, and verify search against representative records.
+
+Do not treat a Buffer/Store/Distributed naming convention as automatic source discovery or claim a universal 20× speed improvement. HyperDX application/API release **2.38.0** and its separately versioned CLI are different artifacts. This guide does not prescribe a new ClickStack deployment over the custom cluster or claim integration was executed.
 
 ### Log Viewer Comparison
 
-| Feature                    | Grafana         | Signoz            | HyperDX         |
-| -------------------------- | --------------- | ----------------- | --------------- |
-| **ClickHouse native**      | Plugin required | Forces own schema | Native          |
-| **Field search speed**     | Good            | Good              | Excellent (20x) |
-| **Custom schema**          | Supported       | Limited           | Full support    |
-| **Buffer/Store structure** | Manual config   | Not supported     | Auto-detected   |
-| **Deployment**             | Standalone      | Standalone        | Standalone      |
-| **License**                | AGPL-3.0        | Custom license    | MIT             |
+| Viewer | Fit to evaluate |
+|---|---|
+| Grafana + ClickHouse plugin | SQL, existing dashboards, alerting and cross-datasource workflows |
+| HyperDX / ClickStack | Observability search and correlation with explicitly configured sources/schema |
+| SigNoz | Its own observability ingestion/model and UI; it also uses ClickHouse |
 
-> **Signoz Limitation**: Signoz enforces its own schema, which creates constraints in environments using Buffer → Store → Distributed 3-tier structures or custom Materialized columns.
-
-***
+Compare the actual ingestion schema, authentication, query workflow, supported release and license for each component. An existing ClickHouse database does not make every observability UI a drop-in interchangeable frontend.
 
 ## Performance Optimization
 
 ### Table Design Optimization
 
-```sql
--- Optimized table design
-CREATE TABLE logs.optimized_logs
-(
-    -- Place frequently filtered columns first
-    timestamp DateTime64(3),
-    date Date DEFAULT toDate(timestamp),
+Choose `ORDER BY` for frequent selective filters and locality; it is not a universal rule to put every frequently queried column first. `LowCardinality(String)` can help repeated namespace/service/level values; assess dictionary size and query behavior rather than enforcing a fixed universal distinct-value cutoff.
 
-    -- LowCardinality for low cardinality columns
-    level LowCardinality(String),
-    namespace LowCardinality(String),
-    service LowCardinality(String),
-    environment LowCardinality(String) DEFAULT 'production',
-
-    -- Regular columns
-    message String,
-    pod_name String,
-
-    -- Compression settings
-    raw_json String CODEC(ZSTD(3))
-)
-ENGINE = MergeTree()
--- Sort key matching query patterns
-PARTITION BY toYYYYMM(date)
-ORDER BY (namespace, service, level, timestamp)
--- TTL settings
-TTL date + INTERVAL 30 DAY DELETE,
-    date + INTERVAL 7 DAY TO VOLUME 'cold'
-SETTINGS
-    index_granularity = 8192,
-    min_bytes_for_wide_part = 10485760,
-    min_rows_for_wide_part = 10000;
-```
+Partition for manageable retention and merges, not maximum possible granularity. Hourly partitioning over 90 days can retain roughly **2,160 hourly partitions**, not only 24–48. Late events can also write into old partitions.
 
 ### Parts Optimization
 
-ClickHouse's MergeTree engine creates Parts on INSERT and merges them in the background. The balance between Part size and count determines query performance and system stability.
-
-**Part Size Trade-offs:**
-
-| Part Characteristic   | Large Size + Few Parts       | Small Size + Many Parts      |
-| --------------------- | ---------------------------- | ---------------------------- |
-| **Merge overhead**    | Memory spikes during merge   | Frequent merges, CPU load    |
-| **Query performance** | Fewer Parts to scan = faster | Part-open overhead increases |
-| **INSERT impact**     | Large batches needed         | Small batches possible       |
-| **Risk**              | OOM possibility              | `Too many parts` error       |
-
-**Operational Recommendations:**
-
-| Item                | Recommended Value              |
-| ------------------- | ------------------------------ |
-| Parts per partition | \~20 or fewer                  |
-| Size per Part       | 2-3GB                          |
-| Active partitions   | 24-48 with hourly partitioning |
-
-**Monitoring Queries:**
-
 ```sql
--- Check Part count and size per partition
-SELECT
-    database,
-    table,
-    partition,
-    count() AS part_count,
-    formatReadableSize(sum(bytes_on_disk)) AS total_size,
-    formatReadableSize(avg(bytes_on_disk)) AS avg_part_size,
-    min(modification_time) AS oldest_part,
-    max(modification_time) AS newest_part
+SELECT partition, count() AS active_parts,
+       sum(rows) AS rows, sum(bytes_on_disk) AS bytes_on_disk
 FROM system.parts
-WHERE active = 1
-  AND database = 'logs'
-GROUP BY database, table, partition
-ORDER BY part_count DESC
-LIMIT 20;
+WHERE active AND database = 'logs' AND table = 'application_logs'
+GROUP BY partition ORDER BY partition;
 
--- Detect Too many parts warnings
-SELECT
-    database,
-    table,
-    partition,
-    count() AS part_count
-FROM system.parts
-WHERE active = 1
-GROUP BY database, table, partition
-HAVING part_count > 300
-ORDER BY part_count DESC;
+SELECT database, table, is_readonly, is_session_expired,
+       queue_size, absolute_delay
+FROM system.replicas
+WHERE database = 'logs';
+
+SELECT database, table, is_blocked, error_count, last_exception
+FROM system.distribution_queue WHERE database = 'logs';
 ```
+
+These system-table queries describe the connected server. Inspect every relevant replica/shard for cluster-wide operations. Track part creation/merges, replication lag and Distributed queues. Batch small inserts; a particular part count or target part size is not a universal threshold. Avoid routine `OPTIMIZE FINAL` as a substitute for fixing excessive small inserts.
 
 ### Query Optimization
 
+Filter timestamp and leading sort-key columns where appropriate, select only needed columns, and inspect `EXPLAIN`/query-log read rows and bytes. A lower-cardinality label is not always the best leading key; test the actual query mix.
+
+The main log table does **not** define a sampling expression, so appending `SAMPLE 0.1` to it is invalid. A separate demonstration table can define a deterministic unsigned sampling key included in its primary/sort key:
+
 ```sql
--- Use PREWHERE (filter optimization)
-SELECT *
-FROM logs.application_logs_distributed
-PREWHERE date = today()
-WHERE level = 'ERROR'
-  AND namespace = 'production'
-LIMIT 100;
-
--- Use WITH clause instead of subqueries
-WITH error_services AS (
-    SELECT service
-    FROM logs.application_logs_distributed
-    WHERE level = 'ERROR'
-      AND date = today()
-    GROUP BY service
-    HAVING count() > 100
+CREATE TABLE logs.sample_demo
+(
+    event_id UInt64,
+    message String
 )
-SELECT
-    l.service,
-    count() as log_count,
-    countIf(level = 'ERROR') as error_count
-FROM logs.application_logs_distributed l
-WHERE l.service IN (SELECT service FROM error_services)
-  AND l.date = today()
-GROUP BY l.service;
+ENGINE = MergeTree
+ORDER BY cityHash64(event_id)
+SAMPLE BY cityHash64(event_id);
 
--- Sampling for fast large-scale analysis
-SELECT
-    service,
-    count() * 10 as estimated_count  -- 10% sample
-FROM logs.application_logs_distributed
-SAMPLE 0.1
-WHERE date >= today() - 7
-GROUP BY service;
+SELECT count() * 10 AS estimated_events
+FROM logs.sample_demo SAMPLE 0.1;
 ```
+
+The fraction is a sampling-key interval, not a promise of exactly 10% of a finite set of rows. Scale additive counts as appropriate; do not multiply averages or percentiles by ten. Sampling must also be representative for the question being asked.
 
 ### System Configuration Optimization
 
-```xml
-<!-- config.d/performance.xml -->
-<clickhouse>
-    <!-- Query processing -->
-    <max_threads>16</max_threads>
-    <max_memory_usage>10000000000</max_memory_usage>
-    <max_bytes_before_external_group_by>5000000000</max_bytes_before_external_group_by>
-    <max_bytes_before_external_sort>5000000000</max_bytes_before_external_sort>
+`max_threads` and `max_memory_usage` are query/user-profile settings. Put them in profiles or per-query settings, not arbitrary top-level server XML. Server caches and background pools consume additional resources outside a single query limit. Account for concurrent queries, merges and ingest buffers before setting a Pod memory limit.
 
-    <!-- Merge settings -->
-    <background_pool_size>16</background_pool_size>
-    <background_schedule_pool_size>16</background_schedule_pool_size>
-
-    <!-- Compression -->
-    <compression>
-        <case>
-            <min_part_size>10000000000</min_part_size>
-            <min_part_size_ratio>0.01</min_part_size_ratio>
-            <method>zstd</method>
-            <level>3</level>
-        </case>
-    </compression>
-
-    <!-- Caching -->
-    <mark_cache_size>5368709120</mark_cache_size>
-    <uncompressed_cache_size>8589934592</uncompressed_cache_size>
-</clickhouse>
-```
+Use bounded test workloads and observe CPU throttling, memory, I/O, merge backlog and failure recovery before changing settings. A low query limit does not cap the whole process.
 
 ### Resource Guidelines
 
-> **Reference**: For AWS instance type performance benchmarks, see [AWS Instance Benchmark](https://benchmark.aws.atomai.click/). Choose instances that match ClickHouse workload characteristics (CPU-intensive queries, large memory cache, high disk I/O).
+Size from daily ingested bytes, measured compression, retained days, replication, query concurrency and peak merge/ingest overhead. For illustration, a measured 5:1 reduction of 1TB/day produces about 200GB/day of compressed data; 90 days is about 18TB before replication and operational headroom. Two replicas roughly double stored copies. This arithmetic is not a measured capacity result or an AWS bill.
 
-```yaml
-# Recommended settings by scale
-
-# Small (daily < 100GB)
-resources:
-  replicas: 3  # 1 shard, 3 replicas
-  cpu: 4
-  memory: 16Gi
-  storage: 500Gi (gp3)
-
-# Medium (daily 100GB - 1TB)
-resources:
-  shards: 3
-  replicas_per_shard: 2
-  cpu: 8
-  memory: 32Gi
-  storage: 2Ti (gp3)
-
-# Large (daily > 1TB)
-resources:
-  shards: 10+
-  replicas_per_shard: 2
-  cpu: 16
-  memory: 64Gi
-  storage: 5Ti+ (io2)
-  # S3 tiering required
-```
-
-***
+On EKS, include EBS provisioned performance/capacity, cross-AZ traffic, node architecture, failure-domain placement and replacement capacity. Fargate does not provide the same host-log/volume topology as a node-based collector/ClickHouse deployment.
 
 ## S3 Archiving and Long-term Retention
 
-Archiving log data to S3 in Parquet format before TTL expiration can reduce storage costs by approximately 90% compared to the original.
-
 ### Archiving Pipeline
 
+Separate two designs:
+
+1. **Cold table storage:** ClickHouse manages its own parts and metadata on a configured S3 disk/volume. Preserve local metadata and use distinct object namespaces per replica as required by the selected disk design. Do not manually lifecycle-delete objects that a live ClickHouse table still owns.
+2. **Independent archive:** Export selected rows to versioned, inventoried Parquet objects. Define completeness, late-arrival handling, access control and restore/query tests separately.
+
+For cold storage, configure the server's storage policy with a `cold` volume and explicitly select that policy on the table:
+
+```sql
+-- Separate example: the server must already define the logs_tiered policy.
+CREATE TABLE logs.tiered_example
+(
+    timestamp DateTime,
+    message String
+)
+ENGINE = MergeTree
+ORDER BY timestamp
+TTL timestamp + INTERVAL 7 DAY TO VOLUME 'cold',
+    timestamp + INTERVAL 90 DAY DELETE
+SETTINGS storage_policy = 'logs_tiered';
 ```
-ClickHouse (Hot)  ──Before TTL──▶  S3 Parquet + ZSTD  ──▶  Query directly via S3 engine
-    90-day retention                  Long-term (unlimited)     No separate table definition needed
-```
+
+`logs_tiered` must exist before this example is created. TTL work is asynchronous; it is not an exact per-row deletion deadline. A TTL clause cannot create S3 permissions or the storage policy. This review exercised a local-disk analogue of the policy, not an S3 deployment.
+
+Use the server workload's AWS identity and bucket/prefix-scoped permissions, private bucket controls, encryption and the applicable KMS permissions. Merely setting `use_environment_credentials` does not create a ServiceAccount identity association or prove that your credential provider is supported by the selected ClickHouse build.
 
 ### Direct S3 Archiving
 
+The following **historical January 2025 range** illustrates syntax; it is not a benchmark or a claim those records still exist under a 90-day TTL. Replace the bucket, range and `RUN_ID` with your owned archive job's values.
+
 ```sql
--- Archive to S3 in Parquet format
+-- Historical January 2025 example; replace range and the unique owned export prefix.
 INSERT INTO FUNCTION s3(
-    'https://s3.ap-northeast-2.amazonaws.com/my-log-archive/logs/{_partition_id}/data.parquet',
-    'Parquet',
-    'timestamp DateTime64(3), level String, message String, namespace String, service String, raw_json String'
+    'https://EXAMPLE-ARCHIVE.s3.ap-northeast-2.amazonaws.com/logs/export-RUN_ID/{_partition_id}.parquet',
+    'Parquet'
 )
-SETTINGS s3_truncate_on_insert=0
-SELECT timestamp, level, message, namespace, service, raw_json
-FROM logs.application_logs
-WHERE date >= '2025-01-01' AND date < '2025-02-01';
+PARTITION BY toYYYYMMDD(timestamp)
+SELECT timestamp, level, namespace, service, pod_name, container_name,
+       node_name, message, trace_id, raw_json
+FROM logs.application_logs_distributed
+WHERE timestamp >= toDateTime64('2025-01-01 00:00:00', 3, 'UTC')
+  AND timestamp < toDateTime64('2025-02-01 00:00:00', 3, 'UTC')
+SETTINGS s3_truncate_on_insert = 0,
+         s3_create_new_file_on_insert = 0,
+         output_format_parquet_compression_method = 'zstd';
 ```
+
+`PARTITION BY` supplies the `{_partition_id}` replacement. The Distributed source covers the intended shards; exporting one local replica alone does not cover a sharded cluster. Use a new reserved prefix per execution, never an uncontrolled shared filename. The settings reject overwrite/automatic extra files; they do not implement a distributed lock or make a partial export atomic.
+
+Select one authoritative copy per shard through the intended Distributed topology; do not union all replicas and double-count. Validate exported row counts, timestamp bounds, schema, representative aggregates and readable objects before declaring success or changing source retention.
 
 ### Watermark-based Progress Tracking
 
-For large-scale archiving, track progress with a watermark table.
+A watermark is a progress record, not proof of completeness. A plain MergeTree table does not enforce a unique job key or compare-and-swap lock. Use a single owner or external transactional lease/state store for concurrent jobs.
 
-```sql
--- Watermark table
-CREATE TABLE logs.archive_watermark
-(
-    partition_id String,
-    status Enum8('pending'=0, 'processing'=1, 'completed'=2, 'failed'=3),
-    started_at DateTime DEFAULT now(),
-    completed_at Nullable(DateTime),
-    row_count UInt64 DEFAULT 0,
-    error_message String DEFAULT ''
-)
-ENGINE = MergeTree()
-ORDER BY (partition_id);
-```
+Record the job ID, source cluster/table/schema version, exclusive time range, shard coverage, output prefix/object manifest and validation result. Mark completion only after all expected outputs are checked. Retry partial exports under an explicit ownership policy; deduplicate overlapping ranges when reading them.
 
-**Archiving Delay Strategy:**
-
-* Wait for Merge completion: 2 days (until Part merges stabilize)
-* Reprocessing buffer: 1 day (for potential data corrections/re-ingestion)
-* **Total delay: 3 days** — archive data only after 3 days from partition creation
+Choose any late-arrival delay from actual data. A fixed “merge after three days” assumption neither closes old partitions to writes nor guarantees that all delayed events arrived. Handle corrections/replays explicitly and retain the previous successful watermark after a failed export.
 
 ### Querying Archived Data Directly
 
-You can query archived Parquet files in S3 directly without creating separate tables.
-
 ```sql
--- Query S3 archive directly (no table creation needed)
-SELECT
-    toStartOfHour(timestamp) AS hour,
-    level,
-    count() AS log_count
+SELECT namespace, service, count() AS log_events
 FROM s3(
-    'https://s3.ap-northeast-2.amazonaws.com/my-log-archive/logs/*/data.parquet',
+    'https://EXAMPLE-ARCHIVE.s3.ap-northeast-2.amazonaws.com/logs/export-RUN_ID/*.parquet',
     'Parquet'
 )
-WHERE timestamp >= '2025-01-15' AND timestamp < '2025-01-16'
-GROUP BY hour, level
-ORDER BY hour;
+WHERE timestamp >= toDateTime64('2025-01-01 00:00:00', 3, 'UTC')
+  AND timestamp < toDateTime64('2025-02-01 00:00:00', 3, 'UTC')
+GROUP BY namespace, service;
 ```
 
-> **Cost Impact**: 1TB raw logs → S3 Parquet + ZSTD compression ≈ 100GB (90% reduction). At S3 Standard pricing, long-term retention costs \~$2.3/TB per month.
+Only query completed, validated export prefixes. Archive classes that require restore must be restored before ordinary S3 reads. Estimate cost using the selected Region, stored bytes, storage class, request/retrieval charges, replication and retention. A universal “90% compression” or “$2.3 per raw TB-month” figure would hide these assumptions.
 
-***
+## References and Validation Scope
+
+- [ClickHouse LTS release](https://github.com/ClickHouse/ClickHouse/releases/tag/v26.3.33.24-lts)
+- [Altinity Operator release](https://github.com/Altinity/clickhouse-operator/releases/tag/release-0.27.3)
+- [Buffer engine and limitations](https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/engines/table-engines/special/buffer.md)
+- [Kafka engine](https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/engines/table-engines/integrations/kafka.md)
+- [Sampling](https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/sql-reference/statements/select/sample.md)
+- [S3 table function](https://github.com/ClickHouse/ClickHouse/blob/v26.3.33.24-lts/docs/en/sql-reference/table-functions/s3.md)
+- [Vector ClickHouse sink](https://vector.dev/docs/reference/configuration/sinks/clickhouse/)
+- [Vector Kubernetes source](https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/)
+- [Vector secret backends](https://vector.dev/docs/reference/configuration/secrets/)
+- [Grafana ClickHouse configuration](https://github.com/grafana/clickhouse-datasource/blob/v4.21.2/docs/sources/configure.md)
+- [Grafana ClickHouse alerting](https://github.com/grafana/clickhouse-datasource/blob/v4.21.2/docs/sources/alerting.md)
+- [HyperDX source](https://github.com/hyperdxio/hyperdx)
+
+Native local checks cover SQL parsing, synthetic schema/query behavior, Vector transforms, operator chart rendering and schema/configuration contracts. They do not establish cluster compatibility, HA/failover, actual Kafka/S3 ingestion, IAM, TLS or production capacity. Validate those against the deployed environment before using this design.
 
 ## Quiz
 
-Test your knowledge with the [ClickHouse Quiz](../../quizzes/observability/logging/04-clickhouse-quiz.md).
+Test your understanding with the [ClickHouse quiz](../../quizzes/observability/logging/04-clickhouse-quiz.md).

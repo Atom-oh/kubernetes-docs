@@ -1,479 +1,338 @@
 # 로깅 개요
 
-> **마지막 업데이트**: 2026년 2월 20일
+> **마지막 업데이트**: 2026년 9월 13일
 
-Kubernetes 환경에서 효과적인 로깅은 시스템의 가시성, 문제 해결, 보안 감사에 필수적입니다. 이 문서에서는 로깅의 기본 개념, 로그 수집 파이프라인 아키텍처, 그리고 EKS 환경에서의 로깅 전략에 대해 설명합니다.
-
-## 목차
-
-1. [로깅 기본 개념](#로깅-기본-개념)
-2. [로그 수집 파이프라인 아키텍처](#로그-수집-파이프라인-아키텍처)
-3. [로그 저장소 선택 기준](#로그-저장소-선택-기준)
-4. [EKS 로깅 전략](#eks-로깅-전략)
-5. [솔루션 비교](#솔루션-비교)
-
----
+Logging은 application 동작·인프라 event·감사 증거를 연결합니다.
+Event schema, 수집 소유권, 전달 실패 처리, 접근·retention·query를 함께 설계합니다.
+Collector/backend 선택만으로 기록 완전성·tenant 격리·규정 준수를 보장하지 않습니다.
 
 ## 로깅 기본 개념
 
-### 구조화된 로깅 (Structured Logging)
+### 구조화된 record도 parsing이 필요함
 
-구조화된 로깅은 로그 메시지를 일관된 형식으로 출력하여 파싱과 분석을 용이하게 합니다. 비구조화된 텍스트 로그와 달리, 구조화된 로그는 필드-값 쌍으로 구성되어 검색과 필터링이 훨씬 효율적입니다.
+JSON은 field를 명시해 검증·검색을 돕지만 decoding, timestamp/type mapping,
+container-runtime framing 처리가 여전히 필요합니다. Plain text보다 커질 수도 있으며
+민감 데이터를 자동으로 없애지 않습니다. 검증한 multiline 형식이 아니라면 한 줄에
+event 하나를 출력합니다.
 
-#### 비구조화 로그 vs 구조화 로그
-
-```plaintext
-# 비구조화 로그 (파싱이 어려움)
-2025-02-15 10:23:45 ERROR Failed to connect to database: connection timeout after 30s
-
-# 구조화 로그 (JSON 형식)
-{
-  "timestamp": "2025-02-15T10:23:45.123Z",
-  "level": "ERROR",
-  "message": "Failed to connect to database",
-  "error": "connection timeout",
-  "timeout_seconds": 30,
-  "service": "user-api",
-  "pod": "user-api-7d4f8b9c6-x2k9m",
-  "namespace": "production",
-  "trace_id": "abc123def456"
-}
-```
-
-#### 구조화된 로깅의 장점
-
-| 장점 | 설명 |
-|------|------|
-| **검색 효율성** | 특정 필드로 빠른 필터링 가능 |
-| **일관성** | 모든 서비스에서 동일한 형식 사용 |
-| **상관 관계 분석** | trace_id, request_id 등으로 요청 추적 |
-| **자동화** | 파싱 없이 즉시 분석 도구에서 사용 가능 |
-| **알림 설정** | 특정 필드 값 기반 알림 규칙 생성 용이 |
-
-### 로그 레벨 (Log Levels)
-
-로그 레벨은 메시지의 중요도와 심각도를 나타냅니다. 적절한 로그 레벨 사용은 효과적인 문제 해결과 노이즈 감소에 중요합니다.
-
-| 레벨 | 숫자 | 용도 | 예시 |
-|------|------|------|------|
-| **TRACE** | 0 | 가장 상세한 디버깅 정보 | 함수 진입/종료, 변수 값 |
-| **DEBUG** | 1 | 개발 중 디버깅 정보 | SQL 쿼리, 요청 파라미터 |
-| **INFO** | 2 | 일반적인 운영 정보 | 서비스 시작, 요청 처리 완료 |
-| **WARN** | 3 | 잠재적 문제 상황 | 재시도 발생, 성능 저하 |
-| **ERROR** | 4 | 오류 발생 (복구 가능) | API 호출 실패, 유효성 검사 실패 |
-| **FATAL** | 5 | 치명적 오류 (복구 불가) | 서비스 시작 실패, 필수 의존성 없음 |
-
-#### 환경별 권장 로그 레벨
-
-```yaml
-# 개발 환경
-LOG_LEVEL: DEBUG
-
-# 스테이징 환경
-LOG_LEVEL: INFO
-
-# 프로덕션 환경
-LOG_LEVEL: INFO  # 또는 WARN (높은 트래픽 시)
-```
-
-### JSON 로그 형식
-
-Kubernetes 환경에서 JSON 형식은 사실상 표준입니다. 대부분의 로그 수집기와 분석 도구가 JSON을 기본 지원합니다.
-
-#### 권장 JSON 필드
+다음은 기존 2025 timestamp를 형식 예시로 보존한 합성 record이며 현재 incident 기록이 아닙니다.
 
 ```json
 {
   "timestamp": "2025-02-15T10:23:45.123Z",
-  "level": "INFO",
-  "logger": "com.example.UserService",
-  "message": "User login successful",
-  "context": {
-    "user_id": "user-12345",
-    "session_id": "sess-abc123",
-    "ip_address": "10.0.1.50"
-  },
-  "kubernetes": {
-    "namespace": "production",
-    "pod": "user-api-7d4f8b9c6-x2k9m",
-    "container": "user-api",
-    "node": "ip-10-0-1-100.ec2.internal"
-  },
-  "trace": {
-    "trace_id": "abc123def456",
-    "span_id": "789ghi",
-    "parent_span_id": "456def"
-  }
+  "level": "ERROR",
+  "message": "Database connection timed out",
+  "service": "example-api",
+  "operation": "database.connect",
+  "timeout_ms": 30000,
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "span_id": "00f067aa0ba902b7"
 }
 ```
 
-#### 주요 필드 설명
+위 JSON은 읽기 쉽게 펼친 것입니다. 실제 line-oriented 출력은 message 안에 newline이
+있더라도 다음처럼 직렬화할 수 있습니다.
 
-| 필드 그룹 | 필드 | 설명 |
-|-----------|------|------|
-| **기본** | timestamp | ISO 8601 형식 타임스탬프 |
-| | level | 로그 레벨 |
-| | message | 사람이 읽을 수 있는 메시지 |
-| **컨텍스트** | context.* | 비즈니스 로직 관련 정보 |
-| **Kubernetes** | kubernetes.* | 파드, 네임스페이스 등 K8s 메타데이터 |
-| **추적** | trace.* | 분산 추적 ID (OpenTelemetry 연동) |
+```python
+import json
 
----
 
-## 로그 수집 파이프라인 아키텍처
+def encode_log(record):
+    # JSON escapes embedded newlines; append exactly one record delimiter.
+    return json.dumps(record, ensure_ascii=False, separators=(",", ":")) + "\n"
+```
 
-### 전체 아키텍처 개요
+이 field 이름은 application convention이며 OTLP wire schema가 아닙니다.
+필요하면 collector/backend에서 OpenTelemetry Timestamp, SeverityText/SeverityNumber,
+Body, Resource, Attributes와 trace context로 mapping합니다.
 
-![애플리케이션·시스템·Kubernetes·컨트롤 플레인 로그가 수집 계층(DaemonSet/Sidecar/OTEL Collector)과 처리 계층(Parse·Enrich·Filter·Buffer)을 거쳐 Loki·ClickHouse·OpenSearch·CloudWatch Logs에 적재되고, 각 저장소를 Grafana 등 짝이 되는 분석 도구가 조회하는 로그 수집 파이프라인을 보여준다.](../../.gitbook/assets/ko-observability-logging-readme-0.png)
+Trace ID는 16 bytes(여기서는 hex 32자), span ID는 8 bytes(hex 16자)입니다.
+모두 0인 ID는 유효하지 않습니다. Log마다 무관한 ID를 만들지 말고 실제 active context를
+연결합니다. Span이 없는 startup/system record는 trace context를 생략할 수 있으므로
+모든 JSON log의 필수 field는 아닙니다. 올바른 ID만으로 span 생성이나 서비스 간 연결이
+보장되지도 않습니다.
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-readme-0.html)
+필요한 business/context field만 수집합니다. Raw session token·password·고객 데이터·
+IP·request body를 모든 로그의 기본 field로 권장하지 않습니다. 식별 가능한 audit data가
+필요한 경우에도 접근·retention·redaction 정책을 정합니다.
+Application JSON이 임의 tenant/namespace를 주장하게 두지 말고 신뢰할 수 있는
+collector metadata를 routing에 사용합니다.
 
-### 계층별 역할
+### Severity는 보편적인 0–5 척도가 아님
 
-#### 1. 수집 계층 (Collection Layer)
+Framework별 이름과 숫자가 다르므로 의미를 mapping합니다.
+OpenTelemetry log model의 범위는 다음과 같습니다.
 
-로그 소스에서 원시 로그를 수집하는 역할을 담당합니다.
+| Severity | SeverityNumber |
+| --- | --- |
+| TRACE | 1–4 |
+| DEBUG | 5–8 |
+| INFO | 9–12 |
+| WARN | 13–16 |
+| ERROR | 17–20 |
+| FATAL | 21–24 |
 
-| 방식 | 장점 | 단점 | 적합한 경우 |
-|------|------|------|------------|
-| **DaemonSet** | 리소스 효율적, 중앙 관리 | 노드당 하나만 실행 | 대부분의 표준 워크로드 |
-| **Sidecar** | 애플리케이션별 격리, 커스텀 처리 | 리소스 오버헤드 | 특수 로그 형식, 멀티테넌트 |
-| **Direct Push** | 실시간성, 유연한 전송 | 애플리케이션 수정 필요 | 고성능 요구사항 |
+이 모델의 0은 severity 미지정입니다. ERROR가 언제나 복구 가능함을 뜻하지 않으며
+이름만으로 retry/recovery 정책을 정하지 않습니다.
+INFO는 운영의 출발점이 될 수 있지만 audit/security event와 일시적 debugging에는
+별도 요구가 있습니다. Volume을 줄이려고 모두 WARN 이상으로 올리면 필요한 증거도 사라집니다.
 
-#### 2. 처리 계층 (Processing Layer)
+## 수집과 처리
 
-수집된 로그를 정규화하고 메타데이터를 추가합니다.
+아래 계층은 역할이며 반드시 다른 process라는 뜻은 아닙니다.
+Destination을 명시적으로 선택하고 모든 record를 모든 backend에 복사하지 않습니다.
+Managed EKS control-plane record는 worker-node file이 아닌 CloudWatch 경로로 들어옵니다.
 
-```yaml
-# FluentBit 처리 파이프라인 예시
+```mermaid
+flowchart LR
+    A["Application stdout / stderr"] --> R["Runtime CRI log files"]
+    R --> N["Collector on supported nodes"]
+    L["Application files"] --> S["Optional sidecar / file collector"]
+    N --> P["Parse, enrich, redact, buffer"]
+    S --> P
+    P --> B["Selected log backend"]
+    C["Managed EKS control plane"] --> W["CloudWatch Logs"]
+    W -->|"Optional subscription / export"| P
+    Q["Authorized query client"] -->|"Query"| B
+    B -->|"Results"| Q
+```
+
+| 패턴 | 사용 조건과 한계 |
+| --- | --- |
+| stdout/stderr + node collector | 일반적인 Linux worker-node 경로; runtime file/collector 권한 필요 |
+| File + sidecar | Legacy/file-only application이나 전용 처리; shared volume·시작/종료·overhead 검토 |
+| Application/SDK push | 구조화된 event를 직접 전송; buffering·인증·실패 처리가 application에 영향 |
+| 관리형 platform router | EKS Fargate built-in router 등 해당 구성 모델 사용 |
+
+DaemonSet은 selector·affinity·toleration·OS·rollout에 맞는 node에 배치됩니다.
+모든 node에서 collector가 정상이며 모든 container를 포함한다고 증명하지 않습니다.
+Collector 중복이나 rollout overlap은 중복 수집을 만들 수 있습니다.
+Sidecar만으로 강한 multi-tenant 보안 격리가 되는 것도 아닙니다.
+
+### Linux 기본 log 경로와 수명
+
+일반적인 기본 배치는 다음과 같습니다.
+
+```text
+Runtime이 쓰는 실제 log file:
+  /var/log/pods/<namespace>_<pod>_<uid>/<container>/0.log
+
+그 file을 가리키는 호환성 symlink:
+  /var/log/containers/<pod>_<namespace>_<container>-<container-id>.log
+```
+
+Kubelet이 runtime의 CRI log 경로를 지정하고 rotation을 관리합니다.
+`podLogsDir`로 기본 경로를 바꿀 수 있고 OS/runtime별 차이도 있습니다.
+Containerd workload에 Docker 전용 mount를 무조건 추가하지 말고 실제 배포를 확인합니다.
+`kubectl logs`는 현재 log file을 제공하며 `--previous`는 보존된 이전 container instance를
+볼 수 있는 기능이지 과거 log archive가 아닙니다.
+
+Rotation은 local file을 제한할 뿐 중앙 retention/backup을 구현하지 않습니다.
+Node 손실·eviction·삭제로 수집 전 record가 사라질 수 있습니다.
+Sidecar의 `emptyDir`는 같은 Pod의 container 재시작을 견디지만 Pod 삭제는 견디지 못합니다.
+Collector offset DB·queue·persistent storage를 output acknowledgment/retry와 함께 설계합니다.
+Buffer는 유한하고 retry는 중복을 만들 수 있으므로 loss/duplicate·backlog·공간 부족·복구를 시험합니다.
+
+Record별 기본 경로를 정합니다. Sidecar가 직접 전송하면서 같은 record를 stdout에도
+쓰면 node collector와 중복될 수 있습니다. Collector 출력의 재귀 수집이나 같은
+subscription source log group으로 되돌려 보내는 경로를 피합니다.
+
+### Fluent Bit 처리 fragment
+
+다음은 YAML이 아닌 **Fluent Bit classic configuration**입니다.
+Filter만 보여주므로 실제 input·CRI/multiline parser·tag 형식·RBAC/cache 접근·storage·
+output을 별도로 구성하고 검증합니다.
+
+```text
+# Fluent Bit classic-format FILTER fragment, not YAML or a complete pipeline.
+# Requires matching tail input tags and CRI/Docker parsing.
 [FILTER]
-    Name         kubernetes
-    Match        kube.*
-    Kube_URL     https://kubernetes.default.svc:443
-    Merge_Log    On
-    K8S-Logging.Parser  On
+    Name               kubernetes
+    Match              kube.*
+    Kube_Tag_Prefix     kube.var.log.containers.
+    Merge_Log          On
+    Merge_Log_Key      app
+    Keep_Log           On
+    K8S-Logging.Parser  Off
+    Labels             Off
+    Annotations        Off
 
 [FILTER]
-    Name         modify
-    Match        *
-    Add          cluster_name eks-production
-    Add          environment production
-
-[FILTER]
-    Name         grep
-    Match        *
-    Exclude      log HealthCheck
+    Name               modify
+    Match              kube.*
+    Set                cluster_name example-cluster
+    Set                environment demo
 ```
 
-#### 3. 저장 계층 (Storage Layer)
+`Merge_Log_Key app`는 parsing한 application field를 collector metadata와 분리합니다.
+`Set`은 지정한 cluster/environment 값을 교체하며 `Add`는 이미 있는 값을 그대로 둡니다.
+여기서는 workload가 선택한 parser/annotation을 자동 신뢰하지 않습니다.
+`Kube_Tag_Prefix`도 실제 input tag에 맞춥니다.
 
-처리된 로그를 저장하고 인덱싱합니다. 각 솔루션의 특성에 따라 저장 방식이 다릅니다.
+`Keep_Log On`에서는 raw log와 parsed copy 둘 다 redaction 대상입니다.
+Raw copy 제거는 검증한 정책에 따라 수행합니다.
+`HealthCheck`라는 문자열이 있는 모든 line을 버리면 실패 증거도 잃을 수 있습니다.
+Application format과 실패 사례를 확인한 뒤 정의된 일상 event만 filter합니다.
 
-#### 4. 분석 계층 (Analysis Layer)
+이 개요는 불완전한 `latest` image DaemonSet을 완전한 설치 예제로 제시하지 않습니다.
+실제 collector에는 고정 image·config·service account/RBAC·mount·권한·resource가 필요합니다.
+배포는 [collector 장](05-collectors.md)을 참고하고 선택한 platform/backend 구성을 검증합니다.
 
-저장된 로그를 검색하고 시각화합니다.
+## EKS 로깅 경로
 
----
+### Control-plane log
 
-## 로그 저장소 선택 기준
+EKS는 `api`, `audit`, `authenticator`, `controllerManager`, `scheduler` record를
+해당 계정의 CloudWatch Logs로 직접 보낼 수 있습니다.
+각각 API 진단·audit event·IAM 인증 진단·controller·scheduler 진단에 해당합니다.
+운영/security 요구에 맞는 유형을 선택합니다.
 
-### 주요 고려 사항
+다음을 `control-plane-logging.json`으로 저장합니다.
 
-#### 1. 비용
-
-월간 로그 볼륨: 1TB 기준 예상 비용 (2025년 기준)
-
-| 솔루션 | 저장 비용/GB | 쿼리 비용 |
-|--------|--------------|-----------|
-| Loki (S3) | $0.023 (S3) | 무료 |
-| OpenSearch | $0.10-0.15 | 무료 |
-| CloudWatch | $0.50 (수집) | $0.005/GB 스캔 |
-| ClickHouse | $0.023 (S3) | 무료 |
-
-#### 2. 쿼리 성능
-
-| 솔루션 | 실시간 쿼리 | 집계 쿼리 | 전문 검색 | 대시보드 |
-|--------|------------|----------|----------|---------|
-| **Loki** | 우수 | 양호 | 제한적 | Grafana |
-| **OpenSearch** | 우수 | 우수 | 우수 | OpenSearch Dashboards |
-| **CloudWatch** | 양호 | 양호 | 양호 | CloudWatch 콘솔 |
-| **ClickHouse** | 우수 | 우수 | 양호 | Grafana |
-
-#### 3. 보존 기간
-
-```yaml
-# 권장 보존 정책
-regulatory_compliance:
-  financial: 7년
-  healthcare: 6년
-  general: 1년
-
-operational:
-  hot_storage: 7-14일    # 빠른 쿼리
-  warm_storage: 30-90일  # 조사용
-  cold_storage: 1년+     # 규정 준수
-```
-
-#### 4. 운영 복잡성
-
-| 솔루션 | 설치 복잡성 | 운영 부담 | 확장성 |
-|--------|-----------|----------|--------|
-| **Loki** | 낮음 | 낮음 | 높음 |
-| **OpenSearch** | 중간 | 높음 | 중간 |
-| **CloudWatch** | 매우 낮음 | 매우 낮음 | 높음 |
-| **ClickHouse** | 높음 | 중간 | 높음 |
-
----
-
-## EKS 로깅 전략
-
-### 로그 수집 패턴
-
-#### 1. stdout/stderr 패턴 (권장)
-
-컨테이너의 표준 출력/에러를 통한 로깅은 Kubernetes의 기본 패턴입니다.
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-pod
-spec:
-  containers:
-  - name: app
-    image: myapp:1.0
-    # 애플리케이션은 stdout/stderr로 로그 출력
-    # kubelet이 /var/log/containers/에 파일로 저장
-    # DaemonSet 에이전트가 수집
-```
-
-**장점:**
-- Kubernetes 네이티브 방식
-- 로그 로테이션 자동 관리 (`/var/log/containers/`)
-- `kubectl logs` 명령어 사용 가능
-- 별도 볼륨 마운트 불필요
-
-**로그 파일 위치:**
-```bash
-# 실제 로그 파일
-/var/log/containers/<pod-name>_<namespace>_<container-name>-<container-id>.log
-
-# 심볼릭 링크
-/var/log/pods/<namespace>_<pod-name>_<pod-uid>/<container-name>/0.log
-```
-
-#### 2. Sidecar 패턴
-
-파일 기반 로그나 특수 처리가 필요한 경우 사용합니다.
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-with-sidecar
-spec:
-  containers:
-  - name: app
-    image: legacy-app:1.0
-    volumeMounts:
-    - name: log-volume
-      mountPath: /var/log/app
-
-  - name: log-collector
-    image: fluent/fluent-bit:latest
-    volumeMounts:
-    - name: log-volume
-      mountPath: /var/log/app
-      readOnly: true
-    - name: fluent-bit-config
-      mountPath: /fluent-bit/etc/
-
-  volumes:
-  - name: log-volume
-    emptyDir: {}
-  - name: fluent-bit-config
-    configMap:
-      name: fluent-bit-sidecar-config
-```
-
-**사용 사례:**
-- 레거시 애플리케이션 (파일 로깅만 지원)
-- 멀티테넌트 환경에서 로그 격리
-- 애플리케이션별 특수 파싱 필요
-- 높은 보안 요구사항
-
-#### 3. DaemonSet 패턴 (가장 일반적)
-
-노드당 하나의 에이전트가 모든 컨테이너 로그를 수집합니다.
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: fluent-bit
-  namespace: logging
-spec:
-  selector:
-    matchLabels:
-      app: fluent-bit
-  template:
-    metadata:
-      labels:
-        app: fluent-bit
-    spec:
-      serviceAccountName: fluent-bit
-      tolerations:
-      - operator: Exists  # 모든 노드에 배포
-      containers:
-      - name: fluent-bit
-        image: public.ecr.aws/aws-observability/aws-for-fluent-bit:latest
-        volumeMounts:
-        - name: varlog
-          mountPath: /var/log
-          readOnly: true
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-        resources:
-          limits:
-            memory: 200Mi
-            cpu: 200m
-          requests:
-            memory: 100Mi
-            cpu: 100m
-      volumes:
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
-```
-
-### EKS 컨트롤 플레인 로깅
-
-EKS 컨트롤 플레인 로그는 CloudWatch Logs로 전송됩니다.
-
-```bash
-# AWS CLI로 컨트롤 플레인 로깅 활성화
-aws eks update-cluster-config \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-```
-
-| 로그 유형 | 설명 | 권장 여부 |
-|----------|------|----------|
-| **api** | API 서버 로그 | 필수 |
-| **audit** | Kubernetes 감사 로그 | 필수 (보안) |
-| **authenticator** | IAM 인증 로그 | 권장 |
-| **controllerManager** | 컨트롤러 매니저 로그 | 선택 |
-| **scheduler** | 스케줄러 로그 | 선택 |
-
-### Container Insights 로깅
-
-```yaml
-# CloudWatch Agent ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cloudwatch-agent-config
-  namespace: amazon-cloudwatch
-data:
-  cwagentconfig.json: |
+```json
+{
+  "clusterLogging": [
     {
-      "logs": {
-        "metrics_collected": {
-          "kubernetes": {
-            "cluster_name": "my-cluster",
-            "metrics_collection_interval": 60
-          }
-        },
-        "force_flush_interval": 5
-      }
+      "types": [
+        "api",
+        "audit",
+        "authenticator",
+        "controllerManager",
+        "scheduler"
+      ],
+      "enabled": true
     }
+  ]
+}
+```
+```bash
+export AWS_REGION=ap-northeast-2
+export CLUSTER_NAME=my-cluster
+
+# Inspect the existing configuration before choosing a change.
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.logging'
+
+# This changes the cluster logging configuration and can incur log charges.
+aws eks update-cluster-config --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --logging file://control-plane-logging.json
+
+# Use the actual update ID from the response, then inspect status/errors.
+: "${UPDATE_ID:?Set the returned update ID}"
+aws eks describe-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --update-id "$UPDATE_ID"
 ```
 
----
+변경은 비동기입니다. EKS 문서는 update를 위해 subnet마다 최대 5개의 가용 IP가
+필요할 수 있다고 명시합니다. Update 상태·실제 stream·log group retention/권한을
+확인합니다. 전달은 best effort이며 보통 수분 내에 도착합니다.
+활성화했다고 모든 이전 event가 소급 수집되는 것은 아닙니다.
 
-## 솔루션 비교
+Audit event는 policy의 level/stage/제외 조건에 따릅니다. 모든 request/body가
+기록되었다는 증거가 아니며 `audit` 활성화만으로 규정 준수가 성립하지 않습니다.
+Node DaemonSet이 managed control-plane host를 읽는 것도 아닙니다.
+CloudWatch record를 다른 곳으로 보내는 subscription/export에는 별도 encoding·IAM·
+전달·중복 처리 요구가 있습니다.
 
-### 기능 비교표
+### Fargate와 Container Insights
 
-| 기능 | Loki | OpenSearch | CloudWatch | ClickHouse |
-|------|------|------------|------------|------------|
-| **설치 복잡성** | 낮음 | 중간 | 없음 (관리형) | 높음 |
-| **쿼리 언어** | LogQL | Lucene/DQL | Insights QL | SQL |
-| **전문 검색** | 제한적 | 우수 | 양호 | 양호 |
-| **스키마** | 스키마리스 | 스키마리스 | 스키마리스 | 스키마 정의 |
-| **압축률** | 높음 | 중간 | N/A | 매우 높음 |
-| **실시간 테일링** | 지원 | 지원 | 제한적 | 지원 |
-| **알림** | Grafana | 내장 | 내장 | Grafana |
-| **멀티테넌시** | 지원 | 지원 | 지원 | 지원 |
-| **S3 백엔드** | 네이티브 | 스냅샷만 | N/A | 네이티브 |
+EKS Fargate에는 Fluent Bit 기반 managed router가 있으며 `aws-observability`
+namespace의 `aws-logging` ConfigMap으로 설정합니다.
+문서화된 5,300-character 한도와 section/plugin 제한이 있고 일반 host DaemonSet을
+설치하는 방식이 아닙니다. Destination 권한을 설정하고 새 workload의 log를 시험합니다.
+Auto Mode·혼합·Windows 환경도 지원되는 수집 경로를 확인합니다.
 
-### 사용 사례별 권장 솔루션
+Namespace에는 `aws-observability: enabled` label이 필요합니다. 문서에 따라 Fargate
+pod execution role에 destination 권한을 부여합니다. ConfigMap 변경은 기존 Pod가
+아닌 새 Pod에 적용되므로 통제된 rollout과 전달 확인을 계획합니다.
 
-| 사용 사례 | 권장 솔루션 |
-|-----------|-------------|
-| 비용 최적화가 최우선 | Loki + S3 |
-| 전문 검색 및 분석 필요 | OpenSearch |
-| AWS 네이티브 환경, 간편한 운영 | CloudWatch Logs |
-| 대규모 분석 워크로드, SQL 선호 | ClickHouse |
-| 기존 Grafana 스택 보유 | Loki |
-| 규정 준수 요구사항 | OpenSearch/CloudWatch |
-| 스타트업/소규모 팀 | Loki 또는 CloudWatch |
-| 대기업/복잡한 분석 요구 | OpenSearch |
 
-### 비용 시뮬레이션 (월간 100GB 로그 기준)
+CloudWatch Agent의 `logs.metrics_collected.kubernetes`는 Container Insights
+performance data를 만들며 application stdout/stderr 수집 자체가 아닙니다.
+Fluent Bit나 구성된 OTel log 경로가 application log를 별도로 처리합니다.
+실제 workload/Operator가 읽지 않는 ConfigMap은 효과가 없습니다.
+검토된 [CloudWatch 장](../metrics/04-cloudwatch-metrics.md)의 모델·구성 경계를 참고하세요.
 
-```
-솔루션별 예상 월간 비용:
+## 저장·retention·비용 결정
 
-Loki (S3 Simple Scalable):
-  ├─ S3 저장: $2.30
-  ├─ S3 요청: $0.50
-  ├─ EC2 (3x m5.large): $180
-  └─ 총계: ~$183
+| Backend | 설계 질문 |
+| --- | --- |
+| Loki | LogQL, label-indexed stream/chunk와 지원 metadata/filter; label·tenancy/auth·storage·query capacity 선택 |
+| OpenSearch | Search/aggregation API, mapping/index lifecycle; 자체 운영·managed domain·UltraWarm·Serverless 구분 |
+| CloudWatch Logs | Managed log group, IAM, retention, Logs Insights QL/SQL/PPL; log class/Region별 기능 확인 |
+| ClickHouse | Column-oriented SQL analytics, schema/order/partition/TTL과 자체 운영/cloud storage 모델 선택 |
 
-OpenSearch (3x m5.large):
-  ├─ 인스턴스: $300
-  ├─ EBS 스토리지: $15
-  └─ 총계: ~$315
+OpenSearch가 모두 “S3 snapshot만” 쓰는 것은 아닙니다. UltraWarm은 S3/cache를
+사용하며 Serverless도 storage와 compute를 분리합니다.
+CloudWatch는 사용자가 구성하는 S3 log backend는 아니지만 별도 export/delivery/
+integration 경로를 지원합니다. Tenant ID나 sidecar가 인증된 routing과 backend 접근
+제어를 대신하지 않습니다.
 
-CloudWatch Logs:
-  ├─ 수집: $50
-  ├─ 저장: $3
-  ├─ 쿼리 (추정): $10
-  └─ 총계: ~$63
+Full-text filtering·indexing·query latency는 다른 질문입니다.
+실제 volume·predicate·concurrency·cold data·복구를 시험합니다.
+조건 없는 “우수/제한적” 순위, schemaless면 schema가 없다는 설명, 측정 dataset/config
+없는 압축률을 피합니다.
 
-ClickHouse (자체 호스팅):
-  ├─ EC2 (3x m5.large): $180
-  ├─ S3 저장: $2.30
-  └─ 총계: ~$183
-```
+### 실제 record에 대한 retention 정책
 
-> **참고**: 실제 비용은 쿼리 패턴, 보존 기간, 리전에 따라 크게 달라질 수 있습니다.
+`financial=7년`, `healthcare=6년`, 일반 log=1년을 보편적인 법 규칙으로 쓰지 않습니다.
+Record 분류·관할·계약·legal hold와 승인된 owner 정책을 확인합니다.
+Hot/warm/cold tier는 운영 선택이지 의무 충족의 증거가 아닙니다.
+Replica·object version·backup·export를 삭제/접근 계획에 포함하고 복원도 별도로 시험합니다.
 
-### 의사결정 플로우차트
+### 같은 조건의 비용 비교
 
-![기존 Grafana 스택 보유 여부, 전문 검색 필요성, AWS 네이티브 선호도, 비용과 기능의 우선순위, 분석 복잡성, SQL 선호와 대규모 분석 여부를 차례로 물어 Loki, OpenSearch, ClickHouse, CloudWatch Logs 중 하나를 추천하는 로그 저장소 의사결정 플로우차트를 보여준다.](../../.gitbook/assets/ko-observability-logging-readme-1.png)
+기존 2025 표는 GB당 storage와 ingestion 단가를 섞고 자체 운영 query를 무료라고
+표현했습니다. 뒤의 100-GB 예시도 재현 가능한 Region·시간·retention·capacity·workload
+근거가 없었습니다. 실제 측정이 아닌 추정 예시이므로 날짜나 단가 하나만 바꿔도
+비교가 올바르게 되지는 않습니다.
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-readme-1.html)
+수집량, 보존/압축 byte와 index overhead, replica, compute, query scan/capacity,
+storage request, network, backup과 운영을 함께 비교합니다.
+Object storage 단가는 한 항목이며 별도 query 요금이 없어도 CPU/memory/I/O를
+소모합니다. Loki+S3가 항상 가장 저렴하거나 특정 backend가 자동으로 규정 준수에
+적합하다고 보장하지 않습니다.
 
----
+1. Query·freshness·retention·접근·복구 목표를 정의합니다.
+2. 충족 가능한 배포 모델을 추립니다.
+3. 대표 데이터/query와 장애·복구 사례를 재현합니다.
+4. 전체 비용과 운영 소유권을 비교합니다.
+5. 남은 가정을 기록하고 production 전에 확인합니다.
 
-## 다음 단계
+## 다음 단계와 검증 범위
 
-각 로그 저장소에 대한 자세한 내용은 다음 문서를 참조하세요:
+Promtail은 **2026-03-02**에 지원 종료되었습니다.
+새 구성에는 Alloy 또는 지원 client를 사용하고 기존 Promtail은 migration을 계획합니다.
+공식 공지는 `lambda-promtail`을 별도로 취급하므로 종료 범위를 임의 확대하지 않습니다.
 
-- [Grafana Loki](./01-loki.md) - 비용 효율적인 로그 집계
-- [Amazon OpenSearch Service](./02-opensearch.md) - 강력한 검색 및 분석
-- [CloudWatch Logs](./03-cloudwatch-logs.md) - AWS 네이티브 로깅
-- [ClickHouse](./04-clickhouse.md) - 고성능 로그 분석
-- [로그 수집기 비교](./05-collectors.md) - FluentBit, Promtail, Alloy, OTEL
+- [Loki](01-loki.md)
+- [OpenSearch](02-opensearch.md)
+- [CloudWatch Logs](03-cloudwatch-logs.md)
+- [ClickHouse](04-clickhouse.md)
+- [Collector: Fluent Bit, Alloy, OpenTelemetry](05-collectors.md)
 
----
+이번 감사는 공식 사실, 예시 직렬화/ID와 요청/config 구조를 확인했습니다.
+EKS logging 변경, collector 배포, tenant/storage 생성, 법적 판단, production 비용
+측정이나 실제 전달·복구 시험은 수행하지 않았습니다.
 
-## 퀴즈
+## 참고 자료
 
-이 장에서 배운 내용을 테스트하려면 [로깅 개요 퀴즈](../../quizzes/observability/logging/README-quiz.md)를 풀어보세요.
+- [Kubernetes logging architecture](https://kubernetes.io/docs/concepts/cluster-administration/logging/)
+- [Kubelet legacy log symlinks](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/kuberuntime/legacy.go)
+- [DaemonSet behavior](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)
+- [Kubernetes audit policy](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/)
+- [OpenTelemetry logs data model](https://opentelemetry.io/docs/specs/otel/logs/data-model/)
+- [W3C Trace Context](https://www.w3.org/TR/trace-context/)
+- [EKS control-plane logging](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+- [EKS Fargate log router](https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html)
+- [Fluent Bit Kubernetes filter source documentation](https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/kubernetes.md)
+- [Fluent Bit modify filter](https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/modify.md)
+- [Loki architecture](https://grafana.com/docs/loki/latest/get-started/overview/)
+- [Promtail end of life](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [OpenSearch UltraWarm](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html)
+- [OpenSearch Serverless](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-overview.html)
+- [CloudWatch Logs query languages](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html)
+- [CloudWatch log classes](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html)
+- [ClickHouse overview](https://github.com/ClickHouse/ClickHouse)
+
+[퀴즈](../../quizzes/observability/logging/README-quiz.md)

@@ -1,193 +1,185 @@
 # ClickHouse for Log Analytics Quiz
 
-Test your understanding of ClickHouse log analytics.
+> **Last Updated**: September 13, 2026
 
----
+1. Why can columnar storage help analytical log queries?
 
-1. What is the main reason ClickHouse shows high performance in log analytics?
-
-   - A) Row-based storage
-   - B) Column-based storage
-   - C) Document-based storage
-   - D) Key-Value storage
+   - A) It always scans every field
+   - B) It can read selected columns and compress repeated values
+   - C) It guarantees a fixed compression ratio
+   - D) It removes the need for schema design
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Column-based storage**
+**Answer: B) It can read selected columns and compress repeated values**
 
-**Explanation:**
-ClickHouse is a column-based database optimized for analytical queries (scanning specific columns only). Same data types are stored consecutively, enabling high compression ratios and vectorized query execution.
+Benefits depend on the data, sort key and query. The guide does not promise 10:1 compression or a fixed throughput.
 
 </details>
 
 ---
 
-2. Which component is used for data replication and distributed query coordination in a ClickHouse cluster?
+2. What is Keeper/ZooKeeper's role in this design?
 
-   - A) Kafka
-   - B) Redis
-   - C) ZooKeeper/ClickHouse Keeper
-   - D) etcd
+   - A) Run every distributed SELECT
+   - B) Store every log row
+   - C) Coordinate replicated tables and distributed DDL
+   - D) Replace the collector
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) ZooKeeper/ClickHouse Keeper**
+**Answer: C) Coordinate replicated tables and distributed DDL**
 
-**Explanation:**
-ClickHouse clusters use ZooKeeper or ClickHouse Keeper to coordinate data synchronization between replicas, distributed DDL execution, and leader election. ClickHouse Keeper is a ClickHouse-specific alternative to ZooKeeper.
+ClickHouse query initiators and Distributed tables perform distributed queries. Keeper is not their query router.
 
 </details>
 
 ---
 
-3. Which ClickHouse table engine supports replication and is most suitable for log storage?
+3. Which engine adds replication to MergeTree storage?
 
-   - A) MergeTree
-   - B) ReplicatedMergeTree
-   - C) Log
-   - D) Memory
+   - A) ReplicatedMergeTree
+   - B) Memory
+   - C) Buffer
+   - D) Distributed alone
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) ReplicatedMergeTree**
+**Answer: A) ReplicatedMergeTree**
 
-**Explanation:**
-ReplicatedMergeTree adds replication functionality to all MergeTree features (sorting, partitioning, TTL, etc.). It is recommended for production log storage requiring high availability.
+Replicas still need coordination, independent persistent storage and an appropriate failure-domain design. Replication alone is not an unconditional HA guarantee.
 
 </details>
 
 ---
 
-4. What optimization type should be used for low-cardinality string columns (e.g., level, namespace) in ClickHouse?
+4. Which type is worth evaluating for repeated namespace or severity values?
 
-   - A) String
-   - B) FixedString
-   - C) LowCardinality(String)
-   - D) Enum
+   - A) Always FixedString(255)
+   - B) LowCardinality(String)
+   - C) A unique integer for every log message
+   - D) Only uncompressed String
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) LowCardinality(String)**
+**Answer: B) LowCardinality(String)**
 
-**Explanation:**
-LowCardinality(String) is used for string columns with few unique values (~10,000 or less). It uses dictionary encoding internally to optimize storage space and query performance.
+Dictionary encoding can help repeated values; benchmark dictionary size and query behavior instead of assuming a universal distinct-value cutoff.
 
 </details>
 
 ---
 
-5. What is the principle for specifying column order in the `ORDER BY` clause when designing ClickHouse log tables?
+5. How should the log table's ORDER BY be chosen?
 
-   - A) Alphabetical order
-   - B) Column size order (smallest first)
-   - C) Frequently filtered columns first
-   - D) Creation time order
+   - A) Alphabetically
+   - B) By field creation time
+   - C) From selective filters, locality and representative queries
+   - D) Always put timestamp last regardless of queries
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Frequently filtered columns first**
+**Answer: C) From selective filters, locality and representative queries**
 
-**Explanation:**
-ClickHouse's ORDER BY affects data sorting and index creation. Placing columns frequently used in WHERE clauses at the front results in scanning less data during queries. Example: `ORDER BY (namespace, service, timestamp)`
+The key affects ordering and index pruning. Frequently queried columns alone do not determine the best order.
 
 </details>
 
 ---
 
-6. What is the syntax for sampling techniques used for fast analysis of large datasets in ClickHouse?
+6. What must be true before using SAMPLE 0.1?
 
-   - A) `LIMIT RANDOM 10%`
-   - B) `SAMPLE 0.1`
-   - C) `WHERE rand() < 0.1`
-   - D) `TABLESAMPLE (10 PERCENT)`
+   - A) Any table supports it automatically
+   - B) The table must contain exactly ten rows
+   - C) It always returns exactly 10% of rows
+   - D) A compatible MergeTree sampling expression must be defined and included in the primary key
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) `SAMPLE 0.1`**
+**Answer: D) A compatible MergeTree sampling expression must be defined and included in the primary key**
 
-**Explanation:**
-ClickHouse's `SAMPLE` clause scans only a portion of data for fast approximate analysis. `SAMPLE 0.1` reads only 10% of the data. Results can be multiplied by an appropriate factor to get estimated totals.
+The main log table has no SAMPLE BY. The separate sample_demo shows the required design. A deterministic sampling-key interval need not contain exactly 10% of a finite row set.
 
 </details>
 
 ---
 
-7. What is the main reason for placing Kafka between log sources and ClickHouse for log collection?
+7. What does Kafka add, subject to its configuration?
 
-   - A) Data encryption
-   - B) Buffering and peak traffic handling
-   - C) Data compression
-   - D) Query optimization
+   - A) Guaranteed exactly-once delivery through a memory Buffer
+   - B) Burst buffering and replay within retention
+   - C) Automatic removal of all parser errors
+   - D) Unlimited storage during outages
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Buffering and peak traffic handling**
+**Answer: B) Burst buffering and replay within retention**
 
-**Explanation:**
-Kafka serves as a message queue that buffers logs during peak traffic, allowing ClickHouse to consume data at a consistent rate. It also prevents data loss during ClickHouse failures.
+Retention, acknowledgements, replication, capacity, offset commits and downstream insert behavior must be tested. An in-memory Buffer can lose acknowledged data on a crash.
 
 </details>
 
 ---
 
-8. What functions are used to extract JSON field values in ClickHouse SQL?
+8. Why use a nullable JSON extraction for optional response_time_ms?
 
-   - A) JSON_EXTRACT()
-   - B) JSONExtractString(), JSONExtractFloat()
-   - C) parseJSON()
-   - D) getJSON()
+   - A) Missing measurements should not become zero-latency requests
+   - B) All logs are HTTP requests
+   - C) It removes the need for JSON validation
+   - D) It changes the server clock
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) JSONExtractString(), JSONExtractFloat()**
+**Answer: A) Missing measurements should not become zero-latency requests**
 
-**Explanation:**
-ClickHouse extracts JSON fields using functions like `JSONExtractString(json, 'field')` and `JSONExtractFloat(json, 'field')`. Different functions are used for each type.
+Check JSONType first to exclude booleans and numeric strings, then extract a nullable number. Nullable extraction alone can coerce those values. Count and percentile queries should use measured events.
 
 </details>
 
 ---
 
-9. What feature in ClickHouse tables automatically deletes old data?
+9. What does a TTL TO VOLUME clause require and guarantee?
 
-   - A) AUTO_DELETE
-   - B) RETENTION_POLICY
-   - C) TTL (Time To Live)
-   - D) EXPIRE_AFTER
+   - A) It creates an S3 bucket and IAM role
+   - B) It deletes every row at an exact wall-clock deadline
+   - C) An existing selected storage policy; asynchronous background work
+   - D) It makes cold parts independent Parquet backups
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) TTL (Time To Live)**
+**Answer: C) An existing selected storage policy; asynchronous background work**
 
-**Explanation:**
-ClickHouse's TTL feature automatically deletes data after a certain period or moves it to different storage (e.g., S3). Example: `TTL date + INTERVAL 90 DAY DELETE`
+TTL cannot create the policy or cloud permissions. Cold table storage and a separately validated Parquet archive have different ownership and recovery semantics.
 
 </details>
 
 ---
 
-10. What data source plugin is used when integrating ClickHouse with Grafana?
+10. How should ClickHouse-backed Grafana alerts be built?
 
-    - A) grafana-mysql-datasource
-    - B) grafana-clickhouse-datasource
-    - C) grafana-sql-datasource
-    - D) grafana-olap-datasource
+   - A) Invent a clickhouse_custom_query Prometheus metric
+   - B) Use grafana-clickhouse-datasource with numeric SQL results and Grafana Alerting
+   - C) Give every dashboard an administrator account
+   - D) Treat no incoming logs as proof of health
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) grafana-clickhouse-datasource**
+**Answer: B) Use grafana-clickhouse-datasource with numeric SQL results and Grafana Alerting**
 
-**Explanation:**
-To integrate ClickHouse with Grafana, install the `grafana-clickhouse-datasource` plugin. This plugin allows you to visualize ClickHouse data using SQL queries and build dashboards.
+Use a restricted read-only account, verified TLS and required timeout-setting permissions. Monitor ingestion separately; an aggregate can return zero even with no input.
 
 </details>
+
+---
+
+[Return to the guide](../../../observability/logging/04-clickhouse.md)

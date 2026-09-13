@@ -1,193 +1,185 @@
 # Amazon OpenSearch Service Quiz
 
-Test your understanding of Amazon OpenSearch Service.
+> **Last Updated**: September 13, 2026
+
+Based on the managed-domain and collector examples in the [guide](../../../observability/logging/02-opensearch.md).
 
 ---
 
-1. What open-source project is Amazon OpenSearch Service based on?
+1. Which statement correctly distinguishes OpenSearch from Amazon OpenSearch Service?
 
-   - A) Apache Solr
-   - B) Elasticsearch 7.10 fork
-   - C) Apache Lucene alone
-   - D) Splunk open-source version
+   - A) Every Elasticsearch client/plugin remains compatible
+   - B) AWS immediately supports every upstream release
+   - C) OpenSearch is an Apache-2.0 project; the managed service supports selected engine versions
+   - D) The service is only a Kibana hosting product
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Elasticsearch 7.10 fork**
+**Answer: C**
 
-**Explanation:**
-OpenSearch is an open-source project created by AWS in 2021 by forking Elasticsearch 7.10 under the Apache 2.0 license. It was started in response to Elastic's license change (SSPL).
+The Elasticsearch 7.10 lineage is not a blanket compatibility guarantee. Check AWS version support and the actual client/plugin. The earlier 2.11 baseline remains standard-supported through November 7, 2027.
 
 </details>
 
 ---
 
-2. Which node type in an OpenSearch cluster is responsible for index metadata management and cluster state management?
+2. With dedicated cluster-manager nodes configured, which role handles cluster state and shard-allocation management?
 
-   - A) Data Node
-   - B) Master Node
-   - C) UltraWarm Node
-   - D) Coordinating Node
+   - A) Dedicated cluster-manager nodes
+   - B) UltraWarm storage
+   - C) Cold storage
+   - D) The log collector
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Master Node**
+**Answer: A**
 
-**Explanation:**
-Master Nodes handle cluster management tasks such as cluster state management, index creation/deletion, and shard allocation decisions. In production environments, 3 dedicated master nodes are recommended.
+AWS configuration fields still use dedicated_master names. Manager count is distinct from data replica count, and zone awareness alone does not enable Multi-AZ with Standby.
 
 </details>
 
 ---
 
-3. What is OpenSearch's cost-effective read-only storage tier?
+3. Which statement is correct for traditional UltraWarm and cold storage?
 
-   - A) Hot Storage
-   - B) Warm Storage
-   - C) UltraWarm
-   - D) Standard Storage
+   - A) UltraWarm stores everything only on EBS
+   - B) Both are S3-backed; cold indexes must be attached to UltraWarm before querying
+   - C) Every workload saves exactly 75%
+   - D) Every instance/engine combination supports both tiers
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) UltraWarm**
+**Answer: B**
 
-**Explanation:**
-UltraWarm is an S3-based read-only storage tier that is approximately 75% cheaper than Hot storage (EBS). It is suitable for storing historical log data that is not frequently queried.
+A hot→UltraWarm→cold policy needs the relevant service prerequisites and migration capacity. Costs and query latency depend on the workload; tier names are not fixed savings guarantees.
 
 </details>
 
 ---
 
-4. What is the primary purpose of ISM (Index State Management) policies?
+4. Which ISM action deletes an index from managed OpenSearch Service cold storage?
 
-   - A) Managing index security settings
-   - B) Automating index lifecycle (rollover, deletion, etc.)
-   - C) Optimizing index queries
-   - D) Configuring index replication
+   - A) delete in every storage tier
+   - B) force_merge
+   - C) warm_migration
+   - D) cold_delete
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Automating index lifecycle (rollover, deletion, etc.)**
+**Answer: D**
 
-**Explanation:**
-ISM policies automatically manage index lifecycles. They can automate index rollover, Hot→UltraWarm→Cold transitions, and deletion after retention periods.
+Managed cold storage requires cold_delete. Policies use one action per action object and run asynchronously; the example 7/30/90-day index ages are not exact event-age retention guarantees.
 
 </details>
 
 ---
 
-5. Which log collection method for OpenSearch is most cost-effective and easiest to manage?
+5. How should direct Fluent Bit delivery and Amazon Data Firehose be compared?
 
-   - A) Logstash on EC2
-   - B) FluentBit DaemonSet + direct transmission
-   - C) Kinesis Data Firehose
-   - D) Lambda functions
+   - A) Firehose is always the cheapest option
+   - B) Direct Fluent Bit cannot authenticate to AWS
+   - C) Compare operational needs, schema, buffering/retry/backup, access and measured cost
+   - D) Both automatically create identical Kubernetes metadata
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Kinesis Data Firehose**
+**Answer: C**
 
-**Explanation:**
-Kinesis Data Firehose is a fully managed service that automatically performs buffering, compression, and batch processing. With built-in S3 backup and error handling, it has low operational overhead and is cost-effective for large-scale log collection.
+Firehose offers a managed delivery path but requires roles, connectivity and compatible records. FailedDocumentsOnly selects its backup mode; a prefix named failed/ alone does not select that behavior.
 
 </details>
 
 ---
 
-6. In OpenSearch Fine-Grained Access Control (FGAC), which feature restricts access to logs from only specific namespaces?
+6. Which statement correctly describes DLS and FLS?
 
-   - A) Field-Level Security (FLS)
-   - B) Document-Level Security (DLS)
-   - C) Index-Level Security
-   - D) Cluster-Level Security
+   - A) DLS filters documents; FLS controls returned fields, with effective roles and trusted metadata still important
+   - B) FLS authenticates the Kubernetes namespace automatically
+   - C) URI-based IAM alone restricts every index named inside a bulk body
+   - D) A security-group rule grants document-level read access
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Document-Level Security (DLS)**
+**Answer: A**
 
-**Explanation:**
-Document-Level Security (DLS) restricts access to only documents matching specific conditions. For example, you can configure access to only a specific team's logs using the condition `kubernetes.namespace: "team-a"`.
+The guide uses trusted kubernetes.namespace_name metadata. A restricted role does not cancel an existing broader grant. FLS does not redact sensitive text inside an allowed message or delete stored data/backups.
 
 </details>
 
 ---
 
-7. In OpenSearch index templates, what is the Elasticsearch/OpenSearch string optimization type used instead of `LowCardinality`?
+7. Which mapped string type supports exact matching and common field aggregations?
 
-   - A) text
+   - A) text with no subfield
    - B) keyword
-   - C) analyzed_string
-   - D) compact_string
+   - C) LowCardinality as an OpenSearch type
+   - D) Unmapped fields only
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) keyword**
+**Answer: B**
 
-**Explanation:**
-In OpenSearch, low-cardinality string fields (namespace, level, etc.) use the `keyword` type. The `text` type is tokenized for full-text search, while `keyword` is optimized for exact matching and aggregations.
+Keyword differs from analyzed text and from ClickHouse LowCardinality. Many keyword/numeric aggregations use column-oriented doc values, so they do not universally scan every full _source document.
 
 </details>
 
 ---
 
-8. What is the correct storage tiering order for OpenSearch cost optimization?
+8. With Logstash_Format On and prefix logs-production, where does the illustrated Fluent Bit output write?
 
-   - A) Cold → UltraWarm → Hot
-   - B) Hot → Cold → UltraWarm
-   - C) Hot → UltraWarm → Cold
-   - D) UltraWarm → Hot → Cold
+   - A) Always to a rollover alias
+   - B) Automatically to a Serverless collection
+   - C) Directly to detached cold indexes
+   - D) Date-based logs-production-YYYY.MM.DD indexes
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Hot → UltraWarm → Cold**
+**Answer: D**
 
-**Explanation:**
-Data is first stored in Hot storage (EBS) for fast queries, then moves to UltraWarm (read-only) as time passes, and finally to Cold Storage (S3) for older data. Cost decreases in this order.
+An alias is not selected merely because one exists. The guide separates the daily-index path from rollover-logs-*, which needs the rollover alias setting, a numbered index and the write alias.
 
 </details>
 
 ---
 
-9. What is the correct Query DSL for searching error logs within a specific time range in OpenSearch?
+9. Which Query DSL filters mapped error log lines from the last hour?
 
-   - A) `{"query": {"match": {"level": "error", "time": "1h"}}}`
-   - B) `{"query": {"bool": {"must": [{"match": {"level": "error"}}, {"range": {"@timestamp": {"gte": "now-1h"}}}]}}}`
-   - C) `{"filter": {"level": "error", "time": "> now-1h"}}`
-   - D) `{"search": {"level": "error", "since": "1h"}}`
+   - A) `{"query":{"match":{"app.level":"error","time":"1h"}}}`
+   - B) `{"filter":{"app.level":"error","time":"last-hour"}}`
+   - C) `{"query":{"bool":{"filter":[{"term":{"app.level":"error"}},{"range":{"@timestamp":{"gte":"now-1h"}}}]}}}`
+   - D) `{"query":{"where":{"level":"error"}}}`
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) `{"query": {"bool": {"must": [{"match": {"level": "error"}}, {"range": {"@timestamp": {"gte": "now-1h"}}}]}}}`**
+**Answer: C**
 
-**Explanation:**
-In OpenSearch Query DSL, `bool` queries are used to combine multiple conditions. The `must` array includes both `match` (text matching) and `range` (time range) specifications.
+The example mapping nests application fields under app and uses @timestamp. Filter context combines exact keyword matching and a time range without requiring relevance scoring.
 
 </details>
 
 ---
 
-10. When comparing OpenSearch and Loki, which use case is OpenSearch more suitable for?
+10. What is a sound basis for selecting OpenSearch, Loki or ClickHouse for log workloads?
 
-    - A) Startups where cost optimization is the top priority
-    - B) Cases requiring full-text search and complex analytical queries
-    - C) Integration with existing Grafana stack
-    - D) Cases requiring only simple log filtering
+   - A) A universal 100GB/day cutover
+   - B) The claim that every organization has the same query mix
+   - C) Fixed 3–5× cost and 60–80% savings rules
+   - D) Representative queries plus retention, durability, permissions, operational capability and measured cost
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Cases requiring full-text search and complex analytical queries**
+**Answer: D**
 
-**Explanation:**
-OpenSearch supports powerful Lucene-based full-text search capabilities and complex aggregation queries. It is suitable for security analysis (SIEM), compliance, and complex log analysis. For cost optimization or simple filtering, Loki is more appropriate.
+All three have different indexing/query models and operating tradeoffs. Compare equivalent requirements and validate migration, reconciliation and rollback; no product automatically establishes compliance or minimum cost.
 
 </details>

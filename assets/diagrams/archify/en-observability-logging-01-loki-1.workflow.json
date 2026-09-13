@@ -16,7 +16,7 @@
           "valueKinds",
           "streams"
         ],
-        "note": "Total streams = namespace values × app values × component values × … — the number of labels and the value types of each label multiply."
+        "note": "Count observed label combinations. Multiplying per-label cardinalities gives a possible upper bound, not actual streams."
       },
       {
         "id": "impact",
@@ -27,7 +27,7 @@
           "queryPerf",
           "memory"
         ],
-        "note": "That single stream count determines index size, query performance, and memory usage together."
+        "note": "Stream count affects cost/performance alongside chunk utilization, ingestion rate, query range, cache and hardware."
       }
     ],
     "legend": {
@@ -70,7 +70,7 @@
       "col": 0,
       "type": "frontend",
       "label": "Number of Labels",
-      "sublabel": "namespace, app, component …",
+      "sublabel": "namespace, app, component \u2026",
       "width": 190
     },
     {
@@ -88,8 +88,7 @@
       "col": 2,
       "type": "database",
       "label": "Total Streams",
-      "sublabel": "product of per-label values",
-      "tag": "< 100,000 per cluster",
+      "sublabel": "Observed label combinations",
       "width": 190
     },
     {

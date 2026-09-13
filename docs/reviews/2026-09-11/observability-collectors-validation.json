@@ -1,0 +1,1634 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T07:05:11.200235+00:00",
+  "scope": [
+    "en/observability/logging/05-collectors.md",
+    "en/quizzes/observability/logging/05-collectors-quiz.md",
+    "ko/observability/logging/05-collectors.md",
+    "ko/quizzes/observability/logging/05-collectors-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/logging/05-collectors.md": {
+      "lines": 1363,
+      "sha256": "9e82a4e9538e2e1c966a7c2decdf59b62c67056c8a9e847e35019c9f9f62b226"
+    },
+    "en/quizzes/observability/logging/05-collectors-quiz.md": {
+      "lines": 193,
+      "sha256": "210280df7b4cfa97601d5f0c96f4767ca76b1af4dacfe64784bbc8884b8e8330"
+    },
+    "ko/observability/logging/05-collectors.md": {
+      "lines": 1546,
+      "sha256": "93d8b564066434a719ea9b433fb25187528009b988c3cdc7b64d5b1e1a6f123e"
+    },
+    "ko/quizzes/observability/logging/05-collectors-quiz.md": {
+      "lines": 193,
+      "sha256": "28917e62e16470ddd65458e77578f153a15bff73dcc5de07a6b404f4d65f8689"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/logging/05-collectors.md",
+        "sha256": "3e1091fd10364f07a74bc5ea9cb3dac50deaf17f5ae4939b3d7d3af548539613",
+        "lines": 827,
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/observability/logging/05-collectors-quiz.md",
+        "sha256": "5ef8e8bd6af23a441b5f183d1efad678fff301f58bb09428cfc9438f2e95a0a7",
+        "lines": 185,
+        "passed": true
+      },
+      {
+        "path": "ko/observability/logging/05-collectors.md",
+        "sha256": "ccc06fa2ba188ba1c404be4abc3a3719296d9fe552179e2242fc696559a530be",
+        "lines": 827,
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/observability/logging/05-collectors-quiz.md",
+        "sha256": "c5200891c0e4493052ea9f8db827209e636d9126c16437f6ffebce3f9131b051",
+        "lines": 185,
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "checks": [
+      {
+        "name": "freshMD en/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "name": "alloldIDs en/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "name": "uniqueIDs en/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "name": "no unresolved template en/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/logging/05-collectors.md ../../.gitbook/assets/en-observability-logging-05-collectors-0.png",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/logging/05-collectors.md ../../.gitbook/assets/en-observability-logging-05-collectors-1.png",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/logging/05-collectors.md 03-cloudwatch-logs.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/logging/05-collectors.md 02-opensearch.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/logging/05-collectors.md ../../quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "freshMD en/quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "alloldIDs en/quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "uniqueIDs en/quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "no unresolved template en/quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "10answers40choices en/quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/quizzes/observability/logging/05-collectors-quiz.md ../../../observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "name": "freshMD ko/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "name": "alloldIDs ko/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "name": "uniqueIDs ko/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "name": "no unresolved template ko/observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/logging/05-collectors.md ../../.gitbook/assets/ko-observability-logging-05-collectors-0.png",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/logging/05-collectors.md ../../.gitbook/assets/ko-observability-logging-05-collectors-1.png",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/logging/05-collectors.md 03-cloudwatch-logs.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/logging/05-collectors.md 02-opensearch.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/logging/05-collectors.md ../../quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "freshMD ko/quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "alloldIDs ko/quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "uniqueIDs ko/quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "no unresolved template ko/quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "10answers40choices ko/quizzes/observability/logging/05-collectors-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/quizzes/observability/logging/05-collectors-quiz.md ../../../observability/logging/05-collectors.md",
+        "passed": true
+      },
+      {
+        "name": "bilingualcodeparity",
+        "passed": true
+      },
+      {
+        "name": "tested artifact exact fluent-bit.conf",
+        "passed": true
+      },
+      {
+        "name": "tested artifact exact process.lua",
+        "passed": true
+      },
+      {
+        "name": "tested artifact exact fluent-bit-workload.yaml",
+        "passed": true
+      },
+      {
+        "name": "tested artifact exact alloy.alloy",
+        "passed": true
+      },
+      {
+        "name": "tested artifact exact otel.yaml",
+        "passed": true
+      },
+      {
+        "name": "tested artifact exact routing.yaml",
+        "passed": true
+      },
+      {
+        "name": "ConfigMapINIexact",
+        "passed": true
+      },
+      {
+        "name": "ConfigMapLuaexact",
+        "passed": true
+      },
+      {
+        "name": "Linuxnodeagent",
+        "passed": true
+      },
+      {
+        "name": "boundedgrace",
+        "passed": true
+      },
+      {
+        "name": "dedicatedwritablestate",
+        "passed": true
+      },
+      {
+        "name": "readOnlyRootNoEscalation",
+        "passed": true
+      },
+      {
+        "name": "imageofficialdigest",
+        "passed": true
+      },
+      {
+        "name": "workloadmatchesvalidatedobjects",
+        "passed": true
+      },
+      {
+        "name": "noSecretOrNodeProxyRBAC",
+        "passed": true
+      },
+      {
+        "name": "nativeCoption line_format",
+        "passed": true
+      },
+      {
+        "name": "nativeCoption tenant_id",
+        "passed": true
+      },
+      {
+        "name": "nativeCoption auto_kubernetes_labels",
+        "passed": true
+      },
+      {
+        "name": "noGoPluginOptionInCConfig BatchWait",
+        "passed": true
+      },
+      {
+        "name": "noGoPluginOptionInCConfig BatchSize",
+        "passed": true
+      },
+      {
+        "name": "noGoPluginOptionInCConfig LineFormat",
+        "passed": true
+      },
+      {
+        "name": "noGoPluginOptionInCConfig TenantID",
+        "passed": true
+      },
+      {
+        "name": "noGoPluginOptionInCConfig AutoKubernetesLabels",
+        "passed": true
+      },
+      {
+        "name": "3nativeconfigs",
+        "passed": true
+      },
+      {
+        "name": "OTel8records33checks",
+        "passed": true
+      },
+      {
+        "name": "Alloy6records",
+        "passed": true
+      },
+      {
+        "name": "Lua8assertionsCurrentSource",
+        "passed": true
+      },
+      {
+        "name": "routing5records4destinations",
+        "passed": true
+      },
+      {
+        "name": "6KubernetesResources",
+        "passed": true
+      },
+      {
+        "name": "6MermaidRenderPass",
+        "passed": true
+      },
+      {
+        "name": "newPNGdecode en-0.png",
+        "passed": true
+      },
+      {
+        "name": "newPNGdecode en-1.png",
+        "passed": true
+      },
+      {
+        "name": "newPNGdecode en-2.png",
+        "passed": true
+      },
+      {
+        "name": "newPNGdecode ko-0.png",
+        "passed": true
+      },
+      {
+        "name": "newPNGdecode ko-1.png",
+        "passed": true
+      },
+      {
+        "name": "newPNGdecode ko-2.png",
+        "passed": true
+      },
+      {
+        "name": "17externalreferences200",
+        "passed": true
+      },
+      {
+        "name": "4recognizedupdateddates",
+        "passed": true
+      },
+      {
+        "name": "scopeddiffcheck",
+        "passed": true
+      }
+    ],
+    "nativeConfigs": [
+      {
+        "file": "alloy.alloy",
+        "exitCode": 0,
+        "passed": true,
+        "output": ""
+      },
+      {
+        "file": "otel.yaml",
+        "exitCode": 0,
+        "passed": true,
+        "output": ""
+      },
+      {
+        "file": "routing.yaml",
+        "exitCode": 0,
+        "passed": true,
+        "output": ""
+      }
+    ],
+    "nativeOTel": {
+      "status": "PASS",
+      "collector": "0.160.0",
+      "records": 8,
+      "checks": [
+        {
+          "name": "CRIpartial-fragments-recombined-once",
+          "passed": true
+        },
+        {
+          "name": "plaintext-retained-unspecified-severity",
+          "passed": true
+        },
+        {
+          "name": "malformed-application-JSON-retained",
+          "passed": true
+        },
+        {
+          "name": "container-resource-UID {\"level\":\"error\",\"message\":\"partial\",\"namespace\":\"spoofed\"}",
+          "passed": true
+        },
+        {
+          "name": "container-resource-namespace {\"level\":\"error\",\"message\":\"partial\",\"namespace\":\"spoofed\"}",
+          "passed": true
+        },
+        {
+          "name": "timestamp-preserved {\"level\":\"error\",\"message\":\"partial\",\"namespace\":\"spoofed\"}",
+          "passed": true
+        },
+        {
+          "name": "error-severity-and-no-resource-spoof",
+          "passed": true
+        },
+        {
+          "name": "container-resource-UID plain log",
+          "passed": true
+        },
+        {
+          "name": "container-resource-namespace plain log",
+          "passed": true
+        },
+        {
+          "name": "timestamp-preserved plain log",
+          "passed": true
+        },
+        {
+          "name": "container-resource-UID {not json",
+          "passed": true
+        },
+        {
+          "name": "container-resource-namespace {not json",
+          "passed": true
+        },
+        {
+          "name": "timestamp-preserved {not json",
+          "passed": true
+        },
+        {
+          "name": "container-resource-UID {\"level\":true,\"message\":\"typed\"}",
+          "passed": true
+        },
+        {
+          "name": "container-resource-namespace {\"level\":true,\"message\":\"typed\"}",
+          "passed": true
+        },
+        {
+          "name": "timestamp-preserved {\"level\":true,\"message\":\"typed\"}",
+          "passed": true
+        },
+        {
+          "name": "boolean-level-not-cast-to-string",
+          "passed": true
+        },
+        {
+          "name": "container-resource-UID {\"level\":\"warn\",\"message\":\"warning\"}",
+          "passed": true
+        },
+        {
+          "name": "container-resource-namespace {\"level\":\"warn\",\"message\":\"warning\"}",
+          "passed": true
+        },
+        {
+          "name": "timestamp-preserved {\"level\":\"warn\",\"message\":\"warning\"}",
+          "passed": true
+        },
+        {
+          "name": "warn-severity",
+          "passed": true
+        },
+        {
+          "name": "container-resource-UID {\"level\":\"trace\",\"message\":\"trace\"}",
+          "passed": true
+        },
+        {
+          "name": "container-resource-namespace {\"level\":\"trace\",\"message\":\"trace\"}",
+          "passed": true
+        },
+        {
+          "name": "timestamp-preserved {\"level\":\"trace\",\"message\":\"trace\"}",
+          "passed": true
+        },
+        {
+          "name": "trace-severity",
+          "passed": true
+        },
+        {
+          "name": "container-resource-UID {\"level\":\"critical\",\"message\":\"fatal\"}",
+          "passed": true
+        },
+        {
+          "name": "container-resource-namespace {\"level\":\"critical\",\"message\":\"fatal\"}",
+          "passed": true
+        },
+        {
+          "name": "timestamp-preserved {\"level\":\"critical\",\"message\":\"fatal\"}",
+          "passed": true
+        },
+        {
+          "name": "fatal-severity",
+          "passed": true
+        },
+        {
+          "name": "container-resource-UID {\"level\": \"INFO\", \"message\": \"docker\"}",
+          "passed": true
+        },
+        {
+          "name": "container-resource-namespace {\"level\": \"INFO\", \"message\": \"docker\"}",
+          "passed": true
+        },
+        {
+          "name": "timestamp-preserved {\"level\": \"INFO\", \"message\": \"docker\"}",
+          "passed": true
+        },
+        {
+          "name": "Docker-envelope-decoded",
+          "passed": true
+        }
+      ],
+      "stateDirectory": "/home/atomoh/kubernetes-docs/.vitepress/cache/observability-collectors-audit/otel-file-proof-bxe8qn7d",
+      "limits": [
+        "Local synthetic files only; Kubernetes enrichment removed from executable fixture.",
+        "Exporter replaced with local file; production mTLS/OTLP/Loki delivery not executed.",
+        "start_at=beginning and100msbatch are test-only; no real node logs/credentials consumed."
+      ]
+    },
+    "nativeAlloy": {
+      "status": "PASS",
+      "version": "1.19.2",
+      "records": 6,
+      "cases": [
+        "CRIpartialrecombine",
+        "traceIDretained",
+        "plaintextretained",
+        "malformedJSONretained",
+        "boundedseveritylabels",
+        "filenameexcludedPodmetadataretained"
+      ],
+      "entries": [
+        {
+          "entry": "{\"level\":\"error\",\"message\":\"partial\",\"trace_id\":\"0123456789abcdef0123456789abcdef\"}",
+          "level": "ERROR",
+          "labels": "{container=\"api\", level=\"ERROR\", namespace=\"production\", pod=\"api-0\", service_name=\"api\", stream=\"stdout\"}"
+        },
+        {
+          "entry": "plain log",
+          "level": "UNKNOWN",
+          "labels": "{container=\"api\", level=\"UNKNOWN\", namespace=\"production\", pod=\"api-0\", service_name=\"api\", stream=\"stdout\"}"
+        },
+        {
+          "entry": "{not json",
+          "level": "UNKNOWN",
+          "labels": "{container=\"api\", level=\"UNKNOWN\", namespace=\"production\", pod=\"api-0\", service_name=\"api\", stream=\"stdout\"}"
+        },
+        {
+          "entry": "{\"level\":true,\"message\":\"typed\"}",
+          "level": "UNKNOWN",
+          "labels": "{container=\"api\", level=\"UNKNOWN\", namespace=\"production\", pod=\"api-0\", service_name=\"api\", stream=\"stdout\"}"
+        },
+        {
+          "entry": "{\"level\":\"warn\",\"message\":\"warning\"}",
+          "level": "WARN",
+          "labels": "{container=\"api\", level=\"WARN\", namespace=\"production\", pod=\"api-0\", service_name=\"api\", stream=\"stdout\"}"
+        },
+        {
+          "entry": "{\"level\":\"info\",\"message\":\"last\"}",
+          "level": "INFO",
+          "labels": "{container=\"api\", level=\"INFO\", namespace=\"production\", pod=\"api-0\", service_name=\"api\", stream=\"stdout\"}"
+        }
+      ],
+      "limits": "SyntheticCRIfile/localEchoonly;noK8sAPI/mTLS/Lokidelivery;usage reportingdisabled"
+    },
+    "nativeLua": {
+      "status": "PASS",
+      "native": "systemLua5.4",
+      "scriptSha256": "bccf3ba07651ee122835a76a8fe79028b9261aa3461b8f08c774ab4f24dd7ed0",
+      "assertions": 8,
+      "cases": [
+        "preserveoriginaltimestampcode2",
+        "droprawduplicate",
+        "nested/case-insensitiveknownkeys",
+        "arraykeys",
+        "preserveunrelatedfields",
+        "plaintextlimitationexplicit",
+        "typedlevel/logs",
+        "depthbound"
+      ],
+      "limits": "NotFluentBitLuaJITembedding;notgeneralPIIsanitizer;free-textmessagevaluesmaycontainsecrets;originalfilesnotrewritten"
+    },
+    "nativeRouting": {
+      "status": "PASS",
+      "collector": "0.160.0",
+      "records": 5,
+      "outputs": {
+        "mysql": [
+          "fixture-mysql"
+        ],
+        "nginx": [
+          "fixture-nginx"
+        ],
+        "app": [
+          "fixture-app"
+        ],
+        "other": [
+          "fixture-unknown",
+          "fixture-None"
+        ]
+      },
+      "response": "{\"partialSuccess\":{}}",
+      "stateDirectory": "/home/atomoh/kubernetes-docs/.vitepress/cache/observability-collectors-audit/routing-proof-hw68se59",
+      "limits": "SyntheticloopbackOTLPJSON/localfileexportersonly;noK8s/cloud/ClickHouse/sinkcredentials;resource.logtypeisproducer-suppliedclassification"
+    },
+    "kubernetes": {
+      "version": "1.36.2",
+      "scope": "6resourcesOpenAPIshape;notadmission/mountpermissions/imageexecution",
+      "results": [
+        {
+          "kind": "Namespace",
+          "name": "logging",
+          "passed": true
+        },
+        {
+          "kind": "ServiceAccount",
+          "name": "fluent-bit",
+          "passed": true
+        },
+        {
+          "kind": "ClusterRole",
+          "name": "log-collector-fluent-bit",
+          "passed": true
+        },
+        {
+          "kind": "ClusterRoleBinding",
+          "name": "log-collector-fluent-bit",
+          "passed": true
+        },
+        {
+          "kind": "ConfigMap",
+          "name": "fluent-bit-config",
+          "passed": true
+        },
+        {
+          "kind": "DaemonSet",
+          "name": "fluent-bit",
+          "passed": true
+        }
+      ]
+    },
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "SixinlineMermaidgraphsparsed/renderedinnativebrowser;privateSVG/PNG;no sitebuild/server",
+      "results": [
+        {
+          "path": "en/observability/logging/05-collectors.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 4,
+          "edges": 3,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "en/observability/logging/05-collectors.md",
+          "index": 1,
+          "parsed": true,
+          "nodes": 11,
+          "edges": 10,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "en/observability/logging/05-collectors.md",
+          "index": 2,
+          "parsed": true,
+          "nodes": 4,
+          "edges": 3,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/logging/05-collectors.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 4,
+          "edges": 3,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/logging/05-collectors.md",
+          "index": 1,
+          "parsed": true,
+          "nodes": 11,
+          "edges": 10,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/logging/05-collectors.md",
+          "index": 2,
+          "parsed": true,
+          "nodes": 4,
+          "edges": 3,
+          "errors": [],
+          "passed": true
+        }
+      ]
+    },
+    "externalReferences": [
+      {
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html",
+        "bytes": 47738
+      },
+      {
+        "url": "https://github.com/fluent/fluent-bit/blob/v5.1.2/plugins/out_loki/loki.c",
+        "status": 200,
+        "finalURL": "https://github.com/fluent/fluent-bit/blob/v5.1.2/plugins/out_loki/loki.c",
+        "bytes": 897356
+      },
+      {
+        "url": "https://github.com/fluent/fluent-bit/tree/v5.1.2",
+        "status": 200,
+        "finalURL": "https://github.com/fluent/fluent-bit/tree/v5.1.2",
+        "bytes": 435450
+      },
+      {
+        "url": "https://github.com/grafana/loki/blob/v2.9.4/LICENSING.md",
+        "status": 200,
+        "finalURL": "https://github.com/grafana/loki/blob/v2.9.4/LICENSING.md",
+        "bytes": 237975
+      },
+      {
+        "url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/connector/routingconnector/README.md",
+        "status": 200,
+        "finalURL": "https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/connector/routingconnector/README.md",
+        "bytes": 442544
+      },
+      {
+        "url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/receiver/filelogreceiver/README.md",
+        "status": 200,
+        "finalURL": "https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/receiver/filelogreceiver/README.md",
+        "bytes": 449660
+      },
+      {
+        "url": "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/tag/v0.160.0",
+        "status": 200,
+        "finalURL": "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/tag/v0.160.0",
+        "bytes": 217676
+      },
+      {
+        "url": "https://github.com/open-telemetry/opentelemetry-collector/blob/v0.160.0/processor/memorylimiterprocessor/README.md",
+        "status": 200,
+        "finalURL": "https://github.com/open-telemetry/opentelemetry-collector/blob/v0.160.0/processor/memorylimiterprocessor/README.md",
+        "bytes": 298408
+      },
+      {
+        "url": "https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.kubernetes/",
+        "status": 200,
+        "finalURL": "https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.kubernetes/",
+        "bytes": 235624
+      },
+      {
+        "url": "https://grafana.com/docs/alloy/latest/reference/components/loki/loki.write/",
+        "status": 200,
+        "finalURL": "https://grafana.com/docs/alloy/latest/reference/components/loki/loki.write/",
+        "bytes": 243271
+      },
+      {
+        "url": "https://grafana.com/docs/alloy/latest/set-up/migrate/from-promtail/",
+        "status": 200,
+        "finalURL": "https://grafana.com/docs/alloy/latest/set-up/migrate/from-promtail/",
+        "bytes": 223632
+      },
+      {
+        "url": "https://grafana.com/docs/loki/latest/send-data/promtail/",
+        "status": 200,
+        "finalURL": "https://grafana.com/docs/loki/latest/send-data/promtail/",
+        "bytes": 167203
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-0.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-0.html",
+        "bytes": 714798
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-1.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-1.html",
+        "bytes": 707047
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-05-collectors-0.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-05-collectors-0.html",
+        "bytes": 714900
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-05-collectors-1.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-05-collectors-1.html",
+        "bytes": 707225
+      },
+      {
+        "url": "https://www.cncf.io/projects/opentelemetry/",
+        "status": 200,
+        "finalURL": "https://www.cncf.io/projects/opentelemetry/",
+        "bytes": 187264
+      }
+    ],
+    "localTargets": [
+      "en/.gitbook/assets/en-observability-logging-05-collectors-0.png",
+      "en/.gitbook/assets/en-observability-logging-05-collectors-1.png",
+      "en/observability/logging/03-cloudwatch-logs.md",
+      "en/observability/logging/02-opensearch.md",
+      "en/quizzes/observability/logging/05-collectors-quiz.md",
+      "en/observability/logging/05-collectors.md",
+      "ko/.gitbook/assets/ko-observability-logging-05-collectors-0.png",
+      "ko/.gitbook/assets/ko-observability-logging-05-collectors-1.png",
+      "ko/observability/logging/03-cloudwatch-logs.md",
+      "ko/observability/logging/02-opensearch.md",
+      "ko/quizzes/observability/logging/05-collectors-quiz.md",
+      "ko/observability/logging/05-collectors.md"
+    ],
+    "counts": {
+      "documents": 4,
+      "answers": 20,
+      "choices": 80,
+      "staticChecks": 70,
+      "nativeConfigs": 3,
+      "otelRecords": 8,
+      "otelAssertions": 33,
+      "alloyRecords": 6,
+      "alloyCases": 6,
+      "luaAssertions": 8,
+      "routingRecords": 5,
+      "routingDestinations": 4,
+      "kubernetesResources": 6,
+      "mermaidGraphs": 6,
+      "originalPNGsViewed": 10,
+      "newMermaidPNGsViewed": 6,
+      "preservedGuideIDs": 64
+    },
+    "limits": [
+      "No actualKubernetesdeployment/metadataAPI,FluentBitcontainerexecution,mTLSgateway,AWSsink,HAorcapacitytest.",
+      "FluentBitpluginoptions/imagecheckedagainstofficialsource/digest;Lua5.4interpretertestsarenotLuaJITembeddingtests.",
+      "Alloy/OTelnativerunsusedsyntheticlocalfiles/Echo/fileexporters;K8sdiscovery/enrichmentandremotesinkswerereplacedonlyinthetestfixtures.",
+      "Pallasv2benchmarksourcecouldnotbecorroborated;originalnumberspreservedinevidencesnapshot,nocurrentperformanceguaranteeornewhistoricalversioninvented.",
+      "Oldimageassets/foreigntranslationsnotedited;inaccurateEN/KOrefsreplacedwithsourceMermaid."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/logging/05-collectors.md",
+        "sha256": "3e1091fd10364f07a74bc5ea9cb3dac50deaf17f5ae4939b3d7d3af548539613",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "log-collectors-comparison"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h3",
+            "id": "log-collector-role"
+          },
+          {
+            "tag": "h3",
+            "id": "core-functions"
+          },
+          {
+            "tag": "h2",
+            "id": "fluentbit"
+          },
+          {
+            "tag": "h3",
+            "id": "overview-1"
+          },
+          {
+            "tag": "h3",
+            "id": "architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "complete-configuration-example"
+          },
+          {
+            "tag": "h3",
+            "id": "parser-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "lua-script-example"
+          },
+          {
+            "tag": "h3",
+            "id": "daemonset-deployment"
+          },
+          {
+            "tag": "h2",
+            "id": "promtail"
+          },
+          {
+            "tag": "h3",
+            "id": "overview-2"
+          },
+          {
+            "tag": "h3",
+            "id": "architecture-1"
+          },
+          {
+            "tag": "h3",
+            "id": "complete-configuration-example-1"
+          },
+          {
+            "tag": "h3",
+            "id": "pipeline-stage-details"
+          },
+          {
+            "tag": "h3",
+            "id": "daemonset-deployment-1"
+          },
+          {
+            "tag": "h2",
+            "id": "grafana-alloy"
+          },
+          {
+            "tag": "h3",
+            "id": "overview-3"
+          },
+          {
+            "tag": "h3",
+            "id": "river-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "migrating-from-promtail"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry-collector"
+          },
+          {
+            "tag": "h3",
+            "id": "overview-4"
+          },
+          {
+            "tag": "h3",
+            "id": "architecture-2"
+          },
+          {
+            "tag": "h3",
+            "id": "complete-configuration-example-2"
+          },
+          {
+            "tag": "h3",
+            "id": "routing-connector"
+          },
+          {
+            "tag": "h3",
+            "id": "log-level-pool-separation-large-scale-environments"
+          },
+          {
+            "tag": "h2",
+            "id": "comparison-and-selection-guide"
+          },
+          {
+            "tag": "h3",
+            "id": "feature-comparison-table"
+          },
+          {
+            "tag": "h3",
+            "id": "recommendations-by-use-case"
+          },
+          {
+            "tag": "h3",
+            "id": "decision-flow"
+          },
+          {
+            "tag": "h2",
+            "id": "references-and-validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "log-collectors-comparison",
+          "table-of-contents",
+          "overview",
+          "log-collector-role",
+          "core-functions",
+          "fluentbit",
+          "overview-1",
+          "architecture",
+          "complete-configuration-example",
+          "parser-configuration",
+          "lua-script-example",
+          "daemonset-deployment",
+          "promtail",
+          "overview-2",
+          "architecture-1",
+          "mermaid-345",
+          "complete-configuration-example-1",
+          "pipeline-stage-details",
+          "daemonset-deployment-1",
+          "grafana-alloy",
+          "overview-3",
+          "river-configuration",
+          "migrating-from-promtail",
+          "opentelemetry-collector",
+          "overview-4",
+          "architecture-2",
+          "mermaid-555",
+          "complete-configuration-example-2",
+          "routing-connector",
+          "log-level-pool-separation-large-scale-environments",
+          "comparison-and-selection-guide",
+          "feature-comparison-table",
+          "recommendations-by-use-case",
+          "decision-flow",
+          "mermaid-850",
+          "references-and-validation-scope",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/logging/05-collectors.md",
+        "sha256": "ccc06fa2ba188ba1c404be4abc3a3719296d9fe552179e2242fc696559a530be",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "로그-수집기-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h3",
+            "id": "로그-수집기-역할"
+          },
+          {
+            "tag": "h3",
+            "id": "핵심-기능"
+          },
+          {
+            "tag": "h2",
+            "id": "fluentbit"
+          },
+          {
+            "tag": "h3",
+            "id": "개요-1"
+          },
+          {
+            "tag": "h3",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "전체-설정-예시"
+          },
+          {
+            "tag": "h3",
+            "id": "파서-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "lua-스크립트-예시"
+          },
+          {
+            "tag": "h3",
+            "id": "daemonset-배포"
+          },
+          {
+            "tag": "h2",
+            "id": "promtail"
+          },
+          {
+            "tag": "h3",
+            "id": "개요-2"
+          },
+          {
+            "tag": "h3",
+            "id": "아키텍처-1"
+          },
+          {
+            "tag": "h3",
+            "id": "전체-설정-예시-1"
+          },
+          {
+            "tag": "h3",
+            "id": "파이프라인-스테이지-상세"
+          },
+          {
+            "tag": "h3",
+            "id": "daemonset-배포-1"
+          },
+          {
+            "tag": "h2",
+            "id": "grafana-alloy"
+          },
+          {
+            "tag": "h3",
+            "id": "개요-3"
+          },
+          {
+            "tag": "h3",
+            "id": "river-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "promtail에서-마이그레이션"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry-collector"
+          },
+          {
+            "tag": "h3",
+            "id": "개요-4"
+          },
+          {
+            "tag": "h3",
+            "id": "아키텍처-2"
+          },
+          {
+            "tag": "h3",
+            "id": "전체-설정-예시-2"
+          },
+          {
+            "tag": "h3",
+            "id": "routing-connector"
+          },
+          {
+            "tag": "h3",
+            "id": "로그-레벨별-pool-분리-대규모-환경"
+          },
+          {
+            "tag": "h2",
+            "id": "비교-및-선택-가이드"
+          },
+          {
+            "tag": "h3",
+            "id": "기능-비교표"
+          },
+          {
+            "tag": "h3",
+            "id": "사용-사례별-권장"
+          },
+          {
+            "tag": "h3",
+            "id": "의사결정-플로우"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료와-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "로그-수집기-비교",
+          "목차",
+          "개요",
+          "로그-수집기-역할",
+          "핵심-기능",
+          "fluentbit",
+          "개요-1",
+          "아키텍처",
+          "전체-설정-예시",
+          "파서-설정",
+          "lua-스크립트-예시",
+          "daemonset-배포",
+          "promtail",
+          "개요-2",
+          "아키텍처-1",
+          "mermaid-345",
+          "전체-설정-예시-1",
+          "파이프라인-스테이지-상세",
+          "daemonset-배포-1",
+          "grafana-alloy",
+          "개요-3",
+          "river-설정",
+          "promtail에서-마이그레이션",
+          "opentelemetry-collector",
+          "개요-4",
+          "아키텍처-2",
+          "mermaid-555",
+          "전체-설정-예시-2",
+          "routing-connector",
+          "로그-레벨별-pool-분리-대규모-환경",
+          "비교-및-선택-가이드",
+          "기능-비교표",
+          "사용-사례별-권장",
+          "의사결정-플로우",
+          "mermaid-850",
+          "참고-자료와-검증-범위",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/logging/05-collectors-quiz.md",
+        "sha256": "5ef8e8bd6af23a441b5f183d1efad678fff301f58bb09428cfc9438f2e95a0a7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "log-collectors-comparison-quiz"
+          }
+        ],
+        "renderedIds": [
+          "log-collectors-comparison-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/logging/05-collectors-quiz.md",
+        "sha256": "c5200891c0e4493052ea9f8db827209e636d9126c16437f6ffebce3f9131b051",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "로그-수집기-비교-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "로그-수집기-비교-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://api.github.com/repos/grafana/alloy/releases/latest",
+      "cacheKey": "14ad293c9661",
+      "fetchedAt": "2026-09-13T06:12:20.376965+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/grafana/alloy/releases/latest",
+      "sha256": "6657231add8faae0fe2a1d896656b989a86f088859b67a03405bc0f778b4a0ae"
+    },
+    {
+      "url": "https://api.github.com/repos/open-telemetry/opentelemetry-collector-releases/releases/latest",
+      "cacheKey": "dcab73a93206",
+      "fetchedAt": "2026-09-13T06:12:21.004765+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/open-telemetry/opentelemetry-collector-releases/releases/latest",
+      "sha256": "73c234b8fff26ebfa7171ef0ba8e357d750f4442743e8d42b9a7e380b2fa587c"
+    },
+    {
+      "url": "https://api.github.com/repos/fluent/fluent-bit/releases/latest",
+      "cacheKey": "4706751a8196",
+      "fetchedAt": "2026-09-13T06:12:20.665580+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/fluent/fluent-bit/releases/latest",
+      "sha256": "2853a291da7e0c1f7dbac1bc814da3c9ced39846b6c83f7e0e92141b9402ab6a"
+    },
+    {
+      "url": "https://grafana.com/docs/loki/latest/send-data/promtail/",
+      "cacheKey": "202de6653ee5",
+      "fetchedAt": "2026-09-13T06:12:20.912079+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/loki/latest/send-data/promtail/",
+      "sha256": "ccd7dc66bbfa6cb4daa75bb4dfdc2b8bc789914e8f0e732f803361d6e95753f2"
+    },
+    {
+      "url": "https://www.cncf.io/projects/fluentd/",
+      "cacheKey": "3a2894fd26d4",
+      "fetchedAt": "2026-09-13T06:12:21.801758+00:00",
+      "status": 200,
+      "finalURL": "https://www.cncf.io/projects/fluentd/",
+      "sha256": "d52386c3030f66c0a8c806c0f067fe795a7576afbfb153df86395892f595615b"
+    },
+    {
+      "url": "https://www.cncf.io/projects/opentelemetry/",
+      "cacheKey": "7a787d2453f1",
+      "fetchedAt": "2026-09-13T06:12:21.518793+00:00",
+      "status": 200,
+      "finalURL": "https://www.cncf.io/projects/opentelemetry/",
+      "sha256": "41a9b2153d5393dc7bfa2bcd49027824815ebff9d79f72a9917b3f7568e0f02b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/README.md",
+      "cacheKey": "7096c90ab632",
+      "fetchedAt": "2026-09-13T06:14:45.470829+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/README.md",
+      "sha256": "9949b08beeb096af9770e3197ed2d2a0f26aa7829ea6582be12bb35e5b2c1468"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/components/loki/loki.source.kubernetes.md",
+      "cacheKey": "987935d0ba7f",
+      "fetchedAt": "2026-09-13T06:16:17.284174+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/components/loki/loki.source.kubernetes.md",
+      "sha256": "149f7e3b4c761809869bc4af9e91eb4263361bcce9f29a5d35e8bbb30b68592f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/components/loki/loki.process.md",
+      "cacheKey": "41d412ffc5b9",
+      "fetchedAt": "2026-09-13T06:16:17.331821+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/components/loki/loki.process.md",
+      "sha256": "9a5b5594db2360d375caca0902b860ddff11dbc481bbd4e8c96def9b43f61275"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/components/local/local.file.md",
+      "cacheKey": "990e6759170f",
+      "fetchedAt": "2026-09-13T06:16:17.564715+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/components/local/local.file.md",
+      "sha256": "42024f5ca383fd108df8d4618f157ceea6f557faba0ffaa945abaaa662b2e057"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/connector/routingconnector/README.md",
+      "cacheKey": "0869763f2a56",
+      "fetchedAt": "2026-09-13T06:16:17.563724+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/connector/routingconnector/README.md",
+      "sha256": "8ceb6a08d05c124d41886fb8c94f5a0dc3208edad3507b52e8ec5523932ef25c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/receiver/filelogreceiver/README.md",
+      "cacheKey": "7a70613b1872",
+      "fetchedAt": "2026-09-13T06:16:17.824219+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/receiver/filelogreceiver/README.md",
+      "sha256": "5d4fa2ff6524f192a9f937dcefa1fc8264cdc450d2799bdf7d4df88d483605ca"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector/v0.160.0/processor/memorylimiterprocessor/README.md",
+      "cacheKey": "61db36889c41",
+      "fetchedAt": "2026-09-13T06:18:30.016971+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector/v0.160.0/processor/memorylimiterprocessor/README.md",
+      "sha256": "c684265071b4e453ae1b9af4ab3a9b30a367d0c0da3f15f6334a958674b34e46"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/processor/filterprocessor/README.md",
+      "cacheKey": "f3195f9b7860",
+      "fetchedAt": "2026-09-13T06:18:30.048174+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/processor/filterprocessor/README.md",
+      "sha256": "57bb1798ea5142330191e4e6ff39125429d48e5baf21437677287b598406e38e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/cli/convert.md",
+      "cacheKey": "cfa2399eab69",
+      "fetchedAt": "2026-09-13T06:18:30.259128+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/cli/convert.md",
+      "sha256": "1a66fa987159214bde17e12de84f1173622d0b2d6ad1baedd9b7f1742c7ea8be"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/set-up/migrate/from-promtail.md",
+      "cacheKey": "f78373d5da38",
+      "fetchedAt": "2026-09-13T06:18:30.289296+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/set-up/migrate/from-promtail.md",
+      "sha256": "70e4e489d01fbb5f2de1828258e96d53e6a7303161ca32793388ea32c9bd0e47"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/plugins/filter_lua/lua.c",
+      "cacheKey": "fbc16fd21993",
+      "fetchedAt": "2026-09-13T06:18:30.521738+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/plugins/filter_lua/lua.c",
+      "sha256": "fef40ad048189371c0a47bc3cce6d709053ff1bf1843d4a9973075453742d713"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/components/loki/loki.write.md",
+      "cacheKey": "4082eaec67cc",
+      "fetchedAt": "2026-09-13T06:17:41.338111+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/components/loki/loki.write.md",
+      "sha256": "ff429bdb59e84bfb7c20fa06ef4cb9cd5217593711d1817acaa50bbad9df187a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/extension/storage/filestorage/README.md",
+      "cacheKey": "c2539ed49254",
+      "fetchedAt": "2026-09-13T06:17:41.153048+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/extension/storage/filestorage/README.md",
+      "sha256": "ba6b58efb9ed9a6bbb7e9a684733d7ae2a2a7cd1764915ce00aa37d8234d14bd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/plugins/out_loki/loki.c",
+      "cacheKey": "2499cf9c1073",
+      "fetchedAt": "2026-09-13T06:17:02.361677+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/plugins/out_loki/loki.c",
+      "sha256": "2d4689685d0fda3c2a3a1f42770c990b133377bf429ce8300e649292b989f296"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/plugins/out_cloudwatch_logs/cloudwatch_logs.c",
+      "cacheKey": "26584c1a32c7",
+      "fetchedAt": "2026-09-13T06:17:01.764666+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/plugins/out_cloudwatch_logs/cloudwatch_logs.c",
+      "sha256": "98e2da8ec3dbad7cd8488bff6ade080113d69ae65a902d5de60084a7a9cbcb68"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/plugins/out_s3/s3.c",
+      "cacheKey": "da1ff4162c54",
+      "fetchedAt": "2026-09-13T06:17:02.035601+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/plugins/out_s3/s3.c",
+      "sha256": "26cba49608ffc7829cd5f08682a3c29b99a7eda3b1e223444cc0b8967dbcfcd1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/components/loki/loki.echo.md",
+      "cacheKey": "637cf535ffe0",
+      "fetchedAt": "2026-09-13T06:28:57.091964+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/components/loki/loki.echo.md",
+      "sha256": "6d66039b0f8be0a2fe081d6c3d50bb00dabbf456e3e7936b75b161bd04ae08c9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/cli/run.md",
+      "cacheKey": "1c3fcec9dbc1",
+      "fetchedAt": "2026-09-13T06:28:57.231121+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/alloy/v1.19.2/docs/sources/reference/cli/run.md",
+      "sha256": "e87f93098aba6f09a746b35a6fd80ef361a93c77ed6ff3ba45bea105ba7e30ad"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/LICENSING.md",
+      "cacheKey": "44ad352fb103",
+      "fetchedAt": "2026-09-13T06:51:25.242821+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/loki/v3.7.7/LICENSING.md",
+      "sha256": "c1aaff28cf56f479037e014903ee05600511cb88daf113254e4e1f982fec9a7f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/loki/v2.9.4/LICENSING.md",
+      "cacheKey": "5aa7ac3aee4e",
+      "fetchedAt": "2026-09-13T06:51:26.192764+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/loki/v2.9.4/LICENSING.md",
+      "sha256": "b7267a59d7e5fd6bedd704a2413ddd2c2054920cb894b023dfcc35be3ad2196b"
+    },
+    {
+      "url": "https://hub.docker.com/v2/repositories/fluent/fluent-bit/tags/5.1.2",
+      "cacheKey": "5b983779753b",
+      "fetchedAt": "2026-09-13T06:39:28.097096+00:00",
+      "status": 200,
+      "finalURL": "https://hub.docker.com/v2/repositories/fluent/fluent-bit/tags/5.1.2",
+      "sha256": "bf9bab6d7eb6a2852f143c9560c3bfd0c29b795dcd8cc0feea684048f4072d8b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/dockerfiles/Dockerfile",
+      "cacheKey": "8ba04d9470c3",
+      "fetchedAt": "2026-09-13T06:40:34.218997+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit/v5.1.2/dockerfiles/Dockerfile",
+      "sha256": "a39aa0bf040d21a900ab4019b5243cd68ccac036a0e8adfd5cb242f617bc1ccc"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html",
+      "cacheKey": "13c047a8c6d3",
+      "fetchedAt": "2026-09-13T06:39:28.322983+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html",
+      "sha256": "1b11aecb09f61e3a4aab7f7d61a1db50fdb3c0b06f707ba1fac45f7d0b06f152"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "cacheKey": "231ba2678238",
+      "fetchedAt": "2026-09-13T06:39:28.544799+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "sha256": "4e90c68d514f556e88e5f862e619d0cd3884e1454c02d1d3c9a219ff1bb31d2e"
+    }
+  ],
+  "findings": [
+    "Entire4originalMarkdownsourcesread:ENguide1363/KOguide1546/193eachquiz=3295lines,includingKO-onlystagecatalog/migration/Syslogmaterial;alloriginalsnapshotsand64guideheadingIDspreserved.",
+    "PromtailEOLMarch2,2026verifiedagainstofficialdocs;replacednewinstallation/keep-existingrecommendationswithmaintainedclientmigration;lambda-promtailexceptionnoted.",
+    "UpdatedreviewbaselinesFluentBit5.1.2,Alloy1.19.2,OTelContrib0.160.0andcurrentCNCFOpenTelemetryGraduatedMay11,2026;FluentBitbelongsgraduatedFluentdecosystem. Didnotequatedistributiontagswithembeddedversions.",
+    "CorrectedFluentBitnativeClokioptionnames(line_format,tenant_id,auto_kubernetes_labels),removedGo-pluginBatchWait/BatchSize/CamelCaseconfusionandunsupportedcloudwatchcompressclaim. ExplicitoutputmatchingforoptionalsystemdandseparateS3bufferingdescribed.",
+    "FluentBitstateDB/chunksmovedoffread-onlyvarlog;explicitbinary/configarguments,Health_Check,45sPodgracevs30sagentgrace,ServiceAccount/RBAC,ConfigMapcreationandmTLSSecretmounts. NodedefaultsystemcriticalPriorityClass;Linux/Windows/Fargate/AutoModeboundariesclarified.",
+    "OriginalLuafailedtomaskJSONquotedpasswordandlog_processedcopy,andbooleanlevelraiseserror;nativeLua5.4reproducedall3. Newknownstructured-keyredactionremovesrawduplicate,guards types/depthandpreservestimestampviareturn2;explicitnotgeneralPII/failclosedboundary.",
+    "AlloyoriginalfileandAPIreaderscouldduplicatePodlogs;newfilepathusesNodeName-filtereddiscovery,CRIreassembly,normalizationbeforelabels,boundedseveritylabelsetandno filename label. APIalternativeexcludesruntimeenvelopestageandrequiresownership/clustering.",
+    "Alloyenv()isdeprecatedbutnotremoved;currentloki.writeWALexistsbutexperimental/offbydefault. Promtailconversionnativelypassesbutwarns globalratelimitbecomesperpipeline,owntracingmanualandselfmetricsdifferent;donotclaimequivalentdelivery.",
+    "CorrectedPromtaildropvsAlloystage.dropsyntaxandKO-onlystagecatalog;packisJSONpackingnotnativestructuredmetadata;notallparsersappliedsequentially. Sourcepositionsnotbackendacknowledgement.",
+    "ActualOTel0.160validatorrejectedremovedlokiexporterandtelemetry.metrics.address. NewOTLPHTTP/Lokiendpoint,metricsreaders,containeroperator,resourcePodUIDassociation,file_storageoffsets/queue andboundedretryconfigvalidate;clusterwideeventcollectionseparatedfromnodeagents.",
+    "ActualOTelruntime8syntheticCRI/Dockerrecords/33assertionsverifyrecombination,metadata,typedseverity,plaintext/malformedretention;K8senrichmentandremotesinkexplicitlyexcludedfromfixture. ActualAlloy6records6casesandLua8assertionspassed.",
+    "Routingstatementroute()remainsvalidin0.160(nativeproof);conditionpreferrednotfalselycalledremoved. Completeindependentloopbackroutingdemohasfallbackandallcomponents;5recordsto4localdestinationsverified. Routingisnotbroker/tenantisolationortransactionalfanout.",
+    "Replacedinvalidresource-poolDeploymentstubs/reservedsystemPriorityClassguaranteeswithexplicitobjectives/capacity/isolationguidance. MemorylimiterisretryablebackpressurenotabsoluteOOMprotection;finitequeues/retriescanlose data.",
+    "Removedunsupporteduniversal10MB/eventspercore/40-60percent/18xperformanceclaims. OriginalPallasv2attribution/16.5-to300MBps/150-to4000eventspercorepreservedinauditsnapshotsbutprimarysourceunverified;no historicalversion/dateinvented. Conditional1000/150batcharithmeticretainedwithassumptions.",
+    "OfficialLokiLICENSINGv2.9.4andv3.7.7listclients/underApache2;oldPromtailAGPLcardincorrect. Viewed10oldPNGs;replacedEN/KOfiguretypes2/3/4(withwronglicense,removedexporter/performance,keepPromtailrecommendation)with6validatedMermaidgraphs;retainedtypes0/1conceptually;assets/foreigntranslationsuntouched.",
+    "Rewrote20quizanswers80choices,recognizedLastUpdatedmetadata,17externalreferencesHTTP200,localpathsandcurrentMarkdown/Vuepassed. Nofullsitebuild/cloudmutation/actualcluster/gateway/AWSsinkexecution."
+  ],
+  "figures": {
+    "originals": [
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-05-collectors-0.png",
+        "sha256": "78ec745af077bee622bd6d0bd41dbadee9c91dee075cd9b8e6e3d598f5ba7dba",
+        "disposition": "retain-conceptual-or-historical-with-caption"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-05-collectors-1.png",
+        "sha256": "23e9c15b6c0c58caff57e8e8a4b465e7d9b39550a1e2ea34cef34c12ac60653c",
+        "disposition": "retain-conceptual-or-historical-with-caption"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-05-collectors-2.png",
+        "sha256": "1e4efd3193a8768eb595f1ad818da096355e0f7ee759442edbd6784b93c3dc2c",
+        "disposition": "replace-reference-with-correct-historical-Mermaid-and-license"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-05-collectors-3.png",
+        "sha256": "c4b3c4a91ab5497ee69b9a11a226f09ae8362c8f42b7f50a658bc0705c610841",
+        "disposition": "replace-reference-with-correct-Mermaid"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-05-collectors-4.png",
+        "sha256": "1d4de88ffcb68ccb4a2b3302f26d8e302b3268ecebac912d528cdbbdd2b3d01f",
+        "disposition": "replace-reference-with-correct-Mermaid"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-05-collectors-0.png",
+        "sha256": "01a6d9eda7ac23150521bbb84d61222983255ff94f309e8cdbd036de00ced507",
+        "disposition": "retain-conceptual-or-historical-with-caption"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-05-collectors-1.png",
+        "sha256": "795c54b9d186158f2b70b72b6239dff35c71bf51f244c2a4b70f6446fda66aef",
+        "disposition": "retain-conceptual-or-historical-with-caption"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-05-collectors-2.png",
+        "sha256": "607b56bbb5530fad07880b6f9ae8f408a88f56277d74486d863b8df2433addc2",
+        "disposition": "replace-reference-with-correct-historical-Mermaid-and-license"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-05-collectors-3.png",
+        "sha256": "9f457bc348c2d2c73982f29ceebcbe2677db5d284f5d6cf8887c49e8934048f0",
+        "disposition": "replace-reference-with-correct-Mermaid"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-05-collectors-4.png",
+        "sha256": "cab045dc57731f637889ba62c3cac4f2483dcad155aec708213d0434e2f76c82",
+        "disposition": "replace-reference-with-correct-Mermaid"
+      }
+    ],
+    "replacement": {
+      "version": "11.16.0",
+      "scope": "SixinlineMermaidgraphsparsed/renderedinnativebrowser;privateSVG/PNG;no sitebuild/server",
+      "results": [
+        {
+          "path": "en/observability/logging/05-collectors.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 4,
+          "edges": 3,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "en/observability/logging/05-collectors.md",
+          "index": 1,
+          "parsed": true,
+          "nodes": 11,
+          "edges": 10,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "en/observability/logging/05-collectors.md",
+          "index": 2,
+          "parsed": true,
+          "nodes": 4,
+          "edges": 3,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/logging/05-collectors.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 4,
+          "edges": 3,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/logging/05-collectors.md",
+          "index": 1,
+          "parsed": true,
+          "nodes": 11,
+          "edges": 10,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/logging/05-collectors.md",
+          "index": 2,
+          "parsed": true,
+          "nodes": 4,
+          "edges": 3,
+          "errors": [],
+          "passed": true
+        }
+      ]
+    },
+    "newPersonallyViewed": [
+      "figures/en-0.png",
+      "figures/en-1.png",
+      "figures/en-2.png",
+      "figures/ko-0.png",
+      "figures/ko-1.png",
+      "figures/ko-2.png"
+    ],
+    "scopeExternalFollowup": "Originalfigures2/3/4andforeigntranslationreferencesremainoutsideworkerwrites;parentautomatedsource-sync/backfillshouldapplycorrectedEN/KOsemantics."
+  },
+  "artifactDirectory": ".vitepress/cache/observability-collectors-audit",
+  "limits": [
+    "No actualKubernetesdeployment/metadataAPI,FluentBitcontainerexecution,mTLSgateway,AWSsink,HAorcapacitytest.",
+    "FluentBitpluginoptions/imagecheckedagainstofficialsource/digest;Lua5.4interpretertestsarenotLuaJITembeddingtests.",
+    "Alloy/OTelnativerunsusedsyntheticlocalfiles/Echo/fileexporters;K8sdiscovery/enrichmentandremotesinkswerereplacedonlyinthetestfixtures.",
+    "Pallasv2benchmarksourcecouldnotbecorroborated;originalnumberspreservedinevidencesnapshot,nocurrentperformanceguaranteeornewhistoricalversioninvented.",
+    "Oldimageassets/foreigntranslationsnotedited;inaccurateEN/KOrefsreplacedwithsourceMermaid."
+  ],
+  "sourceAccessNotes": [
+    "OfficialFluentBitAmazonLinuxrepo/manualrequests403;nativecontainerexecutionnotclaimed;officialpinnedCsource/Dockerfile/imageDigestandnativeLuaused.",
+    "Pallasbenchmarkprimarysourceunavailableafterboundedsearch;Google/DDGautomatedaccessblocked/Bingirrelevant,unreferencedcompanyclaimnottreatedasverified. Originalauditvaluesretained.",
+    "Alloy/OTelreleasedarm64binariesSHA256verifiedagainstGitHubreleaseassetdigests;reusableinprivatepersistentcache;no dependencytreeinstallation."
+  ]
+}

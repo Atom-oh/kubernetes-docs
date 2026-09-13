@@ -1,193 +1,167 @@
 # 로깅 개요 퀴즈
 
-로깅 기본 개념에 대한 이해도를 테스트하는 퀴즈입니다.
+> **마지막 업데이트**: 2026년 9월 13일
 
----
+1. 구조화된 JSON log에 대한 올바른 설명은?
 
-1. 구조화된 로깅(Structured Logging)의 주요 장점이 아닌 것은?
-
-   - A) 검색 및 필터링 효율성 향상
-   - B) 로그 파일 크기 감소
-   - C) 일관된 로그 형식 유지
-   - D) 자동화된 분석 도구와의 호환성
+   - A) Parsing이 필요 없음
+   - B) 항상 byte가 더 적음
+   - C) 명시적 field가 분석을 돕지만 decoding·framing·mapping은 여전히 필요
+   - D) 모든 민감 데이터를 자동 제거
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 로그 파일 크기 감소**
+**정답: C**
 
-**설명:**
-구조화된 로깅(특히 JSON 형식)은 실제로 비구조화된 텍스트 로그보다 파일 크기가 더 클 수 있습니다. 필드명과 구분자가 추가되기 때문입니다. 구조화된 로깅의 실제 장점은 검색 효율성, 일관성, 자동화 도구 호환성입니다.
+검증한 schema와 보통 한 줄당 encoded event 하나를 사용합니다. JSON이 더 클 수 있으며 raw/parsed copy 모두 데이터 처리 정책이 필요합니다.
+
+</details>
+
+2. TRACE부터 FATAL까지의 숫자는 언제나 0부터 5인가요?
+
+   - A) 아니요. Framework마다 다르고 OpenTelemetry는 1–24 범위와 미지정 0을 사용
+   - B) 모든 언어에서 예
+   - C) Kubernetes에서만 예
+   - D) FATAL은 항상 0
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: A**
+
+임의 숫자가 아니라 의미를 mapping합니다. Level만으로 복구 가능성을 정하지 않으며 모두 WARN으로 올리면 증거가 사라질 수 있습니다.
+
+</details>
+
+3. 일반적인 Linux container log 기본 배치는?
+
+   - A) /var/log/containers가 실제 file, /var/log/pods가 symlink
+   - B) /var/log/pods가 실제 file, /var/log/containers가 호환 symlink
+   - C) 모든 runtime이 /var/lib/docker만 사용
+   - D) kubectl logs가 무제한 archive 제공
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B**
+
+기존 설명은 뒤바뀌어 있었습니다. podLogsDir/OS/runtime별 차이가 있으며 rotation과 --previous는 중앙 과거 archive가 아닙니다.
+
+</details>
+
+4. 공정한 backend 비용 비교에 필요한 것은?
+
+   - A) S3 GB 단가만
+   - B) 항상 Loki가 최저가
+   - C) 자체 운영 query는 무료로 가정
+   - D) 같은 workload에서 수집·보존/index·compute·query·request·network·복구·운영 비교
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: D**
+
+기존 2025/100-GB 예시는 단위를 섞고 재현 가능한 구성이 없었습니다. 측정 production 결과가 아니므로 날짜만 바꾸어도 고쳐지지 않습니다.
+
+</details>
+
+5. Log에 trace context를 연결하는 올바른 방법은?
+
+   - A) Record마다 무관한 ID 생성
+   - B) 실제 active context를 사용하고 예시 표현은 trace/span 32/16 hex이며 모두 0이면 안 됨
+   - C) 모든 startup record에 trace ID 필수
+   - D) Session token을 span ID로 사용
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B**
+
+Trace가 없는 event도 유효합니다. JSON field는 destination 모델로 mapping해야 하며 ID만으로 trace 생성이나 correlation이 보장되지는 않습니다.
+
+</details>
+
+6. 예시 pipeline에서 더 적절한 처리 선택은?
+
+   - A) HealthCheck가 있으면 모두 삭제
+   - B) Application JSON을 tenant identity로 신뢰
+   - C) App field와 신뢰 metadata를 분리하고 redaction/filter·offset·buffer·retry 검증
+   - D) Buffer가 모든 유실/중복을 방지한다고 가정
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C**
+
+Fluent Bit 예시는 classic-format filter fragment입니다. Keep_Log의 raw copy도 redaction 대상이며 실패 health check는 중요한 증거일 수 있습니다.
+
+</details>
+
+7. 규정 관련 retention은 어떻게 선택하나요?
+
+   - A) Record 유형·관할·계약·legal hold·승인 정책에 따라
+   - B) 모든 금융 log는 7년
+   - C) 모든 의료 log는 6년
+   - D) Backend 이름만으로 규정 준수 증명
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: A**
+
+업종 이름만으로 법 규칙이 완성되지 않습니다. Replica/object version/backup/export를 보존·삭제·접근 계획에 포함하고 복원을 시험합니다.
+
+</details>
+
+8. Sidecar와 DaemonSet에 대한 올바른 설명은?
+
+   - A) 둘 다 tenant 격리 보장
+   - B) emptyDir가 Pod 삭제를 견딤
+   - C) DaemonSet만 있으면 모든 node log 전달이 증명
+   - D) Sidecar는 file-only app에 유용하지만 배치·shared storage·lifecycle·security 검증 필요
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: D**
+
+emptyDir는 같은 Pod의 container 재시작은 견디지만 Pod 삭제는 아닙니다. DaemonSet은 대상 node에 배치되며 rollout/복수 경로로 중복 수집될 수 있습니다.
+
+</details>
+
+9. 저장소/client에 대한 올바른 설명은?
+
+   - A) OpenSearch는 모든 배포에서 S3를 snapshot에만 사용
+   - B) 배포/index/query 설계가 중요하며 UltraWarm은 S3/cache를 쓰고 Promtail은 EOL 이후 migration 필요
+   - C) 모든 CloudWatch log class 기능이 같음
+   - D) Dataset 없이 압축 순위가 유효
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B**
+
+실제 배포 모델과 query 요구를 비교합니다. Promtail EOL은 2026-03-02이며 lambda-promtail은 별도입니다. Backend 선택만으로 비용/규정 준수를 보장하지 않습니다.
+
+</details>
+
+10. EKS control-plane audit logging을 활성화하면 무엇을 알 수 있나요?
+
+   - A) 모든 request/body가 무손실 기록
+   - B) Worker DaemonSet이 managed API-server host를 읽음
+   - C) Policy와 best-effort CloudWatch 전달 경로를 따르는 audit record를 실제 확인해야 함
+   - D) Application stdout 수집이 자동 완성
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C**
+
+비동기 update 상태·stream·retention/접근을 확인합니다. Fargate는 managed router를 사용하며 Container Insights performance log와 application stdout/stderr는 다릅니다.
 
 </details>
 
 ---
 
-2. 프로덕션 환경에서 권장되는 로그 레벨은?
-
-   - A) DEBUG
-   - B) TRACE
-   - C) INFO 또는 WARN
-   - D) FATAL
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: C) INFO 또는 WARN**
-
-**설명:**
-프로덕션 환경에서는 INFO 또는 WARN 레벨이 권장됩니다. DEBUG나 TRACE는 너무 상세하여 로그 볼륨이 과도해지고, FATAL만 사용하면 중요한 운영 정보를 놓칠 수 있습니다.
-
-</details>
-
----
-
-3. Kubernetes에서 가장 권장되는 로그 수집 패턴은?
-
-   - A) 파일 기반 로깅 + Sidecar
-   - B) stdout/stderr + DaemonSet 에이전트
-   - C) 원격 로깅 서버 직접 전송
-   - D) 로컬 파일 저장 후 수동 수집
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: B) stdout/stderr + DaemonSet 에이전트**
-
-**설명:**
-Kubernetes에서는 컨테이너가 stdout/stderr로 로그를 출력하고, DaemonSet으로 배포된 에이전트가 노드의 `/var/log/containers/`에서 로그를 수집하는 방식이 표준입니다. 이 방식은 kubectl logs 명령어 호환, 자동 로테이션, 별도 볼륨 불필요 등의 장점이 있습니다.
-
-</details>
-
----
-
-4. 로그 저장소 선택 시 "비용 최적화"가 최우선인 경우 권장되는 솔루션은?
-
-   - A) Amazon OpenSearch Service
-   - B) CloudWatch Logs
-   - C) Grafana Loki + S3
-   - D) Elasticsearch on EC2
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: C) Grafana Loki + S3**
-
-**설명:**
-Loki는 로그 콘텐츠를 인덱싱하지 않고 레이블만 인덱싱하여 스토리지 비용을 크게 절감합니다. S3를 백엔드로 사용하면 GB당 $0.023 수준의 저렴한 저장 비용을 달성할 수 있습니다.
-
-</details>
-
----
-
-5. JSON 로그 형식에서 분산 추적을 위해 포함해야 할 필수 필드는?
-
-   - A) user_id, session_id
-   - B) trace_id, span_id
-   - C) request_id, response_time
-   - D) level, message
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: B) trace_id, span_id**
-
-**설명:**
-분산 추적을 위해서는 trace_id(전체 요청 추적)와 span_id(개별 작업 식별)가 필수입니다. 이 필드들을 통해 여러 서비스에 걸친 요청의 흐름을 추적할 수 있습니다.
-
-</details>
-
----
-
-6. 로그 수집 파이프라인에서 "처리 계층"의 역할이 아닌 것은?
-
-   - A) 로그 파싱 및 정규화
-   - B) Kubernetes 메타데이터 추가
-   - C) 로그 저장 및 인덱싱
-   - D) 필터링 및 샘플링
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: C) 로그 저장 및 인덱싱**
-
-**설명:**
-로그 저장 및 인덱싱은 "저장 계층(Storage Layer)"의 역할입니다. 처리 계층은 파싱, 메타데이터 추가, 필터링, 버퍼링 등을 담당합니다.
-
-</details>
-
----
-
-7. 로그 보존 기간 설정 시 금융 규정 준수를 위한 권장 기간은?
-
-   - A) 30일
-   - B) 1년
-   - C) 7년
-   - D) 90일
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: C) 7년**
-
-**설명:**
-금융 규정 준수(예: SOX, PCI-DSS 관련)를 위해서는 일반적으로 7년의 로그 보존이 권장됩니다. 의료(HIPAA)는 6년, 일반적인 운영 로그는 1년 정도가 권장됩니다.
-
-</details>
-
----
-
-8. Sidecar 패턴으로 로그를 수집해야 하는 경우는?
-
-   - A) 모든 표준 Kubernetes 워크로드
-   - B) 레거시 애플리케이션이 파일로만 로그를 출력하는 경우
-   - C) CPU 리소스가 제한된 환경
-   - D) 단일 컨테이너 파드만 있는 경우
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: B) 레거시 애플리케이션이 파일로만 로그를 출력하는 경우**
-
-**설명:**
-Sidecar 패턴은 레거시 애플리케이션(stdout/stderr 대신 파일 로깅), 멀티테넌트 환경에서 로그 격리, 특수 로그 형식 처리가 필요한 경우에 사용됩니다. 리소스 오버헤드가 있으므로 표준 워크로드에는 DaemonSet 방식이 더 효율적입니다.
-
-</details>
-
----
-
-9. 다음 중 쿼리 성능과 전문 검색(Full-text Search) 모두 "우수"한 로그 저장소는?
-
-   - A) Grafana Loki
-   - B) CloudWatch Logs
-   - C) Amazon OpenSearch Service
-   - D) ClickHouse
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: C) Amazon OpenSearch Service**
-
-**설명:**
-OpenSearch(Elasticsearch 포크)는 Lucene 기반의 강력한 전문 검색 기능과 복잡한 집계 쿼리를 모두 지원합니다. Loki는 전문 검색이 제한적이고, CloudWatch와 ClickHouse는 전문 검색이 양호 수준입니다.
-
-</details>
-
----
-
-10. EKS 컨트롤 플레인 로깅에서 보안 감사를 위해 반드시 활성화해야 하는 로그 유형은?
-
-    - A) scheduler
-    - B) controllerManager
-    - C) audit
-    - D) api
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: C) audit**
-
-**설명:**
-audit 로그는 Kubernetes API 서버에 대한 모든 요청을 기록하는 감사 로그입니다. 누가, 언제, 무엇을 했는지 추적할 수 있어 보안 감사 및 규정 준수에 필수적입니다. api 로그도 중요하지만, 보안 감사 목적으로는 audit이 가장 핵심입니다.
-
-</details>
+[학습 자료로 돌아가기](../../../observability/logging/README.md)

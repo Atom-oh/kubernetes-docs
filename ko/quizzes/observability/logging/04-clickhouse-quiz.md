@@ -1,193 +1,185 @@
 # ClickHouse for Log Analytics 퀴즈
 
-ClickHouse 로그 분석에 대한 이해도를 테스트하는 퀴즈입니다.
+> **마지막 업데이트**: 2026년 9월 13일
 
----
+1. 컬럼 저장이 분석 로그 쿼리에 도움이 되는 이유는?
 
-1. ClickHouse가 로그 분석에서 높은 성능을 보이는 주된 이유는?
-
-   - A) 행 기반(Row-based) 저장 방식
-   - B) 컬럼 기반(Column-based) 저장 방식
-   - C) 문서 기반(Document-based) 저장 방식
-   - D) 키-값(Key-Value) 저장 방식
+   - A) 항상 모든 필드를 읽는다
+   - B) 필요한 컬럼을 읽고 반복 값을 압축할 수 있다
+   - C) 고정 압축률을 보장한다
+   - D) 스키마 설계가 필요 없어진다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 컬럼 기반(Column-based) 저장 방식**
+**정답: B) 필요한 컬럼을 읽고 반복 값을 압축할 수 있다**
 
-**설명:**
-ClickHouse는 컬럼 기반 데이터베이스로, 분석 쿼리(특정 컬럼만 스캔)에 최적화되어 있습니다. 동일한 데이터 타입이 연속 저장되어 압축률도 높고, 벡터화된 쿼리 실행이 가능합니다.
+효과는 데이터·sort key·쿼리에 따라 다릅니다. 가이드가 10:1 압축이나 고정 처리량을 보장하지는 않습니다.
 
 </details>
 
 ---
 
-2. ClickHouse 클러스터에서 데이터 복제와 분산 쿼리 조정을 위해 사용하는 컴포넌트는?
+2. 이 설계에서 Keeper/ZooKeeper의 역할은?
 
-   - A) Kafka
-   - B) Redis
-   - C) ZooKeeper/ClickHouse Keeper
-   - D) etcd
+   - A) 모든 분산 SELECT 실행
+   - B) 모든 로그 행 저장
+   - C) Replicated table과 분산 DDL 조정
+   - D) Collector 대체
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) ZooKeeper/ClickHouse Keeper**
+**정답: C) Replicated table과 분산 DDL 조정**
 
-**설명:**
-ClickHouse 클러스터는 ZooKeeper 또는 ClickHouse Keeper를 사용하여 복제본 간 데이터 동기화, 분산 DDL 실행, 리더 선출 등을 조정합니다. ClickHouse Keeper는 ZooKeeper의 ClickHouse 전용 대안입니다.
+분산 쿼리는 ClickHouse query initiator와 Distributed 테이블이 처리합니다. Keeper는 query router가 아닙니다.
 
 </details>
 
 ---
 
-3. ClickHouse 테이블 엔진 중 복제를 지원하며 로그 저장에 가장 적합한 것은?
+3. MergeTree 저장에 replication을 추가하는 engine은?
 
-   - A) MergeTree
-   - B) ReplicatedMergeTree
-   - C) Log
-   - D) Memory
+   - A) ReplicatedMergeTree
+   - B) Memory
+   - C) Buffer
+   - D) Distributed만 사용
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) ReplicatedMergeTree**
+**정답: A) ReplicatedMergeTree**
 
-**설명:**
-ReplicatedMergeTree는 MergeTree의 모든 기능(정렬, 파티셔닝, TTL 등)에 복제 기능을 추가한 엔진입니다. 프로덕션 로그 저장에서 고가용성을 위해 권장됩니다.
+Replica에는 coordination·독립된 영속 저장소·장애 도메인 설계가 필요합니다. Replication만으로 무조건적인 HA가 보장되지는 않습니다.
 
 </details>
 
 ---
 
-4. ClickHouse에서 카디널리티가 낮은 문자열 컬럼(예: level, namespace)에 사용하는 최적화 타입은?
+4. 반복되는 namespace나 severity 값에 검토할 타입은?
 
-   - A) String
-   - B) FixedString
-   - C) LowCardinality(String)
-   - D) Enum
+   - A) 항상 FixedString(255)
+   - B) LowCardinality(String)
+   - C) 각 로그 메시지마다 고유 integer
+   - D) 압축하지 않은 String만
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) LowCardinality(String)**
+**정답: B) LowCardinality(String)**
 
-**설명:**
-LowCardinality(String)은 고유 값이 적은(~10,000개 이하) 문자열 컬럼에 사용합니다. 내부적으로 딕셔너리 인코딩을 사용하여 저장 공간과 쿼리 성능을 최적화합니다.
+반복 값에 dictionary encoding이 도움이 될 수 있습니다. 고정 distinct-value 상한 대신 dictionary 크기와 query 동작을 측정합니다.
 
 </details>
 
 ---
 
-5. ClickHouse 로그 테이블 설계에서 `ORDER BY` 절에 지정하는 컬럼 순서의 원칙은?
+5. 로그 테이블의 ORDER BY는 어떻게 정하는가?
 
    - A) 알파벳 순서
-   - B) 컬럼 크기 순서 (작은 것 먼저)
-   - C) 자주 필터링하는 컬럼 먼저
-   - D) 생성 시간 순서
+   - B) 필드 생성 시각
+   - C) 선택도 높은 필터·locality·대표 query 기준
+   - D) 쿼리와 무관하게 항상 timestamp를 마지막에
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 자주 필터링하는 컬럼 먼저**
+**정답: C) 선택도 높은 필터·locality·대표 query 기준**
 
-**설명:**
-ClickHouse의 ORDER BY는 데이터 정렬 및 인덱스 생성에 영향을 줍니다. 자주 WHERE 절에서 필터링하는 컬럼을 앞에 배치하면 쿼리 시 더 적은 데이터를 스캔합니다. 예: `ORDER BY (namespace, service, timestamp)`
+Key는 정렬과 index pruning에 영향을 줍니다. 자주 조회하는 컬럼이라는 이유만으로 최선의 순서가 정해지지는 않습니다.
 
 </details>
 
 ---
 
-6. ClickHouse에서 대규모 데이터를 빠르게 분석할 때 사용하는 샘플링 기법의 문법은?
+6. SAMPLE 0.1을 사용하기 전에 필요한 조건은?
 
-   - A) `LIMIT RANDOM 10%`
-   - B) `SAMPLE 0.1`
-   - C) `WHERE rand() < 0.1`
-   - D) `TABLESAMPLE (10 PERCENT)`
+   - A) 모든 테이블이 자동 지원
+   - B) 테이블 행이 정확히 10개
+   - C) 항상 정확히 10%의 행 반환
+   - D) 호환되는 MergeTree sampling expression을 정의하고 primary key에 포함
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) `SAMPLE 0.1`**
+**정답: D) 호환되는 MergeTree sampling expression을 정의하고 primary key에 포함**
 
-**설명:**
-ClickHouse의 `SAMPLE` 절은 데이터의 일부만 스캔하여 빠른 근사 분석을 수행합니다. `SAMPLE 0.1`은 10%의 데이터만 읽습니다. 결과에 적절한 배수를 곱하여 전체 추정값을 얻습니다.
+기본 로그 테이블에는 SAMPLE BY가 없습니다. 별도 sample_demo가 필요한 설계를 보여줍니다. 결정적인 sampling-key 구간에 유한한 행의 정확히 10%가 포함되는 것은 아닙니다.
 
 </details>
 
 ---
 
-7. ClickHouse에 로그를 수집할 때 Kafka를 중간에 두는 주된 이유는?
+7. 설정 조건에 따라 Kafka가 제공하는 것은?
 
-   - A) 데이터 암호화
-   - B) 버퍼링 및 피크 트래픽 처리
-   - C) 데이터 압축
-   - D) 쿼리 최적화
+   - A) 메모리 Buffer를 거쳐도 exactly-once 보장
+   - B) Burst buffering과 retention 안의 replay
+   - C) 모든 parser 오류 자동 제거
+   - D) 장애 중 무제한 저장
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 버퍼링 및 피크 트래픽 처리**
+**정답: B) Burst buffering과 retention 안의 replay**
 
-**설명:**
-Kafka는 메시지 큐로서 피크 트래픽 시 로그를 버퍼링하고, ClickHouse가 일정한 속도로 데이터를 소비할 수 있게 합니다. 또한 ClickHouse 장애 시 데이터 손실을 방지합니다.
+Retention·acknowledgement·replication·용량·offset commit·downstream insert를 검증해야 합니다. 메모리 Buffer는 crash 때 확인 응답한 데이터도 잃을 수 있습니다.
 
 </details>
 
 ---
 
-8. ClickHouse SQL에서 JSON 필드 값을 추출하는 함수는?
+8. 선택적인 response_time_ms에 nullable JSON 추출을 사용하는 이유는?
 
-   - A) JSON_EXTRACT()
-   - B) JSONExtractString(), JSONExtractFloat()
-   - C) parseJSON()
-   - D) getJSON()
+   - A) 없는 측정값을 0ms 요청으로 집계하지 않기 위해
+   - B) 모든 로그가 HTTP 요청이므로
+   - C) JSON 검증이 필요 없어지므로
+   - D) 서버 시계를 변경하기 위해
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) JSONExtractString(), JSONExtractFloat()**
+**정답: A) 없는 측정값을 0ms 요청으로 집계하지 않기 위해**
 
-**설명:**
-ClickHouse는 `JSONExtractString(json, 'field')`, `JSONExtractFloat(json, 'field')` 등의 함수로 JSON 필드를 추출합니다. 타입별로 다른 함수를 사용합니다.
+JSONType으로 boolean·숫자 문자열을 먼저 제외하고 nullable 숫자를 추출합니다. Nullable 추출만으로는 해당 값이 숫자로 변환될 수 있습니다. Count·percentile은 측정된 이벤트로 계산합니다.
 
 </details>
 
 ---
 
-9. ClickHouse 테이블에서 오래된 데이터를 자동 삭제하는 기능은?
+9. TTL TO VOLUME에 필요한 조건과 보장은?
 
-   - A) AUTO_DELETE
-   - B) RETENTION_POLICY
-   - C) TTL (Time To Live)
-   - D) EXPIRE_AFTER
+   - A) S3 bucket과 IAM role 생성
+   - B) 모든 행을 정확한 시각에 삭제
+   - C) 이미 선택한 storage policy가 필요하며 background 작업은 비동기
+   - D) Cold part를 독립 Parquet backup으로 만듦
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) TTL (Time To Live)**
+**정답: C) 이미 선택한 storage policy가 필요하며 background 작업은 비동기**
 
-**설명:**
-ClickHouse의 TTL 기능은 특정 기간이 지난 데이터를 자동으로 삭제하거나 다른 스토리지(예: S3)로 이동합니다. 예: `TTL date + INTERVAL 90 DAY DELETE`
+TTL이 policy나 cloud 권한을 만들지는 않습니다. Cold table storage와 별도로 검증한 Parquet archive는 소유권·복구 의미가 다릅니다.
 
 </details>
 
 ---
 
-10. ClickHouse와 Grafana 연동 시 사용하는 데이터소스 플러그인은?
+10. ClickHouse 기반 Grafana 알림은 어떻게 만드는가?
 
-    - A) grafana-mysql-datasource
-    - B) grafana-clickhouse-datasource
-    - C) grafana-sql-datasource
-    - D) grafana-olap-datasource
+   - A) clickhouse_custom_query Prometheus metric을 임의로 만듦
+   - B) grafana-clickhouse-datasource의 숫자 SQL 결과와 Grafana Alerting 사용
+   - C) 모든 dashboard에 관리 계정 사용
+   - D) 로그가 없으면 정상이라고 판단
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) grafana-clickhouse-datasource**
+**정답: B) grafana-clickhouse-datasource의 숫자 SQL 결과와 Grafana Alerting 사용**
 
-**설명:**
-Grafana에서 ClickHouse를 연동하려면 `grafana-clickhouse-datasource` 플러그인을 설치합니다. 이 플러그인을 통해 SQL 쿼리로 ClickHouse 데이터를 시각화하고 대시보드를 구성할 수 있습니다.
+제한된 read-only 계정·검증하는 TLS·필요한 timeout 설정 권한을 사용합니다. 입력이 없어도 집계가 0일 수 있으므로 수집 상태를 따로 관찰합니다.
 
 </details>
+
+---
+
+[본문으로 돌아가기](../../../observability/logging/04-clickhouse.md)

@@ -1,0 +1,896 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T03:53:25.693677+00:00",
+  "scope": [
+    "en/observability/logging/02-opensearch.md",
+    "en/quizzes/observability/logging/02-opensearch-quiz.md",
+    "ko/observability/logging/02-opensearch.md",
+    "ko/quizzes/observability/logging/02-opensearch-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/logging/02-opensearch.md": {
+      "lines": 1144,
+      "sha256": "fa88bec42e02606cbc6dc80f68a5f07159bbef3eaaa330f82855d2a318b46d90"
+    },
+    "en/quizzes/observability/logging/02-opensearch-quiz.md": {
+      "lines": 193,
+      "sha256": "2834df90ed2741984dd4078100815d6c813350ec217fbfaf8dc9b1865641c2f6"
+    },
+    "ko/observability/logging/02-opensearch.md": {
+      "lines": 1136,
+      "sha256": "3abba65e0a5c1f371464d598e4d683dce9ba29262765a22d12a61754207197d6"
+    },
+    "ko/quizzes/observability/logging/02-opensearch-quiz.md": {
+      "lines": 193,
+      "sha256": "72e69f5448160e6578dc92fb267d8092587bc13fca89b0c4c8c81c4f899f6400"
+    }
+  },
+  "checks": {
+    "passed": true,
+    "files": [
+      {
+        "path": "en/observability/logging/02-opensearch.md",
+        "sha256": "c58462c08cacb482860ea3388990f97669c088d830cbf7b9aa988018ff99eb60",
+        "passed": true,
+        "lines": 1169,
+        "reviewScope": "Entire original read; rewritten source/configuration/quiz audited; native/local validation only."
+      },
+      {
+        "path": "en/quizzes/observability/logging/02-opensearch-quiz.md",
+        "sha256": "696ffd23f62e280057761e1ae8bdce4239ef144f49d4f1227b439d80a6810ef8",
+        "passed": true,
+        "lines": 185,
+        "reviewScope": "Entire original read; rewritten source/configuration/quiz audited; native/local validation only."
+      },
+      {
+        "path": "ko/observability/logging/02-opensearch.md",
+        "sha256": "8953c4bf1e765178e59ec7ececc6180439339179d19de79935f809908283f570",
+        "passed": true,
+        "lines": 1169,
+        "reviewScope": "Entire original read; rewritten source/configuration/quiz audited; native/local validation only."
+      },
+      {
+        "path": "ko/quizzes/observability/logging/02-opensearch-quiz.md",
+        "sha256": "bc2d8008888fdb02d3f69b259f7ece39dca483229419b202a4ab17a007c5f73b",
+        "passed": true,
+        "lines": 185,
+        "reviewScope": "Entire original read; rewritten source/configuration/quiz audited; native/local validation only."
+      }
+    ],
+    "counts": {
+      "documents": 4,
+      "answers": 20,
+      "choiceItems": 80,
+      "codeBlocksPerGuide": 12,
+      "httpRequestShapesPerGuide": 16,
+      "nativeContractCases": 101,
+      "sdkHelperCases": 9,
+      "localLinks": 8,
+      "cachedExternalReferences": 21,
+      "viewerHTTP": 4
+    },
+    "localLinks": [
+      {
+        "source": "en/observability/logging/02-opensearch.md",
+        "target": "../../.gitbook/assets/en-observability-logging-02-opensearch-0.png",
+        "exists": true
+      },
+      {
+        "source": "en/observability/logging/02-opensearch.md",
+        "target": "../../.gitbook/assets/en-observability-logging-02-opensearch-1.png",
+        "exists": true
+      },
+      {
+        "source": "en/observability/logging/02-opensearch.md",
+        "target": "../../quizzes/observability/logging/02-opensearch-quiz.md",
+        "exists": true
+      },
+      {
+        "source": "en/quizzes/observability/logging/02-opensearch-quiz.md",
+        "target": "../../../observability/logging/02-opensearch.md",
+        "exists": true
+      },
+      {
+        "source": "ko/observability/logging/02-opensearch.md",
+        "target": "../../.gitbook/assets/ko-observability-logging-02-opensearch-0.png",
+        "exists": true
+      },
+      {
+        "source": "ko/observability/logging/02-opensearch.md",
+        "target": "../../.gitbook/assets/ko-observability-logging-02-opensearch-1.png",
+        "exists": true
+      },
+      {
+        "source": "ko/observability/logging/02-opensearch.md",
+        "target": "../../quizzes/observability/logging/02-opensearch-quiz.md",
+        "exists": true
+      },
+      {
+        "source": "ko/quizzes/observability/logging/02-opensearch-quiz.md",
+        "target": "../../../observability/logging/02-opensearch.md",
+        "exists": true
+      }
+    ],
+    "figures": [
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-02-opensearch-0.png",
+        "sha256": "bd126cc191011cf91e21e728d083785f281a041e90dfaf1ae3987aa031c44aa1",
+        "semanticallyViewedEarlier": true,
+        "disposition": "retained with explicit conceptual topology/storage/name/index-age qualifications"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-02-opensearch-1.png",
+        "sha256": "52254ec2c5b605a9251fbe57cbdf70f4461d4a7d4481ef745a52165ac5ca9679",
+        "semanticallyViewedEarlier": true,
+        "disposition": "retained with explicit conceptual topology/storage/name/index-age qualifications"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-02-opensearch-0.png",
+        "sha256": "acad38bc683a7e58637e60cad86718d03bb3de6d76b2f97d7bfbde2e9dfa1770",
+        "semanticallyViewedEarlier": true,
+        "disposition": "retained with explicit conceptual topology/storage/name/index-age qualifications"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-02-opensearch-1.png",
+        "sha256": "37e7a4b97e304b94f8bf5d536867cb5111f33dc1c5661f4d04aaadfa1c56e198",
+        "semanticallyViewedEarlier": true,
+        "disposition": "retained with explicit conceptual topology/storage/name/index-age qualifications"
+      }
+    ],
+    "limits": [
+      "Kubernetes1.36official OpenAPI schema only, no API admission or daemon execution.",
+      "Fluent Bit classic-format/mount/option contracts checked, no image layers or runtime.",
+      "JSON/mapping/ISM/DLS/FLS relationships only; no OpenSearch query or policy execution.",
+      "No AWS, GPU, cloud mutations, Terraformplan/apply or collector data-delivery test.",
+      "Service-model shape/type validation only, no client or AWS request created.",
+      "SAML XML is synthetic and unsigned; no IdP/certificate/session validation or SSO claim.",
+      "Terraform values mapped to AWS models; no deployment, version/SKU/quota or IAM verification.",
+      "Firehose payload schema does not prove data delivery or engine integration.",
+      "Retained PNGs viewed semantically earlier; current byte hashes/local targets and4viewerHTTPresponses checked. No new responsive browser verification.",
+      "Existing historical support/measurements retained or clearly qualified; no benchmark or cost guarantees.",
+      "Example backup bucket, service-linked role, IRSA trust, role mappings and regional resource capacity remain deployment prerequisites."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/logging/02-opensearch.md",
+        "sha256": "c58462c08cacb482860ea3388990f97669c088d830cbf7b9aa988018ff99eb60",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "amazon-opensearch-service"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "opensearch-cluster-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "data-flow"
+          },
+          {
+            "tag": "h2",
+            "id": "domain-creation"
+          },
+          {
+            "tag": "h3",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h3",
+            "id": "creation-via-terraform"
+          },
+          {
+            "tag": "h2",
+            "id": "index-management"
+          },
+          {
+            "tag": "h3",
+            "id": "index-templates"
+          },
+          {
+            "tag": "h3",
+            "id": "ism-index-state-management-policies"
+          },
+          {
+            "tag": "h3",
+            "id": "index-aliases-and-rollover"
+          },
+          {
+            "tag": "h2",
+            "id": "data-ingestion"
+          },
+          {
+            "tag": "h3",
+            "id": "direct-ingestion-from-fluent-bit"
+          },
+          {
+            "tag": "h3",
+            "id": "ingestion-via-amazon-data-firehose"
+          },
+          {
+            "tag": "h2",
+            "id": "opensearch-dashboards"
+          },
+          {
+            "tag": "h3",
+            "id": "access-and-index-patterns"
+          },
+          {
+            "tag": "h3",
+            "id": "search-query-examples"
+          },
+          {
+            "tag": "h2",
+            "id": "security-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "fine-grained-access-control"
+          },
+          {
+            "tag": "h3",
+            "id": "document-level-security-and-field-level-security"
+          },
+          {
+            "tag": "h3",
+            "id": "saml-authentication-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "cost-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "storage-and-index-settings"
+          },
+          {
+            "tag": "h2",
+            "id": "limitations-in-large-scale-log-environments"
+          },
+          {
+            "tag": "h2",
+            "id": "comparison-with-loki"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "amazon-opensearch-service",
+          "table-of-contents",
+          "opensearch-vs-elasticsearch",
+          "amazon-opensearch-service-features",
+          "key-use-cases",
+          "overview",
+          "node-types",
+          "architecture",
+          "opensearch-cluster-architecture",
+          "data-flow",
+          "creation-via-aws-console",
+          "domain-creation",
+          "prerequisites",
+          "creation-via-terraform",
+          "index-aliases",
+          "index-management",
+          "index-templates",
+          "ism-index-state-management-policies",
+          "index-aliases-and-rollover",
+          "direct-ingestion-from-fluentbit-to-opensearch",
+          "fluentbit-daemonset-using-irsa",
+          "data-ingestion",
+          "direct-ingestion-from-fluent-bit",
+          "ingestion-via-kinesis-data-firehose",
+          "ingestion-via-amazon-data-firehose",
+          "dashboard-access-setup",
+          "create-index-pattern",
+          "visualization-creation",
+          "opensearch-dashboards",
+          "access-and-index-patterns",
+          "search-query-examples",
+          "fine-grained-access-control-fgac",
+          "document-level-security-dls",
+          "field-level-security-fls",
+          "security-configuration",
+          "fine-grained-access-control",
+          "document-level-security-and-field-level-security",
+          "saml-authentication-setup",
+          "storage-tiering",
+          "cost-comparison-based-on-100gb-day",
+          "index-optimization",
+          "reserved-instances",
+          "cost-optimization",
+          "storage-and-index-settings",
+          "inverted-index-inefficiency",
+          "aggregation-query-performance-degradation",
+          "scaling-cost-issues",
+          "clickhouse-migration-decision-criteria",
+          "limitations-in-large-scale-log-environments",
+          "feature-comparison",
+          "recommendations-by-use-case",
+          "migration-considerations",
+          "comparison-with-loki",
+          "validation-and-references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/logging/02-opensearch.md",
+        "sha256": "8953c4bf1e765178e59ec7ececc6180439339179d19de79935f809908283f570",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "amazon-opensearch-service"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "opensearch-클러스터-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "데이터-흐름"
+          },
+          {
+            "tag": "h2",
+            "id": "도메인-생성"
+          },
+          {
+            "tag": "h3",
+            "id": "사전-조건"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform을-통한-생성"
+          },
+          {
+            "tag": "h2",
+            "id": "인덱스-관리"
+          },
+          {
+            "tag": "h3",
+            "id": "인덱스-템플릿"
+          },
+          {
+            "tag": "h3",
+            "id": "ism-index-state-management-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "인덱스-앨리어스와-rollover"
+          },
+          {
+            "tag": "h2",
+            "id": "데이터-수집"
+          },
+          {
+            "tag": "h3",
+            "id": "fluent-bit에서-직접-전송"
+          },
+          {
+            "tag": "h3",
+            "id": "amazon-data-firehose를-통한-수집"
+          },
+          {
+            "tag": "h2",
+            "id": "opensearch-dashboards"
+          },
+          {
+            "tag": "h3",
+            "id": "접근과-인덱스-패턴"
+          },
+          {
+            "tag": "h3",
+            "id": "검색-쿼리-예시"
+          },
+          {
+            "tag": "h2",
+            "id": "보안-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "fine-grained-access-control"
+          },
+          {
+            "tag": "h3",
+            "id": "문서-수준-보안과-필드-수준-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "saml-인증-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "비용-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "스토리지와-인덱스-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "대규모-로그-환경에서의-한계"
+          },
+          {
+            "tag": "h2",
+            "id": "loki와의-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "amazon-opensearch-service",
+          "목차",
+          "opensearch-vs-elasticsearch",
+          "amazon-opensearch-service-특징",
+          "주요-사용-사례",
+          "개요",
+          "노드-유형",
+          "아키텍처",
+          "opensearch-클러스터-아키텍처",
+          "데이터-흐름",
+          "aws-console을-통한-생성",
+          "도메인-생성",
+          "사전-조건",
+          "terraform을-통한-생성",
+          "인덱스-앨리어스",
+          "인덱스-관리",
+          "인덱스-템플릿",
+          "ism-index-state-management-정책",
+          "인덱스-앨리어스와-rollover",
+          "fluentbit에서-opensearch로-직접-전송",
+          "fluentbit-daemonset-irsa-사용",
+          "데이터-수집",
+          "fluent-bit에서-직접-전송",
+          "kinesis-data-firehose를-통한-수집",
+          "amazon-data-firehose를-통한-수집",
+          "대시보드-접근-설정",
+          "인덱스-패턴-생성",
+          "시각화-생성",
+          "opensearch-dashboards",
+          "접근과-인덱스-패턴",
+          "검색-쿼리-예시",
+          "fine-grained-access-control-fgac",
+          "문서-수준-보안-dls",
+          "필드-수준-보안-fls",
+          "보안-설정",
+          "fine-grained-access-control",
+          "문서-수준-보안과-필드-수준-보안",
+          "saml-인증-설정",
+          "스토리지-티어링",
+          "비용-비교-100gb-일-기준",
+          "인덱스-최적화",
+          "reserved-instance",
+          "비용-최적화",
+          "스토리지와-인덱스-설정",
+          "역인덱스-구조의-비효율",
+          "집계-쿼리-성능-저하",
+          "스케일링-비용-문제",
+          "clickhouse-마이그레이션-판단-기준",
+          "대규모-로그-환경에서의-한계",
+          "기능-비교",
+          "사용-사례별-권장",
+          "마이그레이션-고려사항",
+          "loki와의-비교",
+          "검증과-참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/logging/02-opensearch-quiz.md",
+        "sha256": "696ffd23f62e280057761e1ae8bdce4239ef144f49d4f1227b439d80a6810ef8",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "amazon-opensearch-service-quiz"
+          }
+        ],
+        "renderedIds": [
+          "amazon-opensearch-service-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/logging/02-opensearch-quiz.md",
+        "sha256": "bc2d8008888fdb02d3f69b259f7ece39dca483229419b202a4ab17a007c5f73b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "amazon-opensearch-service-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "amazon-opensearch-service-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html",
+      "cacheKey": "559288ad379a",
+      "fetchedAt": "2026-09-13T02:02:11.594593+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html",
+      "sha256": "237d9450c97472d9fc6cd9f5e9d5ec24430b778ae18aa3b3154dcc5884bd3495"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ism.html",
+      "cacheKey": "16b474f0a631",
+      "fetchedAt": "2026-09-13T02:02:11.742380+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ism.html",
+      "sha256": "dc19f2362f91a9a89f0347fda7f0dcc61a2b97e94bb1bf43d69aaec1f18857a1"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cold-storage.html",
+      "cacheKey": "d79961442326",
+      "fetchedAt": "2026-09-13T02:02:11.954309+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cold-storage.html",
+      "sha256": "f9be88c904ef7e1caf35353554a3c3e7c7d36ad36d69a7ceaa001525ad255074"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/saml.html",
+      "cacheKey": "3a49b3cfdbdf",
+      "fetchedAt": "2026-09-13T02:39:36.131761+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/saml.html",
+      "sha256": "97ffc5d613d1b2f2d694d2eb07a45f531560882ea08fd8f3ae479eb179c6f129"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html",
+      "cacheKey": "3a2b9a48cfc0",
+      "fetchedAt": "2026-09-13T02:39:35.930606+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html",
+      "sha256": "45058cce99180739aac10f68eaff4b2858b690a5a2e27f0e7599f2f2bd207fca"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html",
+      "cacheKey": "607552e5a2ba",
+      "fetchedAt": "2026-09-13T02:02:12.217975+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html",
+      "sha256": "d3013cc85cb415334ea0cbee8974a78450a2245c284f8410b29709ff9ba95b3f"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-snapshots.html",
+      "cacheKey": "688c30be074f",
+      "fetchedAt": "2026-09-13T02:02:12.366960+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-snapshots.html",
+      "sha256": "dbc4d9acdc57e8d29a2dba77496d6ae02cd42d960c6101b5d267eae132186c3a"
+    },
+    {
+      "url": "https://docs.opensearch.org/latest/im-plugin/ism/policies/",
+      "cacheKey": "b656bf36d1c4",
+      "fetchedAt": "2026-09-13T02:02:13.254383+00:00",
+      "status": 200,
+      "finalURL": "https://docs.opensearch.org/latest/im-plugin/ism/policies/",
+      "sha256": "6b4cff4bbe5b79e325e6f8106f3c52d670e09c0def71cbc6e8f53e57c080aa2b"
+    },
+    {
+      "url": "https://docs.opensearch.org/latest/api-reference/index-apis/rollover/",
+      "cacheKey": "9d685fcc91e2",
+      "fetchedAt": "2026-09-13T02:02:13.360481+00:00",
+      "status": 200,
+      "finalURL": "https://docs.opensearch.org/latest/api-reference/index-apis/rollover/",
+      "sha256": "fa8e1d32fb482576a2a56579fa872e2b6a9a835e3d8856caf68ad0367b3c73ba"
+    },
+    {
+      "url": "https://docs.opensearch.org/latest/field-types/mapping-parameters/doc-values/",
+      "cacheKey": "0b7de8291a9b",
+      "fetchedAt": "2026-09-13T02:02:13.760627+00:00",
+      "status": 200,
+      "finalURL": "https://docs.opensearch.org/latest/field-types/mapping-parameters/doc-values/",
+      "sha256": "8ea2f6db1484938aecff2feeabc3e2f52d5c53cec67d9732e4668193d948a240"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/opensearch.md",
+      "cacheKey": "2a558e3399c6",
+      "fetchedAt": "2026-09-13T03:48:49.311358+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/outputs/opensearch.md",
+      "sha256": "751148d33fbfc6d0e6a7153d828edec88bf7560b23817db0fd1b3fb971fa3e9f"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html",
+      "cacheKey": "73a1d7cb4bf7",
+      "fetchedAt": "2026-09-13T02:03:46.420342+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html",
+      "sha256": "2f07b46e1c30c7e696f59f161a219d14ce2025d2001bd4b2dec814d47c00effb"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-multiaz.html",
+      "cacheKey": "5f528121df5f",
+      "fetchedAt": "2026-09-13T02:03:46.411263+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-multiaz.html",
+      "sha256": "616920ae2572092cfc249b0c27c645fab810a52d8ba1ae444fa430e072b8e898"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html",
+      "cacheKey": "c7abe881ae55",
+      "fetchedAt": "2026-09-13T02:03:46.620585+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html",
+      "sha256": "32bcd7ffcdd60fa328231c5735f5e440e130c050b6a90705a0ac2319468bdbb2"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ac.html",
+      "cacheKey": "64562c73409b",
+      "fetchedAt": "2026-09-13T02:03:46.626343+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ac.html",
+      "sha256": "9419b6cf220b166511ee1c5b0c04154782650f09f436bb3b4bbef47e89ff0e9a"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/create-destination.html",
+      "cacheKey": "895c33922849",
+      "fetchedAt": "2026-09-13T02:03:46.832951+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/firehose/latest/dev/create-destination.html",
+      "sha256": "c9df4b008e2a70af3699d749e2bab80581ec0898f89885211a935a764bf019a2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/website/docs/r/opensearch_domain.html.markdown",
+      "cacheKey": "8e63ff70157a",
+      "fetchedAt": "2026-09-13T02:03:46.861256+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/website/docs/r/opensearch_domain.html.markdown",
+      "sha256": "81fbe3f116e9763cb9aef0c6311e3170d99358a9f54a0375a154fc3f5b2776b5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/website/docs/r/kinesis_firehose_delivery_stream.html.markdown",
+      "cacheKey": "9bdacde442fb",
+      "fetchedAt": "2026-09-13T02:03:47.084655+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/website/docs/r/kinesis_firehose_delivery_stream.html.markdown",
+      "sha256": "b306349ddf404dabc933a3bd400531158da44a4fdcadd35d685624a8db42a3b1"
+    },
+    {
+      "url": "https://docs.opensearch.org/latest/install-and-configure/configuring-opensearch/index-settings/",
+      "cacheKey": "df7f81e7a34f",
+      "fetchedAt": "2026-09-13T02:03:48.073293+00:00",
+      "status": 200,
+      "finalURL": "https://docs.opensearch.org/latest/install-and-configure/configuring-opensearch/index-settings/",
+      "sha256": "b63e6cb2058f8f564d811d6556920c428be7829086676e8fa5ab91f24e718466"
+    },
+    {
+      "url": "https://www.elastic.co/pricing/faq/licensing",
+      "cacheKey": "5277a2619fe9",
+      "fetchedAt": "2026-09-13T02:03:49.199434+00:00",
+      "status": 200,
+      "finalURL": "https://www.elastic.co/pricing/faq/licensing",
+      "sha256": "9efdb565f7756717df9096bc1b2df7c8d2f7dd4f82b64a2ab84ae5cfed7734b2"
+    },
+    {
+      "url": "https://opensearch.org/about.html",
+      "cacheKey": "0be5dfa04ee6",
+      "fetchedAt": "2026-09-13T02:03:50.028973+00:00",
+      "status": 200,
+      "finalURL": "https://opensearch.org/about/",
+      "sha256": "1bf01a800ab20bf4116939be34da39d498f3fba72ec814d7aca750c7cfb0b024"
+    },
+    {
+      "url": "https://api.github.com/repos/aws/aws-for-fluent-bit/releases?per_page=40",
+      "cacheKey": "94e808d15e38",
+      "fetchedAt": "2026-09-13T02:39:35.712739+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/aws/aws-for-fluent-bit/releases?per_page=40",
+      "sha256": "c7523d0af4868604174c6e96841a8c2179da545c56e0742a231c7d12ac327576"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws/aws-for-fluent-bit/mainline/CHANGELOG.md",
+      "cacheKey": "db48f3655c81",
+      "fetchedAt": "2026-09-13T02:39:35.380433+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws/aws-for-fluent-bit/mainline/CHANGELOG.md",
+      "sha256": "1cddc7168ffbb292680e61b757a92866a3bcece60c2a4364a4065c509e2e172a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/opensearch-project/OpenSearch/3.5.0/server/src/main/java/org/opensearch/action/admin/indices/rollover/RolloverRequest.java",
+      "cacheKey": "60a6ad2f332d",
+      "fetchedAt": "2026-09-13T02:39:35.678681+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/opensearch-project/OpenSearch/3.5.0/server/src/main/java/org/opensearch/action/admin/indices/rollover/RolloverRequest.java",
+      "sha256": "782170558365372e14b4ba42dc7a1312275db934e4320d4b810a9b75d773c13f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/opensearch-project/OpenSearch/3.5.0/server/src/main/java/org/opensearch/indices/IndicesModule.java",
+      "cacheKey": "742cdef0c70a",
+      "fetchedAt": "2026-09-13T02:39:35.931881+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/opensearch-project/OpenSearch/3.5.0/server/src/main/java/org/opensearch/indices/IndicesModule.java",
+      "sha256": "4d429d3abfd47805b2f6f2885097d02b5d460d2de3ba8139ab47093c64e4191c"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/APIReference/API_SAMLIdp.html",
+      "cacheKey": "594a5a8a3b1b",
+      "fetchedAt": "2026-09-13T03:48:49.323861+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/APIReference/API_SAMLIdp.html",
+      "sha256": "505fe2944e86acbfb4d5012dfc209855dc7680e400cf204cd371d41e949f5e9e"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/firehose/latest/APIReference/API_AmazonopensearchserviceDestinationConfiguration.html",
+      "cacheKey": "b692cae974af",
+      "fetchedAt": "2026-09-13T03:48:49.520733+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/firehose/latest/APIReference/API_AmazonopensearchserviceDestinationConfiguration.html",
+      "sha256": "a09400b4e50b719eb6161eaf2b31b0bf97bc9dd15d184da38ca2e0bdaa39a933"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "cacheKey": "b0fb38bb7c6c",
+      "fetchedAt": "2026-09-12T14:09:04.173705+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "sha256": "dcede2063da1d7ad62ecb5af8adb6d7fabd0b52385a7fa0048afb491dac90450"
+    },
+    {
+      "url": "https://aws.amazon.com/opensearch-service/pricing/",
+      "cacheKey": "8cb5c9de386f",
+      "fetchedAt": "2026-09-13T03:07:07.670835+00:00",
+      "status": 200,
+      "finalURL": "https://aws.amazon.com/opensearch-service/pricing/",
+      "sha256": "5f364d45ea8903f78f246db0c4951a7cf60dcc63c5cde065a934551ff7b2f41c"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html",
+      "cacheKey": "bb8c8bde4633",
+      "fetchedAt": "2026-09-13T01:04:02.216354+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html",
+      "sha256": "04b50013c3bf3aeec02f39d1e0ab702bbbb5b76c5a82de9cd71ba5abc4de1cc8"
+    },
+    {
+      "url": "https://github.com/aws/aws-for-fluent-bit/blob/mainline/CHANGELOG.md",
+      "cacheKey": "8f6baf70b28e",
+      "fetchedAt": "2026-09-13T03:07:08.391341+00:00",
+      "status": 200,
+      "finalURL": "https://github.com/aws/aws-for-fluent-bit/blob/mainline/CHANGELOG.md",
+      "sha256": "12ea3312d21d860209ab62b54705f622092ec4cb761eddc21a03b376b72c950f"
+    }
+  ],
+  "findings": [
+    "Updated present configuration baseline to managedOpenSearch3.5/provider6.64.0/AWSforFluentBit3.4.15 without falsely declaring OpenSearch2.11 unsupported; its standard-support date is2027-11-07.",
+    "Replaced readonly/var/logTailDB, Docker-only framing and missing metadataRBAC with explicit6-resourceLinuxcollector, separate writable state, CRI/Docker parser, nativebinary command, typelessAPI/TLS/SigV4 and pinnedimage metadata.",
+    "Kept daily LogstashFormat indexing coherent with templates/ISM; separated numberedalias rollover. OpenSearch3.5RESTparser does not support max_primary_shard_size; ISMmin_primary_shard_size is different from RESTtotal max_size.",
+    "Corrected managed ISM action objects, coldtimestamp and cold_delete; qualified async index-age retention and late-record/migration risks.",
+    "Corrected kubernetes.namespace_name and app.* mapping/query fields, error filters and combined namespaceDLS/FLS raw-log exclusion; permissions/source trust remain explicit prerequisites.",
+    "Replaced self-managed SAML YAML with AWSAPI JSON helper and separated IAM-only domain access from SAMLbrowser access; corrected snapshot schedule and logpublishing policyconditions.",
+    "Provided optional Firehose configuration with explicit FailedDocumentsOnly, defined externalrole/VPC/bucket dependencies and currentservice naming; no data-delivery or engine-integration test claimed.",
+    "Removed unsupported universal cost/latency/querymix/migration thresholds while describing missing originalbenchmarkconditions; retained4conceptualPNGwith accurate topology/storage/index-age captions and liveviewerlinks.",
+    "Aligned20bilingualquizanswers with the revised guide and retained52legacyguideheadingaliases; all4recognizeddateheaders parsed."
+  ],
+  "figures": {
+    "retained": [
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-02-opensearch-0.png",
+        "sha256": "bd126cc191011cf91e21e728d083785f281a041e90dfaf1ae3987aa031c44aa1",
+        "semanticallyViewedEarlier": true,
+        "disposition": "retained with explicit conceptual topology/storage/name/index-age qualifications"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-logging-02-opensearch-1.png",
+        "sha256": "52254ec2c5b605a9251fbe57cbdf70f4461d4a7d4481ef745a52165ac5ca9679",
+        "semanticallyViewedEarlier": true,
+        "disposition": "retained with explicit conceptual topology/storage/name/index-age qualifications"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-02-opensearch-0.png",
+        "sha256": "acad38bc683a7e58637e60cad86718d03bb3de6d76b2f97d7bfbde2e9dfa1770",
+        "semanticallyViewedEarlier": true,
+        "disposition": "retained with explicit conceptual topology/storage/name/index-age qualifications"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-logging-02-opensearch-1.png",
+        "sha256": "37e7a4b97e304b94f8bf5d536867cb5111f33dc1c5661f4d04aaadfa1c56e198",
+        "semanticallyViewedEarlier": true,
+        "disposition": "retained with explicit conceptual topology/storage/name/index-age qualifications"
+      }
+    ],
+    "viewerLinks": [
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-0.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-0.html",
+        "sha256": "7e836cfefad4206de32dc0a6b034eb5ceb18f056b9fe1eba3d6d3db2b3d68a01",
+        "bytes": 716855,
+        "svg": true,
+        "checkedAt": "2026-09-13T03:52:15.650557+00:00"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-1.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-02-opensearch-1.html",
+        "sha256": "891b58fdf7dbf81cde8f2164e99bf35096506dd89ac7c11d7263f5fc8ec2673a",
+        "bytes": 710506,
+        "svg": true,
+        "checkedAt": "2026-09-13T03:52:15.802134+00:00"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-02-opensearch-0.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-02-opensearch-0.html",
+        "sha256": "9b23dec990313703eccc234cfb72b006a7a679f04b79481b55e5c27e1660eb24",
+        "bytes": 717262,
+        "svg": true,
+        "checkedAt": "2026-09-13T03:52:15.896001+00:00"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-02-opensearch-1.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-02-opensearch-1.html",
+        "sha256": "e383feb7b42d489776d82a397e11efaf60a915bd63163004210bd2a32da52160",
+        "bytes": 710697,
+        "svg": true,
+        "checkedAt": "2026-09-13T03:52:16.043053+00:00"
+      }
+    ],
+    "note": "Prior semantic inspection of4PNG; currentreference/caption/hashchecks, no newresponsivebrowserrun."
+  },
+  "artifactDirectory": ".vitepress/cache/observability-opensearch-audit",
+  "limits": [
+    "Kubernetes1.36official OpenAPI schema only, no API admission or daemon execution.",
+    "Fluent Bit classic-format/mount/option contracts checked, no image layers or runtime.",
+    "JSON/mapping/ISM/DLS/FLS relationships only; no OpenSearch query or policy execution.",
+    "No AWS, GPU, cloud mutations, Terraformplan/apply or collector data-delivery test.",
+    "Service-model shape/type validation only, no client or AWS request created.",
+    "SAML XML is synthetic and unsigned; no IdP/certificate/session validation or SSO claim.",
+    "Terraform values mapped to AWS models; no deployment, version/SKU/quota or IAM verification.",
+    "Firehose payload schema does not prove data delivery or engine integration.",
+    "Retained PNGs viewed semantically earlier; current byte hashes/local targets and4viewerHTTPresponses checked. No new responsive browser verification.",
+    "Existing historical support/measurements retained or clearly qualified; no benchmark or cost guarantees.",
+    "Example backup bucket, service-linked role, IRSA trust, role mappings and regional resource capacity remain deployment prerequisites."
+  ],
+  "sourceAccessNotes": [
+    "FluentBitpublicsite fetch failed viawebtool; officialrawrepositorypage was independently fetchedHTTP200 and recorded in persistentprimarycache.",
+    "No whole-sitebuild/cloudmutation/imagelayers/model/GPU. SDKvalidation creates no client or network request."
+  ]
+}

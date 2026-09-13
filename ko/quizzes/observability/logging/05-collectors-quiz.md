@@ -1,193 +1,185 @@
 # 로그 수집기 비교 퀴즈
 
-로그 수집기(FluentBit, Promtail, Alloy, OTEL Collector)에 대한 이해도를 테스트하는 퀴즈입니다.
+> **마지막 업데이트**: 2026년 9월 13일
 
----
+1. 수집기 자원 요구량은 어떻게 비교해야 하는가?
 
-1. 다음 로그 수집기 중 메모리 사용량이 가장 적은 것은?
-
-   - A) Promtail
-   - B) FluentBit
-   - C) Grafana Alloy
-   - D) OpenTelemetry Collector
+   - A) 구현 언어만으로 고정 메모리 순위를 정한다
+   - B) 같은 레코드·처리·목적지·실패 설정으로 측정한다
+   - C) 모든 Go 수집기를 동일하게 취급한다
+   - D) 공개된 초당 이벤트 숫자 하나만 사용한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) FluentBit**
+**정답: B) 같은 레코드·처리·목적지·실패 설정으로 측정한다**
 
-**설명:**
-FluentBit은 C로 작성되어 메모리 사용량이 약 10-50MB로 가장 적습니다. 나머지는 Go로 작성되어 약 50-100MB의 메모리를 사용합니다.
+Buffer·metadata cache·batch·retry·동시성이 자원에 영향을 줍니다. 언어나 압축 형식만으로 처리량을 보장할 수 없습니다.
 
 </details>
 
 ---
 
-2. FluentBit 설정에서 Kubernetes 메타데이터(namespace, pod_name 등)를 로그에 추가하는 FILTER는?
+2. Fluent Bit에서 Pod·namespace metadata를 추가하는 filter는?
 
-   - A) [FILTER] Name modify
-   - B) [FILTER] Name kubernetes
-   - C) [FILTER] Name parser
-   - D) [FILTER] Name record_modifier
+   - A) modify
+   - B) parser
+   - C) kubernetes
+   - D) record_modifier만
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) [FILTER] Name kubernetes**
+**정답: C) kubernetes**
 
-**설명:**
-FluentBit의 `kubernetes` 필터는 Kubernetes API를 통해 파드, 네임스페이스, 레이블 등의 메타데이터를 자동으로 로그에 추가합니다.
+kubernetes filter는 올바른 tag와 metadata 조회 권한이 필요합니다. Use_Kubelet을 켜면 kubelet 연결·권한도 별도로 확인합니다.
 
 </details>
 
 ---
 
-3. Promtail의 주요 제한사항은?
+3. 현재 Promtail에 대한 올바른 접근은?
 
-   - A) JSON 파싱 미지원
-   - B) Loki 외 다른 목적지로 전송 불가
-   - C) Kubernetes 환경에서 사용 불가
-   - D) 멀티라인 로그 처리 불가
+   - A) 2026년 3월 2일 EOL이므로 이전한다
+   - B) 모든 신규 Loki 배포에 선택한다
+   - C) 기존 설치는 계속 업데이트된다고 가정한다
+   - D) lambda-promtail도 자동으로 같은 종료 대상이다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Loki 외 다른 목적지로 전송 불가**
+**정답: A) 2026년 3월 2일 EOL이므로 이전한다**
 
-**설명:**
-Promtail은 Grafana Loki 전용 에이전트로 설계되어, OpenSearch, CloudWatch 등 다른 목적지로의 전송을 지원하지 않습니다. 다중 목적지가 필요하면 FluentBit이나 OTEL Collector를 사용해야 합니다.
+공식 공지는 Alloy 또는 지원되는 다른 client로의 이전을 안내하며 별도 lambda-promtail은 해당 공지에서 제외합니다.
 
 </details>
 
 ---
 
-4. Grafana Alloy의 설정 언어는?
+4. Grafana Alloy가 사용하는 설정 문법은?
 
-   - A) YAML
-   - B) JSON
-   - C) River (HCL 유사)
-   - D) INI
+   - A) 변환 없이 모든 Kubernetes YAML 사용
+   - B) 이전 명칭이 River인 Alloy 설정 문법
+   - C) 모든 Terraform provider를 포함한 Terraform HCL
+   - D) INI만
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) River (HCL 유사)**
+**정답: B) 이전 명칭이 River인 Alloy 설정 문법**
 
-**설명:**
-Grafana Alloy는 River라는 HCL(HashiCorp Configuration Language)과 유사한 설정 언어를 사용합니다. YAML보다 더 표현력이 풍부하고 재사용 가능한 컴포넌트를 정의할 수 있습니다.
+HCL과 비슷하지만 Alloy component graph가 Terraform 파일과 호환되는 것은 아닙니다. 선택한 Alloy binary로 검증합니다.
 
 </details>
 
 ---
 
-5. OpenTelemetry Collector의 파이프라인 구성 요소 순서는?
+5. 일반적인 Collector pipeline 순서는?
 
-   - A) Processors → Receivers → Exporters
-   - B) Receivers → Exporters → Processors
+   - A) Exporters → Receivers → Processors
+   - B) Processors → Exporters → Receivers
    - C) Receivers → Processors → Exporters
-   - D) Exporters → Processors → Receivers
+   - D) 모든 component를 임의 순서로 실행
 
 <details>
 <summary>정답 보기</summary>
 
 **정답: C) Receivers → Processors → Exporters**
 
-**설명:**
-OTEL Collector 파이프라인은 Receivers(데이터 수신) → Processors(데이터 처리/변환) → Exporters(데이터 전송) 순서로 구성됩니다.
+Connector는 pipeline을 연결할 수 있습니다. 현재 Loki 경로는 OTLP HTTP를 사용하며 Contrib0.160.0에는 제거된 loki exporter가 없습니다.
 
 </details>
 
 ---
 
-6. FluentBit에서 복잡한 로그 처리 로직을 구현하기 위해 사용할 수 있는 스크립팅 언어는?
+6. 예제 Lua 변환이 수행하는 것은?
 
-   - A) Python
-   - B) JavaScript
-   - C) Lua
-   - D) Ruby
+   - A) 임의 텍스트의 모든 비밀 제거
+   - B) 원본 node log file 삭제
+   - C) Exactly-once 전달
+   - D) 지정한 structured key 가림과 raw 복사본 제거
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Lua**
+**정답: D) 지정한 structured key 가림과 raw 복사본 제거**
 
-**설명:**
-FluentBit은 Lua 스크립팅을 지원하여 복잡한 로그 처리 로직(필드 변환, 조건부 처리, 민감 정보 마스킹 등)을 구현할 수 있습니다. `[FILTER] Name lua` 필터를 사용합니다.
+일반 PII 탐지기나 fail-closed 경계가 아닙니다. 일반 텍스트와 message 문자열에는 민감정보가 남을 수 있습니다.
 
 </details>
 
 ---
 
-7. Promtail 설정에서 특정 로그를 제외하는 pipeline_stages 설정은?
+7. 기존 Promtail과 Alloy의 drop stage 이름을 올바르게 구분한 것은?
 
-   - A) stage.filter
-   - B) stage.drop
-   - C) stage.exclude
-   - D) stage.ignore
+   - A) Promtail YAML key도 모두 stage.drop
+   - B) Promtail YAML은 drop, Alloy는 stage.drop
+   - C) Promtail filter.exclude, Alloy ignore
+   - D) 둘 다 record를 버릴 수 없음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) stage.drop**
+**정답: B) Promtail YAML은 drop, Alloy는 stage.drop**
 
-**설명:**
-Promtail의 `stage.drop`은 정규식이나 조건에 맞는 로그 라인을 제외합니다. 예: `expression: "healthcheck|readiness"`로 헬스체크 로그를 제외할 수 있습니다.
+Parser·template·labels·output도 순서와 필드 보존에 영향을 줍니다. Stage 목록을 하나의 범용 처리 chain으로 적용하지 않습니다.
 
 </details>
 
 ---
 
-8. AWS 환경에서 CloudWatch Logs와 OpenSearch 모두에 로그를 전송해야 할 때 가장 적합한 수집기는?
+8. 두 AWS 목적지의 native Fluent Bit output 이름은?
 
-   - A) Promtail
-   - B) FluentBit
-   - C) Grafana Alloy
-   - D) Logstash
+   - A) cloudwatch_logs와 opensearch
+   - B) cloudwatch와 elastic만
+   - C) stage.cloudwatch와 stage.opensearch
+   - D) Loki tenant_id가 두 AWS 목적지를 생성
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) FluentBit**
+**정답: A) cloudwatch_logs와 opensearch**
 
-**설명:**
-FluentBit은 `cloudwatch_logs`와 `opensearch` 출력 플러그인을 모두 네이티브로 지원합니다. AWS에서 제공하는 `aws-for-fluent-bit` 이미지로 쉽게 배포할 수 있습니다. Promtail과 Alloy는 Loki에 최적화되어 있습니다.
+Plugin 지원이 IAM 권한을 부여하지는 않습니다. 실제 ServiceAccount identity·Region·endpoint·TLS·사전 생성 리소스의 소유권을 맞춥니다.
 
 </details>
 
 ---
 
-9. OpenTelemetry Collector에서 메모리 사용량을 제한하는 processor는?
+9. memory_limiter는 메모리 압박에서 어떻게 동작하는가?
 
-   - A) batch
-   - B) memory_limiter
-   - C) resource
-   - D) filter
+   - A) 프로세스가 절대 OOM 나지 않음을 보장
+   - B) Node 메모리를 추가 생성
+   - C) Retryable error로 데이터를 거절하고 garbage collection을 요청할 수 있음
+   - D) 모든 source record를 자동 영속화
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) memory_limiter**
+**정답: C) Retryable error로 데이터를 거절하고 garbage collection을 요청할 수 있음**
 
-**설명:**
-`memory_limiter` processor는 OTEL Collector의 메모리 사용량을 모니터링하고, 설정된 한계에 도달하면 데이터 수집을 일시 중단하여 OOM을 방지합니다.
+Receiver retry·한도·queue가 중요합니다. Filelog의 유한한 retry 시간이 끝나면 실패한 batch를 버릴 수 있습니다.
 
 </details>
 
 ---
 
-10. 기존 Promtail 환경에서 메트릭과 트레이스도 함께 수집해야 할 때 권장되는 마이그레이션 대상은?
+10. Promtail→Alloy 변환 성공 후 필요한 작업은?
 
-    - A) FluentBit
-    - B) Logstash
-    - C) Grafana Alloy
-    - D) Filebeat
+   - A) 전달·메트릭이 완전히 같다고 즉시 선언
+   - B) 모든 진단 경고 무시
+   - C) 같은 로그에서 두 agent를 무기한 동시 실행
+   - D) 파싱·state·소유권·인증·self-metric·실제 backend record 검증
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Grafana Alloy**
+**정답: D) 파싱·state·소유권·인증·self-metric·실제 backend record 검증**
 
-**설명:**
-Grafana Alloy는 Promtail의 후속 프로젝트로, Promtail의 모든 기능을 포함하면서 메트릭(Prometheus)과 트레이스(Tempo)도 수집할 수 있습니다. Promtail 설정을 River 문법으로 쉽게 마이그레이션할 수 있습니다.
+Converter가 전역 rate limit을 pipeline별 제한으로 바꿀 수 있으며 host mount나 Kubernetes 권한을 검증하지는 않습니다. File/API 수집 소유권을 정해 중복을 피합니다.
 
 </details>
+
+---
+
+[본문으로 돌아가기](../../../observability/logging/05-collectors.md)

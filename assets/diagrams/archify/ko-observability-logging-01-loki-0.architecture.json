@@ -43,7 +43,7 @@
           "compactor",
           "s3"
         ],
-        "note": "Compactor가 S3의 작은 청크를 병합하고 인덱스를 최적화하며 보존 정책을 적용한다."
+        "note": "Compactor는 TSDB index를 압축하고 retention 삭제 표시를 처리한다. 작은 log chunk를 큰 chunk로 합치는 단계가 아니다."
       }
     ]
   },
@@ -52,7 +52,7 @@
       "id": "agents",
       "type": "external",
       "label": "로그 수집 에이전트",
-      "sublabel": "Promtail · FluentBit · Grafana Alloy",
+      "sublabel": "Alloy / Fluent Bit / supported clients",
       "pos": [
         60,
         40
@@ -150,7 +150,7 @@
       "id": "compactor",
       "type": "backend",
       "label": "Compactor",
-      "sublabel": "청크 병합 · 보존 정책",
+      "sublabel": "인덱스 압축·보존",
       "pos": [
         200,
         580
@@ -222,7 +222,7 @@
       "id": "agents-to-distributor",
       "from": "agents",
       "to": "distributor",
-      "label": "로그 스트림 푸시",
+      "label": "인증된 push",
       "variant": "emphasis",
       "labelDy": 24
     },
@@ -306,7 +306,9 @@
       "dot": "violet",
       "title": "백엔드",
       "items": [
-        "Compactor는 작은 청크를 큰 청크로 병합하고 인덱스를 최적화하며 보존 정책을 적용한다"
+        "TSDB index compaction과 retention 삭제 처리",
+        "쓰기·조회 앞에 인증과 tenant 결정 경로 필요",
+        "전체 TSDB/index gateway 경로는 Loki 본문 참고"
       ]
     }
   ]
