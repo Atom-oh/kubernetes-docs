@@ -1,0 +1,6 @@
+{
+  "escalation_chain_id": "REPLACE_WITH_EXISTING_CHAIN_ID",
+  "position": 1,
+  "type": "wait",
+  "duration": 900
+}

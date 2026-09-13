@@ -1,0 +1,8 @@
+{
+  "name": "Illustrative temporary replacement",
+  "type": "override",
+  "time_zone": "Asia/Seoul",
+  "start": "2026-09-15T09:00:00",
+  "duration": 28800,
+  "users": ["REPLACE_WITH_EXISTING_USER_ID"]
+}

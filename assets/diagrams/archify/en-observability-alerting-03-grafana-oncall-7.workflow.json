@@ -2,210 +2,126 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Notification Channel Priority",
-    "output": "public/archmaps/en-observability-alerting-03-grafana-oncall-7.html",
-    "animation": "trace",
+    "title": "Personal Notification Rule Sets",
     "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "important-path",
-        "label": "Important alerts",
-        "focus": [
-          "fired",
-          "importance",
-          "allChannels",
-          "push",
-          "phone",
-          "sms",
-          "slack",
-          "email"
-        ],
-        "note": "An important alert is delivered to every channel: push, phone call, SMS, Slack, and email."
-      },
-      {
-        "id": "default-path",
-        "label": "Default alerts",
-        "focus": [
-          "fired",
-          "importance",
-          "defaultChannels",
-          "slack",
-          "email"
-        ],
-        "note": "A default alert reaches only the default channels, Slack and email."
+    "animation": "trace",
+    "output": "en-observability-alerting-03-grafana-oncall-7.html",
+    "legend": {
+      "entries": {
+        "messagebus": {
+          "label": "Notification step"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "backend": {
+          "label": "Configuration / work"
+        },
+        "external": {
+          "label": "Service / outcome"
+        }
       }
-    ],
+    },
     "locale": "en"
   },
   "lanes": [
     {
-      "id": "route",
-      "label": "Alert Routing"
+      "id": "main",
+      "label": "Configured flow"
     },
     {
-      "id": "channels",
-      "label": "Notification Channels"
-    },
-    {
-      "id": "default",
-      "label": "Default Alert"
+      "id": "lower",
+      "label": "Alternative"
     }
   ],
   "mainPath": [
-    "fired",
-    "importance",
-    "allChannels"
+    "alert",
+    "choose",
+    "important",
+    "deliver"
   ],
-  "semanticChecks": {
-    "allowedRoots": [
-      "fired"
-    ],
-    "requiredPaths": [
-      {
-        "from": "fired",
-        "to": "push"
-      },
-      {
-        "from": "fired",
-        "to": "email"
-      },
-      {
-        "from": "defaultChannels",
-        "to": "slack"
-      }
-    ]
-  },
   "nodes": [
     {
-      "id": "fired",
-      "lane": "route",
+      "id": "alert",
+      "lane": "main",
       "col": 0,
       "type": "messagebus",
-      "label": "Alert Fired",
-      "width": 140
+      "label": "Notify step",
+      "sublabel": "configured recipient",
+      "width": 195
     },
     {
-      "id": "importance",
-      "lane": "route",
+      "id": "choose",
+      "lane": "main",
       "col": 1,
       "type": "security",
-      "label": "Importance?",
-      "width": 150
+      "label": "Important?",
+      "sublabel": "select rule set",
+      "width": 195
     },
     {
-      "id": "allChannels",
-      "lane": "route",
+      "id": "important",
+      "lane": "main",
       "col": 2,
       "type": "backend",
-      "label": "All Channels",
-      "tag": "IMPORTANT",
-      "width": 150
+      "label": "Important rules",
+      "sublabel": "user-defined order",
+      "width": 195
     },
     {
-      "id": "push",
-      "lane": "channels",
-      "col": 1,
-      "type": "frontend",
-      "label": "Push Notification",
-      "width": 176
-    },
-    {
-      "id": "phone",
-      "lane": "channels",
+      "id": "default",
+      "lane": "lower",
       "col": 2,
-      "type": "frontend",
-      "label": "Phone Call",
-      "width": 130
+      "type": "backend",
+      "label": "Default rules",
+      "sublabel": "user-defined order",
+      "width": 195
     },
     {
-      "id": "sms",
-      "lane": "channels",
+      "id": "deliver",
+      "lane": "main",
       "col": 3,
-      "type": "frontend",
-      "label": "SMS"
-    },
-    {
-      "id": "slack",
-      "lane": "channels",
-      "col": 4,
       "type": "external",
-      "label": "Slack"
-    },
-    {
-      "id": "email",
-      "lane": "channels",
-      "col": 5,
-      "type": "external",
-      "label": "Email"
-    },
-    {
-      "id": "defaultChannels",
-      "lane": "default",
-      "col": 0,
-      "type": "backend",
-      "label": "Default Channels Only",
-      "tag": "DEFAULT",
-      "width": 200
+      "label": "Configured delivery",
+      "sublabel": "channels + waits",
+      "width": 195
     }
   ],
   "edges": [
     {
-      "from": "fired",
-      "to": "importance",
-      "role": "main"
+      "from": "alert",
+      "to": "choose"
     },
     {
-      "from": "importance",
-      "to": "allChannels",
-      "label": "Important",
-      "variant": "emphasis",
-      "role": "main"
+      "from": "choose",
+      "to": "important",
+      "label": "true"
     },
     {
-      "from": "importance",
-      "to": "defaultChannels",
-      "label": "Default",
+      "from": "choose",
+      "to": "default",
+      "label": "false",
       "role": "branch"
     },
     {
-      "from": "allChannels",
-      "to": "push",
-      "variant": "emphasis",
-      "role": "main"
+      "from": "important",
+      "to": "deliver"
     },
     {
-      "from": "allChannels",
-      "to": "phone",
-      "variant": "emphasis",
+      "from": "default",
+      "to": "deliver",
       "role": "branch"
-    },
+    }
+  ],
+  "cards": [
     {
-      "from": "allChannels",
-      "to": "sms",
-      "variant": "emphasis",
-      "role": "branch"
-    },
-    {
-      "from": "allChannels",
-      "to": "slack",
-      "variant": "emphasis",
-      "role": "branch"
-    },
-    {
-      "from": "allChannels",
-      "to": "email",
-      "variant": "emphasis",
-      "role": "branch"
-    },
-    {
-      "from": "defaultChannels",
-      "to": "slack",
-      "role": "branch"
-    },
-    {
-      "from": "defaultChannels",
-      "to": "email",
-      "role": "branch"
+      "dot": "cyan",
+      "title": "Not an all-channel switch",
+      "items": [
+        "Important selects configured important personal rules",
+        "Default is not universally Slack-only",
+        "Provider availability and actual delivery require tests"
+      ]
     }
   ]
 }

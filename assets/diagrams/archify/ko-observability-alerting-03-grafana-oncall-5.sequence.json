@@ -38,12 +38,12 @@
         "focus": [
           "user",
           "slack",
-          "oncall",
-          "alert"
+          "oncall"
         ],
-        "note": "Resolve는 상태·메시지 갱신에 더해 알림 소스에 해결 알림을 보낸다."
+        "note": "권한 있는 해결 동작은 OnCall과 메시지를 갱신하며 소스 규칙 변경은 별도 통합이 필요합니다."
       }
-    ]
+    ],
+    "output": "ko-observability-alerting-03-grafana-oncall-5.html"
   },
   "participants": [
     {
@@ -153,14 +153,6 @@
       "y": 514,
       "label": "메시지 업데이트",
       "variant": "return"
-    },
-    {
-      "id": "res-notify",
-      "from": "oncall",
-      "to": "alert",
-      "y": 551,
-      "label": "해결 알림",
-      "variant": "dashed"
     }
   ],
   "activations": [
@@ -181,6 +173,17 @@
       "from": 472,
       "to": 558,
       "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "상태를 혼동하지 않기",
+      "items": [
+        "확인은 해결이 아님",
+        "수동 OnCall 동작 후에도 소스는 firing일 수 있음",
+        "설치한 app의 실제 명령·버튼·권한 확인"
+      ]
     }
   ]
 }

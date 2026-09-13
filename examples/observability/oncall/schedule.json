@@ -1,0 +1,6 @@
+{
+  "name": "Illustrative SRE schedule",
+  "type": "web",
+  "time_zone": "Asia/Seoul",
+  "shifts": ["REPLACE_WITH_EXISTING_SHIFT_ID"]
+}

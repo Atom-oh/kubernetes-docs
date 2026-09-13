@@ -1,0 +1,17 @@
+# Materialize the generated integration URL in this protected file.
+# This example is not enabled or contacted during the documentation audit.
+route:
+  receiver: no-page
+  group_by: [alertname, cluster, namespace, service]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['severity=~"critical|warning"']
+      receiver: oncall
+receivers:
+  - name: no-page
+  - name: oncall
+    webhook_configs:
+      - url_file: /etc/oncall/integration-url
+        send_resolved: true

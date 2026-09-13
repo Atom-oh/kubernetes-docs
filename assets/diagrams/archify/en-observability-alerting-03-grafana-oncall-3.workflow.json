@@ -3,7 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Escalation Chain Structure",
-    "output": "public/archmaps/en-observability-alerting-03-grafana-oncall-3.html",
+    "output": "en-observability-alerting-03-grafana-oncall-3.html",
     "animation": "trace",
     "quality_profile": "showcase",
     "views": [
@@ -30,14 +30,14 @@
       },
       {
         "id": "resolution",
-        "label": "Resolution path",
+        "label": "Acknowledgment path",
         "focus": [
           "step1",
           "step2",
           "step3",
           "resolved"
         ],
-        "note": "A response within 15 minutes at any step stops the escalation and resolves the alert."
+        "note": "Acknowledgment may stop/pause escalation according to state and policy; it does not resolve the source condition."
       }
     ],
     "legend": {
@@ -62,7 +62,7 @@
     },
     {
       "id": "done",
-      "label": "Resolution"
+      "label": "Acknowledgment"
     }
   ],
   "mainPath": [
@@ -141,7 +141,7 @@
       "lane": "done",
       "col": 5,
       "type": "external",
-      "label": "Alert Resolved",
+      "label": "Acknowledged",
       "width": 140
     }
   ],
@@ -198,20 +198,19 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "Chain configuration (escalation_policies)",
+      "title": "Illustrative policy",
       "items": [
-        "position 0 · notify_on_call_from_schedule · important: true",
-        "position 1 · wait · duration 900 (15 minutes)",
-        "position 2 · notify_persons · secondary responder list"
+        "notify_on_call_from_schedule → wait900s → configured target",
+        "Wait values and target order are organization-specific"
       ]
     },
     {
       "dot": "emerald",
-      "title": "How it behaves",
+      "title": "State matters",
       "items": [
-        "Each step waits 15 minutes (wait 900s) for a response before moving on",
-        "A confirmed response at any step resolves the alert and stops the chain",
-        "If even the last step (entire team) gets no response, the chain ends"
+        "Acknowledge, Resolve and Silence are different actions",
+        "Repeats and next targets require explicit configuration",
+        "No guarantee that a response fixes the underlying incident"
       ]
     }
   ]

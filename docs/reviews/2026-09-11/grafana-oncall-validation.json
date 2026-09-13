@@ -1,0 +1,2163 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T12:52:36.431068+00:00",
+  "originalRead": [
+    {
+      "path": "en/observability/alerting/03-grafana-oncall.md",
+      "lines": 1011,
+      "originalSHA256": "471f6fd366dd0432093460b892b6ae9275c777c30935319e2980066585e3453b",
+      "fullyRead": true,
+      "readAt": "2026-09-13T12:08:07.919966+00:00"
+    },
+    {
+      "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+      "lines": 247,
+      "originalSHA256": "260271b2728b29b242f79e2fd452707a218c497cde9f86cb2e4f16a18574c62d",
+      "fullyRead": true,
+      "readAt": "2026-09-13T12:08:07.919976+00:00"
+    },
+    {
+      "path": "ko/observability/alerting/03-grafana-oncall.md",
+      "lines": 1011,
+      "originalSHA256": "9a8bf7072009b9c14eddabc8e92ebb396c439fec5a394d3d10f151a6d4a0699a",
+      "fullyRead": true,
+      "readAt": "2026-09-13T12:08:07.919978+00:00"
+    },
+    {
+      "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+      "lines": 247,
+      "originalSHA256": "6e61be2cf9ec20e2c5b714a0a68445ca3d3d1681fc91bdbbb80736727f4f862d",
+      "fullyRead": true,
+      "readAt": "2026-09-13T12:08:07.919980+00:00"
+    }
+  ],
+  "originalLines": 2516,
+  "scope": [
+    "en/observability/alerting/03-grafana-oncall.md",
+    "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+    "ko/observability/alerting/03-grafana-oncall.md",
+    "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+    "examples/observability/oncall/inventory.py",
+    "examples/observability/oncall/schedule.json",
+    "examples/observability/oncall/shift.json",
+    "examples/observability/oncall/override.json",
+    "examples/observability/oncall/route.json",
+    "examples/observability/oncall/escalation-wait.json",
+    "examples/observability/oncall/alertmanager.yaml",
+    "examples/observability/oncall/README.md",
+    "examples/observability/oncall/tests/test_inventory.py",
+    "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-0.architecture.json",
+    "public/archmaps/en-observability-alerting-03-grafana-oncall-0.html",
+    "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png",
+    "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-1.sequence.json",
+    "public/archmaps/en-observability-alerting-03-grafana-oncall-1.html",
+    "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png",
+    "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-2.architecture.json",
+    "public/archmaps/en-observability-alerting-03-grafana-oncall-2.html",
+    "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png",
+    "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-3.workflow.json",
+    "public/archmaps/en-observability-alerting-03-grafana-oncall-3.html",
+    "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png",
+    "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-4.architecture.json",
+    "public/archmaps/en-observability-alerting-03-grafana-oncall-4.html",
+    "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png",
+    "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-5.sequence.json",
+    "public/archmaps/en-observability-alerting-03-grafana-oncall-5.html",
+    "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png",
+    "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-6.architecture.json",
+    "public/archmaps/en-observability-alerting-03-grafana-oncall-6.html",
+    "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png",
+    "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-7.workflow.json",
+    "public/archmaps/en-observability-alerting-03-grafana-oncall-7.html",
+    "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png",
+    "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-8.workflow.json",
+    "public/archmaps/en-observability-alerting-03-grafana-oncall-8.html",
+    "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png",
+    "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-0.architecture.json",
+    "public/archmaps/ko-observability-alerting-03-grafana-oncall-0.html",
+    "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-0.png",
+    "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-1.sequence.json",
+    "public/archmaps/ko-observability-alerting-03-grafana-oncall-1.html",
+    "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-1.png",
+    "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-2.architecture.json",
+    "public/archmaps/ko-observability-alerting-03-grafana-oncall-2.html",
+    "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-2.png",
+    "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-3.workflow.json",
+    "public/archmaps/ko-observability-alerting-03-grafana-oncall-3.html",
+    "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-3.png",
+    "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-4.architecture.json",
+    "public/archmaps/ko-observability-alerting-03-grafana-oncall-4.html",
+    "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-4.png",
+    "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-5.sequence.json",
+    "public/archmaps/ko-observability-alerting-03-grafana-oncall-5.html",
+    "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-5.png",
+    "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-6.architecture.json",
+    "public/archmaps/ko-observability-alerting-03-grafana-oncall-6.html",
+    "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-6.png",
+    "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-7.workflow.json",
+    "public/archmaps/ko-observability-alerting-03-grafana-oncall-7.html",
+    "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-7.png",
+    "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-8.workflow.json",
+    "public/archmaps/ko-observability-alerting-03-grafana-oncall-8.html",
+    "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-8.png"
+  ],
+  "repositoryProvenance": {
+    "repository": "grafana-cold-storage/oncall",
+    "archived": true,
+    "defaultBranch": "dev",
+    "head": "af0fbd40558c9a63bcf438589894c440fc434a54",
+    "latestRelease": "v1.16.11",
+    "releasePublishedAt": "2026-02-11T19:00:14Z",
+    "url": "https://github.com/grafana-cold-storage/oncall"
+  },
+  "sources": [
+    {
+      "name": "oncall-lifecycle",
+      "url": "https://grafana.com/docs/oncall/latest/",
+      "status": 200,
+      "sha256": "b75963a14f7297cec8a1675d2e4282d67499bc1797e881f4c43983ed96e3e9cf",
+      "excerpts": [
+        ".txt. init()\"> Menu Caution As of 2026-03-24, the Grafana OnCall OSS project is archived. The grafana/oncall repository is read-only, and active development continues in Grafana Cloud IRM. For a fully supported and actively maintained alternative, Grafana Cloud IRM offers a modern approach to incident response and on-call management. window.docs_",
+        " is available at https://grafana.com/llms-full.txt. init()\"> Menu Caution As of 2026-03-24, the Grafana OnCall OSS project is archived. The grafana/oncall repository is read-only, and active development continues in Grafana Cloud IRM. For a fully supported and actively maintained alternative, Grafana Cloud IRM offers a modern approach to incident r",
+        "nsure individuals receive alerts through their preferred channels, such as SMS, mobile apps, or ChatOps platforms. Through automated alert routing and escalation, Grafana OnCall OSS reduces incident response time, minimizes downtime and helps mitigate the impact of incidents. Explore Introduction Learn more about the key benefits and features t",
+        "ne and SMS Push notifications Webhook Microsoft Teams Slack Telegram Mattermost Mobile app Installation Push notifications from the mobile app Alert feed On-call status On-call schedules API & Terraform schedules Web-based schedules Import on-call schedules Shift swaps Insight logs and metrics On-call status and shifts API reference Alert group",
+        "lization.svg\"},{\"text\":\"Incident Response & Management\",\"href\":\"/products/cloud/irm/\",\"plcmt\":\"cloud-nav\",\"icon\":\"https://a-us.storyblok.com/f/1022730/24x24/7d583c13a3/icon-nav-incident-response-management.svg\"},{\"text\":\"Synthetic Monitoring\",\"href\":\"/products/cloud/synthetic-monitoring/\",\"plcmt\":\"cloud-nav\",\"icon\":\"https://a-us.storyblok.co",
+        "call repository is read-only, and active development continues in Grafana Cloud IRM. For a fully supported and actively maintained alternative, Grafana Cloud IRM offers a modern approach to incident response and on-call management. window.docs_project=\"Grafana OnCall\" Documentation OnCall Open source Grafana OnCall OSS Grafana OnCall OSS all"
+      ]
+    },
+    {
+      "name": "oncall-api",
+      "url": "https://grafana.com/docs/oncall/latest/oncall-api-reference/",
+      "status": 200,
+      "sha256": "62c5546df7c3cb1c60c9284fe2318701d53d255453f1ba241c83004e7a0e3336",
+      "excerpts": [
+        ".txt. init()\"> Menu Caution As of 2026-03-24, the Grafana OnCall OSS project is archived. The grafana/oncall repository is read-only, and active development continues in Grafana Cloud IRM. For a fully supported and actively maintained alternative, Grafana Cloud IRM offers a modern approach to incident response and on-call management. window.docs_",
+        " is available at https://grafana.com/llms-full.txt. init()\"> Menu Caution As of 2026-03-24, the Grafana OnCall OSS project is archived. The grafana/oncall repository is read-only, and active development continues in Grafana Cloud IRM. For a fully supported and actively maintained alternative, Grafana Cloud IRM offers a modern approach to incident r",
+        "ne and SMS Push notifications Webhook Microsoft Teams Slack Telegram Mattermost Mobile app Installation Push notifications from the mobile app Alert feed On-call status On-call schedules API & Terraform schedules Web-based schedules Import on-call schedules Shift swaps Insight logs and metrics On-call status and shifts API reference Alert group",
+        "s Slack Telegram Mattermost Mobile app Installation Push notifications from the mobile app Alert feed On-call status On-call schedules API & Terraform schedules Web-based schedules Import on-call schedules Shift swaps Insight logs and metrics On-call status and shifts API reference Alert groups HTTP API Alerts HTTP API Escalation chains HTTP AP",
+        "lization.svg\"},{\"text\":\"Incident Response & Management\",\"href\":\"/products/cloud/irm/\",\"plcmt\":\"cloud-nav\",\"icon\":\"https://a-us.storyblok.com/f/1022730/24x24/7d583c13a3/icon-nav-incident-response-management.svg\"},{\"text\":\"Synthetic Monitoring\",\"href\":\"/products/cloud/synthetic-monitoring/\",\"plcmt\":\"cloud-nav\",\"icon\":\"https://a-us.storyblok.co",
+        "call repository is read-only, and active development continues in Grafana Cloud IRM. For a fully supported and actively maintained alternative, Grafana Cloud IRM offers a modern approach to incident response and on-call management. window.docs_project=\"Grafana OnCall\" Documentation OnCall API reference Open source HTTP API Reference Use the "
+      ]
+    },
+    {
+      "name": "opsgenie",
+      "url": "https://www.atlassian.com/software/opsgenie",
+      "status": 200,
+      "sha256": "1dd976cda2f406a9c63943561bf5c93a8f18b84b9da678b5c30f89b186cec0ab",
+      "excerpts": [
+        "; } @media (min-width: 1024px) { #adg4-global-nav .component.component--heading.mobile-solutions-title { display: none; } #adg4-global-nav .adg4-nav-link-products .dropdown-content { left: -100px; width: 912px; } } .adg4-nav-link-teams .dropdown-content, .adg4-nav-link-why-atlassian .dropdown-content { width: 696px; left: 5px; } .adg4-nav-link-",
+        ".constants.headerLoginMenu = true; imkt.constants.public = true; imkt.constants.mobileBreakpoint = 640; })(); { \"type\":\"imkt.pages.WACPage\", \"params\": { } } function initializeATLAnalytics() { var pageViewProperties = { contentSite: 'WAC', contentType: 'Website', contentProduct: 'Opsgenie' }; /* get url path, convert to dash format and add it t"
+      ]
+    },
+    {
+      "name": "cloud-connection-cutoff",
+      "url": "https://grafana.com/docs/oncall/latest/set-up/open-source/",
+      "status": 200,
+      "sha256": "bac7da4694082fb19d2f4b14e55be97a8ac79d79ac6bed8f7d2716196e84b214",
+      "verifiedClaim": "Cloud Connection ended 2026-03-24; OSS mobile push via Grafana IRM app and Cloud Connection-dependent SMS/voice unavailable. Separately configured notification mechanisms are distinct."
+    }
+  ],
+  "archivedCodeSources": [
+    {
+      "path": "engine/apps/public_api/urls.py",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/engine/apps/public_api/urls.py",
+      "sha256": "751ac55deea932ba17630f10000ec76730648b87123a92735e0389c831a792c1",
+      "lines": 38
+    },
+    {
+      "path": "engine/apps/public_api/serializers/schedules_web.py",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/engine/apps/public_api/serializers/schedules_web.py",
+      "sha256": "c5c6241c3009b26493864e1031f71e2f71cc989c8772c0f6900b3033cff46fce",
+      "lines": 75
+    },
+    {
+      "path": "engine/apps/public_api/serializers/schedules_base.py",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/engine/apps/public_api/serializers/schedules_base.py",
+      "sha256": "f34205b631b032629623efb49df9f4adaa7ddf09750ab71adb7599f5d3f0e00d",
+      "lines": 76
+    },
+    {
+      "path": "engine/apps/public_api/serializers/on_call_shifts.py",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/engine/apps/public_api/serializers/on_call_shifts.py",
+      "sha256": "65e0b94ad2335549fb6e67bfa0b85efc29e6d6619611490a85cdfb234f8405b7",
+      "lines": 404
+    },
+    {
+      "path": "engine/apps/public_api/serializers/escalation_policies.py",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/engine/apps/public_api/serializers/escalation_policies.py",
+      "sha256": "2de1aa57961dded1c4ce789bd311f505658123c4b70e21b203a1d802c3c8d2ae",
+      "lines": 328
+    },
+    {
+      "path": "engine/apps/public_api/serializers/routes.py",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/engine/apps/public_api/serializers/routes.py",
+      "sha256": "d9adeae5e5ec97df2e69487acaae43dcdca6247909fbade087eba981058bee5b",
+      "lines": 239
+    },
+    {
+      "path": "engine/apps/public_api/serializers/personal_notification_rules.py",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/engine/apps/public_api/serializers/personal_notification_rules.py",
+      "sha256": "38eaa79724d1f0e3a4d3d2c225d339614c0816a19ea149ce6935b4bb5c6549f2",
+      "lines": 129
+    },
+    {
+      "path": "engine/apps/public_api/serializers/slack_channel.py",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/engine/apps/public_api/serializers/slack_channel.py",
+      "sha256": "2cc042a3798039a965e78f9ace7a055bc76ded9229f878adb5109c27a604b22d",
+      "lines": 9
+    },
+    {
+      "path": "helm/oncall/Chart.yaml",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/helm/oncall/Chart.yaml",
+      "sha256": "925963c7d62d6083901c9b05ff36c78cc39084ca7525ee9265fdd7f773bd9e83",
+      "lines": 39
+    },
+    {
+      "path": "helm/oncall/values.yaml",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/helm/oncall/values.yaml",
+      "sha256": "19cd1522e2f6027cba40dcae40be16b79f193836d94acf37ba6814b8e381ef3b",
+      "lines": 731
+    },
+    {
+      "path": "README.md",
+      "url": "https://raw.githubusercontent.com/grafana-cold-storage/oncall/af0fbd40558c9a63bcf438589894c440fc434a54/README.md",
+      "sha256": "fa521ee3111a425f7a1e222b2ded9b516682ba61cf2d1e5e0dad9652ca4341ee",
+      "lines": 168
+    }
+  ],
+  "findings": [
+    "OSSarchived2026-03-24andmovedreadonly;notnewproductionOSSrecommendation;actualrelease/chart/sourceversionsdistinguished;Opsgenielifecycleandoldpricing/countsupdated.",
+    "Archivedchartengine/env/db/broker/cache/secret/Twilio/Telegramcontractsinsteadofinvalid/incompleteproductionvalues;noHAguaranteefromreplicas.",
+    "RawAuthorizationandoptionalX-Grafana-URL;generatedintegrationURLseparatefromAPIkey;boundedread-onlypagination/TLS/no-redirect/privateexportwith12actualTLSfixturetests.",
+    "ScheduleexistingShiftIDs,separateon_call_shifts,weeklyweek_start/startindex/dateformat,overridetypeseparate;19actualupstreampurevalidator/fieldchecks;noDB/APIwriteclaim.",
+    "AcknowledgevsResolve/source-rulelifecycle;importantselectspersonalrulesnotallchannels;actualcustomwebhookfields/declare_incidentfeaturegates.",
+    "Nestedslackroutecontract,payload-specificgroupingandrouting,timersnotinterchangeable;unsupportedslashcommands/Firebase/Teamsuniversalsettingsremoved.",
+    "Migrationtowell-maintaineddestinationwithbackups,identitymapping,delivery/recoverytestsandnonfixedcutover;20quizanswersand116oldIDsretained.",
+    "All18figuresrepaired/captionsaligned;18showcase+54browser+18SVG+18individualPNGreviewed;fourrefinementsrechecked.",
+    "ONCALL-R1-001 fixed: explicitly state expired Cloud Connection path and distinguish independent Twilio/notification-service alternatives in both guides, quizzes and relevant captions."
+  ],
+  "native": {
+    "inventory-validation.json": {
+      "status": "passed",
+      "verifiedAt": "2026-09-13T12:23:36.384975+00:00",
+      "tests": 12,
+      "scope": "Real loopback HTTPS with synthetic token/CA;rawAuthorization,stackheader,pagination,foreignorigin/redirectrejection,TLSfailure,responsecontractsandprivateatomicoutput;noserviceaccountorrealOnCallcall.",
+      "artifacts": [
+        {
+          "path": "examples/observability/oncall/inventory.py",
+          "sha256": "67735b271e62f0600f0c3bc71d16d5eeceb788c3bad657549fc3fc45a672fad7"
+        },
+        {
+          "path": "examples/observability/oncall/tests/test_inventory.py",
+          "sha256": "6d8c7a972012c74fd05391db63867dda7ed327bc78099d5d05988d569f45de5d"
+        }
+      ]
+    },
+    "source-contract-validation.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "case": "weekly complete fields",
+          "passed": true
+        },
+        {
+          "case": "weekly missing week_start rejected",
+          "passed": true
+        },
+        {
+          "case": "recurring missing frequency rejected",
+          "passed": true
+        },
+        {
+          "case": "recurring missing interval rejected",
+          "passed": true
+        },
+        {
+          "case": "rolling missing starting user index rejected",
+          "passed": true
+        },
+        {
+          "case": "rolling start index accepted",
+          "passed": true
+        },
+        {
+          "case": "naive wall datetime format accepted",
+          "passed": true
+        },
+        {
+          "case": "offset-bearing old datetime rejected",
+          "passed": true
+        },
+        {
+          "case": "invalid datetime rejected",
+          "passed": true
+        },
+        {
+          "case": "zero interval rejected",
+          "passed": true
+        },
+        {
+          "case": "valid weekdays",
+          "passed": true
+        },
+        {
+          "case": "invalid weekday rejected",
+          "passed": true
+        },
+        {
+          "case": "daily rolling day constraint rejected",
+          "passed": true
+        },
+        {
+          "case": "schedule.json fields bound to archived serializer",
+          "passed": true
+        },
+        {
+          "case": "shift.json fields bound to archived serializer",
+          "passed": true
+        },
+        {
+          "case": "override.json fields bound to archived serializer",
+          "passed": true
+        },
+        {
+          "case": "route.json fields bound to archived serializer",
+          "passed": true
+        },
+        {
+          "case": "escalation-wait.json fields bound to archived serializer",
+          "passed": true
+        },
+        {
+          "case": "separate shift IDs and nested Slack route contract",
+          "passed": true
+        }
+      ],
+      "count": 19,
+      "sourceHashes": [
+        {
+          "path": "source-code/engine/apps/schedules/models/custom_on_call_shift.py",
+          "sha256": "c5d81823e4ba9fa0aa52111ae5d04f91983093fb26f1f791b6e0ef3db6614fdd"
+        },
+        {
+          "path": "source-code/engine/apps/public_api/serializers/on_call_shifts.py",
+          "sha256": "65e0b94ad2335549fb6e67bfa0b85efc29e6d6619611490a85cdfb234f8405b7"
+        }
+      ],
+      "scope": "Executed selected, verbatim pure upstream validator methods with source-derived constants; inspected actual serializer field lists. No DRF database relationships, OnCall API/server creation, schedule execution or notifications."
+    },
+    "alertmanager-validation.json": {
+      "exitCode": 0,
+      "stdout": "Checking '/home/atomoh/kubernetes-docs/examples/observability/oncall/alertmanager.yaml'  SUCCESS\nFound:\n - global config\n - route\n - 0 inhibit rules\n - 2 receivers\n - 0 templates\n\n",
+      "stderr": "",
+      "scope": "Nativeamtool0.34syntax;noAlertmanagerstartedornotificationssent"
+    },
+    "alertmanager-routing-validation.json": {
+      "status": "passed",
+      "cases": [
+        {
+          "labels": [
+            "severity=critical"
+          ],
+          "receiver": "oncall",
+          "passed": true
+        },
+        {
+          "labels": [
+            "severity=warning"
+          ],
+          "receiver": "oncall",
+          "passed": true
+        },
+        {
+          "labels": [
+            "severity=info"
+          ],
+          "receiver": "no-page",
+          "passed": true
+        },
+        {
+          "labels": [],
+          "receiver": "no-page",
+          "passed": true
+        }
+      ],
+      "scope": "Nativeamtool0.34offlineconfigrouting;noactualwebhookrequest"
+    },
+    "inline-validation.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "path": "en/observability/alerting/03-grafana-oncall.md",
+          "parseAnd6ExactExampleFences": true
+        },
+        {
+          "path": "ko/observability/alerting/03-grafana-oncall.md",
+          "parseAnd6ExactExampleFences": true
+        }
+      ]
+    }
+  },
+  "markdown": {
+    "status": "passed",
+    "files": [
+      {
+        "path": "en/observability/alerting/03-grafana-oncall.md",
+        "originalLines": 1011,
+        "originalHash": "471f6fd366dd0432093460b892b6ae9275c777c30935319e2980066585e3453b",
+        "sha256": "44662f6f0298aaaab20816dc6c12966aedf6b5e94e8660d8b0a7641ba301dc1d",
+        "originalIds": 56,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png",
+            "exists": true
+          },
+          {
+            "target": "../../quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+            "exists": true
+          }
+        ],
+        "lastUpdated": "2026-09-13",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "answers": [],
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "originalLines": 247,
+        "originalHash": "260271b2728b29b242f79e2fd452707a218c497cde9f86cb2e4f16a18574c62d",
+        "sha256": "cd4d6cf6df5e6e2a88a20d9e1eaf58e3a55657aaf1b5044e20824a61da033487",
+        "originalIds": 2,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [
+          {
+            "target": "../../../observability/alerting/03-grafana-oncall.md",
+            "exists": true
+          }
+        ],
+        "lastUpdated": "2026-09-13",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "answers": [
+          "C",
+          "B",
+          "B",
+          "B",
+          "B",
+          "B",
+          "C",
+          "C",
+          "B",
+          "B"
+        ],
+        "passed": true
+      },
+      {
+        "path": "ko/observability/alerting/03-grafana-oncall.md",
+        "originalLines": 1011,
+        "originalHash": "9a8bf7072009b9c14eddabc8e92ebb396c439fec5a394d3d10f151a6d4a0699a",
+        "sha256": "e72a148fb34042f5abc7373d8b3e540e4cb16cbc2d1dfd8fcb195e08e3fb5414",
+        "originalIds": 56,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-0.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-1.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-2.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-3.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-4.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-5.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-6.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-7.png",
+            "exists": true
+          },
+          {
+            "target": "../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-8.png",
+            "exists": true
+          },
+          {
+            "target": "../../quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+            "exists": true
+          }
+        ],
+        "lastUpdated": "2026-09-13",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "answers": [],
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "originalLines": 247,
+        "originalHash": "6e61be2cf9ec20e2c5b714a0a68445ca3d3d1681fc91bdbbb80736727f4f862d",
+        "sha256": "8fba7b2c34577a1609d436b38d367611bf0c9ae330922af5c57abca54b7253a9",
+        "originalIds": 2,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [
+          {
+            "target": "../../../observability/alerting/03-grafana-oncall.md",
+            "exists": true
+          }
+        ],
+        "lastUpdated": "2026-09-13",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "answers": [
+          "C",
+          "B",
+          "B",
+          "B",
+          "B",
+          "B",
+          "C",
+          "C",
+          "B",
+          "B"
+        ],
+        "passed": true
+      }
+    ],
+    "quizParity": true,
+    "scope": "Actual VitePress/Vue compile, current fragments, original anchors and 10-question parity; no site build."
+  },
+  "delivery": [
+    {
+      "stem": "en-observability-alerting-03-grafana-oncall-0",
+      "spec": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-03-grafana-oncall-1",
+      "spec": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-1.sequence.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-03-grafana-oncall-2",
+      "spec": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-2.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-03-grafana-oncall-3",
+      "spec": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-3.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-03-grafana-oncall-4",
+      "spec": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-4.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-03-grafana-oncall-5",
+      "spec": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-5.sequence.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-03-grafana-oncall-6",
+      "spec": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-6.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-03-grafana-oncall-7",
+      "spec": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-7.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-03-grafana-oncall-8",
+      "spec": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-8.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-03-grafana-oncall-0",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-03-grafana-oncall-1",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-1.sequence.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-03-grafana-oncall-2",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-2.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-03-grafana-oncall-3",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-3.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-03-grafana-oncall-4",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-4.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-03-grafana-oncall-5",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-5.sequence.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-03-grafana-oncall-6",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-6.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-03-grafana-oncall-7",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-7.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-03-grafana-oncall-8",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-8.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 718,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 718,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 718,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50641,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 997,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 997,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 997,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58065,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 802,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 802,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 802,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53866,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 898,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 898,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 898,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51617,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 894,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 894,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 894,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58095,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53289,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-6.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-6.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-6.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51257,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-7.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-7.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-7.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48467,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-8.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 644,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-8.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 644,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-03-grafana-oncall-8.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 644,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49382,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 438,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 438,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 438,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50275,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 624,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 624,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 624,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57520,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 505,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 505,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 505,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53251,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 536,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 536,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 536,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50689,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 737,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 737,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 737,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57840,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 558,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 558,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 558,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53027,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-6.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 477,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-6.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 477,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-6.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 477,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51040,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-7.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 316,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-7.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 316,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-7.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 316,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47924,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-8.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 347,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-8.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 347,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-03-grafana-oncall-8.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 347,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48577,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "54 cases on18locallygeneratedviewers; motion/reduced-motion/visibility/theme/guided controls and18SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild",
+    "refinementNote": "Fourviewersre-renderedafterlegend/labelrefinement;12casesreplaceinitialcases. Afile-loadtimeoutduringKOrefinementwasrecheckedwithafreshbrowser(6KOcasespassed),withoutsourcechangesorweakenedassertions."
+  },
+  "individualPNGInspection": {
+    "count": 18,
+    "status": "passed",
+    "fourRefinementsReinspected": true
+  },
+  "artifacts": [
+    {
+      "path": "en/observability/alerting/03-grafana-oncall.md",
+      "sha256": "44662f6f0298aaaab20816dc6c12966aedf6b5e94e8660d8b0a7641ba301dc1d"
+    },
+    {
+      "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+      "sha256": "cd4d6cf6df5e6e2a88a20d9e1eaf58e3a55657aaf1b5044e20824a61da033487"
+    },
+    {
+      "path": "ko/observability/alerting/03-grafana-oncall.md",
+      "sha256": "e72a148fb34042f5abc7373d8b3e540e4cb16cbc2d1dfd8fcb195e08e3fb5414"
+    },
+    {
+      "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+      "sha256": "8fba7b2c34577a1609d436b38d367611bf0c9ae330922af5c57abca54b7253a9"
+    },
+    {
+      "path": "examples/observability/oncall/inventory.py",
+      "sha256": "67735b271e62f0600f0c3bc71d16d5eeceb788c3bad657549fc3fc45a672fad7"
+    },
+    {
+      "path": "examples/observability/oncall/schedule.json",
+      "sha256": "0244da52bc25e20fa10f30d719f72749b79431e14a76ca0a541cf783d1b6df19"
+    },
+    {
+      "path": "examples/observability/oncall/shift.json",
+      "sha256": "16b3f08377cf0a1be80ad8c014dcf0a2375f88e625fbaad3f0757573354d0bab"
+    },
+    {
+      "path": "examples/observability/oncall/override.json",
+      "sha256": "dd38a1287a5a873ff95fcea4909b44ceee276b8bef8262356f9b73f5e661dc0e"
+    },
+    {
+      "path": "examples/observability/oncall/route.json",
+      "sha256": "88f2cbd54b402069a63136abc1537f254696d357c58e8b212aa20976072046b5"
+    },
+    {
+      "path": "examples/observability/oncall/escalation-wait.json",
+      "sha256": "df4528a0121bff2ce04ce65b10d5c29cfb420def1ee28a2966925d2c45bce3d6"
+    },
+    {
+      "path": "examples/observability/oncall/alertmanager.yaml",
+      "sha256": "20ae57942bc40151259c050292c7c59b0a110a2a27672e255596dcb0500fc219"
+    },
+    {
+      "path": "examples/observability/oncall/README.md",
+      "sha256": "8f333dfb5ac10f49803eabec8d163aad021023c6f01ac0976cf3f030a33a8e86"
+    },
+    {
+      "path": "examples/observability/oncall/tests/test_inventory.py",
+      "sha256": "6d8c7a972012c74fd05391db63867dda7ed327bc78099d5d05988d569f45de5d"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-0.architecture.json",
+      "sha256": "84b0fa3db03394c3902012aa43aad26ff8b1dbcccc371e3390be98416586df9a"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-03-grafana-oncall-0.html",
+      "sha256": "596ff1c6836504617d235901163875aa49c06830e4b95296e10172b9d58977d4"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png",
+      "sha256": "bec06ae5209d8440b6a5ab9ef59a46008269e47ac534061ad001e58e1b71ac5f"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-1.sequence.json",
+      "sha256": "475b7ffa30c63acdf8cf230069ae1f0e104bcd18d78594620dd118c7e35382e4"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-03-grafana-oncall-1.html",
+      "sha256": "a6d5cbad3bdf3ae694378234251d03242a71d34fe6ce0cefe7741eb6767240a1"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png",
+      "sha256": "0a72dce6a831b96faef2e2f64e343462408ebc355c4942ee37895e533728bcef"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-2.architecture.json",
+      "sha256": "1058d781395e9632f2872607df59bd700e9fef49c6919fc194b75be19f79514b"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-03-grafana-oncall-2.html",
+      "sha256": "036952617da184e3a82b35a0b393effbfc0754647bf1edd7bd0396f6113ee496"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png",
+      "sha256": "f14f7034619090e3ed87e76a9d1088c18a9c60c058288baaa8bcf98cbc858ceb"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-3.workflow.json",
+      "sha256": "42f6564c252ebe3a4df0e02bc564000bf1a0628e02a39a3dff369bb83df3dee5"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-03-grafana-oncall-3.html",
+      "sha256": "f6e30fe42711b69c8d4e84c1474f8b61977a755047442ba16f3569993e21259c"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png",
+      "sha256": "a47d7a1df2cbb403dd7ba59bfbedd54e33af3a7d7ce4d02f621d162457a03a96"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-4.architecture.json",
+      "sha256": "6f253a1f0e7a908a4fa37e14b3ebd93f3f701a3a0f7d20d7739ad56040490528"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-03-grafana-oncall-4.html",
+      "sha256": "e963940302cbee2ff080b5a5612c23b72f6f11e5f8e5cdc2cf2632ccde612275"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png",
+      "sha256": "a874f850f38e8fc16cde59e0fe98a3d20dcec8b83903e3a3b4afc242771e0e23"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-5.sequence.json",
+      "sha256": "4b79db69b77e5128cb9fb3656dc642f6e39419a49b5678be09458b5c071e2fa0"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-03-grafana-oncall-5.html",
+      "sha256": "f975ac8f659af32ae097417f41178ebc0e9b9e0ccb6af3ec8c11ffedb22138da"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png",
+      "sha256": "ceb03a2cdac2a6a60a541c9d792336addb63700d4d590f79e9162a60cfe61201"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-6.architecture.json",
+      "sha256": "429982a26b5ac3975fc4fa1f13cd16847cdb6dd4d89ec02923657dcb2f5fb1f9"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-03-grafana-oncall-6.html",
+      "sha256": "1f734930383b73facaf679bbbd9db5cb29d9f9bee1dfc9abb20cf2f4034e462c"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png",
+      "sha256": "6b51142a14eb096e4f2e7b0361e78daa10a8fbdfd16e506dca802b1afc26ee24"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-7.workflow.json",
+      "sha256": "2678006d31c482bcc77f1df291eb47218b79d6a3172b159fe7bef266c6d5b843"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-03-grafana-oncall-7.html",
+      "sha256": "267168a5099e76783a315ed78e78a70b1a790a15e04334386ef539f24229a180"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png",
+      "sha256": "edd3d5a4dd304803fc74c8147d83d9e40cfb2b72a1b6dcb0defa0f4aa5123358"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-03-grafana-oncall-8.workflow.json",
+      "sha256": "3d5f80a141b09cbb6d2774930fa0a384001f3a106e28b379bb35169671abf965"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-03-grafana-oncall-8.html",
+      "sha256": "dac051311434759d553bae686c770f06428e87fa7b853eeceaf542e546b3a1de"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png",
+      "sha256": "2778ed3c708c22bc9d9b4f0672cd3e9e6699fcbbaeb58d5508214e24d11fa456"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-0.architecture.json",
+      "sha256": "bd03633429d7b31f28571cb7b8209ce920178377cc84c61199dd67a005d1f619"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-03-grafana-oncall-0.html",
+      "sha256": "61e365a9cfe95433499f6e3a188e21e0117224da1d014a99568df73ae1dfb7a7"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-0.png",
+      "sha256": "6877aef8303122a18b54fb4b2c60b97640f2b9adc2c2985d2707adc394d6760b"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-1.sequence.json",
+      "sha256": "e88f35f1a652a15382fb6ca7c33d23a34c8c1656ba8648815fc3c0fea93b48ce"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-03-grafana-oncall-1.html",
+      "sha256": "0f42c460b06b136d003aa79f4904a6d7baa68ea7bca428eb576cbdd1934361c4"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-1.png",
+      "sha256": "a0148ef4f520ddbfdc8a3c90c4e4afe0d3dfbc2f59967f3ac70ca59dfa853972"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-2.architecture.json",
+      "sha256": "aa99e466f007fccec9c9d6aced145f7ad406e907a6aa156311469a3c526a056e"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-03-grafana-oncall-2.html",
+      "sha256": "3ed6be2ec769620eafc832fa5f9decb79d8abf5c0dd128c8576b99371a2c84b8"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-2.png",
+      "sha256": "015f4ad6283167b817cb6fbd1f8d8e1ac83930cefabac4a1c2c1ac51f7bfda1e"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-3.workflow.json",
+      "sha256": "37aeb4ce08adb71389e623feaa1d9d763a619f9ed2ecf1980de03e49e7cc3997"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-03-grafana-oncall-3.html",
+      "sha256": "66413b793a93d66ce4e45beec6640d6505843ff862ea738751b9abf6cc14e779"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-3.png",
+      "sha256": "6b9f62152894e80268d94907e1a4305fe20979c61d02c63510e34dabb2d9bfce"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-4.architecture.json",
+      "sha256": "ad935f1f56f3d882c1ab1f004169bf14b54477ee19826bd6dd1cd1d1c1589f07"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-03-grafana-oncall-4.html",
+      "sha256": "711d620e695a91ff95eeccadea0f3d6a6a45a514a1d6f6f1b5299b240f32cc4c"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-4.png",
+      "sha256": "40801768c6f21e222aa599a032fe8b7e33797226b0d6cb407ab789bd01c62dd5"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-5.sequence.json",
+      "sha256": "7c548f307fa0a318fdda7459f10a86d6743c92b9c90ba9f59c06fffa36771444"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-03-grafana-oncall-5.html",
+      "sha256": "f930922efed77f8530c76ce0de8d4abd86a4bbbd612d12450a0d5fff8cacda1b"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-5.png",
+      "sha256": "9f96a4af581c23db9b982fc4fd457ad28b9b57013e0ae4d5044d9f68046dbb5c"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-6.architecture.json",
+      "sha256": "289aab1ddbc1ef71f2bf803140e89ab928790cf82e8dd83f0d1f4a01aa63e75f"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-03-grafana-oncall-6.html",
+      "sha256": "1d9f136e10c24430695250fd9665df44698f170521ec95d392551f2ac570c27a"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-6.png",
+      "sha256": "f1354004263cfa5f431bc99c3d5569732bd8a12759cc4bf1b8f1ff347c4e6639"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-7.workflow.json",
+      "sha256": "7ff755e055b2c0b792dd832d740f6e44b1777f2401a9c0c0d94733db0c85045a"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-03-grafana-oncall-7.html",
+      "sha256": "78b495ee64a6a47af5194efda38cdb93abe2c6c0039b52a36e33a48922defe78"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-7.png",
+      "sha256": "164aa13dc78cafe5c54c205552a053bcfb62b7c7415621aa333a7715e94a3479"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-03-grafana-oncall-8.workflow.json",
+      "sha256": "7b856a8fcf249b183bb776446f102769914e7dd98bf55af67ab25519de379020"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-03-grafana-oncall-8.html",
+      "sha256": "91b4611f88f5092f0d4fbb8ea791597b2b48db1afda40232a62637897c832296"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-03-grafana-oncall-8.png",
+      "sha256": "fd3d52fbe7cbf58d5b9f04b8a8b02c067269a3a854c1c158c47ca6ab3494b677"
+    }
+  ],
+  "limits": [
+    "NoactualOnCall/GrafanaCloud/PagerDuty/OpsgenieaccountorAPIwrite,Slack/Teams/SMS/phone/push,cloudresourceorfullsitebuild.",
+    "InventorytestsuselocalHTTPSandfakecredentials;notfullbackup/atomicmigrationproof.",
+    "Sourcecontractchecksexecuteselectedpureupstreammethodsandinspectfieldlists;notDRFdatabase/relationshiporfinalscheduleexecution.",
+    "ArchivedHelmcontractssourcereviewed;noarchivedbackend/DB/HAinstallationorsecuritysupportclaim.",
+    "FailedguessedmigrationURLsarenotsupportingsources;currentlifecycle/API/repositoryevidenceused."
+  ],
+  "integrationFollowup": {
+    "baseCommit": "b82210d85c9d11e111aac9dbf545481911541978",
+    "checkedAt": "2026-09-13T13:14:09.228667+00:00",
+    "changes": [
+      {
+        "path": "en/observability/alerting/03-grafana-oncall.md",
+        "previousSha256": "b22cddf32920edfb7fa96206c59eda9183cdd72ba91f5dfdab422a425a192cda",
+        "sha256": "c96e7a8294dfe5a205d50b18dcc69eefbdb0cc05780590c977b36c88cd89162a"
+      },
+      {
+        "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "previousSha256": "315f5dcc249712de191f16f02e05c3bbc6b79567d1a8b347e2309ce50dda7cf0",
+        "sha256": "b76cd946d8d87aacc242ffd5ac9e82284fa04058ae4372090725e99cf0d03307"
+      },
+      {
+        "path": "ko/observability/alerting/03-grafana-oncall.md",
+        "previousSha256": "54ce43cacaa5ed93763c4af45de49b63b5a7eda64b1705d6d8fd0a0266bb5541",
+        "sha256": "22ad87972e538e211f7b785341df11c77c64ff9195daea1428ba11d6baddfeaa"
+      }
+    ],
+    "scope": "Heading IDs, TOC targets, legacy native anchor aliases and English spacing only; code examples and diagram/native-test artifacts unchanged. Current document validation recorded separately by integration checks.",
+    "documentValidation": {
+      "status": "passed",
+      "method": "Fresh native VitePress render against pre-repair commit; all legacy IDs, authored TOC targets, exact fenced code and 10-question answer parity.",
+      "files": [
+        {
+          "path": "en/observability/alerting/03-grafana-oncall.md",
+          "previousIds": 57,
+          "currentIds": 57,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+          "previousIds": 2,
+          "currentIds": 2,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "answersAfter": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "pass": true
+        },
+        {
+          "path": "ko/observability/alerting/03-grafana-oncall.md",
+          "previousIds": 57,
+          "currentIds": 69,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+          "previousIds": 2,
+          "currentIds": 2,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "answersAfter": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "pass": true
+        }
+      ]
+    }
+  },
+  "cloudConnectionFollowup": {
+    "baseCommit": "5c20ba59e22a8fdd4fd730d0ffe2eacb4cf1ae19",
+    "changes": [
+      {
+        "path": "en/observability/alerting/03-grafana-oncall.md",
+        "previousSha256": "c96e7a8294dfe5a205d50b18dcc69eefbdb0cc05780590c977b36c88cd89162a",
+        "sha256": "44662f6f0298aaaab20816dc6c12966aedf6b5e94e8660d8b0a7641ba301dc1d"
+      },
+      {
+        "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "previousSha256": "b76cd946d8d87aacc242ffd5ac9e82284fa04058ae4372090725e99cf0d03307",
+        "sha256": "cd4d6cf6df5e6e2a88a20d9e1eaf58e3a55657aaf1b5044e20824a61da033487"
+      },
+      {
+        "path": "ko/observability/alerting/03-grafana-oncall.md",
+        "previousSha256": "22ad87972e538e211f7b785341df11c77c64ff9195daea1428ba11d6baddfeaa",
+        "sha256": "e72a148fb34042f5abc7373d8b3e540e4cb16cbc2d1dfd8fcb195e08e3fb5414"
+      },
+      {
+        "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "previousSha256": "844b7d76d246f5a2313172dcdc7e035a70ddfb95aa42c947d176999c06d6607d",
+        "sha256": "8fba7b2c34577a1609d436b38d367611bf0c9ae330922af5c57abca54b7253a9"
+      }
+    ],
+    "fencedCodeUnchanged": true,
+    "sourceSHA256": "bac7da4694082fb19d2f4b14e55be97a8ac79d79ac6bed8f7d2716196e84b214",
+    "scope": "Four prose/caption/source updates. Previous native and visual artifacts unchanged; current Markdown compile/anchor/answer checks rerun."
+  }
+}

@@ -2,9 +2,9 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Grafana OnCall Route Settings",
+    "title": "Configured OnCall Routing",
     "locale": "en",
-    "output": "public/archmaps/en-observability-alerting-03-grafana-oncall-4.html",
+    "output": "en-observability-alerting-03-grafana-oncall-4.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
@@ -23,7 +23,7 @@
           "infra",
           "default"
         ],
-        "note": "Match the severity and team labels with routing_regex to split alerts across the Critical, Infra, and Default chains."
+        "note": "These are illustrative routes; verify actual integration payload, matching mode, order and fallback."
       },
       {
         "id": "grafana-route",
@@ -34,7 +34,7 @@
           "critical",
           "lowpri"
         ],
-        "note": "Alerts from the Production folder go to the Critical chain; Staging folder alerts go to the Low Priority chain."
+        "note": "These are illustrative routes; verify actual integration payload, matching mode, order and fallback."
       },
       {
         "id": "cloudwatch-route",
@@ -45,7 +45,7 @@
           "infra",
           "dba"
         ],
-        "note": "The AWS/EKS namespace goes to the Infra chain; the AWS/RDS namespace goes to the DBA chain."
+        "note": "These are illustrative routes; verify actual integration payload, matching mode, order and fallback."
       }
     ]
   },
@@ -311,11 +311,11 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "Route creation rules",
+      "title": "Actual API contract",
       "items": [
-        "routing_regex \"severity\": \"critical\" → critical-chain (position 0)",
-        "routing_regex \"team\": \"infra\" → infra-chain (position 1)",
-        "Each route sets both escalation_chain_id and slack_channel_id"
+        "Use integration_id, escalation_chain_id and routing fields",
+        "Slack channel is nested under slack.channel_id with enabled",
+        "A regex over message text can match unintended content"
       ]
     }
   ]

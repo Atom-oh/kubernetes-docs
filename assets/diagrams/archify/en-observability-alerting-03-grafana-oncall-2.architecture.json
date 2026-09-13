@@ -14,7 +14,7 @@
           "label": "Rotation"
         },
         "backend": {
-          "label": "Layers"
+          "label": "Shift"
         },
         "security": {
           "label": "Override"
@@ -27,24 +27,24 @@
     "views": [
       {
         "id": "rotation-to-primary",
-        "label": "Rotation → Primary",
+        "label": "Rotation → Shift A",
         "focus": [
           "day-rotation",
           "night-rotation",
           "primary"
         ],
-        "note": "Day and night rotations take turns filling the primary responder slot."
+        "note": "Illustrative day/night rotation inputs; verify actual shift timing and priority."
       },
       {
         "id": "layers-to-final",
-        "label": "Layer Composition",
+        "label": "Configured shift evaluation",
         "focus": [
           "primary",
           "secondary",
           "backup",
           "final"
         ],
-        "note": "Primary, secondary and backup layers stack into the final schedule."
+        "note": "Evaluate actual shift priorities and overlaps; primary/secondary labels do not create automatic fallback."
       },
       {
         "id": "override",
@@ -90,8 +90,8 @@
     {
       "id": "primary",
       "type": "backend",
-      "label": "Primary Responder",
-      "sublabel": "Primary",
+      "label": "Shift A",
+      "sublabel": "configured priority",
       "pos": [
         320,
         60
@@ -104,8 +104,8 @@
     {
       "id": "secondary",
       "type": "backend",
-      "label": "Secondary Responder",
-      "sublabel": "Secondary",
+      "label": "Shift B",
+      "sublabel": "configured priority",
       "pos": [
         320,
         200
@@ -118,8 +118,8 @@
     {
       "id": "backup",
       "type": "backend",
-      "label": "Backup Responder",
-      "sublabel": "Backup",
+      "label": "Other shifts",
+      "sublabel": "configured priority",
       "pos": [
         320,
         340
@@ -133,7 +133,7 @@
       "id": "final",
       "type": "database",
       "label": "Final Schedule",
-      "sublabel": "who is on call, resolved",
+      "sublabel": "verify final responders",
       "pos": [
         640,
         200
@@ -183,7 +183,7 @@
     },
     {
       "kind": "region",
-      "label": "Layers",
+      "label": "Configured shifts",
       "wraps": [
         "primary",
         "secondary",
@@ -244,6 +244,17 @@
       "variant": "dashed",
       "fromSide": "top",
       "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Validate the resolved schedule",
+      "items": [
+        "Create shifts separately and reference their IDs in a web schedule",
+        "Test time zones, DST, gaps, overlaps and overrides",
+        "Backup escalation is an explicit policy, not a naming convention"
+      ]
     }
   ]
 }

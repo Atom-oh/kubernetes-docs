@@ -2,193 +2,134 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "PagerDuty/OpsGenie에서 Grafana OnCall로 마이그레이션 결정 흐름",
-    "output": "public/archmaps/ko-observability-alerting-03-grafana-oncall-8.html",
-    "animation": "trace",
+    "title": "유지보수되는 목적지로 이전",
     "quality_profile": "showcase",
+    "animation": "trace",
+    "output": "ko-observability-alerting-03-grafana-oncall-8.html",
     "legend": {
       "entries": {
-        "backend": {
-          "label": "검토 질문"
+        "messagebus": {
+          "label": "통보 단계"
         },
-        "cloud": {
-          "label": "마이그레이션 결정"
+        "security": {
+          "label": "판단"
+        },
+        "backend": {
+          "label": "설정 / 작업"
         },
         "external": {
-          "label": "기존 온콜 도구"
+          "label": "서비스 / 결과"
         }
       }
-    },
-    "viewBox": [
-      1230,
-      652
-    ]
+    }
   },
   "lanes": [
     {
-      "id": "current",
-      "label": "현재 사용 중"
+      "id": "main",
+      "label": "설정한 흐름"
     },
     {
-      "id": "consider",
-      "label": "Grafana OnCall 고려 시"
-    },
-    {
-      "id": "keep",
-      "label": "결정 · 현재 유지",
-      "variant": "exception"
-    },
-    {
-      "id": "decision",
-      "label": "결정 · 마이그레이션"
+      "id": "lower",
+      "label": "대안"
     }
   ],
   "mainPath": [
-    "current_tool",
-    "cost",
-    "stack",
-    "selfhost",
-    "features",
-    "migrate"
+    "current",
+    "inventory",
+    "compare",
+    "test",
+    "cutover"
   ],
-  "semanticChecks": {
-    "allowedRoots": [
-      "current_tool"
-    ],
-    "allowedTerminals": [
-      "migrate",
-      "keep_current"
-    ],
-    "requiredPaths": [
-      {
-        "from": "current_tool",
-        "to": "migrate"
-      },
-      {
-        "from": "current_tool",
-        "to": "keep_current"
-      }
-    ]
-  },
   "nodes": [
     {
-      "id": "current_tool",
-      "lane": "current",
+      "id": "current",
+      "lane": "main",
       "col": 0,
       "type": "external",
-      "label": "PagerDuty / OpsGenie",
-      "sublabel": "현재 온콜 도구",
-      "width": 150
+      "label": "기존 설치",
+      "sublabel": "OnCall OSS / other",
+      "width": 185
     },
     {
-      "id": "cost",
-      "lane": "consider",
+      "id": "inventory",
+      "lane": "main",
       "col": 1,
       "type": "backend",
-      "label": "비용 절감 필요?",
-      "width": 224
+      "label": "목록 + 백업",
+      "sublabel": "ID·일정·키",
+      "width": 185
     },
     {
-      "id": "stack",
-      "lane": "consider",
+      "id": "compare",
+      "lane": "main",
       "col": 2,
-      "type": "backend",
-      "label": "Grafana 스택 사용?",
-      "width": 184
+      "type": "security",
+      "label": "계약 비교",
+      "sublabel": "기능 + 운영 비용",
+      "width": 185
     },
     {
-      "id": "selfhost",
-      "lane": "consider",
+      "id": "test",
+      "lane": "main",
       "col": 3,
       "type": "backend",
-      "label": "자체 호스팅 선호?",
-      "width": 180
+      "label": "이전 시험",
+      "sublabel": "전달 + 복구",
+      "width": 185
     },
     {
-      "id": "features",
-      "lane": "consider",
+      "id": "cutover",
+      "lane": "main",
       "col": 4,
-      "type": "backend",
-      "label": "기본 기능으로 충분?",
-      "width": 214
+      "type": "external",
+      "label": "통제된 전환",
+      "sublabel": "승인된 소유권",
+      "width": 185
     },
     {
-      "id": "migrate",
-      "lane": "decision",
-      "col": 5,
-      "type": "cloud",
-      "label": "OnCall로 마이그레이션",
-      "sublabel": "Grafana OnCall 도입",
-      "width": 156
-    },
-    {
-      "id": "keep_current",
-      "lane": "keep",
+      "id": "hold",
+      "lane": "lower",
       "col": 3,
       "type": "external",
-      "label": "현재 유지",
-      "sublabel": "PagerDuty / OpsGenie 계속 사용",
-      "width": 156
+      "label": "누락 요건 해결",
+      "sublabel": "대응 범위 유지",
+      "width": 185
     }
   ],
   "edges": [
     {
-      "from": "current_tool",
-      "to": "cost",
-      "variant": "emphasis",
-      "role": "main",
-      "route": "drop",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "from": "current",
+      "to": "inventory"
     },
     {
-      "from": "cost",
-      "to": "stack",
-      "label": "예",
-      "variant": "emphasis",
-      "role": "main"
+      "from": "inventory",
+      "to": "compare"
     },
     {
-      "from": "stack",
-      "to": "selfhost",
-      "label": "예",
-      "variant": "emphasis",
-      "role": "main"
+      "from": "compare",
+      "to": "test"
     },
     {
-      "from": "selfhost",
-      "to": "features",
-      "label": "예 / 아니오",
-      "variant": "emphasis",
-      "role": "main"
+      "from": "test",
+      "to": "cutover",
+      "label": "검증됨"
     },
     {
-      "from": "features",
-      "to": "migrate",
-      "label": "예",
-      "variant": "emphasis",
-      "role": "main"
-    },
-    {
-      "from": "cost",
-      "to": "keep_current",
-      "label": "아니오",
-      "variant": "dashed",
+      "from": "test",
+      "to": "hold",
+      "label": "누락",
       "role": "branch"
-    },
+    }
+  ],
+  "cards": [
     {
-      "from": "stack",
-      "to": "keep_current",
-      "label": "아니오",
-      "variant": "dashed",
-      "role": "branch"
-    },
-    {
-      "from": "features",
-      "to": "keep_current",
-      "label": "아니오",
-      "variant": "dashed",
-      "role": "branch"
+      "dot": "amber",
+      "title": "현재 수명주기",
+      "items": [
+        "OnCall OSS2026-03-24 보관; 새 OSS 설치를 기본값으로 삼지 않음",
+        "Opsgenie 서비스·지원2027-04-05 종료 예정",
+        "고정 절감률·1~2주 전환 보장 없음"
+      ]
     }
   ]
 }

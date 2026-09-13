@@ -1,0 +1,141 @@
+[
+  {
+    "path": "en/observability/alerting/03-grafana-oncall.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "originalSHA256": "471f6fd366dd0432093460b892b6ae9275c777c30935319e2980066585e3453b",
+    "reviewedSha256": "44662f6f0298aaaab20816dc6c12966aedf6b5e94e8660d8b0a7641ba301dc1d",
+    "updatedAt": "2026-09-13T13:28:34.814070+00:00",
+    "summary": "Full2516linepairedreview;12TLSinventory+19sourcecontract+4amtoolroutechecks;4MD116anchors20answers;18diagrams54browser18SVG/PNGverified;noactualnotifications.",
+    "findings": [
+      "OSSarchived2026-03-24andmovedreadonly;notnewproductionOSSrecommendation;actualrelease/chart/sourceversionsdistinguished;Opsgenielifecycleandoldpricing/countsupdated.",
+      "Archivedchartengine/env/db/broker/cache/secret/Twilio/Telegramcontractsinsteadofinvalid/incompleteproductionvalues;noHAguaranteefromreplicas.",
+      "RawAuthorizationandoptionalX-Grafana-URL;generatedintegrationURLseparatefromAPIkey;boundedread-onlypagination/TLS/no-redirect/privateexportwith12actualTLSfixturetests.",
+      "ScheduleexistingShiftIDs,separateon_call_shifts,weeklyweek_start/startindex/dateformat,overridetypeseparate;19actualupstreampurevalidator/fieldchecks;noDB/APIwriteclaim.",
+      "AcknowledgevsResolve/source-rulelifecycle;importantselectspersonalrulesnotallchannels;actualcustomwebhookfields/declare_incidentfeaturegates.",
+      "Nestedslackroutecontract,payload-specificgroupingandrouting,timersnotinterchangeable;unsupportedslashcommands/Firebase/Teamsuniversalsettingsremoved.",
+      "Migrationtowell-maintaineddestinationwithbackups,identitymapping,delivery/recoverytestsandnonfixedcutover;20quizanswersand116oldIDsretained.",
+      "All18figuresrepaired/captionsaligned;18showcase+54browser+18SVG+18individualPNGreviewed;fourrefinementsrechecked."
+    ],
+    "validationReport": "docs/reviews/2026-09-11/grafana-oncall-validation.json",
+    "sources": [
+      "https://grafana.com/docs/oncall/latest/",
+      "https://grafana.com/docs/oncall/latest/oncall-api-reference/",
+      "https://www.atlassian.com/software/opsgenie"
+    ],
+    "integrationFollowup": {
+      "baseCommit": "b82210d85c9d11e111aac9dbf545481911541978",
+      "previousReviewedSha256": "b22cddf32920edfb7fa96206c59eda9183cdd72ba91f5dfdab422a425a192cda",
+      "scope": "Heading IDs, TOC targets, legacy native anchor aliases and English spacing only; code examples and diagram/native-test artifacts unchanged. Current document validation recorded separately by integration checks."
+    },
+    "cloudConnectionFollowup": {
+      "previousReviewedSha256": "c96e7a8294dfe5a205d50b18dcc69eefbdb0cc05780590c977b36c88cd89162a",
+      "source": "https://grafana.com/docs/oncall/latest/set-up/open-source/",
+      "cutoff": "2026-03-24",
+      "codeUnchanged": true
+    }
+  },
+  {
+    "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "originalSHA256": "260271b2728b29b242f79e2fd452707a218c497cde9f86cb2e4f16a18574c62d",
+    "reviewedSha256": "cd4d6cf6df5e6e2a88a20d9e1eaf58e3a55657aaf1b5044e20824a61da033487",
+    "updatedAt": "2026-09-13T13:28:34.818735+00:00",
+    "summary": "Full2516linepairedreview;12TLSinventory+19sourcecontract+4amtoolroutechecks;4MD116anchors20answers;18diagrams54browser18SVG/PNGverified;noactualnotifications.",
+    "findings": [
+      "OSSarchived2026-03-24andmovedreadonly;notnewproductionOSSrecommendation;actualrelease/chart/sourceversionsdistinguished;Opsgenielifecycleandoldpricing/countsupdated.",
+      "Archivedchartengine/env/db/broker/cache/secret/Twilio/Telegramcontractsinsteadofinvalid/incompleteproductionvalues;noHAguaranteefromreplicas.",
+      "RawAuthorizationandoptionalX-Grafana-URL;generatedintegrationURLseparatefromAPIkey;boundedread-onlypagination/TLS/no-redirect/privateexportwith12actualTLSfixturetests.",
+      "ScheduleexistingShiftIDs,separateon_call_shifts,weeklyweek_start/startindex/dateformat,overridetypeseparate;19actualupstreampurevalidator/fieldchecks;noDB/APIwriteclaim.",
+      "AcknowledgevsResolve/source-rulelifecycle;importantselectspersonalrulesnotallchannels;actualcustomwebhookfields/declare_incidentfeaturegates.",
+      "Nestedslackroutecontract,payload-specificgroupingandrouting,timersnotinterchangeable;unsupportedslashcommands/Firebase/Teamsuniversalsettingsremoved.",
+      "Migrationtowell-maintaineddestinationwithbackups,identitymapping,delivery/recoverytestsandnonfixedcutover;20quizanswersand116oldIDsretained.",
+      "All18figuresrepaired/captionsaligned;18showcase+54browser+18SVG+18individualPNGreviewed;fourrefinementsrechecked."
+    ],
+    "validationReport": "docs/reviews/2026-09-11/grafana-oncall-validation.json",
+    "sources": [
+      "https://grafana.com/docs/oncall/latest/",
+      "https://grafana.com/docs/oncall/latest/oncall-api-reference/",
+      "https://www.atlassian.com/software/opsgenie"
+    ],
+    "integrationFollowup": {
+      "baseCommit": "b82210d85c9d11e111aac9dbf545481911541978",
+      "previousReviewedSha256": "315f5dcc249712de191f16f02e05c3bbc6b79567d1a8b347e2309ce50dda7cf0",
+      "scope": "Heading IDs, TOC targets, legacy native anchor aliases and English spacing only; code examples and diagram/native-test artifacts unchanged. Current document validation recorded separately by integration checks."
+    },
+    "cloudConnectionFollowup": {
+      "previousReviewedSha256": "b76cd946d8d87aacc242ffd5ac9e82284fa04058ae4372090725e99cf0d03307",
+      "source": "https://grafana.com/docs/oncall/latest/set-up/open-source/",
+      "cutoff": "2026-03-24",
+      "codeUnchanged": true
+    }
+  },
+  {
+    "path": "ko/observability/alerting/03-grafana-oncall.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "originalSHA256": "9a8bf7072009b9c14eddabc8e92ebb396c439fec5a394d3d10f151a6d4a0699a",
+    "reviewedSha256": "e72a148fb34042f5abc7373d8b3e540e4cb16cbc2d1dfd8fcb195e08e3fb5414",
+    "updatedAt": "2026-09-13T13:28:34.824403+00:00",
+    "summary": "Full2516linepairedreview;12TLSinventory+19sourcecontract+4amtoolroutechecks;4MD116anchors20answers;18diagrams54browser18SVG/PNGverified;noactualnotifications.",
+    "findings": [
+      "OSSarchived2026-03-24andmovedreadonly;notnewproductionOSSrecommendation;actualrelease/chart/sourceversionsdistinguished;Opsgenielifecycleandoldpricing/countsupdated.",
+      "Archivedchartengine/env/db/broker/cache/secret/Twilio/Telegramcontractsinsteadofinvalid/incompleteproductionvalues;noHAguaranteefromreplicas.",
+      "RawAuthorizationandoptionalX-Grafana-URL;generatedintegrationURLseparatefromAPIkey;boundedread-onlypagination/TLS/no-redirect/privateexportwith12actualTLSfixturetests.",
+      "ScheduleexistingShiftIDs,separateon_call_shifts,weeklyweek_start/startindex/dateformat,overridetypeseparate;19actualupstreampurevalidator/fieldchecks;noDB/APIwriteclaim.",
+      "AcknowledgevsResolve/source-rulelifecycle;importantselectspersonalrulesnotallchannels;actualcustomwebhookfields/declare_incidentfeaturegates.",
+      "Nestedslackroutecontract,payload-specificgroupingandrouting,timersnotinterchangeable;unsupportedslashcommands/Firebase/Teamsuniversalsettingsremoved.",
+      "Migrationtowell-maintaineddestinationwithbackups,identitymapping,delivery/recoverytestsandnonfixedcutover;20quizanswersand116oldIDsretained.",
+      "All18figuresrepaired/captionsaligned;18showcase+54browser+18SVG+18individualPNGreviewed;fourrefinementsrechecked."
+    ],
+    "validationReport": "docs/reviews/2026-09-11/grafana-oncall-validation.json",
+    "sources": [
+      "https://grafana.com/docs/oncall/latest/",
+      "https://grafana.com/docs/oncall/latest/oncall-api-reference/",
+      "https://www.atlassian.com/software/opsgenie"
+    ],
+    "integrationFollowup": {
+      "baseCommit": "b82210d85c9d11e111aac9dbf545481911541978",
+      "previousReviewedSha256": "54ce43cacaa5ed93763c4af45de49b63b5a7eda64b1705d6d8fd0a0266bb5541",
+      "scope": "Heading IDs, TOC targets, legacy native anchor aliases and English spacing only; code examples and diagram/native-test artifacts unchanged. Current document validation recorded separately by integration checks."
+    },
+    "cloudConnectionFollowup": {
+      "previousReviewedSha256": "22ad87972e538e211f7b785341df11c77c64ff9195daea1428ba11d6baddfeaa",
+      "source": "https://grafana.com/docs/oncall/latest/set-up/open-source/",
+      "cutoff": "2026-03-24",
+      "codeUnchanged": true
+    }
+  },
+  {
+    "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "originalSHA256": "6e61be2cf9ec20e2c5b714a0a68445ca3d3d1681fc91bdbbb80736727f4f862d",
+    "reviewedSha256": "8fba7b2c34577a1609d436b38d367611bf0c9ae330922af5c57abca54b7253a9",
+    "updatedAt": "2026-09-13T13:28:34.829768+00:00",
+    "summary": "Full2516linepairedreview;12TLSinventory+19sourcecontract+4amtoolroutechecks;4MD116anchors20answers;18diagrams54browser18SVG/PNGverified;noactualnotifications.",
+    "findings": [
+      "OSSarchived2026-03-24andmovedreadonly;notnewproductionOSSrecommendation;actualrelease/chart/sourceversionsdistinguished;Opsgenielifecycleandoldpricing/countsupdated.",
+      "Archivedchartengine/env/db/broker/cache/secret/Twilio/Telegramcontractsinsteadofinvalid/incompleteproductionvalues;noHAguaranteefromreplicas.",
+      "RawAuthorizationandoptionalX-Grafana-URL;generatedintegrationURLseparatefromAPIkey;boundedread-onlypagination/TLS/no-redirect/privateexportwith12actualTLSfixturetests.",
+      "ScheduleexistingShiftIDs,separateon_call_shifts,weeklyweek_start/startindex/dateformat,overridetypeseparate;19actualupstreampurevalidator/fieldchecks;noDB/APIwriteclaim.",
+      "AcknowledgevsResolve/source-rulelifecycle;importantselectspersonalrulesnotallchannels;actualcustomwebhookfields/declare_incidentfeaturegates.",
+      "Nestedslackroutecontract,payload-specificgroupingandrouting,timersnotinterchangeable;unsupportedslashcommands/Firebase/Teamsuniversalsettingsremoved.",
+      "Migrationtowell-maintaineddestinationwithbackups,identitymapping,delivery/recoverytestsandnonfixedcutover;20quizanswersand116oldIDsretained.",
+      "All18figuresrepaired/captionsaligned;18showcase+54browser+18SVG+18individualPNGreviewed;fourrefinementsrechecked."
+    ],
+    "validationReport": "docs/reviews/2026-09-11/grafana-oncall-validation.json",
+    "sources": [
+      "https://grafana.com/docs/oncall/latest/",
+      "https://grafana.com/docs/oncall/latest/oncall-api-reference/",
+      "https://www.atlassian.com/software/opsgenie"
+    ],
+    "cloudConnectionFollowup": {
+      "previousReviewedSha256": "844b7d76d246f5a2313172dcdc7e035a70ddfb95aa42c947d176999c06d6607d",
+      "source": "https://grafana.com/docs/oncall/latest/set-up/open-source/",
+      "cutoff": "2026-03-24",
+      "codeUnchanged": true
+    }
+  }
+]

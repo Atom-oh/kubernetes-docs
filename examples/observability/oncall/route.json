@@ -1,0 +1,11 @@
+{
+  "integration_id": "REPLACE_WITH_EXISTING_INTEGRATION_ID",
+  "routing_type": "regex",
+  "routing_regex": "\"severity\"\\s*:\\s*\"critical\"",
+  "position": 0,
+  "escalation_chain_id": "REPLACE_WITH_EXISTING_CHAIN_ID",
+  "slack": {
+    "channel_id": "REPLACE_WITH_EXISTING_SLACK_CHANNEL_ID",
+    "enabled": true
+  }
+}

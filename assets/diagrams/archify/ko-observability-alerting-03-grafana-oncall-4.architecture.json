@@ -2,8 +2,8 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Grafana OnCall 라우트 설정",
-    "output": "public/archmaps/ko-observability-alerting-03-grafana-oncall-4.html",
+    "title": "설정한 OnCall 라우팅",
+    "output": "ko-observability-alerting-03-grafana-oncall-4.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
@@ -22,7 +22,7 @@
           "infra",
           "default"
         ],
-        "note": "severity·team 레이블을 routing_regex로 매칭해 Critical, Infra, Default 체인으로 나눕니다."
+        "note": "예시 라우트입니다. 실제 integration payload·매칭 방식·순서·fallback을 확인합니다."
       },
       {
         "id": "grafana-route",
@@ -33,7 +33,7 @@
           "critical",
           "lowpri"
         ],
-        "note": "Production 폴더 알림은 Critical 체인, Staging 폴더 알림은 Low Priority 체인으로 보냅니다."
+        "note": "예시 라우트입니다. 실제 integration payload·매칭 방식·순서·fallback을 확인합니다."
       },
       {
         "id": "cloudwatch-route",
@@ -44,7 +44,7 @@
           "infra",
           "dba"
         ],
-        "note": "AWS/EKS 네임스페이스는 Infra 체인, AWS/RDS 네임스페이스는 DBA 체인으로 보냅니다."
+        "note": "예시 라우트입니다. 실제 integration payload·매칭 방식·순서·fallback을 확인합니다."
       }
     ]
   },
@@ -310,11 +310,11 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "라우트 생성 규칙",
+      "title": "실제 API 계약",
       "items": [
-        "routing_regex \"severity\": \"critical\" → critical-chain (position 0)",
-        "routing_regex \"team\": \"infra\" → infra-chain (position 1)",
-        "라우트마다 escalation_chain_id와 slack_channel_id를 함께 지정"
+        "integration_id·escalation_chain_id·routing 필드 사용",
+        "Slack 채널은 slack.channel_id/enabled 중첩 구조",
+        "메시지 정규식은 의도하지 않은 내용과 일치할 수 있음"
       ]
     }
   ]

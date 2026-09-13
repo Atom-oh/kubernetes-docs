@@ -40,19 +40,19 @@
           "sched",
           "notif"
         ],
-        "note": "대기 시간이 지나면 다음 담당자에게 자동으로 에스컬레이션된다."
+        "note": "설정한 대기 후 다음 정책을 평가하며 반드시 다른 사람이 선택되는 것은 아닙니다."
       },
       {
         "id": "ack",
-        "label": "확인과 상태 업데이트",
+        "label": "확인 · 로컬 상태",
         "focus": [
           "notif",
-          "oncall",
-          "src"
+          "oncall"
         ],
-        "note": "담당자가 확인(Acknowledge)하면 소스에 상태가 반영된다."
+        "note": "확인은 OnCall 상태를 바꾸며 소스 규칙 상태를 자동 갱신하지 않습니다."
       }
-    ]
+    ],
+    "output": "ko-observability-alerting-03-grafana-oncall-1.html"
   },
   "participants": [
     {
@@ -95,23 +95,23 @@
   "segments": [
     {
       "from": 160,
-      "to": 275,
+      "to": 312,
       "label": "수신 · 라우팅"
     },
     {
-      "from": 288,
-      "to": 395,
+      "from": 325,
+      "to": 432,
       "label": "1차 알림"
     },
     {
-      "from": 408,
-      "to": 515,
+      "from": 445,
+      "to": 552,
       "label": "응답 없음 → 에스컬레이션"
     },
     {
-      "from": 528,
-      "to": 612,
-      "label": "확인 · 상태 업데이트"
+      "from": 565,
+      "to": 615,
+      "label": "확인 · 로컬 상태"
     }
   ],
   "messages": [
@@ -124,31 +124,39 @@
       "note": "관련 알림 그룹화"
     },
     {
+      "id": "http-response",
+      "from": "oncall",
+      "to": "src",
+      "y": 222,
+      "label": "HTTP 수신 응답",
+      "variant": "return"
+    },
+    {
       "id": "evaluate",
       "from": "oncall",
       "to": "route",
-      "y": 222,
+      "y": 259,
       "label": "라우팅 규칙 평가"
     },
     {
       "id": "select-chain",
       "from": "route",
       "to": "esc",
-      "y": 258,
+      "y": 295,
       "label": "에스컬레이션 체인 선택"
     },
     {
       "id": "query-current",
       "from": "esc",
       "to": "sched",
-      "y": 305,
+      "y": 342,
       "label": "현재 온콜 담당자 조회"
     },
     {
       "id": "current-info",
       "from": "sched",
       "to": "esc",
-      "y": 340,
+      "y": 377,
       "label": "담당자 정보",
       "variant": "return"
     },
@@ -156,7 +164,7 @@
       "id": "notify",
       "from": "esc",
       "to": "notif",
-      "y": 378,
+      "y": 415,
       "label": "알림 전송",
       "variant": "emphasis"
     },
@@ -164,23 +172,23 @@
       "id": "query-next",
       "from": "esc",
       "to": "sched",
-      "y": 425,
-      "label": "다음 담당자 조회",
+      "y": 462,
+      "label": "다음 설정 대상 평가",
       "note": "대기 시간 경과 후"
     },
     {
       "id": "next-info",
       "from": "sched",
       "to": "esc",
-      "y": 460,
-      "label": "다음 담당자",
+      "y": 497,
+      "label": "설정한 담당자",
       "variant": "return"
     },
     {
       "id": "escalate-notify",
       "from": "esc",
       "to": "notif",
-      "y": 498,
+      "y": 535,
       "label": "에스컬레이션 알림",
       "variant": "emphasis"
     },
@@ -188,48 +196,50 @@
       "id": "acknowledge",
       "from": "notif",
       "to": "oncall",
-      "y": 548,
+      "y": 585,
       "label": "담당자 확인(Acknowledge)"
-    },
-    {
-      "id": "status",
-      "from": "oncall",
-      "to": "src",
-      "y": 590,
-      "label": "상태 업데이트",
-      "variant": "return"
     }
   ],
   "activations": [
     {
       "participant": "oncall",
       "from": 180,
-      "to": 596,
+      "to": 605,
       "type": "backend"
     },
     {
       "participant": "esc",
-      "from": 253,
-      "to": 505,
+      "from": 290,
+      "to": 542,
       "type": "backend"
     },
     {
       "participant": "sched",
-      "from": 300,
-      "to": 345,
+      "from": 337,
+      "to": 382,
       "type": "database"
     },
     {
       "participant": "sched",
-      "from": 420,
-      "to": 465,
+      "from": 457,
+      "to": 502,
       "type": "database"
     },
     {
       "participant": "notif",
-      "from": 373,
-      "to": 552,
+      "from": 410,
+      "to": 589,
       "type": "messagebus"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "서로 다른 확인",
+      "items": [
+        "HTTP 수신 응답과 사람의 확인은 별도",
+        "소스 규칙과 OnCall 상태는 별도 수명주기"
+      ]
     }
   ]
 }
