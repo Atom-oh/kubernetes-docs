@@ -1,15 +1,5 @@
 # Grafana Dashboards
 
-<span id="key-features"></span>
-<span id="run-installation"></span>
-<span id="data-source-provisioning-via-configmap"></span>
-<span id="use-method-utilization-saturation-errors"></span>
-<span id="red-method-rate-errors-duration"></span>
-<span id="_4-golden-signals"></span>
-<span id="alert-rule-configuration"></span>
-<span id="_1-dashboard-organization"></span>
-<span id="_2-variable-usage"></span>
-<span id="_3-performance-optimization"></span>
 
 > **Supported versions**: Grafana 13.2.1 · Community Helm chart 13.2.2
 
@@ -18,6 +8,8 @@
 ## Introduction
 
 Grafana queries Prometheus, Loki, Tempo, CloudWatch and other data sources, and provides dashboards and alerting. Its metadata database is separate from the backends that retain metrics, logs and traces. The [runnable examples](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/grafana) connect to existing backends in one cluster. See the [observability stack lab](../../labs/observability/02-observability-stack-lab.md) for backend deployment.
+
+<span id="key-features"></span>
 
 ## Architecture
 
@@ -33,6 +25,8 @@ Grafana queries Prometheus, Loki, Tempo, CloudWatch and other data sources, and 
 | Optional query cache | Supported Enterprise/Cloud capability; Redis is not a required session store |
 
 ## Helm Deployment
+
+<span id="run-installation"></span>
 
 ### Basic Installation
 
@@ -114,6 +108,8 @@ Alerting HA requires peer connectivity and deduplication configuration. Account 
 
 ## Data Source Integration
 
+<span id="data-source-provisioning-via-configmap"></span>
+
 ### File Provisioning and UIDs
 
 `datasources.yaml` fixes Prometheus=`prometheus`, Loki=`loki` and Tempo=`tempo`. Dashboards, alerts and correlation links must use matching UIDs. Environment variables supply values inside provisioning files; setting variables alone does not create data source objects.
@@ -185,6 +181,12 @@ Attach an approved IRSA role to Grafana's ServiceAccount and restrict its OIDC t
 
 Start with `cloudwatch:ListMetrics` and `cloudwatch:GetMetricData` for metric queries. Add Logs, EC2, tag or X-Ray permissions only for features you use. For actions without resource-level permissions, constrain `Resource: "*"` with applicable Region conditions; scope Logs access to actual log groups. Do not combine all AWS read actions in one unconditional wildcard statement. The default example creates no AWS credentials or resources.
 
+<span id="use-method-utilization-saturation-errors"></span>
+
+<span id="red-method-rate-errors-duration"></span>
+
+<span id="_4-golden-signals"></span>
+
 ## Dashboard Design Patterns
 
 `dashboard.json` is complete JSON with eight panels. Application panels use `lab_http_*` from the [MSA lab](../../labs/observability/03-msa-deployment-lab.md). Node panels require node-exporter; the CrashLoop panel requires kube-state-metrics.
@@ -202,6 +204,8 @@ Only fill a missing error series with zero when the corresponding request series
 ```
 
 The denominator excludes zero traffic. Show missing collection and no traffic separately. `rate(node_disk_io_time_weighted_seconds_total[5m])` estimates average I/O queue pressure; `increase(...)` does not count disk errors. `node_load1` includes runnable tasks and I/O waits and is not a pure measure of CPU saturation.
+
+<span id="_2-variable-usage"></span>
 
 The dashboard assumes one cluster. When combining clusters in a central backend, consistently attach `cluster` labels and include them in selectors, grouping and joins. Pod metric joins need at least namespace and pod. Add cluster/namespace variables only when those labels exist. Multi/all selections need regex matchers and `${variable:regex}` escaping. Variables and folders are not data source access controls.
 
@@ -224,6 +228,8 @@ This provider uses a separate `Sidecar` folder; data source and alert sidecars r
 ### Grafana Operator
 
 An Operator deployment first needs the matching controller/CRDs and a `Grafana` instance selected by its `GrafanaDashboard`/`GrafanaDatasource` resources. Do not let a separate Helm deployment and Operator compete for ownership. This chapter validates Helm file provisioning, not an Operator installation. Ellipses such as `panels: [...]` are not valid deployable JSON; use the complete `dashboard.json` as dashboard content.
+
+<span id="alert-rule-configuration"></span>
 
 ## Alert Rules (Grafana Alerting)
 
@@ -350,9 +356,13 @@ allow_sign_up = true
 
 Obtain Cloud Prometheus/Loki URLs and usernames from the stack's Connections page. Do not assume identical IDs or copy invented regional URLs. Use Cloud Access Policy tokens scoped to required `metrics:read`/`logs:read` access and supply `secureJsonData.basicAuthPassword` through a Secret. Grafana service-account tokens and Cloud data-access tokens serve different purposes.
 
+<span id="_1-dashboard-organization"></span>
+
 ## Best Practices
 
 Organize Overview, Infrastructure, Kubernetes, Applications and Alerts by purpose. Include units and missing-data states. Reduce query range, frequency and cardinality before increasing resources; use recording rules for repeated calculations. Replace retired Angular piechart/worldmap plugins with built-in Pie chart/Geomap panels. Pin compatible additional plugins and supply the same versions to every HA node.
+
+<span id="_3-performance-optimization"></span>
 
 `[dashboards] min_refresh_interval = 10s` limits browser refresh frequency, not alert evaluation. Size database pools against DB connection limits and replica count. An OSS `[caching] enabled/ttl` snippet does not provide Enterprise/Cloud query caching.
 

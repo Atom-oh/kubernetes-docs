@@ -1,17 +1,5 @@
 # Grafana 대시보드
 
-<span id="주요-특징"></span>
-<span id="설치-실행"></span>
-<span id="configmap을-통한-데이터-소스-프로비저닝"></span>
-<span id="use-method-utilization-saturation-errors"></span>
-<span id="red-method-rate-errors-duration"></span>
-<span id="_4-golden-signals"></span>
-<span id="알림-규칙-구성"></span>
-<span id="알림-연락처-구성"></span>
-<span id="grafana-cloud-연결-hybrid"></span>
-<span id="_1-대시보드-구조화"></span>
-<span id="_2-변수-활용"></span>
-<span id="_3-성능-최적화"></span>
 
 > **지원 버전**: Grafana 13.2.1 · Community Helm chart 13.2.2
 
@@ -20,6 +8,8 @@
 ## 소개
 
 Grafana는 Prometheus·Loki·Tempo·CloudWatch 같은 데이터 소스를 조회하고 대시보드와 알림을 제공합니다. Grafana의 메타데이터 DB와 메트릭·로그·추적 저장소는 역할이 다릅니다. 이 장의 [실행 예제](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/grafana)는 기존 데이터 소스에 연결하는 단일 클러스터 구성입니다. 백엔드 설치는 [관측성 실습](../../labs/observability/02-observability-stack-lab.md)을 참고합니다.
+
+<span id="주요-특징"></span>
 
 ## 아키텍처
 
@@ -35,6 +25,8 @@ Grafana는 Prometheus·Loki·Tempo·CloudWatch 같은 데이터 소스를 조회
 | 선택적 쿼리 캐시 | Enterprise/Cloud의 지원 기능; Redis를 필수 세션 저장소로 사용하지 않음 |
 
 ## Helm 배포
+
+<span id="설치-실행"></span>
 
 ### 기본 설치
 
@@ -116,6 +108,8 @@ Alerting HA는 별도 peer 연결과 중복 억제가 필요합니다. 기본값
 
 ## 데이터 소스 연동
 
+<span id="configmap을-통한-데이터-소스-프로비저닝"></span>
+
 ### 파일 프로비저닝과 UID
 
 `datasources.yaml`은 Prometheus=`prometheus`, Loki=`loki`, Tempo=`tempo` UID를 고정합니다. 대시보드·알림·상관분석 링크도 같은 UID를 참조해야 합니다. URL에는 환경 변수 치환을 사용하지만, 환경 변수만 설정한다고 데이터 소스 객체가 생성되지는 않습니다.
@@ -187,6 +181,12 @@ CloudWatch를 추가할 때는 Grafana ServiceAccount에 승인된 IRSA role을 
 
 Metrics 조회에 필요한 `cloudwatch:ListMetrics`, `cloudwatch:GetMetricData`부터 시작하고, Logs·EC2·tag·X-Ray 기능을 쓸 때 해당 권한을 별도로 추가합니다. ARN 제한을 지원하지 않는 조회 action의 `Resource: "*"`에는 가능한 Region 조건을 적용하고, Logs 조회 범위는 실제 log group으로 제한합니다. 모든 AWS 조회 권한을 하나의 무조건 wildcard statement에 넣지 않습니다. 이 장의 기본 예제는 CloudWatch 자격 증명이나 AWS 리소스를 생성하지 않습니다.
 
+<span id="use-method-utilization-saturation-errors"></span>
+
+<span id="red-method-rate-errors-duration"></span>
+
+<span id="_4-golden-signals"></span>
+
 ## 대시보드 설계 패턴
 
 `dashboard.json`은 완전한 JSON이며 8개 패널을 제공합니다. 애플리케이션 메트릭은 [MSA 실습](../../labs/observability/03-msa-deployment-lab.md)의 `lab_http_*`를 사용합니다. 노드 패널은 node-exporter, CrashLoop 패널은 kube-state-metrics가 필요합니다.
@@ -204,6 +204,8 @@ Metrics 조회에 필요한 `cloudwatch:ListMetrics`, `cloudwatch:GetMetricData`
 ```
 
 요청 분모가 0인 경우 결과를 숨기며, 수집 부재와 무트래픽은 별도 패널/알림으로 구분합니다. `rate(node_disk_io_time_weighted_seconds_total[5m])`는 평균적인 I/O 대기 압력 지표이고 `increase(...)`를 디스크 오류 수로 해석하면 안 됩니다. `node_load1`은 runnable 작업과 I/O 대기 등의 영향을 받아 CPU 포화도만을 뜻하지 않습니다.
+
+<span id="_2-변수-활용"></span>
 
 현재 대시보드는 한 클러스터를 가정합니다. 중앙 저장소에서 여러 클러스터를 합치면 `cluster` 외부 라벨을 일관되게 넣고 selector·grouping·join에 함께 사용합니다. Pod metric join은 적어도 namespace와 pod를 함께 맞춥니다. `cluster`/`namespace` 변수는 실제 라벨이 있을 때 추가하고, multi/all 선택에는 regex matcher와 `${variable:regex}` escaping을 사용합니다. 변수와 폴더는 데이터 소스 접근을 제한하는 보안 경계가 아닙니다.
 
@@ -226,6 +228,8 @@ helm upgrade grafana grafana-community/grafana --version 13.2.2 \
 ### Grafana Operator 사용
 
 Operator를 선택하면 먼저 해당 버전의 controller와 CRD를 설치하고, `Grafana` 인스턴스 및 `GrafanaDashboard`/`GrafanaDatasource` selector를 연결합니다. 별도 Helm 인스턴스와 Operator가 같은 리소스를 동시에 소유하지 않게 합니다. 이 장은 Helm 파일 프로비저닝을 검증했으며 Operator 배포 예제라고 주장하지 않습니다. JSON의 `panels: [...]` 같은 생략 표기는 적용 가능한 manifest가 아닙니다. 필요한 대시보드 내용은 이 장의 완전한 `dashboard.json`을 사용합니다.
+
+<span id="알림-규칙-구성"></span>
 
 ## 알림 규칙 (Grafana Alerting)
 
@@ -300,6 +304,8 @@ groups:
 
 이 규칙은 **paused 상태로 설치**됩니다. 실제 데이터, 평가 결과, notification policy와 연락처를 확인한 뒤 pause를 해제합니다. `for: 5m`은 조건 유지 시간이고 `interval: 1m`은 평가 주기입니다. NoData와 Error를 정상으로 숨기지 않습니다. 반복 재시작 수가 많다는 것과 현재 `CrashLoopBackOff` 상태는 다르므로, 후자는 waiting reason metric으로 판정합니다.
 
+<span id="알림-연락처-구성"></span>
+
 Slack/PagerDuty 연락처는 공식 provisioning schema에 따라 Secret에서 읽은 값을 사용합니다. 존재하지 않는 `slack.title` 같은 template을 참조하지 말고 기본 template 또는 명시적으로 정의한 template을 연결합니다. 연락처 생성만으로 라우팅이 완성되지 않으며 notification policy에 receiver를 연결해야 합니다. 실제 테스트 알림은 승인된 수신처에서 실행합니다. 이 감사에서는 외부 알림을 전송하지 않았습니다.
 
 ### Grafana 자체 메트릭
@@ -350,11 +356,17 @@ allow_sign_up = true
 | 데이터 위치 | 직접 선택한 저장소/환경 | 실제 stack Region·보존·처리 조건 확인 |
 | 플러그인 | 호환성·서명·배포 방식 확인 | 지원 catalog/stack 정책 확인 |
 
+<span id="grafana-cloud-연결-hybrid"></span>
+
 Cloud의 Prometheus/Loki URL과 username은 해당 stack의 Connections에서 가져옵니다. 두 서비스가 같은 ID라는 가정이나 임의의 Region URL을 복사하지 않습니다. 토큰은 필요한 `metrics:read`/`logs:read` 범위의 Cloud Access Policy로 발급하고 `secureJsonData.basicAuthPassword`에 Secret을 통해 공급합니다. Grafana 서비스 계정 토큰과 Cloud 데이터 접근 토큰을 혼동하지 않습니다.
+
+<span id="_1-대시보드-구조화"></span>
 
 ## Best Practices
 
 Overview → Infrastructure → Kubernetes → Applications → Alerts처럼 목적별로 정리하고, 패널에 단위와 데이터 없음을 표시합니다. 쿼리 범위·빈도·카디널리티를 먼저 줄이고 반복 계산은 recording rule로 옮깁니다. 과거 Angular 기반 piechart/worldmap 플러그인 대신 내장 Pie chart/Geomap 패널을 사용합니다. 추가 플러그인은 호환되는 버전을 고정하고 모든 HA 노드에 동일하게 공급합니다.
+
+<span id="_3-성능-최적화"></span>
 
 `[dashboards] min_refresh_interval = 10s`는 브라우저의 최소 새로고침 간격이지 알림 평가 주기가 아닙니다. 연결 풀은 DB 허용 연결 수와 Grafana 복제본 수를 함께 고려합니다. Enterprise/Cloud의 쿼리 캐시를 OSS용 `[caching] enabled/ttl` 조각으로 보장하지 않습니다.
 

@@ -31,7 +31,7 @@
     "results": [
       {
         "path": "ko/observability/grafana/README.md",
-        "sha256": "00cbded11e6803336ddeee2c642e8cb8958ad3d018c226457b015e7c2a28583c",
+        "sha256": "21fd7c3beae93ad684339ad48324d05c4c6a19e4a7bf8b9fe3535911e436ba5f",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -123,43 +123,43 @@
         ],
         "renderedIds": [
           "grafana-대시보드",
-          "주요-특징",
-          "설치-실행",
-          "configmap을-통한-데이터-소스-프로비저닝",
-          "use-method-utilization-saturation-errors",
-          "red-method-rate-errors-duration",
-          "_4-golden-signals",
-          "알림-규칙-구성",
-          "알림-연락처-구성",
-          "grafana-cloud-연결-hybrid",
-          "_1-대시보드-구조화",
-          "_2-변수-활용",
-          "_3-성능-최적화",
           "소개",
+          "주요-특징",
           "아키텍처",
           "helm-배포",
+          "설치-실행",
           "기본-설치",
           "values-yaml-구성",
           "고가용성-구성",
           "데이터-소스-연동",
+          "configmap을-통한-데이터-소스-프로비저닝",
           "파일-프로비저닝과-uid",
           "cloudwatch-irsa-설정",
+          "use-method-utilization-saturation-errors",
+          "red-method-rate-errors-duration",
+          "_4-golden-signals",
           "대시보드-설계-패턴",
+          "_2-변수-활용",
           "대시보드-프로비저닝",
           "sidecar",
           "grafana-operator-사용",
+          "알림-규칙-구성",
           "알림-규칙-grafana-alerting",
+          "알림-연락처-구성",
           "grafana-자체-메트릭",
           "인증과-접근-제어",
           "grafana-cloud-vs-self-hosted-비교",
+          "grafana-cloud-연결-hybrid",
+          "_1-대시보드-구조화",
           "best-practices",
+          "_3-성능-최적화",
           "검증-범위와-참고-문서",
           "퀴즈"
         ]
       },
       {
         "path": "en/observability/grafana/README.md",
-        "sha256": "a5a0d4a6de2b49da10683b38772eca5146608b8e9d88835c4f00b6d74231d24d",
+        "sha256": "fbfaaa760a5cbaf12514e6d2b3d89821504f1ed7c1cec1748b6b1feae601d67f",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -251,34 +251,34 @@
         ],
         "renderedIds": [
           "grafana-dashboards",
-          "key-features",
-          "run-installation",
-          "data-source-provisioning-via-configmap",
-          "use-method-utilization-saturation-errors",
-          "red-method-rate-errors-duration",
-          "_4-golden-signals",
-          "alert-rule-configuration",
-          "_1-dashboard-organization",
-          "_2-variable-usage",
-          "_3-performance-optimization",
           "introduction",
+          "key-features",
           "architecture",
           "helm-deployment",
+          "run-installation",
           "basic-installation",
           "values-yaml-configuration",
           "high-availability",
           "data-source-integration",
+          "data-source-provisioning-via-configmap",
           "file-provisioning-and-uids",
           "cloudwatch-irsa",
+          "use-method-utilization-saturation-errors",
+          "red-method-rate-errors-duration",
+          "_4-golden-signals",
           "dashboard-design-patterns",
+          "_2-variable-usage",
           "dashboard-provisioning",
           "sidecar",
           "grafana-operator",
+          "alert-rule-configuration",
           "alert-rules-grafana-alerting",
           "grafana-s-own-metrics",
           "authentication-and-access",
           "grafana-cloud-vs-self-hosted-comparison",
+          "_1-dashboard-organization",
           "best-practices",
+          "_3-performance-optimization",
           "validation-scope-and-references",
           "quiz"
         ]
@@ -332,7 +332,7 @@
     },
     {
       "path": "en/observability/grafana/README.md",
-      "sha256": "a5a0d4a6de2b49da10683b38772eca5146608b8e9d88835c4f00b6d74231d24d"
+      "sha256": "fbfaaa760a5cbaf12514e6d2b3d89821504f1ed7c1cec1748b6b1feae601d67f"
     },
     {
       "path": "en/quizzes/observability/grafana/grafana-quiz.md",
@@ -384,7 +384,7 @@
     },
     {
       "path": "ko/observability/grafana/README.md",
-      "sha256": "00cbded11e6803336ddeee2c642e8cb8958ad3d018c226457b015e7c2a28583c"
+      "sha256": "21fd7c3beae93ad684339ad48324d05c4c6a19e4a7bf8b9fe3535911e436ba5f"
     },
     {
       "path": "ko/quizzes/observability/grafana/grafana-quiz.md",
@@ -396,7 +396,7 @@
     },
     {
       "path": "public/archmaps/ko-observability-grafana-readme-0.html",
-      "sha256": "e8449e4753922726b43a31b81423fe05ca49bddbfe55cbe85e15da1529348bcd"
+      "sha256": "0a54fb8a23027e0dd8911d6a9bf76b425b6fd2f6d4cd27c02f086390f7bb32ec"
     }
   ],
   "native": {
@@ -734,5 +734,130 @@
     "Sidecar/profile changes after native run were re-rendered and RBAC asserted; native runtime provisioning files remained unchanged.",
     "Current unified_alerting.min_interval is valid in 13.2.1; retained after checking pinned defaults."
   ],
-  "credentialFileNote": "Random credentials are written without trailing newline so Secret-backed HTTP Basic Auth bytes match Grafana file-provider values."
+  "credentialFileNote": "Random credentials are written without trailing newline so Secret-backed HTTP Basic Auth bytes match Grafana file-provider values.",
+  "reviewFix": {
+    "findings": [
+      "GRAF-R1-001",
+      "GRAF-R1-002"
+    ],
+    "aliases": [
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "주요-특징",
+        "targetStartsWith": "## 아키텍처"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "설치-실행",
+        "targetStartsWith": "### 기본 설치"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "configmap을-통한-데이터-소스-프로비저닝",
+        "targetStartsWith": "### 파일 프로비저닝과 UID"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "use-method-utilization-saturation-errors",
+        "targetStartsWith": "## 대시보드 설계 패턴"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "red-method-rate-errors-duration",
+        "targetStartsWith": "## 대시보드 설계 패턴"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "_4-golden-signals",
+        "targetStartsWith": "## 대시보드 설계 패턴"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "알림-규칙-구성",
+        "targetStartsWith": "## 알림 규칙 (Grafana Alerting)"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "알림-연락처-구성",
+        "targetStartsWith": "Slack/PagerDuty 연락처는"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "grafana-cloud-연결-hybrid",
+        "targetStartsWith": "Cloud의 Prometheus/Loki URL과"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "_1-대시보드-구조화",
+        "targetStartsWith": "## Best Practices"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "_2-변수-활용",
+        "targetStartsWith": "현재 대시보드는 한 클러스터를"
+      },
+      {
+        "path": "ko/observability/grafana/README.md",
+        "alias": "_3-성능-최적화",
+        "targetStartsWith": "`[dashboards] min_refresh_interval"
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "alias": "key-features",
+        "targetStartsWith": "## Architecture"
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "alias": "run-installation",
+        "targetStartsWith": "### Basic Installation"
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "alias": "data-source-provisioning-via-configmap",
+        "targetStartsWith": "### File Provisioning and UIDs"
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "alias": "use-method-utilization-saturation-errors",
+        "targetStartsWith": "## Dashboard Design Patterns"
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "alias": "red-method-rate-errors-duration",
+        "targetStartsWith": "## Dashboard Design Patterns"
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "alias": "_4-golden-signals",
+        "targetStartsWith": "## Dashboard Design Patterns"
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "alias": "alert-rule-configuration",
+        "targetStartsWith": "## Alert Rules (Grafana Alerting)"
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "alias": "_1-dashboard-organization",
+        "targetStartsWith": "## Best Practices"
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "alias": "_2-variable-usage",
+        "targetStartsWith": "The dashboard assumes one cluster."
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "alias": "_3-performance-optimization",
+        "targetStartsWith": "`[dashboards] min_refresh_interval"
+      }
+    ],
+    "dependency": {
+      "pr": 272,
+      "state": "merged",
+      "mergeCommit": "4f80a2126f4c3bb7fdcb99702421fcd7542449d5",
+      "includedInHead": true
+    },
+    "locale": "Koreanstandaloneviewerhtml.langsetko;bodyotherwiseunchanged"
+  }
 }
