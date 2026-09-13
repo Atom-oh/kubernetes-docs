@@ -173,7 +173,7 @@ Lattice는 HTTPS listener에서 **TLS를 종료한 뒤 헤더를 파싱해** `Au
 
 > **서명 검증은 헤더를 읽을 수 있어야 가능하고, 헤더를 읽으려면 TLS를 종료해야 합니다.**
 
-당연해 보이지만 결과가 큽니다. **TLS Passthrough는 TLS를 종료하지 않으므로 Lattice가 `Authorization` 헤더를 볼 수 없습니다.** 즉 요청 서명 기반 인증을 적용할 수 없습니다. 이것이 [06번 문서](./06-constraints.md)의 첫 번째 제약("TLS Passthrough + IAM Auth Policy 동시 적용 불가")의 원리입니다.
+**TLS Passthrough는 TLS를 종료하지 않으므로 Lattice가 `Authorization` 헤더를 볼 수 없고** 호출자의 SigV4 요청 서명을 인증할 수 없습니다. 이것이 [06번 문서](./06-constraints.md)에서 다루는 제약입니다. 모든 auth policy가 금지되는 것은 아닙니다. TLS listener는 anonymous principal로 제한된 정책을 지원하지만, 이 정책이 인증된 호출자 신원을 제공하지는 않습니다.
 
 Controller 문서는 Gateway·HTTPRoute·GRPCRoute의 정책 연결을 설명합니다. 설치한 CRD의 지원 대상을 확인합니다. **Controller 제약이 모든 VPC Lattice TLS auth policy가 거부된다는 뜻은 아닙니다.**
 

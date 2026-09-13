@@ -16,7 +16,7 @@ Before discussing configuration, this question comes first. **Blockchain nodes f
 | What Kubernetes does well | For a blockchain node |
 |---|---|
 | Fast scheduling and rescheduling | State rebuild cost makes rescheduling expensive |
-| Horizontal scaling for throughput | Throughput does not increase |
+| Horizontal scaling for throughput | Replicas can increase aggregate RPC/read capacity and availability, but do not automatically raise base-chain write/consensus capacity |
 | Declarative rolling updates | Hard forks switch simultaneously |
 | Moving Pods between nodes | Bound to local disk |
 
@@ -289,7 +289,6 @@ The following are **dated protocol events**, not a guaranteed future cadence. Ch
 |---|---|---|
 | **May 7, 2025** | **Pectra** mainnet | EIP-7251 raised the maximum effective balance for eligible validators to 2,048 ETH; consolidation changes validator records, not necessarily process/VM count |
 | **December 3, 2025** | **Fusaka** mainnet (epoch 411392) | The headline is **PeerDAS** (Peer Data Availability Sampling) — verifying blob data by sampling rather than in full. Expands blob throughput |
-:::
 
 A validator identity/key is **not a separate process or VM**: one validator client can manage many keys on a shared beacon-node stack. EIP-7251 consolidation can reduce validator records/key-management work, but does not prove proportional infrastructure or cost savings. Measure the actual client topology and preserve slashing protection during key migration.
 

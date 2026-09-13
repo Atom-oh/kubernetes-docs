@@ -191,11 +191,11 @@ AS-IS와 TO-BE의 장애 특성은 성격이 다릅니다.
 
 ### STS 의존성
 
-IAM Auth를 쓰면 **STS가 East-West 데이터 경로의 의존성**이 됩니다 ([03번 문서](./03-auth-flow.md)).
+IAM Auth의 **credential 획득·갱신은 설정한 provider에 의존**합니다([03번 문서](./03-auth-flow.md)). IRSA는 STS, EKS Pod Identity는 node agent와 EKS Auth를 사용합니다. 유효한 credential을 캐시하면 서비스 호출마다 원격 credential 요청을 할 필요는 없습니다.
 
-- credential은 만료되고, 갱신에 STS가 필요합니다
-- STS에 도달할 수 없고 캐시가 만료되면 **서명할 수 없고, 미서명 요청은 403**입니다
-- 즉 **인증 인프라 장애가 서비스 간 통신 장애로 직결**됩니다
+- 임시 credential은 만료되므로 provider가 새 credential을 얻어야 합니다
+- 갱신에 실패하고 유효한 credential이 없으면 client가 dispatch 전에 실패하거나 Lattice가 거부하는 요청을 보낼 수 있습니다. 모든 실패를 HTTP 403으로 가정하지 말고 두 결과를 구분합니다
+- 실제 credential 전달 경로의 장애는 유효한 cache가 소진된 뒤 서비스 호출을 중단시킬 수 있으며 미서명 요청으로 우회하면 안 됩니다
 
 AS-IS에서 이 위치에 있던 것은 SPIRE Server였습니다. **의존성의 존재 자체는 새로운 것이 아니고, 소유자가 고객에서 AWS로 바뀌는 것**입니다 ([05번 문서](./05-spiffe-to-iam.md)의 차이 (b)와 같은 구조).
 
@@ -205,8 +205,8 @@ AS-IS에서 이 위치에 있던 것은 SPIRE Server였습니다. **의존성의
 
 | 완화 수단 | 내용 |
 |---|---|
-| **credential 캐시 수명 확인** | SDK가 credential을 얼마나 오래 캐시하는지, 갱신 실패 시 어떻게 동작하는지 확인. 이 값이 STS 단기 장애의 내구 시간 |
-| **갱신 실패 시 거동 테스트** | STS 접근을 인위적으로 차단하고 서비스가 어떻게 실패하는지 관측. 조용히 403이 나는지, 재시도하는지 |
+| **credential 캐시 수명 확인** | 선택한 provider의 credential 만료·갱신 시점·cache·실패 동작 기록. 남은 유효 credential이 전달 경로 장애를 견딜 수 있는 시간을 제한 |
+| **갱신 실패 시 거동 테스트** | 승인된 격리 시험에서 IRSA의 STS 또는 Pod Identity의 agent/EKS Auth처럼 실제 provider 경로를 차단합니다. Credential 만료까지 관측하며 로컬 획득 실패와 Lattice 응답·재시도 동작을 구분하고 경로를 복구합니다. Pod의 직접 STS egress만 차단하는 것은 보편적인 시험이 아님 |
 | **Critical 경로 이중화** | 최고 중요도 통신에 대해 Lattice 외 대체 경로(직접 호출, NLB) 보유 검토 |
 | **점진적 전환** | 전체를 한 번에 옮기지 않고 중요도 낮은 통신부터. 롤백 경로 유지 |
 | **RTO/RPO 재산정** | 장애 특성이 바뀌었으므로 기존 목표치의 근거를 다시 검토 |

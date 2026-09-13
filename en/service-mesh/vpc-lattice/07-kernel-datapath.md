@@ -96,7 +96,7 @@ Mesh interception can occur at **Pod-netns OUTPUT**. Whether the intercepted req
 
 A restricted proxy can return an error for an unknown destination; an allow-any/passthrough policy can forward it. Validate both the route and the returned error instead of assuming every missing exception causes an immediate 503.
 
-**Diagnosis path**: when Lattice calls fail, check the Envoy sidecar logs first. If requests bound for `169.254.171.x` appear there, interception is the cause.
+**Diagnosis path**: when Lattice calls fail, check whether the Envoy sidecar logs contain the affected requests to `169.254.171.x`. This establishes proxy traversal. Correlate the returned error, route/outbound policy and any changes to signed fields before attributing failure to interception; a configured proxy can also forward the request successfully.
 
 ### Registering the exception — what, and where
 

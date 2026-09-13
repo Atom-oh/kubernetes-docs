@@ -33,7 +33,7 @@ AMB is not universally per-node billed. Dedicated resources, serverless RPC requ
 **Answer: B) Validator operation — managed nodes are for queries and submission, while PoS staking is a different requirement set of key management, signing availability, and slashing risk**
 
 **Explanation:**
-AMB Access public chain nodes are for reading chain data and submitting transactions. Participating as a PoS validator to earn staking rewards is entirely different — the signing key must be online continuously, signing in two places means slashing and forfeited stake, and so strict active-passive with fencing is required. If staking is the goal, AMB does not solve it and you need self-operation or a specialized staking service.
+AMB Access public chain nodes are for reading chain data and submitting transactions. PoS validation adds signing availability and slashing-protection requirements. Uncoordinated signers can produce conflicting slashable messages for the same validator; identical duplicate signatures are not automatically slashable. The ordinary deployment uses a single active signer with fenced failover and preserved slashing history; a distributed signer needs proven coordination. AMB node access does not supply that validator design, so staking needs separate operation or a specialized service.
 </details>
 
 3. What is presented as step 1 of the managed-vs-self-operated decision?
@@ -81,7 +81,7 @@ QLDB was announced in 2018, went GA in 2019, had end of support announced in Jul
 **Answer: B) Standard protocols plus an abstraction layer — having the application speak a standard RPC interface lets you swap the backend between AMB, self-operated, and third-party**
 
 **Explanation:**
-If the application speaks a standard interface like Ethereum JSON-RPC, the backend can be anything. Coupling directly to AMB-specific APIs forfeits that flexibility. Other mitigations are keeping chain data in your own index or warehouse for data independence, securing key export and backup strategies, and measuring resync and data migration time in advance to judge whether you could respond within a notice period.
+A standard interface such as Ethereum JSON-RPC can make compatible backends easier to replace, while AMB-specific APIs introduce coupling. Keep required data independently and measure resync/migration time. Plan key recovery and exit before use: **KMS private signing keys cannot be exported**. Distinguish public-key download, backups of imported key material, CloudHSM extractability/wrapping rules and account/contract rotation options; a managed-key choice does not by itself provide a portable private-key backup.
 </details>
 
 6. Why is AMB's IAM integration a substantive benefit?

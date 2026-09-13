@@ -191,11 +191,11 @@ Neither model has a measured failure probability in this chapter. Build a depend
 
 ### The STS dependency
 
-With IAM Auth, **STS becomes a dependency of the East-West data path** ([document 03](./03-auth-flow.md)).
+With IAM Auth, **credential acquisition and refresh depend on the configured provider** ([document 03](./03-auth-flow.md)). IRSA uses STS; EKS Pod Identity uses the node agent and EKS Auth. Cached valid credentials avoid a remote credential request for every service call.
 
-- Credentials expire, and refreshing requires STS
-- If STS is unreachable and the cache expires, **you cannot sign, and unsigned requests are 403s**
-- In other words, **an authentication infrastructure failure translates directly into a service-to-service communication failure**
+- Temporary credentials expire, and the provider must obtain replacements
+- If refresh fails and no valid credentials remain, the client may fail before dispatch or send a request that Lattice rejects; distinguish these outcomes rather than assuming every failure is an HTTP 403
+- An outage on the actual credential-delivery path can interrupt service calls after valid cached credentials are exhausted; do not fall back to unsigned requests
 
 In AS-IS, SPIRE Server occupied this position. **The existence of the dependency is not new — the owner shifts from the customer to AWS** (the same structure as difference (b) in [document 05](./05-spiffe-to-iam.md)).
 
@@ -205,8 +205,8 @@ This constraint cannot be removed, only mitigated.
 
 | Mitigation | Content |
 |---|---|
-| **Confirm credential cache lifetime** | How long does the SDK cache credentials, and how does it behave on refresh failure? That value is your endurance window for a short STS outage |
-| **Test refresh-failure behavior** | Artificially block STS access and observe how services fail. Do they silently 403, or retry? |
+| **Confirm credential cache lifetime** | Record credential expiry, refresh timing, caching and failure behavior of the selected provider; remaining valid credentials bound how long it may tolerate a delivery-path outage |
+| **Test refresh-failure behavior** | In an approved isolated test, interrupt the actual provider path: STS for IRSA, or the agent/EKS Auth path for Pod Identity. Observe through credential expiry, distinguish local acquisition failures from Lattice responses, record retry behavior, and restore the path. Blocking only a Pod's direct STS egress is not a universal test |
 | **Redundancy for critical paths** | Consider keeping an alternative path (direct call, NLB) for the highest-criticality communication |
 | **Phased migration** | Do not move everything at once; start with lower-criticality traffic. Keep a rollback path |
 | **Recalculate RTO/RPO** | The failure characteristics changed, so revisit the basis for your existing targets |

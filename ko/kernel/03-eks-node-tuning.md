@@ -204,7 +204,7 @@ cat "$KERNEL_CGROUP_PATH/memory.pressure"
 | 항목 | 내용 |
 |---|---|
 | 증상 | 새 연결이 조용히 드롭. 애플리케이션은 타임아웃/refused만 봄 |
-| 직접 증거 | `conntrack -S`의 **`insert_failed`** 증가 |
+| 함께 확인할 증거 | `conntrack -S`의 **`insert_failed`** 증가. 이것만으로 table 포화를 확정하지 않음 |
 | 보조 신호 | `dmesg`의 `nf_conntrack: table full`, `nf_conntrack_count` / `nf_conntrack_max` 비율 |
 | 조정 경로 | **`kube-proxy-config` ConfigMap의 `conntrack.maxPerCore` / `conntrack.min`** (EKS에서 이것이 우선) |
 | 비용 | 항목당 노드 메모리. 무한정 올릴 수 없음 |
@@ -248,7 +248,7 @@ cat "$KERNEL_CGROUP_PATH/memory.pressure"
 | 상황 | 권고 |
 |---|---|
 | Service 수가 많고 iptables 모드 | **nftables 모드 검토** — 1.33에서 GA, O(1) 조회 + 증분 갱신. 커널 5.13+ 필요(AL2023은 충족) |
-| **IPVS 모드 사용 중** | **이전 계획 필요** — 1.35에서 deprecated, 1.38 제거 목표. 권장 대체는 nftables |
+| **IPVS 모드 사용 중** | **이전 계획 필요** — 1.35에서 deprecated; upstream은 1.40 기본 비활성화·1.43 제거 계획. 권장 대체는 nftables |
 | 기본값 유지 | nftables가 GA여도 **기본은 여전히 iptables** — 전환은 명시적 결정 |
 
 ## 스토리지
@@ -295,7 +295,7 @@ cat "$KERNEL_CGROUP_PATH/memory.pressure"
 - 노드 안정성에는 커널 튜닝보다 **kubelet 예약과 축출 임계**가 효과적입니다. 축출이 커널 OOM보다 낫습니다.
 - 근거 있는 조정의 대표 사례는 **conntrack 상한, `somaxconn`, `ip_local_port_range`, `vm.max_map_count`**입니다. 모두 직접적인 증거 카운터가 있습니다.
 - TCP sysctl 범위와 socket별 autotuning override는 다르며 측정 근거로만 조정합니다.
-- **IPVS 모드를 쓰고 있으면 이전 계획이 필요합니다** (1.35 deprecated, 1.38 제거 목표).
+- **IPVS 모드를 쓰고 있으면 이전 계획이 필요합니다** (1.35 deprecated; 1.40 기본 비활성화·1.43 제거 계획). Rollout 전에 아래 KEP-5495 링크에서 최신 일정을 확인합니다.
 
 ## 참고 자료
 

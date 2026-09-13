@@ -187,13 +187,13 @@ Service 구현 방식이 세 갈래이고, **2025~2026년에 지형이 바뀌었
 | 모드 | 룰 평가 | 상태 |
 |---|---|---|
 | **iptables** | Rule-chain 조회 비용은 배치에 따라 다르며 현재 kube-proxy는 갱신을 최적화 | 명시 변경하지 않은 환경의 기본값. 설치 구현 확인 |
-| **IPVS** | 커널 L4 로드밸런서, 해시 기반 O(1) | **Kubernetes 1.35(2025년 12월)에서 deprecated**, 1.38 제거 목표 |
+| **IPVS** | 커널 L4 로드밸런서, 해시 기반 O(1) | **Kubernetes 1.35(2025년 12월)에서 deprecated**; 1.40 기본 비활성화·1.43 제거 계획 |
 | **nftables** | O(1) 조회 + **증분 규칙 갱신** | **Kubernetes 1.33에서 GA** (1.29 alpha → 1.31 beta). 워커 노드에 **커널 5.13+** 필요 |
 
 읽는 방법:
 
 - **대규모 클러스터에서 iptables 모드의 병목은 룰 수와 갱신 비용**입니다. Service·Endpoint가 많을수록 kube-proxy의 동기화 시간이 늘고, 그 동안 규칙이 최신이 아닙니다.
-- **IPVS를 쓰고 있다면 이전 계획이 필요합니다.** 1.38에서 제거가 목표이고, 권장 대체는 nftables 모드입니다.
+- **IPVS를 쓰고 있다면 이전 계획이 필요합니다.** Upstream은 1.40 기본 비활성화와 1.43 제거를 계획하므로 이전 계획 시 최신 [KEP-5495 일정](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)을 확인합니다. 권장 대체는 nftables 모드입니다.
 - AL2023 노드는 커널 6.x라 nftables 모드의 커널 요건을 충족합니다.
 - nftables가 GA여도 **기본값은 iptables**이므로 명시적으로 전환해야 합니다.
 
@@ -255,7 +255,7 @@ conntrack 부하 자체를 줄이는 접근도 있습니다.
 - **net namespace가 Pod의 경계**입니다. 같은 IP·포트 공간, `localhost` 통신, Pod 범위의 netfilter 규칙이 모두 여기서 나옵니다.
 - cgroup v2에서 **`memory.current`는 page cache를 포함**합니다. OOM 진단은 `memory.stat`의 `anon`과 `memory.events`, 그리고 **PSI(`memory.pressure`)**를 함께 봐야 합니다.
 - CPU limit은 **대역폭 제한**이라 사용률이 낮아도 throttling으로 지연이 튑니다. `cpu.stat`의 `nr_throttled`가 증거입니다.
-- kube-proxy는 **nftables가 1.33에서 GA, IPVS는 1.35에서 deprecated(1.38 제거 목표)**, 기본값은 여전히 iptables입니다.
+- kube-proxy는 **nftables가 1.33에서 GA, IPVS는 1.35에서 deprecated**이며 upstream은 IPVS의 1.40 기본 비활성화와 1.43 제거를 계획합니다. 기본값은 여전히 iptables입니다.
 - Conntrack 포화는 신규 연결을 드롭할 수 있습니다. Count/max·drop/insert counter·log로 진단하고 상한 변경 전 유효 kube-proxy 설정을 확인합니다.
 
 다음: [커널 네트워킹 스택](./02-network-stack.md)에서 패킷이 지나는 전체 경로를 봅니다.

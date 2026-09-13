@@ -33,7 +33,7 @@
 **정답: B) 규정이 종단간 암호화 또는 워크로드 간 상호 인증을 요구하는지 — 이에 따라 HTTPS listener + IAM Auth와 TLS Passthrough가 갈리고 이후 설계 대부분이 종속된다**
 
 **설명:**
-이 결정은 기술이 아니라 조직의 심의 기준에 달려 있습니다. TLS Passthrough를 택하면 IAM Auth 전체와 L7 라우팅을 포기하고 인가를 엔드포인트 mTLS나 애플리케이션에서 새로 설계해야 하며, SPIRE 존속 검토까지 따라옵니다. 반대로 HTTPS listener를 택하면 서명 방식 결정으로 이어집니다. 이것을 나중에 확인하면 앞선 모든 설계를 되돌려야 하므로, 보안 담당자와 먼저 합의해야 합니다.
+이 결정은 조직의 보안 요구에 달려 있습니다. TLS Passthrough에서는 Lattice가 SigV4 호출자를 인증하거나 L7 라우팅을 위해 HTTP 필드를 검사할 수 없으며, auth policy는 anonymous principal로 제한됩니다. 따라서 인증된 workload 신원·인가는 endpoint/application에서 설계해야 하고 mTLS·SPIRE를 포함할 수 있습니다. HTTPS listener는 서명 방식 결정으로 이어집니다. 설계를 선택하기 전에 보안 담당자와 이 경계를 합의합니다.
 </details>
 
 3. Lattice 비용은 어떻게 추정해야 합니까?
@@ -129,5 +129,5 @@ Proxy 실패는 개별일 수 있지만 공통 mesh 설정은 넓게 실패할 �
 **정답: B) API Gateway가 Lattice 서비스 네트워크를 private integration 대상으로 네이티브 지원하는지 여부**
 
 **설명:**
-API Gateway가 Lattice 서비스 네트워크를 private integration 대상으로 네이티브 지원한다는 근거는 찾지 못했습니다. 확인된 패턴은 API Gateway → VPC Link → ALB/NLB → Lattice 또는 프록시·페더레이션 계층 경유입니다. 다른 `확인 필요` 항목은 quotas의 정확한 값, Lattice의 Target 선택이 호출자 AZ를 고려하는지, TLS_PASSTHROUGH listener에 auth policy 설정 시 API 거동, ECH 지원 여부입니다. A·C·D는 모두 1차 자료로 확인된 사실입니다.
+API Gateway가 Lattice 서비스 네트워크를 private integration 대상으로 네이티브 지원한다는 근거는 찾지 못했습니다. VPC Link를 통한 ALB/NLB listener 지원만으로 ALB/NLB → Lattice link-local 직접 경로가 성립하지는 않습니다. Bridge가 지원된다고 판단하기 전에 정확한 API 유형·지원 target/연결 방식과 필요한 서명·실패 처리를 갖춘 명시적 proxy 또는 consumer 구현을 검증합니다. 현재 account/Region quota와 실제 backend target 배치를 확인하며 DNS ingress AZ affinity가 동일 AZ backend를 보장한다고 가정하지 않습니다. TLS의 anonymous-principal policy 제한·controller attachment 제한·TLS listener의 ECH/ESNI 제외는 별도로 문서화되어 있으므로 모두 미확정으로 설명하지 않습니다.
 </details>

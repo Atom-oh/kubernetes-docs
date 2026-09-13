@@ -187,13 +187,13 @@ Service implementation comes in three flavors, and **the landscape shifted in 20
 | Mode | Rule evaluation | Status |
 |---|---|---|
 | **iptables** | Rule-chain lookup cost depends on rule layout; current kube-proxy optimizes updates | Default where not explicitly changed; verify the installed implementation |
-| **IPVS** | In-kernel L4 load balancer, hash-based O(1) | **Deprecated in Kubernetes 1.35 (December 2025)**, removal targeted for 1.38 |
+| **IPVS** | In-kernel L4 load balancer, hash-based O(1) | **Deprecated in Kubernetes 1.35 (December 2025)**; planned default disablement in 1.40 and removal in 1.43 |
 | **nftables** | O(1) lookup plus **incremental rule updates** | **GA in Kubernetes 1.33** (alpha 1.29 → beta 1.31). Requires **kernel 5.13+** on worker nodes |
 
 How to read this:
 
 - **In large clusters, the iptables-mode bottleneck is rule count and update cost.** The more Services and Endpoints, the longer kube-proxy's sync takes — and during that window the rules are not current.
-- **If you run IPVS, you need a migration plan.** Removal is targeted for 1.38 and the recommended replacement is nftables mode.
+- **If you run IPVS, you need a migration plan.** Upstream plans default disablement in 1.40 and removal in 1.43; confirm the maintained [KEP-5495 schedule](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md) when planning. The recommended replacement is nftables mode.
 - AL2023 nodes run kernel 6.x, so they satisfy the nftables mode kernel requirement.
 - Even with nftables GA, **the default is still iptables** — you must switch explicitly.
 
@@ -255,7 +255,7 @@ The operationally important property is **copy-up.** Modifying a file from lower
 - **The net namespace is the Pod boundary.** The shared IP/port space, `localhost` communication, and Pod-scoped netfilter rules all follow from it.
 - In cgroup v2, **`memory.current` includes page cache.** OOM diagnosis needs `memory.stat` → `anon`, `memory.events`, and **PSI (`memory.pressure`)** together.
 - A CPU limit is a **bandwidth limit**, so throttling spikes latency even at low utilization. `cpu.stat` → `nr_throttled` is the evidence.
-- For kube-proxy, **nftables is GA in 1.33 and IPVS is deprecated in 1.35 (removal targeted 1.38)**; the default is still iptables.
+- For kube-proxy, **nftables is GA in 1.33 and IPVS is deprecated in 1.35**; upstream plans default disablement of IPVS in 1.40 and removal in 1.43. The default is still iptables.
 - Conntrack exhaustion can drop new connections. Diagnose with count/max, drop/insert counters and logs; check the effective kube-proxy configuration before changing limits.
 
 Next: [Kernel Networking Stack](./02-network-stack.md) walks the full path a packet travels.

@@ -86,7 +86,7 @@ Cross-AZ increases latency due to physical distance (measured baseline: same-AZ 
 
 6. Why is warm-up needed in the measurement design, and why should first-request latency still be recorded separately?
    - A) Warm-up is unnecessary; measuring the first request is enough
-   - B) Without warm-up, credential acquisition and connection setup costs are mixed in and do not represent steady state — but for workloads with frequent cold starts the first-request value is actually the important one
+   - B) Cold credentials or connection pools can add setup work, so record first-request and warmed-up latency separately and evaluate both for frequent cold starts
    - C) Warm-up improves only p50 and has no effect on p99
    - D) The first request always fails
 
@@ -94,8 +94,8 @@ Cross-AZ increases latency due to physical distance (measured baseline: same-AZ 
 
 <summary>Show Answer</summary>
 
-**Answer: B) Without warm-up, credential acquisition and connection setup costs are mixed in and do not represent steady state — but for workloads with frequent cold starts the first-request value is actually the important one**
+**Answer: B) Cold credentials or connection pools can add setup work, so record first-request and warmed-up latency separately and evaluate both for frequent cold starts**
 
 **Explanation:**
-The first request includes both an STS call and a TLS handshake, so it is not representative of steady state; steady-state numbers should come from after adequate warm-up. However, for workloads with frequent cold starts — Lambda, or services that scale out often — the latency users actually experience is closer to the first-request value, so record it as a separate item and evaluate both.
+A first request can include credential acquisition and connection setup when caches or pools are cold. The acquisition path depends on the provider: IRSA uses STS, while EKS Pod Identity uses the node agent and EKS Auth. TLS handshake work applies only to TLS connections. Record first-request and warmed-up latency separately with provider/cache/transport state; do not assume every first request makes a direct STS call or establishes TLS. Evaluate both conditions when cold starts are frequent.
 </details>

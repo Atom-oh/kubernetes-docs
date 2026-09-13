@@ -113,5 +113,5 @@ AWS Gateway API Controller 문서가 명시하는 제약입니다. `IAMAuthPolic
 **정답: B) connection 단위 양방향 상호 인증 → 요청 단위 단방향(클라이언트 증명) + TLS 서버 인증서**
 
 **설명:**
-mTLS는 연결 수립 시 한 번 서로의 SVID를 검증하는 양방향 모델입니다. Lattice IAM Auth는 요청마다 클라이언트의 SigV4 서명을 검증하므로 클라이언트 증명은 오히려 더 세밀해집니다(연결 탈취 후 임의 요청 전송 시나리오 차단, 경로·메서드·헤더 조건 활용 가능). 그러나 서버 측 신원 증명은 TLS 서버 인증서 수준으로 내려가며, "이 서비스가 진짜 그 팀의 서비스인가"를 워크로드 신원 체계로 확인하는 단계가 없어집니다.
+mTLS는 연결을 수립할 때 양쪽 peer의 SVID로 서로를 인증합니다. Lattice IAM Auth는 요청마다 호출자의 SigV4 서명을 검증하며 경로·메서드·헤더 정책 조건을 적용할 수 있습니다. SigV4는 canonical request의 서명 대상 필드를 보호하지만, Lattice는 `UNSIGNED-PAYLOAD`를 요구하고 payload signing을 지원하지 않습니다. 본문은 TLS로 보호하고 credential 탈취·요청 유효 시간·replay를 별도로 평가해야 하며, 요청 서명이 연결 탈취를 보편적으로 차단한다고 단정하면 안 됩니다. HTTPS listener 설계에서 서버 인증은 peer의 SPIFFE identity 대신 TLS 서버 인증서를 사용합니다.
 </details>

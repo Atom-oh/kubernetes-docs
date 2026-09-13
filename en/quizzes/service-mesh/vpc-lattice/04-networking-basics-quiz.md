@@ -17,7 +17,7 @@ This quiz tests your understanding of link-local/ULA addressing, how SNI works, 
 **Answer: B) IPv4 `169.254.171.0/24` is link-local, while IPv6 `fd00:ec2:80::/64` is not link-local but a Unique Local Address (ULA)**
 
 **Explanation:**
-The IPv4 range falls inside `169.254.0.0/16` (RFC 3927, link-local), but the IPv6 range is not `fe80::/10` (link-local) — it is `fd00:ec2:80::/64` inside the `fc00::/7` ULA range (RFC 4193). The difference is scope: link-local has link scope and cannot cross a router, while a ULA has site scope and routes within a private network. Lattice traffic must travel within the VPC to reach an ingress endpoint, so link scope would be insufficient.
+The IPv4 range falls inside `169.254.0.0/16` (RFC 3927, link-local), but the IPv6 range is not `fe80::/10` (link-local) — it is `fd00:ec2:80::/64` inside the `fc00::/7` ULA range (RFC 4193). Link-local addresses have link scope. ULAs have global address scope under RFC 6724, but are intended for private routing rather than global Internet reachability; they are not the deprecated site-local address class. These address classifications do not by themselves describe AWS's special Lattice ingress implementation.
 </details>
 
 2. How should the Lattice address ranges be interpreted?

@@ -33,7 +33,7 @@ AMB 전체가 node별 과금은 아닙니다. 전용 자원·serverless RPC 요�
 **정답: B) 검증자(validator) 운영 — 관리형 노드는 조회·거래 제출용이며 PoS 스테이킹은 키 관리·서명 가용성·slashing 위험이라는 다른 요구사항**
 
 **설명:**
-AMB Access의 퍼블릭 체인 노드는 체인 데이터를 읽고 거래를 제출하는 용도입니다. PoS 검증자로 참여해 스테이킹 보상을 받는 것은 완전히 다른 요구사항입니다 — 서명 키가 상시 온라인이어야 하고, 동시에 두 곳에서 서명하면 slashing으로 예치금이 몰수되며, 그래서 엄격한 Active-Passive 구성과 fencing이 필요합니다. 스테이킹이 목적이라면 AMB로 해결되지 않고 자체 운영이나 전문 스테이킹 서비스가 필요합니다.
+AMB Access의 public-chain node는 체인 데이터를 읽고 거래를 제출하는 용도입니다. PoS validation에는 서명 가용성과 slashing protection이 추가로 필요합니다. 조정되지 않은 signer는 같은 validator에 충돌하는 slashable 메시지를 만들 수 있지만 동일 서명의 중복이 자동으로 slashing 대상이 되지는 않습니다. 일반 배포는 활성 signer 하나와 fencing failover·보존된 slashing 이력을 사용하며 분산 signer에는 검증된 조정이 필요합니다. AMB node 접근이 이 validator 설계를 제공하지는 않으므로 staking에는 별도 운영 또는 전문 서비스가 필요합니다.
 </details>
 
 3. 관리형 vs 자체 운영 의사결정에서 1단계로 제시된 질문은?
@@ -81,7 +81,7 @@ QLDB는 2018년 발표, 2019년 GA되었고 2024년 7월 지원 종료가 발표
 **정답: B) 표준 프로토콜 사용 + 추상화 계층 — 애플리케이션이 표준 RPC 인터페이스로 말하게 하면 백엔드를 AMB·자체 노드·서드파티로 바꿀 수 있음**
 
 **설명:**
-Ethereum JSON-RPC 같은 표준 인터페이스로 애플리케이션이 말하게 하면 백엔드가 무엇이든 바꿀 수 있습니다. AMB 고유 API에 직접 결합하면 이 유연성을 잃습니다. 다른 완화 수단으로는 체인 데이터를 자체 인덱스·웨어하우스에도 보관해 데이터 독립성을 확보하는 것, 키의 내보내기·백업 전략 확보, 그리고 노드 재동기화·데이터 이전에 걸리는 시간을 미리 측정해 통보 기간 내 대응 가능성을 판단하는 것이 있습니다.
+Ethereum JSON-RPC 같은 표준 인터페이스는 호환 backend 교체를 쉽게 만들 수 있지만 AMB 고유 API는 결합을 만듭니다. 필요한 데이터를 독립 보관하고 resync/이전 시간을 측정합니다. 사용 전에 키 복구와 종료를 계획해야 하며 **KMS 개인 signing key는 export할 수 없습니다**. Public-key download·imported key material의 backup·CloudHSM extractability/wrapping 규칙·account/contract rotation을 구분합니다. 관리형 키를 선택한다고 이전 가능한 private-key backup이 자동 제공되지는 않습니다.
 </details>
 
 6. AMB의 IAM 통합이 실질적 이점인 이유는?

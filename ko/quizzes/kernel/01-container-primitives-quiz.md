@@ -70,7 +70,7 @@ CPU limit은 대역폭 제한입니다. `cpu.max`가 `20000 100000`이면 "100ms
 
 5. 2026년 기준 kube-proxy 모드의 상태로 올바른 것은?
    - A) nftables가 기본값이고 iptables는 제거되었다
-   - B) nftables는 1.33에서 GA, IPVS는 1.35에서 deprecated(1.38 제거 목표), 기본값은 여전히 iptables
+   - B) nftables는 1.33에서 GA, IPVS는 1.35에서 deprecated(1.40 기본 비활성화·1.43 제거 계획), 기본값은 여전히 iptables
    - C) IPVS가 기본값이고 nftables는 alpha다
    - D) 세 모드 모두 동일한 성능 특성을 가진다
 
@@ -78,10 +78,10 @@ CPU limit은 대역폭 제한입니다. `cpu.max`가 `20000 100000`이면 "100ms
 
 <summary>정답 보기</summary>
 
-**정답: B) nftables는 1.33에서 GA, IPVS는 1.35에서 deprecated(1.38 제거 목표), 기본값은 여전히 iptables**
+**정답: B) nftables는 1.33에서 GA, IPVS는 1.35에서 deprecated(1.40 기본 비활성화·1.43 제거 계획), 기본값은 여전히 iptables**
 
 **설명:**
-nftables 모드는 1.29 alpha → 1.31 beta → **1.33 GA**로 성숙했고, O(1) 조회와 증분 규칙 갱신을 제공합니다(워커 노드에 커널 5.13+ 필요, AL2023은 충족). IPVS 모드는 **1.35(2025년 12월)에서 deprecated**되었고 1.38 제거가 목표이며 권장 대체는 nftables입니다. 다만 호환성을 위해 **기본값은 여전히 iptables**이므로 nftables 전환은 명시적 결정이 필요합니다. IPVS를 쓰고 있다면 이전 계획이 필요합니다.
+nftables 모드는 1.29 alpha → 1.31 beta → **1.33 GA**로 성숙했고, O(1) 조회와 증분 규칙 갱신을 제공합니다(워커 노드에 커널 5.13+ 필요, AL2023은 충족). IPVS 모드는 **1.35(2025년 12월)에서 deprecated**되었으며 upstream은 1.40 기본 비활성화와 1.43 제거를 계획합니다. 미래 목표이므로 최신 [KEP-5495 일정](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md)을 확인합니다. 권장 대체는 nftables이지만 **기본값은 여전히 iptables**이므로 전환은 명시적 결정입니다.
 </details>
 
 6. Conntrack 포화 의심은 어떻게 검증해야 합니까?

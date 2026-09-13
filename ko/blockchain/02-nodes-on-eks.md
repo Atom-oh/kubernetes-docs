@@ -16,7 +16,7 @@
 | Kubernetes가 잘하는 것 | 블록체인 노드에서 |
 |---|---|
 | 빠른 스케줄링·재배치 | 상태 재구축 비용이 커서 재배치가 비쌈 |
-| 수평 확장으로 처리량 증가 | 처리량이 안 늘어남 |
+| 수평 확장으로 처리량 증가 | Replica는 전체 RPC/read 용량·가용성을 늘릴 수 있지만 base-chain write/consensus 용량을 자동으로 높이지는 않음 |
 | 선언적 롤링 업데이트 | 하드포크는 동시 전환 |
 | 노드 간 Pod 이동 | 로컬 디스크에 묶임 |
 
@@ -289,7 +289,6 @@ Ethereum이 PoS로 전환한 뒤 노드는 **두 개의 프로세스**로 나뉩
 |---|---|---|
 | **2025년 5월 7일** | **Pectra** mainnet | EIP-7251은 해당 validator의 최대 effective balance를 2,048 ETH로 높였으며 consolidation은 record를 바꾸지만 process/VM 수를 반드시 줄이지는 않음 |
 | **2025년 12월 3일** | **Fusaka** 메인넷 (에폭 411392) | 핵심은 **PeerDAS**(Peer Data Availability Sampling) — 블롭 데이터를 전체가 아니라 샘플링으로 검증. 블롭 처리량 확대 |
-:::
 
 Validator identity/key는 **별도 process나 VM과 동일하지 않습니다**. 하나의 validator client가 공유 beacon-node stack에서 여러 키를 관리할 수 있습니다. EIP-7251 consolidation은 validator record·키 관리 작업을 줄일 수 있지만 비례하는 인프라·비용 절감을 증명하지는 않습니다. 실제 client 구성을 측정하고 키 이전 시 slashing protection을 유지합니다.
 

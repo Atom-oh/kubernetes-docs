@@ -216,7 +216,7 @@ This is an architecture decision, so **address it early in design.** Bolted on l
 | Stage | Content |
 |---|---|
 | **1. Validate the problem** | Confirm blockchain is needed. Compare alternatives (ordinary DB, signed logs, WORM) |
-| **2. Secure participating institutions** | **With only one institution, blockchain has no value.** Willingness from at least 2–3 institutions is a precondition |
+| **2. Secure participating institutions** | Agree the intended participants and their roles; justify the shared-ledger, verification and governance benefits against simpler alternatives rather than assuming a universal minimum institution count |
 | **3. Agree on governance** | Before technology. Membership, decision-making, disputes, exit |
 | **4. Design privacy** | Channel/PDC structure. Together with reviewers |
 | **5. Legal/compliance confirmation** | Deletion requests, data location, audit requirements |
@@ -232,7 +232,7 @@ The point of this table is that **stages 2 and 3 come before technology.** Even 
 - The decisive reasons financial services go consortium are **KYC/AML obligations and data sovereignty.** Throughput and governance are secondary benefits.
 - Choosing consortium **removes much of blockchain's original value.** What remains substantively is **"reduced inter-institution reconciliation cost,"** and defining value that way is defensible in review.
 - Choose privacy mechanisms for the actual data model. Historic ciphertext copies can outlive key rotation; validate retention, private-data purge and legal obligations explicitly.
-- Key management requirements are **mutually contradictory.** For PoS validators especially, **double signing means slashing**, so ordinary HA wisdom (active-active) creates risk.
+- Key management must balance isolation and signing availability. For PoS validators, uncoordinated signers can produce **conflicting slashable messages**; an identical duplicate signature is not automatically slashable. Use fenced failover with preserved slashing history, or a proven coordinated distributed-signing design.
 - The two items most underprepared in review are **error correction** (the answer is a compensating-transaction procedure, not technology) and **an exit strategy** (retention obligations mean "we turned it off" is not the end).
 - The core difficulty integrating with existing infrastructure is **the absence of atomicity.** Put eventual-consistency approaches like Saga/outbox into the design early.
 - On the adoption path, **securing participating institutions and agreeing governance come before technology.**

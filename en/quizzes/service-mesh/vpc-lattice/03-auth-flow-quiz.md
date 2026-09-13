@@ -113,5 +113,5 @@ The AWS Gateway API Controller documentation states this explicitly: `IAMAuthPol
 **Answer: B) Connection-scoped bidirectional mutual authentication → request-scoped unidirectional (client proof) plus a TLS server certificate**
 
 **Explanation:**
-mTLS verifies each side's SVID once at connection setup — a bidirectional model. Lattice IAM Auth verifies the client's SigV4 signature on every request, so client proof actually becomes finer-grained (blocking the hijacked-connection scenario and enabling path/method/header conditions). But server-side identity proof drops to the level of a TLS server certificate, and there is no longer a step that confirms "is this really that team's service" within a workload identity system.
+mTLS authenticates both peers using their SVIDs when the connection is established. Lattice IAM Auth verifies the caller's SigV4 signature for each request and can apply path/method/header policy conditions. SigV4 protects the canonical signed fields; Lattice requires `UNSIGNED-PAYLOAD` and does not support payload signing. Protect the body with TLS and assess credential theft, request freshness and replay separately rather than claiming that request signing universally blocks connection hijacking. In the HTTPS-listener design, server authentication uses the TLS server certificate rather than the peer's SPIFFE identity.
 </details>

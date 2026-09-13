@@ -204,7 +204,7 @@ As covered, **the item that most often causes real incidents.**
 | Item | Content |
 |---|---|
 | Symptom | New connections silently dropped. The application only sees timeouts/refusals |
-| Direct evidence | Rising **`insert_failed`** in `conntrack -S` |
+| Evidence to correlate | Rising **`insert_failed`** in `conntrack -S`; this alone does not prove table exhaustion |
 | Secondary signals | `nf_conntrack: table full` in `dmesg`, `nf_conntrack_count` / `nf_conntrack_max` ratio |
 | Adjustment path | **`conntrack.maxPerCore` / `conntrack.min` in the `kube-proxy-config` ConfigMap** (takes precedence on EKS) |
 | Cost | Node memory per entry. Cannot be raised without bound |
@@ -248,7 +248,7 @@ Not a node kernel parameter, but the biggest influence on dataplane performance.
 | Situation | Recommendation |
 |---|---|
 | Many Services, iptables mode | **Consider nftables mode** — GA in 1.33, O(1) lookup plus incremental updates. Needs kernel 5.13+ (AL2023 satisfies it) |
-| **Running IPVS mode** | **Migration plan needed** — deprecated in 1.35, removal targeted 1.38. Recommended replacement is nftables |
+| **Running IPVS mode** | **Migration plan needed** — deprecated in 1.35; upstream plans default disablement in 1.40 and removal in 1.43. Recommended replacement is nftables |
 | Keeping the default | Even with nftables GA, **the default is still iptables** — switching is an explicit decision |
 
 ## Storage
@@ -295,7 +295,7 @@ More important long-term than the tuning itself is **how you manage it.**
 - For node stability, **kubelet reservations and eviction thresholds** beat kernel tuning. Eviction is better than a kernel OOM.
 - The representative justified adjustments are **conntrack ceiling, `somaxconn`, `ip_local_port_range`, and `vm.max_map_count`** — all have direct evidence counters.
 - TCP sysctl bounds and per-socket autotuning overrides are different; tune only with measured evidence.
-- **If you run IPVS mode, you need a migration plan** (deprecated in 1.35, removal targeted 1.38).
+- **If you run IPVS mode, you need a migration plan** (deprecated in 1.35; planned default disablement in 1.40 and removal in 1.43). Confirm the maintained KEP-5495 schedule linked below before rollout.
 
 ## References
 

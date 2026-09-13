@@ -4,7 +4,7 @@
 
 ## 객관식 문제
 
-1. 트래픽 폭주 시 패킷 드롭이 가장 자주 일어나는 지점은?
+1. 송신 packet을 NIC 앞에서 queue에 넣고 `tc -s qdisc`로 자신의 drop을 보여주는 구성요소는?
    - A) NIC의 물리 계층
    - B) qdisc — 노드 안에서 일어나는 드롭이며 `tc -s qdisc`의 `dropped`로 확인
    - C) VPC 네트워크
@@ -113,7 +113,7 @@ qdisc는 패킷을 NIC로 보내기 전 큐에 넣고 순서와 속도를 정합
 **정답: B) 드롭 카운터부터 — `conntrack -S`의 `insert_failed`, `tc -s qdisc`의 `dropped`, `ethtool -S`의 NIC 드롭을 먼저 확인**
 
 **설명:**
-이 세 카운터 중 하나가 증가하고 있으면 원인이 거기입니다. 드롭이 없으면 지연 문제이고, 그때 `ss -tin`의 RTT와 cwnd를 봅니다. 계층을 위에서 아래로 순서대로 훑는 것은 비효율적입니다 — 드롭 카운터가 어느 계층에서 문제가 생겼는지 바로 알려주므로 거기서 시작하는 것이 빠릅니다.
+이 counter는 조사할 후보를 가리킬 뿐 진단을 완성하지는 않습니다. 영향을 받은 flow·시간대와 변화를 연결하고, conntrack은 `insert_failed`가 포화에만 발생하는 값이 아니므로 count/max·kernel log도 확인합니다. 집계 counter에는 무관한 트래픽이 포함될 수 있습니다. 로컬 counter가 그대로여도 원격 drop·인증·애플리케이션 실패를 배제할 수 없습니다. 증상에 따라 `ss -tin`의 RTT·cwnd, 반환 오류와 나머지 경로의 증거를 확인합니다.
 </details>
 
 8. `cubic`과 `bbr`의 차이와 bbr이 유리한 환경은?

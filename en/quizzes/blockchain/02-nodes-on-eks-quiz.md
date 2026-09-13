@@ -145,5 +145,5 @@ Certificate expiry is a concrete risk, not a measured most-common-outage ranking
 **Answer: B) Comparing block hashes with other nodes and a public explorer to confirm you are on the same chain**
 
 **Explanation:**
-A node left on a version that does not support the fork **silently splits onto a different chain.** The process is healthy and it keeps processing blocks, but it sees a different reality from the rest of the network — health checks pass and logs may show no errors. So comparing block hashes with other nodes and a public explorer right after the fork is the only reliable verification.
+An incompatible client may stop following the canonical chain or diverge after activation; process liveness alone does not establish correctness. Compare hashes at the **same block height and finality state** across independent trusted nodes or explorers, accounting for normal propagation and sync lag. Combine that evidence with client version, fork recognition and synchronization checks rather than treating unrelated latest heads or one explorer as definitive.
 </details>

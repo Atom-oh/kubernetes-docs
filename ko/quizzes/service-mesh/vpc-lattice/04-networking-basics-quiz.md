@@ -17,7 +17,7 @@
 **정답: B) IPv4 `169.254.171.0/24`는 link-local이고, IPv6 `fd00:ec2:80::/64`는 link-local이 아니라 Unique Local Address(ULA)다**
 
 **설명:**
-IPv4 쪽은 `169.254.0.0/16`(RFC 3927, link-local) 안의 대역이지만, IPv6 쪽은 `fe80::/10`(link-local)이 아니라 `fc00::/7` ULA 대역(RFC 4193) 안의 `fd00:ec2:80::/64`입니다. 차이는 범위(scope)입니다 — link-local은 링크 범위라 라우터를 넘을 수 없고, ULA는 사이트 범위라 사설 네트워크 내부에서 라우팅됩니다. Lattice 트래픽은 VPC 안에서 인그레스 엔드포인트까지 가야 하므로 링크 범위로는 부족합니다.
+IPv4 쪽은 `169.254.0.0/16`(RFC 3927, link-local) 안의 대역이지만, IPv6 쪽은 `fe80::/10`(link-local)이 아니라 `fc00::/7` ULA 대역(RFC 4193) 안의 `fd00:ec2:80::/64`입니다. Link-local 주소는 link scope입니다. ULA는 RFC 6724상 global address scope이지만 인터넷 전체 연결이 아닌 사설 라우팅을 의도하며, 폐기된 site-local 주소 계열과는 다릅니다. 이 주소 분류만으로 AWS의 특수한 Lattice ingress 구현이 설명되지는 않습니다.
 </details>
 
 2. Lattice 주소 대역은 어떻게 해석해야 합니까?

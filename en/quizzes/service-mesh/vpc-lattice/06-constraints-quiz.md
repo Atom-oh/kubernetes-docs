@@ -33,7 +33,7 @@ These are current API/trust-boundary choices. They do not prove that every TLS a
 **Answer: B) Whether regulation requires end-to-end encryption or workload mutual authentication — this splits HTTPS listener + IAM Auth from TLS Passthrough, and most later design decisions depend on it**
 
 **Explanation:**
-This decision rests on organizational review standards rather than technology. Choosing TLS Passthrough forfeits all of IAM Auth and L7 routing, requires redesigning authorization in endpoint mTLS or the application, and pulls in the question of whether SPIRE stays. Choosing an HTTPS listener leads instead to the signing-approach decision. Confirming this late means unwinding every earlier design decision, so agree with security reviewers first.
+This decision depends on organizational security requirements. TLS Passthrough prevents Lattice from authenticating SigV4 callers or inspecting HTTP fields for L7 routing; its auth policies are limited to anonymous principals. Authenticated workload identity and authorization therefore need an endpoint/application design, which may include mTLS and SPIRE. An HTTPS listener leads instead to the signing-approach decision. Agree on these boundaries with security reviewers before choosing the design.
 </details>
 
 3. How should Lattice cost be estimated?
@@ -129,5 +129,5 @@ A proxy failure can be local, but shared mesh config can fail broadly. A Lattice
 **Answer: B) Whether API Gateway natively supports a Lattice service network as a private integration target**
 
 **Explanation:**
-No evidence was found that API Gateway natively supports a Lattice service network as a private integration target. The confirmed patterns are API Gateway → VPC Link → ALB/NLB → Lattice, or going through a proxy/federation layer. The other `Needs verification` items are exact quota values, whether Lattice's Target selection considers the caller's AZ, the API behavior when setting an auth policy on a TLS_PASSTHROUGH listener, and ECH support. A, C, and D are all confirmed from primary sources.
+No evidence was found that API Gateway natively accepts a Lattice service network as a private integration target. Support for an ALB/NLB listener behind a VPC Link does not establish a direct ALB/NLB → Lattice link-local path. Validate the exact API type, supported target/connectivity, and an explicitly implemented proxy or consumer with the required signing and failure behavior before calling a bridge supported. Check current account/Region quotas and measure backend target placement; DNS ingress AZ affinity does not guarantee a same-AZ backend. TLS anonymous-principal policy limits, controller attachment limits and the TLS-listener ECH/ESNI exclusion are documented separately and should not be described as wholly unconfirmed.
 </details>

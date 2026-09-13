@@ -236,7 +236,7 @@ Ethereum은 2025년에 Pectra·Fusaka를 적용하고 더 잦은 업그레이드
 
 ## 정리
 
-- 블록체인의 전제는 **byzantine fault** — 참여자가 거짓말할 수 있다는 가정입니다. etcd(crash fault)와 근본적으로 다릅니다.
+- 선택한 consensus·신뢰 모델을 비교합니다. **etcd/Raft는 crash-fault tolerant**이고 일부 blockchain은 BFT를 사용하며 permissioned Fabric은 CFT Raft 또는 SmartBFT를 사용할 수 있습니다. Blockchain이라는 명칭 자체가 Byzantine fault tolerance를 뜻하지는 않습니다.
 - 많은 full-node 설계는 검증을 복제하지만 light-client·permissioned 모델은 다르며 RPC/read 용량은 base-chain 쓰기와 별도로 확장할 수 있습니다.
 - 블록의 `prev_hash` 연쇄가 변조를 파급시키고, **머클 트리**가 log N 크기의 포함 증명을 가능하게 합니다(경량 클라이언트의 근거).
 - 합의에 비용이 필요한 이유는 **Sybil 방어**입니다. 참여자를 제한하면(컨소시엄) 그 비용이 불필요해져 BFT로 갈 수 있고, 처리량과 파이널리티가 개선되는 대신 탈중앙성을 포기합니다.

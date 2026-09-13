@@ -17,7 +17,7 @@ This quiz tests your understanding of parameter application paths, kernel versio
 **Answer: B) Unreproducible configuration, breakage on kernel upgrade, defeating kernel auto-tuning**
 
 **Explanation:**
-Values differing per node make incidents impossible to reproduce. Tunable names and locations move between kernel versions (sysctl → debugfs, and so on), so a setting valid on 6.1 can break on 6.18. And pinning values the kernel auto-tunes under load, like TCP buffers, disables that auto-tuning. So the precondition for tuning is measurement — identify the symptom with drop counters and only touch that point.
+Values differing per node make incidents hard to reproduce. Tunable names and locations move between kernel versions (sysctl → debugfs, and so on), so a setting valid on 6.1 can break on 6.18. Explicit per-socket `SO_RCVBUF`/`SO_SNDBUF` settings disable the corresponding socket's automatic sizing; changing `tcp_rmem`/`tcp_wmem` bounds does not by itself disable autotuning. So the precondition for tuning is measurement — correlate the symptom with relevant counters and adjust only settings supported by that evidence.
 </details>
 
 2. What must you know about AL2023's kernel version transition as of 2026?

@@ -70,7 +70,7 @@ A CPU limit is a bandwidth limit. `cpu.max` of `20000 100000` means "up to 20ms 
 
 5. Which statement about kube-proxy modes is correct as of 2026?
    - A) nftables is the default and iptables has been removed
-   - B) nftables is GA in 1.33, IPVS is deprecated in 1.35 (removal targeted 1.38), and the default is still iptables
+   - B) nftables is GA in 1.33, IPVS is deprecated in 1.35 (planned default disablement in 1.40 and removal in 1.43), and the default is still iptables
    - C) IPVS is the default and nftables is alpha
    - D) All three modes have identical performance characteristics
 
@@ -78,10 +78,10 @@ A CPU limit is a bandwidth limit. `cpu.max` of `20000 100000` means "up to 20ms 
 
 <summary>Show Answer</summary>
 
-**Answer: B) nftables is GA in 1.33, IPVS is deprecated in 1.35 (removal targeted 1.38), and the default is still iptables**
+**Answer: B) nftables is GA in 1.33, IPVS is deprecated in 1.35 (planned default disablement in 1.40 and removal in 1.43), and the default is still iptables**
 
 **Explanation:**
-nftables mode matured alpha 1.29 → beta 1.31 → **GA 1.33**, offering O(1) lookup and incremental rule updates (requires kernel 5.13+ on workers; AL2023 satisfies it). IPVS mode was **deprecated in 1.35 (December 2025)** with removal targeted for 1.38, and the recommended replacement is nftables. For compatibility **the default is still iptables**, so switching to nftables is an explicit decision. If you run IPVS, you need a migration plan.
+nftables mode matured alpha 1.29 → beta 1.31 → **GA 1.33**, offering O(1) lookup and incremental rule updates (requires kernel 5.13+ on workers; AL2023 satisfies it). IPVS mode was **deprecated in 1.35 (December 2025)**; upstream plans default disablement in 1.40 and removal in 1.43. These are future targets: check the [maintained KEP-5495 schedule](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md). The recommended replacement is nftables, but **the default is still iptables**, so switching is an explicit decision.
 </details>
 
 6. How should suspected conntrack exhaustion be verified?

@@ -17,7 +17,7 @@ This quiz tests your understanding of the consortium choice, privacy, key manage
 **Answer: B) Whether you can write "why this problem must have no arbiter" in one sentence — if not, compare alternatives first**
 
 **Explanation:**
-Blockchain's essence is "agreeing without a trusted arbiter," paid for in throughput and complexity. If a single organization owns the data, or an arbiter exists whom everyone trusts, an ordinary database is better in every respect. **The case where only tamper detection is needed** is an especially common misconception — audit trails and integrity proofs can be achieved with signed append-only logs, hash chains, or object storage WORM features, with far simpler operations.
+The chapter uses "agreeing without a trusted arbiter" as a starting question for comparing blockchain's costs and benefits. If one organization controls the data or the parties trust an arbiter, start with database/audit-log alternatives and compare the actual independent-verification and governance requirements. Do not infer universally zero value from institution count. When tamper detection is the main requirement, signed append-only logs, hash chains or WORM storage may satisfy it with simpler operations.
 </details>
 
 2. What must be assessed before claiming that a network choice satisfies financial compliance?
@@ -129,7 +129,7 @@ For error correction, "it cannot be reversed" becomes a weakness in review, and 
 **Answer: B) The absence of atomicity — an existing DB transaction and a chain transaction cannot be bound into one atomic unit, so eventual-consistency approaches like Saga/outbox must go into the design early**
 
 **Explanation:**
-A failure between writing to the DB and submitting the chain transaction creates an inconsistency, and they cannot be bound in a distributed transaction. Saga or outbox patterns are needed, connected to the compensating-transaction procedure. Being an architecture decision, it must be **addressed early in design** — bolted on later, data consistency problems surface in production. Note the throughput gap is not solved by adding chain nodes — adding nodes does not increase throughput.
+A failure between writing to the DB and submitting the chain transaction creates an inconsistency, and they cannot be bound in a distributed transaction. Saga or outbox patterns are needed, connected to the compensating-transaction procedure. Being an architecture decision, it must be **addressed early in design** — bolted on later, data consistency problems surface in production. Adding full-node replicas does not automatically increase base-chain write/consensus capacity, although it can increase aggregate RPC/read capacity and availability.
 </details>
 
 9. Which stage must come before technical validation in a realistic adoption path?

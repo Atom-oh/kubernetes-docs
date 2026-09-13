@@ -32,7 +32,7 @@ Enabling IAM Auth adds two computations per request.
 - Caller-side signing adds canonicalization and signature computation. Lattice requires `UNSIGNED-PAYLOAD`; do not benchmark generic payload hashing as required Lattice signing work.
 - Lattice-side verification and enabled-policy evaluation add work. Measure the complete path rather than assuming a per-operation duration.
 
-The real cost here may be less the crypto itself and more the **credential acquisition path.** SigV4 signing needs STS temporary credentials; those are cached, but a refresh happens at expiry. If the refresh is implemented so that it blocks the request path, the request at that moment absorbs the STS call latency in full. This barely shows up in p50 and **appears in the p99 tail** (see [document 03](./03-auth-flow.md)).
+The real cost here may be less the crypto itself and more the **credential acquisition path.** With temporary credentials, the configured provider caches and refreshes them; IRSA uses STS, while EKS Pod Identity uses the node agent and EKS Auth. A request that waits for acquisition or refresh can absorb that latency. Whether it affects p50, p99 or rarer samples depends on the refresh frequency and workload, so record provider/cache behavior and the latency distribution around refreshes (see [document 03](./03-auth-flow.md)).
 
 If you sign via an egress proxy, add the cost of one more proxy hop.
 
@@ -50,7 +50,7 @@ Separately, **on the billing side there is no additional inter-AZ charge for tra
 
 In AS-IS, the mTLS connection between Envoys was a **long-lived connection.** You paid the handshake cost once and many requests flowed over it.
 
-In TO-BE, where and how often the handshake happens changes. If the client opens a new connection per request, the handshake cost attaches to every request. In the benchmark above, disabling keepalive raised p50 from 0.461 → 1.079 ms same-AZ and 0.704 → 1.517 ms cross-AZ. **Whether connections are reused matters more than one proxy hop.**
+In TO-BE, where and how often connections are established changes. A new connection incurs setup work; TLS handshake work applies when TLS is used. In the cited HTTP Pod benchmark, disabling keepalive raised p50 from 0.461 → 1.079 ms same-AZ and 0.704 → 1.517 ms cross-AZ. Those measurements demonstrate a connection-reuse effect in that configuration, not an isolated TLS/Lattice cost or proof that reuse matters more than a proxy hop.
 
 This is why you must audit your applications' HTTP client settings (connection pool size, keepalive, idle timeout) during migration. It is not a Lattice characteristic — it is a client configuration issue that surfaces once the proxy that used to manage connections for you is gone.
 
@@ -94,10 +94,10 @@ To observe these factors separately, split your measurements along axes.
 
 ### Measurement axes
 
-| Axis | Values | Factor it isolates |
+| Axis or output | Values | Purpose and limit |
 |---|---|---|
-| **Percentile** | p50, p99 | Separates the added-path effect from the CPU-contention effect |
-| **AZ placement** | Same AZ / Cross-AZ | Cross-AZ traversal cost, whether Lattice is AZ-aware |
+| **Percentile** | p50, p99 | Describes central and tail latency; causal attribution requires additional controls |
+| **AZ placement** | Same AZ / Cross-AZ | Compare configured paths while recording caller and selected-target placement |
 | **IAM Auth** | on / off in an isolated approved test | Combined signing, credential and policy-evaluation effect |
 
 AZ placement and auth mode are configuration axes; p50/p99 are two outputs from each run, not independent trials. Use repeated matched runs, randomize ordering where practical, and report errors/throughput as well as latency.
@@ -128,7 +128,7 @@ Recording only the numbers makes later interpretation impossible. Record these t
 
 ### Commonly missed aspects of measurement design
 
-**First, measuring without a warm-up mixes in credential acquisition and connection setup.** The first request includes both an STS call and a TLS handshake, so it does not represent steady state. Measure steady state after adequate warm-up and **record first-request latency as a separate item.** For workloads with frequent cold starts (Lambda, services that scale out often), that first-request number is actually the important one.
+**First, record cold and warm conditions separately.** A first request may include credential acquisition and connection setup if credentials or connections are not already cached. The provider determines the acquisition path, and TLS setup applies only to TLS connections; neither a direct STS call nor a TLS handshake occurs on every first request. Measure steady state after warm-up and record first-request latency separately with provider, cache and transport state. Evaluate both for workloads with frequent cold starts, such as Lambda or services that scale out often.
 
 **Second, gather enough samples for p99 to be meaningful.** With few requests, p99 is noise. Use values taken after tens of thousands of requests under stable load.
 

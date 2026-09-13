@@ -236,7 +236,7 @@ Ethereum delivered Pectra and Fusaka in 2025 and has pursued more frequent upgra
 
 ## Summary
 
-- Blockchain's premise is **Byzantine faults** — the assumption that participants may lie. That is fundamentally different from etcd (crash faults).
+- Compare the chosen consensus and trust model: **etcd/Raft is crash-fault tolerant**, some blockchains use BFT, and permissioned Fabric can use CFT Raft or SmartBFT. The blockchain label alone does not imply Byzantine fault tolerance.
 - Many full-node designs replicate verification; light-client and permissioned models differ, and RPC/read capacity can scale separately from base-chain writes.
 - The `prev_hash` chain propagates tampering, and **Merkle trees** enable log-N-sized inclusion proofs (the basis for light clients).
 - Consensus needs a cost because of **Sybil defense.** Restricting participants (consortium) removes that need, allowing BFT with better throughput and finality at the cost of decentralization.

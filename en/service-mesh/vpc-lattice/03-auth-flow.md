@@ -173,7 +173,7 @@ The single most important constraint of this architecture hides here.
 
 > **Signature verification requires reading headers, and reading headers requires terminating TLS.**
 
-Obvious, but consequential. **TLS Passthrough does not terminate TLS, so Lattice cannot see the `Authorization` header** — meaning request-signature-based authentication cannot be applied. This is the principle behind the first constraint in [document 06](./06-constraints.md) ("TLS Passthrough and IAM Auth Policy cannot be used together").
+**TLS Passthrough does not terminate TLS, so Lattice cannot see the `Authorization` header** and cannot authenticate the caller's SigV4 request signature. This is the constraint discussed in [document 06](./06-constraints.md). It does not prohibit every auth policy: TLS listeners support policies limited to anonymous principals, which do not establish authenticated caller identity.
 
 The controller documents policy attachments for Gateway, HTTPRoute and GRPCRoute; check the installed CRD for supported attachment targets. **That controller restriction is not a statement that every VPC Lattice TLS auth policy is rejected.**
 

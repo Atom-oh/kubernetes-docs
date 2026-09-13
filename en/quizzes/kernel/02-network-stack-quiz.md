@@ -4,7 +4,7 @@ This quiz tests your understanding of the packet path, hook points, and Pod-to-P
 
 ## Multiple Choice Questions
 
-1. Where do packet drops most often occur during a traffic burst?
+1. Which component queues outgoing packets before the NIC and exposes its drops through `tc -s qdisc`?
    - A) The NIC's physical layer
    - B) The qdisc — a drop inside the node, visible as `dropped` in `tc -s qdisc`
    - C) The VPC network
@@ -113,7 +113,7 @@ Packets larger than the path's minimum MTU are fragmented or dropped. PMTUD repo
 **Answer: B) Start with drop counters — `insert_failed` in `conntrack -S`, `dropped` in `tc -s qdisc`, NIC drops in `ethtool -S`**
 
 **Explanation:**
-If one of those three is rising, that is your cause. If there are no drops it is a latency problem, and then you look at RTT and cwnd in `ss -tin`. Walking layers top to bottom is inefficient — the drop counters tell you immediately which layer has the problem, so starting there is faster.
+These counters identify candidates to investigate, not a complete diagnosis. Correlate changes with the affected flow and time window; for conntrack, also inspect count/max and kernel logs because `insert_failed` is not unique to exhaustion. Aggregate counters can include unrelated traffic. Unchanged local counters do not exclude remote drops, authentication or application failures. Follow the symptom with checks such as RTT and cwnd in `ss -tin`, returned errors and evidence from the rest of the path.
 </details>
 
 8. What is the difference between `cubic` and `bbr`, and where does bbr help?
