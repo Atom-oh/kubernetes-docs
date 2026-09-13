@@ -1,10 +1,12 @@
 # Cuestionario de OpenTelemetry
 
+> **Última actualización**: September 13, 2026
+
 Pon a prueba tus conocimientos sobre OpenTelemetry.
 
 ---
 
-1. ¿Cuáles son las tres señales compatibles con OpenTelemetry?
+1. ¿En cuáles tres señales principales se centra esta guía?
    - A) Logs, Metrics, Events
    - B) Traces, Metrics, Logs
    - C) Spans, Counters, Logs
@@ -16,7 +18,7 @@ Pon a prueba tus conocimientos sobre OpenTelemetry.
 **Respuesta: B) Traces, Metrics, Logs**
 
 **Explicación:**
-OpenTelemetry estandariza las tres señales principales de observabilidad: Traces (trazado distribuido), Metrics y Logs. Al recopilar y correlacionar estas tres señales de forma integrada, puedes lograr una observabilidad integral del sistema.
+Esta guía se centra en traces, metrics y logs. OpenTelemetry también desarrolla soporte para profiling; la estabilidad difiere según la señal, el componente y el lenguaje. La correlación requiere atributos de recurso compatibles y contexto propagado, no simplemente habilitar tres exporters.
 
 </details>
 
@@ -34,17 +36,17 @@ OpenTelemetry estandariza las tres señales principales de observabilidad: Trace
 **Respuesta: C) Receivers -> Processors -> Exporters**
 
 **Explicación:**
-El pipeline de OTEL Collector se estructura como Receivers (ingesta de datos) -> Processors (procesamiento/transformación de datos) -> Exporters (transmisión al backend). Los Receivers aceptan datos en varios formatos, los Processors realizan procesamiento por lotes, filtrado, incorporación de atributos, etc., y los Exporters envían los datos procesados a los destinos.
+El pipeline de OTEL Collector se estructura como Receivers (ingestión de datos) -> Processors (procesamiento/transformación de datos) -> Exporters (transmisión al backend). Los Receivers aceptan datos en diversos formatos, los Processors realizan procesamiento por lotes, filtrado, adición de atributos, etc., y los Exporters envían los datos procesados a los destinos.
 
 </details>
 
 ---
 
-3. ¿Cuál NO es una ventaja de la auto-instrumentación en OpenTelemetry?
-   - A) Instrumentación sin cambios en el código
+3. ¿Cuál NO es una ventaja de la instrumentación automática en OpenTelemetry?
+   - A) Instrumentación sin cambios de código
    - B) Adopción rápida
    - C) Trazado detallado de la lógica de negocio
-   - D) Metadatos consistentes
+   - D) Metadatos coherentes
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -52,31 +54,31 @@ El pipeline de OTEL Collector se estructura como Receivers (ingesta de datos) ->
 **Respuesta: C) Trazado detallado de la lógica de negocio**
 
 **Explicación:**
-La auto-instrumentación rastrea automáticamente llamadas comunes a bibliotecas como HTTP, bases de datos y colas de mensajes sin cambios en el código. Sin embargo, las operaciones detalladas dentro de la lógica de negocio o las métricas personalizadas requieren instrumentación manual. Es habitual usar conjuntamente la auto-instrumentación y la instrumentación manual.
+La instrumentación automática rastrea automáticamente llamadas habituales de bibliotecas, como HTTP, bases de datos y colas de mensajes, sin cambios de código. Sin embargo, las operaciones detalladas dentro de la lógica de negocio o las métricas personalizadas requieren instrumentación manual. Es habitual utilizar juntas la instrumentación automática y la manual.
 
 </details>
 
 ---
 
-4. ¿Cuándo resulta más ventajoso el processor tail_sampling de OTEL Collector que el muestreo basado en head?
+4. ¿Cuándo resulta útil el processor tail_sampling del Collector en comparación con el muestreo basado en la cabecera?
    - A) Cuando se minimiza el uso de recursos
-   - B) Cuando no se pueden perder solicitudes con errores o latencia
+   - B) Cuando el estado y la duración observados del span deben influir en el muestreo
    - C) Cuando la implementación debe ser sencilla
    - D) Cuando las decisiones de muestreo deben ser rápidas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cuando no se pueden perder solicitudes con errores o latencia**
+**Respuesta: B) Cuando el estado y la duración observados del span deben influir en el muestreo**
 
 **Explicación:**
-El muestreo basado en tail decide si se realiza el muestreo después de que finalice la solicitud, según los resultados (errores, latencia, etc.). Esto garantiza que nunca se omitan solicitudes importantes (ocurrencias de errores, tiempo de respuesta excedido). En cambio, el muestreo basado en head decide al inicio de la solicitud, por lo que es más sencillo de implementar y utiliza menos recursos, pero puede omitir solicitudes importantes.
+Con la estrategia predeterminada `trace-complete` de Collector 0.160.0, la evaluación utiliza los spans acumulados cuando se activa el temporizador de decisión; el nombre no demuestra que la solicitud o el trace estén completos. Los spans que ya se descartaron mediante muestreo de cabecera no se pueden recuperar. Los spans tardíos, los límites de capacidad, los reintentos y los cambios de enrutamiento pueden afectar a la retención. El muestreo de cola con estado requiere que los spans de un trace lleguen al mismo Collector de muestreo; no garantiza que se conserve cada error o solicitud lenta.
 
 </details>
 
 ---
 
-5. ¿Cuál es la función de Resource en el SDK de OpenTelemetry?
+5. ¿Cuál es el rol de Resource en el SDK de OpenTelemetry?
    - A) Gestión de conexiones de red
    - B) Identificar la entidad que genera datos de telemetría
    - C) Compresión de datos
@@ -88,16 +90,16 @@ El muestreo basado en tail decide si se realiza el muestreo después de que fina
 **Respuesta: B) Identificar la entidad que genera datos de telemetría**
 
 **Explicación:**
-Resource son metadatos que identifican la entidad (service, host, container, etc.) que genera datos de telemetría. Incluye atributos como service.name, service.version, deployment.environment para aclarar el origen de los datos. Esta información se adjunta automáticamente a todos los datos de telemetría.
+Un Resource identifica al productor de telemetría, por ejemplo mediante `service.name`, `service.version` y `deployment.environment.name`. El SDK/provider configurado lo asocia con los datos emitidos. Los atributos de identidad de Kubernetes, de la nube o personalizados requieren la configuración o el detector adecuados; no todos se detectan automáticamente.
 
 </details>
 
 ---
 
-6. ¿Qué patrón de despliegue de OTEL Collector es más eficiente en cuanto a recursos en EKS?
-   - A) Patrón Sidecar
+6. ¿Qué carga de trabajo de Kubernetes normalmente ejecuta un Collector en cada nodo apto?
+   - A) Patrón sidecar
    - B) Patrón DaemonSet
-   - C) Patrón Gateway
+   - C) Patrón gateway
    - D) Patrón Deployment
 
 <details>
@@ -106,13 +108,13 @@ Resource son metadatos que identifican la entidad (service, host, container, etc
 **Respuesta: B) Patrón DaemonSet**
 
 **Explicación:**
-El patrón DaemonSet es eficiente en cuanto a recursos, ya que ejecuta solo un Collector por nodo. El patrón Sidecar tiene una alta sobrecarga de recursos, ya que ejecuta un Collector para cada Pod. El patrón Gateway está centralizado, pero puede convertirse en un único punto de fallo. Normalmente, se recomienda una combinación de DaemonSet para la recopilación y Gateway para el procesamiento/transmisión.
+Un DaemonSet coloca un Pod en cada nodo apto; los selectores, los taints y las restricciones de programación determinan la aptitud. No es compatible con EKS Fargate. Los sidecars comparten un Pod de aplicación, mientras que los gateways usan una capa central que puede tener varias réplicas. Ningún patrón es universalmente el más eficiente en recursos: compare el volumen real de señales, los recuentos de nodos/Pods, el aislamiento, la disponibilidad y las necesidades de procesamiento con estado. Un Service ClusterIP delante de un DaemonSet no enruta automáticamente al nodo local.
 
 </details>
 
 ---
 
-7. ¿Qué annotation se aplica a un Pod para la inyección de auto-instrumentación mediante OpenTelemetry Operator?
+7. ¿Qué anotación se aplica a un Pod para la inyección de instrumentación automática mediante OpenTelemetry Operator?
    - A) `otel.io/inject: "true"`
    - B) `instrumentation.opentelemetry.io/inject-java: "true"`
    - C) `opentelemetry.io/auto: "enabled"`
@@ -124,31 +126,31 @@ El patrón DaemonSet es eficiente en cuanto a recursos, ya que ejecuta solo un C
 **Respuesta: B) instrumentation.opentelemetry.io/inject-java: "true"**
 
 **Explicación:**
-OpenTelemetry Operator utiliza annotations con el formato `instrumentation.opentelemetry.io/inject-{language}`. Las annotations específicas de cada lenguaje incluyen inject-java, inject-python, inject-nodejs, inject-dotnet, inject-go, etc. Los agentes de instrumentación se inyectan automáticamente en los Pods que tienen estas annotations.
+El Operator utiliza anotaciones de inyección específicas del lenguaje. Para un Deployment, colóquelas en `spec.template.metadata.annotations` y haga referencia a un recurso Instrumentation existente en el namespace correcto. La inyección correcta también requiere un webhook operativo y una configuración de lenguaje/runtime compatible. Los Pods existentes no se instrumentan de forma retroactiva; los requisitos previos específicos de Go y de otros lenguajes deben revisarse por separado.
 
 </details>
 
 ---
 
-8. ¿Cuál es la función del processor memory_limiter en la configuración de OTEL Collector?
+8. ¿Cuál es el rol del processor memory_limiter en la configuración de OTEL Collector?
    - A) Compresión de datos
-   - B) Evitar la pérdida de datos cuando la memoria es baja
+   - B) Aplicar contrapresión cuando se superan los umbrales de memoria configurados
    - C) Gestión de caché
-   - D) Gestión del búfer de red
+   - D) Gestión de búferes de red
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Evitar la pérdida de datos cuando la memoria es baja**
+**Respuesta: B) Aplicar contrapresión cuando se superan los umbrales de memoria configurados**
 
 **Explicación:**
-El processor memory_limiter supervisa y limita el uso de memoria de Collector. Cuando el uso de memoria alcanza limit_mib, rechaza la ingesta de nuevos datos para evitar la pérdida de datos por OOM (Out of Memory). spike_limit_mib proporciona un búfer para picos repentinos de memoria.
+`limit_mib` es el límite estricto; el límite flexible es `limit_mib - spike_limit_mib`. Por encima del límite flexible, el processor rechaza datos con un error que admite reintento. Por encima del límite estricto, también fuerza la recolección de basura. El comportamiento de reintento/contrapresión de los componentes upstream es importante: los datos rechazados pueden perderse si no se reintentan. Deje margen por debajo del límite de memoria del contenedor; este processor no es almacenamiento duradero ni una garantía absoluta contra OOM/pérdida de datos.
 
 </details>
 
 ---
 
-9. ¿Cuál NO es un componente del header traceparent en el estándar W3C Trace Context de OpenTelemetry?
+9. ¿Cuál NO es un componente de la cabecera traceparent en el estándar W3C Trace Context de OpenTelemetry?
    - A) version
    - B) trace-id
    - C) parent-id
@@ -160,26 +162,28 @@ El processor memory_limiter supervisa y limita el uso de memoria de Collector. C
 **Respuesta: D) span-name**
 
 **Explicación:**
-El formato del header traceparent de W3C Trace Context es `version-trace_id-parent_id-trace_flags`. version es la versión del formato, trace_id es el identificador de todo el trace, parent_id es el ID del span padre y trace_flags es la marca de muestreo. span-name se almacena dentro del Span y no se incluye en el header de propagación.
+OpenTelemetry utiliza el estándar W3C Trace Context. Los campos de `traceparent` son version, trace ID, parent ID y trace flags; el parent ID identifica el span que envía, y los flags incluyen un bit de muestreo. Un nombre de span no se transporta en esta cabecera. Propagar el contexto no registra ni exporta por sí mismo un span.
 
 </details>
 
 ---
 
-10. ¿Cómo se configura el envío de datos a múltiples backends en un pipeline de OTEL Collector?
+10. ¿Cómo se configura el envío de datos a varios backends en un pipeline de OTEL Collector?
     - A) Ejecutar Collectors independientes para cada backend
-    - B) Enumerar varios exporters en el array exporters
+    - B) Enumerar varios exporters en el array de exporters
     - C) Configurar varios endpoints en un único exporter
     - D) Usar un processor fanout
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Enumerar varios exporters en el array exporters**
+**Respuesta: B) Enumerar varios exporters en el array de exporters**
 
 **Explicación:**
-En la configuración del pipeline de OTEL Collector, enumerar varios exporters en el array exporters envía los mismos datos a todos los backends. Por ejemplo: `exporters: [otlp/tempo, awsxray, datadog]`. Esto permite usar simultáneamente varios backends de observabilidad con un único Collector.
+Enumere los exporters configurados que admitan la señal del pipeline, por ejemplo `exporters: [otlp/tempo, awsxray, datadog]` para traces en una distribución que contenga esos componentes. El fan-out no es una transacción atómica entre backends: los errores de exporter, las colas, los reintentos, las transformaciones y la aceptación por parte del backend pueden producir resultados conservados diferentes.
 
 </details>
 
 ---
+
+[Volver a la guía](../../../observability/tracing/03-opentelemetry.md)
