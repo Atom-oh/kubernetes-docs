@@ -1,447 +1,195 @@
-# SPIFFE/SPIRE Quiz
+# Cuestionario de SPIFFE/SPIRE
 
-Pon a prueba tu comprensión de la identidad de workloads con SPIFFE/SPIRE con las siguientes preguntas.
+> **Última actualización**: September 13, 2026
 
----
+## Preguntas
 
-## Questions
+<span id="_1-what-is-the-correct-format-for-a-spiffe-id"></span>
 
-### 1. What is the correct format for a SPIFFE ID?
+### 1. ¿Cuál es un SPIFFE ID válido?
 
-- A) spiffe://workload/trust-domain/path
-- B) spiffe://trust-domain/path
-- C) trust-domain://spiffe/path
-- D) https://spiffe/trust-domain/path
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) spiffe://trust-domain/path**
-
-**Explicación:**
-El formato de SPIFFE ID es un URI con la siguiente estructura:
-
-```
-spiffe://trust-domain/path
-```
-
-Ejemplos:
-```
-spiffe://example.org/ns/production/sa/frontend
-spiffe://cluster.local/k8s/ns/default/pod/nginx-abc123
-spiffe://acme.com/region/us-east-1/service/payment
-```
-
-Componentes:
-- **spiffe://**: Esquema requerido
-- **trust-domain**: Espacio de nombres de identidad de la organización (por ejemplo, example.org)
-- **path**: Identificador jerárquico para el workload
-
-</details>
-
----
-
-### 2. What is the key difference between X.509-SVID and JWT-SVID?
-
-- A) X.509-SVID es para autenticación, JWT-SVID es para autorización
-- B) X.509-SVID es para conexiones mTLS, JWT-SVID es para autenticación de API
-- C) Son idénticos en función
-- D) X.509-SVID caduca más rápido que JWT-SVID
+- A) `https://example.org/app`
+- B) `spiffe://example.org/app`
+- C) `spiffe://example.org:8443/app`
+- D) `spiffe://example.org/app?role=admin`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) X.509-SVID es para conexiones mTLS, JWT-SVID es para autenticación de API**
+**Respuesta: B) spiffe://example.org/app**
 
-**Explicación:**
-SPIFFE admite dos tipos de SVID (SPIFFE Verifiable Identity Document):
-
-**X.509-SVID:**
-- Se usa para conexiones mTLS (mutual TLS)
-- Contiene el SPIFFE ID en el URI SAN (Subject Alternative Name)
-- De larga duración (horas a días)
-- Ideal para: mTLS de Service a Service
-
-**JWT-SVID:**
-- Se usa para autenticación de API (encabezados HTTP)
-- Contiene el SPIFFE ID en la claim `sub`
-- De corta duración (minutos)
-- Ideal para: API REST, serverless, llamadas entre redes
-
-```yaml
-# X.509-SVID use case
-service-a --mTLS--> service-b
-
-# JWT-SVID use case
-service-a --HTTP + JWT Bearer--> API Gateway
-```
+Se usa el esquema spiffe, un trust domain (dominio de confianza) y una ruta opcional. No se permiten puertos, cadenas de consulta ni fragmentos. La estructura de la ruta la define cada sitio y no se limita a /ns/.../sa/... .
 
 </details>
 
----
+<span id="_2-what-is-the-key-difference-between-x-509-svid-and-jwt-svid"></span>
 
-### 3. What is the primary role of the SPIRE Server?
+### 2. ¿Qué afirmación describe correctamente la validación de X.509/JWT-SVID?
 
-- A) Ejecutar workloads
-- B) Emitir SVIDs y gestionar el registro de workloads
-- C) Balancear el tráfico
-- D) Almacenar secretos de aplicaciones
+- A) Solo inspeccionar el CN del X.509
+- B) Una firma JWT válida hace innecesario el audience
+- C) Validar el URI SAN/la cadena del X.509 y la firma/sub/audience/expiración del JWT
+- D) Las comprobaciones de audience del JWT evitan cualquier replay
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Emitir SVIDs y gestionar el registro de workloads**
+**Respuesta: C) Validar el URI SAN/la cadena del X.509 y la firma/sub/audience/expiración del JWT**
 
-**Explicación:**
-Responsabilidades del SPIRE Server:
-
-```
-┌─────────────────────────────────────────────┐
-│              SPIRE Server                    │
-├─────────────────────────────────────────────┤
-│  - Manages trust domain CA                   │
-│  - Issues X.509 and JWT SVIDs               │
-│  - Stores workload registration entries     │
-│  - Performs node attestation                │
-│  - Maintains federation relationships       │
-└─────────────────────────────────────────────┘
-                    │
-         ┌─────────┴─────────┐
-         ▼                   ▼
-   SPIRE Agent          SPIRE Agent
-     (Node 1)             (Node 2)
-```
-
-Funciones clave:
-- Certificate Authority para el trust domain
-- API de registro para entradas de workloads
-- Verificación de attestation de Node y workload
-- Firma y rotación de SVID
+El CN del certificado no es la identidad SPIFFE. Un token JWT de tipo bearer puede sufrir replay aunque el audience coincida. Los tiempos de vida dependen de la política; el alcance de X.509/JWT de este capítulo es independiente de la especificación WIT-SVID en estado Incubating.
 
 </details>
 
----
+<span id="_3-what-is-the-primary-role-of-the-spire-server"></span>
 
-### 4. What is the primary role of the SPIRE Agent?
+### 3. ¿Cuál es la función del SPIRE Server?
 
-- A) Gestionar la red del cluster
-- B) Ejecutarse en Nodes para dar attestation a workloads y entregar SVIDs localmente
-- C) Almacenar secretos del cluster
-- D) Programar Pods
+- A) Cifrar automáticamente todas las conexiones de las aplicaciones
+- B) Gestionar la attestation de los agents, el registro y la firma de SVID
+- C) Autorizar automáticamente todas las solicitudes de servicio
+- D) Distribuir archivos de claves privadas a todos los Pods mediante CSI
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Ejecutarse en Nodes para dar attestation a workloads y entregar SVIDs localmente**
+**Respuesta: B) Gestionar la attestation de los agents, el registro y la firma de SVID**
 
-**Explicación:**
-SPIRE Agent se ejecuta como un DaemonSet en cada Node:
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: spire-agent
-  namespace: spire
-spec:
-  template:
-    spec:
-      containers:
-      - name: spire-agent
-        image: ghcr.io/spiffe/spire-agent:1.8
-        volumeMounts:
-        - name: spire-agent-socket
-          mountPath: /run/spire/sockets
-```
-
-Responsabilidades del Agent:
-- Da attestation al SPIRE Server (node attestation)
-- Verifica la identidad del workload local (workload attestation)
-- Obtiene y almacena en caché SVIDs desde el Server
-- Expone la Workload API (Unix domain socket) a workloads locales
-- Gestiona la rotación de SVID
+Hay que distinguir las responsabilidades de la firma de CA/JWT, del DataStore y del KeyManager. Un upstream de AWS PCA firma las CA intermedias de SPIRE, pero no elimina la firma local de certificados hoja ni la gestión de claves.
 
 </details>
 
----
+<span id="_4-what-is-the-primary-role-of-the-spire-agent"></span>
 
-### 5. Which node attestation method is recommended for Amazon EKS?
+### 4. ¿Quién identifica a la aplicación que llama a la Workload API?
 
-- A) aws_iid
-- B) k8s_sat
-- C) k8s_psat
-- D) join_token
+- A) El workload attestor del SPIRE agent local
+- B) Un resolvedor DNS
+- C) CSI comprobando nombres de archivo
+- D) Únicamente el SPIFFE ID que la propia aplicación declara
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) k8s_psat**
+**Respuesta: A) El workload attestor del SPIRE agent local**
 
-**Explicación:**
-Métodos de node attestation para Kubernetes:
-
-**k8s_psat (Projected Service Account Token)** - Recomendado para EKS:
-```yaml
-# SPIRE Server configuration
-nodeAttestor "k8s_psat" {
-    plugin_data {
-        clusters = {
-            "eks-cluster" = {
-                service_account_allow_list = ["spire:spire-agent"]
-                kube_config_file = ""
-                allowed_node_label_keys = ["topology.kubernetes.io/zone"]
-            }
-        }
-    }
-}
-```
-
-Por qué k8s_psat para EKS:
-- Usa projected service account tokens (más seguros)
-- Los tokens están vinculados a una audience y tienen límite de tiempo
-- Funciona con el proveedor OIDC de EKS
-- No se necesitan credenciales del cloud provider en los agents
-
-Alternativas:
-- **k8s_sat**: Tokens de service account heredados (menos seguros)
-- **aws_iid**: Identidad de instancia EC2 (para entornos no EKS)
+El agent examina el PID/los cgroups del llamante y los metadatos del Pod, y los compara con las entradas autorizadas y la caché. Hacer el fetch dentro de un Pod del agent atesta a ese llamante, no al contexto real de la aplicación.
 
 </details>
 
----
+<span id="_5-which-node-attestation-method-is-recommended-for-amazon-eks"></span>
 
-### 6. What selector types does k8s workload attestation support?
+### 5. ¿Cómo valida el server un token k8s_psat?
 
-- A) Solo imagen del container
-- B) Namespace, service account, etiquetas de Pod e imagen del container
-- C) Solo dirección IP
-- D) Solo nombre de Node
+- A) Comprobando los permisos de S3 de un rol de IRSA
+- B) TokenReview de Kubernetes más el audience y la lista de ServiceAccounts permitidas configurados
+- C) Solo decodificando el token en base64
+- D) Convirtiéndolo en un join token sin expiración
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Namespace, service account, etiquetas de Pod e imagen del container**
+**Respuesta: B) TokenReview de Kubernetes más el audience y la lista de ServiceAccounts permitidas configurados**
 
-**Explicación:**
-Selectors de Kubernetes workload attestation:
-
-```bash
-# Create registration entry with selectors
-spire-server entry create \
-    -spiffeID spiffe://example.org/ns/production/sa/frontend \
-    -parentID spiffe://example.org/agent/node1 \
-    -selector k8s:ns:production \
-    -selector k8s:sa:frontend \
-    -selector k8s:pod-label:app:frontend \
-    -selector k8s:container-image:nginx:1.25
-```
-
-Selectors disponibles:
-| Selector | Example | Description |
-|----------|---------|-------------|
-| k8s:ns | k8s:ns:production | Namespace |
-| k8s:sa | k8s:sa:frontend | ServiceAccount |
-| k8s:pod-label | k8s:pod-label:app:web | Pod labels |
-| k8s:container-image | k8s:container-image:nginx | Container image |
-| k8s:pod-name | k8s:pod-name:nginx-xyz | Specific pod |
-| k8s:pod-uid | k8s:pod-uid:abc-123 | Pod UID |
+Deben coincidir los nombres lógicos de cluster del server y del agent, el audience del token, la lista de SA permitidas y los permisos de TokenReview. aws_iid es una alternativa con supuestos de confianza distintos: no es universalmente más fuerte ni está prohibida en EKS.
 
 </details>
 
----
+<span id="_6-what-selector-types-does-k8s-workload-attestation-support"></span>
 
-### 7. What is the purpose of the SPIFFE CSI Driver?
+### 6. ¿Cómo debe interpretarse k8s:container-image:nginx:*?
 
-- A) Gestionar persistent volumes
-- B) Montar SVIDs directamente en Pods sin sidecars
-- C) Cifrar el almacenamiento de Node
-- D) Aplicar políticas de red
+- A) Coincidencia glob automática para todas las etiquetas de nginx
+- B) Un valor de selector; no se debe suponer coincidencia con comodines
+- C) Prueba de que la firma de la imagen está verificada
+- D) Aplicación automática del RBAC del namespace
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Montar SVIDs directamente en Pods sin sidecars**
+**Respuesta: B) Un valor de selector; no se debe suponer coincidencia con comodines**
 
-**Explicación:**
-El SPIFFE CSI Driver proporciona un enfoque sin sidecar para la entrega de SVID:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-workload
-spec:
-  containers:
-  - name: app
-    image: my-app:latest
-    volumeMounts:
-    - name: spiffe
-      mountPath: /run/spiffe/certs
-      readOnly: true
-  volumes:
-  - name: spiffe
-    csi:
-      driver: "csi.spiffe.io"
-      readOnly: true
-```
-
-Beneficios:
-- No se necesita un container sidecar
-- Los SVIDs se montan automáticamente como archivos
-- Rotación transparente de certificados
-- Menor complejidad del Pod
-- Funciona con cualquier aplicación que espere certificados basados en archivos
-
-El CSI driver se comunica con el SPIRE Agent para obtener y montar SVIDs.
+Hay que hacer coincidir los valores reales de image/ImageID que reporta Kubernetes. Las etiquetas por sí solas no establecen confianza en la cadena de suministro. Los permisos de creación y modificación de Pods, SA y labels también influyen en la elegibilidad de la identidad.
 
 </details>
 
----
+<span id="_7-what-is-the-purpose-of-the-spiffe-csi-driver"></span>
 
-### 8. What does SPIFFE Federation enable?
+### 7. ¿Qué monta SPIFFE CSI 0.2.13 dentro de un Pod?
 
-- A) Replicación de base de datos
-- B) Comunicación entre trust domains de deployments SPIFFE separados
-- C) Programación de Pods entre clusters
-- D) Sincronización de secretos
+- A) Archivos svid.pem/svid.key generados automáticamente
+- B) Un directorio que contiene el socket Unix de la Workload API
+- C) La clave privada de la CA de SPIRE
+- D) Datos compartidos de PostgreSQL
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Comunicación entre trust domains de deployments SPIFFE separados**
+**Respuesta: B) Un directorio que contiene el socket Unix de la Workload API**
 
-**Explicación:**
-SPIFFE Federation permite que workloads en distintos trust domains se autentiquen:
-
-```
-┌─────────────────────┐      Federation      ┌─────────────────────┐
-│  Trust Domain A     │◄──────────────────►│  Trust Domain B      │
-│  example.org        │     Bundle Exchange │  partner.com         │
-├─────────────────────┤                      ├─────────────────────┤
-│  spiffe://example.  │                      │  spiffe://partner.   │
-│  org/service/api    │   ─── mTLS ───►     │  com/service/db      │
-└─────────────────────┘                      └─────────────────────┘
-```
-
-Configuración:
-```yaml
-# SPIRE Server federation config
-federatesWith "partner.com" {
-    bundleEndpointURL = "https://spire.partner.com:8443"
-    bundleEndpointProfile "https_spiffe" {
-        endpointSPIFFEID = "spiffe://partner.com/spire/server"
-    }
-}
-```
-
-Casos de uso:
-- Deployments multi-cloud
-- Integraciones con partners
-- Fusiones y adquisiciones
-- Comunicación zero-trust entre organizaciones
+CSI proporciona acceso al socket de la API. Las aplicaciones basadas en archivos necesitan un adaptador aparte y gestión de la recarga. Las aplicaciones o los proxies siguen siendo quienes consumen la API; la integración no es automática en todos los casos.
 
 </details>
 
----
+<span id="_8-what-does-spiffe-federation-enable"></span>
 
-### 9. How does SPIFFE/SPIRE compare to IAM Roles for Service Accounts (IRSA)?
+### 8. ¿Qué se requiere para hacer el bootstrap de la federación https_spiffe?
 
-- A) IRSA es independiente de la plataforma, SPIFFE es solo para AWS
-- B) SPIFFE proporciona identidad independiente de la plataforma, IRSA es específico de AWS
-- C) Son tecnologías idénticas
-- D) SPIFFE solo funciona con Azure
+- A) Solo una URL de endpoint
+- B) Un bundle de confianza inicial y el SPIFFE ID correcto del endpoint
+- C) Intercambiar ambas claves privadas de CA
+- D) Autorizar automáticamente todos los workloads remotos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) SPIFFE proporciona identidad independiente de la plataforma, IRSA es específico de AWS**
+**Respuesta: B) Un bundle de confianza inicial y el SPIFFE ID correcto del endpoint**
 
-**Explicación:**
-Comparación de SPIFFE/SPIRE vs IRSA:
-
-| Feature | SPIFFE/SPIRE | IRSA |
-|---------|--------------|------|
-| Platform | Any (multi-cloud) | AWS only |
-| Identity Format | SPIFFE ID (URI) | IAM Role ARN |
-| Credential Type | X.509/JWT SVID | AWS STS token |
-| Service-to-Service | Native mTLS | Not supported |
-| AWS Service Access | Via JWT exchange | Direct |
-| Setup Complexity | Higher | Lower (EKS native) |
-
-Cuándo usar cada uno:
-- **IRSA**: Workloads nativos de AWS que acceden a servicios de AWS
-- **SPIFFE/SPIRE**: Multi-cloud, service mesh, requisitos de mTLS
-
-Puedes usar ambos juntos:
-```
-Pod --SPIFFE--> Service Mesh (mTLS)
-Pod --IRSA--> AWS Services (S3, DynamoDB)
-```
+Hay que configurar cada dirección de confianza. La actualización del bundle, la conectividad, la verificación TLS y la autorización de los workloads son responsabilidades independientes. https_web utiliza la ruta de validación de Web PKI del endpoint.
 
 </details>
 
----
+<span id="_9-how-does-spiffe-spire-compare-to-iam-roles-for-service-accounts-irsa"></span>
 
-### 10. What are best practices for naming trust domains in SPIFFE?
+### 9. ¿Qué afirmación compara correctamente IRSA y SPIFFE/SPIRE?
 
-- A) Usar cadenas aleatorias
-- B) Usar direcciones IP
-- C) Usar nombres con estilo DNS que controle tu organización
-- D) Usar números secuenciales
+- A) La renovación de IRSA siempre requiere reiniciar el Pod
+- B) SPIFFE elimina la necesidad de políticas de AWS IAM
+- C) IRSA es una vía de credenciales de AWS; SPIFFE es identidad de workload, y cada una requiere validación
+- D) Una anotación en el Pod completa IRSA y la entrega de archivos de certificado por CSI
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Usar nombres con estilo DNS que controle tu organización**
+**Respuesta: C) IRSA es una vía de credenciales de AWS; SPIFFE es identidad de workload, y cada una requiere validación**
 
-**Explicación:**
-Mejores prácticas para nombrar trust domains:
-
-**Patrones recomendados:**
-```
-# Organization domain
-spiffe://example.com/...
-
-# Environment-specific
-spiffe://prod.example.com/...
-spiffe://staging.example.com/...
-
-# Region-specific
-spiffe://us-east.example.com/...
-```
-
-**Mejores prácticas:**
-1. Usa dominios que poseas (evita colisiones)
-2. Mantén estables los trust domains (cambiarlos es disruptivo)
-3. Considera la separación por entorno
-4. Planifica la federation desde el inicio
-
-**Antipatrones que debes evitar:**
-```
-# Bad: Generic names
-spiffe://cluster/...
-spiffe://kubernetes/...
-
-# Bad: Temporary names
-spiffe://test123/...
-
-# Bad: IP addresses
-spiffe://10.0.0.1/...
-```
-
-Los nombres de trust domain aparecen en todos los SVIDs y logs, así que elige identificadores significativos y estables.
+IRSA se renueva mediante el comportamiento admitido del SDK y del token proyectado, y admite diseños entre cuentas. Hay que validar las anotaciones del ServiceAccount, la confianza en aud/sub y los permisos de AWS. El mTLS de SPIFFE también requiere el consumo de las credenciales y la autorización del peer.
 
 </details>
 
----
+<span id="_10-what-are-best-practices-for-naming-trust-domains-in-spiffe"></span>
 
-## Score Calculation
+### 10. ¿Qué afirmación sobre los trust domains y la rotación de la CA es correcta?
 
-- **9-10 correctas**: Excelente - Tienes una comprensión profunda de SPIFFE/SPIRE.
-- **7-8 correctas**: Bien - Tienes un dominio sólido de los conceptos clave.
-- **5-6 correctas**: Regular - Hay áreas que necesitan estudio adicional.
-- **4 o menos**: Revisa la documentación nuevamente.
+- A) Un trust domain debe ser un nombre DNS resoluble
+- B) bundle set rota automáticamente la clave privada de la CA
+- C) Elegir nombres estables y distinguir los cambios de bundle de la rotación de la clave de la CA
+- D) El parser siempre rechaza los dominios numéricos o con forma de IPv4
 
-## Related Documentation
+<details>
+<summary>Mostrar respuesta</summary>
 
-- [Identidad de workloads con SPIFFE/SPIRE](../../security/12-spiffe-spire.md)
+**Respuesta: C) Elegir nombres estables y distinguir los cambios de bundle de la rotación de la clave de la CA**
+
+La nomenclatura similar a DNS es una recomendación, no la regla sintáctica completa. Los bundles son material de confianza público; la rotación de claves es un ciclo de vida aparte. Hay que verificar el solapamiento de autoridades y la actualización de los consumidores.
+
+</details>
+
+## Cálculo de la puntuación
+
+- 9–10: Comprensión sólida
+- 7–8: Repasa las vías de confianza, autorización y entrega
+- 6 o menos: Revisa la guía y los ejemplos validados
+
+## Documentación relacionada
+
+- [SPIFFE/SPIRE](../../security/12-spiffe-spire.md)
