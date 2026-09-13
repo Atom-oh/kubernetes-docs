@@ -100,9 +100,7 @@ Kubernetes 中的 Windows 支持架构如下：
 5. **emptyDir 卷**：Windows 不支持基于内存的 emptyDir 卷。
 6. **资源限制**：CPU 限制在 Windows 上的应用方式不同。
 
-#<span id="networking"></span>
-
-## 网络限制
+### 网络限制
 
 1. **网络模式**：Windows 仅支持 L3 网络。
 2. **Service 类型**：Windows 节点对某些 Service 类型存在限制。
@@ -309,6 +307,8 @@ spec:
         Get-Content -Path 'C:\inetpub\logs\LogFiles\W3SVC1\u_ex*' -Wait
       }
 ```
+
+<span id="networking"></span>
 
 ## 网络
 

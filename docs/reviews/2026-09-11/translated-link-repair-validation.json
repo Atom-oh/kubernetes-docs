@@ -17,7 +17,7 @@
     {
       "path": "cn/core/10-windows-in-kubernetes.md",
       "previousSha256": "353aaf982f5c9fe4bdc84b14795d55b6e2fd0eef07d0c8adf604d730a9e3e116",
-      "sha256": "78cbf471caa5ad40f63a4f6a172fa7333761cb870cd7a3b75d2721dd32e78e8f",
+      "sha256": "b6f7ff28d65e92400db876106f5345682a01fcf4acab52767e1e00ce3c08df80",
       "codeUnchanged": true,
       "replacements": [
         {
@@ -1179,7 +1179,7 @@
       },
       {
         "path": "cn/core/10-windows-in-kubernetes.md",
-        "sha256": "78cbf471caa5ad40f63a4f6a172fa7333761cb870cd7a3b75d2721dd32e78e8f",
+        "sha256": "b6f7ff28d65e92400db876106f5345682a01fcf4acab52767e1e00ce3c08df80",
         "oldIds": 54,
         "errors": [],
         "missingOld": [],
@@ -1563,6 +1563,232 @@
         "missingOld": [],
         "missingLinks": [],
         "duplicateIds": []
+      }
+    ]
+  },
+  "aliasFollowup": {
+    "finding": "TRANSLATED-LINK-R1-001",
+    "correction": "Restored original H3 网络限制 and placed networking alias before the exact H2 网络. Whole-line heading sequence and alias-to-heading association verified for all44documents.",
+    "checks": [
+      {
+        "path": "cn/basics/02-linux-advanced.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/core/10-windows-in-kubernetes.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/eks/12-kubernetes-version-roadmap.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/eks-hybrid-nodes/README.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/gitops/argocd/README.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/networking/06-pod-network-benchmark.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/ops/01-infrastructure-setup.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/ops/02-infrastructure-advanced.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/ops/06-scaling-strategies.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/quizzes/networking/cilium/glossary-quiz.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/quizzes/service-mesh/istio/traffic-management.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/service-mesh/istio/comparison/README.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "cn/storage/01-ebs-gp2-gp3-benchmark.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/basics/02-linux-advanced.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/eks/12-kubernetes-version-roadmap.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/eks-hybrid-nodes/README.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/gitops/argocd/README.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/networking/06-pod-network-benchmark.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/ops/01-infrastructure-setup.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/ops/02-infrastructure-advanced.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/quizzes/networking/cilium/glossary-quiz.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/quizzes/service-mesh/istio/traffic-management.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/service-mesh/istio/comparison/README.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "jp/storage/01-ebs-gp2-gp3-benchmark.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/basics/02-linux-advanced.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/eks/12-kubernetes-version-roadmap.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/eks-hybrid-nodes/README.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/gitops/argocd/README.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/networking/06-pod-network-benchmark.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/ops/01-infrastructure-setup.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/ops/02-infrastructure-advanced.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/quizzes/networking/cilium/glossary-quiz.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/quizzes/service-mesh/istio/traffic-management.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/service-mesh/istio/comparison/README.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
+      },
+      {
+        "path": "es/storage/01-ebs-gp2-gp3-benchmark.md",
+        "headingSequenceUnchanged": true,
+        "exactAliasAssociation": true
       }
     ]
   }
