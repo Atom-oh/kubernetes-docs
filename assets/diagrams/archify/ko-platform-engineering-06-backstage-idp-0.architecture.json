@@ -155,7 +155,7 @@
       "id": "pg",
       "type": "database",
       "label": "PostgreSQL",
-      "sublabel": "Amazon RDS · Catalog 데이터",
+      "sublabel": "RDS · 플러그인 데이터",
       "pos": [
         990,
         40
@@ -211,7 +211,7 @@
       "id": "argo",
       "type": "external",
       "label": "ArgoCD",
-      "sublabel": "Kubernetes 플러그인 · GitOps",
+      "sublabel": "ArgoCD 플러그인 · GitOps",
       "pos": [
         990,
         430
@@ -358,6 +358,15 @@
       "items": [
         "Catalog 데이터는 PostgreSQL(RDS), TechDocs 산출물은 S3에 저장된다",
         "GitHub/GitLab, EKS, ArgoCD, Cognito/Okta와 플러그인 백엔드가 연동된다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "권한 경계",
+      "items": [
+        "OIDC 로그인과 Permission Policy는 별도",
+        "공유 Kubernetes credential은 사용자별 RBAC가 아님",
+        "외부 시스템 권한과 Secret 파일 전달을 별도로 검토"
       ]
     }
   ]

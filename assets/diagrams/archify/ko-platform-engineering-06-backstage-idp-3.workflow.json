@@ -26,7 +26,7 @@
           "policy",
           "examples"
         ],
-        "note": "Permission Policy는 platform-team, backend-team, viewer 같은 팀 기반 정책 예시를 참조해 판정한다."
+        "note": "본문의 현재 정책: platform admin, catalog read, owner delete, default deny"
       }
     ],
     "viewBox": [
@@ -49,7 +49,8 @@
           "label": "판단 · 정책"
         }
       }
-    }
+    },
+    "output": "ko-platform-engineering-06-backstage-idp-3.html"
   },
   "lanes": [
     {
@@ -184,9 +185,9 @@
       "dot": "amber",
       "title": "정책 예시",
       "items": [
-        "platform-team: 모든 권한",
-        "backend-team: 소유 서비스만 수정",
-        "viewer: 읽기 전용"
+        "platform-team: 명시적으로 모든 권한 허용",
+        "인증 사용자: catalog read만 기본 허용",
+        "catalog delete: IS_ENTITY_OWNER 조건; 나머지 기본 DENY"
       ]
     },
     {

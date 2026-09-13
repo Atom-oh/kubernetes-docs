@@ -1,0 +1,1492 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T23:56:43.354610+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 16,
+    "originalUniqueBlocks": 118,
+    "figures": 8,
+    "exampleFiles": 10
+  },
+  "originalFiles": [
+    {
+      "path": "ko/platform-engineering/06-backstage-idp.md",
+      "lines": 2279,
+      "proseLines": 693,
+      "sha256": "a6245fd18b740ce74ab3ffd559f4faebcb93a99bf4f078ae61ce7405761006c7"
+    },
+    {
+      "path": "ko/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+      "lines": 143,
+      "proseLines": 143,
+      "sha256": "d71e5592eb6a9bb9f9bdfa12821d031359f5200595644a44025dc6e07ad94afc"
+    },
+    {
+      "path": "en/platform-engineering/06-backstage-idp.md",
+      "lines": 2226,
+      "proseLines": 712,
+      "sha256": "aa3446b01113e190acba45e1e418918aaaa06ae3ed61ee94daecf3a14c1c593f"
+    },
+    {
+      "path": "en/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+      "lines": 143,
+      "proseLines": 143,
+      "sha256": "ceff79aca3076d11e456e8181fb85e4bf0279a72f5fc6aa962528b5b26e332c0"
+    }
+  ],
+  "contentPreservation": "Allcatalog/template/TechDocs/search/identity/EKS/permissions/plugin/cost/HA/backup/upgrade/adoptiontopicsand8quiztopicseachretained. Invalidpartialmicroservice4-languageclaimsreplacedwithcomplete3-filedocumentationstarterandexplicitruntimegoldenpathrequirements. Currentpolicy/defaultdeny,filecredentials/charthealth/PDB,registeredactions/PRmergeordering,currentlicense/runtimeanddiagramcorrections.",
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/platform-engineering/06-backstage-idp.md",
+        "sha256": "3e4e28cb7652ead7dc096aaaddc9b6701504972eca0643944828288cd0ab55fa",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "backstage를-활용한-내부-개발자-포털"
+          },
+          {
+            "tag": "h2",
+            "id": "역할과-도입-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처와-플러그인"
+          },
+          {
+            "tag": "h2",
+            "id": "앱-생성·빌드와-버전"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-설정-파일-기반-credential"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-배포-구성과-ha"
+          },
+          {
+            "tag": "h2",
+            "id": "oidc-로그인과-신원-연결"
+          },
+          {
+            "tag": "h2",
+            "id": "software-catalog"
+          },
+          {
+            "tag": "h2",
+            "id": "software-templates와-gitops"
+          },
+          {
+            "tag": "h2",
+            "id": "techdocs와-s3"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes·argocd·비용-플러그인"
+          },
+          {
+            "tag": "h2",
+            "id": "permission-framework"
+          },
+          {
+            "tag": "h2",
+            "id": "감사·복구·업그레이드"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          }
+        ],
+        "renderedIds": [
+          "backstage를-활용한-내부-개발자-포털",
+          "역할과-도입-범위",
+          "아키텍처와-플러그인",
+          "앱-생성·빌드와-버전",
+          "eks-설정-파일-기반-credential",
+          "helm-배포-구성과-ha",
+          "oidc-로그인과-신원-연결",
+          "software-catalog",
+          "software-templates와-gitops",
+          "techdocs와-s3",
+          "kubernetes·argocd·비용-플러그인",
+          "permission-framework",
+          "감사·복구·업그레이드",
+          "검증-범위"
+        ]
+      },
+      {
+        "path": "ko/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+        "sha256": "0ec9af809a6f49bcf79bd81bb2727c9456b22beb2ed13d51b0aab4f79b483524",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "backstage-idp-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-마이크로서비스를-나타내는-catalog-kind는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-software-template이-실제로-생성하는-것은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-kubernetes-workload와-catalog-엔티티를-어떻게-연결하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-eks에서-postgresql과-secret을-어떻게-준비하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-techdocs는-무엇으로-빌드하고-어떻게-제공하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-단계적으로-도입할-때-무엇부터-갖추나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-github와-argocd-작업이-자동-연결되려면-무엇이-필요한가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-팀-소유권에-따라-삭제를-제한하려면-어떻게-하나요"
+          }
+        ],
+        "renderedIds": [
+          "backstage-idp-퀴즈",
+          "_1-마이크로서비스를-나타내는-catalog-kind는-무엇인가요",
+          "_2-software-template이-실제로-생성하는-것은-무엇인가요",
+          "_3-kubernetes-workload와-catalog-엔티티를-어떻게-연결하나요",
+          "_4-eks에서-postgresql과-secret을-어떻게-준비하나요",
+          "_5-techdocs는-무엇으로-빌드하고-어떻게-제공하나요",
+          "_6-단계적으로-도입할-때-무엇부터-갖추나요",
+          "_7-github와-argocd-작업이-자동-연결되려면-무엇이-필요한가요",
+          "_8-팀-소유권에-따라-삭제를-제한하려면-어떻게-하나요"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/06-backstage-idp.md",
+        "sha256": "3b3a67e7d329593b668b221642855943741a3a9cb91f76e2a7e15296fe99fbc7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "backstage-as-an-internal-developer-portal"
+          },
+          {
+            "tag": "h2",
+            "id": "role-and-adoption-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture-and-plugins"
+          },
+          {
+            "tag": "h2",
+            "id": "app-creation-builds-and-versions"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-configuration-with-credential-files"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-configuration-and-ha"
+          },
+          {
+            "tag": "h2",
+            "id": "oidc-sign-in-and-identity"
+          },
+          {
+            "tag": "h2",
+            "id": "software-catalog"
+          },
+          {
+            "tag": "h2",
+            "id": "software-templates-and-gitops"
+          },
+          {
+            "tag": "h2",
+            "id": "techdocs-and-s3"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-argocd-and-cost-plugins"
+          },
+          {
+            "tag": "h2",
+            "id": "permission-framework"
+          },
+          {
+            "tag": "h2",
+            "id": "auditing-recovery-and-upgrades"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-scope"
+          }
+        ],
+        "renderedIds": [
+          "backstage-as-an-internal-developer-portal",
+          "role-and-adoption-scope",
+          "architecture-and-plugins",
+          "app-creation-builds-and-versions",
+          "eks-configuration-with-credential-files",
+          "helm-configuration-and-ha",
+          "oidc-sign-in-and-identity",
+          "software-catalog",
+          "software-templates-and-gitops",
+          "techdocs-and-s3",
+          "kubernetes-argocd-and-cost-plugins",
+          "permission-framework",
+          "auditing-recovery-and-upgrades",
+          "verification-scope"
+        ]
+      },
+      {
+        "path": "en/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+        "sha256": "595d83f4ea2bafefea9607697c5b1af10b2812fbf8f993b430f81b4027099355",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "backstage-idp-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-which-catalog-kind-represents-a-microservice"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-what-does-a-software-template-actually-create"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-how-are-kubernetes-workloads-matched-to-catalog-entities"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-how-should-postgresql-and-secrets-be-prepared-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-how-is-techdocs-built-and-served"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-what-should-be-established-during-incremental-adoption"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-what-connects-github-publication-and-argocd-actions"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-how-can-catalog-deletion-be-restricted-by-ownership"
+          }
+        ],
+        "renderedIds": [
+          "backstage-idp-quiz",
+          "_1-which-catalog-kind-represents-a-microservice",
+          "_2-what-does-a-software-template-actually-create",
+          "_3-how-are-kubernetes-workloads-matched-to-catalog-entities",
+          "_4-how-should-postgresql-and-secrets-be-prepared-on-eks",
+          "_5-how-is-techdocs-built-and-served",
+          "_6-what-should-be-established-during-incremental-adoption",
+          "_7-what-connects-github-publication-and-argocd-actions",
+          "_8-how-can-catalog-deletion-be-restricted-by-ownership"
+        ]
+      }
+    ]
+  },
+  "helm": {
+    "status": "passed",
+    "chartVersion": "2.10.0",
+    "images": [
+      "example.invalid/backstage:replace-with-reviewed-app-revision"
+    ],
+    "replicas": 3,
+    "labels": {
+      "app.kubernetes.io/name": "backstage",
+      "helm.sh/chart": "backstage-2.10.0",
+      "app.kubernetes.io/instance": "backstage",
+      "app.kubernetes.io/managed-by": "Helm",
+      "app.kubernetes.io/component": "backstage"
+    },
+    "args": [
+      "--config",
+      "/app/app-config.production.yaml"
+    ],
+    "volumes": [
+      {
+        "name": "backstage-app-config",
+        "configMap": {
+          "name": "backstage-app-config"
+        }
+      },
+      {
+        "name": "credentials",
+        "secret": {
+          "secretName": "backstage-credentials"
+        }
+      },
+      {
+        "configMap": {
+          "name": "backstage-public-config"
+        },
+        "name": "public-config"
+      }
+    ],
+    "checks": [
+      "NoSecretEnv",
+      "filecredentialmount",
+      "extraAppConfigexactfilename/ConfigMap",
+      "3replicas",
+      "currenthealthpaths",
+      "PDBselectormatches"
+    ],
+    "sha256": "ccc938777983c465cbf9001a316e083836427155060c83f18882de3267005749",
+    "scope": "OfflineHelmrenderwithseparatelypreparedconfigMap/PDB;noimage/DB/OIDC/Kubernetes/AWSexecution."
+  },
+  "configuration": {
+    "status": "passed",
+    "fileIncludes": 5,
+    "integerPort": true,
+    "pool": true,
+    "scope": "ActualFileConfigSource with5syntheticfiles;pathsremappedtoisolatedcache;valuesnotprinted.NoDB/OIDC/GitHub/AWS/network."
+  },
+  "catalog": {
+    "status": "passed",
+    "cases": [
+      {
+        "kind": "Domain",
+        "name": "commerce",
+        "passed": true
+      },
+      {
+        "kind": "System",
+        "name": "order-system",
+        "passed": true
+      },
+      {
+        "kind": "Component",
+        "name": "order-api",
+        "passed": true
+      },
+      {
+        "kind": "API",
+        "name": "order-rest-api",
+        "passed": true
+      },
+      {
+        "kind": "Resource",
+        "name": "order-db",
+        "passed": true
+      },
+      {
+        "kind": "Group",
+        "name": "platform-team",
+        "passed": true
+      },
+      {
+        "kind": "Group",
+        "name": "backend-team",
+        "passed": true
+      },
+      {
+        "kind": "User",
+        "name": "alice",
+        "passed": true
+      },
+      {
+        "case": "component-missing-owner-rejected",
+        "passed": true
+      }
+    ],
+    "references": "Allowner/system/domainrefsresolvewithinfixture",
+    "scope": "Native@backstage/catalog-model1.10.0kindvalidators;nocatalogingestion/database/pluginbackend."
+  },
+  "permissions": {
+    "status": "passed",
+    "cases": [
+      {
+        "case": "anonymous-denied",
+        "result": "DENY",
+        "passed": true
+      },
+      {
+        "case": "service-denied",
+        "result": "DENY",
+        "passed": true
+      },
+      {
+        "case": "authenticated-read",
+        "result": "ALLOW",
+        "passed": true
+      },
+      {
+        "case": "empty-owner-denied",
+        "result": "DENY",
+        "passed": true
+      },
+      {
+        "case": "owner-delete-conditional",
+        "result": "CONDITIONAL",
+        "passed": true
+      },
+      {
+        "case": "non-admin-create-denied",
+        "result": "DENY",
+        "passed": true
+      },
+      {
+        "case": "unknown-write-denied",
+        "result": "DENY",
+        "passed": true
+      },
+      {
+        "case": "platform-create-allowed",
+        "result": "ALLOW",
+        "passed": true
+      }
+    ],
+    "scope": "Actual policy and backend module imports with mocked UserInfoService. Conditional decision shape checked against current catalog rule; no permission backend or catalog ownership evaluator/network."
+  },
+  "template": {
+    "status": "passed",
+    "cases": [
+      {
+        "case": "ordinary-description",
+        "passed": true
+      },
+      {
+        "case": "yaml-special-characters-preserved",
+        "passed": true
+      }
+    ],
+    "skeletonFiles": 3,
+    "scope": "ActualNunjucks3.2.4customdelimiter+catalog-modelvalidator;complete3fileskeletonrendered;notBackstagefetchactionexecution/GitHubpublishing/catalogingestion."
+  },
+  "techdocs": {
+    "versions": {
+      "mkdocs": "1.6.1",
+      "mkdocs-techdocs-core": "1.7.1",
+      "mkdocs-material": "9.7.7"
+    },
+    "strictBuild": true,
+    "pages": 1,
+    "scope": "Onecompletefictionaldocumentationstarter;noS3upload",
+    "buildLogSha256": "ee17654f5aea2c5fcd85c38f134887685ad4b2ec475144b93579430585021ca4"
+  },
+  "exactPublishedMatches": [
+    {
+      "document": "ko/platform-engineering/06-backstage-idp.md",
+      "source": "app-config.production.yaml",
+      "sha256": "0136a1aa61f503c96a041e8914de4ef0b967546f19a8293a764b20cc47fb7b46"
+    },
+    {
+      "document": "ko/platform-engineering/06-backstage-idp.md",
+      "source": "helm-values.yaml",
+      "sha256": "e53594e6a1c3dc61d68d44ceb3b553c72c4f1386a961c139ec0f933c158c35c0"
+    },
+    {
+      "document": "ko/platform-engineering/06-backstage-idp.md",
+      "source": "pdb.yaml",
+      "sha256": "c1ca8e6e82e27492a848033f8d3d39e12fdf7922cf9b23787d89f084c8f61ed4"
+    },
+    {
+      "document": "ko/platform-engineering/06-backstage-idp.md",
+      "source": "catalog-entities.yaml",
+      "sha256": "0d7a66cf2153ae13bd08046a19a22167ad35eabdc99e7a23296fa3f11f666611"
+    },
+    {
+      "document": "ko/platform-engineering/06-backstage-idp.md",
+      "source": "native/policy.ts",
+      "sha256": "d983c4fef64626041c10ed81b52b293721e11b6542538053c211c1441e936760"
+    },
+    {
+      "document": "ko/platform-engineering/06-backstage-idp.md",
+      "source": "template/template.yaml",
+      "sha256": "1ce1805b5e4403697eaee378dabe0121c6d1a645945d03e43b67c5732e1c1a5d"
+    },
+    {
+      "document": "en/platform-engineering/06-backstage-idp.md",
+      "source": "app-config.production.yaml",
+      "sha256": "0136a1aa61f503c96a041e8914de4ef0b967546f19a8293a764b20cc47fb7b46"
+    },
+    {
+      "document": "en/platform-engineering/06-backstage-idp.md",
+      "source": "helm-values.yaml",
+      "sha256": "e53594e6a1c3dc61d68d44ceb3b553c72c4f1386a961c139ec0f933c158c35c0"
+    },
+    {
+      "document": "en/platform-engineering/06-backstage-idp.md",
+      "source": "pdb.yaml",
+      "sha256": "c1ca8e6e82e27492a848033f8d3d39e12fdf7922cf9b23787d89f084c8f61ed4"
+    },
+    {
+      "document": "en/platform-engineering/06-backstage-idp.md",
+      "source": "catalog-entities.yaml",
+      "sha256": "0d7a66cf2153ae13bd08046a19a22167ad35eabdc99e7a23296fa3f11f666611"
+    },
+    {
+      "document": "en/platform-engineering/06-backstage-idp.md",
+      "source": "native/policy.ts",
+      "sha256": "d983c4fef64626041c10ed81b52b293721e11b6542538053c211c1441e936760"
+    },
+    {
+      "document": "en/platform-engineering/06-backstage-idp.md",
+      "source": "template/template.yaml",
+      "sha256": "1ce1805b5e4403697eaee378dabe0121c6d1a645945d03e43b67c5732e1c1a5d"
+    }
+  ],
+  "exampleFiles": [
+    {
+      "path": "examples/platform/backstage/app-config-configmap.yaml",
+      "sha256": "4a855175f1aeac11480b6049e0f0116366079487f5feb3a04558f1725ccc7142"
+    },
+    {
+      "path": "examples/platform/backstage/app-config.production.yaml",
+      "sha256": "0136a1aa61f503c96a041e8914de4ef0b967546f19a8293a764b20cc47fb7b46"
+    },
+    {
+      "path": "examples/platform/backstage/catalog-entities.yaml",
+      "sha256": "0d7a66cf2153ae13bd08046a19a22167ad35eabdc99e7a23296fa3f11f666611"
+    },
+    {
+      "path": "examples/platform/backstage/helm-values.yaml",
+      "sha256": "e53594e6a1c3dc61d68d44ceb3b553c72c4f1386a961c139ec0f933c158c35c0"
+    },
+    {
+      "path": "examples/platform/backstage/pdb.yaml",
+      "sha256": "c1ca8e6e82e27492a848033f8d3d39e12fdf7922cf9b23787d89f084c8f61ed4"
+    },
+    {
+      "path": "examples/platform/backstage/policy.ts",
+      "sha256": "d983c4fef64626041c10ed81b52b293721e11b6542538053c211c1441e936760"
+    },
+    {
+      "path": "examples/platform/backstage/template/skeleton/catalog-info.yaml",
+      "sha256": "40196a1bc421e92775a807a2d4d1adfe7562b4379a09624cd4b79dc58524f15e"
+    },
+    {
+      "path": "examples/platform/backstage/template/skeleton/docs/index.md",
+      "sha256": "e27d699417755cff12bbea22197fcde004de7bf212e398aa100b537facab05b2"
+    },
+    {
+      "path": "examples/platform/backstage/template/skeleton/mkdocs.yml",
+      "sha256": "c7c6cd2ce38429f38c6fb8ac91dbe8793a07bb38a15157ff9bab1575f73b6ab5"
+    },
+    {
+      "path": "examples/platform/backstage/template/template.yaml",
+      "sha256": "1ce1805b5e4403697eaee378dabe0121c6d1a645945d03e43b67c5732e1c1a5d"
+    }
+  ],
+  "localLinks": [
+    {
+      "source": "ko/platform-engineering/06-backstage-idp.md",
+      "target": "../.gitbook/assets/ko-platform-engineering-06-backstage-idp-0.png"
+    },
+    {
+      "source": "ko/platform-engineering/06-backstage-idp.md",
+      "target": "../.gitbook/assets/ko-platform-engineering-06-backstage-idp-1.png"
+    },
+    {
+      "source": "ko/platform-engineering/06-backstage-idp.md",
+      "target": "02-ack.md"
+    },
+    {
+      "source": "ko/platform-engineering/06-backstage-idp.md",
+      "target": "03-kro.md"
+    },
+    {
+      "source": "ko/platform-engineering/06-backstage-idp.md",
+      "target": "05-example-corp-app.md"
+    },
+    {
+      "source": "ko/platform-engineering/06-backstage-idp.md",
+      "target": "../.gitbook/assets/ko-platform-engineering-06-backstage-idp-2.png"
+    },
+    {
+      "source": "ko/platform-engineering/06-backstage-idp.md",
+      "target": "../.gitbook/assets/ko-platform-engineering-06-backstage-idp-3.png"
+    },
+    {
+      "source": "ko/platform-engineering/06-backstage-idp.md",
+      "target": "../quizzes/platform-engineering/06-backstage-idp-quiz.md"
+    },
+    {
+      "source": "ko/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+      "target": "../../platform-engineering/06-backstage-idp.md"
+    },
+    {
+      "source": "en/platform-engineering/06-backstage-idp.md",
+      "target": "../.gitbook/assets/en-platform-engineering-06-backstage-idp-0.png"
+    },
+    {
+      "source": "en/platform-engineering/06-backstage-idp.md",
+      "target": "../.gitbook/assets/en-platform-engineering-06-backstage-idp-1.png"
+    },
+    {
+      "source": "en/platform-engineering/06-backstage-idp.md",
+      "target": "02-ack.md"
+    },
+    {
+      "source": "en/platform-engineering/06-backstage-idp.md",
+      "target": "03-kro.md"
+    },
+    {
+      "source": "en/platform-engineering/06-backstage-idp.md",
+      "target": "05-example-corp-app.md"
+    },
+    {
+      "source": "en/platform-engineering/06-backstage-idp.md",
+      "target": "../.gitbook/assets/en-platform-engineering-06-backstage-idp-2.png"
+    },
+    {
+      "source": "en/platform-engineering/06-backstage-idp.md",
+      "target": "../.gitbook/assets/en-platform-engineering-06-backstage-idp-3.png"
+    },
+    {
+      "source": "en/platform-engineering/06-backstage-idp.md",
+      "target": "../quizzes/platform-engineering/06-backstage-idp-quiz.md"
+    },
+    {
+      "source": "en/quizzes/platform-engineering/06-backstage-idp-quiz.md",
+      "target": "../../platform-engineering/06-backstage-idp.md"
+    }
+  ],
+  "primaryLinks": [
+    {
+      "url": "https://backstage.io/docs/backend-system/core-services/auditor/",
+      "status": 200,
+      "finalUrl": "https://backstage.io/docs/backend-system/core-services/auditor/",
+      "sha256": "ff8b274e081e710869a790327d10de288fab00a293af171d6d5c5755396ecc77"
+    },
+    {
+      "url": "https://backstage.io/docs/conf/writing/",
+      "status": 200,
+      "finalUrl": "https://backstage.io/docs/conf/writing/",
+      "sha256": "75fcc40e70a623bdbc15d1774e6a2ec54193ae4e031af448d1b7f14a143b02d2"
+    },
+    {
+      "url": "https://backstage.io/docs/features/kubernetes/authentication/",
+      "status": 200,
+      "finalUrl": "https://backstage.io/docs/features/kubernetes/authentication/",
+      "sha256": "0265d5323f17a96d7bb0b11cb5e3c66f183930ec472def3c8e2f212c70cd6b15"
+    },
+    {
+      "url": "https://backstage.io/docs/features/techdocs/configuration/",
+      "status": 200,
+      "finalUrl": "https://backstage.io/docs/features/techdocs/configuration/",
+      "sha256": "15dd2b81ea4d77e0b4d891ba516c08a0f36c3230ba577fd90c4e036cd346b643"
+    },
+    {
+      "url": "https://backstage.io/docs/permissions/writing-a-policy/",
+      "status": 200,
+      "finalUrl": "https://backstage.io/docs/permissions/writing-a-policy/",
+      "sha256": "00d7cdd1c96c7233698bd6b16718ef1e3ca50a5f261f73fcfdb0bdf355b8afe4"
+    },
+    {
+      "url": "https://github.com/backstage/backstage/tree/v1.54.7",
+      "status": 200,
+      "finalUrl": "https://github.com/backstage/backstage/tree/v1.54.7",
+      "sha256": "534f648c803e503fe327a09ad1c1ec18bfc9c3a7006878cab7eff5c093d50a2c"
+    },
+    {
+      "url": "https://github.com/backstage/charts/releases/tag/backstage-2.10.0",
+      "status": 200,
+      "finalUrl": "https://github.com/backstage/charts/releases/tag/backstage-2.10.0",
+      "sha256": "e141e0f60b397f44796628262465c6e2684c84b5a00464786a629245c8bbce4a"
+    },
+    {
+      "url": "https://www.cncf.io/projects/backstage/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/projects/backstage/",
+      "sha256": "832fc04c67bf999444a59d234170572defd22b22c5f40bae70b673975bf16954"
+    }
+  ],
+  "packageMetadata": [
+    {
+      "name": "@backstage/catalog-model",
+      "version": "1.10.0",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.esm.js",
+          "default": "./dist/index.cjs.js",
+          "require": "./dist/index.cjs.js"
+        },
+        "./alpha": {
+          "types": "./dist/alpha.d.ts",
+          "import": "./dist/alpha.esm.js",
+          "default": "./dist/alpha.cjs.js",
+          "require": "./dist/alpha.cjs.js"
+        },
+        "./package.json": "./package.json"
+      },
+      "repository": {
+        "url": "https://github.com/backstage/backstage",
+        "type": "git",
+        "directory": "packages/catalog-model"
+      },
+      "tarball": "https://registry.npmjs.org/@backstage/catalog-model/-/catalog-model-1.10.0.tgz"
+    },
+    {
+      "name": "@backstage/config-loader",
+      "version": "1.11.2",
+      "engines": null,
+      "exports": null,
+      "repository": {
+        "url": "https://github.com/backstage/backstage",
+        "type": "git",
+        "directory": "packages/config-loader"
+      },
+      "tarball": "https://registry.npmjs.org/@backstage/config-loader/-/config-loader-1.11.2.tgz"
+    },
+    {
+      "name": "@backstage/plugin-permission-common",
+      "version": "0.9.10",
+      "engines": null,
+      "exports": null,
+      "repository": {
+        "url": "https://github.com/backstage/backstage",
+        "type": "git",
+        "directory": "plugins/permission-common"
+      },
+      "tarball": "https://registry.npmjs.org/@backstage/plugin-permission-common/-/plugin-permission-common-0.9.10.tgz"
+    },
+    {
+      "name": "@backstage/plugin-permission-node",
+      "version": "0.11.3",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/index.cjs.js",
+          "require": "./dist/index.cjs.js"
+        },
+        "./alpha": {
+          "types": "./dist/alpha.d.ts",
+          "default": "./dist/alpha.cjs.js",
+          "require": "./dist/alpha.cjs.js"
+        },
+        "./package.json": "./package.json"
+      },
+      "repository": {
+        "url": "https://github.com/backstage/backstage",
+        "type": "git",
+        "directory": "plugins/permission-node"
+      },
+      "tarball": "https://registry.npmjs.org/@backstage/plugin-permission-node/-/plugin-permission-node-0.11.3.tgz"
+    },
+    {
+      "name": "@backstage/plugin-catalog-backend",
+      "version": "3.9.1",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/index.cjs.js",
+          "require": "./dist/index.cjs.js",
+          "backstage": "@backstage/BackendFeature"
+        },
+        "./alpha": {
+          "types": "./dist/alpha.d.ts",
+          "default": "./dist/alpha.cjs.js",
+          "require": "./dist/alpha.cjs.js"
+        },
+        "./package.json": "./package.json"
+      },
+      "repository": {
+        "url": "https://github.com/backstage/backstage",
+        "type": "git",
+        "directory": "plugins/catalog-backend"
+      },
+      "tarball": "https://registry.npmjs.org/@backstage/plugin-catalog-backend/-/plugin-catalog-backend-3.9.1.tgz"
+    },
+    {
+      "name": "@roadiehq/scaffolder-backend-argocd",
+      "version": "1.8.1",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/index.cjs.js",
+          "require": "./dist/index.cjs.js",
+          "backstage": "@backstage/BackendFeature"
+        },
+        "./package.json": "./package.json"
+      },
+      "repository": {
+        "url": "github:RoadieHQ/roadie-backstage-plugins",
+        "type": "git",
+        "directory": "plugins/scaffolder-actions/scaffolder-backend-argocd"
+      },
+      "tarball": "https://registry.npmjs.org/@roadiehq/scaffolder-backend-argocd/-/scaffolder-backend-argocd-1.8.1.tgz"
+    },
+    {
+      "name": "@roadiehq/backstage-plugin-argo-cd",
+      "version": "2.12.5",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.esm.js",
+          "default": "./dist/index.esm.js"
+        },
+        "./alpha": {
+          "types": "./dist/alpha.d.ts",
+          "import": "./dist/alpha.esm.js",
+          "default": "./dist/alpha.esm.js",
+          "backstage": "@backstage/FrontendPlugin"
+        },
+        "./package.json": "./package.json"
+      },
+      "repository": {
+        "url": "github:RoadieHQ/roadie-backstage-plugins",
+        "type": "git",
+        "directory": "plugins/frontend/backstage-plugin-argo-cd"
+      },
+      "tarball": "https://registry.npmjs.org/@roadiehq/backstage-plugin-argo-cd/-/backstage-plugin-argo-cd-2.12.5.tgz"
+    },
+    {
+      "name": "@kubecost/backstage-plugin",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "@kubecost/backstage-plugin-backend",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "@backstage-community/plugin-kubecost",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "@backstage/create-app",
+      "version": "0.9.1",
+      "engines": null,
+      "exports": null,
+      "repository": {
+        "url": "https://github.com/backstage/backstage",
+        "type": "git",
+        "directory": "packages/create-app"
+      },
+      "tarball": "https://registry.npmjs.org/@backstage/create-app/-/create-app-0.9.1.tgz"
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "c78bf489205ce698c25b25ef3603d81ab9b3a462663ef4564d8198e42481074e"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "c78bf489205ce698c25b25ef3603d81ab9b3a462663ef4564d8198e42481074e"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "c78bf489205ce698c25b25ef3603d81ab9b3a462663ef4564d8198e42481074e"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "b956671bd514b243faf409cd6ae57a662150504b27b169ee632294c83f0e5a98"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "b956671bd514b243faf409cd6ae57a662150504b27b169ee632294c83f0e5a98"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "b956671bd514b243faf409cd6ae57a662150504b27b169ee632294c83f0e5a98"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "a5aa094ab9f6d1eb7923cbf318e3545238cd01d259a4351bcf1f3c6f06170e4c"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "a5aa094ab9f6d1eb7923cbf318e3545238cd01d259a4351bcf1f3c6f06170e4c"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "a5aa094ab9f6d1eb7923cbf318e3545238cd01d259a4351bcf1f3c6f06170e4c"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "52d76028d8a3745929109caa0ba1fd4d4aee473291115d2361981e35317bec48"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "52d76028d8a3745929109caa0ba1fd4d4aee473291115d2361981e35317bec48"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "52d76028d8a3745929109caa0ba1fd4d4aee473291115d2361981e35317bec48"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "453ba8d2e150cb273667615faaf0658700ba02bdc44a79b12ad3c969769c3dc6"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "453ba8d2e150cb273667615faaf0658700ba02bdc44a79b12ad3c969769c3dc6"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "453ba8d2e150cb273667615faaf0658700ba02bdc44a79b12ad3c969769c3dc6"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "71e8ccebe780339ae80ac02bd804ae67007548102b957304fc6cbcde92bcdd09"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "71e8ccebe780339ae80ac02bd804ae67007548102b957304fc6cbcde92bcdd09"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "71e8ccebe780339ae80ac02bd804ae67007548102b957304fc6cbcde92bcdd09"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "85087ce2713909d5179df2f103c42b9fdae0b5599d703e975229b10ae581633f"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "85087ce2713909d5179df2f103c42b9fdae0b5599d703e975229b10ae581633f"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "85087ce2713909d5179df2f103c42b9fdae0b5599d703e975229b10ae581633f"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "a75e81c8d8c993de75d18cb1b13d7d5b5b5f3e5bbdf2665477ab15da647b6efb"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "a75e81c8d8c993de75d18cb1b13d7d5b5b5f3e5bbdf2665477ab15da647b6efb"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "a75e81c8d8c993de75d18cb1b13d7d5b5b5f3e5bbdf2665477ab15da647b6efb"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "diagrams": [
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-06-backstage-idp-0.architecture.json",
+      "sha256": "fc8eae2444a45533ff22159b56fd999e10dc2214f5326aea3b52e44cf2b2d86e"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-06-backstage-idp-0.html",
+      "sha256": "c78bf489205ce698c25b25ef3603d81ab9b3a462663ef4564d8198e42481074e"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-06-backstage-idp-0.png",
+      "sha256": "0596b28a47b83d3a66d229c92d0cc81590fe9ff5676de126b437abb23016eccc"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-06-backstage-idp-1.architecture.json",
+      "sha256": "2c68a4efdedefbe1eb6dc1998980426f4e5fd200e538ba0a0a6e946a7beb584f"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-06-backstage-idp-1.html",
+      "sha256": "a5aa094ab9f6d1eb7923cbf318e3545238cd01d259a4351bcf1f3c6f06170e4c"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-06-backstage-idp-1.png",
+      "sha256": "b475e1a702bb9e7aaf33ba704806aa0116ec6b5de99502222f2150557682e86f"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-06-backstage-idp-2.architecture.json",
+      "sha256": "a28ea65ed34e40905dbd4f8149715184c484836edb3485b078da8d5d14b3fc9d"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-06-backstage-idp-2.html",
+      "sha256": "453ba8d2e150cb273667615faaf0658700ba02bdc44a79b12ad3c969769c3dc6"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-06-backstage-idp-2.png",
+      "sha256": "bc3f3e1381b7228c44b888994405f5ffaf09da1190c8023e61f3b1ba4d77c7a7"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-06-backstage-idp-3.workflow.json",
+      "sha256": "f627cf7d1bc838cc4e07e723669099c674f4b61148ed5accecc5f27fb7f47a22"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-06-backstage-idp-3.html",
+      "sha256": "85087ce2713909d5179df2f103c42b9fdae0b5599d703e975229b10ae581633f"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-06-backstage-idp-3.png",
+      "sha256": "ac6f444fb0b5837fe68bff660378ad06f4d5c471a07023e526a1d1bb6a9f6d06"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-06-backstage-idp-0.architecture.json",
+      "sha256": "54b50de7b939a9707298ef57d99abab3e8d8ec5b34bce7902a77729d87d6d951"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-06-backstage-idp-0.html",
+      "sha256": "b956671bd514b243faf409cd6ae57a662150504b27b169ee632294c83f0e5a98"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-06-backstage-idp-0.png",
+      "sha256": "4a07f7c4f962495f4b062f668417a6e2eb5b8cbbdf925ea69955bed14b28e81c"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-06-backstage-idp-1.architecture.json",
+      "sha256": "44575acfa263aeb7894c36b10e88dea1e290e4e776abb2deb8e2b393b0a71bca"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-06-backstage-idp-1.html",
+      "sha256": "52d76028d8a3745929109caa0ba1fd4d4aee473291115d2361981e35317bec48"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-06-backstage-idp-1.png",
+      "sha256": "46aea46453b1f42d204a723f20522acba978a3cca2047d73c8210e47a3b9a0cb"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-06-backstage-idp-2.architecture.json",
+      "sha256": "a679fc50fc601cb455f00dbf86bac871e81ca9267c4c7dc6d49ff979bd9e9913"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-06-backstage-idp-2.html",
+      "sha256": "71e8ccebe780339ae80ac02bd804ae67007548102b957304fc6cbcde92bcdd09"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-06-backstage-idp-2.png",
+      "sha256": "582ca946da89ff8c22de1fc60b221fdcf5e637d03c77034b3b623d6745eb1bfc"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-06-backstage-idp-3.workflow.json",
+      "sha256": "46d70e5a98f89c4994fd4cca1b1f828db449b528ed73f6b28f778e1e3c1a31c2"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-06-backstage-idp-3.html",
+      "sha256": "a75e81c8d8c993de75d18cb1b13d7d5b5b5f3e5bbdf2665477ab15da647b6efb"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-06-backstage-idp-3.png",
+      "sha256": "aca4663e517c4b15bc6d1ad1d169791132eb71d8bea6868ec373fcf56e37ab37"
+    }
+  ],
+  "sourceIndexes": [
+    ".vitepress/cache/content-review-platform/backstage/sources/index.json",
+    ".vitepress/cache/content-review-platform/backstage/sources/api-source-index.json"
+  ],
+  "limits": [
+    "No full Backstage application/Docker build, provider sign-in, PostgreSQL, Kubernetes/AWS/GitHub/ArgoCD API, template action execution, deployment/load/HA test.",
+    "ConfigFileSource5includesusesonlysyntheticcachefilesandremappedpaths;nocredentialsreadorprinted.",
+    "Permission8casesmockAuthService/UserInfoService;currenttypescompiled;conditionalshapecheckedbutactualcatalogownershipfilteringnotexecuted.",
+    "Nunjucksrendering2casesisnotactualBackstagefetchactionexecution;documentation-onlyskeletondoesnotclaimruntimeapporAWSprovisioning.",
+    "Referencedimage/placeholdersandoperatorprerequisitesexplicit;oldKubecostnpmnamesreturned404notretainedasinstallcommands.",
+    "MkDocsmaterialprintedanupstreaminformationalbanneraboutMkDocs2;installedMkDocs1.xstrictbuildreturned0.",
+    "No full local VitePress build;4MDand24standaloneviewerchecks;8PNGsvisuallyinspected."
+  ]
+}

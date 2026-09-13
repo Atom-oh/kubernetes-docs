@@ -1,0 +1,17 @@
+apiVersion: platform.example.com/v1alpha1
+kind: OrderApp
+metadata:
+  name: order-api
+  namespace: production
+spec:
+  replicas: 3
+  image: example.invalid/order-api:replace-with-reviewed-image
+  port: 8080
+  targetGroupARN: arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/replace-with-approved-tg/0123456789abcdef
+  vpcID: vpc-0123456789abcdef0
+  credentialsSecretName: order-db-credentials
+  aurora:
+    writerEndpoint: replace-with-writer-endpoint.example.invalid
+    readerEndpoint: replace-with-reader-endpoint.example.invalid
+    port: 5432
+    dbName: orders

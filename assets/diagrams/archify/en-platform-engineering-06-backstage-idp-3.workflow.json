@@ -1,0 +1,190 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Backstage permission decisions",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "decision-path",
+        "label": "Decision path",
+        "focus": [
+          "request",
+          "framework",
+          "policy",
+          "allow",
+          "deny",
+          "conditional"
+        ],
+        "note": "Evaluate the user request"
+      },
+      {
+        "id": "policy-examples",
+        "label": "Policy inputs",
+        "focus": [
+          "policy",
+          "examples"
+        ],
+        "note": "Platform admin, catalog read, owner delete, default deny"
+      }
+    ],
+    "viewBox": [
+      930,
+      534
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "output": "en-platform-engineering-06-backstage-idp-3.html",
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "user",
+      "label": "User"
+    },
+    {
+      "id": "framework",
+      "label": "Permission framework"
+    },
+    {
+      "id": "outcome",
+      "label": "Decision"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "framework",
+    "policy",
+    "allow"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "user",
+      "col": 0,
+      "type": "frontend",
+      "label": "User request",
+      "sublabel": "Access a plugin action",
+      "width": 140
+    },
+    {
+      "id": "framework",
+      "lane": "framework",
+      "col": 1,
+      "type": "security",
+      "label": "Permission\nFramework",
+      "sublabel": "Plugin authorization",
+      "tag": "focal",
+      "width": 140
+    },
+    {
+      "id": "policy",
+      "lane": "framework",
+      "col": 2,
+      "type": "security",
+      "label": "Permission\nPolicy",
+      "sublabel": "Evaluate request",
+      "width": 140
+    },
+    {
+      "id": "examples",
+      "lane": "framework",
+      "col": 4,
+      "type": "external",
+      "label": "Current policy",
+      "sublabel": "Explicit grants; default deny",
+      "width": 140
+    },
+    {
+      "id": "allow",
+      "lane": "outcome",
+      "col": 2,
+      "type": "backend",
+      "label": "Allow",
+      "sublabel": "ALLOW",
+      "width": 120
+    },
+    {
+      "id": "deny",
+      "lane": "outcome",
+      "col": 1,
+      "type": "backend",
+      "label": "Deny",
+      "sublabel": "DENY",
+      "width": 120
+    },
+    {
+      "id": "conditional",
+      "lane": "outcome",
+      "col": 3,
+      "type": "backend",
+      "label": "Conditional",
+      "sublabel": "CONDITIONAL",
+      "width": 120
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "framework"
+    },
+    {
+      "from": "framework",
+      "to": "policy"
+    },
+    {
+      "from": "policy",
+      "to": "examples",
+      "label": "consult",
+      "variant": "dashed",
+      "role": "async"
+    },
+    {
+      "from": "policy",
+      "to": "allow",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "policy",
+      "to": "deny",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "policy",
+      "to": "conditional",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Published policy",
+      "items": [
+        "Platform team explicitly allowed",
+        "Authenticated catalog reads allowed",
+        "Catalog delete requires ownership; other actions denied"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Conditional enforcement",
+      "items": [
+        "Backend evaluates IS_ENTITY_OWNER on resources",
+        "A conditional response is not unconditional access",
+        "Plugin authorization coverage remains required"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ACK architecture",
+    "output": "en-platform-engineering-02-ack-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "declare",
+        "label": "Declare",
+        "focus": [
+          "user",
+          "cr"
+        ],
+        "note": "Declare desired state as a Kubernetes custom resource."
+      },
+      {
+        "id": "reconcile",
+        "label": "Reconcile",
+        "focus": [
+          "cr",
+          "controller",
+          "awsapi",
+          "awsres"
+        ],
+        "note": "The service controller reconciles through AWS APIs."
+      },
+      {
+        "id": "status",
+        "label": "Observe",
+        "focus": [
+          "awsapi",
+          "controller",
+          "cr"
+        ],
+        "note": "Observe AWS responses and update CR status."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Kubernetes component"
+        },
+        "cloud": {
+          "label": "AWS service"
+        },
+        "external": {
+          "label": "User"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Kubernetes user / operator",
+      "sublabel": "kubectl apply",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cr",
+      "type": "backend",
+      "label": "Custom resources",
+      "sublabel": "Kubernetes spec / status",
+      "pos": [
+        290,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "crd",
+      "type": "backend",
+      "label": "Custom resource definitions",
+      "sublabel": "Kubernetes API schema",
+      "pos": [
+        530,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "ACK service controller",
+      "sublabel": "Service-specific reconciliation",
+      "pos": [
+        540,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "awsapi",
+      "type": "cloud",
+      "label": "AWS API",
+      "sublabel": "Controller IAM permissions",
+      "pos": [
+        920,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "awsres",
+      "type": "cloud",
+      "label": "AWS resources",
+      "sublabel": "S3, RDS, DynamoDB and more",
+      "pos": [
+        920,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes cluster",
+      "wraps": [
+        "cr",
+        "crd",
+        "controller"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS services",
+      "wraps": [
+        "awsapi",
+        "awsres"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "apply-yaml",
+      "from": "user",
+      "to": "cr",
+      "label": "apply YAML",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
+      "from": "cr",
+      "to": "controller",
+      "label": "CR change event",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "reconcile",
+      "from": "crd",
+      "to": "cr",
+      "label": "API schema",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "cud",
+      "from": "controller",
+      "to": "awsapi",
+      "label": "create / update / delete",
+      "variant": "emphasis"
+    },
+    {
+      "id": "manage",
+      "from": "awsapi",
+      "to": "awsres",
+      "label": "manage",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 54
+    },
+    {
+      "id": "status",
+      "from": "awsapi",
+      "to": "controller",
+      "label": "AWS response",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "status-update",
+      "from": "controller",
+      "to": "cr",
+      "label": "update status",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Reconciliation",
+      "items": [
+        "CRDs define the Kubernetes input schema.",
+        "Controllers watch CRs and call AWS service APIs.",
+        "Observed AWS state updates CR status."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Permissions and readiness",
+      "items": [
+        "Kubernetes RBAC and controller IAM permissions are separate.",
+        "CR creation / ResourceSynced does not prove app readiness.",
+        "Default watch scope is cluster; namespace separation alone is not isolation."
+      ]
+    }
+  ]
+}

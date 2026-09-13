@@ -13,6 +13,7 @@ on:
       - 'package-lock.json'
       - 'examples/ai-ml/qwen-pii-finetuning/**'
       - 'examples/eks/spot-production/**'
+      - 'examples/platform/**'
       - '.vitepress/**'
       - '.github/workflows/pr-validate.yml'
       - '.github/workflows/deploy.yml'
@@ -21,6 +22,20 @@ permissions:
   contents: read
 
 jobs:
+  replica-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: examples/platform/extensions/policy-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: examples/platform/extensions/policy-tests/go.mod
+          cache-dependency-path: examples/platform/extensions/policy-tests/go.sum
+      - run: go test ./...
+
   qwen-contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -1,0 +1,468 @@
+{
+  "status": "passed",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 16,
+    "originalUniqueBlocks": 4
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/platform-engineering/00-platform-engineering-overview.md",
+        "sha256": "09e327d3c74d16ec5e182caf42b45d0f9c76156b53058d99c25797ae5a38bf11",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "platform-engineering-개요"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-platform-engineering이란"
+          },
+          {
+            "tag": "h3",
+            "id": "정의"
+          },
+          {
+            "tag": "h3",
+            "id": "internal-developer-platform-idp"
+          },
+          {
+            "tag": "h3",
+            "id": "platform-engineering-vs-devops-vs-sre"
+          },
+          {
+            "tag": "h3",
+            "id": "플랫폼-팀의-역할과-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-aws-caf-플랫폼-관점-platform-perspective"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-cloud-adoption-framework-소개"
+          },
+          {
+            "tag": "h3",
+            "id": "성숙도-모델-start-→-advance-→-excel"
+          },
+          {
+            "tag": "h4",
+            "id": "start-기반-구축"
+          },
+          {
+            "tag": "h4",
+            "id": "advance-운영-확장"
+          },
+          {
+            "tag": "h4",
+            "id": "excel-지속적-최적화"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-idp-참조-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-기반-idp-계층-구조"
+          },
+          {
+            "tag": "h3",
+            "id": "각-계층의-역할과-도구-매핑"
+          },
+          {
+            "tag": "h3",
+            "id": "셀프서비스-카탈로그-패턴-kro-rgd-ack"
+          },
+          {
+            "tag": "h3",
+            "id": "golden-path-개념"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-플랫폼-엔지니어링-도구-생태계"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-플랫폼-성숙도-자가진단-체크리스트"
+          },
+          {
+            "tag": "h3",
+            "id": "start-단계"
+          },
+          {
+            "tag": "h3",
+            "id": "advance-단계"
+          },
+          {
+            "tag": "h3",
+            "id": "excel-단계"
+          },
+          {
+            "tag": "h3",
+            "id": "지표와-플랫폼-제품의-성공"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "platform-engineering-개요",
+          "_1-platform-engineering이란",
+          "정의",
+          "internal-developer-platform-idp",
+          "platform-engineering-vs-devops-vs-sre",
+          "플랫폼-팀의-역할과-구성",
+          "_2-aws-caf-플랫폼-관점-platform-perspective",
+          "aws-cloud-adoption-framework-소개",
+          "성숙도-모델-start-→-advance-→-excel",
+          "start-기반-구축",
+          "advance-운영-확장",
+          "excel-지속적-최적화",
+          "_3-idp-참조-아키텍처",
+          "kubernetes-기반-idp-계층-구조",
+          "각-계층의-역할과-도구-매핑",
+          "셀프서비스-카탈로그-패턴-kro-rgd-ack",
+          "golden-path-개념",
+          "_4-플랫폼-엔지니어링-도구-생태계",
+          "_5-플랫폼-성숙도-자가진단-체크리스트",
+          "start-단계",
+          "advance-단계",
+          "excel-단계",
+          "지표와-플랫폼-제품의-성공",
+          "_6-참고-자료"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/00-platform-engineering-overview.md",
+        "sha256": "5657b605c1686268f77169cee48021326d1bde87e74969e23027fc9d9607f6c7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "platform-engineering-overview"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-is-platform-engineering"
+          },
+          {
+            "tag": "h3",
+            "id": "definition"
+          },
+          {
+            "tag": "h3",
+            "id": "internal-developer-platform-idp"
+          },
+          {
+            "tag": "h3",
+            "id": "platform-engineering-vs-devops-vs-sre"
+          },
+          {
+            "tag": "h3",
+            "id": "platform-team-roles-and-structure"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-aws-caf-platform-perspective"
+          },
+          {
+            "tag": "h3",
+            "id": "introduction-to-aws-cloud-adoption-framework"
+          },
+          {
+            "tag": "h3",
+            "id": "maturity-model-start-→-advance-→-excel"
+          },
+          {
+            "tag": "h4",
+            "id": "start-foundation-building"
+          },
+          {
+            "tag": "h4",
+            "id": "advance-operational-scaling"
+          },
+          {
+            "tag": "h4",
+            "id": "excel-continuous-optimization"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-idp-reference-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-based-idp-layer-structure"
+          },
+          {
+            "tag": "h3",
+            "id": "role-and-tool-mapping-for-each-layer"
+          },
+          {
+            "tag": "h3",
+            "id": "self-service-catalog-pattern-kro-rgd-ack"
+          },
+          {
+            "tag": "h3",
+            "id": "golden-path-concept"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-platform-engineering-tool-ecosystem"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-platform-maturity-self-assessment-checklist"
+          },
+          {
+            "tag": "h3",
+            "id": "start-stage"
+          },
+          {
+            "tag": "h3",
+            "id": "advance-stage"
+          },
+          {
+            "tag": "h3",
+            "id": "excel-stage"
+          },
+          {
+            "tag": "h3",
+            "id": "metrics-and-platform-product-success"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-references"
+          }
+        ],
+        "renderedIds": [
+          "platform-engineering-overview",
+          "_1-what-is-platform-engineering",
+          "definition",
+          "internal-developer-platform-idp",
+          "platform-engineering-vs-devops-vs-sre",
+          "platform-team-roles-and-structure",
+          "_2-aws-caf-platform-perspective",
+          "introduction-to-aws-cloud-adoption-framework",
+          "maturity-model-start-→-advance-→-excel",
+          "start-foundation-building",
+          "advance-operational-scaling",
+          "excel-continuous-optimization",
+          "_3-idp-reference-architecture",
+          "kubernetes-based-idp-layer-structure",
+          "role-and-tool-mapping-for-each-layer",
+          "self-service-catalog-pattern-kro-rgd-ack",
+          "golden-path-concept",
+          "_4-platform-engineering-tool-ecosystem",
+          "_5-platform-maturity-self-assessment-checklist",
+          "start-stage",
+          "advance-stage",
+          "excel-stage",
+          "metrics-and-platform-product-success",
+          "_6-references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+        "sha256": "a9d0c3a94e31421869abab8074b4ffd8fa28ec0eb35571838c9297c64eac7dd5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "platform-engineering-개요-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-플랫폼-엔지니어링의-핵심-목표는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-start·advance·excel과-도구-매핑은-어떻게-해석하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-platform-engineering-devops와-sre는-어떤-관계인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-idp의-계층과-backstage-포털의-범위는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-golden-path에서-벗어나면-필수-보안-정책도-생략할-수-있나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-webapplication-하나를-만들면-kro가-항상-deployment·rds·iam을-생성하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-현재-dora-지표와-활용-방식은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-guardrail이-있으면-보안과-규정-준수가-자동-보장되나요"
+          }
+        ],
+        "renderedIds": [
+          "platform-engineering-개요-퀴즈",
+          "_1-플랫폼-엔지니어링의-핵심-목표는-무엇인가요",
+          "_2-start·advance·excel과-도구-매핑은-어떻게-해석하나요",
+          "_3-platform-engineering-devops와-sre는-어떤-관계인가요",
+          "_4-idp의-계층과-backstage-포털의-범위는-무엇인가요",
+          "_5-golden-path에서-벗어나면-필수-보안-정책도-생략할-수-있나요",
+          "_6-webapplication-하나를-만들면-kro가-항상-deployment·rds·iam을-생성하나요",
+          "_7-현재-dora-지표와-활용-방식은-무엇인가요",
+          "_8-guardrail이-있으면-보안과-규정-준수가-자동-보장되나요"
+        ]
+      },
+      {
+        "path": "en/quizzes/platform-engineering/00-platform-engineering-overview-quiz.md",
+        "sha256": "dc5631cbace275aeabe564ff0bae91f17369fa9b0b8a66b09eb64dbb913ffe22",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "platform-engineering-overview-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-is-the-core-goal-of-platform-engineering"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-how-should-start-advance-excel-and-tool-mappings-be-interpreted"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-how-do-platform-engineering-devops-and-sre-relate"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-what-are-the-idp-layers-and-the-scope-of-a-backstage-portal"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-can-deviating-from-a-golden-path-bypass-mandatory-security-policy"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-does-one-webapplication-always-make-kro-create-deployments-rds-and-iam"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-what-are-current-dora-metrics-and-how-should-they-be-used"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-do-guardrails-automatically-guarantee-security-and-compliance"
+          }
+        ],
+        "renderedIds": [
+          "platform-engineering-overview-quiz",
+          "_1-what-is-the-core-goal-of-platform-engineering",
+          "_2-how-should-start-advance-excel-and-tool-mappings-be-interpreted",
+          "_3-how-do-platform-engineering-devops-and-sre-relate",
+          "_4-what-are-the-idp-layers-and-the-scope-of-a-backstage-portal",
+          "_5-can-deviating-from-a-golden-path-bypass-mandatory-security-policy",
+          "_6-does-one-webapplication-always-make-kro-create-deployments-rds-and-iam",
+          "_7-what-are-current-dora-metrics-and-how-should-they-be-used",
+          "_8-do-guardrails-automatically-guarantee-security-and-compliance"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "file": "caf-platform.html",
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/aws-caf-platform-perspective/welcome.html",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "caf-engineering.html",
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/aws-caf-platform-perspective/platform-eng.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/prescriptive-guidance/latest/aws-caf-platform-perspective/platform-eng.html",
+      "sha256": "2ffa90736776984acb690173dad5a546e1f4f3bdf00557cbf062bd0838dca235"
+    },
+    {
+      "file": "cncf-platform.html",
+      "url": "https://tag-app-delivery.cncf.io/whitepapers/platforms/",
+      "status": 200,
+      "finalUrl": "https://tag-app-delivery.cncf.io/whitepapers/platforms/",
+      "sha256": "09dfc99bed386572c2abd769c518b7241e1ca179216251f54285040b63b31e29"
+    },
+    {
+      "file": "dora.html",
+      "url": "https://dora.dev/guides/dora-metrics-four-keys/",
+      "status": 200,
+      "finalUrl": "https://dora.dev/guides/dora-metrics/",
+      "sha256": "00f7a12f296db54df7006f19badcfe668819c30fc50d386c471fe55531bcdff1"
+    },
+    {
+      "file": "book.html",
+      "url": "https://www.oreilly.com/library/view/platform-engineering-on/9781617299322/",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "file": "kro-concepts.html",
+      "url": "https://kro.run/docs/concepts/resource-graph-definition/",
+      "error": "HTTP Error 404: Not Found"
+    }
+  ],
+  "additionalSources": [
+    "https://docs.aws.amazon.com/whitepapers/latest/overview-aws-cloud-adoption-framework/platform-perspective.html",
+    "https://docs.aws.amazon.com/prescriptive-guidance/latest/aws-caf-platform-perspective/introduction.html",
+    "https://raw.githubusercontent.com/kro-run/kro/main/README.md"
+  ],
+  "links": [
+    {
+      "url": "https://backstage.io/",
+      "status": 200,
+      "finalUrl": "https://backstage.io/"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/aws-caf-platform-perspective/platform-eng.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/prescriptive-guidance/latest/aws-caf-platform-perspective/platform-eng.html"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/overview-aws-cloud-adoption-framework/platform-perspective.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/whitepapers/latest/overview-aws-cloud-adoption-framework/platform-perspective.html"
+    },
+    {
+      "url": "https://dora.dev/guides/dora-metrics/",
+      "status": 200,
+      "finalUrl": "https://dora.dev/guides/dora-metrics/"
+    },
+    {
+      "url": "https://internaldeveloperplatform.org/",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "url": "https://tag-app-delivery.cncf.io/whitepapers/platforms/",
+      "status": 200,
+      "finalUrl": "https://tag-app-delivery.cncf.io/whitepapers/platforms/"
+    }
+  ],
+  "limitations": [
+    "CustomWebApplicationisillustrativecontractrequiringRGD/generatedCRD,notadeployablebuiltin;nocloudresourcescreated.",
+    "Originalcommercialbook403andguessedKROdocs404notusedastechnicalevidence;accessibleprimaryCAF/CNCF/DORA/kroREADMEused.",
+    "Optionalinternaldeveloperplatform.orgreturns403inthisenvironment,notprovenbroken.",
+    "No full local VitePress build."
+  ]
+}

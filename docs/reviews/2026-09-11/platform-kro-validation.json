@@ -1,0 +1,745 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T23:26:19.422408+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 40,
+    "originalUniqueBlocks": 16,
+    "publishedExampleFiles": 3
+  },
+  "originalFiles": [
+    {
+      "path": "ko/platform-engineering/03-kro.md",
+      "lines": 504,
+      "proseLines": 237,
+      "sha256": "3ff30b029247baddfc110c389144169a8b61b9718f2292125473dfa01f82f0b3"
+    },
+    {
+      "path": "ko/quizzes/platform-engineering/03-kro-quiz.md",
+      "lines": 423,
+      "proseLines": 326,
+      "sha256": "0504cf233760b2d1f6d3ec252ff0475da49e2441d0e4a1f77dfbae31efea55bb"
+    },
+    {
+      "path": "en/platform-engineering/03-kro.md",
+      "lines": 504,
+      "proseLines": 237,
+      "sha256": "6a0631a86bb3d68dc032d33abfd4a6dff49b3f5ad35bbb6b48192158d02d3b35"
+    },
+    {
+      "path": "en/quizzes/platform-engineering/03-kro-quiz.md",
+      "lines": 423,
+      "proseLines": 326,
+      "sha256": "3dbccb462462b7e246d996b0136734ba5760fe764df0fb705e40e4ac2936db90"
+    }
+  ],
+  "contentPreservation": "All20quiztopics retained; corrected inventedRGD/CLI, CEL/schema/status, deletion/GraphRevisions/RBAC, migration/multicluster/stateful limits; complete3fileexample replaces invalid partialNGINXrecipe.",
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/platform-engineering/03-kro.md",
+        "sha256": "5715e2fcfdf0351dfcffd5c5e16556b64caa268d31b885fc20c6cef095b2cbb8",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kube-resource-orchestrator-kro"
+          },
+          {
+            "tag": "h2",
+            "id": "개념과-적용-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "helm·kustomize·operator와-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "설치와-권한"
+          },
+          {
+            "tag": "h2",
+            "id": "완전한-nginxapp-예제"
+          },
+          {
+            "tag": "h3",
+            "id": "resourcegraphdefinition"
+          },
+          {
+            "tag": "h3",
+            "id": "인스턴스"
+          },
+          {
+            "tag": "h3",
+            "id": "적용-순서와-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "graphrevision와-변경-관리"
+          },
+          {
+            "tag": "h2",
+            "id": "삭제와-소유권"
+          },
+          {
+            "tag": "h2",
+            "id": "마이그레이션과-운영-패턴"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위와-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "kube-resource-orchestrator-kro",
+          "개념과-적용-범위",
+          "helm·kustomize·operator와-비교",
+          "설치와-권한",
+          "완전한-nginxapp-예제",
+          "resourcegraphdefinition",
+          "인스턴스",
+          "적용-순서와-확인",
+          "graphrevision와-변경-관리",
+          "삭제와-소유권",
+          "마이그레이션과-운영-패턴",
+          "검증-범위와-참고-자료"
+        ]
+      },
+      {
+        "path": "ko/quizzes/platform-engineering/03-kro-quiz.md",
+        "sha256": "945c1b4cfd5ec89b38e3c691b1def8bb161491e337b322a63cc973ffa53e03ef",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kube-resource-orchestrator-kro-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-kro의-핵심-개념은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-생성할-리소스-목록은-어느-필드에-정의하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-helm과-비교한-kro의-주요-역할은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-인스턴스-입력을-cel에서-어떻게-참조하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-조건부-리소스-포함을-어떻게-설정하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-자식-리소스-상태를-어디에-투영하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-dependency와-준비-순서는-어떻게-정하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-인스턴스를-삭제하면-어떻게-되나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-누가-인스턴스-변경을-감시하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-kubectl-apply는-어떤-역할을-하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-rgd는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-helm-values에-대응하는-입력은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-형제-리소스를-어떻게-참조하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-관리-리소스-추적과-삭제-진단에서-무엇을-보나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-입력-schema-검증은-어떻게-이루어지나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_16-예제-nginxapp-인스턴스를-작성하세요"
+          },
+          {
+            "tag": "h2",
+            "id": "_17-deployment를-만드는-resource-항목을-작성하세요"
+          },
+          {
+            "tag": "h2",
+            "id": "_18-availablereplicas를-status에-노출하세요"
+          },
+          {
+            "tag": "h2",
+            "id": "_19-dev-staging-prod-전략을-설계하세요"
+          },
+          {
+            "tag": "h2",
+            "id": "_20-stateful-app에서-helm과-kro의-한계는-무엇인가요"
+          }
+        ],
+        "renderedIds": [
+          "kube-resource-orchestrator-kro-퀴즈",
+          "_1-kro의-핵심-개념은-무엇인가요",
+          "_2-생성할-리소스-목록은-어느-필드에-정의하나요",
+          "_3-helm과-비교한-kro의-주요-역할은-무엇인가요",
+          "_4-인스턴스-입력을-cel에서-어떻게-참조하나요",
+          "_5-조건부-리소스-포함을-어떻게-설정하나요",
+          "_6-자식-리소스-상태를-어디에-투영하나요",
+          "_7-dependency와-준비-순서는-어떻게-정하나요",
+          "_8-인스턴스를-삭제하면-어떻게-되나요",
+          "_9-누가-인스턴스-변경을-감시하나요",
+          "_10-kubectl-apply는-어떤-역할을-하나요",
+          "_11-rgd는-무엇인가요",
+          "_12-helm-values에-대응하는-입력은-무엇인가요",
+          "_13-형제-리소스를-어떻게-참조하나요",
+          "_14-관리-리소스-추적과-삭제-진단에서-무엇을-보나요",
+          "_15-입력-schema-검증은-어떻게-이루어지나요",
+          "_16-예제-nginxapp-인스턴스를-작성하세요",
+          "_17-deployment를-만드는-resource-항목을-작성하세요",
+          "_18-availablereplicas를-status에-노출하세요",
+          "_19-dev-staging-prod-전략을-설계하세요",
+          "_20-stateful-app에서-helm과-kro의-한계는-무엇인가요"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/03-kro.md",
+        "sha256": "b79497bac0f9856a30c2cb5af8d0ac5e98a0007611ec8d96a80cd3ccb69570f5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kube-resource-orchestrator-kro"
+          },
+          {
+            "tag": "h2",
+            "id": "concepts-and-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "comparison-with-helm-kustomize-and-operators"
+          },
+          {
+            "tag": "h2",
+            "id": "installation-and-permissions"
+          },
+          {
+            "tag": "h2",
+            "id": "complete-nginxapp-example"
+          },
+          {
+            "tag": "h3",
+            "id": "resourcegraphdefinition"
+          },
+          {
+            "tag": "h3",
+            "id": "instance"
+          },
+          {
+            "tag": "h3",
+            "id": "apply-order-and-inspection"
+          },
+          {
+            "tag": "h2",
+            "id": "graphrevisions-and-changes"
+          },
+          {
+            "tag": "h2",
+            "id": "deletion-and-ownership"
+          },
+          {
+            "tag": "h2",
+            "id": "migration-and-operations"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-and-references"
+          }
+        ],
+        "renderedIds": [
+          "kube-resource-orchestrator-kro",
+          "concepts-and-scope",
+          "comparison-with-helm-kustomize-and-operators",
+          "installation-and-permissions",
+          "complete-nginxapp-example",
+          "resourcegraphdefinition",
+          "instance",
+          "apply-order-and-inspection",
+          "graphrevisions-and-changes",
+          "deletion-and-ownership",
+          "migration-and-operations",
+          "verification-and-references"
+        ]
+      },
+      {
+        "path": "en/quizzes/platform-engineering/03-kro-quiz.md",
+        "sha256": "67a24190e8bb879deedddc7ad39f4dbc7274b6250effe66a6c9eb81dbb19a4b9",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kube-resource-orchestrator-kro-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-are-kro-s-core-concepts"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-where-are-managed-resource-definitions-declared"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-what-does-kro-provide-alongside-helm"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-how-are-instance-inputs-referenced-in-cel"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-how-is-conditional-resource-inclusion-configured"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-where-are-managed-resource-status-values-projected"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-how-are-dependencies-and-readiness-ordered"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-what-happens-when-an-instance-is-deleted"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-what-watches-instance-changes"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-what-does-kubectl-apply-do"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-what-is-an-rgd"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-what-supplies-inputs-analogous-to-helm-values"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-how-is-another-resource-referenced"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-what-tracks-managed-resources-and-supports-deletion-diagnosis"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-how-are-input-schemas-validated"
+          },
+          {
+            "tag": "h2",
+            "id": "_16-write-the-example-nginxapp-instance"
+          },
+          {
+            "tag": "h2",
+            "id": "_17-write-the-resource-entry-that-creates-a-deployment"
+          },
+          {
+            "tag": "h2",
+            "id": "_18-expose-availablereplicas-in-status"
+          },
+          {
+            "tag": "h2",
+            "id": "_19-design-a-dev-staging-prod-strategy"
+          },
+          {
+            "tag": "h2",
+            "id": "_20-what-are-helm-and-kro-s-limits-for-stateful-applications"
+          }
+        ],
+        "renderedIds": [
+          "kube-resource-orchestrator-kro-quiz",
+          "_1-what-are-kro-s-core-concepts",
+          "_2-where-are-managed-resource-definitions-declared",
+          "_3-what-does-kro-provide-alongside-helm",
+          "_4-how-are-instance-inputs-referenced-in-cel",
+          "_5-how-is-conditional-resource-inclusion-configured",
+          "_6-where-are-managed-resource-status-values-projected",
+          "_7-how-are-dependencies-and-readiness-ordered",
+          "_8-what-happens-when-an-instance-is-deleted",
+          "_9-what-watches-instance-changes",
+          "_10-what-does-kubectl-apply-do",
+          "_11-what-is-an-rgd",
+          "_12-what-supplies-inputs-analogous-to-helm-values",
+          "_13-how-is-another-resource-referenced",
+          "_14-what-tracks-managed-resources-and-supports-deletion-diagnosis",
+          "_15-how-are-input-schemas-validated",
+          "_16-write-the-example-nginxapp-instance",
+          "_17-write-the-resource-entry-that-creates-a-deployment",
+          "_18-expose-availablereplicas-in-status",
+          "_19-design-a-dev-staging-prod-strategy",
+          "_20-what-are-helm-and-kro-s-limits-for-stateful-applications"
+        ]
+      }
+    ]
+  },
+  "native": {
+    "status": "passed",
+    "kroVersion": "0.9.4",
+    "celGoVersion": "0.31.0",
+    "checks": [
+      {
+        "case": "ingress=False",
+        "resourceKinds": [
+          "Deployment",
+          "Service"
+        ],
+        "status": {
+          "availableReplicas": 2,
+          "serviceIP": "10.96.0.10"
+        },
+        "passed": true
+      },
+      {
+        "case": "ingress=True",
+        "resourceKinds": [
+          "Deployment",
+          "Service",
+          "Ingress"
+        ],
+        "status": {
+          "availableReplicas": 2,
+          "serviceIP": "10.96.0.10"
+        },
+        "passed": true
+      },
+      {
+        "case": "stale observedGeneration is not ready",
+        "passed": true
+      },
+      {
+        "case": "insufficient replicas are not ready",
+        "passed": true
+      }
+    ],
+    "uniqueCELExpressions": 14,
+    "expressions": [
+      "deployment.spec.selector.matchLabels",
+      "deployment.status.availableReplicas",
+      "deployment.status.availableReplicas >= deployment.spec.replicas",
+      "deployment.status.observedGeneration >= deployment.metadata.generation",
+      "schema.metadata.name",
+      "schema.metadata.namespace",
+      "schema.spec.image",
+      "schema.spec.ingress.className",
+      "schema.spec.ingress.enabled",
+      "schema.spec.ingress.host",
+      "schema.spec.ingress.tlsSecret",
+      "schema.spec.replicas",
+      "service.metadata.name",
+      "service.spec.clusterIP"
+    ],
+    "rgdSha256": "6e5e252d5f264a38c27a03e9886fdb49f7de11bdd629d73afca10be4eb9e77f3",
+    "instanceSha256": "5f922830ccce73a186f4a58ec2299857704657d5b746e68e246b0bf0846e8d2e",
+    "scope": "Versioned RGD structural schema and explicit unknown-field/template-XOR checks. Actual cel-go compile/evaluation with synthetic dynamic variables; no kro graph compiler, API discovery, generated-CRD validation, admission/CEL controller or cluster execution."
+  },
+  "helm": {
+    "chart": "oci://registry.k8s.io/kro/charts/kro",
+    "version": "0.9.4",
+    "mode": "aggregation",
+    "renderSha256": "cff6f4ce2fb792c06b82923c0ee8fe5d388a8514f483432f0089aaa396c81f85",
+    "kinds": [
+      "CustomResourceDefinition",
+      "CustomResourceDefinition",
+      "ServiceAccount",
+      "ClusterRole",
+      "ClusterRole",
+      "ClusterRole",
+      "ClusterRole",
+      "ClusterRoleBinding",
+      "Deployment"
+    ],
+    "images": [
+      "registry.k8s.io/kro/kro:v0.9.4"
+    ],
+    "note": "AggregationhasbaseCRD/RGD/GraphRevision/ConfigMappermissions;explicitappClusterRoleadded.Noinstall."
+  },
+  "exactPublishedMatches": [
+    {
+      "document": "ko/platform-engineering/03-kro.md",
+      "example": "examples/platform/kro/nginxapp-rgd.yaml",
+      "sha256": "6e5e252d5f264a38c27a03e9886fdb49f7de11bdd629d73afca10be4eb9e77f3"
+    },
+    {
+      "document": "ko/platform-engineering/03-kro.md",
+      "example": "examples/platform/kro/nginxapp-instance.yaml",
+      "sha256": "5f922830ccce73a186f4a58ec2299857704657d5b746e68e246b0bf0846e8d2e"
+    },
+    {
+      "document": "ko/platform-engineering/03-kro.md",
+      "example": "examples/platform/kro/nginxapp-rbac.yaml",
+      "sha256": "e45b570b47de205caf61e65ce324c9c115ca4deb5da54decf93c69091b421c42"
+    },
+    {
+      "document": "en/platform-engineering/03-kro.md",
+      "example": "examples/platform/kro/nginxapp-rgd.yaml",
+      "sha256": "6e5e252d5f264a38c27a03e9886fdb49f7de11bdd629d73afca10be4eb9e77f3"
+    },
+    {
+      "document": "en/platform-engineering/03-kro.md",
+      "example": "examples/platform/kro/nginxapp-instance.yaml",
+      "sha256": "5f922830ccce73a186f4a58ec2299857704657d5b746e68e246b0bf0846e8d2e"
+    },
+    {
+      "document": "en/platform-engineering/03-kro.md",
+      "example": "examples/platform/kro/nginxapp-rbac.yaml",
+      "sha256": "e45b570b47de205caf61e65ce324c9c115ca4deb5da54decf93c69091b421c42"
+    }
+  ],
+  "localLinks": [
+    {
+      "source": "ko/platform-engineering/03-kro.md",
+      "target": "../quizzes/platform-engineering/03-kro-quiz.md"
+    },
+    {
+      "source": "ko/quizzes/platform-engineering/03-kro-quiz.md",
+      "target": "../../platform-engineering/03-kro.md"
+    },
+    {
+      "source": "en/platform-engineering/03-kro.md",
+      "target": "../quizzes/platform-engineering/03-kro-quiz.md"
+    },
+    {
+      "source": "en/quizzes/platform-engineering/03-kro-quiz.md",
+      "target": "../../platform-engineering/03-kro.md"
+    }
+  ],
+  "primaryLinks": [
+    {
+      "url": "https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/01-access-control.md",
+      "status": 200,
+      "finalUrl": "https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/01-access-control.md",
+      "sha256": "ea7740b8fc8f2321c296121aa8c27c523d71d23667e1dadcff0f3a591f13f9ec"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/05-graph-revisions.md",
+      "status": 200,
+      "finalUrl": "https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/05-graph-revisions.md",
+      "sha256": "d5e94f97d5afe5ca76512aeef3a4a51ce1c874a66b4b5ff730e7d11e13b70289"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/06-instance-deletion.md",
+      "status": 200,
+      "finalUrl": "https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/06-instance-deletion.md",
+      "sha256": "29552cbd9adad52f510487af77c32f1cc9ad477458ceffa63123b268a75b751e"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/concepts/rgd/01-schema.md",
+      "status": 200,
+      "finalUrl": "https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/concepts/rgd/01-schema.md",
+      "sha256": "3f53df0daa78149ebe1607297d8fe56c19ebc463f130f654bbd3a0f1a72f463a"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/kro/releases/tag/v0.9.4",
+      "status": 200,
+      "finalUrl": "https://github.com/kubernetes-sigs/kro/releases/tag/v0.9.4",
+      "sha256": "4238db1d3727948f229c59ec3b974632e36a8fa0b4be32def1f4a5c78bde823a"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/kro/tree/v0.9.4",
+      "status": 200,
+      "finalUrl": "https://github.com/kubernetes-sigs/kro/tree/v0.9.4",
+      "sha256": "96d70a865eb5f0de0a3f0aa236c2586f618e4ef7e0372267825f67f146d36d79"
+    }
+  ],
+  "sources": [
+    {
+      "file": "website_docs_docs_advanced_01-access-control.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/advanced/01-access-control.md",
+      "sha256": "39369c3b62c67309973f99b46af7f15d7d6d9e22417178b839a9604b2543a9f5"
+    },
+    {
+      "file": "website_docs_docs_advanced_02-feature-gates.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/advanced/02-feature-gates.md",
+      "sha256": "c7b2e993fd90f74fb618439ca131cb1afb66a030ce4cd5cb25c852878831c913"
+    },
+    {
+      "file": "website_docs_docs_advanced_03-controller-tuning.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/advanced/03-controller-tuning.md",
+      "sha256": "ca6ef1f45b2997215774540e28ed5f5de758adfe7ce596d3e7e62dec44d8e3e0"
+    },
+    {
+      "file": "website_docs_docs_advanced_04-metrics.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/advanced/04-metrics.md",
+      "sha256": "176c57d450ea22a1e3f28254749336473f47a759e9a63bfe87fc2c8c28d6c746"
+    },
+    {
+      "file": "website_docs_docs_advanced_05-graph-revisions.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/advanced/05-graph-revisions.md",
+      "sha256": "d88b533f1c854a76bf23101c4d4c95da26fef9bb4fae24bfbccc8b6544149401"
+    },
+    {
+      "file": "website_docs_docs_advanced_06-instance-deletion.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/advanced/06-instance-deletion.md",
+      "sha256": "032eedbd5f93d9a1b2754ca413581bc1b104ecf780178810de402fdcbf2a81cb"
+    },
+    {
+      "file": "website_docs_docs_building-abstractions_10-single-resource-rgd.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/building-abstractions/10-single-resource-rgd.md",
+      "sha256": "c151c3d10451d43e9c32327796140991514807894c528a0db64c44720d30492a"
+    },
+    {
+      "file": "website_docs_docs_building-abstractions_20-multi-resource-rgd.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/building-abstractions/20-multi-resource-rgd.md",
+      "sha256": "3f2ba980bbde88c097fd09e1bbc77517857e0ed2fe7881655c00cd0574858ec1"
+    },
+    {
+      "file": "website_docs_docs_building-abstractions_30-rgd-chaining.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/building-abstractions/30-rgd-chaining.md",
+      "sha256": "b6c7d1f94b84ff692762f3a8131763627674b89d3472a6ea661c14f3d02ca09b"
+    },
+    {
+      "file": "website_docs_docs_concepts_15-instances.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/15-instances.md",
+      "sha256": "432808e2bb0db80bde14763424e4adb28c8580193ed8e9e4a3b7161b53e72227"
+    },
+    {
+      "file": "website_docs_docs_concepts_rgd_00-overview.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/rgd/00-overview.md",
+      "sha256": "96ca3608459f651aa25ff0ae56d279da1fa40dc775062c8918eedfd519026ef6"
+    },
+    {
+      "file": "website_docs_docs_concepts_rgd_01-schema.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/rgd/01-schema.md",
+      "sha256": "2fce3710df02163c90fe3b9a1a1390810a1b36adb0bef1da595936f6f7f6a69b"
+    },
+    {
+      "file": "website_docs_docs_concepts_rgd_02-resource-definitions_01-resource-basics.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/rgd/02-resource-definitions/01-resource-basics.md",
+      "sha256": "909ce642c45527d67ce25e6763b98581abc70d8fb044e90cda81589597ab32c8"
+    },
+    {
+      "file": "website_docs_docs_concepts_rgd_02-resource-definitions_02-conditional-creation.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/rgd/02-resource-definitions/02-conditional-creation.md",
+      "sha256": "162e1171470048fbbee7c6cb4659c08241f6aa5f1fed221de06cd043ea91eddb"
+    },
+    {
+      "file": "website_docs_docs_concepts_rgd_02-resource-definitions_03-readiness.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/rgd/02-resource-definitions/03-readiness.md",
+      "sha256": "ced3ff17a8a3dfaf6ccfd04edbfd2730d74035cc709ecf43e996839fd4056d50"
+    },
+    {
+      "file": "website_docs_docs_concepts_rgd_02-resource-definitions_05-external-references.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/rgd/02-resource-definitions/05-external-references.md",
+      "sha256": "b99ed20a355c410aa20cddcdaccc82748dfeaea817e45ebbf5db1cc4560bbb7f"
+    },
+    {
+      "file": "website_docs_docs_concepts_rgd_03-cel-expressions.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/rgd/03-cel-expressions.md",
+      "sha256": "f26d10713362cf27adc9d0282e91714fc190b78c1e2d1da0123b8a5552bb9992"
+    },
+    {
+      "file": "website_docs_docs_concepts_rgd_04-dependencies-ordering.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/rgd/04-dependencies-ordering.md",
+      "sha256": "027cae9d969673329b53a8075b821b329bb136008849764875bf917d5a969586"
+    },
+    {
+      "file": "website_docs_docs_concepts_rgd_05-static-type-checking.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/rgd/05-static-type-checking.md",
+      "sha256": "cf8d27fce57dbabd481788f38c7f69c88ded96018d91e8ddfe7f7cee40394a7c"
+    },
+    {
+      "file": "website_docs_docs_concepts_rgd_06-status-conditions.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/concepts/rgd/06-status-conditions.md",
+      "sha256": "3d2612179d5be373549f4fd6cc032fb808e52246074585a00d1897efefbf3171"
+    },
+    {
+      "file": "website_docs_docs_faq.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/faq.md",
+      "sha256": "169481d0d22b70d34237a3e842c349ac64359f7e0b04f268936304b70c08b335"
+    },
+    {
+      "file": "website_docs_docs_getting-started_01-Installation.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/getting-started/01-Installation.md",
+      "sha256": "ec2404035f408a7a0b2c157b5b084ac8e3ba3a431deb6360bc9e6c043c84a339"
+    },
+    {
+      "file": "website_docs_docs_getting-started_02-deploy-a-resource-graph-definition.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/docs/getting-started/02-deploy-a-resource-graph-definition.md",
+      "sha256": "73ab5fa637f0e1f0ba027d1adcc46bca979def0de523933a342bc018454afbe0"
+    },
+    {
+      "file": "helm_crds_kro.run_resourcegraphdefinitions.yaml",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/helm/crds/kro.run_resourcegraphdefinitions.yaml",
+      "sha256": "6c4e717eab4f89fc06be544fe12a0185de96ef75eefa0acac2de52fe0f383850"
+    },
+    {
+      "file": "helm_templates_cluster-role.yaml",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/helm/templates/cluster-role.yaml",
+      "sha256": "f2cf51b5c06c8a1864a5f3016b3090e84bdf81ef27367134254eab1a1229ceef"
+    },
+    {
+      "file": "helm_templates_deployment.yaml",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/helm/templates/deployment.yaml",
+      "sha256": "9c717776422fe544d727820197c101c1a76fcbdf8f587ec59a2300bd66e721bb"
+    },
+    {
+      "file": "test_upgrade_fixtures_simple-deployment_rgd.yaml",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/test/upgrade/fixtures/simple-deployment/rgd.yaml",
+      "sha256": "ff010561c0ae610d531e16711d55134daf54d699350185bb40f2e477bb5d304a"
+    },
+    {
+      "file": "test_upgrade_fixtures_simple-deployment_instance.yaml",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/test/upgrade/fixtures/simple-deployment/instance.yaml",
+      "sha256": "4401b45e61aa25bf81a9043bd8631fb595697363e044994f445b22aab8f14c49"
+    },
+    {
+      "file": "website_docs_examples_basic_web-app-ingress.md",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/website/docs/examples/basic/web-app-ingress.md",
+      "sha256": "949daca6bbdca8c1a63b1ce0aacd57d402d162cedcf0358b30c09a2712c194a5"
+    },
+    {
+      "file": "go.mod",
+      "url": "https://raw.githubusercontent.com/kro-run/kro/v0.9.4/go.mod",
+      "sha256": "aef3f549f3b4749eb0fa8a0896e497c30ce3082be35e1d497380f594565771af"
+    }
+  ],
+  "limitations": [
+    "NoKubernetes/AWSresourcemutations,controller/app/Ingress/TLS/DBexecution.",
+    "Actualcel-go0.31.0compilation/evaluationusesdynamicvariables/syntheticstatus;notfullkrographcompilation,API discovery/staticKubernetestypeinferenceoradmission.",
+    "RGDstructureandspecifiedCELtemplate/externalRefXORchecked;notgeneralKubernetesCELadmissionexecution.",
+    "CurrentimageindexverifiedinHelmcohort;noimagepulled/executed.",
+    "No full local VitePress build;4documentscompiledwith512MiBNodeheap."
+  ]
+}

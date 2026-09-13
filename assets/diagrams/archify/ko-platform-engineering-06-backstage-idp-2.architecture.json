@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1200,
+      1360,
       330
     ],
     "legend": {
@@ -39,7 +39,7 @@
         120
       ],
       "size": [
-        150,
+        170,
         60
       ]
     },
@@ -49,7 +49,7 @@
       "label": "Git Repository",
       "sublabel": "docs/ + mkdocs.yml",
       "pos": [
-        270,
+        260,
         120
       ],
       "size": [
@@ -63,11 +63,11 @@
       "label": "MkDocs Build",
       "sublabel": "CI 잡",
       "pos": [
-        520,
+        480,
         120
       ],
       "size": [
-        160,
+        170,
         60
       ]
     },
@@ -77,25 +77,39 @@
       "label": "S3 Bucket",
       "sublabel": "정적 HTML 저장",
       "pos": [
-        760,
+        700,
         120
       ],
       "size": [
-        160,
+        170,
         60
       ]
     },
     {
       "id": "techdocs",
       "type": "frontend",
-      "label": "Backstage TechDocs UI",
+      "label": "TechDocs UI",
       "sublabel": "통합 문서 뷰어",
       "pos": [
-        990,
+        1150,
         120
       ],
       "size": [
-        180,
+        170,
+        60
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "TechDocs Backend",
+      "sublabel": "인증 · 권한 · S3 읽기",
+      "pos": [
+        920,
+        120
+      ],
+      "size": [
+        170,
         60
       ]
     }
@@ -106,28 +120,32 @@
       "from": "dev",
       "to": "git",
       "label": "Markdown 작성",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "labelDy": -24
     },
     {
       "id": "git-build",
       "from": "git",
       "to": "build",
       "label": "CI에서 빌드",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "labelDy": -24
     },
     {
       "id": "build-upload",
       "from": "build",
       "to": "s3",
       "label": "업로드",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "labelDy": -24
     },
     {
       "id": "s3-render",
       "from": "s3",
-      "to": "techdocs",
-      "label": "렌더링",
-      "variant": "emphasis"
+      "to": "backend",
+      "label": "산출물 응답",
+      "variant": "emphasis",
+      "labelDy": -24
     },
     {
       "id": "dev-read",
@@ -137,6 +155,14 @@
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "bottom"
+    },
+    {
+      "id": "backend-ui",
+      "from": "backend",
+      "to": "techdocs",
+      "label": "문서 응답",
+      "variant": "emphasis",
+      "labelDy": -24
     }
   ],
   "cards": [
@@ -154,8 +180,8 @@
       "title": "S3 스토리지 백엔드",
       "items": [
         "publisher: awsS3",
-        "Backstage 인스턴스 간 문서 공유·확장성 향상",
-        "IRSA 역할로 버킷 접근"
+        "CI publisher와 Backstage reader 권한 분리",
+        "S3를 공개하지 않고 backend를 통해 문서 제공"
       ]
     }
   ]

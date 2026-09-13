@@ -12,7 +12,7 @@
           "label": "KRO 커스텀 리소스"
         },
         "backend": {
-          "label": "KRO가 생성하는 자식 리소스"
+          "label": "Kubernetes 구성 요소"
         },
         "cloud": {
           "label": "ACK가 관리하는 AWS 인프라"
@@ -31,7 +31,8 @@
           "svc",
           "tgb",
           "dep",
-          "cm"
+          "cm",
+          "lbc"
         ],
         "note": "WebApp CR 하나가 Service, TargetGroupBinding, Deployment, ConfigMap을 함께 생성한다."
       },
@@ -43,7 +44,8 @@
           "nlb",
           "tg",
           "tgb",
-          "svc"
+          "svc",
+          "lbc"
         ],
         "note": "Route 53 → NLB → Target Group으로 들어온 트래픽을 TargetGroupBinding이 Service의 Pod에 연결한다."
       },
@@ -63,7 +65,7 @@
     {
       "id": "cr",
       "type": "frontend",
-      "label": "WebApp CR",
+      "label": "OrderApp CR",
       "sublabel": "단일 애플리케이션 API",
       "pos": [
         40,
@@ -92,7 +94,7 @@
       "id": "tgb",
       "type": "backend",
       "label": "TargetGroupBinding",
-      "sublabel": "Pod ↔ Target Group 연결",
+      "sublabel": "LBC가 처리하는 연결 요청",
       "pos": [
         300,
         200
@@ -120,7 +122,7 @@
       "id": "cm",
       "type": "backend",
       "label": "ConfigMap",
-      "sublabel": "DB 접속 정보",
+      "sublabel": "비밀을 제외한 DB endpoint",
       "pos": [
         300,
         440
@@ -184,6 +186,20 @@
       "size": [
         180,
         60
+      ]
+    },
+    {
+      "id": "lbc",
+      "type": "backend",
+      "label": "AWS Load Balancer Controller",
+      "sublabel": "Target 등록 / 해제",
+      "pos": [
+        980,
+        620
+      ],
+      "size": [
+        265,
+        70
       ]
     }
   ],
@@ -249,7 +265,7 @@
       "id": "tgb-tg",
       "from": "tgb",
       "to": "tg",
-      "label": "targetGroupARN",
+      "label": "참조 ARN",
       "variant": "dashed"
     },
     {
@@ -280,6 +296,64 @@
       "to": "tg",
       "fromSide": "bottom",
       "toSide": "top"
+    },
+    {
+      "id": "tgb-lbc",
+      "from": "tgb",
+      "to": "lbc",
+      "label": "binding 변경",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        925,
+        565
+      ],
+      "via": [
+        [
+          580,
+          230
+        ],
+        [
+          580,
+          300
+        ],
+        [
+          940,
+          300
+        ],
+        [
+          940,
+          655
+        ]
+      ]
+    },
+    {
+      "id": "lbc-tg",
+      "from": "lbc",
+      "to": "tg",
+      "label": "target API",
+      "fromSide": "top",
+      "toSide": "right",
+      "variant": "emphasis",
+      "labelAt": [
+        1120,
+        550
+      ],
+      "via": [
+        [
+          1112.5,
+          280
+        ],
+        [
+          900,
+          280
+        ],
+        [
+          900,
+          230
+        ]
+      ]
     }
   ],
   "cards": [
@@ -294,11 +368,20 @@
     },
     {
       "dot": "cyan",
-      "title": "KRO (애플리케이션)",
+      "title": "kro (애플리케이션)",
       "items": [
-        "ResourceGraphDefinition이 WebApp CR을 정의",
-        "CR 하나로 Deployment, Service, TargetGroupBinding, ConfigMap 관리",
-        "targetGroupARN·endpoints로 ACK 인프라를 참조"
+        "RGD가 OrderApp API와 CEL dependency를 정의",
+        "Service → TGB → Deployment 순서로 준비",
+        "DB 비밀은 미리 준비한 Secret 파일로 전달"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "검증 경계",
+      "items": [
+        "TGB는 ACK가 아니라 AWS LBC가 reconcile",
+        "로컬 schema/CEL 검사이며 실제 앱/DB 미실행",
+        "Deployment update는 Blue/Green·무중단 보장이 아님"
       ]
     }
   ]

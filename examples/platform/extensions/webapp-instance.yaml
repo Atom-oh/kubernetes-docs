@@ -1,0 +1,9 @@
+apiVersion: apps.example.com/v1
+kind: WebApp
+metadata:
+  name: reviewed-web
+  namespace: example
+spec:
+  replicas: 2
+  image: nginxinc/nginx-unprivileged:1.30.4-alpine
+  port: 8080

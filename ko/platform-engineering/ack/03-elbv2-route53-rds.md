@@ -1,253 +1,241 @@
-# ELBv2, Route 53, RDS 리소스 생성 예제 (ACK)
+# ELBv2, Route 53 및 Aurora (ACK)
 
-> **참고**: 이 문서는 [ACK 개념 문서](../02-ack.md)의 실습 예제입니다.
+[ACK](../02-ack.md)
 
-실무에서 자주 사용하는 NLB(Network Load Balancer), Route 53 DNS, Aurora PostgreSQL 조합을 ACK로 프로비저닝하는 예제입니다. 이 패턴은 프로덕션 워크로드에서 가장 일반적인 인프라 구성 중 하나입니다.
+ELBv2 1.7.0 / Route 53 1.6.0 / RDS 1.12.0의 독립된 schema 예제입니다. NLB가 Aurora 앞단에 놓인다는 뜻은 아닙니다. app용 내부 NLB/DNS와 app이 연결할 Aurora를 별도로 준비하는 구성입니다. 전체 서비스가 연결된 실습으로 검증하지 않았습니다.
 
-## 컨트롤러 설치
+infra namespace와 세 controller의 인증·권한을 준비하고 승인된 VPC, private subnet, security group, hosted zone으로 치환하세요. NLB용과 DB용 security group은 필요한 source/port만 허용해야 합니다. 내부 NLB라고 IAM/RBAC 또는 네트워크 접근 제어가 대체되지는 않습니다.
 
-ELBv2, Route 53, RDS 컨트롤러를 설치합니다:
+TargetGroup만 생성하면 target이 등록되지 않습니다. 고정 IP target은 ACK targets로 관리할 수 있지만 Kubernetes Pod의 변동 IP 연결에는 AWS Load Balancer Controller의 적절한 binding/소유권 계획이 필요합니다. 같은 AWS 객체를 두 controller가 경쟁 관리하지 않게 하세요.
 
-```bash
-# 3개 컨트롤러 설치
-for SERVICE in elbv2 route53 rds; do
-  helm install -n ack-system ack-${SERVICE}-controller \
-    oci://public.ecr.aws/aws-controllers-k8s/${SERVICE}-chart \
-    --create-namespace \
-    --set aws.region=ap-northeast-2
-done
-```
+NLB와 TargetGroup ARN은 status.ackResourceMetadata.arn에서 읽습니다. Listener는 지원되는 Ref를 사용합니다. Route 53은 type이 아니라 recordType이며 NLB DNS와 canonicalHostedZoneID를 실제 status에서 복사해야 합니다. record가 속한 hosted zone과 alias 대상 NLB zone ID는 다른 값입니다.
 
-## NLB 생성 (ACK ELBv2)
+Aurora PostgreSQL 17.10은 2026년 8월 발표 버전입니다. 실제 계정·region의 engine/class 조합과 upgrade 경로는 describe-db-engine-versions 및 describe-orderable-db-instance-options로 확인하세요. 예전 15.4를 새 기본값으로 사용하지 않습니다. DB subnet은 최소 두 개의 지원 AZ에 걸쳐 준비하고 실제 배치·가용성을 확인합니다.
+
+manageMasterUserPassword=true로 RDS의 Secrets Manager 통합을 요청하며 별도의 plaintext password 예제를 만들지 않았습니다. 필요한 KMS/Secrets Manager 권한과 비용, app의 승인된 파일 전달 경로를 준비합니다. deletionProtection과 retain은 서로 다른 계층의 보존 설정입니다.
+
+DBInstance 이름이나 Role tag가 writer/reader를 고정하지 않습니다. 실제 writer는 cluster membership 상태로 확인하며 failover로 바뀔 수 있습니다. promotionTier는 승격 우선순위이며 고정 역할 보장이 아닙니다. custom READER endpoint는 지정 인스턴스가 현재 reader인 경우에만 대상으로 사용하므로 failover 후 가용 대상과 연결 재시도를 확인합니다. AZ 이름처럼 보이는 endpoint 이름만으로 AZ 제한이 구현되지 않습니다.
+
+## LoadBalancer — loadbalancer-app-nlb
 
 ```yaml
 apiVersion: elbv2.services.k8s.aws/v1alpha1
 kind: LoadBalancer
 metadata:
-  name: my-app-nlb
+  name: app-nlb
   namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  name: my-app-nlb
+  name: app-nlb
   scheme: internal
   type: network
-  subnetMappings:
-    - subnetID: subnet-0123456789abcdef0
-    - subnetID: subnet-0123456789abcdef1
-    - subnetID: subnet-0123456789abcdef2
-  tags:
-    - key: Environment
-      value: Production
-    - key: Team
-      value: platform
+  subnets:
+  - subnet-0123456789abcdef0
+  - subnet-0123456789abcdef1
+  securityGroups:
+  - sg-0123456789abcdef0
 ```
 
-생성 후 `.status.dnsName`에서 NLB의 DNS 이름을 확인할 수 있습니다.
-
-## Target Group 생성
+## TargetGroup — targetgroup-app-tg
 
 ```yaml
 apiVersion: elbv2.services.k8s.aws/v1alpha1
 kind: TargetGroup
 metadata:
-  name: my-app-tg
+  name: app-tg
   namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  name: my-app-tg
+  name: app-tg
   protocol: TCP
   port: 8080
   targetType: ip
   vpcID: vpc-0123456789abcdef0
   healthCheckProtocol: TCP
-  healthCheckPort: "8080"
-  healthyThresholdCount: 3
-  unhealthyThresholdCount: 3
-  tags:
-    - key: Environment
-      value: Production
+  healthCheckPort: '8080'
 ```
 
-생성 후 `.status.targetGroupARN`에서 Target Group ARN을 확인할 수 있습니다.
-
-## Listener 생성
+## Listener — listener-app-listener
 
 ```yaml
 apiVersion: elbv2.services.k8s.aws/v1alpha1
 kind: Listener
 metadata:
-  name: my-app-listener
+  name: app-listener
   namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  loadBalancerARN: <NLB의 .status.loadBalancerARN>
-  port: 80
+  loadBalancerRef:
+    from:
+      name: app-nlb
+  port: 8080
   protocol: TCP
   defaultActions:
-    - type: forward
-      targetGroupARN: <TargetGroup의 .status.targetGroupARN>
+  - type: forward
+    targetGroupRef:
+      from:
+        name: app-tg
 ```
 
-## Route 53 DNS 레코드 등록
+## RecordSet — recordset-app-dns
 
 ```yaml
 apiVersion: route53.services.k8s.aws/v1alpha1
 kind: RecordSet
 metadata:
-  name: my-app-dns
+  name: app-dns
   namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  hostedZoneID: Z0123456789ABCDEFGHIJ
+  hostedZoneID: REPLACE_WITH_PRIVATE_ZONE_ID
   name: app.example.com
-  type: A
+  recordType: A
   aliasTarget:
-    dnsName: <NLB의 .status.dnsName>
-    hostedZoneID: <NLB의 Hosted Zone ID>
+    dnsName: REPLACE_WITH_NLB_STATUS_DNS_NAME
+    hostedZoneID: REPLACE_WITH_NLB_CANONICAL_HOSTED_ZONE_ID
     evaluateTargetHealth: true
 ```
 
-## Aurora PostgreSQL 클러스터 생성
-
-### DBSubnetGroup
+## DBSubnetGroup — dbsubnetgroup-app-db-subnets
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBSubnetGroup
 metadata:
-  name: my-aurora-subnet-group
+  name: app-db-subnets
   namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  name: my-aurora-subnet-group
-  description: "Subnet group for Aurora PostgreSQL"
+  name: app-db-subnets
+  description: Private subnets in distinct supported AZs
   subnetIDs:
-    - subnet-0123456789abcdef0
-    - subnet-0123456789abcdef1
-    - subnet-0123456789abcdef2
-  tags:
-    - key: Environment
-      value: Production
+  - subnet-0123456789abcdef0
+  - subnet-0123456789abcdef1
 ```
 
-### DBCluster
+## DBCluster — dbcluster-app-aurora
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBCluster
 metadata:
-  name: my-aurora-cluster
+  name: app-aurora
   namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  dbClusterIdentifier: my-aurora-cluster
+  dbClusterIdentifier: app-aurora
   engine: aurora-postgresql
-  engineVersion: "15.4"
+  engineVersion: '17.10'
   masterUsername: dbadmin
-  masterUserPassword:
-    name: aurora-master-password
-    key: password
+  manageMasterUserPassword: true
+  dbSubnetGroupRef:
+    from:
+      name: app-db-subnets
   vpcSecurityGroupIDs:
-    - sg-0123456789abcdef0
-  dbSubnetGroupName: my-aurora-subnet-group
+  - sg-0123456789abcdef1
   storageEncrypted: true
-  tags:
-    - key: Environment
-      value: Production
+  backupRetentionPeriod: 7
+  deletionProtection: true
 ```
 
-생성 후 `.status.endpoint`(Writer 엔드포인트)와 `.status.readerEndpoint`(Reader 엔드포인트)를 확인할 수 있습니다.
-
-### DBInstance (Writer)
+## DBInstance — dbinstance-app-db-1
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBInstance
 metadata:
-  name: my-aurora-writer
+  name: app-db-1
   namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  dbInstanceIdentifier: my-aurora-writer
-  dbClusterIdentifier: my-aurora-cluster
-  dbInstanceClass: db.r6g.xlarge
+  dbInstanceIdentifier: app-db-1
+  dbClusterIdentifierRef:
+    from:
+      name: app-aurora
+  dbInstanceClass: db.r6g.large
   engine: aurora-postgresql
-  availabilityZone: ap-northeast-2a
-  tags:
-    - key: Role
-      value: Writer
+  publiclyAccessible: false
+  promotionTier: 0
 ```
 
-### DBInstance (Reader 1)
+## DBInstance — dbinstance-app-db-2
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBInstance
 metadata:
-  name: my-aurora-reader-1
+  name: app-db-2
   namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  dbInstanceIdentifier: my-aurora-reader-2b
-  dbClusterIdentifier: my-aurora-cluster
-  dbInstanceClass: db.r6g.xlarge
+  dbInstanceIdentifier: app-db-2
+  dbClusterIdentifierRef:
+    from:
+      name: app-aurora
+  dbInstanceClass: db.r6g.large
   engine: aurora-postgresql
-  availabilityZone: ap-northeast-2b
-  tags:
-    - key: Role
-      value: Reader
+  publiclyAccessible: false
+  promotionTier: 1
 ```
 
-### DBInstance (Reader 2)
+## DBInstance — dbinstance-app-db-3
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBInstance
 metadata:
-  name: my-aurora-reader-2
+  name: app-db-3
   namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  dbInstanceIdentifier: my-aurora-reader-2c
-  dbClusterIdentifier: my-aurora-cluster
-  dbInstanceClass: db.r6g.xlarge
+  dbInstanceIdentifier: app-db-3
+  dbClusterIdentifierRef:
+    from:
+      name: app-aurora
+  dbInstanceClass: db.r6g.large
   engine: aurora-postgresql
-  availabilityZone: ap-northeast-2c
-  tags:
-    - key: Role
-      value: Reader
+  publiclyAccessible: false
+  promotionTier: 2
 ```
 
-## Custom Endpoint (AZ별 Read Replica)
-
-특정 AZ의 Reader 인스턴스만 사용하는 커스텀 엔드포인트를 생성할 수 있습니다:
+## DBClusterEndpoint — dbclusterendpoint-app-selected-readers
 
 ```yaml
 apiVersion: rds.services.k8s.aws/v1alpha1
 kind: DBClusterEndpoint
 metadata:
-  name: my-aurora-reader-2a-endpoint
+  name: app-selected-readers
   namespace: infra
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
-  dbClusterIdentifier: my-aurora-cluster
-  dbClusterEndpointIdentifier: my-aurora-reader-2a
+  dbClusterEndpointIdentifier: app-selected-readers
+  dbClusterIdentifierRef:
+    from:
+      name: app-aurora
   endpointType: READER
-  staticMembers:
-    - my-aurora-reader-2b
----
-apiVersion: rds.services.k8s.aws/v1alpha1
-kind: DBClusterEndpoint
-metadata:
-  name: my-aurora-reader-2b-endpoint
-  namespace: infra
-spec:
-  dbClusterIdentifier: my-aurora-cluster
-  dbClusterEndpointIdentifier: my-aurora-reader-2b
-  endpointType: READER
-  staticMembers:
-    - my-aurora-reader-2c
+  staticMemberRefs:
+  - from:
+      name: app-db-2
+  - from:
+      name: app-db-3
 ```
 
-## 리소스 상태 확인
+## 검증과 운영 전 확인
 
-```bash
-# NLB, Target Group, Listener 상태 확인
-kubectl get loadbalancers,targetgroups,listeners -n infra
+표시한 필드는 공식 versioned CRD로 검사했습니다. 스키마 통과는 IAM, AWS 서비스 제약, 실제 생성·연결·복구를 증명하지 않습니다. retain으로 남긴 리소스의 운영·비용·삭제 책임과 백업 계획을 정한 뒤 적용하세요.
 
-# Aurora 클러스터 및 인스턴스 상태 확인
-kubectl get dbclusters,dbinstances,dbclusterendpoints -n infra
-
-# Route 53 레코드 상태 확인
-kubectl get recordsets -n infra
-```
+- [elbv2 v1.7.0 CRDs](https://github.com/aws-controllers-k8s/elbv2-controller/tree/v1.7.0/config/crd/bases)
+- [route53 v1.6.0 CRDs](https://github.com/aws-controllers-k8s/route53-controller/tree/v1.6.0/config/crd/bases)
+- [rds v1.12.0 CRDs](https://github.com/aws-controllers-k8s/rds-controller/tree/v1.12.0/config/crd/bases)
+- [Aurora PostgreSQL minor versions](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-aurora-postgresql-18-4-17-10-16-14-15-18-14-23/)
+- [Aurora custom endpoints](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Custom.html)
