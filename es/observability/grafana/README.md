@@ -1,787 +1,384 @@
-# Dashboards de Grafana
+# Grafana Dashboards
 
-> **Versiones compatibles**: Grafana 11.x
-> **Última actualización**: February 20, 2026
+
+> **Versiones compatibles**: Grafana 13.2.1 · Chart de Helm comunitario 13.2.2
+
+> **Última actualización**: September 13, 2026
 
 ## Introducción
 
-Grafana es una plataforma de código abierto para visualizar y analizar métricas, logs y datos de trazas. Al integrar diversas fuentes de datos, puede monitorear el estado completo del sistema desde un único dashboard.
+Grafana consulta Prometheus, Loki, Tempo, CloudWatch y otras fuentes de datos, y ofrece dashboards (paneles de control) y alertas. Su base de datos de metadatos es independiente de los backends que retienen métricas, logs y trazas. Los [ejemplos ejecutables](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/grafana) se conectan a backends existentes en un clúster. Consulta el [laboratorio de la pila de observabilidad](../../labs/observability/02-observability-stack-lab.md) para el despliegue de los backends.
 
-## Características principales
-
-| Característica | Descripción |
-|---------|-------------|
-| **Múltiples fuentes de datos** | Compatibilidad con Prometheus, Loki, Tempo, CloudWatch, etc. |
-| **Visualizaciones enriquecidas** | Gráficos, mapas de calor, tablas, paneles de estadísticas, etc. |
-| **Alertas** | Alertas basadas en condiciones y diversos canales de notificación |
-| **Plantillas de dashboard** | Dashboards y paneles reutilizables |
-| **Ecosistema de plugins** | Arquitectura de plugins extensible |
-| **Colaboración en equipo** | Carpetas, permisos y funciones de equipo |
+<span id="key-features"></span>
 
 ## Arquitectura
 
-```mermaid
-flowchart TD
-    subgraph Users["Users"]
-        BROWSER[Web Browser]
-        API_CLIENT[API Client]
-    end
+![Grafana almacena dashboards y sesiones de autenticación en su base de datos de metadatos, consulta backends de observabilidad independientes y evalúa alertas. El almacenamiento en caché opcional de consultas es una función de Enterprise o Cloud.](../../.gitbook/assets/en-observability-grafana-readme-0.png)
 
-    subgraph Grafana["Grafana Server"]
-        FRONTEND[Frontend<br/>React]
-        BACKEND[Backend<br/>Go]
-        ALERTING[Alerting Engine]
-        PLUGINS[Plugin System]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-grafana-readme-0.html)
 
-    subgraph Storage["Storage"]
-        DB[(PostgreSQL/MySQL)]
-        CACHE[(Redis/Memcached)]
-    end
-
-    subgraph DataSources["Data Sources"]
-        PROM[Prometheus]
-        VM[VictoriaMetrics]
-        LOKI[Loki]
-        TEMPO[Tempo]
-        CW[CloudWatch]
-        ES[Elasticsearch]
-    end
-
-    subgraph Notifications["Notification Channels"]
-        SLACK[Slack]
-        PAGERDUTY[PagerDuty]
-        EMAIL[Email]
-        WEBHOOK[Webhook]
-    end
-
-    BROWSER & API_CLIENT --> FRONTEND
-    FRONTEND --> BACKEND
-    BACKEND --> DB
-    BACKEND --> CACHE
-    BACKEND --> PLUGINS
-
-    PLUGINS --> PROM & VM & LOKI & TEMPO & CW & ES
-
-    ALERTING --> SLACK & PAGERDUTY & EMAIL & WEBHOOK
-
-    classDef user fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef storage fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-    classDef datasource fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef notification fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class BROWSER,API_CLIENT user
-    class FRONTEND,BACKEND,ALERTING,PLUGINS grafana
-    class DB,CACHE storage
-    class PROM,VM,LOKI,TEMPO,CW,ES datasource
-    class SLACK,PAGERDUTY,EMAIL,WEBHOOK notification
-```
+| Componente | Responsabilidad |
+|---|---|
+| Base de datos de Grafana | Usuarios, dashboards, configuración y sesiones de autenticación; PostgreSQL/MySQL compartido para HA |
+| Fuentes de datos | Consultas y retención reales de métricas, logs y trazas |
+| Grafana Alerting | Evaluación y enrutamiento de notificaciones; la deduplicación de notificaciones necesita una configuración de HA aparte |
+| Caché de consultas opcional | Capacidad admitida en Enterprise/Cloud; Redis no es un almacén de sesiones obligatorio |
 
 ## Despliegue con Helm
 
+<span id="run-installation"></span>
+
 ### Instalación básica
 
-```bash
-# Add Helm repository
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
+El perfil predeterminado usa **una réplica, SQLite, un PVC RWO y actualizaciones Recreate**. Requiere la StorageClass `gp3` y el driver CSI, y puede quedar no disponible durante las actualizaciones. La HA es un perfil aparte. El chart proviene del repositorio comunitario; su versión y el digest de la imagen están fijados.
 
-# Create namespace
-kubectl create namespace monitoring
+Clona este repositorio y edita las tres URLs de `endpoints.yaml` para que coincidan con **los Services y puertos reales**. El ejemplo de Tempo 3.x usa el puerto 3200 de la API HTTP, que difiere de los puertos de ingesta OTLP. Los nombres de servicio de ejemplo no crean backends. Si los backends del laboratorio requieren mTLS, añade su configuración de certificado de CA/cliente a las fuentes de datos; el HTTP simple no puede eludirlo.
+
+Estos comandos son para una instalación nueva. Rota las credenciales existentes mediante tu proceso establecido en lugar de sobrescribir Secrets. Lee localmente el archivo de contraseña privada generado al iniciar sesión; mantén su contenido fuera de Git, de los archivos de values y de los logs del terminal.
+
+```bash
+helm repo add grafana-community https://grafana-community.github.io/helm-charts
+helm repo update grafana-community
+kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+cd examples/observability/grafana
+
+umask 077
+GRAFANA_STATE=$(mktemp -d "$PWD/.grafana-private.XXXXXX")
+printf '%s' admin > "$GRAFANA_STATE/admin-user"
+python3 -c 'import secrets; print(secrets.token_hex(24), end="")' > "$GRAFANA_STATE/admin-password"
+python3 -c 'import secrets; print(secrets.token_hex(32), end="")' > "$GRAFANA_STATE/secret-key"
+python3 -c 'import secrets; print(secrets.token_hex(24), end="")' > "$GRAFANA_STATE/metrics-password"
+kubectl -n monitoring create secret generic grafana-admin-credentials \
+  --from-file=admin-user="$GRAFANA_STATE/admin-user" \
+  --from-file=admin-password="$GRAFANA_STATE/admin-password"
+kubectl -n monitoring create secret generic grafana-runtime \
+  --from-file=secret-key="$GRAFANA_STATE/secret-key" \
+  --from-file=metrics-password="$GRAFANA_STATE/metrics-password"
+
+kubectl apply -f endpoints.yaml
+kubectl -n monitoring create configmap grafana-datasources --from-file=datasources.yaml
+kubectl -n monitoring create configmap grafana-alerts --from-file=alerts.yaml
+kubectl -n monitoring create configmap grafana-docs-dashboards --from-file=dashboard.json
+helm upgrade --install grafana grafana-community/grafana --version 13.2.2 \
+  --namespace monitoring --values values.yaml --wait
+kubectl -n monitoring port-forward service/grafana 3000:80 --address 127.0.0.1
 ```
+
+Abre `http://localhost:3000`. El Service es de tipo ClusterIP y el port forwarding se enlaza únicamente a loopback. Antes de exponer Grafana, configura la autenticación, TLS y las políticas de red/acceso aprobadas.
 
 ### Configuración de values.yaml
 
 ```yaml
-# grafana-values.yaml
-replicas: 2
-
-image:
-  repository: grafana/grafana
-  tag: 11.0.0
-
-# Admin credentials
-adminUser: admin
-adminPassword: ""  # Auto-generated, managed in Secret
-
-# Use existing Secret
-admin:
-  existingSecret: grafana-admin-credentials
-  userKey: admin-user
-  passwordKey: admin-password
-
-# Service configuration
-service:
-  type: ClusterIP
-  port: 80
-
-# Ingress configuration
-ingress:
-  enabled: true
-  ingressClassName: alb
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:123456789012:certificate/xxx
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
-  hosts:
-    - grafana.example.com
-  tls:
-    - hosts:
-        - grafana.example.com
-
-# Persistent storage
+replicas: 1
+deploymentStrategy:
+  type: Recreate
 persistence:
   enabled: true
   type: pvc
   storageClassName: gp3
   size: 10Gi
   accessModes:
-    - ReadWriteOnce
-
-# Resource configuration
-resources:
-  requests:
-    cpu: 200m
-    memory: 256Mi
-  limits:
-    cpu: 1000m
-    memory: 1Gi
-
-# Grafana configuration
-grafana.ini:
-  server:
-    domain: grafana.example.com
-    root_url: https://grafana.example.com
-
-  database:
-    type: postgres
-    host: postgres.monitoring.svc.cluster.local:5432
-    name: grafana
-    user: grafana
-    ssl_mode: require
-
-  security:
-    admin_user: admin
-    secret_key: $__env{GF_SECURITY_SECRET_KEY}
-    cookie_secure: true
-    strict_transport_security: true
-
-  users:
-    allow_sign_up: false
-    auto_assign_org: true
-    auto_assign_org_role: Viewer
-
-  alerting:
-    enabled: true
-    execute_alerts: true
-
-  unified_alerting:
-    enabled: true
-    min_interval: 10s
-
-  analytics:
-    reporting_enabled: false
-    check_for_updates: false
-
-  log:
-    mode: console
-    level: info
-
-  metrics:
-    enabled: true
-
-# Sidecar configuration (dashboard/datasource provisioning)
-sidecar:
-  dashboards:
-    enabled: true
-    label: grafana_dashboard
-    labelValue: "true"
-    searchNamespace: ALL
-    folderAnnotation: grafana_folder
-    provider:
-      foldersFromFilesStructure: true
-  datasources:
-    enabled: true
-    label: grafana_datasource
-    labelValue: "true"
-    searchNamespace: ALL
-  alerts:
-    enabled: true
-    label: grafana_alert
-    searchNamespace: ALL
-
-# Plugin installation
-plugins:
-  - grafana-piechart-panel
-  - grafana-worldmap-panel
-  - grafana-clock-panel
-  - grafana-polystat-panel
-  - yesoreyeram-infinity-datasource
-
-# ServiceMonitor (Prometheus Operator)
-serviceMonitor:
-  enabled: true
-  interval: 30s
-  labels:
-    release: prometheus
-
-# PodDisruptionBudget
-podDisruptionBudget:
-  minAvailable: 1
-
-# Anti-affinity
-affinity:
-  podAntiAffinity:
-    preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 100
-        podAffinityTerm:
-          labelSelector:
-            matchLabels:
-              app.kubernetes.io/name: grafana
-          topologyKey: kubernetes.io/hostname
+  - ReadWriteOnce
+admin:
+  existingSecret: grafana-admin-credentials
+  userKey: admin-user
+  passwordKey: admin-password
+serviceAccount:
+  create: true
+  name: grafana
+  automountServiceAccountToken: false
 ```
 
-### Ejecutar la instalación
+El archivo completo conecta los montajes de Secrets, los UIDs fijos de las fuentes de datos, los archivos de dashboards y una alerta en pausa. Para el aprovisionamiento mediante ConfigMap montado, reinicia los Pods en secuencia después de actualizar los archivos para que el aprovisionamiento se ejecute de nuevo. Proporciona explícitamente cada archivo de values previsto en lugar de conservar ajustes históricos desconocidos con `--reuse-values`.
+
+### Alta disponibilidad
+
+`values-ha.yaml` añade dos réplicas, deshabilita el PVC compartido y configura PostgreSQL externo con `verify-full`, un Service headless y el gossip de Alerting. Prepara por separado la HA de la base de datos, las copias de seguridad y la recuperación. No compartas un único archivo SQLite entre réplicas de Grafana.
+
+La base de datos y el usuario de ejemplo son `grafana`. Prepara un Secret `grafana-database` que contenga `host` (DNS:5432 que coincida con el certificado), `password` y `ca.crt`; monta el mismo `grafana-runtime/secret-key` en ambos Pods. Sustituye `root_url` por la dirección HTTPS externa real y configura la terminación TLS. Mover datos SQLite existentes requiere una migración y una comprobación de recuperación aparte; cambiar el tipo de base de datos no los migra.
 
 ```bash
-# Install
-helm upgrade --install grafana grafana/grafana \
-  --namespace monitoring \
-  --values grafana-values.yaml \
-  --wait
-
-# Verify
-kubectl get pods -n monitoring -l app.kubernetes.io/name=grafana
-kubectl get svc -n monitoring -l app.kubernetes.io/name=grafana
+helm upgrade --install grafana grafana-community/grafana --version 13.2.2 \
+  -n monitoring -f values.yaml -f values-ha.yaml --wait
 ```
+
+El DNS de los peers asume el release `grafana` y el namespace `monitoring`; actualízalo si cambia alguno de los dos. Permite TCP/UDP 9094 entre los Pods de Grafana y solo la conectividad necesaria de DNS, base de datos y backends. Las sesiones de autenticación se almacenan en la base de datos compartida de Grafana, por lo que no se requieren sesiones en Redis ni afinidad en el balanceador de carga para la continuidad del inicio de sesión.
+
+La HA de Alerting requiere conectividad entre peers y configuración de deduplicación. Ten en cuenta la evaluación en cada nodo con la configuración predeterminada. La versión 13.2.1 también tiene `ha_single_node_evaluation`, pero este ejemplo mantiene su valor predeterminado. La deduplicación no garantiza la entrega de notificaciones exactamente una vez ante particiones de red. La validación nativa usó una sola instancia de Grafana y no ejecutó una conmutación por error de la base de datos para este perfil de HA.
 
 ## Integración de fuentes de datos
 
-### Aprovisionamiento de fuentes de datos mediante ConfigMap
+<span id="data-source-provisioning-via-configmap"></span>
+
+### Aprovisionamiento por archivos y UIDs
+
+`datasources.yaml` fija Prometheus=`prometheus`, Loki=`loki` y Tempo=`tempo`. Los dashboards, las alertas y los enlaces de correlación deben usar UIDs coincidentes. Las variables de entorno suministran valores dentro de los archivos de aprovisionamiento; definir variables por sí solo no crea objetos de fuente de datos.
 
 ```yaml
-# grafana-datasources.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-datasources
-  namespace: monitoring
-  labels:
-    grafana_datasource: "true"
-data:
-  datasources.yaml: |-
-    apiVersion: 1
-    deleteDatasources:
-      - name: Old-Prometheus
-        orgId: 1
-
-    datasources:
-      # Prometheus
-      - name: Prometheus
-        type: prometheus
-        uid: prometheus
-        url: http://prometheus-operated.monitoring.svc.cluster.local:9090
-        access: proxy
-        isDefault: true
-        jsonData:
-          httpMethod: POST
-          manageAlerts: true
-          prometheusType: Prometheus
-          prometheusVersion: 2.47.0
-          exemplarTraceIdDestinations:
-            - name: traceID
-              datasourceUid: tempo
-              urlDisplayLabel: "View Trace"
-        editable: false
-
-      # VictoriaMetrics
-      - name: VictoriaMetrics
-        type: prometheus
-        uid: victoriametrics
-        url: http://vmsingle.monitoring.svc.cluster.local:8428
-        access: proxy
-        jsonData:
-          httpMethod: POST
-
-      # Loki
-      - name: Loki
-        type: loki
-        uid: loki
-        url: http://loki-gateway.loki.svc.cluster.local
-        access: proxy
-        jsonData:
-          maxLines: 1000
-          derivedFields:
-            # Extract TraceID from logs
-            - name: TraceID
-              matcherRegex: '"traceId":"([a-f0-9]+)"'
-              url: '$${__value.raw}'
-              datasourceUid: tempo
-              urlDisplayLabel: "View Trace"
-
-      # Tempo
-      - name: Tempo
-        type: tempo
-        uid: tempo
-        url: http://tempo-query-frontend.tempo.svc.cluster.local:3100
-        access: proxy
-        jsonData:
-          httpMethod: GET
-          tracesToLogs:
-            datasourceUid: loki
-            tags: ['job', 'namespace', 'pod']
-            mappedTags:
-              - key: service.name
-                value: app
-            mapTagNamesEnabled: true
-            spanStartTimeShift: '-1h'
-            spanEndTimeShift: '1h'
-            filterByTraceID: true
-            filterBySpanID: true
-          tracesToMetrics:
-            datasourceUid: prometheus
-            tags:
-              - key: service.name
-                value: service
-            queries:
-              - name: 'Request Rate'
-                query: 'sum(rate(http_requests_total{service="$${__tags}"}[5m]))'
-              - name: 'Error Rate'
-                query: 'sum(rate(http_requests_total{service="$${__tags}",status=~"5.."}[5m]))'
-          serviceMap:
-            datasourceUid: prometheus
-          nodeGraph:
-            enabled: true
-          search:
-            hide: false
-          lokiSearch:
-            datasourceUid: loki
-
-      # CloudWatch
-      - name: CloudWatch
-        type: cloudwatch
-        uid: cloudwatch
-        jsonData:
-          authType: default
-          defaultRegion: ap-northeast-2
-          assumeRoleArn: arn:aws:iam::123456789012:role/grafana-cloudwatch-role
+apiVersion: 1
+datasources:
+- name: Prometheus
+  type: prometheus
+  uid: prometheus
+  url: $PROMETHEUS_URL
+  access: proxy
+  isDefault: true
+  editable: false
+  jsonData:
+    httpMethod: POST
+    exemplarTraceIdDestinations:
+    - name: trace_id
+      datasourceUid: tempo
+- name: Loki
+  type: loki
+  uid: loki
+  url: $LOKI_URL
+  access: proxy
+  editable: false
+  jsonData:
+    derivedFields:
+    - name: TraceID
+      matcherRegex: '"trace_id"\s*:\s*"([a-f0-9]{32})"'
+      url: $${__value.raw}
+      datasourceUid: tempo
+- name: Tempo
+  type: tempo
+  uid: tempo
+  url: $TEMPO_URL
+  access: proxy
+  editable: false
+  jsonData:
+    tracesToLogsV2:
+      datasourceUid: loki
+      tags:
+      - key: service.name
+        value: service_name
+      spanStartTimeShift: -5m
+      spanEndTimeShift: 5m
+      customQuery: true
+      query: '{$${__tags}} | json | trace_id="$${__span.traceId}"'
+    tracesToMetrics:
+      datasourceUid: prometheus
+      tags:
+      - key: service.name
+        value: service
+      queries:
+      - name: Request rate
+        query: sum(rate(lab_http_requests_total{$${__tags}}[5m]))
+    serviceMap:
+      datasourceUid: prometheus
+    nodeGraph:
+      enabled: true
 ```
+
+Estos enlaces usan el `service.name` de la aplicación del laboratorio, el `service_name` de Loki, la etiqueta de métrica `service` y el campo de log JSON `trace_id`. Adáptalos a las etiquetas reales para otros pipelines. `$${...}` preserva las macros de enlace `${...}` de Grafana a través del aprovisionamiento por archivos. `${__tags}` se expande a matchers como `service="..."`; envolverlo de nuevo dentro de `service="${__tags}"` crea un selector no válido.
+
+Los exemplars conectan observaciones de métricas seleccionadas con trazas; no contienen la traza de cada solicitud. La compatibilidad del exporter, la ingesta de exemplars en Prometheus y la retención de trazas deben estar alineadas. `serviceMap` requiere métricas de grafo de servicios del metrics-generator de Tempo en Prometheus. Configurar únicamente un UID no genera grafos de servicios.
+
+### IRSA para CloudWatch
+
+Asocia un rol IRSA aprobado al ServiceAccount de Grafana y restringe su confianza OIDC al namespace/ServiceAccount exactos y a `aud`. Verifica la proyección del token y la obtención de credenciales del SDK en el Pod. La fuente de datos con `authType: default` usa esa cadena de credenciales. No establezcas de forma redundante `assumeRoleArn` con el mismo rol; úsalo para una asunción de rol adicional deliberada, con la confianza y los permisos `sts:AssumeRole` necesarios.
+
+Comienza con `cloudwatch:ListMetrics` y `cloudwatch:GetMetricData` para las consultas de métricas. Añade permisos de Logs, EC2, etiquetas o X-Ray solo para las funciones que uses. Para acciones sin permisos a nivel de recurso, restringe `Resource: "*"` con las condiciones de Región aplicables; limita el acceso a Logs a los grupos de logs reales. No combines todas las acciones de lectura de AWS en una única declaración con comodín sin condiciones. El ejemplo predeterminado no crea credenciales ni recursos de AWS.
+
+<span id="use-method-utilization-saturation-errors"></span>
+
+<span id="red-method-rate-errors-duration"></span>
+
+<span id="_4-golden-signals"></span>
 
 ## Patrones de diseño de dashboards
 
-### Método USE (Utilización, Saturación, Errores)
+`dashboard.json` es JSON completo con ocho paneles. Los paneles de la aplicación usan `lab_http_*` del [laboratorio de MSA](../../labs/observability/03-msa-deployment-lab.md). Los paneles de nodos requieren node-exporter; el panel de CrashLoop requiere kube-state-metrics.
 
-Metodología para analizar los recursos del sistema:
+| Método | Señales | Interpretación |
+|---|---|---|
+| RED: Rate, Errors, Duration | Tasa de solicitudes, porcentaje de 5xx, p99 del histograma | No conviertas la ausencia de tráfico de solicitudes o el tráfico cero en un 100 % de éxito |
+| USE: Utilization, Saturation, Errors | Uso de CPU/memoria, presión de la cola de disco, errores de red | El tiempo de E/S ponderado no es un contador de errores de disco |
+| Cuatro señales doradas | Latencia, Tráfico, Errores, Saturación | La disponibilidad es un SLI aparte importante, no uno de estos cuatro nombres |
+
+Rellena con cero una serie de errores ausente solo cuando exista la serie de solicitudes correspondiente:
+
+```promql
+((sum by (service) (rate(lab_http_requests_total{status=~"5.."}[5m])) or 0 * sum by (service) (rate(lab_http_requests_total[5m]))) / (sum by (service) (rate(lab_http_requests_total[5m])) > 0)) * 100
+```
+
+El denominador excluye el tráfico cero. Muestra por separado la falta de recolección y la ausencia de tráfico. `rate(node_disk_io_time_weighted_seconds_total[5m])` estima la presión media de la cola de E/S; `increase(...)` no cuenta errores de disco. `node_load1` incluye tareas ejecutables y esperas de E/S, y no es una medida pura de la saturación de CPU.
+
+<span id="_2-variable-usage"></span>
+
+El dashboard asume un único clúster. Al combinar clústeres en un backend central, adjunta etiquetas `cluster` de forma coherente e inclúyelas en los selectores, agrupaciones y joins. Los joins de métricas de Pods necesitan al menos namespace y pod. Añade variables de clúster/namespace solo cuando existan esas etiquetas. Las selecciones múltiples o de tipo "all" necesitan matchers de regex y el escapado `${variable:regex}`. Las variables y las carpetas no son controles de acceso a las fuentes de datos.
+
+## Aprovisionamiento de dashboards
+
+### Sidecar
+
+El perfil predeterminado de archivos montados no requiere token ni RBAC de la API de Kubernetes. Añade `values-sidecar.yaml` cuando necesites observación dinámica de ConfigMaps. Este perfil opcional usa un Role con ámbito de namespace, lee solo ConfigMaps de `monitoring` y selecciona `grafana_dashboard: "true"`. La etiqueta y su valor son configurables, no requisitos universales de Grafana. Cualquiera que pueda escribir ConfigMaps coincidentes puede cambiar el contenido aprovisionado.
+
+El Role de namespace predeterminado del chart también lee Secrets. Crea primero el Role limitado a ConfigMaps de `sidecar-role.yaml` y referéncialo con `useExistingRole`.
+
+```bash
+kubectl apply -f sidecar-role.yaml
+helm upgrade grafana grafana-community/grafana --version 13.2.2 \
+  -n monitoring -f values.yaml -f values-sidecar.yaml
+```
+
+Este provider usa una carpeta `Sidecar` aparte; los sidecars de fuentes de datos y de alertas permanecen deshabilitados. No copies `searchNamespace: ALL` ni un acceso amplio a Secrets como valores predeterminados habituales. Para conservar los cambios en un dashboard aprovisionado de solo lectura, actualiza su archivo de origen.
+
+### Grafana Operator
+
+Un despliegue con Operator necesita primero el controlador/CRDs correspondientes y una instancia `Grafana` seleccionada por sus recursos `GrafanaDashboard`/`GrafanaDatasource`. No dejes que un despliegue de Helm independiente y el Operator compitan por la propiedad. Este capítulo valida el aprovisionamiento por archivos con Helm, no una instalación con Operator. Las elipsis como `panels: [...]` no son JSON válido y desplegable; usa el `dashboard.json` completo como contenido del dashboard.
+
+<span id="alert-rule-configuration"></span>
+
+## Reglas de alerta (Grafana Alerting)
+
+Usa `[unified_alerting]` en 13.2.1; no habilites la configuración heredada `[alerting]`, que se ha eliminado. El ejemplo conserva las etiquetas a través de A=consulta de rango de CPU, B=reducción por último valor y C=umbral >80. `classic_conditions` no es adecuado cuando necesitas etiquetas de alerta multidimensionales.
 
 ```yaml
-# use-method-dashboard.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: use-method-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "true"
-  annotations:
-    grafana_folder: "System"
-data:
-  use-method.json: |-
-    {
-      "title": "USE Method - System Resources",
-      "uid": "use-method",
-      "panels": [
-        {
-          "title": "CPU Utilization",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
-          "targets": [
-            {
-              "expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-              "legendFormat": "{{instance}}"
-            }
-          ]
-        },
-        {
-          "title": "CPU Saturation (Load Average)",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
-          "targets": [
-            {
-              "expr": "node_load1 / count without(cpu, mode) (node_cpu_seconds_total{mode=\"idle\"})",
-              "legendFormat": "{{instance}}"
-            }
-          ]
-        },
-        {
-          "title": "Memory Utilization",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8},
-          "targets": [
-            {
-              "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
-              "legendFormat": "{{instance}}"
-            }
-          ]
-        }
-      ]
-    }
+apiVersion: 1
+groups:
+- orgId: 1
+  name: grafana-docs
+  folder: Observability
+  interval: 1m
+  rules:
+  - uid: docs-high-cpu
+    title: Sustained CPU usage
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])))
+        instant: false
+        range: true
+        intervalMs: 15000
+        maxDataPoints: 43200
+    - refId: B
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - type: query
+          evaluator:
+            type: gt
+            params:
+            - 80
+          operator:
+            type: and
+          query:
+            params:
+            - C
+          reducer:
+            type: last
+            params: []
+    noDataState: NoData
+    execErrState: Error
+    for: 5m
+    isPaused: true
+    annotations:
+      summary: High CPU on {{ $labels.instance }}
+    labels:
+      severity: warning
 ```
 
-### Método RED (Tasa, Errores, Duración)
+La regla se instala **en pausa**. Valida los datos reales, los resultados de la evaluación, la política de notificación y los contactos antes de reactivarla. `for: 5m` es la duración pendiente; `interval: 1m` es la frecuencia de evaluación. No ocultes NoData/Error como si fueran normales. Los reinicios frecuentes no prueban que un contenedor esté actualmente en `CrashLoopBackOff`; usa la métrica de motivo de espera para ese estado.
 
-Metodología para analizar las solicitudes de Service:
+Aprovisiona los contactos de Slack/PagerDuty con el esquema documentado y valores procedentes de Secrets. Usa una plantilla de notificación integrada o define explícitamente una plantilla personalizada antes de referenciarla; los nombres no definidos como `slack.title` fallan. Un punto de contacto por sí solo no establece el enrutamiento: adjunta el receiver a una política de notificación. Envía pruebas reales solo a un destino aprobado. Esta auditoría no envió notificaciones externas.
 
-```yaml
-# red-method-dashboard.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: red-method-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "true"
-  annotations:
-    grafana_folder: "Services"
-data:
-  red-method.json: |-
-    {
-      "title": "RED Method - Service Metrics",
-      "uid": "red-method",
-      "templating": {
-        "list": [
-          {
-            "name": "service",
-            "type": "query",
-            "query": "label_values(http_requests_total, service)",
-            "refresh": 2
-          }
-        ]
-      },
-      "panels": [
-        {
-          "title": "Request Rate",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
-          "targets": [
-            {
-              "expr": "sum(rate(http_requests_total{service=\"$service\"}[5m])) by (method, path)",
-              "legendFormat": "{{method}} {{path}}"
-            }
-          ]
-        },
-        {
-          "title": "Error Rate",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
-          "targets": [
-            {
-              "expr": "sum(rate(http_requests_total{service=\"$service\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"$service\"}[5m])) * 100",
-              "legendFormat": "Error %"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "percent",
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {"color": "green", "value": null},
-                  {"color": "yellow", "value": 1},
-                  {"color": "red", "value": 5}
-                ]
-              }
-            }
-          }
-        },
-        {
-          "title": "Request Duration (p50, p90, p99)",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0},
-          "targets": [
-            {
-              "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{service=\"$service\"}[5m])) by (le))",
-              "legendFormat": "p50"
-            },
-            {
-              "expr": "histogram_quantile(0.90, sum(rate(http_request_duration_seconds_bucket{service=\"$service\"}[5m])) by (le))",
-              "legendFormat": "p90"
-            },
-            {
-              "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service=\"$service\"}[5m])) by (le))",
-              "legendFormat": "p99"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "s"
-            }
-          }
-        }
-      ]
-    }
+### Métricas propias de Grafana
+
+`/metrics` usa una autenticación básica independiente. Instala Prometheus Operator y haz coincidir la etiqueta `release` del ServiceMonitor con su selector. La contraseña debe coincidir con la contraseña montada de Grafana:
+
+```bash
+printf '%s' metrics > "$GRAFANA_STATE/metrics-user"
+kubectl -n monitoring create secret generic grafana-metrics-auth \
+  --from-file=username="$GRAFANA_STATE/metrics-user" \
+  --from-file=password="$GRAFANA_STATE/metrics-password"
+helm upgrade grafana grafana-community/grafana --version 13.2.2 \
+  -n monitoring -f values.yaml -f values-metrics.yaml
 ```
 
-### 4 señales doradas
+## Autenticación y acceso
 
-Métricas principales del manual de SRE de Google:
+Después de confirmar el HTTPS externo, el callback del IdP (`/login/generic_oauth`), los endpoints/JWKS reales y los claims de grupo, asigna este fragmento INI a `grafana.ini.auth.generic_oauth` del chart. Añade por separado el montaje del archivo del Secret de OAuth. Estos endpoints de IdP de ejemplo no constituyen una instalación de SSO lista para usar.
 
-```yaml
-# golden-signals-dashboard.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: golden-signals-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "true"
-  annotations:
-    grafana_folder: "SRE"
-data:
-  golden-signals.json: |-
-    {
-      "title": "4 Golden Signals",
-      "uid": "golden-signals",
-      "panels": [
-        {
-          "title": "1. Latency - Request Duration",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
-          "targets": [
-            {
-              "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))",
-              "legendFormat": "{{service}} p99"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {"unit": "s"}
-          }
-        },
-        {
-          "title": "2. Traffic - Request Rate",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-          "targets": [
-            {
-              "expr": "sum(rate(http_requests_total[5m])) by (service)",
-              "legendFormat": "{{service}}"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {"unit": "reqps"}
-          }
-        },
-        {
-          "title": "3. Errors - Error Rate",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
-          "targets": [
-            {
-              "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service) * 100",
-              "legendFormat": "{{service}}"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "percent"
-            }
-          }
-        },
-        {
-          "title": "4. Saturation - Resource Usage",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
-          "targets": [
-            {
-              "expr": "sum(container_memory_working_set_bytes{container!=\"\"}) by (pod) / sum(kube_pod_container_resource_limits{resource=\"memory\"}) by (pod) * 100",
-              "legendFormat": "{{pod}} Memory"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {"unit": "percent"}
-          }
-        }
-      ]
-    }
-```
-
-## Reglas de alertas (Grafana Alerting)
-
-### Configuración de reglas de alertas
-
-```yaml
-# grafana-alerts.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-alerts
-  namespace: monitoring
-  labels:
-    grafana_alert: "true"
-data:
-  alerts.yaml: |-
-    apiVersion: 1
-    groups:
-      - orgId: 1
-        name: kubernetes-alerts
-        folder: Alerts
-        interval: 1m
-        rules:
-          - uid: high-cpu-usage
-            title: High CPU Usage
-            condition: C
-            data:
-              - refId: A
-                relativeTimeRange:
-                  from: 600
-                  to: 0
-                datasourceUid: prometheus
-                model:
-                  expr: |
-                    100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
-                  instant: false
-                  range: true
-              - refId: B
-                datasourceUid: __expr__
-                model:
-                  conditions:
-                    - evaluator:
-                        params: [80]
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params: [A]
-                      reducer:
-                        type: avg
-                  refId: B
-                  type: classic_conditions
-              - refId: C
-                datasourceUid: __expr__
-                model:
-                  expression: B
-                  type: threshold
-            noDataState: NoData
-            execErrState: Error
-            for: 5m
-            annotations:
-              summary: "High CPU usage detected on {{ $labels.instance }}"
-              description: "CPU usage is above 80% for more than 5 minutes."
-            labels:
-              severity: warning
-
-          - uid: pod-crash-looping
-            title: Pod CrashLooping
-            condition: C
-            data:
-              - refId: A
-                datasourceUid: prometheus
-                model:
-                  expr: |
-                    increase(kube_pod_container_status_restarts_total[1h]) > 5
-              - refId: C
-                datasourceUid: __expr__
-                model:
-                  expression: A
-                  type: threshold
-            for: 0s
-            annotations:
-              summary: "Pod {{ $labels.pod }} is crash looping"
-            labels:
-              severity: critical
-```
-
-## Comparación entre Grafana Cloud y la versión autohospedada
-
-| Característica | Autohospedado | Grafana Cloud |
-|---------|-------------|---------------|
-| **Sobrecarga de administración** | Alta | Baja |
-| **Costo** | Costo de infraestructura | Basado en el uso |
-| **Escalabilidad** | Administración manual | Automática |
-| **Alta disponibilidad** | Configuración manual | Integrada |
-| **Plugins** | Todos los plugins | Solo plugins aprobados |
-| **Ubicación de los datos** | Interna | Cloud |
-| **Personalización** | Control total | Limitada |
-| **SLA** | Ninguno | 99.9% |
-
-## Prácticas recomendadas
-
-### 1. Organización de dashboards
-
-```
-Folders/
-├── Overview/           # Overall system overview
-│   ├── Executive Summary
-│   └── SLO Dashboard
-├── Infrastructure/     # Infrastructure metrics
-│   ├── Nodes
-│   ├── Storage
-│   └── Network
-├── Kubernetes/         # K8s resources
-│   ├── Cluster
-│   ├── Workloads
-│   └── Networking
-├── Applications/       # Per-application
-│   ├── Service A
-│   └── Service B
-└── Alerts/            # Alert related
-    ├── Active Alerts
-    └── Alert History
-```
-
-### 2. Uso de variables
-
-```json
-{
-  "templating": {
-    "list": [
-      {
-        "name": "datasource",
-        "type": "datasource",
-        "query": "prometheus"
-      },
-      {
-        "name": "cluster",
-        "type": "query",
-        "query": "label_values(kube_node_info, cluster)",
-        "refresh": 2,
-        "multi": true,
-        "includeAll": true
-      },
-      {
-        "name": "namespace",
-        "type": "query",
-        "query": "label_values(kube_namespace_labels{cluster=~\"$cluster\"}, namespace)",
-        "refresh": 2
-      }
-    ]
-  }
-}
-```
-
-### 3. Optimización del rendimiento
-
-```yaml
-# grafana.ini performance settings
-[database]
-max_idle_conn = 25
-max_open_conn = 100
-conn_max_lifetime = 14400
-
-[dataproxy]
-timeout = 30
-keep_alive_seconds = 30
-
-[dashboards]
-min_refresh_interval = 10s
-
-[caching]
+```ini
+[auth.generic_oauth]
 enabled = true
-ttl = 60s
+name = Organization SSO
+client_id = $__file{/run/grafana-oauth/client-id}
+client_secret = $__file{/run/grafana-oauth/client-secret}
+scopes = openid profile email groups
+auth_url = https://sso.example.com/authorize
+token_url = https://sso.example.com/token
+api_url = https://sso.example.com/userinfo
+use_pkce = true
+validate_id_token = true
+jwk_set_url = https://sso.example.com/actual-jwks-endpoint
+role_attribute_strict = true
+allow_assign_grafana_admin = false
+role_attribute_path = contains(groups[*], 'grafana-admins') && 'Admin' || contains(groups[*], 'grafana-viewers') && 'Viewer'
+allow_sign_up = true
 ```
 
-## Cuestionario
+`Admin` es un rol de organización, distinto de `GrafanaAdmin` a nivel de servidor. La asignación estricta rechaza a los usuarios ajenos a los grupos asignados; PKCE y la validación de la firma del ID token están habilitados. Verifica el inicio de sesión real, los cambios de grupo y la revocación en el entorno de destino. Los usuarios con rol Viewer pueden consultar las fuentes de datos de su organización más allá de las consultas de los dashboards visibles, por lo que los permisos de carpeta por sí solos no restringen el acceso a los datos subyacentes.
 
-Pon a prueba tus conocimientos con el [Cuestionario de Grafana](../../quizzes/observability/grafana/grafana-quiz.md).
+## Comparación entre Grafana Cloud y autoalojado
+
+| Área | OSS autoalojado | Grafana Cloud |
+|---|---|---|
+| Operación | Base de datos propia, actualizaciones, copias de seguridad y capacidad | Servicio gestionado; revisa el contrato y los límites |
+| Disponibilidad | Diséñala y verifícala tú mismo | El SLA depende del plan/acuerdo de servicio real |
+| Permisos de fuentes de datos/caché de consultas | No asumas que son funciones de OSS | Revisa las capacidades admitidas y el plan |
+| Ubicación de los datos | Infraestructura/backends elegidos | Región real del stack, retención y condiciones de procesamiento |
+| Plugins | Verifica compatibilidad, firmas y empaquetado | Catálogo admitido y política del stack |
+
+Obtén las URLs y los nombres de usuario de Prometheus/Loki de Cloud en la página Connections del stack. No asumas identificadores idénticos ni copies URLs regionales inventadas. Usa tokens de Cloud Access Policy con el ámbito de acceso `metrics:read`/`logs:read` necesario y suministra `secureJsonData.basicAuthPassword` mediante un Secret. Los tokens de cuenta de servicio de Grafana y los tokens de acceso a datos de Cloud tienen finalidades distintas.
+
+<span id="_1-dashboard-organization"></span>
+
+## Buenas prácticas
+
+Organiza Overview, Infrastructure, Kubernetes, Applications y Alerts por propósito. Incluye unidades y estados de datos ausentes. Reduce el rango, la frecuencia y la cardinalidad de las consultas antes de aumentar los recursos; usa recording rules para los cálculos repetidos. Sustituye los plugins Angular retirados piechart/worldmap por los paneles integrados Pie chart/Geomap. Fija versiones compatibles de los plugins adicionales y suministra las mismas versiones a todos los nodos de HA.
+
+<span id="_3-performance-optimization"></span>
+
+`[dashboards] min_refresh_interval = 10s` limita la frecuencia de refresco del navegador, no la evaluación de alertas. Dimensiona los pools de base de datos frente a los límites de conexiones de la BD y el número de réplicas. Un fragmento `[caching] enabled/ttl` en OSS no proporciona el almacenamiento en caché de consultas de Enterprise/Cloud.
+
+## Alcance de la validación y referencias
+
+Se renderizaron los perfiles del chart de instancia única, HA, métricas y sidecar. Una instancia real de Grafana 13.2.1 comprobó las fuentes de datos, los dashboards, el aprovisionamiento de la alerta en pausa, la evaluación de expresiones y la autenticación de métricas. Las expresiones usaron respuestas sintéticas de Prometheus. Estas comprobaciones no desplegaron EKS, no validaron el TLS real de los backends, no realizaron conmutación por error de una base de datos en HA, no completaron SSO/IRSA ni entregaron notificaciones externas.
+
+- [Grafana HA](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/)
+- [Grafana 13.2.1 configuration defaults](https://github.com/grafana/grafana/blob/v13.2.1/conf/defaults.ini)
+- [Community Helm chart](https://github.com/grafana-community/helm-charts/tree/main/charts/grafana)
+- [Alerting file provisioning](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/)
+- [Generic OAuth](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/generic-oauth/)
+- [Data source permissions and caching](https://grafana.com/docs/grafana/latest/administration/data-source-management/)
+- [Tempo provisioning](https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/)
+- [Loki configuration](https://grafana.com/docs/grafana/latest/datasources/loki/configure/)
+
+## Quiz
+
+Pon a prueba las distinciones de configuración y operación con el [quiz de Grafana](../../quizzes/observability/grafana/grafana-quiz.md).
