@@ -1,0 +1,50 @@
+{
+  "changes": [
+    {
+      "path": "en/observability/alerting/README.md",
+      "previousSha256": "0ce736bf96a500af2b0867ce72ca8b3ff1b17c783e837a86553e41bffe45387b",
+      "sha256": "6aa15e2acc4b77220eb24e1d441e645839cff9f1e4801c707ab75a5fc18e0fa7",
+      "kind": "reference replacement"
+    },
+    {
+      "path": "ko/observability/alerting/README.md",
+      "previousSha256": "2275c206dfa145c2b574c0dd7fa3186c14d341daad2a11bf9b064fafbc388a10",
+      "sha256": "491cfd5bf5eb0a87be465b1b30d7a130e53e2b6c17a4d01a80763cd64f723c68",
+      "kind": "reference replacement"
+    },
+    {
+      "path": "ko/labs/observability/01-infrastructure-setup-lab.md",
+      "previousSha256": "b016812adf8a2461ede84de91615a884c7a1f989c3937dc77d42f1c08e5c4a1e",
+      "sha256": "6253afcd62819d8be73b9143caaac93804d2d3a5e1f9f281aaee4a7c6090d028",
+      "kind": "prevent unintended autolink"
+    }
+  ],
+  "verification": [
+    {
+      "url": "https://response.pagerduty.com/",
+      "status": 200,
+      "finalUrl": "https://response.pagerduty.com/",
+      "sha256": "fa6fcd7717fcf97f98cce882f08cf06baea74e778de37760a807abc0fe073d51",
+      "bytes": 25569,
+      "classification": "reachable"
+    },
+    {
+      "url": "https://developers.openai.com/codex/config-reference",
+      "status": 200,
+      "finalUrl": "https://learn.chatgpt.com/docs/config-file/config-reference",
+      "sha256": "f06e0668d5a679ea3b339c213dd30842c521f4f6e904793385198a29fb3f6770",
+      "bytes": 1413258,
+      "classification": "reachable"
+    },
+    {
+      "url": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+      "status": 200,
+      "finalUrl": "https://owasp.github.io/www-project-top-10-for-large-language-model-applications/",
+      "sha256": "7392a2ce09f46a8d4fded0b9e90b5af7b0642df61efc08c28c651c9c810afb6d",
+      "bytes": 43197,
+      "classification": "reachable"
+    }
+  ],
+  "base": "0c6314a0df597298d35d3b7b8bba30aa5fa4ac3d",
+  "scope": "Two verified PagerDuty reference replacements and one inline-code delimiter repair preventing an unintended IDN autolink. No executable content changed."
+}
