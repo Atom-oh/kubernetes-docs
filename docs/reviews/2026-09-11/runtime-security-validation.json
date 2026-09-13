@@ -37,7 +37,7 @@
     "results": [
       {
         "path": "ko/security/08-runtime-security.md",
-        "sha256": "0263c52db4d02a7a5c06c6467c4e889490c9848f2f6a71b61624750368d9da55",
+        "sha256": "55dc5d11885d49fd159fd2f55a4d509f79466bd97dd77aad03f6f26fa3a19717",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -181,6 +181,7 @@
           "증거-수집과-포렌식",
           "falco-→-elasticsearch",
           "prometheus-grafana-대시보드",
+          "siemsoar-통합",
           "siem-soar-통합",
           "권장-사항",
           "요약",
@@ -189,7 +190,7 @@
       },
       {
         "path": "en/security/08-runtime-security.md",
-        "sha256": "6d82a174e83696460a5d5709df5c32a5ea47a3d5b45a09d2a4e2d4e4353f0904",
+        "sha256": "917b890b098275bae63aa640f31751f9cc53985343a32c7b910128d39fd57756",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -332,6 +333,7 @@
           "evidence-collection-and-forensics",
           "falco-to-elasticsearch",
           "prometheus-grafana-dashboard",
+          "siemsoar-integration",
           "siem-soar-integration",
           "table-of-contents",
           "recommendations",
@@ -1432,5 +1434,6 @@
       "sha256": "199802d9bfbf71471bf226b39bad944dfcc55d7a5e25c1863261ab5789ec0f3b",
       "checksumVerified": true
     }
-  ]
+  ],
+  "integrationNote": "Preserved current-main SIEM/SOAR fragment aliases fromPR255 duringmerge; original34legacyanchorsremain."
 }
