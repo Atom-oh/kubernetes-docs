@@ -23,7 +23,7 @@
 
 **答案: C) 基于 OIDC token 的 AssumeRoleWithWebIdentity**
 
-**说明：** Kubernetes API server 签发投射的 ServiceAccount JWT。受支持的 SDK 使用它调用 STS AssumeRoleWithWebIdentity；STS 检查受信任的 issuer/JWKS、audience 和 subject，并返回临时 AWS 凭证。IAM OIDC provider object 并非 token issuer，且 JWT 不会被直接替换为 AWS API 凭证。
+**说明：** Kubernetes API server 签发投射的 ServiceAccount JWT。受支持的 SDK 使用它调用 STS AssumeRoleWithWebIdentity；STS 检查受信任的 issuer/JWKS、audience 和 subject，并返回临时 AWS 凭证。IAM OIDC provider object 并非 token issuer，且 JWT 不能直接代替 AWS API 凭证使用。
 
 </details>
 

@@ -22,7 +22,7 @@
 
 ---
 
-## IRSA (IAM Roles for Service Accounts)
+## IRSA (IAM Roles for Service Accounts) {#irsa-iam-roles-for-service-accounts}
 
 ### IRSA 概述
 
@@ -164,7 +164,7 @@ metadata:
 
 ---
 
-## EKS Pod Identity
+## EKS Pod Identity {#eks-pod-identity}
 
 ### Pod Identity 概述
 
@@ -264,7 +264,7 @@ spec:
 
 ---
 
-## Pod 的 Security Groups
+## Pod 的 Security Groups {#security-groups-for-pods}
 
 ### 概述
 
@@ -315,7 +315,7 @@ Security-group 返回流量是有状态的，但应用程序发起的新 DNS/dat
 
 ---
 
-## VPC Endpoints
+## VPC Endpoints {#vpc-endpoints}
 
 ### 用于私有 EKS 的 VPC Endpoints
 
@@ -341,7 +341,7 @@ Kubernetes private API endpoint 和 AWS-service PrivateLink endpoints 不同。`
 
 ---
 
-## 控制平面日志
+## 控制平面日志 {#control-plane-logging}
 
 ### EKS 控制平面日志类型
 
@@ -402,7 +402,7 @@ fields @timestamp, user.username, verb, objectRef.namespace, objectRef.name, res
 
 ---
 
-## GuardDuty EKS Protection
+## GuardDuty EKS Protection {#guardduty-eks-protection}
 
 ### GuardDuty EKS Protection 概述
 
@@ -459,7 +459,7 @@ fields @timestamp, user.username, verb, objectRef.namespace, objectRef.name, res
 
 ---
 
-## Amazon Inspector
+## Amazon Inspector {#amazon-inspector}
 
 ### Inspector Container Image Scanning
 
@@ -485,7 +485,7 @@ Enhanced finding events 使用 `aws.inspector2` / `Inspector2 Finding`，不同�
 
 ---
 
-## CIS Kubernetes Benchmark
+## CIS Kubernetes Benchmark {#cis-kubernetes-benchmark}
 
 ### 运行 kube-bench
 
@@ -505,7 +505,7 @@ Enhanced finding events 使用 `aws.inspector2` / `Inspector2 Finding`，不同�
 
 ---
 
-## 集群加密
+## 集群加密 {#cluster-encryption}
 
 ### EKS Secrets Encryption (KMS)
 
@@ -517,7 +517,7 @@ EKS **1.28+ 默认使用 AWS-owned KMS key 对所有 Kubernetes API data 进行 
 
 ---
 
-## 节点安全
+## 节点安全 {#node-security}
 
 ### Bottlerocket OS
 
@@ -533,7 +533,7 @@ Bottlerocket 是 container-host OS 选项，并不保证每个 workload 都安�
 
 ---
 
-## 私有集群
+## 私有集群 {#private-clusters}
 
 ### 完全私有的 EKS 配置
 
@@ -549,7 +549,7 @@ Bastion 会增加自身的 access、patching 和 audit responsibilities。不要
 
 ---
 
-## 多租户模式
+## 多租户模式 {#multi-tenancy-patterns}
 
 ### 基于 Namespace 的多租户
 

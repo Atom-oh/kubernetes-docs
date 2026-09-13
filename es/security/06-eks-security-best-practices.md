@@ -22,7 +22,7 @@ Este documento cubre las mejores prácticas de seguridad para entornos de Amazon
 
 ---
 
-## IRSA (IAM Roles for Service Accounts)
+## IRSA (IAM Roles for Service Accounts) {#irsa-iam-roles-for-service-accounts}
 
 ### Descripción general de IRSA
 
@@ -164,7 +164,7 @@ metadata:
 
 ---
 
-## EKS Pod Identity
+## EKS Pod Identity {#eks-pod-identity}
 
 ### Descripción general de Pod Identity
 
@@ -264,7 +264,7 @@ spec:
 
 ---
 
-## Security Groups para Pods
+## Security Groups para Pods {#security-groups-for-pods}
 
 ### Descripción general
 
@@ -315,7 +315,7 @@ El tráfico de retorno de security groups tiene estado, pero las nuevas conexion
 
 ---
 
-## VPC Endpoints
+## VPC Endpoints {#vpc-endpoints}
 
 ### VPC Endpoints para EKS privado
 
@@ -341,7 +341,7 @@ Proporcione subredes existentes, tablas de rutas, security groups de cliente apr
 
 ---
 
-## Registro del plano de control
+## Registro del plano de control {#control-plane-logging}
 
 ### Tipos de logs del plano de control de EKS
 
@@ -402,7 +402,7 @@ fields @timestamp, user.username, verb, objectRef.namespace, objectRef.name, res
 
 ---
 
-## Protección de GuardDuty para EKS
+## Protección de GuardDuty para EKS {#guardduty-eks-protection}
 
 ### Descripción general de GuardDuty EKS Protection
 
@@ -459,7 +459,7 @@ El patrón no tiene destino de notificación/aislamiento. Los hallazgos de Runti
 
 ---
 
-## Amazon Inspector
+## Amazon Inspector {#amazon-inspector}
 
 ### Escaneo de imágenes de contenedor de Inspector
 
@@ -485,7 +485,7 @@ Los eventos de hallazgos mejorados usan `aws.inspector2` / `Inspector2 Finding`,
 
 ---
 
-## CIS Kubernetes Benchmark
+## CIS Kubernetes Benchmark {#cis-kubernetes-benchmark}
 
 ### Ejecución de kube-bench
 
@@ -505,7 +505,7 @@ El CronJob anterior carecía de montajes de host y asumía que la imagen de kube
 
 ---
 
-## Cifrado del clúster
+## Cifrado del clúster {#cluster-encryption}
 
 ### Cifrado de Secrets de EKS (KMS)
 
@@ -517,7 +517,7 @@ El cifrado en reposo no impide lecturas autorizadas de API ni el uso de un valor
 
 ---
 
-## Seguridad de nodos
+## Seguridad de nodos {#node-security}
 
 ### Bottlerocket OS
 
@@ -533,7 +533,7 @@ Use identidades adecuadas sin root, sin escalada de privilegios, capacidades eli
 
 ---
 
-## Clústeres privados
+## Clústeres privados {#private-clusters}
 
 ### Configuración de EKS completamente privado
 
@@ -549,7 +549,7 @@ Un bastion añade sus propias responsabilidades de acceso, parcheado y auditorí
 
 ---
 
-## Patrones de multi-tenancy
+## Patrones de multi-tenancy {#multi-tenancy-patterns}
 
 ### Multi-tenancy basada en namespace
 

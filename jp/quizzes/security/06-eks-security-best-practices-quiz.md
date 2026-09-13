@@ -91,9 +91,9 @@
 ### 5. AWS GuardDuty EKS Protection で検出**されない**脅威タイプはどれですか？
 
 * A) 悪意のある IP との通信
-* B) Cryptocurrency mining activity
+* B) 暗号資産のマイニング活動
 * C) Pod のリソース使用量が limits を超過すること
-* D) Tor network connections
+* D) Tor ネットワークへの接続
 
 <details>
 
@@ -151,7 +151,7 @@
 
 * A) token size の削減
 * B) bound token と expiration time の設定
-* C) token encryption
+* C) トークンの暗号化
 * D) 自動 token backup
 
 <details>
@@ -169,15 +169,15 @@
 ### 9. Amazon Inspector は EKS 環境で何を scan しますか？
 
 * A) Kubernetes manifest
-* B) Container image vulnerabilities
+* B) コンテナイメージの脆弱性
 * C) IAM policy
-* D) Network traffic
+* D) ネットワークトラフィック
 
 <details>
 
 <summary>回答を表示</summary>
 
-**回答: B) Container image vulnerabilities**
+**回答: B) コンテナイメージの脆弱性**
 
 **解説:** ECR enhanced scanning は、対応する image package vulnerabilities に対して Inspector を使用します。実行中 image の usage information は、runtime behavior detection とは異なります。成功 status、completion timestamp、明示的な findings-count map が確認できた後にのみ、正確な digest を gate してください。pending/missing/error の結果を vulnerabilities がゼロとして扱ってはいけません。
 

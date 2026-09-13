@@ -23,7 +23,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 **Respuesta: C) AssumeRoleWithWebIdentity basado en token OIDC**
 
-**Explicación:** El servidor de API de Kubernetes emite el JWT de ServiceAccount proyectado. Un SDK compatible lo intercambia con STS AssumeRoleWithWebIdentity; STS comprueba el emisor/JWKS de confianza, la audiencia y el sujeto, y devuelve credenciales temporales de AWS. El objeto de proveedor OIDC de IAM no es el emisor del token, y el JWT no se sustituye directamente por credenciales para la API de AWS.
+**Explicación:** El servidor de API de Kubernetes emite el JWT de ServiceAccount proyectado. Un SDK compatible lo intercambia con STS AssumeRoleWithWebIdentity; STS comprueba el emisor/JWKS de confianza, la audiencia y el sujeto, y devuelve credenciales temporales de AWS. El objeto de proveedor OIDC de IAM no es el emisor del token, y el JWT no sustituye directamente a las credenciales para las API de AWS.
 
 </details>
 
@@ -141,7 +141,7 @@ Pon a prueba tu comprensión de las mejores prácticas de seguridad de Amazon EK
 
 **Respuesta: B) El perfil de benchmark CIS Amazon EKS aplicable**
 
-**Explicación:** Elige la edición del benchmark CIS Amazon EKS y el perfil de kube-bench adecuados para el entorno. kube-bench0.16.0 incluye varios perfiles de EKS; un único Job ascendente mutable no demuestra la cobertura de toda la flota. Las comprobaciones manuales/no aplicables y las limitaciones del plano de control administrado se mantienen, y la puntuación de un cuestionario/herramienta no es una certificación.
+**Explicación:** Elige la edición del benchmark CIS Amazon EKS y el perfil de kube-bench adecuados para el entorno. kube-bench0.16.0 incluye varios perfiles de EKS; un único Job mutable del proyecto upstream no demuestra la cobertura de toda la flota. Las comprobaciones manuales/no aplicables y las limitaciones del plano de control administrado se mantienen, y la puntuación de un cuestionario/herramienta no es una certificación.
 
 </details>
 
