@@ -722,43 +722,47 @@
     },
     {
       "path": "ko/quizzes/README.md",
-      "previousReviewedSha256": "3de7e38f887e9309d52d1f281442c0f1f6ad5253b9bef2607a6d0a623a487aaf",
+      "previousReviewedSha256": "2f7975373e35b7a92e3ecf5fa21f9a5e61fc87031d434f75df8c4c871ba5404f",
       "currentMainSha256": "3de7e38f887e9309d52d1f281442c0f1f6ad5253b9bef2607a6d0a623a487aaf",
       "batch": "docs/reviews/2026-09-11/batches/navigation-index.json",
       "matchingReports": [],
       "reviewedBlob": "a925903896e294c21f3eac1b1c042e9b1eedabd9",
       "commit": "8f2b0b2ed55bd54cac38dfad059ac71c4a0e1cf2",
-      "delta": "--- reviewed/ko/quizzes/README.md\n\n+++ main/ko/quizzes/README.md\n\n@@ -205,4 +205,7 @@\n\n - [Calico 운영 퀴즈](./networking/calico/09-operations-quiz.md)\n - [Calico 용어집 퀴즈](./networking/calico/glossary-quiz.md)\n+\n+#### Cilium\n+\n - [Cilium 소개 및 기본 개념 퀴즈](./networking/cilium/01-introduction-quiz.md)\n - [Cilium eBPF 퀴즈](./networking/cilium/02-ebpf-quiz.md)"
+      "delta": "--- reviewed/ko/quizzes/README.md\n\n+++ main/ko/quizzes/README.md\n\n@@ -205,4 +205,7 @@\n\n - [Calico 운영 퀴즈](./networking/calico/09-operations-quiz.md)\n - [Calico 용어집 퀴즈](./networking/calico/glossary-quiz.md)\n+\n+#### Cilium\n+\n - [Cilium 소개 및 기본 개념 퀴즈](./networking/cilium/01-introduction-quiz.md)\n - [Cilium eBPF 퀴즈](./networking/cilium/02-ebpf-quiz.md)",
+      "baselineLedgerSha256": "3de7e38f887e9309d52d1f281442c0f1f6ad5253b9bef2607a6d0a623a487aaf"
     },
     {
       "path": "en/quizzes/README.md",
-      "previousReviewedSha256": "06b7441ddb88ea48bf903305b1d32acf7d691a1aeee91e7637357ef1e6a63e9b",
+      "previousReviewedSha256": "6e74dc7d2a23cf8ef419383777679c782e087216e5880a6351acec20c19538e2",
       "currentMainSha256": "06b7441ddb88ea48bf903305b1d32acf7d691a1aeee91e7637357ef1e6a63e9b",
       "batch": "docs/reviews/2026-09-11/batches/navigation-index.json",
       "matchingReports": [],
       "reviewedBlob": "507c582522fb2fbfcfe474e8db9217d214506f2d",
       "commit": "8f2b0b2ed55bd54cac38dfad059ac71c4a0e1cf2",
-      "delta": "--- reviewed/en/quizzes/README.md\n\n+++ main/en/quizzes/README.md\n\n@@ -205,4 +205,7 @@\n\n - [Operations Quiz](./networking/calico/09-operations-quiz.md)\n - [Calico Glossary Quiz](./networking/calico/glossary-quiz.md)\n+\n+#### Cilium\n+\n - [Cilium Introduction and Basic Concepts Quiz](./networking/cilium/01-introduction-quiz.md)\n - [Cilium eBPF Quiz](./networking/cilium/02-ebpf-quiz.md)"
+      "delta": "--- reviewed/en/quizzes/README.md\n\n+++ main/en/quizzes/README.md\n\n@@ -205,4 +205,7 @@\n\n - [Operations Quiz](./networking/calico/09-operations-quiz.md)\n - [Calico Glossary Quiz](./networking/calico/glossary-quiz.md)\n+\n+#### Cilium\n+\n - [Cilium Introduction and Basic Concepts Quiz](./networking/cilium/01-introduction-quiz.md)\n - [Cilium eBPF Quiz](./networking/cilium/02-ebpf-quiz.md)",
+      "baselineLedgerSha256": "06b7441ddb88ea48bf903305b1d32acf7d691a1aeee91e7637357ef1e6a63e9b"
     },
     {
       "path": "ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
-      "previousReviewedSha256": "7afd30f8190ac3592dc1280c043e29f5e7109e8f9e7e9a145cadd233fd06382e",
+      "previousReviewedSha256": "e838c1a563951ac9ceb2ba92ce2d7e83ac757134a49e423b41731105cbbdcfd8",
       "currentMainSha256": "7afd30f8190ac3592dc1280c043e29f5e7109e8f9e7e9a145cadd233fd06382e",
       "batch": "docs/reviews/2026-09-11/batches/platform-extensions.json",
       "matchingReports": [],
       "reviewedBlob": "2c8903a3538508f8dd3e3d515967088e79662301",
       "commit": "47dc00a97bc0d9477e8b6b41b9cc2fdc625dcda1",
-      "delta": "--- reviewed/ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md\n\n+++ main/ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md\n\n@@ -213,5 +213,5 @@\n\n <summary>정답 보기</summary>\n \n-rules를 apps/v1 deployments의 CREATE/UPDATE로 제한하고 namespaceSelector에 kubernetes.io/metadata.name: production을 사용합니다. 실제 validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects와 admissionReviewVersions를 설정합니다. 본문의 /mutate handler는 Deployment validator가 아니므로 그 경로를 재사용하지 않습니다. replica 범위만 필요하면 본문의 VAP+binding 예제를 사용할 수 있습니다.\n+rules를 apps/v1 deployments의 CREATE/UPDATE로 제한하고 namespaceSelector에 kubernetes.io/metadata.name: production을 사용합니다. 실제 validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects와 admissionReviewVersions를 설정합니다. 본문의 /mutate handler는 Deployment validator가 아니므로 그 경로를 재사용하지 않습니다. replica 범위만 필요하면 본문의 VAP+binding 예제를 사용하고 `deployments`와 `deployments/scale`을 모두 매칭해 HPA 및 `kubectl scale` 갱신도 제한을 검사하도록 합니다.\n \n </details>"
+      "delta": "--- reviewed/ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md\n\n+++ main/ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md\n\n@@ -213,5 +213,5 @@\n\n <summary>정답 보기</summary>\n \n-rules를 apps/v1 deployments의 CREATE/UPDATE로 제한하고 namespaceSelector에 kubernetes.io/metadata.name: production을 사용합니다. 실제 validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects와 admissionReviewVersions를 설정합니다. 본문의 /mutate handler는 Deployment validator가 아니므로 그 경로를 재사용하지 않습니다. replica 범위만 필요하면 본문의 VAP+binding 예제를 사용할 수 있습니다.\n+rules를 apps/v1 deployments의 CREATE/UPDATE로 제한하고 namespaceSelector에 kubernetes.io/metadata.name: production을 사용합니다. 실제 validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects와 admissionReviewVersions를 설정합니다. 본문의 /mutate handler는 Deployment validator가 아니므로 그 경로를 재사용하지 않습니다. replica 범위만 필요하면 본문의 VAP+binding 예제를 사용하고 `deployments`와 `deployments/scale`을 모두 매칭해 HPA 및 `kubectl scale` 갱신도 제한을 검사하도록 합니다.\n \n </details>",
+      "baselineLedgerSha256": "7afd30f8190ac3592dc1280c043e29f5e7109e8f9e7e9a145cadd233fd06382e"
     },
     {
       "path": "en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
-      "previousReviewedSha256": "faab363fdb549182ebf48c795e6bcadad02ffe86bcb249f960abd2dc1161a08f",
+      "previousReviewedSha256": "0cfa96d7aa36c35ce89bbe027f06346a9216c4fa40f954b0ccadec616c73d3a0",
       "currentMainSha256": "faab363fdb549182ebf48c795e6bcadad02ffe86bcb249f960abd2dc1161a08f",
       "batch": "docs/reviews/2026-09-11/batches/platform-extensions.json",
       "matchingReports": [],
       "reviewedBlob": "60a1b88023986c3e5cd28b9ea5b7c9c2fcc04d7c",
       "commit": "47dc00a97bc0d9477e8b6b41b9cc2fdc625dcda1",
-      "delta": "--- reviewed/en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md\n\n+++ main/en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md\n\n@@ -213,5 +213,5 @@\n\n <summary>Show answer</summary>\n \n-Match apps/v1 deployments CREATE/UPDATE and select kubernetes.io/metadata.name: production. Configure an actual validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects and admissionReviewVersions. The guide's /mutate handler is not a Deployment validator. For a replica bound alone, use its VAP/binding example.\n+Match apps/v1 deployments CREATE/UPDATE and select kubernetes.io/metadata.name: production. Configure an actual validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects and admissionReviewVersions. The guide's /mutate handler is not a Deployment validator. For a replica bound alone, use its VAP/binding example and match both `deployments` and `deployments/scale`, so HPA and `kubectl scale` updates cannot bypass the limit.\n \n </details>"
+      "delta": "--- reviewed/en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md\n\n+++ main/en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md\n\n@@ -213,5 +213,5 @@\n\n <summary>Show answer</summary>\n \n-Match apps/v1 deployments CREATE/UPDATE and select kubernetes.io/metadata.name: production. Configure an actual validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects and admissionReviewVersions. The guide's /mutate handler is not a Deployment validator. For a replica bound alone, use its VAP/binding example.\n+Match apps/v1 deployments CREATE/UPDATE and select kubernetes.io/metadata.name: production. Configure an actual validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects and admissionReviewVersions. The guide's /mutate handler is not a Deployment validator. For a replica bound alone, use its VAP/binding example and match both `deployments` and `deployments/scale`, so HPA and `kubectl scale` updates cannot bypass the limit.\n \n </details>",
+      "baselineLedgerSha256": "faab363fdb549182ebf48c795e6bcadad02ffe86bcb249f960abd2dc1161a08f"
     }
   ],
   "markdown": {
@@ -5607,6 +5611,25 @@
     "All 45 remaining historical reviewed blobs were found by SHA-256 in local Git history; their 567-line combined delta was read.",
     "Deltas comprise Markdown line breaks, inline-code escaping, date headers, duplicate-word removal, English baseline wording, navigation additions, repaired fragment links, pinned flagd schema commit references, and the reviewed deployments/scale coverage clarification.",
     "45 current-main pages rendered without Vue/Markdown errors; two pinned flagd schema checksums match; node-join-diagnosis anchors exist in both target guides.",
-    "This does not claim native tests were rerun against metadata-only changes or that the full semantic corpus review is complete."
+    "This does not claim native tests were rerun against metadata-only changes or that the full semantic corpus review is complete.",
+    "Two intermediate deltas connect earlier ledger bytes to the metadata-report input: remove one trailing blank line in the English Kafka index, and correct the English upgrade command to the declared Terraform cluster_version variable. No Terraform plan/apply was executed by this reconciliation."
+  ],
+  "intermediateMetadataBridges": [
+    {
+      "path": "en/data-on-eks/kafka/README.md",
+      "ledgerSha256": "92dc71ef1e2ca4aca0cab8fa325a7f82ca57f96b1f23db59482b40bafc2b8892",
+      "metadataBeforeSha256": "5dc3f1ce9aafd90e871a588f622ec195fa551167b89799af657b3ff7216c4c7e",
+      "reviewedCommit": "fdc3b46bcd1707456c0e6865f99b2b533204b6e5",
+      "reviewedBlob": "343839eb679947fe4fc5f0072f53ff47e039dc35",
+      "diff": "--- ledger/en/data-on-eks/kafka/README.md\n\n+++ metadata-before/en/data-on-eks/kafka/README.md\n\n@@ -84,4 +84,3 @@\n\n ## Quiz\n \n To test what you've learned in this section, try the [Kafka Fundamentals Quiz](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md). To check whether you can turn the benchmark numbers into design decisions, also try the [Kafka Measured Benchmark Quiz](../../quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md).\n-"
+    },
+    {
+      "path": "en/ops/11-upgrade-operations.md",
+      "ledgerSha256": "93f7b94180b25d80220b15e8e1a4724014f6b99459d75d7ed9b2c71433a351f3",
+      "metadataBeforeSha256": "7809663433b3ea0c4aa97fc37e4eea4c5601667a22315e03966be406c62817ed",
+      "reviewedCommit": "c5b6424ddafa053260f3d675ccf290de72e30948",
+      "reviewedBlob": "9f75aa9c42547dc9000d999cc070af24b6900b82",
+      "diff": "--- ledger/en/ops/11-upgrade-operations.md\n\n+++ metadata-before/en/ops/11-upgrade-operations.md\n\n@@ -356,7 +356,7 @@\n\n ```bash\n DOCS_TFVARS=\"/absolute/path/to/production.cluster.tfvars.json\"\n terraform -chdir=terraform/02-cluster plan \\\n-  -var-file=\"$DOCS_TFVARS\" -var=\"kubernetes_version=$DOCS_TARGET\" -out=upgrade.tfplan\n+  -var-file=\"$DOCS_TFVARS\" -var=\"cluster_version=$DOCS_TARGET\" -out=upgrade.tfplan\n terraform -chdir=terraform/02-cluster show upgrade.tfplan\n # Apply the reviewed saved plan:\n terraform -chdir=terraform/02-cluster apply upgrade.tfplan"
+    }
   ]
 }
