@@ -153,8 +153,8 @@ spec:
 
 **参照:**
 
-* [Load Balancing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md)
-* [Connection Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/08-connection-pool.md)
+* [Load Balancing](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/06-load-balancing)
+* [Connection Pool](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/03-destination-rule#_2-connection-pool)
 
 </details>
 
@@ -246,7 +246,7 @@ spec:
 
 **参照:**
 
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Traffic Splitting](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
 * [Argo Rollouts Integration](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
@@ -337,7 +337,7 @@ spec:
 
 **参照:**
 
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
+* [Gateway](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice)
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 
 </details>
@@ -741,7 +741,7 @@ kubectl argo rollouts dashboard
 
 **参照:**
 
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Traffic Splitting](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
@@ -949,8 +949,8 @@ spec:
 
 **参照:**
 
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
-* [Blue/Green Deployment](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment)
+* [Traffic Splitting](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
+* [Blue/Green Deployment](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting#bluegreen-deployment)
 
 </details>
 
@@ -1213,7 +1213,7 @@ Cannot validate:
 
 **参照:**
 
-* [Traffic Mirroring](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/04-traffic-mirroring.md)
+* [Traffic Mirroring](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror)
 
 </details>
 
@@ -1975,8 +1975,8 @@ spec:
 
 **参照:**
 
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [TLS Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration)
+* [Gateway](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice)
+* [TLS Configuration](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice#https-traffic)
 
 </details>
 
@@ -2000,6 +2000,6 @@ spec:
 
 * [Traffic Management Documentation](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Gateway](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice)
+* [Traffic Splitting](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)

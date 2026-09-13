@@ -401,4 +401,4 @@ kubectl get ciliumendpoint -A
 
 ***
 
-[学習教材に戻る](../../../networking/cilium/glossary.md) | [Cilium クイズ一覧](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/networking/cilium/README.md)
+[学習教材に戻る](../../../networking/cilium/glossary.md) | [Cilium クイズ一覧](https://www.atomai.click/kubernetes-docs/en/quizzes/#cilium)

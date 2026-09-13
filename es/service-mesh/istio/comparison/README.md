@@ -169,14 +169,14 @@ Una guía de decisión basada en resultados de pruebas para elegir entre el modo
 
 ### Documentación de Istio
 
-* [Arquitectura de Istio](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md)
-* [Gestión de tráfico de Istio](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/traffic-management/README.md)
-* [Seguridad de Istio](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/security/README.md)
-* [Observabilidad de Istio](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/observability/README.md)
+* [Arquitectura de Istio](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture)
+* [Gestión de tráfico de Istio](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/)
+* [Seguridad de Istio](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/)
+* [Observabilidad de Istio](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/)
 
 ### Documentación de VPC Lattice
 
-* [Descripción general de VPC Lattice](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/vpc-lattice.md)
+* [Descripción general de VPC Lattice](https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice)
 
 ### Referencias externas
 

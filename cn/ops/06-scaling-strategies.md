@@ -2,7 +2,7 @@
 
 > **支持版本**: EKS 1.28+, Metrics Server 0.7+, KEDA 2.13+, VPA 1.0+ **最后更新**: February 19, 2026
 
-< [上一篇: GitOps 自动化](05-gitops-automation.md) | [目录](./) | [下一篇: 运维告警配置](07-observability-alerts.md) >
+< [上一篇: GitOps 自动化](05-gitops-automation.md) | [目录](./README.md) | [下一篇: 运维告警配置](07-observability-alerts.md) >
 
 ***
 
@@ -2589,4 +2589,4 @@ spec:
 
 ***
 
-< [上一篇: GitOps 自动化](05-gitops-automation.md) | [目录](./) | [下一篇: 运维告警配置](07-observability-alerts.md) >
+< [上一篇: GitOps 自动化](05-gitops-automation.md) | [目录](./README.md) | [下一篇: 运维告警配置](07-observability-alerts.md) >

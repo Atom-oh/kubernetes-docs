@@ -724,7 +724,7 @@ Route53 Alias レコードでは、TTL はターゲット（NLB）から継承�
 
 ### NodePool Zone の設定
 
-実際の NodePool YAML は ArgoCD GitOps によって管理されます（[GitOps パイプライン設定](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)を参照）。ここでは主要な概念を示します。
+実際の NodePool YAML は ArgoCD GitOps によって管理されます（[GitOps パイプライン設定](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)を参照）。ここでは主要な概念を示します。
 
 ```yaml
 # Conceptual NodePool for Blue cluster (zone: ap-northeast-2a)
@@ -1390,7 +1390,7 @@ NLB の重み付きルーティングを備えた Blue/Green クラスターア�
 
 * [Terraform 3層インフラストラクチャ](01-infrastructure-setup.md)
 * [CI Pipelines](03-ci-pipelines.md)
-* [GitOps パイプライン設定](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [GitOps パイプライン設定](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)
 * [EKS Auto Mode を始める](../eks-auto-mode/01-getting-started.md)
 
 ***

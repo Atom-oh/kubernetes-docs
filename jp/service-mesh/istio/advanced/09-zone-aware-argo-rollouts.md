@@ -1109,6 +1109,6 @@ spec:
 
 ## 次のステップ
 
-1. [Lab: Zone-aware Rollout の演習](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/labs/zone-aware-rollout/README.md)
+1. [Lab: Zone-aware Rollout の演習](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/09-zone-aware-argo-rollouts#implementation-guide)
 2. リージョン間フェイルオーバーを実装するために [Multi-cluster](02-multi-cluster.md) へ拡張する
-3. 自動分析とロールバックについては [Progressive Delivery](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/advanced/progressive-delivery.md) を参照する
+3. 自動分析とロールバックについては [Progressive Delivery](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/08-argo-rollouts) を参照する

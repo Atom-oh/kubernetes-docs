@@ -169,14 +169,14 @@
 
 ### Istio 文档
 
-* [Istio 架构](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md)
-* [Istio 流量管理](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/traffic-management/README.md)
-* [Istio 安全性](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/security/README.md)
-* [Istio 可观测性](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/observability/README.md)
+* [Istio 架构](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture)
+* [Istio 流量管理](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/)
+* [Istio 安全性](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/)
+* [Istio 可观测性](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/)
 
 ### VPC Lattice 文档
 
-* [VPC Lattice 概述](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/vpc-lattice.md)
+* [VPC Lattice 概述](https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice)
 
 ### 外部参考资料
 

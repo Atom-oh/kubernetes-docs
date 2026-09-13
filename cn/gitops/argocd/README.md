@@ -112,7 +112,7 @@ ApplicationSet 可使用 generator 通过单一定义管理多个应用程序：
 | [安全](07-security.md) | SSO 集成、Secret 管理、TLS、审计日志 |
 | [通知](08-notifications.md) | 通知服务、触发器、模板、订阅 |
 | [最佳实践](09-best-practices.md) | 仓库模式、性能调优、故障排除、EKS 技巧 |
-| [Rollouts Experiment 深入解析](10-rollouts-experiment.md) | Experiment CRD、临时 ReplicaSet 验证、AnalysisRun 结论 |
+| [Rollouts Experiment 深入解析](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/10-rollouts-experiment) | Experiment CRD、临时 ReplicaSet 验证、AnalysisRun 结论 |
 
 ## 快速开始
 

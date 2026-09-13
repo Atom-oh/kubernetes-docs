@@ -1109,6 +1109,6 @@ spec:
 
 ## 后续步骤
 
-1. [实验：Zone 感知 Rollout 实践](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/labs/zone-aware-rollout/README.md)
+1. [实验：Zone 感知 Rollout 实践](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/09-zone-aware-argo-rollouts#implementation-guide)
 2. 扩展至[多集群](02-multi-cluster.md)，实现跨区域故障转移
-3. 使用[渐进式交付](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/advanced/progressive-delivery.md)实现自动化分析和回滚
+3. 使用[渐进式交付](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/08-argo-rollouts)实现自动化分析和回滚

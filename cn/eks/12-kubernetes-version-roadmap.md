@@ -20,6 +20,8 @@ Kubernetes 发展迅速，每年发布三个版本，引入新功能、推动现
 
 ---
 
+<span id="1-overview-and-learning-objectives"></span>
+
 ## 1. 概览和学习目标
 
 ### 本文档的目的
@@ -55,6 +57,8 @@ Kubernetes 发展迅速，每年发布三个版本，引入新功能、推动现
 | **Engineering Managers** | 概览、支持矩阵、Extended Support 的成本影响 |
 
 ---
+
+<span id="2-kubernetes-release-cycle"></span>
 
 ## 2. Kubernetes 发布周期
 
@@ -193,6 +197,8 @@ Kubernetes 开发由 Special Interest Groups（SIGs）组织。理解哪个 SIG 
 
 ---
 
+<span id="3-eks-version-support-matrix"></span>
+
 ## 3. EKS 版本支持矩阵
 
 ### 支持层级
@@ -318,6 +324,8 @@ Amazon EKS 和 EKS Distro 开始支持 Kubernetes 1.35，新增：
 > **相关公告**: EKS 版本回滚支持（July 1, 2026）以及新的 control plane 99.99% SLA / 8XL 扩展层级（March 20, 2026）在 [EKS Upgrades](08-eks-upgrades.md) 文档中介绍，因为它们与升级流程直接相关，而不是 Kubernetes 版本功能。
 
 ---
+
+<span id="4-version-by-version-feature-guide"></span>
 
 ## 4. 按版本划分的功能指南
 
@@ -2275,6 +2283,8 @@ spec:
 - **CPUManagerPolicyAlpha** 增强
 
 ---
+<span id="5-key-feature-graduation-timeline"></span>
+
 ## 5. 关键功能毕业时间线
 
 下表提供主要功能毕业的跨版本综合视图。用它来理解你计划采用的功能的完整生命周期。
@@ -2384,6 +2394,8 @@ gantt
 ```
 
 ---
+
+<span id="6-deprecations-and-removals"></span>
 
 ## 6. 弃用和移除
 
@@ -2508,6 +2520,8 @@ echo "=== Audit Complete ==="
 | VolumeAttributesClass | `storage.k8s.io/v1` | `v1beta1` (removed 1.36) | 1.34 |
 
 ---
+
+<span id="7-eks-specific-considerations"></span>
 
 ## 7. EKS 特定注意事项
 
@@ -2657,6 +2671,8 @@ quadrantChart
 ```
 
 ---
+
+<span id="8-version-upgrade-planning"></span>
 
 ## 8. 版本升级规划
 
@@ -3017,6 +3033,8 @@ rollback_strategy:
 
 ---
 
+<span id="9-future-outlook"></span>
+
 ## 9. 未来展望
 
 ### 正在积极开发的功能
@@ -3081,6 +3099,8 @@ Kubernetes 正在快速演进，以更好支持 AI/ML workloads：
 
 ---
 
+<span id="10-references"></span>
+
 ## 10. 参考资料
 
 ### 官方 Kubernetes 资源
@@ -3126,4 +3146,4 @@ Kubernetes 正在快速演进，以更好支持 AI/ML workloads：
 
 ---
 
-< [上一篇：EKS 高级调试](./11-eks-advanced-debugging.md) | [目录](./README.md) >
+< [上一篇：EKS 高级调试](./11-eks-advanced-debugging.md) | [目录](../README.md) >

@@ -120,7 +120,7 @@ EKS Hybrid Nodes は、オンプレミスノードを AWS で認証するため�
 
 EKS Hybrid Nodes の理解度を確認するには、次のクイズに挑戦してください。
 
-* [EKS Hybrid Nodes クイズ](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/eks-hybrid-nodes/README.md)
+* [EKS Hybrid Nodes クイズ](https://www.atomai.click/kubernetes-docs/en/quizzes/#eks-hybrid-nodes)
 
 ## 関連ドキュメント
 

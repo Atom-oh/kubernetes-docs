@@ -1938,4 +1938,4 @@ flowchart TD
 **Documentos relacionados**:
 
 * [Comparación de Istio y VPC Lattice](02-istio-vs-lattice.md)
-* [Arquitectura de Istio](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md)
+* [Arquitectura de Istio](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture)

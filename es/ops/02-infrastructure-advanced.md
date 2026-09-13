@@ -724,7 +724,7 @@ Para las cargas de trabajo con estado, los Pods deben programarse en la misma zo
 
 ### Configuración de zona de NodePool
 
-El YAML real de NodePool es administrado por ArgoCD GitOps (consulte [Configuración del pipeline de GitOps](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)), pero estos son los conceptos clave:
+El YAML real de NodePool es administrado por ArgoCD GitOps (consulte [Configuración del pipeline de GitOps](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)), pero estos son los conceptos clave:
 
 ```yaml
 # Conceptual NodePool for Blue cluster (zone: ap-northeast-2a)
@@ -1390,7 +1390,7 @@ La arquitectura de clústeres Blue/Green con enrutamiento ponderado de NLB propo
 
 * [Infraestructura de Terraform de 3 capas](01-infrastructure-setup.md)
 * [Pipelines de CI](03-ci-pipelines.md)
-* [Configuración del pipeline de GitOps](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [Configuración del pipeline de GitOps](https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster)
 * [Introducción a EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
 
 ***

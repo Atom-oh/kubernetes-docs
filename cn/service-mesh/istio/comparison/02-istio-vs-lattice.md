@@ -1314,5 +1314,5 @@ flowchart TD
 
 * [Service Mesh 解决方案对比](01-service-mesh-comparison.md)
 * [Istio 架构](../03-architecture.md)
-* [Istio Ambient 模式](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/advanced/01-ambient-mode.md)
-* [VPC Lattice 详细指南](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/networking/02-vpc-lattice.md)
+* [Istio Ambient 模式](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/01-ambient-mode)
+* [VPC Lattice 详细指南](https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice)

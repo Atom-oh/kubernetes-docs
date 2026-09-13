@@ -447,5 +447,5 @@ EKS Pod の `/etc/resolv.conf` には 4 つの search domain（`bench-net.svc.cl
 - [Sidecar vs Ambient Mode Selection Guide](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md) — sidecar hop の +1.29 ms p50 と、ここで測定した +0.21 ms AZ hop を比較
 - [EBS gp2 vs gp3 Measured Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md) — 同じ cluster の storage path を測定
 - [Kafka on EKS Measured Benchmark](../data-on-eks/kafka/09-kafka-benchmark.md) — RF3 replication traffic がこのページの 5 Gbps flow cap と cross-AZ pricing にどう関わるか
-- [Guidebook Roadmap — measured-benchmark series](../roadmap.md)
+- [Guidebook Roadmap — measured-benchmark series](https://www.atomai.click/kubernetes-docs/en/roadmap)
 - [Quiz: Pod Network Benchmark](../quizzes/networking/06-pod-network-benchmark-quiz.md)

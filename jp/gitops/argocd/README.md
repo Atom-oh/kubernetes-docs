@@ -12,6 +12,8 @@
 - [クイックスタート](#quick-start)
 - [バージョン互換性](#version-compatibility)
 
+<span id="what-is-argocd"></span>
+
 ## ArgoCD とは？
 
 ArgoCD は、Kubernetes 向けの宣言的な GitOps 継続的デリバリーツールです。Git リポジトリで定義された望ましい状態をクラスタ内の実際の状態と同期することで、Kubernetes クラスタへのアプリケーションのデプロイを自動化します。
@@ -19,6 +21,8 @@ ArgoCD は、Kubernetes 向けの宣言的な GitOps 継続的デリバリーツ
 CNCF の卒業プロジェクトとして、ArgoCD は GitOps ベースの Kubernetes デプロイにおける事実上の標準となっており、世界中の数千の組織で利用されています。
 
 ![ArgoCD のコントロールプレーンが Repo Server を介して Git、Helm、OCI ソースからマニフェストを取得し、Application Controller がそれらを管理対象 Kubernetes クラスタに照合・同期する一方、ユーザーは Web UI、CLI、または gRPC API を通じて API Server にアクセスすることを示すアーキテクチャ図。](../../.gitbook/assets/en-gitops-argocd-README-0.png)
+
+<span id="key-benefits"></span>
 
 ## 主な利点
 
@@ -49,6 +53,8 @@ CNCF の卒業プロジェクトとして、ArgoCD は GitOps ベースの Kuber
 - **通知**: Slack、Teams、メール、webhook との統合
 - **ヘルスモニタリング**: 組み込みおよびカスタムのヘルスチェック
 
+<span id="architecture-overview"></span>
+
 ## アーキテクチャの概要
 
 ### コアコンポーネント
@@ -66,6 +72,8 @@ CNCF の卒業プロジェクトとして、ArgoCD は GitOps ベースの Kuber
 ### データフロー
 
 ![ユーザーが API Server を介して ArgoCD アプリケーションを作成し、Repo Server でマニフェストをレンダリングした後、Application Controller が反復的に望ましい状態と実際の状態を Kubernetes に対して比較し、照合ループ内でドリフト時に変更を適用することを示すシーケンス図。](../../.gitbook/assets/en-gitops-argocd-README-1.png)
+
+<span id="core-concepts"></span>
 
 ## コアコンセプト
 
@@ -99,6 +107,8 @@ ApplicationSet では、generator を使用して単一の定義から複数の�
 - **Self-Heal**: ドリフトを自動修正
 - **Prune**: 孤立したリソースを削除
 
+<span id="sub-guide-navigation"></span>
+
 ## サブガイドのナビゲーション
 
 | ガイド | 説明 |
@@ -112,7 +122,9 @@ ApplicationSet では、generator を使用して単一の定義から複数の�
 | [セキュリティ](07-security.md) | SSO 統合、secret 管理、TLS、監査ログ |
 | [通知](08-notifications.md) | 通知サービス、トリガー、テンプレート、サブスクリプション |
 | [ベストプラクティス](09-best-practices.md) | リポジトリパターン、パフォーマンスチューニング、トラブルシューティング、EKS のヒント |
-| [Rollouts Experiments 詳細解説](10-rollouts-experiment.md) | Experiment CRD、一時的な ReplicaSet 検証、AnalysisRun の判定 |
+| [Rollouts Experiments 詳細解説](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/10-rollouts-experiment) | Experiment CRD、一時的な ReplicaSet 検証、AnalysisRun の判定 |
+
+<span id="quick-start"></span>
 
 ## クイックスタート
 
@@ -193,6 +205,8 @@ spec:
       prune: true
       selfHeal: true
 ```
+
+<span id="version-compatibility"></span>
 
 ## バージョン互換性
 

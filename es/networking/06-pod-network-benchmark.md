@@ -447,5 +447,5 @@ Una aplicación que resuelve un nombre externo por solicitud envía 10 consultas
 - [Guía de selección de modo Sidecar frente a Ambient](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md) — compare los +1.29 ms de p50 del salto de sidecar con los +0.21 ms del salto de AZ medido aquí
 - [Benchmark medido de EBS gp2 frente a gp3](../storage/01-ebs-gp2-gp3-benchmark.md) — la ruta de almacenamiento del mismo cluster, medida
 - [Benchmark medido de Kafka en EKS](../data-on-eks/kafka/09-kafka-benchmark.md) — cómo el tráfico de replicación RF3 se encuentra con el límite de flujo de 5 Gbps y los precios entre AZ de esta página
-- [Hoja de ruta de la guía — la serie de benchmarks medidos](../roadmap.md)
+- [Hoja de ruta de la guía — la serie de benchmarks medidos](https://www.atomai.click/kubernetes-docs/en/roadmap)
 - [Cuestionario: Benchmark de red de Pod](../quizzes/networking/06-pod-network-benchmark-quiz.md)

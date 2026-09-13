@@ -1,0 +1,1569 @@
+{
+  "base": "26af4c8f292cd0930e61c6091b61a003629089c1",
+  "files": [
+    {
+      "path": "cn/basics/02-linux-advanced.md",
+      "previousSha256": "6f118366d81d1bca1fafb21aaf44d6c22ff3bebd9525523279a1634b1afbdd64",
+      "sha256": "e36ad971c6c3cf5ef7a3f30cb0c5c9c8128d33f5e1f6352a894a52058d98ae90",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 349,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/basics/03-container-basics.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/basics/03-container-technology"
+        }
+      ]
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "previousSha256": "353aaf982f5c9fe4bdc84b14795d55b6e2fd0eef07d0c8adf604d730a9e3e116",
+      "sha256": "78cbf471caa5ad40f63a4f6a172fa7333761cb870cd7a3b75d2721dd32e78e8f",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1014,
+          "old": "../quizzes/core/10-windows-in-kubernetes-quiz.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/quizzes/core/10-windows-in-kubernetes-quiz"
+        }
+      ]
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "previousSha256": "284edc1b5dd1ffa4704821bf572d403d1b13fafab87c4dc01e26933322bc3049",
+      "sha256": "04c756dad27bf2b291ebbf1c4e5a2af77c9d2128809018ab2486225e6c57b651",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 3129,
+          "old": "./README.md",
+          "new": "../README.md"
+        }
+      ]
+    },
+    {
+      "path": "cn/eks-hybrid-nodes/README.md",
+      "previousSha256": "7dfbda30a153a3cb40fbcc1b495e18e7576bed821d017f635e223e1133e4fd67",
+      "sha256": "84995bf28595946acb7522f0d08105047dc588a551c11d3011412b14d53954c1",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 123,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/eks-hybrid-nodes/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/quizzes/#eks-hybrid-nodes"
+        }
+      ]
+    },
+    {
+      "path": "cn/gitops/argocd/README.md",
+      "previousSha256": "9ac61500f6713f4e28ff3042feb872ddd8db2e168c173e0abf7abe4ce815b0a9",
+      "sha256": "0e4277c99afbef4e8571b83f6b5738b8fbc305f9643aff171a65cb3def009311",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 115,
+          "old": "10-rollouts-experiment.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/gitops/argocd/10-rollouts-experiment"
+        }
+      ]
+    },
+    {
+      "path": "cn/networking/06-pod-network-benchmark.md",
+      "previousSha256": "d78e60bb12aa459a2ff8f346dffb46addd60b9f3acf222d82bf06ecb31d108ff",
+      "sha256": "9fb48c0dec11bd8f1c5c2536fbadf8166a61ea0e116717192a133b9a9f116b5d",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 450,
+          "old": "../roadmap.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/roadmap"
+        }
+      ]
+    },
+    {
+      "path": "cn/ops/01-infrastructure-setup.md",
+      "previousSha256": "022cbd4b9da1ae91cd8db25a7c67cb4cf4a3ae9344b53d4ce9817508858a0ccb",
+      "sha256": "10d6a2cfbc7760b2e5a79d855126ddc00d00586fc297954aebc81c4710966806",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1616,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        },
+        {
+          "line": 1623,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        }
+      ]
+    },
+    {
+      "path": "cn/ops/02-infrastructure-advanced.md",
+      "previousSha256": "58811884571c961f9b48543eee415f4719383c2b554132c49865e74ff86036da",
+      "sha256": "ed9bdbb59d860688177c9593229b315b3202899b06caa1d603fb8f2e9b836434",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 727,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        },
+        {
+          "line": 1393,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        }
+      ]
+    },
+    {
+      "path": "cn/ops/06-scaling-strategies.md",
+      "previousSha256": "aa48ad9cf5ab43e3eb3467898e1c243aa73dbb5b1eb75e1cf43a1dc372000f0c",
+      "sha256": "e61ae6b2e026821e88d78f4860e983e03844e3d635f81edefc71c1e9f072f596",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 5,
+          "old": "./",
+          "new": "./README.md"
+        },
+        {
+          "line": 2592,
+          "old": "./",
+          "new": "./README.md"
+        }
+      ]
+    },
+    {
+      "path": "cn/quizzes/networking/cilium/glossary-quiz.md",
+      "previousSha256": "4fdcd67c80033a12905df672e6bcaa17dd175c3f54b53d9776c51b1fdb42d259",
+      "sha256": "854b98354ce78146dd7ba5d48e148a122f9d730291c4653cc4944832597056e9",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 404,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/networking/cilium/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/quizzes/#cilium"
+        }
+      ]
+    },
+    {
+      "path": "cn/quizzes/service-mesh/istio/traffic-management.md",
+      "previousSha256": "b9b4c0859dafd1e53705b5959455a3c7c45d9cc26002ceabe376906ba359d2e7",
+      "sha256": "bf07077be3038598d5f3989ec2464d03387d4d5c12fc1b54b79dda5e34ef180a",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 156,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/06-load-balancing"
+        },
+        {
+          "line": 157,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/08-connection-pool.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/03-destination-rule#_2-connection-pool"
+        },
+        {
+          "line": 249,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        },
+        {
+          "line": 340,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice"
+        },
+        {
+          "line": 744,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        },
+        {
+          "line": 952,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        },
+        {
+          "line": 953,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting#bluegreen-deployment"
+        },
+        {
+          "line": 1216,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/04-traffic-mirroring.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror"
+        },
+        {
+          "line": 1978,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice"
+        },
+        {
+          "line": 1979,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice#https-traffic"
+        },
+        {
+          "line": 2003,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice"
+        },
+        {
+          "line": 2004,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        }
+      ]
+    },
+    {
+      "path": "cn/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+      "previousSha256": "d58e61889dbf936dfc9d0680b828c8bc05de7c179afba89d5689130d2230e914",
+      "sha256": "caefaf6795883cbc950d9d4e360804665b869e615079128e6bac2e38ffe9388f",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1112,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/labs/zone-aware-rollout/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/09-zone-aware-argo-rollouts#implementation-guide"
+        },
+        {
+          "line": 1114,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/advanced/progressive-delivery.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/08-argo-rollouts"
+        }
+      ]
+    },
+    {
+      "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "previousSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+      "sha256": "3f521f9c4d68b618577c868bf00039c2563edc446762bb028631566da7d1116c",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1941,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture"
+        }
+      ]
+    },
+    {
+      "path": "cn/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+      "previousSha256": "3ed876dd8e28772002c50ec2b75ab36c1bc950802b2fa558e9abb17e7e80add3",
+      "sha256": "40642e7ed7985600127ec2091b3892ef52c07bedc4772865df5d4d62c5ae883f",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1317,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/advanced/01-ambient-mode.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/01-ambient-mode"
+        },
+        {
+          "line": 1318,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/networking/02-vpc-lattice.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice"
+        }
+      ]
+    },
+    {
+      "path": "cn/service-mesh/istio/comparison/README.md",
+      "previousSha256": "371b03c09af086d7a69d3d4f16b1d97392afbf4da7fe5cb59749418074c38b54",
+      "sha256": "0463aa1f931c577c44555577ecda4fa1cfb620f71d6c7f275d6f9143e98734c0",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 172,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture"
+        },
+        {
+          "line": 173,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/traffic-management/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/"
+        },
+        {
+          "line": 174,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/security/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/"
+        },
+        {
+          "line": 175,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/observability/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/"
+        },
+        {
+          "line": 179,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/vpc-lattice.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice"
+        }
+      ]
+    },
+    {
+      "path": "cn/storage/01-ebs-gp2-gp3-benchmark.md",
+      "previousSha256": "55a21f25b5bd1b96e7dd91ef0f89e9027b202f3d0ff102ecc2c0de6238ca94a9",
+      "sha256": "3667084d22c26cad5a20bd372f63c79e1070e7bf58c2925aec271479f3db4d6a",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 185,
+          "old": "../database/01-clickhouse-on-eks.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks"
+        },
+        {
+          "line": 270,
+          "old": "../database/01-clickhouse-on-eks.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks"
+        }
+      ]
+    },
+    {
+      "path": "jp/basics/02-linux-advanced.md",
+      "previousSha256": "1cc9eed4ab0a522b3ee5ff6fb9eef659f0adc24876a3083015d8d235dff90e7a",
+      "sha256": "67cc824cc76620420a1feadffdbb1f2558a66dac7272a50c9f2fd80a91622e63",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 349,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/basics/03-container-basics.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/basics/03-container-technology"
+        }
+      ]
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "previousSha256": "ab24409e07be8bc0a51d1f75f7b79a09e732bdee9a3a437dd593d6f67788f632",
+      "sha256": "6daac7ff3a3a8af6b220c6ce873a1574ac902b32394bc526a45cd4276810972c",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 3133,
+          "old": "./README.md",
+          "new": "../README.md"
+        }
+      ]
+    },
+    {
+      "path": "jp/eks-hybrid-nodes/README.md",
+      "previousSha256": "56512aa69f6b696d0e7ec91aeebe53b9d0bf4b27a8fc901dec6840269cc6aa75",
+      "sha256": "ea3eb538b7de89ff35cee3d971302ba59224b7929001a2a0ed8be0e68080188b",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 123,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/eks-hybrid-nodes/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/quizzes/#eks-hybrid-nodes"
+        }
+      ]
+    },
+    {
+      "path": "jp/gitops/argocd/README.md",
+      "previousSha256": "ca8ca74db56505481d7edfaf2c1905c35599f092384271b2973849601f74769b",
+      "sha256": "5e4537c0811c749b1b65148fa955d84f775c6ca70c467e1d025aef7400be5dae",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 115,
+          "old": "10-rollouts-experiment.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/gitops/argocd/10-rollouts-experiment"
+        }
+      ]
+    },
+    {
+      "path": "jp/networking/06-pod-network-benchmark.md",
+      "previousSha256": "5621adab39866a5cc118eeb6a321004d23f9990246fde1f1ad4c64ad87e3658a",
+      "sha256": "62d950e5a7135f5d7bbb54851261f85b1db328f513b4a002de40538d38eb2f67",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 450,
+          "old": "../roadmap.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/roadmap"
+        }
+      ]
+    },
+    {
+      "path": "jp/ops/01-infrastructure-setup.md",
+      "previousSha256": "b3430549762f5a42d0186945ea1a9026e4ba6fe3fefa9800d5bb541326141177",
+      "sha256": "10b6f8b91de9fee4acf7fffb04a64fde7ca19f00ee41fe9708bd81deb4dd0a9c",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1612,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        },
+        {
+          "line": 1619,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        }
+      ]
+    },
+    {
+      "path": "jp/ops/02-infrastructure-advanced.md",
+      "previousSha256": "c9673e13851bd6cdcd26b939bbf6c42f58d9d463ebdbb0db5e5578dfd24ef8cb",
+      "sha256": "21ad2039c27df170fb1ecdab271f42726c278849bbe7bc316378fa3b83111cca",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 727,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        },
+        {
+          "line": 1393,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        }
+      ]
+    },
+    {
+      "path": "jp/quizzes/networking/cilium/glossary-quiz.md",
+      "previousSha256": "38bd6ec882f6f326b9cf181080967720caa3067cf1fe30711fa588765f8609e2",
+      "sha256": "cf84aa81aab7f05db470616f5664fb906292f08de58016c91f196bd86b1ae507",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 404,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/networking/cilium/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/quizzes/#cilium"
+        }
+      ]
+    },
+    {
+      "path": "jp/quizzes/service-mesh/istio/traffic-management.md",
+      "previousSha256": "b1f11a33793b0a4c6f61e9c5b74ef338a3c798910e1355af9f49e1053611f35e",
+      "sha256": "8f045018b6afef3184594e93d1e8d8ecb120c52588a4a4f6f9be530a3c81d51b",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 156,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/06-load-balancing"
+        },
+        {
+          "line": 157,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/08-connection-pool.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/03-destination-rule#_2-connection-pool"
+        },
+        {
+          "line": 249,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        },
+        {
+          "line": 340,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice"
+        },
+        {
+          "line": 744,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        },
+        {
+          "line": 952,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        },
+        {
+          "line": 953,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting#bluegreen-deployment"
+        },
+        {
+          "line": 1216,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/04-traffic-mirroring.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror"
+        },
+        {
+          "line": 1978,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice"
+        },
+        {
+          "line": 1979,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice#https-traffic"
+        },
+        {
+          "line": 2003,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice"
+        },
+        {
+          "line": 2004,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        }
+      ]
+    },
+    {
+      "path": "jp/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+      "previousSha256": "0b1918b95e517c5fa01e7bbd5feabbbc4af974b11d946d9c7f52a81cc07ddf8d",
+      "sha256": "0e997dcc7069b4dcff4db2f300aea375fd04b4f7dffcbdaf3fcc767257e72780",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1112,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/labs/zone-aware-rollout/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/09-zone-aware-argo-rollouts#implementation-guide"
+        },
+        {
+          "line": 1114,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/advanced/progressive-delivery.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/08-argo-rollouts"
+        }
+      ]
+    },
+    {
+      "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "previousSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+      "sha256": "8a3780891be5c2d308d80ff0828bfa3d431875063afa5524d9129e68fd00b547",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1941,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture"
+        }
+      ]
+    },
+    {
+      "path": "jp/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+      "previousSha256": "e4d6a18464309ffd842bffa94f15027b5b467afc576f38d590bf49e949d03936",
+      "sha256": "034e4411e17ae13d37225a12e7ffba318beaf5c21cd481ae6e14d7ccaa0a1ec6",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1317,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/advanced/01-ambient-mode.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/01-ambient-mode"
+        },
+        {
+          "line": 1318,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/networking/02-vpc-lattice.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice"
+        }
+      ]
+    },
+    {
+      "path": "jp/service-mesh/istio/comparison/README.md",
+      "previousSha256": "e01ca35dba39dba498663dbe844edd89773bc91ea35dfd9e2b080331f517284c",
+      "sha256": "90d8a819fbf0b00b3ed11bf2d00002dc93456db040080b5d3578577abbbedc4f",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 172,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture"
+        },
+        {
+          "line": 173,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/traffic-management/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/"
+        },
+        {
+          "line": 174,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/security/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/"
+        },
+        {
+          "line": 175,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/observability/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/"
+        },
+        {
+          "line": 179,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/vpc-lattice.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice"
+        }
+      ]
+    },
+    {
+      "path": "jp/storage/01-ebs-gp2-gp3-benchmark.md",
+      "previousSha256": "579b5a23d3e9c4014a7f295fd732af483b16ec843ff297f559410e0266eecebf",
+      "sha256": "813e375916da029a7701a209f8602ae79aac4208db17e960a304edaf7c2fbdf6",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 185,
+          "old": "../database/01-clickhouse-on-eks.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks"
+        },
+        {
+          "line": 270,
+          "old": "../database/01-clickhouse-on-eks.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks"
+        }
+      ]
+    },
+    {
+      "path": "es/basics/02-linux-advanced.md",
+      "previousSha256": "c568602da3b16c8c383c78c66d8c720ebe63060bb9baed54819e630af5433cde",
+      "sha256": "b7f0a4011b360be4a4a4964eb357be28e3216730d9d3b37f8823b8ad76239481",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 349,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/basics/03-container-basics.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/basics/03-container-technology"
+        }
+      ]
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "previousSha256": "2eb683b89c25db73361ed5d29156a5184af5ed2d22ba61e322ab67595eec8f1a",
+      "sha256": "838ebde01ec2225585551a91ac45ec1607f65143ccc2ef8ce63487a384320d7f",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 3133,
+          "old": "./README.md",
+          "new": "../README.md"
+        }
+      ]
+    },
+    {
+      "path": "es/eks-hybrid-nodes/README.md",
+      "previousSha256": "8ca057cf68711455830668ff64046afe6f18c67a98ec8173b23ef5e42d70b9ab",
+      "sha256": "353bb37799f9522df1946ae6d7c28f8b2abb6906171fcfc0c7f4b3db59a2690d",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 123,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/eks-hybrid-nodes/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/quizzes/#eks-hybrid-nodes"
+        }
+      ]
+    },
+    {
+      "path": "es/gitops/argocd/README.md",
+      "previousSha256": "440529f2980277ad5acc7f509de30a8ff2b6312d0dffec869a8e537bbd18d6ad",
+      "sha256": "f4072c4c6f12b804cd7309e6064597818e53bf027e6a070015df8c63d67c2d7f",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 115,
+          "old": "10-rollouts-experiment.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/gitops/argocd/10-rollouts-experiment"
+        }
+      ]
+    },
+    {
+      "path": "es/networking/06-pod-network-benchmark.md",
+      "previousSha256": "44f23d3cc2545280c143473bbefe10950e5d397bc231ef621832b6b7be9d7aa6",
+      "sha256": "73f1d97e017c6db752ad8f80d630c786344bc8600e2ba8503fd531ea346f758b",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 450,
+          "old": "../roadmap.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/roadmap"
+        }
+      ]
+    },
+    {
+      "path": "es/ops/01-infrastructure-setup.md",
+      "previousSha256": "623607ad1fec28406af3b97a070c4e5f738d3a8fc894d4e9aea48420ddf5162f",
+      "sha256": "c4129bca031655d08acbd5a20be44649838b00ab91c83b82c64dbfeb5d9e4fa5",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1616,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        },
+        {
+          "line": 1623,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        }
+      ]
+    },
+    {
+      "path": "es/ops/02-infrastructure-advanced.md",
+      "previousSha256": "5b4d3430f9b6475e424729e12ffcfda1ba2ea769f807f2f055ddd9c948e925b9",
+      "sha256": "810b4aa99c6593f9010934f939c86f821f1c9b84e6afab2a42bbcb80b8e37e1a",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 727,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        },
+        {
+          "line": 1393,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/ops/04-gitops-multi-cluster"
+        }
+      ]
+    },
+    {
+      "path": "es/quizzes/networking/cilium/glossary-quiz.md",
+      "previousSha256": "f7323ea53a16fa34979bdc3e00c7075f1e42c913530767bef37943a2a0d9efb1",
+      "sha256": "f133be63a9a8e7197a6910a5cd8744dbbf983805623242ef6933c280130b2646",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 404,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/networking/cilium/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/quizzes/#cilium"
+        }
+      ]
+    },
+    {
+      "path": "es/quizzes/service-mesh/istio/traffic-management.md",
+      "previousSha256": "ec56e321adc16cbaab674ec7e625f54face39dc2925189d15325fd4d9fe3bc06",
+      "sha256": "e974f8ac03944e757578c0d3b449e568af5324afd4138506b3482a936ac13752",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 156,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/06-load-balancing"
+        },
+        {
+          "line": 157,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/08-connection-pool.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/03-destination-rule#_2-connection-pool"
+        },
+        {
+          "line": 249,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        },
+        {
+          "line": 340,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice"
+        },
+        {
+          "line": 744,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        },
+        {
+          "line": 952,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        },
+        {
+          "line": 953,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting#bluegreen-deployment"
+        },
+        {
+          "line": 1216,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/04-traffic-mirroring.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror"
+        },
+        {
+          "line": 1978,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice"
+        },
+        {
+          "line": 1979,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice#https-traffic"
+        },
+        {
+          "line": 2003,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/01-gateway-virtualservice"
+        },
+        {
+          "line": 2004,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/04-traffic-splitting"
+        }
+      ]
+    },
+    {
+      "path": "es/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+      "previousSha256": "91307742966e8beaa79b61578ef4060566b92b329bfe7674a1f35434344cb045",
+      "sha256": "1d3f3351f4a42ba81f3df7039c8324a3f61854a33ef5c54a851c16d6581421f4",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1112,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/labs/zone-aware-rollout/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/09-zone-aware-argo-rollouts#implementation-guide"
+        },
+        {
+          "line": 1114,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/advanced/progressive-delivery.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/08-argo-rollouts"
+        }
+      ]
+    },
+    {
+      "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "previousSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+      "sha256": "f2bd7743c12af2812c0e736c73087118ddcb06fe04083cb6ea172975d7d1a1bd",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1941,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture"
+        }
+      ]
+    },
+    {
+      "path": "es/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+      "previousSha256": "1d5c43f8455ceb3dcb0ae7a11fa2096acf961710df00d527b437d3394aa18cd6",
+      "sha256": "e9a16e80fabb9e1f721f335e6c6238d4ca4e720721f0929ee63ac910ce8b28ae",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 1317,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/advanced/01-ambient-mode.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/01-ambient-mode"
+        },
+        {
+          "line": 1318,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/networking/02-vpc-lattice.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice"
+        }
+      ]
+    },
+    {
+      "path": "es/service-mesh/istio/comparison/README.md",
+      "previousSha256": "0969df4cc6bc4c69a0161cae8e322591b9980673fe425c68ceacba2f7477680e",
+      "sha256": "f21bdcbc860c79ec680dddcd0fd7686b3a2797ce5ed328db545dbbd923975af6",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 172,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture"
+        },
+        {
+          "line": 173,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/traffic-management/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/"
+        },
+        {
+          "line": 174,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/security/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/"
+        },
+        {
+          "line": 175,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/observability/README.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/observability/"
+        },
+        {
+          "line": 179,
+          "old": "https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/vpc-lattice.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/networking/02-vpc-lattice"
+        }
+      ]
+    },
+    {
+      "path": "es/storage/01-ebs-gp2-gp3-benchmark.md",
+      "previousSha256": "ca7182e20ebf5426497675e8337c8130de4be2b477f0b605c20e593f2bb873d9",
+      "sha256": "9460466dc09d2c7aa24ccee43574057be68a48599e4bf1fefec80b3788eccc6b",
+      "codeUnchanged": true,
+      "replacements": [
+        {
+          "line": 185,
+          "old": "../database/01-clickhouse-on-eks.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks"
+        },
+        {
+          "line": 270,
+          "old": "../database/01-clickhouse-on-eks.md",
+          "new": "https://www.atomai.click/kubernetes-docs/en/database/01-clickhouse-on-eks"
+        }
+      ]
+    }
+  ],
+  "replacements": 105,
+  "scope": "105linktargetreplacementsand56explicitTOCaliasesacross44translatedMD. After reverting only these exact edits, every file matches its original byte-for-byte. No translated prose or fenced example changed. Canonical English fallback targets and VitePress fragments verified.",
+  "checkedAt": "2026-09-13T14:12:34.380723+00:00",
+  "tocAliases": [
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "windows-container-overview",
+      "heading": "## Windows 容器概述"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "kubernetes-windows-support-architecture",
+      "heading": "## Kubernetes Windows 支持架构"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "windows-node-limitations",
+      "heading": "## Windows 节点限制"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "windows-node-setup",
+      "heading": "## Windows 节点设置"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "deploying-windows-containers",
+      "heading": "## 部署 Windows 容器"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "networking",
+      "heading": "## 网络"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "storage",
+      "heading": "## 存储"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "monitoring-and-logging",
+      "heading": "## 监控和日志记录"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "security",
+      "heading": "## 安全性"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "windows-support-in-amazon-eks",
+      "heading": "## Amazon EKS 中的 Windows 支持"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "best-practices",
+      "heading": "## 最佳实践"
+    },
+    {
+      "path": "cn/core/10-windows-in-kubernetes.md",
+      "id": "conclusion",
+      "heading": "## 结论"
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "id": "1-overview-and-learning-objectives",
+      "heading": "## 1. 概览和学习目标"
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "id": "2-kubernetes-release-cycle",
+      "heading": "## 2. Kubernetes 发布周期"
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "id": "3-eks-version-support-matrix",
+      "heading": "## 3. EKS 版本支持矩阵"
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "id": "4-version-by-version-feature-guide",
+      "heading": "## 4. 按版本划分的功能指南"
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "id": "5-key-feature-graduation-timeline",
+      "heading": "## 5. 关键功能毕业时间线"
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "id": "6-deprecations-and-removals",
+      "heading": "## 6. 弃用和移除"
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "id": "7-eks-specific-considerations",
+      "heading": "## 7. EKS 特定注意事项"
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "id": "8-version-upgrade-planning",
+      "heading": "## 8. 版本升级规划"
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "id": "9-future-outlook",
+      "heading": "## 9. 未来展望"
+    },
+    {
+      "path": "cn/eks/12-kubernetes-version-roadmap.md",
+      "id": "10-references",
+      "heading": "## 10. 参考资料"
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "id": "1-overview-and-learning-objectives",
+      "heading": "## 1. Overview and Learning Objectives"
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "id": "2-kubernetes-release-cycle",
+      "heading": "## 2. Kubernetes Release Cycle"
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "id": "3-eks-version-support-matrix",
+      "heading": "## 3. EKS Version Support Matrix"
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "id": "4-version-by-version-feature-guide",
+      "heading": "## 4. Version-by-Version Feature Guide"
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "id": "5-key-feature-graduation-timeline",
+      "heading": "## 5. Key Feature Graduation Timeline"
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "id": "6-deprecations-and-removals",
+      "heading": "## 6. Deprecations and Removals"
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "id": "7-eks-specific-considerations",
+      "heading": "## 7. EKS-Specific Considerations"
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "id": "8-version-upgrade-planning",
+      "heading": "## 8. Version Upgrade Planning"
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "id": "9-future-outlook",
+      "heading": "## 9. Future Outlook"
+    },
+    {
+      "path": "jp/eks/12-kubernetes-version-roadmap.md",
+      "id": "10-references",
+      "heading": "## 10. References"
+    },
+    {
+      "path": "jp/gitops/argocd/README.md",
+      "id": "what-is-argocd",
+      "heading": "## ArgoCD とは？"
+    },
+    {
+      "path": "jp/gitops/argocd/README.md",
+      "id": "key-benefits",
+      "heading": "## 主な利点"
+    },
+    {
+      "path": "jp/gitops/argocd/README.md",
+      "id": "architecture-overview",
+      "heading": "## アーキテクチャの概要"
+    },
+    {
+      "path": "jp/gitops/argocd/README.md",
+      "id": "core-concepts",
+      "heading": "## コアコンセプト"
+    },
+    {
+      "path": "jp/gitops/argocd/README.md",
+      "id": "sub-guide-navigation",
+      "heading": "## サブガイドのナビゲーション"
+    },
+    {
+      "path": "jp/gitops/argocd/README.md",
+      "id": "quick-start",
+      "heading": "## クイックスタート"
+    },
+    {
+      "path": "jp/gitops/argocd/README.md",
+      "id": "version-compatibility",
+      "heading": "## バージョン互換性"
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "id": "1-overview-and-learning-objectives",
+      "heading": "## 1. Descripción general y objetivos de aprendizaje"
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "id": "2-kubernetes-release-cycle",
+      "heading": "## 2. Ciclo de lanzamiento de Kubernetes"
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "id": "3-eks-version-support-matrix",
+      "heading": "## 3. Matriz de compatibilidad de versiones de EKS"
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "id": "4-version-by-version-feature-guide",
+      "heading": "## 4. Guía de características por versión"
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "id": "5-key-feature-graduation-timeline",
+      "heading": "## 5. Cronograma de promoción de características clave"
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "id": "6-deprecations-and-removals",
+      "heading": "## 6. Deprecaciones y eliminaciones"
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "id": "7-eks-specific-considerations",
+      "heading": "## 7. Consideraciones específicas de EKS"
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "id": "8-version-upgrade-planning",
+      "heading": "## 8. Planificación de actualización de versiones"
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "id": "9-future-outlook",
+      "heading": "## 9. Perspectiva futura"
+    },
+    {
+      "path": "es/eks/12-kubernetes-version-roadmap.md",
+      "id": "10-references",
+      "heading": "## 10. Referencias"
+    },
+    {
+      "path": "es/gitops/argocd/README.md",
+      "id": "what-is-argocd",
+      "heading": "## ¿Qué es ArgoCD?"
+    },
+    {
+      "path": "es/gitops/argocd/README.md",
+      "id": "key-benefits",
+      "heading": "## Beneficios principales"
+    },
+    {
+      "path": "es/gitops/argocd/README.md",
+      "id": "architecture-overview",
+      "heading": "## Descripción general de la arquitectura"
+    },
+    {
+      "path": "es/gitops/argocd/README.md",
+      "id": "core-concepts",
+      "heading": "## Conceptos principales"
+    },
+    {
+      "path": "es/gitops/argocd/README.md",
+      "id": "sub-guide-navigation",
+      "heading": "## Navegación de subguías"
+    },
+    {
+      "path": "es/gitops/argocd/README.md",
+      "id": "quick-start",
+      "heading": "## Inicio rápido"
+    },
+    {
+      "path": "es/gitops/argocd/README.md",
+      "id": "version-compatibility",
+      "heading": "## Compatibilidad de versiones"
+    }
+  ],
+  "markdown": {
+    "status": "passed",
+    "scope": "44 changed translated documents compiled with native VitePress/Vue; existingIDsretained,currentlocalfragmentsandlocalfiletargetsexist;noquizanswer-countclaim.",
+    "files": [
+      {
+        "path": "cn/basics/02-linux-advanced.md",
+        "sha256": "e36ad971c6c3cf5ef7a3f30cb0c5c9c8128d33f5e1f6352a894a52058d98ae90",
+        "oldIds": 43,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/core/10-windows-in-kubernetes.md",
+        "sha256": "78cbf471caa5ad40f63a4f6a172fa7333761cb870cd7a3b75d2721dd32e78e8f",
+        "oldIds": 54,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/eks/12-kubernetes-version-roadmap.md",
+        "sha256": "04c756dad27bf2b291ebbf1c4e5a2af77c9d2128809018ab2486225e6c57b651",
+        "oldIds": 101,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/eks-hybrid-nodes/README.md",
+        "sha256": "84995bf28595946acb7522f0d08105047dc588a551c11d3011412b14d53954c1",
+        "oldIds": 16,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/gitops/argocd/README.md",
+        "sha256": "0e4277c99afbef4e8571b83f6b5738b8fbc305f9643aff171a65cb3def009311",
+        "oldIds": 35,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/networking/06-pod-network-benchmark.md",
+        "sha256": "9fb48c0dec11bd8f1c5c2536fbadf8166a61ea0e116717192a133b9a9f116b5d",
+        "oldIds": 20,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/ops/01-infrastructure-setup.md",
+        "sha256": "10d6a2cfbc7760b2e5a79d855126ddc00d00586fc297954aebc81c4710966806",
+        "oldIds": 42,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/ops/02-infrastructure-advanced.md",
+        "sha256": "ed9bdbb59d860688177c9593229b315b3202899b06caa1d603fb8f2e9b836434",
+        "oldIds": 32,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/ops/06-scaling-strategies.md",
+        "sha256": "e61ae6b2e026821e88d78f4860e983e03844e3d635f81edefc71c1e9f072f596",
+        "oldIds": 38,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/quizzes/networking/cilium/glossary-quiz.md",
+        "sha256": "854b98354ce78146dd7ba5d48e148a122f9d730291c4653cc4944832597056e9",
+        "oldIds": 4,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/quizzes/service-mesh/istio/traffic-management.md",
+        "sha256": "bf07077be3038598d5f3989ec2464d03387d4d5c12fc1b54b79dda5e34ef180a",
+        "oldIds": 15,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+        "sha256": "caefaf6795883cbc950d9d4e360804665b869e615079128e6bac2e38ffe9388f",
+        "oldIds": 46,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+        "sha256": "3f521f9c4d68b618577c868bf00039c2563edc446762bb028631566da7d1116c",
+        "oldIds": 51,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+        "sha256": "40642e7ed7985600127ec2091b3892ef52c07bedc4772865df5d4d62c5ae883f",
+        "oldIds": 72,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/service-mesh/istio/comparison/README.md",
+        "sha256": "0463aa1f931c577c44555577ecda4fa1cfb620f71d6c7f275d6f9143e98734c0",
+        "oldIds": 26,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "cn/storage/01-ebs-gp2-gp3-benchmark.md",
+        "sha256": "3667084d22c26cad5a20bd372f63c79e1070e7bf58c2925aec271479f3db4d6a",
+        "oldIds": 17,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/basics/02-linux-advanced.md",
+        "sha256": "67cc824cc76620420a1feadffdbb1f2558a66dac7272a50c9f2fd80a91622e63",
+        "oldIds": 43,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/eks/12-kubernetes-version-roadmap.md",
+        "sha256": "6daac7ff3a3a8af6b220c6ce873a1574ac902b32394bc526a45cd4276810972c",
+        "oldIds": 101,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/eks-hybrid-nodes/README.md",
+        "sha256": "ea3eb538b7de89ff35cee3d971302ba59224b7929001a2a0ed8be0e68080188b",
+        "oldIds": 16,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/gitops/argocd/README.md",
+        "sha256": "5e4537c0811c749b1b65148fa955d84f775c6ca70c467e1d025aef7400be5dae",
+        "oldIds": 35,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/networking/06-pod-network-benchmark.md",
+        "sha256": "62d950e5a7135f5d7bbb54851261f85b1db328f513b4a002de40538d38eb2f67",
+        "oldIds": 20,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/ops/01-infrastructure-setup.md",
+        "sha256": "10b6f8b91de9fee4acf7fffb04a64fde7ca19f00ee41fe9708bd81deb4dd0a9c",
+        "oldIds": 42,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/ops/02-infrastructure-advanced.md",
+        "sha256": "21ad2039c27df170fb1ecdab271f42726c278849bbe7bc316378fa3b83111cca",
+        "oldIds": 32,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/quizzes/networking/cilium/glossary-quiz.md",
+        "sha256": "cf84aa81aab7f05db470616f5664fb906292f08de58016c91f196bd86b1ae507",
+        "oldIds": 4,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/quizzes/service-mesh/istio/traffic-management.md",
+        "sha256": "8f045018b6afef3184594e93d1e8d8ecb120c52588a4a4f6f9be530a3c81d51b",
+        "oldIds": 15,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+        "sha256": "0e997dcc7069b4dcff4db2f300aea375fd04b4f7dffcbdaf3fcc767257e72780",
+        "oldIds": 46,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+        "sha256": "8a3780891be5c2d308d80ff0828bfa3d431875063afa5524d9129e68fd00b547",
+        "oldIds": 51,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+        "sha256": "034e4411e17ae13d37225a12e7ffba318beaf5c21cd481ae6e14d7ccaa0a1ec6",
+        "oldIds": 72,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/service-mesh/istio/comparison/README.md",
+        "sha256": "90d8a819fbf0b00b3ed11bf2d00002dc93456db040080b5d3578577abbbedc4f",
+        "oldIds": 26,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "jp/storage/01-ebs-gp2-gp3-benchmark.md",
+        "sha256": "813e375916da029a7701a209f8602ae79aac4208db17e960a304edaf7c2fbdf6",
+        "oldIds": 17,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/basics/02-linux-advanced.md",
+        "sha256": "b7f0a4011b360be4a4a4964eb357be28e3216730d9d3b37f8823b8ad76239481",
+        "oldIds": 43,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/eks/12-kubernetes-version-roadmap.md",
+        "sha256": "838ebde01ec2225585551a91ac45ec1607f65143ccc2ef8ce63487a384320d7f",
+        "oldIds": 101,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/eks-hybrid-nodes/README.md",
+        "sha256": "353bb37799f9522df1946ae6d7c28f8b2abb6906171fcfc0c7f4b3db59a2690d",
+        "oldIds": 16,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/gitops/argocd/README.md",
+        "sha256": "f4072c4c6f12b804cd7309e6064597818e53bf027e6a070015df8c63d67c2d7f",
+        "oldIds": 35,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/networking/06-pod-network-benchmark.md",
+        "sha256": "73f1d97e017c6db752ad8f80d630c786344bc8600e2ba8503fd531ea346f758b",
+        "oldIds": 20,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/ops/01-infrastructure-setup.md",
+        "sha256": "c4129bca031655d08acbd5a20be44649838b00ab91c83b82c64dbfeb5d9e4fa5",
+        "oldIds": 42,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/ops/02-infrastructure-advanced.md",
+        "sha256": "810b4aa99c6593f9010934f939c86f821f1c9b84e6afab2a42bbcb80b8e37e1a",
+        "oldIds": 32,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/quizzes/networking/cilium/glossary-quiz.md",
+        "sha256": "f133be63a9a8e7197a6910a5cd8744dbbf983805623242ef6933c280130b2646",
+        "oldIds": 4,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/quizzes/service-mesh/istio/traffic-management.md",
+        "sha256": "e974f8ac03944e757578c0d3b449e568af5324afd4138506b3482a936ac13752",
+        "oldIds": 15,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+        "sha256": "1d3f3351f4a42ba81f3df7039c8324a3f61854a33ef5c54a851c16d6581421f4",
+        "oldIds": 46,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+        "sha256": "f2bd7743c12af2812c0e736c73087118ddcb06fe04083cb6ea172975d7d1a1bd",
+        "oldIds": 51,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+        "sha256": "e9a16e80fabb9e1f721f335e6c6238d4ca4e720721f0929ee63ac910ce8b28ae",
+        "oldIds": 72,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/service-mesh/istio/comparison/README.md",
+        "sha256": "f21bdcbc860c79ec680dddcd0fd7686b3a2797ce5ed328db545dbbd923975af6",
+        "oldIds": 26,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      },
+      {
+        "path": "es/storage/01-ebs-gp2-gp3-benchmark.md",
+        "sha256": "9460466dc09d2c7aa24ccee43574057be68a48599e4bf1fefec80b3788eccc6b",
+        "oldIds": 17,
+        "errors": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": []
+      }
+    ]
+  }
+}
