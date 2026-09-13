@@ -65,9 +65,11 @@ receivers:
 Attach the template's `AlertmanagerPublishPolicyArn` only to the configured
 Alertmanager workload role. Ensure that the role can actually be assumed from
 the Alertmanager Pod and that the receiver is selected by a route. Configure
-the alert's `service` label to match the catalog. `toJson` serializes the
-capitalized template fields; the parser also accepts the lowercase webhook
-shape. The default human-readable SNS template is not this JSON contract.
+the alert's `service` label to match the catalog. `toJson` honors JSON tags: keys include
+`alerts`, `labels`, `status` and camelCase `startsAt`. Capitalized Go template
+access such as `.Alerts` does not determine the JSON key casing. Uppercase
+parsing is retained only for compatibility. The default human-readable SNS
+template is not this JSON contract.
 
 Operational boundaries:
 

@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "reviewedAt": "2026-09-13T06:13:39.990529+00:00",
+  "reviewedAt": "2026-09-13T06:38:04.515795+00:00",
   "scope": "FourKorean/EnglishPart5alertingAIOpsguides/quizzes,11example/testfiles,10diagrams;noAWSdeployment",
   "originalFiles": [
     {
@@ -31,7 +31,7 @@
     "results": [
       {
         "path": "ko/labs/observability/05-alerting-aiops-lab.md",
-        "sha256": "85c151fbae8ad7f1ee3baefd763e31795629adb91deaca9b044ebcd0eb217e9b",
+        "sha256": "e654579cb565167d7f16f4c978d1259c4a11df7ecf5d6b689a6787c243bde887",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -117,7 +117,7 @@
       },
       {
         "path": "ko/quizzes/observability/labs/05-alerting-aiops-quiz.md",
-        "sha256": "c61f469a3397371be3de7f46f2c857725909789d10d80be732366b78f958eff7",
+        "sha256": "f93a3e67b145dc875826b98b85ac9a4f427bcfdbffab282504bdd94199d155e0",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -134,7 +134,7 @@
       },
       {
         "path": "en/labs/observability/05-alerting-aiops-lab.md",
-        "sha256": "740b8d9c6e5db03f779cbc074cc1a1ada3c1644d79f308cf454b7cc8ccf9bec9",
+        "sha256": "4e0bf268dce00352ae9f8d446527d83edd8d9e65f068de0e1fd5e42383f81dd8",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -228,7 +228,7 @@
       },
       {
         "path": "en/quizzes/observability/labs/05-alerting-aiops-quiz.md",
-        "sha256": "cfe85a0466a7471a57c0124a2076a77d519a9a1701cb85c23a3af0e03cfb009d",
+        "sha256": "77ac8b0f9a00239e71487f359e49d92dac4919f8d36f27b5d9b26ccc7d5390a4",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -248,28 +248,28 @@
   "artifacts": [
     {
       "path": "ko/labs/observability/05-alerting-aiops-lab.md",
-      "sha256": "85c151fbae8ad7f1ee3baefd763e31795629adb91deaca9b044ebcd0eb217e9b",
-      "bytes": 14875
+      "sha256": "e654579cb565167d7f16f4c978d1259c4a11df7ecf5d6b689a6787c243bde887",
+      "bytes": 14982
     },
     {
       "path": "ko/quizzes/observability/labs/05-alerting-aiops-quiz.md",
-      "sha256": "c61f469a3397371be3de7f46f2c857725909789d10d80be732366b78f958eff7",
-      "bytes": 5256
+      "sha256": "f93a3e67b145dc875826b98b85ac9a4f427bcfdbffab282504bdd94199d155e0",
+      "bytes": 5288
     },
     {
       "path": "en/labs/observability/05-alerting-aiops-lab.md",
-      "sha256": "740b8d9c6e5db03f779cbc074cc1a1ada3c1644d79f308cf454b7cc8ccf9bec9",
-      "bytes": 13153
+      "sha256": "4e0bf268dce00352ae9f8d446527d83edd8d9e65f068de0e1fd5e42383f81dd8",
+      "bytes": 13244
     },
     {
       "path": "en/quizzes/observability/labs/05-alerting-aiops-quiz.md",
-      "sha256": "cfe85a0466a7471a57c0124a2076a77d519a9a1701cb85c23a3af0e03cfb009d",
-      "bytes": 4977
+      "sha256": "77ac8b0f9a00239e71487f359e49d92dac4919f8d36f27b5d9b26ccc7d5390a4",
+      "bytes": 5019
     },
     {
       "path": "examples/labs/observability/aiops/alerts.py",
-      "sha256": "fe234e35f601ed2c5b233df8df0059bd07e85d82a765dc9a44228d9e36481bd4",
-      "bytes": 4049
+      "sha256": "421623b38ad3933bb358433a81e2c3a6779cd5dd4b309afbcda1435b201475f9",
+      "bytes": 4139
     },
     {
       "path": "examples/labs/observability/aiops/evidence.py",
@@ -298,8 +298,8 @@
     },
     {
       "path": "examples/labs/observability/aiops/README.md",
-      "sha256": "9b91ef382cae5222b4749c29ca1a4d661084c537cdb9a2e75af0c19bbc1a3725",
-      "bytes": 5359
+      "sha256": "935cfad2fe3fb803e0f440767609c7586d9f118e0e55a23a361ccacbb5140280",
+      "bytes": 5491
     },
     {
       "path": "examples/labs/observability/aiops/tests/test_alerts.py",
@@ -1272,5 +1272,12 @@
     "SAMtemplatecfn-lint/staticpolicyonly;sam-build/deployandrealKMSauthorizationnotexecuted.",
     "Diagnosticreporteronly;noautonomousremediation,anonymousHTTPendpointorA2Aprotocolimplementation.",
     "Fullcorpusreviewactive;remaining16labdocumentsstillbeingrepaired."
-  ]
+  ],
+  "reviewFix": {
+    "finding": "AIOPS-R1-001",
+    "originalReviewedHead": "a03db78c6eab82e3392525859df0b94bb4bd4b0d",
+    "change": "CorrectJSON-taggedalerts/labels/status/startsAtdescription;capitalizedGoaccessdifferent;uppercaseparsingretainedascompatibility;runtimeunchanged",
+    "proof": "NativeAlertmanager0.34fixtureandtaggedData/Alertsource",
+    "validation": "24portabletests/4MDrepassed;parserbehaviorunchanged;docstringandprosecorrected"
+  }
 }

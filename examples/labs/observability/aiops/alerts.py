@@ -12,9 +12,10 @@ def _field(value, lower, upper, default=None):
 def normalize_event(event, input_topic, allowed_alerts, allowed_services, alarm_services):
     """Return every SNS record with a bounded list of known firing alerts.
 
-    Alertmanager's template ``{{ . | toJson }}`` uses capitalized fields,
-    while its webhook format uses lowercase fields. Neither descriptions nor
-    arbitrary labels are forwarded to the model.
+    Alertmanager's ``{{ . | toJson }}`` emits JSON-tagged keys such as
+    ``alerts``, ``labels`` and ``startsAt``. Capitalized Go field access is
+    different; uppercase parsing here is optional compatibility. Neither raw
+    descriptions nor arbitrary labels are forwarded to the model.
     """
     if not isinstance(event, dict):
         raise ValueError("Expected an SNS event object")

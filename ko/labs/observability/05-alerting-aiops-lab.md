@@ -122,7 +122,7 @@ receivers:
     send_resolved: true
 ```
 
-`toJson`의 template Data는 대문자 필드(`Alerts`, `Labels`, `Status`)를 사용하므로 parser가 이를 처리합니다. webhook의 소문자 JSON도 지원합니다. 기본 human-readable SNS 메시지를 이 JSON으로 오해하지 않습니다.
+`toJson`은 JSON tag에 따라 `alerts`, `labels`, `status`와 `startsAt` 같은 camelCase 키를 생성합니다. Go template에서 `.Alerts`로 접근하는 것과 직렬화된 JSON key는 다릅니다. parser의 대문자 지원은 추가 호환성 처리로만 유지합니다. 기본 human-readable SNS 메시지를 이 JSON으로 오해하지 않습니다.
 
 템플릿의 AlertmanagerPublishPolicyArn은 기존 **Alertmanager workload role에만** 연결합니다. node role에 공유 권한을 추가하지 않고 실제 Pod의 IAM credential 경로·KMS/SNS 권한을 확인합니다. `service` label은 catalog와 일치해야 하며 allowed alert 목록도 실제 rule과 맞춥니다. 결과 OutputTopicArn에는 reporter를 구독하지 않습니다.
 

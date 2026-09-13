@@ -130,7 +130,7 @@ receivers:
     send_resolved: true
 ```
 
-Template Data serialized by `toJson` has capitalized fields (`Alerts`, `Labels`, `Status`), which the parser handles. It also accepts lowercase webhook JSON. The default human-readable SNS message is not this JSON format.
+`toJson` honors JSON tags, producing `alerts`, `labels`, `status` and camelCase keys such as `startsAt`. Capitalized Go template access (`.Alerts`) is different from serialized JSON keys. The parser retains uppercase support only for compatibility. The default human-readable SNS message is not this JSON format.
 
 Attach the template AlertmanagerPublishPolicyArn only to the existing **Alertmanager workload role**. Verify the Pod credential path and KMS/SNS permissions; do not broaden the shared node role. Match `service` labels and allowed alert names to the catalog/rules. Never subscribe the reporter to OutputTopicArn.
 

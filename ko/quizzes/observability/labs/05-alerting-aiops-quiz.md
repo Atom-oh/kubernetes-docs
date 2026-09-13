@@ -74,14 +74,14 @@ Period는 metric 집계 간격이며 평가 수행 빈도와 동의어가 아닙
 
 5. Alertmanager의 `{{ . | toJson }}` 출력에서 파서가 고려할 점은?
    - A) 항상 plain text다
-   - B) 대문자 template Data 필드와 lowercase webhook 형식의 차이
+   - B) JSON tag의 소문자/camelCase key와 Go template 대문자 필드 접근의 차이
    - C) JSON은 parse할 필요가 없다
    - D) 모든 SNS message는 같은 필드다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 대문자 template Data 필드와 lowercase webhook 형식의 차이**
+**정답: B) JSON tag의 소문자/camelCase key와 Go template 대문자 필드 접근의 차이**
 
 실제0.34.0 template 직렬화와 정상/오류 payload를 검증했습니다.
 

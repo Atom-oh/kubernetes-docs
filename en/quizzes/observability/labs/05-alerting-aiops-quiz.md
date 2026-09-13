@@ -74,14 +74,14 @@ Constrain subscriptions and IAM publish permissions to the same boundary.
 
 5. What must the parser account for with Alertmanager `{{ . | toJson }}` output?
    - A) It is always plain text.
-   - B) Capitalized template Data fields versus lowercase webhook fields.
+   - B) JSON-tagged lowercase/camelCase keys differ from capitalized Go template field access.
    - C) JSON never needs parsing.
    - D) All SNS messages have identical fields.
 
 <details>
 <summary>Show answer</summary>
 
-**Answer: B) Capitalized template Data fields versus lowercase webhook fields.**
+**Answer: B) JSON-tagged lowercase/camelCase keys differ from capitalized Go template field access.**
 
 The actual0.34.0 template serialization and valid/invalid payloads were tested.
 
