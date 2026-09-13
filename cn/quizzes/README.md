@@ -6,11 +6,6 @@
 
 ## 完整测验索引
 
-### 简介
-
-- [使用 LLM 阅读 — llms.txt 测验](./llm-guide-quiz.md)
-- [指南路线图测验](./roadmap-quiz.md)
-
 ### AI/ML
 
 - [AI/ML 工作负载测验](./ai-ml/03-ai-ml-workloads-quiz.md)
@@ -20,7 +15,6 @@
 - [EKS 上的 AI 基础设施测验](./ai-ml/06-ai-infrastructure-quiz.md)
 - [AI/ML 最佳实践测验](./ai-ml/07-ai-ml-best-practices-quiz.md)
 - [EKS 上的 Agentic AI 平台测验](./ai-ml/08-agentic-ai-platform-quiz.md)
-- [LLM Gateway 测验](./ai-ml/08-llm-gateway-quiz.md)
 - [Kubeflow 架构和在 EKS 上的安装测验](./ai-ml/kubeflow/01-architecture-installation-quiz.md)
 - [Kubeflow Pipelines 测验](./ai-ml/kubeflow/02-pipelines-quiz.md)
 - [Kubeflow Notebooks 测验](./ai-ml/kubeflow/03-notebooks-quiz.md)
@@ -34,10 +28,6 @@
 - [KubeRay Operator 测验](./ai-ml/ray/02-kuberay-operator-quiz.md)
 - [Ray Train / Tune 测验](./ai-ml/ray/03-ray-train-tune-quiz.md)
 - [Ray Serve 测验](./ai-ml/ray/04-ray-serve-quiz.md)
-- [SageMaker Qwen 平台架构测验](./ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
-- [合成 PII 数据和 Tokenization 测验](./ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
-- [SageMaker AI 和 MLflow 执行测验](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
-- [SageMaker Qwen 事实验证结果测验](./ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 
 ### 自动扩缩容
 
@@ -52,17 +42,6 @@
 - [容器技术测验](./basics/03-container-technology-quiz.md)
 - [Kubernetes 简介测验](./basics/04-kubernetes-introduction-quiz.md)
 - [eBPF 基础测验](./basics/05-ebpf-fundamentals-quiz.md)
-- [网络基础第 1 部分测验 — 分层模型、链路和路由](./basics/06-network-fundamentals-part1-quiz.md)
-- [网络基础第 2 部分测验 — 传输和 TLS](./basics/06-network-fundamentals-part2-quiz.md)
-- [网络基础第 3 部分测验 — 应用协议](./basics/06-network-fundamentals-part3-quiz.md)
-- [网络基础第 4 部分测验 — 流程和云](./basics/06-network-fundamentals-part4-quiz.md)
-
-### 容器镜像仓库
-
-- [Docker Hub 测验](./container-registry/01-docker-hub-quiz.md)
-- [Amazon ECR 测验](./container-registry/02-amazon-ecr-quiz.md)
-- [Harbor 测验](./container-registry/03-harbor-quiz.md)
-- [容器镜像仓库最佳实践测验](./container-registry/04-best-practices-quiz.md)
 
 ### Kubernetes 核心
 
@@ -75,21 +54,10 @@
 - [策略测验](./core/07-policies-quiz.md)
 - [调度、抢占和驱逐测验](./core/08-scheduling-preemption-eviction-quiz.md)
 - [集群管理测验](./core/09-cluster-administration-quiz.md)
-- [Kubernetes 中的 Windows 测验](./core/10-windows-in-kubernetes-quiz.md)
 - [扩展 Kubernetes 测验](./core/11-extending-kubernetes-quiz.md)
 
 ### EKS 上的数据
 
-- [现代数据管道剖析测验](./data-on-eks/01-data-pipeline-anatomy-quiz.md)
-- [Airflow 架构测验](./data-on-eks/airflow/01-architecture-quiz.md)
-- [Helm Deployment 和 Executor 选择测验](./data-on-eks/airflow/02-helm-deployment-quiz.md)
-- [DAG 模式和 KubernetesPodOperator 测验](./data-on-eks/airflow/03-dag-patterns-quiz.md)
-- [MWAA 集成测验](./data-on-eks/airflow/04-mwaa-integration-quiz.md)
-- [第 5 部分：运维和安全测验](./data-on-eks/airflow/05-operations-quiz.md)
-- [Kubernetes 上的 Flink 架构测验](./data-on-eks/flink/01-architecture-quiz.md)
-- [Flink Kubernetes Operator 测验](./data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
-- [状态、Checkpointing 和流处理模式测验](./data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
-- [运维、HA 和托管 Flink 测验](./data-on-eks/flink/04-operations-ha-quiz.md)
 - [Kafka 基础测验](./data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
 - [Strimzi Operator 测验](./data-on-eks/kafka/02-strimzi-operator-quiz.md)
 - [Kafka 运维测验](./data-on-eks/kafka/03-kafka-operations-quiz.md)
@@ -98,17 +66,6 @@
 - [MSK 集成测验](./data-on-eks/kafka/06-msk-integration-quiz.md)
 - [第 7 部分：监控测验](./data-on-eks/kafka/07-monitoring-quiz.md)
 - [第 8 部分：最佳实践测验](./data-on-eks/kafka/08-best-practices-quiz.md)
-- [第 9 部分：Kafka 基准测试评审测验](./data-on-eks/kafka/09-kafka-benchmark-quiz.md)
-- [Unified Studio 域和项目治理测验](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
-- [Kubernetes 上的 Spark 基础测验](./data-on-eks/spark/01-spark-fundamentals-quiz.md)
-- [Spark Operator 测验](./data-on-eks/spark/02-spark-operator-quiz.md)
-- [Amazon EMR on EKS 测验](./data-on-eks/spark/03-emr-on-eks-quiz.md)
-- [第 4 部分：性能和成本调优测验](./data-on-eks/spark/04-performance-tuning-quiz.md)
-- [第 5 部分：最佳实践和安全测验](./data-on-eks/spark/05-best-practices-quiz.md)
-
-### 数据库
-
-- [ClickHouse on EKS 实测基准测试测验](./database/01-clickhouse-on-eks-quiz.md)
 
 ### Amazon EKS
 
@@ -174,17 +131,6 @@
 - [ArgoCD 安全测验](./gitops/argocd/07-security-quiz.md)
 - [ArgoCD 通知测验](./gitops/argocd/08-notifications-quiz.md)
 - [ArgoCD 最佳实践测验](./gitops/argocd/09-best-practices-quiz.md)
-- [Argo Rollouts 实验测验](./gitops/argocd/10-rollouts-experiment-quiz.md)
-
-### 云治理
-
-- [企业云治理概览测验](./governance/00-governance-overview-quiz.md)
-- [Landing Zone、OU 和组织控制测验](./governance/01-landing-zone-and-ou-quiz.md)
-- [账户结构和 IAM 边界测验](./governance/02-account-and-iam-quiz.md)
-- [多账户、多集群 EKS 架构测验](./governance/03-eks-multi-account-multi-cluster-quiz.md)
-- [共享 VPC 和连接性测验](./governance/04-shared-vpc-and-connectivity-quiz.md)
-- [数据和安全边界测验](./governance/05-data-security-boundaries-quiz.md)
-- [决策框架和 PoC 设计测验](./governance/06-decision-framework-and-poc-quiz.md)
 
 ### 网络
 
@@ -266,7 +212,6 @@
 - [Tekton Pipelines 测验](./ops/14-tekton-pipelines-quiz.md)
 - [可用区集群运维测验](./ops/15-zonal-operations-guide-quiz.md)
 - [故障排除手册测验](./ops/16-troubleshooting-playbook-quiz.md)
-- [EKS Spot 生产实验测验](./ops/17-spot-production-experiments-quiz.md)
 
 ### 平台工程
 
@@ -322,27 +267,6 @@
 - [Linkerd 安全测验](./service-mesh/linkerd/security.md)
 - [Linkerd 流量管理测验](./service-mesh/linkerd/traffic-management.md)
 
-- [App Mesh 与 VPC Lattice 架构测验](./service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
-- [延迟影响分析测验](./service-mesh/vpc-lattice/02-latency-quiz.md)
-- [IAM 身份验证流程测验](./service-mesh/vpc-lattice/03-auth-flow-quiz.md)
-- [基础 — Link-Local 和 SNI 测验](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
-- [工作负载身份迁移测验](./service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
-- [约束和决策点测验](./service-mesh/vpc-lattice/06-constraints-quiz.md)
-- [内核 Datapath 测验](./service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
-
 ### 存储
 
 - [EBS gp2 与 gp3 实测基准测试测验](./storage/01-ebs-gp2-gp3-benchmark-quiz.md)
-
-### 区块链
-
-- [区块链基础测验](./blockchain/01-fundamentals-quiz.md)
-- [在 EKS 上运行区块链节点测验](./blockchain/02-nodes-on-eks-quiz.md)
-- [Amazon Managed Blockchain 测验](./blockchain/03-managed-blockchain-quiz.md)
-- [金融服务视角测验](./blockchain/04-financial-services-quiz.md)
-
-### Linux 内核
-
-- [容器背后的内核功能测验](./kernel/01-container-primitives-quiz.md)
-- [内核网络栈测验](./kernel/02-network-stack-quiz.md)
-- [EKS Node 内核调优测验](./kernel/03-eks-node-tuning-quiz.md)
