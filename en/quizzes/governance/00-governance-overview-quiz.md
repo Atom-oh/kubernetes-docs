@@ -22,19 +22,19 @@ Account is judged by security/quota/cost ownership/lifecycle, VPC by network pol
 
 ---
 
-2. What constraint applies to the location of an EKS Pod Identity role?
-   - A) It can be placed freely in a different Account from the cluster
-   - B) It can only exist in the same Account as the cluster
-   - C) It's automatically replicated to every Account in the Organization
-   - D) Only one can exist per Region
+2. Where must the primary IAM role of a Pod Identity association reside?
+   - A) Any Account
+   - B) The same Account as the cluster
+   - C) Only the management Account
+   - D) One Account per Region
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It can only exist in the same Account as the cluster**
+**Answer: B) The same Account as the cluster**
 
 **Explanation:**
-An EKS Pod Identity role can only exist in the same Account as the cluster. If Kubernetes workloads run in a separate Shared Cluster Account while resources live in each workload's own Account, cross-account access is mandatory two-hop structure: association role → target role.
+The primary association role must be in the cluster Account. The target-role feature uses role chaining, while supported resource policies and IRSA provide other cross-account paths.
 
 </details>
 

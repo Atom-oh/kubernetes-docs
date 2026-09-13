@@ -1,6 +1,6 @@
 # Data·Security 경계
 
-> **마지막 업데이트**: 2026년 9월 9일
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 1. Data ownership 옵션
 
@@ -12,45 +12,50 @@
 
 Hybrid가 대부분의 조직에서 현실적인 시작점입니다. 다만 이 선택보다 실제 아키텍처를 더 크게 좌우하는 것은, 다음 절에서 다루는 **cross-account 백업·복구의 기술적 제약**입니다.
 
-## 2. Cross-account 데이터 복구 제약 — 실제로 선택을 바꾸는 조건
+<span id="_2-cross-account-데이터-복구-제약-—-실제로-선택을-바꾸는-조건"></span>
 
-"데이터는 누가 소유하는가"를 정하기 전에, cross-account로 데이터를 옮기거나 복구하는 경로 자체에 어떤 제약이 있는지 확인해야 합니다. 이 제약들은 중앙 운영과 워크로드 소유 어느 쪽을 택해도 동일하게 적용되므로, **양쪽 다 반드시 구현해야 하는 공통 guardrail**로 이해하는 것이 정확합니다.
+## 2. Cross-account 복구는 리소스와 vault 유형별로 검증한다
 
-### RDS 스냅샷
+데이터 소유권과 복구 위치를 함께 정하되, 특정 snapshot API 제한을 모든 복구 경로의 불가능으로 해석하지 않습니다.
 
-- **RDS 자동 백업은 공유할 수 없습니다.** cross-account로 넘기려면 automated snapshot → manual snapshot으로 복사 → 그 복사본을 공유하는 단계가 필수입니다(AWS Backup 리소스도 동일한 제약을 받습니다). 어느 방향을 택하든 "복사" 단계가 필요하고, 이 단계에는 시간·스토리지 비용·자동화 소유자가 필요합니다.
-- **암호화된 공유 스냅샷은 직접 restore할 수 없습니다.** 공유받은 Account가 자기 Account로 복사한 뒤, 그 복사본에서 restore해야 합니다.
-  - **AWS 기본 KMS key로 암호화한 스냅샷은 공유 자체가 불가능합니다.** 개인정보를 다루는 저장소는 처음부터 customer-managed key(CMK)가 필수입니다 — 선택이 아니라 cross-account 복구 가능성의 전제조건입니다.
-  - 수동 스냅샷은 최대 20개 Account에만 공유할 수 있습니다.
-  - **Multi-AZ DB cluster의 스냅샷은 공유할 수 없습니다.** 이 유형을 쓰면 그 DB에는 cross-account 복구 경로가 아예 존재하지 않습니다. 이 경우 DB와 복구 책임을 같은 Account에 두는 workload-owned 방식이 사실상 강제됩니다.
-  - Oracle/SQL Server의 permanent/persistent 옵션(TDE 등)을 사용하는 인스턴스는 공유에 추가 제약이 있습니다.
+<span id="rds-스냅샷"></span>
 
-### AWS Backup cross-account copy
+### RDS snapshot 공유
 
-다음 전제 조건이 모두 충족되어야 합니다.
+- RDS DB instance의 automated snapshot은 manual snapshot으로 복사한 후 공유합니다. RDS 공유 절차에서는 AWS Backup이 생성한 snapshot에도 같은 설명이 적용됩니다. 이것을 모든 AWS Backup 복구 방식의 단계로 확대하지 않습니다.
+- 암호화된 shared DB instance snapshot은 recipient가 복사한 뒤 restore합니다. AWS 관리형 기본 KMS key로 암호화된 snapshot은 그대로 공유할 수 없으므로 승인된 customer-managed key로 복사하는 경로를 검토합니다.
+- Manual snapshot의 공유 대상은 최대20Account입니다. Oracle/SQL Server의 permanent/persistent option에 추가 제약이 있습니다.
+- **Multi-AZ DB cluster snapshot은 이 RDS snapshot-sharing 경로에서 공유할 수 없습니다.** 이것이 논리 백업·검증된 데이터 복제 등 모든 cross-account 복구 경로가 없다는 뜻은 아니며, workload-owned DB를 강제하지도 않습니다. engine·snapshot 종류·리전별 지원 범위와 대체 복구의 RTO/RPO를 확인합니다.
 
-- 소스·대상 Account가 동일 Organization에 속해야 합니다.
-- Management Account에서 명시적으로 활성화해야 합니다(`UpdateGlobalSettings`).
-- **대상 vault는 default vault가 될 수 없습니다**(default vault의 key는 공유할 수 없습니다).
-- 대상 vault에 `backup:CopyIntoBackupVault`를 허용하는 resource policy가 필요하고, 소스 role에는 `backup:CopyFromBackupVault`와 `backup:CopyIntoBackupVault`가 모두 필요합니다.
-- AWS Backup이 완전 관리하지 않는 리소스 유형은 CMK가 필수입니다(AWS managed key는 cross-account 공유가 불가능합니다).
-- **AWS Backup은 계정 간 직접 restore를 지원하지 않습니다.** 이 또한 "복사 후 복사본에서 restore"의 2단계 구조입니다. 대상 Account에 해당 리소스 유형의 service-linked role이 없다면(한 번도 그 서비스를 써본 적 없는 Account) 미리 만들어둬야 합니다.
-- Cold tier로 전환된 백업은 cross-account copy를 지원하지 않습니다.
+<span id="aws-backup-cross-account-copy"></span>
 
-몇 가지는 보안 설계에 직접적인 영향을 줍니다.
+### AWS Backup의 일반 vault: copy 후 restore
 
-- **대상 Account가 나중에 Organization을 떠나도 이미 복사된 백업은 그대로 보유됩니다.** 이건 개인정보 유출 경로가 될 수 있으므로, `organizations:LeaveOrganization`을 SCP로 Deny하는 것을 권장합니다.
-- **cross-account backup을 활성화하면, 조직의 모든 member Account 사용자가 자기 Account를 destination으로 설정할 수 있습니다.** 개인정보 백업이 미승인 Account로 복사될 위험이 있으므로, `backup:CopyFromBackupVault` 권한에 `backup:CopyTargets`/`backup:CopyTargetOrgPaths` 조건을 걸어 승인된 vault·OU로만 복사되도록 강제해야 합니다. IAM·KMS·resource policy·VPC endpoint policy를 모두 막아도 backup copy 경로는 별개로 존재하므로, 별도로 확인해야 합니다.
+- 같은 Organization의 source/destination과 management Account의 cross-account backup 활성화가 필요합니다.
+- Source role에는 `backup:CopyFromBackupVault`와 `backup:CopyIntoBackupVault`, destination vault에는 후자를 허용하는 resource policy가 필요합니다. 서비스별 backup/copy 권한과 KMS 사용 권한도 충족해야 합니다.
+- 암호화는 resource 유형에 따라 다릅니다. AWS Backup이 완전 관리하는 resource의 destination은 `aws/backup` 또는 customer-managed key를 지원하고, 다른 유형은 customer-managed key가 필요합니다. 공식 copy 페이지의 default-vault 금지 안내도 함께 확인하고, 이 가이드에서는 **전용 destination vault와 명시적 key/policy**를 설계 기준으로 사용합니다. 이름만으로 암호화·copy 적합성을 판정하지 않습니다.
+- 일반 vault의 cross-account 복구는 copy 후 destination에서 restore하는 흐름입니다. 해당 resource의 service-linked role·restore role·subnet/SG 등이 준비되어 있어야 합니다.
+- Cold tier의 cross-account copy는 지원되지 않습니다. resource와 Region의 기능 지원표를 확인합니다.
 
-### 정리
+### Logically air-gapped vault: 공유받은 Account에서 직접 restore
 
-위 제약들은 중앙 운영과 워크로드 소유 중 한쪽을 유리하게 만들지 않습니다(우열이 갈리지 않습니다). 단, **"Multi-AZ DB cluster 스냅샷 공유 불가"는 유일하게 선택 자체를 바꾸는 조건**입니다. 정당한 복구 경로(production → 격리된 복구 Account)도 개발/QA의 접근 차단과 동일한 제약을 받으므로, **RTO 계산에는 스냅샷 복사 시간을 반드시 포함**해야 합니다(TB급 데이터베이스에서는 무시할 수 없는 시간입니다). **RTO/RPO 목표가 정의되어 있지 않으면 이 판정 자체가 불가능**합니다 — 자세한 내용은 [의사결정 프레임워크](./06-decision-framework-and-poc.md)를 참고하세요.
+논리적 에어갭 vault는 AWS RAM으로 개별 Account와 공유할 수 있으며 **다른 Organization의 Account도 가능**합니다. 공유받은 Account는 지원 resource의 recovery point를 직접 restore할 수 있어 recipient vault로 먼저 복사하는 단계가 필요하지 않습니다. 따라서 “AWS Backup은 cross-account 직접 restore를 전혀 지원하지 않는다”는 표현은 부정확합니다.
+
+일반 vault의 copy 허용 policy와 에어갭 vault의 RAM share를 구분하세요. resource/Region 지원, restore IAM, 암호화 key 유형, sharing 승인, source Account 접근 불능 시 복구 절차를 각각 확인합니다. 이 경로가 모든 DB 유형을 지원한다고 가정하지 않습니다.
+
+<span id="정리"></span>
+
+### 승인되지 않은 copy/share 차단
+
+Destination이 Organization을 떠나더라도 기존 copy는 보유할 수 있습니다. source의 `backup:CopyTargets`/`backup:CopyTargetOrgPaths` 조건, destination vault policy, KMS, RAM share 권한과 조직 이탈 절차를 함께 검토합니다. cross-account 기능 활성화는 모든 사용자에게 copy 권한을 부여하지 않으며 IAM·vault·KMS의 Deny를 우회하지 않습니다.
+
+RTO에는 사고 후 실제 수행하는 copy·restore·애플리케이션 검증 시간을 포함합니다. 사전 copy가 있다면 복사 주기는 RPO에 영향을 줍니다. [의사결정 프레임워크](./06-decision-framework-and-poc.md)에서 resource 유형별 복구 시험과 목표를 기록하세요.
 
 ## 3. 개인정보 저장 계층 분리
 
 VPC에 직접 배치되는 저장소(RDS 등)는 일반 서빙 계층과 별도 VPC에 두는 것이 목적에 맞습니다. 목적은 route·inspection·직접 접근 주체·incident containment 범위를 분리하는 것입니다. 다만 **별도 VPC만으로는 충분하지 않습니다** — IAM, SG, KMS key policy, logging, 승인된 접근 경로를 함께 적용해야 합니다.
 
-> **Shared VPC를 개인정보 계층에 쓸 때의 함정**: participant는 NAT Gateway를 describe조차 할 수 없습니다([04장](./04-shared-vpc-and-connectivity.md) 참고). 개인정보 계층이 participant Account이고 VPC가 중앙 소유라면, 데이터 소유팀이 자기 데이터의 egress 경로를 스스로 검증할 수 없습니다 — 규제 대응 시 "이 데이터가 어디로 나갈 수 있는가"를 증명하기 어렵습니다. 이 근거는 "격리 강도"가 아니라 **"소유팀의 egress 경로 증명 가능성"**으로 프레이밍하는 것이 더 정확합니다. 그래서 개인정보 계층은 전용 VPC(워크로드 소유)가 감사 가능성 측면에서 유리합니다.
+> **Shared VPC의 감사 경로**: participant는 owner의 NAT Gateway를 describe할 수 없지만 owner가 제공하는 route/NAT inventory·Config·Flow Logs와 위임된 읽기 권한으로 증거를 구성할 수 있습니다. 전용 VPC는 소유권을 단순화하는 선택지이며 Shared VPC가 본질적으로 감사 불가능하다는 뜻은 아닙니다.
 
 S3는 VPC에 배치되는 리소스가 아닙니다. bucket/Account ownership, VPC endpoint + endpoint policy, bucket/access point policy, KMS key policy, 조직 control로 승인된 경로만 허용하는 방식으로 통제합니다.
 
@@ -61,15 +66,15 @@ S3는 VPC에 배치되는 리소스가 아닙니다. bucket/Account ownership, V
 | 경로 | 통제 수단 |
 |---|---|
 | AWS Backup cross-account copy | `backup:CopyTargets`/`CopyTargetOrgPaths` SCP 조건, destination vault access policy |
-| RDS 수동 스냅샷 공유 | `rds:ModifyDBSnapshotAttribute` SCP Deny 또는 대상 Account 제한 |
-| RDS 스냅샷 public 공유 | SCP로 `restore` 속성에 `all` 지정을 차단 |
+| RDS 수동 스냅샷 공유 | `rds:ModifyDBSnapshotAttribute`를 승인된 자동화로 제한; 대상 Account는 배포 검증에서 검사 |
+| RDS 스냅샷 public 공유 | 공유 변경 API를 제한하고 자동화에서 `restore=all` 거부; 탐지·복구 병행 |
 | EBS 스냅샷 공유 / EC2 Allowed AMIs | `ec2:ModifySnapshotAttribute` 제한, 소스 Account allowlist |
 | S3 Batch Replication / cross-account replication | bucket policy, replication role 제한, RCP |
 | DMS/Glue 경유 이동 | 해당 서비스의 network·IAM 경로 |
 | CDC stream (MSK/Kinesis/DMS) | resource policy + cross-account consumer 제한 |
 | Athena/Redshift cross-account query, Lake Formation | Lake Formation cross-account grant 감사 |
 
-KMS key 관점에서는 개인정보 저장소가 워크로드 소유라도 **CMK를 강제**해야 하고, **복구용 Account를 key policy의 principal에 사전에 포함**해야 합니다. 사고가 발생한 뒤에 key policy를 바꾸려면 key owner Account에 접근해야 하는데, 그 Account가 침해 대상이라면 복구 자체가 막힙니다. Backup vault를 destination으로 지정할 수 있는 Account도 SCP로 제한해야 합니다.
+KMS key 유형과 복구 권한은 선택한 copy/restore 경로 및 조직 요구로 정합니다. 모든 개인정보 저장소에 customer-managed key가 AWS 공통 의무인 것은 아닙니다. source Account를 사용할 수 없는 상황에서도 작동하도록 destination key·사전 copy·허용된 key policy/grant·에어갭 vault와 공유 절차를 시험합니다.
 
 ## 4. Secrets Manager / KMS cross-account
 
@@ -89,14 +94,14 @@ Secret resource policy와 호출자의 identity policy가 **모두** 필요합�
 
 몇 가지 확인된 사실:
 
-- **"AWS Security Hub"는 "Security Hub CSPM"으로 개칭되었습니다.** CSPM 기능(표준, control, finding aggregation, automation rule)과 별개의 Security Hub 기능이 구분되어 있으므로, 비교표를 작성할 때 어느 쪽을 지칭하는지 명확히 하지 않으면 CNAPP와의 중복 판정이 틀어집니다.
-- **Security Hub CSPM은 대부분의 control에 AWS Config를 요구합니다.** Config가 비활성화되어 있으면 대다수 control finding이 생성되지 않습니다. [Landing Zone baseline 의존 관계](./01-landing-zone-and-ou.md)와 합쳐지면, **"Config를 활성화할 것인가"가 Landing Zone / Identity Center / Security Hub CSPM 세 결정의 공통 전제**가 됩니다.
-- **Security Hub CSPM은 활성화 이전에 생성된 finding을 소급 수집하지 않으며, 활성화한 리전의 finding만 처리합니다.** CIS 벤치마크 완전 준수를 위해서는 지원되는 모든 리전에서 활성화해야 합니다. GuardDuty도 리전별로 활성화합니다.
+- Security Hub CSPM의 표준·control·ASFF finding 기능과 별도 Security Hub 기능을 구분해 비교합니다. 이름만으로 기능 범위나 Config 의존성이 같다고 가정하지 않습니다.
+- Security Hub CSPM의 대부분 control은 AWS Config recording이 필요합니다. 이는 Control Tower 4.0의 관리형 baseline 의존성과 함께 검토할 사항이지만 IAM Identity Center 서비스 자체의 Config 필수 조건은 아닙니다.
+- **Security Hub CSPM은 활성화 이전에 생성된 finding을 소급 수집하지 않으며, 활성화한 리전의 finding만 처리합니다.** 공식 가이드의 CIS AWS Foundations Benchmark 전체 보안 검사 coverage를 위해서는 지원되는 모든 리전에서 활성화해야 합니다. GuardDuty도 리전별로 활성화합니다.
 - GuardDuty·Security Hub는 서울 리전에서 사용할 수 있지만, 일부 finding type·control의 지원 범위는 리전마다 다릅니다. 비교는 서울 리전의 실제 coverage를 기준으로 해야 합니다.
 
 ## 6. Shared subnet에서 리소스를 생성할 수 있는 서비스 목록
 
-Shared VPC subnet에 리소스를 만들 수 있는 서비스는 AWS가 명시적으로 정해두고 있으며, 이 목록 밖의 서비스를 쓰는 워크로드는 Shared VPC 전략에서 예외로 다뤄야 합니다.
+아래는 공식 Shared VPC 지원 목록의 요약입니다. 이 목록은 누락 가능성을 명시하므로 이름이 없으면 해당 서비스 문서를 추가 확인합니다. 명시적 미지원과 문서 미기재를 구분합니다.
 
 | 지원 서비스 | 비고 |
 |---|---|
@@ -112,7 +117,7 @@ Shared VPC subnet에 리소스를 만들 수 있는 서비스는 AWS가 명시�
 | DMS, Verified Access, SageMaker Unified Studio | |
 | **Amazon MQ** | **Apache ActiveMQ만 지원. RabbitMQ는 미지원** |
 
-AWS 스스로도 "이 목록에 누락이 있을 수 있다"고 명시하고 있습니다. 실제 사용 서비스 인벤토리를 이 목록과 대조해서, CUJ 경로에 미지원 서비스가 하나라도 있다면 그 워크로드는 Shared VPC locality 대상에서 제외하는 판정 규칙을 두는 것을 권장합니다. 특히 **RabbitMQ 사용 여부는 별도로 확인**해야 합니다.
+Amazon MQ의 RabbitMQ처럼 공식 목록에 명시적으로 제외된 engine은 별도 배치를 검토합니다. CUJ 전체를 Shared VPC에서 제외하기 전에 해당 dependency만 별도 VPC/API 경로로 연결할 수 있는지도 평가합니다.
 
 ## 다음
 
@@ -130,3 +135,4 @@ AWS 스스로도 "이 목록에 누락이 있을 수 있다"고 명시하고 있
 - [GuardDuty 리전별 차이](https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html)
 - [AWS SRA Security Tooling](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/security-tooling.html)
 - [Shared subnet 지원 서비스](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-service-behavior.html)
+- [Logically air-gapped vault sharing and restore](https://docs.aws.amazon.com/aws-backup/latest/devguide/logicallyairgappedvault.html)

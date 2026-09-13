@@ -1,0 +1,226 @@
+[
+  {
+    "path": "en/governance/00-governance-overview.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "774ba3048039f9fa32b9cf4c7663d4f5a2c6f7fd30aefc119bad6658b1432d5e",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/governance/01-landing-zone-and-ou.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "77e5ce9a20eccd58d1135acea0272396845220338ebbd487a6c6bbd3bc5063a1",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/governance/02-account-and-iam.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "92b5ab6197f40dd76662ed0388f84122eb53e1ea771cffced03353ef7d4356af",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/governance/03-eks-multi-account-multi-cluster.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "9670da603db2c838b4be6889e4d3f7db0e3a4d33d76aa4820cc13a005be45b18",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/governance/04-shared-vpc-and-connectivity.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "6891079fbf559391c9f05d5c1e64d095018543df99111d4bc638a4b4904aaea8",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/governance/05-data-security-boundaries.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "145cde333ead9ce2a14b1b939c4f4e92f9a4f3f293d688848379bedfd7ff546b",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/governance/06-decision-framework-and-poc.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "bdba3df8a55677f15b19bdbe3a67120049359b60192252adda346f1a950c24fd",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/quizzes/governance/00-governance-overview-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "5ff0de05d1a8e2b469ab6197ffb6ccacda44aeb3d7411d0a238cc6b80ea7b2f8",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "d0c3cb1db92dd8a2c9f2e5738da5fc1b6d02e7a0dc49774fb5b17fedf477f410",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/quizzes/governance/02-account-and-iam-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "979ab2bd08634d9a4ac5768ffcd6694eca7a969ac833d1acf2a709aafc3c3386",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b6c454eec258ab040f96e668a8c6cf67273724c0610297a8085576608a11670c",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "284b3874d23206af1083aafe5e35b84f042020ac3b956403ab42d5abd4ee6c46",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/quizzes/governance/05-data-security-boundaries-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "468bd61e631e2e8c21587b5807b38e49cf01f71e94ef1289f39977be051ccf95",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "en/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f9c12cad632999b5a41799b8e5fbf8e3d606848891b217ff06fa9dd570b071a2",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/governance/00-governance-overview.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "bd07d7eb8a10278329b793334110d206075b5ac68f6784fb9802e52c9eb02979",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/governance/01-landing-zone-and-ou.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "ab35befd8f81b7a98a76673b171d090a53d4da0627cc6d71dcb178d28deacbc0",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/governance/02-account-and-iam.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "0facecdfd7ec4fc5da3ac42bf3ba7f44970943d582fb9540c9a74a8248f7f050",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/governance/03-eks-multi-account-multi-cluster.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "33b7f351537a13c591c4e24f9f4d27c8a7c73de51734d6eb813af6a1df476fae",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/governance/04-shared-vpc-and-connectivity.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "acd59c6701af220bb33d6463aae3941fa726a5697be1a72b6e622cb45cc884df",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/governance/05-data-security-boundaries.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "9e268f202a81667cc226a9f0e1ea03364ee368ff70837e595a176b6d42bf7199",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/governance/06-decision-framework-and-poc.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "127bdb80b82b6b8def2756cd00119f53cf73f98ead9c26a46f8b521c64c5d960",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/quizzes/governance/00-governance-overview-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "2310ee39faff922f430935e7c297f81e2c74d700ae21041dafa58e4b9fcdcd37",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "2d8d06225fc20d333645273c788036b7f30e15dbdd04516ce78b8a8ee7c82c60",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/quizzes/governance/02-account-and-iam-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "0465d4012c68db044517c18f7281eadcaf991f6076be7d570cf3736c190b4e2e",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "ffff29928e0e75f8c095c4c3086e8440beb8cd8e9e998b4cd42646a48ec5645f",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b378ee3c0fbfc04ae7cebba86e4321d48e6d276ec85e40a7f6b8893333b30685",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/quizzes/governance/05-data-security-boundaries-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "4b34f2980a4eae9ecbe5f0f14f76c2efd55ce04b9de81fb8cd0492201d77150c",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  },
+  {
+    "path": "ko/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "2f8867e062ffeb38ffa27a43c25a6af99ca59f20c5e40b203eeacf3b2b895eff",
+    "summary": "Readall14pairedguides/14quizzes;correctedIAMquota,SharedVPC/TGW,backup/restore,ALB,ARC,CSPMscopeandorganization-specificmandates;56questions,28Markdown,dateand18legacyanchorchecks;primaryAWSsources.NoAWSruntimePoC.",
+    "validationReport": "docs/reviews/2026-09-11/governance-validation.json"
+  }
+]
