@@ -163,6 +163,14 @@ NaN, infinite or multi-series results fail the success condition. Generate test
 traffic before continuing. Aborting a rollout is not a Git revert or restoration
 of the desired image; restore the desired version in the actual source of truth.
 
+The paired Part3 guides contain a complete manual-pause exercise: install the
+checksummed Rollouts1.10.0 CLI, publish a reviewed AMD64 image tag, update through
+Helm values, inspect canary traffic, promote without --full, or abort and restore
+the stable desired values. The chart shares the image value across all roles;
+other roles update normally while payment follows the Rollout. Initial install
+is not an update canary because no prior stable revision exists. These cluster
+commands were documented but not executed in this audit.
+
 KEDA scales the two queue consumers, not the producer API. Its SQS scaler reads
 queue attributes; it does not consume messages. `cooldownPeriod` applies to
 scaling to zero, while HPA behavior controls scaling among positive replicas.

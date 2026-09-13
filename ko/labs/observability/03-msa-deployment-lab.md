@@ -102,6 +102,57 @@ payment-service는 Rollout 하나만 소유합니다. 기본 5 replicas의 20% s
 
 Argo Rollouts1.10.0의 실제 조건 평가와 PromQL을 검증했지만 실제 클러스터 promotion은 실행하지 않았습니다. abort는 Git revert나 desired image 복구가 아닙니다. ArgoCD를 선택하면 [설치 가이드](../../gitops/argocd/01-installation.md)를 따라 이 저장소의 실제 chart 경로와 검토한 revision을 사용하고, 직접 Helm 관리와 동시에 소유하지 않습니다. Secret은 Git에 넣지 않고 기존 이름을 참조합니다. App-of-apps sync wave만으로 child readiness가 보장된다고 가정하지 않습니다.
 
+### 수동 pause 실습 절차
+
+아래는 Helm이 desired state를 소유하는 실습입니다. GitOps로 관리 중이면 검토한 image 변경과 복구를 Git에서 수행하고 직접 Helm 변경을 섞지 않습니다. [Argo Rollouts 1.10.0 release](https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0)에서 OS/CPU에 맞는 CLI와 checksum을 확인한 후 설치합니다.
+
+```bash
+# ROLLOUTS_BINARY: checksum-verified binary for your OS/architecture.
+: "${ROLLOUTS_BINARY:?Set the verified Argo Rollouts 1.10.0 binary path}"
+mkdir -p "$HOME/.local/bin"
+install -m 755 "$ROLLOUTS_BINARY" "$HOME/.local/bin/kubectl-argo-rollouts"
+export PATH="$HOME/.local/bin:$PATH"
+kubectl argo rollouts version --short
+```
+
+안정 상태의 Rollout과 기존 values를 확인한 뒤 Part3 빌드 절차로 실제 검토한 AMD64 이미지를 새 immutable tag로 게시합니다. 초기 설치는 기존 stable revision이 없으므로 그 자체로 canary update 실습이 되지 않습니다. 이 chart의 image 값은 모든 앱 역할이 공유하므로 새 tag 적용 시 다른 역할도 일반 Deployment update를 수행하며 payment만 Rollout 단계를 거칩니다.
+
+```bash
+# Run from examples/labs/observability/application.
+: "${CANARY_IMAGE_TAG:?Set an actually built and reviewed immutable AMD64 image tag}"
+# Keep the original application.yaml as the stable revision's complete values.
+CANARY_VALUES="$LAB_STATE/helm-inputs/canary-image.yaml"
+python3 - "$CANARY_VALUES" "$CANARY_IMAGE_TAG" <<'PYIMAGE'
+import sys, json
+with open(sys.argv[1], "w") as output:
+    json.dump({"image": {"tag": sys.argv[2]}}, output)
+PYIMAGE
+helm upgrade observability-lab ./chart --kube-context service -n msa \
+  -f "$LAB_STATE/helm-inputs/application.yaml" -f "$CANARY_VALUES"
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
+```
+
+`--watch` 창은 별도 터미널에서 유지하고 필요하면 Ctrl+C로 종료합니다. 트래픽과 promote/abort 명령은 다른 터미널에서 실행합니다.
+
+`Paused` 상태에서 4절의 트래픽을 계속 생성하고 새 `rollouts-pod-template-hash` revision에 최근 요청이 최소 5개 도착했는지 Prometheus에서 확인합니다. 조회 실패·트래픽 부재를 정상으로 간주하지 않습니다. 검증 후 다음 명령으로 수동 pause를 해제하면 chart의 AnalysisRun을 거쳐 나머지 단계가 실행됩니다. `--full`은 분석·pause를 건너뛰므로 이 실습에서는 사용하지 않습니다.
+
+```bash
+kubectl argo rollouts promote payment-service --context service -n msa
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
+kubectl --context service -n msa get analysisruns
+```
+
+문제가 생기면 승격 대신 중단하고 원래 전체 values로 desired image도 복구합니다. Abort만으로 spec.template이나 Git이 이전 버전으로 바뀌지는 않습니다.
+
+```bash
+kubectl argo rollouts abort payment-service --context service -n msa
+helm upgrade observability-lab ./chart --kube-context service -n msa \
+  -f "$LAB_STATE/helm-inputs/application.yaml"
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
+```
+
+승격에 성공하면 승인한 image overlay를 이후 Helm 명령에도 유지하거나 관리하는 desired values에 반영합니다. 실패 분석 기록을 보존한 뒤 결과를 확인합니다. 이 감사에서는 CLI checksum·help와 chart/분석 로직을 확인했으며 위 cluster update/promote/abort 명령은 실행하지 않았습니다.
+
 [Part4](./04-load-testing-scaling-lab.md)로 진행합니다. 전체 정리는 [Part6](./06-distributed-tracing-lab.md#cleanup)의 소유권·의존성 순서를 따릅니다.
 
 ## 검증 범위

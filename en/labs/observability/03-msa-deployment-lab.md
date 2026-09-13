@@ -111,6 +111,57 @@ A single Rollout owns payment-service. With five replicas, the20% step is replic
 
 Actual Rollouts1.10.0 condition evaluation and PromQL were tested, but cluster promotion was not executed. Abort is not a Git revert or desired-image restoration. For optional ArgoCD, follow its [installation guide](../../gitops/argocd/01-installation.md), point to this repository’s real chart path/reviewed revision, and avoid simultaneous direct-Helm ownership. Reference existing Secrets rather than committing them. App-of-apps sync waves alone do not guarantee child readiness.
 
+### Exercise the manual pause
+
+These steps use Helm as the desired-state owner. Under GitOps, review image changes and recovery in Git and do not mix direct Helm writes. Install the matching OS/CPU plugin after checking the [Argo Rollouts 1.10.0 release](https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0) binary and checksum.
+
+```bash
+# ROLLOUTS_BINARY: checksum-verified binary for your OS/architecture.
+: "${ROLLOUTS_BINARY:?Set the verified Argo Rollouts 1.10.0 binary path}"
+mkdir -p "$HOME/.local/bin"
+install -m 755 "$ROLLOUTS_BINARY" "$HOME/.local/bin/kubectl-argo-rollouts"
+export PATH="$HOME/.local/bin:$PATH"
+kubectl argo rollouts version --short
+```
+
+Confirm a stable Rollout and retain its complete values before publishing an actually reviewed AMD64 image under a new immutable tag using the Part3 build procedure. Initial installation has no prior stable revision and is not this update exercise. The chart shares one image setting across all roles, so changing it also updates other roles as ordinary Deployments; only payment follows Rollout steps.
+
+```bash
+# Run from examples/labs/observability/application.
+: "${CANARY_IMAGE_TAG:?Set an actually built and reviewed immutable AMD64 image tag}"
+# Keep the original application.yaml as the stable revision's complete values.
+CANARY_VALUES="$LAB_STATE/helm-inputs/canary-image.yaml"
+python3 - "$CANARY_VALUES" "$CANARY_IMAGE_TAG" <<'PYIMAGE'
+import sys, json
+with open(sys.argv[1], "w") as output:
+    json.dump({"image": {"tag": sys.argv[2]}}, output)
+PYIMAGE
+helm upgrade observability-lab ./chart --kube-context service -n msa \
+  -f "$LAB_STATE/helm-inputs/application.yaml" -f "$CANARY_VALUES"
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
+```
+
+Keep the --watch display in a separate terminal and stop it with Ctrl+C when needed. Run traffic and promote/abort commands in another terminal.
+
+While Paused, continue the traffic from section4 and verify that at least five recent requests reached the new rollouts-pod-template-hash revision in Prometheus. Missing traffic/query failures are not success. After inspection, advance the manual pause below so the configured AnalysisRun and subsequent steps execute. Do not use --full: it skips analysis and pauses.
+
+```bash
+kubectl argo rollouts promote payment-service --context service -n msa
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
+kubectl --context service -n msa get analysisruns
+```
+
+If a problem occurs, abort instead of promoting, then restore the desired image through the original complete values. Abort alone does not restore spec.template or Git.
+
+```bash
+kubectl argo rollouts abort payment-service --context service -n msa
+helm upgrade observability-lab ./chart --kube-context service -n msa \
+  -f "$LAB_STATE/helm-inputs/application.yaml"
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
+```
+
+After successful promotion, retain the approved image overlay in subsequent Helm commands or incorporate it into your managed desired values. Preserve failure-analysis evidence and inspect the final state. This audit verified CLI checksums/help and chart/analysis logic; it did not execute these cluster update/promote/abort commands.
+
 Continue to [Part4](./04-load-testing-scaling-lab.md). Follow [Part6](./06-distributed-tracing-lab.md#cleanup) for ownership/dependency-aware cleanup.
 
 ## Validation scope

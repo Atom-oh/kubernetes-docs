@@ -169,4 +169,5 @@ grafana:
     create: false
   serviceAccount:
     automountServiceAccountToken: false
+    autoMount: false
   automountServiceAccountToken: false

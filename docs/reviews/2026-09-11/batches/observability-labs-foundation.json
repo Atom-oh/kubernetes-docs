@@ -6,7 +6,7 @@
     "reviewedSha256": "b4c4b8d6a75293268dff0cb10df5cda006047dd52a083bb7a4775cc3b9d42fe1",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "ko/labs/observability/01-infrastructure-setup-lab.md",
@@ -15,7 +15,7 @@
     "reviewedSha256": "b016812adf8a2461ede84de91615a884c7a1f989c3937dc77d42f1c08e5c4a1e",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "ko/labs/observability/02-observability-stack-lab.md",
@@ -24,16 +24,16 @@
     "reviewedSha256": "61c6e9735e52009e6fa5ce07464d27808c0110a07cb377e05294dd305df496af",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "ko/labs/observability/03-msa-deployment-lab.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "561e2e66802e50037f4e28c77997cd5b0b9b1678b49c3df28a67694010059fa1",
+    "reviewedSha256": "f3aee88c0ea039397ab6568ef644c508ac59b60d0d34dd5187ea3235b1179c30",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "ko/labs/observability/README.md",
@@ -42,7 +42,7 @@
     "reviewedSha256": "9401a0f2d8917d58d9ac3bab2b777c579bba922e3b5ca7e3ef852418b7080f89",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "ko/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
@@ -51,7 +51,7 @@
     "reviewedSha256": "e837bf45096766c06656ed624fe5f944ba5b3e449a7e94f50015cf0eb6708474",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "ko/quizzes/observability/labs/02-observability-stack-quiz.md",
@@ -60,7 +60,7 @@
     "reviewedSha256": "aa6221024b7908cb9f4c6dd19fd7b3ef94c680a73729fc99bb95c14154194924",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "ko/quizzes/observability/labs/03-msa-deployment-quiz.md",
@@ -69,7 +69,7 @@
     "reviewedSha256": "76401c6fe631f57227289ab6ed2c421b17eeeaddd4c81717a7c459bcf5ee4a6a",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "en/labs/README.md",
@@ -78,7 +78,7 @@
     "reviewedSha256": "f5dcdbdc47f46830ca58bf4794d8c0ad2e63d688adbafe2427e790cc660cb6e5",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "en/labs/observability/01-infrastructure-setup-lab.md",
@@ -87,7 +87,7 @@
     "reviewedSha256": "21f1396ed5be0a0df7d3522d8d5b4c86504a80f7053d266c9b1e4911a6c08a2a",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "en/labs/observability/02-observability-stack-lab.md",
@@ -96,16 +96,16 @@
     "reviewedSha256": "d979bef4619b37d966c1eff688eff032541c459c59a82f20c06e5bf047bdac1e",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "en/labs/observability/03-msa-deployment-lab.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "5108fe29480400783365b92d7ef1d6b83e1e367b45be02daf3397c6b42fdc653",
+    "reviewedSha256": "7e1de6555fcfc0d2a1244dc20ca72a06e4de53f0425648cbe94f04bd7b06d26c",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "en/labs/observability/README.md",
@@ -114,7 +114,7 @@
     "reviewedSha256": "9edf00ffd15732a5d89b7c8780d0ac301d050d74114a4f7f4ccb8b1e23dbf1ea",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "en/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
@@ -123,7 +123,7 @@
     "reviewedSha256": "49a78b4fa681afe0b50a0d7da74c78c7ea14e88993fad503d216b5ded4628d2c",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "en/quizzes/observability/labs/02-observability-stack-quiz.md",
@@ -132,7 +132,7 @@
     "reviewedSha256": "8b8a19ceeb34bd89991b6dd2b711a44a89f30786d4b8264a2aedcdb720e4d6ad",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   },
   {
     "path": "en/quizzes/observability/labs/03-msa-deployment-quiz.md",
@@ -141,6 +141,6 @@
     "reviewedSha256": "61e3754e78c18cedb89ae5df77ab6b50d843bdf169d631a51e16f1ab6fd44b32",
     "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json",
-    "reviewFix": "Five initial review findings fixed: sanitized exception telemetry; AMD64 build instructions; unused Grafana API permissions removed; Collector Service enabled; Korean HTML language corrected."
+    "reviewFix": "Sevenreviewfindingsaddressed: fourinitialMajors; KoreanHTMLlanguage; completecanarymanualpauseprocedure;legacyGrafanaSAautoMount."
   }
 ]

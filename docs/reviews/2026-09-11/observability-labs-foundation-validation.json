@@ -1,7 +1,7 @@
 {
   "status": "passed",
   "reviewedAt": "2026-09-13T08:22:13.600481+00:00",
-  "scope": "16Korean/Englishfoundationlab/index/quizdocuments,60questions,38examplefiles,18diagrams;twoPart6referencefollowups",
+  "scope": "16 foundation Korean/English guides/indexes/quizzes plus associated application/stack examples and18diagramtriples; Part6 reference follow-ups remain separately recorded",
   "originalFiles": [
     {
       "path": "ko/labs/README.md",
@@ -287,7 +287,7 @@
       },
       {
         "path": "ko/labs/observability/03-msa-deployment-lab.md",
-        "sha256": "561e2e66802e50037f4e28c77997cd5b0b9b1678b49c3df28a67694010059fa1",
+        "sha256": "f3aee88c0ea039397ab6568ef644c508ac59b60d0d34dd5187ea3235b1179c30",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -315,6 +315,10 @@
           {
             "tag": "h2",
             "id": "canary"
+          },
+          {
+            "tag": "h3",
+            "id": "수동-pause-실습-절차"
           },
           {
             "tag": "h2",
@@ -351,6 +355,7 @@
           "deployment",
           "verify",
           "canary",
+          "수동-pause-실습-절차",
           "검증-범위"
         ]
       },
@@ -660,7 +665,7 @@
       },
       {
         "path": "en/labs/observability/03-msa-deployment-lab.md",
-        "sha256": "5108fe29480400783365b92d7ef1d6b83e1e367b45be02daf3397c6b42fdc653",
+        "sha256": "7e1de6555fcfc0d2a1244dc20ca72a06e4de53f0425648cbe94f04bd7b06d26c",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -688,6 +693,10 @@
           {
             "tag": "h2",
             "id": "canary"
+          },
+          {
+            "tag": "h3",
+            "id": "exercise-the-manual-pause"
           },
           {
             "tag": "h2",
@@ -733,6 +742,7 @@
           "deployment",
           "verify",
           "canary",
+          "exercise-the-manual-pause",
           "validation-scope"
         ]
       },
@@ -1024,8 +1034,8 @@
     },
     {
       "path": "ko/labs/observability/03-msa-deployment-lab.md",
-      "sha256": "561e2e66802e50037f4e28c77997cd5b0b9b1678b49c3df28a67694010059fa1",
-      "bytes": 9241
+      "sha256": "f3aee88c0ea039397ab6568ef644c508ac59b60d0d34dd5187ea3235b1179c30",
+      "bytes": 12820
     },
     {
       "path": "ko/labs/observability/README.md",
@@ -1064,8 +1074,8 @@
     },
     {
       "path": "en/labs/observability/03-msa-deployment-lab.md",
-      "sha256": "5108fe29480400783365b92d7ef1d6b83e1e367b45be02daf3397c6b42fdc653",
-      "bytes": 8164
+      "sha256": "7e1de6555fcfc0d2a1244dc20ca72a06e4de53f0425648cbe94f04bd7b06d26c",
+      "bytes": 11451
     },
     {
       "path": "en/labs/observability/README.md",
@@ -1149,8 +1159,8 @@
     },
     {
       "path": "examples/labs/observability/application/README.md",
-      "sha256": "e9d53b61ad116fecfd5ee46b9e63f1aff633c510c6cfc52d1cacd480a4c46773",
-      "bytes": 9272
+      "sha256": "47db28e9380672ebcbecb02aea754d0593bc730130cfb31e5ee261abe53bdea6",
+      "bytes": 9809
     },
     {
       "path": "examples/labs/observability/application/prepare_clusters.py",
@@ -1234,8 +1244,8 @@
     },
     {
       "path": "examples/labs/observability/stack/monitoring-management-values.yaml",
-      "sha256": "9c28717d76a3a8cf9b2576bc44fe2dbdd898a897945255f931fd50d5af0ec23e",
-      "bytes": 4153
+      "sha256": "e2b1dbe8ae69704348c3f3cc1a367acd56168676071063a0d4f9b645f3b0f94d",
+      "bytes": 4174
     },
     {
       "path": "examples/labs/observability/stack/prometheus-probe.yaml",
@@ -3295,7 +3305,9 @@
       "FOUNDATION-R1-002",
       "FOUNDATION-R1-003",
       "FOUNDATION-R1-004",
-      "FOUNDATION-R1-005"
+      "FOUNDATION-R1-005",
+      "FOUNDATION-R1-006",
+      "FOUNDATION-R2-001"
     ],
     "priorDockerEvidence": {
       "status": "passed",
@@ -3349,9 +3361,10 @@
         "one Grafana container, no sidecars",
         "Pod API token disabled",
         "no Grafana Role/ClusterRole or binding",
-        "dedicated datasource Secret mount preserved"
+        "dedicated datasource Secret mount preserved",
+        "ServiceAccount legacy/current automount flags andPod override allfalse"
       ],
-      "valuesSha256": "9c28717d76a3a8cf9b2576bc44fe2dbdd898a897945255f931fd50d5af0ec23e",
+      "valuesSha256": "e2b1dbe8ae69704348c3f3cc1a367acd56168676071063a0d4f9b645f3b0f94d",
       "limits": "Actual pinned chart render; no Kubernetes installation"
     },
     "collectorServiceBinding": {
@@ -3409,5 +3422,211 @@
     ],
     "runtimeEvidenceScope": "Prior HTTP/PG/SDK/mTLS experiments retained as historical contract evidence. Current changed application code was exercised by all20portable tests in the newly built image; affected chart endpoint/RBAC bindings re-rendered. AMD64 build remains unexecuted.",
     "buildCommands": "BothguidesandapplicationREADME explicitly buildx--platformlinux/amd64--push and inspect publishedmanifest before m6i deployment."
+  },
+  "minorFollowup": {
+    "status": "passed",
+    "markdown": {
+      "nodeHeapMiB": 512,
+      "scope": "Explicit documents only; no site build",
+      "results": [
+        {
+          "path": "ko/labs/observability/03-msa-deployment-lab.md",
+          "sha256": "f3aee88c0ea039397ab6568ef644c508ac59b60d0d34dd5187ea3235b1179c30",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "part-3-msa-배포-및-카나리"
+            },
+            {
+              "tag": "h2",
+              "id": "contracts"
+            },
+            {
+              "tag": "h2",
+              "id": "image-database"
+            },
+            {
+              "tag": "h2",
+              "id": "deployment"
+            },
+            {
+              "tag": "h2",
+              "id": "verify"
+            },
+            {
+              "tag": "h2",
+              "id": "canary"
+            },
+            {
+              "tag": "h3",
+              "id": "수동-pause-실습-절차"
+            },
+            {
+              "tag": "h2",
+              "id": "검증-범위"
+            }
+          ],
+          "renderedIds": [
+            "part-3-msa-배포-및-카나리",
+            "argo-rollouts-dashboard",
+            "canary-배포-상태-다이어그램",
+            "dockerfile-예시",
+            "git-저장소-구조",
+            "grafana에서-트래픽-분할-확인",
+            "step-3-1-msa-애플리케이션-소개",
+            "step-3-2-karpenter-nodepool-구성",
+            "step-3-3-keda-scaledobject-구성",
+            "step-3-4-argocd-application-applicationset",
+            "step-3-5-초기-배포-확인",
+            "step-3-6-otel-auto-instrumentation-구성",
+            "step-3-7-argo-rollouts-canary-배포",
+            "step-3-8-의도적-실패-주입-및-자동-롤백",
+            "검증-verification",
+            "검증-항목",
+            "다음-단계",
+            "서비스-구성",
+            "서비스-코드-예시",
+            "아키텍처-개요",
+            "예상-결과",
+            "예상-결과-1",
+            "참조-문서",
+            "학습-목표",
+            "contracts",
+            "image-database",
+            "deployment",
+            "verify",
+            "canary",
+            "수동-pause-실습-절차",
+            "검증-범위"
+          ]
+        },
+        {
+          "path": "en/labs/observability/03-msa-deployment-lab.md",
+          "sha256": "7e1de6555fcfc0d2a1244dc20ca72a06e4de53f0425648cbe94f04bd7b06d26c",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "part-3-msa-deployment-and-canary"
+            },
+            {
+              "tag": "h2",
+              "id": "contracts"
+            },
+            {
+              "tag": "h2",
+              "id": "image-database"
+            },
+            {
+              "tag": "h2",
+              "id": "deployment"
+            },
+            {
+              "tag": "h2",
+              "id": "verify"
+            },
+            {
+              "tag": "h2",
+              "id": "canary"
+            },
+            {
+              "tag": "h3",
+              "id": "exercise-the-manual-pause"
+            },
+            {
+              "tag": "h2",
+              "id": "validation-scope"
+            }
+          ],
+          "renderedIds": [
+            "part-3-msa-deployment-and-canary",
+            "application-structure",
+            "architecture-overview",
+            "canary-state-diagram",
+            "cleanup",
+            "exercise-1-msa-application-overview",
+            "exercise-2-karpenter-nodepool-configuration",
+            "exercise-3-keda-scaledobject-configuration",
+            "exercise-4-argocd-application-deployment",
+            "exercise-5-opentelemetry-auto-instrumentation",
+            "exercise-6-argo-rollouts-canary-deployment",
+            "exercise-7-intentional-failure-and-automatic-rollback",
+            "learning-objectives",
+            "next-steps",
+            "prerequisites",
+            "references",
+            "repository-structure",
+            "sample-code-snippets",
+            "service-call-flow",
+            "steps",
+            "steps-1",
+            "steps-2",
+            "steps-3",
+            "steps-4",
+            "steps-5",
+            "summary",
+            "troubleshooting",
+            "verification",
+            "verification-1",
+            "verification-2",
+            "verification-3",
+            "verification-4",
+            "verification-5",
+            "contracts",
+            "image-database",
+            "deployment",
+            "verify",
+            "canary",
+            "exercise-the-manual-pause",
+            "validation-scope"
+          ]
+        }
+      ]
+    },
+    "bashSyntax": [
+      {
+        "path": "ko/labs/observability/03-msa-deployment-lab.md",
+        "bashBlocksParsed": 7,
+        "sha256": "f3aee88c0ea039397ab6568ef644c508ac59b60d0d34dd5187ea3235b1179c30"
+      },
+      {
+        "path": "en/labs/observability/03-msa-deployment-lab.md",
+        "bashBlocksParsed": 7,
+        "sha256": "7e1de6555fcfc0d2a1244dc20ca72a06e4de53f0425648cbe94f04bd7b06d26c"
+      }
+    ],
+    "CLI": {
+      "version": "1.10.0",
+      "binary": "kubectl-argo-rollouts-linux-arm64",
+      "sha256": "2d73e61091084769d16191f21fc686b9c2054892eb93d59046660e8c876a6865",
+      "scope": "Published binary/checksum verified; subsequent --help calls only, no cluster requests"
+    },
+    "commands": "Native1.10helpverified get rollout--watch, promote without--full, abort; version--short with/dev/nullkubeconfig; clustercommandsnotexecuted",
+    "helmOwnership": "ReviewedsharedimageupdateviaHelmvaluesoverlay;allrolesupdatetheimage,paymentonlyusescanarysteps;restoreoriginalcompletevaluesafterabort",
+    "serviceAccount": {
+      "status": "passed",
+      "finding": "FOUNDATION-R2-001",
+      "resources": 77,
+      "serviceAccountAutomount": false,
+      "podAutomount": false,
+      "valuesSha256": "e2b1dbe8ae69704348c3f3cc1a367acd56168676071063a0d4f9b645f3b0f94d",
+      "scope": "Pinned chart render only; legacyfield andcurrentfield bothfalse"
+    },
+    "helmOverlay": {
+      "status": "passed",
+      "workloads": 5,
+      "checks": [
+        "JSONimageoverlayacceptedbyHelm",
+        "allfiveworkloadimageschange",
+        "paymentsoleRollout retainsmanualpauseandanalysis",
+        "omittingoverlayrestoresoriginaltemplate"
+      ],
+      "scope": "Synthetic Helm renders only; images notpulled/pushed; clustercommands notexecuted"
+    }
   }
 }
