@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payments
+  labels:
+    spiffe-enabled: 'true'
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payment-processor
+  namespace: payments
+---
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: payments-workload
+spec:
+  spiffeIDTemplate: spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{
+    .PodSpec.ServiceAccountName }}
+  namespaceSelector:
+    matchLabels:
+      spiffe-enabled: 'true'
+  podSelector:
+    matchLabels:
+      spiffe-managed: 'true'
+  workloadSelectorTemplates:
+  - k8s:ns:{{ .PodMeta.Namespace }}
+  - k8s:sa:{{ .PodSpec.ServiceAccountName }}
+  - k8s:container-name:app
+  ttl: 1h
+  jwtTtl: 5m
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: payment-processor
+  namespace: payments
+  labels:
+    spiffe-managed: 'true'
+spec:
+  serviceAccountName: payment-processor
+  containers:
+  - name: app
+    image: registry.example.com/team/payment-app:REPLACE_WITH_APPROVED_VERSION
+    env:
+    - name: SPIFFE_ENDPOINT_SOCKET
+      value: unix:///spiffe-workload-api/spire-agent.sock
+    volumeMounts:
+    - name: spiffe-workload-api
+      mountPath: /spiffe-workload-api
+      readOnly: true
+  volumes:
+  - name: spiffe-workload-api
+    csi:
+      driver: csi.spiffe.io
+      readOnly: true

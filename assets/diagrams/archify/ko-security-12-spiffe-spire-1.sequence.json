@@ -2,14 +2,14 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "SVID 발급 플로우",
+    "title": "X.509-SVID 캐시와 갱신 경로",
     "output": "ko-security-12-spiffe-spire-1.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "column_fit": "spread",
     "viewBox": [
       1080,
-      720
+      900
     ],
     "legend": {
       "entries": {
@@ -28,7 +28,7 @@
           "attest",
           "reg"
         ],
-        "note": "애플리케이션이 Unix Socket으로 SVID를 요청하면 Agent가 프로세스 정보를 수집해 셀렉터를 매칭한다."
+        "note": "호출 프로세스를 어테스트하고 Agent에 동기화된 엔트리/캐시에서 허용된 신원을 선택한다."
       },
       {
         "id": "issue",
@@ -39,7 +39,7 @@
           "reg",
           "sign"
         ],
-        "note": "Node API가 등록 엔트리를 확인하고 CA가 X.509-SVID를 서명한다."
+        "note": "캐시 누락 또는 갱신 시 Server가 Agent와 엔트리를 확인하고 인증서를 서명한다. 매 Workload API 요청마다 발급하지 않는다."
       },
       {
         "id": "deliver",
@@ -50,7 +50,7 @@
           "cache",
           "app"
         ],
-        "note": "반환된 SVID를 Agent가 캐시에 저장한 뒤 애플리케이션에 전달한다."
+        "note": "Agent의 key와 갱신된 certificate/bundle을 API stream으로 전달한다. 소비자는 새 자격 증명을 반영해야 한다."
       }
     ]
   },
@@ -70,8 +70,8 @@
     {
       "id": "cache",
       "type": "database",
-      "label": "SVID 캐시",
-      "sublabel": "SPIRE Agent"
+      "label": "Agent Cache",
+      "sublabel": "Entries · SVIDs · keys"
     },
     {
       "id": "attest",
@@ -100,19 +100,19 @@
   ],
   "segments": [
     {
-      "from": 160,
-      "to": 330,
-      "label": "요청 · 워크로드 어테스테이션"
+      "from": 150,
+      "to": 410,
+      "label": "로컬 어테스테이션·캐시"
     },
     {
-      "from": 340,
-      "to": 500,
-      "label": "SPIRE Server 발급"
+      "from": 415,
+      "to": 640,
+      "label": "선택적 발급·갱신 경로"
     },
     {
-      "from": 510,
-      "to": 600,
-      "label": "캐시 · 전달"
+      "from": 645,
+      "to": 780,
+      "label": "갱신 전달"
     }
   ],
   "messages": [
@@ -120,7 +120,7 @@
       "id": "m1",
       "from": "app",
       "to": "wa",
-      "y": 190,
+      "y": 180,
       "label": "1. SVID 요청",
       "variant": "emphasis"
     },
@@ -128,97 +128,90 @@
       "id": "m2",
       "from": "wa",
       "to": "attest",
-      "y": 232,
-      "label": "2. 프로세스 정보 수집"
+      "y": 229,
+      "label": "2. 호출 프로세스 확인",
+      "variant": "default"
     },
     {
       "id": "m3",
       "from": "attest",
-      "to": "reg",
-      "y": 274,
-      "label": "3. 셀렉터 매칭",
-      "variant": "dashed"
+      "to": "wa",
+      "y": 278,
+      "label": "3. 어테스트된 selectors",
+      "variant": "return"
     },
     {
       "id": "m4",
       "from": "wa",
-      "to": "nodeapi",
-      "y": 366,
-      "label": "4. SVID 요청",
-      "variant": "emphasis"
+      "to": "cache",
+      "y": 327,
+      "label": "4. 엔트리·캐시 조회",
+      "variant": "default"
     },
     {
       "id": "m5",
-      "from": "nodeapi",
-      "to": "reg",
-      "y": 404,
-      "label": "5. 등록 확인",
-      "variant": "dashed"
+      "from": "cache",
+      "to": "wa",
+      "y": 376,
+      "label": "5. 유효 캐시 사용 가능",
+      "variant": "return"
     },
     {
       "id": "m6",
-      "from": "nodeapi",
-      "to": "sign",
-      "y": 442,
-      "label": "6. SVID 서명",
-      "variant": "security"
+      "from": "wa",
+      "to": "nodeapi",
+      "y": 425,
+      "label": "6. 누락·갱신 시 요청",
+      "variant": "emphasis"
     },
     {
       "id": "m7",
-      "from": "sign",
-      "to": "nodeapi",
-      "y": 480,
-      "label": "7. X.509-SVID",
-      "variant": "return"
+      "from": "nodeapi",
+      "to": "reg",
+      "y": 474,
+      "label": "7. Agent·엔트리 권한 검사",
+      "variant": "default"
     },
     {
       "id": "m8",
       "from": "nodeapi",
-      "to": "wa",
-      "y": 530,
-      "label": "8. SVID 반환",
-      "variant": "return"
+      "to": "sign",
+      "y": 523,
+      "label": "8. 인증서 서명",
+      "variant": "default"
     },
     {
       "id": "m9",
-      "from": "wa",
-      "to": "cache",
-      "y": 562,
-      "label": "9. 캐시 저장"
+      "from": "sign",
+      "to": "nodeapi",
+      "y": 572,
+      "label": "9. Certificate chain",
+      "variant": "return"
     },
     {
       "id": "m10",
+      "from": "nodeapi",
+      "to": "cache",
+      "y": 621,
+      "label": "10. 갱신 인증서 동기화",
+      "variant": "return"
+    },
+    {
+      "id": "m11",
+      "from": "cache",
+      "to": "wa",
+      "y": 670,
+      "label": "11. Certificate · key · bundle",
+      "variant": "return"
+    },
+    {
+      "id": "m12",
       "from": "wa",
       "to": "app",
-      "y": 594,
-      "label": "10. SVID 전달",
+      "y": 719,
+      "label": "12. API stream 업데이트",
       "variant": "return"
     }
   ],
-  "activations": [
-    {
-      "participant": "wa",
-      "from": 185,
-      "to": 600,
-      "type": "backend"
-    },
-    {
-      "participant": "attest",
-      "from": 227,
-      "to": 280,
-      "type": "security"
-    },
-    {
-      "participant": "nodeapi",
-      "from": 361,
-      "to": 536,
-      "type": "backend"
-    },
-    {
-      "participant": "sign",
-      "from": 437,
-      "to": 486,
-      "type": "security"
-    }
-  ]
+  "activations": []
 }

@@ -33,7 +33,7 @@
           "ca",
           "controller-manager"
         ],
-        "note": "The SPIRE Server manages the data store and CA while the Controller Manager creates registration entries."
+        "note": "The server key manager owns signing keys. An upstream such as AWS Private CA signs SPIRE intermediate CAs, not every workload leaf."
       },
       {
         "id": "node-attestation",
@@ -56,7 +56,7 @@
           "wl2b",
           "agent2"
         ],
-        "note": "Workloads receive SVIDs over the Workload API (Unix domain socket) served by the Agent on their own node."
+        "note": "CSI mounts the Workload API socket directory. Applications/proxies consume the API or an explicit file adapter and handle updates."
       }
     ]
   },
@@ -79,7 +79,7 @@
       "id": "datastore",
       "type": "database",
       "label": "Data store",
-      "sublabel": "SQLite / PostgreSQL",
+      "sublabel": "Entries and CA state",
       "pos": [
         40,
         160
@@ -106,8 +106,8 @@
     {
       "id": "ca",
       "type": "security",
-      "label": "Built-in CA or Upstream CA",
-      "sublabel": "Signs SVIDs",
+      "label": "SPIRE Signing Keys",
+      "sublabel": "CA · JWT key manager",
       "pos": [
         570,
         160
@@ -304,20 +304,20 @@
       "dot": "cyan",
       "title": "SPIRE Server",
       "items": [
-        "Certificate Authority: signs X.509-SVIDs and JWT-SVIDs",
-        "Registration API: manages workload registration entries",
-        "Node Attestation: verifies agent identity during bootstrap",
-        "Data Store: persists registration entries and CA state"
+        "X.509-SVID: SPIRE CA signs leaf certificates",
+        "JWT-SVID: server JWT signing key",
+        "Upstream CA: signs SPIRE intermediate CA",
+        "Distinguish DataStore from KeyManager persistence"
       ]
     },
     {
       "dot": "amber",
       "title": "SPIRE Agent",
       "items": [
-        "Workload API: serves SVIDs to workloads via Unix socket",
-        "Workload Attestation: identifies workloads requesting SVIDs",
-        "SVID caching and automatic rotation",
-        "SDS Server: Envoy SDS API for service meshes"
+        "Workload API/SDS attest the calling process",
+        "CSI mounts an API socket, not certificate files",
+        "Cache, renew, and update trust bundles",
+        "Application authentication and authorization remain separate"
       ]
     }
   ]

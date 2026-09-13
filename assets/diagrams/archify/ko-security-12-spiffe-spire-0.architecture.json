@@ -32,7 +32,7 @@
           "ca",
           "controller-manager"
         ],
-        "note": "SPIRE Server가 데이터스토어와 CA를 관리하고, Controller Manager가 등록 엔트리를 생성한다."
+        "note": "Server의 key manager가 서명 키를 관리한다. AWS Private CA 등의 upstream은 SPIRE 중간 CA를 서명하며 workload leaf를 대신 서명하는 것은 아니다."
       },
       {
         "id": "node-attestation",
@@ -55,7 +55,7 @@
           "wl2b",
           "agent2"
         ],
-        "note": "워크로드는 같은 노드의 Agent가 노출하는 Workload API(Unix 도메인 소켓)로 SVID를 받는다."
+        "note": "CSI는 Workload API 소켓 디렉터리를 연결한다. 애플리케이션/프록시는 API 또는 명시적 파일 변환기를 사용하고 갱신을 반영한다."
       }
     ]
   },
@@ -78,7 +78,7 @@
       "id": "datastore",
       "type": "database",
       "label": "데이터스토어",
-      "sublabel": "SQLite / PostgreSQL",
+      "sublabel": "등록 · CA 상태",
       "pos": [
         40,
         160
@@ -105,8 +105,8 @@
     {
       "id": "ca",
       "type": "security",
-      "label": "내장 CA 또는 Upstream CA",
-      "sublabel": "SVID 서명",
+      "label": "SPIRE Signing Keys",
+      "sublabel": "CA · JWT key manager",
       "pos": [
         570,
         160
@@ -303,20 +303,20 @@
       "dot": "cyan",
       "title": "SPIRE Server",
       "items": [
-        "Certificate Authority: X.509-SVID 및 JWT-SVID 서명",
-        "Registration API: 워크로드 등록 엔트리 관리",
-        "Node Attestation: 에이전트 노드 검증",
-        "Datastore: 등록 엔트리, CA 키 등 영속 데이터 저장"
+        "X.509-SVID: SPIRE CA가 leaf 서명",
+        "JWT-SVID: Server의 JWT signing key 사용",
+        "Upstream CA: SPIRE 중간 CA 서명",
+        "DataStore와 KeyManager의 저장 책임 구분"
       ]
     },
     {
       "dot": "amber",
       "title": "SPIRE Agent",
       "items": [
-        "Workload API: Unix 도메인 소켓을 통한 SVID 제공",
-        "Workload Attestation: 로컬 워크로드 검증",
-        "SVID 캐싱 및 갱신",
-        "SDS(Secret Discovery Service): Envoy 통합"
+        "Workload API/SDS: 호출 프로세스 어테스테이션",
+        "CSI: 인증서 파일이 아닌 API 소켓 mount",
+        "캐시·갱신·trust bundle 업데이트",
+        "애플리케이션 인증과 권한 부여는 별도"
       ]
     }
   ]

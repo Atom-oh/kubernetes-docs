@@ -26,7 +26,7 @@
           "be_b",
           "server_b"
         ],
-        "note": "The two servers periodically fetch and store each other's trust bundle through the bundle endpoints (:8443)."
+        "note": "Configure each trust direction explicitly. https_spiffe needs a trusted bootstrap bundle and endpoint SPIFFE ID verification."
       },
       {
         "id": "cross-mtls",
@@ -35,7 +35,7 @@
           "wl_a",
           "wl_b"
         ],
-        "note": "Using the exchanged bundles as the trust root, workloads in both domains talk directly over mTLS."
+        "note": "Federation distributes authentication trust. Connectivity and authorization of peer SPIFFE IDs are separate policies."
       }
     ],
     "locale": "en"
@@ -72,8 +72,8 @@
     {
       "id": "bundle_a",
       "type": "database",
-      "label": "Trust Bundle A",
-      "sublabel": "own + Bundle B",
+      "label": "Bundle Store A",
+      "sublabel": "Per-domain bundles",
       "pos": [
         40,
         360
@@ -142,8 +142,8 @@
     {
       "id": "bundle_b",
       "type": "database",
-      "label": "Trust Bundle B",
-      "sublabel": "own + Bundle A",
+      "label": "Bundle Store B",
+      "sublabel": "Per-domain bundles",
       "pos": [
         890,
         360
@@ -187,7 +187,7 @@
       "id": "wl-a-svid",
       "from": "wl_a",
       "to": "server_a",
-      "label": "SVID",
+      "label": "SVID via agent",
       "variant": "dashed",
       "labelDy": 24
     },
@@ -208,8 +208,12 @@
       "id": "bundle-exchange",
       "from": "be_a",
       "to": "be_b",
-      "label": "bundle exchange",
-      "variant": "emphasis"
+      "label": "Explicit trust setup",
+      "variant": "emphasis",
+      "labelAt": [
+        550,
+        300
+      ]
     },
     {
       "id": "server-b-publish",
@@ -221,7 +225,7 @@
       "id": "wl-b-svid",
       "from": "wl_b",
       "to": "server_b",
-      "label": "SVID",
+      "label": "SVID via agent",
       "variant": "dashed",
       "labelDy": 24
     },
@@ -236,8 +240,28 @@
       "id": "cross-mtls",
       "from": "wl_a",
       "to": "wl_b",
-      "label": "mTLS",
+      "label": "mTLS + peer ID authorization",
       "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Trust bootstrap",
+      "items": [
+        "https_spiffe: initial bundle + endpointSPIFFEID",
+        "https_web: validate DNS/TLS certificate chain",
+        "Importing a bundle does not rotate a CA key"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Scope",
+      "items": [
+        "federatesWith: only required workload trust domains",
+        "Separate JWT audience/expiry checks from replay defenses",
+        "Apply service authorization after authentication"
+      ]
     }
   ]
 }

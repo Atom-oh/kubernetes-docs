@@ -26,7 +26,7 @@
           "be_b",
           "server_b"
         ],
-        "note": "두 서버가 Bundle Endpoint(:8443)로 서로의 Trust Bundle을 주기적으로 가져와 저장한다."
+        "note": "양방향 신뢰는 각 방향의 관계를 따로 구성해야 한다. https_spiffe는 신뢰할 초기 bundle과 endpoint SPIFFE ID 검증이 필요하다."
       },
       {
         "id": "cross-mtls",
@@ -35,7 +35,7 @@
           "wl_a",
           "wl_b"
         ],
-        "note": "교환된 Bundle을 신뢰 기반으로 두 도메인의 워크로드가 직접 mTLS로 통신한다."
+        "note": "페더레이션은 인증을 위한 trust bundle 배포이다. 네트워크 연결과 상대 SPIFFE ID 권한 부여는 별도 정책이다."
       }
     ],
     "legend": {
@@ -88,8 +88,8 @@
     {
       "id": "bundle_a",
       "type": "database",
-      "label": "Trust Bundle A",
-      "sublabel": "자체 + B의 Bundle",
+      "label": "Bundle Store A",
+      "sublabel": "도메인별 별도 bundle",
       "pos": [
         40,
         360
@@ -158,8 +158,8 @@
     {
       "id": "bundle_b",
       "type": "database",
-      "label": "Trust Bundle B",
-      "sublabel": "자체 + A의 Bundle",
+      "label": "Bundle Store B",
+      "sublabel": "도메인별 별도 bundle",
       "pos": [
         890,
         360
@@ -203,7 +203,7 @@
       "id": "wl-a-svid",
       "from": "wl_a",
       "to": "server_a",
-      "label": "SVID",
+      "label": "Agent 경유 SVID",
       "variant": "dashed",
       "labelDy": 24
     },
@@ -224,7 +224,7 @@
       "id": "bundle-exchange",
       "from": "be_a",
       "to": "be_b",
-      "label": "Trust Bundle 교환",
+      "label": "명시적 신뢰 관계",
       "variant": "emphasis"
     },
     {
@@ -237,7 +237,7 @@
       "id": "wl-b-svid",
       "from": "wl_b",
       "to": "server_b",
-      "label": "SVID",
+      "label": "Agent 경유 SVID",
       "variant": "dashed",
       "labelDy": 24
     },
@@ -252,8 +252,28 @@
       "id": "cross-mtls",
       "from": "wl_a",
       "to": "wl_b",
-      "label": "mTLS 통신",
+      "label": "mTLS + 상대 ID 허용 정책",
       "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "신뢰 bootstrap",
+      "items": [
+        "https_spiffe: 초기 bundle + endpointSPIFFEID",
+        "https_web: DNS/TLS 인증서 체인 확인",
+        "bundle을 설정하는 것은 CA 키 교체가 아님"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "범위",
+      "items": [
+        "federatesWith: workload에 필요한 도메인만",
+        "JWT audience/expiry 검증과 replay 방어 구분",
+        "인증 후 서비스별 authorization 적용"
+      ]
     }
   ]
 }

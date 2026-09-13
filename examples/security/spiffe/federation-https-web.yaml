@@ -1,0 +1,9 @@
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterFederatedTrustDomain
+metadata:
+  name: partner-domain
+spec:
+  trustDomain: partner.example.org
+  bundleEndpointURL: https://bundle.partner.example.org
+  bundleEndpointProfile:
+    type: https_web
