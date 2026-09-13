@@ -3,32 +3,32 @@
     "path": "ko/security/07-image-security.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "b2e1eb3d8187108ae8fe637e5ac6872d3a176c24cb6812a788f4f5d49e34b066",
-    "summary": "Readall4MD2384lines/68blocks;updatedECRnative/Inspectorqueryandalerts,Trivysyntax,Cosignidentity/digest/SBOM,KyvernoCELallcontainerpolicy,Connaisseurchart,baseimagesandbuild-onceCI;24questions90legacyanchors16examples;boundednativechecks,nocloudorcontainerexecution.",
+    "reviewedSha256": "f9f47a75c0af6293fb6351ca199e30991c47e393a639fb73e0fddbb9ea074307",
+    "summary": "Readall4MD2374lines/68blocks;updatedECRnative/Inspectorqueryandalerts,Trivysyntax,Cosignidentity/digest/SBOM,KyvernoCELallcontainerpolicy,Connaisseurchart,baseimagesandbuild-onceCI;24questions90legacyanchors18examples;boundednativechecks,nocloudorcontainerexecution.",
     "validationReport": "docs/reviews/2026-09-11/image-security-validation.json"
   },
   {
     "path": "en/security/07-image-security.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "82d31d1d230c694f43fd9fc51d6be2c1b4b70f7e378564bc0c829f0203f2ef52",
-    "summary": "Readall4MD2384lines/68blocks;updatedECRnative/Inspectorqueryandalerts,Trivysyntax,Cosignidentity/digest/SBOM,KyvernoCELallcontainerpolicy,Connaisseurchart,baseimagesandbuild-onceCI;24questions90legacyanchors16examples;boundednativechecks,nocloudorcontainerexecution.",
+    "reviewedSha256": "4351076bd5bab3100e03716238ad7b80b77335d91e64b0a6b8b4dfede36a84c8",
+    "summary": "Readall4MD2374lines/68blocks;updatedECRnative/Inspectorqueryandalerts,Trivysyntax,Cosignidentity/digest/SBOM,KyvernoCELallcontainerpolicy,Connaisseurchart,baseimagesandbuild-onceCI;24questions90legacyanchors18examples;boundednativechecks,nocloudorcontainerexecution.",
     "validationReport": "docs/reviews/2026-09-11/image-security-validation.json"
   },
   {
     "path": "ko/quizzes/security/07-image-security-quiz.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "09c9bcf9a855a3e2ded0bcba77614e59d6101f3772cca58054bae6f423e2c412",
-    "summary": "Readall4MD2384lines/68blocks;updatedECRnative/Inspectorqueryandalerts,Trivysyntax,Cosignidentity/digest/SBOM,KyvernoCELallcontainerpolicy,Connaisseurchart,baseimagesandbuild-onceCI;24questions90legacyanchors16examples;boundednativechecks,nocloudorcontainerexecution.",
+    "reviewedSha256": "f580c74486355f0654901f47e4bc788b7915315122fb3f99a423743ecc70b0c0",
+    "summary": "Readall4MD2374lines/68blocks;updatedECRnative/Inspectorqueryandalerts,Trivysyntax,Cosignidentity/digest/SBOM,KyvernoCELallcontainerpolicy,Connaisseurchart,baseimagesandbuild-onceCI;24questions90legacyanchors18examples;boundednativechecks,nocloudorcontainerexecution.",
     "validationReport": "docs/reviews/2026-09-11/image-security-validation.json"
   },
   {
     "path": "en/quizzes/security/07-image-security-quiz.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "6f7dd63e559db3878dbbfaa47da9159f0e006ca7cd459a16d9e07fab5e2352ff",
-    "summary": "Readall4MD2384lines/68blocks;updatedECRnative/Inspectorqueryandalerts,Trivysyntax,Cosignidentity/digest/SBOM,KyvernoCELallcontainerpolicy,Connaisseurchart,baseimagesandbuild-onceCI;24questions90legacyanchors16examples;boundednativechecks,nocloudorcontainerexecution.",
+    "reviewedSha256": "1cd9bf5a751b05202861f180f06ca7336d8fcf6337b16b27526a1ce138442546",
+    "summary": "Readall4MD2374lines/68blocks;updatedECRnative/Inspectorqueryandalerts,Trivysyntax,Cosignidentity/digest/SBOM,KyvernoCELallcontainerpolicy,Connaisseurchart,baseimagesandbuild-onceCI;24questions90legacyanchors18examples;boundednativechecks,nocloudorcontainerexecution.",
     "validationReport": "docs/reviews/2026-09-11/image-security-validation.json"
   }
 ]

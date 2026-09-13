@@ -94,7 +94,7 @@ jobs:
         run: |
           set -euo pipefail
           cosign sign --yes "$IMAGE_REF"
-          cosign verify --certificate-identity "$GITHUB_WORKFLOW_REF"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
+          cosign verify --certificate-identity "${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
       - name: Generate SBOM for the pushed digest
         uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
         with:
@@ -110,7 +110,7 @@ jobs:
         run: |
           set -euo pipefail
           cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$IMAGE_REF"
-          cosign verify-attestation --type spdxjson             --certificate-identity "$GITHUB_WORKFLOW_REF"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
+          cosign verify-attestation --type spdxjson             --certificate-identity "${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
       - name: Publish build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:

@@ -253,7 +253,9 @@ Images outside matchImageReferences can be skipped by image verification, so app
 
 <span id="connaisseur"></span>
 
-### Connaisseur alternative
+### Connaisseur alternative — legacy signature path
+
+**Connaisseur 3.12.0 is not a consumer of default Cosign 3 bundles.** It uses the cosign/v2 verification path with legacy signature tags and SimpleSigning payloads. Use a separate compatibility producer. The [legacy signing script](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh) explicitly sets Cosign 3.1.3 `--new-bundle-format=false --registry-referrers-mode=legacy` while retaining transparency upload/verification. The accompanying signing config explicitly selects Rekor v1 for the legacy verifier’s log format. Supply real approved keys and a digest. This path is separate from secure-build.yaml’s default bundle format; do not feed that workflow’s default output directly to Connaisseur. Legacy flags are deprecated, so plan a coordinated producer/verifier migration. CLI options and both source contracts were checked; registry/signature integration was not executed.
 
 Connaisseur 3.12.0/chart 2.12.0 is another option. In the [values example](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml), validators and policy belong under application, and deny is an explicitly defined static validator. The included public key is a synthetic test key that must be replaced with the real trust key.
 
@@ -475,7 +477,7 @@ jobs:
         run: |
           set -euo pipefail
           cosign sign --yes "$IMAGE_REF"
-          cosign verify --certificate-identity "$GITHUB_WORKFLOW_REF"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
+          cosign verify --certificate-identity "${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
       - name: Generate SBOM for the pushed digest
         uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
         with:
@@ -491,7 +493,7 @@ jobs:
         run: |
           set -euo pipefail
           cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$IMAGE_REF"
-          cosign verify-attestation --type spdxjson             --certificate-identity "$GITHUB_WORKFLOW_REF"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
+          cosign verify-attestation --type spdxjson             --certificate-identity "${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
       - name: Publish build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:

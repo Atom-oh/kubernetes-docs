@@ -7,10 +7,10 @@
 
 ### 1. 주어진 이미지 reference를 Trivy로 검사하는 명령은?
 
-A. trivy scan "$IMAGE_REF"
-B. trivy image "$IMAGE_REF"
-C. trivy container "$IMAGE_REF"
-D. trivy check "$IMAGE_REF"
+- A. trivy scan "$IMAGE_REF"
+- B. trivy image "$IMAGE_REF"
+- C. trivy container "$IMAGE_REF"
+- D. trivy check "$IMAGE_REF"
 
 <details>
 <summary>정답 보기</summary>
@@ -25,10 +25,10 @@ trivy image가 이미지 검사 명령입니다. IMAGE_REF에는 실제 digest r
 
 ### 2. 이미지 digest와 승인된 서명자의 연결을 검증하는 도구는?
 
-A. Trivy의 CVE DB
-B. Cosign/Sigstore
-C. Clair의 package scanner
-D. Docker imagePullPolicy
+- A. Trivy의 CVE DB
+- B. Cosign/Sigstore
+- C. Clair의 package scanner
+- D. Docker imagePullPolicy
 
 <details>
 <summary>정답 보기</summary>
@@ -43,10 +43,10 @@ Cosign은 key 또는 OIDC identity/issuer와 digest 및 필요한 transparency �
 
 ### 3. Shift-left 보안은 무엇을 의미하는가?
 
-A. 운영 단계까지 검사를 미룸
-B. 개발·PR·빌드 단계에서 문제를 일찍 검사
-C. 보안팀만 소스에 접근
-D. 운영 재검사를 제거
+- A. 운영 단계까지 검사를 미룸
+- B. 개발·PR·빌드 단계에서 문제를 일찍 검사
+- C. 보안팀만 소스에 접근
+- D. 운영 재검사를 제거
 
 <details>
 <summary>정답 보기</summary>
@@ -61,10 +61,10 @@ D. 운영 재검사를 제거
 
 ### 4. 일반적인 distroless runtime 이미지의 특징은?
 
-A. 모든 Linux 도구를 포함
-B. 애플리케이션에 필요한 최소 runtime 구성요소 중심
-C. 항상 shell과 debugger를 포함
-D. package manager가 필수
+- A. 모든 Linux 도구를 포함
+- B. 애플리케이션에 필요한 최소 runtime 구성요소 중심
+- C. 항상 shell과 debugger를 포함
+- D. package manager가 필수
 
 <details>
 <summary>정답 보기</summary>
@@ -79,10 +79,10 @@ D. package manager가 필수
 
 ### 5. 현재 ECR Basic과 Enhanced scanning의 차이는?
 
-A. Basic은 AWS native OS scanner, Enhanced는 Inspector의 OS/언어 package 검사
-B. Basic은 항상 Clair, Enhanced는 OS만 검사
-C. 두 방식 모두 push를 자동 거부
-D. Enhanced는 모든 이미지를 무기한 검사
+- A. Basic은 AWS native OS scanner, Enhanced는 Inspector의 OS/언어 package 검사
+- B. Basic은 항상 Clair, Enhanced는 OS만 검사
+- C. 두 방식 모두 push를 자동 거부
+- D. Enhanced는 모든 이미지를 무기한 검사
 
 <details>
 <summary>정답 보기</summary>
@@ -97,10 +97,10 @@ Basic은 manual/scan-on-push, Enhanced는 scan-on-push/continuous를 지원합�
 
 ### 6. SBOM은 무엇을 제공하는가?
 
-A. 취약점이 없다는 인증
-B. 도구가 발견한 소프트웨어 구성요소 inventory
-C. 승인된 signer의 자동 증명
-D. 배포 권한
+- A. 취약점이 없다는 인증
+- B. 도구가 발견한 소프트웨어 구성요소 inventory
+- C. 승인된 signer의 자동 증명
+- D. 배포 권한
 
 <details>
 <summary>정답 보기</summary>
@@ -115,10 +115,10 @@ SBOM은 구성요소와 관계를 기록하지만 탐지 범위가 불완전할 
 
 ### 7. 기존 Kyverno ClusterPolicy에서 이미지 서명 검사에 사용한 규칙은?
 
-A. validate만
-B. mutate만
-C. verifyImages
-D. generate만
+- A. validate만
+- B. mutate만
+- C. verifyImages
+- D. generate만
 
 <details>
 <summary>정답 보기</summary>
@@ -133,10 +133,10 @@ D. generate만
 
 ### 8. 이미지 tag 대신 digest를 고정하는 이유는?
 
-A. 항상 짧아짐
-B. 특정 image content를 식별
-C. 서명 검사가 자동 수행됨
-D. CVE가 자동 제거됨
+- A. 항상 짧아짐
+- B. 특정 image content를 식별
+- C. 서명 검사가 자동 수행됨
+- D. CVE가 자동 제거됨
 
 <details>
 <summary>정답 보기</summary>
@@ -151,10 +151,10 @@ Tag는 이동할 수 있지만 digest는 내용을 식별합니다. 재현 가�
 
 ### 9. Trivy의 정적 검사와 별도인 영역은?
 
-A. OS package 식별
-B. 언어 dependency 검사
-C. 실행 중 syscall·process 행위 탐지
-D. 소스 시크릿 탐지
+- A. OS package 식별
+- B. 언어 dependency 검사
+- C. 실행 중 syscall·process 행위 탐지
+- D. 소스 시크릿 탐지
 
 <details>
 <summary>정답 보기</summary>
@@ -169,10 +169,10 @@ Trivy의 package·misconfiguration·secret 검사는 런타임 행위 탐지와 
 
 ### 10. 레지스트리 접근 통제로 부적절한 것은?
 
-A. Private image의 승인된 pull identity
-B. 공개 image도 digest·서명 검증
-C. 익명 사용자의 임의 image push/delete 허용
-D. Registry·admission·scan gate의 권한 분리
+- A. Private image의 승인된 pull identity
+- B. 공개 image도 digest·서명 검증
+- C. 익명 사용자의 임의 image push/delete 허용
+- D. Registry·admission·scan gate의 권한 분리
 
 <details>
 <summary>정답 보기</summary>
@@ -187,10 +187,10 @@ D. Registry·admission·scan gate의 권한 분리
 
 ### 11. 사전에 정한 CI scan gate를 통과하지 못하면 어떻게 처리하는가?
 
-A. 무조건 무시
-B. Publish/sign 단계로 진행하지 않고 실패 원인을 확인
-C. 다른 이미지를 재빌드해 검사 없이 push
-D. exit code만0으로 바꿈
+- A. 무조건 무시
+- B. Publish/sign 단계로 진행하지 않고 실패 원인을 확인
+- C. 다른 이미지를 재빌드해 검사 없이 push
+- D. exit code만0으로 바꿈
 
 <details>
 <summary>정답 보기</summary>
@@ -205,10 +205,10 @@ D. exit code만0으로 바꿈
 
 ### 12. Alpine에 대해 잘못된 가정은?
 
-A. musl libc 기반
-B. apk package manager 사용
-C. glibc 의존 애플리케이션과 항상 완전 호환
-D. 선택한 release의 지원기간 확인 필요
+- A. musl libc 기반
+- B. apk package manager 사용
+- C. glibc 의존 애플리케이션과 항상 완전 호환
+- D. 선택한 release의 지원기간 확인 필요
 
 <details>
 <summary>정답 보기</summary>

@@ -253,7 +253,9 @@ spec:
 
 <span id="connaisseur"></span>
 
-### Connaisseur 대안
+### Connaisseur 대안 — legacy 서명 경로
+
+**Connaisseur 3.12.0은 기본 Cosign 3 bundle을 소비하는 대안이 아닙니다.** 이 버전은 cosign/v2 검증 경로와 legacy signature tag·SimpleSigning payload를 사용합니다. 별도 compatibility producer가 필요합니다. [legacy 서명 스크립트](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)는 Cosign 3.1.3에 `--new-bundle-format=false --registry-referrers-mode=legacy`를 명시하고 transparency upload/검증을 유지합니다. 동봉한 signing config는 Rekor v1을 명시하며 legacy verifier가 소비하는 로그 형식을 유지합니다. 실제 승인 key와 digest를 제공해야 합니다. 이 경로는 아래 secure-build.yaml의 기본 bundle 경로와 별도이며, 해당 기본 workflow의 결과를 그대로 Connaisseur에 넣으면 안 됩니다. Legacy 옵션은 deprecated이므로 verifier와 producer를 함께 업그레이드하는 마이그레이션 계획이 필요합니다. CLI 옵션과 양쪽 소스 계약은 확인했지만 실제 registry/signature 연동을 실행하지 않았습니다.
 
 Connaisseur 3.12.0/chart 2.12.0을 사용할 수도 있습니다. [values 예제](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml)에서 `validators`와 `policy`는 `application` 아래에 있고, `deny`는 명시적으로 정의한 static validator입니다. 포함된 public key는 합성 검사 key이므로 실제 신뢰 key로 교체해야 합니다.
 
@@ -475,7 +477,7 @@ jobs:
         run: |
           set -euo pipefail
           cosign sign --yes "$IMAGE_REF"
-          cosign verify --certificate-identity "$GITHUB_WORKFLOW_REF"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
+          cosign verify --certificate-identity "${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
       - name: Generate SBOM for the pushed digest
         uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
         with:
@@ -491,7 +493,7 @@ jobs:
         run: |
           set -euo pipefail
           cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$IMAGE_REF"
-          cosign verify-attestation --type spdxjson             --certificate-identity "$GITHUB_WORKFLOW_REF"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
+          cosign verify-attestation --type spdxjson             --certificate-identity "${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}"             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REF"
       - name: Publish build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:

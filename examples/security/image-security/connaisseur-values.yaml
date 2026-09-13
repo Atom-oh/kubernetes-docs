@@ -23,6 +23,8 @@ application:
     validator: release
     with:
       trustRoot: example-key-replace-before-use
+      verifyInTransparencyLog: true
+      verifySCT: true
   features:
     detectionMode: false
     automaticChildApproval: false

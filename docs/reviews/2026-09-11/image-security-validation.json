@@ -3,10 +3,10 @@
   "reviewedAt": "2026-09-13T02:02:16.114937+00:00",
   "scope": {
     "documents": 4,
-    "originalLines": 2384,
+    "originalLines": 2374,
     "originalCodeBlocks": 68,
     "quizQuestions": 24,
-    "exampleFiles": 16,
+    "exampleFiles": 18,
     "images": 0
   },
   "originalFiles": [
@@ -41,7 +41,7 @@
     "results": [
       {
         "path": "ko/security/07-image-security.md",
-        "sha256": "b2e1eb3d8187108ae8fe637e5ac6872d3a176c24cb6812a788f4f5d49e34b066",
+        "sha256": "f9f47a75c0af6293fb6351ca199e30991c47e393a639fb73e0fddbb9ea074307",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -104,7 +104,7 @@
           },
           {
             "tag": "h3",
-            "id": "connaisseur-대안"
+            "id": "connaisseur-대안-—-legacy-서명-경로"
           },
           {
             "tag": "h2",
@@ -177,7 +177,7 @@
           "registry·digest-정책",
           "workflow-서명-정책",
           "connaisseur",
-          "connaisseur-대안",
+          "connaisseur-대안-—-legacy-서명-경로",
           "sbom-software-bill-of-materials-생성",
           "sbom-기반-취약점-검사",
           "slsa-supply-chain-levels-for-software-artifacts",
@@ -204,7 +204,7 @@
       },
       {
         "path": "en/security/07-image-security.md",
-        "sha256": "82d31d1d230c694f43fd9fc51d6be2c1b4b70f7e378564bc0c829f0203f2ef52",
+        "sha256": "4351076bd5bab3100e03716238ad7b80b77335d91e64b0a6b8b4dfede36a84c8",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -267,7 +267,7 @@
           },
           {
             "tag": "h3",
-            "id": "connaisseur-alternative"
+            "id": "connaisseur-alternative-—-legacy-signature-path"
           },
           {
             "tag": "h2",
@@ -340,7 +340,7 @@
           "registry-and-digest-policy",
           "workflow-signature-policy",
           "connaisseur",
-          "connaisseur-alternative",
+          "connaisseur-alternative-—-legacy-signature-path",
           "sbom-software-bill-of-materials-generation",
           "sbom-based-vulnerability-scanning",
           "slsa-supply-chain-levels-for-software-artifacts",
@@ -367,7 +367,7 @@
       },
       {
         "path": "ko/quizzes/security/07-image-security-quiz.md",
-        "sha256": "09c9bcf9a855a3e2ded0bcba77614e59d6101f3772cca58054bae6f423e2c412",
+        "sha256": "f580c74486355f0654901f47e4bc788b7915315122fb3f99a423743ecc70b0c0",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -456,7 +456,7 @@
       },
       {
         "path": "en/quizzes/security/07-image-security-quiz.md",
-        "sha256": "6f7dd63e559db3878dbbfaa47da9159f0e006ca7cd459a16d9e07fab5e2352ff",
+        "sha256": "1cd9bf5a751b05202861f180f06ca7336d8fcf6337b16b27526a1ce138442546",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -601,7 +601,7 @@
       {
         "document": "ko/security/07-image-security.md",
         "example": "examples/security/image-security/secure-build.yaml",
-        "sha256": "25b2183743a153d93e086cfb93fca67c2b5519b0eb0f1611c89a7681ee15e773"
+        "sha256": "f31af7e36c6374d960c5f2506955cf8da6dcdf39fdb97d9541293651451a9dd8"
       },
       {
         "document": "ko/security/07-image-security.md",
@@ -636,7 +636,7 @@
       {
         "document": "en/security/07-image-security.md",
         "example": "examples/security/image-security/secure-build.yaml",
-        "sha256": "25b2183743a153d93e086cfb93fca67c2b5519b0eb0f1611c89a7681ee15e773"
+        "sha256": "f31af7e36c6374d960c5f2506955cf8da6dcdf39fdb97d9541293651451a9dd8"
       },
       {
         "document": "en/security/07-image-security.md",
@@ -1163,6 +1163,20 @@
         }
       ],
       "scope": "Nativehostprograms+staticDockerfilemisconfiguration+publicOCIindexmetadataonly;noDockerbuild/containerexecution/CVEscan"
+    },
+    "connaisseur-review-fix": {
+      "renderedPolicy": {
+        "pattern": "ghcr.io/example-org/*",
+        "validator": "release",
+        "with": {
+          "trustRoot": "example-key-replace-before-use",
+          "verifyInTransparencyLog": true,
+          "verifySCT": true
+        }
+      },
+      "source": "examples/security/image-security/connaisseur-values.yaml",
+      "sha256": "eefc2b333a332c7672719e3a4a2e03d9a6be6f8cbadec4aa38c6fa3c07589b7a",
+      "scope": "OfflineHelmrendereffectiveconfig;noadmission/signaturefetch"
     }
   },
   "actions": [
@@ -1373,9 +1387,11 @@
     "examples/security/image-security/base-images/go.mod": "a8c37cb6f93457dc5e42998f1fcdb0f8840ee5a1a3cd9eda86c22479d9f12328",
     "examples/security/image-security/base-images/main.go": "22c2916cfd25a507233a60fbe093101d37487238a86ff0e56790c71ff25e27c4",
     "examples/security/image-security/base-images/requirements.txt": "b3eb6bad1b45f559438df752b1c7d8da1ff5e81d7805d5a14a931c779adb151d",
-    "examples/security/image-security/connaisseur-values.yaml": "c131e617f50c316039ae2e66477ff622ad1926e99edcef79c35eae03d0e95415",
+    "examples/security/image-security/connaisseur-sign-legacy.sh": "b50e19c08ed38b23bb079356bd0a16546f1c7bc84a699c884a5a16ff4b779ba3",
+    "examples/security/image-security/connaisseur-signing-config.json": "f20e60b6ceb7c664d2745c70c00996ee95ac9de64f91118bae042dd6f9bdc1e4",
+    "examples/security/image-security/connaisseur-values.yaml": "eefc2b333a332c7672719e3a4a2e03d9a6be6f8cbadec4aa38c6fa3c07589b7a",
     "examples/security/image-security/inspector-alerts.yaml": "10f7aac26d9162e69b84500ec277b2768ad45c97fa83fd9e5f437a16996a92fc",
-    "examples/security/image-security/secure-build.yaml": "25b2183743a153d93e086cfb93fca67c2b5519b0eb0f1611c89a7681ee15e773",
+    "examples/security/image-security/secure-build.yaml": "f31af7e36c6374d960c5f2506955cf8da6dcdf39fdb97d9541293651451a9dd8",
     "examples/security/image-security/trivy-operator-values.yaml": "3f88d97a5e5184e451217ce767fea4805f216cc2be419a0c3f8d6fdb6e92da0b",
     "examples/security/image-security/trivy.yaml": "8830eaca00e52781c1194f84512643528787ec6e1fec8f93679d52ae17647b54",
     "examples/security/image-security/verify-signatures.yaml": "6421c94d16a4e2b6b5dbd7c66d512a5e9f958a771d6698c17835f48c06cefa0b"
@@ -1437,5 +1453,41 @@
     "CIworkflowpassedactionlintandpinnedactioninputchecks;noGitHubworkflowexecutionwastriggeredforitsapplicationbuild.",
     "LegacyClusterPolicynativecasesarecompatibilityevidence;publishednewexamplesusepolicies.kyverno.io/v1.",
     "Baseimagepinsmustbeupdatedandrescanned;AlpinepackagefetchandfuturePythondependenciesneedreproducibilitycontrols."
-  ]
+  ],
+  "reviewFixes": {
+    "ids": [
+      "IMG-R1-001",
+      "IMG-R1-002",
+      "IMG-R1-003",
+      "IMG-R1-004"
+    ],
+    "originalLines": 2374,
+    "choices": "48Markdownlistitemsperlocale;12questionspreserved",
+    "identity": {
+      "status": "passed",
+      "cases": [
+        {
+          "command": "verify",
+          "identity": "https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main",
+          "sameDigest": true
+        },
+        {
+          "command": "verify-attestation",
+          "identity": "https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main",
+          "sameDigest": true
+        }
+      ],
+      "scope": "Executeexactpublishedshellwithanargument-capturestub;notrealCosign/OIDC/registryexecution"
+    },
+    "legacyProducer": {
+      "cosign": "3.1.3",
+      "format": "new-bundle-format=false;registry-referrers-mode=legacy",
+      "rekor": "ExplicitmajorApiVersion1signingconfig",
+      "consumer": "Connaisseur3.12.0/cosign-v2.6.4SimpleSigninglegacySignatureTag",
+      "verifyInTransparencyLog": true,
+      "verifySCT": true,
+      "checks": "CLIflags/help,bashsyntax,exactupstreamproducer/consumerbranchesandHelmconfig;noactualregistry/tlogsigning"
+    },
+    "limit": "Theprimarysecure-buildworkflowkeepsCosign3defaultbundles;legacycompatibilityscriptisseparateanddeprecatedflagsneedamigrationplan."
+  }
 }
