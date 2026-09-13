@@ -1,665 +1,579 @@
 # Métricas de CloudWatch
 
-> **Última actualización**: July 11, 2026
-
-## Tabla de contenido
-
-- [Introducción](#introducción)
-- [Descripción general de Container Insights](#descripción-general-de-container-insights)
-- [Configuración de CloudWatch Agent](#configuración-de-cloudwatch-agent)
-- [Recopilación de métricas personalizadas](#recopilación-de-métricas-personalizadas)
-- [Metric Math y detección de anomalías](#metric-math-y-detección-de-anomalías)
-- [Creación de dashboards](#creación-de-dashboards)
-- [Configuración de alertas](#configuración-de-alertas)
-- [Optimización de costos](#optimización-de-costos)
-- [Prácticas recomendadas](#prácticas-recomendadas)
-- [Solución de problemas](#solución-de-problemas)
+> **Última actualización**: September 13, 2026
+> Ejemplo de Helm: amazon-cloudwatch-observability 6.6.0.
+> Los anuncios históricos de abril/julio a continuación conservan sus fechas reales.
 
 ## Introducción
 
-Amazon CloudWatch es el servicio nativo de monitoreo y observabilidad de AWS. El uso de CloudWatch en entornos EKS habilita la recopilación de métricas, alertas y dashboards integrados con los servicios de AWS sin requerir una infraestructura de monitoreo independiente.
+CloudWatch administra el almacenamiento, las consultas, los dashboards y las alertas. Los equipos aún configuran
+collectors, identidad de carga de trabajo, acceso de red, cardinalidad, retención y propiedad
+de la respuesta. Un backend administrado no elimina estas responsabilidades operativas.
 
-### Características principales
+| Tema | CloudWatch | Prometheus / VictoriaMetrics autoadministrados |
+| --- | --- | --- |
+| Backend | Servicio administrado por AWS; la disponibilidad de características/Region varía | Operar capacidad, almacenamiento, actualizaciones y recuperación |
+| Recopilación | Métricas de servicios AWS más agents/SDKs/OTLP configurados | Exporters, agents, scraping y remote write |
+| Consulta | Metric Math, Metrics Insights; PromQL para métricas OTel | PromQL / MetricsQL |
+| Costo | Modelo de métricas/observaciones o ingesta OTLP, logs, consultas y alertas | Cómputo/almacenamiento/red más operaciones |
+| Plataformas | AWS y recopilación híbrida/multicloud compatible | Opciones de despliegue neutrales respecto a la nube |
+| Retención | Depende del modelo y la resolución de las métricas; los logs tienen retención separada | Política de almacenamiento/retención configurada |
 
-| Característica | Descripción |
-|---------|-------------|
-| **Totalmente administrado** | No se requiere administrar la infraestructura |
-| **Integración nativa con AWS** | Integración automática con EC2, EKS, RDS, etc. |
-| **Container Insights** | Monitoreo a nivel de contenedor/Pod |
-| **Detección de anomalías** | Detección automática de anomalías basada en ML |
-| **Metric Math** | Cálculo de métricas con expresiones matemáticas |
-| **Dashboard unificado** | Logs, métricas y trazas integrados |
-| **Disponibilidad global** | Compatible con todas las regiones de AWS |
+## Container Insights: elija un modelo de métricas
 
-### CloudWatch frente a soluciones de código abierto
+El add-on CloudWatch Observability para EKS y el chart de Helm configuran un Operator y
+componentes de recopilación. Container Insights tradicional usa eventos de logs de rendimiento
+y métricas de CloudWatch extraídas; Container Insights basado en OTel envía métricas de OpenTelemetry
+y puede usar PromQL. Son modelos distintos de nomenclatura, dimensiones y facturación.
+
+| Métrica `ContainerInsights` tradicional | Significado y conjunto de dimensiones de ejemplo |
+| --- | --- |
+| `cluster_node_count` | Cantidad de nodos; `ClusterName` |
+| `cluster_failed_node_count` | Nodos con condiciones de fallo; `ClusterName`. No exclusivamente `NotReady` |
+| `node_cpu_utilization`, `node_memory_utilization` | Utilización de nodos; `ClusterName`, o `NodeName,ClusterName,InstanceId` |
+| `node_network_total_bytes` | Rendimiento de red en **bytes/second**, no un contador acumulativo de bytes |
+| `namespace_number_of_running_pods` | Cantidad de Pods; `Namespace,ClusterName` |
+| `pod_cpu_utilization`, `pod_memory_utilization` | Uso del Pod en relación con el límite del **nodo**; use las métricas documentadas `_over_pod_limit` para las proporciones del límite del Pod |
+| `pod_number_of_container_restarts` | Reinicios totales en un Pod; `PodName,Namespace,ClusterName` |
+
+La lista documentada no contiene `cluster_cpu_utilization` ni
+`cluster_memory_utilization`. Una métrica de nodo solo con `ClusterName` no es automáticamente
+un cálculo de utilización del cluster ponderado por capacidad. Use el conjunto exacto de
+dimensiones publicado. Algunos campos aparecen solo en logs de rendimiento y las métricas mejoradas
+tienen conjuntos adicionales como `FullPodName`; no invente nombres de métricas a partir de campos de logs.
+Las métricas de recepción/transmisión de red también son tasas. Evite aplicarles `RATE()`
+como si fueran contadores de bytes monotónicos.
+
+El diagrama separa la extracción tradicional de métricas, las métricas OTLP opcionales y los logs de aplicación.
 
 ```mermaid
 flowchart LR
-    subgraph CW["CloudWatch"]
-        C1[Fully Managed]
-        C2[AWS Native]
-        C3[Usage-based Cost]
-        C4[15 Month Retention]
-    end
-
-    subgraph OS["Open Source<br/>Prometheus/VM"]
-        O1[Self-managed]
-        O2[Cloud Neutral]
-        O3[Infrastructure Cost Only]
-        O4[Unlimited Retention]
-    end
-
-    classDef cw fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef os fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class C1,C2,C3,C4 cw
-    class O1,O2,O3,O4 os
+    N["Supported nodes and workloads"] --> A["CloudWatch Agent"]
+    A -->|"Traditional EMF"| L["CloudWatch Logs"]
+    L -->|"Metric extraction"| M["Traditional metrics"]
+    A -->|"OTLP, when enabled"| O["OTel metrics"]
+    N -->|"stdout / stderr"| F["Chosen log collector"]
+    F --> L
+    M --> D["Dashboards and alarms"]
+    O --> Q["PromQL and OTel views"]
 ```
 
-| Elemento | CloudWatch | Prometheus/VM |
-|------|------------|---------------|
-| Sobrecarga operativa | Ninguna | Presente |
-| Modelo de costos | Basado en el uso | Basado en infraestructura |
-| Escalabilidad | Automática | Configuración manual |
-| Lenguaje de consulta | Metric Math | PromQL/MetricsQL |
-| Multicloud | Solo AWS | Neutral respecto a la nube |
-| Personalización | Limitada | Totalmente flexible |
+### Instalación y alcance de la plataforma
 
-## Descripción general de Container Insights
-
-Container Insights es una característica de CloudWatch para monitorear cargas de trabajo en contenedores en clústeres EKS.
-
-### Arquitectura
-
-```mermaid
-flowchart TB
-    subgraph EKS["EKS Cluster"]
-        subgraph NODES["Worker Nodes"]
-            CW1[CloudWatch Agent<br/>DaemonSet]
-            FB[Fluent Bit<br/>DaemonSet]
-            APP[Applications]
-        end
-    end
-
-    subgraph CLOUDWATCH["CloudWatch"]
-        CI[Container Insights<br/>Metrics]
-        CL[CloudWatch Logs]
-        PM[Performance Monitoring]
-    end
-
-    CW1 -->|Metrics| CI
-    FB -->|Logs| CL
-    CI --> PM
-    CL --> PM
-    APP -.->|expose| CW1
-    APP -.->|stdout/stderr| FB
-
-    classDef eks fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef cw fill:#146EB4,stroke:#333,stroke-width:1px,color:white
-    classDef agent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class EKS,NODES eks
-    class CI,CL,PM cw
-    class CW1,FB,APP agent
-```
-
-### Métricas recopiladas
-
-**Nivel de clúster**:
-- `cluster_node_count` - Cantidad de Nodes
-- `cluster_failed_node_count` - Cantidad de Nodes con errores
-- `cluster_cpu_utilization` - Utilización de CPU
-- `cluster_memory_utilization` - Utilización de memoria
-
-**Nivel de Node**:
-- `node_cpu_utilization` - Utilización de CPU del Node
-- `node_memory_utilization` - Utilización de memoria del Node
-- `node_network_total_bytes` - Bytes totales de red
-- `node_filesystem_utilization` - Utilización del sistema de archivos
-
-**Nivel de Pod/contenedor**:
-- `pod_cpu_utilization` - Utilización de CPU del Pod
-- `pod_memory_utilization` - Utilización de memoria del Pod
-- `pod_network_rx_bytes` - Bytes de red recibidos
-- `pod_network_tx_bytes` - Bytes de red transmitidos
-- `container_cpu_utilization` - Utilización de CPU del contenedor
-- `container_memory_utilization` - Utilización de memoria del contenedor
-
-### Habilitar Container Insights
+Use el add-on administrado de EKS o una instalación administrada por Helm para los mismos
+componentes. Establezca la propiedad antes de cambiar; no instale ambos sin revisar.
+Para el add-on administrado, determine la compatibilidad con la versión real de Kubernetes,
+la arquitectura, el tipo de cómputo y la Region. Una versión de Helm no es una versión de EKS
+`v…-eksbuild.…`.
 
 ```bash
-# Enable as EKS add-on (recommended)
-aws eks create-addon \
-  --cluster-name my-cluster \
+# Read-only discovery. Use the intended account, Region and cluster.
+export AWS_REGION=ap-northeast-2
+export CLUSTER_NAME=my-cluster
+K8S_VERSION=$(aws eks describe-cluster --name "$CLUSTER_NAME" \
+  --region "$AWS_REGION" --query 'cluster.version' --output text)
+aws eks describe-addon-versions \
   --addon-name amazon-cloudwatch-observability \
-  --addon-version v1.5.0-eksbuild.1 \
-  --service-account-role-arn arn:aws:iam::123456789012:role/CloudWatchAgentRole
+  --kubernetes-version "$K8S_VERSION" --region "$AWS_REGION" \
+  --query 'addons[0].addonVersions[].{version:addonVersion,architectures:architecture,computeTypes:computeTypes,compatibilities:compatibilities}'
 
-# Or enable with eksctl
-eksctl utils update-cluster-logging \
-  --cluster my-cluster \
-  --enable-types all \
-  --approve
+# Set ADDON_VERSION to the exact compatible version selected above.
+: "${ADDON_VERSION:?Select a compatible EKS add-on version}"
+aws eks describe-addon-configuration \
+  --addon-name amazon-cloudwatch-observability \
+  --addon-version "$ADDON_VERSION" --region "$AWS_REGION" \
+  --query configurationSchema --output text > addon-schema.json
 ```
 
-### Container Insights basado en OpenTelemetry (vista previa)
+Prepare por separado los permisos IAM documentados del add-on y la identidad de carga de trabajo.
+La guía del add-on recomienda EKS Pod Identity para las versiones compatibles; requiere
+un Agent y una asociación para el namespace/service account reales. IRSA es una alternativa
+que requiere el proveedor OIDC del cluster, la política de confianza y la anotación de la service
+account. Un `aws sts get-caller-identity` local identifica solo a quien lo llama, no las
+credenciales usadas dentro del collector.
 
-CloudWatch está presentando en vista previa un sucesor de Container Insights para EKS basado en OpenTelemetry (OTLP), anunciado el 2 de abril de 2026. Se ejecuta junto con el Container Insights clásico basado en CloudWatch Agent descrito anteriormente, por lo que puede adoptarlo de forma incremental por clúster en lugar de migrar todo de una vez.
+El add-on admite Container Insights en nodos de trabajo Linux y Windows, con soporte para
+Windows desde 1.5.0; Application Signals en EKS Windows no es compatible. Fargate no ejecuta
+este DaemonSet con montajes de host; use su ruta de recopilación documentada. Compruebe Auto Mode
+y clusters mixtos frente a los tipos de cómputo compatibles y los requisitos de recopilación del
+add-on seleccionado. No prometa métricas de host idénticas en todas las plataformas. Las cargas
+de trabajo, los collectors y los endpoints de AWS también necesitan las rutas de red y RBAC pertinentes.
 
-En comparación con la recopilación clásica basada en agentes:
+El siguiente ejemplo de Helm está dirigido a **nodos de trabajo Linux EC2**. El chart 6.6.0 declara
+la imagen del agent `1.300072.0b1766`; la versión pública del agent en GitHub `v1.300071.0` pertenece a
+un canal de versiones distinto. El chart está fijado y conserva su imagen predeterminada.
+Esta revisión renderizó el chart, no un despliegue de EKS activo.
 
-- **Recopilación de métricas más amplia** mediante OTLP en lugar del conjunto fijo de métricas de CloudWatch Agent
-- **Filtrado de alta cardinalidad** — hasta 150 etiquetas por métrica, útil para desgloses por Pod o por namespace que el modelo clásico de dimensiones no puede expresar económicamente
-- **Compatibilidad con PromQL en CloudWatch Query Studio** — consulte directamente con PromQL las métricas recopiladas por OTel, sin implementar un espacio de trabajo de Prometheus o Amazon Managed Service for Prometheus independiente
-- **Detección automática de aceleradores** — las GPU NVIDIA, EFA y los dispositivos AWS Trainium/Inferentia se detectan automáticamente, lo cual es importante para la observabilidad de cargas de trabajo de AI/ML (consulte la [ruta de lecciones de AI/ML](../../ai-ml/01-ai-ml-workloads.md) para contenido relacionado sobre cargas de trabajo de GPU)
+```yaml
+# cloudwatch-values.yaml: reviewed Helm chart 6.6.0, Linux EC2 example
+clusterName: my-cluster
+region: ap-northeast-2
+containerInsights:
+  enabled: true
+containerLogs:
+  enabled: true
+applicationSignals:
+  enabled: false
+otelContainerInsights:
+  enabled: false
+  logs:
+    enabled: false
+```
 
-Regiones de vista previa: US East (N. Virginia), US West (Oregon), Asia Pacific (Sydney), Asia Pacific (Singapore) y Europe (Ireland).
+En este chart, el agent de CloudWatch y Fluent Bit usan la service account `cloudwatch-agent`
+en el namespace de la versión. Prepare su asociación de Pod Identity antes de esperar telemetría.
+Para IRSA, configure y mantenga la anotación en esa service account real; el `roleArn` de nivel
+superior del chart **no** es un atajo de EKS IRSA. Revise los CRD generados, ClusterRoles, Secrets,
+montajes de host y selectores de nodos. El Operator crea cargas de trabajo del agent a partir de
+recursos personalizados `AmazonCloudWatchAgent`; `helm template` por sí solo no ejecuta esa reconciliación.
 
-> Referencia: [CloudWatch OTel-based Container Insights for EKS (Preview)](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
+El chart 6.6.0 también renderiza dos CR de agent específicos de Windows, seleccionados para nodos
+Windows, incluso en este ejemplo de Linux. La configuración `applicationSignals.enabled: false` de Linux
+no elimina esos CR de Windows. Este ejemplo supone nodos solo Linux; revise por separado la configuración
+generada de Windows antes de usarla en un cluster mixto.
 
-Para conocer cómo se relaciona esto con el complemento EKS `amazon-cloudwatch-observability` y Application Signals, consulte [Monitoreo y logging de EKS](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500).
+```bash
+helm repo add aws-observability https://aws-observability.github.io/helm-charts
+helm repo update aws-observability
+helm template cloudwatch aws-observability/amazon-cloudwatch-observability \
+  --version 6.6.0 --namespace amazon-cloudwatch \
+  --include-crds --values cloudwatch-values.yaml > cloudwatch-rendered.yaml
 
-### Actualización de julio de 2026: eventos de servicio de Application Signals
+# Installation changes the cluster; run only after reviewing ownership and prerequisites.
+helm upgrade --install cloudwatch aws-observability/amazon-cloudwatch-observability \
+  --version 6.6.0 --namespace amazon-cloudwatch --create-namespace \
+  --values cloudwatch-values.yaml
+```
 
-Service Events, anunciado el 6 de julio de 2026, captura automáticamente errores (instantáneas de excepciones), anomalías de rendimiento (instantáneas de eventos de latencia) y eventos de despliegue para cualquier aplicación con CloudWatch Application Signals habilitado. Las aplicaciones instrumentadas con los SDK de ADOT o el complemento EKS `amazon-cloudwatch-observability` obtienen esta funcionalidad sin configuración adicional una vez que Application Signals está activo, y puede habilitar opcionalmente las métricas de llamadas a funciones para obtener mayor visibilidad del rendimiento. Disponible en todas las regiones comerciales de AWS; los lenguajes compatibles son Java, Python y JavaScript. ([Anuncio](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/))
+`eksctl utils update-cluster-logging` configura los **logs del plano de control de EKS**. No
+instala CloudWatch Agent ni habilita Container Insights.
+
+### Migración a OTel y anuncios históricos
+
+La guía actual de OTel Container Insights recomienda la ruta de OTel para desarrollo nuevo
+y describe la ruta tradicional como modo de mantenimiento. OTel está deshabilitado de forma
+predeterminada; la guía requiere el add-on 6.2.0 o posterior. Compruebe las versiones compatibles
+reales del add-on y la disponibilidad de características, no solo ese mínimo.
+
+Para el chart revisado, habilite `otelContainerInsights.enabled` después de evaluar el modelo
+de métricas de OTel. Mantener `containerInsights.enabled: true` permite ambas rutas de métricas
+durante la migración, con ingesta/costo adicional que se debe evaluar. El ejemplo mantiene
+`otelContainerInsights.logs.enabled: false` mientras Fluent Bit recopila logs; elija deliberadamente
+la propiedad de los logs en vez de duplicar la recopilación.
+
+Las métricas OTel conservan nombres de origen como `container_cpu_usage_seconds_total` y admiten
+hasta 150 labels procedentes de metadatos de origen/recurso/Kubernetes. Las métricas tradicionales
+`PutMetricData` tienen un límite separado de 30 dimensiones. Los labels adicionales aumentan el
+tamaño de la carga útil y pueden exponer metadatos; no son un presupuesto de cardinalidad gratuito
+ni ilimitado. Las métricas de aceleradores aún requieren drivers/plugins/toolkits compatibles.
+
+El **anuncio de vista previa del 2026-04-02** enumeró N. Virginia, Oregon, Sydney,
+Singapore e Ireland. Es un registro de lanzamiento fechado, no la disponibilidad completa ni la
+tabla de precios actual. El **anuncio de Service Events del 2026-07-06** describe eventos de error,
+latencia y despliegue para aplicaciones activas de Application Signals, instrumentación Java/Python/JavaScript
+compatible y métricas de funciones opcionales. Application Signals debe habilitarse e instrumentarse
+realmente; el ejemplo anterior solo de métricas no lo habilita. Mantenga la fecha de julio aunque la URL
+del anuncio contiene `/06/`.
 
 ## Configuración de CloudWatch Agent
 
-### Configuración de IRSA
+### JSON tradicional correcto de Container Insights
 
-```bash
-# Create IAM policy
-cat <<EOF > cloudwatch-agent-policy.json
+El collector de Kubernetes pertenece bajo **`logs.metrics_collected.kubernetes`**.
+Este fragmento muestra esa configuración de recopilación tradicional; no es un DaemonSet completo,
+una política de identidad ni un reemplazo de toda la configuración generada del add-on.
+JSON no permite comentarios en línea.
+
+```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "cloudwatch:PutMetricData",
-                "ec2:DescribeVolumes",
-                "ec2:DescribeTags",
-                "logs:PutLogEvents",
-                "logs:DescribeLogStreams",
-                "logs:DescribeLogGroups",
-                "logs:CreateLogStream",
-                "logs:CreateLogGroup"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ssm:GetParameter"
-            ],
-            "Resource": "arn:aws:ssm:*:*:parameter/AmazonCloudWatch-*"
-        }
-    ]
-}
-EOF
-
-aws iam create-policy \
-  --policy-name CloudWatchAgentPolicy \
-  --policy-document file://cloudwatch-agent-policy.json
-
-# Create service account
-eksctl create iamserviceaccount \
-  --name cloudwatch-agent \
-  --namespace amazon-cloudwatch \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::123456789012:policy/CloudWatchAgentPolicy \
-  --approve
-```
-
-### Despliegue de DaemonSet
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: amazon-cloudwatch
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cwagentconfig
-  namespace: amazon-cloudwatch
-data:
-  cwagentconfig.json: |
-    {
-      "logs": {
-        "metrics_collected": {
-          "kubernetes": {
-            "cluster_name": "my-cluster",
-            "metrics_collection_interval": 60
-          }
-        },
-        "force_flush_interval": 5
-      },
-      "metrics": {
-        "namespace": "ContainerInsights",
-        "metrics_collected": {
-          "kubernetes": {
-            "cluster_name": "my-cluster",
-            "metrics_collection_interval": 60,
-            "enhanced_container_insights": true
-          }
-        }
+  "logs": {
+    "metrics_collected": {
+      "kubernetes": {
+        "cluster_name": "my-cluster",
+        "metrics_collection_interval": 60,
+        "enhanced_container_insights": true
       }
     }
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: cloudwatch-agent
-  namespace: amazon-cloudwatch
-spec:
-  selector:
-    matchLabels:
-      name: cloudwatch-agent
-  template:
-    metadata:
-      labels:
-        name: cloudwatch-agent
-    spec:
-      serviceAccountName: cloudwatch-agent
-      containers:
-      - name: cloudwatch-agent
-        image: public.ecr.aws/cloudwatch-agent/cloudwatch-agent:1.300031.0b311
-        resources:
-          limits:
-            cpu: 400m
-            memory: 400Mi
-          requests:
-            cpu: 200m
-            memory: 200Mi
-        env:
-        - name: HOST_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
-        - name: HOST_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        - name: K8S_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: CI_VERSION
-          value: "k8s/1.3.11"
-        volumeMounts:
-        - name: cwagentconfig
-          mountPath: /etc/cwagentconfig
-        - name: rootfs
-          mountPath: /rootfs
-          readOnly: true
-        - name: dockersock
-          mountPath: /var/run/docker.sock
-          readOnly: true
-        - name: varlibdocker
-          mountPath: /var/lib/docker
-          readOnly: true
-        - name: containerdsock
-          mountPath: /run/containerd/containerd.sock
-          readOnly: true
-        - name: sys
-          mountPath: /sys
-          readOnly: true
-        - name: devdisk
-          mountPath: /dev/disk
-          readOnly: true
-      volumes:
-      - name: cwagentconfig
-        configMap:
-          name: cwagentconfig
-      - name: rootfs
-        hostPath:
-          path: /
-      - name: dockersock
-        hostPath:
-          path: /var/run/docker.sock
-      - name: varlibdocker
-        hostPath:
-          path: /var/lib/docker
-      - name: containerdsock
-        hostPath:
-          path: /run/containerd/containerd.sock
-      - name: sys
-        hostPath:
-          path: /sys
-      - name: devdisk
-        hostPath:
-          path: /dev/disk/
-      terminationGracePeriodSeconds: 60
-      tolerations:
-      - operator: Exists
+  }
+}
 ```
 
-### Container Insights mejorado
+No coloque un segundo collector de Kubernetes bajo `metrics.metrics_collected`.
+Con el chart de Helm, un `agent.config` personalizado sobrescribe los valores predeterminados generados y puede
+eliminar Application Signals, trace u otra recopilación configurada. Comience con la configuración
+renderizada efectiva y conserve las características que pretende mantener. Cambiar un ConfigMap que no está
+montado por la carga de trabajo en ejecución no tiene efecto.
 
-Container Insights mejorado proporciona métricas adicionales y monitoreo más granular.
+El chart/Operator proporciona service accounts, RBAC de descubrimiento, montajes de configuración
+y rutas de host específicas del runtime. Un DaemonSet escrito manualmente necesita todos ellos y debe
+considerar su plataforma. No copie un despliegue que solo use un socket Docker en entornos
+de containerd/Fargate/Auto Mode y suponga un comportamiento equivalente. La recopilación a nivel de host
+es acceso privilegiado; limite quién puede modificar su carga de trabajo y service account.
+
+La observabilidad mejorada agrega métricas y dimensiones, pero varias métricas de capacidad reservada ya
+existen en la lista tradicional. Verifique el catálogo de métricas mejoradas y el modelo de facturación en
+vez de tratar cada métrica reservada/GPU como exclusiva de la modalidad mejorada. La recopilación de GPU/EFA/Neuron
+también depende del hardware y software de nodo compatibles pertinentes.
+
+## Recopilación de métricas personalizadas
+
+### Selección de destinos y etiquetas de dimensión
+
+Use un propietario de recopilación por destino: recopilación Prometheus de CloudWatch Agent,
+ADOT/EMF o una ruta OTLP adecuada. Hacer scraping de todos los Pods desde cada réplica de DaemonSet
+puede multiplicar las muestras y los cargos. Un Deployment singleton es un modelo simple de propiedad;
+HA/sharding requiere una estrategia de asignación revisada.
+
+Este ejemplo espera un **gauge** llamado `queue_depth` en `/metrics`, un puerto de container
+Pod llamado `metrics`, la anotación `prometheus.io/scrape: "true"` y el label
+`app.kubernetes.io/name` en el namespace `default`. El destino debe ser accesible y estar autorizado;
+agregue TLS/autenticación según el endpoint real. Este fragmento de scraping HTTP supone un endpoint
+interno permitido, no un servicio de métricas público.
+
+Guarde lo siguiente como `prometheus.yaml`. Selecciona el puerto con nombre y crea los
+**tres** valores de label necesarios para la declaración EMF. Una lista de dimensiones EMF
+no crea labels inexistentes. Un label de Pod utilizado para `Service` es una identidad lógica de
+servicio; no prueba que exista un objeto Kubernetes Service.
 
 ```yaml
-# Enable in ConfigMap
-cwagentconfig.json: |
-  {
-    "metrics": {
-      "metrics_collected": {
-        "kubernetes": {
-          "enhanced_container_insights": true,
-          "accelerated_compute_metrics": true  # GPU metrics
+global:
+  scrape_interval: 30s
+  scrape_timeout: 10s
+scrape_configs:
+- job_name: my-app
+  kubernetes_sd_configs:
+  - role: pod
+    namespaces:
+      names:
+      - default
+  relabel_configs:
+  - source_labels:
+    - __meta_kubernetes_pod_annotation_prometheus_io_scrape
+    action: keep
+    regex: 'true'
+  - source_labels:
+    - __meta_kubernetes_pod_container_port_name
+    action: keep
+    regex: metrics
+  - source_labels:
+    - __meta_kubernetes_namespace
+    target_label: Namespace
+  - source_labels:
+    - __meta_kubernetes_pod_label_app_kubernetes_io_name
+    target_label: Service
+  - source_labels:
+    - Service
+    action: keep
+    regex: .+
+  - target_label: ClusterName
+    replacement: my-cluster
+  metric_relabel_configs:
+  - source_labels:
+    - __name__
+    action: keep
+    regex: queue_depth
+```
+
+### Configuración de Prometheus de CloudWatch Agent
+
+Los archivos JSON del agent y YAML de Prometheus son dos archivos distintos. Monte el primero en
+la ruta de entrada configurada del agent y el segundo en la ruta exacta
+`/etc/prometheusconfig/prometheus.yaml` a la que se hace referencia a continuación. Esta es la configuración
+para un collector con propiedad independiente, no una instalación completa ni una sobrescritura que deba
+pegarse en cada DaemonSet de Container Insights.
+
+```json
+{
+  "logs": {
+    "metrics_collected": {
+      "prometheus": {
+        "cluster_name": "my-cluster",
+        "log_group_name": "/aws/containerinsights/my-cluster/prometheus",
+        "prometheus_config_path": "/etc/prometheusconfig/prometheus.yaml",
+        "emf_processor": {
+          "metric_declaration_dedup": true,
+          "metric_namespace": "CustomMetrics",
+          "metric_unit": {
+            "queue_depth": "Count"
+          },
+          "metric_declaration": [
+            {
+              "source_labels": [
+                "job"
+              ],
+              "label_matcher": "^my-app$",
+              "dimensions": [
+                [
+                  "ClusterName",
+                  "Namespace",
+                  "Service"
+                ]
+              ],
+              "metric_selectors": [
+                "^queue_depth$"
+              ]
+            }
+          ]
         }
       }
     }
   }
+}
 ```
 
-**Métricas adicionales**:
-- `pod_cpu_reserved_capacity` - Capacidad de CPU reservada
-- `pod_memory_reserved_capacity` - Capacidad de memoria reservada
-- `node_cpu_reserved_capacity` - CPU reservada del Node
-- `node_memory_reserved_capacity` - Memoria reservada del Node
-- Métricas de GPU (al utilizar GPU NVIDIA)
-
-## Recopilación de métricas personalizadas
-
-### Recopilar métricas de Prometheus con CloudWatch Agent
-
-CloudWatch Agent puede recopilar métricas en formato Prometheus y enviarlas a CloudWatch.
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus-cwagentconfig
-  namespace: amazon-cloudwatch
-data:
-  cwagentconfig.json: |
-    {
-      "logs": {
-        "metrics_collected": {
-          "prometheus": {
-            "cluster_name": "my-cluster",
-            "log_group_name": "/aws/containerinsights/my-cluster/prometheus",
-            "prometheus_config_path": "/etc/prometheusconfig/prometheus.yaml",
-            "emf_processor": {
-              "metric_declaration_dedup": true,
-              "metric_namespace": "ContainerInsights/Prometheus",
-              "metric_unit": {
-                "http_requests_total": "Count",
-                "http_request_duration_seconds": "Seconds"
-              },
-              "metric_declaration": [
-                {
-                  "source_labels": ["job"],
-                  "label_matcher": "^my-app$",
-                  "dimensions": [["ClusterName", "Namespace", "Service"]],
-                  "metric_selectors": [
-                    "^http_requests_total$",
-                    "^http_request_duration_seconds.*$"
-                  ]
-                }
-              ]
-            }
-          }
-        }
-      }
-    }
-  prometheus.yaml: |
-    global:
-      scrape_interval: 1m
-      scrape_timeout: 10s
-    scrape_configs:
-      - job_name: 'my-app'
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-            action: keep
-            regex: true
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-            action: replace
-            target_label: __metrics_path__
-            regex: (.+)
-```
+La integración tradicional oficial de Prometheus documenta soporte para gauge, counter y summary,
+no la importación automática de histogramas de Prometheus. Los deltas de counter, las primeras muestras,
+los resets y los campos de summary requieren su propia interpretación. Este ejemplo usa deliberadamente
+un gauge: `Average`/`Maximum` describen la profundidad de la cola, mientras que sumar snapshots no cuenta
+las solicitudes procesadas. Use la ruta OTel cuando corresponda y verifique por separado su asignación real
+de histogram/temporality.
 
 ### AWS Distro for OpenTelemetry (ADOT)
 
-ADOT puede enviar métricas de Prometheus a CloudWatch.
+Para la **ruta EMF**, un collector ADOT con el receiver `prometheus` y el exporter `awsemf`
+puede usar el siguiente `config.yaml`. La versión ADOT revisada es `v0.50.0`; confirme su
+imagen/plataforma y los componentes habilitados para su despliegue. El exporter envía eventos de log EMF,
+que CloudWatch extrae como métricas tradicionales. No afirma que todas las rutas modernas de CloudWatch/OTLP
+usen EMF.
+
+```yaml
+receivers:
+  prometheus:
+    config:
+      global:
+        scrape_interval: 30s
+        scrape_timeout: 10s
+      scrape_configs:
+      - job_name: my-app
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - default
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_annotation_prometheus_io_scrape
+          action: keep
+          regex: 'true'
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_name
+          action: keep
+          regex: metrics
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: Namespace
+        - source_labels:
+          - __meta_kubernetes_pod_label_app_kubernetes_io_name
+          target_label: Service
+        - source_labels:
+          - Service
+          action: keep
+          regex: .+
+        - target_label: ClusterName
+          replacement: my-cluster
+        metric_relabel_configs:
+        - source_labels:
+          - __name__
+          action: keep
+          regex: queue_depth
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 384
+    spike_limit_mib: 64
+  batch:
+    timeout: 10s
+exporters:
+  awsemf:
+    region: ap-northeast-2
+    namespace: CustomMetrics
+    log_group_name: /aws/containerinsights/my-cluster/prometheus
+    dimension_rollup_option: NoDimensionRollup
+    metric_declarations:
+    - dimensions:
+      - - ClusterName
+        - Namespace
+        - Service
+      metric_name_selectors:
+      - ^queue_depth$
+service:
+  pipelines:
+    metrics:
+      receivers:
+      - prometheus
+      processors:
+      - memory_limiter
+      - batch
+      exporters:
+      - awsemf
+```
+
+El collector debe ejecutarse con un montaje de configuración y `--config` apuntando a ese archivo,
+credenciales IAM de carga de trabajo autorizadas para escribir el grupo/streams de logs EMF de clase
+**Standard** previsto y límites de memoria coherentes con el limiter. También necesita RBAC de descubrimiento
+de Kubernetes y acceso de red a los destinos seleccionados y AWS Logs. El siguiente Role está limitado
+al único namespace descubierto; cree primero el namespace `amazon-cloudwatch` y vincule esta SA al collector real.
 
 ```yaml
 apiVersion: v1
-kind: ConfigMap
+kind: ServiceAccount
 metadata:
-  name: adot-collector-config
+  name: metrics-scraper
   namespace: amazon-cloudwatch
-data:
-  config.yaml: |
-    receivers:
-      prometheus:
-        config:
-          global:
-            scrape_interval: 30s
-          scrape_configs:
-            - job_name: 'kubernetes-pods'
-              kubernetes_sd_configs:
-                - role: pod
-              relabel_configs:
-                - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-                  action: keep
-                  regex: true
-
-    processors:
-      batch:
-        timeout: 60s
-
-    exporters:
-      awsemf:
-        namespace: CustomMetrics
-        log_group_name: '/aws/containerinsights/my-cluster/prometheus'
-        dimension_rollup_option: NoDimensionRollup
-        metric_declarations:
-          - dimensions: [[ClusterName, Namespace, Service]]
-            metric_name_selectors:
-              - "^http_.*"
-
-    service:
-      pipelines:
-        metrics:
-          receivers: [prometheus]
-          processors: [batch]
-          exporters: [awsemf]
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
 metadata:
-  name: adot-collector
+  name: metrics-pod-discovery
+  namespace: default
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: metrics-pod-discovery
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: metrics-pod-discovery
+subjects:
+- kind: ServiceAccount
+  name: metrics-scraper
   namespace: amazon-cloudwatch
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: adot-collector
-  template:
-    metadata:
-      labels:
-        app: adot-collector
-    spec:
-      serviceAccountName: adot-collector
-      containers:
-      - name: adot-collector
-        image: public.ecr.aws/aws-observability/aws-otel-collector:v0.35.0
-        command:
-          - "/awscollector"
-          - "--config=/etc/config/config.yaml"
-        resources:
-          limits:
-            cpu: 500m
-            memory: 512Mi
-          requests:
-            cpu: 200m
-            memory: 256Mi
-        volumeMounts:
-        - name: config
-          mountPath: /etc/config
-      volumes:
-      - name: config
-        configMap:
-          name: adot-collector-config
 ```
 
-### Enviar métricas personalizadas mediante SDK
+IAM y RBAC de Kubernetes son independientes. Asocie la SA del collector a su propio rol de
+Pod Identity o a un rol IRSA correctamente configurado; este manifiesto RBAC no crea ningún rol.
+Cree previamente/sea propietario del grupo de logs o autorice explícitamente su creación. Cuando use
+más réplicas o namespaces, revise la propiedad de los destinos y amplíe solo los permisos de descubrimiento
+necesarios. Los fragmentos de configuración no se desplegaron ni se usaron para enviar métricas durante esta auditoría.
+
+### Envío de métricas personalizadas mediante SDK
+
+Estos son helpers reutilizables, no ejecutables independientes. El llamador crea y reutiliza un cliente
+boto3/AWS SDK for Go v2 CloudWatch con la Region prevista, credenciales de carga de trabajo, timeouts
+y política de reintentos. Los errores se propagan a ese llamador. No se incorporan credenciales. La marca
+de tiempo de Python usa UTC con reconocimiento de zona horaria. El valor es el conteo del intervalo de
+informes de la aplicación; consúltelo con `Sum` para una ventana coincidente, en vez de tratarlo como un contador
+acumulativo. `PutMetricData` no tiene token de idempotencia, por lo que los reintentos ambiguos pueden duplicar
+muestras; no trate el envío de telemetría como un libro mayor de negocio de exactamente una vez.
 
 ```python
-# Python example
-import boto3
-from datetime import datetime
+from datetime import datetime, timezone
 
-cloudwatch = boto3.client('cloudwatch', region_name='ap-northeast-2')
 
-def put_custom_metric(namespace, metric_name, value, dimensions, unit='Count'):
-    cloudwatch.put_metric_data(
-        Namespace=namespace,
-        MetricData=[
-            {
-                'MetricName': metric_name,
-                'Dimensions': dimensions,
-                'Timestamp': datetime.utcnow(),
-                'Value': value,
-                'Unit': unit
-            }
-        ]
+def put_orders_processed(cloudwatch, count):
+    """The caller supplies a configured boto3 CloudWatch client."""
+    if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+        raise ValueError("count must be a non-negative integer")
+    return cloudwatch.put_metric_data(
+        Namespace="MyApp/Production",
+        MetricData=[{
+            "MetricName": "OrdersProcessed",
+            "Dimensions": [
+                {"Name": "Service", "Value": "order-service"},
+                {"Name": "Environment", "Value": "production"},
+            ],
+            "Timestamp": datetime.now(timezone.utc),
+            "Value": count,
+            "Unit": "Count",
+            "StorageResolution": 60,
+        }],
     )
-
-# Usage example
-put_custom_metric(
-    namespace='MyApp/Production',
-    metric_name='OrdersProcessed',
-    value=150,
-    dimensions=[
-        {'Name': 'Service', 'Value': 'order-service'},
-        {'Name': 'Environment', 'Value': 'production'}
-    ]
-)
 ```
 
 ```go
-// Go example
-package main
+package metrics
 
 import (
     "context"
     "time"
 
-    "github.com/aws/aws-sdk-go-v2/config"
+    "github.com/aws/aws-sdk-go-v2/aws"
     "github.com/aws/aws-sdk-go-v2/service/cloudwatch"
     "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 )
 
-func putCustomMetric(ctx context.Context, client *cloudwatch.Client) error {
+func PutOrdersProcessed(ctx context.Context, client *cloudwatch.Client, count uint64) error {
     _, err := client.PutMetricData(ctx, &cloudwatch.PutMetricDataInput{
         Namespace: aws.String("MyApp/Production"),
-        MetricData: []types.MetricDatum{
-            {
-                MetricName: aws.String("OrdersProcessed"),
-                Dimensions: []types.Dimension{
-                    {
-                        Name:  aws.String("Service"),
-                        Value: aws.String("order-service"),
-                    },
-                },
-                Timestamp: aws.Time(time.Now()),
-                Value:     aws.Float64(150),
-                Unit:      types.StandardUnitCount,
+        MetricData: []types.MetricDatum{{
+            MetricName: aws.String("OrdersProcessed"),
+            Dimensions: []types.Dimension{
+                {Name: aws.String("Service"), Value: aws.String("order-service")},
+                {Name: aws.String("Environment"), Value: aws.String("production")},
             },
-        },
+            Timestamp: aws.Time(time.Now().UTC()),
+            Value: aws.Float64(float64(count)),
+            Unit: types.StandardUnitCount,
+            StorageResolution: aws.Int32(60),
+        }},
     })
     return err
 }
 ```
 
+Namespace, nombre de métrica y el **conjunto completo de dimensiones** identifican una métrica
+tradicional. Omitir `Environment` consulta una identidad diferente; las dimensiones personalizadas no
+producen automáticamente todas las series agregadas. Agrupe por lotes dentro de los límites de API documentados
+y restrinja `cloudwatch:PutMetricData` al namespace previsto con la condición IAM `cloudwatch:namespace`.
 ## Metric Math y detección de anomalías
 
 ### Metric Math
 
-Metric Math permite combinar matemáticamente varias métricas.
+Use el mismo período, dimensiones y unidades compatibles para series relacionadas.
+Las métricas de errores de destino y solicitudes de ALB son conteos, por lo que el widget usa **Sum**.
+Confirme el valor real de la dimensión del load balancer y que ambas métricas le pertenezcan.
 
 ```json
-// Using Metric Math in CloudWatch dashboard widget
 {
   "metrics": [
-    [ { "expression": "m1/m2*100", "label": "Error Rate (%)", "id": "e1" } ],
-    [ "AWS/ApplicationELB", "HTTPCode_Target_5XX_Count", "LoadBalancer", "app/my-alb/xxx", { "id": "m1", "visible": false } ],
-    [ ".", "RequestCount", ".", ".", { "id": "m2", "visible": false } ]
+    [{"expression": "IF(m2>0,100*m1/m2)", "label": "Target 5xx / requests (%)", "id": "e1"}],
+    ["AWS/ApplicationELB", "HTTPCode_Target_5XX_Count", "LoadBalancer", "app/replace-with-your-alb/id", {"id": "m1", "visible": false}],
+    [".", "RequestCount", ".", ".", {"id": "m2", "visible": false}]
   ],
   "view": "timeSeries",
-  "stacked": false,
   "region": "ap-northeast-2",
-  "period": 60
+  "period": 60,
+  "stat": "Sum"
 }
 ```
 
-**Funciones clave de Metric Math**:
+La aritmética de CloudWatch trata los puntos de datos faltantes como cero; la división por cero
+omite el resultado. El `IF` mantiene los períodos sin tráfico fuera de esta proporción. Para el tráfico
+de solicitudes sin conteo de target-5xx publicado, el numerador faltante aporta cero. Distinga ese
+comportamiento documentado de métricas dispersas de una ruta de recopilación rota; la telemetría de
+solicitudes faltante no debe presentarse como un resultado sano de cero errores.
 
-```
-# Basic operations
-m1 + m2                    # Addition
-m1 - m2                    # Subtraction
-m1 * m2                    # Multiplication
-m1 / m2                    # Division
+| Expresión o configuración | Significado / limitación |
+| --- | --- |
+| `SUM(METRICS())`, `AVG(METRICS())` | Combina las series temporales de métricas del widget; no es un promedio móvil temporal |
+| `AVG(m1)`, `STDDEV(m1)` | Resúmenes escalares de una serie; no pueden ser el resultado final de una serie temporal por sí solos |
+| `DIFF(m1)`, `RATE(m1)` | Diferencia/tasa de puntos de datos; inspeccione la semántica de origen, la dispersión y los resets |
+| `FILL(m1,0)` | Relleno explícito; puede ocultar una interrupción de telemetría si se usa sin una comprobación de frescura independiente |
+| Estadística de métrica `p95` | Percentil de las muestras elegibles de la métrica seleccionada |
+| `period: 300`, `stat: "Average"` | Buckets de agregación de cinco minutos; no una media móvil de cinco minutos |
+| `SEARCH(...)` | Array de series de métricas coincidentes para un dashboard; no se puede usar directamente para alertas |
+| `SLICE(SORT(SEARCH(...), AVG, DESC), 0, 10)` | Clasifica las series coincidentes por promedio en el rango evaluado y conserva diez |
 
-# Aggregation functions
-SUM(METRICS())            # Sum of all metrics
-AVG(METRICS())            # Average
-MIN(METRICS())            # Minimum
-MAX(METRICS())            # Maximum
-
-# Statistical functions
-STDDEV(m1)                # Standard deviation
-PERCENTILE(m1, 95)        # Percentile
-
-# Time series functions
-RATE(m1)                  # Rate of change
-DIFF(m1)                  # Difference from previous value
-PERIOD(m1)                # Period (seconds)
-FILL(m1, 0)               # Fill missing data
-
-# Search
-SEARCH('{Namespace, Dim1, Dim2} MetricName', 'Average')
-```
-
-**Ejemplos prácticos**:
-
-```json
-// CPU utilization calculation
-{
-  "expression": "m1 / m2 * 100",
-  "label": "CPU Utilization %"
-}
-
-// Error rate calculation
-{
-  "expression": "100 * m1 / (m1 + m2)",
-  "label": "Error Rate %"
-}
-
-// p95 latency (combined across multiple services)
-{
-  "expression": "PERCENTILE(METRICS(), 95)",
-  "label": "p95 Latency"
-}
-
-// Moving average
-{
-  "expression": "AVG(METRICS()) PERIOD(300)",
-  "label": "5min Moving Average"
-}
-```
+`PERCENTILE(m1,95)` y `AVG(METRICS()) PERIOD(300)` no son Metric Math válidos.
+Elija `p95` como estadística de métrica cuando sea compatible. Promediar o tomar el percentil
+de valores p95 a nivel de servicio no reconstruye un p95 global de latencia de solicitudes:
+esto requiere una agregación compatible de distribución/muestras en la capa de recopilación.
+No mezcle la semántica de CloudWatch Metric Math con PromQL.
 
 ### Detección de anomalías
 
-CloudWatch Anomaly Detection detecta automáticamente patrones anormales de métricas mediante ML.
+CloudWatch Anomaly Detection detecta automáticamente patrones anómalos de métricas mediante ML.
 
 ```bash
 # Enable anomaly detection via CLI
@@ -718,7 +632,7 @@ resource "aws_cloudwatch_metric_alarm" "anomaly_detection" {
       stat        = "Average"
 
       dimensions = {
-        ClusterName = "my-cluster"
+        ClusterName = var.cluster_name
       }
     }
   }
@@ -730,7 +644,7 @@ resource "aws_cloudwatch_metric_alarm" "anomaly_detection" {
     return_data = true
   }
 
-  alarm_actions = [aws_sns_topic.alerts.arn]
+  alarm_actions = [var.alert_topic_arn]
 
   tags = {
     Environment = "production"
@@ -740,460 +654,654 @@ resource "aws_cloudwatch_metric_alarm" "anomaly_detection" {
 
 ## Creación de dashboards
 
-### Crear un dashboard con CloudFormation
+### CloudFormation
+
+Esta plantilla conserva vistas de CPU/memoria/conteo de nodos, conteo de Pods por namespace,
+rendimiento de red y los diez Pods principales. Use el namespace/dimensiones publicados reales.
+`namespace_number_of_running_pods` es un conteo de Pods; contar **containers** en ejecución no
+da el mismo valor. Los snapshots de conteo usan `Average`, no `Sum` de muestras repetidas.
+La métrica de red ya está en bytes/segundo. La vista de los diez principales clasifica las series
+sobre el rango seleccionado; no es una alerta independiente para diez Pods.
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
-Description: EKS Monitoring Dashboard
-
+Description: Traditional Container Insights dashboard
 Parameters:
   ClusterName:
     Type: String
-    Default: my-cluster
-
+    MinLength: 1
+  NamespaceName:
+    Type: String
+    Default: default
+    MinLength: 1
 Resources:
-  EKSDashboard:
+  Dashboard:
     Type: AWS::CloudWatch::Dashboard
     Properties:
-      DashboardName: !Sub "${ClusterName}-monitoring"
-      DashboardBody: !Sub |
-        {
-          "widgets": [
-            {
-              "type": "metric",
-              "x": 0,
-              "y": 0,
-              "width": 12,
-              "height": 6,
-              "properties": {
-                "title": "Cluster CPU Utilization",
-                "metrics": [
-                  ["ContainerInsights", "cluster_cpu_utilization", "ClusterName", "${ClusterName}"]
-                ],
-                "view": "timeSeries",
-                "region": "${AWS::Region}",
-                "period": 60,
-                "stat": "Average"
+      DashboardName:
+        Fn::Sub: ${AWS::StackName}-${AWS::Region}
+      DashboardBody:
+        Fn::Sub: |-
+          {
+            "widgets": [
+              {
+                "type": "metric",
+                "x": 0,
+                "y": 0,
+                "width": 8,
+                "height": 6,
+                "properties": {
+                  "title": "Node CPU (ClusterName series)",
+                  "region": "${AWS::Region}",
+                  "period": 60,
+                  "stat": "Average",
+                  "view": "timeSeries",
+                  "metrics": [
+                    [
+                      "ContainerInsights",
+                      "node_cpu_utilization",
+                      "ClusterName",
+                      "${ClusterName}"
+                    ]
+                  ]
+                }
+              },
+              {
+                "type": "metric",
+                "x": 8,
+                "y": 0,
+                "width": 8,
+                "height": 6,
+                "properties": {
+                  "title": "Node memory (ClusterName series)",
+                  "region": "${AWS::Region}",
+                  "period": 60,
+                  "stat": "Average",
+                  "view": "timeSeries",
+                  "metrics": [
+                    [
+                      "ContainerInsights",
+                      "node_memory_utilization",
+                      "ClusterName",
+                      "${ClusterName}"
+                    ]
+                  ]
+                }
+              },
+              {
+                "type": "metric",
+                "x": 16,
+                "y": 0,
+                "width": 8,
+                "height": 6,
+                "properties": {
+                  "title": "Node count",
+                  "region": "${AWS::Region}",
+                  "period": 60,
+                  "stat": "Average",
+                  "view": "singleValue",
+                  "metrics": [
+                    [
+                      "ContainerInsights",
+                      "cluster_node_count",
+                      "ClusterName",
+                      "${ClusterName}"
+                    ]
+                  ]
+                }
+              },
+              {
+                "type": "metric",
+                "x": 0,
+                "y": 6,
+                "width": 8,
+                "height": 6,
+                "properties": {
+                  "title": "Running pods in namespace",
+                  "region": "${AWS::Region}",
+                  "period": 60,
+                  "stat": "Average",
+                  "view": "timeSeries",
+                  "metrics": [
+                    [
+                      "ContainerInsights",
+                      "namespace_number_of_running_pods",
+                      "Namespace",
+                      "${NamespaceName}",
+                      "ClusterName",
+                      "${ClusterName}"
+                    ]
+                  ]
+                }
+              },
+              {
+                "type": "metric",
+                "x": 8,
+                "y": 6,
+                "width": 8,
+                "height": 6,
+                "properties": {
+                  "title": "Node network (bytes/second)",
+                  "region": "${AWS::Region}",
+                  "period": 60,
+                  "stat": "Average",
+                  "view": "timeSeries",
+                  "metrics": [
+                    [
+                      "ContainerInsights",
+                      "node_network_total_bytes",
+                      "ClusterName",
+                      "${ClusterName}"
+                    ]
+                  ]
+                }
+              },
+              {
+                "type": "metric",
+                "x": 16,
+                "y": 6,
+                "width": 8,
+                "height": 6,
+                "properties": {
+                  "title": "Top 10 pod series by average CPU",
+                  "region": "${AWS::Region}",
+                  "view": "timeSeries",
+                  "period": 60,
+                  "metrics": [
+                    [
+                      {
+                        "expression": "SLICE(SORT(SEARCH('{ContainerInsights,ClusterName,Namespace,PodName} MetricName=\"pod_cpu_utilization\" ClusterName=\"${ClusterName}\"', 'Average', 60), AVG, DESC), 0, 10)",
+                        "id": "top10",
+                        "label": "Pod CPU"
+                      }
+                    ]
+                  ]
+                }
               }
-            },
-            {
-              "type": "metric",
-              "x": 12,
-              "y": 0,
-              "width": 12,
-              "height": 6,
-              "properties": {
-                "title": "Cluster Memory Utilization",
-                "metrics": [
-                  ["ContainerInsights", "cluster_memory_utilization", "ClusterName", "${ClusterName}"]
-                ],
-                "view": "timeSeries",
-                "region": "${AWS::Region}",
-                "period": 60,
-                "stat": "Average"
-              }
-            },
-            {
-              "type": "metric",
-              "x": 0,
-              "y": 6,
-              "width": 8,
-              "height": 6,
-              "properties": {
-                "title": "Node Count",
-                "metrics": [
-                  ["ContainerInsights", "cluster_node_count", "ClusterName", "${ClusterName}"]
-                ],
-                "view": "singleValue",
-                "region": "${AWS::Region}",
-                "period": 60,
-                "stat": "Average"
-              }
-            }
-          ]
-        }
+            ]
+          }
 ```
 
-### Crear un dashboard con Terraform
+### Terraform
+
+Use los siguientes fragmentos HCL en un módulo raíz con un provider de AWS fijado por
+sus restricciones de versión/archivo de bloqueo y configurado para la cuenta/Region previstas.
+Declare estas entradas una vez para los ejemplos de anomalía, dashboard y alertas; proporcione el
+ARN del topic SNS existente en vez de hacer referencia a un recurso de topic no declarado.
 
 ```hcl
+variable "cluster_name" {
+  type = string
+}
+variable "namespace_name" {
+  type    = string
+  default = "default"
+}
+variable "region" {
+  type = string
+}
+variable "alert_topic_arn" {
+  type = string
+}
+```
+```hcl
 resource "aws_cloudwatch_dashboard" "eks_monitoring" {
-  dashboard_name = "${var.cluster_name}-monitoring"
-
+  dashboard_name = "${var.cluster_name}-${var.region}-metrics"
   dashboard_body = jsonencode({
-    widgets = [
-      {
-        type   = "metric"
-        x      = 0
-        y      = 0
-        width  = 12
-        height = 6
-        properties = {
-          title  = "Cluster CPU Utilization"
-          region = var.region
-          metrics = [
-            ["ContainerInsights", "cluster_cpu_utilization", "ClusterName", var.cluster_name]
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Node CPU (ClusterName series)",
+        "region": "${var.region}",
+        "period": 60,
+        "stat": "Average",
+        "view": "timeSeries",
+        "metrics": [
+          [
+            "ContainerInsights",
+            "node_cpu_utilization",
+            "ClusterName",
+            "${var.cluster_name}"
           ]
-          view   = "timeSeries"
-          period = 60
-          stat   = "Average"
-          yAxis = {
-            left = {
-              min = 0
-              max = 100
-            }
-          }
-        }
-      },
-      {
-        type   = "metric"
-        x      = 12
-        y      = 0
-        width  = 12
-        height = 6
-        properties = {
-          title  = "Cluster Memory Utilization"
-          region = var.region
-          metrics = [
-            ["ContainerInsights", "cluster_memory_utilization", "ClusterName", var.cluster_name]
-          ]
-          view   = "timeSeries"
-          period = 60
-          stat   = "Average"
-        }
+        ]
       }
-    ]
-  })
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 0,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Node memory (ClusterName series)",
+        "region": "${var.region}",
+        "period": 60,
+        "stat": "Average",
+        "view": "timeSeries",
+        "metrics": [
+          [
+            "ContainerInsights",
+            "node_memory_utilization",
+            "ClusterName",
+            "${var.cluster_name}"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 0,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Node count",
+        "region": "${var.region}",
+        "period": 60,
+        "stat": "Average",
+        "view": "singleValue",
+        "metrics": [
+          [
+            "ContainerInsights",
+            "cluster_node_count",
+            "ClusterName",
+            "${var.cluster_name}"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 6,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Running pods in namespace",
+        "region": "${var.region}",
+        "period": 60,
+        "stat": "Average",
+        "view": "timeSeries",
+        "metrics": [
+          [
+            "ContainerInsights",
+            "namespace_number_of_running_pods",
+            "Namespace",
+            "${var.namespace_name}",
+            "ClusterName",
+            "${var.cluster_name}"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 6,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Node network (bytes/second)",
+        "region": "${var.region}",
+        "period": 60,
+        "stat": "Average",
+        "view": "timeSeries",
+        "metrics": [
+          [
+            "ContainerInsights",
+            "node_network_total_bytes",
+            "ClusterName",
+            "${var.cluster_name}"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 6,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Top 10 pod series by average CPU",
+        "region": "${var.region}",
+        "view": "timeSeries",
+        "period": 60,
+        "metrics": [
+          [
+            {
+              "expression": "SLICE(SORT(SEARCH('{ContainerInsights,ClusterName,Namespace,PodName} MetricName=\"pod_cpu_utilization\" ClusterName=\"${var.cluster_name}\"', 'Average', 60), AVG, DESC), 0, 10)",
+              "id": "top10",
+              "label": "Pod CPU"
+            }
+          ]
+        ]
+      }
+    }
+  ]
+})
 }
 ```
 
 ## Configuración de alertas
 
-### Reglas de alerta básicas
+La siguiente plantilla de CloudFormation es independiente de la plantilla de dashboard;
+declara sus entradas. Los umbrales son ejemplos, no criterios universales de incidentes.
+Una serie de nodo solo con `ClusterName` puede ocultar un nodo activo; inspeccione las series
+por nodo y la agregación que necesita. Valide la entrega de alertas y el comportamiento de datos faltantes.
 
 ```yaml
-# CloudFormation
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Example traditional metric alarms; tune thresholds
+Parameters:
+  ClusterName:
+    Type: String
+    MinLength: 1
+  NamespaceName:
+    Type: String
+    Default: default
+    MinLength: 1
+  PodMetricName:
+    Type: String
+    Description: Exact published PodName dimension value
+    MinLength: 1
+  AlertTopicArn:
+    Type: String
+    Description: Existing authorized SNS topic with confirmed delivery
+    AllowedPattern: ^arn:[^:]+:sns:[^:]+:[0-9]{12}:.+$
 Resources:
-  HighCPUAlarm:
+  HighCPU:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub "${ClusterName}-high-cpu"
-      AlarmDescription: "Cluster CPU utilization is high"
-      MetricName: cluster_cpu_utilization
+      AlarmDescription: Node CPU ClusterName series exceeds the example threshold
       Namespace: ContainerInsights
+      MetricName: node_cpu_utilization
       Dimensions:
-        - Name: ClusterName
-          Value: !Ref ClusterName
+      - Name: ClusterName
+        Value:
+          Ref: ClusterName
       Statistic: Average
       Period: 300
       EvaluationPeriods: 2
+      DatapointsToAlarm: 2
       Threshold: 80
       ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: missing
       AlarmActions:
-        - !Ref AlertSNSTopic
-
-  HighMemoryAlarm:
+      - Ref: AlertTopicArn
+  HighMemory:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub "${ClusterName}-high-memory"
-      AlarmDescription: "Cluster memory utilization is high"
-      MetricName: cluster_memory_utilization
+      AlarmDescription: Node memory ClusterName series exceeds the example threshold
       Namespace: ContainerInsights
+      MetricName: node_memory_utilization
       Dimensions:
-        - Name: ClusterName
-          Value: !Ref ClusterName
+      - Name: ClusterName
+        Value:
+          Ref: ClusterName
       Statistic: Average
       Period: 300
       EvaluationPeriods: 2
+      DatapointsToAlarm: 2
       Threshold: 85
       ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: missing
       AlarmActions:
-        - !Ref AlertSNSTopic
+      - Ref: AlertTopicArn
+  PodRestartTotal:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Observed restart total exceeds 5; not five new restarts per
+        period
+      Namespace: ContainerInsights
+      MetricName: pod_number_of_container_restarts
+      Dimensions:
+      - Name: ClusterName
+        Value:
+          Ref: ClusterName
+      - Name: Namespace
+        Value:
+          Ref: NamespaceName
+      - Name: PodName
+        Value:
+          Ref: PodMetricName
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 2
+      DatapointsToAlarm: 2
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: missing
+      AlarmActions:
+      - Ref: AlertTopicArn
 ```
 
-### Configuración de alertas con Terraform
+La alerta de reinicios evalúa un **total**, no cinco reinicios nuevos en cinco minutos.
+Use la dimensión exacta de métrica `PodName`; puede representar un nombre normalizado de carga
+de trabajo en vez de un nombre completo de Pod de Kubernetes. El reemplazo de Pods y los cambios
+de identidad de métricas pueden resetear/dividir observaciones. Para una alerta de reinicio reciente,
+defina y valide por separado la recopilación de delta/tasa y el comportamiento de reset.
+
+Los modelos de detección de anomalías necesitan historial adecuado y no son una prueba instantánea
+de un incidente. Tanto la serie observada como la consulta `ANOMALY_DETECTION_BAND` pueden tener
+`ReturnData: true` en la forma documentada de alerta de anomalía; no aplique a ciegas la regla genérica
+de alerta matemática de una sola salida para eliminar la serie requerida.
+
+### Alertas de Terraform
 
 ```hcl
 resource "aws_cloudwatch_metric_alarm" "high_cpu" {
-  alarm_name          = "${var.cluster_name}-high-cpu"
+  alarm_name          = "${var.cluster_name}-node-cpu"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
-  metric_name         = "cluster_cpu_utilization"
+  datapoints_to_alarm  = 2
+  metric_name         = "node_cpu_utilization"
   namespace           = "ContainerInsights"
   period              = 300
   statistic           = "Average"
   threshold           = 80
-  alarm_description   = "Cluster CPU utilization exceeds 80%"
-
-  dimensions = {
-    ClusterName = var.cluster_name
-  }
-
-  alarm_actions = [aws_sns_topic.alerts.arn]
-  ok_actions    = [aws_sns_topic.alerts.arn]
-
-  tags = {
-    Environment = var.environment
-  }
+  treat_missing_data  = "missing"
+  alarm_description   = "Node CPU ClusterName series exceeds the example threshold"
+  dimensions          = { ClusterName = var.cluster_name }
+  alarm_actions       = [var.alert_topic_arn]
+  ok_actions          = [var.alert_topic_arn]
 }
 
-resource "aws_cloudwatch_metric_alarm" "node_not_ready" {
-  alarm_name          = "${var.cluster_name}-node-not-ready"
+resource "aws_cloudwatch_metric_alarm" "failed_nodes" {
+  alarm_name          = "${var.cluster_name}-failed-nodes"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
+  datapoints_to_alarm  = 2
   metric_name         = "cluster_failed_node_count"
   namespace           = "ContainerInsights"
   period              = 60
   statistic           = "Maximum"
   threshold           = 0
-  alarm_description   = "One or more nodes are not ready"
-
-  dimensions = {
-    ClusterName = var.cluster_name
-  }
-
-  alarm_actions = [aws_sns_topic.alerts.arn]
+  treat_missing_data  = "missing"
+  alarm_description   = "Node failure conditions; inspect the actual conditions"
+  dimensions          = { ClusterName = var.cluster_name }
+  alarm_actions       = [var.alert_topic_arn]
 }
 ```
 
+`cluster_failed_node_count` abarca condiciones de fallo de nodos, no solo NotReady.
+`TreatMissingData: missing` hace que las brechas de telemetría sean visibles como datos insuficientes cuando
+corresponda; por sí mismo no envía una notificación salvo que se configure esa acción.
+Use una comprobación independiente del estado de recopilación y verifique las suscripciones, políticas y
+entrega de SNS. Una plantilla/plan exitoso no demuestra que una métrica tenga puntos de datos.
 ## Optimización de costos
 
-### Estructura de costos de CloudWatch
+### Ajuste del modelo de facturación a la recopilación
 
-| Elemento | Costo (ap-northeast-2) |
-|------|----------------------|
-| Métricas personalizadas | $0.30/métrica/mes (primeras 10,000) |
-| API GetMetricData | $0.01/1,000 solicitudes de métricas |
-| Dashboard | $3.00/dashboard/mes (los primeros 3 gratis) |
-| Ingesta de logs | $0.76/GB |
-| Almacenamiento de logs | $0.0314/GB/mes |
-| Alarmas | Gratis (las primeras 10), $0.10/alarma/mes |
+| Ruta | Factores de costo que se deben verificar |
+| --- | --- |
+| Métricas personalizadas tradicionales / `PutMetricData` | Identidades de métrica/dimensión publicadas, uso de API, consultas y alertas |
+| EKS Container Insights con observabilidad mejorada | Niveles basados en observaciones; el almacenamiento de logs de rendimiento y los logs de containers son adicionales |
+| Métricas OTel | Bytes de ingesta OTLP, incluidos atributos/metadatos de recursos; cargos aplicables de consulta y centralización |
+| Logs | Ingesta, almacenamiento, escaneos de consulta y características habilitadas |
 
-### Estrategias de optimización de costos
+No reutilice una tabla fija de precios de Seoul ni suponga que “las primeras diez métricas/1 millón de
+llamadas de API son gratuitas” para todos los productos y ofertas de cuenta. Consulte los precios actuales
+por Region/producto y la elegibilidad de la cuenta. Los precios de OTel no siguen el modelo tradicional
+por métrica única. Más labels aún aumentan los bytes y el riesgo de divulgación. Habilitar a la vez la
+recopilación tradicional y OTel puede generar costos de ambos modelos.
 
-```mermaid
-flowchart TD
-    A[CloudWatch Cost Optimization] --> B[Metric Optimization]
-    A --> C[Log Optimization]
-    A --> D[Dashboard Optimization]
+Las métricas personalizadas de un segundo no tienen una tasa universal de almacenamiento por métrica diez
+veces mayor. Las solicitudes `PutMetricData` más frecuentes y las alertas de alta resolución pueden aumentar
+los cargos. Agrupe las solicitudes compatibles, recopile solo las series necesarias y elija la resolución
+según el objetivo de detección. La retención de métricas estándar consolida las muestras más antiguas;
+“15 meses” no significa que cada muestra de un segundo pueda consultarse durante 15 meses.
 
-    B --> B1[Minimize high-resolution metrics]
-    B --> B2[Remove unnecessary dimensions]
-    B --> B3[Adjust collection interval]
+### La retención es una decisión de eliminación de datos
 
-    C --> C1[Set log retention period]
-    C --> C2[Log filtering]
-    C --> C3[Use log classes]
-
-    D --> D1[Consolidate dashboards]
-    D --> D2[Optimize queries]
-
-    classDef main fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef strategy fill:#146EB4,stroke:#333,stroke-width:1px,color:white
-
-    class A main
-    class B,C,D,B1,B2,B3,C1,C2,C3,D1,D2 strategy
-```
-
-### 1. Optimización de la recopilación de métricas
-
-```yaml
-# Filtering in CloudWatch Agent configuration
-cwagentconfig.json: |
-  {
-    "metrics": {
-      "metrics_collected": {
-        "kubernetes": {
-          "cluster_name": "my-cluster",
-          "metrics_collection_interval": 60,  # 60s instead of 30s
-          "enhanced_container_insights": false  # Enable only when needed
-        }
-      },
-      "aggregation_dimensions": [
-        ["ClusterName"],
-        ["ClusterName", "Namespace"]
-        # Remove unnecessary dimension combinations
-      ]
-    }
-  }
-```
-
-### 2. Política de retención de logs
+Establezca la retención para un grupo de logs explícito y aprobado. Una retención más corta puede vencer
+el historial existente; no es solo una preferencia de facturación futura. Nunca recorra todos los grupos
+de logs de la cuenta sin retención para asignarles un período corto.
 
 ```bash
-# Set log group retention period
-aws logs put-retention-policy \
-  --log-group-name /aws/containerinsights/my-cluster/application \
-  --retention-in-days 7
+# Inspect exactly one owned log group and its current retention before changing it.
+: "${AWS_REGION:?Set the intended Region}"
+: "${OWNED_LOG_GROUP:?Set one approved log group name}"
+aws logs describe-log-groups --region "$AWS_REGION" \
+  --log-group-name-prefix "$OWNED_LOG_GROUP" \
+  --query 'logGroups[].{name:logGroupName,retention:retentionInDays,class:logGroupClass}'
 
-aws logs put-retention-policy \
-  --log-group-name /aws/containerinsights/my-cluster/performance \
-  --retention-in-days 30
-
-# Clean up old log groups
-for lg in $(aws logs describe-log-groups --query 'logGroups[?retentionInDays==`null`].logGroupName' --output text); do
-  aws logs put-retention-policy --log-group-name "$lg" --retention-in-days 14
-done
+# Only after checking exact name, ownership and the approved retention requirement:
+aws logs put-retention-policy --region "$AWS_REGION" \
+  --log-group-name "$OWNED_LOG_GROUP" --retention-in-days 30
 ```
 
-### 3. Usar la clase de logs de acceso infrecuente
+La consulta por prefijo puede devolver grupos adicionales. Inspeccione el nombre exacto; la escritura
+usa únicamente `OWNED_LOG_GROUP`. Aplique el requisito de retención legal/incidentes de la organización
+en vez de tratar este valor ilustrativo de 30 días como universal. Para operaciones repetibles,
+admínistrelo en la IaC propietaria del grupo de logs.
 
-```bash
-# Apply Infrequent Access class to new log group (50% cost savings)
-aws logs create-log-group \
-  --log-group-name /aws/containerinsights/my-cluster/audit \
-  --log-group-class INFREQUENT_ACCESS
-```
+### Infrequent Access tiene restricciones de características
 
-### Monitoreo de costos
+Standard e Infrequent Access difieren en el precio de ingesta; los precios de almacenamiento y consultas
+de Logs Insights son iguales. La clase de un grupo de logs no se puede cambiar después de crearlo.
+Infrequent Access **no** admite EMF, ingesta de logs de Container Insights, filtros de métricas,
+filtros de suscripción ni Live Tail. No traslade los logs de rendimiento/EMF de esta guía a esa clase
+como ahorro general. Evalúela para logs forenses/de archivo elegibles, con sus características de consulta
+compatibles. Un precio de ingesta inferior no implica un ahorro del 50 % en la factura total de observabilidad.
 
-```hcl
-# CloudWatch cost alarm
-resource "aws_cloudwatch_metric_alarm" "cw_cost_alarm" {
-  alarm_name          = "cloudwatch-cost-alarm"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "EstimatedCharges"
-  namespace           = "AWS/Billing"
-  period              = 86400
-  statistic           = "Maximum"
-  threshold           = 100  # $100
-  alarm_description   = "CloudWatch estimated charges exceed $100"
+### Visibilidad de costos
 
-  dimensions = {
-    ServiceName = "AmazonCloudWatch"
-    Currency    = "USD"
-  }
+Use el uso facturado y la asignación de costos para el análisis de costos. `ListMetrics` es para descubrimiento,
+no una factura ni un inventario completo de series históricas; las métricas inactivas pueden no aparecer.
+Contar nombres de dimensiones no mide combinaciones únicas de valores de dimensión y, por lo tanto,
+no mide la cardinalidad.
 
-  alarm_actions = [aws_sns_topic.billing_alerts.arn]
-}
-```
+Las métricas de cargos estimados `AWS/Billing` de CloudWatch requieren alertas de facturación habilitadas
+y se publican en **us-east-1**. Verifique el alcance aplicable de cuenta/pagador y las dimensiones reales
+de `Currency`/servicio. Se actualizan periódicamente y no son un límite de gasto. Use AWS Budgets/Cost Explorer
+para el seguimiento y las alertas de costos de servicios; también se debe confirmar una suscripción SNS y
+probar su entrega.
 
 ## Prácticas recomendadas
 
-### 1. Estrategia de namespace
-
-```yaml
-# Custom metric namespace structure
-MyCompany/Production/API        # Production API metrics
-MyCompany/Staging/API           # Staging API metrics
-MyCompany/Production/Workers    # Production worker metrics
-```
-
-### 2. Diseño de dimensiones
-
-```yaml
-# Recommended dimension structure
-dimensions:
-  - ClusterName     # Required
-  - Namespace       # K8s namespace
-  - Service         # Service name
-  - Environment     # Environment (prod/staging/dev)
-
-# Dimensions to avoid (high cardinality)
-dimensions:
-  - PodName         # Different per pod (cost increase)
-  - RequestID       # Different per request (very high cost)
-```
-
-### 3. Diseño de alertas
-
-```yaml
-# Layered alerting strategy
-Critical (P1):
-  - Cluster down
-  - 50%+ nodes failed
-  - SNS -> PagerDuty
-
-Warning (P2):
-  - CPU/memory 80%+
-  - Increasing pod restarts
-  - SNS -> Slack
-
-Info (P3):
-  - Scaling events
-  - Deployment complete
-  - SNS -> Email/Logs
-```
+- Separe los namespaces de aplicación de los namespaces propiedad de AWS/collectors. El namespace es
+  identidad de métrica, no un límite de seguridad IAM por sí mismo.
+- Use dimensiones estables de servicio/entorno; evite ID de usuarios, ID de solicitudes, URL sin procesar
+  u otros labels sensibles/de cardinalidad alta. Las dimensiones faltantes o renombradas cambian la identidad.
+- Clasifique cada métrica como gauge, conteo por intervalo, contador acumulativo o distribución antes de
+  elegir `Average`, `Sum`, percentil o tasa. Inspeccione las muestras/resets reales.
+- Defina conjuntamente las ventanas de detección, el comportamiento de datos faltantes y la propiedad de
+  entrega. Use SLO/impacto al cliente más el estado del recurso/recopilación, en vez de solo CPU.
+- Registre el modelo de recopilación, versiones fijadas, propiedad de IAM/SA, decisiones de retención
+  y costo medido. No cambie modelos ni elimine historial solo para ajustarse a un ejemplo.
 
 ## Solución de problemas
 
-### Problemas comunes
+### Sin métricas o valores inesperados
 
-#### 1. Las métricas no se muestran
-
-```bash
-# Check CloudWatch Agent logs
-kubectl logs -n amazon-cloudwatch -l name=cloudwatch-agent
-
-# Check IAM permissions
-aws sts get-caller-identity
-aws iam simulate-principal-policy \
-  --policy-source-arn arn:aws:iam::123456789012:role/CloudWatchAgentRole \
-  --action-names cloudwatch:PutMetricData
-
-# Check metrics directly
-aws cloudwatch list-metrics \
-  --namespace ContainerInsights \
-  --dimensions Name=ClusterName,Value=my-cluster
-```
-
-#### 2. Costos altos
+Compruebe primero el **modelo seleccionado**: un nombre de origen OTel no es necesariamente un nombre
+tradicional de `ContainerInsights`. Compruebe Region, namespace, conjunto completo de dimensiones,
+rango de tiempo/estadística solicitados y la demora entre recopilación y visibilidad. Inspeccione el
+estado/logs del collector, la configuración montada real y la selección de destino/label de scraping.
+Una anotación por sí sola no garantiza que el puerto/ruta de destino sea correcto.
 
 ```bash
-# Check metric count
-aws cloudwatch list-metrics --namespace ContainerInsights | jq '.Metrics | length'
+# Read-only checks; use the actual Region and installation owner.
+aws eks describe-addon --cluster-name "$CLUSTER_NAME" \
+  --addon-name amazon-cloudwatch-observability --region "$AWS_REGION" \
+  --query 'addon.{version:addonVersion,status:status,health:health,config:configurationValues}'
+kubectl get amazoncloudwatchagents -n amazon-cloudwatch
+kubectl get pods,daemonsets,deployments,serviceaccounts -n amazon-cloudwatch
 
-# Find high cardinality metrics
-aws cloudwatch list-metrics \
-  --namespace ContainerInsights \
-  --query 'Metrics[*].Dimensions[*].Name' \
-  --output text | sort | uniq -c | sort -rn | head -20
+aws cloudwatch list-metrics --region "$AWS_REGION" \
+  --namespace ContainerInsights --metric-name node_cpu_utilization \
+  --dimensions "Name=ClusterName,Value=$CLUSTER_NAME"
+
+: "${ALARM_NAME:?Set one alarm name}"
+aws cloudwatch describe-alarms --alarm-names "$ALARM_NAME" --region "$AWS_REGION"
+aws cloudwatch describe-alarm-history --alarm-name "$ALARM_NAME" \
+  --history-item-type StateUpdate --region "$AWS_REGION"
 ```
 
-#### 3. Las alarmas no se activan
+`describe-addon` se aplica a un add-on administrado; una instalación solo de Helm no tiene un
+registro de add-on correspondiente. El filtrado de `ListMetrics` coincide con métricas que contienen
+las dimensiones solicitadas y puede devolver dimensiones adicionales. Inspeccione el conjunto
+**completo** devuelto antes de consultar. El descubrimiento no demuestra puntos de datos recientes,
+inventario histórico completo ni cardinalidad facturada actual.
 
-```bash
-# Check alarm status
-aws cloudwatch describe-alarms --alarm-names "my-alarm"
+Compruebe la autorización de descubrimiento de Kubernetes por separado de IAM. Revise la SA/asociación
+del collector real o la confianza IRSA y el proveedor de credenciales seleccionado dentro de esa carga
+de trabajo. Un comando STS local o una simulación de política IAM por sí solos no prueban la autorización
+end-to-end: los SCP, las políticas de recursos, los endpoints y la identidad de runtime pueden cambiar
+el resultado. No registre credenciales temporales ni tokens durante el diagnóstico.
 
-# Check alarm history
-aws cloudwatch describe-alarm-history \
-  --alarm-name "my-alarm" \
-  --history-item-type StateUpdate
+### Costos altos o alertas inactivas
 
-# Check SNS topic
-aws sns list-subscriptions-by-topic \
-  --topic-arn arn:aws:sns:ap-northeast-2:123456789012:my-alerts
-```
+Use las categorías de uso de facturación para separar scraping duplicado, conjuntos adicionales de
+dimensiones, observaciones mejoradas, carga útil OTLP, logs, escaneos y uso de alertas/consultas.
+Elimine la recopilación no necesaria en su propietario; no acorte la retención de todos los grupos de
+logs. Para una alerta inactiva, inspeccione sus datos de métrica reales, motivo de estado, política de
+datos faltantes e historial. Después verifique la habilitación de acciones, permisos del topic SNS,
+confirmación de suscripción y entrega. Una alerta que no incumple y una alerta sin telemetría utilizable
+son estados diferentes.
 
-### Comandos de depuración
+## Alcance de la validación
 
-```bash
-# Check Container Insights status
-kubectl get pods -n amazon-cloudwatch
+Esta guía distingue las comprobaciones de configuración/estructura del comportamiento desplegado.
+Durante la auditoría no se realizó ninguna instalación de EKS, búsqueda de identidad/credenciales,
+envío de métricas/logs, cambio de retención, aplicación de CloudFormation/Terraform, entrega real de
+alertas ni medición de precios. Los fragmentos de collector requieren los requisitos previos de runtime,
+montaje, RBAC, identidad y red indicados. Valide los destinos reales y los resultados end-to-end antes
+del uso operativo.
 
-# Check CloudWatch Agent configuration
-kubectl describe configmap cwagentconfig -n amazon-cloudwatch
-
-# Check real-time metrics
-aws cloudwatch get-metric-statistics \
-  --namespace ContainerInsights \
-  --metric-name cluster_cpu_utilization \
-  --dimensions Name=ClusterName,Value=my-cluster \
-  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  --period 60 \
-  --statistics Average
-```
+Las comprobaciones locales incluyeron el renderizado de Helm 6.6.0, el esquema JSON del agent v1.300071.0,
+solicitudes de Python 3.12.13/boto3 1.42.97 bajo Stubber, sintaxis HCL y renderizado de Markdown/diagramas.
+El chart conserva su imagen declarada más reciente; la comprobación de esquema no valida ese binario en
+ejecución. Los campos de componentes de ADOT v0.50.0 y los tipos de API CloudWatch de Go SDK v1.72.0 se
+inspeccionaron en el código fuente; no se realizó ni la ejecución del collector ni la compilación de Go.
+Metric Math se comprobó frente a la referencia y casos aritméticos, sin llamar al motor de expresiones de
+CloudWatch.
 
 ## Referencias
 
-- [Documentación oficial de Amazon CloudWatch](https://docs.aws.amazon.com/cloudwatch/)
-- [Guía de configuración de Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-quickstart.html)
-- [Configuración de CloudWatch Agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
+- [Instalación del add-on de EKS y Helm](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
+- [Versión de Helm 6.6.0 revisada](https://github.com/aws-observability/helm-charts/releases/tag/amazon-cloudwatch-observability-6.6.0)
+- [Métricas y dimensiones tradicionales de EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)
+- [Métricas mejoradas de EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-enhanced-EKS.html)
+- [OTel Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/container-insights-eks-otel.html)
+- [Inicio rápido de OTel](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/container-insights-eks-otel-quickstart.html)
+- [Anuncio de vista previa del 2 de abril](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
+- [Anuncio de Service Events del 6 de julio](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/)
+- [Referencia de configuración del agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
+- [Configuración de Prometheus / EMF](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup-configure.html)
+- [ADOT v0.50.0](https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0)
+- [API PutMetricData](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricData.html)
+- [Condición IAM de namespace](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/iam-cw-condition-keys-namespace.html)
+- [Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
+- [Estructura del cuerpo de dashboard](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Dashboard-Body-Structure.html)
+- [Capacidades de clases de logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html)
 - [Precios de CloudWatch](https://aws.amazon.com/cloudwatch/pricing/)
+- [Requisitos previos para alertas de facturación](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html)
 
-## Cuestionario
-
-Para comprobar su comprensión de este capítulo, pruebe el [cuestionario de métricas de CloudWatch](../../quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md).
+[Cuestionario](../../quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
