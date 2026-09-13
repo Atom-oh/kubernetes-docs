@@ -1893,5 +1893,10 @@
     "PrimarypublicHTTPSsourcescachedpersistently;DatadogMarkdownendpointspreferredforcleanofficialcontent.",
     "APIclient9MBwheelkeptzippedtoavoid9148extractedentries;nativefixturesunderpersistentignoredcache.",
     "No full localVitePressbuild,cloud/Datadogtenantmutation,model/GPUcall,commit/push."
-  ]
+  ],
+  "parentAssetClosure": {
+    "status": "passed",
+    "report": "docs/reviews/2026-09-11/tracing-datadog-shared-assets-validation.json",
+    "note": "Historicalnative/textreviewevidenceandoriginalassetlimitationsarepreservedabove;thislaterclosureupdatesthe17retiredsharedassets."
+  }
 }

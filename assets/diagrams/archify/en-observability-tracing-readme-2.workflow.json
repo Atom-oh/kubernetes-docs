@@ -12,7 +12,7 @@
         "focus": [
           "header"
         ],
-        "note": "TraceID names the whole trace, SpanID this span, and ParentSpanID its parent. A root span has ParentSpanID null."
+        "note": "TraceID identifies the trace, SpanID this span, and the parent identifier is absent for a root. The representation depends on the API."
       },
       {
         "id": "timing",
@@ -21,7 +21,7 @@
           "header",
           "timing"
         ],
-        "note": "Start Time and Duration record when this unit of work began and how long it took, e.g. start 10:30:00, 150 ms."
+        "note": "Start time is known at creation; duration follows from end minus start after the span ends. 150 ms is illustrative."
       },
       {
         "id": "metadata",
@@ -30,7 +30,7 @@
           "timing",
           "metadata"
         ],
-        "note": "Holds the Operation Name (HTTP GET /users), Tags (service=api, http.method=GET) and Logs (request received, response sent)."
+        "note": "OpenTelemetry uses attributes and timestamped events. Events are not an automatic copy of application logs."
       },
       {
         "id": "outcome",
@@ -39,7 +39,7 @@
           "metadata",
           "status"
         ],
-        "note": "When the work completes, Status records the outcome. The example span closes with Status: OK."
+        "note": "Status is UNSET, OK or ERROR. Successful HTTP instrumentation commonly leaves UNSET; exception recording and setting ERROR are separate."
       }
     ],
     "legend": {
@@ -58,12 +58,13 @@
         }
       }
     },
-    "locale": "en"
+    "locale": "en",
+    "output": "en-observability-tracing-readme-2.html"
   },
   "lanes": [
     {
       "id": "identity",
-      "label": "Identification · timing — filled when the span starts"
+      "label": "Identity and timing"
     },
     {
       "id": "outcome",
@@ -106,7 +107,7 @@
       "width": 176,
       "type": "database",
       "label": "Metadata",
-      "sublabel": "Operation · Tags · Logs",
+      "sublabel": "Name · Attributes · Events",
       "tag": "03 · metadata",
       "height": 116
     },
@@ -117,7 +118,7 @@
       "width": 176,
       "type": "security",
       "label": "Status",
-      "sublabel": "Status: OK",
+      "sublabel": "UNSET / OK / ERROR",
       "tag": "04 · outcome",
       "height": 116
     }
@@ -142,6 +143,16 @@
       "to": "status",
       "variant": "emphasis",
       "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Not all fields exist at start",
+      "items": [
+        "Initial attributes and links may be provided at creation",
+        "Duration requires an end timestamp; later events add context"
+      ]
     }
   ]
 }

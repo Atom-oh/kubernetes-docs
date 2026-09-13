@@ -1,0 +1,2378 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T10:54:16.006288+00:00",
+  "scope": "17retainedlegacydiagramURLsrepairedtoreflectthefullyreviewedDatadog/tracing/Tempo/XRaychapters",
+  "fullSemanticRead": [
+    {
+      "stem": "en-observability-metrics-05-datadog-0",
+      "specPath": "assets/diagrams/archify/en-observability-metrics-05-datadog-0.architecture.json",
+      "originalSHA256": "85381e13975400a002e64d5826edf2e7dc835d617ac395bce88da750ae9c854e",
+      "title": "Datadog vs Open Source vs CloudWatch",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "en-observability-metrics-05-datadog-2",
+      "specPath": "assets/diagrams/archify/en-observability-metrics-05-datadog-2.architecture.json",
+      "originalSHA256": "d790b7dda134e879b5ed0fe34e98fea2ccc249d7b892c1b44b891eb16d43fd6a",
+      "title": "Datadog Cost Optimization Strategies",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "en-observability-tracing-01-tempo-0",
+      "specPath": "assets/diagrams/archify/en-observability-tracing-01-tempo-0.architecture.json",
+      "originalSHA256": "234b06d490b20895f0264b415a1f5831651d2b75af0c926e02e0abb489adc0e5",
+      "title": "Grafana Tempo Architecture",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "en-observability-tracing-02-xray-0",
+      "specPath": "assets/diagrams/archify/en-observability-tracing-02-xray-0.architecture.json",
+      "originalSHA256": "bd8ed324c0365fc981b80918dcc94a57c976cd1f7e72d9a49b17b9ab735e1c35",
+      "title": "AWS X-Ray Tracing Architecture",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "en-observability-tracing-readme-1",
+      "specPath": "assets/diagrams/archify/en-observability-tracing-readme-1.architecture.json",
+      "originalSHA256": "af41440acb919a69415ca5902461d204086f0120f2e3e25441891ddb22363e45",
+      "title": "Trace: One Request, Many Spans",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "en-observability-tracing-readme-2",
+      "specPath": "assets/diagrams/archify/en-observability-tracing-readme-2.workflow.json",
+      "originalSHA256": "671ba185ce8a23756ff048eb3b8ff6cda4223350fafa3b3cc693c2c16976070a",
+      "title": "Anatomy of a Single Span",
+      "type": "workflow",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "en-observability-tracing-readme-5",
+      "specPath": "assets/diagrams/archify/en-observability-tracing-readme-5.workflow.json",
+      "originalSHA256": "222510584adbbba5ace4e4522ebeeb2b7a41cb73e7ac1ea53946f3f08ec0c6c4",
+      "title": "Tail-based Sampling Flow",
+      "type": "workflow",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "en-observability-tracing-readme-7",
+      "specPath": "assets/diagrams/archify/en-observability-tracing-readme-7.workflow.json",
+      "originalSHA256": "77e95b0455cf647d166640014ca41a3cf18784bab49375a26eb3030add8f32a3",
+      "title": "Distributed Tracing Solution Selection Guide",
+      "type": "workflow",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "ko-observability-metrics-05-datadog-0",
+      "specPath": "assets/diagrams/archify/ko-observability-metrics-05-datadog-0.architecture.json",
+      "originalSHA256": "7bb2f73d3ce96d64cfe5d603fd6467df6b7d726cbd1d89b8b8e8eefa1ec8c7a5",
+      "title": "Datadog vs 오픈소스 vs CloudWatch",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "ko-observability-metrics-05-datadog-2",
+      "specPath": "assets/diagrams/archify/ko-observability-metrics-05-datadog-2.architecture.json",
+      "originalSHA256": "2623133c57f19642f8397f065086e0f851df454e8430d41f1e8d7b312679f8e8",
+      "title": "Datadog 비용 최적화 전략",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "ko-observability-tracing-01-tempo-0",
+      "specPath": "assets/diagrams/archify/ko-observability-tracing-01-tempo-0.architecture.json",
+      "originalSHA256": "bb059781f7b8437d10ad50f3acdf5b5afe4672c61c647b3686c0588141793ea8",
+      "title": "Grafana Tempo 아키텍처",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "ko-observability-tracing-02-xray-0",
+      "specPath": "assets/diagrams/archify/ko-observability-tracing-02-xray-0.architecture.json",
+      "originalSHA256": "8b44275d0b5ff86a87de5ac0c9c2664fb308a737a2831699804f03f7ee375628",
+      "title": "AWS X-Ray 트레이싱 아키텍처",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "ko-observability-tracing-02-xray-1",
+      "specPath": "assets/diagrams/archify/ko-observability-tracing-02-xray-1.architecture.json",
+      "originalSHA256": "52427f6abb8946267d54d05c57f55bf6373a64c5795754194826c4cd41c9d66a",
+      "title": "응답 시간이 표시된 X-Ray 서비스 맵",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "ko-observability-tracing-readme-1",
+      "specPath": "assets/diagrams/archify/ko-observability-tracing-readme-1.architecture.json",
+      "originalSHA256": "ee035f41d7e9d53af074c4f7a9fac8922099a6dfbc541522e1225d058756106a",
+      "title": "Trace: 하나의 요청, 여러 Span",
+      "type": "architecture",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "ko-observability-tracing-readme-2",
+      "specPath": "assets/diagrams/archify/ko-observability-tracing-readme-2.workflow.json",
+      "originalSHA256": "8aef09fc504b364b76889a45c7ab81d392ff446d4f157b49c746419ea3ecd526",
+      "title": "Span 하나의 구성 요소",
+      "type": "workflow",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "ko-observability-tracing-readme-5",
+      "specPath": "assets/diagrams/archify/ko-observability-tracing-readme-5.workflow.json",
+      "originalSHA256": "92d00c8f066510a95920dcbfb91749daa66e2d304dcfc2520d48a6f9424a7ccc",
+      "title": "Tail-based Sampling 흐름",
+      "type": "workflow",
+      "semanticFullRead": true
+    },
+    {
+      "stem": "ko-observability-tracing-readme-7",
+      "specPath": "assets/diagrams/archify/ko-observability-tracing-readme-7.workflow.json",
+      "originalSHA256": "a29eefd7152eb8ad4323a1c0abcd40b9e592e3daa71899a23a86ace9322aaa0f",
+      "title": "분산 추적 솔루션 선택 가이드",
+      "type": "workflow",
+      "semanticFullRead": true
+    }
+  ],
+  "changes": [
+    "Datadogcomparisonnolongerassertscostpredictabilityranking,750integrationsorlimitedCloudWatchAPM.",
+    "Datadogcostdiagramremovesincorrect3350billandwrongnonLocalTraffic/quotaorcontainerfilter/cardinalityequivalences;productusageandlimitsqualified.",
+    "Traceoverviewusesstart/endtimeline650mswindowvs1600mssum,inclusiveparentdurations,OTelattributes/eventsandUNSET/OK/ERROR,endtimerequired.",
+    "Tailsamplingboundeddecision_wait,traceaffinity,probabilisticnormaltracesandupstream/late/overflowloss;noguaranteeimportanttracesneverlost.",
+    "Tracingselectionkeepsallfivecandidateswithoutunsupportedcheapest/AIbinaryranking.",
+    "Tempo3microservicesKafka/live-store/block-builder/backgroundscheduler-workerandseparatemetricsbackendreplacesTempo2ingester/compactorrecipe.",
+    "XRaydaemon/ADOTclassicexportissignedHTTPS;localUDP/TCPnotcloudtransport;managedserviceintegrationconditional;SDK/daemonmaintenancevbackendseparated.",
+    "KoreanXRaymapretainsoriginalillustrativetimesand2percent;removesunsupportedhighestQPSclaim."
+  ],
+  "sourcesFromCompletedTextReviews": [
+    {
+      "report": "docs/reviews/2026-09-11/observability-datadog-validation.json",
+      "primarySources": [
+        {
+          "url": "https://api.github.com/repos/DataDog/helm-charts/releases?per_page=10",
+          "cacheKey": "f686cb2bedd0",
+          "fetchedAt": "2026-09-13T00:07:28.887020+00:00",
+          "status": 200,
+          "finalURL": "https://api.github.com/repos/DataDog/helm-charts/releases?per_page=10",
+          "sha256": "7f9d188faf31c68a98aef41d27e21d8d35e87be207ab0b7c42b67d751e3f2bf8"
+        },
+        {
+          "url": "https://api.github.com/repos/DataDog/datadog-agent/releases/latest",
+          "cacheKey": "631d2f6d4235",
+          "fetchedAt": "2026-09-13T00:07:28.858061+00:00",
+          "status": 200,
+          "finalURL": "https://api.github.com/repos/DataDog/datadog-agent/releases/latest",
+          "sha256": "6c7e714ff32ede0fcaa52a9509e075800828bb05399950c709521ae5c6d21fc2"
+        },
+        {
+          "url": "https://docs.datadoghq.com/containers/kubernetes/installation/",
+          "cacheKey": "f6bc62457b66",
+          "fetchedAt": "2026-09-13T00:07:29.922812+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/containers/kubernetes/installation/",
+          "sha256": "8240c9b5bb6e6fb28c5769aa71f7ba89b5660ec7fcd370af2cbb4a9e3938d17f"
+        },
+        {
+          "url": "https://docs.datadoghq.com/integrations/kubernetes/",
+          "cacheKey": "36c3ee12ae10",
+          "fetchedAt": "2026-09-13T00:07:29.761945+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/integrations/kubernetes/",
+          "sha256": "5a3b014c2b2764cd9e70cb7f6496de085f21e127555c62f0df175fd399802686"
+        },
+        {
+          "url": "https://docs.datadoghq.com/containers/kubernetes/installation.md",
+          "cacheKey": "06ad7801794e",
+          "fetchedAt": "2026-09-13T00:09:11.787866+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/containers/kubernetes/installation.md",
+          "sha256": "61bd6f746d591b48391089b911ca859cf5d97aba28b2e95ac3df240e599b96ef"
+        },
+        {
+          "url": "https://docs.datadoghq.com/integrations/kubernetes.md",
+          "cacheKey": "951716c20bab",
+          "fetchedAt": "2026-09-13T00:09:11.646481+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/integrations/kubernetes.md",
+          "sha256": "7e0cd6df92758e5dd2893001ccf761891a8938bd79cf5dbaeb83469c186f95a4"
+        },
+        {
+          "url": "https://docs.datadoghq.com/integrations/kubernetes_state_core.md",
+          "cacheKey": "0f3708c900cd",
+          "fetchedAt": "2026-09-13T00:09:12.462933+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/integrations/kubernetes_state_core.md",
+          "sha256": "3d7cdd291184eff7981cae65d196bc5ec5f992b88735a18383af499b10f9a6a5"
+        },
+        {
+          "url": "https://docs.datadoghq.com/containers/cluster_agent/admission_controller/",
+          "cacheKey": "6dbdd7fcaa3a",
+          "fetchedAt": "2026-09-13T00:09:12.770838+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/containers/cluster_agent/admission_controller/",
+          "sha256": "e9ff00cb0945539b39560975068d5ca2eac633ac463c7ff5ecd7ee66df7c7e57"
+        },
+        {
+          "url": "https://docs.datadoghq.com/agent/kubernetes/distributions.md",
+          "cacheKey": "486061223d68",
+          "fetchedAt": "2026-09-13T00:12:20.148865+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/containers/kubernetes/distributions.md",
+          "sha256": "52e2fd064f8d834d48b3a56e55d779cb5490c3b076f558331cccfc967c5ed088"
+        },
+        {
+          "url": "https://docs.datadoghq.com/containers/kubernetes/apm.md",
+          "cacheKey": "822a8770fae0",
+          "fetchedAt": "2026-09-13T00:12:19.942132+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/containers/kubernetes/apm.md",
+          "sha256": "15748e177958f7bc65bd733840dc8deee11895221ae7968f002fb19bc91b6364"
+        },
+        {
+          "url": "https://docs.datadoghq.com/containers/cluster_agent/admission_controller.md",
+          "cacheKey": "19a46cda5811",
+          "fetchedAt": "2026-09-13T00:12:20.534575+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/containers/cluster_agent/admission_controller.md",
+          "sha256": "da6161952972416285e5e934b313e025cb6b379ef5c4a543bb1d7cadd1bbab4c"
+        },
+        {
+          "url": "https://docs.datadoghq.com/developers/dogstatsd/unix_socket.md",
+          "cacheKey": "5e9bf9fa2560",
+          "fetchedAt": "2026-09-13T00:12:20.828773+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/extend/dogstatsd/unix_socket.md",
+          "sha256": "62adbd5a9543f544f99b02dd24e75f502b64e66fc7d2f5e8dae8ff989b2da5d5"
+        },
+        {
+          "url": "https://docs.datadoghq.com/integrations/amazon_web_services.md",
+          "cacheKey": "5a495b05bbe0",
+          "fetchedAt": "2026-09-13T00:12:21.148645+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/integrations/amazon-web-services.md",
+          "sha256": "7f91a6f2617f7900477848c61c52287f059662f8b5c5b358f2b438feafb75124"
+        },
+        {
+          "url": "https://docs.datadoghq.com/containers/kubernetes/prometheus.md",
+          "cacheKey": "0c2181d4ca0b",
+          "fetchedAt": "2026-09-13T00:12:20.853683+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/containers/kubernetes/prometheus.md",
+          "sha256": "d44ea6f1ad5e00a5db01abffdd9de66fb924e4282aa20b3c6af807e99b2ae9b8"
+        },
+        {
+          "url": "https://docs.datadoghq.com/tracing/trace_collection/library_config/python.md",
+          "cacheKey": "78bf9e324ce7",
+          "fetchedAt": "2026-09-13T00:12:22.027942+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/tracing/trace_collection/library_config/python.md",
+          "sha256": "15cc926e467f46fba821a0a1afb5f3d817e3f4266d8e01ff1b6c200bbaec4575"
+        },
+        {
+          "url": "https://www.datadoghq.com/pricing/",
+          "cacheKey": "7f4e8a35a591",
+          "fetchedAt": "2026-09-13T00:12:21.411680+00:00",
+          "status": 200,
+          "finalURL": "https://www.datadoghq.com/pricing/",
+          "sha256": "6c8167cef6edf96b2b98d48d53bfad83a0a1b96a8b65af0c5dae7b091e290bb0"
+        },
+        {
+          "url": "https://api.github.com/repos/DataDog/dd-trace-java/releases/latest",
+          "cacheKey": "da051bc64f2c",
+          "fetchedAt": "2026-09-13T00:12:21.746276+00:00",
+          "status": 200,
+          "finalURL": "https://api.github.com/repos/DataDog/dd-trace-java/releases/latest",
+          "sha256": "5c0ff7f27c0489d16f0671bc88971ee9ca0a071a37e4b055b652e16efe96c099"
+        },
+        {
+          "url": "https://pypi.org/pypi/ddtrace/json",
+          "cacheKey": "31ebee26bdf2",
+          "fetchedAt": "2026-09-13T00:12:22.062019+00:00",
+          "status": 200,
+          "finalURL": "https://pypi.org/pypi/ddtrace/json",
+          "sha256": "76b53fb573b1355f99ffd056e91851b09b54e06ee805cc3ffd426d4831d07439"
+        },
+        {
+          "url": "https://pypi.org/pypi/datadog-api-client/json",
+          "cacheKey": "12a6e7bb5184",
+          "fetchedAt": "2026-09-13T00:12:22.236577+00:00",
+          "status": 200,
+          "finalURL": "https://pypi.org/pypi/datadog-api-client/json",
+          "sha256": "960fe77c4971ae3ff0a77ff4fa25732a925437786547bc7c0add691dbe3b40e2"
+        },
+        {
+          "url": "https://docs.datadoghq.com/integrations/kubelet.md",
+          "cacheKey": "20ddbc91c9d1",
+          "fetchedAt": "2026-09-13T00:22:04.902657+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/integrations/kubelet.md",
+          "sha256": "6ec02fb5cfac7b14905d624a607791a1af09d84377dac11da88acf931038d851"
+        },
+        {
+          "url": "https://docs.datadoghq.com/integrations/system.md",
+          "cacheKey": "fe93eff6f7b5",
+          "fetchedAt": "2026-09-13T00:22:04.932445+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/integrations/system.md",
+          "sha256": "4ff884012972f403f2a5e0314ed75966e61853925918316f3a142443375d9440"
+        },
+        {
+          "url": "https://docs.datadoghq.com/tracing/guide/local_sdk_injection.md",
+          "cacheKey": "2070276f9670",
+          "fetchedAt": "2026-09-13T00:22:05.551418+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/tracing/guide/local_sdk_injection.md",
+          "sha256": "1152e3ec071d79b055e49157b2c7165609c09171b42e40b9a74bc7e69d3e7385"
+        },
+        {
+          "url": "https://docs.datadoghq.com/tracing/trace_collection/custom_instrumentation/python.md",
+          "cacheKey": "dc70f5f431ce",
+          "fetchedAt": "2026-09-13T00:22:05.556735+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/tracing/trace_collection/custom_instrumentation/server-side.md",
+          "sha256": "2449284c66eab786475e35cbb17a40149cb7b832d368bbd6dc7eaa9e18086577"
+        },
+        {
+          "url": "https://docs.datadoghq.com/tracing/trace_collection/custom_instrumentation/java.md",
+          "cacheKey": "979be29285a7",
+          "fetchedAt": "2026-09-13T00:22:05.598513+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/tracing/trace_collection/custom_instrumentation/server-side.md",
+          "sha256": "2449284c66eab786475e35cbb17a40149cb7b832d368bbd6dc7eaa9e18086577"
+        },
+        {
+          "url": "https://docs.datadoghq.com/logs/log_configuration/parsing.md",
+          "cacheKey": "874f88f7f2fa",
+          "fetchedAt": "2026-09-13T00:22:06.159213+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/logs/log_configuration/parsing.md",
+          "sha256": "d8dd870c0ced29ca7271c7cd13035bcfbca53bdad76dd0039f147e6a6889ccd2"
+        },
+        {
+          "url": "https://docs.datadoghq.com/monitors/guide/as-count-in-monitor-evaluations.md",
+          "cacheKey": "c67c696a8a8d",
+          "fetchedAt": "2026-09-13T00:22:06.755687+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/monitors/guide/as-count-in-monitor-evaluations.md",
+          "sha256": "2fcab57fb06fc8d9977896460f30d2bfc7a3a26f428c2a1f7d426729364d576a"
+        },
+        {
+          "url": "https://docs.datadoghq.com/service_management/service_level_objectives/metric.md",
+          "cacheKey": "f1546a4f3b1d",
+          "fetchedAt": "2026-09-13T00:22:07.197375+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/service_level_objectives/metric.md",
+          "sha256": "f6a94c783c77c56d898245f3f1af35c504e2a962a5826c019f943d485427675b"
+        },
+        {
+          "url": "https://docs.datadoghq.com/agent/troubleshooting/send_a_flare.md",
+          "cacheKey": "a64ab983ba7d",
+          "fetchedAt": "2026-09-13T00:22:07.397929+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/agent/troubleshooting/send_a_flare.md",
+          "sha256": "cf716de99aec83d4b9ab0f10fd3abf1dede6c92f2a3dc1b36ca47fb4669b78d7"
+        },
+        {
+          "url": "https://pypi.org/pypi/datadog/json",
+          "cacheKey": "7e00bf50b816",
+          "fetchedAt": "2026-09-13T00:22:07.400176+00:00",
+          "status": 200,
+          "finalURL": "https://pypi.org/pypi/datadog/json",
+          "sha256": "78d527b5d6c0ad34db8166f6159c474e09b50ba89ceaad7c54e667292fc322a0"
+        },
+        {
+          "url": "https://docs.datadoghq.com/containers/kubernetes/distributions.md",
+          "cacheKey": "7ec8c11b4349",
+          "fetchedAt": "2026-09-13T00:53:26.482597+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/containers/kubernetes/distributions.md",
+          "sha256": "52e2fd064f8d834d48b3a56e55d779cb5490c3b076f558331cccfc967c5ed088"
+        },
+        {
+          "url": "https://docs.datadoghq.com/extend/dogstatsd/unix_socket.md",
+          "cacheKey": "6110b7f501ee",
+          "fetchedAt": "2026-09-13T00:53:26.483347+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/extend/dogstatsd/unix_socket.md",
+          "sha256": "62adbd5a9543f544f99b02dd24e75f502b64e66fc7d2f5e8dae8ff989b2da5d5"
+        },
+        {
+          "url": "https://docs.datadoghq.com/integrations/amazon-web-services.md",
+          "cacheKey": "0b7c99d6836f",
+          "fetchedAt": "2026-09-13T00:53:26.513419+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/integrations/amazon-web-services.md",
+          "sha256": "7f91a6f2617f7900477848c61c52287f059662f8b5c5b358f2b438feafb75124"
+        },
+        {
+          "url": "https://docs.datadoghq.com/service_level_objectives/metric.md",
+          "cacheKey": "f631f84ee4a4",
+          "fetchedAt": "2026-09-13T00:53:26.506596+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/service_level_objectives/metric.md",
+          "sha256": "f6a94c783c77c56d898245f3f1af35c504e2a962a5826c019f943d485427675b"
+        },
+        {
+          "url": "https://docs.datadoghq.com/tracing/trace_collection/custom_instrumentation/server-side.md",
+          "cacheKey": "e56b5f0246f0",
+          "fetchedAt": "2026-09-13T00:53:26.530236+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/tracing/trace_collection/custom_instrumentation/server-side.md",
+          "sha256": "2449284c66eab786475e35cbb17a40149cb7b832d368bbd6dc7eaa9e18086577"
+        },
+        {
+          "url": "https://github.com/DataDog/datadog-agent/releases/tag/7.83.1",
+          "cacheKey": "8ef2fdb00e66",
+          "fetchedAt": "2026-09-13T00:53:26.989432+00:00",
+          "status": 200,
+          "finalURL": "https://github.com/DataDog/datadog-agent/releases/tag/7.83.1",
+          "sha256": "000067f3c7e78f66b36ec7bf42966e7efc2669034553d1d52582abde5918d1c3"
+        },
+        {
+          "url": "https://github.com/DataDog/helm-charts/releases/tag/datadog-3.244.0",
+          "cacheKey": "728b166f2bdc",
+          "fetchedAt": "2026-09-13T00:53:27.054446+00:00",
+          "status": 200,
+          "finalURL": "https://github.com/DataDog/helm-charts/releases/tag/datadog-3.244.0",
+          "sha256": "cf7e90b89afffecbc9b9d9ed59df5a36792a95d14bca7083cb410f427f5dade8"
+        },
+        {
+          "url": "https://api.github.com/repos/DataDog/datadog-go/releases/latest",
+          "cacheKey": "ebed1e715937",
+          "fetchedAt": "2026-09-13T00:55:31.114191+00:00",
+          "status": 200,
+          "finalURL": "https://api.github.com/repos/DataDog/datadog-go/releases/latest",
+          "sha256": "3f8c8a11add6f64b77dfa9cbf8409173641aca5d2e655747ebe842dbf560bf14"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/DataDog/datadog-go/v5.9.1/statsd/statsd.go",
+          "cacheKey": "5a337cbae863",
+          "fetchedAt": "2026-09-13T00:56:55.373127+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/DataDog/datadog-go/v5.9.1/statsd/statsd.go",
+          "sha256": "af769f8a3d6b06b64b94fdb88d54c7a26ac4be98d37dc176ef0f37f658e2a1cf"
+        }
+      ],
+      "reviewedScope": [
+        "en/observability/metrics/05-datadog.md",
+        "en/quizzes/observability/metrics/05-datadog-quiz.md",
+        "ko/observability/metrics/05-datadog.md",
+        "ko/quizzes/observability/metrics/05-datadog-quiz.md"
+      ]
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-tracing-overview-validation.json",
+      "primarySources": [
+        {
+          "url": "https://www.w3.org/TR/trace-context/",
+          "cacheKey": "6a0029787a22",
+          "fetchedAt": "2026-09-13T07:08:28.232518+00:00",
+          "status": 200,
+          "finalURL": "https://www.w3.org/TR/trace-context/",
+          "sha256": "9e7228d2a91c5aa4bef6e7f610366a2000274ee51699053e10c8ac3f0b8965be"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/openzipkin/b3-propagation/master/README.md",
+          "cacheKey": "ff1b868c890e",
+          "fetchedAt": "2026-09-13T07:08:28.395424+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/openzipkin/b3-propagation/master/README.md",
+          "sha256": "b0b14a361c04c15002dc32f6630c76aa82b4de65a419a874fc37b6b4e4cc0a54"
+        },
+        {
+          "url": "https://opentelemetry.io/docs/specs/otel/trace/api/",
+          "cacheKey": "9495556bb983",
+          "fetchedAt": "2026-09-13T07:08:28.546302+00:00",
+          "status": 200,
+          "finalURL": "https://opentelemetry.io/docs/specs/otel/trace/api/",
+          "sha256": "c23bd928ad45e6615af467c9ee216c53dfcb7e78d58e75a76027a86cc2018767"
+        },
+        {
+          "url": "https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/",
+          "cacheKey": "b4b11da775ed",
+          "fetchedAt": "2026-09-13T07:08:29.285617+00:00",
+          "status": 200,
+          "finalURL": "https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/",
+          "sha256": "97e88c5630b1bed8b25cdb59f338b3da4fd0fec9392ce4973ed8a6170c2eac78"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/processor/tailsamplingprocessor/README.md",
+          "cacheKey": "6972b6c25420",
+          "fetchedAt": "2026-09-13T07:08:28.788702+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/processor/tailsamplingprocessor/README.md",
+          "sha256": "cc848d941b4469e849448e54a0704f128204e94708f40ea0af50459cff7f9639"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md",
+          "cacheKey": "e60b738fd5de",
+          "fetchedAt": "2026-09-13T07:08:29.042452+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md",
+          "sha256": "3115ed69476ddb5e4b64ebf363f1a8f5d0f0a7cc2a6263ea612360d5357f877e"
+        },
+        {
+          "url": "https://api.github.com/repos/open-telemetry/opentelemetry-python/releases/latest",
+          "cacheKey": "a55ea3e2cc95",
+          "fetchedAt": "2026-09-13T07:09:53.799061+00:00",
+          "status": 200,
+          "finalURL": "https://api.github.com/repos/open-telemetry/opentelemetry-python/releases/latest",
+          "sha256": "baa0c9abb289dba1f7ca9f457580dc128bb39e4cc258f40d561235554dac1e0f"
+        },
+        {
+          "url": "https://api.github.com/repos/open-telemetry/opentelemetry-java/releases/latest",
+          "cacheKey": "ef5798067be8",
+          "fetchedAt": "2026-09-13T07:09:53.818892+00:00",
+          "status": 200,
+          "finalURL": "https://api.github.com/repos/open-telemetry/opentelemetry-java/releases/latest",
+          "sha256": "61274412ce771cf67fd90e5fe3be1997c28428a79557088337dc8d1017e39fec"
+        },
+        {
+          "url": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+          "cacheKey": "533be7768708",
+          "fetchedAt": "2026-09-13T07:09:54.517961+00:00",
+          "status": 200,
+          "finalURL": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+          "sha256": "c16beeae0872298834c9bcc938e02f6cb542721e0531cf65b6c62e63034f4293"
+        },
+        {
+          "url": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+          "cacheKey": "dd7291976f4c",
+          "fetchedAt": "2026-09-13T07:09:53.872090+00:00",
+          "status": 200,
+          "finalURL": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+          "sha256": "f4c95893e96e16a4377868180d2c0d4b6e72489f39f30177298dc8ceb456beb7"
+        },
+        {
+          "url": "https://pypi.org/pypi/opentelemetry-propagator-b3/1.44.0/json",
+          "cacheKey": "9f91f4395b73",
+          "fetchedAt": "2026-09-13T07:11:16.995216+00:00",
+          "status": 200,
+          "finalURL": "https://pypi.org/pypi/opentelemetry-propagator-b3/1.44.0/json",
+          "sha256": "4fd6567845c9f5547468924b838996e77cf8b0cbc0df85713caba54f0fabfd34"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-python/v1.44.0/opentelemetry-api/src/opentelemetry/trace/propagation/tracecontext.py",
+          "cacheKey": "cf54d00da872",
+          "fetchedAt": "2026-09-13T07:11:17.043097+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-python/v1.44.0/opentelemetry-api/src/opentelemetry/trace/propagation/tracecontext.py",
+          "sha256": "94fef4c502e2a56e6a4eb02598a821a387e40f17c54a7771bf1b9652cabf8faa"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/api/all/src/main/java/io/opentelemetry/api/trace/SpanContext.java",
+          "cacheKey": "7c6f24701c42",
+          "fetchedAt": "2026-09-13T07:11:17.229515+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/api/all/src/main/java/io/opentelemetry/api/trace/SpanContext.java",
+          "sha256": "e1c03df3910e349a0aa16dd57249c6ffb106a97e09deadaf382a4c212bf689ff"
+        },
+        {
+          "url": "https://www.slf4j.org/apidocs/org/slf4j/MDC.html",
+          "cacheKey": "b977acbf9fe1",
+          "fetchedAt": "2026-09-13T07:11:18.695243+00:00",
+          "status": 200,
+          "finalURL": "https://www.slf4j.org/apidocs/org/slf4j/MDC.html",
+          "sha256": "af0e894d7b9b37548e6a2457debc020e1c7eab461d7c9c0f1b6dea4d8bb771d3"
+        },
+        {
+          "url": "https://grafana.com/docs/tempo/latest/introduction/",
+          "cacheKey": "c44f029751a6",
+          "fetchedAt": "2026-09-13T07:19:34.368543+00:00",
+          "status": 200,
+          "finalURL": "https://grafana.com/docs/tempo/latest/introduction/",
+          "sha256": "c46e23d2a682f4de0be2ece288485d0043add587d807df28f651567f01a06106"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html",
+          "cacheKey": "8b9a5d5ca360",
+          "fetchedAt": "2026-09-13T07:19:33.864526+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html",
+          "sha256": "2741daeb86551680d94ff1a23b24115fa14a3da347d74ab10c4b21649ed8cad0"
+        },
+        {
+          "url": "https://www.jaegertracing.io/docs/latest/architecture/",
+          "cacheKey": "70451313b134",
+          "fetchedAt": "2026-09-13T07:19:34.466737+00:00",
+          "status": 200,
+          "finalURL": "https://www.jaegertracing.io/docs/2.20/architecture/",
+          "sha256": "3885acc86e21366a2e3fd5d381884984b0d4d64e0cca3365e44e2969d7329016"
+        },
+        {
+          "url": "https://docs.datadoghq.com/tracing/",
+          "cacheKey": "0008dd7abc98",
+          "fetchedAt": "2026-09-13T07:19:35.247613+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/tracing/",
+          "sha256": "3f366bb8e518723f8a93fef232ec637d9921f449b0946dde0ad3d88b7c759d6c"
+        },
+        {
+          "url": "https://docs.dynatrace.com/docs/observe/application-observability/distributed-tracing",
+          "cacheKey": "a48976e6872e",
+          "fetchedAt": "2026-09-13T07:19:35.872953+00:00",
+          "status": 200,
+          "finalURL": "https://docs.dynatrace.com/docs/observe/application-observability/distributed-tracing",
+          "sha256": "d39fabb65194403475e77497cb9605a9b4cfb69dc3b7fefdb46f55b57e25b4a3"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/README.md",
+          "cacheKey": "2eddab9bd606",
+          "fetchedAt": "2026-09-13T07:24:31.631642+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/README.md",
+          "sha256": "e5e068feb7acf0cd43eb1d77d3dc2fd3de38a76269f58ed8fabf5a485edea587"
+        },
+        {
+          "url": "https://docs.datadoghq.com/tracing.md",
+          "cacheKey": "9a7656f3463b",
+          "fetchedAt": "2026-09-13T07:24:32.061983+00:00",
+          "status": 200,
+          "finalURL": "https://docs.datadoghq.com/tracing.md",
+          "sha256": "83d0994d3fcc1921870393858954e3824a92cb020e9e8eb04112c57805d6535b"
+        }
+      ],
+      "reviewedScope": [
+        "en/observability/tracing/README.md",
+        "ko/observability/tracing/README.md"
+      ]
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-tempo-validation.json",
+      "primarySources": [
+        {
+          "url": "https://api.github.com/repos/grafana/tempo/releases/latest",
+          "cacheKey": "c2c7d3e5e7b3",
+          "fetchedAt": "2026-09-13T07:40:17.713643+00:00",
+          "status": 200,
+          "finalURL": "https://api.github.com/repos/grafana/tempo/releases/latest",
+          "sha256": "2800dd54295259647b0dc69c2ed758c12562166b45bb4214b738ddab02c9abc5"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana-community/helm-charts/main/charts/tempo-distributed/Chart.yaml",
+          "cacheKey": "4bb0c0f4913e",
+          "fetchedAt": "2026-09-13T07:40:17.650683+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana-community/helm-charts/main/charts/tempo-distributed/Chart.yaml",
+          "sha256": "28963189e968ae472063f6ab0ee88e926461e0259835ed7473acfcecd2d74cb7"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana-community/helm-charts/tempo-distributed-3.6.0/charts/tempo-distributed/values.yaml",
+          "cacheKey": "90fedc59b877",
+          "fetchedAt": "2026-09-13T07:45:27.621906+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana-community/helm-charts/tempo-distributed-3.6.0/charts/tempo-distributed/values.yaml",
+          "sha256": "b342557260a2c98a25c0b3492e82c71700d89fbb4800c8badac046ac4e5704c4"
+        },
+        {
+          "url": "https://api.github.com/repos/grafana-community/helm-charts/releases/tags/tempo-distributed-3.6.0",
+          "cacheKey": "0984388daf41",
+          "fetchedAt": "2026-09-13T07:42:22.409276+00:00",
+          "status": 200,
+          "finalURL": "https://api.github.com/repos/grafana-community/helm-charts/releases/tags/tempo-distributed-3.6.0",
+          "sha256": "c81694e0c74985061a2302e382639d9c5ec5c281cea57f2c7a581ccc068de580"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/cmd/tempo/main.go",
+          "cacheKey": "8400e6b1b1d8",
+          "fetchedAt": "2026-09-13T07:42:22.415506+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/cmd/tempo/main.go",
+          "sha256": "e5ca3b54428559602801a9c803e0a7993971d850fe694fb17ec801df831d1834"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/config.go",
+          "cacheKey": "0a98c83dc92e",
+          "fetchedAt": "2026-09-13T07:45:27.064754+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/config.go",
+          "sha256": "7e989242ab1e3af866b7c2dcd770ecb85d9a23cc8c3b10fa1a238a4a2e98bf3e"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/writer_client.go",
+          "cacheKey": "38ba23550a7c",
+          "fetchedAt": "2026-09-13T07:49:02.794276+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/writer_client.go",
+          "sha256": "78a3a0c8b7016f6aea38ffbba0fb849b6cd0ce4864ac65ec102d2b7094c5f8d6"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/reader_client.go",
+          "cacheKey": "510fe52ccb4b",
+          "fetchedAt": "2026-09-13T07:49:03.032279+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/reader_client.go",
+          "sha256": "2229d3d7449e90efc18fbd3a4c19e3493c671c1a52198f4e5b91dd6686f6952c"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/docs/sources/tempo/introduction/architecture.md",
+          "cacheKey": "bca6d23f9192",
+          "fetchedAt": "2026-09-13T07:45:26.882843+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/docs/sources/tempo/introduction/architecture.md",
+          "sha256": "ba01258f7cb1423cc15fbb91b52af9dfed7fe9a413959b9567e41b6ed5736b09"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/docs/sources/tempo/set-up-for-tracing/setup-tempo/upgrade.md",
+          "cacheKey": "1936d77c1d21",
+          "fetchedAt": "2026-09-13T07:45:27.157658+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/docs/sources/tempo/set-up-for-tracing/setup-tempo/upgrade.md",
+          "sha256": "472aa0fb0d8a3c8fd5a29f5d5257b9e77a87f6286b08731b1eb4844092aa95ed"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/tempodb/backend/s3/config.go",
+          "cacheKey": "3abb3eb1803d",
+          "fetchedAt": "2026-09-13T07:49:34.865060+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/tempodb/backend/s3/config.go",
+          "sha256": "e189ee9c2857831814b2512b4bcdb202783aa3dcc2ad3c9ae785ad6e3a71c10a"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/tempodb/backend/s3/s3.go",
+          "cacheKey": "f23e532d448e",
+          "fetchedAt": "2026-09-13T07:49:34.635110+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/tempodb/backend/s3/s3.go",
+          "sha256": "b467a24b7c5bc447f4decbe58f1f71717728f7ed01d7b3d170921d2aaecc6aff"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/traceql/engine.go",
+          "cacheKey": "64d9d1bea8d9",
+          "fetchedAt": "2026-09-13T07:49:34.397746+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/traceql/engine.go",
+          "sha256": "58d127e1fce6483e5738e636a15681349bb4afc23e8e252e1171e63d612280b3"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/modules/generator/processor/spanmetrics/spanmetrics.go",
+          "cacheKey": "5a8f7cc9d8b1",
+          "fetchedAt": "2026-09-13T07:57:40.030840+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/modules/generator/processor/spanmetrics/spanmetrics.go",
+          "sha256": "7fbda05e1c423e0e7dce03d4840fc8bce2375c2c016ab4bb811e9754d4ec162a"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/modules/generator/registry/histogram.go",
+          "cacheKey": "e4dccada2010",
+          "fetchedAt": "2026-09-13T07:57:40.242619+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/modules/generator/registry/histogram.go",
+          "sha256": "23e6edca596b116c5aa80d9e67babdb35e022416deec83e62a5fb410965528fc"
+        },
+        {
+          "url": "https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/",
+          "cacheKey": "8bed54ebd2dd",
+          "fetchedAt": "2026-09-13T07:49:35.037783+00:00",
+          "status": 200,
+          "finalURL": "https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/",
+          "sha256": "89c77972c17227ac4c3a2e9149e4320211186a45594cdbf6c8ee7a17bb11448f"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html",
+          "cacheKey": "029f31af45f1",
+          "fetchedAt": "2026-09-13T07:52:19.996528+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html",
+          "sha256": "aacc0de7d93d53696c6b18b02aaf33c24dca2f437dc4f698e31c51f5742845dc"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+          "cacheKey": "3402cc49aabf",
+          "fetchedAt": "2026-09-13T07:52:19.785414+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+          "sha256": "b5c8bab7a9d7ccd1613f3f6dfc17cb0daf34234826745941762be368b606acdf"
+        },
+        {
+          "url": "https://grafana.com/docs/tempo/latest/traceql/construct-traceql-queries/",
+          "cacheKey": "1c6d8c1da63b",
+          "fetchedAt": "2026-09-13T07:49:35.133570+00:00",
+          "status": 200,
+          "finalURL": "https://grafana.com/docs/tempo/latest/traceql/construct-traceql-queries/",
+          "sha256": "a7b2f004495d5a5a1abcecf5965e9a693307a64252bbc69591cfa19cd220e884"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/example/docker-compose/single-binary/tempo.yaml",
+          "cacheKey": "5cc77be0488b",
+          "fetchedAt": "2026-09-13T07:49:03.196605+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/example/docker-compose/single-binary/tempo.yaml",
+          "sha256": "85fc97739e982e4b79c901404152bcb5dee5334ef7921b2e5d5b3984bfbcb4e1"
+        },
+        {
+          "url": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+          "cacheKey": "533be7768708",
+          "fetchedAt": "2026-09-13T07:09:54.517961+00:00",
+          "status": 200,
+          "finalURL": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+          "sha256": "c16beeae0872298834c9bcc938e02f6cb542721e0531cf65b6c62e63034f4293"
+        },
+        {
+          "url": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+          "cacheKey": "dd7291976f4c",
+          "fetchedAt": "2026-09-13T07:09:53.872090+00:00",
+          "status": 200,
+          "finalURL": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+          "sha256": "f4c95893e96e16a4377868180d2c0d4b6e72489f39f30177298dc8ceb456beb7"
+        },
+        {
+          "url": "https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/upgrade/",
+          "cacheKey": "784b87aeaffd",
+          "fetchedAt": "2026-09-13T07:57:39.740016+00:00",
+          "status": 200,
+          "finalURL": "https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/upgrade/",
+          "sha256": "2b9c4156c5b58c190d585aa9e23edef00b8543a3fad40787d9e91ee76e4ff1f5"
+        },
+        {
+          "url": "https://grafana.com/docs/tempo/latest/introduction/architecture/",
+          "cacheKey": "151b717992d8",
+          "fetchedAt": "2026-09-13T07:57:40.009536+00:00",
+          "status": 200,
+          "finalURL": "https://grafana.com/docs/tempo/latest/introduction/architecture/",
+          "sha256": "ec1a023a4d5cde21f2f332da5506a23694850352f3c9fe3474c1908875e6ee4c"
+        }
+      ],
+      "reviewedScope": [
+        "en/observability/tracing/01-tempo.md",
+        "en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "ko/observability/tracing/01-tempo.md",
+        "ko/quizzes/observability/tracing/01-tempo-quiz.md"
+      ]
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-xray-validation.json",
+      "primarySources": [
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html",
+          "cacheKey": "07b52d88956f",
+          "fetchedAt": "2026-09-13T10:24:33.193953+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html",
+          "sha256": "ac6dabcdd43d67893c0b594749c07946704e3a1ac1bdafede17836465a914644"
+        },
+        {
+          "url": "https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0",
+          "cacheKey": "2ba84fa45707",
+          "fetchedAt": "2026-09-13T10:24:34.038833+00:00",
+          "status": 200,
+          "finalURL": "https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0",
+          "sha256": "6391b242cc4c57c1d360d04de93de9294c838aa1be9ac264d4571e06f6dafa68"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/pkg/defaultcomponents/defaults.go",
+          "cacheKey": "6c80b5db7514",
+          "fetchedAt": "2026-09-13T08:04:54.707765+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/pkg/defaultcomponents/defaults.go",
+          "sha256": "0ab1f4366a69570b8872e3f98057205b038bd8a63d6ea9d4e051f5615e91cd0a"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/receiver/awsxrayreceiver/config.go",
+          "cacheKey": "20ed0233ff03",
+          "fetchedAt": "2026-09-13T08:04:12.859257+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/receiver/awsxrayreceiver/config.go",
+          "sha256": "f2ed6580dee98f3c9284aa2dc6915c055bb6ffc33ae8925ebfc5a4df4930b625"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/receiver/awsxrayreceiver/factory.go",
+          "cacheKey": "69b39c88696f",
+          "fetchedAt": "2026-09-13T08:26:52.584373+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/receiver/awsxrayreceiver/factory.go",
+          "sha256": "59e13ee251cd1a79f230430b4fc056811d5f9df42f28b6fc2016c2748414b1b2"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/exporter/awsxrayexporter/README.md",
+          "cacheKey": "7b22ad5b1784",
+          "fetchedAt": "2026-09-13T08:04:13.109076+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/exporter/awsxrayexporter/README.md",
+          "sha256": "2a22b6f15062633720dcdfcb6abf69884175d14a97f53bc25f3c6a442e10f56d"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/cmd/awscollector/Dockerfile",
+          "cacheKey": "a7b305d057a6",
+          "fetchedAt": "2026-09-13T08:24:17.409313+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/cmd/awscollector/Dockerfile",
+          "sha256": "fd6e164b486a999214125c4e5e1314cedd1146d7b889394c3312343e4cd9ec09"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/pkg/extraconfig/container.go",
+          "cacheKey": "607ab0ca4916",
+          "fetchedAt": "2026-09-13T08:25:19.289725+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/pkg/extraconfig/container.go",
+          "sha256": "0e45216a0e0e92a1d5148023fffe528b5b53e911dfe9a36643e5a5cdbaa84b3f"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/aws/aws-xray-daemon/v3.7.0/Dockerfile",
+          "cacheKey": "c07557b45365",
+          "fetchedAt": "2026-09-13T08:33:23.385115+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/aws/aws-xray-daemon/v3.7.0/Dockerfile",
+          "sha256": "58603c30ecc93002517666eebbbff8efe7d5fe5f807b4c865c581cab2cd00bad"
+        },
+        {
+          "url": "https://hub.docker.com/v2/namespaces/amazon/repositories/aws-xray-daemon/tags/3.7.0",
+          "cacheKey": "56d8bc341f8a",
+          "fetchedAt": "2026-09-13T08:33:23.628811+00:00",
+          "status": 200,
+          "finalURL": "https://hub.docker.com/v2/namespaces/amazon/repositories/aws-xray-daemon/tags/3.7.0",
+          "sha256": "910e17de0d36dee25df0a1a39a2e08944c85e4a73230ce653b3c4014ef9deee0"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+          "cacheKey": "231ba2678238",
+          "fetchedAt": "2026-09-13T08:33:23.592945+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+          "sha256": "4e90c68d514f556e88e5f862e619d0cd3884e1454c02d1d3c9a219ff1bb31d2e"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-api-sampling.html",
+          "cacheKey": "f2cadba62eb6",
+          "fetchedAt": "2026-09-13T08:03:22.296693+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-api-sampling.html",
+          "sha256": "051f5fce8896c17938dfd13099da1b7892f44405773a716c7d3e89edde718de7"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRule.html",
+          "cacheKey": "cb00e95db664",
+          "fetchedAt": "2026-09-13T08:21:37.463400+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRule.html",
+          "sha256": "3dbe0f106d3897371042fd3eaddb045143a48f20377e7e8339b271c467ec0f21"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-sampling.html",
+          "cacheKey": "d807efb8548c",
+          "fetchedAt": "2026-09-13T08:32:19.049797+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-sampling.html",
+          "sha256": "0fe50f55b523ff223575a25758204d56ec8a0e1f70c4b287bee71ef7a62628dd"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html",
+          "cacheKey": "2c26c92b1d5a",
+          "fetchedAt": "2026-09-13T10:24:32.856787+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html",
+          "sha256": "0d7a630fbb969b3d268bfe6853532c97c99b87a5010d28688656112e57f333cc"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-filters.html",
+          "cacheKey": "8225dd4fbe31",
+          "fetchedAt": "2026-09-13T08:03:22.685681+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-filters.html",
+          "sha256": "f4dbd35cdf08959aa90619fb326980e69d25dd9ec376fb632028d081f1c50599"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-java-segment.html",
+          "cacheKey": "57aed6e9c1f7",
+          "fetchedAt": "2026-09-13T08:32:18.805108+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-java-segment.html",
+          "sha256": "b1f8617c8927a1fdf24ef6cbfebb0cbc47a20be5b9b9c2d5a54512ec54467781"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html",
+          "cacheKey": "4912b3ae747f",
+          "fetchedAt": "2026-09-13T10:24:32.646621+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html",
+          "sha256": "ee85396fb311918dbe1cddce737584a40f8dcad64649c514f7567496a0adedba"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-ingesting-span-log-groups.html",
+          "cacheKey": "87c76c5a143b",
+          "fetchedAt": "2026-09-13T08:04:04.223136+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-ingesting-span-log-groups.html",
+          "sha256": "1a4ff2e44cdbd61f3cab24790929fdd3b9988fc187d9886ab698976adb42f8b7"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPEndpoint.html",
+          "cacheKey": "0abf6d354956",
+          "fetchedAt": "2026-09-13T08:04:04.015044+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPEndpoint.html",
+          "sha256": "11be838b9290f37839326a34ba2b5a53f4b9989debc47a6ea05b683b37c9379b"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPGettingStarted.html",
+          "cacheKey": "c19236d506f9",
+          "fetchedAt": "2026-09-13T08:04:55.219341+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPGettingStarted.html",
+          "sha256": "0bf33c7c535ce2a8eb1e324586619cf3cabbe1bb7795f69846dbace2a4d7d304"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html",
+          "cacheKey": "4429d970c3d9",
+          "fetchedAt": "2026-09-13T10:24:32.638554+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html",
+          "sha256": "0c6d5be85d3b3a1b35cb3213a8fc9bd38d26e0f66d86a5f38399b0e457b1b25c"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+          "cacheKey": "ad9fe58c3d55",
+          "fetchedAt": "2026-09-13T10:26:30.810218+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+          "sha256": "d2462be4d4b563d98d33fd8e36ae1ac75769965f81f9a52b4da7abf826b9a85f"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-servicemap.html",
+          "cacheKey": "be3f2e7fa168",
+          "fetchedAt": "2026-09-13T08:04:55.213700+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-servicemap.html",
+          "sha256": "98ea369bbf803da136367c5af0f729ca40e6cb19134baed05c9e854a990c753d"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-api-segmentdocuments.html",
+          "cacheKey": "ae45b79bdf7f",
+          "fetchedAt": "2026-09-13T08:04:04.441453+00:00",
+          "status": 200,
+          "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-api-segmentdocuments.html",
+          "sha256": "a2781a21d9dfbf2ed996d300d5a59f23f23f834241d59134625d532460df86f0"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/aws/aws-xray-sdk-java/v2.21.1/aws-xray-recorder-sdk-core/src/main/java/com/amazonaws/xray/entities/SegmentImpl.java",
+          "cacheKey": "3c178e6652f1",
+          "fetchedAt": "2026-09-13T08:21:37.728715+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/aws/aws-xray-sdk-java/v2.21.1/aws-xray-recorder-sdk-core/src/main/java/com/amazonaws/xray/entities/SegmentImpl.java",
+          "sha256": "5b9df6159955eb35a680143213b7af25aa597fe0feb1dfe5706778aea7ddc966"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/aws/aws-xray-sdk-java/v2.21.1/aws-xray-recorder-sdk-core/src/main/java/com/amazonaws/xray/entities/SubsegmentImpl.java",
+          "cacheKey": "294461a1b543",
+          "fetchedAt": "2026-09-13T08:21:37.910533+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/aws/aws-xray-sdk-java/v2.21.1/aws-xray-recorder-sdk-core/src/main/java/com/amazonaws/xray/entities/SubsegmentImpl.java",
+          "sha256": "8960fa07c7beac5db18fc2c71748021c627ab7858a1ebbad126464e0e170b03e"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/sdk-extensions/autoconfigure/src/main/java/io/opentelemetry/sdk/autoconfigure/AutoConfiguredOpenTelemetrySdk.java",
+          "cacheKey": "24bccb73946b",
+          "fetchedAt": "2026-09-13T10:24:33.702774+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/sdk-extensions/autoconfigure/src/main/java/io/opentelemetry/sdk/autoconfigure/AutoConfiguredOpenTelemetrySdk.java",
+          "sha256": "1bf98878f42603c4d5246d6b43dd25302d51ac546a44232e0b7e6ad8e00f6386"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/exporters/otlp/all/src/main/java/io/opentelemetry/exporter/otlp/internal/OtlpConfigUtil.java",
+          "cacheKey": "13518c3efee4",
+          "fetchedAt": "2026-09-13T10:24:33.933847+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/exporters/otlp/all/src/main/java/io/opentelemetry/exporter/otlp/internal/OtlpConfigUtil.java",
+          "sha256": "1d1e33b4f7596a864611c15e5d0470a584d1a4b6da0013a760d73034b76d92ef"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/sdk/all/src/main/java/io/opentelemetry/sdk/OpenTelemetrySdk.java",
+          "cacheKey": "501514647a5c",
+          "fetchedAt": "2026-09-13T10:24:34.143355+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/sdk/all/src/main/java/io/opentelemetry/sdk/OpenTelemetrySdk.java",
+          "sha256": "7392c923c08e40ef7ac0b7dbc67a175a880456f7439ac42b71094759e45a63a2"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-go/v1.44.0/exporters/otlp/otlptrace/otlptracehttp/internal/otlpconfig/envconfig.go",
+          "cacheKey": "910a53682f48",
+          "fetchedAt": "2026-09-13T10:28:51.105451+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-go/v1.44.0/exporters/otlp/otlptrace/otlptracehttp/internal/otlpconfig/envconfig.go",
+          "sha256": "3629c9cb8431e260ab4dd2cde247da48cbb4972e6d82d7a7b1028795452d68b4"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-python/v1.44.0/exporter/opentelemetry-exporter-otlp-proto-http/src/opentelemetry/exporter/otlp/proto/http/trace_exporter/__init__.py",
+          "cacheKey": "a8e4a89362a2",
+          "fetchedAt": "2026-09-13T10:28:51.112443+00:00",
+          "status": 200,
+          "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-python/v1.44.0/exporter/opentelemetry-exporter-otlp-proto-http/src/opentelemetry/exporter/otlp/proto/http/trace_exporter/__init__.py",
+          "sha256": "55cb85cc18ad6545f01a03fe88509f0501b946dcd0032bccc5b324e9452805b4"
+        }
+      ],
+      "reviewedScope": [
+        "en/observability/tracing/02-xray.md",
+        "en/quizzes/observability/tracing/02-xray-quiz.md",
+        "ko/observability/tracing/02-xray.md",
+        "ko/quizzes/observability/tracing/02-xray-quiz.md"
+      ]
+    }
+  ],
+  "delivery": [
+    {
+      "stem": "en-observability-metrics-05-datadog-0",
+      "spec": "assets/diagrams/archify/en-observability-metrics-05-datadog-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-metrics-05-datadog-2",
+      "spec": "assets/diagrams/archify/en-observability-metrics-05-datadog-2.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-tracing-01-tempo-0",
+      "spec": "assets/diagrams/archify/en-observability-tracing-01-tempo-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-tracing-02-xray-0",
+      "spec": "assets/diagrams/archify/en-observability-tracing-02-xray-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-tracing-readme-1",
+      "spec": "assets/diagrams/archify/en-observability-tracing-readme-1.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-tracing-readme-2",
+      "spec": "assets/diagrams/archify/en-observability-tracing-readme-2.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-tracing-readme-5",
+      "spec": "assets/diagrams/archify/en-observability-tracing-readme-5.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-tracing-readme-7",
+      "spec": "assets/diagrams/archify/en-observability-tracing-readme-7.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-metrics-05-datadog-0",
+      "spec": "assets/diagrams/archify/ko-observability-metrics-05-datadog-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-metrics-05-datadog-2",
+      "spec": "assets/diagrams/archify/ko-observability-metrics-05-datadog-2.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-tracing-01-tempo-0",
+      "spec": "assets/diagrams/archify/ko-observability-tracing-01-tempo-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-tracing-02-xray-0",
+      "spec": "assets/diagrams/archify/ko-observability-tracing-02-xray-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-tracing-02-xray-1",
+      "spec": "assets/diagrams/archify/ko-observability-tracing-02-xray-1.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-tracing-readme-1",
+      "spec": "assets/diagrams/archify/ko-observability-tracing-readme-1.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-tracing-readme-2",
+      "spec": "assets/diagrams/archify/ko-observability-tracing-readme-2.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-tracing-readme-5",
+      "spec": "assets/diagrams/archify/ko-observability-tracing-readme-5.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-tracing-readme-7",
+      "spec": "assets/diagrams/archify/ko-observability-tracing-readme-7.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-metrics-05-datadog-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 859,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-metrics-05-datadog-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 859,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-metrics-05-datadog-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 859,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55993,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-metrics-05-datadog-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 870,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-metrics-05-datadog-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 870,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-metrics-05-datadog-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 870,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57543,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-01-tempo-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 779,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-01-tempo-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 779,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-01-tempo-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 779,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56931,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-02-xray-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 918,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-02-xray-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 918,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-02-xray-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 918,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54719,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 699,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 699,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 699,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52072,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 718,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 718,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 718,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47271,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 859,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 859,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 859,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49914,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-7.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 659,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-7.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 659,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-tracing-readme-7.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 659,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50128,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-metrics-05-datadog-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 498,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-metrics-05-datadog-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 498,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-metrics-05-datadog-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 498,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54770,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-metrics-05-datadog-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 501,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-metrics-05-datadog-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 501,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-metrics-05-datadog-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 501,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56608,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-01-tempo-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 551,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-01-tempo-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 551,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-01-tempo-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 551,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56578,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-02-xray-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 691,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-02-xray-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 691,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-02-xray-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 691,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54240,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-02-xray-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 621,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-02-xray-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 621,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-02-xray-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 621,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48570,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 488,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 488,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 488,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51583,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 523,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 523,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 523,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 46962,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 545,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 545,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 545,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49531,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-7.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 368,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-7.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 368,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-tracing-readme-7.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 368,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49166,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "51 cases on 17locallygeneratedviewers; motion/reduced-motion/visibility/theme/guided controls and 17 SVG exports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "individualPNGVisualInspection": {
+    "count": 17,
+    "status": "passed",
+    "method": "EachfinalPNGopenedindividually;readlabels/cards,arrowdirection,clippingandpairsemantics."
+  },
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/en-observability-metrics-05-datadog-0.architecture.json",
+      "sha256": "0ece3a5cf8d8a3f87678f470e65dbfaa877809118188cd3f5d455a8a7dc0901b"
+    },
+    {
+      "path": "public/archmaps/en-observability-metrics-05-datadog-0.html",
+      "sha256": "273b37cff0a11f7e0641dd377e1e184912f53c530c4f15fb235b09f5702e8c17"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-metrics-05-datadog-0.png",
+      "sha256": "f1dfe5270b6490a61f4bb58fdfc50919683ee7274500eba75c764062768bfff0"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-metrics-05-datadog-2.architecture.json",
+      "sha256": "9ef3c6dad56f5236b292a34df789ffe70c7a44ad04b5dbc88f171e4002516d90"
+    },
+    {
+      "path": "public/archmaps/en-observability-metrics-05-datadog-2.html",
+      "sha256": "2f9376134961b6456858115d033416e06920fb701fbfa327676744b7bb8ccde3"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-metrics-05-datadog-2.png",
+      "sha256": "f86cec189280ff97db4a6f4c2e0fb0010764d8bce9c4e11715068e92c3968600"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-tracing-01-tempo-0.architecture.json",
+      "sha256": "b651372dff8dd212ea38b2be99f313325810e41e67fc8e27cc0cd8fd314c9079"
+    },
+    {
+      "path": "public/archmaps/en-observability-tracing-01-tempo-0.html",
+      "sha256": "abe543b227e0a2f0c2b7bb0856ccc7e8f7fb07e72517166451913edfbdd31e98"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-tracing-01-tempo-0.png",
+      "sha256": "6ec7a3a28409bed9de8680c55c25d296dfec7e9e87d1e489234ad3d9ca2545e3"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-tracing-02-xray-0.architecture.json",
+      "sha256": "2bca2d29feeb5e60fa4bc9a0580e0be36b9a79296eadd4a4128f81e4e5aee6e1"
+    },
+    {
+      "path": "public/archmaps/en-observability-tracing-02-xray-0.html",
+      "sha256": "f59cfc07581f0b8ef4dd60a75de681ac10617aba4f823983a7023bf88ae0c775"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-tracing-02-xray-0.png",
+      "sha256": "f3842c81bac71e94aa81e7e9e6b37e37884a960a696e4cd694085bc883a7ec37"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-tracing-readme-1.architecture.json",
+      "sha256": "126162515ea679a08528ea5d916aeb1b9a34abf00cbcf891acc9b970dc22cea1"
+    },
+    {
+      "path": "public/archmaps/en-observability-tracing-readme-1.html",
+      "sha256": "a61bf5dd12a7a1c1b57ea873807a38fb52fa10315a3ace9b17845d2650eb4f66"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-tracing-readme-1.png",
+      "sha256": "70c8aa5017a52cf9388da878166f36a8f29499c95c1bce61c8a1546fba4518bd"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-tracing-readme-2.workflow.json",
+      "sha256": "38036e9d542c1944b9b4c6e517b57b0e0fcc6ec4d8779c787e6a950d5702560f"
+    },
+    {
+      "path": "public/archmaps/en-observability-tracing-readme-2.html",
+      "sha256": "24086829786259cceaefe1016cce2986c98a35f947c2b59342ea60fa083a8255"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-tracing-readme-2.png",
+      "sha256": "bb8fed1d3497d5ae1b78216e05bad98898692c656b00ce3459df94b618c505b8"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-tracing-readme-5.workflow.json",
+      "sha256": "ac842e9a50afc7917f6571971091b8efb4f66f5337db824477cb2b06cbfb4bab"
+    },
+    {
+      "path": "public/archmaps/en-observability-tracing-readme-5.html",
+      "sha256": "3cdd08e91ada1611ec84ea54d32a55618ddc218a698c7f8e145e1b60bbeb0fc8"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-tracing-readme-5.png",
+      "sha256": "1ff28e60bb91eabf2b01c7307ff744c8bd53f9557c13dc75b63bb3ca089979d0"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-tracing-readme-7.workflow.json",
+      "sha256": "8516c0daa078e197b60c48b5f718a07a61994d001962227ab7f02355968b3651"
+    },
+    {
+      "path": "public/archmaps/en-observability-tracing-readme-7.html",
+      "sha256": "a47df58782a39439ae1e01ae17ecd1bda7ee885bb179a28b9f2b615159d60b2f"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-tracing-readme-7.png",
+      "sha256": "bea1f2c3e7f986f4f2197854362e4894dc38ae7fdcee0047c263da4430a54f6e"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-metrics-05-datadog-0.architecture.json",
+      "sha256": "d88b492ce555d1ae8d561ae624fd8bf3b91f52584844fc725171b5f17aa3b78f"
+    },
+    {
+      "path": "public/archmaps/ko-observability-metrics-05-datadog-0.html",
+      "sha256": "c230e1a8005ba9c20142a15a357ab0401071b3775180ca7163e94abe0bbf2056"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-metrics-05-datadog-0.png",
+      "sha256": "b77bcfa9949cb63ff4b45bb239e8d8eb3437486690482472305204d8859f2924"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-metrics-05-datadog-2.architecture.json",
+      "sha256": "17feb8bd188ae2c01e78438ae54d0c3f83efa28f371dfddfa5bc828b67b05ffd"
+    },
+    {
+      "path": "public/archmaps/ko-observability-metrics-05-datadog-2.html",
+      "sha256": "7ae9aec9d018f52ec0d12a5868a5f157d09855fe87ed7e438a8b7a8fe9dce511"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-metrics-05-datadog-2.png",
+      "sha256": "d16d651c1b273ac65ef2267185da23fb6ffb1e619002c183cb57e46d62e37cfb"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-tracing-01-tempo-0.architecture.json",
+      "sha256": "af0f597654f8364c508af8518adc6358a1635750657835abe86d4e5d8da6c259"
+    },
+    {
+      "path": "public/archmaps/ko-observability-tracing-01-tempo-0.html",
+      "sha256": "9acb880bd3093f4d8fc731230fc8876a5ec27a2f05cb12e89971795577a1e26d"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-tracing-01-tempo-0.png",
+      "sha256": "6d7eaa582dd1d54747e3100b1fca8a220822fa7b40da56b35d08c279af231147"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-tracing-02-xray-0.architecture.json",
+      "sha256": "98893e72f0399930a06ecc423a217017d4cd5eb5998be5f3b17a759e05e62b49"
+    },
+    {
+      "path": "public/archmaps/ko-observability-tracing-02-xray-0.html",
+      "sha256": "dbd41732e9476dca794beb49a64772a9420f73df81a26dda9d559ba6f5907b19"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-tracing-02-xray-0.png",
+      "sha256": "1a9aca69c473c3a7dc6f09b63c64548b9163952d73d24e83d8a1631b0a449bdd"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-tracing-02-xray-1.architecture.json",
+      "sha256": "ad964c8e98ba06c5a015daa2ec092163fc82e192828c51f86f996965beb7954d"
+    },
+    {
+      "path": "public/archmaps/ko-observability-tracing-02-xray-1.html",
+      "sha256": "0823be5ff25aec49922a51a7d53395144f707ff2858914471dae8e27228e024d"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-tracing-02-xray-1.png",
+      "sha256": "6c5be7d508d66bdc70b01c82c3bf27e67d38b933fd471612a374739a4c144bc4"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-tracing-readme-1.architecture.json",
+      "sha256": "3750e39cc6ead4d0600dac0ce4b596650d55afb34df981be875473cbe77089ca"
+    },
+    {
+      "path": "public/archmaps/ko-observability-tracing-readme-1.html",
+      "sha256": "46e7008f4baa1c55f96a458d121b28275b3c4d35d7ffea0d627f6b6ea03046fe"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-tracing-readme-1.png",
+      "sha256": "4cdc8bff483f6f0683c43ab39e909f5386795b6c29652509c9f3f73e9fb07cc3"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-tracing-readme-2.workflow.json",
+      "sha256": "4d6dc53e8511c124e67fbd2598a70669c14afd58159f65e0a53a6d46568a0417"
+    },
+    {
+      "path": "public/archmaps/ko-observability-tracing-readme-2.html",
+      "sha256": "0151ac3b09e7b8f6bf9a7d27080e8eb9943c308068a9932f7de34234b5c0e52e"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-tracing-readme-2.png",
+      "sha256": "e8fa5a17857b7de82e6a80eb00ce38b3f8414d85bdc87bb952a96f4fc4a5c4cd"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-tracing-readme-5.workflow.json",
+      "sha256": "68406edcedb0451d3b160dd848a8bf8a44eeac18594db58e862ca07c9a59194a"
+    },
+    {
+      "path": "public/archmaps/ko-observability-tracing-readme-5.html",
+      "sha256": "8dd6563de9a388780597a34be191ac42c42da43a9a6c8de0cac691a7420e98b5"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-tracing-readme-5.png",
+      "sha256": "c766fd9e3fc83708a2fcb4ba738171dabc575851fa7eca96f36648450ec3f1e9"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-tracing-readme-7.workflow.json",
+      "sha256": "83e8f969453eb797638a4109b1812cf6c6ecc218211cdec34b683d9099637b59"
+    },
+    {
+      "path": "public/archmaps/ko-observability-tracing-readme-7.html",
+      "sha256": "8d72e6f247d0f52211cbad5cbcddd4440050e47e613c6b5e3a4950b033c441a1"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-tracing-readme-7.png",
+      "sha256": "77363b97b05c866408517170b23b36c4d2d02db7df2085f6f48295a6d38f2fc8"
+    }
+  ],
+  "limits": [
+    "Asset-onlyrepair;didnotrerunnativebackend/SDK/cloudtests.",
+    "Foreignprosebackfillremainstracked;oldsharedassetURLsstayavailablewithcorrectedEnglish/Koreancontent.",
+    "No measuredSaaScost,productionlatency,trafficvolumeorcloudavailabilityclaim."
+  ]
+}

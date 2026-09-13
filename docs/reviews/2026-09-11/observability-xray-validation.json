@@ -1540,5 +1540,10 @@
   "sourceAccessNotes": [
     "Rejected a CloudWatch installation link that returnedHTTP200butredirectedtothemonitoringindex;usedtheverifiedcanonicaladd-onpageinstead.",
     "OfficialADOTUbuntuarm64v0.50DEBdownloaded/extractedonlythebinary;versionedHTTPS+SHArecorded,nopublishersignatureverificationclaimed."
-  ]
+  ],
+  "parentAssetClosure": {
+    "status": "passed",
+    "report": "docs/reviews/2026-09-11/tracing-datadog-shared-assets-validation.json",
+    "note": "Historicalnative/textreviewevidenceandoriginalassetlimitationsarepreservedabove;thislaterclosureupdatesthe17retiredsharedassets."
+  }
 }

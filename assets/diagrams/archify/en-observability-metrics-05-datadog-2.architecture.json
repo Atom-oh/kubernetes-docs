@@ -22,7 +22,7 @@
           "m2",
           "m3"
         ],
-        "note": "Trim collected metrics with ignoreAutoConfig, dogstatsd and containerExcludeMetrics in values.yaml."
+        "note": "Metric selection and bounded tag combinations affect usage. DogStatsD nonLocalTraffic controls reachability, not a metric quota."
       },
       {
         "id": "view-log",
@@ -46,7 +46,7 @@
           "a2",
           "a3"
         ],
-        "note": "Cap trace volume with DD_TRACE_SAMPLE_RATE 0.1 (10%) and DD_TRACE_RATE_LIMIT 100."
+        "note": "Sampling and rate limits have SDK/Agent-specific scope and are not account-wide cost caps."
       }
     ]
   },
@@ -54,7 +54,7 @@
     {
       "id": "root",
       "type": "cloud",
-      "label": "Datadog Cost Optimization",
+      "label": "Measure usage by product",
       "pos": [
         570,
         30
@@ -63,12 +63,12 @@
         220,
         60
       ],
-      "sublabel": "Example: 100-node EKS ~$3,350/month"
+      "sublabel": "no fixed monthly estimate"
     },
     {
       "id": "metric",
       "type": "backend",
-      "label": "Metric Optimization",
+      "label": "Metrics",
       "pos": [
         30,
         250
@@ -77,12 +77,12 @@
         160,
         56
       ],
-      "sublabel": "Infra $15/host/month"
+      "sublabel": "series, tags, collection"
     },
     {
       "id": "log",
       "type": "backend",
-      "label": "Log Optimization",
+      "label": "Logs",
       "pos": [
         480,
         250
@@ -91,12 +91,12 @@
         160,
         56
       ],
-      "sublabel": "$0.10/GB"
+      "sublabel": "ingest, index, retention"
     },
     {
       "id": "apm",
       "type": "backend",
-      "label": "APM Optimization",
+      "label": "APM",
       "pos": [
         930,
         250
@@ -105,12 +105,12 @@
         160,
         56
       ],
-      "sublabel": "$31/host/month"
+      "sublabel": "billable hosts and spans"
     },
     {
       "id": "m1",
       "type": "backend",
-      "label": "Limit custom metrics",
+      "label": "Select metrics",
       "pos": [
         230,
         170
@@ -119,12 +119,12 @@
         200,
         50
       ],
-      "sublabel": "dogstatsd.nonLocalTraffic"
+      "sublabel": "review check output"
     },
     {
       "id": "m2",
       "type": "backend",
-      "label": "Manage tag cardinality",
+      "label": "Bound tag cardinality",
       "pos": [
         230,
         250
@@ -133,7 +133,7 @@
         200,
         50
       ],
-      "sublabel": "containerExcludeMetrics"
+      "sublabel": "avoid unbounded IDs"
     },
     {
       "id": "m3",
@@ -191,7 +191,7 @@
     {
       "id": "a1",
       "type": "backend",
-      "label": "Adjust sampling rate",
+      "label": "Review sampling",
       "pos": [
         1130,
         170
@@ -200,7 +200,7 @@
         200,
         50
       ],
-      "sublabel": "DD_TRACE_SAMPLE_RATE"
+      "sublabel": "SDK / Agent semantics"
     },
     {
       "id": "a2",
@@ -333,6 +333,17 @@
       "id": "apm-a3",
       "from": "apm",
       "to": "a3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Measure before and after",
+      "items": [
+        "Container exclusion is not a general tag-cardinality limiter",
+        "Index exclusions may not reduce already-ingested log volume",
+        "Include retention, indexed spans, compute and operational cost"
+      ]
     }
   ]
 }

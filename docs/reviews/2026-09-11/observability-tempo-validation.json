@@ -1707,5 +1707,10 @@
       "sha256": "56190e848ab2a27f551b62945b1629b5f48b2ad5a6163abf88edf90325ea8164",
       "bytes": 101049
     }
-  ]
+  ],
+  "parentAssetClosure": {
+    "status": "passed",
+    "report": "docs/reviews/2026-09-11/tracing-datadog-shared-assets-validation.json",
+    "note": "Historicalnative/textreviewevidenceandoriginalassetlimitationsarepreservedabove;thislaterclosureupdatesthe17retiredsharedassets."
+  }
 }

@@ -2,223 +2,124 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Distributed Tracing Solution Selection Guide",
-    "locale": "en",
+    "title": "Tracing Selection Criteria",
     "quality_profile": "showcase",
     "animation": "trace",
-    "views": [
-      {
-        "id": "aws-path",
-        "label": "AWS-native path",
-        "focus": [
-          "q_aws",
-          "xray"
-        ],
-        "note": "If you need AWS-native integration, choose AWS X-Ray right away. It integrates natively with EKS and is billed by usage."
-      },
-      {
-        "id": "oss-path",
-        "label": "Cost-first path",
-        "focus": [
-          "q_aws",
-          "q_cost",
-          "q_grafana",
-          "tempo",
-          "jaeger"
-        ],
-        "note": "If cost comes first, go open source. Pick Tempo if you already run the Grafana stack, otherwise Jaeger."
-      },
-      {
-        "id": "saas-path",
-        "label": "Commercial SaaS path",
-        "focus": [
-          "q_aws",
-          "q_cost",
-          "q_ai",
-          "dynatrace",
-          "datadog"
-        ],
-        "note": "If features matter more than cost, go commercial SaaS. Pick Dynatrace (Davis AI) if you need AI analysis, otherwise Datadog APM."
-      }
-    ],
+    "output": "en-observability-tracing-readme-7.html",
     "legend": {
       "entries": {
-        "backend": {
-          "label": "Decision"
+        "frontend": {
+          "label": "Requirements"
         },
         "cloud": {
-          "label": "AWS managed"
+          "label": "AWS service"
         },
-        "frontend": {
-          "label": "Open source"
+        "backend": {
+          "label": "Operated backend"
         },
         "external": {
-          "label": "Commercial SaaS"
+          "label": "SaaS"
+        },
+        "security": {
+          "label": "Validation"
         }
       }
     }
   },
   "lanes": [
     {
-      "id": "step1",
-      "label": "Step 1 · AWS-native integration"
+      "id": "criteria",
+      "label": "Compare using one workload"
     },
     {
-      "id": "step2",
-      "label": "Step 2 · Cost priority"
-    },
-    {
-      "id": "step3",
-      "label": "Step 3 · Existing stack / AI analysis"
-    },
-    {
-      "id": "result",
-      "label": "Recommended solution"
+      "id": "candidates",
+      "label": "Candidates, not a ranking"
     }
   ],
   "mainPath": [
-    "q_aws",
-    "q_cost",
-    "q_grafana",
-    "tempo"
+    "needs",
+    "trial"
   ],
   "nodes": [
     {
-      "id": "q_aws",
-      "lane": "step1",
+      "id": "needs",
+      "lane": "criteria",
       "col": 0,
-      "width": 160,
-      "type": "backend",
-      "label": "AWS-native required?",
-      "sublabel": "EKS integration model"
+      "type": "frontend",
+      "label": "Define requirements",
+      "sublabel": "protocol, queries, retention",
+      "width": 200
     },
     {
-      "id": "q_cost",
-      "lane": "step2",
-      "col": 1,
-      "width": 160,
-      "type": "backend",
-      "label": "Cost comes first?",
-      "sublabel": "open source vs commercial SaaS"
-    },
-    {
-      "id": "q_grafana",
-      "lane": "step3",
-      "col": 1,
-      "width": 160,
-      "type": "backend",
-      "label": "Using Grafana stack?",
-      "sublabel": "existing dashboard integration"
-    },
-    {
-      "id": "q_ai",
-      "lane": "step3",
-      "col": 3,
-      "width": 160,
-      "type": "backend",
-      "label": "Need AI analysis?",
-      "sublabel": "Davis AI · Watchdog"
+      "id": "trial",
+      "lane": "criteria",
+      "col": 4,
+      "type": "security",
+      "label": "Test actual workload",
+      "sublabel": "loss, latency, total cost",
+      "width": 200
     },
     {
       "id": "xray",
-      "lane": "result",
+      "lane": "candidates",
       "col": 0,
-      "width": 160,
       "type": "cloud",
       "label": "AWS X-Ray",
-      "sublabel": "AWS managed · usage-based"
+      "sublabel": "AWS integration + identity",
+      "width": 185
     },
     {
       "id": "tempo",
-      "lane": "result",
+      "lane": "candidates",
       "col": 1,
-      "width": 160,
-      "type": "frontend",
+      "type": "backend",
       "label": "Grafana Tempo",
-      "sublabel": "storage cost only · TraceQL"
+      "sublabel": "TraceQL + operated storage",
+      "width": 185
     },
     {
       "id": "jaeger",
-      "lane": "result",
+      "lane": "candidates",
       "col": 2,
-      "width": 160,
-      "type": "frontend",
+      "type": "backend",
       "label": "Jaeger",
-      "sublabel": "infrastructure cost · Cassandra/ES"
+      "sublabel": "version / backend support",
+      "width": 185
     },
     {
       "id": "dynatrace",
-      "lane": "result",
+      "lane": "candidates",
       "col": 3,
-      "width": 160,
       "type": "external",
       "label": "Dynatrace",
-      "sublabel": "Davis AI · OneAgent"
+      "sublabel": "instrumentation + plan",
+      "width": 185
     },
     {
       "id": "datadog",
-      "lane": "result",
+      "lane": "candidates",
       "col": 4,
-      "width": 160,
       "type": "external",
       "label": "Datadog APM",
-      "sublabel": "Watchdog · host/span-based"
+      "sublabel": "instrumentation + usage",
+      "width": 185
     }
   ],
   "edges": [
     {
-      "id": "aws-yes",
-      "from": "q_aws",
-      "to": "xray",
-      "label": "Yes",
-      "role": "branch"
-    },
+      "from": "needs",
+      "to": "trial",
+      "label": "evaluate all candidates"
+    }
+  ],
+  "cards": [
     {
-      "id": "aws-no",
-      "from": "q_aws",
-      "to": "q_cost",
-      "label": "No"
-    },
-    {
-      "id": "cost-yes",
-      "from": "q_cost",
-      "to": "q_grafana",
-      "label": "Yes",
-      "toSide": "top"
-    },
-    {
-      "id": "cost-no",
-      "from": "q_cost",
-      "to": "q_ai",
-      "label": "No",
-      "role": "branch"
-    },
-    {
-      "id": "grafana-yes",
-      "from": "q_grafana",
-      "to": "tempo",
-      "label": "Yes"
-    },
-    {
-      "id": "grafana-no",
-      "from": "q_grafana",
-      "to": "jaeger",
-      "label": "No",
-      "role": "branch"
-    },
-    {
-      "id": "ai-yes",
-      "from": "q_ai",
-      "to": "dynatrace",
-      "label": "Yes",
-      "role": "branch"
-    },
-    {
-      "id": "ai-no",
-      "from": "q_ai",
-      "to": "datadog",
-      "label": "No",
-      "role": "branch"
+      "dot": "cyan",
+      "title": "Shared evaluation",
+      "items": [
+        "Include compute, storage, requests, data transfer and people",
+        "AI capability and cost are not binary vendor distinctions"
+      ]
     }
   ]
 }

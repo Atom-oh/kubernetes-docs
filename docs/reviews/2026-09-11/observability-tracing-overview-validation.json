@@ -1238,5 +1238,10 @@
     "ReusedexistingPython3.12OTelAPI/SDK1.44andprometheus-client0.26;only8KBofficialB3wheelextractedwithPyPI SHAverification.",
     "Java/JDKnotinPATH/usualsystem/privateFlinklocations;no largeJDKinstallationorfalseJava-executionclaim. MDCAPIandJava1.66SpanContextsourceverified.",
     "TempointroHTMLandDatadogHTMLincludednavigation;usedpinnedTempoREADMEandDatadogMarkdownplusofficialbackenddocumentsforactualcontent."
-  ]
+  ],
+  "parentAssetClosure": {
+    "status": "passed",
+    "report": "docs/reviews/2026-09-11/tracing-datadog-shared-assets-validation.json",
+    "note": "Historicalnative/textreviewevidenceandoriginalassetlimitationsarepreservedabove;thislaterclosureupdatesthe17retiredsharedassets."
+  }
 }
