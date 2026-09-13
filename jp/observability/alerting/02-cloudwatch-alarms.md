@@ -21,6 +21,8 @@ CLI と Terraform の例では、**従来の CloudWatch メトリクスアラー
 
 ---
 
+<span id="cloudwatch-alarms-overview"></span>
+
 ## CloudWatch アラームの概要
 
 Amazon CloudWatch Alarms は、AWS ネイティブモニタリングサービスのアラート機能です。CloudWatch メトリクスに基づいてアラートを作成し、SNS、Lambda、EC2 Auto Scaling などとの統合を通じて自動応答を有効にします。
@@ -46,6 +48,8 @@ Amazon CloudWatch Alarms は、AWS ネイティブモニタリングサービス
 
 ---
 
+<span id="architecture"></span>
+
 ## アーキテクチャ
 
 ### CloudWatch アラームの動作フロー
@@ -63,6 +67,8 @@ Amazon CloudWatch Alarms は、AWS ネイティブモニタリングサービス
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-1.html)
 
 ---
+
+<span id="metric-alarms"></span>
 
 ## メトリクスアラーム
 
@@ -202,6 +208,8 @@ math-functions:
 
 ---
 
+<span id="composite-alarms"></span>
+
 ## 複合アラーム
 
 ### 複合アラームの概念
@@ -309,6 +317,8 @@ aws cloudwatch put-composite-alarm  \
 
 ---
 
+<span id="anomaly-detection"></span>
+
 ## 異常検出
 
 ### 異常検出の概要
@@ -398,6 +408,8 @@ aws cloudwatch put-anomaly-detector \
 
 ---
 
+<span id="sns-integration"></span>
+
 ## SNS 統合
 
 ### SNS Topic の作成
@@ -447,6 +459,8 @@ aws sns set-subscription-attributes  \
 カスタム Lambda が必要な場合は、シークレットストアから webhook を取得し、その宛先を検証して、接続／読み取りタイムアウトを設定し、レスポンスステータスを確認します。HTTP 429/5xx を成功として報告しないでください。リトライ、デッドレターパス、重複処理を構成してください。SNS は以下の EventBridge エンベロープではなく、`Records[].Sns.Message` を使用します。この章の検証では実際の Slack メッセージは送信しません。
 
 ---
+
+<span id="eventbridge-integration"></span>
 
 ## EventBridge 統合
 
@@ -521,6 +535,8 @@ def lambda_handler(event, context):
 この関数は AWS の変更を実行しません。ペイロード検査は送信者を認証しません。追加する修復処理には、明示的なターゲット許可リスト、現在のアラーム／リソース状態の確認、冪等性、クールダウン、最小権限、ロールバックが必要です。
 
 ---
+
+<span id="container-insights-alerts"></span>
 
 ## Container Insights アラート
 
@@ -603,6 +619,8 @@ CPU の例はクラスター集約です。個別ノードでは、完全な `Cl
 
 ---
 
+<span id="cloudwatch-alarm-actions"></span>
+
 ## CloudWatch アラームアクション
 
 ### EC2 アクション
@@ -675,6 +693,8 @@ aws cloudwatch put-metric-alarm \
 
 ---
 
+<span id="cost-optimization"></span>
+
 ## コスト最適化
 
 ### コスト要因
@@ -730,6 +750,8 @@ aws cloudwatch describe-alarms  \
 
 ---
 
+<span id="prometheus-metrics-integration"></span>
+
 ## Prometheus メトリクス統合
 
 ### Amazon Managed Prometheus（AMP）統合
@@ -743,6 +765,8 @@ AMP に保存されたメトリクスは、従来の CloudWatch メトリクス�
 以前の CPU モード平均は合計 CPU 使用率ではありませんでした。関連しない、または無制限の Pod にまたがるメモリ平均の比率は、各 Pod の制限使用率ではありませんでした。必要なラベルとリセットセマンティクスを保持する PromQL を選択し、ルールをテストして実際に収集されたデータを検証してください。
 
 ---
+
+<span id="terraform-examples"></span>
 
 ## Terraform の例
 

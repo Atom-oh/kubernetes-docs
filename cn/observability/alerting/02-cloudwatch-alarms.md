@@ -50,7 +50,7 @@ Amazon CloudWatch Alarms 是 AWS 原生监控服务的告警功能。它基于 C
 
 ### CloudWatch Alarms 运行流程
 
-![来自 EC2、EKS、RDS、Lambda 和自定义来源的指标汇入 CloudWatch Metrics，告警直接评估这些指标，或通过 Metrics Math 和 Anomaly Detection 带宽进行评估；告警分发到 SNS 及其他动作，SNS 再转发到各通知渠道。](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png)
+![来自 EC2、EKS、RDS、Lambda 和自定义来源的指标汇入 CloudWatch Metrics，告警直接评估这些指标，或通过 Metrics Math 和 Anomaly Detection 预期区间进行评估；告警分发到 SNS 及其他动作，SNS 再转发到各通知渠道。](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-0.html)
 
@@ -315,7 +315,7 @@ aws cloudwatch put-composite-alarm  \
 
 CloudWatch Anomaly Detection 使用机器学习学习指标的正常模式，并检测离群值。
 
-![学习阶段使用历史数据训练 ML 模型以生成预期带，检测阶段将当前指标与其比较：超出带宽则发出异常告警，位于带内则标记为正常。](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png)
+![学习阶段使用历史数据训练 ML 模型以生成预期带，检测阶段将当前指标与其比较：超出预期区间则发出异常告警，位于带内则标记为正常。](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-3.html)
 
@@ -679,14 +679,14 @@ aws cloudwatch put-metric-alarm \
 
 ### 成本构成因素
 
-下表数字是 2026-09-13 查阅官方定价页面时的 **US East 示例**，并非首尔 Region 的报价。请查询目标 Region 的当前价格。指标告警按被评估的指标计费，而复合告警按告警个数计费。异常检测包含实际指标以及两条带宽指标。添加复合告警不会免除子告警的费用：它减少的是通知噪音，而不会自动降低成本。
+下表数字是 2026-09-13 查阅官方定价页面时的 **US East 示例**，并非首尔 Region 的报价。请查询目标 Region 的当前价格。指标告警按被评估的指标计费，而复合告警按告警个数计费。异常检测包含实际指标以及预期区间的上界和下界两条指标。添加复合告警不会免除子告警的费用：它减少的是通知噪音，而不会自动降低成本。
 
 
 | 项目 | 费用 |
 |------|------|
 | 标准分辨率告警（60s） | $0.10/告警/月 |
 | 高分辨率告警（10s） | $0.30/告警/月 |
-| 标准异常检测告警：一条实际指标加两条带宽指标 | 示例 $0.30/告警/月 |
+| 标准异常检测告警：一条实际指标加预期区间的上界和下界两条指标 | 示例 $0.30/告警/月 |
 | 复合告警（Composite Alarm） | $0.50/告警/月 |
 
 ### 成本优化策略

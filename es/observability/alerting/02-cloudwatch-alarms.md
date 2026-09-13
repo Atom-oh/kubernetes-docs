@@ -21,6 +21,8 @@ Los ejemplos de CLI y Terraform cubren las **alarmas de métricas clásicas de C
 
 ---
 
+<span id="cloudwatch-alarms-overview"></span>
+
 ## Descripción general de las alarmas de CloudWatch
 
 Amazon CloudWatch Alarms es la función de alertas del servicio de monitoreo nativo de AWS. Crea alertas basadas en métricas de CloudWatch y permite respuestas automatizadas mediante la integración con SNS, Lambda, EC2 Auto Scaling y más.
@@ -46,6 +48,8 @@ Amazon CloudWatch Alarms es la función de alertas del servicio de monitoreo nat
 
 ---
 
+<span id="architecture"></span>
+
 ## Arquitectura
 
 ### Flujo de operación de las alarmas de CloudWatch
@@ -63,6 +67,8 @@ Una alarma de métrica clásica comienza en `INSUFFICIENT_DATA` y luego se eval�
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-1.html)
 
 ---
+
+<span id="metric-alarms"></span>
 
 ## Alarmas de métricas
 
@@ -202,6 +208,8 @@ math-functions:
 
 ---
 
+<span id="composite-alarms"></span>
+
 ## Alarmas compuestas
 
 ### Concepto de alarma compuesta
@@ -309,6 +317,8 @@ aws cloudwatch put-composite-alarm  \
 
 ---
 
+<span id="anomaly-detection"></span>
+
 ## Detección de anomalías
 
 ### Descripción general de la detección de anomalías
@@ -398,6 +408,8 @@ aws cloudwatch put-anomaly-detector \
 
 ---
 
+<span id="sns-integration"></span>
+
 ## Integración con SNS
 
 ### Creación de un tema de SNS
@@ -447,6 +459,8 @@ Para las notificaciones estándar de CloudWatch, conecte el tema de SNS y un can
 Si se requiere una Lambda personalizada, obtenga el webhook de un almacén de secretos, valide su destino, establezca tiempos de espera de conexión/lectura y compruebe el estado de la respuesta. No informe HTTP 429/5xx como éxito; configure reintentos, una ruta de dead-letter y el manejo de duplicados. SNS usa `Records[].Sns.Message`, no el sobre de EventBridge siguiente. La validación de este capítulo no envía mensajes reales de Slack.
 
 ---
+
+<span id="eventbridge-integration"></span>
 
 ## Integración con EventBridge
 
@@ -521,6 +535,8 @@ def lambda_handler(event, context):
 La función no realiza mutaciones de AWS. Las comprobaciones de payload no autentican al remitente. Toda remediación agregada necesita una lista de permitidos explícita de destinos, comprobaciones actuales del estado de la alarma/recurso, idempotencia, período de enfriamiento, mínimo privilegio y reversión.
 
 ---
+
+<span id="container-insights-alerts"></span>
 
 ## Alertas de Container Insights
 
@@ -603,6 +619,8 @@ El ejemplo de CPU es una agregación de clúster. Un nodo individual usa el conj
 
 ---
 
+<span id="cloudwatch-alarm-actions"></span>
+
 ## Acciones de alarmas de CloudWatch
 
 ### Acciones de EC2
@@ -675,6 +693,8 @@ Un ARN `automation-definition/...` no es un destino directo de `AlarmActions` co
 
 ---
 
+<span id="cost-optimization"></span>
+
 ## Optimización de costos
 
 ### Factores de costo
@@ -730,6 +750,8 @@ aws cloudwatch describe-alarms  \
 
 ---
 
+<span id="prometheus-metrics-integration"></span>
+
 ## Integración de métricas de Prometheus
 
 ### Integración con Amazon Managed Prometheus (AMP)
@@ -743,6 +765,8 @@ Las métricas almacenadas en AMP no se copian automáticamente a las métricas c
 El anterior promedio de modo de CPU no era la utilización total de CPU; una proporción de promedios de memoria entre Pods no relacionados o sin límite no era la utilización del límite de cada Pod. Seleccione PromQL que conserve las etiquetas requeridas y la semántica de restablecimiento, luego pruebe la regla y valide los datos recopilados reales.
 
 ---
+
+<span id="terraform-examples"></span>
 
 ## Ejemplos de Terraform
 

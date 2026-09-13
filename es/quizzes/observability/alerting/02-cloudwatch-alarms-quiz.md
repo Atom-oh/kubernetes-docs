@@ -146,7 +146,7 @@ Elija según la semántica de la métrica. `notBreaching` puede ser adecuado par
 **Explicación:**
 CloudWatch Alarm Actions puede ejecutar directamente las siguientes operaciones nativas de AWS:
 - EC2 Actions: Detener, reiniciar, recuperar, terminar (iniciar no es una acción directa)
-- Auto Scaling Actions: Activar políticas de escalado horizontal o vertical
+- Auto Scaling Actions: Activar políticas de aumento o reducción del número de instancias (scale-out/scale-in)
 - SNS Actions: Enviar mensajes a temas
 
 El reinicio de un Pod de EKS no es compatible directamente y requiere una ruta de Lambda/workflow y Kubernetes API autorizada por separado.
