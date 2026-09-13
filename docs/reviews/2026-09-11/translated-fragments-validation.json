@@ -1,7 +1,7 @@
 {
   "status": "passed",
   "checkedAt": "2026-09-13T14:44:31.189183+00:00",
-  "baseCommit": "242173fdcd8807dabdab18df69f04d99a8bde568",
+  "baseCommit": "f502959add1fe7d409a9f432e1323d3c21616027",
   "scope": "Exact whole-line heading aliases and verified English fallback links. Heading lines and fenced code unchanged; fallback labels explicitly marked English.",
   "files": [
     {
@@ -330,13 +330,6 @@
       "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
       "previousSha256": "f53cbff79ce8849e3893e6ca65e173463af751d5a646b9f3890abf8bd970d0e5",
       "sha256": "f732a1a7f4ff4fcdbd33eb735479e228f7b5994919d0e28881bc4d1be6239447",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "previousSha256": "1d6d48405361887942b0baa82d6c7056084385f3f7db664cabc1c895351ed5e5",
-      "sha256": "7eaba0e4a41113e4c61e5611c5539b24ab89c2e4af59837f6d5cbb93b6dc8a82",
       "fencedCodeUnchanged": true,
       "headingLinesUnchanged": true
     },
@@ -971,13 +964,6 @@
       "headingLinesUnchanged": true
     },
     {
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "previousSha256": "a00e0dc4adc58c0c2cd9b5006495416fc432a4f4cca119abeba06eafda7345b3",
-      "sha256": "971eb0311ddac9eea45948b070830f184e6bd1864ec85bbc212182da8935375b",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
       "path": "es/observability/alerting/README.md",
       "previousSha256": "64a386a362fa4c3f03d07d0b91fa0677891f6c5f7d9efc661b0019978e09b707",
       "sha256": "4d2202033682e6f10e43c03875c595ab1638ca3afb031372b226ef71a44ed5da",
@@ -1569,13 +1555,6 @@
       "path": "jp/observability/alerting/01-alertmanager.md",
       "previousSha256": "bd07151fa9450cc47343deafd012dec61d0c93c6467a8997a3d8ce7b5acf0916",
       "sha256": "f65f20c9fedc2bb0a61715035f53a89dbe78875db1535bebcb4e97b0be45a019",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "previousSha256": "c30450893348ea4158478d682b1b43ffc37b9c38f25642f9103787d1b85cb97f",
-      "sha256": "135bf76ab78413f8889ee448562d906bc7c33f1cc6a3f51135b167390b8c6cc5",
       "fencedCodeUnchanged": true,
       "headingLinesUnchanged": true
     },
@@ -6253,138 +6232,6 @@
       "method": "unique exact normalized label at highest matching heading level",
       "evidenceLabels": [
         "CloudWatch Alarms 概览"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "best-practices",
-      "heading": "## 最佳实践",
-      "nativeId": "最佳实践",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "最佳实践"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "pagerdutyopsgenie-comparison",
-      "heading": "## PagerDuty/OpsGenie 对比",
-      "nativeId": "pagerduty-opsgenie-对比",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "PagerDuty/OpsGenie 对比"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "mobile-app",
-      "heading": "## 移动应用",
-      "nativeId": "移动应用",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "移动应用"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "grafana-irm-integration",
-      "heading": "## Grafana IRM 集成",
-      "nativeId": "grafana-irm-集成",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Grafana IRM 集成"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "chatops-integration",
-      "heading": "## ChatOps 集成",
-      "nativeId": "chatops-集成",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "ChatOps 集成"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "alert-grouping-and-routing",
-      "heading": "## 告警分组与路由",
-      "nativeId": "告警分组与路由",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "告警分组与路由"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "escalation-chains",
-      "heading": "## 升级链",
-      "nativeId": "升级链",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "升级链"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "on-call-schedule-configuration",
-      "heading": "## 值班计划配置",
-      "nativeId": "值班计划配置",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "值班计划配置"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "integration-setup",
-      "heading": "## 集成设置",
-      "nativeId": "集成设置",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "集成设置"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "installation",
-      "heading": "## 安装",
-      "nativeId": "安装",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "安装"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "architecture",
-      "heading": "## 架构",
-      "nativeId": "架构",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "架构"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/03-grafana-oncall.md",
-      "id": "grafana-oncall-overview",
-      "heading": "## Grafana OnCall 概述",
-      "nativeId": "grafana-oncall-概述",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Grafana OnCall 概述"
       ]
     },
     {
@@ -13819,138 +13666,6 @@
     },
     {
       "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "best-practices",
-      "heading": "## Prácticas recomendadas",
-      "nativeId": "practicas-recomendadas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Prácticas recomendadas"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "pagerdutyopsgenie-comparison",
-      "heading": "## Comparación con PagerDuty/OpsGenie",
-      "nativeId": "comparacion-con-pagerduty-opsgenie",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Comparación con PagerDuty/OpsGenie"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "mobile-app",
-      "heading": "## Aplicación móvil",
-      "nativeId": "aplicacion-movil",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Aplicación móvil"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "grafana-irm-integration",
-      "heading": "## Integración de Grafana IRM",
-      "nativeId": "integracion-de-grafana-irm",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Integración de Grafana IRM"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "chatops-integration",
-      "heading": "## Integración de ChatOps",
-      "nativeId": "integracion-de-chatops",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Integración de ChatOps"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "alert-grouping-and-routing",
-      "heading": "## Agrupación y enrutamiento de alertas",
-      "nativeId": "agrupacion-y-enrutamiento-de-alertas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Agrupación y enrutamiento de alertas"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "escalation-chains",
-      "heading": "## Cadenas de escalamiento",
-      "nativeId": "cadenas-de-escalamiento",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Cadenas de escalamiento"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "on-call-schedule-configuration",
-      "heading": "## Configuración del calendario de guardias",
-      "nativeId": "configuracion-del-calendario-de-guardias",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Configuración del calendario de guardias"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "integration-setup",
-      "heading": "## Configuración de integraciones",
-      "nativeId": "configuracion-de-integraciones",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Configuración de integraciones"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "installation",
-      "heading": "## Instalación",
-      "nativeId": "instalacion",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Instalación"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "architecture",
-      "heading": "## Arquitectura",
-      "nativeId": "arquitectura",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Arquitectura"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/03-grafana-oncall.md",
-      "id": "grafana-oncall-overview",
-      "heading": "## Descripción general de Grafana OnCall",
-      "nativeId": "descripcion-general-de-grafana-oncall",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Descripción general de Grafana OnCall"
-      ]
-    },
-    {
-      "kind": "alias",
       "path": "es/observability/alerting/README.md",
       "id": "solution-comparison",
       "heading": "## Comparación de soluciones",
@@ -20584,138 +20299,6 @@
     },
     {
       "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "best-practices",
-      "heading": "## ベストプラクティス",
-      "nativeId": "ベストプラクティス",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "ベストプラクティス"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "pagerdutyopsgenie-comparison",
-      "heading": "## PagerDuty/OpsGenie の比較",
-      "nativeId": "pagerduty-opsgenie-の比較",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "PagerDuty/OpsGenie の比較"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "mobile-app",
-      "heading": "## モバイルアプリ",
-      "nativeId": "モバイルアプリ",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "モバイルアプリ"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "grafana-irm-integration",
-      "heading": "## Grafana IRM 統合",
-      "nativeId": "grafana-irm-統合",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Grafana IRM 統合"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "chatops-integration",
-      "heading": "## ChatOps 統合",
-      "nativeId": "chatops-統合",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "ChatOps 統合"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "alert-grouping-and-routing",
-      "heading": "## アラートのグループ化とルーティング",
-      "nativeId": "アラートのグループ化とルーティング",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "アラートのグループ化とルーティング"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "escalation-chains",
-      "heading": "## エスカレーションチェーン",
-      "nativeId": "エスカレーションチェーン",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "エスカレーションチェーン"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "on-call-schedule-configuration",
-      "heading": "## オンコールスケジュールの設定",
-      "nativeId": "オンコールスケジュールの設定",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "オンコールスケジュールの設定"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "integration-setup",
-      "heading": "## 統合のセットアップ",
-      "nativeId": "統合のセットアップ",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "統合のセットアップ"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "installation",
-      "heading": "## インストール",
-      "nativeId": "インストール",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "インストール"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "architecture",
-      "heading": "## アーキテクチャ",
-      "nativeId": "アーキテクチャ",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "アーキテクチャ"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/03-grafana-oncall.md",
-      "id": "grafana-oncall-overview",
-      "heading": "## Grafana OnCall の概要",
-      "nativeId": "grafana-oncall-の概要",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Grafana OnCall の概要"
-      ]
-    },
-    {
-      "kind": "alias",
       "path": "jp/observability/alerting/README.md",
       "id": "solution-comparison",
       "heading": "## ソリューション比較",
@@ -24290,7 +23873,7 @@
   ],
   "nativePreservation": {
     "status": "passed",
-    "documents": 272,
+    "documents": 269,
     "checks": [
       {
         "path": "cn/autoscaling/01-keda.md",
@@ -24524,11 +24107,6 @@
       },
       {
         "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
-        "path": "cn/observability/alerting/03-grafana-oncall.md",
         "codeUnchanged": true,
         "headingsUnchanged": true
       },
@@ -24983,11 +24561,6 @@
         "headingsUnchanged": true
       },
       {
-        "path": "es/observability/alerting/03-grafana-oncall.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
         "path": "es/observability/alerting/README.md",
         "codeUnchanged": true,
         "headingsUnchanged": true
@@ -25413,11 +24986,6 @@
         "headingsUnchanged": true
       },
       {
-        "path": "jp/observability/alerting/03-grafana-oncall.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
         "path": "jp/observability/alerting/README.md",
         "codeUnchanged": true,
         "headingsUnchanged": true
@@ -25656,7 +25224,7 @@
   },
   "allLocaleFragments": {
     "documents": 2795,
-    "checked": 66585,
+    "checked": 66588,
     "missing": [],
     "skipped": []
   },
@@ -25664,5 +25232,16 @@
     "Mechanical heading/link correction only; unchanged translated prose is not a newly completed semantic review.",
     "English fallback links are explicitly labeled and target an existing verified section.",
     "Native Markdown parsing, not naive fence splitting, verifies code preservation; exact reverse reconstruction also passes."
-  ]
+  ],
+  "mergeResolution": {
+    "previousReviewedHead": "edb59fcd4c4256bf4c99407a6abeee741448bc12",
+    "mergedMain": "f502959add1fe7d409a9f432e1323d3c21616027",
+    "preservedFromMain": [
+      "cn/observability/alerting/03-grafana-oncall.md",
+      "es/observability/alerting/03-grafana-oncall.md",
+      "jp/observability/alerting/03-grafana-oncall.md"
+    ],
+    "reason": "PR301 latest translations already provide the corresponding current section IDs and73historicalaliases. Preserve those complete reviewed translations instead of layering old-version edits.",
+    "removedFromThisPRScope": 3
+  }
 }

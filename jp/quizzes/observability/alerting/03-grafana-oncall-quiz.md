@@ -1,12 +1,18 @@
 # Grafana OnCall クイズ
 
-Grafana OnCall の理解度を確認するクイズです。
+> **最終更新**: September 13, 2026
+
+このクイズでは、アーカイブされた OnCall OSS インストールのレビューと移行について扱います。
+
+Grafana OnCall に関する理解を確認するためのクイズです。
+
+**Cloud Connection は 2026-03-24 に終了しました。** Grafana IRM アプリを通じた OSS モバイルプッシュ通知、および Cloud Connection に依存する SMS/音声通知は、もはや機能しません。個別に設定された Twilio またはその他の通知サービスは別の経路です。これは、すべてのセルフホスト型電話/SMS メカニズムが終了したことを意味するものではありません。
 
 ---
 
 1. Grafana OnCall の主要機能ではないものはどれですか？
    - A) オンコールスケジュール管理
-   - B) エスカレーションチェーンの設定
+   - B) エスカレーションチェーン設定
    - C) メトリクスの収集と保存
    - D) ChatOps 統合 (Slack, Teams)
 
@@ -16,24 +22,17 @@ Grafana OnCall の理解度を確認するクイズです。
 **回答: C) メトリクスの収集と保存**
 
 **解説:**
-Grafana OnCall は、次の機能を提供するオンコール管理およびインシデント対応ツールです。
-- オンコールスケジュール管理（ローテーション、オーバーライド）
-- エスカレーションチェーンの設定
-- アラートのグループ化とルーティング
-- ChatOps 統合 (Slack, MS Teams, Telegram)
-- モバイルアプリ通知
-
-メトリクスの収集と保存は、Prometheus や Grafana Mimir などの別のツールの役割です。OnCall は、これらのツールから生成されたアラートを受信して処理します。
+OnCall はアラート、スケジュール、ルーティング、対応者のアクションを受信・管理します。メトリクスデータベースではありません。OSS は 2026-03-24 にアーカイブされました。既存インストールでのチャネル/API の可用性は、保守されている Cloud IRM とは別に確認する必要があります。
 
 </details>
 
 ---
 
 2. Grafana OnCall のエスカレーションポリシーにおける `wait` タイプの役割は何ですか？
-   - A) アラート送信前にデータ収集を待機する
+   - A) アラートを送信する前にデータ収集を待機する
    - B) 次のエスカレーションステップに進む前に待機する
-   - C) ユーザーの応答を待ってから自動解決する
-   - D) アラートのグループ化を待機する
+   - C) ユーザーの応答を待機してから自動解決する
+   - D) アラートグループ化を待機する
 
 <details>
 <summary>回答を表示</summary>
@@ -41,12 +40,7 @@ Grafana OnCall は、次の機能を提供するオンコール管理および�
 **回答: B) 次のエスカレーションステップに進む前に待機する**
 
 **解説:**
-エスカレーションチェーンでは、`wait` タイプは現在のステップと次のステップの間の待機時間を設定します。例:
-1. ステップ 1: 現在のオンコール対応者に通知する
-2. ステップ 2: 900 秒（15 分）待機する
-3. ステップ 3: 応答がない場合、二次対応者に通知する
-
-これにより、一次対応者に応答する時間を与え、応答がない場合にのみエスカレーションが進みます。
+wait ステップは次のエスカレーションステップを遅延させます。インシデントを確認応答も解決も行いません。確認した公開 serializer は、秒単位で 1 分から 24 時間の待機を受け付けます。実際に停止するか、再ページするかの動作は、チェーンと alert-group の状態に依存します。
 
 </details>
 
@@ -54,67 +48,53 @@ Grafana OnCall は、次の機能を提供するオンコール管理および�
 
 3. Grafana OnCall のオンコールスケジュールにおける「Override」とは何ですか？
    - A) スケジュールを完全に削除して再作成すること
-   - B) 既存のスケジュール内の特定期間について対応者を一時的に変更すること
+   - B) 既存スケジュール内の特定期間の対応者を一時的に変更すること
    - C) スケジュールのタイムゾーンを変更すること
    - D) ローテーションサイクルを変更すること
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 既存のスケジュール内の特定期間について対応者を一時的に変更すること**
+**回答: B) 既存スケジュール内の特定期間の対応者を一時的に変更すること**
 
 **解説:**
-Override は、通常のオンコールスケジュールにおいて特定期間の対応者を一時的に変更する機能です。主なユースケース:
-- 休暇による対応者の交代
-- 緊急事態による一時的な変更
-- トレーニングや会議による一時的な交代
-
-Override は、既存のスケジュールを維持したまま、特定期間に別の対応者を指定します。
+Override は、定義された期間のカバレッジを変更します。確認した API では、明示的な timezone と対象スケジュールへの必須の関連付けを持つ on_call_shifts タイプです。既存の shift ID、優先度、欠落、および最終対応者を確認してください。古いネストされた overrides エンドポイントを前提にしないでください。
 
 </details>
 
 ---
 
-4. Grafana OnCall を Alertmanager と統合する際に使用される方法は何ですか？
+4. Grafana OnCall を Alertmanager と統合する際には、どの方法を使用しますか？
    - A) Alertmanager が OnCall のメトリクスを直接収集する
-   - B) Alertmanager の webhook_configs を介して OnCall にアラートを送信する
+   - B) Alertmanager の webhook_configs 経由で OnCall にアラートを送信する
    - C) OnCall が Alertmanager の API を定期的にポーリングする
-   - D) 両方のシステムがデータベースを共有する
+   - D) 両システムがデータベースを共有する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Alertmanager の webhook_configs を介して OnCall にアラートを送信する**
+**回答: B) Alertmanager の webhook_configs 経由で OnCall にアラートを送信する**
 
 **解説:**
-Alertmanager と Grafana OnCall の統合は Webhook を通じて行われます:
-```yaml
-receivers:
-  - name: 'grafana-oncall'
-    webhook_configs:
-      - url: 'https://oncall.example.com/api/v1/webhook/<integration-id>/'
-        send_resolved: true
-```
-
-Alertmanager がアラートを発報すると、設定された Webhook URL に HTTP POST リクエストを送信し、OnCall がそれを受信して処理します。
+実際の統合タイプに対して生成された URL を webhook_configs とともに使用し、適切な場合は保護された url_file に保存します。参照するすべての receiver を定義し、最新の matcher を使用してください。公開 API の raw-token 認証は webhook URL とは別です。send_resolved があっても、OnCall がソースルールを更新するわけではありません。
 
 </details>
 
 ---
 
-5. Grafana OnCall におけるアラートのグループ化の主な目的は何ですか？
-   - A) アラートを時刻順に並べ替える
-   - B) 関連するアラートを 1 つにまとめてアラート疲れを軽減する
-   - C) アラートを重要度別に分類する
-   - D) 重複したアラートを自動的に削除する
+5. Grafana OnCall におけるアラートグループ化の主な目的は何ですか？
+   - A) アラートを時間順に並べ替える
+   - B) 関連するアラートを 1 つにまとめてアラート疲労を軽減する
+   - C) アラートを重要度で分類する
+   - D) 重複するアラートを自動的に削除する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 関連するアラートを 1 つにまとめてアラート疲れを軽減する**
+**回答: B) 関連するアラートを 1 つにまとめてアラート疲労を軽減する**
 
 **解説:**
-アラートのグループ化では、同じ問題によって発生した複数のアラートを 1 つのグループとして管理します。たとえば、node 障害によって複数の Pod アラートが発生した場合、それらをまとめることで、対応者は数十件の個別アラートではなく 1 件のグループ化されたアラートを受け取ります。グループ化キー（例: alertname + namespace）を定義して、どのアラートをまとめるかを決定します。
+グループ化は対応者の重複作業を減らせますが、インシデントドメインをスコープとするキーを使用する必要があります。ラベルが少なすぎると無関係なインシデントが統合され、無制限の ID はグループを分断します。ソース Alertmanager のタイミングと OnCall のグループ化/解決テンプレートは別物であり、配信が正確に 1 回行われる保証はありません。
 
 </details>
 
@@ -122,101 +102,77 @@ Alertmanager がアラートを発報すると、設定された Webhook URL に
 
 6. Grafana OnCall のエスカレーションポリシーで `notify_on_call_from_schedule` の `important` フラグが true の場合、何が起こりますか？
    - A) アラートが最優先としてマークされる
-   - B) 設定済みのすべてのチャネル（電話、SMS、push など）でアラートが送信される
-   - C) エスカレーションチェーンがスキップされ、アラートが直ちに管理者へ送信される
+   - B) ユーザーが設定した重要な通知ルールセットが選択される
+   - C) エスカレーションチェーンがスキップされ、アラートが直ちに上司へ送信される
    - D) アラートが永続的に保存される
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 設定済みのすべてのチャネル（電話、SMS、push など）でアラートが送信される**
+**回答: B) ユーザーが設定した重要な通知ルールセットが選択される**
 
 **解説:**
-`important` フラグの意味:
-- `important: true`: ユーザーが設定したすべての通知チャネル（電話、SMS、モバイル push、Slack など）でアラートを送信する
-- `important: false`: デフォルトのチャネルのみ（例: Slack）でアラートを送信する
-
-これにより、重要度に応じてアラートの強度を調整できます。Critical アラートは電話/SMS を含めるために important=true に設定でき、Warning は Slack のみを使用するために important=false に設定できます。
+important は、ユーザーの重要な個人用通知ルールセットを選択します。設定されたルールの順序、待機、チャネル、および可用性は引き続き適用されます。すべてのチャネルを介して自動送信するわけではありません。デフォルトルールは普遍的に Slack 専用ではありません。
 
 </details>
 
 ---
 
-7. Grafana OnCall と Slack の統合で使用できないコマンドはどれですか？
-   - A) /oncall ack (アラートを確認する)
-   - B) /oncall resolve (アラートを解決する)
-   - C) /oncall deploy (Deployment を実行する)
-   - D) /oncall silence 2h (2 時間サイレンスする)
+7. 既存の OnCall インストールで Slack アクションを使用する正しい方法はどれですか？
+   - A) すべてのインストールが /oncall ack をサポートすると仮定する
+   - B) スラッシュコマンドを Bash として扱う
+   - C) インストール済みアプリのコマンド、権限、アクションボタンを確認する
+   - D) 確認応答がソースモニターを解決すると仮定する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) /oncall deploy (Deployment を実行する)**
+**回答: C) インストール済みアプリのコマンド、権限、アクションボタンを確認する**
 
 **解説:**
-Grafana OnCall の Slack コマンド:
-- `/oncall` - 現在のオンコール対応者を確認する
-- `/oncall schedule` - スケジュールを表示する
-- `/oncall ack` - アラートを確認する
-- `/oncall resolve` - アラートを解決する
-- `/oncall silence 2h` - 2 時間サイレンスする
-- `/oncall unsilence` - サイレンスを解除する
-- `/oncall escalate` - アラートをエスカレーションする
-
-Deployment の実行は OnCall の機能ではありません。OnCall はアラート管理とオンコール管理に重点を置いています。
+インストール済み Slack アプリの実際のルートコマンド/ヘルプと、認可されたアクションボタンを確認してください。確認したソースでは、古くから主張されている /oncall コマンドカタログではなく、設定可能なルートコマンドと /grafana の例を使用しています。Acknowledge、Resolve、Silence は異なるアクションです。デプロイの実行が暗黙に行われるわけではありません。
 
 </details>
 
 ---
 
-8. PagerDuty/OpsGenie と比較した Grafana OnCall の利点ではないものはどれですか？
-   - A) オープンソースでセルフホスト可能
-   - B) Grafana stack とのネイティブ統合
-   - C) 700+ の統合をサポート
-   - D) 無料で利用可能（OSS バージョン）
+8. 新しいオンコールツールまたは移行の判断に適した根拠は何ですか？
+   - A) 古い統合数だけで選ぶ
+   - B) OSS に運用コストはないと仮定する
+   - C) 保守、必要な機能、実際のコスト、移行/復旧を確認する
+   - D) アーカイブされた OnCall OSS をデフォルトでインストールする
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) 700+ の統合をサポート**
+**回答: C) 保守、必要な機能、実際のコスト、移行/復旧を確認する**
 
 **解説:**
-700+ の統合は PagerDuty の利点です。比較:
-- **Grafana OnCall**: 30+ の統合、オープンソース、セルフホスト可能、Grafana ネイティブ統合、無料（OSS）
-- **PagerDuty**: 700+ の統合、SaaS のみ、高度な分析/レポート、AIOps 機能
-- **OpsGenie**: 200+ の統合、SaaS のみ、Atlassian ecosystem 統合
-
-OnCall は Grafana stack を使用する環境にとってコスト効率の高い選択肢ですが、多様な外部システム統合が必要な場合は PagerDuty の方が適している可能性があります。
+現在の保守/ライフサイクル、必要な機能、運用コスト、契約を基準にしてください。固定された古い統合数やユーザー単価だけでは不十分です。OnCall OSS はアーカイブされており、Opsgenie は 2027-04-05 にサービス/サポートを終了すると発表しています。保守されている移行先をレビューし、移行/復旧をテストしてください。
 
 </details>
 
 ---
 
-9. Grafana OnCall の本番 Deployment における高可用性の推奨構成は何ですか？
-   - A) 単一インスタンスで十分
-   - B) API server と Celery worker のレプリカ数を増やし、外部 PostgreSQL/Redis を使用する
-   - C) 複数の cluster に分散 Deployment する
-   - D) 読み取り専用レプリカのみを追加する
+9. 既存の OnCall デプロイメントの可用性について、何を確認する必要がありますか？
+   - A) API レプリカが 3 つあれば可用性が保証される
+   - B) 依存関係、状態、配信、障害、および復旧時の挙動
+   - C) クラスター数のみ
+   - D) 読み取り専用データベースレプリカのみ
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) API server と Celery worker のレプリカ数を増やし、外部 PostgreSQL/Redis を使用する**
+**回答: B) 依存関係、状態、配信、障害、および復旧時の挙動**
 
 **解説:**
-Grafana OnCall の本番 HA 構成:
-- **API server**: 3+ レプリカ、Pod Anti-Affinity 設定
-- **Celery workers**: 3+ レプリカ、Pod Anti-Affinity 設定
-- **PostgreSQL**: 外部マネージド DB（AWS RDS など）を使用
-- **Redis**: 外部マネージド Redis（AWS ElastiCache など）を使用
-
-この構成により単一障害点を排除し、個々のコンポーネントに障害が発生してもサービスを継続して運用できます。
+レプリカ数だけでは、すべての障害ポイントを排除できません。既存インストールでは、依存関係、broker/cache/database、scheduler、key、TLS、配信、および復旧の検証が必要です。アーカイブされた OSS は、新規本番環境のデフォルトの選択肢ではありません。このレビューでは HA デプロイメントは実施していません。
 
 </details>
 
 ---
 
-10. Grafana OnCall で Route を設定する主な目的は何ですか？
+10. Grafana OnCall でルートを設定する主な目的は何ですか？
     - A) ネットワークトラフィックの分散
     - B) アラート条件に基づいて異なるエスカレーションチェーンを適用する
     - C) データベースクエリの最適化
@@ -228,20 +184,19 @@ Grafana OnCall の本番 HA 構成:
 **回答: B) アラート条件に基づいて異なるエスカレーションチェーンを適用する**
 
 **解説:**
-Route は、受信アラートの属性（label、severity、team など）に基づいて、適切なエスカレーションチェーンに接続します:
-- `severity=critical` -> Critical エスカレーションチェーン（電話/SMS を含む）
-- `team=infra` -> Infrastructure team のエスカレーションチェーン
-- `namespace=production` -> Production オンコールスケジュール
-
-ルーティングルールは正規表現を使用して定義され、アラート payload の内容に基づいてマッチします。これにより、異なるアラートタイプに対して適切な対応者とエスカレーションポリシーを適用できます。
+ルートは、統合の実際のペイロード、マッチングモード、順序、およびフォールバックを使用して、エスカレーション/通知の動作を選択します。確認した serializer はネストされた slack.channel_id/enabled を使用します。欠落または競合するフィールドをテストしてください。任意のメッセージテキストに対する regex マッチングは、すべてのプロバイダーに共通する契約ではありません。
 
 </details>
 
 ---
 
-## 追加学習リソース
+<span id="追加学習リソース"></span>
+
+## 追加の学習リソース
 
 - [Grafana OnCall ドキュメント](https://grafana.com/docs/oncall/latest/)
-- [Grafana OnCall GitHub](https://github.com/grafana/oncall)
-- [Grafana OnCall Helm Chart](https://github.com/grafana/helm-charts/tree/main/charts/oncall)
+- [Grafana OnCall GitHub](https://github.com/grafana-cold-storage/oncall)
+- [Grafana OnCall Helm Chart](https://github.com/grafana-cold-storage/oncall/tree/af0fbd40558c9a63bcf438589894c440fc434a54/helm/oncall)
 - [Grafana IRM (Incident Response Management)](https://grafana.com/products/cloud/irm/)
+
+- [ガイド](../../../observability/alerting/03-grafana-oncall.md)
