@@ -1,0 +1,2328 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T16:54:54.294950+00:00",
+  "scope": [
+    "en/networking/cilium/networking-concepts.md",
+    "en/quizzes/networking/cilium/networking-concepts-quiz.md",
+    "ko/networking/cilium/networking-concepts.md",
+    "ko/quizzes/networking/cilium/networking-concepts-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/networking/cilium/networking-concepts.md": {
+      "lines": 1205,
+      "sha256": "ae8e45aa501208d5cf7815df7734ba40d52b7e5720c8631fb129dae521344e5d"
+    },
+    "en/quizzes/networking/cilium/networking-concepts-quiz.md": {
+      "lines": 256,
+      "sha256": "8e0e960eed1892d958f733ebe30c6deafeda0cb26798e59ccf0641f115e1a05f"
+    },
+    "ko/networking/cilium/networking-concepts.md": {
+      "lines": 1211,
+      "sha256": "24c451da083132bdf55af24bc92d5cc07c7de181a27ab86b31d58d3d6c0089e4"
+    },
+    "ko/quizzes/networking/cilium/networking-concepts-quiz.md": {
+      "lines": 256,
+      "sha256": "0e8e6d3159f995071b4ba6a561dc55d06734367b4d2a65f5448a92fb35fa9f79"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/networking/cilium/networking-concepts.md",
+        "sha256": "0edf4130bc247959439feae05f72a539c95684ff97900862633279943b67469c",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/networking/cilium/networking-concepts-quiz.md",
+        "sha256": "b32b11c91299e5b8b5c4690b6b323bfc3d6e601f28d213e2936b0a26e6104dcc",
+        "passed": true
+      },
+      {
+        "path": "ko/networking/cilium/networking-concepts.md",
+        "sha256": "af76770e756aa6c73f7ae7c51ea6666e7096a7a6dfc89375625d504880d4d984",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/networking/cilium/networking-concepts-quiz.md",
+        "sha256": "40cf2200edc7857728f76165b49293e7ce486ba99f8c9c985604a530d82b8b6a",
+        "passed": true
+      }
+    ],
+    "schemaObjects": 8,
+    "helmFragments": 10,
+    "questions": 40,
+    "retainedFigureReferences": 24,
+    "routingCases": [
+      [
+        "tunnel",
+        false,
+        true
+      ],
+      [
+        "native",
+        true,
+        true
+      ],
+      [
+        "tunnel",
+        true,
+        false
+      ],
+      [
+        "native",
+        false,
+        true
+      ]
+    ],
+    "nonMasqueradeCIDRCases": [
+      [
+        "10.255.255.254",
+        true
+      ],
+      [
+        "11.0.0.1",
+        false
+      ],
+      [
+        "172.15.255.254",
+        false
+      ],
+      [
+        "172.16.0.1",
+        true
+      ],
+      [
+        "172.31.255.254",
+        true
+      ],
+      [
+        "172.32.0.1",
+        false
+      ],
+      [
+        "192.168.1.1",
+        true
+      ],
+      [
+        "192.169.1.1",
+        false
+      ]
+    ],
+    "FQDNCases": [
+      [
+        "api.example.com",
+        true
+      ],
+      [
+        "one.api.example.com",
+        true
+      ],
+      [
+        "a.b.api.example.com",
+        false
+      ],
+      [
+        "example.com",
+        false
+      ],
+      [
+        "api.example.com.evil",
+        false
+      ],
+      [
+        "ONE.API.EXAMPLE.COM.",
+        true
+      ]
+    ],
+    "HTTPconditionCases": [
+      [
+        "GET",
+        "/api/v1/products",
+        true
+      ],
+      [
+        "POST",
+        "/api/v1/products",
+        false
+      ],
+      [
+        "GET",
+        "/api/v1/products/other",
+        false
+      ],
+      [
+        "GET",
+        "/api/v1/other",
+        false
+      ]
+    ],
+    "NATaddressCases": [
+      {
+        "before": [
+          "10.0.0.2",
+          "203.0.113.5"
+        ],
+        "after": [
+          "198.51.100.1",
+          "203.0.113.5"
+        ],
+        "changes": [
+          "source"
+        ]
+      },
+      {
+        "before": [
+          "203.0.113.5",
+          "198.51.100.1"
+        ],
+        "after": [
+          "203.0.113.5",
+          "10.0.0.3"
+        ],
+        "changes": [
+          "destination"
+        ]
+      },
+      {
+        "before": [
+          "10.0.0.2",
+          "10.0.0.3"
+        ],
+        "after": [
+          "192.0.2.2",
+          "198.51.100.3"
+        ],
+        "changes": [
+          "source",
+          "destination"
+        ]
+      }
+    ],
+    "oldRegressions": [
+      {
+        "language": "en",
+        "oldSeedInvalid": true,
+        "oldImaginaryConfigKeysPresent": true
+      },
+      {
+        "language": "ko",
+        "oldSeedInvalid": true,
+        "oldImaginaryConfigKeysPresent": true
+      }
+    ],
+    "sources": [
+      {
+        "label": "Cilium routing",
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/routing.rst",
+        "cacheKey": "93884cdf2b41",
+        "status": 200,
+        "sha256": "1dc7232f46a1839898013f567505c0a114e9418bfe98b9b59b816bb879473092"
+      },
+      {
+        "label": "Cilium chart values",
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.yaml",
+        "cacheKey": "ab96902e3fca",
+        "status": 200,
+        "sha256": "48e57492486c8672b85c7fca96b3d9ae48025f1913beea12f3d3dd11b7500ae1"
+      },
+      {
+        "label": "Kube-proxy replacement",
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst",
+        "cacheKey": "22e54ce1b17d",
+        "status": 200,
+        "sha256": "04b670a1456958399883f3a99abbb783d9b3df77380de62ccf311d1cbf525ed2"
+      },
+      {
+        "label": "Masquerading",
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/masquerading.rst",
+        "cacheKey": "3700bf28499c",
+        "status": 200,
+        "sha256": "b69d509d4e09902755bd5b97357aeedc47a6d5942a93c7a4ece08daa9b07a8a1"
+      },
+      {
+        "label": "BGP Control Plane",
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst",
+        "cacheKey": "32d588751973",
+        "status": 200,
+        "sha256": "2817d5068db658d64ab3175f7197eddbb61ffb5e9016759b9dd3ad617899579c"
+      },
+      {
+        "label": "Global Services",
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/clustermesh/global-services.rst",
+        "cacheKey": "bfc6a216b89d",
+        "status": 200,
+        "sha256": "b4fea52506307a3d11c2f239a9d6679958707e8db73749efc02a2930b5d46b8f"
+      },
+      {
+        "label": "Policy language",
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer3.rst",
+        "cacheKey": "f6af22ee3d55",
+        "status": 200,
+        "sha256": "3ddff4658197f40b19b9b45570a0aa07fb25aa45f21a90d487c2532acd719ece"
+      },
+      {
+        "label": "DNS policy",
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/dns.rst",
+        "cacheKey": "46e8184d152f",
+        "status": 200,
+        "sha256": "1c12754bd76b392f4f8b661ddcb7f7b02cd3397eddf232d0f74f86a4dea9f2c0"
+      },
+      {
+        "label": "IPsec",
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ipsec.rst",
+        "cacheKey": "4089ae7aa86f",
+        "status": 200,
+        "sha256": "48396f60c7dcf387c1195b8db2a0bb00c90b02278da68c620d8a8ab8e093e2b4"
+      },
+      {
+        "label": "WireGuard",
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst",
+        "cacheKey": "93d5e022335e",
+        "status": 200,
+        "sha256": "b0130d160fedb18ff0c5cee1fb17d2a1bd4328ca69137050b29ca4902995984d"
+      },
+      {
+        "label": "Kubernetes network model",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/",
+        "cacheKey": "412b025f3b23",
+        "status": 200,
+        "sha256": "887465e4f1004c20b7b1ef11f72519f9983db7a078bbb8fe7697efc35be471f2"
+      },
+      {
+        "label": "Services",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/service/",
+        "cacheKey": "fb91f3263e90",
+        "status": 200,
+        "sha256": "c79c12d9beb86cb6057bd06daded0f384c6b5d0f7b2068146855a1109edcd0d2"
+      },
+      {
+        "label": "DNS for Services and Pods",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/",
+        "cacheKey": "9c3e04d359b8",
+        "status": 200,
+        "sha256": "072322f618f3bb53a0c2d4b90b580ab82faa33e320e777e72a85bd53e2fb32be"
+      },
+      {
+        "label": "NetworkPolicy",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+        "cacheKey": "953450b4076f",
+        "status": 200,
+        "sha256": "d537cebf90aee2ca121c56a6cda0b52969f99be62cdb54692dfe5bef7a95da02"
+      },
+      {
+        "label": "CNI specification",
+        "url": "https://raw.githubusercontent.com/containernetworking/cni/main/SPEC.md",
+        "cacheKey": "92426034f7ac",
+        "status": 200,
+        "sha256": "e35d42e754107bee503b60cd83dfca8a45f092d8806c18554db01e05cd3f2d81"
+      },
+      {
+        "label": "Docker bridge networking",
+        "url": "https://docs.docker.com/engine/network/drivers/bridge/",
+        "cacheKey": "881082f899b2",
+        "status": 200,
+        "sha256": "08821c0ebf4e6bab9857c08909670f0b499e86e8e4c4eb5f15a61eab42432c08"
+      },
+      {
+        "label": "Docker host networking",
+        "url": "https://docs.docker.com/engine/network/drivers/host/",
+        "cacheKey": "6732393fd414",
+        "status": 200,
+        "sha256": "3951b03f1a46dad3c8bc8ca6db0e4080d3fb6c6878df4e0c600d57a9c940175e"
+      },
+      {
+        "label": "Ingress NGINX retirement",
+        "url": "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+        "cacheKey": "5c477eabbb6d",
+        "status": 200,
+        "sha256": "a011aca86618b51d948de89c8042d43406b99f1ba233d3fed7b708c3266ca6b9"
+      },
+      {
+        "label": "Internet architecture / RFC 1122",
+        "url": "https://www.rfc-editor.org/rfc/rfc1122.txt",
+        "cacheKey": "985c7bcf5b49",
+        "status": 200,
+        "sha256": "9f526e6bebc868324fedb90aebbcf6e5b15c53fd373ca5d5ce1c2cdcd264e04f"
+      },
+      {
+        "label": "DNS / RFC 1034",
+        "url": "https://www.rfc-editor.org/rfc/rfc1034.txt",
+        "cacheKey": "26ad3cbb04c0",
+        "status": 200,
+        "sha256": "d6b10a71441df879cc2817d23f2dad120c8a5f87e74eba1e4ed4b743a76a891a"
+      },
+      {
+        "label": "NAT terminology / RFC 2663",
+        "url": "https://www.rfc-editor.org/rfc/rfc2663.txt",
+        "cacheKey": "a043dddebdc3",
+        "status": 200,
+        "sha256": "5da63886f46cc12237a23faebfb4f9037eb8da8375837041228f29cd1a251681"
+      },
+      {
+        "label": "NAT mapping behavior / RFC 4787",
+        "url": "https://www.rfc-editor.org/rfc/rfc4787.txt",
+        "cacheKey": "bce2fc99e1a0",
+        "status": 200,
+        "sha256": "5db82ec5f0d6b9b0fc0a37ce7d5b40592e4e6f41562ba8fbc55f1daa52648405"
+      },
+      {
+        "label": "RIP v2 / RFC 2453",
+        "url": "https://www.rfc-editor.org/rfc/rfc2453.txt",
+        "cacheKey": "ea1410ac6918",
+        "status": 200,
+        "sha256": "0ea7c77b8883220c13003fe0cc31ee628478864dac5919aada0497bd9e9e2127"
+      },
+      {
+        "label": "EIGRP / RFC 7868",
+        "url": "https://www.rfc-editor.org/rfc/rfc7868.txt",
+        "cacheKey": "0340546ea047",
+        "status": 200,
+        "sha256": "960af059ab0f2ee3a9c3adf930ad1036866cade0b5761298ee8bb978a9cee3b1"
+      }
+    ],
+    "inboundFragments": [],
+    "schemaAdapters": [
+      "Kubernetes IntOrString permits integer targetPort; optional ipMasqAgent.config verified against released documentation."
+    ],
+    "gitDiffCheck": "passed",
+    "limits": [
+      "Structural API/Helm schemas and source-based local decision fixtures; no admission/CEL or complete policy engine.",
+      "No installation, CNI/IPAM migration, router/NAT/HTTP traffic, cloud mutation or production performance measurement.",
+      "30 original figures viewed; retained captions distinguish generic examples from Cilium behavior. No asset/foreign-prose edits.",
+      "No Helm render, full local build or devserver; four-document compilation is a separate bounded check."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 1024,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/networking/cilium/networking-concepts.md",
+        "sha256": "0edf4130bc247959439feae05f72a539c95684ff97900862633279943b67469c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "deep-dive-into-networking-concepts"
+          },
+          {
+            "tag": "h2",
+            "id": "learning-objectives"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "osi-model-and-tcp-ip-stack"
+          },
+          {
+            "tag": "h3",
+            "id": "osi-model-and-tcp-ip-model-comparison"
+          },
+          {
+            "tag": "h3",
+            "id": "osi-7-layer-model"
+          },
+          {
+            "tag": "h3",
+            "id": "relationship-between-cilium-and-osi-model"
+          },
+          {
+            "tag": "h3",
+            "id": "tcp-ip-stack"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium-features-by-layer"
+          },
+          {
+            "tag": "h2",
+            "id": "container-networking-basics"
+          },
+          {
+            "tag": "h3",
+            "id": "container-network-interface-cni"
+          },
+          {
+            "tag": "h4",
+            "id": "key-components-of-cni"
+          },
+          {
+            "tag": "h4",
+            "id": "main-responsibilities-of-cni-plugins"
+          },
+          {
+            "tag": "h3",
+            "id": "container-networking-models"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-bridge-networking"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-host-networking"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-overlay-networking"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-underlay-networking-direct-routing"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-networking-model"
+          },
+          {
+            "tag": "h4",
+            "id": "kubernetes-network-components"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium-s-container-networking-approach"
+          },
+          {
+            "tag": "h2",
+            "id": "overlay-networks"
+          },
+          {
+            "tag": "h3",
+            "id": "how-overlay-networks-work"
+          },
+          {
+            "tag": "h3",
+            "id": "major-overlay-network-protocols"
+          },
+          {
+            "tag": "h4",
+            "id": "vxlan-virtual-extensible-lan"
+          },
+          {
+            "tag": "h4",
+            "id": "geneve-generic-network-virtualization-encapsulation"
+          },
+          {
+            "tag": "h4",
+            "id": "ipsec"
+          },
+          {
+            "tag": "h3",
+            "id": "advantages-and-disadvantages-of-overlay-networks"
+          },
+          {
+            "tag": "h4",
+            "id": "advantages"
+          },
+          {
+            "tag": "h4",
+            "id": "disadvantages"
+          },
+          {
+            "tag": "h3",
+            "id": "overlay-networks-in-cilium"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-vxlan-configuration-example"
+          },
+          {
+            "tag": "h2",
+            "id": "network-address-translation-nat"
+          },
+          {
+            "tag": "h3",
+            "id": "main-types-of-nat"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-source-nat-snat"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-destination-nat-dnat"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-port-address-translation-pat"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-twice-nat-and-bi-directional-nat"
+          },
+          {
+            "tag": "h3",
+            "id": "advantages-and-disadvantages-of-nat"
+          },
+          {
+            "tag": "h4",
+            "id": "advantages-1"
+          },
+          {
+            "tag": "h4",
+            "id": "disadvantages-1"
+          },
+          {
+            "tag": "h3",
+            "id": "nat-in-kubernetes-and-cilium"
+          },
+          {
+            "tag": "h4",
+            "id": "nat-in-kubernetes"
+          },
+          {
+            "tag": "h4",
+            "id": "nat-in-cilium"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-nat-configuration-example"
+          },
+          {
+            "tag": "h2",
+            "id": "routing-protocols"
+          },
+          {
+            "tag": "h3",
+            "id": "classification-of-routing-protocols"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-interior-gateway-protocols-igp"
+          },
+          {
+            "tag": "h5",
+            "id": "distance-vector-protocols"
+          },
+          {
+            "tag": "h5",
+            "id": "link-state-protocols"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-exterior-gateway-protocols-egp"
+          },
+          {
+            "tag": "h3",
+            "id": "routing-protocols-in-container-networking"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-container-networking-with-bgp"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-container-network-routing-mechanisms"
+          },
+          {
+            "tag": "h3",
+            "id": "routing-in-cilium"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-native-routing-direct-routing"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-bgp-routing"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-overlay-routing"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-hybrid-routing"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium-routing-configuration-examples"
+          },
+          {
+            "tag": "h4",
+            "id": "native-routing-configuration"
+          },
+          {
+            "tag": "h4",
+            "id": "bgp-routing-configuration"
+          },
+          {
+            "tag": "h4",
+            "id": "overlay-routing-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "dns-and-service-discovery"
+          },
+          {
+            "tag": "h3",
+            "id": "dns-domain-name-system"
+          },
+          {
+            "tag": "h4",
+            "id": "how-dns-works"
+          },
+          {
+            "tag": "h4",
+            "id": "dns-record-types"
+          },
+          {
+            "tag": "h4",
+            "id": "dns-resolution-process"
+          },
+          {
+            "tag": "h3",
+            "id": "service-discovery-in-container-environments"
+          },
+          {
+            "tag": "h4",
+            "id": "service-discovery-approaches"
+          },
+          {
+            "tag": "h3",
+            "id": "dns-and-service-discovery-in-kubernetes"
+          },
+          {
+            "tag": "h4",
+            "id": "kubernetes-services"
+          },
+          {
+            "tag": "h4",
+            "id": "kubernetes-dns"
+          },
+          {
+            "tag": "h4",
+            "id": "kubernetes-service-discovery-mechanisms"
+          },
+          {
+            "tag": "h3",
+            "id": "dns-and-service-discovery-in-cilium"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-s-dns-based-policies"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-s-service-discovery-enhancements"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-service-configuration-example"
+          },
+          {
+            "tag": "h2",
+            "id": "load-balancing-concepts"
+          },
+          {
+            "tag": "h3",
+            "id": "types-of-load-balancing"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-l4-transport-layer-load-balancing"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-l7-application-layer-load-balancing"
+          },
+          {
+            "tag": "h3",
+            "id": "load-balancing-algorithms"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-round-robin"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-least-connections"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-ip-hash"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-least-response-time"
+          },
+          {
+            "tag": "h4",
+            "id": "_5-random-selection"
+          },
+          {
+            "tag": "h3",
+            "id": "load-balancer-deployment-models"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-hardware-load-balancers"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-software-load-balancers"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-cloud-load-balancers"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-container-native-load-balancers"
+          },
+          {
+            "tag": "h3",
+            "id": "load-balancing-in-kubernetes"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-service-load-balancing"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-ingress-controllers"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-service-mesh"
+          },
+          {
+            "tag": "h3",
+            "id": "load-balancing-in-cilium"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-ebpf-based-load-balancing"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-load-balancing-algorithms"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-l7-load-balancing"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-global-service-load-balancing"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-load-balancing-configuration-example"
+          },
+          {
+            "tag": "h2",
+            "id": "network-security-basics"
+          },
+          {
+            "tag": "h3",
+            "id": "core-network-security-concepts"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-defense-in-depth"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-principle-of-least-privilege"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-network-segmentation"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-encryption"
+          },
+          {
+            "tag": "h3",
+            "id": "container-networking-security-threats"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-network-based-attacks"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-application-layer-attacks"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-container-specific-threats"
+          },
+          {
+            "tag": "h3",
+            "id": "network-security-controls"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-firewalls"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-intrusion-detection-and-prevention-systems-ids-ips"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-network-policies"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-encryption-protocols"
+          },
+          {
+            "tag": "h3",
+            "id": "network-security-in-kubernetes"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-network-policies"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-service-mesh-security"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-security-contexts"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium-s-network-security-features"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-identity-based-security"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-transparent-encryption"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-threat-detection-and-visibility"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-l3-l7-policy-enforcement"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-network-security-configuration-example"
+          },
+          {
+            "tag": "h3",
+            "id": "network-security-best-practices"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-default-deny-policy"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-defense-in-depth-approach"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-least-privilege-networking"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-continuous-monitoring-and-auditing"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "deep-dive-into-networking-concepts",
+          "learning-objectives",
+          "table-of-contents",
+          "osi-model-and-tcp-ip-stack",
+          "osi-model-and-tcp-ip-model-comparison",
+          "osi-7-layer-model",
+          "relationship-between-cilium-and-osi-model",
+          "tcp-ip-stack",
+          "cilium-features-by-layer",
+          "container-networking-basics",
+          "container-network-interface-cni",
+          "key-components-of-cni",
+          "main-responsibilities-of-cni-plugins",
+          "container-networking-models",
+          "_1-bridge-networking",
+          "_2-host-networking",
+          "_3-overlay-networking",
+          "_4-underlay-networking-direct-routing",
+          "kubernetes-networking-model",
+          "kubernetes-network-components",
+          "cilium-s-container-networking-approach",
+          "overlay-networks",
+          "how-overlay-networks-work",
+          "major-overlay-network-protocols",
+          "vxlan-virtual-extensible-lan",
+          "geneve-generic-network-virtualization-encapsulation",
+          "ipsec",
+          "advantages-and-disadvantages-of-overlay-networks",
+          "advantages",
+          "disadvantages",
+          "overlay-networks-in-cilium",
+          "cilium-vxlan-configuration-example",
+          "network-address-translation-nat",
+          "main-types-of-nat",
+          "_1-source-nat-snat",
+          "_2-destination-nat-dnat",
+          "_3-port-address-translation-pat",
+          "_4-twice-nat-and-bi-directional-nat",
+          "advantages-and-disadvantages-of-nat",
+          "advantages-1",
+          "disadvantages-1",
+          "nat-in-kubernetes-and-cilium",
+          "nat-in-kubernetes",
+          "nat-in-cilium",
+          "cilium-nat-configuration-example",
+          "routing-protocols",
+          "classification-of-routing-protocols",
+          "_1-interior-gateway-protocols-igp",
+          "distance-vector-protocols",
+          "link-state-protocols",
+          "_2-exterior-gateway-protocols-egp",
+          "routing-protocols-in-container-networking",
+          "_1-container-networking-with-bgp",
+          "_2-container-network-routing-mechanisms",
+          "routing-in-cilium",
+          "_1-native-routing-direct-routing",
+          "_2-bgp-routing",
+          "_3-overlay-routing",
+          "_4-hybrid-routing",
+          "cilium-routing-configuration-examples",
+          "native-routing-configuration",
+          "bgp-routing-configuration",
+          "overlay-routing-configuration",
+          "dns-and-service-discovery",
+          "dns-domain-name-system",
+          "how-dns-works",
+          "dns-record-types",
+          "dns-resolution-process",
+          "service-discovery-in-container-environments",
+          "service-discovery-approaches",
+          "dns-and-service-discovery-in-kubernetes",
+          "kubernetes-services",
+          "kubernetes-dns",
+          "kubernetes-service-discovery-mechanisms",
+          "dns-and-service-discovery-in-cilium",
+          "cilium-s-dns-based-policies",
+          "cilium-s-service-discovery-enhancements",
+          "cilium-service-configuration-example",
+          "load-balancing-concepts",
+          "types-of-load-balancing",
+          "_1-l4-transport-layer-load-balancing",
+          "_2-l7-application-layer-load-balancing",
+          "load-balancing-algorithms",
+          "_1-round-robin",
+          "_2-least-connections",
+          "_3-ip-hash",
+          "_4-least-response-time",
+          "_5-random-selection",
+          "load-balancer-deployment-models",
+          "_1-hardware-load-balancers",
+          "_2-software-load-balancers",
+          "_3-cloud-load-balancers",
+          "_4-container-native-load-balancers",
+          "load-balancing-in-kubernetes",
+          "_1-service-load-balancing",
+          "_2-ingress-controllers",
+          "_3-service-mesh",
+          "load-balancing-in-cilium",
+          "_1-ebpf-based-load-balancing",
+          "_2-load-balancing-algorithms",
+          "_3-l7-load-balancing",
+          "_4-global-service-load-balancing",
+          "cilium-load-balancing-configuration-example",
+          "network-security-basics",
+          "core-network-security-concepts",
+          "_1-defense-in-depth",
+          "_2-principle-of-least-privilege",
+          "_3-network-segmentation",
+          "_4-encryption",
+          "container-networking-security-threats",
+          "_1-network-based-attacks",
+          "_2-application-layer-attacks",
+          "_3-container-specific-threats",
+          "network-security-controls",
+          "_1-firewalls",
+          "_2-intrusion-detection-and-prevention-systems-ids-ips",
+          "_3-network-policies",
+          "_4-encryption-protocols",
+          "network-security-in-kubernetes",
+          "_1-network-policies",
+          "_2-service-mesh-security",
+          "_3-security-contexts",
+          "cilium-s-network-security-features",
+          "_1-identity-based-security",
+          "_2-transparent-encryption",
+          "_3-threat-detection-and-visibility",
+          "_4-l3-l7-policy-enforcement",
+          "cilium-network-security-configuration-example",
+          "network-security-best-practices",
+          "_1-default-deny-policy",
+          "_2-defense-in-depth-approach",
+          "_3-least-privilege-networking",
+          "_4-continuous-monitoring-and-auditing",
+          "primary-references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/networking/cilium/networking-concepts.md",
+        "sha256": "af76770e756aa6c73f7ae7c51ea6666e7096a7a6dfc89375625d504880d4d984",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "네트워킹-개념-심층-분석"
+          },
+          {
+            "tag": "h2",
+            "id": "학습-목표"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "osi-모델-및-tcp-ip-스택"
+          },
+          {
+            "tag": "h3",
+            "id": "osi-모델과-tcp-ip-모델-비교"
+          },
+          {
+            "tag": "h3",
+            "id": "osi-7계층-모델"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium과-osi-모델의-관계"
+          },
+          {
+            "tag": "h3",
+            "id": "tcp-ip-스택"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium과-계층별-기능"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-네트워킹-기초"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-네트워크-인터페이스-cni"
+          },
+          {
+            "tag": "h4",
+            "id": "cni의-주요-구성-요소"
+          },
+          {
+            "tag": "h4",
+            "id": "cni-플러그인의-주요-책임"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-네트워킹-모델"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-브리지-네트워킹"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-호스트-네트워킹"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-오버레이-네트워킹"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-언더레이-네트워킹-직접-라우팅"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-네트워킹-모델"
+          },
+          {
+            "tag": "h4",
+            "id": "kubernetes-네트워크-구성-요소"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium의-컨테이너-네트워킹-접근-방식"
+          },
+          {
+            "tag": "h2",
+            "id": "오버레이-네트워크"
+          },
+          {
+            "tag": "h3",
+            "id": "오버레이-네트워크의-작동-원리"
+          },
+          {
+            "tag": "h3",
+            "id": "주요-오버레이-네트워크-프로토콜"
+          },
+          {
+            "tag": "h4",
+            "id": "vxlan-virtual-extensible-lan"
+          },
+          {
+            "tag": "h4",
+            "id": "geneve-generic-network-virtualization-encapsulation"
+          },
+          {
+            "tag": "h4",
+            "id": "ipsec"
+          },
+          {
+            "tag": "h3",
+            "id": "오버레이-네트워크의-장단점"
+          },
+          {
+            "tag": "h4",
+            "id": "장점"
+          },
+          {
+            "tag": "h4",
+            "id": "단점"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium에서의-오버레이-네트워크"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-vxlan-구성-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "네트워크-주소-변환-nat"
+          },
+          {
+            "tag": "h3",
+            "id": "nat의-주요-유형"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-소스-nat-snat"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-목적지-nat-dnat"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-포트-주소-변환-pat"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-twice-nat와-양방향-nat"
+          },
+          {
+            "tag": "h3",
+            "id": "nat의-장단점"
+          },
+          {
+            "tag": "h4",
+            "id": "장점-1"
+          },
+          {
+            "tag": "h4",
+            "id": "단점-1"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-및-cilium에서의-nat"
+          },
+          {
+            "tag": "h4",
+            "id": "kubernetes에서의-nat"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium에서의-nat"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-nat-구성-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "라우팅-프로토콜"
+          },
+          {
+            "tag": "h3",
+            "id": "라우팅-프로토콜의-분류"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-내부-게이트웨이-프로토콜-igp"
+          },
+          {
+            "tag": "h5",
+            "id": "거리-벡터-프로토콜"
+          },
+          {
+            "tag": "h5",
+            "id": "링크-상태-프로토콜"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-외부-게이트웨이-프로토콜-egp"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-네트워킹에서의-라우팅-프로토콜"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-bgp를-활용한-컨테이너-네트워킹"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-컨테이너-네트워크-라우팅-메커니즘"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium에서의-라우팅"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-직접-라우팅-native-routing"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-bgp-라우팅"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-오버레이-라우팅"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-하이브리드-라우팅"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium-라우팅-구성-예제"
+          },
+          {
+            "tag": "h4",
+            "id": "직접-라우팅-구성"
+          },
+          {
+            "tag": "h4",
+            "id": "bgp-라우팅-구성"
+          },
+          {
+            "tag": "h4",
+            "id": "오버레이-라우팅-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "dns-및-서비스-디스커버리"
+          },
+          {
+            "tag": "h3",
+            "id": "dns-domain-name-system"
+          },
+          {
+            "tag": "h4",
+            "id": "dns-작동-원리"
+          },
+          {
+            "tag": "h4",
+            "id": "dns-레코드-유형"
+          },
+          {
+            "tag": "h4",
+            "id": "dns-해석-과정"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-환경에서의-서비스-디스커버리"
+          },
+          {
+            "tag": "h4",
+            "id": "서비스-디스커버리-접근-방식"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes에서의-dns-및-서비스-디스커버리"
+          },
+          {
+            "tag": "h4",
+            "id": "kubernetes-서비스"
+          },
+          {
+            "tag": "h4",
+            "id": "kubernetes-dns"
+          },
+          {
+            "tag": "h4",
+            "id": "kubernetes-서비스-디스커버리-메커니즘"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium에서의-dns-및-서비스-디스커버리"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium의-dns-기반-정책"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium의-서비스-디스커버리-향상"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-서비스-구성-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "로드-밸런싱-개념"
+          },
+          {
+            "tag": "h3",
+            "id": "로드-밸런싱-유형"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-l4-전송-계층-로드-밸런싱"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-l7-애플리케이션-계층-로드-밸런싱"
+          },
+          {
+            "tag": "h3",
+            "id": "로드-밸런싱-알고리즘"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-라운드-로빈-round-robin"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-최소-연결-least-connections"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-ip-해시-ip-hash"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-최소-응답-시간-least-response-time"
+          },
+          {
+            "tag": "h4",
+            "id": "_5-임의-선택-random"
+          },
+          {
+            "tag": "h3",
+            "id": "로드-밸런서-배포-모델"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-하드웨어-로드-밸런서"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-소프트웨어-로드-밸런서"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-클라우드-로드-밸런서"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-컨테이너-네이티브-로드-밸런서"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes에서의-로드-밸런싱"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-서비스-로드-밸런싱"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-ingress-컨트롤러"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-서비스-메시"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium에서의-로드-밸런싱"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-ebpf-기반-로드-밸런싱"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-로드-밸런싱-알고리즘"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-l7-로드-밸런싱"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-글로벌-서비스-로드-밸런싱"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-로드-밸런싱-구성-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "네트워크-보안-기초"
+          },
+          {
+            "tag": "h3",
+            "id": "네트워크-보안의-핵심-개념"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-심층-방어-defense-in-depth"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-최소-권한-원칙"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-네트워크-세분화"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-암호화"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-네트워킹-보안-위협"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-네트워크-기반-공격"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-애플리케이션-계층-공격"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-컨테이너-특화-위협"
+          },
+          {
+            "tag": "h3",
+            "id": "네트워크-보안-제어"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-방화벽"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-침입-탐지-및-방지-시스템-ids-ips"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-네트워크-정책"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-암호화-프로토콜"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes에서의-네트워크-보안"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-네트워크-정책"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-서비스-메시-보안"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-보안-컨텍스트"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium의-네트워크-보안-기능"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-신원-기반-보안"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-투명한-암호화"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-위협-탐지-및-가시성"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-l3-l7-정책-시행"
+          },
+          {
+            "tag": "h4",
+            "id": "cilium-네트워크-보안-구성-예제"
+          },
+          {
+            "tag": "h3",
+            "id": "네트워크-보안-모범-사례"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-기본-거부-정책"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-심층-방어-접근-방식"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-최소-권한-네트워킹"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-지속적인-모니터링-및-감사"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-근거"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "네트워킹-개념-심층-분석",
+          "학습-목표",
+          "목차",
+          "osi-모델-및-tcp-ip-스택",
+          "osi-모델과-tcp-ip-모델-비교",
+          "osi-7계층-모델",
+          "cilium과-osi-모델의-관계",
+          "tcp-ip-스택",
+          "cilium과-계층별-기능",
+          "컨테이너-네트워킹-기초",
+          "컨테이너-네트워크-인터페이스-cni",
+          "cni의-주요-구성-요소",
+          "cni-플러그인의-주요-책임",
+          "컨테이너-네트워킹-모델",
+          "_1-브리지-네트워킹",
+          "_2-호스트-네트워킹",
+          "_3-오버레이-네트워킹",
+          "_4-언더레이-네트워킹-직접-라우팅",
+          "kubernetes-네트워킹-모델",
+          "kubernetes-네트워크-구성-요소",
+          "cilium의-컨테이너-네트워킹-접근-방식",
+          "오버레이-네트워크",
+          "오버레이-네트워크의-작동-원리",
+          "주요-오버레이-네트워크-프로토콜",
+          "vxlan-virtual-extensible-lan",
+          "geneve-generic-network-virtualization-encapsulation",
+          "ipsec",
+          "오버레이-네트워크의-장단점",
+          "장점",
+          "단점",
+          "cilium에서의-오버레이-네트워크",
+          "cilium-vxlan-구성-예제",
+          "네트워크-주소-변환-nat",
+          "nat의-주요-유형",
+          "_1-소스-nat-snat",
+          "_2-목적지-nat-dnat",
+          "_3-포트-주소-변환-pat",
+          "_4-twice-nat와-양방향-nat",
+          "nat의-장단점",
+          "장점-1",
+          "단점-1",
+          "kubernetes-및-cilium에서의-nat",
+          "kubernetes에서의-nat",
+          "cilium에서의-nat",
+          "cilium-nat-구성-예제",
+          "라우팅-프로토콜",
+          "라우팅-프로토콜의-분류",
+          "_1-내부-게이트웨이-프로토콜-igp",
+          "거리-벡터-프로토콜",
+          "링크-상태-프로토콜",
+          "_2-외부-게이트웨이-프로토콜-egp",
+          "컨테이너-네트워킹에서의-라우팅-프로토콜",
+          "_1-bgp를-활용한-컨테이너-네트워킹",
+          "_2-컨테이너-네트워크-라우팅-메커니즘",
+          "cilium에서의-라우팅",
+          "_1-직접-라우팅-native-routing",
+          "_2-bgp-라우팅",
+          "_3-오버레이-라우팅",
+          "_4-하이브리드-라우팅",
+          "cilium-라우팅-구성-예제",
+          "직접-라우팅-구성",
+          "bgp-라우팅-구성",
+          "오버레이-라우팅-구성",
+          "dns-및-서비스-디스커버리",
+          "dns-domain-name-system",
+          "dns-작동-원리",
+          "dns-레코드-유형",
+          "dns-해석-과정",
+          "컨테이너-환경에서의-서비스-디스커버리",
+          "서비스-디스커버리-접근-방식",
+          "kubernetes에서의-dns-및-서비스-디스커버리",
+          "kubernetes-서비스",
+          "kubernetes-dns",
+          "kubernetes-서비스-디스커버리-메커니즘",
+          "cilium에서의-dns-및-서비스-디스커버리",
+          "cilium의-dns-기반-정책",
+          "cilium의-서비스-디스커버리-향상",
+          "cilium-서비스-구성-예제",
+          "로드-밸런싱-개념",
+          "로드-밸런싱-유형",
+          "_1-l4-전송-계층-로드-밸런싱",
+          "_2-l7-애플리케이션-계층-로드-밸런싱",
+          "로드-밸런싱-알고리즘",
+          "_1-라운드-로빈-round-robin",
+          "_2-최소-연결-least-connections",
+          "_3-ip-해시-ip-hash",
+          "_4-최소-응답-시간-least-response-time",
+          "_5-임의-선택-random",
+          "로드-밸런서-배포-모델",
+          "_1-하드웨어-로드-밸런서",
+          "_2-소프트웨어-로드-밸런서",
+          "_3-클라우드-로드-밸런서",
+          "_4-컨테이너-네이티브-로드-밸런서",
+          "kubernetes에서의-로드-밸런싱",
+          "_1-서비스-로드-밸런싱",
+          "_2-ingress-컨트롤러",
+          "_3-서비스-메시",
+          "cilium에서의-로드-밸런싱",
+          "_1-ebpf-기반-로드-밸런싱",
+          "_2-로드-밸런싱-알고리즘",
+          "_3-l7-로드-밸런싱",
+          "_4-글로벌-서비스-로드-밸런싱",
+          "cilium-로드-밸런싱-구성-예제",
+          "네트워크-보안-기초",
+          "네트워크-보안의-핵심-개념",
+          "_1-심층-방어-defense-in-depth",
+          "_2-최소-권한-원칙",
+          "_3-네트워크-세분화",
+          "_4-암호화",
+          "컨테이너-네트워킹-보안-위협",
+          "_1-네트워크-기반-공격",
+          "_2-애플리케이션-계층-공격",
+          "_3-컨테이너-특화-위협",
+          "네트워크-보안-제어",
+          "_1-방화벽",
+          "_2-침입-탐지-및-방지-시스템-ids-ips",
+          "_3-네트워크-정책",
+          "_4-암호화-프로토콜",
+          "kubernetes에서의-네트워크-보안",
+          "_1-네트워크-정책",
+          "_2-서비스-메시-보안",
+          "_3-보안-컨텍스트",
+          "cilium의-네트워크-보안-기능",
+          "_1-신원-기반-보안",
+          "_2-투명한-암호화",
+          "_3-위협-탐지-및-가시성",
+          "_4-l3-l7-정책-시행",
+          "cilium-네트워크-보안-구성-예제",
+          "네트워크-보안-모범-사례",
+          "_1-기본-거부-정책",
+          "_2-심층-방어-접근-방식",
+          "_3-최소-권한-네트워킹",
+          "_4-지속적인-모니터링-및-감사",
+          "공식-근거",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/networking/cilium/networking-concepts-quiz.md",
+        "sha256": "b32b11c91299e5b8b5c4690b6b323bfc3d6e601f28d213e2936b0a26e6104dcc",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cilium-networking-concepts-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "osi-and-basic-concepts"
+          },
+          {
+            "tag": "h2",
+            "id": "container-networking"
+          },
+          {
+            "tag": "h2",
+            "id": "ipam"
+          },
+          {
+            "tag": "h2",
+            "id": "services-and-load-balancing"
+          },
+          {
+            "tag": "h2",
+            "id": "network-policies"
+          },
+          {
+            "tag": "h2",
+            "id": "advanced-concepts"
+          }
+        ],
+        "renderedIds": [
+          "cilium-networking-concepts-quiz",
+          "osi-and-basic-concepts",
+          "container-networking",
+          "ipam",
+          "services-and-load-balancing",
+          "network-policies",
+          "advanced-concepts"
+        ]
+      },
+      {
+        "path": "ko/quizzes/networking/cilium/networking-concepts-quiz.md",
+        "sha256": "40cf2200edc7857728f76165b49293e7ce486ba99f8c9c985604a530d82b8b6a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cilium-네트워킹-개념-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "osi-및-기본-개념"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-네트워킹"
+          },
+          {
+            "tag": "h2",
+            "id": "ipam"
+          },
+          {
+            "tag": "h2",
+            "id": "서비스-및-로드-밸런싱"
+          },
+          {
+            "tag": "h2",
+            "id": "네트워크-정책"
+          },
+          {
+            "tag": "h2",
+            "id": "고급-개념"
+          }
+        ],
+        "renderedIds": [
+          "cilium-네트워킹-개념-퀴즈",
+          "osi-및-기본-개념",
+          "컨테이너-네트워킹",
+          "ipam",
+          "서비스-및-로드-밸런싱",
+          "네트워크-정책",
+          "고급-개념"
+        ]
+      }
+    ]
+  },
+  "fragmentChecks": [
+    {
+      "path": "en/networking/cilium/networking-concepts.md",
+      "fragment": "osi-model-and-tcp-ip-stack",
+      "found": true
+    },
+    {
+      "path": "en/networking/cilium/networking-concepts.md",
+      "fragment": "container-networking-basics",
+      "found": true
+    },
+    {
+      "path": "en/networking/cilium/networking-concepts.md",
+      "fragment": "overlay-networks",
+      "found": true
+    },
+    {
+      "path": "en/networking/cilium/networking-concepts.md",
+      "fragment": "network-address-translation-nat",
+      "found": true
+    },
+    {
+      "path": "en/networking/cilium/networking-concepts.md",
+      "fragment": "routing-protocols",
+      "found": true
+    },
+    {
+      "path": "en/networking/cilium/networking-concepts.md",
+      "fragment": "dns-and-service-discovery",
+      "found": true
+    },
+    {
+      "path": "en/networking/cilium/networking-concepts.md",
+      "fragment": "load-balancing-concepts",
+      "found": true
+    },
+    {
+      "path": "en/networking/cilium/networking-concepts.md",
+      "fragment": "network-security-basics",
+      "found": true
+    },
+    {
+      "path": "ko/networking/cilium/networking-concepts.md",
+      "fragment": "osi-모델-및-tcp-ip-스택",
+      "found": true
+    },
+    {
+      "path": "ko/networking/cilium/networking-concepts.md",
+      "fragment": "컨테이너-네트워킹-기초",
+      "found": true
+    },
+    {
+      "path": "ko/networking/cilium/networking-concepts.md",
+      "fragment": "오버레이-네트워크",
+      "found": true
+    },
+    {
+      "path": "ko/networking/cilium/networking-concepts.md",
+      "fragment": "네트워크-주소-변환-nat",
+      "found": true
+    },
+    {
+      "path": "ko/networking/cilium/networking-concepts.md",
+      "fragment": "라우팅-프로토콜",
+      "found": true
+    },
+    {
+      "path": "ko/networking/cilium/networking-concepts.md",
+      "fragment": "dns-및-서비스-디스커버리",
+      "found": true
+    },
+    {
+      "path": "ko/networking/cilium/networking-concepts.md",
+      "fragment": "로드-밸런싱-개념",
+      "found": true
+    },
+    {
+      "path": "ko/networking/cilium/networking-concepts.md",
+      "fragment": "네트워크-보안-기초",
+      "found": true
+    }
+  ],
+  "primarySources": [
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.yaml",
+      "cacheKey": "ab96902e3fca",
+      "fetchedAt": "2026-09-12T14:02:08.604636+00:00",
+      "status": 200,
+      "sha256": "48e57492486c8672b85c7fca96b3d9ae48025f1913beea12f3d3dd11b7500ae1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/templates/cilium-configmap.yaml",
+      "cacheKey": "ca1c09dd8495",
+      "fetchedAt": "2026-09-12T16:14:36.020269+00:00",
+      "status": 200,
+      "sha256": "d8ff1cbcdff051c59db0b1ebacb92a350513a8cc078f7b27a063b15ee2ac9e19"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/daemon/cmd/daemon_main.go",
+      "cacheKey": "b37c0cc321fc",
+      "fetchedAt": "2026-09-12T14:02:09.056646+00:00",
+      "status": 200,
+      "sha256": "e42c6cadc71d4a98f58ebc950a9bda259fe7f9d8d3f48e27cb6b31b412d0f7e8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/routing.rst",
+      "cacheKey": "93884cdf2b41",
+      "fetchedAt": "2026-09-12T14:02:08.083206+00:00",
+      "status": 200,
+      "sha256": "1dc7232f46a1839898013f567505c0a114e9418bfe98b9b59b816bb879473092"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst",
+      "cacheKey": "22e54ce1b17d",
+      "fetchedAt": "2026-09-12T13:53:41.306083+00:00",
+      "status": 200,
+      "sha256": "04b670a1456958399883f3a99abbb783d9b3df77380de62ccf311d1cbf525ed2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/masquerading.rst",
+      "cacheKey": "3700bf28499c",
+      "fetchedAt": "2026-09-12T16:31:21.429536+00:00",
+      "status": 200,
+      "sha256": "b69d509d4e09902755bd5b97357aeedc47a6d5942a93c7a4ece08daa9b07a8a1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst",
+      "cacheKey": "d22b9e16808d",
+      "fetchedAt": "2026-09-12T14:04:21.339699+00:00",
+      "status": 200,
+      "sha256": "f108f647f12b8f52012ab6171b391228ddbe0c1130647ccbdb713c270cbe333d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst",
+      "cacheKey": "32d588751973",
+      "fetchedAt": "2026-09-12T14:02:08.567856+00:00",
+      "status": 200,
+      "sha256": "2817d5068db658d64ab3175f7197eddbb61ffb5e9016759b9dd3ad617899579c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/clustermesh/global-services.rst",
+      "cacheKey": "bfc6a216b89d",
+      "fetchedAt": "2026-09-12T14:32:55.301848+00:00",
+      "status": 200,
+      "sha256": "b4fea52506307a3d11c2f239a9d6679958707e8db73749efc02a2930b5d46b8f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer3.rst",
+      "cacheKey": "f6af22ee3d55",
+      "fetchedAt": "2026-09-12T14:32:54.893101+00:00",
+      "status": 200,
+      "sha256": "3ddff4658197f40b19b9b45570a0aa07fb25aa45f21a90d487c2532acd719ece"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/policy/api/entity.go",
+      "cacheKey": "3ce5257f5ad6",
+      "fetchedAt": "2026-09-12T14:47:02.898775+00:00",
+      "status": 200,
+      "sha256": "5f7cd422387aec2a1b64093a9ee1429fc6b9429776ca67cd93f6565fb7413521"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/",
+      "cacheKey": "08a066cf82b7",
+      "fetchedAt": "2026-09-12T16:23:06.266189+00:00",
+      "status": 200,
+      "sha256": "f4c09257d5b5775267842e5657300738f773f4ba4755d4d56081d21d2957d27c"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "cacheKey": "fb91f3263e90",
+      "fetchedAt": "2026-09-12T16:23:06.227981+00:00",
+      "status": 200,
+      "sha256": "c79c12d9beb86cb6057bd06daded0f384c6b5d0f7b2068146855a1109edcd0d2"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "cacheKey": "953450b4076f",
+      "fetchedAt": "2026-09-12T16:06:50.607761+00:00",
+      "status": 200,
+      "sha256": "d537cebf90aee2ca121c56a6cda0b52969f99be62cdb54692dfe5bef7a95da02"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/dns.rst",
+      "cacheKey": "46e8184d152f",
+      "fetchedAt": "2026-09-12T14:32:54.821365+00:00",
+      "status": 200,
+      "sha256": "1c12754bd76b392f4f8b661ddcb7f7b02cd3397eddf232d0f74f86a4dea9f2c0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/fqdn/matchpattern/matchpattern.go",
+      "cacheKey": "edaa77dc1888",
+      "fetchedAt": "2026-09-12T14:39:04.272451+00:00",
+      "status": 200,
+      "sha256": "84577fba9a2665597d4f073b41f1ac217a4d20b98c26a3b498d4dbedb4ad0a3b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/fqdn/matchpattern/matchpattern_test.go",
+      "cacheKey": "db573ecc25e3",
+      "fetchedAt": "2026-09-12T14:39:04.238093+00:00",
+      "status": 200,
+      "sha256": "7df9900edb94085f0079da88c0c79b8a4d732ae469be6f9b1227815c5c5e646c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ipsec.rst",
+      "cacheKey": "4089ae7aa86f",
+      "fetchedAt": "2026-09-12T15:55:34.458671+00:00",
+      "status": 200,
+      "sha256": "48396f60c7dcf387c1195b8db2a0bb00c90b02278da68c620d8a8ab8e093e2b4"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst",
+      "cacheKey": "93d5e022335e",
+      "fetchedAt": "2026-09-12T15:55:34.736451+00:00",
+      "status": 200,
+      "sha256": "b0130d160fedb18ff0c5cee1fb17d2a1bd4328ca69137050b29ca4902995984d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "cacheKey": "6050aa75f1a1",
+      "fetchedAt": "2026-09-12T13:56:49.743616+00:00",
+      "status": 200,
+      "sha256": "6cfda4c36fd22aeaa063a67034c747675a381fba2d9eabaef4d642153e0293c0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+      "cacheKey": "2e97c35c1c5d",
+      "fetchedAt": "2026-09-12T15:55:34.463939+00:00",
+      "status": 200,
+      "sha256": "62be30f49546fc787dd42d83b3b184c8ab5c706ffbf33252f6e3551fbd971672"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/",
+      "cacheKey": "412b025f3b23",
+      "fetchedAt": "2026-09-12T16:31:20.895247+00:00",
+      "status": 200,
+      "sha256": "887465e4f1004c20b7b1ef11f72519f9983db7a078bbb8fe7697efc35be471f2"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/",
+      "cacheKey": "9c3e04d359b8",
+      "fetchedAt": "2026-09-12T16:31:20.376986+00:00",
+      "status": 200,
+      "sha256": "072322f618f3bb53a0c2d4b90b580ab82faa33e320e777e72a85bd53e2fb32be"
+    },
+    {
+      "url": "https://docs.docker.com/engine/network/drivers/bridge/",
+      "cacheKey": "881082f899b2",
+      "fetchedAt": "2026-09-12T16:31:20.432428+00:00",
+      "status": 200,
+      "sha256": "08821c0ebf4e6bab9857c08909670f0b499e86e8e4c4eb5f15a61eab42432c08"
+    },
+    {
+      "url": "https://docs.docker.com/engine/network/drivers/host/",
+      "cacheKey": "6732393fd414",
+      "fetchedAt": "2026-09-12T16:31:20.487823+00:00",
+      "status": 200,
+      "sha256": "3951b03f1a46dad3c8bc8ca6db0e4080d3fb6c6878df4e0c600d57a9c940175e"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc2663.txt",
+      "cacheKey": "a043dddebdc3",
+      "fetchedAt": "2026-09-12T16:31:20.722715+00:00",
+      "status": 200,
+      "sha256": "5da63886f46cc12237a23faebfb4f9037eb8da8375837041228f29cd1a251681"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc4787.txt",
+      "cacheKey": "bce2fc99e1a0",
+      "fetchedAt": "2026-09-12T16:31:20.968701+00:00",
+      "status": 200,
+      "sha256": "5db82ec5f0d6b9b0fc0a37ce7d5b40592e4e6f41562ba8fbc55f1daa52648405"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc2453.txt",
+      "cacheKey": "ea1410ac6918",
+      "fetchedAt": "2026-09-12T16:31:21.140272+00:00",
+      "status": 200,
+      "sha256": "0ea7c77b8883220c13003fe0cc31ee628478864dac5919aada0497bd9e9e2127"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc7868.txt",
+      "cacheKey": "0340546ea047",
+      "fetchedAt": "2026-09-12T16:31:21.224225+00:00",
+      "status": 200,
+      "sha256": "960af059ab0f2ee3a9c3adf930ad1036866cade0b5761298ee8bb978a9cee3b1"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc1122.txt",
+      "cacheKey": "985c7bcf5b49",
+      "fetchedAt": "2026-09-12T16:31:21.407979+00:00",
+      "status": 200,
+      "sha256": "9f526e6bebc868324fedb90aebbcf6e5b15c53fd373ca5d5ce1c2cdcd264e04f"
+    },
+    {
+      "url": "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "cacheKey": "5c477eabbb6d",
+      "fetchedAt": "2026-09-12T16:35:16.065719+00:00",
+      "status": 200,
+      "sha256": "a011aca86618b51d948de89c8042d43406b99f1ba233d3fed7b708c3266ca6b9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/containernetworking/cni/main/SPEC.md",
+      "cacheKey": "92426034f7ac",
+      "fetchedAt": "2026-09-12T16:35:15.141832+00:00",
+      "status": 200,
+      "sha256": "e35d42e754107bee503b60cd83dfca8a45f092d8806c18554db01e05cd3f2d81"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "cacheKey": "b0fb38bb7c6c",
+      "fetchedAt": "2026-09-12T14:09:04.173705+00:00",
+      "status": 200,
+      "sha256": "dcede2063da1d7ad62ecb5af8adb6d7fabd0b52385a7fa0048afb491dac90450"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.schema.json",
+      "cacheKey": "f8f20476ed28",
+      "fetchedAt": "2026-09-12T14:02:08.816699+00:00",
+      "status": 200,
+      "sha256": "5e0d378b3748df1dea5704cf5cc985c5709f88123f8300694e56267891036abd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml",
+      "cacheKey": "0fe7c551ccb3",
+      "fetchedAt": "2026-09-12T14:09:04.314427+00:00",
+      "status": 200,
+      "sha256": "62c6de8f358da125b94468d39187edb1cea157d79503fdc50ccec8a6aaa79a76"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/l2-announcements.rst",
+      "cacheKey": "87859b2fe912",
+      "fetchedAt": "2026-09-12T15:21:36.715042+00:00",
+      "status": 200,
+      "sha256": "6f26f2ddb5630b28c2a0a6046776e9fd235779870ed1ed45c24b0ddedf021f77"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/performance/tuning.rst",
+      "cacheKey": "d9730471f8c7",
+      "fetchedAt": "2026-09-12T16:13:32.801440+00:00",
+      "status": 200,
+      "sha256": "9d29c771b06000acf61568be2e9e0e08c7446ad01f24bf7754277e026f70b343"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/egress-gateway/egress-gateway.rst",
+      "cacheKey": "bf5bd9cb4b15",
+      "fetchedAt": "2026-09-12T16:13:33.328648+00:00",
+      "status": 200,
+      "sha256": "c0604ae15274e36d0fb0f8533076b2833ddc556ea1966b2a26b93394c1a28710"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc7348.txt",
+      "cacheKey": "f96c7fe06a98",
+      "fetchedAt": "2026-09-12T16:23:06.637566+00:00",
+      "status": 200,
+      "sha256": "731475429b30bf4b29a102a0c9217cb0d3522c34fd546ba7b134fec931e83574"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc1034.txt",
+      "cacheKey": "26ad3cbb04c0",
+      "fetchedAt": "2026-09-12T16:24:15.912678+00:00",
+      "status": 200,
+      "sha256": "d6b10a71441df879cc2817d23f2dad120c8a5f87e74eba1e4ed4b743a76a891a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "cacheKey": "68e8148446c9",
+      "fetchedAt": "2026-09-12T13:53:41.051310+00:00",
+      "status": 200,
+      "sha256": "4119df582c01582bc082c529b6faf29167d07f129c1cec2583117fc37e2e4b13"
+    }
+  ],
+  "findings": [
+    "Full1205EN/1211KOguideand256-linequizzeseachread. PreservedcoreOSI/container/overlay/NAT/routing/DNS/LB/securityteaching;correctedKOduplicatedOSI6/7paragraphsandMaglevmistranslation.",
+    "QualifiedOSImapping,TCPversusUDP,error-detectionandapplicationlayerclaims;replacedfictionalgeneralMACpolicy/ARP-spoofingguaranteewithactualoptionalL2AnnouncementsBeta.",
+    "CurrentK8smodelmeansnodeagentreachabilitytoPodsONTHATNODE andPodconnectivitybarringsegmentation,notunrestrictedexternal/everyhost-to-everyPod. CNIexecutioncontractversusoptionalpolicyenforcementandCRIownershipclarified.",
+    "Dockerbridge/hostpicturesaregenericLinuxexamples,notCiliumdefaulttopologyorabsoluteperformance/no-isolationclaims.",
+    "StandardVXLAN4789versusCilium8472,24bitVNItheoryversusidentity/capacity,overlayversusencryption/policyandIPsecIKEversusCiliumkeySecretqualified.",
+    "Removedunsupportednative-when-reachable/overlayfallbackclaim. Currenttunnel+autoDirectNodeRoutestrueisrejected;validLBhybridTCPDSR/UDPSNATisseparate.",
+    "Replacedobsolete/fakeConfigMaptunnel,ipv4-range,tunnel-endpoint-selector,enable-auto-direct-node-routes,enable-bgp/bgp-config-path,ipv4-masquerade-exclude-cidr,strict,enable-fqdn-filter/global-services withcurrentHelm/APIexamples.",
+    "NATdefinitionsnotlimitedprivate/public;NATnotfirewallguarantee. RFCTwiceNATchangesbothaddresses;bidirectionalNATmeanssessionsinitiatedbothways. PATportspacenotuniversal65kflowcap.",
+    "NATprofileusesactualipMasqAgentnonMasqueradeCIDRs withBPF/KPR/device/return-routeprerequisites;noautomaticroutesoruniversalSNAT.ServicepacketDNATdistinguishedfromsocketLB.",
+    "RIP15/16andperiodic/triggeredupdates,EIGRPdefaultthroughput/delaycoefficientsandInformationalRFCstatuscorrected;BGPadsnotlocalroutingprogramming/automaticHA.",
+    "DNSrecursion/referralflowandCoreDNSServiceVIPresolutionseparatedfrombackendselection. CurrentEndpointSlices,configurablecluster-domain,legacyPodDNS,readiness/headlessandcreation-timeenvironmentvariablesdocumented.",
+    "FQDNexamplesnowhaveTCP+UDPDNS/proxyobservationandTCP443limits,separatenamespacesandplaceholderprereqs. Wildcarddepth/apexandlearnedIPnotHTTPSHost/authconstraints explicit.",
+    "GlobalServicesactualannotation+matchingname/namespace;ClientIPaffinityconfiguredonService.CiliumBPFdefaultRandom/Maglevnotroundrobin/leastconnections;nofakeMaglevtimeout. InvalidCiliumseedreplacedwithvalid12bytebase64demo andproductionseedhandlingguidance.",
+    "BPFhostroutingnodeinternalpathdistinguishedfromnativeroutingbetweennodes. Health/statepropagationandremoteCacheTTL0limitsreplaceautomaticlatency-measurement/failoverclaims.",
+    "Hardware/softwareperformanceandLBavailabilitynotguaranteed.Communityingress-nginxretirementMarch2026primaryverified;noambiguouscurrentinstallrecommendation.",
+    "Defenseindepthshared-failurelimits,TLSratherthanSSL,readonlyrootFSversuswritablevolumes,Cilium/HubbleversusexternalIDS/runtimealerts,andcrypto/keymanagementscopescorrected.Kafkapolicy/routingclaimsremoved.",
+    "StandardL4NPandCNPL7demosexplicitlyseparatedbynamespace topreventbroadL4allowbypassingL7. DNSdependenciesadded;noactualapplication/database/externalAPIdeploymentclaimed.",
+    "All40MCQs revisedandmatchedtoprose:genericdefaultsvsplatformprofiles,actualcluster-pool/kubernetesnames,ENInotallEKSrecommendation,world/CIDRscope,BGP,EgressSNAT,andhostrouting.",
+    "ThreeexistingTOCanchorsfixedagainstactualrenderer:EN/KOtcpip->tcp-ipandKOnatseparator;noKoreanproseUnicode-normalizationrewrite."
+  ],
+  "artifactDirectory": ".vitepress/cache/networking-cilium-concepts-audit",
+  "figures": {
+    "actuallyViewed": 30,
+    "removedIndicesEachLanguage": [
+      9,
+      10,
+      11
+    ],
+    "retainedIndicesEachLanguage": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      12,
+      13,
+      14
+    ],
+    "semanticDecisions": {
+      "remove": [
+        9,
+        10,
+        11
+      ],
+      "retainWithCaptions": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        12,
+        13,
+        14
+      ],
+      "notes": {
+        "0": "OSIapproximation;SSLlabellegacy,notcurrentprotocolrecommendation",
+        "1": "LinuxDockerbridgeillustrativeaddressesnotCilium/datapathdefault",
+        "2": "Noisolationmeansnetworknamespaceonly",
+        "3": "GenericVXLAN4789/sharedL2prefixnotCilium8472/perNodeIPAMplan",
+        "4": "Conceptualhostroutesvalid",
+        "5": "GenericVXLAN4789/VNItheoreticalfieldwidthnotCiliumcapacitypromise",
+        "6": "ExampleSNATpublic/privateaddressesdocumentationrangesnotdefinition",
+        "7": "ExampleDNATpublic/privatepatternnotallDNAT",
+        "8": "65kportspacecaptionqualifiesnotuniversaltotalconnectioncap",
+        "9": "WrongreceivingpatharrowsandautomaticnativeBGPadvertisementfooter;redundantwith4remove",
+        "10": "IncorrectiterativeDNSarrowsroot->TLD->authanddirectresponse;replacestep-tablewithrecursive resolver/referrals",
+        "11": "CoreDNSincorrectlyselectsbackendbeforeClusterIPresponse;replaceDNS-vs-service-forwardingtable",
+        "12": "GenericL4selectedbackendnotbroadcast",
+        "13": "GenericL7pathroutingrequiresvisibleHTTP/TLStermination",
+        "14": "PacketpathillustrationnotuniversalSocketLBorperformanceguarantee"
+      }
+    },
+    "externalRepair": "Parentregenerate/source-syncifremovednative/DNSfiguresorforeigntranslationsarereused;noassets/foreignproseedited."
+  },
+  "limits": [
+    "Structural API/Helm schemas and source-based local decision fixtures; no admission/CEL or complete policy engine.",
+    "No installation, CNI/IPAM migration, router/NAT/HTTP traffic, cloud mutation or production performance measurement.",
+    "30 original figures viewed; retained captions distinguish generic examples from Cilium behavior. No asset/foreign-prose edits.",
+    "No Helm render, full local build or devserver; four-document compilation is a separate bounded check.",
+    "16in-pageTOCfragmentchecksusetheactualrenderedIDsandparentUnicode-normalizationpolicy."
+  ]
+}

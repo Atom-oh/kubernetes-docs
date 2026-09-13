@@ -1,0 +1,580 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T22:54:47.826855+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 14,
+    "uniqueFigure": 1
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ops/17-spot-production-experiments.md",
+        "sha256": "8f754bfdd57b2324c47885d11d5180f3c38c32d042c038ef81d83caee01e5533",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-spot-운영-적용-실험과-결과-판정"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-먼저-확인할-동작과-한계"
+          },
+          {
+            "tag": "h3",
+            "id": "운영-방식별-실험-경로"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-실험-환경과-대조군"
+          },
+          {
+            "tag": "h3",
+            "id": "실행-전에-고정할-기록"
+          },
+          {
+            "tag": "h3",
+            "id": "비교-그룹"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-실험-목록과-합격-기준"
+          },
+          {
+            "tag": "h3",
+            "id": "e4-전환-훈련과-공급-부족을-구분"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-e2-재현-aws-fis로-spot-한-대-회수"
+          },
+          {
+            "tag": "h3",
+            "id": "사전-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-측정과-결과-기록"
+          },
+          {
+            "tag": "h3",
+            "id": "관측-시각"
+          },
+          {
+            "tag": "h3",
+            "id": "실험-진행-현황"
+          },
+          {
+            "tag": "h3",
+            "id": "비용-계산"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-운영-도입과-롤백"
+          },
+          {
+            "tag": "h3",
+            "id": "도입-판정"
+          },
+          {
+            "tag": "h3",
+            "id": "롤백-절차"
+          },
+          {
+            "tag": "h3",
+            "id": "정리"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-2026-09-12-실측-결과"
+          },
+          {
+            "tag": "h3",
+            "id": "환경과-해석-범위"
+          },
+          {
+            "tag": "h3",
+            "id": "요청-결과"
+          },
+          {
+            "tag": "h3",
+            "id": "회수-시간선"
+          },
+          {
+            "tag": "h3",
+            "id": "전환·비용·판정"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-관련-문서와-근거"
+          }
+        ],
+        "renderedIds": [
+          "eks-spot-운영-적용-실험과-결과-판정",
+          "_1-먼저-확인할-동작과-한계",
+          "운영-방식별-실험-경로",
+          "_2-실험-환경과-대조군",
+          "실행-전에-고정할-기록",
+          "비교-그룹",
+          "_3-실험-목록과-합격-기준",
+          "e4-전환-훈련과-공급-부족을-구분",
+          "_4-e2-재현-aws-fis로-spot-한-대-회수",
+          "사전-준비",
+          "_5-측정과-결과-기록",
+          "관측-시각",
+          "실험-진행-현황",
+          "비용-계산",
+          "_6-운영-도입과-롤백",
+          "도입-판정",
+          "롤백-절차",
+          "정리",
+          "_7-2026-09-12-실측-결과",
+          "환경과-해석-범위",
+          "요청-결과",
+          "회수-시간선",
+          "전환·비용·판정",
+          "_8-관련-문서와-근거"
+        ]
+      },
+      {
+        "path": "en/ops/17-spot-production-experiments.md",
+        "sha256": "f506e72249a9529409d9dba39e8b16edfc184f3782658c10db8e27c3cb3ac203",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-spot-production-experiments-and-result-assessment"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-behavior-and-limits-to-verify"
+          },
+          {
+            "tag": "h3",
+            "id": "paths-by-compute-manager"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-environment-and-comparison-groups"
+          },
+          {
+            "tag": "h3",
+            "id": "freeze-this-record-before-each-run"
+          },
+          {
+            "tag": "h3",
+            "id": "comparison-groups"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-experiments-and-acceptance-criteria"
+          },
+          {
+            "tag": "h3",
+            "id": "e4-distinguish-a-transition-drill-from-capacity-failure"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-reproduce-e2-reclaim-one-spot-node-using-aws-fis"
+          },
+          {
+            "tag": "h3",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-measurement-and-result-records"
+          },
+          {
+            "tag": "h3",
+            "id": "observation-timeline"
+          },
+          {
+            "tag": "h3",
+            "id": "experiment-status"
+          },
+          {
+            "tag": "h3",
+            "id": "cost-calculation"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-adoption-and-rollback"
+          },
+          {
+            "tag": "h3",
+            "id": "decision"
+          },
+          {
+            "tag": "h3",
+            "id": "rollback-procedure"
+          },
+          {
+            "tag": "h3",
+            "id": "cleanup"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-measurements-from-2026-09-12"
+          },
+          {
+            "tag": "h3",
+            "id": "environment-and-interpretation"
+          },
+          {
+            "tag": "h3",
+            "id": "request-results"
+          },
+          {
+            "tag": "h3",
+            "id": "reclamation-timeline"
+          },
+          {
+            "tag": "h3",
+            "id": "transition-pricing-and-decision"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-related-guides-and-sources"
+          }
+        ],
+        "renderedIds": [
+          "eks-spot-production-experiments-and-result-assessment",
+          "_1-behavior-and-limits-to-verify",
+          "paths-by-compute-manager",
+          "_2-environment-and-comparison-groups",
+          "freeze-this-record-before-each-run",
+          "comparison-groups",
+          "_3-experiments-and-acceptance-criteria",
+          "e4-distinguish-a-transition-drill-from-capacity-failure",
+          "_4-reproduce-e2-reclaim-one-spot-node-using-aws-fis",
+          "prerequisites",
+          "_5-measurement-and-result-records",
+          "observation-timeline",
+          "experiment-status",
+          "cost-calculation",
+          "_6-adoption-and-rollback",
+          "decision",
+          "rollback-procedure",
+          "cleanup",
+          "_7-measurements-from-2026-09-12",
+          "environment-and-interpretation",
+          "request-results",
+          "reclamation-timeline",
+          "transition-pricing-and-decision",
+          "_8-related-guides-and-sources"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ops/17-spot-production-experiments-quiz.md",
+        "sha256": "fd87a694e73eeae1c6bf9dcac4296e0b0b317bedd2b1359841d9cc0beb8f2604",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-spot-운영-적용-실험-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-pdb를-설정한-spot-노드에서-drain-시험을-통과했습니다-올바른-해석은"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-spot-only-selector를-가진-pod가-pending입니다-on-demand-노드를-추가하면"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-nodepool을-on-demand-전용으로-바꿔-서비스가-정상-기동했습니다-검증된-내용은"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-fis-실험이-completed이고-대체-노드가-ready입니다-서비스-실험의-합격-조건은"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-spot-비용-절감의-올바른-비교-방식은"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-실험-데이터가-없는-상태의-올바른-결과-기록은"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-e2-실측에서-혼합-경로의-전체-오류율은-0-0556-최악-60초-오류율은-0-8333-였습니다-60초-오류율-기준이-0-1-라면"
+          }
+        ],
+        "renderedIds": [
+          "eks-spot-운영-적용-실험-퀴즈",
+          "_1-pdb를-설정한-spot-노드에서-drain-시험을-통과했습니다-올바른-해석은",
+          "_2-spot-only-selector를-가진-pod가-pending입니다-on-demand-노드를-추가하면",
+          "_3-nodepool을-on-demand-전용으로-바꿔-서비스가-정상-기동했습니다-검증된-내용은",
+          "_4-fis-실험이-completed이고-대체-노드가-ready입니다-서비스-실험의-합격-조건은",
+          "_5-spot-비용-절감의-올바른-비교-방식은",
+          "_6-실험-데이터가-없는-상태의-올바른-결과-기록은",
+          "_7-e2-실측에서-혼합-경로의-전체-오류율은-0-0556-최악-60초-오류율은-0-8333-였습니다-60초-오류율-기준이-0-1-라면"
+        ]
+      },
+      {
+        "path": "en/quizzes/ops/17-spot-production-experiments-quiz.md",
+        "sha256": "f9172db5d923f2cdeac4bd4458f56d93b04f8c769f2377039980c002bdcf5564",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-spot-production-experiments-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-a-drain-test-passes-on-a-spot-node-with-a-pdb-what-does-this-establish"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-a-pending-pod-has-a-spot-only-selector-what-happens-if-you-add-an-on-demand-node"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-a-service-starts-after-changing-a-nodepool-to-on-demand-only-what-did-the-drill-verify"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-fis-reports-completed-and-the-replacement-node-is-ready-what-establishes-a-service-level-pass"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-which-comparison-correctly-assesses-spot-savings"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-how-should-results-be-recorded-when-no-experiment-data-exists"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-e2-s-mixed-path-had-0-0556-overall-errors-and-0-8333-in-its-worst-full-60-second-window-if-the-60-second-criterion-is-0-1-what-follows"
+          }
+        ],
+        "renderedIds": [
+          "eks-spot-production-experiments-quiz",
+          "_1-a-drain-test-passes-on-a-spot-node-with-a-pdb-what-does-this-establish",
+          "_2-a-pending-pod-has-a-spot-only-selector-what-happens-if-you-add-an-on-demand-node",
+          "_3-a-service-starts-after-changing-a-nodepool-to-on-demand-only-what-did-the-drill-verify",
+          "_4-fis-reports-completed-and-the-replacement-node-is-ready-what-establishes-a-service-level-pass",
+          "_5-which-comparison-correctly-assesses-spot-savings",
+          "_6-how-should-results-be-recorded-when-no-experiment-data-exists",
+          "_7-e2-s-mixed-path-had-0-0556-overall-errors-and-0-8333-in-its-worst-full-60-second-window-if-the-60-second-criterion-is-0-1-what-follows"
+        ]
+      }
+    ]
+  },
+  "nativeOfflineRecompute": {
+    "status": "passed",
+    "records": [
+      {
+        "path": "e0-baseline/baseline",
+        "requests": 2400,
+        "errors": 0,
+        "p99": 3.4051619999786453,
+        "worst60sRate": 0.0,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e0-baseline/mixed",
+        "requests": 2400,
+        "errors": 0,
+        "p99": 4.895088000012038,
+        "worst60sRate": 0.0,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e0-baseline/spot-only",
+        "requests": 2400,
+        "errors": 0,
+        "p99": 3.9103860000295754,
+        "worst60sRate": 0.0,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e1-drain/baseline",
+        "requests": 3600,
+        "errors": 0,
+        "p99": 5.930995999960942,
+        "worst60sRate": 0.0,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e1-drain/mixed",
+        "requests": 3600,
+        "errors": 8,
+        "p99": 3.3009509999146758,
+        "worst60sRate": 0.005833333333333334,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e1-drain/spot-only",
+        "requests": 3600,
+        "errors": 1,
+        "p99": 5.108990000053382,
+        "worst60sRate": 0.0008333333333333334,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e2-interruption/baseline",
+        "requests": 18000,
+        "errors": 0,
+        "p99": 5.165266999938467,
+        "worst60sRate": 0.0,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e2-interruption/mixed",
+        "requests": 18000,
+        "errors": 10,
+        "p99": 5.631134000168458,
+        "worst60sRate": 0.008333333333333333,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e2-interruption/spot-only",
+        "requests": 18000,
+        "errors": 5,
+        "p99": 5.087986000035016,
+        "worst60sRate": 0.004166666666666667,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e4-ondemand-transition/baseline",
+        "requests": 4800,
+        "errors": 0,
+        "p99": 5.598788999805038,
+        "worst60sRate": 0.0,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e4-ondemand-transition/mixed",
+        "requests": 4800,
+        "errors": 9,
+        "p99": 6.19827999980771,
+        "worst60sRate": 0.005833333333333334,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      },
+      {
+        "path": "e4-ondemand-transition/spot-only",
+        "requests": 4800,
+        "errors": 16,
+        "p99": 6.986975000017992,
+        "worst60sRate": 0.013333333333333334,
+        "rawHashVerified": true,
+        "recomputedEqualsStored": true
+      }
+    ],
+    "totalRequests": 86400,
+    "scope": "Offlinehashverificationandnativeanalyzerrecomputationof12publishedrequestdatasets. NoFIS/EC2/Kubernetesloadorcloudactions;historicalinfrastructureclaimsnotindependentlyreplayed."
+  },
+  "tests": {
+    "passed": 29,
+    "command": "python3.12 -m unittest discover -s examples/eks/spot-production -p test_*.py",
+    "sourceRef": "main510b24c3"
+  },
+  "references": [
+    {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "status": 200,
+      "finalUrl": "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/"
+    },
+    {
+      "url": "https://karpenter.sh/docs/concepts/disruption/",
+      "status": 200,
+      "finalUrl": "https://karpenter.sh/docs/concepts/disruption/"
+    },
+    {
+      "url": "https://karpenter.sh/docs/concepts/nodepools/",
+      "status": 200,
+      "finalUrl": "https://karpenter.sh/docs/concepts/nodepools/"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/automode.html"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/fis/latest/userguide/fis-tutorial-spot-interruptions.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/fis/latest/userguide/fis-tutorial-spot-interruptions.html"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "status": 200,
+      "finalUrl": "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/fis/latest/userguide/getting-started-iam-service-role.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/fis/latest/userguide/getting-started-iam-service-role.html"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/fis/latest/userguide/stop-experiment.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/fis/latest/userguide/stop-experiment.html"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html"
+    },
+    {
+      "url": "https://karpenter.sh/docs/upgrading/compatibility/",
+      "status": 200,
+      "finalUrl": "https://karpenter.sh/docs/upgrading/compatibility/"
+    }
+  ],
+  "image": {
+    "path": "assets/experiments/eks-spot/2026-09-12-interruption.png",
+    "sha256": "edf7ab958308c0edb3c83154e88f80f8ee70526bb791549eb7b634d6cb9b0da8",
+    "visuallyInspected": true
+  },
+  "changes": [
+    "Useprivatecurrent-directoryresultfolderinsteadvolatile/tmpfornewexperimentrecords.",
+    "PreservedallpublishedmeasurednumbersandHOLDdecision;nohistoricmetricreplacement."
+  ],
+  "limitations": [
+    "NoFIS/EC2/Kubernetes/cloudloadorresourceactionsrerun.",
+    "Historicalinfrastructuretimeline/cleanupremainasrecorded;offlineclientdatahashesandstatisticsrecomputed.",
+    "One-scenario-runandsharedbackendscannotestablishproductionreliabilityorrealizedsavings."
+  ]
+}

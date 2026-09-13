@@ -1,322 +1,197 @@
 # EKS Auto Mode 마이그레이션 가이드 퀴즈
 
 > **관련 문서**: [마이그레이션 가이드](../../eks-auto-mode/09-migration-guide.md)
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 객관식 문제
 
-### 1. 관리형 노드 그룹에서 Auto Mode로 마이그레이션 시 첫 번째 단계는 무엇인가요?
+### 1. 이전 용량을 활성화하거나 제거하기 전에 무엇을 해야 하나요?
 
-- A) 기존 노드 그룹 즉시 삭제
-- B) 현재 상태 분석 (노드 리소스 사용량, 워크로드 분포 확인)
-- C) Auto Mode NodePool 생성
-- D) 모든 Pod drain
+- A) 기존 node group 삭제
+- B) Workload·의존성·소유권·복구 요구 인벤토리
+- C) 모든 Pod drain
+- D) 같은 인스턴스 이름이면 호환된다고 가정
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 현재 상태 분석 (노드 리소스 사용량, 워크로드 분포 확인)**
+**정답: B) Workload·의존성·소유권·복구 요구 인벤토리**
 
 **설명:**
-마이그레이션의 첫 단계는 현재 환경을 철저히 분석하는 것입니다.
-
-**마이그레이션 단계:**
-1. **현재 상태 분석** - 노드 그룹, 리소스 사용량, 워크로드 분포 확인
-2. Auto Mode 활성화
-3. NodePool 구성
-4. 워크로드 마이그레이션
-5. 기존 노드 그룹 축소
-6. 기존 노드 그룹 삭제
-7. 검증 및 최적화
+계정·cluster·old group identity를 고정한 뒤 placement·data·IAM·network·controller·cost·app health를 조사합니다. 축소/삭제 전에 각 wave를 검증하며 마지막 검증 단계가 최초 health check는 아닙니다. 본문에서 아래 명령용 private WORK_DIR·KUBE_CONTEXT를 설정합니다.
 
 ```bash
-# 현재 노드 그룹 확인
-eksctl get nodegroup --cluster my-cluster
-
-# 노드 리소스 사용량 분석
-kubectl top nodes
-
-# 워크로드 분포 확인
-kubectl get pods -A -o wide | awk '{print $8}' | sort | uniq -c
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
+  get deployments,statefulsets,daemonsets,jobs,cronjobs -A -o json |
+jq '[.items[] | (.spec.template // .spec.jobTemplate.spec.template) as $t |
+ {kind,namespace:.metadata.namespace,name:.metadata.name,uid:.metadata.uid,
+  nodeSelector:$t.spec.nodeSelector,affinity:$t.spec.affinity,tolerations:$t.spec.tolerations,
+  serviceAccountName:$t.spec.serviceAccountName,hostNetwork:$t.spec.hostNetwork,
+  pvcNames:[$t.spec.volumes[]?.persistentVolumeClaim.claimName // empty]}]' \
+  > "$WORK_DIR/workload-placement.json"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get pods -A -o json |
+jq '[.items[] | {namespace:.metadata.namespace,name:.metadata.name,node:.spec.nodeName,
+  phase:.status.phase,deletionTimestamp:.metadata.deletionTimestamp,
+  ready:([.status.conditions[]?|select(.type=="Ready")|.status]|first // "NotReported"),
+  owners:[.metadata.ownerReferences[]?|{kind,name,controller}]}]' \
+  > "$WORK_DIR/pod-state.json"
 ```
+
 
 </details>
 
-### 2. 마이그레이션 중 기존 노드 그룹과 Auto Mode를 공존시키는 방법은?
+### 2. 기존 managed node와 Auto Mode를 예측 가능하게 공존시키는 방법은 무엇인가요?
 
-- A) 불가능하므로 순차적으로만 가능
-- B) nodeSelector로 워크로드 분리
-- C) 별도 클러스터 필요
-- D) AWS Support 티켓 필요
+- A) 공존 불가능
+- B) Workload별 명시적 placement와 controller 소유권 사용
+- C) 별도 cluster만 가능
+- D) AWS resource tag만 매칭
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) nodeSelector로 워크로드 분리**
+**정답: B) Workload별 명시적 placement와 controller 소유권 사용**
 
 **설명:**
-공존 기간 동안 nodeSelector와 affinity를 사용하여 워크로드를 분리합니다.
+정확한 old node-group selector와 Auto pool/compute-type selector로 fleet을 구분합니다. 일반 Karpenter label은 자체 Karpenter도 선택합니다. 의존성이 이전될 때까지 혼합 노드 DNS/agent와 기존 storage/load-balancer controller를 유지하세요. 아래는 Pod spec 조각이며 본문에는 완전한 canary Deployment가 있습니다.
 
+기존 managed group:
 ```yaml
-# 기존 노드 그룹에 고정된 워크로드
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: legacy-critical-app
-spec:
-  template:
-    spec:
-      nodeSelector:
-        eks.amazonaws.com/nodegroup: old-nodegroup
-
----
-# Auto Mode로 이전 가능한 워크로드
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: migrated-app
-spec:
-  template:
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: karpenter.sh/nodepool
-                    operator: Exists
+# Pod template spec fragment
+nodeSelector:
+  eks.amazonaws.com/nodegroup: REPLACE_WITH_OLD_NODEGROUP
+tolerations: []
 ```
+
+Auto canary:
+```yaml
+# Pod template spec fragment
+nodeSelector:
+  karpenter.sh/nodepool: migration-pool
+  eks.amazonaws.com/compute-type: auto
+tolerations:
+- key: migration
+  operator: Equal
+  value: auto-mode
+  effect: NoSchedule
+```
+
 
 </details>
 
-### 3. 점진적 워크로드 이전 순서로 권장되는 것은?
+### 3. 이전 위험을 낮추는 순서는 무엇인가요?
 
-- A) 프로덕션 -> 스테이징 -> 개발
-- B) 개발 -> 스테이징 -> 프로덕션 (비중요 워크로드부터)
-- C) 모든 워크로드 동시 이전
-- D) 랜덤 순서
+- A) 중요 production부터
+- B) 대표 저위험 workload부터 점차 중요한 의존성으로
+- C) 모두 동시에
+- D) 무작위
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 개발 -> 스테이징 -> 프로덕션 (비중요 워크로드부터)**
+**정답: B) 대표 저위험 workload부터 점차 중요한 의존성으로**
 
 **설명:**
-점진적 마이그레이션으로 위험을 최소화합니다.
-
-```yaml
-# 1단계: 비중요 워크로드 이전
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dev-app
-spec:
-  template:
-    spec:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              preference:
-                matchExpressions:
-                  - key: node-type
-                    operator: In
-                    values: ["auto-mode"]
-```
-
-**이전 순서:**
-1. 개발 환경 워크로드
-2. 스테이징 워크로드
-3. 프로덕션 비중요 워크로드
-4. 프로덕션 중요 워크로드
+실제 의존성을 반영한다면 development/staging·비중요 production·중요 production 순서가 유용합니다. 소유 controller/GitOps placement를 변경한 뒤 app 동작·storage·IAM·DNS·traffic을 확인합니다. Soft preference나 임의 `node-type=auto-mode` label은 이전 증거가 아닙니다. Health 실패·불명 시 중단하며 고정 sleep은 검증이 아닙니다.
 
 </details>
 
-### 4. 롤백이 필요할 때 수행해야 하는 단계 순서는?
+### 4. 복구 경로를 보존하는 rollback 순서는 무엇인가요?
 
-- A) 클러스터 삭제 후 재생성
-- B) NodePool 삭제 -> 기존 노드 그룹 스케일업 -> 워크로드 이전
-- C) AWS Support 문의
+- A) 먼저 cluster 삭제·재생성
+- B) 호환 old capacity·placement 복원 후 health 검증, 그다음 정확한 Auto 리소스 정리
+- C) Auto NodePool 먼저 삭제
 - D) Auto Mode만 비활성화
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) NodePool 삭제 -> 기존 노드 그룹 스케일업 -> 워크로드 이전**
+**정답: B) 호환 old capacity·placement 복원 후 health 검증, 그다음 정확한 Auto 리소스 정리**
 
 **설명:**
-롤백은 역순으로 진행합니다.
-
-```bash
-#!/bin/bash
-# rollback.sh
-
-# 1. Auto Mode NodePool 비활성화
-kubectl delete nodepool migration-pool
-
-# 2. 기존 노드 그룹 스케일 업
-eksctl scale nodegroup \
-    --cluster my-cluster \
-    --name old-nodegroup \
-    --nodes 10 \
-    --nodes-min 3
-
-# 3. 워크로드를 기존 노드로 이전
-kubectl patch deployment migrated-app -p '
-{
-  "spec": {
-    "template": {
-      "spec": {
-        "nodeSelector": {
-          "eks.amazonaws.com/nodegroup": "old-nodegroup"
-        },
-        "affinity": null
-      }
-    }
-  }
-}'
-
-# 4. Auto Mode Pod drain
-for node in $(kubectl get nodes -l karpenter.sh/nodepool=migration-pool -o name); do
-    kubectl drain $node --ignore-daemonsets --delete-emptydir-data
-done
-```
+이전 용량이 Ready가 될 때까지 Auto pool을 유지합니다. 충돌하는 Auto selector를 남기거나 관련 없는 affinity를 지우지 말고 의도한 placement를 검토·복원하세요. Pod뿐 아니라 data·traffic도 확인한 뒤 migration 소유 용량을 정리합니다. NodePool 삭제는 node까지 cascade될 수 있으며 scaling JSON만으로 삭제된 group을 재생성할 수 없습니다. 이는 workload 이전 rollback이지 Kubernetes version rollback이 아닙니다.
 
 </details>
 
-### 5. 기존 노드 그룹을 단계적으로 축소할 때 권장되는 방법은?
+### 5. 기존 managed node group의 desired size를 줄이기 전에 무엇이 필요한가요?
 
-- A) 즉시 0으로 축소
-- B) 50%씩 단계적 축소 후 안정화 확인
-- C) 1개씩만 축소
-- D) 모든 노드 동시에 drain
+- A) 즉시 0으로 설정
+- B) 이전 workload 검증·old 앱 용량 cordon/비움·owner 조율
+- C) 항상 절반씩 축소
+- D) 5분 대기만
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 50%씩 단계적 축소 후 안정화 확인**
+**정답: B) 이전 workload 검증·old 앱 용량 cordon/비움·owner 조율**
 
 **설명:**
-점진적 축소로 서비스 영향을 최소화합니다.
-
-```bash
-#!/bin/bash
-CLUSTER="my-cluster"
-NODEGROUP="old-nodegroup"
-CURRENT_SIZE=$(eksctl get nodegroup --cluster $CLUSTER --name $NODEGROUP -o json | jq -r '.[0].DesiredCapacity')
-
-# 50%씩 축소
-while [ $CURRENT_SIZE -gt 0 ]; do
-    NEW_SIZE=$((CURRENT_SIZE / 2))
-    if [ $NEW_SIZE -lt 1 ]; then
-        NEW_SIZE=0
-    fi
-
-    echo "Scaling from $CURRENT_SIZE to $NEW_SIZE"
-    eksctl scale nodegroup --cluster $CLUSTER --name $NODEGROUP \
-        --nodes $NEW_SIZE --nodes-min 0
-
-    # 안정화 대기
-    sleep 300
-
-    # 워크로드 상태 확인
-    kubectl get pods -A --field-selector=status.phase=Pending
-
-    CURRENT_SIZE=$NEW_SIZE
-done
-```
+MNG scaling 설정 변경은 ASG scale-down을 사용하며 PDB를 따르지 않습니다. 본문은 old-node cordon·active non-DaemonSet Pod를 확인하고 조회 실패 시 중단합니다. System 의존성·Job 결과 export를 검토하고 controller가 old node를 다시 채우지 않도록 합니다. Desired를 절반으로 줄이고 sleep해도 안전성이 입증되지 않으며 원래 IaC/scaling 소유권도 적용됩니다.
 
 </details>
 
-### 6. 마이그레이션 중 모니터링해야 할 핵심 지표가 아닌 것은?
+### 6. 이전 중 비용은 어떻게 관측해야 하나요?
 
-- A) Pending Pod 수
-- B) 노드 프로비저닝 시간
-- C) EC2 인스턴스 비용
-- D) 워크로드 가용성
+- A) 기존 리소스 전체 삭제까지 무시
+- B) 현재 node 수를 정확한 청구액으로 사용
+- C) 양쪽 fleet/load balancer 비용과 가용성·성능을 함께 추적
+- D) Auto Mode가 기존 비용을 모두 자동 제거한다고 가정
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) EC2 인스턴스 비용**
+**정답: C) 양쪽 fleet/load balancer 비용과 가용성·성능을 함께 추적**
 
 **설명:**
-마이그레이션 중에는 서비스 안정성이 최우선이므로 다음 지표를 모니터링합니다.
+공존 기간에는 양쪽 fleet/traffic 경로에 과금될 수 있습니다. 실제 청구와 구성한 운영 publisher를 사용합니다. 다음 원래 수치는 미검증 계획 예시이며 Auto Mode 기본 메트릭·정상 범위가 아닙니다.
 
-| 지표 | 정상 범위 | 알람 조건 |
-|------|----------|----------|
-| Pending Pod 수 | 0-5 | > 10 for 5분 |
-| 노드 프로비저닝 시간 | < 90초 | > 120초 |
-| 워크로드 가용성 | > 99.9% | < 99.5% |
-| API 응답 시간 | < 200ms | > 500ms |
+| 신호 | 이전 baseline 예시 | 이전 alert 예시 |
+|------|--------------------|-----------------|
+| Pending Pod | 0–5 | 5분간 >10 |
+| 프로비저닝 시간 | <90초 | >120초 |
+| 가용성 | >99.9% | <99.5% |
+| API latency | <200ms | >500ms |
 
-비용은 마이그레이션 완료 후 최적화 단계에서 확인합니다.
-
-```bash
-# 실시간 모니터링
-watch -n 5 'echo "=== Pending Pods ===" && \
-kubectl get pods -A --field-selector=status.phase=Pending && \
-echo "=== Node Status ===" && kubectl get nodes -o wide'
-```
+Pending은 unschedulable과 같지 않고 Running은 app readiness가 아닙니다. Collector 데이터 부재는 실패 0이 아닙니다.
 
 </details>
 
-### 7. 마이그레이션 완료 후 검증해야 할 항목이 아닌 것은?
+### 7. Workload 검증 후 rollback 선택지를 보존하기 위해 미룰 수 있는 작업은 무엇인가요?
 
-- A) 모든 워크로드 정상 실행 확인
-- B) Auto Mode 노드에서 Pod 분포 확인
-- C) 기존 노드 그룹 완전 삭제
-- D) NodePool 상태 확인
+- A) 앱 동작 확인
+- B) 예상 placement 확인
+- C) 기존 node-group 정의 삭제
+- D) Data·controller health 확인
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 기존 노드 그룹 완전 삭제**
+**정답: C) 기존 node-group 정의 삭제**
 
 **설명:**
-마이그레이션 검증 시점에서는 기존 노드 그룹을 유지하여 롤백 옵션을 보존합니다. 삭제는 안정성 확인 후 진행합니다.
-
-**검증 체크리스트:**
-1. 모든 Pod Running 상태 확인
-2. Auto Mode 노드에 워크로드 분포 확인
-3. NodePool 및 NodeClaim 정상 상태
-4. 애플리케이션 성능 테스트
-5. 로그 및 메트릭 정상 수집
-6. **일정 기간(1-2주) 안정성 확인 후 기존 노드 그룹 삭제**
+정한 안정화 기간 동안 old 정의/설정을 보존하고 남은 리소스·비용을 추적합니다. 이전 1–2주는 예시이지 보편적 요구가 아닙니다. 모든 Pod에 Running을 요구하지 말고 실제 readiness·성공한 Job을 확인하세요. Data/traffic/workload 검증 후 원래 IaC owner로 삭제합니다.
 
 </details>
 
-### 8. Karpenter를 직접 사용하던 클러스터에서 Auto Mode로 전환 시 주의사항은?
+### 8. 기존 self-managed Karpenter controller는 어떻게 다뤄야 하나요?
 
-- A) 직접 전환 가능
-- B) 기존 Karpenter 리소스와 충돌 가능, Karpenter 제거 후 전환
-- C) 동시 운영 권장
-- D) 추가 비용 발생
+- A) Auto Mode 전에 항상 제거
+- B) 호환 Karpenter를 공존 중 유지하고 old 소유 리소스 finalization 후 uninstall
+- C) 공유 Karpenter CRD 전체 삭제
+- D) Karpenter label 노드를 모두 선택해 삭제
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 기존 Karpenter 리소스와 충돌 가능, Karpenter 제거 후 전환**
+**정답: B) 호환 Karpenter를 공존 중 유지하고 old 소유 리소스 finalization 후 uninstall**
 
 **설명:**
-Auto Mode는 내부적으로 Karpenter를 사용하므로, 기존 self-managed Karpenter와 충돌할 수 있습니다.
-
-**전환 절차:**
-1. 기존 Karpenter NodePool 구성 백업
-2. Karpenter가 관리하는 워크로드를 관리형 노드 그룹으로 임시 이전
-3. self-managed Karpenter 제거
-4. Auto Mode 활성화
-5. Auto Mode NodePool 구성 (백업 참고)
-6. 워크로드 이전
-
-```bash
-# Karpenter 제거 전 확인
-kubectl get nodepools
-kubectl get nodeclaims
-kubectl get nodes -l karpenter.sh/nodepool
-
-# Karpenter 제거
-helm uninstall karpenter -n karpenter
-kubectl delete namespace karpenter
-```
+AWS는 직접 공존 이전을 문서화합니다. v1.1 migration 최소값은 현재 Kubernetes 호환 조건을 대체하지 않습니다. 별도 NodeClass reference·taint Auto pool을 사용하고 공유 NodePool/NodeClaim CRD를 변경·삭제하지 마세요. 기존 controller가 finalization할 수 있는 동안 그 소유 pool/claim을 정리하고 인스턴스·의존성 정리를 확인한 뒤 해당 release/IAM/queue만 제거합니다.
 
 </details>
+
+## 참고 자료
+
+- [Managed node-group scaling and PDBs](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)
+- [Auto Mode migration reference](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)
+- [Karpenter coexistence migration](https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-karpenter.html)

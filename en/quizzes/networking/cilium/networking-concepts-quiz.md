@@ -1,23 +1,30 @@
 # Cilium Networking Concepts Quiz
 
-> **Supported Version**: Cilium 1.17
-> **Last Updated**: February 22, 2026
+> **Review baseline**: Cilium 1.20.1.
+> **Last reviewed**: September 12, 2026.
 
-## OSI Model and Basic Concepts
+[Return to the guide](../../../networking/cilium/networking-concepts.md)
 
-1. **Which layer of the OSI model does Cilium primarily operate at?**
-   - A) L2 (Data Link Layer)
-   - B) L3/L4 (Network/Transport Layer)
-   - C) L7 (Application Layer)
-   - D) All layers from L3 to L7
+## OSI and Basic Concepts
+
+1. **Which description of Cilium policy capabilities is correct?**
+
+   - A) Only a general MAC-address firewall
+   - B) Only L3/L4 with no proxy integration
+   - C) Only HTTP policy
+   - D) L3/L4 controls and configured supported L7 rules
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: D) All layers from L3 to L7</p>
-   <p><strong>Explanation</strong>: Cilium provides networking and security features not only at L3/L4 (IP addresses, ports) but also up to L7 (HTTP, gRPC, Kafka, etc.) layers.</p>
+
+   **Answer: D) L3/L4 controls and configured supported L7 rules**
+
+   Cilium combines L3/L4 enforcement with supported HTTP/gRPC and DNS proxy functions. This does not mean implementing every OSI layer or the removed Kafka L7 API.
+
    </details>
 
-2. **Which of the following is an L2 (Data Link Layer) address?**
+2. **Which is a link-layer address?**
+
    - A) IP address
    - B) MAC address
    - C) Port number
@@ -25,11 +32,15 @@
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: B) MAC address</p>
-   <p><strong>Explanation</strong>: A MAC (Media Access Control) address is a unique identifier for a network interface card and is used at the L2 layer.</p>
+
+   **Answer: B) MAC address**
+
+   A MAC address identifies a link-layer interface. It can be locally assigned or changed, so global uniqueness and authenticity are not guaranteed.
+
    </details>
 
-3. **Which of the following is an L3 (Network Layer) protocol?**
+3. **Which protocol provides network-layer IP addressing?**
+
    - A) TCP
    - B) UDP
    - C) IP
@@ -37,25 +48,33 @@
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: C) IP</p>
-   <p><strong>Explanation</strong>: IP (Internet Protocol) is a protocol responsible for packet routing at the network layer (L3).</p>
+
+   **Answer: C) IP**
+
+   IP provides logical addressing and network-layer packet delivery; TCP and UDP have different transport semantics.
+
    </details>
 
 ## Container Networking
 
-4. **What is Cilium's default network model?**
-   - A) Bridge mode
-   - B) Overlay network
-   - C) Underlay network
-   - D) Host network
+4. **Without platform overrides, what is the generic Cilium Helm routing default?**
+
+   - A) Docker bridge
+   - B) Tunnel/overlay mode
+   - C) Mandatory BGP native mode
+   - D) Host networking for every workload
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: B) Overlay network</p>
-   <p><strong>Explanation</strong>: Cilium uses an overlay network model using VXLAN or Geneve by default.</p>
+
+   **Answer: B) Tunnel/overlay mode**
+
+   The generic default is tunnel mode. Platform-specific installation profiles can choose another mode; it is not an EKS-wide or cloud-wide invariant.
+
    </details>
 
-5. **What is the default overlay protocol used by Cilium?**
+5. **Which protocol is the default for the generic Cilium tunnel profile?**
+
    - A) VXLAN
    - B) GRE
    - C) IPsec
@@ -63,194 +82,257 @@
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: A) VXLAN</p>
-   <p><strong>Explanation</strong>: Cilium uses the VXLAN (Virtual Extensible LAN) protocol by default to configure overlay networks.</p>
+
+   **Answer: A) VXLAN**
+
+   VXLAN is the default tunnel protocol, using UDP 8472 in Cilium by default. Standard VXLAN's assigned UDP port is 4789.
+
    </details>
 
-6. **What is the main benefit of Cilium's Direct Routing mode?**
-   - A) Higher security
-   - B) Better compatibility
-   - C) Lower latency and higher throughput
-   - D) Easier setup
+6. **What is a concrete property of native routing?**
+
+   - A) Automatic encryption
+   - B) No need for return routes
+   - C) No overlay encapsulation on that path
+   - D) Guaranteed best throughput
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: C) Lower latency and higher throughput</p>
-   <p><strong>Explanation</strong>: Direct Routing mode provides lower latency and higher throughput because it does not use overlay encapsulation.</p>
+
+   **Answer: C) No overlay encapsulation on that path**
+
+   Native routing avoids overlay headers but needs valid Pod reachability and return routes. Performance is workload- and implementation-dependent.
+
    </details>
 
-## IP Address Management (IPAM)
+## IPAM
 
-7. **What is Cilium's default IPAM mode?**
-   - A) Kubernetes Host Scope
-   - B) Cluster Scope
-   - C) CRD-based
-   - D) AWS ENI
+7. **What is the generic Helm IPAM default without platform overrides?**
+
+   - A) kubernetes
+   - B) cluster-pool
+   - C) A mode named PodCIDR
+   - D) eni
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: B) Cluster Scope</p>
-   <p><strong>Explanation</strong>: Cilium's default IPAM mode is Cluster Scope, which allocates IP addresses centrally across the entire cluster.</p>
+
+   **Answer: B) cluster-pool**
+
+   In cluster-pool mode the operator allocates node CIDRs and each agent allocates Pod IPs locally. Use the actual mode name rather than the ambiguous phrase Cluster Scope.
+
    </details>
 
-8. **What is the recommended IPAM mode when using Cilium on AWS EKS?**
-   - A) Kubernetes Host Scope
-   - B) Cluster Scope
-   - C) AWS ENI
-   - D) CRD-based
+8. **Which Cilium IPAM mode uses EC2 ENIs and VPC addresses?**
+
+   - A) Kubernetes host-scope
+   - B) Cluster-pool
+   - C) ENI
+   - D) Generic CRD-backed
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: C) AWS ENI</p>
-   <p><strong>Explanation</strong>: On AWS EKS, it is recommended to use AWS ENI IPAM mode to directly allocate VPC IP addresses to Pods.</p>
+
+   **Answer: C) ENI**
+
+   ENI mode has AWS-specific prerequisites. It is not a universal recommendation for every EKS compute mode or CNI-chaining arrangement.
+
    </details>
 
-9. **What Kubernetes feature does Cilium's IPAM 'PodCIDR' mode utilize?**
-   - A) NodeSpec.PodCIDR
-   - B) NodeSpec.CIDR
-   - C) NodeSpec.Subnet
-   - D) NodeSpec.IPRange
+9. **Which Node fields are used by ipam.mode: kubernetes?**
+
+   - A) spec.podCIDR / spec.podCIDRs
+   - B) spec.CIDR
+   - C) spec.Subnet
+   - D) spec.IPRange
 
    <details>
    <summary>Show Answer</summary>
-   <p><strong>Answer</strong>: A) NodeSpec.PodCIDR</p>
-   <p><strong>Explanation</strong>: Cilium's PodCIDR IPAM mode utilizes the NodeSpec.PodCIDR field assigned by Kubernetes to each node.</p>
+
+   **Answer: A) spec.podCIDR / spec.podCIDRs**
+
+   Kubernetes allocates node Pod CIDRs. Cilium uses these in Kubernetes host-scope IPAM; PodCIDR is not the literal IPAM mode name.
+
    </details>
 
 ## Services and Load Balancing
 
-10. **Which feature is NOT provided by Cilium's kube-proxy replacement mode?**
-    - A) ClusterIP service support
-    - B) NodePort service support
-    - C) LoadBalancer service support
-    - D) Service mesh functionality
+10. **Which feature is not enabled solely by kube-proxy replacement?**
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: D) Service mesh functionality</p>
-    <p><strong>Explanation</strong>: Cilium's kube-proxy replacement mode supports basic Kubernetes service types, but service mesh functionality is provided through a separate Cilium Service Mesh feature.</p>
-    </details>
+   - A) ClusterIP forwarding
+   - B) NodePort forwarding
+   - C) Supported LoadBalancer Service forwarding
+   - D) Workload mTLS
 
-11. **What algorithms does Cilium use for service load balancing?**
-    - A) Round robin
-    - B) Least connections
-    - C) IP hash
-    - D) All of the above
+   <details>
+   <summary>Show Answer</summary>
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: D) All of the above</p>
-    <p><strong>Explanation</strong>: Cilium supports various load balancing algorithms including round robin, least connections, and IP hash.</p>
-    </details>
+   **Answer: D) Workload mTLS**
 
-12. **What does Cilium's Global Service feature enable?**
-    - A) Globally distributed service access
-    - B) Service load balancing across multiple clusters
-    - C) Global IP address allocation
-    - D) Global network policy application
+   Service forwarding is separate from workload authentication/encryption. External load-balancer provisioning also needs its controller/provider.
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: B) Service load balancing across multiple clusters</p>
-    <p><strong>Explanation</strong>: Cilium's Global Service feature enables load balancing for the same service across multiple clusters through Cluster Mesh.</p>
-    </details>
+   </details>
+
+11. **Which are Cilium's BPF Service load-balancing algorithms?**
+
+   - A) Random and Maglev
+   - B) Round robin only
+   - C) Least connections by default
+   - D) Periodic Maglev timeout rotation
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: A) Random and Maglev**
+
+   Random is the default and Maglev is an alternative on supported paths. Envoy algorithms, ClientIP affinity and affinity timeouts are separate concepts.
+
+   </details>
+
+12. **What does a configured Global Service enable?**
+
+   - A) Automatic worldwide public IP allocation
+   - B) Service load balancing across connected clusters
+   - C) Automatic replication of every policy
+   - D) Shared persistent storage
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: B) Service load balancing across connected clusters**
+
+   ClusterMesh and matching Service names/namespaces are required. Endpoint/cache behavior and failure handling still need validation.
+
+   </details>
 
 ## Network Policies
 
-13. **What does the 'toCIDR' rule in Cilium network policies allow?**
-    - A) Traffic to specific IP address ranges
-    - B) Traffic to specific domain names
-    - C) Traffic to specific services
-    - D) Traffic to specific ports
+13. **What does toCIDR select?**
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: A) Traffic to specific IP address ranges</p>
-    <p><strong>Explanation</strong>: The toCIDR rule is used to allow traffic to specific IP address ranges (in CIDR notation).</p>
-    </details>
+   - A) Destination address ranges
+   - B) Authenticated DNS hostnames
+   - C) Only named Services
+   - D) Only TCP ports
 
-14. **What does the 'world' entity mean in Cilium network policy 'toEntities' rules?**
-    - A) All internal cluster endpoints
-    - B) All external networks
-    - C) All nodes
-    - D) All namespaces
+   <details>
+   <summary>Show Answer</summary>
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: B) All external networks</p>
-    <p><strong>Explanation</strong>: The 'world' entity means all networks external to the cluster.</p>
-    </details>
+   **Answer: A) Destination address ranges**
 
-15. **Which protocol is NOT supported in Cilium's L7 policies?**
-    - A) HTTP
-    - B) gRPC
-    - C) Kafka
-    - D) SMTP
+   CIDR selectors have endpoint-classification rules; managed in-cluster Pods/nodes are excluded by default, with an explicit Beta opt-in in this version. It is not an authentication mechanism.
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: D) SMTP</p>
-    <p><strong>Explanation</strong>: Cilium supports L7 protocols such as HTTP, gRPC, and Kafka, but does not support SMTP by default.</p>
-    </details>
+   </details>
 
-## Advanced Networking Concepts
+14. **What does the world entity represent?**
 
-16. **What protocols can be used in Cilium's Transparent Encryption feature?**
-    - A) IPsec
-    - B) WireGuard
-    - C) Both A and B
-    - D) TLS
+   - A) All known cluster identities
+   - B) External endpoints, rather than known cluster/ClusterMesh identities
+   - C) All Kubernetes nodes
+   - D) All namespaces
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: C) Both A and B</p>
-    <p><strong>Explanation</strong>: Cilium can encrypt traffic between nodes using both IPsec and WireGuard.</p>
-    </details>
+   <details>
+   <summary>Show Answer</summary>
 
-17. **What technology does Cilium's Multi-cluster feature use?**
-    - A) Cluster Federation
-    - B) Cluster Mesh
-    - C) Multi-cluster Networking
-    - D) Global Cluster
+   **Answer: B) External endpoints, rather than known cluster/ClusterMesh identities**
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: B) Cluster Mesh</p>
-    <p><strong>Explanation</strong>: Cilium uses Cluster Mesh technology to provide connectivity between multiple Kubernetes clusters.</p>
-    </details>
+   world is not a synonym for every endpoint in every cluster. Select the appropriate entity/identity scope and required ports.
 
-18. **What is possible through Cilium's BGP support?**
-    - A) Route exchange with external routers
-    - B) External IP advertisement for LoadBalancer services
-    - C) Direct routing between clusters
-    - D) All of the above
+   </details>
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: D) All of the above</p>
-    <p><strong>Explanation</strong>: Cilium's BGP support enables route exchange with external routers, external IP advertisement for LoadBalancer services, and direct routing between clusters.</p>
-    </details>
+15. **Which former Cilium L7 capability was removed?**
 
-19. **What is the main purpose of Cilium's Egress Gateway feature?**
-    - A) Preserving the source IP address of external traffic
-    - B) Changing the destination IP address of external traffic
-    - C) Encrypting external traffic
-    - D) Blocking external traffic
+   - A) HTTP path matching
+   - B) DNS query rules
+   - C) Kafka topic rules
+   - D) HTTP method matching
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: A) Preserving the source IP address of external traffic</p>
-    <p><strong>Explanation</strong>: Egress Gateway SNATs traffic going from Pods to outside the cluster to a specific IP, providing a consistent source IP.</p>
-    </details>
+   <details>
+   <summary>Show Answer</summary>
 
-20. **Which statement is correct about Cilium's Host Routing feature?**
-    - A) Routing between host network and Pod network
-    - B) Direct routing between hosts
-    - C) Host network interface protection
-    - D) Host-based load balancing
+   **Answer: C) Kafka topic rules**
 
-    <details>
-    <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: B) Direct routing between hosts</p>
-    <p><strong>Explanation</strong>: Cilium's Host Routing provides direct routing between hosts without an overlay network.</p>
-    </details>
+   Current policy supports HTTP/gRPC-related proxy functions and DNS rules; old Kafka policy examples must not be copied into the current API.
+
+   </details>
+
+## Advanced Concepts
+
+16. **Which pair names alternative Cilium node transport encryption modes?**
+
+   - A) HTTP and DNS
+   - B) TCP and UDP
+   - C) IPsec and WireGuard
+   - D) Relay and Prometheus
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: C) IPsec and WireGuard**
+
+   Choose the appropriate node encryption mode and validate coverage. SPIRE mutual authentication and Beta ztunnel workload mTLS have different roles and prerequisites.
+
+   </details>
+
+17. **What is Cilium's multi-cluster networking feature called?**
+
+   - A) Cluster Federation
+   - B) ClusterMesh
+   - C) Global Cluster
+   - D) NodePort Mesh
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: B) ClusterMesh**
+
+   ClusterMesh shares network metadata and supports configured cross-cluster connectivity; addressing, trust and underlay prerequisites remain.
+
+   </details>
+
+18. **What does Cilium BGP Control Plane do?**
+
+   - A) Programs all learned routes into the local datapath
+   - B) Advertises selected Pod/Service prefixes to peers
+   - C) Creates DNS records automatically
+   - D) Guarantees all cross-cluster traffic
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: B) Advertises selected Pod/Service prefixes to peers**
+
+   Advertisement is distinct from address allocation and actual packet forwarding. Inspect the peer's routes and test both traffic directions.
+
+   </details>
+
+19. **What does Egress Gateway do to matching outbound traffic?**
+
+   - A) SNAT to a selected gateway IP
+   - B) Preserve every original Pod source IP
+   - C) Automatically encrypt external traffic
+   - D) Create gateway interfaces without prerequisites
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: A) SNAT to a selected gateway IP**
+
+   It provides a configured source address by translation. Prepared interfaces/routing and new-Pod policy convergence must be considered.
+
+   </details>
+
+20. **What does BPF host routing optimize?**
+
+   - A) Automatic native/overlay fallback
+   - B) Host-internal packet forwarding and use of the host stack
+   - C) Host firewall authorization
+   - D) Storage encryption
+
+   <details>
+   <summary>Show Answer</summary>
+
+   **Answer: B) Host-internal packet forwarding and use of the host stack**
+
+   BPF host routing can bypass parts of the host stack/netfilter with its prerequisites and integration limits. It is distinct from selecting native versus tunnel routing between nodes.
+
+   </details>

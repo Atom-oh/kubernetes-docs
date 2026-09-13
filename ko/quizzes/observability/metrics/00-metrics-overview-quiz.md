@@ -1,183 +1,165 @@
 # 메트릭 개요 퀴즈
 
-메트릭의 기본 개념과 모니터링 솔루션에 대한 이해도를 테스트하는 퀴즈입니다.
+> 검토: 2026-09-12
 
----
+1. 리셋될 수 있는 누적 횟수를 표현하는 유형은 무엇인가요?
 
-1. Prometheus 메트릭의 네 가지 기본 유형 중, 값이 증가만 가능하고 재시작 시 0으로 리셋되는 유형은?
    - A) Gauge
    - B) Counter
-   - C) Histogram
-   - D) Summary
+   - C) 미리 계산한 p99
+   - D) Scrape timestamp
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Counter**
+**정답: B**
 
-**설명:**
-Counter는 누적되는 값을 추적하는 메트릭 유형으로, 값은 증가만 가능하며 재시작 시 0으로 리셋됩니다. HTTP 요청 수, 에러 수, 완료된 작업 수 등을 추적하는 데 사용됩니다. Gauge는 증가/감소 모두 가능하고, Histogram과 Summary는 분포를 측정합니다.
+Counter는 음수가 아닌 증가량을 누적합니다. 측정하는 상태가 다시 만들어지면 리셋될 수 있습니다. rate()는 관측한 리셋을 처리하지만 관측하지 못한 증가량까지 복원하지는 않습니다.
 
 </details>
 
----
+2. 메서드 5개, 경로 20개, 상태 코드 10개는 무엇을 의미하나요?
 
-2. 다음 중 카디널리티(Cardinality)에 대한 설명으로 올바른 것은?
-   - A) 메트릭의 수집 간격을 의미한다
-   - B) 메트릭의 고유한 시계열 조합 수를 의미한다
-   - C) 메트릭의 데이터 압축률을 의미한다
-   - D) 메트릭의 보존 기간을 의미한다
+   - A) 모든 배포에서 저장 시계열이 정확히 1,000개이다
+   - B) 모든 조합이 가능할 때 애플리케이션 레이블 조합은 최대 1,000개이다
+   - C) 하루 샘플이 정확히 1,000개이다
+   - D) 자원 사용량에는 영향이 없다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 메트릭의 고유한 시계열 조합 수를 의미한다**
+**정답: B**
 
-**설명:**
-카디널리티는 메트릭의 고유한 레이블 조합 수를 의미합니다. 높은 카디널리티는 스토리지 사용량과 쿼리 성능에 직접적인 영향을 미치며, user_id나 request_id와 같이 무한히 증가할 수 있는 값을 레이블로 사용하면 카디널리티가 폭발적으로 증가합니다.
+곱셈 결과는 상한입니다. 실제 발생 조합, 대상·복제본 레이블, Histogram 버킷, 과거 시계열 churn이 실제 시계열 수와 저장량에 영향을 줍니다.
 
 </details>
 
----
+3. Pushgateway 사용 방식으로 적절한 것은 무엇인가요?
 
-3. Pull 모델과 Push 모델에 대한 설명으로 올바르지 않은 것은?
-   - A) Prometheus는 Pull 기반 시스템이다
-   - B) Pull 모델에서는 중앙에서 수집 대상과 주기를 제어한다
-   - C) Push 모델은 짧은 수명 작업의 메트릭 수집에 적합하다
-   - D) Pull 모델은 NAT/방화벽 뒤의 대상 접근이 쉽다
+   - A) 모든 짧은 Pod를 HOSTNAME별 그룹으로 만들고 자동 만료를 기다린다
+   - B) 적합한 서비스 단위 배치에 안정적인 그룹·성공 시각·명시적인 폐기 정책을 사용한다
+   - C) Gateway의 up=1을 모든 배치 성공의 증거로 삼는다
+   - D) 배치가 실패해도 성공 시각을 전송한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: D) Pull 모델은 NAT/방화벽 뒤의 대상 접근이 쉽다**
+**정답: B**
 
-**설명:**
-Pull 모델에서는 모니터링 서버가 대상에 직접 HTTP 요청을 보내 메트릭을 수집하므로, NAT/방화벽 뒤의 대상에 접근하기 어렵습니다. 반면 Push 모델에서는 대상이 직접 메트릭을 전송하므로 NAT/방화벽 환경에서 유리합니다. Pushgateway를 사용하면 Pull 모델에서도 짧은 수명 작업의 메트릭을 수집할 수 있습니다.
+Pushgateway는 모든 짧은 작업의 기본 선택지가 아니며 그룹에 자동 TTL이 없습니다. Scrape 상태와 배치의 최근 성공 여부는 다릅니다. honor_labels는 전송한 작업 식별자를 유지합니다.
 
 </details>
 
----
+4. Histogram과 Summary에 대한 설명으로 맞는 것은 무엇인가요?
 
-4. Histogram과 Summary의 차이점에 대한 설명으로 올바른 것은?
-   - A) Histogram은 클라이언트에서 분위수를 계산한다
-   - B) Summary는 여러 인스턴스 간 집계가 가능하다
-   - C) Histogram은 서버(쿼리 시)에서 분위수를 계산한다
-   - D) Summary가 Histogram보다 스토리지 효율성이 높다
+   - A) Summary 분위수는 항상 정확하다
+   - B) 인스턴스 p99의 평균이 전체 p99이다
+   - C) 호환되는 classic 버킷은 합칠 수 있고, Summary sum/count도 평균 계산을 위해 합칠 수 있다
+   - D) Summary의 모든 데이터는 집계할 수 없다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Histogram은 서버(쿼리 시)에서 분위수를 계산한다**
+**정답: C**
 
-**설명:**
-Histogram은 버킷 기반으로 데이터를 저장하고 쿼리 시 서버에서 분위수를 계산합니다. Summary는 클라이언트에서 분위수를 계산하여 저장합니다. Histogram은 여러 인스턴스 간 집계가 가능하지만, Summary는 집계가 불가능합니다. SLO/SLI 측정이나 분산 시스템에서는 Histogram이 권장됩니다.
+Classic 버킷은 계측한 생산자에서 집계하고 Prometheus가 조회 시 분위수를 계산합니다. Summary 분위수는 알고리즘·시간 구간에 따른 오차가 있으며 전체 분위수로 집계할 수 없습니다. 반면 음수가 아닌 지연 시간의 sum/count 변화율로 전체 평균을 계산할 수 있습니다.
 
 </details>
 
----
+5. 새 Prometheus 애플리케이션 메트릭의 권장 관례가 아닌 것은 무엇인가요?
 
-5. 메트릭 네이밍 규칙으로 권장되지 않는 것은?
-   - A) snake_case 사용
-   - B) 단위를 접미사로 포함 (_seconds, _bytes)
-   - C) camelCase 사용
-   - D) 애플리케이션/도메인 접두사 사용
+   - A) 의미 있는 접두사 사용
+   - B) _seconds, _bytes 같은 단위 접미사 사용
+   - C) 일반적인 기본 단위 관례보다 camelCase·밀리초를 우선 사용
+   - D) 누적 Counter를 _total로 표시
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) camelCase 사용**
+**정답: C**
 
-**설명:**
-Prometheus 스타일의 메트릭 네이밍 규칙에서는 camelCase 대신 snake_case를 사용합니다. 좋은 메트릭 이름은 `http_requests_total`, `http_request_duration_seconds`처럼 소문자와 언더스코어를 사용하고, 단위를 접미사로 포함하며, 애플리케이션/도메인 접두사를 사용합니다.
+의미 있는 언더스코어 구분 이름과 기본 단위를 권장합니다. _total은 Counter 표시이지 물리 단위가 아닙니다. node_memory_MemAvailable_bytes처럼 기존 exporter가 공개한 이름은 유지합니다.
 
 </details>
 
----
+6. Prometheus 보존 기간에 대해 맞는 설명은 무엇인가요?
 
-6. Prometheus의 장기 저장소로 별도 솔루션이 필요한 이유로 적절하지 않은 것은?
-   - A) 압축률이 낮아 디스크 사용량이 증가한다
-   - B) 단일 노드 아키텍처로 확장에 제한이 있다
-   - C) PromQL이 복잡한 쿼리를 지원하지 않는다
-   - D) 네이티브 HA 클러스터링을 지원하지 않는다
+   - A) 30일보다 오래 보존할 수 없다
+   - B) 시간·용량 보존 설정이 없으면 기본 15일이며, 더 오래 보존하려면 적절한 설정과 용량이 필요하다
+   - C) Local 데이터를 압축하지 않는다
+   - D) Mimir 없이 독립 수집 복제본을 구성할 수 없다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) PromQL이 복잡한 쿼리를 지원하지 않는다**
+**정답: B**
 
-**설명:**
-PromQL은 매우 강력한 쿼리 언어로, 복잡한 쿼리도 지원합니다. Prometheus가 장기 저장소로 적합하지 않은 이유는 상대적으로 낮은 압축률, 단일 노드 아키텍처의 확장 제한, 네이티브 HA 클러스터링 미지원, 장기간 데이터에 대한 쿼리 속도 저하 등입니다.
+기본 보존 기간은 최대값이 아닙니다. Local TSDB는 복제된 분산 저장소가 아니므로 수집 중복성·조회 중복 제거·내구성·복구를 구분해 설계합니다.
 
 </details>
 
----
+7. 제품·저장소에 대한 주장 중 틀린 것은 무엇인가요?
 
-7. 다음 솔루션 비교 중 올바르지 않은 것은?
-   - A) VictoriaMetrics는 Prometheus보다 높은 압축률을 제공한다
-   - B) CloudWatch는 완전 관리형 서비스이다
-   - C) Mimir는 로컬 디스크만 지원한다
-   - D) Datadog은 SaaS 모델로 제공된다
+   - A) VictoriaMetrics single-node와 cluster는 운영 요구가 다르다
+   - B) 기존 CloudWatch metrics는 시간이 지나면 해상도가 낮아진다
+   - C) Mimir의 object storage가 무제한 확장과 모든 local storage 제거를 보장한다
+   - D) Datadog 메트릭 쿼리는 rollup을 적용하므로 보존 기간이 모든 그래프의 최초 해상도를 보장하지는 않는다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Mimir는 로컬 디스크만 지원한다**
+**정답: C**
 
-**설명:**
-Grafana Mimir는 객체 스토리지(S3, GCS, Azure Blob 등)를 필수로 사용하는 분산 메트릭 저장소입니다. 로컬 디스크가 아닌 클라우드 객체 스토리지를 활용하여 무제한 확장성과 장기 보존을 제공합니다. VictoriaMetrics는 로컬 디스크와 객체 스토리지 모두 지원합니다.
+Object storage는 Mimir 구조의 일부일 뿐 무제한 용량 보장이 아닙니다. Ingest/local 자원, query 제한, 복제와 운영 용량이 여전히 중요합니다. 백업 대상이나 edition별 기능도 기본 저장 구조와 구분해야 합니다.
 
 </details>
 
----
+8. 메트릭 카디널리티를 제어하지 못하는 방법은 무엇인가요?
 
-8. 높은 카디널리티 문제를 방지하기 위한 방법으로 적절하지 않은 것은?
-   - A) 사용자 ID를 메트릭 레이블로 사용하지 않는다
-   - B) 요청 ID를 메트릭 레이블로 사용하지 않는다
-   - C) HTTP 상태 코드를 그룹화한다 (200 → 2xx)
-   - D) 모든 레이블 값을 고유하게 유지한다
+   - A) 정규화한 경로 template 사용
+   - B) 일반 레이블에서 사용자·세션 ID 제외
+   - C) 상세 구분을 잃어도 될 때 상태 코드 그룹화
+   - D) 매 요청마다 새로운 request_id 레이블 값 부여
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: D) 모든 레이블 값을 고유하게 유지한다**
+**정답: D**
 
-**설명:**
-높은 카디널리티를 방지하려면 레이블 값이 무한히 증가하지 않도록 해야 합니다. 사용자 ID, 요청 ID, 세션 ID 등 무한히 증가할 수 있는 값은 레이블로 사용하지 않아야 하고, HTTP 상태 코드는 그룹화(200 → 2xx), URL 경로는 정규화(/users/123 → /users/{id})하는 것이 좋습니다.
+서로 다른 레이블 값은 시계열을 늘리며 값에 hash를 적용해도 개수가 줄지는 않습니다. 필요한 요청 문맥은 적절히 통제한 로그·트레이스로 다룹니다. 카디널리티와 민감 정보 노출을 함께 검토합니다.
 
 </details>
 
----
+9. Kubernetes 메트릭 역할의 올바른 연결은 무엇인가요?
 
-9. Kubernetes 환경에서 주요 메트릭 소스와 역할의 연결이 올바른 것은?
-   - A) node-exporter - Kubernetes 객체 상태 메트릭
-   - B) kube-state-metrics - 노드 수준 하드웨어 메트릭
-   - C) cAdvisor - 컨테이너별 리소스 메트릭
-   - D) metrics-server - 장기 메트릭 저장
+   - A) node-exporter — Kubernetes API 객체 상태
+   - B) kube-state-metrics — 실제 컨테이너 CPU 사용량
+   - C) cAdvisor/kubelet 메트릭 — 컨테이너 자원 측정
+   - D) metrics-server — 장기 Prometheus TSDB
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) cAdvisor - 컨테이너별 리소스 메트릭**
+**정답: C**
 
-**설명:**
-cAdvisor(Container Advisor)는 컨테이너별 CPU, 메모리, I/O 등의 리소스 메트릭을 수집합니다. node-exporter는 노드 수준의 하드웨어/OS 메트릭, kube-state-metrics는 Kubernetes API 객체(Pod, Deployment, Node 등)의 상태 메트릭, metrics-server는 HPA/VPA용 실시간 리소스 메트릭을 제공합니다.
+node-exporter는 호스트 OS, kube-state-metrics는 API 객체 상태, metrics-server는 Resource Metrics API를 담당합니다. Prometheus/vmalert/Mimir rule이 알림을 평가하고 Alertmanager는 전달합니다. vmagent는 수집·전달기이지 조회 가능한 TSDB가 아닙니다.
 
 </details>
 
----
+10. 검토 가능한 비용 비교에 필요한 것은 무엇인가요?
 
-10. 메트릭 솔루션 선택 시 고려사항으로 적절하지 않은 것은?
-    - A) 팀의 운영 역량과 규모
-    - B) 멀티클라우드 요구사항
-    - C) 비용 구조와 예산
-    - D) 메트릭 이름의 길이
+   - A) 팀 규모만으로 정한 제품 순위
+   - B) 수집 주기·기능 조건이 없는 노드 수
+   - C) 측정한 시계열·샘플량, 보존·해상도, HA·조회 요구와 선택한 기능의 최신 단가
+   - D) 메트릭 이름과 값의 길이는 절대 중요하지 않다는 가정
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: D) 메트릭 이름의 길이**
+**정답: C**
 
-**설명:**
-메트릭 솔루션 선택 시 팀의 운영 역량, 멀티클라우드 요구사항, 비용 구조, 확장성 요구사항, 기존 에코시스템과의 통합 등을 고려해야 합니다. 메트릭 이름의 길이는 솔루션 선택에 영향을 미치지 않습니다. 대신 카디널리티, 데이터 보존 기간, 쿼리 성능 등이 중요한 고려사항입니다.
+실제 노출 시계열 100만 개를 15초마다 30일간 수집하면 filtering/deduplication 전 1,728억 샘플입니다. 인프라·index/WAL·복제본·조회량·custom metric 제공량·운영 인력에 따라 비용이 달라집니다. 업무량 계산이지 공급자의 견적이 아닙니다.
 
 </details>
+
+[학습 자료로 돌아가기](../../../observability/metrics/README.md)

@@ -1,8 +1,9 @@
 # EKS Hybrid Nodes
 
-> **Supported Versions**: EKS 1.31+, nodeadm 0.1+ **Last Updated**: February 23, 2026
+> **Supported Versions**: Current EKS-supported versions; examples reviewed for EKS 1.36 / nodeadm 1.0.20
+> **Last Updated**: September 12, 2026
 
-Amazon EKS Hybrid Nodes is a feature that allows you to manage on-premises servers from the AWS EKS control plane. This guide covers the concepts, configuration methods, and practical usage of EKS Hybrid Nodes in production environments.
+Amazon EKS Hybrid Nodes connects customer-operated on-premises or edge nodes to an AWS-managed EKS control plane. You continue to operate the hosts, operating systems, connectivity and workloads. This guide distinguishes supported interfaces from example configurations; it is not evidence that a particular on-premises production deployment has been tested.
 
 ## Table of Contents
 
@@ -17,9 +18,9 @@ Amazon EKS Hybrid Nodes is a feature that allows you to manage on-premises serve
 9. [Bare Metal Server OS Installation and Migration Guide](09-bare-metal-os-setup.md)
 10. [Hybrid Nodes Gateway](10-hybrid-nodes-gateway.md)
 
-## What are Hybrid Nodes?
+## What Are Hybrid Nodes?
 
-EKS Hybrid Nodes is a feature that enables you to register servers in your on-premises data center or edge environment as Kubernetes nodes managed by the AWS EKS control plane. This allows you to manage cloud and on-premises infrastructure as a single Kubernetes cluster.
+Hybrid Nodes can share a cluster with ordinary AWS compute nodes. Registering a cloud machine as a **hybrid** node is a different matter: AWS does not support hybrid-node infrastructure in AWS Regions, Local Zones, Outposts or other clouds, and EC2 use still incurs hybrid fees.
 
 ![EKS hybrid nodes network overview diagram running from the on-prem router and gateway to the control plane ENI in the AWS cluster VPC.](../.gitbook/assets/en-eks-hybrid-nodes-highlevel-0.png)
 
@@ -31,86 +32,68 @@ The following diagram shows the network prerequisites including VPC, subnets, Tr
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
 
-## Why Use Hybrid Nodes?
+The diagrams illustrate private connectivity and routing, not automatic creation of every on-premises route, firewall rule or AWS service endpoint.
 
-### 1. Regulatory Compliance and Data Sovereignty
+## Use Cases and Data Boundaries
 
-Certain industries (finance, healthcare, government) have regulations requiring data to remain within specific regions or facilities. With Hybrid Nodes, you can keep sensitive data on-premises while leveraging EKS management capabilities.
+On-premises GPUs, large local datasets, edge processing and existing hardware can be reasons to use Hybrid Nodes. Data-locality requirements still need application, storage, egress and logging controls. Kubernetes API objects and control-plane metadata are managed in AWS; a node selector alone does not establish data sovereignty or regulatory compliance.
+
+Use the actual hybrid compute label and an explicitly maintained organization label for placement, rather than assuming an AWS zone named `on-premises` exists:
 
 ```yaml
-# Example of regulatory compliance workload placement
-apiVersion: v1
-kind: Pod
-metadata:
-  name: financial-data-processor
-spec:
-  nodeSelector:
-    topology.kubernetes.io/zone: "on-premises"
-    compliance.company.io/data-sovereignty: "required"
-  containers:
-  - name: processor
-    image: harbor.internal.company.io/finance/data-processor:v1.2.0
+# Pod spec fragment; set organization labels through the node owner.
+nodeSelector:
+  eks.amazonaws.com/compute-type: hybrid
+  example.com/data-location: on-premises
 ```
 
-### 2. Data Gravity
+This fragment does not create a label, a complete application, a security boundary or a data-retention policy. Validate image/runtime compatibility and actual data paths.
 
-When large datasets exist on-premises, it's more efficient to bring compute closer to the data rather than moving data to the cloud.
+## Architecture and Ownership
 
-### 3. Leveraging Existing Hardware
+| Component | Location | Responsibility |
+|-----------|----------|----------------|
+| EKS API server, etcd, controllers, scheduler | AWS | AWS-managed control plane |
+| nodeadm | On-premises supported Linux host | Installation/bootstrap/upgrade CLI; not the long-running node agent |
+| kubelet / containerd | On-premises | Node agent / CRI runtime, operated by the host owner |
+| Cilium or Calico | On-premises and cluster | Compatible CNI configuration; VPC CNI does not manage hybrid nodes |
+| SSM Agent or Roles Anywhere signing helper | On-premises | Obtains temporary credentials from the corresponding AWS service |
+| SSM / IAM Roles Anywhere service | AWS | Credential service, not a local offline CA substitute |
+| VPN / Direct Connect and routing | Both environments | Bidirectional connectivity; Direct Connect alone does not imply encryption |
 
-You can continue to utilize already-invested high-performance servers (especially GPU servers) while applying modern Kubernetes-based workload management.
+Bottlerocket's supported VMware variants use their own bootstrap path and do not use nodeadm. For other supported hosts, `nodeadm install` installs dependencies and `nodeadm init` configures/joins the node. SSM-based new installations/upgrades require **nodeadm 1.0.19 or later** because of SSM signing-key changes; the reviewed current release is **1.0.20**.
 
-### 4. Unified Management
+## Constraints to Plan Around
 
-Managing Kubernetes workloads in both cloud and on-premises environments from a single control plane reduces operational complexity.
+- **Connected environment:** Reliable private bidirectional connectivity to AWS is required. Hybrid Nodes is not intended for disconnected/intermittent DDIL operation. “Air-gap” in this guide means restricted internet access with required AWS connectivity, not isolation from AWS.
+- **Addresses:** IPv4 RFC1918 or CGNAT ranges, with no overlap between remote node/Pod, VPC and service CIDRs. Up to **15 node CIDRs and 15 Pod CIDRs per cluster** are supported.
+- **Authentication:** Use `API` or `API_AND_CONFIG_MAP` and prepare the Hybrid Nodes IAM role/access entries.
+- **API endpoint:** AWS recommends public-only or private-only. With both enabled, nodes outside the VPC resolve public endpoint addresses; that **can** prevent joining if the expected path/access rules are private. It is not a universal API prohibition. Even a public API endpoint does not remove the private control-plane-to-node connectivity requirement.
+- **Regions:** Available except AWS GovCloud (US) and AWS China Regions, according to the current overview.
+- **Host support:** Review the OS, architecture, CNI and kernel together. AL2023 is for on-premises virtualized environments, not a generic bare-metal recommendation.
+- **Charges:** Hybrid fees use reported vCPU-hours while nodes are attached. Hyperthreaded bare-metal cores can report two vCPUs. Idle workloads do not automatically stop node charges; cluster and other service fees are separate.
 
-## Architecture Components
+## Credential Providers
 
-The EKS Hybrid Nodes architecture consists of the following components:
+Both providers need access to AWS service endpoints to refresh credentials. A local CA does not let IAM Roles Anywhere issue AWS credentials offline. Prefer one provider consistently across the fleet unless there is a reviewed reason to mix them.
 
-| Component                       | Location    | Role                                            |
-| ------------------------------- | ----------- | ----------------------------------------------- |
-| EKS Control Plane               | AWS         | API server, etcd, controller manager, scheduler |
-| nodeadm                         | On-Premises | Node bootstrap and management agent             |
-| kubelet                         | On-Premises | Pod execution and node status reporting         |
-| containerd                      | On-Premises | Container runtime                               |
-| VPN/Direct Connect              | Network     | Secure connection between AWS and on-premises   |
-| SSM Agent or IAM Roles Anywhere | On-Premises | Credential management                           |
+| Topic | SSM hybrid activations | IAM Roles Anywhere |
+|-------|------------------------|--------------------|
+| Bootstrap | Activation ID/code and prepared SSM-trusting role | PKI, per-node certificate/key, trust anchor, profile and role |
+| Naming | SSM-generated `mi-...` name | Custom node name bound to the certificate identity |
+| Session duration | Fixed one hour, refreshed by SSM | Default one hour; supported request/profile durations 15 minutes–12 hours, subject to effective duration and role maximum |
+| Disconnection | Cannot refresh; retry backoff can delay reconnection after network recovery | Cannot obtain new credentials offline; credential-process obtains them on demand when connectivity returns |
+| Scale / cost | Up to 1,000 standard hybrid-activated SSM nodes per account/Region without additional SSM cost; advanced tier has separate charges | No identical SSM tier threshold; IAM Roles Anywhere quotas and PKI operations still apply |
+| Typical choice | No existing PKI; simpler registration | Existing PKI and managed certificate lifecycle |
 
-### Key Constraints and Limitations
+The Roles Anywhere profile must accept a custom role session name, and the trust policy must bind it to the chosen certificate attribute. Its effective session duration must **not exceed** the IAM role maximum; equality is allowed by the CreateSession API. The [prerequisites](01-prerequisites.md) detail these contracts and secure preparation.
 
-* **Network connectivity**: Requires reliable on-premises to AWS connectivity via VPN or Direct Connect (not suitable for disconnected, intermittent, limited, or denied environments)
-* **CIDR limits**: Up to 15 CIDRs for Remote Node Networks and Remote Pod Networks per cluster
-* **IPv4 only**: Must use IPv4 address family (IPv6 not supported for hybrid nodes)
-* **Authentication mode**: Cluster must use `API` or `API_AND_CONFIG_MAP` authentication mode
-* **Endpoint access**: Must use Public OR Private only ("Public and Private" **not supported** — causes hybrid node join failures)
-* **Per-vCPU pricing**: Hybrid nodes are charged per-vCPU hourly (no minimum commitments)
-* **Cloud infrastructure**: Not supported on cloud infrastructure (running on EC2 will incur hybrid node fees)
-* **VPC CNI**: Amazon VPC CNI is not compatible with hybrid nodes; use Cilium or Calico
+## Example Workloads
 
-### Credential Provider Options
-
-EKS Hybrid Nodes supports two credential providers for authenticating on-premises nodes with AWS:
-
-| Feature                  | SSM Hybrid Activations                                                           | IAM Roles Anywhere                                     |
-| ------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| **Setup complexity**     | Simple — activation code/ID pair                                                 | Moderate — requires PKI infrastructure                 |
-| **Certificate required** | No                                                                               | Yes (X.509 certificate per node)                       |
-| **Air-gap compatible**   | No (requires SSM endpoint access)                                                | Yes (works with local CA)                              |
-| **Credential rotation**  | Automatic (AWS managed, 1-hour TTL fixed)                                        | Automatic (certificate-based, 1-12 hours configurable) |
-| **Node naming**          | Auto-generated (`mi-xxxx`, not customizable)                                     | Custom (must match certificate CN)                     |
-| **Scaling limits**       | 1,000 free per account per region; advanced-instances tier for more (extra cost) | No limits                                              |
-| **AWS dependency**       | SSM service                                                                      | IAM Roles Anywhere service                             |
-| **Best for**             | Standard environments with internet/VPN                                          | Air-gap, strict compliance, existing PKI               |
-
-> **Recommendation**: Use SSM Hybrid Activations for simplicity in most environments. Choose IAM Roles Anywhere when you need air-gap support or already have PKI infrastructure.
-
-## Primary Use Cases
-
-1. **AI/ML Workloads**: Model training on on-premises GPU servers, inference services in the cloud
-2. **Financial Services**: Transaction data processing on-premises, analytics in the cloud
-3. **Manufacturing**: Edge computing in factories integrated with central cloud
-4. **Media Processing**: Large media file processing where the data resides
+1. Local GPU training or inference with a verified runtime and recovery plan.
+2. Local data processing with separately reviewed AWS metadata/telemetry/egress paths.
+3. Factory/edge applications with reliable connectivity and tested disconnection behavior.
+4. Media processing near large existing datasets.
 
 ## Next Steps
 
@@ -146,3 +129,9 @@ To test your understanding of EKS Hybrid Nodes, try the following quiz:
 * [Hybrid Nodes Networking Guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
 * [Hybrid Nodes CNI Configuration](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
 * [Hybrid Nodes Troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-troubleshooting.html)
+
+* [Hybrid operating-system compatibility](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html)
+* [Hybrid credentials and IAM role](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html)
+* [Host credentials during network disconnection](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html)
+* [IAM Roles Anywhere CreateSession semantics](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-create-session.html)
+* [EKS pricing](https://aws.amazon.com/eks/pricing/)

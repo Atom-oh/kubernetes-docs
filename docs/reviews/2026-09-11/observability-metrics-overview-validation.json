@@ -1,0 +1,1128 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T19:16:30.166562+00:00",
+  "scope": [
+    "en/observability/metrics/README.md",
+    "ko/observability/metrics/README.md",
+    "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+    "ko/quizzes/observability/metrics/00-metrics-overview-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/metrics/README.md": {
+      "lines": 419,
+      "sha256": "99002c40fe050f2c0fd764f5f9c156af801fb6be0fc2372dc54d9417822ba439"
+    },
+    "ko/observability/metrics/README.md": {
+      "lines": 419,
+      "sha256": "c33fefe8439225e3b12ddd8446f5fc8471f68c1179c07cbb1c504ade68cff801"
+    },
+    "en/quizzes/observability/metrics/00-metrics-overview-quiz.md": {
+      "lines": 185,
+      "sha256": "8b1794042c54277118fa53537b81773cf710482ba9a7cc33e7c6ee94aa41b1a6"
+    },
+    "ko/quizzes/observability/metrics/00-metrics-overview-quiz.md": {
+      "lines": 183,
+      "sha256": "8e8cf1a8176de238b17f3f82be160fec916a393e486fff67f14cfcbbbd0b1641"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/metrics/README.md",
+        "sha256": "5d7b0ed8700905276777c192047fbb86ee05b6ace7c5bd06d8ace3c25d546bd7",
+        "lines": 401,
+        "fences": 21,
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "sha256": "06f91edc45cc85be90eeecd6d1d4beaa902f05328b1d875d1550ab617d9b93ce",
+        "lines": 401,
+        "fences": 21,
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+        "sha256": "4e719e003d61f87329fda3917e20231a4111523a5f02e34b31129c067c1e4d4c",
+        "lines": 165,
+        "fences": 0,
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+        "sha256": "6d559f8aef9d9f979a62fd658aa5f86957a8d42f2ca19bc6ed048a1cf5488590",
+        "lines": 165,
+        "fences": 0,
+        "passed": true
+      }
+    ],
+    "publishedCounts": {
+      "expositions": 8,
+      "queries": 26,
+      "configs": 6,
+      "shellFragments": 2,
+      "quizQuestions": 20
+    },
+    "nativeChecks": [
+      {
+        "tool": "native-check.py",
+        "exit": 0,
+        "stdout": "{\"configChecks\": 3, \"expositions\": 4, \"originalShellsRejected\": 2, \"relabelCases\": 7, \"mockPushCases\": 8, \"histogramSum\": \"4800.8625\", \"sampleScenario\": 172800000000}"
+      },
+      {
+        "tool": "promql-check.py",
+        "exit": 0,
+        "stdout": "{\"groups\": 10, \"assertions\": 27, \"queries\": 13, \"p95\": \"0.1452380952380952380952380952\"}"
+      }
+    ],
+    "nativeBasics": {
+      "promtool": {
+        "version": "3.14.0",
+        "platform": "linux-arm64",
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/observability-tools/promtool-3.14.0",
+        "releaseURL": "https://github.com/prometheus/prometheus/releases/tag/v3.14.0",
+        "releasePublishedAt": "2026-08-18T08:49:40Z",
+        "archiveURL": "https://github.com/prometheus/prometheus/releases/download/v3.14.0/prometheus-3.14.0.linux-arm64.tar.gz",
+        "archiveBytes": 98015563,
+        "archiveSHA256": "077f3781ab7245dc04c9a3c9b78ba120fc8e41aa0dc97489b0af67247e50ba83",
+        "manifestSHA256": "1f56a4ef0378db78e13928f7d54ebf018c815ebcb240df2f84fac919cc9f2ed5",
+        "binarySHA256": "e5388d1393f006044d75148fe3b0fc8e5324109bdd9fd191b078d68096d769c1",
+        "binaryBytes": 109735431,
+        "extraction": "Only promtool; no server/dependency tree.",
+        "archiveRetained": false,
+        "versionOutput": "promtool, version 3.14.0 (branch: HEAD, revision: d7598b7141418fa35be2b5ec5d0fefb634199610)\n  build user:       root@f423027f4410\n  build date:       20260817-16:52:05\n  go version:       go1.26.6\n  platform:         linux/arm64\n  tags:             netgo,builtinassets\n"
+      },
+      "configChecks": [
+        {
+          "file": "pod-scrape.yaml",
+          "exit": 0,
+          "output": "Checking /home/atomoh/kubernetes-docs/.vitepress/cache/observability-metrics-overview-audit/pod-scrape.yaml\n SUCCESS: /home/atomoh/kubernetes-docs/.vitepress/cache/observability-metrics-overview-audit/pod-scrape.yaml is valid prometheus config file syntax\n\n"
+        },
+        {
+          "file": "pushgateway-scrape.yaml",
+          "exit": 0,
+          "output": "Checking /home/atomoh/kubernetes-docs/.vitepress/cache/observability-metrics-overview-audit/pushgateway-scrape.yaml\n SUCCESS: /home/atomoh/kubernetes-docs/.vitepress/cache/observability-metrics-overview-audit/pushgateway-scrape.yaml is valid prometheus config file syntax\n\n"
+        },
+        {
+          "file": "remote-write.yaml",
+          "exit": 0,
+          "output": "Checking /home/atomoh/kubernetes-docs/.vitepress/cache/observability-metrics-overview-audit/remote-write.yaml\n SUCCESS: /home/atomoh/kubernetes-docs/.vitepress/cache/observability-metrics-overview-audit/remote-write.yaml is valid prometheus config file syntax\n\n"
+        }
+      ],
+      "expositions": [
+        {
+          "file": "counter.prom",
+          "families": [
+            {
+              "name": "http_requests",
+              "type": "counter",
+              "samples": 2
+            }
+          ]
+        },
+        {
+          "file": "gauge.prom",
+          "families": [
+            {
+              "name": "node_memory_MemAvailable_bytes",
+              "type": "gauge",
+              "samples": 1
+            },
+            {
+              "name": "node_memory_MemTotal_bytes",
+              "type": "gauge",
+              "samples": 1
+            },
+            {
+              "name": "kube_pod_status_ready",
+              "type": "gauge",
+              "samples": 1
+            },
+            {
+              "name": "temperature_celsius",
+              "type": "gauge",
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "file": "histogram.prom",
+          "families": [
+            {
+              "name": "http_request_duration_seconds",
+              "type": "histogram",
+              "samples": 9
+            }
+          ]
+        },
+        {
+          "file": "summary.prom",
+          "families": [
+            {
+              "name": "rpc_request_duration_seconds",
+              "type": "summary",
+              "samples": 5
+            }
+          ]
+        }
+      ],
+      "legacyTimestamp": {
+        "inputMillis": 1677649200000,
+        "parsedSeconds": 1677649200.0
+      },
+      "histogram": {
+        "originalSum": "53.42",
+        "minimumLowerBound": "2704.505",
+        "newSum": "4800.8625",
+        "weightedGroups": [
+          {
+            "count": 24054,
+            "value": "0.0025"
+          },
+          {
+            "count": 9390,
+            "value": "0.0075"
+          },
+          {
+            "count": 66948,
+            "value": "0.0175"
+          },
+          {
+            "count": 28997,
+            "value": "0.0375"
+          },
+          {
+            "count": 4599,
+            "value": "0.075"
+          },
+          {
+            "count": 10332,
+            "value": "0.2"
+          }
+        ],
+        "tailBucketAdded": "0.25"
+      },
+      "oldJobShell": [
+        {
+          "language": "en",
+          "oldJobShellRejected": true,
+          "stderr": "bash: line 5: syntax error near unexpected token `cat'\nbash: line 5: `cat <<EOF | curl --data-binary @- ${PUSHGATEWAY_URL}/metrics/job/batch_job/instance/${HOSTNAME}'\n"
+        },
+        {
+          "language": "ko",
+          "oldJobShellRejected": true,
+          "stderr": "bash: line 5: syntax error near unexpected token `cat'\nbash: line 5: `cat <<EOF | curl --data-binary @- ${PUSHGATEWAY_URL}/metrics/job/batch_job/instance/${HOSTNAME}'\n"
+        }
+      ],
+      "relabelModels": [
+        {
+          "case": "named-metrics",
+          "kept": true,
+          "result": {
+            "__meta_kubernetes_pod_annotation_prometheus_io_scrape": "true",
+            "__meta_kubernetes_pod_phase": "Running",
+            "__meta_kubernetes_pod_container_port_name": "metrics",
+            "__meta_kubernetes_pod_container_port_protocol": "TCP",
+            "__meta_kubernetes_namespace": "example-app",
+            "__meta_kubernetes_pod_name": "example-0",
+            "__address__": "10.0.0.4:9090",
+            "__metrics_path__": "/metrics",
+            "namespace": "example-app",
+            "pod": "example-0"
+          }
+        },
+        {
+          "case": "http-port",
+          "kept": false,
+          "result": null
+        },
+        {
+          "case": "scrape-disabled",
+          "kept": false,
+          "result": null
+        },
+        {
+          "case": "completed",
+          "kept": false,
+          "result": null
+        },
+        {
+          "case": "udp",
+          "kept": false,
+          "result": null
+        },
+        {
+          "case": "custom-path",
+          "kept": true,
+          "result": {
+            "__meta_kubernetes_pod_annotation_prometheus_io_scrape": "true",
+            "__meta_kubernetes_pod_phase": "Running",
+            "__meta_kubernetes_pod_container_port_name": "metrics",
+            "__meta_kubernetes_pod_container_port_protocol": "TCP",
+            "__meta_kubernetes_namespace": "example-app",
+            "__meta_kubernetes_pod_name": "example-0",
+            "__address__": "10.0.0.4:9090",
+            "__metrics_path__": "/custom-metrics",
+            "__meta_kubernetes_pod_annotation_prometheus_io_path": "/custom-metrics",
+            "namespace": "example-app",
+            "pod": "example-0"
+          }
+        },
+        {
+          "case": "ipv6",
+          "kept": true,
+          "result": {
+            "__meta_kubernetes_pod_annotation_prometheus_io_scrape": "true",
+            "__meta_kubernetes_pod_phase": "Running",
+            "__meta_kubernetes_pod_container_port_name": "metrics",
+            "__meta_kubernetes_pod_container_port_protocol": "TCP",
+            "__meta_kubernetes_namespace": "example-app",
+            "__meta_kubernetes_pod_name": "example-0",
+            "__address__": "[fd00::4]:9090",
+            "__metrics_path__": "/metrics",
+            "namespace": "example-app",
+            "pod": "example-0"
+          }
+        }
+      ],
+      "mockPushCases": [
+        {
+          "case": "valid",
+          "exit": 0,
+          "mockCalled": true,
+          "payload": {
+            "example_batch_last_run_duration_seconds": 1.25,
+            "example_batch_last_run_records_processed": 42,
+            "example_batch_last_success_timestamp_seconds": 1700000000
+          },
+          "stderr": ""
+        },
+        {
+          "case": "missing-url",
+          "exit": 1,
+          "mockCalled": false,
+          "payload": null,
+          "stderr": "bash: line 7: PUSHGATEWAY_URL: Set the reachable authorized Pushgateway base URL\n"
+        },
+        {
+          "case": "bad-duration",
+          "exit": 1,
+          "mockCalled": false,
+          "payload": null,
+          "stderr": ""
+        },
+        {
+          "case": "negative-duration",
+          "exit": 1,
+          "mockCalled": false,
+          "payload": null,
+          "stderr": ""
+        },
+        {
+          "case": "bad-records",
+          "exit": 2,
+          "mockCalled": false,
+          "payload": null,
+          "stderr": ""
+        },
+        {
+          "case": "bad-time",
+          "exit": 2,
+          "mockCalled": false,
+          "payload": null,
+          "stderr": ""
+        },
+        {
+          "case": "zero-records",
+          "exit": 0,
+          "mockCalled": true,
+          "payload": {
+            "example_batch_last_run_duration_seconds": 0,
+            "example_batch_last_run_records_processed": 0,
+            "example_batch_last_success_timestamp_seconds": 1700000000
+          },
+          "stderr": ""
+        },
+        {
+          "case": "http-failure",
+          "exit": 22,
+          "mockCalled": true,
+          "payload": {
+            "example_batch_last_run_duration_seconds": 1.25,
+            "example_batch_last_run_records_processed": 42,
+            "example_batch_last_success_timestamp_seconds": 1700000000
+          },
+          "stderr": ""
+        }
+      ],
+      "cardinalityModels": {
+        "correlatedLabels": {
+          "observed": 3,
+          "cartesianUpperBound": 6
+        },
+        "chapterExample": {
+          "methods": 5,
+          "endpoints": 20,
+          "statuses": 10,
+          "upperBound": 1000
+        },
+        "twoTargets": 2000,
+        "classicHistogramPerLabelSet": {
+          "bucketsIncludingInf": 7,
+          "sumAndCount": 2,
+          "seriesWithoutCreated": 9
+        }
+      },
+      "floatSampleScenario": {
+        "series": 1000000,
+        "days": 30,
+        "intervalSeconds": 15,
+        "samples": 172800000000
+      },
+      "limits": [
+        "Promtool checked configuration syntax only, with no Kubernetes discovery/backend connection.",
+        "Pushgateway delivery ran only against a Bash curl function; no network push or business job was executed.",
+        "Relabel cases model the reviewed rules, not a live Kubernetes discovery controller.",
+        "Exposition parsed by official prometheus-client0.26; arithmetic and cardinality fixtures are synthetic, not production benchmarks."
+      ]
+    },
+    "nativePromQL": {
+      "tool": "/home/atomoh/kubernetes-docs/.vitepress/cache/observability-tools/promtool-3.14.0",
+      "version": "3.14.0",
+      "exit": 0,
+      "groups": 10,
+      "assertions": 27,
+      "groupNames": [
+        "counters-two-instances",
+        "counter-reset-before-summing",
+        "gauges",
+        "corrected-histogram-distribution",
+        "aggregate-buckets-not-instance-quantiles",
+        "missing-data-is-not-zero",
+        "zero-observation-quantiles-and-mean-undefined",
+        "summary-count-sum-are-aggregatable",
+        "active-series-and-label-values",
+        "batch-completion-time-is-a-gauge-value"
+      ],
+      "histogramP95": "0.1452380952380952380952380952",
+      "publishedQueryNames": [
+        "counter_rate",
+        "counter_total_rate",
+        "counter_increase",
+        "memory_used_percent",
+        "temperature_max",
+        "histogram_p95",
+        "histogram_mean",
+        "summary_p99",
+        "summary_mean",
+        "cardinality_top",
+        "cardinality_metric",
+        "cardinality_endpoint",
+        "batch_age"
+      ],
+      "allPublishedQueriesExercised": true,
+      "output": "  SUCCESS\n\n",
+      "fixture": "/home/atomoh/kubernetes-docs/.vitepress/cache/observability-metrics-overview-audit/promql-tests.yaml",
+      "limits": [
+        "Actual PromQL engine on synthetic series only; no server, network query or production benchmark.",
+        "NaN checked by self-inequality; p95 checked with1e-12 tolerance for rate/interpolation rounding.",
+        "Prometheus3.14 max_over_time result labels omit the metric name; expected labels reflect the verified native result."
+      ]
+    },
+    "localLinks": [
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "#metrics-fundamentals",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "#metric-types",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "#pull-vs-push-model",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "#cardinality-and-metric-design",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "#long-term-storage-requirements",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "#solution-comparison",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "#metrics-collection-architecture",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "../../.gitbook/assets/en-observability-metrics-readme-0.png",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "01-prometheus.md",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "02-victoriametrics.md",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "03-mimir.md",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "04-cloudwatch-metrics.md",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "05-datadog.md",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/README.md",
+        "target": "../../quizzes/observability/metrics/00-metrics-overview-quiz.md",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "#메트릭-기본-개념",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "#메트릭-유형",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "#pull-vs-push-모델",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "#카디널리티와-메트릭-설계",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "#장기-저장소-필요성",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "#솔루션-비교",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "#메트릭-수집-아키텍처",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "../../.gitbook/assets/ko-observability-metrics-readme-0.png",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "01-prometheus.md",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "02-victoriametrics.md",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "03-mimir.md",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "04-cloudwatch-metrics.md",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "05-datadog.md",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "target": "../../quizzes/observability/metrics/00-metrics-overview-quiz.md",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+        "target": "../../../observability/metrics/README.md",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+        "target": "../../../observability/metrics/README.md",
+        "passed": true
+      }
+    ],
+    "limits": [
+      "No cluster/cloud deployment or network push. Native configuration syntax, actual PromQL synthetic series, official client parser and mocked curl only.",
+      "Published code blocks match the exercised fixtures in both languages; no production load or vendor cost benchmark is claimed."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 1024,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/metrics/README.md",
+        "sha256": "5d7b0ed8700905276777c192047fbb86ee05b6ace7c5bd06d8ace3c25d546bd7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "metrics-overview"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "metrics-fundamentals"
+          },
+          {
+            "tag": "h3",
+            "id": "naming-and-units"
+          },
+          {
+            "tag": "h2",
+            "id": "metric-types"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-counter"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-gauge"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-histogram"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-summary"
+          },
+          {
+            "tag": "h2",
+            "id": "pull-vs-push-model"
+          },
+          {
+            "tag": "h3",
+            "id": "pull-and-kubernetes-discovery"
+          },
+          {
+            "tag": "h3",
+            "id": "push-and-service-level-batch-jobs"
+          },
+          {
+            "tag": "h2",
+            "id": "cardinality-and-metric-design"
+          },
+          {
+            "tag": "h2",
+            "id": "long-term-storage-requirements"
+          },
+          {
+            "tag": "h3",
+            "id": "retention-planning"
+          },
+          {
+            "tag": "h3",
+            "id": "remote-write"
+          },
+          {
+            "tag": "h2",
+            "id": "solution-comparison"
+          },
+          {
+            "tag": "h3",
+            "id": "deployment-and-operational-boundaries"
+          },
+          {
+            "tag": "h3",
+            "id": "cost-inputs-not-unsupported-monthly-totals"
+          },
+          {
+            "tag": "h2",
+            "id": "metrics-collection-architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-references"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          }
+        ],
+        "renderedIds": [
+          "metrics-overview",
+          "table-of-contents",
+          "metrics-fundamentals",
+          "naming-and-units",
+          "metric-types",
+          "_1-counter",
+          "_2-gauge",
+          "_3-histogram",
+          "_4-summary",
+          "pull-vs-push-model",
+          "pull-and-kubernetes-discovery",
+          "push-and-service-level-batch-jobs",
+          "cardinality-and-metric-design",
+          "long-term-storage-requirements",
+          "retention-planning",
+          "remote-write",
+          "solution-comparison",
+          "deployment-and-operational-boundaries",
+          "cost-inputs-not-unsupported-monthly-totals",
+          "metrics-collection-architecture",
+          "primary-references",
+          "next-steps"
+        ]
+      },
+      {
+        "path": "ko/observability/metrics/README.md",
+        "sha256": "06f91edc45cc85be90eeecd6d1d4beaa902f05328b1d875d1550ab617d9b93ce",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "메트릭-개요"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "메트릭-기본-개념"
+          },
+          {
+            "tag": "h3",
+            "id": "이름과-단위"
+          },
+          {
+            "tag": "h2",
+            "id": "메트릭-유형"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-counter"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-gauge"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-histogram"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-summary"
+          },
+          {
+            "tag": "h2",
+            "id": "pull-vs-push-모델"
+          },
+          {
+            "tag": "h3",
+            "id": "pull과-kubernetes-discovery"
+          },
+          {
+            "tag": "h3",
+            "id": "push와-서비스-단위-배치"
+          },
+          {
+            "tag": "h2",
+            "id": "카디널리티와-메트릭-설계"
+          },
+          {
+            "tag": "h2",
+            "id": "장기-저장소-필요성"
+          },
+          {
+            "tag": "h3",
+            "id": "보존-계획"
+          },
+          {
+            "tag": "h3",
+            "id": "remote-write"
+          },
+          {
+            "tag": "h2",
+            "id": "솔루션-비교"
+          },
+          {
+            "tag": "h3",
+            "id": "배포와-운영-경계"
+          },
+          {
+            "tag": "h3",
+            "id": "근거-없는-월-비용-대신-입력-조건-계산"
+          },
+          {
+            "tag": "h2",
+            "id": "메트릭-수집-아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계"
+          }
+        ],
+        "renderedIds": [
+          "메트릭-개요",
+          "목차",
+          "메트릭-기본-개념",
+          "이름과-단위",
+          "메트릭-유형",
+          "_1-counter",
+          "_2-gauge",
+          "_3-histogram",
+          "_4-summary",
+          "pull-vs-push-모델",
+          "pull과-kubernetes-discovery",
+          "push와-서비스-단위-배치",
+          "카디널리티와-메트릭-설계",
+          "장기-저장소-필요성",
+          "보존-계획",
+          "remote-write",
+          "솔루션-비교",
+          "배포와-운영-경계",
+          "근거-없는-월-비용-대신-입력-조건-계산",
+          "메트릭-수집-아키텍처",
+          "공식-참고-자료",
+          "다음-단계"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+        "sha256": "4e719e003d61f87329fda3917e20231a4111523a5f02e34b31129c067c1e4d4c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "metrics-overview-quiz"
+          }
+        ],
+        "renderedIds": [
+          "metrics-overview-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/00-metrics-overview-quiz.md",
+        "sha256": "6d559f8aef9d9f979a62fd658aa5f86957a8d42f2ca19bc6ed048a1cf5488590",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "메트릭-개요-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "메트릭-개요-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://api.github.com/repos/prometheus/prometheus/releases/tags/v3.14.0",
+      "cacheKey": "db8c7aaf0221",
+      "fetchedAt": "2026-09-12T17:29:10.271816+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/prometheus/prometheus/releases/tags/v3.14.0",
+      "sha256": "44ffd402fc8278d92f57a8731d5fa547222448c4f431f9542671d2097274f511"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/querying/functions.md",
+      "cacheKey": "17d6c65aed35",
+      "fetchedAt": "2026-09-12T17:29:10.601551+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/querying/functions.md",
+      "sha256": "21a0b70b5178dbe74a0d707818f533f827cee0368133067bda0228aaccb09821"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/configuration.md",
+      "cacheKey": "6f3cb0ae20bb",
+      "fetchedAt": "2026-09-12T17:29:10.519276+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/configuration.md",
+      "sha256": "41fce997567ed5d4c7047cb0623324ca3b88ab7efd3dfb6b7c250b1db7cfca46"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/storage.md",
+      "cacheKey": "da4ffe207416",
+      "fetchedAt": "2026-09-12T17:29:10.760801+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/storage.md",
+      "sha256": "7ea93bb1e7b4a733072d510dc068d0f66d678b46285c76fae55fa96a58d9173a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/pushing.md",
+      "cacheKey": "e8da03f887d5",
+      "fetchedAt": "2026-09-12T17:29:10.838927+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/pushing.md",
+      "sha256": "0eec9dd6f0c0f86a3486076b32490395de761f4c14b697a19046a9171f94a0ee"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/remote_write.md",
+      "cacheKey": "495581e073bb",
+      "fetchedAt": "2026-09-12T17:29:11.008824+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/remote_write.md",
+      "sha256": "9c34492c0f726928abf3560a000bf6857fff3786e1b6eb0d5077a41a0bcecc44"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/naming.md",
+      "cacheKey": "262805e51f40",
+      "fetchedAt": "2026-09-12T17:29:11.123333+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/naming.md",
+      "sha256": "685f22e7d9af8b5845c0cbcdfc675074a9221d2ef9c99193c4d629d415d7f1f1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/pushgateway/master/README.md",
+      "cacheKey": "f367e250c9b4",
+      "fetchedAt": "2026-09-12T17:29:11.237506+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/pushgateway/master/README.md",
+      "sha256": "de2924d7ed064801946ec35ca7aa73a15347d8b087dcc3453bc26dffb3a38f0f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/kube-state-metrics/main/docs/metrics/workload/pod-metrics.md",
+      "cacheKey": "ed797b051d6a",
+      "fetchedAt": "2026-09-12T17:29:11.512854+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/kubernetes/kube-state-metrics/main/docs/metrics/workload/pod-metrics.md",
+      "sha256": "c6b1bbda544ae6d13a48938b86a3fd7ba85ba3e8b3934586165b63bf126ea007"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/node_exporter/master/collector/meminfo_linux.go",
+      "cacheKey": "e9d38b69af3c",
+      "fetchedAt": "2026-09-12T17:29:11.494074+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/node_exporter/master/collector/meminfo_linux.go",
+      "sha256": "5581506b08c12c6bf3ed612365f9f3c4dbc3fb989701a97711bb13da0f1db211"
+    },
+    {
+      "url": "https://aws.amazon.com/prometheus/pricing/",
+      "cacheKey": "a0414f9835b0",
+      "fetchedAt": "2026-09-12T17:32:24.690378+00:00",
+      "status": 200,
+      "finalURL": "https://aws.amazon.com/prometheus/pricing/",
+      "sha256": "783ec0bef019c4d90938d4224f1265a2d2e0ea68bb4778f2042206bf7719f4fe"
+    },
+    {
+      "url": "https://aws.amazon.com/cloudwatch/pricing/",
+      "cacheKey": "d3ee07d77954",
+      "fetchedAt": "2026-09-12T17:32:24.696567+00:00",
+      "status": 200,
+      "finalURL": "https://aws.amazon.com/cloudwatch/pricing/",
+      "sha256": "e508cbc146c01293b6a82e7c7dddca45ab5afca83b7367bf456b0425588ead6e"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html",
+      "cacheKey": "87ccc36e9e32",
+      "fetchedAt": "2026-09-12T17:32:24.905257+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html",
+      "sha256": "c51342bdf0f68e9c37c4cbecf7a3ded9dbcb227d65ebe56d990d8e17d9f16340"
+    },
+    {
+      "url": "https://www.datadoghq.com/pricing/",
+      "cacheKey": "7f4e8a35a591",
+      "fetchedAt": "2026-09-12T17:32:25.157359+00:00",
+      "status": 200,
+      "finalURL": "https://www.datadoghq.com/pricing/",
+      "sha256": "6c8167cef6edf96b2b98d48d53bfad83a0a1b96a8b65af0c5dae7b091e290bb0"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/",
+      "cacheKey": "1b5d22c162f8",
+      "fetchedAt": "2026-09-12T17:32:25.438243+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/",
+      "sha256": "57367765731541bcb2ae1ad5b246824128fbfbf97b028dde2a237dbe051774f4"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/",
+      "cacheKey": "242594b0e7de",
+      "fetchedAt": "2026-09-12T17:32:26.397937+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/",
+      "sha256": "e74a56ffdb1153494fc13505950af149112967e92eae43d08be62f536e954069"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/vmagent/",
+      "cacheKey": "07b083027c04",
+      "fetchedAt": "2026-09-12T17:32:26.302300+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/vmagent/",
+      "sha256": "f14160e44c22f21011166201f2c2c5320b9bad10e0a1705fd2223b0c48c27122"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/references/architecture/",
+      "cacheKey": "9832dcc81d10",
+      "fetchedAt": "2026-09-12T17:32:26.635827+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/references/architecture/",
+      "sha256": "8f6871e9c23592280484e7196d8f21e0418d733180af5efb742a16e3e48913d1"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/configure/configure-object-storage-backend/",
+      "cacheKey": "ba2d21199e86",
+      "fetchedAt": "2026-09-12T17:32:27.014151+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/configure/configure-object-storage-backend/",
+      "sha256": "14824868d718636215fffc85399e15f9024cd73adc9ef350d6fd6f2386410f5e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/metrics-server/master/README.md",
+      "cacheKey": "2de9ab1204c5",
+      "fetchedAt": "2026-09-12T17:32:26.857260+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/kubernetes-sigs/metrics-server/master/README.md",
+      "sha256": "1268edb575b90e533a249611de76ac824582cdbacdfbb0997ff6f51f247949d0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/docs/main/docs/concepts/metric_types.md",
+      "cacheKey": "7b4322e45f1d",
+      "fetchedAt": "2026-09-12T17:06:24.330146+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/concepts/metric_types.md",
+      "sha256": "6cd936ac134836d2b4786b98675520ca364081839a5a083a4e7b427808b3be62"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/histograms.md",
+      "cacheKey": "6fc0f924e51a",
+      "fetchedAt": "2026-09-12T17:06:24.308810+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/histograms.md",
+      "sha256": "ebe64305d7d6156ca6b7021604c84eb5eab1868f35510089670ffe6fe387dcd2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md",
+      "cacheKey": "e60b738fd5de",
+      "fetchedAt": "2026-09-12T17:00:27.570820+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md",
+      "sha256": "3115ed69476ddb5e4b64ebf363f1a8f5d0f0a7cc2a6263ea612360d5357f877e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/docs/main/docs/instrumenting/exposition_formats.md",
+      "cacheKey": "c99090b0cee6",
+      "fetchedAt": "2026-09-12T19:08:23.902822+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/instrumenting/exposition_formats.md",
+      "sha256": "d66e4c2d1e3ff33bb8e4360161647f22663d4804a038d7b309097193424b1197"
+    },
+    {
+      "url": "https://docs.datadoghq.com/data_security/data_retention_periods/",
+      "cacheKey": "85256e8bae01",
+      "fetchedAt": "2026-09-12T19:08:38.091770+00:00",
+      "status": 200,
+      "finalURL": "https://docs.datadoghq.com/data_security/data_retention_periods/",
+      "sha256": "5c6c6ec2574b7561af6d8d013f1c0adb47f86914f8c836a26fc221027957df5e"
+    },
+    {
+      "url": "https://docs.datadoghq.com/dashboards/functions/rollup.md",
+      "cacheKey": "7a402c090a9e",
+      "fetchedAt": "2026-09-12T19:08:37.856008+00:00",
+      "status": 200,
+      "finalURL": "https://docs.datadoghq.com/dashboards/functions/rollup.md",
+      "sha256": "b4cf1a4fab9731103604b65996776d2447d8bf8c8d6339528104f9083330dd08"
+    }
+  ],
+  "findings": [
+    "Promlegacytexttimestampmillisecondsnotuniversal;OpenMetricsseconds/OTelnanoseconds,optionalserverassignedscrapetime. _totalcountertypesuffixnotunit;httpRequestDurationMsdoesincludeunitbutstyle/baseunitbad.",
+    "ExpositionandPromQLmixedinyamlfences;inlinecommentsaftervaluesnotvalidwireexposition;separatetextandPromQLblocks.",
+    "Histogramcounts144320andoldsum53.42IMPOSSIBLE:minimumlowerbound2704.505s. Preservebucketcountswithclearlysyntheticreproduciblesum4800.8625fromweightedfixture.",
+    "Classicbucketsinstrumentation-side,queryquantilesserverside;Summaryquantilesapproximatedwitherror/window,notexact. Quantilesnonaggregatablebut_sum/_countcanaggregate. Nativehistogramdistinction/currentSDKsupport.",
+    "Node_exporterrealMemAvailable/MemTotalmetricnames;KSMpodreadycondition/namespaceinclude;oldnode_memory_usage_bytes/totalnamesnotstandardunlesscustom.",
+    "rateadjustsresetsbutdoesnotrecoverlostsamples;increaseextrapolates/fractional;ratebeforeaggregation;aggregatehistogramwithleforfleetp95andjobscope.",
+    "Pullupmetricchecks scrapeavailabilitynotapplicationSLO;bothnetworkdirections/authrequired. Providerpull/pushcanmix.",
+    "Poddiscoveryannotationconfigmissesportselection/phase/namespace;usenamedmetricscontainerportfilterandrealRBAC/prereqs,notIPv6-unsafeaddressrewrite.",
+    "PushgatewayJobdo_work()shellsyntaxinvalid,imageplaceholderundefinedDURATION/RECORDS,noPushgatewaydeploy,HOSTNAMEgrouporphans. Replaceexplicitstable-service-batchintegrationfragment;honor_labels,metricslifecycle,noTTL,lastsuccessgauge,notallshortlivedjobs. Noactualpush.",
+    "Cardinalityproductupperboundonlyallcombos;targetlabels/replicas/bucketsandhistoricalchurncount;limitglobaltopkqueryscope.CountPromQLactivevectorsnotallTSDBhistory.",
+    "PromTSDBcompressednotinherentlylowcompression;retentionconfigurabledefault15dnot15-30hardlimit;independentreplicaspossiblewithoutThanos,querydedup/storageclusteringseparate.",
+    "Retentiontableisplanningnotuniversallegal1-7yearrequirement. No complianceguarantee.",
+    "RemoteWritecapacity2500<batch10000poorprofile;defaultsthenmeasuredtuning,capacity3-10xbatchguidanceverify;dropgo_.*notinherentlyhighcardinalityandlosesruntimediagnostics. ReceiverVMsingle8428vsclusterpath/permissionsprereqs;asyncWALlimitsnotbackup.",
+    "VendorcomparisonVMsinglevscluster/managed,Mimirlocal+objectingestarchitecture,CloudWatchresolutiontiered455days,Datadogproduct/queryrollups/costdrivers;removeunattributed7xcompressionandunsubstantiatedpriceestimates.",
+    "Costscenario1mseries15s30days=172.8B samplesbeforehist/replicas. Replaceunsupported$500/$1700/$3000+/$15000+withinputs/formulas/currentofficialpricinglinks,notnewguessestimates.",
+    "Figure3TSDB->Alertmanagerwrong;Promruleevalsendsalerts;vmagentiscollector+forwarder/spoolnotqueryablePromTSDB,vmalertseparate.RBAC/cAdvisor/metrics-server/autoscalingroles.",
+    "QuizQ4Summaryblanketnonaggregation,Q6mandatoryLTS/lowcompression,Q7unlimitedMimir+VMobjectstoragefeatureedition,Q10name-lengthnevermattersallwrongorambiguous.",
+    "ResolvedDatadogretentionwithactualofficialpage;distinguishedretentionfromqueryrollup.",
+    "Actual1mexportedseriesat15sfor30d=172.8Bsamples;donotdouble-multiplyhistogram/replicasifalreadyincludedinseriescount."
+  ],
+  "figures": {
+    "viewed": 8,
+    "retainedPerLocale": [
+      0
+    ],
+    "removedPerLocale": [
+      1,
+      2,
+      3
+    ],
+    "reason": {
+      "0": "UsefulHTTPpull/pushillustration;qualifyhybridcollection/up-not-service-SLOandfirewallauth.",
+      "1": "FooterassertslowPromcompression+universalretention/compliance1-7years;replacetable/accuratestorageplanning.",
+      "2": "Embeddedunverified$500/$1700/$3000/$15000estimatesandteamsize-onlyproductranking;replacecostinputs/evaluationcriteria.",
+      "3": "ConflatesvmagentwithPromTSDBandTSDBdirectalertsender;replacecollector/store/rule-evaluator/Alertmanagerroles table."
+    },
+    "scopeExternal": "Existing corresponding public archmaps and generated foreign-language pages require source-sync/regeneration before reuse; no foreign prose or unrelated assets edited."
+  },
+  "artifactDirectory": ".vitepress/cache/observability-metrics-overview-audit",
+  "limits": [
+    "No cluster/cloud deployment or network push. Native configuration syntax, actual PromQL synthetic series, official client parser and mocked curl only.",
+    "Published code blocks match the exercised fixtures in both languages; no production load or vendor cost benchmark is claimed."
+  ],
+  "sourceAccessNotes": [
+    "Prometheuscanonicalexposition-formatspagereturned403;officialrepositoryrawsource200used. DatadogretentionURLdiscoveredfromofficialsiteandverified200."
+  ]
+}

@@ -2,19 +2,21 @@
   "date": "2026-09-11",
   "branch": "docs/review-followup-2026-09-12",
   "repo": "/home/atomoh/kubernetes-docs",
-  "state": "active; original sequential scope retained",
+  "state": "active original observability audit; CloudWatch closed, Datadog full-read begins",
   "coverage": {
     "serviceMeshInventory": 170,
-    "fullyRead": 258,
-    "fixedAndValidated": 258,
-    "fullyReadPendingValidation": 0,
+    "fullyRead": 304,
+    "fixedAndValidated": 300,
+    "fullyReadPendingValidation": 4,
     "serviceMeshUnread": 0,
-    "networkingQueued": 20,
-    "observabilityAndLabsQueued": 116,
+    "networkingQueued": 0,
+    "observabilityAndLabsQueued": 90,
     "totalAssignedMarkdownInventory": 394,
-    "totalUnreadInventory": 136,
-    "networkingFullyRead": 88,
-    "networkingFixedAndValidated": 88
+    "totalUnreadInventory": 90,
+    "networkingFullyRead": 108,
+    "networkingFixedAndValidated": 108,
+    "observabilityFullyRead": 26,
+    "observabilityFixedAndValidated": 22
   },
   "completedBatches": [
     "istio-foundation (16)",
@@ -41,19 +43,33 @@
     "networking-cilium-introduction4",
     "networking-cilium-ebpf4",
     "networking-cilium-networking4",
-    "networking-cilium-ipam-policy4"
+    "networking-cilium-ipam-policy4",
+    "networking-cilium-l2l7-4",
+    "networking-cilium-security-4",
+    "networking-cilium-advanced-4",
+    "networking-cilium-glossary-4",
+    "networking-cilium-concepts-4",
+    "networking-cilium complete38",
+    "networking complete108",
+    "observability-foundation-readme2",
+    "observability-metrics-overview4",
+    "observability-prometheus4",
+    "observability-victoriametrics4",
+    "observability-mimir",
+    "observability-cloudwatch-metrics"
   ],
-  "activeBatch": "networking-cilium L2-L7",
+  "activeBatch": "observability-metrics Datadog",
   "currentFiles": [
-    "en/networking/cilium/05-l2-l7-networking.md",
-    "en/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
-    "ko/networking/cilium/05-l2-l7-networking.md",
-    "ko/quizzes/networking/cilium/05-l2-l7-networking-quiz.md"
+    "en/observability/metrics/05-datadog.md",
+    "en/quizzes/observability/metrics/05-datadog-quiz.md",
+    "ko/observability/metrics/05-datadog.md",
+    "ko/quizzes/observability/metrics/05-datadog-quiz.md"
   ],
-  "currentWork": "Cilium04IPAM-policy4complete. Next05L2-L7fourselected,unread.258read/complete;20Cilium+116observabilityremain.",
+  "currentWork": "Current observability-metrics Datadog: 4/4 sources fully read; primary verification/fixes pending. Last completed read: ko/quizzes/observability/metrics/05-datadog-quiz.md.",
   "nextSteps": [
-    "FullyreadCilium05L2-L7guides/quizzes4;verifycurrentAPIs/commands/proxy/datapathandapplyconcretefixes.",
-    "ContinueCilium06–07/glossary/networking-concepts16thenobservability116."
+    "Read each Datadog guide/quiz completely, EN/KO; markfullyReadonlyafteractualEOF.",
+    "Verify officialDatadogAgent/chart/operator/config/API/features andsupportedEKSplatform/security/metrics/pricing claims; safeconcretefixesonly.",
+    "Continue remaining logging/tracing/grafana/alerting/optimization/labs sequentially; nofullbuild/cloudmutations/commits."
   ],
   "blockers": [],
   "knownLimitations": [
@@ -125,7 +141,20 @@
     "docs/reviews/2026-09-11/networking-cilium-introduction-validation.json",
     "docs/reviews/2026-09-11/networking-cilium-ebpf-validation.json",
     "docs/reviews/2026-09-11/networking-cilium-networking-validation.json",
-    "docs/reviews/2026-09-11/networking-cilium-ipam-policy-validation.json"
+    "docs/reviews/2026-09-11/networking-cilium-ipam-policy-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-l2l7-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-security-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-advanced-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-glossary-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-concepts-validation.json",
+    "docs/reviews/2026-09-11/networking-coverage.json",
+    "docs/reviews/2026-09-11/observability-domain-progress.json",
+    "docs/reviews/2026-09-11/observability-overview-validation.json",
+    "docs/reviews/2026-09-11/observability-metrics-overview-validation.json",
+    "docs/reviews/2026-09-11/observability-prometheus-validation.json",
+    "docs/reviews/2026-09-11/observability-victoriametrics-validation.json",
+    "docs/reviews/2026-09-11/observability-mimir-validation.json",
+    "docs/reviews/2026-09-11/observability-cloudwatch-metrics-validation.json"
   ],
   "temporaryArtifacts": {
     "sourceCache": "/tmp/istio-foundation-sources/ (SHA256(url)[:12].html is raw; .txt is extracted text)",
@@ -1333,19 +1362,21 @@
     "policy": "No full VitePress/devserver/repository-wide builds; bounded native checks; Node heap<=1GiB; evidence/scripts stay in persistent cache/reports; no checkout/reset/commit/push or cloud mutations."
   },
   "latestBoundedValidation": {
-    "chapter": "Cilium04IPAM-policy",
-    "report": "docs/reviews/2026-09-11/networking-cilium-ipam-policy-validation.json",
-    "objects": 28,
-    "HelmFragments": 8,
-    "BashBlocks": 14,
-    "MCQs": 40,
-    "jqCases": 13,
-    "DNSmodels": 16,
-    "HTTPmodels": 8,
-    "poolModels": 5,
-    "renderedFiles": 4
+    "chapter": "observability-cloudwatch-metrics",
+    "report": "docs/reviews/2026-09-11/observability-cloudwatch-metrics-validation.json",
+    "documents": 4,
+    "codeBlocks": 42,
+    "quizQuestions": 20,
+    "nativeChecks": 20,
+    "sdkPython": "3.12.13",
+    "mermaid": 2
   },
-  "currentReadFiles": [],
+  "currentReadFiles": [
+    "en/observability/metrics/05-datadog.md",
+    "en/quizzes/observability/metrics/05-datadog-quiz.md",
+    "ko/observability/metrics/05-datadog.md",
+    "ko/quizzes/observability/metrics/05-datadog-quiz.md"
+  ],
   "scopeExternalFollowups": [
     {
       "path": "en/eks-hybrid-nodes/02-network-configuration.md",
@@ -1367,5 +1398,20 @@
       "finding": "Existing snippets still select spec.addresses[0]/podCIDRs[0] and generate ip route add. Parent should review typed address/family and actual next-hop prerequisites; worker did not fully audit or edit this outside-scope file.",
       "basis": "Exactsnippetsearch+currentCiliumNodeAPIsemantics;currentchapter'snativejqfixtureprovesfirstaddresscanbeCiliumInternalIP."
     }
-  ]
+  ],
+  "temporaryReviewAssignment": {
+    "head": "70381386da7a9efd908615f39417cd28dd50b391",
+    "base": "a16d5937ad6d47a94c011ce1221a2cbe08ecb88f",
+    "state": "complete-original-audit-resumed",
+    "resumeRequiresParentConfirmation": false,
+    "artifact": ".vitepress/cache/data-audit-integration/review-70381386.json",
+    "verdict": "PASS",
+    "rawScore": 90,
+    "coverage": "45/45",
+    "critical": 0,
+    "major": 0,
+    "minor": 0
+  },
+  "updatedAt": "2026-09-13T00:05:39.597997+00:00",
+  "currentPendingSummary": "CloudWatchmetrics4fullyread,no sourceedits;currentprimarycache/version/config/mathfindingspersistedinobservability-cloudwatch-metrics-audit.300read296closed;Mimiralreadyclosed."
 }
