@@ -1,0 +1,2399 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T08:25:54.343276+00:00",
+  "scope": "Four Korean/English optimization guides/quizzes, six configuration/readme files,18diagrams",
+  "originalFiles": [
+    {
+      "path": "ko/observability/09-observability-optimization.md",
+      "lines": 1451,
+      "sha256": "30cb8686d4bb0c679584339a7a9e3653b887f6218c54bef0b60ea0263c64ce25"
+    },
+    {
+      "path": "ko/quizzes/observability/09-observability-optimization-quiz.md",
+      "lines": 459,
+      "sha256": "9bbfe3978105db334989023605a81659ebc8e34f6dc47e6c7e0ba48511364d7a"
+    },
+    {
+      "path": "en/observability/09-observability-optimization.md",
+      "lines": 1451,
+      "sha256": "608fb7407b986329321eddb66bf24669b26142aabe6b086f4a073ad1072a7d87"
+    },
+    {
+      "path": "en/quizzes/observability/09-observability-optimization-quiz.md",
+      "lines": 459,
+      "sha256": "d0af08ef0244752175f86119425c66721ed36d6eb346475ac81272d73ef26fde"
+    }
+  ],
+  "originalLines": 3820,
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/observability/09-observability-optimization.md",
+        "sha256": "9e5e38a47cf50799a26cc8ec9368998c11a34d1d3a71d05adc8f7f9867ef2a35",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-관측성-최적화-가이드"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-관측성-3대-축-개요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-로깅-솔루션-비교"
+          },
+          {
+            "tag": "h3",
+            "id": "에이전트와-컨테이너-로그-형식"
+          },
+          {
+            "tag": "h3",
+            "id": "필터와-확률-샘플링-구분"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-메트릭-수집-및-저장"
+          },
+          {
+            "tag": "h3",
+            "id": "다른-지표를-지우지-않는-카디널리티-관리"
+          },
+          {
+            "tag": "h3",
+            "id": "recording-rule과-보존"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-분산-트레이싱"
+          },
+          {
+            "tag": "h3",
+            "id": "샘플링과-affinity"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-ebpf-기반-no-code-모니터링"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-비용-모니터링"
+          },
+          {
+            "tag": "h3",
+            "id": "opencost와-비용-할당"
+          },
+          {
+            "tag": "h3",
+            "id": "보존-기간과-아카이브"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-통합-관측성-대시보드"
+          },
+          {
+            "tag": "h3",
+            "id": "요청-slo·burn-rate·남은-에러-버짓"
+          },
+          {
+            "tag": "h3",
+            "id": "알림-라우팅"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-운영-과제와-해결-방법"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-모범-사례와-다음-단계"
+          },
+          {
+            "tag": "h3",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h3",
+            "id": "관련-문서와-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "eks-관측성-최적화-가이드",
+          "_1-1-로깅-메트릭-트레이싱의-관계",
+          "_1-2-각-축의-역할과-선택-기준",
+          "_1-3-eks-관측성-아키텍처-전체-그림",
+          "1-관측성-3대-축-개요",
+          "_1-관측성-3대-축-개요",
+          "_2-1-로그-저장소-비교",
+          "_2-2-로그-에이전트-비교",
+          "_2-3-eks에서-fluent-bit-loki-구성-예제",
+          "2-로깅-솔루션-비교",
+          "_2-로깅-솔루션-비교",
+          "에이전트와-컨테이너-로그-형식",
+          "필터와-확률-샘플링-구분",
+          "_3-1-메트릭-저장소-비교",
+          "_3-2-cardinality-관리-전략",
+          "_3-3-recording-rules로-쿼리-성능-개선",
+          "_3-4-장기-저장-전략",
+          "3-메트릭-수집-및-저장",
+          "_3-메트릭-수집-및-저장",
+          "다른-지표를-지우지-않는-카디널리티-관리",
+          "recording-rule과-보존",
+          "_4-1-opentelemetry-개요-및-아키텍처",
+          "_4-2-트레이싱-백엔드-비교",
+          "_4-3-샘플링-전략",
+          "_4-4-eks에서-otel-collector-daemonset-구성",
+          "4-분산-트레이싱",
+          "_4-분산-트레이싱",
+          "샘플링과-affinity",
+          "_5-1-왜-ebpf-모니터링인가",
+          "_5-2-coroot-자동-서비스-맵-및-지연-시간-분석",
+          "_5-3-pixie-현재-new-relic-kubernetes-특화-관측성",
+          "_5-4-cilium-hubble-네트워크-흐름-관찰",
+          "_5-5-kepler-에너지-소비-모니터링",
+          "5-ebpf-기반-no-code-모니터링",
+          "_5-ebpf-기반-no-code-모니터링",
+          "_6-1-kubecost-opencost-설치-및-구성",
+          "_6-2-네임스페이스-팀별-비용-할당",
+          "_6-3-cloudwatch-비용-최적화",
+          "_6-4-로그-메트릭-저장-비용-절감-전략",
+          "6-비용-모니터링",
+          "_6-비용-모니터링",
+          "opencost와-비용-할당",
+          "보존-기간과-아카이브",
+          "_7-1-grafana-기반-통합-대시보드-구성",
+          "_7-2-로그-메트릭-트레이스-연계-exemplars",
+          "_7-3-알림-전략-경고-피로-방지",
+          "_7-4-slo-sli-기반-모니터링",
+          "7-통합-관측성-대시보드",
+          "_7-통합-관측성-대시보드",
+          "요청-slo·burn-rate·남은-에러-버짓",
+          "알림-라우팅",
+          "_8-1-로그-메트릭-저장-비용-폭증-대응",
+          "_8-2-eks-auto-mode-노드-모니터링",
+          "_8-3-도구-간-데이터-상관관계-분석",
+          "_8-4-대규모-클러스터에서-모니터링-시스템-성능-유지",
+          "_8-5-고가용성-관측성-스택-구성",
+          "8-운영-과제와-해결-방법",
+          "_8-운영-과제와-해결-방법",
+          "_9-1-단계별-도입-전략",
+          "_9-2-비용-대비-효과-분석",
+          "_9-3-체크리스트",
+          "_9-4-관련-문서-및-퀴즈",
+          "9-모범-사례와-다음-단계",
+          "_9-모범-사례와-다음-단계",
+          "검증-범위",
+          "관련-문서와-퀴즈",
+          "목차",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/observability/09-observability-optimization.md",
+        "sha256": "56e2715d4aa794f5f557a78ad03da53e05f2c94f35fffb4f6c761a7dead95067",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-observability-optimization-guide"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-overview-of-the-three-pillars-of-observability"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-logging-solution-comparison"
+          },
+          {
+            "tag": "h3",
+            "id": "agents-and-container-log-format"
+          },
+          {
+            "tag": "h3",
+            "id": "filtering-is-not-percentage-sampling"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-metrics-collection-and-storage"
+          },
+          {
+            "tag": "h3",
+            "id": "cardinality-without-dropping-unrelated-metrics"
+          },
+          {
+            "tag": "h3",
+            "id": "recording-rules-and-retention"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-distributed-tracing"
+          },
+          {
+            "tag": "h3",
+            "id": "sampling-and-affinity"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-ebpf-based-no-code-monitoring"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-cost-monitoring"
+          },
+          {
+            "tag": "h3",
+            "id": "opencost-and-allocation"
+          },
+          {
+            "tag": "h3",
+            "id": "retention-and-archive-safety"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-unified-observability-dashboard"
+          },
+          {
+            "tag": "h3",
+            "id": "request-slo-burn-rate-and-remaining-budget"
+          },
+          {
+            "tag": "h3",
+            "id": "alert-routing"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-operational-challenges-and-solutions"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-best-practices-and-next-steps"
+          },
+          {
+            "tag": "h3",
+            "id": "validation-and-limits"
+          },
+          {
+            "tag": "h3",
+            "id": "related-reading"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "eks-observability-optimization-guide",
+          "_1-1-relationship-between-logging-metrics-and-tracing",
+          "_1-2-role-of-each-pillar-and-selection-criteria",
+          "_1-3-overall-eks-observability-architecture",
+          "1-overview-of-the-three-pillars-of-observability",
+          "_1-overview-of-the-three-pillars-of-observability",
+          "_2-1-log-storage-comparison",
+          "_2-2-log-agent-comparison",
+          "_2-3-fluent-bit-loki-configuration-example-for-eks",
+          "2-logging-solution-comparison",
+          "_2-logging-solution-comparison",
+          "agents-and-container-log-format",
+          "filtering-is-not-percentage-sampling",
+          "_3-1-metrics-storage-comparison",
+          "_3-2-cardinality-management-strategy",
+          "_3-3-improving-query-performance-with-recording-rules",
+          "_3-4-long-term-storage-strategy",
+          "3-metrics-collection-and-storage",
+          "_3-metrics-collection-and-storage",
+          "cardinality-without-dropping-unrelated-metrics",
+          "recording-rules-and-retention",
+          "_4-1-opentelemetry-overview-and-architecture",
+          "_4-2-tracing-backend-comparison",
+          "_4-3-sampling-strategies",
+          "_4-4-otel-collector-daemonset-configuration-for-eks",
+          "4-distributed-tracing",
+          "_4-distributed-tracing",
+          "sampling-and-affinity",
+          "_5-1-why-ebpf-monitoring",
+          "_5-2-coroot-automatic-service-maps-and-latency-analysis",
+          "_5-3-pixie-now-new-relic-kubernetes-specific-observability",
+          "_5-4-cilium-hubble-network-flow-observation",
+          "_5-5-kepler-energy-consumption-monitoring",
+          "5-ebpf-based-no-code-monitoring",
+          "_5-ebpf-based-no-code-monitoring",
+          "_6-1-kubecost-opencost-installation-and-configuration",
+          "_6-2-cost-allocation-by-namespace-team",
+          "_6-3-cloudwatch-cost-optimization",
+          "_6-4-log-metrics-storage-cost-reduction-strategies",
+          "6-cost-monitoring",
+          "_6-cost-monitoring",
+          "opencost-and-allocation",
+          "retention-and-archive-safety",
+          "_7-1-grafana-based-unified-dashboard-configuration",
+          "_7-2-log-metrics-trace-correlation-exemplars",
+          "_7-3-alerting-strategy-preventing-alert-fatigue",
+          "_7-4-slo-sli-based-monitoring",
+          "7-unified-observability-dashboard",
+          "_7-unified-observability-dashboard",
+          "request-slo-burn-rate-and-remaining-budget",
+          "alert-routing",
+          "_8-1-responding-to-exploding-log-metrics-storage-costs",
+          "_8-2-eks-auto-mode-node-monitoring",
+          "_8-3-cross-tool-data-correlation-analysis",
+          "_8-4-maintaining-monitoring-system-performance-at-large-scale",
+          "_8-5-high-availability-observability-stack-configuration",
+          "8-operational-challenges-and-solutions",
+          "_8-operational-challenges-and-solutions",
+          "_9-1-phased-adoption-strategy",
+          "_9-2-cost-benefit-analysis",
+          "_9-3-checklist",
+          "_9-4-related-documents-and-quizzes",
+          "9-best-practices-and-next-steps",
+          "_9-best-practices-and-next-steps",
+          "validation-and-limits",
+          "related-reading",
+          "table-of-contents",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/09-observability-optimization-quiz.md",
+        "sha256": "7a8b1d9c4ad85ed4edccad90aae156018e032759542d6df7f7116cdfe1c4537b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "관측성-최적화-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "단답형-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "심화-문제"
+          }
+        ],
+        "renderedIds": [
+          "관측성-최적화-퀴즈",
+          "객관식-문제",
+          "단답형-문제",
+          "실습-문제",
+          "심화-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/09-observability-optimization-quiz.md",
+        "sha256": "3ecae526b0b577e0bc8afcd9d2b83366ff3ba6c8167677ac00a5010526341110",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-optimization-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "hands-on-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "advanced-questions"
+          }
+        ],
+        "renderedIds": [
+          "observability-optimization-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions",
+          "hands-on-questions",
+          "advanced-questions"
+        ]
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/en-observability-09-observability-optimization-0.architecture.json",
+      "sha256": "65928a95dfcc827c7bc4a07a56367efb7d0e1e243f7e0ff031323e3675915a9a"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-09-observability-optimization-1.architecture.json",
+      "sha256": "474f8765da5ec2fa14d63ba009ff91f8a602c791ce878fa891be34af76144d7c"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-09-observability-optimization-2.architecture.json",
+      "sha256": "c6416ad5da9c778d6dc6456b812f8f241c2e3b68b094e63b8a30cfe4a0d4e8f0"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-09-observability-optimization-3.architecture.json",
+      "sha256": "6cc861f5a014a367f005f4cdf1b941a065877c3cdd470d65ef610783e071985e"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-09-observability-optimization-4.architecture.json",
+      "sha256": "0531100ecc9223d3e0b24659e61ea116cbdaf0b7786196763f4de514772b3563"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-09-observability-optimization-5.workflow.json",
+      "sha256": "4ce11b625942e8b6d9e1e7b108d86d6aebddeec1b3d5eb737f370585134047cc"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-09-observability-optimization-6.sequence.json",
+      "sha256": "f25b9c0c26a35a527016abcbf008cf8642b94423d650562fcdd5d4bebf110edb"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-09-observability-optimization-7.architecture.json",
+      "sha256": "3251dc0faa12aa6d63e4fb2db4f9065ab4994606bcef69a5ede355e602ad53f4"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-09-observability-optimization-8.architecture.json",
+      "sha256": "ffd579406fe39dfc666e6d7bbf519d62949597ff3c61a2fee66cf14c4b38709d"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-09-observability-optimization-0.architecture.json",
+      "sha256": "cbff303535071a7735b3526190f2bb0d1bb3471feea593b8135181f04eab9524"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-09-observability-optimization-1.architecture.json",
+      "sha256": "6e14e406f7197f5f478b3b1b3037188d70fd68970a1f4ae9737c2d5a0618ba56"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-09-observability-optimization-2.architecture.json",
+      "sha256": "21ea86aea8732d23ab79c26f017ede5b2efa62c18162f29138dc1ad4cdc9ddf1"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-09-observability-optimization-3.architecture.json",
+      "sha256": "c2c93ce8e60292f84e7f686922d0f789d80cba4f7e19d7c3a8f36ab633b97d1c"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-09-observability-optimization-4.architecture.json",
+      "sha256": "9b83b0c9a06f95ad9a1f8d91c16ef9fc7d14df36fb8a344bb18d73055a538eba"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-09-observability-optimization-5.workflow.json",
+      "sha256": "faa4d9e56a373245f56a6ac56f1e40b8239e5e4ec3a640c0898c19a9cf027fb2"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-09-observability-optimization-6.sequence.json",
+      "sha256": "1f4bd928e75094cec9ff55f1bf75a903552588f57a13a1d4b30cd26359621a5d"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-09-observability-optimization-7.architecture.json",
+      "sha256": "2ce12701d9f2080b21376e1228442c5571946990ec06a05d163629c80ee9d3d4"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-09-observability-optimization-8.architecture.json",
+      "sha256": "845c9c04e98582cf330ccdb2a9e79bfd51f8abf67a3229dae2cd5b992af738b0"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-09-observability-optimization-0.png",
+      "sha256": "0db1a70a46b487bd8e371aed912ad123b5303f25052835aa41cb7c31969db1c3"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-09-observability-optimization-1.png",
+      "sha256": "98bb09012092ad8eecb2c39a09d29c57142863295b6a3d01f680091dd58c52ef"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-09-observability-optimization-2.png",
+      "sha256": "e4f25c7e637f18bceafd6166c9a773d0bf1996de85c67b8eb96b165e46a00b4f"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-09-observability-optimization-3.png",
+      "sha256": "7dff65ddaf9fe0e5a63dd10be82fb8ecddefcb7041f7e13929149754d609ea63"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-09-observability-optimization-4.png",
+      "sha256": "8562f02e773b6481126c4bb4aca80a856d6ab0b6b04ae5575eb6a1023d86e812"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-09-observability-optimization-5.png",
+      "sha256": "5f77c3824db52b4fcab0285e38782277913edd21c57d6db32d0da07aa8404a6a"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-09-observability-optimization-6.png",
+      "sha256": "d49076f506c6ada8433b67d7da3cc446ee6df043629eefb4237f9e1da87b3a96"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-09-observability-optimization-7.png",
+      "sha256": "00bb749e954087d98200e04ff7e97c76a6118f79f1fd0af3862bdd39649771bf"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-09-observability-optimization-8.png",
+      "sha256": "6331d8fb6853bc68abd02fcc9d8523150498c631d4b441a574b542e0b725a94d"
+    },
+    {
+      "path": "en/observability/09-observability-optimization.md",
+      "sha256": "53752481b131c0470bcca6672c0cbc71b68564b3a0181332c654aad80c0d4f0d"
+    },
+    {
+      "path": "en/quizzes/observability/09-observability-optimization-quiz.md",
+      "sha256": "5f7397d662d58a4a78e7818bbf92c4f0f00f096950d0f9233c38c4e04ef14cf5"
+    },
+    {
+      "path": "examples/observability/optimization/README.md",
+      "sha256": "dccf947f58fe651a5240a7f70594c3c174bc10ddbb43dc1a47beacb3af914e55"
+    },
+    {
+      "path": "examples/observability/optimization/alertmanager.yaml",
+      "sha256": "b6692f36fd4b00b5e77d901f3a532c23ba6947930bf13cf206cf8c5a2bbaccc8"
+    },
+    {
+      "path": "examples/observability/optimization/collector-tail-local.yaml",
+      "sha256": "748b20efe3f09401c04c007a8438a5be68749738c93e8d013eaa8fb983705fbf"
+    },
+    {
+      "path": "examples/observability/optimization/opencost-values.yaml",
+      "sha256": "24cb7083ddac8312a9d62f39e2e3014b70a580cac7be3de8807ed3a925e9750f"
+    },
+    {
+      "path": "examples/observability/optimization/prometheus.yaml",
+      "sha256": "5093a38766f525656b2e7377bc42937b72703f8ee9c175e863cdbce7d3fe6c8b"
+    },
+    {
+      "path": "examples/observability/optimization/slo-rules.yaml",
+      "sha256": "04421543d522f996f13cf30bae404f2ff0e820218784a3017329fb96fa78e410"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-09-observability-optimization-0.png",
+      "sha256": "d1e8f13b4ef57b8cef93ccbda4e545aa0022cc7c15457b49ebe9981ee1530955"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-09-observability-optimization-1.png",
+      "sha256": "52ceeff0a950f0f10651aca13b995bd52e5ec75c839ef1136207289e6bfb773c"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-09-observability-optimization-2.png",
+      "sha256": "5053b64cd827bffbb7852a049b01e084a339bfd806f6c1f5b4828379bd4479d6"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-09-observability-optimization-3.png",
+      "sha256": "337b692242c9de7559ccec7989d9d9044e2eaaaefed1c5c14b4d15e7350ab1e0"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-09-observability-optimization-4.png",
+      "sha256": "0216daa7e8c8c75218cd8d834eabbc9ad62d5f1e9f64f6580725320296f373f1"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-09-observability-optimization-5.png",
+      "sha256": "5ab19c92efc8c1f0b09452d9aceda6c202c6b3f9e37672d16a8dbc5826c1035d"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-09-observability-optimization-6.png",
+      "sha256": "830b2f08a8a2b0e109c14ca178d4f1c17bb446da11d8dbe60e19b8a8df3aaeb3"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-09-observability-optimization-7.png",
+      "sha256": "c8348138680f2d961e6d8ca6689939394d26b24c8ff968ecb1fe7a2057b28c73"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-09-observability-optimization-8.png",
+      "sha256": "9eda214dd0e91ced0013a73e46458a61ba53556edfd5ecd1b230671e61daff58"
+    },
+    {
+      "path": "ko/observability/09-observability-optimization.md",
+      "sha256": "1f9f21d670afc9ca797f5e562519702f2e6df213178b8081860b3b6e1e801dd6"
+    },
+    {
+      "path": "ko/quizzes/observability/09-observability-optimization-quiz.md",
+      "sha256": "f9011b56141ff75fb3f8387c7b130c44fc2b4a6fd2a9c37fa6bb956a5ee16f96"
+    },
+    {
+      "path": "public/archmaps/en-observability-09-observability-optimization-0.html",
+      "sha256": "f57efc60e32953f07d327e40671f7698e61d434c03704568e96f642167cf9f95"
+    },
+    {
+      "path": "public/archmaps/en-observability-09-observability-optimization-1.html",
+      "sha256": "034ea05631b50da932222a6e9b5deb7c3fe7b6ed37bd273d370c48eedc1614fd"
+    },
+    {
+      "path": "public/archmaps/en-observability-09-observability-optimization-2.html",
+      "sha256": "f5b665224f495a700757392152492282a1b005b59c5f80cd0e2e700982a5ba80"
+    },
+    {
+      "path": "public/archmaps/en-observability-09-observability-optimization-3.html",
+      "sha256": "4255004f5096b703f92387676a6067f2cc2e7e89ea534274aed33a8cbb6d0eef"
+    },
+    {
+      "path": "public/archmaps/en-observability-09-observability-optimization-4.html",
+      "sha256": "93772228ccf0e87f310077e8a9d329915cba1afde461a8864d8444269319ec21"
+    },
+    {
+      "path": "public/archmaps/en-observability-09-observability-optimization-5.html",
+      "sha256": "bc6b62006cf2a94d5d5660285492209d16f9d35cb6cbf6cc4f7dc43cef5ef414"
+    },
+    {
+      "path": "public/archmaps/en-observability-09-observability-optimization-6.html",
+      "sha256": "950c05f0dd01811558227bb8e842383b21cdde5cb7a73b0f03ee5e1382e09612"
+    },
+    {
+      "path": "public/archmaps/en-observability-09-observability-optimization-7.html",
+      "sha256": "aad7a1ad158716ac740182fe8d410fca69d44b629dbcd28a5d377d0bbd361302"
+    },
+    {
+      "path": "public/archmaps/en-observability-09-observability-optimization-8.html",
+      "sha256": "daf0b1f541e46d84f0cbeaeb1ea7324203d281c2e83358d70c333fe7f55e19d9"
+    },
+    {
+      "path": "public/archmaps/ko-observability-09-observability-optimization-0.html",
+      "sha256": "8fd7099f86a1959d749299c8eadfa1cfead19c9837ed0fed58ac314f3199bae3"
+    },
+    {
+      "path": "public/archmaps/ko-observability-09-observability-optimization-1.html",
+      "sha256": "36ee190978bf43e5640b7008848e1e44513c283b7c00db2623be4076f6863d8a"
+    },
+    {
+      "path": "public/archmaps/ko-observability-09-observability-optimization-2.html",
+      "sha256": "d4a8c7545c1cc0eef0562adeb0b3971d005c5ffbb77a0728596bbcac2d435200"
+    },
+    {
+      "path": "public/archmaps/ko-observability-09-observability-optimization-3.html",
+      "sha256": "3b3891ade01af6b33bdce2c99dc07b6b9305e9de3cf5f425357e97ba85f6e6ab"
+    },
+    {
+      "path": "public/archmaps/ko-observability-09-observability-optimization-4.html",
+      "sha256": "9d6b95abe37bda4903496cd81d6d7aede0b6701a2f588fb57a89eccd31aaccc1"
+    },
+    {
+      "path": "public/archmaps/ko-observability-09-observability-optimization-5.html",
+      "sha256": "74a54137e8c0e4c099078361c5966c70fd297647dc861136a05c48a7bbae2141"
+    },
+    {
+      "path": "public/archmaps/ko-observability-09-observability-optimization-6.html",
+      "sha256": "d626a9bd887be546c5db651dc200891b9b555a2439cced84d4165322ce9f5b43"
+    },
+    {
+      "path": "public/archmaps/ko-observability-09-observability-optimization-7.html",
+      "sha256": "b7e0d302a4e6b487f7709953f37fe3d91132e66b6dfa043f51c2807a99e68ddf"
+    },
+    {
+      "path": "public/archmaps/ko-observability-09-observability-optimization-8.html",
+      "sha256": "7f295dd996ac84ed99174a7f8cbe0b35bda9c714eab2c6994d7a94c2981f0dcd"
+    }
+  ],
+  "native": {
+    "slo": {
+      "status": "passed",
+      "ruleExpressionsParsed": 9,
+      "testCases": 6,
+      "assertions": 7,
+      "limits": "Synthetic native PromQL evaluation including720hourly samples for30day request budget; real history completeness and SLOcontract not inferred"
+    },
+    "relabel": {
+      "status": "passed",
+      "version": "Prometheus3.14.0",
+      "remainingBuckets": [
+        "+Inf",
+        "0.1",
+        "0.5",
+        "1.0"
+      ],
+      "nonHistogramAndSumCountRetained": true,
+      "series": 7,
+      "scope": "Actual Prometheus scrape of local synthetic metrics using exact metric_relabel_configs; only interval/target/ruleFiles changed for fixture. No Kubernetes discovery or production scrape."
+    },
+    "tail": {
+      "status": "passed",
+      "version": "otelcol-contrib0.160.0",
+      "inputSpans": 840,
+      "exported": {
+        "error": 20,
+        "slow": 20,
+        "normal": 90
+      },
+      "specificAttributeRemoved": true,
+      "configSha256": "748b20efe3f09401c04c007a8438a5be68749738c93e8d013eaa8fb983705fbf",
+      "scope": "Actual Collector process, OTLP protobuf HTTP ingest/export to loopback sink; deterministic synthetic trace IDs, one collector, spans arrive before decision; no production/full-trace/late-span guarantee. Only configured sensitive_data span attribute deletion checked."
+    },
+    "alertmanager": {
+      "status": "passed",
+      "version": "0.34.0",
+      "inhibitRules": 2,
+      "receiver": "review-only (no integrations)",
+      "scope": "Actual amtool parser; no external notifications or scheduled routing execution"
+    },
+    "opencost": {
+      "status": "passed",
+      "chart": "2.5.31",
+      "appVersion": "1.121.2",
+      "resources": 6,
+      "images": [
+        "ghcr.io/opencost/opencost:1.121.2@sha256:de278443452756ea230a35bad1cad3002efae830a1b42b12fdd7ca37796f6e95",
+        "ghcr.io/opencost/opencost-ui:1.121.2@sha256:99ee2db766a074fcbc321bbddfae1851c159339f463a3c32a9ba87727576a3ed"
+      ],
+      "scope": "Pinned chart rendering only; no cluster installation/Prometheus allocation data/CUR reconciliation"
+    }
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-09-observability-optimization-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 731,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 731,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 731,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50806,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 735,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 735,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 735,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55760,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 510,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 510,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 510,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53882,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 542,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 542,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 542,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50756,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 795,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 795,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 795,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54485,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 700,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 700,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 700,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53629,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-6.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 670,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-6.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 670,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-6.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 670,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53997,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-7.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 943,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-7.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 943,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-7.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 943,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 61689,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-8.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 913,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-8.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 913,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-09-observability-optimization-8.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 913,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55630,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 419,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 419,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 419,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50191,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 575,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 575,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 575,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55164,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 368,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 368,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 368,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53436,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 414,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 414,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 414,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50627,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 430,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 430,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 430,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53311,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 466,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 466,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 466,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52753,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-6.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 490,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-6.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 490,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-6.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 490,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53725,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-7.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 659,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-7.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 659,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-7.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 659,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 60776,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-8.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 602,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-8.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 602,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-09-observability-optimization-8.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 602,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54724,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "54 cases on18 locally generated viewers; motion/reduced-motion/visibility/theme/guided controls and18SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "visual": {
+    "status": "passed",
+    "individuallyInspected": [
+      "ko/.gitbook/assets/ko-observability-09-observability-optimization-0.png",
+      "ko/.gitbook/assets/ko-observability-09-observability-optimization-1.png",
+      "ko/.gitbook/assets/ko-observability-09-observability-optimization-2.png",
+      "ko/.gitbook/assets/ko-observability-09-observability-optimization-3.png",
+      "ko/.gitbook/assets/ko-observability-09-observability-optimization-4.png",
+      "ko/.gitbook/assets/ko-observability-09-observability-optimization-5.png",
+      "ko/.gitbook/assets/ko-observability-09-observability-optimization-6.png",
+      "ko/.gitbook/assets/ko-observability-09-observability-optimization-7.png",
+      "ko/.gitbook/assets/ko-observability-09-observability-optimization-8.png",
+      "en/.gitbook/assets/en-observability-09-observability-optimization-0.png",
+      "en/.gitbook/assets/en-observability-09-observability-optimization-1.png",
+      "en/.gitbook/assets/en-observability-09-observability-optimization-2.png",
+      "en/.gitbook/assets/en-observability-09-observability-optimization-3.png",
+      "en/.gitbook/assets/en-observability-09-observability-optimization-4.png",
+      "en/.gitbook/assets/en-observability-09-observability-optimization-5.png",
+      "en/.gitbook/assets/en-observability-09-observability-optimization-6.png",
+      "en/.gitbook/assets/en-observability-09-observability-optimization-7.png",
+      "en/.gitbook/assets/en-observability-09-observability-optimization-8.png"
+    ],
+    "notes": "All18 full PNGs individually displayed and inspected; no clipped labels/cards/diagrams. Dense HA diagram remains zoomable in interactive viewer."
+  },
+  "legacyAnchors": [
+    {
+      "path": "ko/observability/09-observability-optimization.md",
+      "originalIds": [
+        "eks-관측성-최적화-가이드",
+        "목차",
+        "_1-관측성-3대-축-개요",
+        "_1-1-로깅-메트릭-트레이싱의-관계",
+        "_1-2-각-축의-역할과-선택-기준",
+        "_1-3-eks-관측성-아키텍처-전체-그림",
+        "_2-로깅-솔루션-비교",
+        "_2-1-로그-저장소-비교",
+        "_2-2-로그-에이전트-비교",
+        "_2-3-eks에서-fluent-bit-loki-구성-예제",
+        "_3-메트릭-수집-및-저장",
+        "_3-1-메트릭-저장소-비교",
+        "_3-2-cardinality-관리-전략",
+        "_3-3-recording-rules로-쿼리-성능-개선",
+        "_3-4-장기-저장-전략",
+        "_4-분산-트레이싱",
+        "_4-1-opentelemetry-개요-및-아키텍처",
+        "_4-2-트레이싱-백엔드-비교",
+        "_4-3-샘플링-전략",
+        "_4-4-eks에서-otel-collector-daemonset-구성",
+        "_5-ebpf-기반-no-code-모니터링",
+        "_5-1-왜-ebpf-모니터링인가",
+        "_5-2-coroot-자동-서비스-맵-및-지연-시간-분석",
+        "_5-3-pixie-현재-new-relic-kubernetes-특화-관측성",
+        "_5-4-cilium-hubble-네트워크-흐름-관찰",
+        "_5-5-kepler-에너지-소비-모니터링",
+        "_6-비용-모니터링",
+        "_6-1-kubecost-opencost-설치-및-구성",
+        "_6-2-네임스페이스-팀별-비용-할당",
+        "_6-3-cloudwatch-비용-최적화",
+        "_6-4-로그-메트릭-저장-비용-절감-전략",
+        "_7-통합-관측성-대시보드",
+        "_7-1-grafana-기반-통합-대시보드-구성",
+        "_7-2-로그-메트릭-트레이스-연계-exemplars",
+        "_7-3-알림-전략-경고-피로-방지",
+        "_7-4-slo-sli-기반-모니터링",
+        "_8-운영-과제와-해결-방법",
+        "_8-1-로그-메트릭-저장-비용-폭증-대응",
+        "_8-2-eks-auto-mode-노드-모니터링",
+        "_8-3-도구-간-데이터-상관관계-분석",
+        "_8-4-대규모-클러스터에서-모니터링-시스템-성능-유지",
+        "_8-5-고가용성-관측성-스택-구성",
+        "_9-모범-사례와-다음-단계",
+        "_9-1-단계별-도입-전략",
+        "_9-2-비용-대비-효과-분석",
+        "_9-3-체크리스트",
+        "_9-4-관련-문서-및-퀴즈",
+        "참고-자료",
+        "1-관측성-3대-축-개요",
+        "2-로깅-솔루션-비교",
+        "3-메트릭-수집-및-저장",
+        "4-분산-트레이싱",
+        "5-ebpf-기반-no-code-모니터링",
+        "6-비용-모니터링",
+        "7-통합-관측성-대시보드",
+        "8-운영-과제와-해결-방법",
+        "9-모범-사례와-다음-단계"
+      ],
+      "preservedAliases": [
+        {
+          "id": "목차",
+          "target": "## 문서 목차"
+        },
+        {
+          "id": "_1-1-로깅-메트릭-트레이싱의-관계",
+          "target": "## 1. 관측성 3대 축 개요"
+        },
+        {
+          "id": "_1-2-각-축의-역할과-선택-기준",
+          "target": "## 1. 관측성 3대 축 개요"
+        },
+        {
+          "id": "_1-3-eks-관측성-아키텍처-전체-그림",
+          "target": "## 1. 관측성 3대 축 개요"
+        },
+        {
+          "id": "_2-1-로그-저장소-비교",
+          "target": "## 2. 로깅 솔루션 비교"
+        },
+        {
+          "id": "_2-2-로그-에이전트-비교",
+          "target": "## 2. 로깅 솔루션 비교"
+        },
+        {
+          "id": "_2-3-eks에서-fluent-bit-loki-구성-예제",
+          "target": "## 2. 로깅 솔루션 비교"
+        },
+        {
+          "id": "_3-1-메트릭-저장소-비교",
+          "target": "## 3. 메트릭 수집 및 저장"
+        },
+        {
+          "id": "_3-2-cardinality-관리-전략",
+          "target": "## 3. 메트릭 수집 및 저장"
+        },
+        {
+          "id": "_3-3-recording-rules로-쿼리-성능-개선",
+          "target": "## 3. 메트릭 수집 및 저장"
+        },
+        {
+          "id": "_3-4-장기-저장-전략",
+          "target": "## 3. 메트릭 수집 및 저장"
+        },
+        {
+          "id": "_4-1-opentelemetry-개요-및-아키텍처",
+          "target": "## 4. 분산 트레이싱"
+        },
+        {
+          "id": "_4-2-트레이싱-백엔드-비교",
+          "target": "## 4. 분산 트레이싱"
+        },
+        {
+          "id": "_4-3-샘플링-전략",
+          "target": "## 4. 분산 트레이싱"
+        },
+        {
+          "id": "_4-4-eks에서-otel-collector-daemonset-구성",
+          "target": "## 4. 분산 트레이싱"
+        },
+        {
+          "id": "_5-1-왜-ebpf-모니터링인가",
+          "target": "## 5. eBPF 기반 No-Code 모니터링"
+        },
+        {
+          "id": "_5-2-coroot-자동-서비스-맵-및-지연-시간-분석",
+          "target": "## 5. eBPF 기반 No-Code 모니터링"
+        },
+        {
+          "id": "_5-3-pixie-현재-new-relic-kubernetes-특화-관측성",
+          "target": "## 5. eBPF 기반 No-Code 모니터링"
+        },
+        {
+          "id": "_5-4-cilium-hubble-네트워크-흐름-관찰",
+          "target": "## 5. eBPF 기반 No-Code 모니터링"
+        },
+        {
+          "id": "_5-5-kepler-에너지-소비-모니터링",
+          "target": "## 5. eBPF 기반 No-Code 모니터링"
+        },
+        {
+          "id": "_6-1-kubecost-opencost-설치-및-구성",
+          "target": "## 6. 비용 모니터링"
+        },
+        {
+          "id": "_6-2-네임스페이스-팀별-비용-할당",
+          "target": "## 6. 비용 모니터링"
+        },
+        {
+          "id": "_6-3-cloudwatch-비용-최적화",
+          "target": "## 6. 비용 모니터링"
+        },
+        {
+          "id": "_6-4-로그-메트릭-저장-비용-절감-전략",
+          "target": "## 6. 비용 모니터링"
+        },
+        {
+          "id": "_7-1-grafana-기반-통합-대시보드-구성",
+          "target": "## 7. 통합 관측성 대시보드"
+        },
+        {
+          "id": "_7-2-로그-메트릭-트레이스-연계-exemplars",
+          "target": "## 7. 통합 관측성 대시보드"
+        },
+        {
+          "id": "_7-3-알림-전략-경고-피로-방지",
+          "target": "## 7. 통합 관측성 대시보드"
+        },
+        {
+          "id": "_7-4-slo-sli-기반-모니터링",
+          "target": "## 7. 통합 관측성 대시보드"
+        },
+        {
+          "id": "_8-1-로그-메트릭-저장-비용-폭증-대응",
+          "target": "## 8. 운영 과제와 해결 방법"
+        },
+        {
+          "id": "_8-2-eks-auto-mode-노드-모니터링",
+          "target": "## 8. 운영 과제와 해결 방법"
+        },
+        {
+          "id": "_8-3-도구-간-데이터-상관관계-분석",
+          "target": "## 8. 운영 과제와 해결 방법"
+        },
+        {
+          "id": "_8-4-대규모-클러스터에서-모니터링-시스템-성능-유지",
+          "target": "## 8. 운영 과제와 해결 방법"
+        },
+        {
+          "id": "_8-5-고가용성-관측성-스택-구성",
+          "target": "## 8. 운영 과제와 해결 방법"
+        },
+        {
+          "id": "_9-1-단계별-도입-전략",
+          "target": "## 9. 모범 사례와 다음 단계"
+        },
+        {
+          "id": "_9-2-비용-대비-효과-분석",
+          "target": "## 9. 모범 사례와 다음 단계"
+        },
+        {
+          "id": "_9-3-체크리스트",
+          "target": "## 9. 모범 사례와 다음 단계"
+        },
+        {
+          "id": "_9-4-관련-문서-및-퀴즈",
+          "target": "## 9. 모범 사례와 다음 단계"
+        },
+        {
+          "id": "1-관측성-3대-축-개요",
+          "target": "## 1. 관측성 3대 축 개요"
+        },
+        {
+          "id": "2-로깅-솔루션-비교",
+          "target": "## 2. 로깅 솔루션 비교"
+        },
+        {
+          "id": "3-메트릭-수집-및-저장",
+          "target": "## 3. 메트릭 수집 및 저장"
+        },
+        {
+          "id": "4-분산-트레이싱",
+          "target": "## 4. 분산 트레이싱"
+        },
+        {
+          "id": "5-ebpf-기반-no-code-모니터링",
+          "target": "## 5. eBPF 기반 No-Code 모니터링"
+        },
+        {
+          "id": "6-비용-모니터링",
+          "target": "## 6. 비용 모니터링"
+        },
+        {
+          "id": "7-통합-관측성-대시보드",
+          "target": "## 7. 통합 관측성 대시보드"
+        },
+        {
+          "id": "8-운영-과제와-해결-방법",
+          "target": "## 8. 운영 과제와 해결 방법"
+        },
+        {
+          "id": "9-모범-사례와-다음-단계",
+          "target": "## 9. 모범 사례와 다음 단계"
+        }
+      ]
+    },
+    {
+      "path": "en/observability/09-observability-optimization.md",
+      "originalIds": [
+        "eks-observability-optimization-guide",
+        "table-of-contents",
+        "_1-overview-of-the-three-pillars-of-observability",
+        "_1-1-relationship-between-logging-metrics-and-tracing",
+        "_1-2-role-of-each-pillar-and-selection-criteria",
+        "_1-3-overall-eks-observability-architecture",
+        "_2-logging-solution-comparison",
+        "_2-1-log-storage-comparison",
+        "_2-2-log-agent-comparison",
+        "_2-3-fluent-bit-loki-configuration-example-for-eks",
+        "_3-metrics-collection-and-storage",
+        "_3-1-metrics-storage-comparison",
+        "_3-2-cardinality-management-strategy",
+        "_3-3-improving-query-performance-with-recording-rules",
+        "_3-4-long-term-storage-strategy",
+        "_4-distributed-tracing",
+        "_4-1-opentelemetry-overview-and-architecture",
+        "_4-2-tracing-backend-comparison",
+        "_4-3-sampling-strategies",
+        "_4-4-otel-collector-daemonset-configuration-for-eks",
+        "_5-ebpf-based-no-code-monitoring",
+        "_5-1-why-ebpf-monitoring",
+        "_5-2-coroot-automatic-service-maps-and-latency-analysis",
+        "_5-3-pixie-now-new-relic-kubernetes-specific-observability",
+        "_5-4-cilium-hubble-network-flow-observation",
+        "_5-5-kepler-energy-consumption-monitoring",
+        "_6-cost-monitoring",
+        "_6-1-kubecost-opencost-installation-and-configuration",
+        "_6-2-cost-allocation-by-namespace-team",
+        "_6-3-cloudwatch-cost-optimization",
+        "_6-4-log-metrics-storage-cost-reduction-strategies",
+        "_7-unified-observability-dashboard",
+        "_7-1-grafana-based-unified-dashboard-configuration",
+        "_7-2-log-metrics-trace-correlation-exemplars",
+        "_7-3-alerting-strategy-preventing-alert-fatigue",
+        "_7-4-slo-sli-based-monitoring",
+        "_8-operational-challenges-and-solutions",
+        "_8-1-responding-to-exploding-log-metrics-storage-costs",
+        "_8-2-eks-auto-mode-node-monitoring",
+        "_8-3-cross-tool-data-correlation-analysis",
+        "_8-4-maintaining-monitoring-system-performance-at-large-scale",
+        "_8-5-high-availability-observability-stack-configuration",
+        "_9-best-practices-and-next-steps",
+        "_9-1-phased-adoption-strategy",
+        "_9-2-cost-benefit-analysis",
+        "_9-3-checklist",
+        "_9-4-related-documents-and-quizzes",
+        "references",
+        "1-overview-of-the-three-pillars-of-observability",
+        "2-logging-solution-comparison",
+        "3-metrics-collection-and-storage",
+        "4-distributed-tracing",
+        "5-ebpf-based-no-code-monitoring",
+        "6-cost-monitoring",
+        "7-unified-observability-dashboard",
+        "8-operational-challenges-and-solutions",
+        "9-best-practices-and-next-steps"
+      ],
+      "preservedAliases": [
+        {
+          "id": "table-of-contents",
+          "target": "## Contents"
+        },
+        {
+          "id": "_1-1-relationship-between-logging-metrics-and-tracing",
+          "target": "## 1. Overview of the Three Pillars of Observability"
+        },
+        {
+          "id": "_1-2-role-of-each-pillar-and-selection-criteria",
+          "target": "## 1. Overview of the Three Pillars of Observability"
+        },
+        {
+          "id": "_1-3-overall-eks-observability-architecture",
+          "target": "## 1. Overview of the Three Pillars of Observability"
+        },
+        {
+          "id": "_2-1-log-storage-comparison",
+          "target": "## 2. Logging Solution Comparison"
+        },
+        {
+          "id": "_2-2-log-agent-comparison",
+          "target": "## 2. Logging Solution Comparison"
+        },
+        {
+          "id": "_2-3-fluent-bit-loki-configuration-example-for-eks",
+          "target": "## 2. Logging Solution Comparison"
+        },
+        {
+          "id": "_3-1-metrics-storage-comparison",
+          "target": "## 3. Metrics Collection and Storage"
+        },
+        {
+          "id": "_3-2-cardinality-management-strategy",
+          "target": "## 3. Metrics Collection and Storage"
+        },
+        {
+          "id": "_3-3-improving-query-performance-with-recording-rules",
+          "target": "## 3. Metrics Collection and Storage"
+        },
+        {
+          "id": "_3-4-long-term-storage-strategy",
+          "target": "## 3. Metrics Collection and Storage"
+        },
+        {
+          "id": "_4-1-opentelemetry-overview-and-architecture",
+          "target": "## 4. Distributed Tracing"
+        },
+        {
+          "id": "_4-2-tracing-backend-comparison",
+          "target": "## 4. Distributed Tracing"
+        },
+        {
+          "id": "_4-3-sampling-strategies",
+          "target": "## 4. Distributed Tracing"
+        },
+        {
+          "id": "_4-4-otel-collector-daemonset-configuration-for-eks",
+          "target": "## 4. Distributed Tracing"
+        },
+        {
+          "id": "_5-1-why-ebpf-monitoring",
+          "target": "## 5. eBPF-Based No-Code Monitoring"
+        },
+        {
+          "id": "_5-2-coroot-automatic-service-maps-and-latency-analysis",
+          "target": "## 5. eBPF-Based No-Code Monitoring"
+        },
+        {
+          "id": "_5-3-pixie-now-new-relic-kubernetes-specific-observability",
+          "target": "## 5. eBPF-Based No-Code Monitoring"
+        },
+        {
+          "id": "_5-4-cilium-hubble-network-flow-observation",
+          "target": "## 5. eBPF-Based No-Code Monitoring"
+        },
+        {
+          "id": "_5-5-kepler-energy-consumption-monitoring",
+          "target": "## 5. eBPF-Based No-Code Monitoring"
+        },
+        {
+          "id": "_6-1-kubecost-opencost-installation-and-configuration",
+          "target": "## 6. Cost Monitoring"
+        },
+        {
+          "id": "_6-2-cost-allocation-by-namespace-team",
+          "target": "## 6. Cost Monitoring"
+        },
+        {
+          "id": "_6-3-cloudwatch-cost-optimization",
+          "target": "## 6. Cost Monitoring"
+        },
+        {
+          "id": "_6-4-log-metrics-storage-cost-reduction-strategies",
+          "target": "## 6. Cost Monitoring"
+        },
+        {
+          "id": "_7-1-grafana-based-unified-dashboard-configuration",
+          "target": "## 7. Unified Observability Dashboard"
+        },
+        {
+          "id": "_7-2-log-metrics-trace-correlation-exemplars",
+          "target": "## 7. Unified Observability Dashboard"
+        },
+        {
+          "id": "_7-3-alerting-strategy-preventing-alert-fatigue",
+          "target": "## 7. Unified Observability Dashboard"
+        },
+        {
+          "id": "_7-4-slo-sli-based-monitoring",
+          "target": "## 7. Unified Observability Dashboard"
+        },
+        {
+          "id": "_8-1-responding-to-exploding-log-metrics-storage-costs",
+          "target": "## 8. Operational Challenges and Solutions"
+        },
+        {
+          "id": "_8-2-eks-auto-mode-node-monitoring",
+          "target": "## 8. Operational Challenges and Solutions"
+        },
+        {
+          "id": "_8-3-cross-tool-data-correlation-analysis",
+          "target": "## 8. Operational Challenges and Solutions"
+        },
+        {
+          "id": "_8-4-maintaining-monitoring-system-performance-at-large-scale",
+          "target": "## 8. Operational Challenges and Solutions"
+        },
+        {
+          "id": "_8-5-high-availability-observability-stack-configuration",
+          "target": "## 8. Operational Challenges and Solutions"
+        },
+        {
+          "id": "_9-1-phased-adoption-strategy",
+          "target": "## 9. Best Practices and Next Steps"
+        },
+        {
+          "id": "_9-2-cost-benefit-analysis",
+          "target": "## 9. Best Practices and Next Steps"
+        },
+        {
+          "id": "_9-3-checklist",
+          "target": "## 9. Best Practices and Next Steps"
+        },
+        {
+          "id": "_9-4-related-documents-and-quizzes",
+          "target": "## 9. Best Practices and Next Steps"
+        },
+        {
+          "id": "1-overview-of-the-three-pillars-of-observability",
+          "target": "## 1. Overview of the Three Pillars of Observability"
+        },
+        {
+          "id": "2-logging-solution-comparison",
+          "target": "## 2. Logging Solution Comparison"
+        },
+        {
+          "id": "3-metrics-collection-and-storage",
+          "target": "## 3. Metrics Collection and Storage"
+        },
+        {
+          "id": "4-distributed-tracing",
+          "target": "## 4. Distributed Tracing"
+        },
+        {
+          "id": "5-ebpf-based-no-code-monitoring",
+          "target": "## 5. eBPF-Based No-Code Monitoring"
+        },
+        {
+          "id": "6-cost-monitoring",
+          "target": "## 6. Cost Monitoring"
+        },
+        {
+          "id": "7-unified-observability-dashboard",
+          "target": "## 7. Unified Observability Dashboard"
+        },
+        {
+          "id": "8-operational-challenges-and-solutions",
+          "target": "## 8. Operational Challenges and Solutions"
+        },
+        {
+          "id": "9-best-practices-and-next-steps",
+          "target": "## 9. Best Practices and Next Steps"
+        }
+      ]
+    }
+  ],
+  "sourceVerification": {
+    "AWSKnowledgeMCP": [
+      {
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html",
+        "verified": "Auto Mode includes node monitoring agent publishing Kubernetes events and node conditions."
+      },
+      {
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch.html",
+        "verified": "CloudWatch Observability Operator/add-on installs required components; ConfigMap alone is not deployment."
+      },
+      {
+        "url": "https://docs.aws.amazon.com/prometheus/latest/APIReference/API_UpdateWorkspaceConfiguration.html",
+        "verified": "Actual retrieved full API: retentionPeriodInDays config, min1, quota errors; not unlimited. No numerical max established by this source."
+      }
+    ],
+    "versionedGitHub": [
+      "kepler v0.11.4 README explicitly0.10rewrite/readonlyproc-sys/noBPFcaps/baremetal/RAPLonly/noGPU",
+      "otelcol-contrib v0.160 tailsampling trace-complete timer firstarrival not guaranteedcompletion; affinity required; sampling_strategy/dropped/late policies need statedlimits"
+    ],
+    "access": "Actual AWSKnowledgeMCP and authenticated GitHub API, not web.run citation IDs"
+  },
+  "releaseChecks": [
+    {
+      "repository": "fluent/fluent-bit",
+      "tag": "v5.1.2",
+      "publishedAt": "2026-09-05T03:54:50Z"
+    },
+    {
+      "repository": "sustainable-computing-io/kepler",
+      "tag": "v0.11.4",
+      "publishedAt": "2026-02-16T06:47:41Z"
+    },
+    {
+      "repository": "coroot/coroot",
+      "tag": "v1.26.0",
+      "publishedAt": "2026-09-07T16:22:45Z"
+    },
+    {
+      "repository": "pixie-io/pixie",
+      "tag": "release/cloud/v0.1.9",
+      "publishedAt": "2025-01-24T23:55:53Z"
+    },
+    {
+      "repository": "opencost/opencost",
+      "tag": "v1.121.2",
+      "publishedAt": "2026-09-11T21:38:02Z"
+    },
+    {
+      "repository": "open-telemetry/opentelemetry-collector-contrib",
+      "tag": "v0.160.0",
+      "publishedAt": "2026-09-02T16:36:04Z"
+    }
+  ],
+  "sourceCorrections": [
+    "Kepler README lists legacy limitations but its v0.11.4 metrics reference includes newer GPU metrics; guide deliberately limits claims to verified CPU metrics and actual host support instead of inferring GPU absence.",
+    "Coroot legacy chart0.22.0 deprecated; actual operator chart0.9.10/app1.9.9 and CE0.3.3 distinct; not deployed.",
+    "No universal price/throughput/memory/savings claims retained.",
+    "Prometheus canonical histogram1→1.0 confirmed by real scrape.",
+    "Tail native input kept below num_traces capacity; deterministic distributed SHA-derived IDs:840spans→20errors20slow90normal retained. This is not a full-trace guarantee."
+  ],
+  "limitations": [
+    "No Kubernetes/eBPF/Coroot/Kepler installation or physical energy readings.",
+    "No AWS billing reconciliation, production performance benchmark or external notification.",
+    "Source diagrams are conceptual; icon counts are not replica minimums.",
+    "Examples use new lab metrics and should integrate after PR272; Grafana links should integrate after PR273."
+  ],
+  "reviewFixes": {
+    "date": "2026-09-13T11:05:56.965626+00:00",
+    "findings": [
+      "OPT-R1-001",
+      "OPT-R1-002",
+      "OPT-R1-003"
+    ],
+    "changes": [
+      "RemovedduplicatedFluentBitregexanswerinbothquizzes.",
+      "RestoredcompactTOCnearintroandmovedlegacyTOCbookmarkstoit;allcurrentfragmentlinksresolve.",
+      "Koreanlatencyboundarynowstrictlygreaterthan1second,matchingCollector0.160.0evaluator."
+    ],
+    "markdownValidation": {
+      "status": "passed",
+      "rows": [
+        {
+          "path": "en/observability/09-observability-optimization.md",
+          "sha256": "53752481b131c0470bcca6672c0cbc71b68564b3a0181332c654aad80c0d4f0d",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 68,
+          "images": 9,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        },
+        {
+          "path": "ko/observability/09-observability-optimization.md",
+          "sha256": "1f9f21d670afc9ca797f5e562519702f2e6df213178b8081860b3b6e1e801dd6",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 68,
+          "images": 9,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        },
+        {
+          "path": "en/quizzes/observability/09-observability-optimization-quiz.md",
+          "sha256": "5f7397d662d58a4a78e7818bbf92c4f0f00f096950d0f9233c38c4e04ef14cf5",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 5,
+          "images": 0,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        },
+        {
+          "path": "ko/quizzes/observability/09-observability-optimization-quiz.md",
+          "sha256": "f9011b56141ff75fb3f8387c7b130c44fc2b4a6fd2a9c37fa6bb956a5ee16f96",
+          "errors": [],
+          "missingAnchors": [],
+          "missingFragments": [],
+          "originalIds": 5,
+          "images": 0,
+          "lastUpdated": "2026-09-13",
+          "pass": true
+        }
+      ],
+      "scope": "Actual VitePress/Vue compilation and original rendered anchor preservation, without a site build."
+    },
+    "limits": "Text/anchoronlychanges;nativetelemetry/configartifactsunchangedandpriornativeevidenceretained."
+  }
+}

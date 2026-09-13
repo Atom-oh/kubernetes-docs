@@ -1,1451 +1,370 @@
 # EKS Observability Optimization Guide
 
-> **Supported versions**: Amazon EKS 1.29+, OpenTelemetry 0.90+
-> **Last updated**: February 2025
+> **Validated example versions**: Prometheus 3.14.0 · OTel Collector Contrib 0.160.0 · Alertmanager 0.34.0 · OpenCost 1.121.2/chart 2.5.31
 
----
+> **Last Updated**: September 13, 2026
 
-## Table of Contents
+Optimize observability around incident questions, collection quality and measured cost. A node count alone cannot predict ingestion volume, query load, retention cost or staffing requirements. This chapter uses [complete configuration examples](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/optimization) and links to the deployment guides for cluster installation. Native tests use synthetic data; they are not production capacity benchmarks.
 
-1. [Overview of the Three Pillars of Observability](#1-overview-of-the-three-pillars-of-observability)
-2. [Logging Solution Comparison](#2-logging-solution-comparison)
-3. [Metrics Collection and Storage](#3-metrics-collection-and-storage)
-4. [Distributed Tracing](#4-distributed-tracing)
-5. [eBPF-Based No-Code Monitoring](#5-ebpf-based-no-code-monitoring)
-6. [Cost Monitoring](#6-cost-monitoring)
-7. [Unified Observability Dashboard](#7-unified-observability-dashboard)
-8. [Operational Challenges and Solutions](#8-operational-challenges-and-solutions)
-9. [Best Practices and Next Steps](#9-best-practices-and-next-steps)
+<span id="table-of-contents"></span>
 
----
+## Contents
+
+- [1. Overview of the Three Pillars of Observability](#1-overview-of-the-three-pillars-of-observability)
+- [2. Logging Solution Comparison](#2-logging-solution-comparison)
+- [3. Metrics Collection and Storage](#3-metrics-collection-and-storage)
+- [4. Distributed Tracing](#4-distributed-tracing)
+- [5. eBPF-Based No-Code Monitoring](#5-ebpf-based-no-code-monitoring)
+- [6. Cost Monitoring](#6-cost-monitoring)
+- [7. Unified Observability Dashboard](#7-unified-observability-dashboard)
+- [8. Operational Challenges and Solutions](#8-operational-challenges-and-solutions)
+- [9. Best Practices and Next Steps](#9-best-practices-and-next-steps)
+
+<span id="_1-1-relationship-between-logging-metrics-and-tracing"></span>
+
+<span id="_1-2-role-of-each-pillar-and-selection-criteria"></span>
+
+<span id="_1-3-overall-eks-observability-architecture"></span>
 
 <span id="1-overview-of-the-three-pillars-of-observability"></span>
 
 ## 1. Overview of the Three Pillars of Observability
 
-In modern cloud-native environments, **observability** is the ability to understand the internal state of a system through its external outputs. To implement effective observability in EKS environments, you need to understand three key pillars.
+Logs describe events, metrics summarize behavior over time, and traces describe instrumented request paths. A missing trace or quiet dashboard does not establish that a service is healthy. Include collector drops, queues, failed exports and scrape health in the same operational view.
 
-### 1.1 Relationship Between Logging, Metrics, and Tracing
-
-![Logging, Metrics, and Tracing shown as three peer pillars, each mapped to its data shape and best-fit question, and linked by a dashed cycle of correlation signals — exemplars, trace context, and correlation IDs.](../.gitbook/assets/en-observability-09-observability-optimization-0.png)
+![Logs correlate through shared labels and trace IDs; exemplars connect selected metric observations to traces.](../.gitbook/assets/en-observability-09-observability-optimization-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-0.html)
 
-### 1.2 Role of Each Pillar and Selection Criteria
+Use bounded service/route/status labels for metrics and put high-cardinality request IDs in appropriately controlled logs/traces. A trace is not necessarily complete: instrumentation, propagation, sampling and retention all affect it.
 
-| Pillar | Primary Role | Question Type | Data Volume | Cost Characteristics |
-|---|---|---|---|---|
-| **Logging** | Event recording, auditing, debugging | "What happened?" | High | High storage costs |
-| **Metrics** | System state monitoring, alerting | "Is the system healthy?" | Medium | Sensitive to cardinality |
-| **Tracing** | Request flow tracking, bottleneck analysis | "Why is it slow?" | High (sampling required) | Proportional to sampling rate |
-
-### 1.3 Overall EKS Observability Architecture
-
-![Application Pods emit logs, metrics, and traces to Fluent Bit, the OTel Collector, and Prometheus, which land in log, metrics, and trace storage backends that all converge into Grafana as the single unified visualization layer.](../.gitbook/assets/en-observability-09-observability-optimization-1.png)
+![Node agents and gateway collectors send signals to their selected backends; Grafana queries those stores.](../.gitbook/assets/en-observability-09-observability-optimization-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-1.html)
 
----
+Agents and gateways have different responsibilities. Node agents read local logs; gateways can apply centralized policies. Tail sampling needs trace affinity and cannot be made correct by placing arbitrary DaemonSet replicas behind a random load balancer.
+
+<span id="_2-1-log-storage-comparison"></span>
+
+<span id="_2-2-log-agent-comparison"></span>
+
+<span id="_2-3-fluent-bit-loki-configuration-example-for-eks"></span>
 
 <span id="2-logging-solution-comparison"></span>
 
 ## 2. Logging Solution Comparison
 
-### 2.1 Log Storage Comparison
+| Backend | Useful characteristics | Costs and operating constraints |
+|---|---|---|
+| CloudWatch Logs | Managed ingestion, retention and Logs Insights | Region, log class, ingestion, storage, query scan and quotas |
+| OpenSearch | Indexed search and analytics | Provisioned/serverless capacity, indexing, replicas, storage and query load |
+| Loki | Label-indexed logs, LogQL and object storage | Compute, cache, object requests, retention, query fanout and operation |
+| ClickHouse | SQL analytics, schema and compression choices | Compute, storage, replication, ingestion schema and query tuning |
 
-| Criteria | CloudWatch Logs | OpenSearch | Loki | ClickHouse |
-|---|---|---|---|---|
-| **Cost** | Ingestion: $0.50/GB<br/>Storage: $0.03/GB/month | Instance cost + EBS<br/>r6g.large: ~$150/month | Object storage cost<br/>S3: $0.023/GB/month | Instance + storage<br/>Reduced by high compression |
-| **Performance** | Excellent for small scale<br/>Latency at large scale | Optimized for full-text search<br/>Strong for complex queries | Fast label-based filtering<br/>Limited full-text search | Optimized for analytical queries<br/>Excellent real-time aggregation |
-| **Operational Complexity** | Fully managed<br/>Minimal operational burden | Cluster management required<br/>Complex tuning | Simple architecture<br/>Easy to operate | Schema management required<br/>Medium complexity |
-| **Query Capabilities** | Logs Insights<br/>Basic analysis | Lucene query<br/>Powerful full-text search | LogQL<br/>Label-based filtering | SQL-based<br/>Complex analytical queries |
-| **Scalability** | Auto-scaling<br/>Unlimited | Manual sharding<br/>Node addition required | Easy horizontal scaling<br/>Leverages object storage | Sharding support<br/>Petabyte scale |
-| **Suitable Use Cases** | AWS-native environments<br/>Simple logging | Complex search requirements<br/>Security/compliance | Cost-efficiency focused<br/>Grafana integration | Log analysis/aggregation<br/>Long-term retention |
+There is no universal fastest or cheapest choice. Compare the same input volume, compression, retention, availability, query latency and support scope. Object storage pricing alone is not the total cost of Loki or Tempo. Managed services also have quotas.
 
-### 2.2 Log Agent Comparison
+### Agents and container log format
 
-| Criteria | Fluent Bit | Fluentd | Vector |
-|---|---|---|---|
-| **Memory Usage** | ~15MB | ~60MB | ~30MB |
-| **CPU Usage** | Low | Medium | Low |
-| **Throughput** | Up to ~200K msg/s | Up to ~50K msg/s | Up to ~300K msg/s |
-| **Language** | C | Ruby/C | Rust |
-| **Plugin Ecosystem** | Limited but core support | Very rich | Growing |
-| **Configuration Complexity** | Low | Medium | Medium |
-| **EKS Integration** | Native support | Supported | Supported |
+Fluent Bit, Fluentd and Vector differ in plugins, languages, buffering and deployment model. Fixed claims such as “15 MB” or “200K messages/second” need a reproducible workload, version and hardware. Measure your record sizes, parser cost, retries and backpressure.
 
-### 2.3 Fluent Bit + Loki Configuration Example for EKS
+Modern EKS containerd logs use CRI framing. Do not apply a Docker JSON parser blindly or assume `/var/lib/docker/containers` exists. Use the supported container/CRI parser, handle multiline messages, mount host logs read-only, and store offsets/buffers in a separate writable location. Kubernetes metadata enrichment needs the matching ServiceAccount/RBAC. A ConfigMap alone deploys no collector.
 
-```yaml
-# fluent-bit-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: logging
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         5
-        Log_Level     info
-        Daemon        off
-        Parsers_File  parsers.conf
-        HTTP_Server   On
-        HTTP_Listen   0.0.0.0
-        HTTP_Port     2020
+Limit Loki labels to stable dimensions such as cluster, namespace and service. Automatically copying all Pod labels can explode streams. Follow the [collector guide](./logging/05-collectors.md) and [Loki guide](./logging/01-loki.md) for current complete profiles; confirm the target Service, schema, storage, IAM and network controls before installing.
 
-    [INPUT]
-        Name              tail
-        Tag               kube.*
-        Path              /var/log/containers/*.log
-        Parser            docker
-        DB                /var/log/flb_kube.db
-        Mem_Buf_Limit     50MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
+### Filtering is not percentage sampling
 
-    [FILTER]
-        Name                kubernetes
-        Match               kube.*
-        Kube_URL            https://kubernetes.default.svc:443
-        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
-        Kube_Tag_Prefix     kube.var.log.containers.
-        Merge_Log           On
-        Keep_Log            Off
-        K8S-Logging.Parser  On
-        K8S-Logging.Exclude On
+After parsing JSON into a `level` field, a Fluent Bit filter fragment can exclude exact DEBUG/TRACE levels:
 
-    [OUTPUT]
-        Name                   loki
-        Match                  *
-        Host                   loki-gateway.logging.svc.cluster.local
-        Port                   80
-        Labels                 job=fluent-bit
-        Label_Keys             $kubernetes['namespace_name'],$kubernetes['pod_name'],$kubernetes['container_name']
-        Remove_Keys            kubernetes,stream
-        Auto_Kubernetes_Labels on
-        Line_Format            json
-
-  parsers.conf: |
-    [PARSER]
-        Name        docker
-        Format      json
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-
-    [PARSER]
-        Name        json
-        Format      json
-        Time_Key    timestamp
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
----
-# fluent-bit-daemonset.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: fluent-bit
-  namespace: logging
-  labels:
-    app: fluent-bit
-spec:
-  selector:
-    matchLabels:
-      app: fluent-bit
-  template:
-    metadata:
-      labels:
-        app: fluent-bit
-    spec:
-      serviceAccountName: fluent-bit
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          effect: NoSchedule
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
-      containers:
-        - name: fluent-bit
-          image: fluent/fluent-bit:2.2
-          resources:
-            limits:
-              memory: 200Mi
-              cpu: 200m
-            requests:
-              memory: 100Mi
-              cpu: 100m
-          volumeMounts:
-            - name: varlog
-              mountPath: /var/log
-            - name: varlibdockercontainers
-              mountPath: /var/lib/docker/containers
-              readOnly: true
-            - name: config
-              mountPath: /fluent-bit/etc/
-      volumes:
-        - name: varlog
-          hostPath:
-            path: /var/log
-        - name: varlibdockercontainers
-          hostPath:
-            path: /var/lib/docker/containers
-        - name: config
-          configMap:
-            name: fluent-bit-config
+```ini
+[FILTER]
+    Name     grep
+    Match    application.*
+    Exclude  level ^(DEBUG|TRACE)$
 ```
 
-```bash
-# Install Loki (Helm)
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
+This fragment needs a matching input/parser/output pipeline. Do not discard records merely because arbitrary message text contains “DEBUG”. Fluent Bit's throttle `Rate` and `Window` implement a moving-window rate limit, not a 10% probability sampler. Measure dropped records and preserve incident/audit requirements before filtering.
 
-# Install Loki in Simple Scalable mode
-helm install loki grafana/loki \
-  --namespace logging \
-  --create-namespace \
-  --set loki.auth_enabled=false \
-  --set loki.storage.type=s3 \
-  --set loki.storage.s3.endpoint=s3.ap-northeast-2.amazonaws.com \
-  --set loki.storage.s3.region=ap-northeast-2 \
-  --set loki.storage.s3.bucketnames=my-loki-bucket \
-  --set loki.storage.s3.insecure=false \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::ACCOUNT:role/LokiS3Role
-```
+For CloudWatch, use documented `cloudwatch_logs` options. `log_format json` and the old `max_batch_size`/`max_batch_put_limit` snippet are not a valid generic JSON-output/batching configuration. The plugin handles batching; check its pinned version's options. A `log_retention_days` setting used when creating a group does not establish the retention of every existing group.
 
----
+<span id="_3-1-metrics-storage-comparison"></span>
+
+<span id="_3-2-cardinality-management-strategy"></span>
+
+<span id="_3-3-improving-query-performance-with-recording-rules"></span>
+
+<span id="_3-4-long-term-storage-strategy"></span>
 
 <span id="3-metrics-collection-and-storage"></span>
 
 ## 3. Metrics Collection and Storage
 
-### 3.1 Metrics Storage Comparison
+Prometheus has local TSDB storage; sharding, remote write and a query/aggregation layer extend its deployment model. VictoriaMetrics single-node and cluster products have different availability and replication properties. AMP is managed but has workspace quotas and configurable retention. None of these means unlimited retention, automatic replication from “three storage Pods”, or identical semantics for every extended query.
 
-| Criteria | Prometheus | VictoriaMetrics | AMP (Amazon Managed Prometheus) |
-|---|---|---|---|
-| **Scalability** | Single node<br/>Vertical scaling only | Cluster mode<br/>Horizontal scaling | Auto-scaling<br/>Unlimited |
-| **Cost** | Infrastructure cost only<br/>EC2/EBS | Infrastructure cost<br/>Savings vs Prometheus | Ingestion: $0.90/10M samples<br/>Storage: $0.03/GB/month |
-| **HA** | Separate configuration required<br/>Thanos/Cortex | Built-in replication<br/>Automatic failover | Fully managed HA<br/>Multi-AZ |
-| **Operational Overhead** | High<br/>Storage/scaling management | Medium<br/>Simple operations | Low<br/>AWS managed |
-| **Long-term Storage** | Separate solution required | Built-in support | Unlimited retention |
-| **Query Performance** | Excellent | Very excellent<br/>(Optimized engine) | Excellent |
-| **PromQL Compatibility** | Native | Fully compatible + extensions | Fully compatible |
+### Cardinality without dropping unrelated metrics
 
-### 3.2 Cardinality Management Strategy
-
-**Cardinality** refers to the number of unique time series. High cardinality directly impacts memory usage and query performance.
+The example `prometheus.yaml` drops only selected buckets of one known histogram. It retains non-histogram metrics, `_sum`, `_count`, the SLO bucket `le="0.5"`, and `+Inf`.
 
 ```yaml
-# prometheus-config.yaml - Metric dropping and label optimization
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus-config
-  namespace: monitoring
-data:
-  prometheus.yml: |
-    global:
-      scrape_interval: 30s
-      evaluation_interval: 30s
-
-    scrape_configs:
-      - job_name: 'kubernetes-pods'
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          # Collect only specific namespaces
-          - source_labels: [__meta_kubernetes_namespace]
-            regex: 'kube-system|monitoring|production'
-            action: keep
-
-          # Remove unnecessary labels
-          - regex: '__meta_kubernetes_pod_label_(.+)'
-            action: labeldrop
-
-          # Remove Pod UID (high cardinality cause)
-          - regex: 'pod_template_hash|controller_revision_hash'
-            action: labeldrop
-
-        metric_relabel_configs:
-          # Drop unnecessary metrics
-          - source_labels: [__name__]
-            regex: 'go_.*|promhttp_.*'
-            action: drop
-
-          # Limit histogram buckets (major high cardinality culprit)
-          - source_labels: [__name__, le]
-            regex: '.*_bucket;(0\.001|0\.005|0\.01|0\.05|0\.1|0\.5|1|5|10|30|60|120|300)'
-            action: keep
+- source_labels:
+  - __name__
+  - le
+  regex: lab_http_request_duration_seconds_bucket;(0\.005|0\.01|0\.025|0\.05|0\.25)
+  action: drop
 ```
 
-### 3.3 Improving Query Performance with Recording Rules
+An `action: keep` matching only `.*_bucket;...` also deletes every nonmatching metric and often `+Inf`. Changing histogram buckets affects quantile accuracy; prefer the instrumentation schema where possible and retain the bucket needed by the SLO. Prometheus 3 normalizes classic histogram `le` values, for example `1` becomes `1.0`; match actual ingested labels.
 
-Recording Rules pre-compute complex queries and store the results.
+`relabel_configs` changes discovered targets before scraping; `metric_relabel_configs` changes scraped samples. Removing labels does not aggregate samples and can create duplicate series. Discovery's `__meta_*` labels are not automatically persistent sample labels. Reduce labels at the source and prove the remaining label set is unique.
 
-```yaml
-# prometheus-recording-rules.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: recording-rules
-  namespace: monitoring
-spec:
-  groups:
-    - name: k8s.rules
-      interval: 30s
-      rules:
-        # Pre-compute CPU utilization per node
-        - record: node:cpu_utilization:ratio
-          expr: |
-            1 - avg by (node) (
-              rate(node_cpu_seconds_total{mode="idle"}[5m])
-            )
+### Recording rules and retention
 
-        # Memory utilization per node
-        - record: node:memory_utilization:ratio
-          expr: |
-            1 - (
-              node_memory_MemAvailable_bytes
-              / node_memory_MemTotal_bytes
-            )
+Use recording rules for repeated calculations, with consistent `service`, `cluster` and namespace keys. Node-exporter normally identifies targets with `instance`; do not group by a `node` label that was never added. Metrics needed to diagnose the collector itself should not be blindly dropped with all `go_.*` or `promhttp_.*` families.
 
-        # CPU usage per namespace
-        - record: namespace:container_cpu_usage_seconds_total:sum_rate
-          expr: |
-            sum by (namespace) (
-              rate(container_cpu_usage_seconds_total{container!=""}[5m])
-            )
-
-        # Pod restart count (hourly)
-        - record: namespace:pod_restarts:sum_increase1h
-          expr: |
-            sum by (namespace) (
-              increase(kube_pod_container_status_restarts_total[1h])
-            )
-
-    - name: slo.rules
-      interval: 30s
-      rules:
-        # Error rate per service
-        - record: service:http_requests:error_rate5m
-          expr: |
-            sum by (service) (
-              rate(http_requests_total{status=~"5.."}[5m])
-            )
-            /
-            sum by (service) (
-              rate(http_requests_total[5m])
-            )
-
-        # P99 latency per service
-        - record: service:http_request_duration_seconds:p99
-          expr: |
-            histogram_quantile(0.99,
-              sum by (service, le) (
-                rate(http_request_duration_seconds_bucket[5m])
-              )
-            )
-```
-
-### 3.4 Long-term Storage Strategy
-
-![Prometheus's 7-day local storage remote-writes to three long-term backend choices — Thanos, VictoriaMetrics, or AMP — each with its own query layer, all converging on Grafana as the single query surface.](../.gitbook/assets/en-observability-09-observability-optimization-2.png)
+![Prometheus can remote-write to a configured Thanos Receive, VictoriaMetrics or AMP path; each requires explicit retention and query handling.](../.gitbook/assets/en-observability-09-observability-optimization-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-2.html)
 
----
+A remote-write queue is not a backup or guarantee of lossless delivery. Plan WAL/queue capacity, retry behavior, authentication, network interruption and receiver limits. A Thanos sidecar/block upload architecture differs from the Thanos Receive path shown here.
+
+For Prometheus Operator, `replicas: 2` and `shards: 3` mean six Prometheus Pods. Budget PVCs and memory for all six, configure selectors, and provide a query layer that merges shards and deduplicates HA replicas. Two replicas with an undeduplicated remote-write receiver can double-count data. Verify CRD fields and supported dedicated query settings against the pinned operator; do not add conflicting generic arguments.
+
+<span id="_4-1-opentelemetry-overview-and-architecture"></span>
+
+<span id="_4-2-tracing-backend-comparison"></span>
+
+<span id="_4-3-sampling-strategies"></span>
+
+<span id="_4-4-otel-collector-daemonset-configuration-for-eks"></span>
 
 <span id="4-distributed-tracing"></span>
 
 ## 4. Distributed Tracing
 
-### 4.1 OpenTelemetry Overview and Architecture
+Tempo supports TraceQL as well as trace-ID lookup. Jaeger 2 uses an OTel-based architecture with explicitly selected storage. X-Ray is an AWS backend; use current OTel/ADOT integration guidance rather than treating an old SDK version as universal. Consider ingestion, query, storage and operations instead of comparing only per-trace and S3 prices.
 
-OpenTelemetry (OTel) is a vendor-neutral standard for collecting and exporting observability data (traces, metrics, logs).
-
-![Application services send OTLP traces into the OTel Collector, where receivers, batch and attribute processors, and tail sampling decide what survives before exporters forward spans to Grafana Tempo, Jaeger, or AWS X-Ray.](../.gitbook/assets/en-observability-09-observability-optimization-3.png)
+![Memory limiting and explicit redaction precede tail sampling; batching and trace exporters follow it. Metrics use a separate pipeline.](../.gitbook/assets/en-observability-09-observability-optimization-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-3.html)
 
-### 4.2 Tracing Backend Comparison
+### Sampling and affinity
 
-| Criteria | Grafana Tempo | Jaeger | AWS X-Ray |
-|---|---|---|---|
-| **Architecture** | Object storage-based<br/>No index | Elasticsearch/Cassandra<br/>Index-based | AWS managed<br/>Serverless |
-| **Cost** | S3 storage cost only<br/>Very inexpensive | Infrastructure cost<br/>Index storage | Per-trace pricing<br/>$5/million traces |
-| **Scalability** | Unlimited<br/>Horizontal scaling | Node addition required<br/>Index management | Auto-scaling<br/>Unlimited |
-| **Query Method** | Direct TraceID lookup<br/>Exemplars integration | Tag-based search<br/>Time range search | Service map<br/>Filter search |
-| **Grafana Integration** | Native | Supported | Limited |
-| **AWS Integration** | Separate configuration | Separate configuration | Native<br/>Lambda, ECS, etc. |
-| **Suitable Use Cases** | Cost-efficiency focused<br/>Grafana stack | Complex search requirements<br/>Self-hosted infrastructure | AWS-native<br/>Serverless environments |
+Head sampling decides before the full request outcome is known. Collector probabilistic sampling also happens after telemetry reaches the collector and is not the same as an SDK head decision. Tail sampling cannot recover spans already dropped upstream.
 
-### 4.3 Sampling Strategies
+In the default `trace-complete` strategy, `decision_wait` controls timer-based decisions over received spans; it does not prove that every span arrived or the trace finished. Route all spans for one trace ID to the same sampler. Size the buffer for arrival rate × wait time plus burst and span-size headroom. Capacity overflow, oversized traces, restarts and late spans can defeat a promise to retain every error trace.
+
+The loopback-only `collector-tail-local.yaml` is a synthetic demonstration, not an EKS manifest. It uses a 1,000-trace buffer, a two-second decision wait and a 192 MiB memory-limiter setting; tune production values from measured traces and container memory headroom. Its policies are:
 
 ```yaml
-# otel-collector-config.yaml - Sampling strategy configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: otel-collector-config
-  namespace: observability
-data:
-  config.yaml: |
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-          http:
-            endpoint: 0.0.0.0:4318
-
-    processors:
-      # Batch processing - performance optimization
-      batch:
-        timeout: 5s
-        send_batch_size: 1000
-        send_batch_max_size: 1500
-
-      # Memory limit - OOM prevention
-      memory_limiter:
-        check_interval: 1s
-        limit_mib: 1000
-        spike_limit_mib: 200
-
-      # Probabilistic sampling - Head Sampling
-      probabilistic_sampler:
-        hash_seed: 22
-        sampling_percentage: 10  # 10% sampling
-
-      # Tail Sampling - condition-based sampling
-      tail_sampling:
-        decision_wait: 10s
-        num_traces: 100000
-        policies:
-          # Keep 100% of traces with errors
-          - name: errors
-            type: status_code
-            status_code:
-              status_codes: [ERROR]
-
-          # Keep 100% of high-latency traces
-          - name: slow-traces
-            type: latency
-            latency:
-              threshold_ms: 1000
-
-          # Keep 100% of traces from specific services
-          - name: critical-services
-            type: string_attribute
-            string_attribute:
-              key: service.name
-              values: [payment-service, order-service]
-
-          # Sample only 5% of the rest
-          - name: default
-            type: probabilistic
-            probabilistic:
-              sampling_percentage: 5
-
-      # Add/remove attributes
-      attributes:
-        actions:
-          - key: environment
-            value: production
-            action: upsert
-          - key: sensitive_data
-            action: delete
-
-    exporters:
-      otlp:
-        endpoint: tempo-distributor.observability:4317
-        tls:
-          insecure: true
-
-      awsxray:
-        region: ap-northeast-2
-
-      debug:
-        verbosity: detailed
-
-    service:
-      pipelines:
-        traces:
-          receivers: [otlp]
-          processors: [memory_limiter, batch, tail_sampling, attributes]
-          exporters: [otlp, awsxray]
+decision_wait: 2s
+num_traces: 1000
+maximum_trace_size_bytes: 1048576
+policies:
+- name: errors
+  type: status_code
+  status_code:
+    status_codes:
+    - ERROR
+- name: slow
+  type: latency
+  latency:
+    threshold_ms: 1000
+- name: baseline
+  type: probabilistic
+  probabilistic:
+    sampling_percentage: 10
 ```
 
-### 4.4 OTel Collector DaemonSet Configuration for EKS
+With these positive policies, matching error/slow traces are kept and other traces are eligible for the probabilistic policy. This does not imply a 90% overall volume reduction. Drop/composite/inverted policies have different decision semantics; do not generalize “first matching rule wins”. The example removes only the specifically named `sensitive_data` span attribute. Sanitize span names, events, resource attributes and application logs through an explicit data policy before export.
 
-```yaml
-# otel-collector-daemonset.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: otel-collector
-  namespace: observability
-  labels:
-    app: otel-collector
-spec:
-  selector:
-    matchLabels:
-      app: otel-collector
-  template:
-    metadata:
-      labels:
-        app: otel-collector
-    spec:
-      serviceAccountName: otel-collector
-      containers:
-        - name: collector
-          image: otel/opentelemetry-collector-contrib:0.92.0
-          args:
-            - --config=/conf/config.yaml
-          ports:
-            - containerPort: 4317  # OTLP gRPC
-              hostPort: 4317
-            - containerPort: 4318  # OTLP HTTP
-              hostPort: 4318
-            - containerPort: 8888  # Metrics
-          resources:
-            limits:
-              memory: 1Gi
-              cpu: 500m
-            requests:
-              memory: 200Mi
-              cpu: 100m
-          volumeMounts:
-            - name: config
-              mountPath: /conf
-          env:
-            - name: K8S_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: K8S_POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: K8S_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-      volumes:
-        - name: config
-          configMap:
-            name: otel-collector-config
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          effect: NoSchedule
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: otel-collector
-  namespace: observability
-spec:
-  selector:
-    app: otel-collector
-  ports:
-    - name: otlp-grpc
-      port: 4317
-      targetPort: 4317
-    - name: otlp-http
-      port: 4318
-      targetPort: 4318
-    - name: metrics
-      port: 8888
-      targetPort: 8888
-```
+For a cluster deployment, use the [OTel guide](./tracing/03-opentelemetry.md) and [observability stack lab](../labs/observability/02-observability-stack-lab.md). Operator injection annotations require the Operator, matching `Instrumentation` resource, supported runtime image and workload restart. Match OTLP HTTP/4318 versus gRPC/4317 and TLS/authentication; an annotation alone does not install instrumentation.
 
-Auto-instrumentation configuration with OTel SDK for applications:
+<span id="_5-1-why-ebpf-monitoring"></span>
 
-```yaml
-# Adding auto-instrumentation to application Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-  namespace: production
-spec:
-  template:
-    metadata:
-      annotations:
-        # Enable OTel Operator auto-instrumentation
-        instrumentation.opentelemetry.io/inject-java: "true"
-        # Or for Python, Node.js, etc.
-        # instrumentation.opentelemetry.io/inject-python: "true"
-        # instrumentation.opentelemetry.io/inject-nodejs: "true"
-    spec:
-      containers:
-        - name: app
-          image: my-app:latest
-          env:
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otel-collector.observability:4317"
-            - name: OTEL_SERVICE_NAME
-              value: "my-app"
-            - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.namespace=production,deployment.environment=prod"
-```
+<span id="_5-2-coroot-automatic-service-maps-and-latency-analysis"></span>
 
----
+<span id="_5-3-pixie-now-new-relic-kubernetes-specific-observability"></span>
+
+<span id="_5-4-cilium-hubble-network-flow-observation"></span>
+
+<span id="_5-5-kepler-energy-consumption-monitoring"></span>
 
 <span id="5-ebpf-based-no-code-monitoring"></span>
 
 ## 5. eBPF-Based No-Code Monitoring
 
-### 5.1 Why eBPF Monitoring
-
-**eBPF (extended Berkeley Packet Filter)** is a technology that allows safe program execution within the Linux kernel. The biggest advantage of eBPF-based monitoring is achieving observability **without code modifications**.
-
-![Traditional instrumentation must add an SDK and modify/redeploy code before collecting data, while eBPF instrumentation collects the same data from kernel-level hooks via an eBPF program without changing the application code.](../.gitbook/assets/en-observability-09-observability-optimization-4.png)
+![Manual/automatic SDK instrumentation and eBPF have different coverage and deployment requirements; neither observes every application equally.](../.gitbook/assets/en-observability-09-observability-optimization-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-4.html)
 
-| Characteristic | Traditional Instrumentation | eBPF Instrumentation |
-|---|---|---|
-| **Code Modification** | Required | Not required |
-| **Deployment Impact** | Redeployment required | Separate deployment |
-| **Overhead** | Application level | Kernel level (very low) |
-| **Language Dependency** | SDK support needed per language | Language agnostic |
-| **Coverage** | Only instrumented parts | Entire system |
-| **Maintenance** | Managed with code | Independent |
+eBPF can reduce source changes for supported protocols, kernels and runtimes. It does not automatically capture business semantics, every language/library, or all TLS traffic. Uprobes may observe plaintext at supported library boundaries; that is not general TLS decryption. Evaluate privileges, sensitive payload capture, kernel compatibility and measured overhead. SDK auto-instrumentation can also avoid application source changes, though restarts/configuration may be needed.
 
-### 5.2 Coroot: Automatic Service Maps and Latency Analysis
+| Tool | Current deployment consideration |
+|---|---|
+| Coroot | The legacy `coroot/coroot` chart is deprecated. Use the documented Operator/Coroot CR flow; operator chart 0.9.10 and CE chart 0.3.3 are separate components. Review agent privileges, storage and authentication. |
+| Pixie | An open-source project with kernel/protocol prerequisites and control-plane choices. In-cluster storage does not make exported queries/results impossible; review actual access and data paths. |
+| Cilium Hubble | Requires a compatible Cilium deployment. Flow visibility, L7 policy/proxy coverage and enabled metrics vary; it is not an application-wide distributed tracing replacement. |
+| Kepler | Version 0.10+ rewrote the old 0.7 architecture. Current metrics and deployment prerequisites differ; do not copy the old privileged/BPF DaemonSet. |
 
-Coroot uses eBPF to automatically generate service maps and analyze latency.
-
-```yaml
-# coroot-helm-values.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: coroot
----
-# Install Coroot via Helm
-# helm repo add coroot https://coroot.github.io/helm-charts
-# helm install coroot coroot/coroot -n coroot -f coroot-helm-values.yaml
-
-coroot:
-  replicas: 1
-  resources:
-    requests:
-      cpu: 200m
-      memory: 1Gi
-    limits:
-      cpu: 1
-      memory: 2Gi
-
-  # Prometheus integration
-  prometheus:
-    url: "http://prometheus-server.monitoring:9090"
-
-  # ClickHouse storage (logs/traces)
-  clickhouse:
-    enabled: true
-    persistence:
-      size: 100Gi
-      storageClass: gp3
-
-node-agent:
-  # eBPF-based agent
-  ebpf:
-    enabled: true
-
-  resources:
-    requests:
-      cpu: 100m
-      memory: 100Mi
-    limits:
-      cpu: 500m
-      memory: 500Mi
-
-  tolerations:
-    - operator: Exists
-```
-
-**Coroot Key Features:**
-
-- **Automatic Service Discovery**: Detects network connections via eBPF to auto-generate service maps
-- **Latency Analysis**: Automatically measures latency between each service
-- **Resource Usage Tracking**: Analyzes CPU, memory, disk I/O per service
-- **Log Collection**: Collects application logs without code modifications
-
-### 5.3 Pixie (Now New Relic): Kubernetes-Specific Observability
-
-Pixie is an eBPF-based observability platform specialized for Kubernetes environments.
-
-```bash
-# Install Pixie CLI
-bash -c "$(curl -fsSL https://withpixie.ai/install.sh)"
-
-# Deploy Pixie
-px deploy
-
-# Check cluster status
-px get viziers
-
-# Real-time HTTP traffic monitoring
-px live http_data
-
-# Per-service latency analysis
-px live service_stats
-```
-
-**Pixie Key Features:**
-
-- **Ready-to-use Dashboards**: Automatic monitoring of HTTP, DNS, MySQL, PostgreSQL, etc. immediately after deployment
-- **PxL Scripts**: Custom analysis with Python-like query language
-- **Local Data Storage**: Sensitive data never leaves the cluster
-- **Automatic Encryption Analysis**: Decrypts TLS traffic via eBPF for analysis
-
-### 5.4 Cilium Hubble: Network Flow Observation
-
-For EKS clusters using Cilium CNI, Hubble provides network visibility.
-
-```yaml
-# cilium-hubble-values.yaml
-hubble:
-  enabled: true
-
-  relay:
-    enabled: true
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-
-  ui:
-    enabled: true
-    replicas: 1
-    ingress:
-      enabled: true
-      annotations:
-        kubernetes.io/ingress.class: nginx
-      hosts:
-        - hubble.example.com
-
-  metrics:
-    enabled:
-      - dns
-      - drop
-      - tcp
-      - flow
-      - icmp
-      - http
-    serviceMonitor:
-      enabled: true
-```
-
-```bash
-# Real-time flow observation with Hubble CLI
-hubble observe --namespace production
-
-# Filter traffic to specific service
-hubble observe --to-service production/api-server
-
-# Monitor DNS requests
-hubble observe --protocol dns
-
-# Analyze dropped packets
-hubble observe --verdict DROPPED
-```
-
-### 5.5 Kepler: Energy Consumption Monitoring
-
-Kepler (Kubernetes Efficient Power Level Exporter) uses eBPF to measure workload energy consumption.
-
-```yaml
-# kepler-daemonset.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: kepler
-  namespace: kepler
-spec:
-  selector:
-    matchLabels:
-      app: kepler
-  template:
-    metadata:
-      labels:
-        app: kepler
-    spec:
-      serviceAccountName: kepler
-      containers:
-        - name: kepler
-          image: quay.io/sustainable_computing_io/kepler:release-0.7
-          securityContext:
-            privileged: true
-          ports:
-            - containerPort: 9102
-              name: metrics
-          volumeMounts:
-            - name: lib-modules
-              mountPath: /lib/modules
-            - name: tracing
-              mountPath: /sys/kernel/tracing
-            - name: kernel-src
-              mountPath: /usr/src/kernels
-          env:
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-      volumes:
-        - name: lib-modules
-          hostPath:
-            path: /lib/modules
-        - name: tracing
-          hostPath:
-            path: /sys/kernel/tracing
-        - name: kernel-src
-          hostPath:
-            path: /usr/src/kernels
-```
-
-**Kepler Metrics Examples:**
+Kepler 0.11.4 documents CPU metrics such as `kepler_pod_cpu_watts` and `kepler_pod_cpu_joules_total` with `pod_namespace`/`pod_name`. Hardware energy access and attribution must work on the actual host; ordinary virtual EKS nodes are not guaranteed to expose host RAPL data. Consult the release's deployment and hardware support documentation before claiming measurement accuracy.
 
 ```promql
-# Energy consumption by namespace (joules)
-sum by (namespace) (kepler_container_joules_total)
+# A watts gauge already measures power.
+sum by (pod_namespace) (kepler_pod_cpu_watts)
 
-# Power consumption by Pod (watts)
-rate(kepler_container_joules_total[5m]) * 1000
-
-# Top 10 Pods consuming the most energy
-topk(10, sum by (pod_name) (rate(kepler_container_joules_total[5m])))
+# J/s = W; multiplying by 1000 would give milliwatts.
+rate(kepler_pod_cpu_joules_total[5m])
 ```
 
----
+Readiness or a running exporter does not establish correct hardware measurements. EKS Auto Mode and Fargate have different host-access constraints; verify supported instrumentation instead of applying a privileged node agent everywhere. Keep Hubble/Coroot/OpenCost UIs private until authentication and network access are configured.
+
+<span id="_6-1-kubecost-opencost-installation-and-configuration"></span>
+
+<span id="_6-2-cost-allocation-by-namespace-team"></span>
+
+<span id="_6-3-cloudwatch-cost-optimization"></span>
+
+<span id="_6-4-log-metrics-storage-cost-reduction-strategies"></span>
 
 <span id="6-cost-monitoring"></span>
 
 ## 6. Cost Monitoring
 
-### 6.1 KubeCost / OpenCost Installation and Configuration
+### OpenCost and allocation
 
-OpenCost is a CNCF project and the open-source standard for Kubernetes cost monitoring.
+`opencost-values.yaml` targets chart 2.5.31/app 1.121.2, selects an existing Prometheus and disables Cloud Cost ingestion. Replace the endpoint with one containing the metrics required by OpenCost, including workload/resource and cost data; mere reachability is insufficient. Configure approved authentication/CA handling for protected Prometheus endpoints.
 
 ```bash
-# Install OpenCost
 helm repo add opencost https://opencost.github.io/opencost-helm-chart
-helm repo update
-
-helm install opencost opencost/opencost \
-  --namespace opencost \
-  --create-namespace \
-  --set opencost.prometheus.internal.enabled=false \
-  --set opencost.prometheus.external.enabled=true \
-  --set opencost.prometheus.external.url="http://prometheus-server.monitoring:9090" \
-  --set opencost.ui.enabled=true
+helm repo update opencost
+helm upgrade --install opencost opencost/opencost --version 2.5.31   -n opencost --create-namespace -f opencost-values.yaml
+kubectl -n opencost port-forward service/opencost 9003:9003 --address 127.0.0.1
+# In another terminal:
+curl --fail --get http://127.0.0.1:9003/allocation/compute   --data-urlencode 'window=7d' --data-urlencode 'aggregate=namespace'
 ```
 
-```yaml
-# opencost-values.yaml - Detailed configuration
-opencost:
-  exporter:
-    defaultClusterId: "eks-production"
+Seven days of requested output needs sufficient input history. Allocation estimates are not the AWS invoice. Standardize `team`, `cost-center`, cluster and namespace labels; define idle/shared-cost allocation and compare with CUR/Data Exports, credits, discounts and amortization. AWS Cloud Cost reconciliation requires its supported `cloudIntegrationSecret` format, CUR/Athena/S3 prerequisites and scoped identity permissions. Unsupported values such as the old `exporter.aws.athenaProjectID` fragment do not establish that integration. Never place AWS access keys in values files.
 
-    # AWS cost integration
-    aws:
-      spotDataRegion: ap-northeast-2
-      spotDataBucket: "my-spot-data-bucket"
-      athenaProjectID: "my-aws-project"
-      athenaRegion: ap-northeast-2
-      athenaDatabase: "athenacurcfn_my_cur"
-      athenaTable: "my_cur"
-      masterPayerARN: "arn:aws:iam::ACCOUNT:role/OpenCostRole"
+### Retention and archive safety
 
-  prometheus:
-    external:
-      enabled: true
-      url: "http://prometheus-server.monitoring:9090"
-
-  ui:
-    enabled: true
-    ingress:
-      enabled: true
-      annotations:
-        kubernetes.io/ingress.class: nginx
-      hosts:
-        - host: opencost.example.com
-          paths:
-            - path: /
-              pathType: Prefix
-```
-
-### 6.2 Cost Allocation by Namespace/Team
-
-```yaml
-# cost-allocation-labels.yaml
-# Label standardization for team cost tracking
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: team-alpha
-  labels:
-    cost-center: "engineering"
-    team: "alpha"
-    environment: "production"
----
-# Apply cost labels to Pods
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-server
-  namespace: team-alpha
-spec:
-  template:
-    metadata:
-      labels:
-        cost-center: "engineering"
-        team: "alpha"
-        component: "api"
-    spec:
-      containers:
-        - name: api
-          resources:
-            requests:
-              cpu: 500m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
-```
-
-**Cost Query via OpenCost API:**
+Inventory log groups before making retention changes:
 
 ```bash
-# Cost by namespace (last 7 days)
-curl -s "http://opencost.opencost:9003/allocation/compute?window=7d&aggregate=namespace" | jq '.'
-
-# Cost by team label
-curl -s "http://opencost.opencost:9003/allocation/compute?window=7d&aggregate=label:team" | jq '.'
-
-# Daily cost trend
-curl -s "http://opencost.opencost:9003/allocation/compute?window=30d&step=1d&aggregate=namespace" | jq '.'
+aws logs describe-log-groups --log-group-name-prefix /eks/production/   --query 'logGroups[].{name:logGroupName,retention:retentionInDays,storedBytes:storedBytes}'   --output json
 ```
 
-### 6.3 CloudWatch Cost Optimization
+Apply an approved retention policy to explicitly selected groups through infrastructure configuration. `storedBytes == 0` does not mean a log group is unused; subscriptions, producers, audit requirements and future writes may still depend on it. Do not bulk-delete “empty” groups or treat tab-separated CLI text as one log-group name per line.
 
-```yaml
-# cloudwatch-log-retention.yaml
-# Cost reduction through log retention period optimization
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-cloudwatch-config
-  namespace: logging
-data:
-  fluent-bit.conf: |
-    [OUTPUT]
-        Name                cloudwatch_logs
-        Match               *
-        region              ap-northeast-2
-        log_group_name      /eks/production/application
-        log_stream_prefix   ${HOSTNAME}-
-        auto_create_group   true
-        # Set log retention period (cost optimization)
-        log_retention_days  14
-
-        # Batch settings for API call optimization
-        log_format          json
-        max_batch_size      1048576
-        max_batch_put_limit 100
-```
-
-```bash
-# Batch set CloudWatch Logs retention period
-aws logs describe-log-groups --query 'logGroups[*].logGroupName' --output text | \
-while read log_group; do
-  aws logs put-retention-policy \
-    --log-group-name "$log_group" \
-    --retention-in-days 14
-done
-
-# Clean up unused log groups
-aws logs describe-log-groups --query 'logGroups[?storedBytes==`0`].logGroupName' --output text | \
-while read log_group; do
-  echo "Deleting empty log group: $log_group"
-  aws logs delete-log-group --log-group-name "$log_group"
-done
-```
-
-### 6.4 Log/Metrics Storage Cost Reduction Strategies
-
-![Collected logs and metrics are classified by priority into full storage, sampling, or aggregation only, then routed to storage tiers of different cost (S3 Glacier Deep Archive, S3 Standard-IA, or memory/local) to cut retention cost.](../.gitbook/assets/en-observability-09-observability-optimization-5.png)
+![Keep active incident data queryable, measure sampling effects, and use separately restorable archives only when restore delay is acceptable.](../.gitbook/assets/en-observability-09-observability-optimization-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-5.html)
 
-| Strategy | Target | Expected Savings |
-|---|---|---|
-| **Log Level Filtering** | Drop DEBUG/TRACE logs | 40-60% |
-| **Sampling** | High-frequency events | 30-50% |
-| **Compression** | All logs/metrics | 60-80% |
-| **Tiered Storage** | Old data | 70-90% |
-| **Retention Period Optimization** | Low-priority data | 50-70% |
+Do not transition active Loki/Tempo blocks into Glacier blindly: the backend may require immediate reads and will not necessarily restore archived objects on demand. Coordinate backend retention/compaction with object lifecycle rules and test retrieval. Compression, filtering and retention savings overlap; do not add their percentages as if independent.
 
----
+<span id="_7-1-grafana-based-unified-dashboard-configuration"></span>
+
+<span id="_7-2-log-metrics-trace-correlation-exemplars"></span>
+
+<span id="_7-3-alerting-strategy-preventing-alert-fatigue"></span>
+
+<span id="_7-4-slo-sli-based-monitoring"></span>
 
 <span id="7-unified-observability-dashboard"></span>
 
 ## 7. Unified Observability Dashboard
 
-### 7.1 Grafana-Based Unified Dashboard Configuration
+Use the [Grafana guide](./grafana/README.md) for pinned provisioning with matching `prometheus`, `loki` and `tempo` UIDs, current `tracesToLogsV2`, and real HTTP/TLS endpoints. Environment variables do not create a data source by themselves. Exemplar label names and JSON trace fields must match the instrumented application.
 
-```yaml
-# grafana-datasources.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-datasources
-  namespace: monitoring
-data:
-  datasources.yaml: |
-    apiVersion: 1
-    datasources:
-      # Prometheus - Metrics
-      - name: Prometheus
-        type: prometheus
-        access: proxy
-        url: http://prometheus-server:9090
-        isDefault: true
-        jsonData:
-          httpMethod: POST
-          exemplarTraceIdDestinations:
-            - name: traceID
-              datasourceUid: tempo
+Prometheus feature switches belong on its command line or the operator's supported `enableFeatures` field, not `global.enable_features` in `prometheus.yml`. The example uses `storage.exemplars.max_exemplars`; when enabling exemplar storage, also use the version-appropriate feature flag. Registered collectors and OpenMetrics exposition are required at the application. Avoid raw request paths or unsampled/invalid trace IDs in exemplar instrumentation.
 
-      # Loki - Logs
-      - name: Loki
-        type: loki
-        access: proxy
-        url: http://loki-gateway:80
-        jsonData:
-          derivedFields:
-            - name: TraceID
-              matcherRegex: '"traceId":"([a-f0-9]+)"'
-              url: '$${__value.raw}'
-              datasourceUid: tempo
+### Request SLO, burn rate and remaining budget
 
-      # Tempo - Traces
-      - name: Tempo
-        type: tempo
-        access: proxy
-        url: http://tempo-query-frontend:3100
-        uid: tempo
-        jsonData:
-          httpMethod: GET
-          tracesToLogs:
-            datasourceUid: loki
-            tags: ['service.name', 'pod']
-          serviceMap:
-            datasourceUid: prometheus
-          nodeGraph:
-            enabled: true
-          lokiSearch:
-            datasourceUid: loki
+For a request-based 99.9% availability SLO, allowed bad requests are `total requests × 0.001` over the defined window. That is not automatically 43 minutes of downtime; time-based and request-based SLIs have different denominators.
+
+`slo-rules.yaml` separates short-window error ratios from a 30-day request-weighted ratio:
+
+```promql
+# Recent burn rate:
+service:http_5xx:ratio_5m / 0.001
+
+# Remaining 30-day request budget:
+1 - service:http_5xx:ratio_30d / 0.001
 ```
 
-### 7.2 Log -> Metrics -> Trace Correlation (Exemplars)
+The 30-day ratio uses `increase(counter[30d])` for numerator and denominator, not the latest five-minute ratio. Require sufficient history and monitor collection gaps. An exhausted budget can be negative; missing/zero traffic remains undefined rather than becoming perfect availability. The `le="0.5"` bucket divided by histogram count is the fraction of requests within 500 ms, not “the fraction of p99 values below 500 ms”.
 
-Exemplars is a feature that links trace IDs to metric data points.
+The example pairs 1h/5m burn thresholds of 14.4 and 6h/30m thresholds of 6. For a 30-day objective these are illustrative fast/sustained burn policies, not universal severity settings. Tune evaluation windows, traffic confidence and response policy with service owners. Do not automatically suspend deployment merely because one short-window estimate crosses a threshold.
 
-```yaml
-# prometheus-exemplars-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus-config
-  namespace: monitoring
-data:
-  prometheus.yml: |
-    global:
-      scrape_interval: 15s
-      # Enable Exemplars
-      enable_features:
-        - exemplar-storage
+### Alert routing
 
-    scrape_configs:
-      - job_name: 'application'
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-            regex: 'true'
-            action: keep
-```
+`alertmanager.yaml` provides current matchers, Asia/Seoul off-hours and inhibition guarded by nonempty cluster/node labels. Missing labels otherwise compare equal and can silence unrelated alerts. Its `review-only` receiver deliberately has no integration: it validates routing without sending anything. Before operational use, add approved contacts, Secret-backed webhook/routing keys and explicit receiver policies, then test delivery and inhibition. Evaluation, grouping, repeat interval, pending duration and mute schedules serve different purposes.
 
-Exporting Exemplars from applications (Go example):
+<span id="_8-1-responding-to-exploding-log-metrics-storage-costs"></span>
 
-```go
-// Adding Exemplars to Prometheus histograms
-import (
-    "github.com/prometheus/client_golang/prometheus"
-    "go.opentelemetry.io/otel/trace"
-)
+<span id="_8-2-eks-auto-mode-node-monitoring"></span>
 
-var httpDuration = prometheus.NewHistogramVec(
-    prometheus.HistogramOpts{
-        Name:    "http_request_duration_seconds",
-        Help:    "HTTP request duration",
-        Buckets: prometheus.DefBuckets,
-    },
-    []string{"method", "path", "status"},
-)
+<span id="_8-3-cross-tool-data-correlation-analysis"></span>
 
-func recordMetric(ctx context.Context, method, path, status string, duration float64) {
-    span := trace.SpanFromContext(ctx)
-    traceID := span.SpanContext().TraceID().String()
+<span id="_8-4-maintaining-monitoring-system-performance-at-large-scale"></span>
 
-    httpDuration.WithLabelValues(method, path, status).(prometheus.ExemplarObserver).
-        ObserveWithExemplar(duration, prometheus.Labels{"traceID": traceID})
-}
-```
-
-### 7.3 Alerting Strategy: Preventing Alert Fatigue
-
-```yaml
-# alertmanager-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: alertmanager-config
-  namespace: monitoring
-data:
-  alertmanager.yml: |
-    global:
-      resolve_timeout: 5m
-
-    # Routing rules
-    route:
-      receiver: 'default'
-      group_by: ['alertname', 'namespace', 'service']
-      group_wait: 30s
-      group_interval: 5m
-      repeat_interval: 4h
-
-      routes:
-        # Routing by severity
-        - match:
-            severity: critical
-          receiver: 'critical-alerts'
-          group_wait: 10s
-          repeat_interval: 1h
-
-        - match:
-            severity: warning
-          receiver: 'warning-alerts'
-          group_wait: 1m
-          repeat_interval: 4h
-
-        # Suppress alerts outside business hours
-        - match:
-            severity: info
-          receiver: 'info-alerts'
-          mute_time_intervals:
-            - off-hours
-
-    # Alert inhibition rules
-    inhibit_rules:
-      # Suppress individual service alerts when cluster is down
-      - source_match:
-          alertname: ClusterDown
-        target_match_re:
-          alertname: '.+'
-        equal: ['cluster']
-
-      # Suppress Pod alerts when node is down
-      - source_match:
-          alertname: NodeDown
-        target_match_re:
-          alertname: 'Pod.*'
-        equal: ['node']
-
-    # Define off-hours
-    time_intervals:
-      - name: off-hours
-        time_intervals:
-          - weekdays: ['saturday', 'sunday']
-          - times:
-              - start_time: '00:00'
-                end_time: '09:00'
-              - start_time: '18:00'
-                end_time: '24:00'
-
-    receivers:
-      - name: 'default'
-        slack_configs:
-          - channel: '#alerts-default'
-
-      - name: 'critical-alerts'
-        slack_configs:
-          - channel: '#alerts-critical'
-        pagerduty_configs:
-          - service_key: '<pagerduty-key>'
-
-      - name: 'warning-alerts'
-        slack_configs:
-          - channel: '#alerts-warning'
-
-      - name: 'info-alerts'
-        slack_configs:
-          - channel: '#alerts-info'
-```
-
-### 7.4 SLO/SLI-Based Monitoring
-
-```yaml
-# slo-recording-rules.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: slo-rules
-  namespace: monitoring
-spec:
-  groups:
-    - name: slo.rules
-      rules:
-        # Availability SLI: Successful request ratio
-        - record: sli:availability:ratio
-          expr: |
-            sum(rate(http_requests_total{status!~"5.."}[5m]))
-            /
-            sum(rate(http_requests_total[5m]))
-
-        # Latency SLI: P99 < 500ms ratio
-        - record: sli:latency:ratio
-          expr: |
-            sum(rate(http_request_duration_seconds_bucket{le="0.5"}[5m]))
-            /
-            sum(rate(http_request_duration_seconds_count[5m]))
-
-        # Error budget burn rate (30-day basis)
-        - record: slo:error_budget:remaining
-          expr: |
-            1 - (
-              (1 - sli:availability:ratio)
-              /
-              (1 - 0.999)  # 99.9% SLO target
-            )
-
-    - name: slo.alerts
-      rules:
-        # Warning when 50% of error budget consumed
-        - alert: ErrorBudgetBurnRateHigh
-          expr: slo:error_budget:remaining < 0.5
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "More than 50% of error budget consumed"
-            description: "Remaining error budget: {{ $value | humanizePercentage }}"
-
-        # Critical when 80% of error budget consumed
-        - alert: ErrorBudgetBurnRateCritical
-          expr: slo:error_budget:remaining < 0.2
-          for: 5m
-          labels:
-            severity: critical
-          annotations:
-            summary: "More than 80% of error budget consumed"
-            description: "Remaining error budget: {{ $value | humanizePercentage }}"
-```
-
----
+<span id="_8-5-high-availability-observability-stack-configuration"></span>
 
 <span id="8-operational-challenges-and-solutions"></span>
 
 ## 8. Operational Challenges and Solutions
 
-### 8.1 Responding to Exploding Log/Metrics Storage Costs
-
-| Problem | Cause | Solution |
-|---|---|---|
-| Log cost spike | Excessive DEBUG logs | Log level filtering, sampling |
-| Metric cardinality explosion | Pod UID, timestamp labels | Label cleanup, metric dropping |
-| Trace storage cost | 100% sampling | Apply Tail Sampling |
-| Long-term retention cost | Same retention for all data | Tiered Storage |
-
-```yaml
-# cost-optimization-config.yaml
-# Fluent Bit log filtering
-[FILTER]
-    Name     grep
-    Match    *
-    Exclude  log ^.*DEBUG.*$
-    Exclude  log ^.*TRACE.*$
-
-# High-frequency log sampling (10%)
-[FILTER]
-    Name          throttle
-    Match         kube.var.log.containers.nginx*
-    Rate          10
-    Window        60
-    Print_Status  true
-```
-
-### 8.2 EKS Auto Mode Node Monitoring
-
-In EKS Auto Mode, nodes are automatically managed, requiring special monitoring strategies.
-
-```yaml
-# auto-mode-monitoring.yaml
-# Managed Node Pool monitoring
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: auto-mode-nodes
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      eks.amazonaws.com/managed: "true"
-  namespaceSelector:
-    any: true
-  podMetricsEndpoints:
-    - port: metrics
-      interval: 30s
----
-# Enable CloudWatch Container Insights
-# Recommended for use with EKS Auto Mode
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cwagent-config
-  namespace: amazon-cloudwatch
-data:
-  cwagentconfig.json: |
-    {
-      "logs": {
-        "metrics_collected": {
-          "kubernetes": {
-            "cluster_name": "eks-auto-cluster",
-            "metrics_collection_interval": 60
-          }
-        }
-      }
-    }
-```
-
-### 8.3 Cross-Tool Data Correlation Analysis
-
-![A user's slow-API investigation flows entirely through Grafana, which queries Prometheus for a P99 exemplar, follows the trace ID into Tempo to find the bottleneck service, then filters Loki logs by that same trace ID before returning one unified answer.](../.gitbook/assets/en-observability-09-observability-optimization-6.png)
+![Grafana queries source histogram exemplars, retrieves retained traces and correlates logs by the same trace ID.](../.gitbook/assets/en-observability-09-observability-optimization-6.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-6.html)
 
-### 8.4 Maintaining Monitoring System Performance at Large Scale
+A computed p99 series does not itself retain exemplar metadata. Query exemplars from the original instrumented series, then verify trace retention and log fields. A trace link resolving to no data may mean sampling/retention mismatch rather than a broken UI.
 
-```yaml
-# high-scale-prometheus.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: Prometheus
-metadata:
-  name: prometheus
-  namespace: monitoring
-spec:
-  replicas: 2
-  retention: 7d
-  retentionSize: 100GB
+EKS Auto Mode includes a node monitoring agent that publishes Kubernetes Events and node Conditions. Read those signals and node health alongside workload metrics. A PodMonitor selects Pods and named container ports; selecting a node label does not magically expose node metrics. CloudWatch Observability's add-on/operator installs agents and requires permissions/configuration; a standalone ConfigMap does not enable Container Insights.
 
-  # Sharding for load distribution
-  shards: 3
-
-  resources:
-    requests:
-      cpu: 2
-      memory: 8Gi
-    limits:
-      cpu: 4
-      memory: 16Gi
-
-  # Offload to external storage
-  remoteWrite:
-    - url: "http://victoriametrics:8428/api/v1/write"
-      queueConfig:
-        capacity: 10000
-        maxShards: 30
-        maxSamplesPerSend: 5000
-
-  # Query performance optimization
-  queryLogFile: /prometheus/query.log
-
-  additionalArgs:
-    # Query concurrency limit
-    - name: query.max-concurrency
-      value: "20"
-    # Query timeout
-    - name: query.timeout
-      value: "2m"
-```
-
-### 8.5 High Availability Observability Stack Configuration
-
-![Fluent Bit agents on every node fan through a Load Balancer into a redundant pair of OTel Collectors, which write logs to two Loki Write replicas backed by a shared S3 Bucket and metrics to two vminsert replicas backed by vmstorage x3.](../.gitbook/assets/en-observability-09-observability-optimization-7.png)
+![Collection, gateway and storage availability require explicit replication, quorum, routing and query contracts; icon counts do not prescribe replica counts.](../.gitbook/assets/en-observability-09-observability-optimization-7.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-7.html)
 
----
+Test failures at collection, queue, receiver, storage and query layers. PDBs constrain voluntary disruptions when respected; they do not guarantee availability during node loss. Replication factors, quorum, AZ placement, stateful storage and read-path aggregation are separate requirements. Follow current Loki/Tempo deployment modes instead of mixing retired Simple Scalable/Tempo 2 ingester examples into a current stack.
+
+<span id="_9-1-phased-adoption-strategy"></span>
+
+<span id="_9-2-cost-benefit-analysis"></span>
+
+<span id="_9-3-checklist"></span>
+
+<span id="_9-4-related-documents-and-quizzes"></span>
 
 <span id="9-best-practices-and-next-steps"></span>
 
 ## 9. Best Practices and Next Steps
 
-### 9.1 Phased Adoption Strategy
-
-![A three-phase adoption path: Phase 1 uses CloudWatch-only basics, Phase 2 layers on the Prometheus/Grafana and Loki/X-Ray stack, and Phase 3 arrives at OpenTelemetry, eBPF monitoring, and cost monitoring as the advanced end state.](../.gitbook/assets/en-observability-09-observability-optimization-8.png)
+![Optional adoption stages based on incident questions and operating capacity, rather than mandatory product migrations or fixed schedules.](../.gitbook/assets/en-observability-09-observability-optimization-8.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-8.html)
 
-| Phase | Components | Duration | Cost | Operational Complexity |
-|---|---|---|---|---|
-| **Phase 1 (Basic)** | CloudWatch-based | 1-2 days | Low | Low |
-| **Phase 2 (Intermediate)** | Grafana stack | 1-2 weeks | Medium | Medium |
-| **Phase 3 (Advanced)** | OpenTelemetry + eBPF | 2-4 weeks | High | High |
+Establish a baseline: bytes/day per signal, active series, new-series churn, samples/second, spans/second, sample retention, query scan volume, retention, buffer loss, recovery time and operating effort. Use current Region-specific pricing and your negotiated terms. For a hypothetical $5,000/month baseline and $2,500 target, attribute actual cost categories before estimating savings. No tool switch guarantees 50% savings.
 
-### 9.2 Cost-Benefit Analysis
+Roll out one measurable change at a time. Compare incident investigation success, SLO coverage, dropped data and the bill before and after. Maintain enough data to reverse a harmful filter and restore diagnosis. Deployment duration depends on permissions, team experience, validation and migration; fixed “one to two days” schedules are not commitments.
 
-| Tool Combination | Est. Monthly Cost (100 nodes) | Feature Coverage | ROI |
-|---|---|---|---|
-| CloudWatch full | $500-1,000 | Basic | Low |
-| Prometheus + Loki + Grafana | $200-400 (infrastructure) | Intermediate | Medium |
-| AMP + Tempo + eBPF | $300-600 | Advanced | High |
-| Commercial solutions (Datadog, etc.) | $2,000-5,000 | Complete | Varies |
+### Validation and limits
 
-### 9.3 Checklist
+Native checks covered Prometheus configuration and nine rules, selective bucket relabeling against a real synthetic scrape, seven SLO assertions including a 30-day request budget, an actual Collector tail-sampling pipeline, Alertmanager configuration and the pinned OpenCost Helm render. There was no production workload, billing reconciliation, Kubernetes/eBPF installation or external notification. Diagram/browser checks are recorded separately in the review report.
 
-**Observability Implementation Checklist:**
+### Related reading
 
-- [ ] Implement all three pillars: logging, metrics, tracing
-- [ ] Set up data correlation between pillars
-- [ ] Establish cardinality management policies
-- [ ] Define and apply sampling strategies
-- [ ] Deploy cost monitoring tools
-- [ ] Optimize alerting rules (prevent alert fatigue)
-- [ ] Define SLO/SLI and configure dashboards
-- [ ] Establish long-term storage strategy
-- [ ] Complete high availability configuration
-- [ ] Documentation and team training
-
-### 9.4 Related Documents and Quizzes
-
-**Related Documents:**
-
-- [Prometheus Operations Guide](./metrics/01-prometheus.md)
-- [Grafana Dashboard Configuration](./grafana/README.md)
-
-**Related Quiz:**
-
-- [Observability Optimization Quiz](../quizzes/observability/09-observability-optimization-quiz.md)
-
----
+- [Prometheus guide](./metrics/01-prometheus.md)
+- [Grafana dashboards](./grafana/README.md)
+- [Observability optimization quiz](../quizzes/observability/09-observability-optimization-quiz.md)
 
 ## References
 
-- [OpenTelemetry Official Documentation](https://opentelemetry.io/docs/)
-- [Grafana Loki Documentation](https://grafana.com/docs/loki/latest/)
-- [Prometheus Operator](https://prometheus-operator.dev/)
-- [AWS Observability Best Practices](https://aws-observability.github.io/observability-best-practices/)
-- [OpenCost Project](https://www.opencost.io/)
-- [eBPF.io](https://ebpf.io/)
+- [Collector tail sampling v0.160.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor)
+- [Prometheus configuration](https://prometheus.io/docs/prometheus/latest/configuration/configuration/)
+- [Prometheus alerting configuration](https://prometheus.io/docs/alerting/latest/configuration/)
+- [AMP workspace retention configuration](https://docs.aws.amazon.com/prometheus/latest/APIReference/API_UpdateWorkspaceConfiguration.html)
+- [EKS Auto Mode troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html)
+- [CloudWatch Observability add-on](https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch.html)
+- [Kepler v0.11.4](https://github.com/sustainable-computing-io/kepler/tree/v0.11.4)
+- [Coroot Helm charts](https://github.com/coroot/helm-charts/tree/main/charts)
+- [OpenCost Helm chart](https://github.com/opencost/opencost-helm-chart/tree/main/charts/opencost)
+- [Pixie](https://github.com/pixie-io/pixie)

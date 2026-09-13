@@ -20,7 +20,7 @@
           "grafana",
           "prometheus"
         ],
-        "note": "The Exemplar attached to the P99 latency query result supplies the traceID."
+        "note": "Query latency and exemplars from source histogram series; computed p99 does not preserve exemplar metadata."
       },
       {
         "id": "trace",
@@ -106,7 +106,7 @@
       "from": "grafana",
       "to": "prometheus",
       "y": 228,
-      "label": "Query P99 latency"
+      "label": "Latency + source exemplars"
     },
     {
       "id": "exemplar",
@@ -128,7 +128,7 @@
       "from": "tempo",
       "to": "grafana",
       "y": 358,
-      "label": "Full request flow",
+      "label": "Retained span flow",
       "variant": "return",
       "note": "Identify bottleneck service"
     },

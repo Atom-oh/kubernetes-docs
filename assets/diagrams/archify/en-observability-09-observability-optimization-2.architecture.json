@@ -26,8 +26,8 @@
     {
       "id": "thanos",
       "type": "database",
-      "label": "Thanos",
-      "sublabel": "S3-based",
+      "label": "Thanos Receive",
+      "sublabel": "TSDB + object storage",
       "pos": [
         360,
         100
@@ -123,7 +123,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Short-term Storage (7 days)",
+      "label": "Local retention policy",
       "wraps": [
         "prom"
       ]
@@ -222,6 +222,16 @@
       "id": "ampq-grafana",
       "from": "ampq",
       "to": "grafana"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Long-term storage contract",
+      "items": [
+        "Verify capacity, retention, query and deduplication",
+        "Remote Write is not a backup or zero-loss guarantee"
+      ]
     }
   ]
 }

@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5038,9 +5041,9 @@
         <path data-edge-from="logging" data-edge-to="logging-data" data-edge-key="0" data-edge-id="logging-to-data" data-composition-points="190,244;190,400" d="M 190 244 L 190 400" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="metrics" data-edge-to="metrics-data" data-edge-key="1" data-edge-id="metrics-to-data" data-composition-points="550,244;550,400" d="M 550 244 L 550 400" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="tracing" data-edge-to="tracing-data" data-edge-key="2" data-edge-id="tracing-to-data" data-composition-points="910,244;910,400" d="M 910 244 L 910 400" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="logging" data-edge-to="metrics" data-edge-label="Exemplars" data-edge-key="3" data-edge-id="exemplars" data-composition-points="300,212;440,212" d="M 300 212 L 440 212" class="a-dashed" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="metrics" data-edge-to="tracing" data-edge-label="Context" data-edge-key="4" data-edge-id="context" data-composition-points="660,212;800,212" d="M 660 212 L 800 212" class="a-dashed" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="tracing" data-edge-to="logging" data-edge-label="Correlation ID" data-edge-key="5" data-edge-id="correlation-id" data-composition-points="910,180;910,80;190,80;190,180" d="M 910 180 L 910 88 Q 910 80 902 80 L 198 80 Q 190 80 190 88 L 190 180" class="a-dashed" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="logging" data-edge-to="metrics" data-edge-label="Shared labels" data-edge-key="3" data-edge-id="exemplars" data-composition-points="300,212;440,212" d="M 300 212 L 440 212" class="a-dashed" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="metrics" data-edge-to="tracing" data-edge-label="Exemplars" data-edge-key="4" data-edge-id="context" data-composition-points="660,212;800,212" d="M 660 212 L 800 212" class="a-dashed" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="tracing" data-edge-to="logging" data-edge-label="Trace ID" data-edge-key="5" data-edge-id="correlation-id" data-composition-points="910,180;910,80;190,80;190,180" d="M 910 180 L 910 88 Q 910 80 902 80 L 198 80 Q 190 80 190 88 L 190 180" class="a-dashed" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
         <g id="node-logging" data-node-id="logging" data-node-label="Logging" tabindex="0" role="button" aria-label="Focus Logging, &quot;What happened?&quot;, Three Pillars" aria-pressed="false" data-node-kind="backend" data-node-sublabel="&quot;What happened?&quot;" data-node-context="Three Pillars">
@@ -5116,17 +5119,17 @@
 
 
 
-        <g data-detail="context" data-edge-from="logging" data-edge-to="metrics" data-edge-label="Exemplars" data-edge-key="3" data-edge-id="exemplars">
-          <rect x="343.4" y="192" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="370" y="202" class="t-messagebus" font-size="8" text-anchor="middle">Exemplars</text>
+        <g data-detail="context" data-edge-from="logging" data-edge-to="metrics" data-edge-label="Shared labels" data-edge-key="3" data-edge-id="exemplars">
+          <rect x="333.8" y="192" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="370" y="202" class="t-messagebus" font-size="8" text-anchor="middle">Shared labels</text>
         </g>
-        <g data-detail="context" data-edge-from="metrics" data-edge-to="tracing" data-edge-label="Context" data-edge-key="4" data-edge-id="context">
-          <rect x="708.2" y="192" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="730" y="202" class="t-messagebus" font-size="8" text-anchor="middle">Context</text>
+        <g data-detail="context" data-edge-from="metrics" data-edge-to="tracing" data-edge-label="Exemplars" data-edge-key="4" data-edge-id="context">
+          <rect x="703.4" y="192" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="730" y="202" class="t-messagebus" font-size="8" text-anchor="middle">Exemplars</text>
         </g>
-        <g data-detail="context" data-edge-from="tracing" data-edge-to="logging" data-edge-label="Correlation ID" data-edge-key="5" data-edge-id="correlation-id">
-          <rect x="511.4" y="58" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="550" y="68" class="t-messagebus" font-size="8" text-anchor="middle">Correlation ID</text>
+        <g data-detail="context" data-edge-from="tracing" data-edge-to="logging" data-edge-label="Trace ID" data-edge-key="5" data-edge-id="correlation-id">
+          <rect x="525.8" y="58" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="550" y="68" class="t-messagebus" font-size="8" text-anchor="middle">Trace ID</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
@@ -5366,8 +5369,8 @@
           <h3>Tracing</h3>
         </div>
         <ul>
-          <li>&bull; Request flow tracking, bottleneck analysis</li>
-          <li>&bull; High volume needs sampling; cost scales with sampling rate</li>
+          <li>&bull; Investigate request flow and latency</li>
+          <li>&bull; Evaluate sampling, loss and operating cost</li>
         </ul>
       </div>
     </div>
@@ -7163,7 +7166,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

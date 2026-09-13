@@ -1,0 +1,45 @@
+groups:
+- name: request-slo
+  interval: 30s
+  rules:
+  - record: service:http_5xx:ratio_5m
+    expr: (sum by (service) (rate(lab_http_requests_total{status=~"5.."}[5m])) or
+      0 * sum by (service) (rate(lab_http_requests_total[5m]))) / (sum by (service)
+      (rate(lab_http_requests_total[5m])) > 0)
+  - record: service:http_5xx:ratio_1h
+    expr: (sum by (service) (rate(lab_http_requests_total{status=~"5.."}[1h])) or
+      0 * sum by (service) (rate(lab_http_requests_total[1h]))) / (sum by (service)
+      (rate(lab_http_requests_total[1h])) > 0)
+  - record: service:http_5xx:ratio_30m
+    expr: (sum by (service) (rate(lab_http_requests_total{status=~"5.."}[30m])) or
+      0 * sum by (service) (rate(lab_http_requests_total[30m]))) / (sum by (service)
+      (rate(lab_http_requests_total[30m])) > 0)
+  - record: service:http_5xx:ratio_6h
+    expr: (sum by (service) (rate(lab_http_requests_total{status=~"5.."}[6h])) or
+      0 * sum by (service) (rate(lab_http_requests_total[6h]))) / (sum by (service)
+      (rate(lab_http_requests_total[6h])) > 0)
+  - record: service:http_5xx:ratio_30d
+    expr: (sum by (service) (increase(lab_http_requests_total{status=~"5.."}[30d]))
+      or 0 * sum by (service) (increase(lab_http_requests_total[30d]))) / (sum by
+      (service) (increase(lab_http_requests_total[30d])) > 0)
+  - record: service:error_budget:remaining_30d
+    expr: 1 - service:http_5xx:ratio_30d / 0.001
+  - record: service:latency_under_500ms:ratio_5m
+    expr: sum by (service) (rate(lab_http_request_duration_seconds_bucket{le="0.5"}[5m]))
+      / (sum by (service) (rate(lab_http_request_duration_seconds_count[5m])) > 0)
+  - alert: FastErrorBudgetBurn
+    expr: (service:http_5xx:ratio_1h / 0.001 > 14.4) and (service:http_5xx:ratio_5m
+      / 0.001 > 14.4)
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: Fast error-budget burn for {{ $labels.service }}
+  - alert: SlowErrorBudgetBurn
+    expr: (service:http_5xx:ratio_6h / 0.001 > 6) and (service:http_5xx:ratio_30m
+      / 0.001 > 6)
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: Sustained error-budget burn for {{ $labels.service }}

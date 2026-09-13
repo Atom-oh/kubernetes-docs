@@ -1,7 +1,8 @@
 # Observability Optimization Quiz
 
-> **Supported Versions**: Amazon EKS 1.29+, OpenTelemetry 0.90+
-> **Last Updated**: February 22, 2026
+> **Validated example versions**: Prometheus 3.14.0 · OTel Collector Contrib 0.160.0
+
+> **Last Updated**: September 13, 2026
 
 This quiz tests your understanding of the EKS Observability Optimization Guide. It covers the three pillars of observability—logging, metrics, and tracing—as well as eBPF-based monitoring and cost optimization strategies.
 
@@ -37,11 +38,11 @@ The three pillars of observability answer different types of questions. Logging 
 **Answer: C) Loki**
 
 **Explanation:**
-Grafana Loki uses label-based indexing to provide fast filtering without full-text search indexes. It stores log data in object storage like S3, making storage costs very low (S3: $0.023/GB/month). OpenSearch is strong in full-text search but has high index storage costs, while CloudWatch Logs has relatively high ingestion costs ($0.50/GB).
+Loki uses label indexing and object storage, but total cost includes compute, caches, object requests, queries and operations. Compare the same Region, volume, retention and availability instead of treating S3 storage price as total cost.
 
 </details>
 
-3. Which log agent has the lowest memory usage, is written in C, and is natively supported on EKS?
+3. Which C-based agent can collect logs on EKS?
    - A) Fluentd
    - B) Fluent Bit
    - C) Vector
@@ -53,7 +54,7 @@ Grafana Loki uses label-based indexing to provide fast filtering without full-te
 **Answer: B) Fluent Bit**
 
 **Explanation:**
-Fluent Bit is written in C and uses only about 15MB of memory. It is lighter than Fluentd (~60MB, Ruby/C) or Vector (~30MB, Rust), and provides high throughput of up to ~200K msg/s. AWS officially recommends Fluent Bit as the log collector for EKS and provides the aws-for-fluent-bit image.
+Fluent Bit is a C-based collector usable in AWS deployments. Memory and throughput depend on version, parsers, record size, buffering and hardware; fixed 15 MB or 200K msg/s claims are not guarantees.
 
 </details>
 
@@ -69,11 +70,11 @@ Fluent Bit is written in C and uses only about 15MB of memory. It is lighter tha
 **Answer: B) When using Pod UID or timestamp as labels**
 
 **Explanation:**
-Cardinality refers to the number of unique time series. Using unique values like Pod UID, timestamps, or request IDs as labels causes label combinations to grow infinitely, resulting in an explosion of time series. This causes Prometheus memory usage to spike and query performance to degrade. It is recommended to remove labels like pod_template_hash and controller_revision_hash in relabel_configs.
+Changing request-ID/timestamp labels increases series counts. Bound labels at the source and verify uniqueness. labeldrop does not aggregate samples and can create collisions; target relabeling and metric relabeling run at different stages.
 
 </details>
 
-5. In OpenTelemetry Collector's Tail Sampling strategy, which policy type keeps 100% of traces that contain errors?
+5. In OpenTelemetry Collector's Tail Sampling strategy, which policy type selects received traces containing an ERROR span?
    - A) probabilistic
    - B) latency
    - C) status_code
@@ -85,7 +86,7 @@ Cardinality refers to the number of unique time series. Using unique values like
 **Answer: C) status_code**
 
 **Explanation:**
-Tail Sampling makes sampling decisions based on complete trace information after the trace is finished. The `status_code` policy samples based on the trace's status code (OK, ERROR). Setting `status_codes: [ERROR]` keeps 100% of traces containing errors. This is an effective strategy that preserves traces important for problem analysis while reducing overall data volume.
+The ERROR status_code policy selects traces using error spans received by that sampler. Trace affinity, decision timing, buffer limits, late spans and upstream head sampling prevent a guarantee that every failing request is retained.
 
 </details>
 
@@ -101,7 +102,7 @@ Tail Sampling makes sampling decisions based on complete trace information after
 **Answer: B) It can instrument applications without code modification**
 
 **Explanation:**
-eBPF (extended Berkeley Packet Filter) safely runs programs in the Linux kernel to observe system calls, network packets, and more. Traditional instrumentation requires adding SDKs, modifying code, and redeploying, but eBPF operates transparently at the kernel level, enabling monitoring without application changes. It is also language-agnostic, instrumenting applications written in any language equally.
+It can reduce source changes for supported kernels, runtimes and protocols, but does not cover every language, TLS library or business span equally. Validate permissions, overhead and sensitive payloads; SDK auto-instrumentation may also avoid source changes.
 
 </details>
 
@@ -117,23 +118,23 @@ eBPF (extended Berkeley Packet Filter) safely runs programs in the Linux kernel 
 **Answer: B) Network flow observation and analysis**
 
 **Explanation:**
-Cilium Hubble is the observability component of Cilium, an eBPF-based CNI. Hubble observes all network flows in the cluster in real-time, analyzing DNS requests, TCP connections, HTTP traffic, and more. With the `hubble observe` command, you can filter traffic to specific services or analyze dropped packets. It is useful for service map visualization and network policy validation.
+Hubble observes network flows in a compatible Cilium deployment. L7 visibility depends on protocols and proxy/policy configuration. Verify actual coverage instead of promising every flow or complete application tracing.
 
 </details>
 
 8. What is the primary metric that Kepler (Kubernetes Efficient Power Level Exporter) measures?
    - A) CPU temperature
    - B) Network bandwidth
-   - C) Energy consumption (joules/watts)
+   - C) Energy (joules) and power (watts)
    - D) Disk I/O latency
 
 <details>
 <summary>View Answer</summary>
 
-**Answer: C) Energy consumption (joules/watts)**
+**Answer: C) Energy (joules) and power (watts)**
 
 **Explanation:**
-Kepler is a CNCF project that uses eBPF to measure energy consumption of containers and Pods. It provides energy consumption (joules) through the `kepler_container_joules_total` metric, and power consumption (watts) can be calculated with `rate(kepler_container_joules_total[5m]) * 1000`. This enables analysis of energy usage by namespace or Pod, helping achieve green computing goals.
+Kepler 0.10+ differs from legacy 0.7. In 0.11.4, kepler_pod_cpu_watts is a power gauge and rate(kepler_pod_cpu_joules_total[5m]) is J/s=W. Multiplying by 1000 gives milliwatts. Verify hardware access and attribution support.
 
 </details>
 
@@ -165,7 +166,7 @@ OpenCost allocates costs based on Kubernetes labels. By consistently applying la
 **Answer: B) The amount of errors allowed while deviating from SLO targets**
 
 **Explanation:**
-Error budget is a concept derived from SLO, representing the total amount of errors allowed. For example, a 99.9% availability SLO means a 0.1% error budget. Based on 30 days, approximately 43 minutes of downtime is allowed. When the error budget is exhausted, new feature deployments should be halted to focus on stability improvements. The remaining error budget ratio can be calculated with the expression `1 - (1 - sli:availability:ratio) / (1 - 0.999)`.
+For a request-based 99.9% SLO, allowed bad requests equal total requests×0.001 over the defined window. Do not confuse this with time-based downtime. Remaining 30-day budget requires a 30-day request-weighted error ratio, not the latest five-minute ratio.
 
 </details>
 
@@ -185,7 +186,7 @@ Recording Rules periodically evaluate PromQL expressions and store the results a
 
 </details>
 
-2. In OpenTelemetry, what is the sampling method called that makes sampling decisions based on complete trace information after the trace is finished?
+2. In OpenTelemetry, what is the sampling method called that collects spans for a decision window and samples using observed outcomes?
 
 <details>
 <summary>View Answer</summary>
@@ -193,7 +194,7 @@ Recording Rules periodically evaluate PromQL expressions and store the results a
 **Answer:** Tail Sampling
 
 **Explanation:**
-Tail Sampling makes sampling decisions after all spans of a trace have arrived. This contrasts with Head Sampling (probabilistic sampling), which makes decisions at the start of the trace. The advantage of Tail Sampling is that it can selectively keep only traces with errors or high latency. However, since all spans must be kept in memory before making a decision, the `decision_wait` and `num_traces` settings are important.
+Default trace-complete sampling decides using spans received during its decision window. It cannot prove completion or arrival of all spans; consider affinity, buffers, late spans, restarts and upstream sampling.
 
 </details>
 
@@ -217,7 +218,7 @@ Exemplars is a feature that attaches additional context (typically traceID) to m
 **Answer:** vmstorage
 
 **Explanation:**
-VictoriaMetrics cluster mode consists of three components. vminsert handles metric collection and distribution, vmselect handles query processing, and vmstorage handles actual metric data storage. vmstorage can scale horizontally with multiple instances and provides high availability through replication. This separated architecture enables independent scaling of ingestion, storage, and query workloads.
+vmstorage stores the data. Multiple instances alone do not establish replication: configure replication factors, vminsert/vmselect behavior, query deduplication and failure handling.
 
 </details>
 
@@ -229,7 +230,7 @@ VictoriaMetrics cluster mode consists of three components. vminsert handles metr
 **Answer:** Tiered Storage
 
 **Explanation:**
-Tiered storage strategy stores data in different storage tiers based on importance and access frequency. Recent data is stored in high-performance storage (SSD, EBS), medium-term data in S3 Standard-IA, and long-term archive data in S3 Glacier Deep Archive. This can reduce storage costs by 70-90%. Object storage-based solutions like Loki and Tempo support this strategy by default.
+Tiering depends on access frequency, restore delay and retention. Moving active Loki/Tempo blocks into Glacier can break queries; validate compatibility/recovery or use a separate archive. Savings are not a fixed percentage.
 
 </details>
 
@@ -247,20 +248,11 @@ Tiered storage strategy stores data in different storage tiers based on importan
 [FILTER]
     Name     grep
     Match    *
-    Exclude  log ^.*DEBUG.*$
-    Exclude  log ^.*TRACE.*$
-```
-
-Or using regular expressions:
-```ini
-[FILTER]
-    Name     grep
-    Match    *
-    Exclude  log (DEBUG|TRACE)
+    Exclude  level ^(DEBUG|TRACE)$
 ```
 
 **Explanation:**
-Fluent Bit's grep filter uses regular expressions to filter logs. The `Exclude` directive excludes logs matching the pattern. Filtering DEBUG/TRACE logs in production environments can reduce log volume by 40-60%, significantly cutting storage costs. However, DEBUG logs can be selectively enabled for specific services when troubleshooting is needed.
+Match ^(DEBUG|TRACE)$ on a parsed level field rather than arbitrary message text. Measure drops and incident-investigation impact; 40–60% savings are not guaranteed.
 
 </details>
 
@@ -312,30 +304,27 @@ This alert rule calculates the 5XX status code ratio per service. `status=~"5.."
 ```yaml
 processors:
   tail_sampling:
-    decision_wait: 10s
-    num_traces: 100000
+    decision_wait: 2s
+    num_traces: 1000
+    maximum_trace_size_bytes: 1048576
     policies:
-      # Keep 100% of traces with errors
-      - name: errors-policy
-        type: status_code
-        status_code:
-          status_codes: [ERROR]
-
-      # Keep 100% of traces with latency over 1 second
-      - name: slow-traces-policy
-        type: latency
-        latency:
-          threshold_ms: 1000
-
-      # Sample only 10% of the rest
-      - name: default-policy
-        type: probabilistic
-        probabilistic:
-          sampling_percentage: 10
+    - name: errors
+      type: status_code
+      status_code:
+        status_codes:
+        - ERROR
+    - name: slow
+      type: latency
+      latency:
+        threshold_ms: 1000
+    - name: baseline
+      type: probabilistic
+      probabilistic:
+        sampling_percentage: 10
 ```
 
 **Explanation:**
-Tail Sampling policies are evaluated in order, and if any policy matches, the trace is kept. `decision_wait` is the time to wait for trace completion, requiring enough time for all spans to arrive. `num_traces` is the maximum number of traces to keep in memory. This configuration can reduce overall data volume by about 90% while retaining traces important for error and performance analysis.
+These positive policies retain matching received error/slow traces and probabilistically sample the rest. Buffer, affinity and late-span limits remain. Overall retention depends on the error/slow share; 90% reduction is not guaranteed. Do not generalize first-match semantics to drop/composite policies.
 
 </details>
 
@@ -350,36 +339,7 @@ Tail Sampling policies are evaluated in order, and if any policy matches, the tr
 
 **Answer:**
 
-**Data Collection Layer:**
-- Fluent Bit: Deploy as DaemonSet on each node (memory limit 100-200Mi)
-- OTel Collector: Deploy as DaemonSet with load balancer in front
-- Collector redundancy: At least 2+ Collector instances per AZ
-
-**Storage Layer:**
-- Logs: Loki Simple Scalable mode
-  - Write path: 2+ replicas (AZ distributed)
-  - Read path: 2+ replicas (query load balancing)
-  - Backend: S3 (durability 99.999999999%)
-
-- Metrics: VictoriaMetrics cluster or AMP
-  - vminsert: 2+ replicas (write load balancing)
-  - vmstorage: 3+ replicas (replication factor 2)
-  - vmselect: 2+ replicas (read load balancing)
-
-- Traces: Grafana Tempo
-  - Distributor: 2+ replicas
-  - Ingester: 3+ replicas (WAL enabled)
-  - Backend: S3
-
-**Query Layer:**
-- Grafana: 2+ replicas, external PostgreSQL/MySQL for session storage
-- Caching: Query result caching with Redis/Memcached
-
-**Key Considerations:**
-1. Deploy all stateful components across multiple AZs
-2. Use S3 as shared storage (eliminate single point of failure)
-3. Prometheus sharding (3-5 shards) + Remote Write to offload to central storage
-4. PodDisruptionBudget to ensure availability during rolling updates
+Do not derive replica counts from node count alone. Separate node log agents and gateways, route tail sampling by trace ID, and measure buffering/backpressure and drops. Follow current Loki/Tempo mode replication/quorum/AZ requirements; configure VictoriaMetrics replication/query deduplication and AMP quotas/retention. Budget PVC/memory for Prometheus replicas×shards and merge shard queries. Grafana needs a shared DB and separate Alerting HA; verify edition support for query caching. PDBs and S3 durability do not guarantee end-to-end availability; test failures and recovery.
 
 </details>
 
@@ -390,57 +350,7 @@ Tail Sampling policies are evaluated in order, and if any policy matches, the tr
 
 **Answer:**
 
-**Logging Optimization (Expected savings: $1,500-2,000)**
-
-1. **Log level filtering** (40-60% reduction)
-   - Exclude DEBUG/TRACE logs in production environment
-   - Implementation: Fluent Bit grep filter with `Exclude log (DEBUG|TRACE)`
-
-2. **Apply sampling** (30-50% reduction)
-   - 10% sampling for high-frequency logs (access logs, health checks)
-   - Implementation: Fluent Bit throttle filter `Rate 10, Window 60`
-
-3. **Retention period optimization** (20-40% reduction)
-   - Production: 14 days, Dev/Staging: 7 days
-   - Long-term retention only for important logs (move to S3 Glacier)
-
-4. **Storage migration** (50-70% reduction)
-   - CloudWatch Logs ($0.50/GB ingestion) -> Loki + S3 ($0.023/GB storage)
-
-**Metrics Optimization (Expected savings: $500-800)**
-
-1. **Cardinality management**
-   - Remove unnecessary labels (pod_template_hash, controller_revision_hash)
-   - Drop metrics: exclude internal metrics like `go_.*`, `promhttp_.*`
-
-2. **Scrape interval adjustment**
-   - Critical metrics: 15s, General metrics: 30s-60s
-   - Limit histogram buckets (remove unnecessary le values)
-
-3. **Utilize Recording Rules**
-   - Pre-compute frequently used aggregation queries
-   - Early deletion of original high-resolution data (7 days -> 3 days)
-
-4. **Storage migration**
-   - Self-managed Prometheus -> VictoriaMetrics (7x compression ratio)
-   - Or use AMP (eliminate operational burden, predictable costs)
-
-**Tracing Optimization (Expected savings: $500-1,000)**
-
-1. **Apply Tail Sampling** (80-90% reduction)
-   - Error/slow traces: 100% retention
-   - Normal traces: only 5-10% sampling
-
-2. **Storage migration**
-   - X-Ray ($5/million traces) -> Tempo + S3 (storage costs only)
-
-3. **Retention period optimization**
-   - Detailed traces: 7 days
-   - Aggregated data: 30 days
-
-**Total Expected Savings: $2,500-3,800 (50-76%)**
-
-The key is importance-based tiering. Instead of treating all data equally, aggressively reduce data while retaining what is needed for problem analysis.
+The $5,000 baseline and 50% target are hypothetical. Attribute ingestion, storage, scan, compute and operating costs before optimizing the largest category. Trial parsed-level filtering, request-level probability sampling, safe metric/bucket reduction, tail sampling and retention separately. Throttling is not a 10% sampler, and recording rules do not change raw-data retention. Compare complete costs with equal Region, availability, query and retention requirements. Savings overlap; evaluate the bill, data loss, SLO coverage and investigation success instead of adding percentages. If the target is not established, report evidence and the next experiment.
 
 </details>
 

@@ -1,0 +1,53 @@
+route:
+  receiver: review-only
+  group_by:
+  - alertname
+  - cluster
+  - namespace
+  - service
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - matchers:
+    - severity="info"
+    receiver: review-only
+    mute_time_intervals:
+    - off-hours
+inhibit_rules:
+- source_matchers:
+  - alertname="ClusterDown"
+  - cluster!=""
+  target_matchers:
+  - alertname=~"Pod.*|Service.*"
+  - cluster!=""
+  equal:
+  - cluster
+- source_matchers:
+  - alertname="NodeDown"
+  - cluster!=""
+  - node!=""
+  target_matchers:
+  - alertname=~"Pod.*"
+  - cluster!=""
+  - node!=""
+  equal:
+  - cluster
+  - node
+time_intervals:
+- name: off-hours
+  time_intervals:
+  - weekdays:
+    - saturday
+    - sunday
+    location: Asia/Seoul
+  - weekdays:
+    - monday:friday
+    times:
+    - start_time: 00:00
+      end_time: 09:00
+    - start_time: '18:00'
+      end_time: '24:00'
+    location: Asia/Seoul
+receivers:
+- name: review-only

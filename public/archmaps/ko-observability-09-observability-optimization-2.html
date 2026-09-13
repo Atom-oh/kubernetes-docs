@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-preset="classic">
+<html lang="ko" data-theme="dark" data-preset="classic">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5030,7 +5033,7 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="단기 저장 (7일)" x="10" y="250" width="220" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="로컬 보존 정책" x="10" y="250" width="220" height="110" rx="12" class="c-region" stroke-width="1"/>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="장기 저장 옵션" x="330" y="70" width="230" height="470" rx="12" class="c-region" stroke-width="1"/>
 
@@ -5048,8 +5051,8 @@
         <path data-edge-from="ampq" data-edge-to="grafana" data-edge-key="8" data-edge-id="ampq-grafana" data-composition-points="810,490;865,490;865,324;920,324" d="M 810 490 L 857 490 Q 865 490 865 482 L 865 332 Q 865 324 873 324 L 920 324" class="a-default" data-animate="edge" style="--step:8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
-        <g id="node-prom" data-node-id="prom" data-node-label="Prometheus" tabindex="0" role="button" aria-label="Focus Prometheus, 로컬 스토리지, 단기 저장 (7일)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="로컬 스토리지" data-node-context="단기 저장 (7일)">
-          <title>Prometheus · 로컬 스토리지 · 단기 저장 (7일)</title>
+        <g id="node-prom" data-node-id="prom" data-node-label="Prometheus" tabindex="0" role="button" aria-label="Focus Prometheus, 로컬 스토리지, 로컬 보존 정책" aria-pressed="false" data-node-kind="backend" data-node-sublabel="로컬 스토리지" data-node-context="로컬 보존 정책">
+          <title>Prometheus · 로컬 스토리지 · 로컬 보존 정책</title>
           <rect x="40" y="280" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="40" y="280" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(46 286) scale(0.6875)">
@@ -5059,16 +5062,16 @@
         <text data-detail="context" x="120" y="324" class="t-muted" font-size="9" text-anchor="middle">로컬 스토리지</text>
         </g>
 
-        <g id="node-thanos" data-node-id="thanos" data-node-label="Thanos" tabindex="0" role="button" aria-label="Focus Thanos, S3 기반, 장기 저장 옵션" aria-pressed="false" data-node-kind="database" data-node-sublabel="S3 기반" data-node-context="장기 저장 옵션">
-          <title>Thanos · S3 기반 · 장기 저장 옵션</title>
+        <g id="node-thanos" data-node-id="thanos" data-node-label="Thanos Receive" tabindex="0" role="button" aria-label="Focus Thanos Receive, TSDB + object storage, 장기 저장 옵션" aria-pressed="false" data-node-kind="database" data-node-sublabel="TSDB + object storage" data-node-context="장기 저장 옵션">
+          <title>Thanos Receive · TSDB + object storage · 장기 저장 옵션</title>
           <rect x="360" y="100" width="170" height="60" rx="6" class="c-mask"/>
           <rect x="360" y="100" width="170" height="60" rx="6" class="c-database" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(366 106) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="445" y="128" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Thanos</text>
-        <text data-detail="context" x="445" y="144" class="t-muted" font-size="9" text-anchor="middle">S3 기반</text>
+          <text data-node-label="" data-detail-anchor="" x="445" y="128" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Thanos Receive</text>
+        <text data-detail="context" x="445" y="144" class="t-muted" font-size="9" text-anchor="middle">TSDB + object storage</text>
         </g>
 
         <g id="node-vm" data-node-id="vm" data-node-label="VictoriaMetrics" tabindex="0" role="button" aria-label="Focus VictoriaMetrics, 자체 스토리지, 장기 저장 옵션" aria-pressed="false" data-node-kind="database" data-node-sublabel="자체 스토리지" data-node-context="장기 저장 옵션">
@@ -5154,9 +5157,9 @@
 
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="단기 저장 (7일)">
-          <rect data-graph-role="structural-frame-label-mask" x="14" y="260" width="91" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="18" y="273" class="t-cloud" font-size="9" font-weight="600">단기 저장 (7일)</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="로컬 보존 정책">
+          <rect data-graph-role="structural-frame-label-mask" x="14" y="260" width="85.6" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="18" y="273" class="t-cloud" font-size="9" font-weight="600">로컬 보존 정책</text>
         </g>
 
         <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="장기 저장 옵션">
@@ -5375,7 +5378,16 @@
 
     <!-- Info Cards -->
     <div class="cards">
-
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot amber"></div>
+          <h3>장기 저장 계약</h3>
+        </div>
+        <ul>
+          <li>&bull; 용량·보존 기간·쿼리·복제 중복 제거 확인</li>
+          <li>&bull; Remote Write는 백업·무손실 보장이 아님</li>
+        </ul>
+      </div>
     </div>
 
   </div>
@@ -7169,7 +7181,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

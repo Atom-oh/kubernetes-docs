@@ -143,21 +143,21 @@
       "id": "exemplars",
       "from": "logging",
       "to": "metrics",
-      "label": "Exemplars",
+      "label": "공통 라벨",
       "variant": "dashed"
     },
     {
       "id": "context",
       "from": "metrics",
       "to": "tracing",
-      "label": "Context",
+      "label": "Exemplars",
       "variant": "dashed"
     },
     {
       "id": "correlation-id",
       "from": "tracing",
       "to": "logging",
-      "label": "Correlation ID",
+      "label": "Trace ID",
       "variant": "dashed",
       "fromSide": "top",
       "toSide": "top",
@@ -198,8 +198,8 @@
       "dot": "violet",
       "title": "트레이싱",
       "items": [
-        "요청 흐름 추적, 병목 분석",
-        "볼륨 높아 샘플링 필요, 비용은 샘플링률에 비례"
+        "요청 흐름과 지연 원인 분석",
+        "샘플링·수집 손실·운영 비용을 함께 평가"
       ]
     }
   ]

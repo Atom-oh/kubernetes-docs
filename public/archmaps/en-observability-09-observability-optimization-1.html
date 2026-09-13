@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5039,8 +5042,8 @@
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="3" data-composition-frame-label="Visualization Layer" x="910" y="220" width="210" height="114" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
-        <path data-edge-from="app" data-edge-to="fluentbit" data-edge-label="logs" data-edge-key="0" data-edge-id="app-fluentbit" data-composition-points="200,275;260,275;260,120;320,120" d="M 200 275 L 252 275 Q 260 275 260 267 L 260 128 Q 260 120 268 120 L 320 120" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="app" data-edge-to="otel" data-edge-label="metrics · traces" data-edge-key="1" data-edge-id="app-otel" data-composition-points="200,289;260,289;260,440;320,440" d="M 200 289 L 252 289 Q 260 289 260 297 L 260 432 Q 260 440 268 440 L 320 440" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="app" data-edge-to="fluentbit" data-edge-label="logs" data-edge-key="0" data-edge-id="app-fluentbit" data-composition-points="200,268;260,268;260,120;320,120" d="M 200 268 L 252 268 Q 260 268 260 260 L 260 128 Q 260 120 268 120 L 320 120" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="app" data-edge-to="otel" data-edge-label="metrics · traces" data-edge-key="1" data-edge-id="app-otel" data-composition-points="200,296;260,296;260,440;320,440" d="M 200 296 L 252 296 Q 260 296 260 304 L 260 432 Q 260 440 268 440 L 320 440" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="fluentbit" data-edge-to="logstore" data-edge-key="2" data-edge-id="fluentbit-logstore" data-composition-points="490,120;600,120" d="M 490 120 L 600 120" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="otel" data-edge-to="metricstore" data-edge-key="3" data-edge-id="otel-metricstore" data-composition-points="405,410;405,362;725,362;725,314" d="M 405 410 L 405 370 Q 405 362 413 362 L 717 362 Q 725 362 725 354 L 725 314" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="otel" data-edge-to="tracestore" data-edge-key="4" data-edge-id="otel-tracestore" data-composition-points="490,440;600,440" d="M 490 440 L 600 440" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
@@ -5048,6 +5051,7 @@
         <path data-edge-from="logstore" data-edge-to="grafana" data-edge-key="6" data-edge-id="logstore-grafana" data-composition-points="850,120;895,120;895,268;940,268" d="M 850 120 L 887 120 Q 895 120 895 128 L 895 260 Q 895 268 903 268 L 940 268" class="a-default" data-animate="edge" style="--step:6" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="metricstore" data-edge-to="grafana" data-edge-key="7" data-edge-id="metricstore-grafana" data-composition-points="850,282;940,282" d="M 850 282 L 940 282" class="a-emphasis" data-animate="edge" style="--step:7" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="tracestore" data-edge-to="grafana" data-edge-key="8" data-edge-id="tracestore-grafana" data-composition-points="850,440;895,440;895,296;940,296" d="M 850 440 L 887 440 Q 895 440 895 432 L 895 304 Q 895 296 903 296 L 940 296" class="a-default" data-animate="edge" style="--step:8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="app" data-edge-to="prom" data-edge-key="9" data-edge-id="app-prom" data-composition-points="200,282;320,282" d="M 200 282 L 320 282" class="a-default" data-animate="edge" style="--step:9" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
         <g id="node-app" data-node-id="app" data-node-label="Application Pod" tabindex="0" role="button" aria-label="Focus Application Pod, emits logs · metrics · traces, Workloads" aria-pressed="false" data-node-kind="backend" data-node-sublabel="emits logs · metrics · traces" data-node-context="Workloads">
@@ -5072,15 +5076,15 @@
         <text data-detail="context" x="405" y="134" class="t-muted" font-size="9" text-anchor="middle">DaemonSet</text>
         </g>
 
-        <g id="node-otel" data-node-id="otel" data-node-label="OTel Collector" tabindex="0" role="button" aria-label="Focus OTel Collector, DaemonSet, Collection Layer" aria-pressed="false" data-node-kind="backend" data-node-sublabel="DaemonSet" data-node-context="Collection Layer">
-          <title>OTel Collector · DaemonSet · Collection Layer</title>
+        <g id="node-otel" data-node-id="otel" data-node-label="OTel Collector" tabindex="0" role="button" aria-label="Focus OTel Collector, Agent / gateway, Collection Layer" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Agent / gateway" data-node-context="Collection Layer">
+          <title>OTel Collector · Agent / gateway · Collection Layer</title>
           <rect x="320" y="410" width="170" height="60" rx="6" class="c-mask"/>
           <rect x="320" y="410" width="170" height="60" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(326 416) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="405" y="438" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">OTel Collector</text>
-        <text data-detail="context" x="405" y="454" class="t-muted" font-size="9" text-anchor="middle">DaemonSet</text>
+        <text data-detail="context" x="405" y="454" class="t-muted" font-size="9" text-anchor="middle">Agent / gateway</text>
         </g>
 
         <g id="node-prom" data-node-id="prom" data-node-label="Prometheus" tabindex="0" role="button" aria-label="Focus Prometheus, metrics scrape, Collection Layer" aria-pressed="false" data-node-kind="backend" data-node-sublabel="metrics scrape" data-node-context="Collection Layer">
@@ -5146,13 +5150,14 @@
 
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="app" data-edge-to="fluentbit" data-edge-label="logs" data-edge-key="0" data-edge-id="app-fluentbit">
-          <rect x="245" y="177.5" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="260" y="187.5" class="t-muted" font-size="8" text-anchor="middle">logs</text>
+          <rect x="245" y="174" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="260" y="184" class="t-muted" font-size="8" text-anchor="middle">logs</text>
         </g>
         <g data-detail="context" data-edge-from="app" data-edge-to="otel" data-edge-label="metrics · traces" data-edge-key="1" data-edge-id="app-otel">
-          <rect x="216.6" y="344.5" width="86.8" height="14" rx="3" class="c-mask"/>
-          <text x="260" y="354.5" class="t-backend" font-size="8" text-anchor="middle">metrics · traces</text>
+          <rect x="216.6" y="348" width="86.8" height="14" rx="3" class="c-mask"/>
+          <text x="260" y="358" class="t-backend" font-size="8" text-anchor="middle">metrics · traces</text>
         </g>
+
 
 
 
@@ -5390,7 +5395,7 @@
           <h3>eBPF Layer</h3>
         </div>
         <ul>
-          <li>&bull; Collects data from kernel-level hooks with no code changes (see Section 5)</li>
+          <li>&bull; Verify kernel, protocol and permission support</li>
           <li>&bull; Cilium Hubble · Pixie · Coroot</li>
         </ul>
       </div>
@@ -7187,7 +7192,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

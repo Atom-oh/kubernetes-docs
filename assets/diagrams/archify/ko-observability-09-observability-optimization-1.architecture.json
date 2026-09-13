@@ -80,7 +80,7 @@
       "id": "otel",
       "type": "backend",
       "label": "OTel Collector",
-      "sublabel": "DaemonSet",
+      "sublabel": "Agent / gateway",
       "pos": [
         320,
         410
@@ -249,6 +249,11 @@
       "id": "tracestore-grafana",
       "from": "tracestore",
       "to": "grafana"
+    },
+    {
+      "id": "app-prom",
+      "from": "app",
+      "to": "prom"
     }
   ],
   "cards": [
@@ -256,7 +261,7 @@
       "dot": "violet",
       "title": "eBPF 계층",
       "items": [
-        "코드 수정 없이 커널 레벨 훅에서 데이터를 수집한다 (5장 참고)",
+        "지원 커널·프로토콜·권한 범위를 확인",
         "Cilium Hubble · Pixie · Coroot"
       ]
     }

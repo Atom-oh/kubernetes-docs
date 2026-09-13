@@ -19,7 +19,7 @@
           "full",
           "glacier"
         ],
-        "note": "중요도가 높은 데이터는 전체를 저장하고 S3 Glacier Deep Archive로 계층화해 장기 보관합니다."
+        "note": "중요한 활성 데이터는 즉시 조회 가능한 계층에 보존한다."
       },
       {
         "id": "medium-tier",
@@ -29,17 +29,17 @@
           "sample",
           "standardIa"
         ],
-        "note": "고빈도 이벤트는 샘플링해 S3 Standard-IA에 중기 보관합니다. 표 기준 예상 절감 30-50%."
+        "note": "샘플링 손실과 실제 비용을 측정한다. 고정 절감률을 보장하지 않는다."
       },
       {
         "id": "low-tier",
-        "label": "낮음 · 집계만",
+        "label": "별도 아카이브",
         "focus": [
           "classify",
           "aggregate",
           "local"
         ],
-        "note": "중요도가 낮은 데이터는 집계값만 메모리/로컬에 단기 보관해 보존 기간을 최소화합니다."
+        "note": "Loki/Tempo 활성 블록을 무작정 Glacier로 이동하지 않는다. 복구 가능한 별도 아카이브를 설계한다."
       }
     ]
   },
@@ -58,7 +58,7 @@
     },
     {
       "id": "low",
-      "label": "중요도 낮음"
+      "label": "비활성 아카이브"
     }
   ],
   "mainPath": [
@@ -104,7 +104,7 @@
       "lane": "intake",
       "col": 1,
       "type": "security",
-      "label": "중요도 분류",
+      "label": "조회·보존 요구 분류",
       "tag": "DECISION",
       "width": 224
     },
@@ -114,7 +114,7 @@
       "col": 3,
       "type": "backend",
       "label": "전체 저장",
-      "sublabel": "장기 보관",
+      "sublabel": "빠른 장애 분석",
       "width": 164
     },
     {
@@ -122,8 +122,8 @@
       "lane": "high",
       "col": 5,
       "type": "cloud",
-      "label": "S3 Glacier",
-      "sublabel": "Deep Archive",
+      "label": "조회 가능 저장소",
+      "sublabel": "보존 기간 내 접근",
       "width": 164
     },
     {
@@ -132,7 +132,7 @@
       "col": 3,
       "type": "backend",
       "label": "샘플링",
-      "sublabel": "중기 보관",
+      "sublabel": "품질 영향 측정",
       "width": 164
     },
     {
@@ -140,16 +140,17 @@
       "lane": "medium",
       "col": 5,
       "type": "cloud",
-      "label": "S3 Standard-IA",
-      "width": 164
+      "label": "적합한 스토리지",
+      "width": 164,
+      "sublabel": "수명 주기 호환성"
     },
     {
       "id": "aggregate",
       "lane": "low",
       "col": 3,
       "type": "backend",
-      "label": "집계만",
-      "sublabel": "단기 보관",
+      "label": "별도 아카이브",
+      "sublabel": "복구 시간 허용 시",
       "width": 164
     },
     {
@@ -157,8 +158,9 @@
       "lane": "low",
       "col": 5,
       "type": "database",
-      "label": "메모리/로컬",
-      "width": 164
+      "label": "S3 archive",
+      "width": 164,
+      "sublabel": "복구 후 재조회"
     }
   ],
   "edges": [
