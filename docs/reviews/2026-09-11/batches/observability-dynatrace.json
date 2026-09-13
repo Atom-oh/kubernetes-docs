@@ -59,9 +59,13 @@
       "NoAWS/K8s/Dynatracetenantexecution/fullbuild/cloudmutation.",
       "Evidence:docs/reviews/2026-09-11/observability-dynatrace-validation.json"
     ],
-    "reviewedSha256": "fa42484af372d11fa805564683d5491655e69da189c9ee229bb3d79cf2ea459c",
+    "reviewedSha256": "19bbf619945e8e135cde0c5258f0a2e9733676fd79b3745bbe2191e178efef65",
     "validationReport": "docs/reviews/2026-09-11/observability-dynatrace-validation.json",
-    "updatedAt": "2026-09-13T13:21:40.697493+00:00"
+    "updatedAt": "2026-09-13T13:21:40.697493+00:00",
+    "policyNameFollowup": {
+      "previousSha256": "fa42484af372d11fa805564683d5491655e69da189c9ee229bb3d79cf2ea459c",
+      "change": "Official displayed policy names Kubernetes Operator / Kubernetes Ingest; no executable/config changes."
+    }
   },
   {
     "path": "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
@@ -187,9 +191,13 @@
       "NoAWS/K8s/Dynatracetenantexecution/fullbuild/cloudmutation.",
       "Evidence:docs/reviews/2026-09-11/observability-dynatrace-validation.json"
     ],
-    "reviewedSha256": "91fa7dcd32d97e2cd678395da71cbbe8f897d7e77e33e733a0dceeb96a69706a",
+    "reviewedSha256": "4d8ebe77baf420f5cba4d15812a894b385b5f1a0c80dd27a908a69b3c1b73a9f",
     "validationReport": "docs/reviews/2026-09-11/observability-dynatrace-validation.json",
-    "updatedAt": "2026-09-13T13:21:40.697515+00:00"
+    "updatedAt": "2026-09-13T13:21:40.697515+00:00",
+    "policyNameFollowup": {
+      "previousSha256": "91fa7dcd32d97e2cd678395da71cbbe8f897d7e77e33e733a0dceeb96a69706a",
+      "change": "Official displayed policy names Kubernetes Operator / Kubernetes Ingest; no executable/config changes."
+    }
   },
   {
     "path": "ko/quizzes/observability/tracing/04-dynatrace-quiz.md",

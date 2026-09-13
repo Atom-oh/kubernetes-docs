@@ -68,7 +68,7 @@ kubectl create namespace dynatrace
 
 테넌트의 토큰 종류에 맞춰 최신 [토큰·권한 가이드](https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/tokens-permissions)를 사용합니다.
 
-- **Latest Dynatrace 플랫폼 토큰:** 전용 service user와 공식 `KubernetesOperator`, `KubernetesIngest` 정책을 사용하고 환경 범위를 제한합니다. Operator는 필요한 `fleet-management`·`settings` 동작을, 수집은 해당 `openpipeline`·`storage` 권한을 사용합니다. 사용자 권한과 토큰 scope가 모두 적용됩니다.
+- **Latest Dynatrace 플랫폼 토큰:** 전용 service user와 공식 `Kubernetes Operator`, `Kubernetes Ingest` 정책을 사용하고 환경 범위를 제한합니다. Operator는 필요한 `fleet-management`·`settings` 동작을, 수집은 해당 `openpipeline`·`storage` 권한을 사용합니다. 사용자 권한과 토큰 scope가 모두 적용됩니다.
 - **Classic access token:** Operator와 수집 자격 증명을 분리합니다. 최신 가이드의 installer·connection·ActiveGate-token 권한을 적용합니다. Operator 1.7부터 `entities.read`는 필요하지 않고 settings 권한은 선택 사항입니다. 과거의 무제한 권한 목록을 재사용하지 않습니다.
 - 활성화한 신호에 필요한 권한만 줍니다. Classic OTLP scope는 `openTelemetryTrace.ingest`, `metrics.ingest`, `logs.ingest`이며 배포 이벤트·설정 쓰기는 별도 권한입니다.
 

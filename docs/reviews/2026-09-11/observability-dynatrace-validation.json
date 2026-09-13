@@ -32,7 +32,7 @@
     "files": [
       {
         "path": "en/observability/tracing/04-dynatrace.md",
-        "sha256": "fa42484af372d11fa805564683d5491655e69da189c9ee229bb3d79cf2ea459c",
+        "sha256": "19bbf619945e8e135cde0c5258f0a2e9733676fd79b3745bbe2191e178efef65",
         "fullyRead": true,
         "fixed": true
       },
@@ -44,7 +44,7 @@
       },
       {
         "path": "ko/observability/tracing/04-dynatrace.md",
-        "sha256": "91fa7dcd32d97e2cd678395da71cbbe8f897d7e77e33e733a0dceeb96a69706a",
+        "sha256": "4d8ebe77baf420f5cba4d15812a894b385b5f1a0c80dd27a908a69b3c1b73a9f",
         "fullyRead": true,
         "fixed": true
       },
@@ -1820,5 +1820,23 @@
     "browserCases": 6,
     "desktopCases": 8,
     "individualPNG": 2
+  },
+  "policyNameFollowup": {
+    "finding": "DYNATRACE-R1-001",
+    "baseCommit": "ad2b996d58303fa4f479c7c9480b4ce6b25bc303",
+    "changes": [
+      {
+        "path": "en/observability/tracing/04-dynatrace.md",
+        "previousSha256": "fa42484af372d11fa805564683d5491655e69da189c9ee229bb3d79cf2ea459c",
+        "sha256": "19bbf619945e8e135cde0c5258f0a2e9733676fd79b3745bbe2191e178efef65"
+      },
+      {
+        "path": "ko/observability/tracing/04-dynatrace.md",
+        "previousSha256": "91fa7dcd32d97e2cd678395da71cbbe8f897d7e77e33e733a0dceeb96a69706a",
+        "sha256": "4d8ebe77baf420f5cba4d15812a894b385b5f1a0c80dd27a908a69b3c1b73a9f"
+      }
+    ],
+    "source": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/tokens-permissions",
+    "scope": "Two prose policy-name corrections only. Prior native/schema/figure evidence applies to unchanged executable content; current Markdown checks rerun."
   }
 }

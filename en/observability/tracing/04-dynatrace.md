@@ -68,7 +68,7 @@ kubectl create namespace dynatrace
 
 Use the current [token and permission guide](https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/tokens-permissions) for the tenant's token family:
 
-- **Latest Dynatrace platform tokens:** use a dedicated service user and the documented `KubernetesOperator` and `KubernetesIngest` policies, with environment restrictions. Operator permissions cover the required `fleet-management` and `settings` actions; ingestion uses the corresponding `openpipeline`/`storage` permissions. User permissions and token scopes both apply.
+- **Latest Dynatrace platform tokens:** use a dedicated service user and the documented `Kubernetes Operator` and `Kubernetes Ingest` policies, with environment restrictions. Operator permissions cover the required `fleet-management` and `settings` actions; ingestion uses the corresponding `openpipeline`/`storage` permissions. User permissions and token scopes both apply.
 - **Classic access tokens:** keep Operator and ingest credentials separate. The current guide documents installer/connection/ActiveGate-token permissions; `entities.read` is no longer required from Operator 1.7, and settings permissions are optional from 1.7. Do not reuse the old unrestricted permission checklist.
 - Ingest only enabled signals. Classic OTLP scopes are `openTelemetryTrace.ingest`, `metrics.ingest` and `logs.ingest`; deployment events and settings writes use different permissions.
 
