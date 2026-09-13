@@ -26,7 +26,7 @@
           "restart",
           "notify"
         ],
-        "note": "Lambda 타겟으로 자동 스케일링, 인스턴스 재시작, Slack 알림을 수행합니다."
+        "note": "입력 점검과 알림 전달을 분리합니다. 리소스 변경은 별도 승인 범위·현재 상태·중복 실행 방지가 필요합니다."
       },
       {
         "id": "aws-automation",
@@ -134,7 +134,7 @@
       "lane": "lambda",
       "col": 3,
       "type": "backend",
-      "label": "Lambda: 자동 스케일링",
+      "label": "Lambda: 입력 점검",
       "width": 200
     },
     {
@@ -142,7 +142,7 @@
       "lane": "lambda",
       "col": 4,
       "type": "backend",
-      "label": "Lambda: 인스턴스 재시작",
+      "label": "Lambda: 승인된 조치",
       "width": 210
     },
     {
@@ -150,7 +150,7 @@
       "lane": "lambda",
       "col": 5,
       "type": "backend",
-      "label": "Lambda: Slack 알림",
+      "label": "Lambda: 알림 전달",
       "width": 220
     },
     {
@@ -230,8 +230,8 @@
       "dot": "cyan",
       "title": "타겟 등록",
       "items": [
-        "aws events put-targets로 Rule에 타겟 추가",
-        "Lambda · SSM Automation · Step Functions 모두 타겟 가능"
+        "put-targets 외에 대상별 호출 권한·실행 역할 필요",
+        "rule/account/region 범위, 재시도·DLQ·중복 처리 검증"
       ]
     }
   ]

@@ -149,7 +149,7 @@
       "dot": "orange",
       "title": "Composite Alarm Rule",
       "items": [
-        "ALARM(HighCPU) AND ALARM(HighMemory) OR ALARM(HighDisk)",
+        "(ALARM(\"HighCPU\") AND ALARM(\"HighMemory\")) OR ALARM(\"HighDisk\")",
         "Attach alarm actions only to the Composite Alarm (alarm-actions: critical-alerts, ok-actions: alerts)"
       ]
     }

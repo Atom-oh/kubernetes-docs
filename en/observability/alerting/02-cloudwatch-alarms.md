@@ -1,6 +1,8 @@
 # CloudWatch Alarms
 
-> **Last Updated**: February 20, 2026
+> **Last Updated**: September 13, 2026
+
+The CLI and Terraform examples cover **classic CloudWatch metric alarms** and composite alarms. CloudWatch also supports **PromQL alarms** over metrics ingested through its OTLP endpoint and **log alarms** over Logs Insights query results. PromQL alarms use `PendingPeriod`/`RecoveryPeriod`; the M-of-N and missing-data settings below do not apply unchanged. Account, Region, and resource values are examples. Before using creation or update commands, verify the actual targets, IAM permissions, cost, and recipients. `PutMetricAlarm`/`PutCompositeAlarm` replace an existing alarm configuration, so preserve its current settings before updating it.
 
 ## Table of Contents
 
@@ -25,7 +27,7 @@ Amazon CloudWatch Alarms is the alerting feature of AWS's native monitoring serv
 
 ### Key Features
 
-1. **Metric Alarms**: Alerts based on single metrics
+1. **Metric Alarms**: Evaluate a metric, metric math, or Metrics Insights query
 2. **Composite Alarms**: Combine multiple alarm conditions
 3. **Anomaly Detection**: Machine learning-based anomaly detection
 4. **Alarm Actions**: Execute automatic actions when alerts fire
@@ -36,9 +38,9 @@ Amazon CloudWatch Alarms is the alerting feature of AWS's native monitoring serv
 | Characteristic | CloudWatch Alarms | Prometheus Alertmanager |
 |----------------|-------------------|-------------------------|
 | **Type** | AWS Managed Service | Open Source |
-| **Data Source** | CloudWatch Metrics | Prometheus Metrics |
-| **Query Language** | CloudWatch Metrics Math | PromQL |
-| **Cost** | Per-alarm pricing | Free (infrastructure costs only) |
+| **Data Source** | CloudWatch metrics, OTLP metrics, or logs by alarm type | Alerts evaluated by Prometheus or other clients |
+| **Evaluation** | Metric math, PromQL, or Logs Insights according to alarm type | Prometheus evaluates PromQL; Alertmanager groups, inhibits, and routes alerts |
+| **Cost** | Depends on alarm type, evaluated metrics, queries, and contributors | No software license fee; infrastructure and operations still cost money |
 | **Complex Routing** | Limited | Advanced routing support |
 | **AWS Integration** | Native | Additional configuration required |
 
@@ -54,9 +56,9 @@ Amazon CloudWatch Alarms is the alerting feature of AWS's native monitoring serv
 
 ### Alarm States
 
-CloudWatch Alarms have three states:
+A classic metric alarm starts in `INSUFFICIENT_DATA` and is then evaluated into `OK` or `ALARM`. Missing data does not always imply `INSUFFICIENT_DATA`: `missing` produces insufficient data when all evaluation data is missing, `notBreaching` fills missing points as good, `breaching` fills them as bad, and `ignore` retains the state. When additional real points are sufficient for evaluation, CloudWatch does not use the missing-data fill setting. A blanket `notBreaching` policy can therefore hide a stopped heartbeat or collector. A composite alarm can be in `INSUFFICIENT_DATA` only just after creation.
 
-![A CloudWatch alarm starts OK, moves to ALARM when its threshold is exceeded and back to OK once the metric returns to normal, and falls into INSUFFICIENT_DATA from either state when metric data stops arriving until data resumes.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png)
+![A classic metric alarm begins in INSUFFICIENT_DATA; subsequent transitions distinguish threshold evaluation from the configured missing-data policy.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-1.html)
 
@@ -83,7 +85,7 @@ aws cloudwatch put-metric-alarm \
   --dimensions Name=InstanceId,Value=i-1234567890abcdef0 \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:alerts \
   --ok-actions arn:aws:sns:ap-northeast-2:123456789012:alerts \
-  --treat-missing-data notBreaching
+  --treat-missing-data missing
 ```
 
 ### Alarm Configuration Components
@@ -92,13 +94,15 @@ aws cloudwatch put-metric-alarm \
 |-----------|-------------|---------|
 | `metric-name` | Name of metric to monitor | `CPUUtilization` |
 | `namespace` | Metric namespace | `AWS/EC2`, `AWS/EKS` |
-| `statistic` | Statistical function | `Average`, `Sum`, `Maximum`, `Minimum`, `p99` |
+| `statistic` | Statistical function | `Average`, `Sum`, `Maximum`, `Minimum`, `SampleCount` |
 | `period` | Evaluation period (seconds) | `60`, `300`, `3600` |
 | `threshold` | Threshold value | `80` |
 | `comparison-operator` | Comparison operator | `GreaterThanThreshold` |
-| `evaluation-periods` | Consecutive evaluation count | `2` (alert if exceeded 2 consecutive times) |
+| `evaluation-periods` | Number of evaluation periods N | `3` (M is `datapoints-to-alarm`) |
 | `datapoints-to-alarm` | Datapoints required for alarm | `2` of `3` |
 | `treat-missing-data` | Missing data handling | `notBreaching`, `breaching`, `ignore`, `missing` |
+
+Use `--extended-statistic p99`, not `--statistic p99`. M breaching points within N need not be consecutive; omitting M makes it equal N. `Period` is the aggregation duration, not a notification interval. Classic metric alarm periods of 10, 20, or 30 seconds are high resolution and need matching high-resolution data. 60 seconds is standard resolution. Period×N is limited to seven days, or one day when Period is below one hour. Actions normally run on state transitions, except Auto Scaling actions.
 
 ### Comparison Operators
 
@@ -154,7 +158,7 @@ aws cloudwatch put-metric-alarm \
     },
     {
       "Id": "error_rate",
-      "Expression": "(errors / requests) * 100",
+      "Expression": "IF(requests > 0, 100 * FILL(errors, 0) / requests, 0)",
       "ReturnData": true
     }
   ]' \
@@ -163,6 +167,8 @@ aws cloudwatch put-metric-alarm \
   --evaluation-periods 2 \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:alerts
 ```
+
+This expression measures target 5xx responses among requests forwarded by the ALB. It does not include every user-visible failure, such as ALB-generated errors or failures before selecting a target. Missing 5xx points are filled with zero when requests exist; zero requests is defined as 0% here. Monitor missing request/collection data separately. A classic metric math alarm must return one final time series. `SEARCH` is for graphs and cannot be used as an alarm expression. `RATE` can behave differently with sparse metrics because the evaluation range changes.
 
 ### Metrics Math Functions
 
@@ -206,6 +212,8 @@ Composite Alarms can combine multiple Metric Alarms to define complex conditions
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-2.html)
 
+`CWAgent` memory and disk metrics require an installed agent and a matching published dimension set. The `InstanceId`-only examples work only if the agent publishes that aggregation. `disk_used_percent` often also has `path`, `device`, and `fstype`; use the **complete dimension set** returned by `list-metrics`. The example child alarms have no actions; only the composite sends notifications.
+
 ### Creating Composite Alarms
 
 ```bash
@@ -247,7 +255,7 @@ aws cloudwatch put-metric-alarm \
 aws cloudwatch put-composite-alarm \
   --alarm-name "ServerResourceCritical" \
   --alarm-description "Server resources are critical" \
-  --alarm-rule "ALARM(HighCPU) AND ALARM(HighMemory) OR ALARM(HighDisk)" \
+  --alarm-rule '(ALARM("HighCPU") AND ALARM("HighMemory")) OR ALARM("HighDisk")' \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:critical-alerts \
   --ok-actions arn:aws:sns:ap-northeast-2:123456789012:alerts
 ```
@@ -287,18 +295,16 @@ examples:
 
 ### Alert Suppression Pattern
 
-```bash
-# Suppress alerts during maintenance
-aws cloudwatch put-composite-alarm \
-  --alarm-name "ProductionAlerts" \
-  --alarm-rule "ALARM(HighCPU) AND NOT ALARM(MaintenanceMode)" \
-  --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:alerts
+`set-alarm-state` is a temporary testing override; a metric alarm quickly returns to its evaluated state and does not establish a maintenance window. The following example assumes an external controller continuously publishes the state of a `MaintenanceMode` alarm. `ActionsSuppressor` suppresses composite actions without changing its evaluated state. Include the wait/extension periods when testing the maintenance window.
 
-# Manually transition MaintenanceMode alarm to ALARM state for suppression
-aws cloudwatch set-alarm-state \
-  --alarm-name "MaintenanceMode" \
-  --state-value ALARM \
-  --state-reason "Scheduled maintenance"
+```bash
+aws cloudwatch put-composite-alarm  \
+  --alarm-name ProductionAlerts  \
+  --alarm-rule 'ALARM("HighCPU")'  \
+  --actions-suppressor MaintenanceMode  \
+  --actions-suppressor-wait-period 60  \
+  --actions-suppressor-extension-period 60  \
+  --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:alerts
 ```
 
 ---
@@ -359,15 +365,17 @@ aws cloudwatch put-metric-alarm \
 # - stddev: Standard deviation multiplier (default 2)
 
 examples:
-  # 2 standard deviations (approximately 95% confidence interval)
+  # Width parameter 2: not a guaranteed 95% confidence interval
   - "ANOMALY_DETECTION_BAND(m1, 2)"
 
-  # 3 standard deviations (approximately 99.7% confidence interval)
+  # Width parameter 3: a wider expected band
   - "ANOMALY_DETECTION_BAND(m1, 3)"
 
   # More sensitive detection (1 standard deviation)
   - "ANOMALY_DETECTION_BAND(m1, 1)"
 ```
+
+The parameter controls the model's expected band width; it is not a guaranteed Gaussian 95% or 99.7% interval. The model uses up to two weeks of history and can start with less. The excluded dates below illustrate the format; replace them with relevant intervals within the model's training history.
 
 ### Adjusting Model Training Period
 
@@ -408,7 +416,7 @@ aws sns subscribe \
 aws sns subscribe \
   --topic-arn arn:aws:sns:ap-northeast-2:123456789012:eks-alerts \
   --protocol sms \
-  --notification-endpoint +821012345678
+  --notification-endpoint "$VERIFIED_SMS_NUMBER"
 
 # Add Lambda subscription
 aws sns subscribe \
@@ -419,94 +427,24 @@ aws sns subscribe \
 
 ### SNS Message Filtering
 
-```json
-// Subscription filter policy
-{
-  "severity": ["critical", "high"],
-  "environment": ["production"]
-}
-```
+Default CloudWatch SNS notifications do not automatically include the example `severity` or `environment` message attributes. To filter the body's `NewStateValue`, set `FilterPolicyScope=MessageBody`. This filter excludes `OK` recovery messages. Email requires subscription confirmation; SMS requires checking verified numbers, sandbox/Region requirements, and cost. A Lambda subscription also needs a Lambda resource policy allowing `sns.amazonaws.com` from the specific topic ARN.
 
 ```bash
-# Apply filter policy
-aws sns set-subscription-attributes \
-  --subscription-arn arn:aws:sns:ap-northeast-2:123456789012:eks-alerts:xxx \
-  --attribute-name FilterPolicy \
-  --attribute-value '{"severity": ["critical", "high"]}'
+aws sns set-subscription-attributes  \
+  --subscription-arn "$SUBSCRIPTION_ARN"  \
+  --attribute-name FilterPolicyScope  \
+  --attribute-value MessageBody
+aws sns set-subscription-attributes  \
+  --subscription-arn "$SUBSCRIPTION_ARN"  \
+  --attribute-name FilterPolicy  \
+  --attribute-value '{"NewStateValue": ["ALARM"]}'
 ```
 
 ### SNS to Slack Integration (Lambda)
 
-```python
-# lambda_function.py
-import json
-import urllib3
-import os
+For standard CloudWatch notifications, connect the SNS topic and an approved Slack channel through **Amazon Q Developer in chat applications** (formerly AWS Chatbot). Limit the channel's IAM role and guardrail policy to its notification purpose.
 
-http = urllib3.PoolManager()
-
-def lambda_handler(event, context):
-    slack_webhook_url = os.environ['SLACK_WEBHOOK_URL']
-
-    for record in event['Records']:
-        sns_message = json.loads(record['Sns']['Message'])
-
-        # Parse CloudWatch Alarm message
-        alarm_name = sns_message.get('AlarmName', 'Unknown')
-        alarm_description = sns_message.get('AlarmDescription', '')
-        new_state = sns_message.get('NewStateValue', 'Unknown')
-        reason = sns_message.get('NewStateReason', '')
-        timestamp = sns_message.get('StateChangeTime', '')
-
-        # Slack message color
-        if new_state == 'ALARM':
-            color = '#ff0000'
-            emoji = ':rotating_light:'
-        elif new_state == 'OK':
-            color = '#36a64f'
-            emoji = ':white_check_mark:'
-        else:
-            color = '#808080'
-            emoji = ':question:'
-
-        # Compose Slack message
-        slack_message = {
-            "attachments": [
-                {
-                    "color": color,
-                    "title": f"{emoji} {alarm_name}",
-                    "text": alarm_description,
-                    "fields": [
-                        {
-                            "title": "State",
-                            "value": new_state,
-                            "short": True
-                        },
-                        {
-                            "title": "Time",
-                            "value": timestamp,
-                            "short": True
-                        },
-                        {
-                            "title": "Reason",
-                            "value": reason,
-                            "short": False
-                        }
-                    ]
-                }
-            ]
-        }
-
-        # Send to Slack
-        response = http.request(
-            'POST',
-            slack_webhook_url,
-            body=json.dumps(slack_message),
-            headers={'Content-Type': 'application/json'}
-        )
-
-    return {'statusCode': 200}
-```
+If a custom Lambda is required, retrieve the webhook from a secret store, validate its destination, set connection/read timeouts, and check the response status. Do not report HTTP 429/5xx as success; configure retries, a dead-letter path, and duplicate handling. SNS uses `Records[].Sns.Message`, not the EventBridge envelope below. This chapter's validation does not send real Slack messages.
 
 ---
 
@@ -551,70 +489,36 @@ aws events put-targets \
 {
   "source": ["aws.cloudwatch"],
   "detail-type": ["CloudWatch Alarm State Change"],
+  "account": ["123456789012"],
+  "region": ["ap-northeast-2"],
+  "resources": ["arn:aws:cloudwatch:ap-northeast-2:123456789012:alarm:EKS-Node-HighCPU"],
   "detail": {
-    "alarmName": [{
-      "prefix": "EKS-"
-    }],
-    "state": {
-      "value": ["ALARM"]
-    },
-    "previousState": {
-      "value": ["OK"]
-    },
-    "configuration": {
-      "metrics": [{
-        "metricStat": {
-          "metric": {
-            "namespace": ["AWS/EKS", "ContainerInsights"]
-          }
-        }
-      }]
-    }
+    "alarmName": ["EKS-Node-HighCPU"],
+    "state": {"value": ["ALARM"]}
   }
 }
 ```
 
+Restricting `previousState` to `OK` misses `INSUFFICIENT_DATA → ALARM`. Matching an exact alarm ARN avoids assumptions about metric math or composite configuration shapes. `put-targets` does not grant Lambda invocation permission: add a Lambda resource policy for `events.amazonaws.com`, scoped to the rule's `SourceArn`, and configure retry/dead-letter behavior.
+
 ### Auto Recovery Lambda Example
 
-```python
-# auto_recovery.py
-import boto3
-import json
+High CPU alone is not evidence that rebooting is appropriate. This example implements the **input inspection stage** of recovery: it checks state, account, Region, and alarm ARN, then returns metric information. EventBridge `dimensions` is an object, unlike the dimension list in an SNS alarm message. It also handles an expression-first query and a composite alarm without metrics.
 
-ec2 = boto3.client('ec2')
-ecs = boto3.client('ecs')
+Package the [tested event normalizer and tests](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/cloudwatch-alarms) with the Lambda handler:
+
+```python
+from event_normalizer import normalize_alarm_event
 
 def lambda_handler(event, context):
-    alarm_name = event['detail']['alarmName']
-    alarm_state = event['detail']['state']['value']
-
-    print(f"Alarm: {alarm_name}, State: {alarm_state}")
-
-    # Automatic response based on alarm name
-    if 'EC2-HighCPU' in alarm_name:
-        # Identify EC2 instance
-        dimensions = event['detail']['configuration']['metrics'][0]['metricStat']['metric']['dimensions']
-        instance_id = next(d['value'] for d in dimensions if d['name'] == 'InstanceId')
-
-        # Reboot instance
-        ec2.reboot_instances(InstanceIds=[instance_id])
-        return {'action': 'reboot', 'instance': instance_id}
-
-    elif 'ECS-ServiceUnhealthy' in alarm_name:
-        # Restart ECS service
-        dimensions = event['detail']['configuration']['metrics'][0]['metricStat']['metric']['dimensions']
-        cluster = next(d['value'] for d in dimensions if d['name'] == 'ClusterName')
-        service = next(d['value'] for d in dimensions if d['name'] == 'ServiceName')
-
-        ecs.update_service(
-            cluster=cluster,
-            service=service,
-            forceNewDeployment=True
-        )
-        return {'action': 'redeploy', 'service': service}
-
-    return {'action': 'none'}
+    return normalize_alarm_event(
+        event,
+        expected_account="123456789012",
+        expected_region="ap-northeast-2",
+    )
 ```
+
+The function performs no AWS mutations. Payload checks do not authenticate the sender. Any added remediation needs an explicit target allowlist, current alarm/resource state checks, idempotency, cooldown, least privilege, and rollback.
 
 ---
 
@@ -622,23 +526,26 @@ def lambda_handler(event, context):
 
 ### EKS Container Insights Metrics
 
-When Container Insights is enabled, EKS cluster metrics can be viewed in CloudWatch.
+These examples use the classic `ContainerInsights` CloudWatch metric path. Do not mix its names, dimensions, and billing with enhanced observability or OTel metric paths. Follow the [current EKS add-on guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html), which installs CloudWatch Agent and Fluent Bit, and select an add-on version compatible with the cluster's Kubernetes version and Region. Configure IAM and the agent association first when using EKS Pod Identity.
+
+`update-addon` updates an existing installation; a first installation uses `create-addon`. Preserve existing configuration and Pod Identity associations. Query available versions and select one in the deployment plan instead of pinning the old `v1.2.0` or applying an unreviewed `latest` Fluentd manifest.
 
 ```bash
-# Enable Container Insights
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name amazon-cloudwatch-observability \
-  --addon-version v1.2.0-eksbuild.1
-
-# Or install CloudWatch Agent
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml
+aws eks describe-addon-versions  \
+  --addon-name amazon-cloudwatch-observability  \
+  --kubernetes-version "$KUBERNETES_VERSION"  \
+  --region "$AWS_REGION"
+aws cloudwatch list-metrics  \
+  --namespace ContainerInsights  \
+  --metric-name pod_number_of_container_restarts  \
+  --dimensions Name=ClusterName,Value=my-cluster  \
+  --region "$AWS_REGION"
 ```
 
 ### Container Insights Alert Examples
 
 ```bash
-# Node CPU utilization alarm
+# Cluster aggregate CPU utilization alarm
 aws cloudwatch put-metric-alarm \
   --alarm-name "EKS-Node-HighCPU" \
   --metric-name node_cpu_utilization \
@@ -654,7 +561,7 @@ aws cloudwatch put-metric-alarm \
 # Pod memory utilization alarm
 aws cloudwatch put-metric-alarm \
   --alarm-name "EKS-Pod-HighMemory" \
-  --metric-name pod_memory_utilization \
+  --metric-name pod_memory_utilization_over_pod_limit \
   --namespace ContainerInsights \
   --dimensions Name=ClusterName,Value=my-cluster Name=Namespace,Value=production \
   --statistic Average \
@@ -664,13 +571,13 @@ aws cloudwatch put-metric-alarm \
   --evaluation-periods 2 \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:eks-alerts
 
-# Pod restart alarm
+# One Pod's cumulative restart count (not a five-minute increase)
 aws cloudwatch put-metric-alarm \
   --alarm-name "EKS-Pod-Restarts" \
   --metric-name pod_number_of_container_restarts \
   --namespace ContainerInsights \
-  --dimensions Name=ClusterName,Value=my-cluster Name=Namespace,Value=production \
-  --statistic Sum \
+  --dimensions Name=ClusterName,Value=my-cluster Name=Namespace,Value=production Name=PodName,Value=my-pod \
+  --statistic Maximum \
   --period 300 \
   --threshold 3 \
   --comparison-operator GreaterThanThreshold \
@@ -678,15 +585,17 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:eks-alerts
 ```
 
+The CPU example is a cluster aggregation. An individual node uses the full `ClusterName`, `NodeName`, and `InstanceId` set. `pod_memory_utilization` divides by **node memory**, whereas `pod_memory_utilization_over_pod_limit` divides by the Pod limit. The latter may be absent if any container lacks a memory limit. `pod_number_of_container_restarts` is cumulative and uses `ClusterName`, `Namespace`, and `PodName`. `Maximum > 3` means the observed lifetime count exceeded three; summing samples does not count recent restarts. Account for Pod replacement, resets, and name reuse. Use reset-aware PromQL `increase()` or a separately defined delta metric for recent increments.
+
 ### Key Container Insights Metrics
 
 | Metric | Description | Dimensions |
 |--------|-------------|------------|
 | `cluster_node_count` | Cluster node count | ClusterName |
 | `cluster_failed_node_count` | Failed node count | ClusterName |
-| `node_cpu_utilization` | Node CPU utilization | ClusterName, NodeName |
-| `node_memory_utilization` | Node memory utilization | ClusterName, NodeName |
-| `node_filesystem_utilization` | Node disk utilization | ClusterName, NodeName |
+| `node_cpu_utilization` | Node CPU utilization | ClusterName, NodeName, InstanceId; or ClusterName |
+| `node_memory_utilization` | Node memory utilization | ClusterName, NodeName, InstanceId; or ClusterName |
+| `node_filesystem_utilization` | Node disk utilization | ClusterName, NodeName, InstanceId; or ClusterName |
 | `pod_cpu_utilization` | Pod CPU utilization | ClusterName, Namespace, PodName |
 | `pod_memory_utilization` | Pod memory utilization | ClusterName, Namespace, PodName |
 | `pod_number_of_container_restarts` | Container restart count | ClusterName, Namespace, PodName |
@@ -697,6 +606,9 @@ aws cloudwatch put-metric-alarm \
 ## CloudWatch Alarm Actions
 
 ### EC2 Actions
+
+Direct EC2 actions are stop, terminate, reboot, and recover; **start is not supported**. These examples mutate instances: use only an explicitly approved target after checking supported instances, permissions, and stop/recovery impact. Use `missing` for missing data and attach mutation actions only to `ALARM`. Metric math and composite alarms cannot directly perform EC2 actions.
+
 
 ```bash
 # EC2 instance recovery (on system status check failure)
@@ -710,6 +622,7 @@ aws cloudwatch put-metric-alarm \
   --threshold 1 \
   --comparison-operator GreaterThanOrEqualToThreshold \
   --evaluation-periods 2 \
+  --treat-missing-data missing \
   --alarm-actions arn:aws:automate:ap-northeast-2:ec2:recover
 
 # EC2 instance stop
@@ -723,6 +636,7 @@ aws cloudwatch put-metric-alarm \
   --threshold 5 \
   --comparison-operator LessThanThreshold \
   --evaluation-periods 24 \
+  --treat-missing-data missing \
   --alarm-actions arn:aws:automate:ap-northeast-2:ec2:stop
 ```
 
@@ -757,20 +671,7 @@ aws cloudwatch put-metric-alarm \
 
 ### Systems Manager Actions
 
-```bash
-# Execute SSM Automation
-aws cloudwatch put-metric-alarm \
-  --alarm-name "DiskFull-Cleanup" \
-  --metric-name disk_used_percent \
-  --namespace CWAgent \
-  --dimensions Name=InstanceId,Value=i-1234567890abcdef0 Name=path,Value=/ \
-  --statistic Average \
-  --period 300 \
-  --threshold 90 \
-  --comparison-operator GreaterThanThreshold \
-  --evaluation-periods 1 \
-  --alarm-actions arn:aws:ssm:ap-northeast-2:123456789012:automation-definition/CleanupDisk:$DEFAULT
-```
+An `automation-definition/...` ARN is not a supported direct `AlarmActions` target for running an arbitrary SSM Automation runbook. Direct SSM integration uses the API's listed actions, such as OpsItems. Route Automation through an **EventBridge SSM Automation target** or an explicit Lambda/Step Functions workflow. Scope the target execution role, `ssm:StartAutomationExecution`, runbook parameters, and Automation role separately. A disk threshold alone must not authorize arbitrary file deletion.
 
 ---
 
@@ -778,16 +679,19 @@ aws cloudwatch put-metric-alarm \
 
 ### Cost Factors
 
+The figures below are **US East examples** from the official pricing page checked on 2026-09-13, not a quote for Seoul. Check the target Region's current pricing. Metric alarms are charged by evaluated metrics, while composites are charged per alarm. Anomaly detection includes the actual metric and two band metrics. Adding a composite retains the child alarm charges: it reduces notification noise, not automatically cost.
+
+
 | Item | Cost |
 |------|------|
 | Standard Resolution alarm (60s) | $0.10/alarm/month |
 | High Resolution alarm (10s) | $0.30/alarm/month |
-| Anomaly Detection | $0.30/metric/month |
+| Standard anomaly alarm: one actual metric plus two bands | $0.30/alarm/month example |
 | Composite Alarm | $0.50/alarm/month |
 
 ### Cost Optimization Strategies
 
-![Four cost-optimization strategies branch from a central goal — minimizing alarm count, optimizing evaluation resolution, using composite alarms, and removing unnecessary alarms — each broken down into concrete tactics.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png)
+![Review duplication, resolution and evaluated metrics; composites add to child-alarm charges, and removal requires ownership and dependency checks.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-02-cloudwatch-alarms-5.html)
 
@@ -796,7 +700,7 @@ aws cloudwatch put-metric-alarm \
 ```yaml
 # Cost-effective alarm settings
 
-# Critical: High Resolution (fast detection needed)
+# Critical: Standard Resolution (60s; only 10/20/30s is high resolution)
 critical-alerts:
   period: 60  # 1 minute
   evaluation-periods: 2
@@ -814,19 +718,14 @@ info-alerts:
 
 ### Alarm Cleanup Script
 
+This command only lists candidates for inspection. `INSUFFICIENT_DATA` is not proof that an alarm is unused, and a fixed historical date cannot mean '90 days ago'. Review elapsed time since `StateTransitionedTimestamp`, actual collection, ownership, and composite dependencies before a separately authorized deletion. `StateUpdatedTimestamp` can also change when the state reason changes; it is not the same as time in the current state.
+
 ```bash
-#!/bin/bash
-# Identify and clean up old alarms
-
-# List alarms in INSUFFICIENT_DATA state for 90+ days
-aws cloudwatch describe-alarms \
-  --state-value INSUFFICIENT_DATA \
-  --query 'MetricAlarms[?StateUpdatedTimestamp<=`2024-11-01`].AlarmName' \
-  --output text
-
-# Delete alarms
-aws cloudwatch delete-alarms \
-  --alarm-names "old-alarm-1" "old-alarm-2"
+aws cloudwatch describe-alarms  \
+  --alarm-types MetricAlarm  \
+  --state-value INSUFFICIENT_DATA  \
+  --query 'MetricAlarms[].{Name:AlarmName,StateSince:StateTransitionedTimestamp,Updated:StateUpdatedTimestamp}'  \
+  --output json
 ```
 
 ---
@@ -835,71 +734,20 @@ aws cloudwatch delete-alarms \
 
 ### Amazon Managed Prometheus (AMP) Integration
 
-AMP metrics can be used for CloudWatch alerts.
+Metrics stored in AMP are not automatically copied into classic CloudWatch metrics. Choose the path that matches the requirement.
 
-```bash
-# Send AMP workspace metrics to CloudWatch
-# (Periodic query via Lambda)
+- **Alerts inside AMP**: configure workspace Prometheus alerting rules → managed Alertmanager → a supported receiver (SNS or PagerDuty).
+- **CloudWatch PromQL alarms**: evaluate metrics ingested through the CloudWatch OTLP endpoint. This is not direct querying of an AMP workspace.
+- **Republishing classic CloudWatch metrics**: define only the required aggregates in a separate exporter. Sign with one consistent frozen temporary-credential set and validate timeouts, HTTP status, result type, finite values, timestamps, and dimensions. Do not turn empty results, NaN, or failures into zero or success. This adds query, custom metric, runtime costs, and delay.
 
-# Lambda function example
-```
-
-```python
-# amp_to_cloudwatch.py
-import boto3
-import requests
-from aws_requests_auth.aws_auth import AWSRequestsAuth
-
-def lambda_handler(event, context):
-    # AMP workspace settings
-    amp_endpoint = "https://aps-workspaces.ap-northeast-2.amazonaws.com/workspaces/ws-xxx/api/v1/query"
-    region = "ap-northeast-2"
-
-    # AWS authentication
-    auth = AWSRequestsAuth(
-        aws_access_key=boto3.Session().get_credentials().access_key,
-        aws_secret_access_key=boto3.Session().get_credentials().secret_key,
-        aws_token=boto3.Session().get_credentials().token,
-        aws_host=f"aps-workspaces.{region}.amazonaws.com",
-        aws_region=region,
-        aws_service="aps"
-    )
-
-    # Execute Prometheus queries
-    queries = [
-        ("eks_node_cpu_usage", 'avg(rate(node_cpu_seconds_total{mode!="idle"}[5m])) * 100'),
-        ("eks_pod_memory_usage", 'avg(container_memory_working_set_bytes) / avg(container_spec_memory_limit_bytes) * 100'),
-    ]
-
-    cloudwatch = boto3.client('cloudwatch')
-
-    for metric_name, query in queries:
-        response = requests.get(
-            amp_endpoint,
-            params={"query": query},
-            auth=auth
-        )
-
-        result = response.json()
-        if result['data']['result']:
-            value = float(result['data']['result'][0]['value'][1])
-
-            # Send metric to CloudWatch
-            cloudwatch.put_metric_data(
-                Namespace='AMP/EKS',
-                MetricData=[{
-                    'MetricName': metric_name,
-                    'Value': value,
-                    'Unit': 'Percent'
-                }]
-            )
-
-    return {'status': 'success'}
-```
+The former CPU mode average was not total CPU utilization; a ratio of memory averages across unrelated or unlimited Pods was not each Pod's limit utilization. Select PromQL that preserves the required labels and reset semantics, then test the rule and validate actual collected data.
 
 ---
 
 ## Terraform Examples
+
+The blocks below form one example module. Configure real resource values and the SNS topic policy, then review `terraform plan` before deployment. Example validation covers provider schema/syntax, not AWS deployment or actual notification delivery.
+
 
 ### Basic Alarm
 
@@ -934,7 +782,7 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu" {
   alarm_actions = [aws_sns_topic.alerts.arn]
   ok_actions    = [aws_sns_topic.alerts.arn]
 
-  treat_missing_data = "notBreaching"
+  treat_missing_data = "missing"
 }
 ```
 
@@ -982,7 +830,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_error_rate" {
 
   metric_query {
     id          = "error_rate"
-    expression  = "(errors / requests) * 100"
+    expression  = "IF(requests > 0, 100 * FILL(errors, 0) / requests, 0)"
     label       = "Error Rate"
     return_data = true
   }
@@ -1065,13 +913,14 @@ resource "aws_cloudwatch_metric_alarm" "eks_pod_restarts" {
   metric_name         = "pod_number_of_container_restarts"
   namespace           = "ContainerInsights"
   period              = 300
-  statistic           = "Sum"
+  statistic           = "Maximum"
   threshold           = 3
-  alarm_description   = "EKS Pod has restarted more than 3 times"
+  alarm_description   = "Observed cumulative restart count exceeds 3; not a 5-minute increase"
 
   dimensions = {
     ClusterName = "my-eks-cluster"
     Namespace   = "production"
+    PodName     = "my-pod"
   }
 
   alarm_actions = [aws_sns_topic.alerts.arn]
@@ -1116,6 +965,25 @@ resource "aws_cloudwatch_metric_alarm" "cpu_anomaly" {
 ```
 
 ---
+
+## References
+
+- [CloudWatch alarm types](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Alarms.html)
+- [PutMetricAlarm API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html)
+- [Missing data evaluation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html)
+- [Composite alarms and action suppression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutCompositeAlarm.html)
+- [Metric math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
+- [Anomaly detection](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Anomaly_Detection.html)
+- [SNS alarm message schemas](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html)
+- [SNS filter policy scope](https://docs.aws.amazon.com/sns/latest/dg/sns-message-filtering-scope.html)
+- [EventBridge alarm events](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch-and-eventbridge.html)
+- [EventBridge target permissions](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
+- [Container Insights metric dimensions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)
+- [CloudWatch Observability EKS add-on](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)
+- [CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/)
+- [PromQL alarms](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-promql.html)
+- [Log alarms](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Alarm-On-Logs.html)
+- [AMP alert receivers](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-alertmanager-receiver.html)
 
 ## Quiz
 

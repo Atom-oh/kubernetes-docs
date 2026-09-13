@@ -27,7 +27,7 @@
           "restart",
           "notify"
         ],
-        "note": "Lambda targets perform auto scaling, instance restart, and Slack notification."
+        "note": "Separate input inspection and notification. Mutations require explicit authorization, current-state checks, and idempotency."
       },
       {
         "id": "aws-automation",
@@ -135,7 +135,7 @@
       "lane": "lambda",
       "col": 3,
       "type": "backend",
-      "label": "Lambda: Auto Scaling",
+      "label": "Lambda: Inspect input",
       "width": 200
     },
     {
@@ -143,7 +143,7 @@
       "lane": "lambda",
       "col": 4,
       "type": "backend",
-      "label": "Lambda: Instance Restart",
+      "label": "Lambda: Approved action",
       "width": 210
     },
     {
@@ -151,7 +151,7 @@
       "lane": "lambda",
       "col": 5,
       "type": "backend",
-      "label": "Lambda: Slack Notification",
+      "label": "Lambda: Notification",
       "width": 220
     },
     {
@@ -231,8 +231,8 @@
       "dot": "cyan",
       "title": "Target registration",
       "items": [
-        "Add targets to the rule with aws events put-targets",
-        "Lambda, SSM Automation, and Step Functions can all be targets"
+        "put-targets also needs target-specific permissions and execution roles",
+        "Verify rule/account/Region scope, retries, DLQ, and duplicate handling"
       ]
     }
   ]

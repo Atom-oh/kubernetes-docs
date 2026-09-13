@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch Alarm State Transitions",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1150,
+      600
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "views": [
+      {
+        "id": "threshold",
+        "label": "Threshold evaluation",
+        "focus": [
+          "created",
+          "insufficient",
+          "ok",
+          "alarm"
+        ],
+        "note": "A classic metric alarm starts in INSUFFICIENT_DATA, then evaluates its data."
+      },
+      {
+        "id": "missing",
+        "label": "Missing data",
+        "focus": [
+          "ok",
+          "alarm",
+          "insufficient"
+        ],
+        "note": "Starred transitions assume treat-missing-data=missing and all evaluation data missing. Other policies are listed below."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "created",
+      "type": "external",
+      "label": "Alarm created",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "insufficient",
+      "type": "cloud",
+      "label": "INSUFFICIENT_DATA",
+      "sublabel": "initial / all missing*",
+      "pos": [
+        370,
+        250
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "ok",
+      "type": "backend",
+      "label": "OK",
+      "sublabel": "evaluated good",
+      "pos": [
+        820,
+        70
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "alarm",
+      "type": "security",
+      "label": "ALARM",
+      "sublabel": "evaluated breaching",
+      "pos": [
+        820,
+        445
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "create",
+      "from": "created",
+      "to": "insufficient",
+      "label": "Initial state"
+    },
+    {
+      "id": "enough-good",
+      "from": "insufficient",
+      "to": "ok",
+      "label": "Good evaluation",
+      "fromSide": "top"
+    },
+    {
+      "id": "enough-bad",
+      "from": "insufficient",
+      "to": "alarm",
+      "label": "Breaching evaluation",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "breach",
+      "from": "ok",
+      "to": "alarm",
+      "label": "Breach",
+      "variant": "emphasis",
+      "labelAt": [
+        890,
+        280
+      ]
+    },
+    {
+      "id": "recover",
+      "from": "alarm",
+      "to": "ok",
+      "label": "Recovery",
+      "fromSide": "right"
+    },
+    {
+      "id": "missing-ok",
+      "from": "ok",
+      "to": "insufficient",
+      "label": "All missing*",
+      "variant": "dashed"
+    },
+    {
+      "id": "missing-alarm",
+      "from": "alarm",
+      "to": "insufficient",
+      "label": "All missing*",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Missing data policy",
+      "items": [
+        "missing + all missing: INSUFFICIENT_DATA; sufficient real data takes priority",
+        "notBreaching: fill good / breaching: fill bad",
+        "ignore: retain state; absent data is not automatically healthy or failed"
+      ]
+    }
+  ]
+}

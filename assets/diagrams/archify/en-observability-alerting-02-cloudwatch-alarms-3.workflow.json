@@ -28,7 +28,7 @@
           "normal",
           "anomalyAlert"
         ],
-        "note": "Current metrics are compared with the band: within it is Normal, outside it raises an Anomaly Alert."
+        "note": "Breaching points are evaluated with the configured M-of-N settings; one outlier does not always trigger ALARM."
       }
     ]
   },
@@ -183,11 +183,11 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "Band Width (stddev multiplier)",
+      "title": "Expected band width",
       "items": [
-        "ANOMALY_DETECTION_BAND(m1, 2) — 2 standard deviations, about 95% confidence interval (default)",
-        "ANOMALY_DETECTION_BAND(m1, 3) — 3 standard deviations, about 99.7% confidence interval",
-        "ANOMALY_DETECTION_BAND(m1, 1) — 1 standard deviation, more sensitive detection"
+        "ANOMALY_DETECTION_BAND(m1, 2): default width",
+        "A larger value widens the band; no guaranteed 95% or 99.7% interval",
+        "Alarm evaluation also applies configured M-of-N and missing-data handling"
       ]
     },
     {

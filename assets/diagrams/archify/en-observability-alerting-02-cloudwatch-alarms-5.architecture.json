@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "CloudWatch Alarms Cost Optimization Strategies",
+    "title": "CloudWatch Alarm Cost Review",
     "locale": "en",
     "output": "en-observability-alerting-02-cloudwatch-alarms-5.html",
     "quality_profile": "showcase",
@@ -35,7 +35,7 @@
           "dedupe",
           "replace-composite"
         ],
-        "note": "Consolidate duplicate alarms and replace them with composite alarms to cut the alarm count itself."
+        "note": "Review duplicate alarms and evaluated metrics. A composite does not replace its child alarms."
       },
       {
         "id": "v-res",
@@ -56,7 +56,7 @@
           "composite",
           "combine"
         ],
-        "note": "Combine multiple metric alarms into a single composite alarm."
+        "note": "A composite reduces notification noise but adds charges to its children."
       },
       {
         "id": "v-remove",
@@ -115,7 +115,7 @@
     {
       "id": "composite",
       "type": "backend",
-      "label": "Use Composite Alarms",
+      "label": "Account for Composites",
       "pos": [
         400,
         380
@@ -154,7 +154,7 @@
     {
       "id": "replace-composite",
       "type": "external",
-      "label": "Replace with Composite Alarm",
+      "label": "Count Evaluated Metrics",
       "pos": [
         800,
         100
@@ -193,7 +193,7 @@
     {
       "id": "combine",
       "type": "external",
-      "label": "Combine Alarms into One Composite",
+      "label": "Child Cost + Composite Cost",
       "pos": [
         800,
         384
@@ -206,7 +206,7 @@
     {
       "id": "delete-unused",
       "type": "external",
-      "label": "Delete Unused Alarms",
+      "label": "Verify Ownership Before Removal",
       "pos": [
         800,
         500
@@ -289,18 +289,6 @@
       "id": "remove-to-review",
       "from": "remove",
       "to": "review"
-    }
-  ],
-  "cards": [
-    {
-      "dot": "amber",
-      "title": "Cost Factors (monthly)",
-      "items": [
-        "Standard Resolution alarm (60s): $0.10/alarm",
-        "High Resolution alarm (10s): $0.30/alarm",
-        "Anomaly Detection: $0.30/metric",
-        "Composite Alarm: $0.50/alarm"
-      ]
     }
   ]
 }

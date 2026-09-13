@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "CloudWatch Alarms 비용 최적화 전략",
+    "title": "CloudWatch Alarms 비용 검토",
     "output": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -34,7 +34,7 @@
           "dedupe",
           "replace-composite"
         ],
-        "note": "중복 알림을 통합하고 Composite Alarm으로 대체해 알림 개수 자체를 줄인다."
+        "note": "중복 알림과 평가 메트릭 수를 검토합니다. Composite는 child alarm을 대체하지 않습니다."
       },
       {
         "id": "v-res",
@@ -55,7 +55,7 @@
           "composite",
           "combine"
         ],
-        "note": "여러 Metric Alarm을 하나의 Composite Alarm으로 묶는다."
+        "note": "Composite는 알림 소음을 줄이지만 child 비용에 추가 과금됩니다."
       },
       {
         "id": "v-remove",
@@ -114,7 +114,7 @@
     {
       "id": "composite",
       "type": "backend",
-      "label": "Composite Alarm 활용",
+      "label": "Composite 비용 확인",
       "pos": [
         400,
         380
@@ -153,7 +153,7 @@
     {
       "id": "replace-composite",
       "type": "external",
-      "label": "Composite Alarm으로 대체",
+      "label": "평가 메트릭 수 확인",
       "pos": [
         800,
         100
@@ -192,7 +192,7 @@
     {
       "id": "combine",
       "type": "external",
-      "label": "여러 Metric Alarm을 하나의 Composite로",
+      "label": "Child 비용 + Composite 추가 비용",
       "pos": [
         800,
         384
@@ -205,7 +205,7 @@
     {
       "id": "delete-unused",
       "type": "external",
-      "label": "사용하지 않는 알림 삭제",
+      "label": "소유자·의존성 확인 후 삭제",
       "pos": [
         800,
         500
@@ -288,18 +288,6 @@
       "id": "remove-to-review",
       "from": "remove",
       "to": "review"
-    }
-  ],
-  "cards": [
-    {
-      "dot": "amber",
-      "title": "비용 요소 (월)",
-      "items": [
-        "Standard Resolution 알림(60초): $0.10/알림",
-        "High Resolution 알림(10초): $0.30/알림",
-        "Anomaly Detection: $0.30/메트릭",
-        "Composite Alarm: $0.50/알림"
-      ]
     }
   ]
 }

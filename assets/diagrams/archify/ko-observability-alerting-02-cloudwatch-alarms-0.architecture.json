@@ -44,7 +44,7 @@
           "email-sms",
           "lambda-http"
         ],
-        "note": "ALARM 전이 시 SNS, Auto Scaling, EC2 Actions, Systems Manager 액션이 실행되고 SNS가 알림 채널로 전달한다."
+        "note": "유효한 alarm 유형과 상태에 맞는 액션만 연결합니다. 임의 SSM Automation은 EventBridge 등 별도 경로가 필요합니다."
       }
     ]
   },
@@ -179,7 +179,7 @@
       "id": "ssm",
       "type": "cloud",
       "label": "Systems Manager",
-      "sublabel": "SSM Automation 실행",
+      "sublabel": "OpsItem 생성",
       "pos": [
         880,
         390
@@ -328,6 +328,16 @@
       "from": "sns",
       "to": "lambda-http",
       "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "액션 범위",
+      "items": [
+        "SSM 직접 경로: OpsItem; Automation runbook 직접 실행 아님",
+        "Anomaly alarm은 Auto Scaling 불가; metric math는 EC2 직접 변경 불가"
+      ]
     }
   ]
 }
