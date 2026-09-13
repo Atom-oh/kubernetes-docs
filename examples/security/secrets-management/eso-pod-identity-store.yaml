@@ -1,0 +1,13 @@
+# Alternative to IRSA. Associate the actual ESO controller ServiceAccount
+# external-secrets/external-secrets-controller with a constrained Pod Identity role.
+# This store intentionally has no auth.jwt.serviceAccountRef.
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: aws-controller-identity
+  namespace: production
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: ap-northeast-2

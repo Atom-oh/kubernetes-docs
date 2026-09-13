@@ -1,0 +1,6 @@
+# Copy to .sops.yaml and replace the public age recipient before encryption.
+# The private age identity stays outside the repository.
+creation_rules:
+  - path_regex: '(^|/)app-secret(\.enc)?\.yaml$'
+    encrypted_regex: '^(data|stringData)$'
+    age: REPLACE_WITH_YOUR_PUBLIC_AGE_RECIPIENT

@@ -1,0 +1,57 @@
+# Render-only Vault 2.1.0 / chart 0.34.1 baseline.
+# Certificates, gp3 StorageClass, initialization/unseal, Raft joining,
+# audit device activation and operational recovery remain prerequisites.
+global:
+  tlsDisable: false
+server:
+  image:
+    repository: hashicorp/vault
+    tag: "2.1.0"
+  dev:
+    enabled: false
+  standalone:
+    enabled: false
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+      config: |
+        ui = true
+        listener "tcp" {
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_cert_file = "/vault/tls/tls.crt"
+          tls_key_file = "/vault/tls/tls.key"
+        }
+        storage "raft" {
+          path = "/vault/data"
+        }
+        service_registration "kubernetes" {}
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: gp3
+  auditStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: gp3
+  volumes:
+    - name: vault-tls
+      secret:
+        secretName: vault-server-tls
+  volumeMounts:
+    - name: vault-tls
+      mountPath: /vault/tls
+      readOnly: true
+  extraEnvironmentVars:
+    VAULT_CACERT: /vault/tls/ca.crt
+injector:
+  enabled: true
+  replicas: 2
+  agentImage:
+    repository: hashicorp/vault
+    tag: "2.1.0"
+csi:
+  enabled: false
