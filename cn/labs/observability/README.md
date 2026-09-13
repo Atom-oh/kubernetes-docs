@@ -1,138 +1,82 @@
-# 实验系列简介
+# 可观测性实验系列
 
-> **难度**：高级 **最后更新**：February 23, 2026
+<span id="architecture-diagram"></span>
+<span id="cost-estimate"></span>
+<span id="lab-sequence"></span>
+<span id="lab-series-introduction"></span>
+<span id="learning-outcomes"></span>
+<span id="msa-application-overview"></span>
+<span id="observability-tool-coverage"></span>
+<span id="overview"></span>
+<span id="references"></span>
+<span id="required-iam-permissions"></span>
+<span id="service-call-flow"></span>
 
-## 概述
+> **难度**: 高级
+> **最后更新**: September 13, 2026
+连接一个可运行的合成订单应用程序及其指标/日志/追踪，覆盖两个 EKS 集群。基线采用 Prometheus、Loki、Tempo 和 Grafana，并使用 AWS SNS/SQS、Aurora 和 CloudWatch。实验配置不同于生产环境的 HA/容量验证。
 
-本实验系列将带您全面动手构建面向基于 Kubernetes 的微服务的全栈可观测性平台。您将在两个 EKS 集群中部署并集成多种可观测性工具，使用真实场景模式实现可观测性的三大支柱（Metrics、Logs、Traces）。
-
-该架构模拟生产级环境：**Managed Cluster** 承载可观测性栈，**Service Cluster** 运行采用 OTel instrumentation 的 MSA 应用程序。
-
-![实验环境架构：从管理集群的 GitOps 和可观测性栈，经过服务集群的 MSA 应用程序，到 AWS 托管的可观测性后端。](../../.gitbook/assets/en-labs-observability-overview-0.png)
+![管理/服务职责及身份验证边界](../../.gitbook/assets/en-labs-observability-overview-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-0.html)
 
-## 架构图
+## 前置条件 {#prerequisites}
 
-![架构图展示了 Argo CD 将采用 OTel instrumentation 的 MSA 应用程序部署到服务集群；该集群的 autoscaler 和 OTel agent 将 telemetry 发送到管理集群的可观测性栈；应用程序和可观测性栈均与 Aurora、SQS/SNS、MWAA、AMP、CloudWatch 和 OpenSearch 等 AWS 托管服务集成。](../../.gitbook/assets/en-labs-observability-README-0.png)
+使用经批准的临时 AWS 角色、已审核的私有 VPC/子网/路由/DNS/SG、EBS CSI/gp3、支持 NetworkPolicy 的 CNI 以及 AWS Load Balancer Controller。无需授予一揽子服务 FullAccess 权限或使用长期访问密钥。请在每个阶段重新检查版本、权限和配额。
 
-## 前提条件
+| 工具 | 已审核的基线 |
+|---|---|
+| EKS / kubectl | 1.36 / 1.36.2 |
+| eksctl / Helm | 0.229.0 / 3.21.3 |
+| Python / AWS CLI | 3.12 / v2 |
+| k6 / Locust | 2.2.0 / 2.46.5 |
+| 应用程序 / 控制器 | 示例中固定的要求、镜像摘要和 Chart 版本 |
 
-在开始本实验系列之前，请确保您具备以下条件：
+## 可运行代码和顺序 {#sequence}
 
-| 要求 | 版本  | 验证命令          |
-| ----------- | -------- | ----------------------------- |
-| AWS 账户 | -        | `aws sts get-caller-identity` |
-| AWS CLI     | >= 2.15  | `aws --version`               |
-| eksctl      | >= 0.175 | `eksctl version`              |
-| kubectl     | >= 1.29  | `kubectl version --client`    |
-| Helm        | >= 3.14  | `helm version`                |
-| Terraform   | >= 1.7   | `terraform version`           |
-| k6          | >= 0.49  | `k6 version`                  |
-| Docker      | >= 24.0  | `docker --version`            |
+使用本仓库中的 [应用程序](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)、[堆栈](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/stack)、[负载测试](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/load-test) 和 [aiops](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops) 示例。固定使用已审核的 commit/tag，并保留私有的 LAB_STATE；请勿克隆旧的、不存在的示例仓库。
 
-### 所需 IAM 权限
+![从基础设施到追踪分析的六个阶段](../../.gitbook/assets/en-labs-observability-overview-2.png)
 
-您的 AWS user/role 需要以下权限：
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-2.html)
 
-* EKS 完全访问权限
-* EC2 完全访问权限（用于 node group）
-* VPC 完全访问权限
-* IAM 有限访问权限（用于 IRSA）
-* CloudFormation 完全访问权限
-* SQS/SNS 完全访问权限
-* RDS 完全访问权限（用于 Aurora）
-* OpenSearch 完全访问权限
-* Managed Prometheus/Grafana 完全访问权限
-* MWAA 完全访问权限
+| 部分 | 阶段 | 结果 |
+|---|---|---|
+| 1 | [基础设施](01-infrastructure-setup-lab.md) | EKS、私有 DB、SNS 扇出、范围受限的角色 |
+| 2 | [可观测性堆栈](02-observability-stack-lab.md) | mTLS 收集器/remote-write、Loki/Tempo/Grafana |
+| 3 | [MSA/canary](03-msa-deployment-lab.md) | 五个可运行角色、outbox、仅限修订版本的分析 |
+| 4 | [负载/扩缩容](04-load-testing-scaling-lab.md) | 已测量的请求以及消费者/节点观测 |
+| 5 | [告警/AIOps](05-alerting-aiops-lab.md) | 独立主题的诊断报告器、人工审查 |
+| 6 | [分布式追踪](06-distributed-tracing-lab.md) | 实际的指标/exemplar/追踪/日志关联、清理 |
 
-## 成本估算
+## 应用程序和数据流 {#application}
 
-> **警告**：本实验系列会创建大量 AWS 资源。以下提供预估成本。
+一个 Python 镜像以独立的 api-gateway、order-service、payment-service、notification 和 analytics 角色运行。支付/通知均为合成操作，不会进行真实扣款/发送电子邮件/SMS。订单和 outbox 共享一个事务；独立队列和 event-ID 去重机制为 notification/analytics 提供服务。未实现或声称实现 Gateway 身份验证、通用速率限制和真实支付网关。
 
-| 服务                   | 配置                     | 每小时成本 (USD) |
-| ------------------------- | --------------------------------- | ----------------- |
-| EKS Control Plane         | 2 个集群                        | $0.20             |
-| EC2 (Managed Cluster)     | 3x m5.xlarge                      | $0.58             |
-| EC2 (Service Cluster)     | 3x m5.large（+ Karpenter scaling） | $0.29+            |
-| Aurora PostgreSQL         | db.r6g.large（multi-AZ）           | $0.52             |
-| OpenSearch                | m6g.large.search（2 个节点）        | $0.25             |
-| Amazon Managed Prometheus | 按摄取量计算                | \~$0.10           |
-| Amazon Managed Grafana    | 1 个 workspace                       | $0.15             |
-| MWAA                      | mw1.small                         | $0.31             |
-| SQS/SNS                   | 按使用量计算                    | \~$0.01           |
-| **总计估算**        |                                   | **\~$2.50/小时**  |
+![HTTP、事务性 outbox 和独立消费者队列](../../.gitbook/assets/en-labs-observability-overview-3.png)
 
-**提示**：请在单次会话中完成实验，并立即执行清理以尽量减少成本。
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-3.html)
 
-## 实验顺序
+## 基线与可选扩展 {#coverage}
 
-![由六个部分组成的线性路线图，展示可观测性实验从基础设施设置，依次推进到可观测性栈、采用 Canary rollout 的 MSA 部署、负载测试与扩缩容、告警与 AIOps，以及分布式追踪。](../../.gitbook/assets/en-labs-observability-README-1.png)
 
-| 部分 | 标题                                                    | 时长 | 关键主题                                      |
-| ---- | -------------------------------------------------------- | -------- | ----------------------------------------------- |
-| 1    | [基础设施设置](01-infrastructure-setup-lab.md)   | 60 分钟   | EKS 集群、AWS 服务、ArgoCD              |
-| 2    | [可观测性栈](02-observability-stack-lab.md)     | 90 分钟   | OTel、Prometheus、Loki、Tempo、Grafana          |
-| 3    | [MSA 部署与 Canary](03-msa-deployment-lab.md)      | 60 分钟   | ArgoCD、Argo Rollouts、OTel instrumentation     |
-| 4    | [负载测试与扩缩容](04-load-testing-scaling-lab.md) | 45 分钟   | k6、KEDA、Karpenter                             |
-| 5    | [告警与 AIOps](05-alerting-aiops-lab.md)             | 60 分钟   | Alertmanager、OnCall、CloudWatch Investigations |
-| 6    | [分布式追踪](06-distributed-tracing-lab.md)     | 45 分钟   | Tempo、TraceQL、Log-Trace correlation           |
+![基线路径和需要独立验证的扩展](../../.gitbook/assets/en-labs-observability-overview-1.png)
 
-## MSA 应用程序概述
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-1.html)
 
-本实验使用一个包含 5 个服务的示例电子商务 MSA 应用程序：
+| 基线 | 可选的独立集成 |
+|---|---|
+| Prometheus / CloudWatch 指标 | VictoriaMetrics、Mimir、AMP |
+| Loki / CloudWatch Logs | ClickHouse、OpenSearch |
+| OTel / Tempo | X-Ray、Dynatrace |
+| Grafana | Amazon Managed Grafana、商业工具 |
+| Alertmanager / SNS / 诊断 Lambda | 现有值班平台、CloudWatch Investigations 组 |
+| 合成事件消费者 | MWAA 调度/批量分析、生产事务系统 |
 
-| 服务              | 语言           | 角色                            | 依赖项              |
-| -------------------- | ------------------ | ------------------------------- | ------------------------- |
-| API Gateway          | Go                 | 请求路由、身份验证 | Order、Payment            |
-| Order Service        | Python (FastAPI)   | 订单管理、库存     | Aurora、SQS               |
-| Payment Service      | Java (Spring Boot) | 支付处理              | Aurora                    |
-| Notification Service | Node.js (Express)  | 电子邮件/SMS 通知         | SQS consumer              |
-| Analytics Batch      | Python             | 每日分析聚合     | Aurora，由 MWAA 触发 |
+安装不同于已验证的数据摄取、查询、权限和成本。有关扩展，请参阅 [指标](../../observability/metrics/README.md)、[日志](../../observability/logging/README.md)、[追踪](../../observability/tracing/README.md) 和 [Grafana](../../observability/grafana/README.md) 指南。第 5 部分纳入了诸如 OnCall OSS 归档等变更。
 
-### 服务调用流程
+## 成本、验证和清理 {#cost-and-cleanup}
 
-![时序图展示客户端的订单请求从 API Gateway 流向 Order Service，后者写入 Aurora，调用 Payment Service 收费并记录付款，随后发布订单事件；Notification Service 异步消费该事件，同时 Order 和 Gateway 向客户端返回成功响应。](../../.gitbook/assets/en-labs-observability-README-2.png)
+根据实际使用量估算特定 Region 的节点、NAT、EBS、Aurora ACU/存储/I/O、日志摄取/保留、消息、KMS、LB、传输和模型调用。请勿将按用户按月收费与按小时计费的基础设施混合为一个固定总额。单写入器/backend 实验并非生产级 HA；副本限制并不是绝对的支出上限。
 
-## 可观测性工具覆盖范围
-
-本实验涵盖以下可观测性工具：
-
-| 类别          | 涵盖工具                      | AWS 集成             |
-| ----------------- | ---------------------------------- | --------------------------- |
-| **Metrics**       | Prometheus、VictoriaMetrics、Mimir | AMP（remote write）          |
-| **Logging**       | Loki、ClickHouse、Fluent Bit       | CloudWatch Logs、OpenSearch |
-| **Tracing**       | Tempo、OTel Collector              | X-Ray（通过 OTel）            |
-| **Visualization** | Grafana                            | AMG                         |
-| **Alerting**      | Alertmanager、Grafana OnCall       | CloudWatch Alarms、SNS      |
-| **AIOps**         | CloudWatch Investigations          | Bedrock Claude 集成  |
-
-> **注意**：本实验重点使用开源工具和 AWS 原生工具。Datadog 和 Dynatrace 等商业解决方案在单独的文档中介绍，但不会在本实验中部署。
-
-## 学习成果
-
-完成本实验系列后，您将能够：
-
-1. **设计** 面向 Kubernetes 的生产级可观测性架构
-2. **部署** 集成 OTel 的完整 LGTM 栈（Loki、Grafana、Tempo、Mimir）
-3. **配置** 使用 OTel Collector 的多后端 telemetry pipeline
-4. **实现** 通过可观测性驱动分析的 Canary deployment
-5. **构建** 使用 CloudWatch Investigations 和 Bedrock 的 AIOps workflow
-6. **分析** 分布式 trace 以识别性能瓶颈
-7. **关联** Metrics、Logs 和 Traces 以进行根本原因分析
-
-## 参考资料
-
-* [可观测性概述](../../observability/README.md)
-* [Prometheus 文档](../../observability/metrics/01-prometheus.md)
-* [Grafana Dashboard](../../observability/grafana/README.md)
-* [Loki 文档](../../observability/logging/01-loki.md)
-* [Tempo 文档](../../observability/tracing/01-tempo.md)
-* [OpenTelemetry 文档](../../observability/tracing/03-opentelemetry.md)
-* [ArgoCD 文档](../../gitops/argocd/README.md)
-* [KEDA 文档](../../autoscaling/01-keda.md)
-* [Karpenter 文档](../../autoscaling/02-karpenter.md)
-
-***
-
-**准备好开始了吗？** 请从[第 1 部分：基础设施设置](01-infrastructure-setup-lab.md)开始
+区分本地原生/SDK/schema/浏览器验证与实际 AWS 结果。清查资源、IAM 附加项、快照、DNS 和 LB/PVC；按照第 6 部分的依赖顺序进行清理。不要抑制所有失败，也不要在其托管依赖项之前删除集群。

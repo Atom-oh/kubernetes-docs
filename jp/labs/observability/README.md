@@ -1,138 +1,82 @@
-# ラボシリーズの紹介
+# オブザーバビリティ ラボシリーズ
 
-> **難易度**: 上級 **最終更新**: February 23, 2026
+<span id="architecture-diagram"></span>
+<span id="cost-estimate"></span>
+<span id="lab-sequence"></span>
+<span id="lab-series-introduction"></span>
+<span id="learning-outcomes"></span>
+<span id="msa-application-overview"></span>
+<span id="observability-tool-coverage"></span>
+<span id="overview"></span>
+<span id="references"></span>
+<span id="required-iam-permissions"></span>
+<span id="service-call-flow"></span>
 
-## 概要
+> **難易度**: 上級
+> **最終更新**: September 13, 2026
+実行可能な合成注文アプリケーションと、そのメトリクス/ログ/トレースを、2 つの EKS クラスターにまたがって接続します。ベースラインでは Prometheus、Loki、Tempo、Grafana と、AWS SNS/SQS、Aurora、CloudWatch を使用します。ラボ構成は、本番環境の HA/キャパシティ検証とは別のものです。
 
-このラボシリーズでは、Kubernetes ベースのマイクロサービス向けフルスタック Observability プラットフォームを構築するための包括的なハンズオンを提供します。2 つの EKS クラスターに複数の Observability ツールをデプロイして統合し、実際のパターンで Observability の 3 本柱（Metrics、Logs、Traces）を実装します。
-
-このアーキテクチャは、Observability スタックをホストする **Managed Cluster** と、OTel instrumentation を備えた MSA アプリケーションを実行する **Service Cluster** から成る本番グレードの環境をシミュレートします。
-
-![Management Cluster の GitOps および Observability スタックから Service Cluster の MSA アプリまで、さらに AWS マネージド Observability バックエンドまでを示すラボ環境アーキテクチャ。](../../.gitbook/assets/en-labs-observability-overview-0.png)
+![管理/サービスの責任範囲と認証境界](../../.gitbook/assets/en-labs-observability-overview-0.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-0.html)
 
-## アーキテクチャ図
+## 前提条件 {#prerequisites}
 
-![OTel instrumentation を備えた MSA アプリケーションを Argo CD が Service Cluster にデプロイし、その autoscaler と OTel agent が telemetry を Managed Cluster の Observability スタックに送信する様子を示すアーキテクチャ図。アプリケーションと Observability スタックはいずれも Aurora、SQS/SNS、MWAA、AMP、CloudWatch、OpenSearch などの AWS マネージドサービスと統合されます。](../../.gitbook/assets/en-labs-observability-README-0.png)
+承認済みの一時 AWS ロール、レビュー済みのプライベート VPC/サブネット/ルート/DNS/SG、EBS CSI/gp3、NetworkPolicy 対応 CNI、および AWS Load Balancer Controller を使用してください。包括的なサービス FullAccess や長期間有効なアクセスキーは不要です。各ステージでバージョン、権限、クォータを再確認してください。
 
-## 前提条件
+| ツール | レビュー済みベースライン |
+|---|---|
+| EKS / kubectl | 1.36 / 1.36.2 |
+| eksctl / Helm | 0.229.0 / 3.21.3 |
+| Python / AWS CLI | 3.12 / v2 |
+| k6 / Locust | 2.2.0 / 2.46.5 |
+| アプリケーション / コントローラー | 例内の固定された要件、イメージダイジェスト、チャートバージョン |
 
-このラボシリーズを開始する前に、以下がそろっていることを確認してください。
+## 実行可能なコードと手順 {#sequence}
 
-| 要件 | バージョン  | 確認コマンド          |
-| ----------- | -------- | ----------------------------- |
-| AWS Account | -        | `aws sts get-caller-identity` |
-| AWS CLI     | >= 2.15  | `aws --version`               |
-| eksctl      | >= 0.175 | `eksctl version`              |
-| kubectl     | >= 1.29  | `kubectl version --client`    |
-| Helm        | >= 3.14  | `helm version`                |
-| Terraform   | >= 1.7   | `terraform version`           |
-| k6          | >= 0.49  | `k6 version`                  |
-| Docker      | >= 24.0  | `docker --version`            |
+このリポジトリの [アプリケーション](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)、[スタック](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/stack)、[負荷テスト](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/load-test)、および [aiops](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops) の例を使用してください。レビュー済みのコミット/タグを固定し、プライベートな LAB_STATE を保持してください。古く存在しないサンプルリポジトリをクローンしないでください。
 
-### 必要な IAM 権限
+![インフラストラクチャからトレース分析までの 6 ステージ](../../.gitbook/assets/en-labs-observability-overview-2.png)
 
-AWS user/role には以下の権限が必要です。
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-2.html)
 
-* EKS へのフルアクセス
-* EC2 へのフルアクセス（node group 用）
-* VPC へのフルアクセス
-* IAM への限定アクセス（IRSA 用）
-* CloudFormation へのフルアクセス
-* SQS/SNS へのフルアクセス
-* RDS へのフルアクセス（Aurora 用）
-* OpenSearch へのフルアクセス
-* Managed Prometheus/Grafana へのフルアクセス
-* MWAA へのフルアクセス
+| パート | ステージ | 成果 |
+|---|---|---|
+| 1 | [インフラストラクチャ](01-infrastructure-setup-lab.md) | EKS、プライベート DB、SNS ファンアウト、スコープを限定したロール |
+| 2 | [オブザーバビリティスタック](02-observability-stack-lab.md) | mTLS collectors/remote-write、Loki/Tempo/Grafana |
+| 3 | [MSA/canary](03-msa-deployment-lab.md) | 実行可能な 5 つのロール、outbox、リビジョンのみの分析 |
+| 4 | [負荷/スケーリング](04-load-testing-scaling-lab.md) | 測定済みリクエストと consumer/node の観測 |
+| 5 | [アラート/AIOps](05-alerting-aiops-lab.md) | トピックを分離した診断レポーター、人によるレビュー |
+| 6 | [分散トレーシング](06-distributed-tracing-lab.md) | 実際の metric/exemplar/trace/log 相関、クリーンアップ |
 
-## コスト見積もり
+## アプリケーションとデータフロー {#application}
 
-> **警告**: このラボシリーズでは多くの AWS リソースが作成されます。以下に推定コストを示します。
+1 つの Python イメージを、個別の api-gateway、order-service、payment-service、notification、analytics ロールとして実行します。決済/通知は合成であり、実際の請求/メール/SMS は行いません。注文と outbox はトランザクションを共有し、独立したキューとイベント ID の重複排除が notification/analytics を処理します。Gateway 認証、一般的なレート制限、実際の決済ゲートウェイは実装も主張もされていません。
 
-| サービス                   | 設定                     | 時間あたりのコスト (USD) |
-| ------------------------- | --------------------------------- | ----------------- |
-| EKS Control Plane         | 2 クラスター                        | $0.20             |
-| EC2 (Managed Cluster)     | 3x m5.xlarge                      | $0.58             |
-| EC2 (Service Cluster)     | 3x m5.large (+ Karpenter scaling) | $0.29+            |
-| Aurora PostgreSQL         | db.r6g.large (multi-AZ)           | $0.52             |
-| OpenSearch                | m6g.large.search (2 nodes)        | $0.25             |
-| Amazon Managed Prometheus | 取り込み量に基づく                | \~$0.10           |
-| Amazon Managed Grafana    | 1 workspace                       | $0.15             |
-| MWAA                      | mw1.small                         | $0.31             |
-| SQS/SNS                   | 使用量に基づく                    | \~$0.01           |
-| **合計見積もり**        |                                   | **\~$2.50/時間**  |
+![HTTP、トランザクション outbox、個別の consumer キュー](../../.gitbook/assets/en-labs-observability-overview-3.png)
 
-**ヒント**: コストを最小限に抑えるため、ラボは 1 回のセッションで完了し、すぐに cleanup を実行してください。
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-3.html)
 
-## ラボの順序
+## ベースラインとオプションの拡張機能 {#coverage}
 
-![インフラストラクチャのセットアップから Observability スタック、canary rollout を伴う MSA のデプロイ、load testing と scaling、alerting と AIOps、distributed tracing へと進む、6 部構成の直線的なロードマップ。](../../.gitbook/assets/en-labs-observability-README-1.png)
 
-| パート | タイトル                                                    | 所要時間 | 主なトピック                                      |
-| ---- | -------------------------------------------------------- | -------- | ----------------------------------------------- |
-| 1    | [インフラストラクチャのセットアップ](01-infrastructure-setup-lab.md)   | 60 分   | EKS クラスター、AWS サービス、ArgoCD              |
-| 2    | [Observability スタック](02-observability-stack-lab.md)     | 90 分   | OTel、Prometheus、Loki、Tempo、Grafana          |
-| 3    | [MSA のデプロイと Canary](03-msa-deployment-lab.md)      | 60 分   | ArgoCD、Argo Rollouts、OTel instrumentation     |
-| 4    | [Load Testing と Scaling](04-load-testing-scaling-lab.md) | 45 分   | k6、KEDA、Karpenter                             |
-| 5    | [Alerting と AIOps](05-alerting-aiops-lab.md)             | 60 分   | Alertmanager、OnCall、CloudWatch Investigations |
-| 6    | [Distributed Tracing](06-distributed-tracing-lab.md)     | 45 分   | Tempo、TraceQL、Log-Trace の相関           |
+![ベースラインパスと、個別の検証が必要な拡張機能](../../.gitbook/assets/en-labs-observability-overview-1.png)
 
-## MSA アプリケーションの概要
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-1.html)
 
-このラボでは、5 つのサービスから成るサンプル e-commerce MSA アプリケーションを使用します。
+| ベースライン | オプションの個別統合 |
+|---|---|
+| Prometheus / CloudWatch メトリクス | VictoriaMetrics、Mimir、AMP |
+| Loki / CloudWatch Logs | ClickHouse、OpenSearch |
+| OTel / Tempo | X-Ray、Dynatrace |
+| Grafana | Amazon Managed Grafana、商用ツール |
+| Alertmanager / SNS / 診断 Lambda | 既存のオンコールプラットフォーム、CloudWatch Investigations グループ |
+| 合成イベント consumer | MWAA スケジューリング/バッチ分析、本番トランザクションシステム |
 
-| サービス              | 言語           | 役割                            | 依存先              |
-| -------------------- | ------------------ | ------------------------------- | ------------------------- |
-| API Gateway          | Go                 | リクエストルーティング、認証 | Order、Payment            |
-| Order Service        | Python (FastAPI)   | Order 管理、inventory     | Aurora、SQS               |
-| Payment Service      | Java (Spring Boot) | Payment 処理              | Aurora                    |
-| Notification Service | Node.js (Express)  | Email/SMS 通知         | SQS consumer              |
-| Analytics Batch      | Python             | 日次 analytics 集計     | Aurora、MWAA によりトリガー |
+インストールは、検証済みの取り込み、クエリ、権限、コストとは異なります。拡張機能については、[metrics](../../observability/metrics/README.md)、[logging](../../observability/logging/README.md)、[tracing](../../observability/tracing/README.md)、[Grafana](../../observability/grafana/README.md) のガイドを参照してください。Part5 には OnCall OSS のアーカイブなどの変更が組み込まれています。
 
-### サービス呼び出しフロー
+## コスト、検証、クリーンアップ {#cost-and-cleanup}
 
-![クライアントの order リクエストが API gateway を経由して Order Service に流れ、Aurora に書き込み、Payment Service を呼び出して課金と支払いの記録を行うシーケンス図。その後、order event を publish し、Notification Service が非同期に consume する一方で、Order Service と gateway はクライアントに成功を返します。](../../.gitbook/assets/en-labs-observability-README-2.png)
+実際の使用量に基づいて、リージョン固有のノード、NAT、EBS、Aurora ACU/ストレージ/I/O、ログ取り込み/保持、メッセージ、KMS、LB、転送、モデル呼び出しを見積もってください。月額のユーザー単位料金と、時間単位のインフラストラクチャ料金を固定された合計額に混在させないでください。単一 writer/backend のラボは本番グレードの HA ではありません。レプリカ上限は絶対的な支出上限ではありません。
 
-## Observability ツールの対象範囲
-
-このラボでは、以下の Observability ツールを扱います。
-
-| カテゴリー          | 対象ツール                      | AWS 統合             |
-| ----------------- | ---------------------------------- | --------------------------- |
-| **Metrics**       | Prometheus、VictoriaMetrics、Mimir | AMP (remote write)          |
-| **Logging**       | Loki、ClickHouse、Fluent Bit       | CloudWatch Logs、OpenSearch |
-| **Tracing**       | Tempo、OTel Collector              | X-Ray (via OTel)            |
-| **Visualization** | Grafana                            | AMG                         |
-| **Alerting**      | Alertmanager、Grafana OnCall       | CloudWatch Alarms、SNS      |
-| **AIOps**         | CloudWatch Investigations          | Bedrock Claude integration  |
-
-> **注記**: このラボでは、オープンソースおよび AWS ネイティブのツールに焦点を当てます。Datadog や Dynatrace などの商用ソリューションは別のドキュメントで扱いますが、このラボではデプロイしません。
-
-## 学習成果
-
-このラボシリーズを完了すると、以下ができるようになります。
-
-1. Kubernetes 向けの本番グレード Observability アーキテクチャを **設計** する
-2. OTel とともに完全な LGTM スタック（Loki、Grafana、Tempo、Mimir）を **デプロイ** する
-3. OTel Collector を使用して multi-backend telemetry pipeline を **構成** する
-4. Observability 主導の分析を用いた canary deployment を **実装** する
-5. CloudWatch Investigations と Bedrock による AIOps workflow を **構築** する
-6. distributed trace を **分析** して performance bottleneck を特定する
-7. root cause analysis のために metrics、logs、traces を **相関付ける**
-
-## 参考資料
-
-* [Observability の概要](../../observability/README.md)
-* [Prometheus ドキュメント](../../observability/metrics/01-prometheus.md)
-* [Grafana Dashboard](../../observability/grafana/README.md)
-* [Loki ドキュメント](../../observability/logging/01-loki.md)
-* [Tempo ドキュメント](../../observability/tracing/01-tempo.md)
-* [OpenTelemetry ドキュメント](../../observability/tracing/03-opentelemetry.md)
-* [ArgoCD ドキュメント](../../gitops/argocd/README.md)
-* [KEDA ドキュメント](../../autoscaling/01-keda.md)
-* [Karpenter ドキュメント](../../autoscaling/02-karpenter.md)
-
-***
-
-**開始する準備はできましたか？** [パート 1: インフラストラクチャのセットアップ](01-infrastructure-setup-lab.md)から開始してください
+ローカルの native/SDK/schema/browser 検証と、実際の AWS 結果を区別してください。リソース、IAM アタッチメント、スナップショット、DNS、LB/PVC をインベントリ化し、Part6 の依存関係順にクリーンアップしてください。すべての失敗を抑制したり、管理対象の依存リソースより先にクラスターを削除したりしないでください。

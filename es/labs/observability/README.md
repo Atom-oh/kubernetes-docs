@@ -1,138 +1,82 @@
-# Introducción a la serie de laboratorios
+# Serie de labs de observabilidad
 
-> **Dificultad**: Avanzada **Última actualización**: February 23, 2026
+<span id="architecture-diagram"></span>
+<span id="cost-estimate"></span>
+<span id="lab-sequence"></span>
+<span id="lab-series-introduction"></span>
+<span id="learning-outcomes"></span>
+<span id="msa-application-overview"></span>
+<span id="observability-tool-coverage"></span>
+<span id="overview"></span>
+<span id="references"></span>
+<span id="required-iam-permissions"></span>
+<span id="service-call-flow"></span>
 
-## Descripción general
+> **Dificultad**: Avanzado
+> **Última actualización**: September 13, 2026
+Conecta una aplicación sintética de pedidos ejecutable y sus métricas/logs/trazas a través de dos clústeres de EKS. La base utiliza Prometheus, Loki, Tempo y Grafana con AWS SNS/SQS, Aurora y CloudWatch. La configuración del lab es distinta de la validación de HA/capacidad en producción.
 
-Esta serie de laboratorios ofrece un recorrido completo y práctico para crear una plataforma de observabilidad full-stack para microservicios basados en Kubernetes. Desplegarás e integrarás varias herramientas de observabilidad en dos clústeres de EKS, implementando los tres pilares de la observabilidad (Metrics, Logs, Traces) con patrones del mundo real.
+![Management/service responsibilities and authentication boundaries](../../.gitbook/assets/en-labs-observability-overview-0.png)
 
-La arquitectura simula un entorno de nivel de producción con un **Managed Cluster** que aloja la pila de observabilidad y un **Service Cluster** que ejecuta aplicaciones MSA con instrumentación de OTel.
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-0.html)
 
-![Arquitectura del entorno de laboratorio, desde el GitOps y la pila de observabilidad del clúster de administración, pasando por las aplicaciones MSA del clúster de servicio, hasta los backends de observabilidad administrados de AWS.](../../.gitbook/assets/en-labs-observability-overview-0.png)
+## Requisitos previos {#prerequisites}
 
-[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-0.html)
+Usa un rol temporal de AWS aprobado, VPC/subredes/rutas/DNS/SGs privados revisados, EBS CSI/gp3, un CNI compatible con NetworkPolicy y AWS Load Balancer Controller. No se requiere ningún FullAccess general de servicio ni claves de acceso de larga duración. Vuelve a comprobar versiones, permisos y cuotas en cada etapa.
 
-## Diagrama de arquitectura
+| Herramienta | Base revisada |
+|---|---|
+| EKS / kubectl | 1.36 / 1.36.2 |
+| eksctl / Helm | 0.229.0 / 3.21.3 |
+| Python / AWS CLI | 3.12 / v2 |
+| k6 / Locust | 2.2.0 / 2.46.5 |
+| Aplicación / controllers | Requisitos fijados, digest de imagen y versiones de chart en los ejemplos |
 
-![Diagrama de arquitectura que muestra a Argo CD desplegando la aplicación MSA instrumentada con OTel en el clúster de servicio, cuyos autoscalers y agente de OTel envían telemetría a la pila de observabilidad del clúster administrado, mientras que tanto la aplicación como la pila de observabilidad se integran con servicios administrados de AWS como Aurora, SQS/SNS, MWAA, AMP, CloudWatch y OpenSearch.](../../.gitbook/assets/en-labs-observability-README-0.png)
+## Código ejecutable y secuencia {#sequence}
 
-## Requisitos previos
+Usa los ejemplos [application](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application), [stack](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/stack), [load-test](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/load-test) y [aiops](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops) de este repositorio. Fija un commit/tag revisado y conserva el LAB_STATE privado; no clones el antiguo repositorio de ejemplos inexistente.
 
-Antes de comenzar esta serie de laboratorios, asegúrate de contar con lo siguiente:
+![Six stages from infrastructure to trace analysis](../../.gitbook/assets/en-labs-observability-overview-2.png)
 
-| Requisito | Versión  | Comando de verificación        |
-| ----------- | -------- | ----------------------------- |
-| Cuenta de AWS | -        | `aws sts get-caller-identity` |
-| AWS CLI     | >= 2.15  | `aws --version`               |
-| eksctl      | >= 0.175 | `eksctl version`              |
-| kubectl     | >= 1.29  | `kubectl version --client`    |
-| Helm        | >= 3.14  | `helm version`                |
-| Terraform   | >= 1.7   | `terraform version`           |
-| k6          | >= 0.49  | `k6 version`                  |
-| Docker      | >= 24.0  | `docker --version`            |
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-2.html)
 
-### Permisos de IAM necesarios
+| Parte | Etapa | Resultado |
+|---|---|---|
+| 1 | [Infraestructura](01-infrastructure-setup-lab.md) | EKS, base de datos privada, fanout de SNS, roles restringidos |
+| 2 | [Stack de observabilidad](02-observability-stack-lab.md) | Colectores/remote-write con mTLS, Loki/Tempo/Grafana |
+| 3 | [MSA/canary](03-msa-deployment-lab.md) | Cinco roles ejecutables, outbox, análisis solo por revisión |
+| 4 | [Carga/escalado](04-load-testing-scaling-lab.md) | Peticiones medidas y observaciones de consumidores/nodos |
+| 5 | [Alertas/AIOps](05-alerting-aiops-lab.md) | Reporter de diagnóstico con topic separado, revisión humana |
+| 6 | [Trazado distribuido](06-distributed-tracing-lab.md) | Correlación real de métricas/exemplars/trazas/logs, limpieza |
 
-Tu usuario/rol de AWS necesita los siguientes permisos:
+## Aplicación y flujo de datos {#application}
 
-* Acceso completo a EKS
-* Acceso completo a EC2 (para node groups)
-* Acceso completo a VPC
-* Acceso limitado a IAM (para IRSA)
-* Acceso completo a CloudFormation
-* Acceso completo a SQS/SNS
-* Acceso completo a RDS (para Aurora)
-* Acceso completo a OpenSearch
-* Acceso completo a Managed Prometheus/Grafana
-* Acceso completo a MWAA
+Una única imagen de Python se ejecuta como los roles separados api-gateway, order-service, payment-service, notification y analytics. Los pagos y notificaciones son sintéticos, sin cargos, correos ni SMS reales. Los pedidos y el outbox comparten una transacción; colas independientes y la deduplicación por ID de evento sirven a notification/analytics. La autenticación en el gateway, la limitación de tasa general y una pasarela de pago real no están implementadas ni se afirman.
 
-## Estimación de costos
+![HTTP, transactional outbox and separate consumer queues](../../.gitbook/assets/en-labs-observability-overview-3.png)
 
-> **Advertencia**: Esta serie de laboratorios crea recursos significativos de AWS. A continuación se proporcionan los costos estimados.
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-3.html)
 
-| Servicio                   | Configuración                     | Costo por hora (USD) |
-| ------------------------- | --------------------------------- | ----------------- |
-| EKS Control Plane         | 2 clústeres                       | $0.20             |
-| EC2 (Managed Cluster)     | 3x m5.xlarge                      | $0.58             |
-| EC2 (Service Cluster)     | 3x m5.large (+ escalado de Karpenter) | $0.29+            |
-| Aurora PostgreSQL         | db.r6g.large (multi-AZ)           | $0.52             |
-| OpenSearch                | m6g.large.search (2 nodos)        | $0.25             |
-| Amazon Managed Prometheus | Según la ingesta                   | \~$0.10           |
-| Amazon Managed Grafana    | 1 workspace                       | $0.15             |
-| MWAA                      | mw1.small                         | $0.31             |
-| SQS/SNS                   | Según el uso                       | \~$0.01           |
-| **Estimación total**      |                                   | **\~$2.50/hora**  |
+## Base frente a extensiones opcionales {#coverage}
 
-**Consejo**: Completa el laboratorio en una sola sesión y ejecuta la limpieza inmediatamente para minimizar los costos.
 
-## Secuencia del laboratorio
+![Baseline paths and extensions needing independent validation](../../.gitbook/assets/en-labs-observability-overview-1.png)
 
-![Hoja de ruta lineal de seis partes que muestra la progresión del laboratorio de observabilidad desde la configuración de la infraestructura, pasando por la pila de observabilidad, el despliegue de MSA con lanzamiento canary, las pruebas de carga y el escalado, las alertas y AIOps, hasta el tracing distribuido.](../../.gitbook/assets/en-labs-observability-README-1.png)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-1.html)
 
-| Parte | Título                                                    | Duración | Temas principales                              |
-| ---- | -------------------------------------------------------- | -------- | ----------------------------------------------- |
-| 1    | [Configuración de la infraestructura](01-infrastructure-setup-lab.md)   | 60 min   | Clústeres de EKS, servicios de AWS, ArgoCD      |
-| 2    | [Pila de observabilidad](02-observability-stack-lab.md)     | 90 min   | OTel, Prometheus, Loki, Tempo, Grafana          |
-| 3    | [Despliegue de MSA y canary](03-msa-deployment-lab.md)      | 60 min   | ArgoCD, Argo Rollouts, instrumentación de OTel  |
-| 4    | [Pruebas de carga y escalado](04-load-testing-scaling-lab.md) | 45 min   | k6, KEDA, Karpenter                             |
-| 5    | [Alertas y AIOps](05-alerting-aiops-lab.md)             | 60 min   | Alertmanager, OnCall, investigaciones de CloudWatch |
-| 6    | [Tracing distribuido](06-distributed-tracing-lab.md)     | 45 min   | Tempo, TraceQL, correlación Log-Trace           |
+| Base | Integración opcional independiente |
+|---|---|
+| Métricas de Prometheus / CloudWatch | VictoriaMetrics, Mimir, AMP |
+| Loki / CloudWatch Logs | ClickHouse, OpenSearch |
+| OTel / Tempo | X-Ray, Dynatrace |
+| Grafana | Amazon Managed Grafana, herramientas comerciales |
+| Alertmanager / SNS / Lambda de diagnóstico | Plataforma de on-call existente, grupo de CloudWatch Investigations |
+| Consumidores de eventos sintéticos | Programación con MWAA/analítica por lotes, sistemas transaccionales de producción |
 
-## Descripción general de la aplicación MSA
+La instalación es distinta de la ingesta, las consultas, los permisos y los costes verificados. Consulta las guías de [métricas](../../observability/metrics/README.md), [logging](../../observability/logging/README.md), [trazado](../../observability/tracing/README.md) y [Grafana](../../observability/grafana/README.md) para las extensiones. La Part5 incorpora cambios como el archivado de OnCall OSS.
 
-El laboratorio utiliza una aplicación MSA de comercio electrónico de ejemplo con 5 servicios:
+## Coste, verificación y limpieza {#cost-and-cleanup}
 
-| Servicio              | Lenguaje           | Función                         | Dependencias              |
-| -------------------- | ------------------ | ------------------------------- | ------------------------- |
-| API Gateway          | Go                 | Enrutamiento de solicitudes, autenticación | Order, Payment            |
-| Order Service        | Python (FastAPI)   | Gestión de pedidos, inventario  | Aurora, SQS               |
-| Payment Service      | Java (Spring Boot) | Procesamiento de pagos          | Aurora                    |
-| Notification Service | Node.js (Express)  | Notificaciones por correo electrónico/SMS | Consumidor de SQS         |
-| Analytics Batch      | Python             | Agregación diaria de analíticas | Aurora, activado por MWAA |
+Estima a partir del uso real los nodos específicos de la Región, NAT, EBS, ACU/almacenamiento/E-S de Aurora, la ingesta/retención de logs, los mensajes, KMS, los LBs, la transferencia y las llamadas al modelo. No mezcles cargos mensuales por usuario con infraestructura por horas en un total fijo. Los labs con un único writer/backend no tienen HA de nivel de producción; los límites de réplicas no son topes absolutos de gasto.
 
-### Flujo de llamadas de servicio
-
-![Diagrama de secuencia que muestra la solicitud de pedido de un cliente fluyendo a través de API Gateway hacia Order Service, que escribe en Aurora, llama a Payment Service para cobrar y registrar el pago, y luego publica un evento de pedido que Notification Service consume de forma asíncrona, mientras Order Service y API Gateway devuelven éxito al cliente.](../../.gitbook/assets/en-labs-observability-README-2.png)
-
-## Cobertura de herramientas de observabilidad
-
-Este laboratorio cubre las siguientes herramientas de observabilidad:
-
-| Categoría          | Herramientas incluidas              | Integración con AWS          |
-| ----------------- | ---------------------------------- | --------------------------- |
-| **Metrics**       | Prometheus, VictoriaMetrics, Mimir | AMP (remote write)          |
-| **Logging**       | Loki, ClickHouse, Fluent Bit       | CloudWatch Logs, OpenSearch |
-| **Tracing**       | Tempo, OTel Collector              | X-Ray (mediante OTel)       |
-| **Visualización** | Grafana                            | AMG                         |
-| **Alerting**      | Alertmanager, Grafana OnCall       | CloudWatch Alarms, SNS      |
-| **AIOps**         | CloudWatch Investigations          | Integración con Bedrock Claude |
-
-> **Nota**: Este laboratorio se centra en herramientas de código abierto y nativas de AWS. Las soluciones comerciales como Datadog y Dynatrace se cubren en documentación independiente, pero no se despliegan en este laboratorio.
-
-## Resultados de aprendizaje
-
-Al completar esta serie de laboratorios, podrás:
-
-1. **Diseñar** una arquitectura de observabilidad de nivel de producción para Kubernetes
-2. **Desplegar** la pila LGTM completa (Loki, Grafana, Tempo, Mimir) con OTel
-3. **Configurar** pipelines de telemetría con múltiples backends mediante OTel Collector
-4. **Implementar** despliegues canary con análisis basado en observabilidad
-5. **Crear** flujos de trabajo de AIOps con CloudWatch Investigations y Bedrock
-6. **Analizar** traces distribuidos para identificar cuellos de botella de rendimiento
-7. **Correlacionar** métricas, logs y traces para el análisis de causa raíz
-
-## Referencias
-
-* [Descripción general de observabilidad](../../observability/README.md)
-* [Documentación de Prometheus](../../observability/metrics/01-prometheus.md)
-* [Dashboard de Grafana](../../observability/grafana/README.md)
-* [Documentación de Loki](../../observability/logging/01-loki.md)
-* [Documentación de Tempo](../../observability/tracing/01-tempo.md)
-* [Documentación de OpenTelemetry](../../observability/tracing/03-opentelemetry.md)
-* [Documentación de ArgoCD](../../gitops/argocd/README.md)
-* [Documentación de KEDA](../../autoscaling/01-keda.md)
-* [Documentación de Karpenter](../../autoscaling/02-karpenter.md)
-
-***
-
-**¿Listo para comenzar?** Comienza con la [Parte 1: Configuración de la infraestructura](01-infrastructure-setup-lab.md)
+Distingue la validación local nativa/de SDK/de esquema/de navegador de los resultados reales en AWS. Inventaria recursos, asociaciones de IAM, snapshots, DNS y LBs/PVCs; realiza la limpieza en el orden de dependencias de la Part6. No silencies todos los fallos ni elimines clústeres antes que sus dependientes gestionados.

@@ -1,807 +1,126 @@
-# 第 1 部分：基础设施设置
+# 第 1 部分：基础设施搭建
 
-> **难度**：中级
-> **预计时间**：60 分钟
-> **最后更新**：February 22, 2026
+<span id="cleanup"></span>
+<span id="exercise-1-environment-setup"></span>
+<span id="exercise-2-managed-cluster-eks-setup"></span>
+<span id="exercise-3-service-cluster-eks-setup"></span>
+<span id="exercise-4-aws-managed-services-setup"></span>
+<span id="exercise-5-argocd-setup-on-managed-cluster"></span>
+<span id="exercise-6-argo-rollouts-setup-on-service-cluster"></span>
+<span id="exercise-7-irsa-configuration"></span>
+<span id="learning-objectives"></span>
+<span id="next-steps"></span>
+<span id="references"></span>
+<span id="steps"></span>
+<span id="steps-1"></span>
+<span id="steps-2"></span>
+<span id="steps-3"></span>
+<span id="steps-4"></span>
+<span id="steps-5"></span>
+<span id="steps-6"></span>
+<span id="summary"></span>
+<span id="troubleshooting"></span>
+<span id="verification"></span>
+<span id="verification-1"></span>
+<span id="verification-2"></span>
+<span id="verification-3"></span>
+<span id="verification-4"></span>
+<span id="verification-5"></span>
 
-## 学习目标
+> **难度**: 高级
+> **最后更新**: September 13, 2026
+准备两个 EKS 集群以及一条专用的实验数据库/消息链路。可执行文件位于[应用示例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)中。在创建计费资源之前，请先审查账户、Region（区域）、网络、权限和清理方案。本次审阅并未创建任何 AWS 资源。
 
-- 使用 Terraform 和 eksctl 预置两个 EKS 集群（Managed 和 Service）
-- 配置 AWS Managed Services（Aurora、OpenSearch、AMP、AMG、MWAA、SQS/SNS）
-- 设置 ArgoCD 以进行多集群部署
-- 配置 IRSA（IAM Roles for Service Accounts），以实现安全的 AWS 访问
+![管理/服务集群与专用实验资源](../../.gitbook/assets/en-labs-observability-01-infrastructure-setup-lab-0.png)
 
-## 前提条件
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-01-infrastructure-setup-lab-0.html)
 
-- [ ] 已配置具有适当权限的 AWS CLI
-- [ ] 已安装 Terraform >= 1.7
-- [ ] 已安装 eksctl >= 0.175
-- [ ] 已安装 kubectl >= 1.29
-- [ ] 已安装 Helm >= 3.14
-- [ ] 已完成 [EKS Cluster Creation](../../eks/02-eks-cluster-creation-part1.md) 学习
+## 1. 验证环境与归属 {#prerequisites}
 
-> **成本警告**：本实验会创建大量 AWS 资源。预计成本约为 $2.50/小时。完成后请进行完整清理。
-
----
-
-## 练习 1：环境设置
-
-### 步骤
-
-**步骤 1.1：设置环境变量**
-
-```bash
-export AWS_REGION=us-west-2
-export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export MANAGED_CLUSTER_NAME=obs-managed
-export SERVICE_CLUSTER_NAME=obs-service
-
-echo "AWS Region: $AWS_REGION"
-echo "Account ID: $ACCOUNT_ID"
-echo "Managed Cluster: $MANAGED_CLUSTER_NAME"
-echo "Service Cluster: $SERVICE_CLUSTER_NAME"
-```
-
-**步骤 1.2：创建工作目录**
-
-```bash
-mkdir -p ~/obs-lab/{terraform,k8s,scripts}
-cd ~/obs-lab
-```
-
-**步骤 1.3：验证工具版本**
+示例是在 AWS CLI v2、eksctl 0.229.0、kubectl 1.36.2、Helm 3.21.3、Python 3.12、Docker、Git 和 jq 环境下审阅的。在审阅时，EKS 1.36 处于标准支持阶段。旧的 1.31 示例处于扩展支持阶段，并非已经停止支持。实际执行时请重新确认版本与 Region 的可用性。
 
 ```bash
 aws --version
-terraform version
 eksctl version
 kubectl version --client
 helm version
+python3 --version
+aws sts get-caller-identity
 ```
-
----
-
-## 练习 2：Managed Cluster（EKS）设置
-
-### 步骤
-
-**步骤 2.1：创建 VPC 和 EKS 集群配置**
+请使用经过批准的临时角色。对照部署计划审查所需的 EKS、EC2/VPC、CloudFormation、IAM/PassRole、RDS、SNS/SQS、KMS 和 Logs 操作权限。不要为本练习为每个服务授予 FullAccess，也不要创建长期有效的 IAM 访问密钥。
 
 ```bash
-cat > ~/obs-lab/managed-cluster.yaml << 'EOF'
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-
-metadata:
-  name: obs-managed
-  region: us-west-2
-  version: "1.31"
-
-vpc:
-  cidr: 10.10.0.0/16
-  nat:
-    gateway: Single
-
-iam:
-  withOIDC: true
-
-managedNodeGroups:
-  - name: obs-workers
-    instanceType: m5.xlarge
-    desiredCapacity: 3
-    minSize: 2
-    maxSize: 5
-    volumeSize: 100
-    volumeType: gp3
-    labels:
-      role: observability
-    tags:
-      Environment: lab
-      Purpose: observability-stack
-    iam:
-      attachPolicyARNs:
-        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-
-addons:
-  - name: vpc-cni
-    version: latest
-  - name: coredns
-    version: latest
-  - name: kube-proxy
-    version: latest
-  - name: aws-ebs-csi-driver
-    version: latest
-    wellKnownPolicies:
-      ebsCSIController: true
-
-cloudWatch:
-  clusterLogging:
-    enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
-EOF
+umask 077
+export LAB_STATE="$(mktemp -d "$PWD/obs-lab.XXXXXXXX")"
+# Set AWS_REGION, EXPECTED_ACCOUNT_ID and a unique LAB_PREFIX first.
+test "$(aws sts get-caller-identity --query Account --output text)" = "$EXPECTED_ACCOUNT_ID"
 ```
 
-**步骤 2.2：创建 Managed Cluster**
+## 2. 网络与两个集群 {#clusters}
+
+该示例复用了一个已审阅的 VPC 以及位于不同 AZ（可用区）中的两个私有子网。请先准备好 NAT/所需的 VPC 端点、DNS、地址容量以及 SG/NACL 规则。Kubernetes service CIDR172.20.0.0/16 和172.21.0.0/16 不得与实际的 VPC/互联网络重叠。使用不同的 VPC 时需要额外的对等连接/TGW、双向路由、DNS 以及源 IP 验证。
 
 ```bash
-eksctl create cluster -f ~/obs-lab/managed-cluster.yaml
+cd examples/labs/observability/application
+python3 prepare_clusters.py --region "$AWS_REGION" --vpc-id "$VPC_ID" \
+  --subnet-a "$PRIVATE_SUBNET_A" --az-a "$AZ_A" \
+  --subnet-b "$PRIVATE_SUBNET_B" --az-b "$AZ_B" \
+  --client-cidr "$CLIENT_CIDR" --prefix "$LAB_PREFIX" \
+  --output-directory "$LAB_STATE/clusters"
 ```
-
-> 此过程大约需要 15-20 分钟。
-
-**步骤 2.3：验证集群创建**
+生成器会选择 EKS 1.36、API access entry、OIDC、AL2023 托管节点、加密的 gp3 以及范围收窄的公共 API 客户端 CIDR。节点规格/数量是实验设置，并非经过实测的容量。创建之前请审查 JSON 和成本。若失败，请先检查以该名称部分创建出的资源，然后再重新创建任何内容。
 
 ```bash
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-managed)
-kubectl get nodes -o wide
-kubectl get pods -n kube-system
+eksctl create cluster -f "$LAB_STATE/clusters/managed.json" --write-kubeconfig=false
+eksctl create cluster -f "$LAB_STATE/clusters/service.json" --write-kubeconfig=false
+export KUBECONFIG="$LAB_STATE/kubeconfig"
+aws eks update-kubeconfig --name "$LAB_PREFIX-managed" --alias managed --kubeconfig "$KUBECONFIG"
+aws eks update-kubeconfig --name "$LAB_PREFIX-service" --alias service --kubeconfig "$KUBECONFIG"
+kubectl --context managed get nodes
+kubectl --context service get nodes
 ```
+请套用 [EKS 创建指南](../../eks/02-eks-cluster-creation-part1.md)和[集群实验](../eks/01-eks-cluster-creation-lab.md)中的账户/端点/归属检查。确认两个 context 分别选中了预期的、彼此不同的集群。
 
-### 验证
+## 3. 存储、负载均衡器与 OIDC 前置条件 {#platform-prerequisites}
+
+安装 EBS CSI 和已审阅的 `gp3` StorageClass、一个真正会强制执行 NetworkPolicy 的 CNI，以及 AWS Load Balancer Controller（`service.k8s.aws/nlb`）。不要盲目覆盖共享的 StorageClass。获取每个集群的 OIDC issuer 及对应的 IAM provider ARN。去掉 https:// 后的 issuer 主机/路径必须与 provider ARN 的后缀一致。
 
 ```bash
-kubectl get nodes
-# Expected: 3 nodes in Ready state
+aws eks describe-cluster --name "$LAB_PREFIX-managed" --query cluster.identity.oidc.issuer --output text
+aws eks describe-cluster --name "$LAB_PREFIX-service" --query cluster.identity.oidc.issuer --output text
+kubectl --context managed get storageclass gp3
+kubectl --context service get storageclass gp3
 ```
 
----
+## 4. Aurora、SNS/SQS 与角色 {#managed-resources}
 
-## 练习 3：Service Cluster（EKS）设置
-
-### 步骤
-
-**步骤 3.1：创建支持 Karpenter 的 Service Cluster 配置**
+`application/infra.yaml` 会创建一个私有的 Aurora writer、托管的 master Secret、SNS 扇出、彼此独立的消费者队列/DLQ、一个 CloudWatch 日志组以及若干角色。数据库入站规则仅允许实际的 service 节点 SG。单 writer 练习并不等于 Multi-AZ 高可用。请查询并显式提供该 Region 支持的 Aurora 引擎版本。
 
 ```bash
-cat > ~/obs-lab/service-cluster.yaml << 'EOF'
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-
-metadata:
-  name: obs-service
-  region: us-west-2
-  version: "1.31"
-  tags:
-    karpenter.sh/discovery: obs-service
-
-vpc:
-  cidr: 10.20.0.0/16
-  nat:
-    gateway: Single
-
-iam:
-  withOIDC: true
-
-managedNodeGroups:
-  - name: system
-    instanceType: m5.large
-    desiredCapacity: 2
-    minSize: 2
-    maxSize: 3
-    volumeSize: 50
-    volumeType: gp3
-    labels:
-      role: system
-    taints:
-      - key: CriticalAddonsOnly
-        value: "true"
-        effect: PreferNoSchedule
-
-karpenter:
-  version: '0.35.0'
-  createServiceAccount: true
-  withSpotInterruptionQueue: true
-
-addons:
-  - name: vpc-cni
-    version: latest
-  - name: coredns
-    version: latest
-  - name: kube-proxy
-    version: latest
-  - name: aws-ebs-csi-driver
-    version: latest
-    wellKnownPolicies:
-      ebsCSIController: true
-
-cloudWatch:
-  clusterLogging:
-    enableTypes: ["api", "audit", "authenticator"]
-EOF
+aws rds describe-db-engine-versions --engine aurora-postgresql \
+  --query "DBEngineVersions[].EngineVersion" --output table
 ```
-
-**步骤 3.2：创建 Service Cluster**
+提供 VpcId、PrivateSubnetIds、ServiceNodeSecurityGroupId、AuroraEngineVersion 以及两组 OIDC provider/issuer 配对；审查并执行 CloudFormation 变更集。验证账户、ARN 与 ServiceAccount 的一致性。应用运行时角色、KEDA 队列读取身份和管理侧 Collector 日志身份是彼此独立的。
 
 ```bash
-eksctl create cluster -f ~/obs-lab/service-cluster.yaml
+aws cloudformation describe-stacks --stack-name "$LAB_STACK" \
+  --query "Stacks[0].Outputs" --output json > "$LAB_STATE/infra-outputs.json"
 ```
 
-**步骤 3.3：配置 Karpenter NodePool**
+在此为第 2 部分生成 Collector 身份所需的输入。现在就确定镜像仓库和不可变标签；镜像的构建/推送在第 3 部分进行。
 
 ```bash
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-service)
-
-cat <<EOF | kubectl apply -f -
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: default
-spec:
-  template:
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand", "spot"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values: ["m5.large", "m5.xlarge", "m5.2xlarge", "c5.large", "c5.xlarge"]
-      nodeClassRef:
-        name: default
-  limits:
-    cpu: 100
-    memory: 200Gi
-  disruption:
-    consolidationPolicy: WhenUnderutilized
-    consolidateAfter: 30s
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: default
-spec:
-  amiFamily: AL2
-  subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: obs-service
-  securityGroupSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: obs-service
-  role: KarpenterNodeRole-obs-service
-  tags:
-    Environment: lab
-    ManagedBy: karpenter
-EOF
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt PyYAML==6.0.3
+.venv/bin/python prepare_values.py --outputs-file "$LAB_STATE/infra-outputs.json"   --region "$AWS_REGION" --image-repository "$IMAGE_REPOSITORY"   --image-tag "$IMAGE_TAG" --output-directory "$LAB_STATE/helm-inputs"
 ```
 
-### 验证
+## 5. 运行时数据库账户与下一步 {#database-and-next}
 
-```bash
-kubectl get nodepools
-kubectl get ec2nodeclasses
-# Expected: default NodePool and EC2NodeClass created
-```
+只在经过授权的环境中读取 master Secret，并将连接信息保存为私有的 JSON 文件。使用 RDS CA 证书包和 `sslmode=verify-full`。[bootstrap_db.py 流程](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application#infrastructure-and-credentials)会创建专用的 `lab_runtime` DML 访问权限，且不会覆盖已有密码。将其 Pod CA 路径设置为 `/run/database-ca/global-bundle.pem`。
 
----
+在归属清单中记录 stack、集群、保留的快照、IAM 附加关系、LB 和 PVC。针对实际的 Region 和用量估算 EKS/节点/NAT/EBS/Aurora/Logs/SNS/SQS/KMS/流量传输成本。不要给出固定的每小时总额，也不要把 AMG 的按用户月度价格换算成工作区的每小时费用。继续阅读[第 2 部分](./02-observability-stack-lab.md)。
 
-## 练习 4：AWS Managed Services 设置
+## 验证范围
 
-### 步骤
-
-**步骤 4.1：创建 SQS Queue 和 SNS Topic**
-
-```bash
-# Create SQS Queue for order events
-aws sqs create-queue \
-  --queue-name obs-lab-orders \
-  --attributes '{
-    "VisibilityTimeout": "30",
-    "MessageRetentionPeriod": "86400",
-    "ReceiveMessageWaitTimeSeconds": "20"
-  }' \
-  --region $AWS_REGION
-
-# Create SNS Topic for alerts
-aws sns create-topic \
-  --name obs-lab-alerts \
-  --region $AWS_REGION
-
-# Store ARNs
-export SQS_QUEUE_URL=$(aws sqs get-queue-url --queue-name obs-lab-orders --query QueueUrl --output text)
-export SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, 'obs-lab-alerts')].TopicArn" --output text)
-
-echo "SQS Queue URL: $SQS_QUEUE_URL"
-echo "SNS Topic ARN: $SNS_TOPIC_ARN"
-```
-
-**步骤 4.2：创建 Aurora PostgreSQL 集群**
-
-```bash
-# Create DB subnet group
-aws rds create-db-subnet-group \
-  --db-subnet-group-name obs-lab-aurora \
-  --db-subnet-group-description "Subnet group for obs-lab Aurora" \
-  --subnet-ids $(aws ec2 describe-subnets \
-    --filters "Name=tag:alpha.eksctl.io/cluster-name,Values=obs-service" \
-    --query "Subnets[?MapPublicIpOnLaunch==\`false\`].SubnetId" \
-    --output text | tr '\t' ' ')
-
-# Create Aurora cluster
-aws rds create-db-cluster \
-  --db-cluster-identifier obs-lab-aurora \
-  --engine aurora-postgresql \
-  --engine-version 15.4 \
-  --master-username obsadmin \
-  --master-user-password 'ObsLab2026!' \
-  --db-subnet-group-name obs-lab-aurora \
-  --vpc-security-group-ids $(aws ec2 describe-security-groups \
-    --filters "Name=tag:alpha.eksctl.io/cluster-name,Values=obs-service" \
-    --query "SecurityGroups[0].GroupId" --output text) \
-  --storage-encrypted \
-  --region $AWS_REGION
-
-# Create Aurora instance
-aws rds create-db-instance \
-  --db-instance-identifier obs-lab-aurora-1 \
-  --db-cluster-identifier obs-lab-aurora \
-  --db-instance-class db.r6g.large \
-  --engine aurora-postgresql \
-  --region $AWS_REGION
-
-echo "Aurora cluster creation initiated. This takes ~10 minutes."
-```
-
-**步骤 4.3：创建 MWAA Environment**
-
-```bash
-# Create S3 bucket for MWAA DAGs
-aws s3 mb s3://obs-lab-mwaa-${ACCOUNT_ID}-${AWS_REGION}
-
-# Upload placeholder DAG
-cat > /tmp/analytics_dag.py << 'DAGEOF'
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from datetime import datetime, timedelta
-
-default_args = {
-    'owner': 'obs-lab',
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
-}
-
-with DAG(
-    'analytics_batch',
-    default_args=default_args,
-    description='Daily analytics aggregation',
-    schedule_interval='0 2 * * *',
-    start_date=datetime(2026, 1, 1),
-    catchup=False,
-) as dag:
-
-    def run_analytics():
-        print("Running analytics batch job")
-
-    analytics_task = PythonOperator(
-        task_id='run_analytics',
-        python_callable=run_analytics,
-    )
-DAGEOF
-
-aws s3 cp /tmp/analytics_dag.py s3://obs-lab-mwaa-${ACCOUNT_ID}-${AWS_REGION}/dags/
-
-# Note: MWAA environment creation via CLI is complex
-# Use AWS Console or Terraform for production
-echo "For MWAA setup, use AWS Console: Amazon MWAA > Create environment"
-echo "S3 DAGs folder: s3://obs-lab-mwaa-${ACCOUNT_ID}-${AWS_REGION}/dags/"
-```
-
-**步骤 4.4：创建 Amazon Managed Prometheus（AMP）Workspace**
-
-```bash
-# Create AMP workspace
-aws amp create-workspace \
-  --alias obs-lab-prometheus \
-  --region $AWS_REGION
-
-# Get workspace ID
-export AMP_WORKSPACE_ID=$(aws amp list-workspaces \
-  --alias obs-lab-prometheus \
-  --query "workspaces[0].workspaceId" \
-  --output text)
-
-export AMP_REMOTE_WRITE_URL="https://aps-workspaces.${AWS_REGION}.amazonaws.com/workspaces/${AMP_WORKSPACE_ID}/api/v1/remote_write"
-export AMP_QUERY_URL="https://aps-workspaces.${AWS_REGION}.amazonaws.com/workspaces/${AMP_WORKSPACE_ID}"
-
-echo "AMP Workspace ID: $AMP_WORKSPACE_ID"
-echo "AMP Remote Write URL: $AMP_REMOTE_WRITE_URL"
-```
-
-**步骤 4.5：创建 Amazon Managed Grafana（AMG）Workspace**
-
-```bash
-# Create AMG workspace (requires SSO or IAM Identity Center)
-# Note: AMG creation via CLI requires additional IAM setup
-# Use AWS Console for initial setup
-
-echo "For AMG setup, use AWS Console: Amazon Managed Grafana > Create workspace"
-echo "Enable data sources: Amazon Managed Prometheus, CloudWatch, X-Ray"
-```
-
-**步骤 4.6：创建 OpenSearch Domain**
-
-```bash
-# Create OpenSearch domain
-aws opensearch create-domain \
-  --domain-name obs-lab-logs \
-  --engine-version OpenSearch_2.11 \
-  --cluster-config '{
-    "InstanceType": "m6g.large.search",
-    "InstanceCount": 2,
-    "DedicatedMasterEnabled": false,
-    "ZoneAwarenessEnabled": true,
-    "ZoneAwarenessConfig": {
-      "AvailabilityZoneCount": 2
-    }
-  }' \
-  --ebs-options '{
-    "EBSEnabled": true,
-    "VolumeType": "gp3",
-    "VolumeSize": 100
-  }' \
-  --node-to-node-encryption-options Enabled=true \
-  --encryption-at-rest-options Enabled=true \
-  --domain-endpoint-options '{
-    "EnforceHTTPS": true,
-    "TLSSecurityPolicy": "Policy-Min-TLS-1-2-2019-07"
-  }' \
-  --region $AWS_REGION
-
-echo "OpenSearch domain creation initiated. This takes ~15 minutes."
-```
-
-### 验证
-
-```bash
-# Check SQS
-aws sqs get-queue-attributes --queue-url $SQS_QUEUE_URL --attribute-names All
-
-# Check Aurora status
-aws rds describe-db-clusters --db-cluster-identifier obs-lab-aurora \
-  --query "DBClusters[0].Status"
-
-# Check AMP
-aws amp describe-workspace --workspace-id $AMP_WORKSPACE_ID
-
-# Check OpenSearch
-aws opensearch describe-domain --domain-name obs-lab-logs \
-  --query "DomainStatus.Processing"
-```
-
----
-
-## 练习 5：Managed Cluster 上的 ArgoCD 设置
-
-### 步骤
-
-**步骤 5.1：切换到 Managed Cluster**
-
-```bash
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-managed)
-kubectl config current-context
-```
-
-**步骤 5.2：安装 ArgoCD**
-
-```bash
-# Create namespace
-kubectl create namespace argocd
-
-# Install ArgoCD
-helm repo add argo https://argoproj.github.io/argo-helm
-helm repo update
-
-helm install argocd argo/argo-cd \
-  --namespace argocd \
-  --version 6.4.0 \
-  --set server.service.type=LoadBalancer \
-  --set configs.params."server\.insecure"=true \
-  --set controller.metrics.enabled=true \
-  --set server.metrics.enabled=true \
-  --wait
-```
-
-**步骤 5.3：获取 ArgoCD 凭证**
-
-```bash
-# Get admin password
-ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret \
-  -o jsonpath="{.data.password}" | base64 -d)
-
-# Get ArgoCD server URL
-ARGOCD_SERVER=$(kubectl -n argocd get svc argocd-server \
-  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-
-echo "ArgoCD URL: http://$ARGOCD_SERVER"
-echo "Username: admin"
-echo "Password: $ARGOCD_PASSWORD"
-```
-
-**步骤 5.4：安装 ArgoCD CLI 并登录**
-
-```bash
-# Install ArgoCD CLI
-curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-chmod +x /usr/local/bin/argocd
-
-# Login to ArgoCD
-argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PASSWORD --insecure
-```
-
-**步骤 5.5：使用 ArgoCD 注册 Service Cluster**
-
-```bash
-# Get Service Cluster context name
-SERVICE_CONTEXT=$(kubectl config get-contexts -o name | grep obs-service)
-
-# Add Service Cluster to ArgoCD
-argocd cluster add $SERVICE_CONTEXT --name obs-service --yes
-
-# Verify cluster registration
-argocd cluster list
-```
-
-### 验证
-
-```bash
-argocd cluster list
-# Expected: Two clusters listed (in-cluster and obs-service)
-```
-
----
-
-## 练习 6：Service Cluster 上的 Argo Rollouts 设置
-
-### 步骤
-
-**步骤 6.1：切换到 Service Cluster**
-
-```bash
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-service)
-```
-
-**步骤 6.2：安装 Argo Rollouts**
-
-```bash
-# Create namespace
-kubectl create namespace argo-rollouts
-
-# Install Argo Rollouts
-helm install argo-rollouts argo/argo-rollouts \
-  --namespace argo-rollouts \
-  --version 2.34.0 \
-  --set dashboard.enabled=true \
-  --set dashboard.service.type=LoadBalancer \
-  --set controller.metrics.enabled=true \
-  --wait
-```
-
-**步骤 6.3：获取 Argo Rollouts Dashboard URL**
-
-```bash
-ROLLOUTS_DASHBOARD=$(kubectl -n argo-rollouts get svc argo-rollouts-dashboard \
-  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-
-echo "Argo Rollouts Dashboard: http://$ROLLOUTS_DASHBOARD:3100"
-```
-
-### 验证
-
-```bash
-kubectl get pods -n argo-rollouts
-kubectl get svc -n argo-rollouts
-# Expected: argo-rollouts-controller and dashboard running
-```
-
----
-
-## 练习 7：IRSA 配置
-
-### 步骤
-
-**步骤 7.1：为 Prometheus 创建 IRSA（远程写入 AMP）**
-
-```bash
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-managed)
-
-# Create IAM policy for AMP
-cat > /tmp/amp-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "aps:RemoteWrite",
-        "aps:QueryMetrics",
-        "aps:GetSeries",
-        "aps:GetLabels",
-        "aps:GetMetricMetadata"
-      ],
-      "Resource": "arn:aws:aps:${AWS_REGION}:${ACCOUNT_ID}:workspace/${AMP_WORKSPACE_ID}"
-    }
-  ]
-}
-EOF
-
-aws iam create-policy \
-  --policy-name obs-lab-amp-access \
-  --policy-document file:///tmp/amp-policy.json
-
-# Create IRSA for prometheus
-eksctl create iamserviceaccount \
-  --cluster $MANAGED_CLUSTER_NAME \
-  --namespace monitoring \
-  --name prometheus-server \
-  --attach-policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/obs-lab-amp-access \
-  --approve
-```
-
-**步骤 7.2：为 OpenSearch 和 CloudWatch 创建 IRSA**
-
-```bash
-# Create combined observability policy
-cat > /tmp/obs-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "es:ESHttp*"
-      ],
-      "Resource": "arn:aws:es:${AWS_REGION}:${ACCOUNT_ID}:domain/obs-lab-logs/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-        "logs:DescribeLogStreams"
-      ],
-      "Resource": "arn:aws:logs:${AWS_REGION}:${ACCOUNT_ID}:log-group:/obs-lab/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "xray:PutTraceSegments",
-        "xray:PutTelemetryRecords"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-EOF
-
-aws iam create-policy \
-  --policy-name obs-lab-logging-access \
-  --policy-document file:///tmp/obs-policy.json
-
-# Create IRSA for fluent-bit
-eksctl create iamserviceaccount \
-  --cluster $MANAGED_CLUSTER_NAME \
-  --namespace logging \
-  --name fluent-bit \
-  --attach-policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/obs-lab-logging-access \
-  --approve
-```
-
-**步骤 7.3：为 Service Cluster（OTel Agent）创建 IRSA**
-
-```bash
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-service)
-
-# Create IRSA for OTel agent
-eksctl create iamserviceaccount \
-  --cluster $SERVICE_CLUSTER_NAME \
-  --namespace opentelemetry \
-  --name otel-collector \
-  --attach-policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/obs-lab-logging-access \
-  --approve
-```
-
-### 验证
-
-```bash
-# Check service accounts
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-managed)
-kubectl get sa -n monitoring prometheus-server -o yaml | grep -A5 annotations
-
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-service)
-kubectl get sa -n opentelemetry otel-collector -o yaml | grep -A5 annotations
-```
-
----
-
-## 总结
-
-在本实验中，你已完成：
-
-| 组件 | 状态 | 详情 |
-|-----------|--------|---------|
-| Managed Cluster | 已创建 | 3 个 m5.xlarge 节点，配备可观测性堆栈 |
-| Service Cluster | 已创建 | 已启用 Karpenter 以进行动态扩缩容 |
-| SQS Queue | 已创建 | 用于事件消息传递的 obs-lab-orders |
-| SNS Topic | 已创建 | 用于通知的 obs-lab-alerts |
-| Aurora PostgreSQL | 已创建 | db.r6g.large 多可用区 |
-| AMP Workspace | 已创建 | 用于 Prometheus 远程写入 |
-| OpenSearch | 已创建 | 2 个 m6g.large.search 节点 |
-| ArgoCD | 已安装 | 已配置多集群部署 |
-| Argo Rollouts | 已安装 | 已准备好 Canary 部署 |
-| IRSA | 已配置 | 安全的 AWS 服务访问 |
-
-## 清理
-
-> **重要**：完成所有实验后请运行清理，以避免持续产生费用。
-
-```bash
-# Delete EKS clusters (deletes node groups, IRSA, etc.)
-eksctl delete cluster -f ~/obs-lab/managed-cluster.yaml --wait
-eksctl delete cluster -f ~/obs-lab/service-cluster.yaml --wait
-
-# Delete Aurora
-aws rds delete-db-instance --db-instance-identifier obs-lab-aurora-1 --skip-final-snapshot
-aws rds delete-db-cluster --db-cluster-identifier obs-lab-aurora --skip-final-snapshot
-
-# Delete OpenSearch
-aws opensearch delete-domain --domain-name obs-lab-logs
-
-# Delete AMP
-aws amp delete-workspace --workspace-id $AMP_WORKSPACE_ID
-
-# Delete SQS/SNS
-aws sqs delete-queue --queue-url $SQS_QUEUE_URL
-aws sns delete-topic --topic-arn $SNS_TOPIC_ARN
-
-# Delete S3 bucket (MWAA)
-aws s3 rb s3://obs-lab-mwaa-${ACCOUNT_ID}-${AWS_REGION} --force
-
-# Delete IAM policies
-aws iam delete-policy --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/obs-lab-amp-access
-aws iam delete-policy --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/obs-lab-logging-access
-
-# Cleanup local files
-rm -rf ~/obs-lab
-```
-
-## 故障排除
-
-<details>
-<summary>EKS 集群创建失败</summary>
-
-- 验证 IAM 权限包含 EKS、EC2、VPC、CloudFormation
-- 检查所在区域的 VPC/子网限制
-- 运行 `eksctl utils describe-stacks --region=$AWS_REGION --cluster=<cluster-name>`
-</details>
-
-<details>
-<summary>ArgoCD 无法连接到 Service Cluster</summary>
-
-- 验证两个集群上下文均存在：`kubectl config get-contexts`
-- 重新运行集群添加：`argocd cluster add <context> --name obs-service --yes`
-- 检查 ArgoCD 日志：`kubectl logs -n argocd -l app.kubernetes.io/name=argocd-server`
-</details>
-
-<details>
-<summary>IRSA 未正常工作</summary>
-
-- 验证 OIDC provider 已关联：`aws eks describe-cluster --name <cluster> --query cluster.identity.oidc`
-- 检查 Service Account 注解：`kubectl get sa <sa-name> -n <namespace> -o yaml`
-- 验证 IAM role 信任策略包含正确的 OIDC provider
-</details>
-
-## 后续步骤
-
-继续学习 [第 2 部分：可观测性堆栈部署](./02-observability-stack-lab.md)，以部署完整的可观测性堆栈。
-
-## 参考资料
-
-- [EKS Cluster Creation](../../eks/02-eks-cluster-creation-part1.md)
-- [EKS Networking](../../eks/03-eks-networking-part1.md)
-- [Karpenter Documentation](../../autoscaling/02-karpenter.md)
-- [ArgoCD Documentation](../../gitops/argocd/README.md)
+检查涵盖了 eksctl schema、CloudFormation lint/角色结构以及本地 PostgreSQL 行为。实际的 EKS/VPC/OIDC/IRSA/Aurora/TLS、配额以及预配时长均未实际验证。

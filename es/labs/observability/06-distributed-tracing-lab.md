@@ -1,4 +1,4 @@
-# Parte 6: Análisis de trazas distribuidas
+# Parte 6: Análisis de trazabilidad distribuida
 
 <span id="cleanup-steps-table"></span>
 <span id="drill-down-analysis-workflow"></span>
@@ -25,16 +25,16 @@
 <span id="traceql-query-reference"></span>
 <span id="verification"></span>
 
-> **Dificultad**: Avanzado · **Tiempo estimado**: 45 minutos
+> **Dificultad**: Avanzada · **Tiempo estimado**: 45 minutos
 > **Última actualización**: September 13, 2026
 
-Sigue una petición real desde las métricas, pasando por un exemplar, hasta su trace (traza) y sus logs (registros), separando las observaciones de las hipótesis causales. Esto requiere la ruta de ingesta de la [Parte 2](./02-observability-stack-lab.md) y la propagación de contexto de la [Parte 3](./03-msa-deployment-lab.md). El TraceQL que aparece a continuación se comprobó con el parser real de Tempo **3.0.3** y usa los atributos actuales de OTel.
+Sigue una solicitud real desde las métricas, pasando por un exemplar, hasta su traza y logs, separando las observaciones de las hipótesis causales. Esto requiere la ruta de ingesta de la [Parte 2](./02-observability-stack-lab.md) y la propagación de contexto de la [Parte 3](./03-msa-deployment-lab.md). El TraceQL a continuación se verificó con el analizador real de Tempo **3.0.3** y utiliza atributos OTel actuales.
 
-![Investigate a metric through its trace and logs](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-0.png)
+![Investiga una métrica a través de su traza y logs](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-0.html)
 
-## 1. Búsqueda con TraceQL {#traceql}
+## 1. Búsqueda en TraceQL {#traceql}
 
 ```traceql
 { resource.service.name = "order-service" && span:duration > 1s }
@@ -54,15 +54,15 @@ Sigue una petición real desde las métricas, pasando por un exemplar, hasta su 
 { span:status = error } | select(resource.service.name, span.http.response.status_code, span:duration)
 ```
 
-`span:duration` mide un span individual; `trace:duration` mide el trace completo. Usa `span:` para los intrínsecos explícitos y `span.`/`resource.` para los atributos. `>>` encuentra los spans de la derecha que descienden de los spans de la izquierda. Buscar descendientes de un span de base de datos no es lo mismo que encontrar trabajo de base de datos por debajo de un Service.
+`span:duration` mide un span individual; `trace:duration` mide toda la traza. Usa `span:` para intrínsecos explícitos y `span.`/`resource.` para atributos. `>>` encuentra spans del lado derecho que descienden de spans del lado izquierdo. Buscar descendientes de un span de DB es diferente de encontrar trabajo de DB bajo un servicio.
 
-`sort(duration)`, el `order by` de SQL, `| limit 20` y `{ duration > p99 }` no forman parte de esta sintaxis de búsqueda. Configura el orden de los resultados, el límite de búsqueda y el rango temporal en Grafana, y sustituye un p99 medido por un literal de duración como `800ms`. `select()` solicita los atributos que se muestran; no puede recrear spans que nunca se almacenaron.
+`sort(duration)`, SQL `order by`, `| limit 20` y `{ duration > p99 }` no pertenecen a esta sintaxis de búsqueda. Configura el orden de los resultados, el límite de búsqueda y el intervalo de tiempo en Grafana, y sustituye un p99 medido por un literal de duración como `800ms`. `select()` solicita los atributos que se muestran; no puede recrear spans que nunca se almacenaron.
 
-Los SDK más antiguos pueden emitir `http.status_code`, `http.method`, `db.system`, `db.statement` o `messaging.operation`. Inspecciona los spans reales y las versiones del SDK antes de usar los actuales `http.response.status_code`, `http.request.method`, `db.system.name`, `db.query.text` o `messaging.operation.type`. Renombrar un atributo de consulta no transforma los datos ya recopilados. Captura el texto de las consultas solo bajo una política explícita de saneamiento; excluye contraseñas, literales SQL y datos de clientes.
+Los SDK más antiguos pueden emitir `http.status_code`, `http.method`, `db.system`, `db.statement` o `messaging.operation`. Inspecciona los spans reales y las versiones de SDK antes de usar los actuales `http.response.status_code`, `http.request.method`, `db.system.name`, `db.query.text` o `messaging.operation.type`. Renombrar un atributo de consulta no transforma los datos recopilados. Captura texto de consultas solo bajo una política explícita de sanitización; excluye contraseñas, literales SQL y datos de clientes.
 
 ## 2. Requisitos previos del grafo de servicios {#service-graph}
 
-Recibir trazas en Tempo no basta por sí solo para completar el grafo de servicios de Grafana. Habilita el procesador service-graphs del metrics-generator, entrega sus métricas a un backend de métricas real y enlaza el UID de serviceMap del datasource de Tempo en Grafana con ese backend. Los spans cliente/servidor o productor/consumidor deben compartir contexto. El muestreo, los spans ausentes y los tipos de span incorrectos afectan a las aristas resultantes.
+Recibir trazas solo en Tempo no completa el grafo de servicios de Grafana. Habilita el procesador service-graphs de metrics-generator, entrega sus métricas a un backend de métricas real y vincula el UID serviceMap de la fuente de datos Tempo de Grafana a ese backend. Los spans de cliente/servidor o productor/consumidor deben compartir contexto. El muestreo, los spans faltantes y los tipos de span incorrectos afectan las aristas resultantes.
 
 ```promql
 sum by (client, server) (rate(traces_service_graph_request_total[5m]))
@@ -80,23 +80,23 @@ sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum[5m
 sum by (client, server) (rate(traces_service_graph_request_server_seconds_count[5m]))
 ```
 
-El contador de fallos puede no tener ninguna serie hasta el primer fallo. Rellena su numerador ausente con cero a partir de la serie de total de peticiones correspondiente y luego exige un denominador positivo para distinguir un 0% saludable de la ausencia de tráfico o de una ingesta que falta.
+El contador de fallos puede no tener ninguna serie hasta el primer fallo. Completa su numerador faltante con cero a partir de la serie request-total correspondiente y luego exige un denominador positivo para distinguir un 0 % saludable de la ausencia de tráfico o de ingesta faltante.
 
-La última consulta mide la duración media del lado del servidor. La duración del lado del cliente usa `traces_service_graph_request_client_seconds_*`; no consultes la familia inexistente `traces_service_graph_request_duration_seconds_*`. Trata los intervalos sin tráfico como evidencia ausente. Los colores y el grosor de las aristas dependen de la configuración de Grafana y del dashboard; inspecciona los valores de peticiones, errores y duración en lugar de asumir reglas de color fijas del 1%/5%.
+La última consulta mide la duración media del lado del servidor. La duración del lado del cliente usa `traces_service_graph_request_client_seconds_*`; no consultes la familia inexistente `traces_service_graph_request_duration_seconds_*`. Trata los intervalos sin tráfico como evidencia faltante. Los colores y los anchos de las aristas dependen de la configuración de Grafana/dashboard; inspecciona los valores de solicitud/error/duración en lugar de asumir reglas fijas de color de 1 %/5 %.
 
-## 3. Formula hipótesis de cuellos de botella a partir del waterfall {#waterfall}
+## 3. Formula hipótesis de cuellos de botella a partir de la cascada {#waterfall}
 
 | Observación | Seguimiento |
 |---|---|
-| Span de base de datos lento | Revisa el plan de consulta, los bloqueos, el pool de conexiones y las métricas de la base de datos |
-| Span de cliente prolongado | Compara los intervalos de DNS/TLS/red/espera del servidor/reintentos |
-| Hueco entre el span padre y el hijo | Revisa el trabajo no instrumentado, las colas, el GC y la planificación |
-| Spans hijos en paralelo | Analiza el solapamiento y la ruta crítica en lugar de sumar duraciones |
-| Retraso en la mensajería | Separa la duración de envío/recepción/procesamiento de la espera en cola y las reentregas |
+| Span de DB lento | Comprueba el plan de consulta, bloqueos, el pool de conexiones y las métricas de DB |
+| Span de cliente largo | Compara los intervalos de espera/reintento de DNS/TLS/red/servidor |
+| Brecha entre padre e hijo | Comprueba trabajo sin instrumentar, colas, GC y planificación |
+| Spans hijos paralelos | Analiza la superposición y la ruta crítica en lugar de sumar las duraciones |
+| Retraso de mensajería | Separa la duración de envío/recepción/procesamiento de la espera en cola y la reentrega |
 
-La duración del padre incluye la duración de los hijos; sumar todos los spans cuenta el tiempo dos veces. Un span de base de datos de 1,8 segundos no prueba por sí solo que falte un índice. Compara logs y métricas sobre la misma release, el mismo tráfico y el mismo rango temporal antes de aceptar una hipótesis.
+La duración del padre incluye la duración de los hijos; sumar todos los spans cuenta el tiempo dos veces. Un span de DB de 1,8 segundos por sí solo no demuestra que falte un índice. Compara logs y métricas en la misma versión, tráfico e intervalo de tiempo antes de aceptar una hipótesis.
 
-## 4. Enlaza logs y trazas {#correlation}
+## 4. Vincula logs y trazas {#correlation}
 
 ```logql
 {service_name="order-service"} | json | level="ERROR"
@@ -104,55 +104,55 @@ La duración del padre incluye la duración de los hijos; sumar todos los spans 
 {service_name="order-service"} | json | trace_id="0123456789abcdef0123456789abcdef"
 ```
 
-Estas consultas dan por supuesto que existen realmente una etiqueta de stream `service_name` y un campo JSON `trace_id`. Sustituye el trace ID de ejemplo de 32 caracteres por un ID de petición real. `traceID`, `traceId` y `trace_id` son campos distintos. Mantén los trace ID en campos de log o en metadatos estructurados, no en etiquetas de stream únicas. Define los límites temporales en Grafana o en los parámetros HTTP; no añadas `timestamp >= 2025-...` a LogQL.
+Estas consultas suponen una etiqueta de flujo `service_name` real y un campo JSON `trace_id`. Sustituye el ID de traza de ejemplo de 32 caracteres por un ID de solicitud real. `traceID`, `traceId` y `trace_id` son campos diferentes. Mantén los ID de traza en campos de log/metadatos estructurados, no en etiquetas de flujo únicas. Establece los límites de tiempo en los parámetros de Grafana/HTTP; no añadas `timestamp >= 2025-...` a LogQL.
 
-Un derived field de Loki extrae el trace ID y enlaza con el UID del datasource de Tempo. En el YAML de provisioning de Grafana, escapa la expresión del enlace interno como `$${__value.raw}`. Las expresiones regulares entre comillas dobles y un envsubst de shell demasiado amplio pueden alterar las barras invertidas o las variables de Grafana; usa comillas simples cuando corresponda y sustituciones de alcance reducido.
+Un campo derivado de Loki extrae el ID de traza y lo vincula al UID de la fuente de datos Tempo. En el YAML de aprovisionamiento de Grafana, escapa la expresión del enlace interno como `$${__value.raw}`. Las expresiones regulares entre comillas dobles y un envsubst de shell amplio pueden cambiar las barras invertidas o las variables de Grafana; usa comillas simples adecuadas y sustituciones de alcance limitado.
 
-Configura `tracesToLogsV2` de Tempo con el UID de Loki, el mapeo real de etiquetas de recurso a log, el margen temporal y el filtrado por trace ID. Inspecciona el LogQL generado después de hacer clic en «Logs for this span». Que el enlace exista y que se recupere correctamente la misma petición son comprobaciones distintas.
+Configura Tempo `tracesToLogsV2` con el UID de Loki, el mapeo real de etiquetas de recurso a log, relleno de tiempo y filtrado por ID de traza. Inspecciona el LogQL generado después de hacer clic en “Logs for this span.” La existencia de un enlace y la recuperación exitosa de la misma solicitud son verificaciones independientes.
 
-## 5. Significado y verificación de los exemplars {#exemplars}
+## 5. Significado y verificación de exemplar {#exemplars}
 
-![Follow a representative exemplar to its trace and logs](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-1.png)
+![Sigue un exemplar representativo hasta su traza y logs](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-1.html)
 
-Un exemplar es una **observación representativa** adjunta a un agregado. Hacer clic en un punto de una gráfica de p99 no prueba que esa petición determinara el límite exacto del percentil. La producción de exemplars, su conservación en el exporter/remote-write, el almacenamiento en Prometheus y el enlace del datasource en Grafana deben funcionar todos. El muestreo o la retención pueden dejar un ID de exemplar cuyo trace no esté disponible.
+Un exemplar es una **observación representativa** adjunta a un agregado. Hacer clic en un punto de un gráfico p99 no demuestra que esa solicitud determinara el límite exacto del percentil. La producción de exemplars, la conservación por exporter/remote-write, el almacenamiento de Prometheus y la vinculación de la fuente de datos de Grafana deben funcionar. El muestreo o la retención pueden dejar un ID de exemplar cuya traza no está disponible.
 
-Inspecciona los resultados reales de la API de exemplars de Prometheus y consulta Tempo con el `trace_id` devuelto. Habilitar una opción de visualización en Grafana o buscar un ConfigMap de Prometheus inexistente no valida la ingesta. Verifica los ajustes de almacenamiento de exemplars frente a la versión instalada de Prometheus o del chart y frente al recurso de Prometheus renderizado y sus argumentos de ejecución.
+Inspecciona los resultados reales de la API de exemplar de Prometheus y consulta Tempo con el `trace_id` devuelto. Habilitar una opción de visualización de Grafana o buscar un ConfigMap de Prometheus inexistente no es una validación de ingesta. Confirma la configuración de almacenamiento de exemplars con respecto a la versión instalada de Prometheus/chart y los argumentos del recurso/runtime de Prometheus renderizados.
 
 ## 6. Dashboards RED y SLI/SLO {#slo}
 
-Construye los paneles RED a partir de los nombres de métrica, las etiquetas y las unidades de histograma reales. Compara la tasa de peticiones, la proporción de fallos y la distribución de duraciones sobre el mismo alcance de Service/ruta. Define qué peticiones son elegibles y qué cuenta como éxito antes de calcular la disponibilidad; indica cómo se tratan las respuestas 4xx, los health checks y los reintentos.
+Crea paneles RED a partir de nombres de métricas, etiquetas y unidades de histogramas reales. Compara la tasa de solicitudes, la proporción de fallos y la distribución de duración en el mismo ámbito de servicio/ruta. Define las solicitudes elegibles y el éxito antes de calcular la disponibilidad; indica cómo se tratan las respuestas 4xx, las comprobaciones de estado y los reintentos.
 
-Un SLO de 30 días requiere retención y observaciones reales a lo largo de ese periodo. Una consulta `[30d]` en un laboratorio recién creado no genera 30 días de evidencia. Gestiona la ausencia de tráfico, las series ausentes y los reinicios de contadores; declara las limitaciones de los percentiles con volúmenes bajos. Calcula el presupuesto de errores usando los fallos permitidos y los fallos observados en la misma ventana. Registra el periodo, el denominador y el valor en lugar de afirmar un fijo «99,9% conseguido».
+Un SLO de 30 días requiere retención y observaciones reales durante ese período. Una consulta `[30d]` en un laboratorio reciente no crea 30 días de evidencia. Gestiona la ausencia de tráfico, las series faltantes y los reinicios de contadores; divulga las limitaciones de percentiles de bajo volumen. Calcula los presupuestos de error usando los fallos permitidos y los fallos observados durante la misma ventana. Registra el período, el denominador y el valor en lugar de afirmar que se logró un “99,9 %” fijo.
 
 ## 7. Verifica el flujo y luego limpia {#cleanup}
 
-Antes de la limpieza, registra una petición cuyo ID de exemplar, trace ID en Tempo y trace ID en los logs coincidan; verifica las dependencias reales del grafo de servicios y la entrega de alertas. Conserva los valores medidos, las marcas de tiempo y las versiones de configuración en lugar de rellenar los resultados con estimaciones.
+Antes de la limpieza, registra una solicitud cuyo ID de exemplar, ID de traza de Tempo e ID de traza de log coincidan; verifica las dependencias reales del grafo de servicios y la entrega de alertas. Conserva los valores medidos, las marcas de tiempo y las versiones de configuración en lugar de completar los resultados con estimaciones.
 
 | Orden | Acción y condición de finalización |
 |---|---|
-| 1 | Detén k6/Locust, la inyección de fallos y los disparadores de análisis con IA; guarda los resultados |
-| 2 | Detén la recreación del ApplicationSet/padre de GitOps y elimina en cascada la aplicación real |
-| 3 | Elimina los LoadBalancers/Ingresses, workloads y PVCs del clúster de servicio; verifica la limpieza de los LB y volúmenes externos |
-| 4 | Elimina los custom resources de telemetría antes de desinstalar sus operators usando los nombres reales de release/namespace |
-| 5 | Vacía/elimina los NodeClaims de Karpenter antes de retirar el controlador; conserva los controladores de API/LB/almacenamiento mientras existan dependencias |
-| 6 | Revisa los planes de destrucción con el mismo estado de IaC; usa los IDs/ARNs exactos registrados para los recursos de AWS creados manualmente |
-| 7 | Elimina EKS/VPC después de limpiar las dependencias y luego verifica la eliminación de los servicios gestionados y los recursos residuales |
+| 1 | Detén k6/Locust, la inyección de fallos y los activadores de análisis de IA; guarda los resultados |
+| 2 | Detén la recreación de GitOps ApplicationSet/padre y elimina en cascada la aplicación real |
+| 3 | Elimina los LoadBalancers/Ingresses, workloads y PVCs del clúster de servicios; verifica la limpieza del LB/volumen externo |
+| 4 | Elimina los recursos personalizados de telemetría antes de desinstalar sus operadores usando los nombres reales de release/namespace |
+| 5 | Drena/elimina los NodeClaims de Karpenter antes de eliminar el controlador; conserva los controladores de API/LB/almacenamiento mientras existan dependencias |
+| 6 | Revisa los planes de destrucción usando el mismo estado de IaC; usa los ID/ARN exactos registrados para los recursos de AWS creados manualmente |
+| 7 | Elimina EKS/VPC después de limpiar las dependencias y luego verifica la eliminación de servicios administrados y recursos residuales |
 
-No elimines namespaces compartidos ni CRDs de ámbito de clúster. Usa la release/namespace/versión de instalación registrados, no una URL de instalador `latest`. En S3 con versionado hay que revisar las versiones antiguas y los delete markers además de los objetos actuales. Reconcilia la política de snapshots de Aurora, el bucket de MWAA/DAG, AMG, AMP, OpenSearch, SNS/SQS/DLQ, Lambda/API Gateway, las asociaciones de IAM, EBS/LBs, los log groups y las alarmas con tu inventario. Las solicitudes de eliminación aceptadas no equivalen a una eliminación completada.
+No elimines namespaces compartidos ni CRDs de todo el clúster. Usa el release/namespace/versión de instalación registrado, no una URL de instalador `latest`. S3 versionado requiere comprobar las versiones antiguas y los marcadores de eliminación, así como los objetos actuales. Concilia la política de snapshots de Aurora, el bucket de MWAA/DAG, AMG, AMP, OpenSearch, SNS/SQS/DLQ, Lambda/API Gateway, las asociaciones de IAM, EBS/LBs, los grupos de logs y las alarmas con tu inventario. Las solicitudes de eliminación aceptadas no son eliminaciones completadas.
 
-Revisa la propiedad de los recursos y preserva la evidencia y el estado en lugar de usar una destrucción autoaprobada sin comprobar, silenciar todos los errores o eliminar todo el directorio de trabajo.
+Revisa la propiedad de los recursos y conserva la evidencia/el estado en lugar de usar una destrucción con aprobación automática sin comprobar, suprimir todos los errores o eliminar todo el directorio de trabajo.
 
 ## Alcance de la validación y referencias
 
-El parser actual de Tempo validó 12 consultas aceptadas y rechazó tres consultas erróneas anteriores. Una instancia local efímera de Loki 3.7.7 recibió dos líneas de log sintéticas; ambas consultas LogQL recuperaron exactamente el trace ID esperado. No se ejecutaron la búsqueda en Tempo del servicio real, la recopilación en Loki, el enlace de datos en Grafana ni la eliminación en la nube.
+El analizador actual de Tempo validó 12 consultas aceptadas y rechazó tres consultas erróneas anteriores. Un Loki local efímero 3.7.7 recibió dos líneas de log sintéticas; ambas consultas de LogQL recuperaron el ID de traza exacto esperado. No se ejecutaron la búsqueda real de Tempo del servicio, la recopilación de Loki, la vinculación de datos de Grafana ni la eliminación en la nube.
 
 - [TraceQL](https://grafana.com/docs/tempo/latest/traceql/)
 - [Métricas del grafo de servicios](https://grafana.com/docs/tempo/latest/metrics-from-traces/service_graphs/)
 - [Spans HTTP de OTel](https://opentelemetry.io/docs/specs/semconv/http/http-spans/)
 - [Spans de base de datos de OTel](https://opentelemetry.io/docs/specs/semconv/database/database-spans/)
-- [Derived fields de Loki](https://grafana.com/docs/grafana/latest/datasources/loki/configure-loki-data-source/)
+- [Campos derivados de Loki](https://grafana.com/docs/grafana/latest/datasources/loki/configure/)
 - [Guía de Tempo](../../observability/tracing/01-tempo.md)
 - [Guía de Loki](../../observability/logging/01-loki.md)
-- [Índice de la serie](./README.md)
+- [Índice de series](./README.md)
