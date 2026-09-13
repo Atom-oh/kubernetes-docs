@@ -11,6 +11,14 @@ def json_object(response):
         return {}
 
 
+def valid_id(value):
+    return (isinstance(value, str) and bool(value)) or (
+        type(value) in (int, float)
+        and 0 < value <= 2**53 - 1
+        and value == int(value)
+    )
+
+
 class OrderUser(HttpUser):
     wait_time = between(0.5, 1)
 
@@ -28,14 +36,13 @@ class OrderUser(HttpUser):
             catch_response=True,
         ) as response:
             order_id = json_object(response).get("id")
-            valid_id = (
-                type(order_id) is int and 0 < order_id <= 2**53 - 1
-            ) or (isinstance(order_id, str) and bool(order_id))
-            if response.status_code != 201 or not valid_id:
+            if response.status_code != 201 or not valid_id(order_id):
                 response.failure("order response must be 201 with a valid id")
                 return
             response.success()
 
+        if type(order_id) in (int, float):
+            order_id = int(order_id)
         with self.client.post(
             "/payments",
             json={
@@ -62,7 +69,8 @@ class OrderUser(HttpUser):
             timeout=5,
             catch_response=True,
         ) as response:
-            if response.status_code != 200 or json_object(response).get("id") != order_id:
+            read_id = json_object(response).get("id")
+            if response.status_code != 200 or not valid_id(read_id) or read_id != order_id:
                 response.failure("response did not contain the created order")
             else:
                 response.success()

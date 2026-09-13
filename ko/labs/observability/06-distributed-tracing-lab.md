@@ -72,14 +72,20 @@ Tempo에 trace가 들어오는 것만으로 Grafana service graph가 완성되�
 ```promql
 sum by (client, server) (rate(traces_service_graph_request_total[5m]))
 
-sum by (client, server) (rate(traces_service_graph_request_failed_total[5m]))
-/
-sum by (client, server) (rate(traces_service_graph_request_total[5m]))
+(
+  sum by (client, server) (rate(traces_service_graph_request_failed_total[5m]))
+  or on (client, server)
+  (0 * sum by (client, server) (rate(traces_service_graph_request_total[5m])))
+)
+/ on (client, server)
+(sum by (client, server) (rate(traces_service_graph_request_total[5m])) > 0)
 
 sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum[5m]))
 /
 sum by (client, server) (rate(traces_service_graph_request_server_seconds_count[5m]))
 ```
+
+에러 counter는 오류가 한 번도 없으면 series 자체가 없을 수 있습니다. 분자는 대응하는 request-total의 0으로 보완하고, 분모는 양수인 요청률만 남겨 정상 0%와 무트래픽·수집 누락을 구분합니다.
 
 마지막 쿼리는 server 측 평균 지연입니다. client 측은 `traces_service_graph_request_client_seconds_*`를 사용합니다. 존재하지 않는 `traces_service_graph_request_duration_seconds_*`를 사용하지 않습니다. 0 요청 구간은 0% 정상으로 오해하지 않도록 처리합니다. UI 색상·굵기는 dashboard/Grafana 설정에 따라 달라지므로 고정 1%·5% 색상 규칙으로 판정하지 않고 실제 request/error/duration 값을 봅니다.
 

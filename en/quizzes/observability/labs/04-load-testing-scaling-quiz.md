@@ -140,16 +140,16 @@ Use kube_deployment_status_replicas_ready for ready replicas; Rollouts need thei
 
 9. How should Running Pods be counted from phase metrics?
    - A) Count all Running series without filtering values.
-   - B) Sum Running series whose value equals 1.
+   - B) Sum the Running phase 0/1 gauges directly.
    - C) Sum Pod-name lengths.
    - D) Always return three.
 
 <details>
 <summary>Show answer</summary>
 
-**Answer: B) Sum Running series whose value equals 1.**
+**Answer: B) Sum the Running phase 0/1 gauges directly.**
 
-Running phase series can exist with value zero, so an unfiltered count overcounts.
+Running phase series can exist with value zero, so an unfiltered count overcounts. Summing the gauges returns zero for all-Pending Pods and remains absent when telemetry is missing.
 
 </details>
 

@@ -140,16 +140,16 @@ ready는 kube_deployment_status_replicas_ready로 확인합니다. Rollout은 �
 
 9. Running Pod 수를 phase metric으로 세는 방법은?
    - A) Running series를 조건 없이 count한다
-   - B) 값이 1인 Running series를 합한다
+   - B) Running phase의 0/1 gauge를 그대로 합한다
    - C) Pod 이름 길이를 합한다
    - D) 항상 3을 반환한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 값이 1인 Running series를 합한다**
+**정답: B) Running phase의 0/1 gauge를 그대로 합한다**
 
-phase=Running series도 값 0으로 존재할 수 있어 count만 하면 과대 계산합니다.
+phase=Running series도 값 0으로 존재할 수 있어 count만 하면 과대 계산합니다. gauge 합은 전부 Pending이면 0이며 수집 series가 없을 때는 데이터 없음으로 남습니다.
 
 </details>
 

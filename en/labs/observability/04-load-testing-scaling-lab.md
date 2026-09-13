@@ -105,7 +105,7 @@ Karpenter provisions capacity for unschedulable Pods whose requirements can be m
 
 ```promql
 # Running Pods: phase series also exist with value zero.
-sum(kube_pod_status_phase{namespace="msa", phase="Running"} == 1)
+sum(kube_pod_status_phase{namespace="msa", phase="Running"})
 
 # Deployment total/ready replicas are different measurements.
 kube_deployment_status_replicas{namespace="msa"}
@@ -119,6 +119,8 @@ kube_horizontalpodautoscaler_status_current_replicas{namespace="msa"}
 sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="msa", container!="", container!="POD"}[5m]))
 sum by (pod) (container_memory_working_set_bytes{namespace="msa", container!="", container!="POD"})
 ```
+
+Summing the Running phase 0/1 gauges returns zero when all observed Pods are Pending and remains absent when telemetry is missing. Filtering every series out with `== 1` loses that distinction.
 
 `kube_deployment_status_replicas` is not the ready count. For a Rollout workload, use Rollouts exporter/ReplicaSet/Pod state rather than assuming Deployment metrics exist. Custom node labels appear in `kube_node_labels` only when allowed by kube-state-metrics. `changes(kube_node_created[10m])` observes a constant creation timestamp and does not detect newly created nodes.
 

@@ -67,14 +67,20 @@ Receiving traces in Tempo alone does not complete the Grafana service graph. Ena
 ```promql
 sum by (client, server) (rate(traces_service_graph_request_total[5m]))
 
-sum by (client, server) (rate(traces_service_graph_request_failed_total[5m]))
-/
-sum by (client, server) (rate(traces_service_graph_request_total[5m]))
+(
+  sum by (client, server) (rate(traces_service_graph_request_failed_total[5m]))
+  or on (client, server)
+  (0 * sum by (client, server) (rate(traces_service_graph_request_total[5m])))
+)
+/ on (client, server)
+(sum by (client, server) (rate(traces_service_graph_request_total[5m])) > 0)
 
 sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum[5m]))
 /
 sum by (client, server) (rate(traces_service_graph_request_server_seconds_count[5m]))
 ```
+
+The failure counter may have no series until the first failure. Fill its missing numerator with zero from the matching request-total series, then require a positive denominator to distinguish healthy 0% from no traffic or missing ingestion.
 
 The last query measures mean server-side duration. Client-side duration uses `traces_service_graph_request_client_seconds_*`; do not query the nonexistent `traces_service_graph_request_duration_seconds_*` family. Treat zero-traffic intervals as missing evidence. Colors and edge widths depend on Grafana/dashboard settings; inspect request/error/duration values rather than assuming fixed 1%/5% color rules.
 

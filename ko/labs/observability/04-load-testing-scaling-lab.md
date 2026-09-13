@@ -104,7 +104,7 @@ Karpenter는 리소스 제약 때문에 스케줄되지 못한 Pod를 보고 cap
 
 ```promql
 # Running Pods: phase series also exist with value zero.
-sum(kube_pod_status_phase{namespace="msa", phase="Running"} == 1)
+sum(kube_pod_status_phase{namespace="msa", phase="Running"})
 
 # Deployment total/ready replicas are different measurements.
 kube_deployment_status_replicas{namespace="msa"}
@@ -118,6 +118,8 @@ kube_horizontalpodautoscaler_status_current_replicas{namespace="msa"}
 sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="msa", container!="", container!="POD"}[5m]))
 sum by (pod) (container_memory_working_set_bytes{namespace="msa", container!="", container!="POD"})
 ```
+
+Running phase의 0/1 gauge를 합하므로 전부 Pending이면 0, series 자체가 없으면 데이터 없음입니다. `== 1` 필터로 모두 제거한 빈 vector를 0개 Pod로 오해하지 않습니다.
 
 `kube_deployment_status_replicas`는 ready 수가 아닙니다. Rollout을 사용하는 워크로드는 Deployment 메트릭 대신 Rollouts exporter·ReplicaSet·Pod 상태를 확인합니다. `kube_node_labels`의 사용자 label은 kube-state-metrics allowlist에 포함되어야 노출됩니다. `changes(kube_node_created[10m])`는 고정 생성 timestamp의 변화만 계산하므로 새 노드 탐지 쿼리가 아닙니다.
 

@@ -3,24 +3,24 @@
     "path": "ko/labs/observability/04-load-testing-scaling-lab.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "0795cc530c42c8b780510e6559c22c91db3d89e3e67b19d8eb97e15b83770719",
-    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved.",
+    "reviewedSha256": "eae2e1d899de9038bca29de63405458f324698056767ab3a984a9860bad91191",
+    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json"
   },
   {
     "path": "ko/labs/observability/06-distributed-tracing-lab.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "119047d293671c7770e600141c9c301e16a008f69292f5179f51073291010d53",
-    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved.",
+    "reviewedSha256": "22992d2bb2b1df19af33dab6071f5166bd3bd41987d7b656c4226db7e8907505",
+    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json"
   },
   {
     "path": "ko/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "ccaf3398defc1fc6812c856467f2cbf4c1e1f8560ca4b840e166cdcf483323f3",
-    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved.",
+    "reviewedSha256": "24ad4c10c0d1daf46d3c76f9f1477235e5d2cf7d8c2c6c2d078385cac3d99734",
+    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json"
   },
   {
@@ -28,31 +28,31 @@
     "fullyRead": true,
     "status": "fixed",
     "reviewedSha256": "a3eda1b4de7b68c4b50426739fd711e5d93e19b50342b634299b1f0e878c9552",
-    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved.",
+    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json"
   },
   {
     "path": "en/labs/observability/04-load-testing-scaling-lab.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "e53fd3b5fec82b39afb42169849f3dce502c0480c4c94fddf3d4d0fbce858a31",
-    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved.",
+    "reviewedSha256": "43d1a37736a8f1ef587555d1d66f8a9335a3d54b5eefac32566a6a01f528f3df",
+    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json"
   },
   {
     "path": "en/labs/observability/06-distributed-tracing-lab.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "57fa12242c29682a82dc137464117151cc03cb6aff60efb30a22e66aa5fd1f67",
-    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved.",
+    "reviewedSha256": "79b821e756b668354df32d9f299f0eb52c3e64324bbf46e5b4f5bf0e592c5bb6",
+    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json"
   },
   {
     "path": "en/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "598d04df3b758add9f214f960c775292ba8b6b9633c1acd58b4ec94a38e63ba0",
-    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved.",
+    "reviewedSha256": "0ff1bbf56232cf2325a4000373a37872a091e7fec72a0428e17eaeeffa2c3f16",
+    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json"
   },
   {
@@ -60,7 +60,7 @@
     "fullyRead": true,
     "status": "fixed",
     "reviewedSha256": "088c05e34cc3f6c3c776f9e0a1840bf48402065fcbca07750a11cba724523c5a",
-    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved.",
+    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure.",
     "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json"
   }
 ]

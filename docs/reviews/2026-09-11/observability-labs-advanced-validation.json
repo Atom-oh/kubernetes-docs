@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "reviewedAt": "2026-09-13T05:39:42.747809+00:00",
+  "reviewedAt": "2026-09-13T05:50:47.970761+00:00",
   "scope": "EightKorean/EnglishPart4loadtesting/Part6tracingguidesandquizzes;5runnableloadexamples;6diagrams;sharedmobileviewerfix",
   "originalFiles": [
     {
@@ -51,7 +51,7 @@
     "results": [
       {
         "path": "ko/labs/observability/04-load-testing-scaling-lab.md",
-        "sha256": "0795cc530c42c8b780510e6559c22c91db3d89e3e67b19d8eb97e15b83770719",
+        "sha256": "eae2e1d899de9038bca29de63405458f324698056767ab3a984a9860bad91191",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -129,7 +129,7 @@
       },
       {
         "path": "ko/labs/observability/06-distributed-tracing-lab.md",
-        "sha256": "119047d293671c7770e600141c9c301e16a008f69292f5179f51073291010d53",
+        "sha256": "22992d2bb2b1df19af33dab6071f5166bd3bd41987d7b656c4226db7e8907505",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -214,7 +214,7 @@
       },
       {
         "path": "ko/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
-        "sha256": "ccaf3398defc1fc6812c856467f2cbf4c1e1f8560ca4b840e166cdcf483323f3",
+        "sha256": "24ad4c10c0d1daf46d3c76f9f1477235e5d2cf7d8c2c6c2d078385cac3d99734",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -246,7 +246,7 @@
       },
       {
         "path": "en/labs/observability/04-load-testing-scaling-lab.md",
-        "sha256": "e53fd3b5fec82b39afb42169849f3dce502c0480c4c94fddf3d4d0fbce858a31",
+        "sha256": "43d1a37736a8f1ef587555d1d66f8a9335a3d54b5eefac32566a6a01f528f3df",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -325,7 +325,7 @@
       },
       {
         "path": "en/labs/observability/06-distributed-tracing-lab.md",
-        "sha256": "57fa12242c29682a82dc137464117151cc03cb6aff60efb30a22e66aa5fd1f67",
+        "sha256": "79b821e756b668354df32d9f299f0eb52c3e64324bbf46e5b4f5bf0e592c5bb6",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -405,7 +405,7 @@
       },
       {
         "path": "en/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
-        "sha256": "598d04df3b758add9f214f960c775292ba8b6b9633c1acd58b4ec94a38e63ba0",
+        "sha256": "0ff1bbf56232cf2325a4000373a37872a091e7fec72a0428e17eaeeffa2c3f16",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -440,18 +440,18 @@
   "artifacts": [
     {
       "path": "ko/labs/observability/04-load-testing-scaling-lab.md",
-      "sha256": "0795cc530c42c8b780510e6559c22c91db3d89e3e67b19d8eb97e15b83770719",
-      "bytes": 10456
+      "sha256": "eae2e1d899de9038bca29de63405458f324698056767ab3a984a9860bad91191",
+      "bytes": 10660
     },
     {
       "path": "ko/labs/observability/06-distributed-tracing-lab.md",
-      "sha256": "119047d293671c7770e600141c9c301e16a008f69292f5179f51073291010d53",
-      "bytes": 13444
+      "sha256": "22992d2bb2b1df19af33dab6071f5166bd3bd41987d7b656c4226db7e8907505",
+      "bytes": 13835
     },
     {
       "path": "ko/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
-      "sha256": "ccaf3398defc1fc6812c856467f2cbf4c1e1f8560ca4b840e166cdcf483323f3",
-      "bytes": 4817
+      "sha256": "24ad4c10c0d1daf46d3c76f9f1477235e5d2cf7d8c2c6c2d078385cac3d99734",
+      "bytes": 4947
     },
     {
       "path": "ko/quizzes/observability/labs/06-distributed-tracing-quiz.md",
@@ -460,18 +460,18 @@
     },
     {
       "path": "en/labs/observability/04-load-testing-scaling-lab.md",
-      "sha256": "e53fd3b5fec82b39afb42169849f3dce502c0480c4c94fddf3d4d0fbce858a31",
-      "bytes": 8879
+      "sha256": "43d1a37736a8f1ef587555d1d66f8a9335a3d54b5eefac32566a6a01f528f3df",
+      "bytes": 9069
     },
     {
       "path": "en/labs/observability/06-distributed-tracing-lab.md",
-      "sha256": "57fa12242c29682a82dc137464117151cc03cb6aff60efb30a22e66aa5fd1f67",
-      "bytes": 11235
+      "sha256": "79b821e756b668354df32d9f299f0eb52c3e64324bbf46e5b4f5bf0e592c5bb6",
+      "bytes": 11613
     },
     {
       "path": "en/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
-      "sha256": "598d04df3b758add9f214f960c775292ba8b6b9633c1acd58b4ec94a38e63ba0",
-      "bytes": 4567
+      "sha256": "0ff1bbf56232cf2325a4000373a37872a091e7fec72a0428e17eaeeffa2c3f16",
+      "bytes": 4670
     },
     {
       "path": "en/quizzes/observability/labs/06-distributed-tracing-quiz.md",
@@ -495,8 +495,8 @@
     },
     {
       "path": "examples/labs/observability/load-test/locustfile.py",
-      "sha256": "b73976d3509c458987e4f2da79b28c5d5712ffd6de962152377a27e9c35e4ad4",
-      "bytes": 2151
+      "sha256": "e80280cceadebfb7117ea484f312f1eac5339c86d766b350a4d4c351be4c199a",
+      "bytes": 2328
     },
     {
       "path": "examples/labs/observability/load-test/requirements.txt",
@@ -651,7 +651,7 @@
     },
     "locust": {
       "binary": "Locust2.46.5/Python3.12",
-      "scriptSha256": "b73976d3509c458987e4f2da79b28c5d5712ffd6de962152377a27e9c35e4ad4",
+      "scriptSha256": "e80280cceadebfb7117ea484f312f1eac5339c86d766b350a4d4c351be4c199a",
       "cases": [
         {
           "case": "success",
@@ -799,7 +799,8 @@
     "version": "3.14",
     "assertions": 4,
     "passed": true,
-    "scope": "Runningphasevaluefilter,totalvsreadyreplicas,constantnodecreationtimestamp"
+    "scope": "Runningphasevaluefilter,totalvsreadyreplicas,constantnodecreationtimestamp",
+    "initialExecutionScope": "Original4assertionsremainhistoricalevidence;reviewFixes.prometheusrecords7currentedgecaseassertions."
   },
   "browser": {
     "status": "passed",
@@ -1368,5 +1369,42 @@
     "LoadtestsusedsyntheticloopbackHTTP;Lokireceived2syntheticloglinesandwasstopped.",
     "All28labdocumentsfullyreadbutremaining20arestillbeingrepaired;thisreportonlycloses8.",
     "Globalresponsivefixisvalidatedon6representativegeneratedviewersat375/768/1920;notclaimallviewersmanuallyinspected."
-  ]
+  ],
+  "reviewFixes": {
+    "reviewedInitialHead": "9f7a2b31ec40f1096dee75f3f1955efb26cb776f",
+    "findingsResolved": [
+      "OBS-LAB-R1-001",
+      "OBS-LAB-R1-002",
+      "OBS-LAB-R1-003"
+    ],
+    "prometheus": {
+      "status": "passed",
+      "cases": [
+        "healthy",
+        "errors",
+        "zero",
+        "absent",
+        "running",
+        "all-pending",
+        "missing"
+      ],
+      "query": "(sum by (client, server) (rate(traces_service_graph_request_failed_total[5m])) or on (client, server) (0 * sum by (client, server) (rate(traces_service_graph_request_total[5m])))) / on (client, server) (sum by (client, server) (rate(traces_service_graph_request_total[5m])) > 0)",
+      "version": "Prometheus3.14",
+      "assertions": 7
+    },
+    "locustBooleanID": {
+      "binary": "Locust2.46.5/Python3.12",
+      "scriptSha256": "e80280cceadebfb7117ea484f312f1eac5339c86d766b350a4d4c351be4c199a",
+      "cases": [
+        {
+          "case": "boolean-read-id",
+          "exit": 99,
+          "requests": 9,
+          "passed": true
+        }
+      ],
+      "limits": "Loopback synthetic API only; no real service, cloud, scaling or stress test executed."
+    },
+    "behavior": "Healthyedgezeroerrornumeratorfilledfrommatchingtotal;no/absenttrafficremainabsent;sumPod0/1gauges;LocustrejectboolandcanonicalizesintegernumericID."
+  }
 }
