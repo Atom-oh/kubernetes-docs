@@ -2,13 +2,12 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Observability Lab Environment Architecture",
-    "output": "en-labs-observability-overview-0.html",
+    "title": "Lab environment and trust boundaries",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1120,
-      620
+      1190,
+      670
     ],
     "locale": "en"
   },
@@ -16,148 +15,144 @@
     {
       "id": "mgmt",
       "type": "backend",
-      "label": "Management cluster (VPC 1)",
-      "sublabel": "ArgoCD · Argo Rollouts",
+      "label": "Management EKS",
+      "sublabel": "1.36 / managed context",
       "pos": [
         40,
-        120
+        80
       ],
       "size": [
-        250,
-        76
+        260,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Service EKS",
+      "sublabel": "1.36 / service context",
+      "pos": [
+        440,
+        80
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "data",
+      "type": "database",
+      "label": "Aurora · SNS · SQS",
+      "sublabel": "Dedicated DB / event path",
+      "pos": [
+        840,
+        80
+      ],
+      "size": [
+        270,
+        64
       ]
     },
     {
       "id": "obs",
       "type": "database",
-      "label": "Observability stack",
-      "sublabel": "Prometheus · Grafana · Loki · Tempo",
+      "label": "Prometheus · Loki · Tempo",
+      "sublabel": "Grafana / management Collector",
       "pos": [
-        330,
-        400
+        40,
+        350
       ],
       "size": [
-        280,
-        76
+        300,
+        64
       ]
     },
     {
-      "id": "svc",
-      "type": "frontend",
-      "label": "Service cluster (VPC 2)",
-      "sublabel": "MSA apps · Karpenter · KEDA",
+      "id": "source",
+      "type": "backend",
+      "label": "Prometheus + Collector",
+      "sublabel": "scrape / CRI logs / OTLP traces",
       "pos": [
-        400,
-        120
+        440,
+        350
       ],
       "size": [
         290,
-        76
+        64
       ]
     },
     {
-      "id": "otel",
-      "type": "messagebus",
-      "label": "OTel Agent",
-      "sublabel": "DaemonSet collection",
-      "pos": [
-        40,
-        400
-      ],
-      "size": [
-        230,
-        76
-      ]
-    },
-    {
-      "id": "awsapp",
+      "id": "cw",
       "type": "cloud",
-      "label": "SQS · SNS · Aurora · MWAA",
-      "sublabel": "App-dependency services",
+      "label": "CloudWatch Logs",
+      "sublabel": "Structured logs / AIOps",
       "pos": [
-        780,
-        120
+        860,
+        500
       ],
       "size": [
-        280,
-        76
-      ]
-    },
-    {
-      "id": "awsobs",
-      "type": "database",
-      "label": "AMP · AMG · CloudWatch",
-      "sublabel": "Managed observability backends",
-      "pos": [
-        700,
-        400
-      ],
-      "size": [
-        280,
-        76
+        250,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "mgmt-svc",
+      "id": "e0",
       "from": "mgmt",
-      "to": "svc",
-      "label": "GitOps deploy"
-    },
-    {
-      "id": "svc-awsapp",
-      "from": "svc",
-      "to": "awsapp",
-      "label": "messaging"
-    },
-    {
-      "id": "svc-otel",
-      "from": "svc",
-      "to": "otel",
-      "label": "Metrics · logs · traces",
+      "to": "obs",
+      "label": "hosts",
       "fromSide": "bottom",
       "toSide": "top"
     },
     {
-      "id": "otel-obs",
-      "from": "otel",
-      "to": "obs",
-      "label": "ships data"
+      "id": "e1",
+      "from": "svc",
+      "to": "source",
+      "label": "collect",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
-      "id": "obs-awsobs",
+      "id": "e2",
+      "from": "svc",
+      "to": "data",
+      "label": "SQL / events"
+    },
+    {
+      "id": "e3",
+      "from": "source",
+      "to": "obs",
+      "label": "mTLS",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "e4",
       "from": "obs",
-      "to": "awsobs",
-      "label": "Remote write"
+      "to": "cw",
+      "label": "JSON logs",
+      "fromSide": "bottom",
+      "toSide": "left"
     }
   ],
+  "boundaries": [],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Two clusters",
+      "title": "Explicit prerequisites",
       "items": [
-        "The management cluster in VPC 1 hosts ArgoCD, Argo Rollouts, and the observability stack",
-        "The service cluster in VPC 2 runs the MSA applications and load generators",
-        "Separating what you observe from what observes keeps monitoring alive during an incident"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "Telemetry path",
-      "items": [
-        "The OTel Agent runs as a DaemonSet and gathers metrics, logs, and traces per node",
-        "The OTel Collector fans each signal out to Prometheus, Loki, and Tempo",
-        "A single Grafana explores all three signals together"
+        "Reviewed VPC, private subnets, routes, DNS and SGs",
+        "TCP NLB forwarding plus endpoint client-certificate checks"
       ]
     },
     {
       "dot": "amber",
-      "title": "Managed backend integration",
+      "title": "Lab scope",
       "items": [
-        "Prometheus remote-writes to AMP for long retention and high availability",
-        "Logs can also go to CloudWatch Logs or OpenSearch",
-        "Include the scaling events Karpenter and KEDA produce in what you observe"
+        "Single backends/DB writer are not production HA",
+        "Karpenter, other backends and GitOps are separate extensions"
       ]
     }
   ]

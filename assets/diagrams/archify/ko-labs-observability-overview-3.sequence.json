@@ -8,42 +8,7 @@
     "column_fit": "spread",
     "viewBox": [
       1080,
-      700
-    ],
-    "views": [
-      {
-        "id": "order-flow",
-        "label": "주문 생성 (POST /orders)",
-        "focus": [
-          "client",
-          "gw",
-          "order",
-          "aurora",
-          "mq"
-        ],
-        "note": "API Gateway가 요청을 order-service로 라우팅하고, Aurora 기록 후 order_created 이벤트를 SQS로 발행합니다."
-      },
-      {
-        "id": "payment-flow",
-        "label": "결제 처리 (POST /payments)",
-        "focus": [
-          "client",
-          "gw",
-          "payment",
-          "aurora",
-          "mq"
-        ],
-        "note": "payment-service도 같은 패턴으로 Aurora에 기록하고 payment_completed 이벤트를 SNS로 발행합니다."
-      },
-      {
-        "id": "async-notify",
-        "label": "비동기 알림",
-        "focus": [
-          "mq",
-          "notif"
-        ],
-        "note": "notification-service는 SQS 메시지를 소비해 이메일·SMS를 발송하며, 클라이언트 응답을 지연시키지 않습니다."
-      }
+      820
     ],
     "legend": {
       "mode": "auto",
@@ -67,61 +32,54 @@
     {
       "id": "client",
       "type": "external",
-      "label": "Client",
-      "sublabel": "클라이언트"
+      "label": "Client"
     },
     {
       "id": "gw",
       "type": "backend",
-      "label": "API Gateway",
-      "sublabel": "api-gateway · Go"
+      "label": "API Gateway"
     },
     {
       "id": "order",
       "type": "backend",
-      "label": "Order",
-      "sublabel": "order-service · Python"
+      "label": "Order"
     },
     {
       "id": "payment",
       "type": "backend",
-      "label": "Payment",
-      "sublabel": "payment-service · Java"
+      "label": "Payment"
     },
     {
       "id": "aurora",
       "type": "database",
-      "label": "Aurora",
-      "sublabel": "PostgreSQL"
+      "label": "Aurora"
     },
     {
       "id": "mq",
       "type": "messagebus",
-      "label": "SQS / SNS",
-      "sublabel": "이벤트 큐·토픽"
+      "label": "SNS →2SQS"
     },
     {
       "id": "notif",
       "type": "backend",
-      "label": "Notification",
-      "sublabel": "Node.js / Express"
+      "label": "Consumers"
     }
   ],
   "segments": [
     {
       "from": 160,
-      "to": 340,
-      "label": "주문 생성 — POST /orders"
+      "to": 320,
+      "label": "Order transaction / HTTP response"
     },
     {
-      "from": 360,
-      "to": 540,
-      "label": "결제 처리 — POST /payments"
+      "from": 340,
+      "to": 520,
+      "label": "Payment transaction / HTTP response"
     },
     {
-      "from": 560,
-      "to": 605,
-      "label": "비동기 알림 발송"
+      "from": 540,
+      "to": 715,
+      "label": "Asynchronous outbox / independent consumers"
     }
   ],
   "messages": [
@@ -137,29 +95,21 @@
       "id": "m2",
       "from": "gw",
       "to": "order",
-      "y": 210,
-      "label": "인증 · 라우팅 후 요청 전달"
+      "y": 214,
+      "label": "W3C context 전달"
     },
     {
       "id": "m3",
       "from": "order",
       "to": "aurora",
-      "y": 238,
-      "label": "INSERT 주문"
-    },
-    {
-      "id": "m5",
-      "from": "order",
-      "to": "mq",
-      "y": 266,
-      "label": "order_created 이벤트 발행",
-      "variant": "dashed"
+      "y": 246,
+      "label": "주문 + outbox transaction"
     },
     {
       "id": "m6",
       "from": "order",
       "to": "gw",
-      "y": 294,
+      "y": 278,
       "label": "201 Created",
       "variant": "return"
     },
@@ -167,7 +117,7 @@
       "id": "m7",
       "from": "gw",
       "to": "client",
-      "y": 322,
+      "y": 308,
       "label": "201 Created",
       "variant": "return"
     },
@@ -175,7 +125,7 @@
       "id": "m8",
       "from": "client",
       "to": "gw",
-      "y": 382,
+      "y": 362,
       "label": "POST /payments",
       "variant": "emphasis"
     },
@@ -183,29 +133,21 @@
       "id": "m9",
       "from": "gw",
       "to": "payment",
-      "y": 410,
-      "label": "인증 · 라우팅 후 요청 전달"
+      "y": 394,
+      "label": "W3C context 전달"
     },
     {
       "id": "m10",
       "from": "payment",
       "to": "aurora",
-      "y": 438,
-      "label": "INSERT 결제"
-    },
-    {
-      "id": "m12",
-      "from": "payment",
-      "to": "mq",
-      "y": 466,
-      "label": "payment_completed 이벤트 발행",
-      "variant": "dashed"
+      "y": 426,
+      "label": "결제 + outbox transaction"
     },
     {
       "id": "m13",
       "from": "payment",
       "to": "gw",
-      "y": 494,
+      "y": 458,
       "label": "결제 결과 응답",
       "variant": "return"
     },
@@ -213,7 +155,7 @@
       "id": "m14",
       "from": "gw",
       "to": "client",
-      "y": 522,
+      "y": 490,
       "label": "결제 결과 응답",
       "variant": "return"
     },
@@ -221,54 +163,46 @@
       "id": "m15",
       "from": "mq",
       "to": "notif",
-      "y": 585,
-      "label": "SQS 메시지 소비 → 이메일·SMS 발송",
+      "y": 682,
+      "label": "각 queue 소비·dedup·합성 결과",
       "variant": "dashed",
       "note": "응답 경로와 분리된 비동기 처리"
+    },
+    {
+      "id": "publish-order",
+      "from": "order",
+      "to": "mq",
+      "y": 570,
+      "label": "retry order.created",
+      "variant": "dashed"
+    },
+    {
+      "id": "publish-payment",
+      "from": "payment",
+      "to": "mq",
+      "y": 610,
+      "label": "retry payment.completed",
+      "variant": "dashed"
+    },
+    {
+      "id": "mark",
+      "from": "mq",
+      "to": "order",
+      "y": 646,
+      "label": "성공 응답 → DB mark",
+      "variant": "dashed"
     }
   ],
-  "activations": [
+  "activations": [],
+  "cards": [
     {
-      "participant": "gw",
-      "from": 182,
-      "to": 326,
-      "type": "backend"
-    },
-    {
-      "participant": "order",
-      "from": 210,
-      "to": 298,
-      "type": "backend"
-    },
-    {
-      "participant": "aurora",
-      "from": 238,
-      "to": 256,
-      "type": "database"
-    },
-    {
-      "participant": "gw",
-      "from": 382,
-      "to": 526,
-      "type": "backend"
-    },
-    {
-      "participant": "payment",
-      "from": 410,
-      "to": 498,
-      "type": "backend"
-    },
-    {
-      "participant": "aurora",
-      "from": 438,
-      "to": 456,
-      "type": "database"
-    },
-    {
-      "participant": "notif",
-      "from": 585,
-      "to": 602,
-      "type": "backend"
+      "dot": "amber",
+      "title": "중복과 인과관계",
+      "items": [
+        "publish와 HTTP 응답의 상대 순서는 달라질 수 있음",
+        "트랜잭션 commit 후 발행; 중복은 consumer가 처리",
+        "W3C context가 비동기 경로를 연결"
+      ]
     }
   ]
 }

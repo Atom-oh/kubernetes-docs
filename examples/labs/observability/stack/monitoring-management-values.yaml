@@ -1,0 +1,166 @@
+fullnameOverride: lab-monitoring
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubelet:
+  serviceMonitor:
+    tlsConfig:
+      insecureSkipVerify: false
+prometheus:
+  serviceAccount:
+    create: true
+    name: lab-monitoring-prometheus
+  prometheusSpec:
+    replicas: 1
+    shards: 1
+    retention: 2d
+    retentionSize: 8GB
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+          storageClassName: gp3
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: '1'
+        memory: 1Gi
+    externalLabels:
+      cluster: management
+    serviceMonitorSelectorNilUsesHelmValues: true
+    serviceMonitorNamespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: monitoring
+    podMonitorSelectorNilUsesHelmValues: true
+    podMonitorNamespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: monitoring
+    ruleSelectorNilUsesHelmValues: true
+    ruleNamespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: monitoring
+    enableRemoteWriteReceiver: true
+    enableFeatures:
+    - exemplar-storage
+    exemplars:
+      maxSize: 10000
+    web:
+      tlsConfig:
+        cert:
+          secret:
+            name: lab-prometheus-tls
+            key: tls.crt
+        keySecret:
+          name: lab-prometheus-tls
+          key: tls.key
+        client_ca:
+          secret:
+            name: lab-prometheus-tls
+            key: ca.crt
+        clientAuthType: RequireAndVerifyClientCert
+        minVersion: TLS12
+    secrets:
+    - lab-prometheus-client
+    volumes:
+    - name: probe-client
+      configMap:
+        name: lab-prometheus-probe
+    volumeMounts:
+    - name: probe-client
+      mountPath: /etc/prometheus/probe
+      readOnly: true
+    containers:
+    - name: prometheus
+      startupProbe:
+        exec:
+          command:
+          - /bin/promtool
+          - check
+          - ready
+          - --http.config.file=/etc/prometheus/probe/http.yaml
+          - --url=https://127.0.0.1:9090
+        timeoutSeconds: 3
+      readinessProbe:
+        exec:
+          command:
+          - /bin/promtool
+          - check
+          - ready
+          - --http.config.file=/etc/prometheus/probe/http.yaml
+          - --url=https://127.0.0.1:9090
+        timeoutSeconds: 3
+      livenessProbe:
+        exec:
+          command:
+          - /bin/promtool
+          - check
+          - healthy
+          - --http.config.file=/etc/prometheus/probe/http.yaml
+          - --url=https://127.0.0.1:9090
+        timeoutSeconds: 3
+    podMetadata:
+      labels:
+        lab-role: prometheus-management
+  serviceMonitor:
+    scheme: https
+    tlsConfig:
+      ca:
+        secret:
+          name: lab-prometheus-client
+          key: ca.crt
+      cert:
+        secret:
+          name: lab-prometheus-client
+          key: tls.crt
+      keySecret:
+        name: lab-prometheus-client
+        key: tls.key
+      serverName: lab-monitoring-prometheus.monitoring.svc.cluster.local
+alertmanager:
+  alertmanagerSpec:
+    replicas: 1
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi
+          storageClassName: gp3
+grafana:
+  fullnameOverride: lab-grafana
+  replicas: 1
+  admin:
+    existingSecret: lab-grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClassName: gp3
+  sidecar:
+    dashboards:
+      searchNamespace: monitoring
+    datasources:
+      searchNamespace: monitoring
+      enabled: false
+  extraSecretMounts:
+  - name: lab-datasources
+    secretName: lab-grafana-datasources
+    mountPath: /etc/grafana/provisioning/datasources
+    readOnly: true
+  defaultDashboardsEnabled: false
+  podLabels:
+    lab-role: grafana

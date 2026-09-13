@@ -1,0 +1,82 @@
+fullnameOverride: lab-tempo
+replicas: 1
+tempo:
+  tag: 3.0.3
+  reportingEnabled: false
+  retention: 24h
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: '1'
+      memory: 1Gi
+  receivers:
+    jaeger:
+      protocols:
+        grpc: null
+        thrift_binary: null
+        thrift_compact: null
+        thrift_http: null
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: http://lab-monitoring-prometheus.monitoring.svc.cluster.local:9090/api/v1/write
+    storage:
+      path: /var/tempo/metrics
+      remote_write:
+      - url: https://lab-monitoring-prometheus.monitoring.svc.cluster.local:9090/api/v1/write
+        send_exemplars: true
+        tls_config:
+          ca_file: /run/prometheus-client/ca.crt
+          cert_file: /run/prometheus-client/tls.crt
+          key_file: /run/prometheus-client/tls.key
+  overrides:
+    defaults:
+      metrics_generator:
+        processors:
+        - service-graphs
+        - span-metrics
+  extraVolumeMounts:
+  - name: prometheus-client
+    mountPath: /run/prometheus-client
+    readOnly: true
+serviceAccount:
+  automountServiceAccountToken: false
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClassName: gp3
+service:
+  type: ClusterIP
+tempoQuery:
+  enabled: false
+config: "stream_over_http_enabled: {{ .Values.tempo.streamOverHttpEnabled }}\nmemberlist:\n  cluster_label: \"{{\
+  \ .Release.Name }}.{{ .Release.Namespace }}\"\nmultitenancy_enabled: {{ .Values.tempo.multitenancyEnabled }}\n\
+  usage_report:\n  reporting_enabled: {{ .Values.tempo.reportingEnabled }}\n{{- $backendScheduler := dict \"provider\"\
+  \ (dict \"compaction\" (dict \"compaction\" (dict \"block_retention\" .Values.tempo.retention))) }}\n{{- with\
+  \ .Values.tempo.backendScheduler }}\n{{- $backendScheduler = mergeOverwrite $backendScheduler (deepCopy .) }}\n\
+  {{- end }}\nbackend_scheduler:\n  {{- toYaml $backendScheduler | nindent 6 }}\n{{- with .Values.tempo.backendWorker\
+  \ }}\nbackend_worker:\n  {{- toYaml . | nindent 6 }}\n{{- end }}\ndistributor:\n  receivers:\n    {{- toYaml (omit\
+  \ .Values.tempo.receivers \"jaeger\") | nindent 8 }}\n{{- with .Values.tempo.liveStore }}\nlive_store:\n  {{-\
+  \ toYaml . | nindent 6 }}\n{{- end }}\nserver:\n  {{- toYaml .Values.tempo.server | nindent 6 }}\nstorage:\n \
+  \ {{- toYaml .Values.tempo.storage | nindent 6 }}\nquerier:\n  {{- toYaml .Values.tempo.querier | nindent 6 }}\n\
+  query_frontend:\n  {{- toYaml .Values.tempo.queryFrontend | nindent 6 }}\noverrides:\n  {{- toYaml .Values.tempo.overrides\
+  \ | nindent 6 }}\n  {{- if .Values.tempo.metricsGenerator.enabled }}\nmetrics_generator:\n  {{- if .Values.tempo.metricsGenerator.processor\
+  \ }}\n  processor:\n    {{- toYaml .Values.tempo.metricsGenerator.processor | nindent 8 }}\n  {{- end }}\n  {{-\
+  \ if .Values.tempo.metricsGenerator.registry }}\n  registry:\n    {{- toYaml .Values.tempo.metricsGenerator.registry\
+  \ | nindent 8 }}\n  {{- end }}\n  storage:\n    path: {{ .Values.tempo.metricsGenerator.storage.path | quote }}\n\
+  \    {{- if .Values.tempo.metricsGenerator.storage.remote_write }}\n    remote_write:\n      {{- toYaml .Values.tempo.metricsGenerator.storage.remote_write\
+  \ | nindent 10 }}\n    {{- else }}\n    remote_write:\n      - url: {{ .Values.tempo.metricsGenerator.remoteWriteUrl\
+  \ }}\n    {{- end }}\n  {{- end }}\n"
+extraVolumes:
+- name: prometheus-client
+  secret:
+    secretName: lab-prometheus-client
+podLabels:
+  lab-role: tempo

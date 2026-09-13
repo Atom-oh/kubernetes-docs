@@ -1,0 +1,9 @@
+*
+!Dockerfile
+!requirements.txt
+!api.py
+!db_config.py
+!main.py
+!messaging.py
+!storage.py
+!telemetry.py

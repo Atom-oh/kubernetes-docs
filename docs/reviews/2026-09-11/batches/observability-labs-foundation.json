@@ -1,0 +1,130 @@
+[
+  {
+    "path": "ko/labs/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b4c4b8d6a75293268dff0cb10df5cda006047dd52a083bb7a4775cc3b9d42fe1",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "ko/labs/observability/01-infrastructure-setup-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b016812adf8a2461ede84de91615a884c7a1f989c3937dc77d42f1c08e5c4a1e",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "ko/labs/observability/02-observability-stack-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "332387ba06f5bcf84ffb743c53347a9a894521fa937ae0e4f29760c01b8d8b72",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "ko/labs/observability/03-msa-deployment-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "db3450cdd014323455620905598146c7a742c3691cd25ee7b49fd91b32255cf8",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "ko/labs/observability/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "9401a0f2d8917d58d9ac3bab2b777c579bba922e3b5ca7e3ef852418b7080f89",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "ko/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "e837bf45096766c06656ed624fe5f944ba5b3e449a7e94f50015cf0eb6708474",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "ko/quizzes/observability/labs/02-observability-stack-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "aa6221024b7908cb9f4c6dd19fd7b3ef94c680a73729fc99bb95c14154194924",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "ko/quizzes/observability/labs/03-msa-deployment-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "76401c6fe631f57227289ab6ed2c421b17eeeaddd4c81717a7c459bcf5ee4a6a",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "en/labs/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f5dcdbdc47f46830ca58bf4794d8c0ad2e63d688adbafe2427e790cc660cb6e5",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "en/labs/observability/01-infrastructure-setup-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "21f1396ed5be0a0df7d3522d8d5b4c86504a80f7053d266c9b1e4911a6c08a2a",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "en/labs/observability/02-observability-stack-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "872c73be26e930cf725df25ac58576237265203e71c1fbf8a8e0b26d5dd0733a",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "en/labs/observability/03-msa-deployment-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "752044d86350230897794dd0ed5d32c6f41fba50ed95450cb058ba9b51e16445",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "en/labs/observability/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "9edf00ffd15732a5d89b7c8780d0ac301d050d74114a4f7f4ccb8b1e23dbf1ea",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "en/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "49a78b4fa681afe0b50a0d7da74c78c7ea14e88993fad503d216b5ded4628d2c",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "en/quizzes/observability/labs/02-observability-stack-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "8b8a19ceeb34bd89991b6dd2b711a44a89f30786d4b8264a2aedcdb720e4d6ad",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  },
+  {
+    "path": "en/quizzes/observability/labs/03-msa-deployment-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "61e3754e78c18cedb89ae5df77ab6b50d843bdf169d631a51e16f1ab6fd44b32",
+    "summary": "Fullyreadfoundation16MD/60quiz;completeapplication/DB/outbox/telemetry/IAM/Helmexamples;18figures54browser194anchors;nativeHTTP/PG/SDK/TLS/CRD/PromQL/Argo/imagechecks;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
+  }
+]

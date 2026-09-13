@@ -1,0 +1,80 @@
+fullnameOverride: lab-service-monitoring
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubelet:
+  serviceMonitor:
+    tlsConfig:
+      insecureSkipVerify: false
+prometheus:
+  serviceAccount:
+    create: true
+    name: lab-service-monitoring-prometheus
+  prometheusSpec:
+    replicas: 1
+    shards: 1
+    retention: 2d
+    retentionSize: 8GB
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+          storageClassName: gp3
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: '1'
+        memory: 1Gi
+    externalLabels:
+      cluster: service
+    serviceMonitorSelectorNilUsesHelmValues: true
+    serviceMonitorNamespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: In
+        values:
+        - monitoring
+        - msa
+    podMonitorSelectorNilUsesHelmValues: true
+    podMonitorNamespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: In
+        values:
+        - monitoring
+        - msa
+    ruleSelectorNilUsesHelmValues: true
+    ruleNamespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: monitoring
+    enableFeatures:
+    - exemplar-storage
+    exemplars:
+      maxSize: 10000
+    secrets:
+    - lab-prometheus-client
+    remoteWrite:
+    - url: https://REPLACE_WITH_ROUTABLE_PROMETHEUS_DNS:9090/api/v1/write
+      sendExemplars: true
+      tlsConfig:
+        caFile: /etc/prometheus/secrets/lab-prometheus-client/ca.crt
+        certFile: /etc/prometheus/secrets/lab-prometheus-client/tls.crt
+        keyFile: /etc/prometheus/secrets/lab-prometheus-client/tls.key
+    podMetadata:
+      labels:
+        lab-role: prometheus-service
+alertmanager:
+  enabled: false
+grafana:
+  enabled: false

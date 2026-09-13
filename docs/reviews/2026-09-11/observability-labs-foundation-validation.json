@@ -1,0 +1,3287 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T07:42:35.359364+00:00",
+  "scope": "16Korean/Englishfoundationlab/index/quizdocuments,60questions,38examplefiles,18diagrams;twoPart6referencefollowups",
+  "originalFiles": [
+    {
+      "path": "ko/labs/README.md",
+      "lines": 61,
+      "sha256": "99194e703abb55da303487208a4b4c26bfb6638384b6d4f3982cf9a91fb67ae4"
+    },
+    {
+      "path": "ko/labs/observability/01-infrastructure-setup-lab.md",
+      "lines": 1211,
+      "sha256": "7a5d55aa5f460ead799a908ee84f3e43b34044f96e9075b1474a169fad2bec84"
+    },
+    {
+      "path": "ko/labs/observability/02-observability-stack-lab.md",
+      "lines": 1953,
+      "sha256": "d37d2a25d3e909c8d0f9e9cc80984a0df76a8957e63831c1152bc7578f5410ba"
+    },
+    {
+      "path": "ko/labs/observability/03-msa-deployment-lab.md",
+      "lines": 1172,
+      "sha256": "ecfffbb7dc128a32cc80a4bc145fdde10a912e200579c07e156ecac72bfe67c4"
+    },
+    {
+      "path": "ko/labs/observability/README.md",
+      "lines": 208,
+      "sha256": "1bbedd503c1aac02920a85a48d8a4df7d0cb83037d964e94c80ee059b7d900c5"
+    },
+    {
+      "path": "ko/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+      "lines": 175,
+      "sha256": "6e8fc21b7b3b593eeb6cb2795dd0cd661bc2c765fa96742cf5b0f7b10ad63704"
+    },
+    {
+      "path": "ko/quizzes/observability/labs/02-observability-stack-quiz.md",
+      "lines": 175,
+      "sha256": "b255dbdb73fb6c1e0272a1a23e47f6d73ee60c6f62c052da78e82601176b86fe"
+    },
+    {
+      "path": "ko/quizzes/observability/labs/03-msa-deployment-quiz.md",
+      "lines": 178,
+      "sha256": "3b730ff801be447033d37cda7fa4ea611a7c55a69614e7d78846eef9bf91750a"
+    },
+    {
+      "path": "en/labs/README.md",
+      "lines": 61,
+      "sha256": "2d7ad59eddf35370d8dc8b52a0b130674c150d439b3ab250ff3ba4b278ffadcd"
+    },
+    {
+      "path": "en/labs/observability/01-infrastructure-setup-lab.md",
+      "lines": 810,
+      "sha256": "5d5324f0acd81b4e24f9d1984a969d3167d4384f4e57f7b775897436f7b72847"
+    },
+    {
+      "path": "en/labs/observability/02-observability-stack-lab.md",
+      "lines": 1543,
+      "sha256": "c8fdce0bb1b51de22eeca84f518d7bb59b2483b51c8b363a44510d19b1498b0b"
+    },
+    {
+      "path": "en/labs/observability/03-msa-deployment-lab.md",
+      "lines": 1145,
+      "sha256": "f7293dfff1c4ab937a4bb7d9754abc1e39652fac0bef9ec395fb34b4bfcfbda0"
+    },
+    {
+      "path": "en/labs/observability/README.md",
+      "lines": 144,
+      "sha256": "17fefb046ca13129983eb85b18e53802e204cfc4eb1d2474d76ea6af03ec0a1c"
+    },
+    {
+      "path": "en/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+      "lines": 185,
+      "sha256": "c555fa0a516151106a0879fb69125926b188d0e7dc952264d3308b2b3ecb8cd6"
+    },
+    {
+      "path": "en/quizzes/observability/labs/02-observability-stack-quiz.md",
+      "lines": 185,
+      "sha256": "d9eb00d5c8b2670e7e6ecf9d5fbe513512e6f6e0e3cc760db26c37e22af1edf8"
+    },
+    {
+      "path": "en/quizzes/observability/labs/03-msa-deployment-quiz.md",
+      "lines": 185,
+      "sha256": "e3a833fd4ea64a9c9683a275ab073fa7c2500a76cd364b233772ce7a07078b31"
+    }
+  ],
+  "originalLines": 9391,
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/labs/README.md",
+        "sha256": "b4c4b8d6a75293268dff0cb10df5cda006047dd52a083bb7a4775cc3b9d42fe1",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "실습-가이드"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-목록"
+          },
+          {
+            "tag": "h2",
+            "id": "권장-학습-순서"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h3",
+            "id": "로컬-환경-기초-컨테이너-실습용"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-환경-핵심-실습용"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-환경-eks-실습용"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-팁"
+          }
+        ],
+        "renderedIds": [
+          "실습-가이드",
+          "실습-목록",
+          "권장-학습-순서",
+          "실습-환경-준비",
+          "로컬-환경-기초-컨테이너-실습용",
+          "kubernetes-환경-핵심-실습용",
+          "aws-환경-eks-실습용",
+          "실습-팁"
+        ]
+      },
+      {
+        "path": "ko/labs/observability/01-infrastructure-setup-lab.md",
+        "sha256": "b016812adf8a2461ede84de91615a884c7a1f989c3937dc77d42f1c08e5c4a1e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-1-인프라-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "clusters"
+          },
+          {
+            "tag": "h2",
+            "id": "platform-prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "managed-resources"
+          },
+          {
+            "tag": "h2",
+            "id": "database-and-next"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          }
+        ],
+        "renderedIds": [
+          "part-1-인프라-구성",
+          "aws-managed-services-상태-확인",
+          "eksctl을-사용한-클러스터-생성",
+          "step-1-1-managed-cluster-생성",
+          "step-1-10-argo-rollouts-설치",
+          "step-1-2-service-cluster-생성",
+          "step-1-3-sqs-큐-sns-토픽-생성",
+          "step-1-4-aurora-postgresql-생성",
+          "step-1-5-mwaa-환경-생성",
+          "step-1-6-amp-워크스페이스-생성",
+          "step-1-7-amg-워크스페이스-생성",
+          "step-1-8-opensearch-도메인-생성",
+          "step-1-9-argocd-설치-및-멀티-클러스터-등록",
+          "terraform을-사용한-클러스터-생성-대안",
+          "검증-verification",
+          "구성-단계-요약",
+          "다음-단계",
+          "아키텍처-개요",
+          "예상-결과",
+          "정리-이-part에서-정리하지-않음",
+          "참조-문서",
+          "클러스터-상태-확인",
+          "학습-목표",
+          "prerequisites",
+          "clusters",
+          "platform-prerequisites",
+          "managed-resources",
+          "database-and-next",
+          "검증-범위"
+        ]
+      },
+      {
+        "path": "ko/labs/observability/02-observability-stack-lab.md",
+        "sha256": "332387ba06f5bcf84ffb743c53347a9a894521fa937ae0e4f29760c01b8d8b72",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-observability-스택-배포"
+          },
+          {
+            "tag": "h2",
+            "id": "baseline"
+          },
+          {
+            "tag": "h2",
+            "id": "tls-network"
+          },
+          {
+            "tag": "h2",
+            "id": "management"
+          },
+          {
+            "tag": "h2",
+            "id": "collectors"
+          },
+          {
+            "tag": "h2",
+            "id": "verify-extend"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          }
+        ],
+        "renderedIds": [
+          "part-2-observability-스택-배포",
+          "_2-2-1-kube-prometheus-stack-prometheus-alertmanager-grafana",
+          "_2-2-2-victoriametrics",
+          "_2-2-3-mimir",
+          "_2-2-4-cloudwatch-metrics-adot",
+          "_2-3-1-loki-simplescalable-mode",
+          "_2-3-2-clickhouse",
+          "_2-3-3-opensearch-fluentbit",
+          "_2-3-4-cloudwatch-logs-fluentbit",
+          "_2-4-1-tempo",
+          "_2-4-2-x-ray-otel-collector-exporter",
+          "_2-5-1-grafana-datasource-provisioning",
+          "_2-5-2-amazon-managed-grafana-설정",
+          "_2-5-3-exemplar-설정",
+          "_2-6-1-alertmanager-sns-receiver",
+          "_2-6-2-grafana-oncall-설치",
+          "_2-6-3-cloudwatch-alarms",
+          "grafana-explore-테스트",
+          "observability-스택-상태-확인",
+          "otel-collector-아키텍처",
+          "step-2-1-opentelemetry-collector-배포",
+          "step-2-2-metrics-스택-배포",
+          "step-2-3-logging-스택-배포",
+          "step-2-4-tracing-스택-배포",
+          "step-2-5-visualization-구성",
+          "step-2-6-alerting-기본-구성",
+          "검증-verification",
+          "다음-단계",
+          "아키텍처-개요",
+          "예상-결과",
+          "참조-문서",
+          "학습-목표",
+          "baseline",
+          "tls-network",
+          "management",
+          "collectors",
+          "verify-extend",
+          "검증-범위"
+        ]
+      },
+      {
+        "path": "ko/labs/observability/03-msa-deployment-lab.md",
+        "sha256": "db3450cdd014323455620905598146c7a742c3691cd25ee7b49fd91b32255cf8",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-msa-배포-및-카나리"
+          },
+          {
+            "tag": "h2",
+            "id": "contracts"
+          },
+          {
+            "tag": "h2",
+            "id": "image-database"
+          },
+          {
+            "tag": "h2",
+            "id": "deployment"
+          },
+          {
+            "tag": "h2",
+            "id": "verify"
+          },
+          {
+            "tag": "h2",
+            "id": "canary"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          }
+        ],
+        "renderedIds": [
+          "part-3-msa-배포-및-카나리",
+          "argo-rollouts-dashboard",
+          "canary-배포-상태-다이어그램",
+          "dockerfile-예시",
+          "git-저장소-구조",
+          "grafana에서-트래픽-분할-확인",
+          "step-3-1-msa-애플리케이션-소개",
+          "step-3-2-karpenter-nodepool-구성",
+          "step-3-3-keda-scaledobject-구성",
+          "step-3-4-argocd-application-applicationset",
+          "step-3-5-초기-배포-확인",
+          "step-3-6-otel-auto-instrumentation-구성",
+          "step-3-7-argo-rollouts-canary-배포",
+          "step-3-8-의도적-실패-주입-및-자동-롤백",
+          "검증-verification",
+          "검증-항목",
+          "다음-단계",
+          "서비스-구성",
+          "서비스-코드-예시",
+          "아키텍처-개요",
+          "예상-결과",
+          "예상-결과-1",
+          "참조-문서",
+          "학습-목표",
+          "contracts",
+          "image-database",
+          "deployment",
+          "verify",
+          "canary",
+          "검증-범위"
+        ]
+      },
+      {
+        "path": "ko/labs/observability/README.md",
+        "sha256": "9401a0f2d8917d58d9ac3bab2b777c579bba922e3b5ca7e3ef852418b7080f89",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-실습-시리즈"
+          },
+          {
+            "tag": "h2",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "sequence"
+          },
+          {
+            "tag": "h2",
+            "id": "application"
+          },
+          {
+            "tag": "h2",
+            "id": "coverage"
+          },
+          {
+            "tag": "h2",
+            "id": "cost-and-cleanup"
+          }
+        ],
+        "renderedIds": [
+          "observability-실습-시리즈",
+          "eks-및-인프라",
+          "gitops-및-배포",
+          "msa-서비스-호출-흐름",
+          "msa-애플리케이션-구성",
+          "observability-기초",
+          "observability-도구-커버리지",
+          "개요",
+          "비용-안내",
+          "사전-요구-사항",
+          "서비스-메시-및-네트워킹",
+          "실습-순서",
+          "실습-시리즈-소개",
+          "실습-시작하기",
+          "아키텍처-개요",
+          "참고할-기존-문서",
+          "환경-확인-스크립트",
+          "prerequisites",
+          "sequence",
+          "application",
+          "coverage",
+          "cost-and-cleanup"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+        "sha256": "e837bf45096766c06656ed624fe5f944ba5b3e449a7e94f50015cf0eb6708474",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-01-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-01-퀴즈",
+          "observability-실습-part-1-인프라-구성-퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/labs/02-observability-stack-quiz.md",
+        "sha256": "aa6221024b7908cb9f4c6dd19fd7b3ef94c680a73729fc99bb95c14154194924",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-02-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-02-퀴즈",
+          "observability-실습-part-2-observability-스택-퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/labs/03-msa-deployment-quiz.md",
+        "sha256": "76401c6fe631f57227289ab6ed2c421b17eeeaddd4c81717a7c459bcf5ee4a6a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-03-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-03-퀴즈",
+          "observability-실습-part-3-msa-배포-및-카나리-퀴즈"
+        ]
+      },
+      {
+        "path": "en/labs/README.md",
+        "sha256": "f5dcdbdc47f46830ca58bf4794d8c0ad2e63d688adbafe2427e790cc660cb6e5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "lab-guide"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-list"
+          },
+          {
+            "tag": "h2",
+            "id": "recommended-learning-path"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h3",
+            "id": "local-environment-for-basic-container-labs"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-environment-for-core-labs"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-environment-for-eks-labs"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-tips"
+          }
+        ],
+        "renderedIds": [
+          "lab-guide",
+          "lab-list",
+          "recommended-learning-path",
+          "lab-environment-setup",
+          "local-environment-for-basic-container-labs",
+          "kubernetes-environment-for-core-labs",
+          "aws-environment-for-eks-labs",
+          "lab-tips"
+        ]
+      },
+      {
+        "path": "en/labs/observability/01-infrastructure-setup-lab.md",
+        "sha256": "21f1396ed5be0a0df7d3522d8d5b4c86504a80f7053d266c9b1e4911a6c08a2a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-1-infrastructure-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "clusters"
+          },
+          {
+            "tag": "h2",
+            "id": "platform-prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "managed-resources"
+          },
+          {
+            "tag": "h2",
+            "id": "database-and-next"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          }
+        ],
+        "renderedIds": [
+          "part-1-infrastructure-setup",
+          "cleanup",
+          "exercise-1-environment-setup",
+          "exercise-2-managed-cluster-eks-setup",
+          "exercise-3-service-cluster-eks-setup",
+          "exercise-4-aws-managed-services-setup",
+          "exercise-5-argocd-setup-on-managed-cluster",
+          "exercise-6-argo-rollouts-setup-on-service-cluster",
+          "exercise-7-irsa-configuration",
+          "learning-objectives",
+          "next-steps",
+          "references",
+          "steps",
+          "steps-1",
+          "steps-2",
+          "steps-3",
+          "steps-4",
+          "steps-5",
+          "steps-6",
+          "summary",
+          "troubleshooting",
+          "verification",
+          "verification-1",
+          "verification-2",
+          "verification-3",
+          "verification-4",
+          "verification-5",
+          "prerequisites",
+          "clusters",
+          "platform-prerequisites",
+          "managed-resources",
+          "database-and-next",
+          "validation-scope"
+        ]
+      },
+      {
+        "path": "en/labs/observability/02-observability-stack-lab.md",
+        "sha256": "872c73be26e930cf725df25ac58576237265203e71c1fbf8a8e0b26d5dd0733a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-deploy-the-observability-stack"
+          },
+          {
+            "tag": "h2",
+            "id": "baseline"
+          },
+          {
+            "tag": "h2",
+            "id": "tls-network"
+          },
+          {
+            "tag": "h2",
+            "id": "management"
+          },
+          {
+            "tag": "h2",
+            "id": "collectors"
+          },
+          {
+            "tag": "h2",
+            "id": "verify-extend"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          }
+        ],
+        "renderedIds": [
+          "part-2-deploy-the-observability-stack",
+          "architecture-overview",
+          "cleanup",
+          "exercise-1-opentelemetry-collector-deployment",
+          "exercise-2-metrics-stack-deployment",
+          "exercise-3-logging-stack-deployment",
+          "exercise-4-tracing-stack-deployment",
+          "exercise-5-grafana-deployment-and-data-source-configuration",
+          "exercise-6-alerting-configuration",
+          "learning-objectives",
+          "next-steps",
+          "part-2-observability-stack-deployment",
+          "prerequisites",
+          "references",
+          "steps",
+          "steps-1",
+          "steps-2",
+          "steps-3",
+          "steps-4",
+          "steps-5",
+          "summary",
+          "troubleshooting",
+          "verification",
+          "verification-1",
+          "verification-2",
+          "verification-3",
+          "verification-4",
+          "verification-5",
+          "baseline",
+          "tls-network",
+          "management",
+          "collectors",
+          "verify-extend",
+          "validation-scope"
+        ]
+      },
+      {
+        "path": "en/labs/observability/03-msa-deployment-lab.md",
+        "sha256": "752044d86350230897794dd0ed5d32c6f41fba50ed95450cb058ba9b51e16445",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-msa-deployment-and-canary"
+          },
+          {
+            "tag": "h2",
+            "id": "contracts"
+          },
+          {
+            "tag": "h2",
+            "id": "image-database"
+          },
+          {
+            "tag": "h2",
+            "id": "deployment"
+          },
+          {
+            "tag": "h2",
+            "id": "verify"
+          },
+          {
+            "tag": "h2",
+            "id": "canary"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          }
+        ],
+        "renderedIds": [
+          "part-3-msa-deployment-and-canary",
+          "application-structure",
+          "architecture-overview",
+          "canary-state-diagram",
+          "cleanup",
+          "exercise-1-msa-application-overview",
+          "exercise-2-karpenter-nodepool-configuration",
+          "exercise-3-keda-scaledobject-configuration",
+          "exercise-4-argocd-application-deployment",
+          "exercise-5-opentelemetry-auto-instrumentation",
+          "exercise-6-argo-rollouts-canary-deployment",
+          "exercise-7-intentional-failure-and-automatic-rollback",
+          "learning-objectives",
+          "next-steps",
+          "prerequisites",
+          "references",
+          "repository-structure",
+          "sample-code-snippets",
+          "service-call-flow",
+          "steps",
+          "steps-1",
+          "steps-2",
+          "steps-3",
+          "steps-4",
+          "steps-5",
+          "summary",
+          "troubleshooting",
+          "verification",
+          "verification-1",
+          "verification-2",
+          "verification-3",
+          "verification-4",
+          "verification-5",
+          "contracts",
+          "image-database",
+          "deployment",
+          "verify",
+          "canary",
+          "validation-scope"
+        ]
+      },
+      {
+        "path": "en/labs/observability/README.md",
+        "sha256": "9edf00ffd15732a5d89b7c8780d0ac301d050d74114a4f7f4ccb8b1e23dbf1ea",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-series"
+          },
+          {
+            "tag": "h2",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "sequence"
+          },
+          {
+            "tag": "h2",
+            "id": "application"
+          },
+          {
+            "tag": "h2",
+            "id": "coverage"
+          },
+          {
+            "tag": "h2",
+            "id": "cost-and-cleanup"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-series",
+          "architecture-diagram",
+          "cost-estimate",
+          "lab-sequence",
+          "lab-series-introduction",
+          "learning-outcomes",
+          "msa-application-overview",
+          "observability-tool-coverage",
+          "overview",
+          "references",
+          "required-iam-permissions",
+          "service-call-flow",
+          "prerequisites",
+          "sequence",
+          "application",
+          "coverage",
+          "cost-and-cleanup"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+        "sha256": "49a78b4fa681afe0b50a0d7da74c78c7ea14e88993fad503d216b5ded4628d2c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-01-quiz"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-01-quiz",
+          "observability-lab-part-1-infrastructure-setup-quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/labs/02-observability-stack-quiz.md",
+        "sha256": "8b8a19ceeb34bd89991b6dd2b711a44a89f30786d4b8264a2aedcdb720e4d6ad",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-02-quiz"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-02-quiz",
+          "observability-lab-part-2-observability-stack-quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/labs/03-msa-deployment-quiz.md",
+        "sha256": "61e3754e78c18cedb89ae5df77ab6b50d843bdf169d631a51e16f1ab6fd44b32",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-lab-03-quiz"
+          }
+        ],
+        "renderedIds": [
+          "observability-lab-03-quiz",
+          "observability-lab-part-3-msa-deployment-and-canary-quiz"
+        ]
+      },
+      {
+        "path": "ko/labs/observability/06-distributed-tracing-lab.md",
+        "sha256": "a2cec1d4cd139641cd7e46d698c345f0543851fd680fcb8596c53f8dc42c2b62",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-6-분산-추적-분석"
+          },
+          {
+            "tag": "h2",
+            "id": "traceql"
+          },
+          {
+            "tag": "h2",
+            "id": "service-graph"
+          },
+          {
+            "tag": "h2",
+            "id": "waterfall"
+          },
+          {
+            "tag": "h2",
+            "id": "correlation"
+          },
+          {
+            "tag": "h2",
+            "id": "exemplars"
+          },
+          {
+            "tag": "h2",
+            "id": "slo"
+          },
+          {
+            "tag": "h2",
+            "id": "cleanup"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위와-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-6-분산-추적-분석",
+          "exemplar-워크플로우",
+          "full-drill-down-테스트",
+          "logs-→-traces-연동",
+          "span-유형별-병목-분류",
+          "step-6-1-traceql-트레이스-검색",
+          "step-6-2-서비스-그래프-service-graph",
+          "step-6-3-지연-구간-식별-워크플로우",
+          "step-6-4-loki와-tempo-상관관계",
+          "step-6-5-exemplar-활용",
+          "step-6-6-종합-대시보드-구성",
+          "step-6-7-정리-cleanup",
+          "tempo-service-graph-활성화",
+          "traceql-기본-문법",
+          "traces-→-logs-연동",
+          "검증-verification",
+          "검증-체크리스트",
+          "다음-단계-권장",
+          "대시보드-패널-구성",
+          "분석-단계",
+          "분석-워크플로우",
+          "서비스-그래프-해석",
+          "시리즈-목차",
+          "실습-완료",
+          "정리-순서",
+          "정리-확인",
+          "주요-검색-쿼리",
+          "참조-문서",
+          "학습-내용-요약",
+          "학습-목표",
+          "traceql",
+          "service-graph",
+          "waterfall",
+          "correlation",
+          "exemplars",
+          "slo",
+          "cleanup",
+          "검증-범위와-참고-자료"
+        ]
+      },
+      {
+        "path": "en/labs/observability/06-distributed-tracing-lab.md",
+        "sha256": "9cbb31f92e53814a7a5b7134b460cbfbfc3f0256dd538eb07b4caa45dd9a0208",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-6-distributed-tracing-analysis"
+          },
+          {
+            "tag": "h2",
+            "id": "traceql"
+          },
+          {
+            "tag": "h2",
+            "id": "service-graph"
+          },
+          {
+            "tag": "h2",
+            "id": "waterfall"
+          },
+          {
+            "tag": "h2",
+            "id": "correlation"
+          },
+          {
+            "tag": "h2",
+            "id": "exemplars"
+          },
+          {
+            "tag": "h2",
+            "id": "slo"
+          },
+          {
+            "tag": "h2",
+            "id": "cleanup"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope-and-references"
+          }
+        ],
+        "renderedIds": [
+          "part-6-distributed-tracing-analysis",
+          "cleanup-steps-table",
+          "drill-down-analysis-workflow",
+          "exercise-1-traceql-trace-search",
+          "exercise-2-service-graph-visualization",
+          "exercise-3-latency-identification-workflow",
+          "exercise-4-loki-tempo-correlation",
+          "exercise-5-exemplar-usage",
+          "exercise-6-comprehensive-dashboard-setup",
+          "final-verification-checklist",
+          "full-cleanup-script",
+          "key-takeaways",
+          "learning-objectives",
+          "next-steps",
+          "prerequisites",
+          "references",
+          "steps",
+          "steps-1",
+          "steps-2",
+          "steps-3",
+          "steps-4",
+          "steps-5",
+          "summary",
+          "traceql-query-reference",
+          "verification",
+          "traceql",
+          "service-graph",
+          "waterfall",
+          "correlation",
+          "exemplars",
+          "slo",
+          "cleanup",
+          "validation-scope-and-references"
+        ]
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "ko/labs/README.md",
+      "sha256": "b4c4b8d6a75293268dff0cb10df5cda006047dd52a083bb7a4775cc3b9d42fe1",
+      "bytes": 3403
+    },
+    {
+      "path": "ko/labs/observability/01-infrastructure-setup-lab.md",
+      "sha256": "b016812adf8a2461ede84de91615a884c7a1f989c3937dc77d42f1c08e5c4a1e",
+      "bytes": 9069
+    },
+    {
+      "path": "ko/labs/observability/02-observability-stack-lab.md",
+      "sha256": "332387ba06f5bcf84ffb743c53347a9a894521fa937ae0e4f29760c01b8d8b72",
+      "bytes": 9925
+    },
+    {
+      "path": "ko/labs/observability/03-msa-deployment-lab.md",
+      "sha256": "db3450cdd014323455620905598146c7a742c3691cd25ee7b49fd91b32255cf8",
+      "bytes": 8864
+    },
+    {
+      "path": "ko/labs/observability/README.md",
+      "sha256": "9401a0f2d8917d58d9ac3bab2b777c579bba922e3b5ca7e3ef852418b7080f89",
+      "bytes": 6607
+    },
+    {
+      "path": "ko/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+      "sha256": "e837bf45096766c06656ed624fe5f944ba5b3e449a7e94f50015cf0eb6708474",
+      "bytes": 4849
+    },
+    {
+      "path": "ko/quizzes/observability/labs/02-observability-stack-quiz.md",
+      "sha256": "aa6221024b7908cb9f4c6dd19fd7b3ef94c680a73729fc99bb95c14154194924",
+      "bytes": 4521
+    },
+    {
+      "path": "ko/quizzes/observability/labs/03-msa-deployment-quiz.md",
+      "sha256": "76401c6fe631f57227289ab6ed2c421b17eeeaddd4c81717a7c459bcf5ee4a6a",
+      "bytes": 4049
+    },
+    {
+      "path": "en/labs/README.md",
+      "sha256": "f5dcdbdc47f46830ca58bf4794d8c0ad2e63d688adbafe2427e790cc660cb6e5",
+      "bytes": 3284
+    },
+    {
+      "path": "en/labs/observability/01-infrastructure-setup-lab.md",
+      "sha256": "21f1396ed5be0a0df7d3522d8d5b4c86504a80f7053d266c9b1e4911a6c08a2a",
+      "bytes": 7732
+    },
+    {
+      "path": "en/labs/observability/02-observability-stack-lab.md",
+      "sha256": "872c73be26e930cf725df25ac58576237265203e71c1fbf8a8e0b26d5dd0733a",
+      "bytes": 8595
+    },
+    {
+      "path": "en/labs/observability/03-msa-deployment-lab.md",
+      "sha256": "752044d86350230897794dd0ed5d32c6f41fba50ed95450cb058ba9b51e16445",
+      "bytes": 7864
+    },
+    {
+      "path": "en/labs/observability/README.md",
+      "sha256": "9edf00ffd15732a5d89b7c8780d0ac301d050d74114a4f7f4ccb8b1e23dbf1ea",
+      "bytes": 5627
+    },
+    {
+      "path": "en/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+      "sha256": "49a78b4fa681afe0b50a0d7da74c78c7ea14e88993fad503d216b5ded4628d2c",
+      "bytes": 4897
+    },
+    {
+      "path": "en/quizzes/observability/labs/02-observability-stack-quiz.md",
+      "sha256": "8b8a19ceeb34bd89991b6dd2b711a44a89f30786d4b8264a2aedcdb720e4d6ad",
+      "bytes": 4783
+    },
+    {
+      "path": "en/quizzes/observability/labs/03-msa-deployment-quiz.md",
+      "sha256": "61e3754e78c18cedb89ae5df77ab6b50d843bdf169d631a51e16f1ab6fd44b32",
+      "bytes": 4203
+    },
+    {
+      "path": "examples/labs/observability/application/storage.py",
+      "sha256": "e0944b73fdc1f96ef44e7b66055d058b025c01a367764adf932f21bf2a8305e5",
+      "bytes": 6237
+    },
+    {
+      "path": "examples/labs/observability/application/telemetry.py",
+      "sha256": "b5046ba75ec22748f8aa551a12132278289c6b2f3e997a42c41413940bb86c9f",
+      "bytes": 3626
+    },
+    {
+      "path": "examples/labs/observability/application/api.py",
+      "sha256": "af2c2451c98b4a8df3644adbce182ce867c8c9fd58f6ddeb7b53db7d97930418",
+      "bytes": 7286
+    },
+    {
+      "path": "examples/labs/observability/application/messaging.py",
+      "sha256": "7e3937f339f8e246bf6c23d2ff59679325d5712835d673ef3d650e6dd28c3840",
+      "bytes": 4465
+    },
+    {
+      "path": "examples/labs/observability/application/main.py",
+      "sha256": "ace4dfc5ccc61d102eff6578d6e8df420f5ebe2289435c09dd0e9ca3083383dc",
+      "bytes": 3227
+    },
+    {
+      "path": "examples/labs/observability/application/requirements.txt",
+      "sha256": "0f06f28c80276b92ad78a06af85d83e8b9408d4ffdc8612660e8e69ff3f1abba",
+      "bytes": 203
+    },
+    {
+      "path": "examples/labs/observability/application/Dockerfile",
+      "sha256": "b4ecfd4b97fb238290431755c046cc27a8ac0c199423c523f6b54450ab2b07b9",
+      "bytes": 525
+    },
+    {
+      "path": "examples/labs/observability/application/.dockerignore",
+      "sha256": "ae2678e5252e9293a06fb754a95c0c201c1a317db98584bc4931ae89955e1fce",
+      "bytes": 103
+    },
+    {
+      "path": "examples/labs/observability/application/infra.yaml",
+      "sha256": "5b6e8497940c7ee8bad3e6130db91235e25dcb02ae056149f121a4c780e74468",
+      "bytes": 13662
+    },
+    {
+      "path": "examples/labs/observability/application/db_config.py",
+      "sha256": "4a5b8e984288413274d04e023d6e3be103efd2172b0fec98361b5034c5bec68b",
+      "bytes": 1705
+    },
+    {
+      "path": "examples/labs/observability/application/bootstrap_db.py",
+      "sha256": "2e16fca556789126561c404d7054d6643b27b451f759301bbf75298dc576ef20",
+      "bytes": 3434
+    },
+    {
+      "path": "examples/labs/observability/application/prepare_values.py",
+      "sha256": "faa40c6154a595badea1960915331afab7b40063382f40fb27ce64ca0cbb9ae0",
+      "bytes": 3360
+    },
+    {
+      "path": "examples/labs/observability/application/README.md",
+      "sha256": "42af74f89c333ad84792bf65cf07fecb0ff3fe015a71516bb7e85dd11f3eb7c6",
+      "bytes": 8521
+    },
+    {
+      "path": "examples/labs/observability/application/prepare_clusters.py",
+      "sha256": "a70d9c37be24d709a4ebfc6c04ebce5525492db74b2f33a9d46396a8cbd93a29",
+      "bytes": 3728
+    },
+    {
+      "path": "examples/labs/observability/application/chart/Chart.yaml",
+      "sha256": "8e00605ee28b2ec97f4210e5c9b120a058c546b702bc3518e69e259f23bd8559",
+      "bytes": 154
+    },
+    {
+      "path": "examples/labs/observability/application/chart/values.yaml",
+      "sha256": "08518ab93bbf6716d099a94971a6716ecda679c10f60c318abf243dcd442d257",
+      "bytes": 799
+    },
+    {
+      "path": "examples/labs/observability/application/chart/templates/workloads.yaml",
+      "sha256": "185a3e448d985ba29498993caf5e2068c6d08466c53ef7a232237bd4acb79085",
+      "bytes": 5090
+    },
+    {
+      "path": "examples/labs/observability/application/chart/templates/monitoring.yaml",
+      "sha256": "f3db6e24d6ed5df20c8fea78529bf38b8819f3678975a8dad5a8feb56203c1ac",
+      "bytes": 319
+    },
+    {
+      "path": "examples/labs/observability/application/chart/templates/scaling.yaml",
+      "sha256": "978ef3914d3206fce3c93ea84f364c9aa6124380db63bba6621f0d6555e99c7c",
+      "bytes": 943
+    },
+    {
+      "path": "examples/labs/observability/application/chart/templates/analysis.yaml",
+      "sha256": "22c0cce30a6495fbe5361b1f5e6ced98d41f72bfff3445c9ce0484626537624b",
+      "bytes": 1442
+    },
+    {
+      "path": "examples/labs/observability/application/tests/test_storage.py",
+      "sha256": "aa30b7c6e2ffe163d3aaec5a1b72341f02db60173b9bbdedf7c50507a5d22b0a",
+      "bytes": 2588
+    },
+    {
+      "path": "examples/labs/observability/application/tests/test_telemetry.py",
+      "sha256": "d87d2d5ce869b9d33a8946284b7c71b9fdf526a6d705b2bd6d35efd224b26ecb",
+      "bytes": 1515
+    },
+    {
+      "path": "examples/labs/observability/application/tests/test_api.py",
+      "sha256": "3ddff4027a35a9033f72a37c3e283c168c9948acabf726c65d3b5e63f529bacc",
+      "bytes": 1909
+    },
+    {
+      "path": "examples/labs/observability/application/tests/test_messaging.py",
+      "sha256": "5f587328c75f1957b4b0637caa6dccd9a96fc8de08c180fe645a0fb77ea01059",
+      "bytes": 2277
+    },
+    {
+      "path": "examples/labs/observability/application/tests/test_db_config.py",
+      "sha256": "cf52e848dcf0a208a9bdcb8f627f600ce6889691f8c179d45a9bba5d91f0381a",
+      "bytes": 1211
+    },
+    {
+      "path": "examples/labs/observability/stack/tempo-values.yaml",
+      "sha256": "89025b2b1219d273ae9cf940f747db7ab7c0d5822f8cd69c38a7ce74d7242e83",
+      "bytes": 3587
+    },
+    {
+      "path": "examples/labs/observability/stack/collector-management-values.yaml",
+      "sha256": "36c4596ebae724bf93c2fc8cf223ebf2c1363c7b2bd6a541c8a10def257b440b",
+      "bytes": 2035
+    },
+    {
+      "path": "examples/labs/observability/stack/collector-service-values.yaml",
+      "sha256": "e3037adf69d7ff7533fdeed375f92c102e1f59302801240fcb86f4866b9e7516",
+      "bytes": 3336
+    },
+    {
+      "path": "examples/labs/observability/stack/loki-values.yaml",
+      "sha256": "12f715eb35dfce6a162ead5b3d542694f7b48587fabd569f6aa198b1c2eaee54",
+      "bytes": 1038
+    },
+    {
+      "path": "examples/labs/observability/stack/monitoring-management-values.yaml",
+      "sha256": "1e69c4bc968c6f43ec95092bf7908d4e3bac5e4b221b6013a1ce43f908c943ec",
+      "bytes": 4010
+    },
+    {
+      "path": "examples/labs/observability/stack/prometheus-probe.yaml",
+      "sha256": "28a7df11fe1f2c1db7d1cb243a775fbbab3363c6392cb23320c336103731feac",
+      "bytes": 407
+    },
+    {
+      "path": "examples/labs/observability/stack/monitoring-service-values.yaml",
+      "sha256": "a564be06b8335929ea8dc840b99bcefcfeeb06d5a48960633810f54b49f8d425",
+      "bytes": 1962
+    },
+    {
+      "path": "examples/labs/observability/stack/prepare_tls.py",
+      "sha256": "a1375c3385ac72b1f30908a975ce668510519ef4e034f03b9658d9efbd38b972",
+      "bytes": 8301
+    },
+    {
+      "path": "examples/labs/observability/stack/backend-network-policies.yaml",
+      "sha256": "bff78969c9d85e490c8fa3a6ca24edc557274f0740477e9bdda012c709b7b306",
+      "bytes": 896
+    },
+    {
+      "path": "examples/labs/observability/stack/render_network.py",
+      "sha256": "11ffa0f0bcecbb137c2b805923be16bc1df0d4c57651ba0d464f2ad8ff85f0a6",
+      "bytes": 4080
+    },
+    {
+      "path": "examples/labs/observability/stack/collector-cloudwatch-values.yaml",
+      "sha256": "c45b595f25ebda2fd4c646f07a07d207bac58f05f0225d93d4213b1e74d36e54",
+      "bytes": 520
+    },
+    {
+      "path": "examples/labs/observability/stack/requirements.txt",
+      "sha256": "abd9bb8982c14fa016a9e13a3f299ad6ee6fa9c546e0a2eab8f785619963a8ea",
+      "bytes": 35
+    },
+    {
+      "path": "examples/labs/observability/stack/README.md",
+      "sha256": "1ae4c0686697cd455847a322fe7f33d753aaaae153975f2afef9dd9f2c0affe2",
+      "bytes": 8665
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-01-infrastructure-setup-lab-0.architecture.json",
+      "sha256": "e01a74457a79e29dbbe7fb20a48a11ef6c7a306b089a0ec91ca07a817be45c4c",
+      "bytes": 2883
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-01-infrastructure-setup-lab-0.html",
+      "sha256": "81365756bb1d95bb607ee425b5dbe299145d5641644a35364f528fe6a303facf",
+      "bytes": 706767
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-01-infrastructure-setup-lab-0.png",
+      "sha256": "0b95f5e4dcd03f52a46bae54752bed372b0ed081c381ac144800f8cf52122869",
+      "bytes": 94024
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-02-observability-stack-lab-0.architecture.json",
+      "sha256": "4cce084d2adc5f50e8b54a2fc889d00c7321cd3a202e39e04a56c5eac992ad9c",
+      "bytes": 3829
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-02-observability-stack-lab-0.html",
+      "sha256": "6ebd8fdabb9eeefed952ff4fd8fef9680e0c9c553990b54b1ebcb5443488d9d6",
+      "bytes": 712156
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-02-observability-stack-lab-0.png",
+      "sha256": "ac160922174afdcf0107d531fc6cacc467027dd24fdc2573aab44429b751359a",
+      "bytes": 89927
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-03-msa-deployment-lab-0.architecture.json",
+      "sha256": "31208d3c32cad833ad314d20e8eb7da58f50593cde3640d2c3249e40feea1394",
+      "bytes": 4139
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-03-msa-deployment-lab-0.html",
+      "sha256": "acf51a1eab4ff59b1fe99353bc69a705c0aa20570446162b111b447d6a3f8470",
+      "bytes": 714200
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-03-msa-deployment-lab-0.png",
+      "sha256": "82094c8562fd75b3e4b1baa8fe9c601cbf0a9ec2971dd0d79682a9c087fbc80b",
+      "bytes": 108455
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-03-msa-deployment-lab-1.lifecycle.json",
+      "sha256": "b4fa4038ba66a14bd84f0b346c9bfd7498fbf9a0ecd94a7c1e2d239e15fd6fd3",
+      "bytes": 2343
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-03-msa-deployment-lab-1.html",
+      "sha256": "3a45b234ed7162e5b00e09773668c21459cf8e9c0c97ea2987e86fb0a7eee09c",
+      "bytes": 706128
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-03-msa-deployment-lab-1.png",
+      "sha256": "46d2930e90931d40ca9d8a5d3096908f0cda7c593c5dca439775b7d61655aa5e",
+      "bytes": 93923
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-03-msa-deployment-lab-10.architecture.json",
+      "sha256": "129fc0260063f00f8307cff43694ab24cb16ec236705874804cbb19b6631f09e",
+      "bytes": 4126
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-03-msa-deployment-lab-10.html",
+      "sha256": "134dfcc775951dcd21b2b7e6a5c3c8d12c59a05be25c7ae95e87dcbd6d61209a",
+      "bytes": 714199
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-03-msa-deployment-lab-10.png",
+      "sha256": "5a6123cca8813b311658705886a6741ed1bc99238fc8bbefeb786e04566302a5",
+      "bytes": 108292
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-overview-0.architecture.json",
+      "sha256": "0955f09aba2376612436a75b9058aab98dd2f70faa777c20bd4576d1980b3926",
+      "bytes": 2912
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-overview-0.html",
+      "sha256": "c0d1ff16abc796e649067bea2d712447b17c4938584a9b4fb1dc476ac0a6c40f",
+      "bytes": 706790
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-overview-0.png",
+      "sha256": "6600f3ad35d4c0787ae2cbe8760147ead8eacb138b35ef87a1016161ad98c81b",
+      "bytes": 93613
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-overview-1.architecture.json",
+      "sha256": "27e166d87db2b5f5b3b3bc87b2e75b503972c8c7a2ff494f5d189a571a38a2c3",
+      "bytes": 2864
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-overview-1.html",
+      "sha256": "e4e2baf8384ea5593c99cc9569e97b7c5f514b921ee9259908b9d1307171604a",
+      "bytes": 707181
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-overview-1.png",
+      "sha256": "1193366faf91c68291b1c31a8be11f0e2c341f36dc332504ac15cbb18ba7325c",
+      "bytes": 93272
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-overview-2.workflow.json",
+      "sha256": "9331e6f4eecba8dbbe1f30217eb171e7216884a962286b049d8ae83204c3ad90",
+      "bytes": 2584
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-overview-2.html",
+      "sha256": "adb5a7766a4b4e1a12d01de15b6bbbe23762c0f171545caa15f5541b2dfa7995",
+      "bytes": 705135
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-overview-2.png",
+      "sha256": "c4b388ef3a04f9253a04283426eb942e4398f3f629b7b7866bfb74c4b91c53d8",
+      "bytes": 68559
+    },
+    {
+      "path": "assets/diagrams/archify/en-labs-observability-overview-3.sequence.json",
+      "sha256": "3a3c9404c1183e71f2183a29481a1fc3e7fbe3e7b14fa8f85151952b7f77b127",
+      "bytes": 3702
+    },
+    {
+      "path": "public/archmaps/en-labs-observability-overview-3.html",
+      "sha256": "c19c13ae7349461efecc96dc6514c2b5142a76bbfaac299bb65e0244b5f28f6c",
+      "bytes": 715425
+    },
+    {
+      "path": "en/.gitbook/assets/en-labs-observability-overview-3.png",
+      "sha256": "59447db3b8baa0b5c071f7d0455df1b47c7ee2e0218644282b3260b4c9b48dc6",
+      "bytes": 142650
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-01-infrastructure-setup-lab-0.architecture.json",
+      "sha256": "cf904aff067d1b98094bcbaa344a97afbc4f706ae7318b19d007111c08c2f2a5",
+      "bytes": 2858
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-01-infrastructure-setup-lab-0.html",
+      "sha256": "9d45416f297c1320502b1cea97b691dfb557da92e263b252ffaf84cf3302176c",
+      "bytes": 706784
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-01-infrastructure-setup-lab-0.png",
+      "sha256": "6d8f87f63cb369065315972aa3c8fe86cd5e8456e9b888f298774ce225792e0f",
+      "bytes": 87053
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-02-observability-stack-lab-0.architecture.json",
+      "sha256": "d2965057a9e735911b0cb3d23412bfca87523908e386868c11a36eae0331b082",
+      "bytes": 3821
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-02-observability-stack-lab-0.html",
+      "sha256": "fc36bb4c3226985e73f3a8d8460a8962d0b6be85a87e554c90055911eceaffbf",
+      "bytes": 712198
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-02-observability-stack-lab-0.png",
+      "sha256": "661acb3c8f0cfe62dd3d82556c85c58c08c164ecf48076318bbf60d0d10d138c",
+      "bytes": 88384
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-03-msa-deployment-lab-0.architecture.json",
+      "sha256": "07ec3bc0b8a7f72af2017857e40ef5ea1f5ce07272fd58945949f182f5525cc3",
+      "bytes": 4099
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-03-msa-deployment-lab-0.html",
+      "sha256": "4900714a5a7511ad8437b1b4fc2fef63b4a7bf0df06ffc146ac2f0b49722e931",
+      "bytes": 714180
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-0.png",
+      "sha256": "126147d0fe07a7873a74d51ad2270548a8683122427cddf2f7b34867e77d5635",
+      "bytes": 100788
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-03-msa-deployment-lab-1.lifecycle.json",
+      "sha256": "a52dd7df2df0a2b647a22c666555c21d97678ab9914523da021f81f7d3aa674f",
+      "bytes": 2321
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-03-msa-deployment-lab-1.html",
+      "sha256": "24a91da15a262c456c7fd2ba22f29956918493d3cc825ff8fae7274e1f1c5f48",
+      "bytes": 706136
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-1.png",
+      "sha256": "c889e572c66be7e357111282fb2e2f7c3a9f68ad10f57fbc8e28cf89dcb47412",
+      "bytes": 86841
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-03-msa-deployment-lab-10.architecture.json",
+      "sha256": "b2a2e7fc7d904a24b64dad211f39fbd9938b8f8902b0106224a1ac3f934168ae",
+      "bytes": 4123
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-03-msa-deployment-lab-10.html",
+      "sha256": "f22e65d86dcac05b47ca75ec510e410abac56856106889425269c5b80635803d",
+      "bytes": 714222
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-10.png",
+      "sha256": "6de3f156d104ac0494da558ac34418cf7c172d13d2cee4dfbdfa08f12746f874",
+      "bytes": 102706
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-overview-0.architecture.json",
+      "sha256": "efa46296f24aada3e5991e9a5deb8cb20e733ea5f9fbf39cf4f29f6a96590f83",
+      "bytes": 2867
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-overview-0.html",
+      "sha256": "ced4a048c2bd5216e693494605e9d8a726f9b94aabd40ac0284a28e39174bcc3",
+      "bytes": 706773
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-overview-0.png",
+      "sha256": "5765cf22c6d4762183a51deddc4d74ce0924386dae1b82cc64d46dcbb015de48",
+      "bytes": 87125
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-overview-1.architecture.json",
+      "sha256": "ad07a38399a118636b4408987bbd7dd02f79423799fb43c1593847474a2ba156",
+      "bytes": 2835
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-overview-1.html",
+      "sha256": "f188265a6761670f3f0d7a5968b9f036031848be92ba1ff0a84b7c3800ad2012",
+      "bytes": 707135
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-overview-1.png",
+      "sha256": "47358dae3f32d5f6fcbc99b55540b103105221eebbd85c3d276e43928d70f940",
+      "bytes": 86831
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-overview-2.workflow.json",
+      "sha256": "94f3947521e9e8feb312606da06f22bb0beb00dbd421a16effe517ee46a4e839",
+      "bytes": 2606
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-overview-2.html",
+      "sha256": "14a28e8aa3d7d01dec85f5c6dfbf2137223052424304a7cff660fc2d5300d5ce",
+      "bytes": 705326
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-overview-2.png",
+      "sha256": "637c09b55b7dfafbdb2c90191f4b6a8ebc348afb33f80f9ce6679f53caa8c391",
+      "bytes": 64722
+    },
+    {
+      "path": "assets/diagrams/archify/ko-labs-observability-overview-3.sequence.json",
+      "sha256": "60ec8896fa1471bfdbb8d88f43ba080cc8afcc25b3748fbaf42e907b17afcf29",
+      "bytes": 4051
+    },
+    {
+      "path": "public/archmaps/ko-labs-observability-overview-3.html",
+      "sha256": "61b2f5ffc85352c6baa71a99cd39c46275bcf113291c5c67c7d79e629a0e9efc",
+      "bytes": 715470
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-labs-observability-overview-3.png",
+      "sha256": "91a55ae3ce63906244d550abbd90c0fc53eb19baf3876a452ee45422c3340bae",
+      "bytes": 135986
+    },
+    {
+      "path": "ko/labs/observability/06-distributed-tracing-lab.md",
+      "sha256": "a2cec1d4cd139641cd7e46d698c345f0543851fd680fcb8596c53f8dc42c2b62",
+      "bytes": 13818
+    },
+    {
+      "path": "en/labs/observability/06-distributed-tracing-lab.md",
+      "sha256": "9cbb31f92e53814a7a5b7134b460cbfbfc3f0256dd538eb07b4caa45dd9a0208",
+      "bytes": 11596
+    }
+  ],
+  "native": {
+    "httpFlow": {
+      "status": "passed",
+      "httpRequests": 5,
+      "roles": [
+        "order-service",
+        "payment-service",
+        "api-gateway"
+      ],
+      "spanCounts": {
+        "order-service": 10,
+        "payment-service": 6,
+        "api-gateway": 10
+      },
+      "checks": [
+        "create/order/payment/read",
+        "repeat-payment-idempotent",
+        "conflicting-payment409",
+        "2outboxevents",
+        "allupstreamspanssharegatewaytraceIDs",
+        "boundedmetricroutes"
+      ],
+      "limits": "ThreeactualUvicornserversloopbackHTTP+SQLite/inmemoryspanexporters;noAWSorrealpayment"
+    },
+    "messagingSDK": {
+      "status": "passed",
+      "boto3": "1.43.93",
+      "checks": [
+        "actualSNSPublishshape",
+        "markoutboxonlyafterSDKsuccess",
+        "SNSJSONenvelopetoSQSconsumer",
+        "twoSDKreceives/deletesbutoneDBeffect",
+        "W3CtraceIDandproducer-consumerparentpreserved"
+      ],
+      "spans": 4,
+      "scope": "ActualSDKStubberandSQLite/OTelSDK;noAWSnetworkorrealSNSfanout/SQSdelivery"
+    },
+    "postgres": {
+      "status": "passed",
+      "postgresVersion": "17.11 (Debian 17.11-1.pgdg12+2)",
+      "image": "postgres@sha256:051f7b7b3abdd564d5d1bd1e8c4b9c1b6e77087d1dd22020ede611c096a272e0",
+      "checks": [
+        "explicitbootstraprole",
+        "rawspecialpasswordlogin",
+        "runtimeDML/outbox/paymentidempotency",
+        "consumerduplicates",
+        "publishedmark",
+        "DROP/CREATEROLE/CREATETABLEdenied",
+        "existingrolenotoverwritten"
+      ],
+      "deniedStatements": [
+        [
+          "DROP",
+          "TABLE"
+        ],
+        [
+          "CREATE",
+          "ROLE"
+        ],
+        [
+          "CREATE",
+          "TABLE"
+        ]
+      ],
+      "limits": "EphemeralinternalDockerPostgreSQLwithoutpublishedports;TLSdisabledonlyforthisnativeSQLtest;noAurora/AWS/IAM/TLSverificationclaim"
+    },
+    "docker": {
+      "status": "passed",
+      "imageId": "sha256:5f37fb1106ea7b25a1ec873dc31184a8acd8fd84b74032b6aa3e2423c22b794c",
+      "size": 253219230,
+      "user": "10001:10001",
+      "checks": [
+        "nonroot-readonly-network-none-DBinit",
+        "nonroot-readonly-gateway-health-and-ready"
+      ],
+      "sourceHashes": {
+        "Dockerfile": "b4ecfd4b97fb238290431755c046cc27a8ac0c199423c523f6b54450ab2b07b9",
+        ".dockerignore": "ae2678e5252e9293a06fb754a95c0c201c1a317db98584bc4931ae89955e1fce",
+        "requirements.txt": "0f06f28c80276b92ad78a06af85d83e8b9408d4ffdc8612660e8e69ff3f1abba",
+        "api.py": "af2c2451c98b4a8df3644adbce182ce867c8c9fd58f6ddeb7b53db7d97930418",
+        "db_config.py": "4a5b8e984288413274d04e023d6e3be103efd2172b0fec98361b5034c5bec68b",
+        "main.py": "ace4dfc5ccc61d102eff6578d6e8df420f5ebe2289435c09dd0e9ca3083383dc",
+        "messaging.py": "7e3937f339f8e246bf6c23d2ff59679325d5712835d673ef3d650e6dd28c3840",
+        "storage.py": "e0944b73fdc1f96ef44e7b66055d058b025c01a367764adf932f21bf2a8305e5",
+        "telemetry.py": "b5046ba75ec22748f8aa551a12132278289c6b2f3e997a42c41413940bb86c9f"
+      },
+      "limits": "LocalARM64build/smokeonly;noAWS/IRSA/K8s/realDBorqueue"
+    },
+    "appSchema": {
+      "status": "passed",
+      "kubernetes": "1.36.2",
+      "rollouts": "1.10.0",
+      "keda": "2.20.0",
+      "resources": [
+        {
+          "kind": "ServiceAccount",
+          "name": "analytics",
+          "passed": true
+        },
+        {
+          "kind": "ServiceAccount",
+          "name": "api-gateway",
+          "passed": true
+        },
+        {
+          "kind": "ServiceAccount",
+          "name": "notification",
+          "passed": true
+        },
+        {
+          "kind": "ServiceAccount",
+          "name": "order-service",
+          "passed": true
+        },
+        {
+          "kind": "ServiceAccount",
+          "name": "payment-service",
+          "passed": true
+        },
+        {
+          "kind": "Service",
+          "name": "analytics",
+          "passed": true
+        },
+        {
+          "kind": "Service",
+          "name": "api-gateway",
+          "passed": true
+        },
+        {
+          "kind": "Service",
+          "name": "notification",
+          "passed": true
+        },
+        {
+          "kind": "Service",
+          "name": "order-service",
+          "passed": true
+        },
+        {
+          "kind": "Service",
+          "name": "payment-service",
+          "passed": true
+        },
+        {
+          "kind": "Deployment",
+          "name": "analytics",
+          "passed": true
+        },
+        {
+          "kind": "Deployment",
+          "name": "api-gateway",
+          "passed": true
+        },
+        {
+          "kind": "Deployment",
+          "name": "notification",
+          "passed": true
+        },
+        {
+          "kind": "Deployment",
+          "name": "order-service",
+          "passed": true
+        },
+        {
+          "kind": "AnalysisTemplate",
+          "name": "lab-payment-health",
+          "passed": true
+        },
+        {
+          "kind": "Rollout",
+          "name": "payment-service",
+          "passed": true
+        },
+        {
+          "kind": "ScaledObject",
+          "name": "analytics",
+          "passed": true
+        },
+        {
+          "kind": "ScaledObject",
+          "name": "notification",
+          "passed": true
+        },
+        {
+          "kind": "ServiceMonitor",
+          "name": "observability-lab",
+          "passed": true
+        },
+        {
+          "kind": "TriggerAuthentication",
+          "name": "lab-sqs-auth",
+          "passed": true
+        }
+      ],
+      "checks": [
+        "solepaymentRolloutownership",
+        "5per-roleServiceAccounts",
+        "readyhealthpaths",
+        "readonlynonrootcontainers"
+      ],
+      "limits": "Helm/officialschema/contracts;noK8s admission/IRSA/PodIdentity/traffic/scaling"
+    },
+    "canaryPromQL": {
+      "status": "passed",
+      "prometheus": "3.14.0",
+      "cases": [
+        "healthy",
+        "errors",
+        "zero",
+        "absent"
+      ],
+      "assertions": 8,
+      "queries": {
+        "enough-canary-traffic": "sum(increase(lab_http_requests_total{service=\"payment-service\",route=\"POST /payments\",revision=\"canary\"}[2m]))\n",
+        "canary-success-ratio": "1 - (\n  (\n    sum(rate(lab_http_requests_total{service=\"payment-service\",route=\"POST /payments\",revision=\"canary\",status=~\"5..\"}[2m]))\n    or\n    (0 * sum(rate(lab_http_requests_total{service=\"payment-service\",route=\"POST /payments\",revision=\"canary\"}[2m])))\n  )\n  /\n  (sum(rate(lab_http_requests_total{service=\"payment-service\",route=\"POST /payments\",revision=\"canary\"}[2m])) > 0)\n)\n"
+      },
+      "limits": "NativePromQLsyntheticseries;stabletrafficexcluded;noArgoAnalysisRun/K8s"
+    },
+    "canaryCondition": {
+      "status": "passed",
+      "version": "1.10.0",
+      "cases": 9,
+      "checks": "actualEvalConditionpositive/low/error/empty/NaN/multiple/infinity",
+      "scope": "Nativeexpressionevaluationonly;noArgoAnalysisRun/cluster"
+    },
+    "identityValues": {
+      "status": "passed",
+      "checks": [
+        "stack-output-to-role-mapping",
+        "KEDA2.20.2actualServiceAccountIRSAannotation",
+        "regionalSTSendpoint"
+      ],
+      "scope": "GeneratedYAML+nativeHelm;noSTS/IAMexchange"
+    },
+    "helm": {
+      "status": "passed",
+      "profiles": [
+        {
+          "name": "tempo",
+          "resources": 5,
+          "publishedCRDSchemaChecks": 0,
+          "passed": true
+        },
+        {
+          "name": "loki",
+          "resources": 10,
+          "publishedCRDSchemaChecks": 0,
+          "passed": true
+        },
+        {
+          "name": "collector-management",
+          "resources": 4,
+          "publishedCRDSchemaChecks": 0,
+          "passed": true
+        },
+        {
+          "name": "collector-service",
+          "resources": 5,
+          "publishedCRDSchemaChecks": 0,
+          "passed": true
+        },
+        {
+          "name": "collector-cloudwatch",
+          "resources": 4,
+          "publishedCRDSchemaChecks": 0,
+          "passed": true
+        },
+        {
+          "name": "monitoring-management",
+          "resources": 80,
+          "publishedCRDSchemaChecks": 41,
+          "passed": true
+        },
+        {
+          "name": "monitoring-service",
+          "resources": 66,
+          "publishedCRDSchemaChecks": 38,
+          "passed": true
+        }
+      ],
+      "limits": "PinnedHelm/currentprofileCRDchecks;noK8sinstallation"
+    },
+    "nativeConfigs": {
+      "status": "passed",
+      "profiles": [
+        {
+          "profile": "tempo",
+          "exit": 0,
+          "passed": true
+        },
+        {
+          "profile": "loki",
+          "exit": 0,
+          "passed": true
+        },
+        {
+          "profile": "collector-management",
+          "exit": 0,
+          "passed": true
+        },
+        {
+          "profile": "collector-service",
+          "exit": 0,
+          "passed": true
+        },
+        {
+          "profile": "collector-cloudwatch",
+          "exit": 0,
+          "passed": true
+        }
+      ],
+      "limits": "Nativeconfigvalidationonly;localruntime/TLSexperimentsreportedseparately"
+    },
+    "collectorMTLS": {
+      "status": "passed",
+      "collector": "0.160.0",
+      "checks": [
+        "twoactualCollectorprocesses",
+        "clientcertauthenticatedupstream",
+        "OTLPHTTPtraceforwarded",
+        "CRIthenJSONlogparsedandforwarded",
+        "sameTraceIDinlogandspan",
+        "missingclientcertrejected"
+      ],
+      "traceRequests": 1,
+      "logRequests": 1,
+      "limits": "Loopbacksyntheticcerts/OTLPcapturebackend;KubernetesAPIprocessorremovedonlyinfixture;noEKS/RBAC/Loki/Tempo/SNS/AWSexecution"
+    },
+    "cloudWatchSerialization": {
+      "status": "passed",
+      "collector": "0.160.0",
+      "checks": [
+        "twoactualCollectorprocesses",
+        "clientcertauthenticatedupstream",
+        "OTLPHTTPtraceforwarded",
+        "CRIthenJSONlogparsedandforwarded",
+        "sameTraceIDinlogandspan",
+        "missingclientcertrejected",
+        "CloudWatchrawJSONservice-level-traceIDpreserved"
+      ],
+      "traceRequests": 1,
+      "logRequests": 1,
+      "limits": "Loopbacksyntheticcerts/OTLPcapturebackend;KubernetesAPIprocessorremovedonlyinfixture;noEKS/RBAC/Loki/Tempo/SNS/AWSexecution;CloudWatchisloopbackAWSJSONtestdoublewithsyntheticcredentials"
+    },
+    "prometheusMTLS": {
+      "status": "passed",
+      "version": "3.14.0",
+      "checks": [
+        {
+          "case": "client-certificate-ready-probe",
+          "passed": true
+        },
+        {
+          "case": "client-certificate-healthy-probe",
+          "passed": true
+        },
+        {
+          "case": "default-no-client-certificate-probe-rejected",
+          "passed": true
+        }
+      ],
+      "scope": "ActualPrometheus/promtoolloopbackTLSwithsyntheticcerts;noK8sorremote-writeingestionyet"
+    },
+    "tlsProvisioning": {
+      "status": "passed",
+      "checks": [
+        "private-directory-and-files",
+        "server-chain-EKU-hostname",
+        "client-EKU",
+        "datasource-UIDs-TLS-and-escaped-expression",
+        "CA-private-key-excluded-from-Secrets",
+        "existing-output-refused"
+      ],
+      "scope": "Synthetic7daylabPKI/openssl/YAML/privatefilepermissions;noK8s/DNS/network/IAMorGrafanaruntime"
+    },
+    "network": {
+      "status": "passed",
+      "checks": [
+        "4officialOpenAPIresources-internalNLB-sourceandhealthranges",
+        "wide-or-public-sources-rejected"
+      ],
+      "scope": "Schema/input/selectorcontractonly;noLBC/NLB/VPC/NetworkPolicyenforcementexecution"
+    }
+  },
+  "unitTests": {
+    "passed": true,
+    "count": 19,
+    "scope": "PortableSQLite/OTel/FastAPI/messaging/DBconfigtests;actualHTTP/PostgreSQL/SDKexperimentsreportedseparately"
+  },
+  "siteTests": 126,
+  "infra": {
+    "cloudFormationLint": "passed",
+    "resourceCount": 26,
+    "eksctlSchemaVersion": "0.229.0",
+    "generatedClusterConfigs": 2,
+    "operatorProbeMerge": "Actualprometheus-operator0.93.1MergePatchContainersreplacesHTTPhandlerswith3authenticatedexecprobes"
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50202,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 818,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 818,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 818,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57373,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 672,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 672,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 672,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49707,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 805,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57379,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 698,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 698,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 698,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50199,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 630,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 630,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 630,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50864,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 487,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 487,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 487,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49247,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 808,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 808,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-overview-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 808,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59393,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 537,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 537,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-01-infrastructure-setup-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 537,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50030,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 720,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 720,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 720,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57351,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 560,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 49478,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 708,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 708,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-03-msa-deployment-lab-10.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 708,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57354,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 534,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 534,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 534,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50024,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 484,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 484,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 484,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50658,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 397,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 397,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 397,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48847,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 629,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 629,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-overview-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 629,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59205,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-02-observability-stack-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 586,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-02-observability-stack-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 586,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-02-observability-stack-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 586,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55709,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-02-observability-stack-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 468,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-02-observability-stack-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 468,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-02-observability-stack-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 468,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55702,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "54cases/18currentviewers;6casesfor2stackdiagramclippingfixesrerun;18SVGexports;noexternalfontsoranalytics"
+  },
+  "visual": {
+    "status": "passed",
+    "pngs": 18,
+    "individualPNGInspection": true,
+    "stackClippingFix": 2,
+    "browserCases": 54,
+    "SVGExports": 18,
+    "scope": "Everycurrent18PNGvisuallyinspected;nohover/menuconsolefailuresat375/768/1920"
+  },
+  "legacyAnchors": [
+    {
+      "path": "ko/labs/README.md",
+      "aliases": []
+    },
+    {
+      "path": "ko/labs/observability/01-infrastructure-setup-lab.md",
+      "aliases": [
+        "aws-managed-services-상태-확인",
+        "eksctl을-사용한-클러스터-생성",
+        "step-1-1-managed-cluster-생성",
+        "step-1-10-argo-rollouts-설치",
+        "step-1-2-service-cluster-생성",
+        "step-1-3-sqs-큐-sns-토픽-생성",
+        "step-1-4-aurora-postgresql-생성",
+        "step-1-5-mwaa-환경-생성",
+        "step-1-6-amp-워크스페이스-생성",
+        "step-1-7-amg-워크스페이스-생성",
+        "step-1-8-opensearch-도메인-생성",
+        "step-1-9-argocd-설치-및-멀티-클러스터-등록",
+        "terraform을-사용한-클러스터-생성-대안",
+        "검증-verification",
+        "구성-단계-요약",
+        "다음-단계",
+        "아키텍처-개요",
+        "예상-결과",
+        "정리-이-part에서-정리하지-않음",
+        "참조-문서",
+        "클러스터-상태-확인",
+        "학습-목표"
+      ]
+    },
+    {
+      "path": "ko/labs/observability/02-observability-stack-lab.md",
+      "aliases": [
+        "_2-2-1-kube-prometheus-stack-prometheus-alertmanager-grafana",
+        "_2-2-2-victoriametrics",
+        "_2-2-3-mimir",
+        "_2-2-4-cloudwatch-metrics-adot",
+        "_2-3-1-loki-simplescalable-mode",
+        "_2-3-2-clickhouse",
+        "_2-3-3-opensearch-fluentbit",
+        "_2-3-4-cloudwatch-logs-fluentbit",
+        "_2-4-1-tempo",
+        "_2-4-2-x-ray-otel-collector-exporter",
+        "_2-5-1-grafana-datasource-provisioning",
+        "_2-5-2-amazon-managed-grafana-설정",
+        "_2-5-3-exemplar-설정",
+        "_2-6-1-alertmanager-sns-receiver",
+        "_2-6-2-grafana-oncall-설치",
+        "_2-6-3-cloudwatch-alarms",
+        "grafana-explore-테스트",
+        "observability-스택-상태-확인",
+        "otel-collector-아키텍처",
+        "step-2-1-opentelemetry-collector-배포",
+        "step-2-2-metrics-스택-배포",
+        "step-2-3-logging-스택-배포",
+        "step-2-4-tracing-스택-배포",
+        "step-2-5-visualization-구성",
+        "step-2-6-alerting-기본-구성",
+        "검증-verification",
+        "다음-단계",
+        "아키텍처-개요",
+        "예상-결과",
+        "참조-문서",
+        "학습-목표"
+      ]
+    },
+    {
+      "path": "ko/labs/observability/03-msa-deployment-lab.md",
+      "aliases": [
+        "argo-rollouts-dashboard",
+        "canary-배포-상태-다이어그램",
+        "dockerfile-예시",
+        "git-저장소-구조",
+        "grafana에서-트래픽-분할-확인",
+        "step-3-1-msa-애플리케이션-소개",
+        "step-3-2-karpenter-nodepool-구성",
+        "step-3-3-keda-scaledobject-구성",
+        "step-3-4-argocd-application-applicationset",
+        "step-3-5-초기-배포-확인",
+        "step-3-6-otel-auto-instrumentation-구성",
+        "step-3-7-argo-rollouts-canary-배포",
+        "step-3-8-의도적-실패-주입-및-자동-롤백",
+        "검증-verification",
+        "검증-항목",
+        "다음-단계",
+        "서비스-구성",
+        "서비스-코드-예시",
+        "아키텍처-개요",
+        "예상-결과",
+        "예상-결과-1",
+        "참조-문서",
+        "학습-목표"
+      ]
+    },
+    {
+      "path": "ko/labs/observability/README.md",
+      "aliases": [
+        "eks-및-인프라",
+        "gitops-및-배포",
+        "msa-서비스-호출-흐름",
+        "msa-애플리케이션-구성",
+        "observability-기초",
+        "observability-도구-커버리지",
+        "개요",
+        "비용-안내",
+        "사전-요구-사항",
+        "서비스-메시-및-네트워킹",
+        "실습-순서",
+        "실습-시리즈-소개",
+        "실습-시작하기",
+        "아키텍처-개요",
+        "참고할-기존-문서",
+        "환경-확인-스크립트"
+      ]
+    },
+    {
+      "path": "ko/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+      "aliases": [
+        "observability-실습-part-1-인프라-구성-퀴즈"
+      ]
+    },
+    {
+      "path": "ko/quizzes/observability/labs/02-observability-stack-quiz.md",
+      "aliases": [
+        "observability-실습-part-2-observability-스택-퀴즈"
+      ]
+    },
+    {
+      "path": "ko/quizzes/observability/labs/03-msa-deployment-quiz.md",
+      "aliases": [
+        "observability-실습-part-3-msa-배포-및-카나리-퀴즈"
+      ]
+    },
+    {
+      "path": "en/labs/README.md",
+      "aliases": []
+    },
+    {
+      "path": "en/labs/observability/01-infrastructure-setup-lab.md",
+      "aliases": [
+        "cleanup",
+        "exercise-1-environment-setup",
+        "exercise-2-managed-cluster-eks-setup",
+        "exercise-3-service-cluster-eks-setup",
+        "exercise-4-aws-managed-services-setup",
+        "exercise-5-argocd-setup-on-managed-cluster",
+        "exercise-6-argo-rollouts-setup-on-service-cluster",
+        "exercise-7-irsa-configuration",
+        "learning-objectives",
+        "next-steps",
+        "references",
+        "steps",
+        "steps-1",
+        "steps-2",
+        "steps-3",
+        "steps-4",
+        "steps-5",
+        "steps-6",
+        "summary",
+        "troubleshooting",
+        "verification",
+        "verification-1",
+        "verification-2",
+        "verification-3",
+        "verification-4",
+        "verification-5"
+      ]
+    },
+    {
+      "path": "en/labs/observability/02-observability-stack-lab.md",
+      "aliases": [
+        "architecture-overview",
+        "cleanup",
+        "exercise-1-opentelemetry-collector-deployment",
+        "exercise-2-metrics-stack-deployment",
+        "exercise-3-logging-stack-deployment",
+        "exercise-4-tracing-stack-deployment",
+        "exercise-5-grafana-deployment-and-data-source-configuration",
+        "exercise-6-alerting-configuration",
+        "learning-objectives",
+        "next-steps",
+        "part-2-observability-stack-deployment",
+        "prerequisites",
+        "references",
+        "steps",
+        "steps-1",
+        "steps-2",
+        "steps-3",
+        "steps-4",
+        "steps-5",
+        "summary",
+        "troubleshooting",
+        "verification",
+        "verification-1",
+        "verification-2",
+        "verification-3",
+        "verification-4",
+        "verification-5"
+      ]
+    },
+    {
+      "path": "en/labs/observability/03-msa-deployment-lab.md",
+      "aliases": [
+        "application-structure",
+        "architecture-overview",
+        "canary-state-diagram",
+        "cleanup",
+        "exercise-1-msa-application-overview",
+        "exercise-2-karpenter-nodepool-configuration",
+        "exercise-3-keda-scaledobject-configuration",
+        "exercise-4-argocd-application-deployment",
+        "exercise-5-opentelemetry-auto-instrumentation",
+        "exercise-6-argo-rollouts-canary-deployment",
+        "exercise-7-intentional-failure-and-automatic-rollback",
+        "learning-objectives",
+        "next-steps",
+        "prerequisites",
+        "references",
+        "repository-structure",
+        "sample-code-snippets",
+        "service-call-flow",
+        "steps",
+        "steps-1",
+        "steps-2",
+        "steps-3",
+        "steps-4",
+        "steps-5",
+        "summary",
+        "troubleshooting",
+        "verification",
+        "verification-1",
+        "verification-2",
+        "verification-3",
+        "verification-4",
+        "verification-5"
+      ]
+    },
+    {
+      "path": "en/labs/observability/README.md",
+      "aliases": [
+        "architecture-diagram",
+        "cost-estimate",
+        "lab-sequence",
+        "lab-series-introduction",
+        "learning-outcomes",
+        "msa-application-overview",
+        "observability-tool-coverage",
+        "overview",
+        "references",
+        "required-iam-permissions",
+        "service-call-flow"
+      ]
+    },
+    {
+      "path": "en/quizzes/observability/labs/01-infrastructure-setup-quiz.md",
+      "aliases": [
+        "observability-lab-part-1-infrastructure-setup-quiz"
+      ]
+    },
+    {
+      "path": "en/quizzes/observability/labs/02-observability-stack-quiz.md",
+      "aliases": [
+        "observability-lab-part-2-observability-stack-quiz"
+      ]
+    },
+    {
+      "path": "en/quizzes/observability/labs/03-msa-deployment-quiz.md",
+      "aliases": [
+        "observability-lab-part-3-msa-deployment-and-canary-quiz"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "verified": "officialHTTPSversiontable;EKS1.36standard/1.31extended"
+    },
+    {
+      "url": "https://github.com/prometheus-operator/prometheus-operator/tree/v0.93.1",
+      "verified": "actualCRD/BuildProbes/MergePatchContainersnative"
+    },
+    {
+      "url": "https://github.com/grafana/tempo/releases/tag/v3.0.3",
+      "verified": "checksummednativebinary/config/startup/TraceQL"
+    },
+    {
+      "url": "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/tag/v0.160.0",
+      "verified": "checksummednativebinaryand2processmTLS/CRI/CloudWatchserializedoutput"
+    },
+    {
+      "url": "https://grafana.com/docs/grafana/latest/datasources/loki/configure/",
+      "verified": "HTTP200currentprovisioningdocs;replacesold404path"
+    },
+    {
+      "url": "https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/",
+      "verified": "HTTP200tracesToLogsV2/serviceMap/UIDschema"
+    },
+    {
+      "url": "https://keda.sh/docs/2.20/authentication-providers/aws/",
+      "verified": "officialprovideraws/identityOwnerkeda;actual2.20.2HelmIRSAannotations"
+    },
+    {
+      "url": "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/utils/evaluate/evaluate.go",
+      "verified": "actualEvalCondition9casesinclNaN/Inf/empty"
+    }
+  ],
+  "limitations": [
+    "NoAWSresourcecreation,realEKSadmission/IRSA/NLB/VPC/DNS/NetworkPolicyenforcement/AuroraTLS/SNSfanout/modelinvocationorrealpayment.",
+    "PostgreSQL17.11testusedisolatedDockeranddisabledTLS;itprovesSQL/grantsbehavior,notAurora/TLS.",
+    "TwoCollectorprocessesusedloopbacksyntheticcertsandmockOTLP/AWSJSONbackend;K8sattributesprocessorremovedonlyinruntimefixture.",
+    "CurrentapplicationimagebuiltARM64andtestednetwork-none;AMD64imagebuildnotexecuted.",
+    "Configuration/nativechecksarenotfullcloudend-to-enddeploymentorperformancebenchmarks.",
+    "Fullcorpusauditcontinues;workerqueuesnotclosed."
+  ],
+  "finalValidation": {
+    "appChartResources": 20,
+    "appChartRenderedSha256": "70cfb9743a57632c9d1759fb98f327ad41a8cd9c9322634e0823a5b862cdd49e",
+    "TLSandNetworkHelpers": "repassedcurrentfiles",
+    "networkValidatorEnvironment": "SystemPythonwithjsonschema;applicationvenvlacksjsonschema",
+    "note": "SchemaandhelperchecksafterfinalIRSA/namespace/Infinity/DNSedits"
+  }
+}
