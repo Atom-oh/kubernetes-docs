@@ -1,0 +1,46 @@
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: verify-approved-workflow
+spec:
+  failurePolicy: Fail
+  validationActions: [Deny]
+  evaluation:
+    background:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods, pods/ephemeralcontainers]
+  matchImageReferences:
+    - glob: ghcr.io/example-org/*
+  validationConfigurations:
+    mutateDigest: false
+    verifyDigest: true
+    required: true
+  images:
+    - name: workloadImages
+      expression: >-
+        (object.spec.containers +
+        (has(object.spec.initContainers) ? object.spec.initContainers : []) +
+        (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers : []))
+        .map(c, c.image)
+  attestors:
+    - name: githubRelease
+      cosign:
+        keyless:
+          identities:
+            - issuer: https://token.actions.githubusercontent.com
+              subject: https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main
+        ctlog:
+          url: https://rekor.sigstore.dev
+          insecureIgnoreTlog: false
+          insecureIgnoreSCT: false
+  validations:
+    - expression: >-
+        images.workloadImages.map(image,
+          verifyImageSignatures(image, [attestors.githubRelease]))
+          .all(result, result > 0)
+      message: Image signature must match the approved workflow and transparency proof.

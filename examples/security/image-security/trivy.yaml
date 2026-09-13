@@ -1,0 +1,15 @@
+# Baseline for image/filesystem scans; explicitly review exceptions in .trivyignore.
+severity:
+  - HIGH
+  - CRITICAL
+exit-code: 1
+ignorefile: .trivyignore
+scan:
+  scanners:
+    - vuln
+    - secret
+    - misconfig
+  parallel: 2
+  disable-telemetry: true
+vulnerability:
+  ignore-unfixed: false

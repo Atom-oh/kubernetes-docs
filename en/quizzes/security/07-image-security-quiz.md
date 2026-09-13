@@ -1,290 +1,220 @@
+<span id="quiz-questions"></span>
+
 # Container Image Security Quiz
+> **Last Updated**: September 13, 2026
 
-This quiz tests your understanding of image scanning, image signing, supply chain security, and base image selection.
+<span id="_1-what-is-the-correct-command-to-scan-a-container-image-with-trivy"></span>
 
-## Quiz Questions
+### 1. Which command scans a given image reference with Trivy?
 
-### 1. What is the correct command to scan a container image with Trivy?
-
-A. trivy scan nginx:latest
-B. trivy image nginx:latest
-C. trivy container nginx:latest
-D. trivy check nginx:latest
+- A. trivy scan "$IMAGE_REF"
+- B. trivy image "$IMAGE_REF"
+- C. trivy container "$IMAGE_REF"
+- D. trivy check "$IMAGE_REF"
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. trivy image nginx:latest**
+**Answer: B. trivy image "$IMAGE_REF"**
 
-**Explanation:**
-Trivy's image scanning command:
-```bash
-trivy image nginx:latest
-trivy image --severity HIGH,CRITICAL nginx:latest
-trivy image --format json nginx:latest
-```
-
-`trivy image` scans container images for vulnerabilities.
+trivy image is the image-scanning command. Set IMAGE_REF to a real digest reference. Valid syntax alone does not establish registry access, database freshness, or package-detection coverage.
 
 </details>
 
-### 2. Which tool is used for image signing and verification?
+<span id="_2-which-tool-is-used-for-image-signing-and-verification"></span>
 
-A. Trivy
-B. Cosign/Sigstore
-C. Clair
-D. Anchore
+### 2. Which tool verifies a relationship between an image digest and an approved signer?
+
+- A. Trivy’s CVE database
+- B. Cosign/Sigstore
+- C. Clair’s package scanner
+- D. Docker imagePullPolicy
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B. Cosign/Sigstore**
 
-**Explanation:**
-Cosign is part of the Sigstore project, a tool for container image signing and verification:
-```bash
-# Sign image
-cosign sign --key cosign.key myregistry/myimage:tag
-
-# Verify signature
-cosign verify --key cosign.pub myregistry/myimage:tag
-```
-
-Trivy, Clair, and Anchore are vulnerability scanners.
+Cosign verifies a key or OIDC identity/issuer, digest, and required transparency evidence. Signatures do not guarantee the absence of known vulnerabilities.
 
 </details>
 
-### 3. What does the "Shift-Left" security approach mean?
+<span id="_3-what-does-the-shift-left-security-approach-mean"></span>
 
-A. Defer security to operations phase
-B. Move security to early development stages
-C. Security team only responsible
-D. Remove automation
+### 3. What does shift-left security mean?
+
+- A. Deferring checks until production
+- B. Checking earlier in development, PRs, and builds
+- C. Restricting source access to the security team
+- D. Removing production rescanning
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Move security to early development stages**
+**Answer: B. Checking earlier in development, PRs, and builds**
 
-**Explanation:**
-Shift-Left security moves security checks to the earliest possible stage in the development cycle:
-- Scanning at IDE stage
-- Build gates in CI/CD pipeline
-- Security checks during PR review
-
-The earlier problems are found, the lower the cost to fix.
+Earlier checks shorten feedback loops. New CVEs and runtime behavior still require registry rescanning and runtime detection after release.
 
 </details>
 
-### 4. What is the main characteristic of Distroless images?
+<span id="_4-what-is-the-main-characteristic-of-distroless-images"></span>
 
-A. Include all Linux utilities
-B. Include only minimal components needed to run applications
-C. Include debugging tools
-D. Include package managers
+### 4. What characterizes a standard distroless runtime image?
+
+- A. Every Linux utility is included
+- B. A minimal set of application runtime components
+- C. A shell and debugger are always included
+- D. A package manager is mandatory
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Include only minimal components needed to run applications**
+**Answer: B. A minimal set of application runtime components**
 
-**Explanation:**
-Distroless images have:
-- No shell (bash, sh, etc.)
-- No package manager
-- No unnecessary utilities
-- Minimal attack surface
-- Only application runtime
-
-Benefits in security and image size.
+Standard runtimes omit shells/package managers; debug variants differ. Application binaries and libraries can still contain vulnerabilities.
 
 </details>
 
-### 5. What are the two types of Amazon ECR image scanning?
+<span id="_5-what-are-the-two-types-of-amazon-ecr-image-scanning"></span>
 
-A. Basic scanning, Enhanced scanning
-B. Automatic scanning, Manual scanning
-C. Quick scanning, Deep scanning
-D. Free scanning, Paid scanning
+### 5. How do current ECR Basic and Enhanced scanning differ?
+
+- A. Basic uses AWS-native OS scanning; Enhanced uses Inspector for OS/language packages
+- B. Basic always uses Clair; Enhanced scans only OS packages
+- C. Both automatically reject pushes
+- D. Enhanced scans every image forever
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A. Basic scanning, Enhanced scanning**
+**Answer: A. Basic uses AWS-native OS scanning; Enhanced uses Inspector for OS/language packages**
 
-**Explanation:**
-Amazon ECR scanning types:
-- **Basic scanning**: Clair-based, OS package vulnerability scan
-- **Enhanced scanning**: Amazon Inspector-based, OS + programming language packages, continuous scanning
-
-Enhanced scanning has additional cost but is more comprehensive.
+Basic supports manual/scan-on-push; Enhanced supports scan-on-push/continuous. Distinguish findings from enhancedFindings and ECR from Inspector events.
 
 </details>
 
-### 6. What is SBOM (Software Bill of Materials)?
+<span id="_6-what-is-sbom-software-bill-of-materials"></span>
 
-A. List of software licenses
-B. List of software components
-C. List of security vulnerabilities
-D. List of build commands
+### 6. What does an SBOM provide?
+
+- A. Certification that no vulnerabilities exist
+- B. An inventory of software components detected by a tool
+- C. Automatic proof of an approved signer
+- D. Deployment authorization
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. List of software components**
+**Answer: B. An inventory of software components detected by a tool**
 
-**Explanation:**
-SBOM is a list of all components (libraries, dependencies, versions, etc.) included in software. Essential for supply chain security and vulnerability management:
-```bash
-# Generate SBOM with Trivy
-trivy image --format spdx-json -o sbom.json nginx:latest
-```
+SBOMs record components and relationships but may have incomplete coverage. Assess signed attestations binding them to a digest and the verification policy separately.
 
 </details>
 
-### 7. What policy type verifies image signatures in Kyverno?
+<span id="_7-what-policy-type-verifies-image-signatures-in-kyverno"></span>
 
-A. validate
-B. mutate
-C. verifyImages
-D. generate
+### 7. Which rule performs image signature checks in legacy Kyverno ClusterPolicy?
+
+- A. validate only
+- B. mutate only
+- C. verifyImages
+- D. generate only
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: C. verifyImages**
 
-**Explanation:**
-Kyverno's `verifyImages` rule verifies container image signatures:
-```yaml
-spec:
-  rules:
-  - name: verify-signature
-    verifyImages:
-    - imageReferences:
-      - "myregistry/*"
-      attestors:
-      - entries:
-        - keys:
-            publicKeys: |-
-              -----BEGIN PUBLIC KEY-----
-              ...
-              -----END PUBLIC KEY-----
-```
+Distinguish legacy verifyImages from the newer ImageValidatingPolicy. The Kyverno 1.19.1 example uses CEL policies alongside registry/digest restrictions covering ordinary, init, and ephemeral containers.
 
 </details>
 
-### 8. Why should you use digests instead of image tags?
+<span id="_8-why-should-you-use-digests-instead-of-image-tags"></span>
 
-A. Shorter names
-B. Guaranteed immutability
-C. Faster pulling
-D. Save storage space
+### 8. Why pin an image digest instead of a tag?
+
+- A. It is always shorter
+- B. It identifies specific image content
+- C. It automatically verifies signatures
+- D. It removes CVEs
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Guaranteed immutability**
+**Answer: B. It identifies specific image content**
 
-**Explanation:**
-Tags (e.g., `nginx:latest`) can be changed to point to different images. Digests (e.g., `nginx@sha256:abc123...`) are hashes of specific image content and are immutable:
-```yaml
-image: nginx@sha256:abc123def456...
-```
-
-This ensures reproducibility and security.
+Tags can move; digests identify content. This supports reproducible artifact selection but does not replace signer trust, vulnerability checks, or availability validation.
 
 </details>
 
-### 9. What does Trivy NOT scan?
+<span id="_9-what-does-trivy-not-scan"></span>
 
-A. OS package vulnerabilities
-B. Language-specific dependencies
-C. Runtime behavior
-D. Secret detection
+### 9. Which area is separate from Trivy’s static checks?
+
+- A. OS package identification
+- B. Language-dependency scanning
+- C. Live syscall/process behavior detection
+- D. Source-secret detection
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Runtime behavior**
+**Answer: C. Live syscall/process behavior detection**
 
-**Explanation:**
-Trivy is a static analysis tool that scans:
-- OS package vulnerabilities
-- Language-specific dependencies (npm, pip, go, etc.)
-- IaC misconfigurations
-- Hardcoded secrets
-- Licenses
-
-Runtime behavior analysis is the domain of runtime security tools like Falco.
+Package, misconfiguration, and secret scanning differ from runtime behavior detection. Design runtime tooling such as Falco separately.
 
 </details>
 
-### 10. Which is NOT a container image registry security best practice?
+<span id="_10-which-is-not-a-container-image-registry-security-best-practice"></span>
 
-A. Use private registry
-B. Enable image scanning
-C. Allow anonymous pulling
-D. Block vulnerable image push
+### 10. Which registry access practice is inappropriate?
+
+- A. Approved pull identities for private images
+- B. Digest/signature verification for public images
+- C. Allowing arbitrary anonymous image pushes/deletes
+- D. Separating registry, admission, and scan-gate permissions
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Allow anonymous pulling**
+**Answer: C. Allowing arbitrary anonymous image pushes/deletes**
 
-**Explanation:**
-Registry security best practices:
-- Use private registry
-- IAM-based authentication
-- Enable image scanning
-- Block vulnerable image push/pull
-- Image signature verification
-- Use immutable tags or digests
-
-Anonymous pulling is a security risk and should be disabled in production environments.
+Anonymous reads of intentionally public images are not inherently vulnerabilities. Control confidentiality, write/delete permissions, provenance, and rate limits separately.
 
 </details>
 
-### 11. What is the recommended action when image scanning fails in CI/CD pipeline?
+<span id="_11-what-is-the-recommended-action-when-image-scanning-fails-in-ci-cd-pipeline"></span>
 
-A. Log warning only
-B. Stop the build
-C. Auto-fix
-D. Ignore and proceed
+### 11. What should happen when the agreed CI scan gate does not pass?
+
+- A. Always ignore it
+- B. Stop before publishing/signing and inspect the cause
+- C. Rebuild another image and push without scanning
+- D. Force exit code 0
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Stop the build**
+**Answer: B. Stop before publishing/signing and inspect the cause**
 
-**Explanation:**
-In CI/CD pipelines, builds should stop when Critical/High vulnerabilities are found:
-```bash
-trivy image --exit-code 1 --severity HIGH,CRITICAL myimage:tag
-```
-
-`--exit-code 1` returns a non-zero exit code when vulnerabilities are found, failing the pipeline.
+Distinguish policy violations from scanner/database/permission errors and retain results. Do not deploy a different artifact rebuilt after the scan. Exceptions need rationale, ownership, and expiry.
 
 </details>
 
-### 12. What is NOT an advantage of Alpine base images?
+<span id="_12-what-is-not-an-advantage-of-alpine-base-images"></span>
 
-A. Small size
-B. Fewer vulnerabilities
-C. glibc compatibility
-D. Fast builds
+### 12. Which assumption about Alpine is incorrect?
+
+- A. It uses musl libc
+- B. It uses the apk package manager
+- C. It is always fully compatible with glibc-dependent applications
+- D. The selected release’s support lifetime must be checked
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. glibc compatibility**
+**Answer: C. It is always fully compatible with glibc-dependent applications**
 
-**Explanation:**
-Alpine Linux characteristics:
-- Small size (~5MB)
-- Minimal packages
-- Uses musl libc (not glibc)
-
-Alpine uses musl libc instead of glibc, so some applications that depend on glibc may have compatibility issues.
+Alpine uses musl, so glibc-dependent binaries can have compatibility issues. Image size alone guarantees neither vulnerability counts nor build speed.
 
 </details>
