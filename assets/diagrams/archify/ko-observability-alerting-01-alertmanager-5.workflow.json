@@ -25,9 +25,29 @@
           "auto_remove",
           "manual"
         ],
-        "note": "장기 Silence는 정기적으로 검토하고, 만료되면 자동 제거, 아직이면 수동으로 다시 검토한다."
+        "note": "Expired는 알림 억제가 끝난 상태이며 보관 기간과 GC 이후 삭제됩니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "관리 절차"
+        },
+        "security": {
+          "label": "판정"
+        },
+        "cloud": {
+          "label": "만료 상태"
+        },
+        "external": {
+          "label": "담당자 검토"
+        },
+        "frontend": {
+          "label": "입력"
+        }
+      }
+    }
   },
   "lanes": [
     {
@@ -104,8 +124,8 @@
       "lane": "review",
       "col": 5,
       "type": "cloud",
-      "label": "자동 제거",
-      "sublabel": "만료된 Silence 정리",
+      "label": "Expired",
+      "sublabel": "GC 전 보관",
       "width": 150
     },
     {
@@ -154,22 +174,19 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "권장 사항",
+      "title": "Silence 수명",
       "items": [
-        "항상 코멘트 작성: 왜 Silence를 만들었는지 기록",
-        "최소 기간 설정: 필요한 만큼만 Silence",
-        "정기적 검토: 장기 Silence는 정기적으로 검토",
-        "알림 설정: Silence 만료 전 알림"
+        "미래 startsAt: Pending → Active → Expired",
+        "endsAt 도달 또는 명시적 만료는 즉시 물리 삭제가 아닙니다.",
+        "Expired 객체는 retention/GC 후 제거됩니다."
       ]
     },
     {
       "dot": "cyan",
-      "title": "유형별 Silence 기간",
+      "title": "운영 조건",
       "items": [
-        "유지보수: 계획된 시간만큼",
-        "배포: 배포 완료까지",
-        "조사 중: 최대 4시간",
-        "알려진 이슈: 수정 완료까지"
+        "담당자·이유·기간을 기록하고 장기 Silence를 검토합니다.",
+        "특정 조사 시간은 예시이지 제품의 고정 최대값이 아닙니다."
       ]
     }
   ]
