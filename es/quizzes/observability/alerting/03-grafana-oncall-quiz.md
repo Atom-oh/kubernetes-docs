@@ -1,11 +1,17 @@
 # Cuestionario de Grafana OnCall
 
+> **Última actualización**: September 13, 2026
+
+Este cuestionario cubre la revisión/migración de instalaciones archivadas de OnCall OSS.
+
 Un cuestionario para evaluar tu comprensión de Grafana OnCall.
+
+**Cloud Connection finalizó el 2026-03-24.** Las notificaciones push móviles de OSS mediante la aplicación Grafana IRM y las notificaciones por SMS/voz que dependen de Cloud Connection ya no funcionan. Los servicios de notificación de Twilio u otros configurados por separado son vías distintas; esto no significa que todos los mecanismos de teléfono/SMS autoalojados hayan finalizado.
 
 ---
 
-1. ¿Cuál NO es una característica clave de Grafana OnCall?
-   - A) Gestión de calendarios de guardia
+1. ¿Cuál NO es una característica principal de Grafana OnCall?
+   - A) Gestión de horarios de guardia
    - B) Configuración de cadenas de escalamiento
    - C) Recopilación y almacenamiento de métricas
    - D) Integración con ChatOps (Slack, Teams)
@@ -16,14 +22,7 @@ Un cuestionario para evaluar tu comprensión de Grafana OnCall.
 **Respuesta: C) Recopilación y almacenamiento de métricas**
 
 **Explicación:**
-Grafana OnCall es una herramienta de gestión de guardias y respuesta a incidentes que proporciona las siguientes características:
-- Gestión de calendarios de guardia (rotaciones, sustituciones)
-- Configuración de cadenas de escalamiento
-- Agrupación y enrutamiento de alertas
-- Integración con ChatOps (Slack, MS Teams, Telegram)
-- Notificaciones de aplicaciones móviles
-
-La recopilación y el almacenamiento de métricas son funciones de otras herramientas como Prometheus o Grafana Mimir. OnCall recibe y procesa las alertas generadas por estas herramientas.
+OnCall recibe y gestiona alertas, horarios, enrutamiento y acciones de los respondedores; no es una base de datos de métricas. OSS se archivó el 2026-03-24. La disponibilidad de canales/API en una instalación existente debe comprobarse por separado de Cloud IRM mantenido.
 
 </details>
 
@@ -31,45 +30,35 @@ La recopilación y el almacenamiento de métricas son funciones de otras herrami
 
 2. ¿Cuál es la función del tipo `wait` en la política de escalamiento de Grafana OnCall?
    - A) Esperar la recopilación de datos antes de enviar alertas
-   - B) Esperar antes de pasar al siguiente paso de escalamiento
+   - B) Esperar antes de avanzar al siguiente paso de escalamiento
    - C) Esperar la respuesta del usuario y luego resolver automáticamente
    - D) Esperar la agrupación de alertas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Esperar antes de pasar al siguiente paso de escalamiento**
+**Respuesta: B) Esperar antes de avanzar al siguiente paso de escalamiento**
 
 **Explicación:**
-En las cadenas de escalamiento, el tipo `wait` establece un tiempo de espera entre el paso actual y el siguiente. Por ejemplo:
-1. Paso 1: Notificar a la persona responsable de guardia actual
-2. Paso 2: esperar 900 segundos (15 minutos)
-3. Paso 3: Si no hay respuesta, notificar a la persona responsable secundaria
-
-Esto da tiempo a la persona responsable principal para responder, y el escalamiento solo continúa si no hay respuesta.
+Un paso de espera retrasa el siguiente paso de escalamiento. No reconoce ni resuelve un incidente. El serializador público inspeccionado acepta esperas de entre un minuto y 24 horas, en segundos; el comportamiento real de detención o nueva notificación depende de la cadena y del estado del grupo de alertas.
 
 </details>
 
 ---
 
-3. ¿Qué es un "Override" en el calendario de guardia de Grafana OnCall?
-   - A) Eliminar y recrear completamente el calendario
-   - B) Cambiar temporalmente a la persona responsable durante un período específico en el calendario existente
-   - C) Cambiar la zona horaria del calendario
+3. ¿Qué es una "Override" en el horario de guardia de Grafana OnCall?
+   - A) Eliminar y volver a crear por completo el horario
+   - B) Cambiar temporalmente el respondedor durante un período específico en el horario existente
+   - C) Cambiar la zona horaria del horario
    - D) Modificar el ciclo de rotación
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cambiar temporalmente a la persona responsable durante un período específico en el calendario existente**
+**Respuesta: B) Cambiar temporalmente el respondedor durante un período específico en el horario existente**
 
 **Explicación:**
-Override es una característica que cambia temporalmente a la persona responsable durante un período específico en un calendario de guardia regular. Casos de uso principales:
-- Sustitución de la persona responsable debido a vacaciones
-- Cambio temporal debido a situaciones de emergencia
-- Intercambio temporal debido a capacitaciones/reuniones
-
-Override designa a una persona responsable diferente durante un período específico mientras mantiene el calendario existente.
+Una override cambia la cobertura durante un período definido. En la API inspeccionada es de tipo on_call_shifts, con una zona horaria explícita y la asociación obligatoria con el horario previsto. Verifica los ID de turnos existentes, las prioridades, las brechas y los respondedores finales; no supongas que existe el antiguo endpoint anidado de overrides.
 
 </details>
 
@@ -87,153 +76,115 @@ Override designa a una persona responsable diferente durante un período especí
 **Respuesta: B) Enviar alertas a OnCall mediante los webhook_configs de Alertmanager**
 
 **Explicación:**
-La integración de Alertmanager y Grafana OnCall se realiza mediante webhooks:
-```yaml
-receivers:
-  - name: 'grafana-oncall'
-    webhook_configs:
-      - url: 'https://oncall.example.com/api/v1/webhook/<integration-id>/'
-        send_resolved: true
-```
-
-Cuando Alertmanager dispara una alerta, envía una solicitud HTTP POST a la URL de webhook configurada, y OnCall la recibe y procesa.
+Usa webhook_configs con la URL generada para el tipo de integración real, almacenada en un url_file protegido cuando sea conveniente. Define cada receiver al que se haga referencia y usa matchers actuales. La autenticación mediante raw token de la API pública es independiente de una URL de webhook; send_resolved no hace que OnCall actualice la regla de origen.
 
 </details>
 
 ---
 
-5. ¿Cuál es el propósito principal de la agrupación de alertas en Grafana OnCall?
-   - A) Ordenar las alertas por hora
-   - B) Agrupar las alertas relacionadas en una sola para reducir la fatiga de alertas
-   - C) Clasificar las alertas por gravedad
-   - D) Eliminar automáticamente las alertas duplicadas
+5. ¿Cuál es el objetivo principal de la agrupación de alertas en Grafana OnCall?
+   - A) Ordenar alertas por hora
+   - B) Agrupar alertas relacionadas en una sola para reducir la fatiga por alertas
+   - C) Clasificar alertas por gravedad
+   - D) Eliminar automáticamente alertas duplicadas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Agrupar las alertas relacionadas en una sola para reducir la fatiga de alertas**
+**Respuesta: B) Agrupar alertas relacionadas en una sola para reducir la fatiga por alertas**
 
 **Explicación:**
-La agrupación de alertas gestiona como un único grupo varias alertas causadas por el mismo problema. Por ejemplo, si se producen varias alertas de Pod debido a un fallo de nodo, se agrupan para que la persona responsable reciba una alerta agrupada en lugar de decenas de alertas individuales. Se define una clave de agrupación (por ejemplo, alertname + namespace) para determinar qué alertas se agrupan.
+La agrupación puede reducir el trabajo duplicado de los respondedores, pero debe utilizar una clave limitada al dominio del incidente. Demasiadas pocas etiquetas combinan incidentes no relacionados; los ID sin límites fragmentan los grupos. La temporización de Alertmanager de origen y las plantillas de agrupación/resolución de OnCall son diferentes, y la entrega no está garantizada exactamente una vez.
 
 </details>
 
 ---
 
-6. ¿Qué sucede cuando el indicador `important` es true para `notify_on_call_from_schedule` en la política de escalamiento de Grafana OnCall?
+6. ¿Qué sucede cuando el indicador `important` es verdadero para `notify_on_call_from_schedule` en la política de escalamiento de Grafana OnCall?
    - A) La alerta se marca como de máxima prioridad
-   - B) La alerta se envía mediante todos los canales configurados (teléfono, SMS, push, etc.)
-   - C) La cadena de escalamiento se omite y la alerta se envía inmediatamente al supervisor
-   - D) La alerta se almacena permanentemente
+   - B) Se selecciona el conjunto configurado por el usuario de reglas de notificación importantes
+   - C) Se omite la cadena de escalamiento y la alerta se envía inmediatamente al supervisor
+   - D) La alerta se almacena de forma permanente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) La alerta se envía mediante todos los canales configurados (teléfono, SMS, push, etc.)**
+**Respuesta: B) Se selecciona el conjunto configurado por el usuario de reglas de notificación importantes**
 
 **Explicación:**
-El significado del indicador `important`:
-- `important: true`: Enviar una alerta mediante todos los canales de notificación configurados por el usuario (teléfono, SMS, push móvil, Slack, etc.)
-- `important: false`: Enviar una alerta solo mediante los canales predeterminados (por ejemplo, Slack)
-
-Esto permite ajustar la intensidad de las alertas según la gravedad. Las alertas críticas se pueden configurar con important=true para incluir teléfono/SMS, mientras que Warning se puede configurar con important=false para usar solo Slack.
+Important selecciona el conjunto personal de reglas de notificación importantes del usuario. El orden, las esperas, los canales y la disponibilidad de las reglas configuradas siguen aplicándose. No envía automáticamente a través de todos los canales; las reglas predeterminadas no son exclusivamente de Slack en todos los casos.
 
 </details>
 
 ---
 
-7. ¿Cuál NO es un comando disponible al usar la integración de Slack con Grafana OnCall?
-   - A) /oncall ack (reconocer alerta)
-   - B) /oncall resolve (resolver alerta)
-   - C) /oncall deploy (ejecutar Deployment)
-   - D) /oncall silence 2h (silenciar durante 2 horas)
+7. ¿Cuál es la forma correcta de usar acciones de Slack con una instalación existente de OnCall?
+   - A) Suponer que todas las instalaciones admiten /oncall ack
+   - B) Tratar los comandos de barra como Bash
+   - C) Verificar los comandos, permisos y botones de acción de la aplicación instalada
+   - D) Suponer que el reconocimiento resuelve el monitor de origen
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) /oncall deploy (ejecutar Deployment)**
+**Respuesta: C) Verificar los comandos, permisos y botones de acción de la aplicación instalada**
 
 **Explicación:**
-Comandos de Grafana OnCall para Slack:
-- `/oncall` - Consultar la persona responsable de guardia actual
-- `/oncall schedule` - Ver el calendario
-- `/oncall ack` - Reconocer alerta
-- `/oncall resolve` - Resolver alerta
-- `/oncall silence 2h` - Silenciar durante 2 horas
-- `/oncall unsilence` - Quitar el silencio
-- `/oncall escalate` - Escalar alerta
-
-La ejecución de Deployment no es una característica de OnCall. OnCall se centra en la gestión de alertas y de guardias.
+Comprueba el comando raíz/la ayuda reales y los botones de acción autorizados de la aplicación de Slack instalada. El código fuente inspeccionado utiliza un comando raíz configurable y ejemplos con /grafana, no el antiguo catálogo de comandos /oncall que se afirmaba. Acknowledge, Resolve y Silence son acciones diferentes; no se implica la ejecución del despliegue.
 
 </details>
 
 ---
 
-8. ¿Cuál NO es una ventaja de Grafana OnCall en comparación con PagerDuty/OpsGenie?
-   - A) Código abierto y puede alojarse de forma autogestionada
-   - B) Integración nativa con el stack de Grafana
-   - C) Compatibilidad con más de 700 integraciones
-   - D) Uso gratuito (versión OSS)
+8. ¿Cuál es la base adecuada para decidir sobre una nueva herramienta de guardia o una migración?
+   - A) Elegir solo según los antiguos recuentos de integraciones
+   - B) Suponer que OSS no tiene coste operativo
+   - C) Comprobar el mantenimiento, las características requeridas, el coste real y la migración/recuperación
+   - D) Instalar OnCall OSS archivado de forma predeterminada
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Compatibilidad con más de 700 integraciones**
+**Respuesta: C) Comprobar el mantenimiento, las características requeridas, el coste real y la migración/recuperación**
 
 **Explicación:**
-Más de 700 integraciones es una ventaja de PagerDuty. Comparación:
-- **Grafana OnCall**: más de 30 integraciones, código abierto, posibilidad de alojamiento autogestionado, integración nativa con Grafana, gratuito (OSS)
-- **PagerDuty**: más de 700 integraciones, solo SaaS, analítica/informes avanzados, características de AIOps
-- **OpsGenie**: más de 200 integraciones, solo SaaS, integración con el ecosistema de Atlassian
-
-OnCall es una opción rentable para entornos que utilizan el stack de Grafana, pero PagerDuty puede ser más adecuado cuando se necesitan integraciones con diversos sistemas externos.
+Utiliza el mantenimiento/ciclo de vida actual, las características requeridas, el coste operativo y los contratos. Los antiguos recuentos fijos de integraciones o precios por usuario son insuficientes. OnCall OSS está archivado; Opsgenie tiene un fin de servicio/soporte anunciado para el 2027-04-05. Revisa un destino mantenido y prueba la migración/recuperación.
 
 </details>
 
 ---
 
-9. ¿Cuál es la configuración recomendada para alta disponibilidad en un Deployment de producción de Grafana OnCall?
-   - A) Una sola instancia es suficiente
-   - B) Aumentar el número de réplicas del servidor API y de los workers de Celery, y utilizar PostgreSQL/Redis externos
-   - C) Deployment distribuido en varios clusters
-   - D) Agregar únicamente réplicas de solo lectura
+9. ¿Qué se debe verificar para la disponibilidad de un Deployment de OnCall existente?
+   - A) Tres réplicas de API garantizan la disponibilidad
+   - B) Dependencias, estado, entrega y comportamiento ante fallos y recuperación
+   - C) Solo el número de clústeres
+   - D) Solo una réplica de base de datos de solo lectura
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Aumentar el número de réplicas del servidor API y de los workers de Celery, y utilizar PostgreSQL/Redis externos**
+**Respuesta: B) Dependencias, estado, entrega y comportamiento ante fallos y recuperación**
 
 **Explicación:**
-Configuración de HA de producción para Grafana OnCall:
-- **Servidor API**: más de 3 réplicas, configuración de Pod Anti-Affinity
-- **Workers de Celery**: más de 3 réplicas, configuración de Pod Anti-Affinity
-- **PostgreSQL**: Usar una DB administrada externa (AWS RDS, etc.)
-- **Redis**: Usar Redis administrado externo (AWS ElastiCache, etc.)
-
-Esta configuración elimina los puntos únicos de fallo y permite que el servicio siga funcionando incluso cuando fallan componentes individuales.
+El número de réplicas por sí solo no elimina todos los puntos de fallo. Las instalaciones existentes requieren validación de dependencias, broker/cache/base de datos, programador, claves, TLS, entrega y recuperación. OSS archivado no es una opción predeterminada para producción nueva; en esta revisión no se probó ningún despliegue de HA.
 
 </details>
 
 ---
 
-10. ¿Cuál es el propósito principal de configurar rutas en Grafana OnCall?
+10. ¿Cuál es el objetivo principal de configurar rutas en Grafana OnCall?
     - A) Distribución del tráfico de red
-    - B) Aplicar diferentes cadenas de escalamiento según las condiciones de alerta
-    - C) Optimización de consultas de bases de datos
+    - B) Aplicar diferentes cadenas de escalamiento según las condiciones de las alertas
+    - C) Optimización de consultas de base de datos
     - D) Configuración de la ruta de autenticación de usuarios
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Aplicar diferentes cadenas de escalamiento según las condiciones de alerta**
+**Respuesta: B) Aplicar diferentes cadenas de escalamiento según las condiciones de las alertas**
 
 **Explicación:**
-Las rutas conectan las alertas entrantes con las cadenas de escalamiento adecuadas según sus atributos (labels, gravedad, equipo, etc.):
-- `severity=critical` -> Cadena de escalamiento crítica (incluye teléfono/SMS)
-- `team=infra` -> Cadena de escalamiento del equipo de infraestructura
-- `namespace=production` -> Calendario de guardia de producción
-
-Las reglas de enrutamiento se definen mediante expresiones regulares y realizan coincidencias según el contenido de la carga útil de la alerta. Esto permite aplicar las personas responsables y políticas de escalamiento adecuadas para los diferentes tipos de alerta.
+Las rutas seleccionan el comportamiento de escalamiento/notificación mediante la carga útil real de la integración, el modo de coincidencia, el orden y la alternativa de respaldo. El serializador inspeccionado utiliza slack.channel_id/enabled anidado. Prueba los campos ausentes o en conflicto; la coincidencia arbitraria de expresiones regulares del texto de mensajes no es un contrato universal de proveedor.
 
 </details>
 
@@ -242,6 +193,8 @@ Las reglas de enrutamiento se definen mediante expresiones regulares y realizan 
 ## Recursos de aprendizaje adicionales
 
 - [Documentación de Grafana OnCall](https://grafana.com/docs/oncall/latest/)
-- [GitHub de Grafana OnCall](https://github.com/grafana/oncall)
-- [Helm Chart de Grafana OnCall](https://github.com/grafana/helm-charts/tree/main/charts/oncall)
+- [Grafana OnCall en GitHub](https://github.com/grafana-cold-storage/oncall)
+- [Helm Chart de Grafana OnCall](https://github.com/grafana-cold-storage/oncall/tree/af0fbd40558c9a63bcf438589894c440fc434a54/helm/oncall)
 - [Grafana IRM (Gestión de respuesta a incidentes)](https://grafana.com/products/cloud/irm/)
+
+- [Guía](../../../observability/alerting/03-grafana-oncall.md)
