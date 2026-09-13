@@ -3,7 +3,7 @@
 > **Last Updated**: September 13, 2026
 > **Validation baseline**: cert-manager 1.21.2, cmctl 2.5.0, trust-manager 0.25.0, istio-csr 0.17.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. The official supported/tested Kubernetes range for cert-manager 1.21 is 1.33–1.36.
 
-cert-manager manages certificate issuance and renewal as Kubernetes resources. **CA trust distribution, application reload, revocation, and CRL/OCSP operations remain separate responsibilities.** Examples were checked with local schemas, configuration, and libraries; they are not evidence of live CA issuance or AWS/Kubernetes deployment.
+cert-manager manages certificate issuance and renewal as Kubernetes resources. **CA trust distribution, application reload, revocation, and CRL/OCSP operations remain separate responsibilities.** Examples were checked with local schemas, configuration, and libraries; they are not evidence of external CA issuance or AWS/Kubernetes deployment. A separate ephemeral local Vault 2.1.0 test used a synthetic CA for sixteen issuance/CSR-signing acceptance/rejection cases.
 
 <span id="what-cert-manager-solves"></span>
 <span id="project-status"></span>
@@ -295,6 +295,8 @@ Limit SANs in the Vault role and bind audience vault://demo-app/vault-pki to thi
 <span id="nlb-with-tls-termination-at-ingress-controller"></span>
 <span id="gateway-api-integration"></span>
 
+The DNS role explicitly sets allow_ip_sans=false and allow_localhost=false. allowed_domains does not constrain IP SANs, and localhost has a separate permissive default. A vault write POST resets omitted role fields to defaults; read back the complete role and test allowed DNS and rejected IP/localhost requests after applying it.
+
 ## EKS Integration Patterns
 
 | Path | TLS termination and key location |
@@ -555,7 +557,7 @@ Selecting recursive DNS resolvers is not increasing propagation wait time. Inspe
 
 ## Summary and References
 
-Local checks include pinned Helm/CRD schemas, controller-config decoding, 6 renewal cases, real CSR generation/signature checking, 5 Prometheus cases / 20 assertions, and 24 diagram browser cases. No real CA/ACME issuance, AWS resource creation, Vault login, mesh installation, or runtime mTLS was executed.
+Local checks include pinned Helm/CRD schemas, controller-config decoding, 6 renewal cases, real CSR generation/signature checking, 5 Prometheus cases / 20 assertions, 24 diagram browser cases, and sixteen synthetic issuance/CSR-signing cases in ephemeral local Vault. No external CA/ACME issuance, AWS resource creation, deployed Vault login, mesh installation, or runtime mTLS was executed.
 
 - [cert-manager releases](https://cert-manager.io/docs/releases/)
 - [CNCF project history](https://www.cncf.io/projects/cert-manager/)

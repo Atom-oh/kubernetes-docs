@@ -1,6 +1,6 @@
 {
   "status": "passed-scoped-audit",
-  "reviewedAt": "2026-09-13T03:06:02.797571+00:00",
+  "reviewedAt": "2026-09-13T03:53:36.730287+00:00",
   "scope": {
     "documents": 4,
     "originalLines": 3602,
@@ -42,7 +42,7 @@
     "results": [
       {
         "path": "ko/security/10-cert-manager.md",
-        "sha256": "8b00788fc7c5c0919940c205b3d66f83e9c4212784e27f538b0beb483630a4a5",
+        "sha256": "ff1f09004695ef99c6cb1dd1c129b1c944404649a2720030e8bab4b45bf5ab5e",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -189,6 +189,7 @@
           "적용-시나리오",
           "예시-ack를-통한-certificate-리소스-정의",
           "cert-manager와-비교",
+          "aws-네이티브-대안-acm--ack",
           "aws-네이티브-대안-acm-ack",
           "acm-requestcertificate와-ack-export",
           "acm-acme-eab와-사전-도메인-검증",
@@ -226,7 +227,7 @@
       },
       {
         "path": "en/security/10-cert-manager.md",
-        "sha256": "3d391554ab42e09267ad092de00f82e112a5e199752fa7aa76931d572c8d5368",
+        "sha256": "818c7b538eb9b9d3c3c897e1ac04d52d143244b7a954d74dc9bf405badabd980",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -371,6 +372,7 @@
           "applicable-scenarios",
           "example-defining-a-certificate-via-ack",
           "comparison-with-cert-manager",
+          "aws-native-alternative-acm--ack",
           "aws-native-alternative-acm-ack",
           "acm-requestcertificate-and-ack-export",
           "acm-acme-eab-and-prevalidated-domains",
@@ -654,8 +656,8 @@
     },
     {
       "path": "examples/security/cert-manager/vault-setup.sh",
-      "sha256": "fb1cd54387d9213c1e4fe28f57ea0cb422aff97e675ea20d5f6cb71424955452",
-      "bytes": 645
+      "sha256": "b23c84f0bfb9f1e9201a11382aaf5b6b2617219be2c116863a39d6c9d0fd9b19",
+      "bytes": 813
     },
     {
       "path": "examples/security/cert-manager/alb-acm-ingress.yaml",
@@ -699,8 +701,8 @@
     },
     {
       "path": "examples/security/cert-manager/README.md",
-      "sha256": "a8cde32dbe50b4a246f31e8e7a21c72364d65d36b5937b518df13e4c03799619",
-      "bytes": 4171
+      "sha256": "099031e88a09ab5ae2df6c9c67d858ada3d2d25a2bfc678c51ba168478b92be4",
+      "bytes": 4525
     }
   ],
   "assets": [
@@ -2556,6 +2558,168 @@
       ],
       "scope": "24caseson8production-normalizedcert-manager-viewers; motion/reduced-motion/visibility/theme/guided controls and8SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild",
       "retryNote": "Final six component-viewer cases replace pre-final cases after terminology adjustment; all 24 final cases passed."
+    },
+    "vaultRole": {
+      "status": "passed",
+      "vaultVersion": "2.1.0",
+      "cases": [
+        {
+          "role": "original",
+          "case": "approved-dns",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "ip-san",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "localhost",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "outside-dns",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name outside.invalid not allowed by this role"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "approved-dns",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "fixed",
+          "case": "ip-san",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "IP Subject Alternative Names are not allowed in this role, but was provided [192.0.2.10]"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "localhost",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name localhost not allowed by this role"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "outside-dns",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name outside.invalid not allowed by this role"
+          ]
+        },
+        {
+          "role": "original",
+          "case": "csr-approved-dns",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "csr-ip-san",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "csr-localhost",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "original",
+          "case": "csr-outside-dns",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name outside.invalid not allowed by this role"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "csr-approved-dns",
+          "status": 200,
+          "expected": 200,
+          "passed": true,
+          "errors": []
+        },
+        {
+          "role": "fixed",
+          "case": "csr-ip-san",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "IP Subject Alternative Names are not allowed in this role, but was provided some via CSR"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "csr-localhost",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name localhost not allowed by this role"
+          ]
+        },
+        {
+          "role": "fixed",
+          "case": "csr-outside-dns",
+          "status": 400,
+          "expected": 400,
+          "passed": true,
+          "errors": [
+            "common name outside.invalid not allowed by this role"
+          ]
+        }
+      ],
+      "fixedRoleReadback": {
+        "allowed_domains": [
+          "example.com"
+        ],
+        "allow_subdomains": true,
+        "allow_bare_domains": false,
+        "allow_any_name": false,
+        "allow_ip_sans": false,
+        "allow_localhost": false,
+        "use_csr_sans": true
+      },
+      "scope": "Ephemeral in-memory Vault bound only to127.0.0.1; synthetic CA and local issuance requests. No deployed Vault login, Kubernetes authentication, external CA, AWS or cluster calls; token/privatekeys never published."
     }
   },
   "changes": [
@@ -2565,12 +2729,20 @@
     "Correct Vault audience/token RBAC/TLS trust; remove cluster-wide developer Secret reads.",
     "Distinguish Istio agent/CSR/SDS/peer mTLS and Linkerd external identity renewal.",
     "Correct Bundle inline field, trust namespace, subPath/reload, readiness condition and expiry alerts.",
-    "Preserve 130 old fragments and redraw eight bilingual diagrams with final PNG visual inspection."
+    "Preserve 130 old fragments and redraw eight bilingual diagrams with final PNG visual inspection.",
+    "Explicitly disable Vault IP SAN and localhost issuance; read effective role after POST. Actual ephemeral localhost Vault tests reproduce old permissive behavior and verify fixed policy for both issue and CSR-sign endpoints (16 cases). Correct Korean Gateway shim to Certificate creation."
   ],
   "limits": [
-    "No live CA/ACME issuance, AWS resource creation, real IAM authorization, Vault login, Kubernetes admission, mesh installation or runtime mTLS was executed.",
+    "No external CA/ACME issuance, AWS resources, deployed Vault login, Kubernetes authentication/admission, mesh installation or runtime mTLS was executed. Synthetic local Vault PKI issuance/signing was tested separately.",
     "Pinned Kubernetes/CRD OpenAPI validation does not execute CEL/webhook policy. Kubernetes IntOrString extension is explicitly interpreted.",
     "Helm rendering is not proof of installation, readiness or successful renewal.",
     "Browser cases use 375/768/1920 widths with local font fallback; full site build delegated to CI."
-  ]
+  ],
+  "vaultBinary": {
+    "version": "2.1.0",
+    "url": "https://releases.hashicorp.com/vault/2.1.0/vault_2.1.0_linux_arm64.zip",
+    "sha256": "319b3eb7b0c2ad218453f5d1af5c23cac81a024db3a07ccd2494ecd31f2090c3",
+    "checksumVerified": true
+  },
+  "integrationNote": "Preserved two current-main ACM/ACK compatibility aliases from PR255 in addition to the 130 original fragment aliases."
 }

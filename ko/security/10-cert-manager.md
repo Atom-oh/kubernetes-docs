@@ -5,7 +5,7 @@
 > **마지막 업데이트**: 2026년 9월 13일
 > **검증 기준**: cert-manager 1.21.2, cmctl 2.5.0, trust-manager 0.25.0, istio-csr 0.17.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. cert-manager 1.21의 공식 Kubernetes 지원·시험 범위는 1.33–1.36입니다.
 
-cert-manager는 인증서 발급·갱신을 Kubernetes 리소스로 관리합니다. **CA 신뢰 배포, 애플리케이션 reload, 인증서 폐기·CRL/OCSP 운영은 별도 책임**입니다. 아래 예제는 로컬 schema·설정·라이브러리 검증을 거쳤으며 실제 CA 발급이나 AWS/Kubernetes 배포 결과가 아닙니다.
+cert-manager는 인증서 발급·갱신을 Kubernetes 리소스로 관리합니다. **CA 신뢰 배포, 애플리케이션 reload, 인증서 폐기·CRL/OCSP 운영은 별도 책임**입니다. 아래 예제는 로컬 schema·설정·라이브러리 검증을 거쳤으며 외부 CA 발급이나 AWS/Kubernetes 배포 결과가 아닙니다. 별도로 로컬 임시 Vault 2.1.0에서 합성 CA를 사용해 SAN 허용·거부 16개 사례를 시험했습니다.
 
 <span id="인증서-자동화의-필요성"></span>
 <span id="cert-manager의-주요-기능"></span>
@@ -250,7 +250,7 @@ CA issuer는 CA 인증서/key가 담긴 Secret을 사용합니다. CA Secret을 
 
 HTTP-01은 해당 호스트의 port80 경로 접근이 필요하고 wildcard를 지원하지 않습니다. DNS-01은 DNS TXT 권한으로 wildcard를 검증합니다. 기존 authorization 재사용이나 ACM의 사전 검증 방식에서는 모든 요청마다 새 challenge가 생긴다고 가정하지 않습니다.
 
-신규 설치에서 2026년 3월에 유지보수가 종료된 ingress-nginx를 기본값으로 안내하지 않습니다. [HTTP-01 Gateway 예제](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/public-staging.yaml)는 설치된 Envoy Gateway의 `envoy-gateway` GatewayClass를 전제로 합니다. 실제 이름을 확인하고, solver namespace의 `cert-manager-http01: enabled` label과 Gateway allowedRoutes를 맞춥니다. HTTPS용 Gateway shim은 Secret reference를 생성할 뿐 Gateway controller 설치나 TLS reload를 대신하지 않습니다.
+신규 설치에서 2026년 3월에 유지보수가 종료된 ingress-nginx를 기본값으로 안내하지 않습니다. [HTTP-01 Gateway 예제](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/public-staging.yaml)는 설치된 Envoy Gateway의 `envoy-gateway` GatewayClass를 전제로 합니다. 실제 이름을 확인하고, solver namespace의 `cert-manager-http01: enabled` label과 Gateway allowedRoutes를 맞춥니다. HTTPS용 Gateway shim은 설정된 certificateRefs를 바탕으로 Certificate를 생성하며 Gateway controller 설치나 TLS reload를 대신하지 않습니다.
 
 [Route53 issuer](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-issuer.yaml)와 [IAM 정책](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/route53-policy.json)은 hostedZoneID를 고정하고 TXT challenge 이름으로 변경 권한을 제한합니다. zone ID를 명시하면 ListHostedZonesByName 전체 조회 권한을 생략할 수 있습니다. IRSA 또는 지원되는 Pod Identity의 실제 controller 자격 증명과 교차 계정 role 경로를 확인합니다. Namespace selector나 dnsZones는 IAM 통제의 대체물이 아닙니다.
 
@@ -299,6 +299,8 @@ Vault role은 SAN 범위를 제한하고 audience를 `vault://demo-app/vault-pki
 <span id="ingress-nginx-cert-manager"></span>
 <span id="nlb-tls-종단"></span>
 <span id="gateway-api-cert-manager"></span>
+
+이 DNS용 Vault role은 allow_ip_sans=false와 allow_localhost=false를 명시합니다. allowed_domains만으로 IP SAN을 제한하지 못하며 localhost도 별도 기본 허용 항목입니다. vault write의 POST는 생략한 필드를 기본값으로 재설정하므로 적용 후 전체 role을 조회하고 승인된 DNS·거부할 IP/localhost 요청을 시험합니다.
 
 ## EKS 통합 패턴
 
@@ -560,7 +562,7 @@ DNS resolver 선택은 propagation 대기 시간을 늘리는 옵션과 다릅�
 
 ## 요약 및 참고 자료
 
-로컬 검증은 pinned Helm/CRD, controller config decoder, renewal6case, 실제 CSR 생성·서명 확인, Prometheus5case/20assertion, 다이어그램24browsercase를 포함합니다. 실제 CA/ACME 발급, AWS 리소스 생성, Vault login, mesh 설치·mTLS runtime은 실행하지 않았습니다.
+로컬 검증은 pinned Helm/CRD, controller config decoder, 갱신 계산 6개 사례, 실제 CSR 생성·서명 확인, Prometheus 5개 사례·20개 assertion, 다이어그램 브라우저 24개 사례와 로컬 임시 Vault의 합성 인증서 발급·거부 16개 사례를 포함합니다. 외부 CA/ACME 발급, AWS 리소스 생성, 운영 Vault 로그인, mesh 설치·mTLS runtime은 실행하지 않았습니다.
 
 - [cert-manager releases](https://cert-manager.io/docs/releases/)
 - [CNCF project history](https://www.cncf.io/projects/cert-manager/)

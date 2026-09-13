@@ -5,9 +5,13 @@ set -euo pipefail
 vault policy write cert-manager-demo-app vault-policy.hcl
 vault write pki/roles/example-role \
   allowed_domains=example.com allow_subdomains=true \
-  allow_bare_domains=false allow_any_name=false max_ttl=72h
+  allow_bare_domains=false allow_any_name=false \
+  allow_ip_sans=false allow_localhost=false max_ttl=72h
 vault write auth/kubernetes/role/cert-manager-demo-app \
   bound_service_account_names=vault-issuer \
   bound_service_account_namespaces=demo-app \
   audience=vault://demo-app/vault-pki \
   policies=cert-manager-demo-app ttl=1m
+
+# POST resets omitted role fields; inspect the complete effective role after applying.
+vault read pki/roles/example-role
