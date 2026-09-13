@@ -1,290 +1,220 @@
+<span id="퀴즈-문제"></span>
+
 # 컨테이너 이미지 보안 퀴즈
+> **마지막 업데이트**: 2026년 9월 13일
 
-이 퀴즈는 이미지 스캐닝, 이미지 서명, 공급망 보안, 베이스 이미지 선택에 대한 이해를 테스트합니다.
+<span id="_1-trivy로-컨테이너-이미지를-스캔하는-올바른-명령은"></span>
 
-## 퀴즈 문제
+### 1. 주어진 이미지 reference를 Trivy로 검사하는 명령은?
 
-### 1. Trivy로 컨테이너 이미지를 스캔하는 올바른 명령은?
-
-A. trivy scan nginx:latest
-B. trivy image nginx:latest
-C. trivy container nginx:latest
-D. trivy check nginx:latest
+A. trivy scan "$IMAGE_REF"
+B. trivy image "$IMAGE_REF"
+C. trivy container "$IMAGE_REF"
+D. trivy check "$IMAGE_REF"
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. trivy image nginx:latest**
+**정답: B. trivy image "$IMAGE_REF"**
 
-**설명:**
-Trivy의 이미지 스캔 명령:
-```bash
-trivy image nginx:latest
-trivy image --severity HIGH,CRITICAL nginx:latest
-trivy image --format json nginx:latest
-```
-
-`trivy image`는 컨테이너 이미지의 취약점을 스캔합니다.
+trivy image가 이미지 검사 명령입니다. IMAGE_REF에는 실제 digest reference를 넣습니다. 명령 구문이 유효해도 registry 권한·DB 갱신·지원 package 탐지 여부를 확인해야 합니다.
 
 </details>
 
-### 2. 이미지 서명 및 검증에 사용되는 도구는?
+<span id="_2-이미지-서명-및-검증에-사용되는-도구는"></span>
 
-A. Trivy
+### 2. 이미지 digest와 승인된 서명자의 연결을 검증하는 도구는?
+
+A. Trivy의 CVE DB
 B. Cosign/Sigstore
-C. Clair
-D. Anchore
+C. Clair의 package scanner
+D. Docker imagePullPolicy
 
 <details>
 <summary>정답 보기</summary>
 
 **정답: B. Cosign/Sigstore**
 
-**설명:**
-Cosign은 Sigstore 프로젝트의 일부로, 컨테이너 이미지 서명 및 검증을 위한 도구입니다:
-```bash
-# 이미지 서명
-cosign sign --key cosign.key myregistry/myimage:tag
-
-# 서명 검증
-cosign verify --key cosign.pub myregistry/myimage:tag
-```
-
-Trivy, Clair, Anchore는 취약점 스캐너입니다.
+Cosign은 key 또는 OIDC identity/issuer와 digest 및 필요한 transparency 증거를 검증합니다. 서명은 알려진 취약점이 없다는 보증이 아닙니다.
 
 </details>
 
-### 3. "Shift-Left" 보안 접근 방식의 의미는?
+<span id="_3-shift-left-보안-접근-방식의-의미는"></span>
 
-A. 보안을 운영 단계로 미룸
-B. 보안을 개발 초기 단계로 이동
-C. 보안팀만 담당
-D. 자동화 제거
+### 3. Shift-left 보안은 무엇을 의미하는가?
+
+A. 운영 단계까지 검사를 미룸
+B. 개발·PR·빌드 단계에서 문제를 일찍 검사
+C. 보안팀만 소스에 접근
+D. 운영 재검사를 제거
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 보안을 개발 초기 단계로 이동**
+**정답: B. 개발·PR·빌드 단계에서 문제를 일찍 검사**
 
-**Explanation:**
-Shift-Left 보안은 보안 검사를 개발 주기의 가능한 한 이른 단계로 이동시키는 것입니다:
-- IDE 단계에서 스캐닝
-- CI/CD 파이프라인에서 빌드 게이트
-- PR 검토 시 보안 체크
-
-문제를 일찍 발견할수록 수정 비용이 낮습니다.
+개발 초기 검사는 수정 피드백을 앞당깁니다. 배포 후 새 CVE와 런타임 행위가 생기므로 registry 재검사와 런타임 탐지는 계속 필요합니다.
 
 </details>
 
-### 4. Distroless 이미지의 주요 특징은?
+<span id="_4-distroless-이미지의-주요-특징은"></span>
 
-A. 모든 Linux 유틸리티 포함
-B. 애플리케이션 실행에 필요한 최소 구성요소만 포함
-C. 디버깅 도구 포함
-D. 패키지 관리자 포함
+### 4. 일반적인 distroless runtime 이미지의 특징은?
+
+A. 모든 Linux 도구를 포함
+B. 애플리케이션에 필요한 최소 runtime 구성요소 중심
+C. 항상 shell과 debugger를 포함
+D. package manager가 필수
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 애플리케이션 실행에 필요한 최소 구성요소만 포함**
+**정답: B. 애플리케이션에 필요한 최소 runtime 구성요소 중심**
 
-**설명:**
-Distroless 이미지는:
-- 셸 없음 (bash, sh 등)
-- 패키지 관리자 없음
-- 불필요한 유틸리티 없음
-- 최소 공격 표면
-- 애플리케이션 런타임만 포함
-
-보안과 이미지 크기 측면에서 이점이 있습니다.
+일반 runtime에는 shell/package manager가 없으며 debug variant는 다를 수 있습니다. 작은 base image에도 애플리케이션 binary·library 취약점은 남을 수 있습니다.
 
 </details>
 
-### 5. Amazon ECR 이미지 스캐닝의 두 가지 유형은?
+<span id="_5-amazon-ecr-이미지-스캐닝의-두-가지-유형은"></span>
 
-A. 기본 스캐닝, 고급 스캐닝
-B. 자동 스캐닝, 수동 스캐닝
-C. 빠른 스캐닝, 심층 스캐닝
-D. 무료 스캐닝, 유료 스캐닝
+### 5. 현재 ECR Basic과 Enhanced scanning의 차이는?
+
+A. Basic은 AWS native OS scanner, Enhanced는 Inspector의 OS/언어 package 검사
+B. Basic은 항상 Clair, Enhanced는 OS만 검사
+C. 두 방식 모두 push를 자동 거부
+D. Enhanced는 모든 이미지를 무기한 검사
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: A. 기본 스캐닝, 고급 스캐닝**
+**정답: A. Basic은 AWS native OS scanner, Enhanced는 Inspector의 OS/언어 package 검사**
 
-**설명:**
-Amazon ECR 스캐닝 유형:
-- **기본 스캐닝 (Basic)**: Clair 기반, OS 패키지 취약점 스캔
-- **고급 스캐닝 (Enhanced)**: Amazon Inspector 기반, OS + 프로그래밍 언어 패키지 스캔, 지속적 스캐닝
-
-고급 스캐닝은 추가 비용이 발생하지만 더 포괄적입니다.
+Basic은 manual/scan-on-push, Enhanced는 scan-on-push/continuous를 지원합니다. 결과의 findings와 enhancedFindings 및 ECR/Inspector 이벤트를 구분합니다.
 
 </details>
 
-### 6. SBOM(Software Bill of Materials)이란?
+<span id="_6-sbom-software-bill-of-materials-이란"></span>
 
-A. 소프트웨어 라이선스 목록
-B. 소프트웨어 구성요소 목록
-C. 보안 취약점 목록
-D. 빌드 명령어 목록
+### 6. SBOM은 무엇을 제공하는가?
+
+A. 취약점이 없다는 인증
+B. 도구가 발견한 소프트웨어 구성요소 inventory
+C. 승인된 signer의 자동 증명
+D. 배포 권한
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 소프트웨어 구성요소 목록**
+**정답: B. 도구가 발견한 소프트웨어 구성요소 inventory**
 
-**설명:**
-SBOM은 소프트웨어에 포함된 모든 구성요소(라이브러리, 종속성, 버전 등)의 목록입니다. 공급망 보안과 취약점 관리에 필수적입니다:
-```bash
-# Trivy로 SBOM 생성
-trivy image --format spdx-json -o sbom.json nginx:latest
-```
+SBOM은 구성요소와 관계를 기록하지만 탐지 범위가 불완전할 수 있습니다. digest에 연결한 서명된 attestation과 검증 policy를 별도로 평가합니다.
 
 </details>
 
-### 7. Kyverno에서 이미지 서명을 검증하는 정책 유형은?
+<span id="_7-kyverno에서-이미지-서명을-검증하는-정책-유형은"></span>
 
-A. validate
-B. mutate
+### 7. 기존 Kyverno ClusterPolicy에서 이미지 서명 검사에 사용한 규칙은?
+
+A. validate만
+B. mutate만
 C. verifyImages
-D. generate
+D. generate만
 
 <details>
 <summary>정답 보기</summary>
 
 **정답: C. verifyImages**
 
-**설명:**
-Kyverno의 `verifyImages` 규칙은 컨테이너 이미지 서명을 검증합니다:
-```yaml
-spec:
-  rules:
-  - name: verify-signature
-    verifyImages:
-    - imageReferences:
-      - "myregistry/*"
-      attestors:
-      - entries:
-        - keys:
-            publicKeys: |-
-              -----BEGIN PUBLIC KEY-----
-              ...
-              -----END PUBLIC KEY-----
-```
+기존 verifyImages와 신규 ImageValidatingPolicy를 구분합니다. Kyverno1.19.1의 신규 예제는 CEL policy를 사용하며 registry/digest 제한과 일반·init·ephemeral container 범위를 함께 검사합니다.
 
 </details>
 
-### 8. 이미지 태그 대신 다이제스트를 사용해야 하는 이유는?
+<span id="_8-이미지-태그-대신-다이제스트를-사용해야-하는-이유는"></span>
 
-A. 더 짧은 이름
-B. 불변성 보장
-C. 더 빠른 풀링
-D. 저장 공간 절약
+### 8. 이미지 tag 대신 digest를 고정하는 이유는?
+
+A. 항상 짧아짐
+B. 특정 image content를 식별
+C. 서명 검사가 자동 수행됨
+D. CVE가 자동 제거됨
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 불변성 보장**
+**정답: B. 특정 image content를 식별**
 
-**설명:**
-태그(예: `nginx:latest`)는 다른 이미지를 가리키도록 변경될 수 있습니다. 다이제스트(예: `nginx@sha256:abc123...`)는 특정 이미지 콘텐츠의 해시로, 변경 불가능합니다:
-```yaml
-image: nginx@sha256:abc123def456...
-```
-
-이는 재현성과 보안을 보장합니다.
+Tag는 이동할 수 있지만 digest는 내용을 식별합니다. 재현 가능한 artifact 선택에 도움이 되며 signer 신뢰·취약점·가용성 검증을 대신하지 않습니다.
 
 </details>
 
-### 9. Trivy가 스캔하지 않는 대상은?
+<span id="_9-trivy가-스캔하지-않는-대상은"></span>
 
-A. OS 패키지 취약점
-B. 언어별 종속성
-C. 런타임 행위
-D. 시크릿 탐지
+### 9. Trivy의 정적 검사와 별도인 영역은?
+
+A. OS package 식별
+B. 언어 dependency 검사
+C. 실행 중 syscall·process 행위 탐지
+D. 소스 시크릿 탐지
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C. 런타임 행위**
+**정답: C. 실행 중 syscall·process 행위 탐지**
 
-**설명:**
-Trivy는 정적 분석 도구로 다음을 스캔합니다:
-- OS 패키지 취약점
-- 언어별 종속성 (npm, pip, go 등)
-- IaC 구성 오류
-- 하드코딩된 시크릿
-- 라이선스
-
-런타임 행위 분석은 Falco 같은 런타임 보안 도구의 영역입니다.
+Trivy의 package·misconfiguration·secret 검사는 런타임 행위 탐지와 다릅니다. Falco 같은 런타임 도구의 역할을 별도로 설계합니다.
 
 </details>
 
-### 10. 컨테이너 이미지 레지스트리 보안 모범 사례가 아닌 것은?
+<span id="_10-컨테이너-이미지-레지스트리-보안-모범-사례가-아닌-것은"></span>
 
-A. 프라이빗 레지스트리 사용
-B. 이미지 스캐닝 활성화
-C. 익명 풀링 허용
-D. 취약한 이미지 푸시 차단
+### 10. 레지스트리 접근 통제로 부적절한 것은?
+
+A. Private image의 승인된 pull identity
+B. 공개 image도 digest·서명 검증
+C. 익명 사용자의 임의 image push/delete 허용
+D. Registry·admission·scan gate의 권한 분리
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C. 익명 풀링 허용**
+**정답: C. 익명 사용자의 임의 image push/delete 허용**
 
-**설명:**
-레지스트리 보안 모범 사례:
-- 프라이빗 레지스트리 사용
-- IAM 기반 인증
-- 이미지 스캐닝 활성화
-- 취약한 이미지 푸시/풀 차단
-- 이미지 서명 검증
-- 불변 태그 또는 다이제스트 사용
-
-익명 풀링은 보안 위험이 있으며, 프로덕션 환경에서는 비활성화해야 합니다.
+공개 배포용 image의 anonymous read 자체를 모두 취약점으로 간주하지 않습니다. 기밀성, write/delete 권한, 출처 검증, rate limit을 각각 통제합니다.
 
 </details>
 
-### 11. CI/CD 파이프라인에서 이미지 스캐닝 실패 시 권장 조치는?
+<span id="_11-ci-cd-파이프라인에서-이미지-스캐닝-실패-시-권장-조치는"></span>
 
-A. 경고만 기록
-B. 빌드 중단
-C. 자동 수정
-D. 무시하고 진행
+### 11. 사전에 정한 CI scan gate를 통과하지 못하면 어떻게 처리하는가?
+
+A. 무조건 무시
+B. Publish/sign 단계로 진행하지 않고 실패 원인을 확인
+C. 다른 이미지를 재빌드해 검사 없이 push
+D. exit code만0으로 바꿈
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 빌드 중단**
+**정답: B. Publish/sign 단계로 진행하지 않고 실패 원인을 확인**
 
-**설명:**
-CI/CD 파이프라인에서 Critical/High 취약점 발견 시 빌드를 중단해야 합니다:
-```bash
-trivy image --exit-code 1 --severity HIGH,CRITICAL myimage:tag
-```
-
-`--exit-code 1`은 취약점 발견 시 0이 아닌 종료 코드를 반환하여 파이프라인을 실패시킵니다.
+정책 위반과 scanner/DB/권한 오류를 구분하고 결과를 보존합니다. 검사 후 다시 빌드한 다른 artifact를 배포하지 않습니다. Severity 예외는 근거·소유자·만료일을 정합니다.
 
 </details>
 
-### 12. Alpine 베이스 이미지의 장점이 아닌 것은?
+<span id="_12-alpine-베이스-이미지의-장점이-아닌-것은"></span>
 
-A. 작은 크기
-B. 적은 취약점
-C. glibc 호환성
-D. 빠른 빌드
+### 12. Alpine에 대해 잘못된 가정은?
+
+A. musl libc 기반
+B. apk package manager 사용
+C. glibc 의존 애플리케이션과 항상 완전 호환
+D. 선택한 release의 지원기간 확인 필요
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C. glibc 호환성**
+**정답: C. glibc 의존 애플리케이션과 항상 완전 호환**
 
-**설명:**
-Alpine Linux의 특징:
-- 작은 크기 (~5MB)
-- 최소 패키지
-- musl libc 사용 (glibc 아님)
-
-Alpine은 glibc 대신 musl libc를 사용하므로, glibc에 의존하는 일부 애플리케이션은 호환성 문제가 발생할 수 있습니다.
+Alpine은 musl을 사용하므로 glibc 의존 binary와 호환성 차이가 있습니다. 이미지 크기만으로 취약점 수나 build 속도를 보장하지 않습니다.
 
 </details>

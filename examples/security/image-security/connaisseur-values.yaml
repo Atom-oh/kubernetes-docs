@@ -1,0 +1,31 @@
+application:
+  validators:
+  - name: deny
+    type: static
+    approve: false
+  - name: release
+    type: cosign
+    trustRoots:
+    - name: example-key-replace-before-use
+      key: '-----BEGIN PUBLIC KEY-----
+
+        MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEi60+mnKNT1IZ7b7fCDSel300thjk
+
+        AfQYKlbIaoihDfkbpHNlxW/ScBulltFrBAL1g+M2v/N/Uwk5c4jfNZjIyQ==
+
+        -----END PUBLIC KEY-----
+
+        '
+  policy:
+  - pattern: '*:*'
+    validator: deny
+  - pattern: ghcr.io/example-org/*
+    validator: release
+    with:
+      trustRoot: example-key-replace-before-use
+  features:
+    detectionMode: false
+    automaticChildApproval: false
+    automaticUnchangedApproval: false
+    namespacedValidation:
+      mode: validate

@@ -1,0 +1,1441 @@
+{
+  "status": "passed-scoped-audit",
+  "reviewedAt": "2026-09-13T02:02:16.114937+00:00",
+  "scope": {
+    "documents": 4,
+    "originalLines": 2384,
+    "originalCodeBlocks": 68,
+    "quizQuestions": 24,
+    "exampleFiles": 16,
+    "images": 0
+  },
+  "originalFiles": [
+    {
+      "path": "ko/security/07-image-security.md",
+      "lines": 897,
+      "sha256": "748f1f7e922089d475da5144ae56710ad5b87959026f9f5a8fc0a45a562906ad",
+      "blocks": 28
+    },
+    {
+      "path": "en/security/07-image-security.md",
+      "lines": 897,
+      "sha256": "53ea97921650ba05fcd81bf68b5bec6016f57e76a28c67c2b05d8967e17b244e",
+      "blocks": 28
+    },
+    {
+      "path": "ko/quizzes/security/07-image-security-quiz.md",
+      "lines": 290,
+      "sha256": "116a19f83bb70d5c6d0389e82f8b59df1f720741aec7e63bd5b98b841c655b5b",
+      "blocks": 6
+    },
+    {
+      "path": "en/quizzes/security/07-image-security-quiz.md",
+      "lines": 290,
+      "sha256": "a331281e6766f72f469d15d5710aae0ffba38c5833dffd44ef3ed73f00df37d2",
+      "blocks": 6
+    }
+  ],
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/security/07-image-security.md",
+        "sha256": "b2e1eb3d8187108ae8fe637e5ac6872d3a176c24cb6812a788f4f5d49e34b066",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "컨테이너-이미지-보안"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "이미지-스캐닝-개요"
+          },
+          {
+            "tag": "h2",
+            "id": "trivy"
+          },
+          {
+            "tag": "h3",
+            "id": "설치와-스캔-명령"
+          },
+          {
+            "tag": "h3",
+            "id": "설정-파일과-예외"
+          },
+          {
+            "tag": "h3",
+            "id": "trivy-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "amazon-ecr-이미지-스캐닝"
+          },
+          {
+            "tag": "h3",
+            "id": "inspector-알림과-권한"
+          },
+          {
+            "tag": "h2",
+            "id": "cosign-sigstore를-사용한-이미지-서명"
+          },
+          {
+            "tag": "h3",
+            "id": "서명-순서와-신뢰-기준"
+          },
+          {
+            "tag": "h2",
+            "id": "admission-control에서-이미지-검증"
+          },
+          {
+            "tag": "h3",
+            "id": "registry·digest-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "workflow-서명-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "connaisseur-대안"
+          },
+          {
+            "tag": "h2",
+            "id": "공급망-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "sbom과-attestation"
+          },
+          {
+            "tag": "h3",
+            "id": "slsa-provenance"
+          },
+          {
+            "tag": "h2",
+            "id": "기본-이미지-선택"
+          },
+          {
+            "tag": "h3",
+            "id": "최소-base-image-빌드-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "이미지-레지스트리-모범-사례"
+          },
+          {
+            "tag": "h2",
+            "id": "ci-cd-파이프라인-통합"
+          },
+          {
+            "tag": "h2",
+            "id": "수행한-검증과-한계"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "컨테이너-이미지-보안",
+          "목차",
+          "shift-left-보안",
+          "스캐닝-대상",
+          "이미지-스캐닝-개요",
+          "trivy-개요",
+          "trivy-설치",
+          "이미지-스캐닝",
+          "파일시스템-스캔",
+          "trivy-설정-파일",
+          "trivy",
+          "설치와-스캔-명령",
+          "설정-파일과-예외",
+          "trivy-operator-kubernetes-통합",
+          "trivy-operator",
+          "기본-스캐닝-vs-향상된-스캐닝",
+          "향상된-스캐닝-활성화",
+          "스캔-결과-조회",
+          "eventbridge를-통한-알림",
+          "amazon-ecr-이미지-스캐닝",
+          "inspector-알림과-권한",
+          "cosign-개요",
+          "cosign-설치",
+          "키-기반-서명",
+          "키리스-서명-oidc-기반",
+          "github-actions-통합",
+          "cosign-sigstore를-사용한-이미지-서명",
+          "서명-순서와-신뢰-기준",
+          "kyverno-imageverify",
+          "admission-control에서-이미지-검증",
+          "registry·digest-정책",
+          "workflow-서명-정책",
+          "connaisseur",
+          "connaisseur-대안",
+          "sbom-software-bill-of-materials-생성",
+          "sbom-기반-취약점-검사",
+          "slsa-supply-chain-levels-for-software-artifacts",
+          "공급망-보안",
+          "sbom과-attestation",
+          "slsa-provenance",
+          "이미지-유형-비교",
+          "distroless-이미지-사용",
+          "chainguard-이미지-사용",
+          "alpine-보안-강화",
+          "기본-이미지-선택",
+          "최소-base-image-빌드-예제",
+          "프라이빗-레지스트리-사용",
+          "이미지-풀-정책",
+          "불변-태그-정책-kyverno",
+          "이미지-레지스트리-모범-사례",
+          "완전한-이미지-보안-파이프라인",
+          "ci-cd-파이프라인-통합",
+          "수행한-검증과-한계",
+          "요약",
+          "권장-사항",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/security/07-image-security.md",
+        "sha256": "82d31d1d230c694f43fd9fc51d6be2c1b4b70f7e378564bc0c829f0203f2ef52",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "container-image-security"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "image-scanning-overview"
+          },
+          {
+            "tag": "h2",
+            "id": "trivy"
+          },
+          {
+            "tag": "h3",
+            "id": "installation-and-scanning"
+          },
+          {
+            "tag": "h3",
+            "id": "configuration-and-exceptions"
+          },
+          {
+            "tag": "h3",
+            "id": "trivy-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "amazon-ecr-image-scanning"
+          },
+          {
+            "tag": "h3",
+            "id": "inspector-alerts-and-permissions"
+          },
+          {
+            "tag": "h2",
+            "id": "image-signing-with-cosign-sigstore"
+          },
+          {
+            "tag": "h3",
+            "id": "signing-order-and-trust"
+          },
+          {
+            "tag": "h2",
+            "id": "image-verification-in-admission-control"
+          },
+          {
+            "tag": "h3",
+            "id": "registry-and-digest-policy"
+          },
+          {
+            "tag": "h3",
+            "id": "workflow-signature-policy"
+          },
+          {
+            "tag": "h3",
+            "id": "connaisseur-alternative"
+          },
+          {
+            "tag": "h2",
+            "id": "supply-chain-security"
+          },
+          {
+            "tag": "h3",
+            "id": "sbom-and-attestations"
+          },
+          {
+            "tag": "h3",
+            "id": "slsa-provenance"
+          },
+          {
+            "tag": "h2",
+            "id": "base-image-selection"
+          },
+          {
+            "tag": "h3",
+            "id": "minimal-base-image-build-examples"
+          },
+          {
+            "tag": "h2",
+            "id": "image-registry-best-practices"
+          },
+          {
+            "tag": "h2",
+            "id": "ci-cd-pipeline-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "checks-performed-and-limits"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "container-image-security",
+          "table-of-contents",
+          "shift-left-security",
+          "scan-targets",
+          "image-scanning-overview",
+          "trivy-installation",
+          "image-scanning",
+          "filesystem-scanning",
+          "trivy-configuration-file",
+          "trivy-operator-kubernetes-integration",
+          "trivy",
+          "installation-and-scanning",
+          "configuration-and-exceptions",
+          "trivy-overview",
+          "trivy-operator",
+          "basic-scanning-vs-enhanced-scanning",
+          "enabling-enhanced-scanning",
+          "retrieving-scan-results",
+          "notifications-via-eventbridge",
+          "amazon-ecr-image-scanning",
+          "inspector-alerts-and-permissions",
+          "cosign-overview",
+          "cosign-installation",
+          "key-based-signing",
+          "keyless-signing-oidc-based",
+          "github-actions-integration",
+          "image-signing-with-cosign-sigstore",
+          "signing-order-and-trust",
+          "kyverno-imageverify",
+          "image-verification-in-admission-control",
+          "registry-and-digest-policy",
+          "workflow-signature-policy",
+          "connaisseur",
+          "connaisseur-alternative",
+          "sbom-software-bill-of-materials-generation",
+          "sbom-based-vulnerability-scanning",
+          "slsa-supply-chain-levels-for-software-artifacts",
+          "supply-chain-security",
+          "sbom-and-attestations",
+          "slsa-provenance",
+          "image-type-comparison",
+          "using-distroless-images",
+          "using-chainguard-images",
+          "alpine-security-hardening",
+          "base-image-selection",
+          "minimal-base-image-build-examples",
+          "using-private-registries",
+          "image-pull-policies",
+          "immutable-tag-policy-kyverno",
+          "image-registry-best-practices",
+          "complete-image-security-pipeline",
+          "ci-cd-pipeline-integration",
+          "checks-performed-and-limits",
+          "summary",
+          "recommendations",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/security/07-image-security-quiz.md",
+        "sha256": "09c9bcf9a855a3e2ded0bcba77614e59d6101f3772cca58054bae6f423e2c412",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "컨테이너-이미지-보안-퀴즈"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-주어진-이미지-reference를-trivy로-검사하는-명령은"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-이미지-digest와-승인된-서명자의-연결을-검증하는-도구는"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-shift-left-보안은-무엇을-의미하는가"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-일반적인-distroless-runtime-이미지의-특징은"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-현재-ecr-basic과-enhanced-scanning의-차이는"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-sbom은-무엇을-제공하는가"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-기존-kyverno-clusterpolicy에서-이미지-서명-검사에-사용한-규칙은"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-이미지-tag-대신-digest를-고정하는-이유는"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-trivy의-정적-검사와-별도인-영역은"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-레지스트리-접근-통제로-부적절한-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_11-사전에-정한-ci-scan-gate를-통과하지-못하면-어떻게-처리하는가"
+          },
+          {
+            "tag": "h3",
+            "id": "_12-alpine에-대해-잘못된-가정은"
+          }
+        ],
+        "renderedIds": [
+          "퀴즈-문제",
+          "컨테이너-이미지-보안-퀴즈",
+          "_1-trivy로-컨테이너-이미지를-스캔하는-올바른-명령은",
+          "_1-주어진-이미지-reference를-trivy로-검사하는-명령은",
+          "_2-이미지-서명-및-검증에-사용되는-도구는",
+          "_2-이미지-digest와-승인된-서명자의-연결을-검증하는-도구는",
+          "_3-shift-left-보안-접근-방식의-의미는",
+          "_3-shift-left-보안은-무엇을-의미하는가",
+          "_4-distroless-이미지의-주요-특징은",
+          "_4-일반적인-distroless-runtime-이미지의-특징은",
+          "_5-amazon-ecr-이미지-스캐닝의-두-가지-유형은",
+          "_5-현재-ecr-basic과-enhanced-scanning의-차이는",
+          "_6-sbom-software-bill-of-materials-이란",
+          "_6-sbom은-무엇을-제공하는가",
+          "_7-kyverno에서-이미지-서명을-검증하는-정책-유형은",
+          "_7-기존-kyverno-clusterpolicy에서-이미지-서명-검사에-사용한-규칙은",
+          "_8-이미지-태그-대신-다이제스트를-사용해야-하는-이유는",
+          "_8-이미지-tag-대신-digest를-고정하는-이유는",
+          "_9-trivy가-스캔하지-않는-대상은",
+          "_9-trivy의-정적-검사와-별도인-영역은",
+          "_10-컨테이너-이미지-레지스트리-보안-모범-사례가-아닌-것은",
+          "_10-레지스트리-접근-통제로-부적절한-것은",
+          "_11-ci-cd-파이프라인에서-이미지-스캐닝-실패-시-권장-조치는",
+          "_11-사전에-정한-ci-scan-gate를-통과하지-못하면-어떻게-처리하는가",
+          "_12-alpine-베이스-이미지의-장점이-아닌-것은",
+          "_12-alpine에-대해-잘못된-가정은"
+        ]
+      },
+      {
+        "path": "en/quizzes/security/07-image-security-quiz.md",
+        "sha256": "6f7dd63e559db3878dbbfaa47da9159f0e006ca7cd459a16d9e07fab5e2352ff",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "container-image-security-quiz"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-which-command-scans-a-given-image-reference-with-trivy"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-which-tool-verifies-a-relationship-between-an-image-digest-and-an-approved-signer"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-what-does-shift-left-security-mean"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-what-characterizes-a-standard-distroless-runtime-image"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-how-do-current-ecr-basic-and-enhanced-scanning-differ"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-what-does-an-sbom-provide"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-which-rule-performs-image-signature-checks-in-legacy-kyverno-clusterpolicy"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-why-pin-an-image-digest-instead-of-a-tag"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-which-area-is-separate-from-trivy-s-static-checks"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-which-registry-access-practice-is-inappropriate"
+          },
+          {
+            "tag": "h3",
+            "id": "_11-what-should-happen-when-the-agreed-ci-scan-gate-does-not-pass"
+          },
+          {
+            "tag": "h3",
+            "id": "_12-which-assumption-about-alpine-is-incorrect"
+          }
+        ],
+        "renderedIds": [
+          "quiz-questions",
+          "container-image-security-quiz",
+          "_1-what-is-the-correct-command-to-scan-a-container-image-with-trivy",
+          "_1-which-command-scans-a-given-image-reference-with-trivy",
+          "_2-which-tool-is-used-for-image-signing-and-verification",
+          "_2-which-tool-verifies-a-relationship-between-an-image-digest-and-an-approved-signer",
+          "_3-what-does-the-shift-left-security-approach-mean",
+          "_3-what-does-shift-left-security-mean",
+          "_4-what-is-the-main-characteristic-of-distroless-images",
+          "_4-what-characterizes-a-standard-distroless-runtime-image",
+          "_5-what-are-the-two-types-of-amazon-ecr-image-scanning",
+          "_5-how-do-current-ecr-basic-and-enhanced-scanning-differ",
+          "_6-what-is-sbom-software-bill-of-materials",
+          "_6-what-does-an-sbom-provide",
+          "_7-what-policy-type-verifies-image-signatures-in-kyverno",
+          "_7-which-rule-performs-image-signature-checks-in-legacy-kyverno-clusterpolicy",
+          "_8-why-should-you-use-digests-instead-of-image-tags",
+          "_8-why-pin-an-image-digest-instead-of-a-tag",
+          "_9-what-does-trivy-not-scan",
+          "_9-which-area-is-separate-from-trivy-s-static-checks",
+          "_10-which-is-not-a-container-image-registry-security-best-practice",
+          "_10-which-registry-access-practice-is-inappropriate",
+          "_11-what-is-the-recommended-action-when-image-scanning-fails-in-ci-cd-pipeline",
+          "_11-what-should-happen-when-the-agreed-ci-scan-gate-does-not-pass",
+          "_12-what-is-not-an-advantage-of-alpine-base-images",
+          "_12-which-assumption-about-alpine-is-incorrect"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "status": "passed",
+    "anchors": [
+      {
+        "path": "ko/security/07-image-security.md",
+        "allOriginalIDsPreserved": true,
+        "originalCount": 44
+      },
+      {
+        "path": "en/security/07-image-security.md",
+        "allOriginalIDsPreserved": true,
+        "originalCount": 44
+      },
+      {
+        "path": "ko/quizzes/security/07-image-security-quiz.md",
+        "allOriginalIDsPreserved": true,
+        "originalCount": 14
+      },
+      {
+        "path": "en/quizzes/security/07-image-security-quiz.md",
+        "allOriginalIDsPreserved": true,
+        "originalCount": 14
+      }
+    ],
+    "restoredLegacyAnchors": 90,
+    "quizzes": [
+      {
+        "path": "ko/quizzes/security/07-image-security-quiz.md",
+        "questions": 12,
+        "answersMatch": true
+      },
+      {
+        "path": "en/quizzes/security/07-image-security-quiz.md",
+        "questions": 12,
+        "answersMatch": true
+      }
+    ],
+    "exactPublishedMatches": [
+      {
+        "document": "ko/security/07-image-security.md",
+        "example": "examples/security/image-security/trivy.yaml",
+        "sha256": "8830eaca00e52781c1194f84512643528787ec6e1fec8f93679d52ae17647b54"
+      },
+      {
+        "document": "ko/security/07-image-security.md",
+        "example": "examples/security/image-security/approved-images.yaml",
+        "sha256": "ea31530a1e75eaedfa30c1be8a74b03b9363901f62eaf7ee709b2dc375367403"
+      },
+      {
+        "document": "ko/security/07-image-security.md",
+        "example": "examples/security/image-security/verify-signatures.yaml",
+        "sha256": "6421c94d16a4e2b6b5dbd7c66d512a5e9f958a771d6698c17835f48c06cefa0b"
+      },
+      {
+        "document": "ko/security/07-image-security.md",
+        "example": "examples/security/image-security/secure-build.yaml",
+        "sha256": "25b2183743a153d93e086cfb93fca67c2b5519b0eb0f1611c89a7681ee15e773"
+      },
+      {
+        "document": "ko/security/07-image-security.md",
+        "example": "examples/security/image-security/base-images/Dockerfile.distroless",
+        "sha256": "dc2aba09f88a3bc04306939e345c2418e8453892f7643b8f7a053e1c9112cfc3"
+      },
+      {
+        "document": "ko/security/07-image-security.md",
+        "example": "examples/security/image-security/base-images/Dockerfile.chainguard",
+        "sha256": "31a047d0eb7d2a15c0c0af39eacf39603a0a62f9c95765124a08aac829f2dfa7"
+      },
+      {
+        "document": "ko/security/07-image-security.md",
+        "example": "examples/security/image-security/base-images/Dockerfile.alpine",
+        "sha256": "d8e82462ee2e994dff086960de774ae03881944dbdd1d8072dfe306c46773395"
+      },
+      {
+        "document": "en/security/07-image-security.md",
+        "example": "examples/security/image-security/trivy.yaml",
+        "sha256": "8830eaca00e52781c1194f84512643528787ec6e1fec8f93679d52ae17647b54"
+      },
+      {
+        "document": "en/security/07-image-security.md",
+        "example": "examples/security/image-security/approved-images.yaml",
+        "sha256": "ea31530a1e75eaedfa30c1be8a74b03b9363901f62eaf7ee709b2dc375367403"
+      },
+      {
+        "document": "en/security/07-image-security.md",
+        "example": "examples/security/image-security/verify-signatures.yaml",
+        "sha256": "6421c94d16a4e2b6b5dbd7c66d512a5e9f958a771d6698c17835f48c06cefa0b"
+      },
+      {
+        "document": "en/security/07-image-security.md",
+        "example": "examples/security/image-security/secure-build.yaml",
+        "sha256": "25b2183743a153d93e086cfb93fca67c2b5519b0eb0f1611c89a7681ee15e773"
+      },
+      {
+        "document": "en/security/07-image-security.md",
+        "example": "examples/security/image-security/base-images/Dockerfile.distroless",
+        "sha256": "dc2aba09f88a3bc04306939e345c2418e8453892f7643b8f7a053e1c9112cfc3"
+      },
+      {
+        "document": "en/security/07-image-security.md",
+        "example": "examples/security/image-security/base-images/Dockerfile.chainguard",
+        "sha256": "31a047d0eb7d2a15c0c0af39eacf39603a0a62f9c95765124a08aac829f2dfa7"
+      },
+      {
+        "document": "en/security/07-image-security.md",
+        "example": "examples/security/image-security/base-images/Dockerfile.alpine",
+        "sha256": "d8e82462ee2e994dff086960de774ae03881944dbdd1d8072dfe306c46773395"
+      }
+    ]
+  },
+  "native": {
+    "binary-validation.json": [
+      {
+        "repo": "aquasecurity/trivy",
+        "version": "v0.74.0",
+        "archive": ".vitepress/cache/content-review-image-security/downloads/trivy_0.74.0_Linux-ARM64.tar.gz",
+        "sha256": "b94ce1976bbf3c15b514b605ee88be7c6d94a29be2302847ff01cb794d47aad5",
+        "checksumMatches": true,
+        "binary": ".vitepress/cache/content-review-image-security/bin/trivy",
+        "binarySha256": "fed2c9ca7d27191ada34524b5eaf5216a845c6d6f3246143c3b475552ffe5358"
+      },
+      {
+        "repo": "sigstore/cosign",
+        "version": "v3.1.3",
+        "archive": ".vitepress/cache/content-review-image-security/downloads/cosign-linux-arm64",
+        "sha256": "c5d324e091826b0d7a78eb16fef316450b4eb9aaec045611c08ba06f5e73220a",
+        "checksumMatches": true,
+        "binary": ".vitepress/cache/content-review-image-security/bin/cosign",
+        "binarySha256": "c5d324e091826b0d7a78eb16fef316450b4eb9aaec045611c08ba06f5e73220a"
+      },
+      {
+        "repo": "kyverno/kyverno",
+        "version": "v1.19.1",
+        "archive": ".vitepress/cache/content-review-image-security/downloads/kyverno-cli_v1.19.1_linux_arm64.tar.gz",
+        "sha256": "d78fecd183e1e6749c653fdb744c88d065e6737ec6856c97c4efac84bec54554",
+        "checksumMatches": true,
+        "binary": ".vitepress/cache/content-review-image-security/bin/kyverno",
+        "binarySha256": "280d4c41a747179f3ccc10a0bcac902c165975434436fcda1731bc2f2f41d0c3"
+      }
+    ],
+    "trivy-secret-validation.json": {
+      "status": "passed",
+      "cases": [
+        {
+          "case": "bad",
+          "exitCode": 1,
+          "expected": 1,
+          "findings": 1,
+          "syntheticRuleMatched": true
+        },
+        {
+          "case": "good",
+          "exitCode": 0,
+          "expected": 0,
+          "findings": 0,
+          "syntheticRuleMatched": false
+        }
+      ],
+      "scope": "Syntheticcustomruleonly;noCVEdb/imagepull/cloudorrealcredentials;telemetrydisabled"
+    },
+    "trivy-misconfiguration-validation.json": {
+      "status": "passed",
+      "cases": [
+        {
+          "case": "bad",
+          "exitCode": 1,
+          "expected": 1,
+          "checkIDs": [
+            "DS-0002"
+          ]
+        },
+        {
+          "case": "good",
+          "exitCode": 0,
+          "expected": 0,
+          "checkIDs": []
+        }
+      ],
+      "scope": "SyntheticDockerfilesnativebuilt-inchecks;noimagebuild/pull/CVEdborrealapplicationexecution. Configcommandhasnooffline-scanflag;checkupdatesandtelemetrydisabledexplicitly."
+    },
+    "published-trivy-config-validation.json": {
+      "status": "passed",
+      "source": "examples/security/image-security/trivy.yaml",
+      "sha256": "8830eaca00e52781c1194f84512643528787ec6e1fec8f93679d52ae17647b54",
+      "cases": [
+        {
+          "case": "bad",
+          "exitCode": 1,
+          "expected": 1
+        },
+        {
+          "case": "good",
+          "exitCode": 0,
+          "expected": 0
+        }
+      ],
+      "scope": "Actualpublishedconfigloadedwithsecret-onlyoverrideandsyntheticrule;CVE/misconfigurationselectionnotclaimedexecutedbythesetwocases"
+    },
+    "cosign-local-validation.json": {
+      "status": "passed",
+      "cases": [
+        {
+          "fixture": "artifact.txt",
+          "exitCode": 0,
+          "expectedValid": true
+        },
+        {
+          "fixture": "tampered.txt",
+          "exitCode": 1,
+          "expectedValid": false
+        }
+      ],
+      "scope": "Localkeyblobintegrityonly;notcontainer/registry/OIDC/Fulcio/Rekorverification. Transparencyverificationexplicitlydisabledonlyforthissyntheticprivatefixture;notapublishedproductioncommand."
+    },
+    "kyverno-policy-validation.json": {
+      "status": "passed",
+      "cases": [
+        {
+          "name": "good",
+          "expectedPass": true,
+          "exitCode": 0,
+          "matchedExpected": true
+        },
+        {
+          "name": "tag",
+          "expectedPass": false,
+          "exitCode": 1,
+          "matchedExpected": true
+        },
+        {
+          "name": "other-registry",
+          "expectedPass": false,
+          "exitCode": 1,
+          "matchedExpected": true
+        },
+        {
+          "name": "short-digest",
+          "expectedPass": false,
+          "exitCode": 1,
+          "matchedExpected": true
+        },
+        {
+          "name": "init-tag",
+          "expectedPass": false,
+          "exitCode": 1,
+          "matchedExpected": true
+        },
+        {
+          "name": "ephemeral-tag",
+          "expectedPass": false,
+          "exitCode": 1,
+          "matchedExpected": true
+        }
+      ],
+      "scope": "NativeKyverno1.19.1offlineClusterPolicycompatibilityvalidation;deprecatedAPIwarningretained;nocluster/image/signature/networkverification"
+    },
+    "kyverno-cel-policy-validation.json": {
+      "status": "passed",
+      "apiVersion": "policies.kyverno.io/v1",
+      "cases": [
+        {
+          "name": "good",
+          "expectedPass": true,
+          "exitCode": 0,
+          "matchedExpected": true
+        },
+        {
+          "name": "tag",
+          "expectedPass": false,
+          "exitCode": 1,
+          "matchedExpected": true
+        },
+        {
+          "name": "other-registry",
+          "expectedPass": false,
+          "exitCode": 1,
+          "matchedExpected": true
+        },
+        {
+          "name": "short-digest",
+          "expectedPass": false,
+          "exitCode": 1,
+          "matchedExpected": true
+        },
+        {
+          "name": "init-tag",
+          "expectedPass": false,
+          "exitCode": 1,
+          "matchedExpected": true
+        },
+        {
+          "name": "ephemeral-tag",
+          "expectedPass": false,
+          "exitCode": 1,
+          "matchedExpected": true
+        }
+      ],
+      "scope": "NativeKyverno1.19.1offlineCELValidatingPolicy6objectcases;notliveadmission/subresourcematcherorregistry/signatureverification"
+    },
+    "kyverno-schema-validation.json": {
+      "status": "passed",
+      "resources": [
+        {
+          "file": ".vitepress/cache/content-review-image-security/fixtures/kyverno/validating-policy.yaml",
+          "sha256": "ea31530a1e75eaedfa30c1be8a74b03b9363901f62eaf7ee709b2dc375367403",
+          "schema": "policies.kyverno.io_validatingpolicies.yaml",
+          "version": "v1",
+          "unknownFields": 0
+        },
+        {
+          "file": ".vitepress/cache/content-review-image-security/fixtures/kyverno/image-validating-policy.yaml",
+          "sha256": "6421c94d16a4e2b6b5dbd7c66d512a5e9f958a771d6698c17835f48c06cefa0b",
+          "schema": "policies.kyverno.io_imagevalidatingpolicies.yaml",
+          "version": "v1",
+          "unknownFields": 0
+        }
+      ],
+      "scope": "Pinned1.19.1CRDOpenAPIschema/unknownfields;signaturefetch/admissionnotexecuted"
+    },
+    "cfn-validation.json": {
+      "status": "passed",
+      "validatedAt": "2026-09-13T01:37:21.678668+00:00",
+      "template": ".vitepress/cache/content-review-image-security/fixtures/cfn/inspector-alerts.yaml",
+      "sha256": "10f7aac26d9162e69b84500ec277b2768ad45c97fa83fd9e5f437a16996a92fc",
+      "findings": [],
+      "scope": "Localcfn-lintschema/staticreviewonly;existingcustomerKMSkeypolicy/IAMdelegationandSNSsubscriptionsareprerequisites;noAWSdeployment,deliveryorKMSrequestverified",
+      "source": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html",
+      "notes": [
+        "CurrentEventBridgedocumentationsupportsexecutionrolesforSNStargets.",
+        "DirectEventBridge-service-principaltoencryptedSNShasunsupportedKMSsourceconditionkeys;donotcopythoseconditionsfromevent-busencryptionexamples."
+      ]
+    },
+    "helm-render-validation.json": {
+      "status": "passed",
+      "charts": [
+        {
+          "chart": "trivy-operator",
+          "version": "0.36.0",
+          "resources": 21,
+          "kinds": [
+            "ClusterComplianceReport",
+            "ClusterRole",
+            "ClusterRoleBinding",
+            "ConfigMap",
+            "Deployment",
+            "Role",
+            "RoleBinding",
+            "Secret",
+            "Service",
+            "ServiceAccount"
+          ]
+        },
+        {
+          "chart": "connaisseur",
+          "version": "2.12.0",
+          "resources": 13,
+          "kinds": [
+            "ConfigMap",
+            "Deployment",
+            "MutatingWebhookConfiguration",
+            "Secret",
+            "Service",
+            "ServiceAccount"
+          ]
+        }
+      ],
+      "scope": "OfflinepinnedHelmrenderonly;notcontroller/admission/registryverification"
+    },
+    "ecr-model-validation.json": {
+      "status": "passed",
+      "queries": [
+        {
+          "mode": "basic",
+          "query": "imageScanFindings.findings[?severity==`CRITICAL`]",
+          "matches": 1
+        },
+        {
+          "mode": "enhanced",
+          "query": "imageScanFindings.enhancedFindings[?severity==`CRITICAL`]",
+          "matches": 1
+        }
+      ],
+      "registryConfigValid": true,
+      "scope": "LocalbotocoreECRmodelandJMESPathsyntheticfixtures;noservicecalls/CVEdatabase/actualscans"
+    },
+    "base-image-validation.json": {
+      "status": "passed",
+      "nativeApps": {
+        "goVersion": "1.27.1",
+        "goBuildAndRun": true,
+        "pythonRun": true,
+        "output": "reviewed image build example"
+      },
+      "dockerfiles": [
+        "Dockerfile.alpine",
+        "Dockerfile.chainguard",
+        "Dockerfile.distroless"
+      ],
+      "imageManifests": [
+        {
+          "image": "golang:1.27.1",
+          "digest": "sha256:f44f6e88636cfb311f9ebace870ded69d943f227bb3cb27d32ffd84ea18c43ea",
+          "mediaType": "application/vnd.oci.image.index.v1+json",
+          "platforms": [
+            {
+              "architecture": "amd64",
+              "os": "linux"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "arm",
+              "os": "linux",
+              "variant": "v7"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "arm64",
+              "os": "linux",
+              "variant": "v8"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "386",
+              "os": "linux"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "ppc64le",
+              "os": "linux"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "riscv64",
+              "os": "linux"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "s390x",
+              "os": "linux"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "amd64",
+              "os": "windows",
+              "os.version": "10.0.26100.33438"
+            },
+            {
+              "architecture": "amd64",
+              "os": "windows",
+              "os.version": "10.0.20348.5622"
+            }
+          ],
+          "scope": "PublicOCIindexonly;noimagepulled/executed"
+        },
+        {
+          "image": "alpine:3.24.1",
+          "digest": "sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b",
+          "mediaType": "application/vnd.oci.image.index.v1+json",
+          "platforms": [
+            {
+              "architecture": "amd64",
+              "os": "linux"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "arm",
+              "os": "linux",
+              "variant": "v6"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "arm",
+              "os": "linux",
+              "variant": "v7"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "arm64",
+              "os": "linux",
+              "variant": "v8"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "386",
+              "os": "linux"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "ppc64le",
+              "os": "linux"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "riscv64",
+              "os": "linux"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            },
+            {
+              "architecture": "s390x",
+              "os": "linux"
+            },
+            {
+              "architecture": "unknown",
+              "os": "unknown"
+            }
+          ],
+          "scope": "PublicOCIindexonly;noimagepulled/executed"
+        },
+        {
+          "image": "gcr.io/distroless/static-debian13:nonroot",
+          "digest": "sha256:1c2c046bc09ed40fad370b599a0b1ae7987f55b01e247cf27a7c27cd97e5bbc7",
+          "mediaType": "application/vnd.oci.image.index.v1+json",
+          "platforms": [
+            {
+              "os": "linux",
+              "architecture": "amd64"
+            },
+            {
+              "os": "linux",
+              "architecture": "arm64",
+              "variant": "v8"
+            },
+            {
+              "os": "linux",
+              "architecture": "arm",
+              "variant": "v7"
+            },
+            {
+              "os": "linux",
+              "architecture": "s390x"
+            },
+            {
+              "os": "linux",
+              "architecture": "ppc64le"
+            },
+            {
+              "os": "linux",
+              "architecture": "riscv64"
+            }
+          ],
+          "scope": "PublicOCIindexonly;noimagepulled/executed"
+        },
+        {
+          "image": "cgr.dev/chainguard/python:latest",
+          "digest": "sha256:b5decb00aa1cb65ab71bb3f6632a44bb8e6fd8d661de1f0342fd513a06837b9a",
+          "mediaType": "application/vnd.oci.image.index.v1+json",
+          "platforms": [
+            {
+              "architecture": "amd64",
+              "os": "linux"
+            },
+            {
+              "architecture": "arm64",
+              "os": "linux"
+            }
+          ],
+          "scope": "PublicOCIindexonly;noimagepulled/executed"
+        },
+        {
+          "image": "cgr.dev/chainguard/python:latest-dev",
+          "digest": "sha256:b0bc807f4334fea6adaac0f4dfbde255b9938ca957facb26eaed8bb448fce473",
+          "mediaType": "application/vnd.oci.image.index.v1+json",
+          "platforms": [
+            {
+              "architecture": "amd64",
+              "os": "linux"
+            },
+            {
+              "architecture": "arm64",
+              "os": "linux"
+            }
+          ],
+          "scope": "PublicOCIindexonly;noimagepulled/executed"
+        }
+      ],
+      "scope": "Nativehostprograms+staticDockerfilemisconfiguration+publicOCIindexmetadataonly;noDockerbuild/containerexecution/CVEscan"
+    }
+  },
+  "actions": [
+    {
+      "repo": "actions/checkout",
+      "tag": "v7.0.1",
+      "publishedAt": "2026-07-20T15:10:05Z",
+      "url": "https://github.com/actions/checkout/releases/tag/v7.0.1",
+      "commit": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "type": "commit"
+    },
+    {
+      "repo": "docker/setup-buildx-action",
+      "tag": "v4.3.0",
+      "publishedAt": "2026-08-19T09:41:47Z",
+      "url": "https://github.com/docker/setup-buildx-action/releases/tag/v4.3.0",
+      "commit": "37fe631027851001ddb9b187196cc803df7f5f0e",
+      "type": "commit"
+    },
+    {
+      "repo": "docker/build-push-action",
+      "tag": "v7.3.0",
+      "publishedAt": "2026-07-01T14:24:45Z",
+      "url": "https://github.com/docker/build-push-action/releases/tag/v7.3.0",
+      "commit": "53b7df96c91f9c12dcc8a07bcb9ccacbed38856a",
+      "type": "commit"
+    },
+    {
+      "repo": "docker/login-action",
+      "tag": "v4.6.0",
+      "publishedAt": "2026-07-29T12:12:00Z",
+      "url": "https://github.com/docker/login-action/releases/tag/v4.6.0",
+      "commit": "dbcb813823bdd20940b903addbd779551569679f",
+      "type": "commit"
+    },
+    {
+      "repo": "aquasecurity/trivy-action",
+      "tag": "v0.36.0",
+      "publishedAt": "2026-04-22T09:39:33Z",
+      "url": "https://github.com/aquasecurity/trivy-action/releases/tag/v0.36.0",
+      "commit": "ed142fd0673e97e23eac54620cfb913e5ce36c25",
+      "type": "commit"
+    },
+    {
+      "repo": "sigstore/cosign-installer",
+      "tag": "v4.1.2",
+      "publishedAt": "2026-05-07T01:27:27Z",
+      "url": "https://github.com/sigstore/cosign-installer/releases/tag/v4.1.2",
+      "commit": "6f9f17788090df1f26f669e9d70d6ae9567deba6",
+      "type": "commit"
+    },
+    {
+      "repo": "anchore/sbom-action",
+      "tag": "v0.24.2",
+      "publishedAt": "2026-08-28T19:45:05Z",
+      "url": "https://github.com/anchore/sbom-action/releases/tag/v0.24.2",
+      "commit": "3ad7283483fc7af8ff2b4ea19663c2d5ca935e26",
+      "type": "commit"
+    },
+    {
+      "repo": "github/codeql-action",
+      "tag": "codeql-bundle-v2.27.0",
+      "publishedAt": "2026-09-09T11:31:59Z",
+      "url": "https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.27.0",
+      "commit": "977e6ceaea7361825998245d787fa3b4d6b9e5df",
+      "type": "commit"
+    },
+    {
+      "repo": "actions/attest-build-provenance",
+      "tag": "v4.2.2",
+      "publishedAt": "2026-08-06T19:59:04Z",
+      "url": "https://github.com/actions/attest-build-provenance/releases/tag/v4.2.2",
+      "commit": "4d101475d8b20a2381f78447822ac1eab6504dd8",
+      "type": "commit"
+    },
+    {
+      "repo": "actions/attest",
+      "tag": "v4.2.2",
+      "commit": "1e69f48acb82d1966a394da916b4c1698aa569d6",
+      "publishedAt": "2026-08-04T20:36:29Z",
+      "url": "https://github.com/actions/attest/releases/tag/v4.2.2"
+    }
+  ],
+  "actionlint": "1.7.12exactpublishedworkflowpassed",
+  "cfnLint": "Exactpublishedtemplate0findings",
+  "primaryLinks": [
+    {
+      "url": "https://aquasecurity.github.io/trivy/",
+      "status": 200,
+      "finalUrl": "http://trivy.dev/",
+      "sampleSha256": "2ed92970bf28c26d7a5eeed912e175794dd643815b912b57d947c349d5554c9c",
+      "sampleBytes": 25656
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html",
+      "sampleSha256": "66d898efba2a10ffffc4ac2c0b5777b74243c8168a577c1caec97c94cbf94c5c",
+      "sampleBytes": 14580
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html",
+      "sampleSha256": "b7725438809c3acfb03221bd4ad82ce1a5157fd9b3ee56ab39faa0faaa6b2453",
+      "sampleBytes": 34853
+    },
+    {
+      "url": "https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html",
+      "sampleSha256": "70157bedd43a196f7db6a0b3fc1969effee22877976e32c76424e1929127a7b8",
+      "sampleBytes": 67988
+    },
+    {
+      "url": "https://docs.aws.amazon.com/sns/latest/dg/sns-key-management.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/sns/latest/dg/sns-key-management.html",
+      "sampleSha256": "5b278ac5ec9222385052188f4fcf32b7bb91b90dcc1860b11e14290789bd3f53",
+      "sampleBytes": 32084
+    },
+    {
+      "url": "https://docs.sigstore.dev/cosign/verifying/verify/",
+      "status": 200,
+      "finalUrl": "https://docs.sigstore.dev/cosign/verifying/verify/",
+      "sampleSha256": "b3c8875e67487dfb045365ab41dda6cec81ce88a02fbd14e4a6409fcdd50dc8d",
+      "sampleBytes": 73554
+    },
+    {
+      "url": "https://github.com/GoogleContainerTools/distroless",
+      "status": 200,
+      "finalUrl": "https://github.com/GoogleContainerTools/distroless",
+      "sampleSha256": "4e52c08de8316c1f0d61eddb5af7b71bddc23bca293fac488c4f02c0e76f3c83",
+      "sampleBytes": 200000
+    },
+    {
+      "url": "https://github.com/actions/attest/tree/v4.2.2",
+      "status": 200,
+      "finalUrl": "https://github.com/actions/attest/tree/v4.2.2",
+      "sampleSha256": "63030a0f5b4f7c0fa9c304d5afd6fce5f6983be6cab6c1acee083be5ab84b8b1",
+      "sampleBytes": 200000
+    },
+    {
+      "url": "https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm",
+      "status": 200,
+      "finalUrl": "https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm",
+      "sampleSha256": "6374154304998a1773e6e6a817ac51596d64090059bbaebb8f7ad625b5bfebd5",
+      "sampleBytes": 200000
+    },
+    {
+      "url": "https://github.com/aquasecurity/trivy/releases/tag/v0.74.0",
+      "status": 200,
+      "finalUrl": "https://github.com/aquasecurity/trivy/releases/tag/v0.74.0",
+      "sampleSha256": "79795ab80beafb7c23b215847225fb430b9e3b3d2b5f7d2877e2c98f1ee99e62",
+      "sampleBytes": 200000
+    },
+    {
+      "url": "https://github.com/sigstore/cosign/releases/tag/v3.1.3",
+      "status": 200,
+      "finalUrl": "https://github.com/sigstore/cosign/releases/tag/v3.1.3",
+      "sampleSha256": "a358f5fb2e8b0049efd202c55ad0d67a16fadc7ea500dbd8c3451c0c76930e2c",
+      "sampleBytes": 200000
+    },
+    {
+      "url": "https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md",
+      "status": 200,
+      "finalUrl": "https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md",
+      "sampleSha256": "e7bb35dd9e25267cdebbf65602a01e48327db462009499f35787b38284ee895d",
+      "sampleBytes": 200000
+    },
+    {
+      "url": "https://images.chainguard.dev/directory/image/python/overview",
+      "status": 200,
+      "finalUrl": "https://images.chainguard.dev/directory/image/python/overview",
+      "sampleSha256": "a57e3e2d56fa876a1c9ed7a9adb2ff7309ef398cb140a8e3841ca9dd4fcf7a4a",
+      "sampleBytes": 200000
+    },
+    {
+      "url": "https://kyverno.io/docs/guides/migration-to-cel/",
+      "status": 200,
+      "finalUrl": "https://kyverno.io/docs/guides/migration-to-cel/",
+      "sampleSha256": "633437cb6b8d50f934ca26bbeb46575a71182ca989bf98cc2dd6353a25091753",
+      "sampleBytes": 128334
+    },
+    {
+      "url": "https://kyverno.io/docs/policy-types/image-validating-policy/",
+      "status": 200,
+      "finalUrl": "https://kyverno.io/docs/policy-types/image-validating-policy/",
+      "sampleSha256": "1eb26e71f4f4c289caff161337660e2bb0557f7d0c7fd2038931674836f66b98",
+      "sampleBytes": 200000
+    },
+    {
+      "url": "https://slsa.dev/spec/v1.2/build-requirements",
+      "status": 200,
+      "finalUrl": "https://slsa.dev/spec/v1.2/build-requirements",
+      "sampleSha256": "fb91571cef368dc080c7f0b12902b0fb62d7494d3a9b3705e28db1b61494fcf5",
+      "sampleBytes": 32934
+    }
+  ],
+  "exampleHashes": {
+    "examples/security/image-security/.trivyignore": "dba37c67dec19de81f39b4fea8a7cdf45b12a2b95a87a85e78a265ccf3677f3b",
+    "examples/security/image-security/approved-images.yaml": "ea31530a1e75eaedfa30c1be8a74b03b9363901f62eaf7ee709b2dc375367403",
+    "examples/security/image-security/base-images/Dockerfile.alpine": "d8e82462ee2e994dff086960de774ae03881944dbdd1d8072dfe306c46773395",
+    "examples/security/image-security/base-images/Dockerfile.chainguard": "31a047d0eb7d2a15c0c0af39eacf39603a0a62f9c95765124a08aac829f2dfa7",
+    "examples/security/image-security/base-images/Dockerfile.distroless": "dc2aba09f88a3bc04306939e345c2418e8453892f7643b8f7a053e1c9112cfc3",
+    "examples/security/image-security/base-images/README.md": "1b7d3f9be8a58d3ffca2b9bec64643fb27d92f2d893e14fc29e7a6c84651ee08",
+    "examples/security/image-security/base-images/app.py": "29dfc0e35825d4b49551a4ddb64817847f3ca47ca1208362dea6795e929b006b",
+    "examples/security/image-security/base-images/go.mod": "a8c37cb6f93457dc5e42998f1fcdb0f8840ee5a1a3cd9eda86c22479d9f12328",
+    "examples/security/image-security/base-images/main.go": "22c2916cfd25a507233a60fbe093101d37487238a86ff0e56790c71ff25e27c4",
+    "examples/security/image-security/base-images/requirements.txt": "b3eb6bad1b45f559438df752b1c7d8da1ff5e81d7805d5a14a931c779adb151d",
+    "examples/security/image-security/connaisseur-values.yaml": "c131e617f50c316039ae2e66477ff622ad1926e99edcef79c35eae03d0e95415",
+    "examples/security/image-security/inspector-alerts.yaml": "10f7aac26d9162e69b84500ec277b2768ad45c97fa83fd9e5f437a16996a92fc",
+    "examples/security/image-security/secure-build.yaml": "25b2183743a153d93e086cfb93fca67c2b5519b0eb0f1611c89a7681ee15e773",
+    "examples/security/image-security/trivy-operator-values.yaml": "3f88d97a5e5184e451217ce767fea4805f216cc2be419a0c3f8d6fdb6e92da0b",
+    "examples/security/image-security/trivy.yaml": "8830eaca00e52781c1194f84512643528787ec6e1fec8f93679d52ae17647b54",
+    "examples/security/image-security/verify-signatures.yaml": "6421c94d16a4e2b6b5dbd7c66d512a5e9f958a771d6698c17835f48c06cefa0b"
+  },
+  "contentPreservation": [
+    {
+      "topic": "ShiftLeftandscantargets;workfloworder",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "Trivyinstall/images/fs/config/ignore/operatorreports",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "ECRbasic/enhanced/config/findings/notifications",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "Cosigninstall/key/keyless/GitHubidentity/digest",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "Kyvernolegacy-to-CEL/registry/signature/init-ephemeralcoverage;Connaisseuralternative",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "SBOMgeneration/scanning/attestation;SLSAprovenance",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "Distroless/Chainguard/Alpine/Scratchcomparisonand3completeDockerfilepatterns",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "Registryidentity/imagepullpolicy/immutablepinning",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "CompleteCIbuild-scan-push-sign-attestwithsameartifact",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "All12quiztopicsperlocale",
+      "status": "INCLUDED"
+    }
+  ],
+  "replacements": [
+    "TwoASCIIdiagramsreplacedbyexplicitorderedworkflows;signingfollowspush/digestdiscovery.",
+    "FabricatedCVE/reportandtruncatedkeysremoved;reportsareoperatoroutputs;ConnaisseurcontainsvalidsyntheticPUBLICkeylabelledforreplacement.",
+    "OldpartialGo/PythonDockerfilefragmentsreplacedby16completeexamplefilesincludingminimalprograms.",
+    "SLSAv1.9generatorfragmentreplacedwithcurrentactions/attestworkflow;noautomaticLevel3claim."
+  ],
+  "limits": [
+    "NoDockerbuild,containerexecution,remoteimagepull,CVEdatabasescan,registryupload,OIDC/Fulcio/Rekorverification,liveKubernetesadmissionorAWSresourcecreationwasperformed.",
+    "Go/Pythonminimalprogramsranonthehost;OCIindexesandplatformmetadatawerereadonly,notimagecontents.",
+    "Cosignblobfixtureusedasyntheticlocalkeyandnoprivatetransparencyproof;itsignore-tlogflagisnotapublishedproductionrecipe.",
+    "ImageValidatingPolicycheckedwithpinnedCRDschema,notactualregistry-signatureverification;CELregistry/digestpolicyhad6nativecases.",
+    "CloudFormationrequiresanexistingcustomsymmetricKMSkeywithIAMdelegation,appropriateSNSsubscriptionanddeploymenttest. cfn-guard/cloudchange-setvalidationnotexecuted.",
+    "CIworkflowpassedactionlintandpinnedactioninputchecks;noGitHubworkflowexecutionwastriggeredforitsapplicationbuild.",
+    "LegacyClusterPolicynativecasesarecompatibilityevidence;publishednewexamplesusepolicies.kyverno.io/v1.",
+    "Baseimagepinsmustbeupdatedandrescanned;AlpinepackagefetchandfuturePythondependenciesneedreproducibilitycontrols."
+  ]
+}
