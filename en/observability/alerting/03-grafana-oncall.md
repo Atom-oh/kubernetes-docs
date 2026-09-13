@@ -14,16 +14,16 @@
 - [ChatOps Integration](#chatops-integration)
 - [Grafana IRM Integration](#grafana-irm-integration)
 - [Mobile App](#mobile-app)
-- [PagerDuty/OpsGenie Comparison](#pagerdutyopsgenie-comparison)
+- [PagerDuty/OpsGenie Comparison](#pagerduty-opsgenie-comparison)
 - [Best Practices](#best-practices)
 
 ---
 
-## Grafana OnCall Overview
+## Grafana OnCall Overview {#grafana-oncall-overview}
 
 **Grafana OnCall OSS was archived on 2026-03-24.** Its repository moved to `grafana-cold-storage/oncall` and is read-only. This chapter supports review/migration of existing installations; it is not a recommendation for a new production OSS deployment. Check maintained Grafana Cloud IRM features, APIs and plans separately.
 
-The reviewed archived source is `af0fbd40558c9a63bcf438589894c440fc434a54`. The latest release is labelled v1.16.11, while that source's Helm chart/appVersion is1.15.6; these are not interchangeable version identifiers. Examples were checked against this source and official OnCall API documentation. No actual OnCall account creation, API writes or notifications were performed.
+The reviewed archived source is `af0fbd40558c9a63bcf438589894c440fc434a54`. The latest release is labelled v1.16.11, while that source's Helm chart/appVersion is 1.15.6; these are not interchangeable version identifiers. Examples were checked against this source and official OnCall API documentation. No actual OnCall account creation, API writes or notifications were performed.
 
 ### Key Features
 
@@ -40,13 +40,13 @@ The reviewed archived source is `af0fbd40558c9a63bcf438589894c440fc434a54`. The 
 |---|---|
 | OnCall OSS | Archived existing installation; dependency, recovery and migration ownership |
 | Grafana Cloud IRM / PagerDuty | Verify maintenance, required channels/schedules/APIs, regions and contract terms |
-| Opsgenie | End of sale2025-06-04; service/support end scheduled2027-04-05. Existing users need a migration plan |
+| Opsgenie | End of sale 2025-06-04; service/support end scheduled 2027-04-05. Existing users need a migration plan |
 
 Do not select a product using fixed integration counts, old prices or subjective basic/advanced rankings.
 
 ---
 
-## Architecture
+## Architecture {#architecture}
 
 ### Grafana OnCall Components
 
@@ -66,7 +66,7 @@ These are logical responsibilities, not necessarily separate Deployments. Inspec
 
 ---
 
-## Installation
+## Installation {#installation}
 
 ### Installation via Helm (EKS)
 
@@ -102,7 +102,7 @@ Do not pass actual values through --from-literal arguments or plaintext Helm val
 
 ---
 
-## Integration Setup
+## Integration Setup {#integration-setup}
 
 ### Alertmanager Integration
 
@@ -128,7 +128,7 @@ receivers:
         send_resolved: true
 ```
 
-amtool0.34 validated syntax and four critical/warning/info/fallback routing cases. send_resolved forwards source resolution messages; it does not make manual OnCall resolution change the source rule automatically.
+amtool 0.34 validated syntax and four critical/warning/info/fallback routing cases. send_resolved forwards source resolution messages; it does not make manual OnCall resolution change the source rule automatically.
 
 ### Grafana Alerting Integration
 
@@ -148,7 +148,7 @@ The [read-only inventory tool](https://github.com/Atom-oh/kubernetes-docs/tree/m
 
 ---
 
-## On-Call Schedule Configuration
+## On-Call Schedule Configuration {#on-call-schedule-configuration}
 
 ### Schedule Concept
 
@@ -214,11 +214,11 @@ In this source, an override is a separate `/api/v1/on_call_shifts/` type, not th
 
 ---
 
-## Escalation Chains
+## Escalation Chains {#escalation-chains}
 
 ### Escalation Chain Structure
 
-Acknowledge, Resolve and Silence are different states. Acknowledgment does not fix the underlying problem or deactivate the source rule. Verify wait, stop and re-page conditions using the actual policy and integration state. The diagram's15-minute windows are illustrative policy, not a product guarantee.
+Acknowledge, Resolve and Silence are different states. Acknowledgment does not fix the underlying problem or deactivate the source rule. Verify wait, stop and re-page conditions using the actual policy and integration state. The diagram's 15-minute windows are illustrative policy, not a product guarantee.
 
 ![Illustrative wait and notification steps lead to acknowledgment; acknowledgment is not source resolution.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png)
 
@@ -226,7 +226,7 @@ Acknowledge, Resolve and Silence are different states. Acknowledgment does not f
 
 ### Creating Escalation Chain
 
-Verify existing chain, schedule and user IDs and permissions; review create/update requests separately. This is **one wait step** for /api/v1/escalation_policies/, not a complete chain-creation request. The inspected source accepts wait durations from one minute to24hours, expressed as seconds.
+Verify existing chain, schedule and user IDs and permissions; review create/update requests separately. This is **one wait step** for /api/v1/escalation_policies/, not a complete chain-creation request. The inspected source accepts wait durations from one minute to 24 hours, expressed as seconds.
 
 ```json
 {
@@ -252,7 +252,7 @@ Agree on severity-specific purpose, response windows, backups, work hours and re
 
 ---
 
-## Alert Grouping and Routing
+## Alert Grouping and Routing {#alert-grouping-and-routing}
 
 ### Route Settings
 
@@ -290,7 +290,7 @@ Choose template variables from the actual integration payload. payload.labels is
 
 ---
 
-## ChatOps Integration
+## ChatOps Integration {#chatops-integration}
 
 ### Slack Integration
 
@@ -322,7 +322,7 @@ The archived chart uses nested oncall.telegram token/existingSecret/tokenKey set
 
 ---
 
-## Grafana IRM Integration
+## Grafana IRM Integration {#grafana-irm-integration}
 
 ### Incident Response Management
 
@@ -338,7 +338,7 @@ The inspected source contains a real declare_incident step, but validates organi
 
 ---
 
-## Mobile App
+## Mobile App {#mobile-app}
 
 ### Mobile App Features
 
@@ -362,7 +362,7 @@ Important/default selects separate personal notification-rule sets. Their order,
 
 <span id="pagerdutyopsgenie-comparison"></span>
 
-## PagerDuty/OpsGenie Comparison
+## PagerDuty/OpsGenie Comparison {#pagerduty-opsgenie-comparison}
 
 ### Feature Comparison
 
@@ -392,11 +392,11 @@ A fixed one-to-two-week overlap is not a guarantee, and API inventory is not a c
 
 ---
 
-## Best Practices
+## Best Practices {#best-practices}
 
 ### On-Call Schedule Design
 
-Agree schedules using actual time zones, holidays, handoffs, backups and staffing. Weekly shifts,09:00 handoffs or a minimum of three/four people are not universal answers. Transfer ongoing incidents, expiring silences and coverage gaps.
+Agree schedules using actual time zones, holidays, handoffs, backups and staffing. Weekly shifts, 09:00 handoffs or a minimum of three/four people are not universal answers. Transfer ongoing incidents, expiring silences and coverage gaps.
 
 
 ### Escalation Design

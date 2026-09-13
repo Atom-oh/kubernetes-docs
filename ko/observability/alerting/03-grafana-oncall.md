@@ -4,22 +4,24 @@
 
 ## 목차
 
-- [Grafana OnCall 개요](#grafana-oncall-개요)
-- [아키텍처](#아키텍처)
-- [설치](#설치)
-- [통합 설정](#통합-설정)
-- [온콜 스케줄 구성](#온콜-스케줄-구성)
-- [에스컬레이션 체인](#에스컬레이션-체인)
-- [알림 그룹화 및 라우팅](#알림-그룹화-및-라우팅)
-- [ChatOps 통합](#chatops-통합)
-- [Grafana IRM 연동](#grafana-irm-연동)
-- [모바일 앱](#모바일-앱)
-- [PagerDuty/OpsGenie 비교](#pagerdutyopsgenie-비교)
-- [모범 사례](#모범-사례)
+- [Grafana OnCall 개요](#grafana-oncall-overview)
+- [아키텍처](#architecture)
+- [설치](#installation)
+- [통합 설정](#integration-setup)
+- [온콜 스케줄 구성](#on-call-schedule-configuration)
+- [에스컬레이션 체인](#escalation-chains)
+- [알림 그룹화 및 라우팅](#alert-grouping-and-routing)
+- [ChatOps 통합](#chatops-integration)
+- [Grafana IRM 연동](#grafana-irm-integration)
+- [모바일 앱](#mobile-app)
+- [PagerDuty/OpsGenie 비교](#pagerduty-opsgenie-comparison)
+- [모범 사례](#best-practices)
 
 ---
 
-## Grafana OnCall 개요
+<span id="grafana-oncall-개요"></span>
+
+## Grafana OnCall 개요 {#grafana-oncall-overview}
 
 **Grafana OnCall OSS는 2026-03-24에 보관 처리되었습니다.** 저장소는 `grafana-cold-storage/oncall`로 이동했으며 읽기 전용입니다. 이 장은 기존 설치의 구조·API·이전 검토용이고 새로운 프로덕션 OSS 도입을 권장하는 설치 가이드가 아닙니다. 유지보수되는 Grafana Cloud IRM의 기능·API·요금제는 별도로 확인합니다.
 
@@ -46,7 +48,9 @@
 
 ---
 
-## 아키텍처
+<span id="아키텍처"></span>
+
+## 아키텍처 {#architecture}
 
 ### Grafana OnCall 구성 요소
 
@@ -66,7 +70,9 @@
 
 ---
 
-## 설치
+<span id="설치"></span>
+
+## 설치 {#installation}
 
 ### Helm을 통한 설치 (EKS)
 
@@ -102,7 +108,9 @@ DB/Redis TLS 검증, 역할별 secret 전달, 네트워크 접근, 백업·복�
 
 ---
 
-## 통합 설정
+<span id="통합-설정"></span>
+
+## 통합 설정 {#integration-setup}
 
 ### Alertmanager 통합
 
@@ -148,7 +156,9 @@ Public API는 문서화된 **raw Authorization token**을 사용하며 Bearer를
 
 ---
 
-## 온콜 스케줄 구성
+<span id="온콜-스케줄-구성"></span>
+
+## 온콜 스케줄 구성 {#on-call-schedule-configuration}
 
 ### 스케줄 개념
 
@@ -214,7 +224,9 @@ web schedule의 `shifts`는 중첩 shift 오브젝트가 아니라 **이미 만�
 
 ---
 
-## 에스컬레이션 체인
+<span id="에스컬레이션-체인"></span>
+
+## 에스컬레이션 체인 {#escalation-chains}
 
 ### 에스컬레이션 체인 구조
 
@@ -252,7 +264,9 @@ Critical/Warning별 목적·응답 시간·백업·근무 시간·재호출 조�
 
 ---
 
-## 알림 그룹화 및 라우팅
+<span id="알림-그룹화-및-라우팅"></span>
+
+## 알림 그룹화 및 라우팅 {#alert-grouping-and-routing}
 
 ### 라우트 설정
 
@@ -290,7 +304,9 @@ Integration별 실제 payload, route 순서, 일치하지 않을 때의 default 
 
 ---
 
-## ChatOps 통합
+<span id="chatops-통합"></span>
+
+## ChatOps 통합 {#chatops-integration}
 
 ### Slack 통합
 
@@ -322,7 +338,9 @@ archived chart는 `oncall.telegram` 아래의 token/existingSecret/tokenKey와 �
 
 ---
 
-## Grafana IRM 연동
+<span id="grafana-irm-연동"></span>
+
+## Grafana IRM 연동 {#grafana-irm-integration}
 
 ### Incident Response Management
 
@@ -338,7 +356,9 @@ Grafana Cloud IRM의 유지보수되는 알림·온콜·인시던트 기능과 �
 
 ---
 
-## 모바일 앱
+<span id="모바일-앱"></span>
+
+## 모바일 앱 {#mobile-app}
 
 ### 모바일 앱 기능
 
@@ -362,7 +382,9 @@ Important/default는 사용자의 별도 알림 규칙 세트를 선택합니다
 
 <span id="pagerdutyopsgenie-비교"></span>
 
-## PagerDuty/OpsGenie 비교
+<span id="pagerduty-opsgenie-비교"></span>
+
+## PagerDuty/OpsGenie 비교 {#pagerduty-opsgenie-comparison}
 
 ### 기능 비교
 
@@ -392,7 +414,9 @@ Important/default는 사용자의 별도 알림 규칙 세트를 선택합니다
 
 ---
 
-## 모범 사례
+<span id="모범-사례"></span>
+
+## 모범 사례 {#best-practices}
 
 ### 온콜 스케줄 설계
 

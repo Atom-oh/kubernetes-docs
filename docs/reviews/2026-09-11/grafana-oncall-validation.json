@@ -397,7 +397,7 @@
         "path": "en/observability/alerting/03-grafana-oncall.md",
         "originalLines": 1011,
         "originalHash": "471f6fd366dd0432093460b892b6ae9275c777c30935319e2980066585e3453b",
-        "sha256": "b22cddf32920edfb7fa96206c59eda9183cdd72ba91f5dfdab422a425a192cda",
+        "sha256": "c96e7a8294dfe5a205d50b18dcc69eefbdb0cc05780590c977b36c88cd89162a",
         "originalIds": 56,
         "aliases": [],
         "missingOld": [],
@@ -462,7 +462,7 @@
         "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
         "originalLines": 247,
         "originalHash": "260271b2728b29b242f79e2fd452707a218c497cde9f86cb2e4f16a18574c62d",
-        "sha256": "315f5dcc249712de191f16f02e05c3bbc6b79567d1a8b347e2309ce50dda7cf0",
+        "sha256": "b76cd946d8d87aacc242ffd5ac9e82284fa04058ae4372090725e99cf0d03307",
         "originalIds": 2,
         "aliases": [],
         "missingOld": [],
@@ -506,7 +506,7 @@
         "path": "ko/observability/alerting/03-grafana-oncall.md",
         "originalLines": 1011,
         "originalHash": "9a8bf7072009b9c14eddabc8e92ebb396c439fec5a394d3d10f151a6d4a0699a",
-        "sha256": "54ce43cacaa5ed93763c4af45de49b63b5a7eda64b1705d6d8fd0a0266bb5541",
+        "sha256": "22ad87972e538e211f7b785341df11c77c64ff9195daea1428ba11d6baddfeaa",
         "originalIds": 56,
         "aliases": [],
         "missingOld": [],
@@ -1730,15 +1730,15 @@
   "artifacts": [
     {
       "path": "en/observability/alerting/03-grafana-oncall.md",
-      "sha256": "b22cddf32920edfb7fa96206c59eda9183cdd72ba91f5dfdab422a425a192cda"
+      "sha256": "c96e7a8294dfe5a205d50b18dcc69eefbdb0cc05780590c977b36c88cd89162a"
     },
     {
       "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
-      "sha256": "315f5dcc249712de191f16f02e05c3bbc6b79567d1a8b347e2309ce50dda7cf0"
+      "sha256": "b76cd946d8d87aacc242ffd5ac9e82284fa04058ae4372090725e99cf0d03307"
     },
     {
       "path": "ko/observability/alerting/03-grafana-oncall.md",
-      "sha256": "54ce43cacaa5ed93763c4af45de49b63b5a7eda64b1705d6d8fd0a0266bb5541"
+      "sha256": "22ad87972e538e211f7b785341df11c77c64ff9195daea1428ba11d6baddfeaa"
     },
     {
       "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
@@ -2003,5 +2003,125 @@
     "Sourcecontractchecksexecuteselectedpureupstreammethodsandinspectfieldlists;notDRFdatabase/relationshiporfinalscheduleexecution.",
     "ArchivedHelmcontractssourcereviewed;noarchivedbackend/DB/HAinstallationorsecuritysupportclaim.",
     "FailedguessedmigrationURLsarenotsupportingsources;currentlifecycle/API/repositoryevidenceused."
-  ]
+  ],
+  "integrationFollowup": {
+    "baseCommit": "b82210d85c9d11e111aac9dbf545481911541978",
+    "checkedAt": "2026-09-13T13:14:09.228667+00:00",
+    "changes": [
+      {
+        "path": "en/observability/alerting/03-grafana-oncall.md",
+        "previousSha256": "b22cddf32920edfb7fa96206c59eda9183cdd72ba91f5dfdab422a425a192cda",
+        "sha256": "c96e7a8294dfe5a205d50b18dcc69eefbdb0cc05780590c977b36c88cd89162a"
+      },
+      {
+        "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "previousSha256": "315f5dcc249712de191f16f02e05c3bbc6b79567d1a8b347e2309ce50dda7cf0",
+        "sha256": "b76cd946d8d87aacc242ffd5ac9e82284fa04058ae4372090725e99cf0d03307"
+      },
+      {
+        "path": "ko/observability/alerting/03-grafana-oncall.md",
+        "previousSha256": "54ce43cacaa5ed93763c4af45de49b63b5a7eda64b1705d6d8fd0a0266bb5541",
+        "sha256": "22ad87972e538e211f7b785341df11c77c64ff9195daea1428ba11d6baddfeaa"
+      }
+    ],
+    "scope": "Heading IDs, TOC targets, legacy native anchor aliases and English spacing only; code examples and diagram/native-test artifacts unchanged. Current document validation recorded separately by integration checks.",
+    "documentValidation": {
+      "status": "passed",
+      "method": "Fresh native VitePress render against pre-repair commit; all legacy IDs, authored TOC targets, exact fenced code and 10-question answer parity.",
+      "files": [
+        {
+          "path": "en/observability/alerting/03-grafana-oncall.md",
+          "previousIds": 57,
+          "currentIds": 57,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+          "previousIds": 2,
+          "currentIds": 2,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "answersAfter": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "pass": true
+        },
+        {
+          "path": "ko/observability/alerting/03-grafana-oncall.md",
+          "previousIds": 57,
+          "currentIds": 69,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+          "previousIds": 2,
+          "currentIds": 2,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "answersAfter": [
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "C",
+            "C",
+            "B",
+            "B"
+          ],
+          "pass": true
+        }
+      ]
+    }
+  }
 }

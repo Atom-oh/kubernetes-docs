@@ -20,7 +20,7 @@ A quiz to test your understanding of Grafana OnCall.
 **Answer: C) Metric collection and storage**
 
 **Explanation:**
-OnCall receives and manages alerts, schedules, routing and responder actions; it is not a metrics database. OSS was archived on2026-03-24. Channel/API availability in an existing installation must be checked separately from maintained Cloud IRM.
+OnCall receives and manages alerts, schedules, routing and responder actions; it is not a metrics database. OSS was archived on 2026-03-24. Channel/API availability in an existing installation must be checked separately from maintained Cloud IRM.
 
 </details>
 
@@ -38,7 +38,7 @@ OnCall receives and manages alerts, schedules, routing and responder actions; it
 **Answer: B) Wait before proceeding to the next escalation step**
 
 **Explanation:**
-A wait step delays the next escalation step. It neither acknowledges nor resolves an incident. The inspected public serializer accepts one-minute-to24-hour waits, in seconds; actual stop/re-page behavior depends on the chain and alert-group state.
+A wait step delays the next escalation step. It neither acknowledges nor resolves an incident. The inspected public serializer accepts one-minute-to-24-hour waits, in seconds; actual stop/re-page behavior depends on the chain and alert-group state.
 
 </details>
 
@@ -146,7 +146,7 @@ Check the installed Slack app's actual root command/help and authorized action b
 **Answer: C) Check maintenance, required features, actual cost and migration/recovery**
 
 **Explanation:**
-Use current maintenance/lifecycle, required features, operating cost and contracts. Fixed old integration counts or per-user prices are insufficient. OnCall OSS is archived; Opsgenie has an announced2027-04-05 service/support end. Review a maintained destination and test migration/recovery.
+Use current maintenance/lifecycle, required features, operating cost and contracts. Fixed old integration counts or per-user prices are insufficient. OnCall OSS is archived; Opsgenie has an announced 2027-04-05 service/support end. Review a maintained destination and test migration/recovery.
 
 </details>
 
