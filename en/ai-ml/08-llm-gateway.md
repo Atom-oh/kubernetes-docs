@@ -60,25 +60,29 @@ N local rate/quota counters can admit N times a per-instance limit without coord
 
 ### 2.2 The Request Pipeline — 13 Stages One Request Passes Through
 
-![Proposed pipeline: authenticate, parse, route, reauthorize, transform, reserve and invoke; inspect output before relay, compute cost, settle and finish audit.](../../assets/llm-gateway-request-pipeline.svg)
+![Proposed pipeline with reservation and audit before every billable helper or main call, followed by output inspection, settlement and completion.](../../assets/llm-gateway-request-pipeline.svg)
 
 The order is not arbitrary. **Where a stage sits determines its security property.**
 
 | # | Stage | Why this position |
 |---|-------|-------------------|
 | 1 | **Auth** | Authenticate high-entropy virtual keys or short-lived identity. Derive permissions from trusted policy, not caller headers; hash random keys at rest and rate-limit auth failures. |
-| 2 | **Parse** | Parse bounded input and retain RawBody only as a candidate fast path; final policy transformations determine whether it may be forwarded. |
-| 3 | **Route** | alias → canonical name, unrouted-model fallback, budget-tier substitution, priority chain + circuit breaker. |
+| 2 | **Parse** | Parse bounded input; retain RawBody only as a candidate fast path. Persist metadata-only `request_started` before helper calls; this does not authorize logging raw prompts. |
+| 3 | **Route** | alias → canonical name, unrouted-model fallback, budget-tier substitution, priority chain + circuit breaker. Metered routing uses the per-call admission contract below. |
 | 4 | **RBAC re-check** | Targets appended in stage 3 by fallback or substitution **never went through the original allow-list check**. Skip this and the fallback path becomes a privilege bypass. |
-| 5 | **Filters** | Apply required privacy and prompt policy; inspect the exact outbound representation. Required filter errors fail closed. External classifiers are approved egress destinations too. |
-| 6 | **PreCheck / reserve** | Recount transformed input plus output/reasoning allowance for the target; atomically reserve quota and money before dispatch. Denials have no inference spend debit, but abuse limits still apply. |
-| 7 | **Provider call** | Persist `request_started` before dispatch; send the inspected body. Preserve raw bytes only if the API and all required transformations permit it. Attach provider credentials here. |
-| 8 | **Output guard** | Inspect buffered text and complete tool arguments before release; bound buffer size/time and fail closed on inspection failure. |
-| 9 | **Stream relay** | Relay approved protocol events; measure upstream and user-visible TTFT separately. Never restart a committed response. |
+| 5 | **Filters** | Apply required privacy and prompt policy to the exact outbound representation. Paid classifiers, embeddings and standalone guardrails require their own admitted calls. Required filter errors fail closed. |
+| 6 | **Main PreCheck / reserve** | Size the final transformed input and output/reasoning allowance, then atomically reserve main-call quota and money. Fund required paid output checks before generation. Main denial does not refund auxiliary charges already incurred. |
+| 7 | **Provider call** | Persist the funded main call's `subcall_started` before dispatch; send the inspected body. Preserve raw bytes only if API and policy permit it. Attach provider credentials here. |
+| 8 | **Output guard** | Inspect buffered text and complete tool arguments before release, using funded checks. Bound buffer size/time; if a required check cannot be admitted or completed, withhold output and retain incurred charges. |
+| 9 | **Response relay** | Relay the approved body or protocol events. For streams, measure upstream and user-visible TTFT separately. Never restart a committed response. |
 | 10 | **Cost** | Use versioned provider/model/region prices, non-overlapping usage fields and fixed-point/decimal arithmetic with explicit rounding. Refuse unpriced routes. |
 | 11 | **Settle** | Idempotently replace reservations with known actual charges; missing final usage retains conservative reservations pending reconciliation. Cancellation does not mean zero cost. |
 | 12 | **Audit completion** | Link completion/cancellation/unknown outcomes to the pre-dispatch start record; preserve a durable reconciliation journal and external integrity anchors. |
 | 13 | **Metrics** | OpenTelemetry GenAI semantic conventions (`gen_ai.*`). Label cardinality is bounded by config; key IDs and user IDs never become labels. |
+
+**Every billable subcall follows the same admission contract:** authorize its destination and input data → validate and price a conservative bound → atomically reserve quota/money → persist `subcall_started` → dispatch → settle. This applies inside routing and filters, to the main model and output checks, and to each retry. A main-model allow-list entry does not authorize auxiliary destinations. Unknown prices, exhausted or expired allowances prevent dispatch.
+
+A request can therefore have several separately funded calls. With zero available budget, a paid LLM router cannot run merely to discover that main inference will be denied. If routing already incurred a charge before main admission fails, retain that charge. Reserve the bounded cost of required output checks before starting generation; an unfunded additional check fails closed. The ledger covers the metered call charges included in its pricing policy; infrastructure, storage and network costs require their own accounting.
 
 ### 2.3 The Cache Invariant — the Most Common Gateway Cost Incident
 
@@ -110,13 +114,13 @@ Clients need compatible ingress adapters. Claude Code commonly uses Messages; cu
 | **Codex CLI** | OpenAI Responses | `model_providers.<id>.base_url`, `wire_api = "responses"`, supported command-backed authentication | Current [configuration](https://developers.openai.com/codex/config-reference) supports Responses only; a Chat-only gateway needs a tested adapter |
 | **OpenCode** | Anthropic or OpenAI-compatible, chosen per provider entry | provider `baseURL` in `opencode.json` | One process may hit two ingresses at once; the same virtual key must resolve to the same team on both |
 | **Hermes Agent** | OpenAI-compatible Chat Completions | `base_url` + `api_key` in the agent config | Function-calling tools; tool results come back as `role=tool` messages, not `tool_result` blocks |
-| **Your app / AWS SDK** | Selected Bedrock runtime API | An explicitly supported AWS-compatible adapter, not merely an endpoint override | Validate ingress authentication, sign upstream calls with workload identity and implement the selected API/event-stream framing |
+| **Your app / AWS SDK** | Selected Bedrock runtime API | An explicitly supported AWS-compatible adapter, not merely an endpoint override | Validate ingress authentication, sign with workload identity and handle the selected operation's response body or AWS event stream |
 
 **How it works — the three-stage ingress / canonical / egress structure**
 
 1. **Protocol ingress**: one per protocol, parses the request and keeps the RawBody.
 2. **Canonical request**: type interpreted fields and retain protocol metadata. Check capabilities for tools, reasoning, multimodal content and provider-managed state. Reject unsupported semantics; an `Extra` map does not make arbitrary translation lossless.
-3. **Shared policy core** authenticates, routes, reauthorizes, transforms, reserves and accounts for each request. Protocol-specific capability and pricing rules still apply.
+3. **Shared policy core** authenticates and records the request, then routes, reauthorizes and transforms it. Every billable helper/main/output call uses the same reservation, start-record and settlement contract; protocol-specific capability and pricing rules still apply.
 4. **Protocol egress**: produce and inspect the final outbound payload. Raw forwarding is conditional on the API and policy; otherwise convert supported fields and verify stream errors, tool semantics and usage accounting.
 
 **Ingress × egress matrix — when does the body go out verbatim?**
@@ -128,7 +132,7 @@ Clients need compatible ingress adapters. Claude Code commonly uses Messages; cu
 | OpenAI Responses (Codex) | capability-limited adapter | capability-limited adapter | capability-limited adapter | preserve only for matching Responses API |
 | Bedrock SDK API | convert if supported | preserve only for same runtime API | preserve only for Converse | convert if supported |
 
-\* Bedrock Claude InvokeModel requires `anthropic_version: bedrock-2023-05-31`, a URI `modelId`, AWS authentication and event-stream framing. It is not a model-id-only rewrite of Messages. Converse has a different envelope. All preservation cells remain conditional on routing and required transforms.
+\* Bedrock Claude InvokeModel requires `anthropic_version: bedrock-2023-05-31`, a URI `modelId` and AWS authentication; its non-streaming Claude response is JSON. **InvokeModelWithResponseStream** requires AWS event-stream decoding. These are not model-id-only rewrites of Messages. Converse has a different envelope. All preservation cells remain conditional on routing and required transforms.
 
 Provider/model changes may start without a reusable cache, but stable conversion is not permanently cache-cold. Choose compatible routes using tested features, privacy, task quality and measured cache usage, not protocol names alone.
 
@@ -140,15 +144,17 @@ Provider/model changes may start without a reusable cache, but stable conversion
 
 ### 3.1 PreCheck and Settle
 
+Apply this sequence to **each billable call**, including an LLM router, embedding/classifier, standalone guardrail and retry. Auxiliary calls may precede main inference but cannot precede their own reservation and start record.
+
 ```text
 time →
 client ──request──▶ gateway                                              provider
                      │
                      │ ① size transformed input + output/reasoning ceiling; conservative maximum cost
                      │ ② PreCheck: rate (RPM/TPM) · quota (daily tokens) · budget (µUSD)
-                     │    - block ⇒ 402/429; no inference spend debit (abuse limits still apply)
+                     │    - block ⇒ 402/429; no dispatch of this call; retain earlier auxiliary charges
                      │    - warn ⇒ pass with a warning header (block wins on tie)
-                     │ ③ atomically reserve quota AND money; persist reservation/request IDs
+                     │ ③ atomically reserve quota AND money; persist reservation/subcall start IDs
                      │──────────────────────── request ────────────────────▶
                      │◀─────────────── SSE stream (with usage) ─────────────
                      │ ④ Settle: normalize provider usage without double-counting cached input
@@ -161,6 +167,8 @@ client ──request──▶ gateway                                           
 
 **Why reserve atomically?** A read-then-debit race lets concurrent calls observe the same balance. Reserve money and quota together before dispatch, using durable request IDs and idempotent settlement. TPM reservations alone do not cap money. A hard cap requires a conservative upper bound for all billable dimensions; heuristic estimates need a stated overshoot tolerance. Interrupted streams may omit final usage, so reconcile rather than refund them as zero.
 
+The [offline admission model](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/llm-gateway/check_budget_admission.py) checks zero/expired allowance, auxiliary charges followed by main denial, concurrent grants, prefunded output checks, unknown usage and replay. Run it with Python 3. It uses synthetic integer cost units and an in-memory lock; it does not validate real prices, distributed storage, durability or a deployed gateway.
+
 ### 3.2 Hard Caps Across Distributed Data Planes — Budget Leases
 
 With one data plane per node there is one team-budget counter per node. The control plane's **lease ledger** closes the gap.
@@ -169,7 +177,7 @@ With one data plane per node there is one team-budget counter per node. The cont
 Control-plane ledger (team payments, monthly limit $1,000)
   spent (reported total)   = $612
   outstanding grants       = { node-a: $40, node-b: $40, node-c: $40 }
-  remaining                = 1000 − 612 − 120 = $228
+  remaining                = 1000 − 612 − 120 = $268
 
 Data plane node-a (heartbeat every 10 s)
   lease { allowance: $40, expires: +30s }
@@ -259,7 +267,7 @@ Sending "rename this variable" to a frontier model wastes money; sending "design
 | rules/heuristics | workload-dependent | local CPU | evaluate labeled tasks | cheap baseline; no accuracy guarantee |
 | embedding similarity | embedding lookup/inference | model-dependent | evaluate per domain | embedding service is another approved egress hop |
 | small classifier | measure deployed p50/p95 | serving cost | evaluate language/task | track drift and fallback |
-| LLM-as-router | additional model call | token/request charges | evaluate outcomes | include routing cost and privacy |
+| LLM-as-router | additional model call | token/request charges | evaluate outcomes | admit, reserve and record this call before it runs |
 
 Intent routing needs extra care with agent traffic. **Switching models inside one conversation** (a) cold-starts the prompt cache and (b) may make the new model reject the previous turns' `tool_use` id format or `thinking` blocks. In practice, **decide the tier on the first turn and pin it to the session**.
 
@@ -639,7 +647,7 @@ Every product calls itself an "AI gateway," yet the answers to these questions d
 
 **Architecture**
 - [ ] Data plane and control plane are separate processes, and behavior during a control-plane outage is documented
-- [ ] Transform and size the final request before atomic money/quota reservation; reconcile uncertain usage
+- [ ] Inspect and size each billable subcall before atomic money/quota reservation, including helpers/output checks/retries; retain incurred and uncertain charges
 - [ ] Hard-cap teams and soft-limit teams are distinguished in policy
 
 **Routing**

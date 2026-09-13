@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1240" height="900" viewBox="0 0 1240 900" font-family="'Segoe UI', Helvetica, Arial, 'Noto Sans', sans-serif" font-size="14" role="img" aria-labelledby="diagram-title diagram-description">
 <title id="diagram-title">Proposed design: Multi-client LLM gateway: heterogeneous clients and protocols through one governed core</title>
-<desc id="diagram-description">Proposed composite gateway design, not a product feature guarantee. The accompanying Korean and English chapters explain policy, compatibility and failure limits.</desc><defs>
+<desc id="diagram-description">Protocol adapters share authenticated policy and a per-billable-call admission loop. Routing and filter helpers enter the same reserve, start-record, call and settlement loop as main inference and output checks.</desc><defs>
 <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151" /></marker>
 <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b91c1c" /></marker>
 <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#15803d" /></marker>
@@ -69,45 +69,44 @@
 <line x1="497" y1="377" x2="543" y2="160" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
 <line x1="497" y1="537" x2="543" y2="170" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
 <rect x="545" y="196" width="320" height="170" rx="10" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.6" />
-<text x="705.0" y="218" text-anchor="middle" font-size="12.5" font-weight="600" fill="#111827">Shared policy core (proposed design)</text>
+<text x="705.0" y="218" text-anchor="middle" font-size="12.5" font-weight="600" fill="#111827">Shared policy + per-call admission</text>
 <text x="705.0" y="238" text-anchor="middle" font-size="12.5" fill="#374151" />
 <rect x="560" y="232" width="64" height="32" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
 <text x="592.0" y="253.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">KeyAuth</text>
 <line x1="625" y1="248" x2="633" y2="248" stroke="#374151" stroke-width="1.2" marker-end="url(#arr)" />
 <rect x="634" y="232" width="64" height="32" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
-<text x="666.0" y="253.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Route</text>
+<text x="666.0" y="253.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Route*</text>
 <line x1="699" y1="248" x2="707" y2="248" stroke="#374151" stroke-width="1.2" marker-end="url(#arr)" />
 <rect x="708" y="232" width="64" height="32" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
 <text x="740.0" y="253.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Reauth</text>
 <line x1="773" y1="248" x2="781" y2="248" stroke="#374151" stroke-width="1.2" marker-end="url(#arr)" />
 <rect x="782" y="232" width="64" height="32" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
-<text x="814.0" y="253.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Filters</text>
+<text x="814.0" y="253.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Filters*</text>
 <rect x="560" y="278" width="64" height="32" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
 <text x="592.0" y="299.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Reserve</text>
 <line x1="625" y1="294" x2="633" y2="294" stroke="#374151" stroke-width="1.2" marker-end="url(#arr)" />
 <rect x="634" y="278" width="64" height="32" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
-<text x="666.0" y="299.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Egress</text>
+<text x="666.0" y="299.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Start</text>
 <line x1="699" y1="294" x2="707" y2="294" stroke="#374151" stroke-width="1.2" marker-end="url(#arr)" />
 <rect x="708" y="278" width="64" height="32" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
-<text x="740.0" y="299.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Settle</text>
+<text x="740.0" y="299.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Call</text>
 <line x1="773" y1="294" x2="781" y2="294" stroke="#374151" stroke-width="1.2" marker-end="url(#arr)" />
 <rect x="782" y="278" width="64" height="32" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
-<text x="814.0" y="299.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Audit</text>
-<path d="M 830 264 L 830 276 L 592 276 L 592 278" fill="none" stroke="#374151" stroke-width="1.2" marker-end="url(#arr)" />
-<text x="705" y="336" text-anchor="middle" font-size="12" font-weight="normal" fill="#111827">one Principal (team · user · key) · one policy</text>
-<text x="705" y="353" text-anchor="middle" font-size="12" font-weight="normal" fill="#111827">one audit chain · one cost ledger</text>
-<line x1="705" y1="175" x2="705" y2="194" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<text x="814.0" y="299.0" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Settle</text>
+<text x="705" y="336" text-anchor="middle" font-size="12" font-weight="normal" fill="#111827">Paid helpers* use the same admitted call loop</text>
+<text x="705" y="353" text-anchor="middle" font-size="12" font-weight="normal" fill="#111827">Reserve → start record → call → settle</text>
+<line x1="705" y1="185" x2="705" y2="194" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
 <text x="545" y="396" text-anchor="start" font-size="12.5" font-weight="700" fill="#1d4ed8">Egress — inspected, capability-checked request</text>
 <rect x="545" y="408" width="320" height="54" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6" />
 <text x="705.0" y="430" text-anchor="middle" font-size="12.5" font-weight="600" fill="#111827">Anthropic Messages</text>
 <text x="705.0" y="450" text-anchor="middle" font-size="12.5" fill="#374151">preserve only when policy/API permit</text>
 <rect x="545" y="472" width="320" height="54" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6" />
 <text x="705.0" y="494" text-anchor="middle" font-size="12.5" font-weight="600" fill="#111827">Bedrock InvokeModel / Converse</text>
-<text x="705.0" y="514" text-anchor="middle" font-size="12.5" fill="#374151">API-specific body + auth + stream framing</text>
+<text x="705.0" y="514" text-anchor="middle" font-size="12.5" fill="#374151">Body or event stream by selected operation</text>
 <rect x="545" y="536" width="320" height="54" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6" />
 <text x="705.0" y="558" text-anchor="middle" font-size="12.5" font-weight="600" fill="#111827">OpenAI-compatible API</text>
 <text x="705.0" y="578" text-anchor="middle" font-size="12.5" fill="#374151">Chat or Responses: check exact upstream API</text>
-<line x1="705" y1="367" x2="705" y2="406" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<line x1="855" y1="367" x2="855" y2="406" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
 <text x="705" y="600" text-anchor="middle" font-size="12" font-weight="normal" fill="#6b7280" font-style="italic">authenticated policy; provider-specific accounting</text>
 <rect x="900" y="60" width="320" height="560" rx="14" fill="#dcfce7" fill-opacity="0.45" stroke="#15803d" stroke-width="1.4" stroke-dasharray="8 5" />
 <text x="914" y="82" font-size="15" font-weight="700" fill="#15803d">Providers</text>

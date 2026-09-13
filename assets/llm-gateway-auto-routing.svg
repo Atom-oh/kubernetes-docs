@@ -34,7 +34,7 @@
 <rect x="30" y="424" width="250" height="62" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
 <text x="155.0" y="446" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Intent / complexity</text>
 <text x="155.0" y="466" text-anchor="middle" font-size="12.5" fill="#374151">L4</text>
-<text x="300" y="450" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">classifier or small router model picks a capability tier; opt-in, adds latency</text>
+<text x="300" y="450" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">fund and admit any paid classifier/router before selecting the capability tier</text>
 <text x="300" y="471" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. 'rename variable' ⇒ small model · 'design a schema' ⇒ frontier model</text>
 <line x1="155" y1="487" x2="155" y2="500" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
 <rect x="30" y="502" width="250" height="62" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
@@ -81,4 +81,4 @@
 <text x="880" y="533" text-anchor="start" font-size="13" font-weight="600" fill="#111827">• The router must not become the SPOF.</text>
 <text x="892" y="550" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">Classifier down ⇒ consider the requested</text>
 <text x="892" y="567" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">model only if all policy checks still pass.</text>
-</svg>
+<text x="880" y="604" text-anchor="start" font-size="13" font-weight="600" fill="#111827">• Admit paid helper calls first.</text><text x="892" y="625" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">Authorize, reserve and record a start before</text><text x="892" y="642" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">router / classifier / embedding / guardrail calls.</text><text x="892" y="659" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">Retain their charges if main inference is denied.</text></svg>
