@@ -1,124 +1,327 @@
-# Cuestionarios del contenido de capacitación de Kubernetes y EKS
+# Cuestionarios de operaciones Cloud Native
 
-Este directorio contiene cuestionarios para el contenido de capacitación de Kubernetes y Amazon EKS. Cada cuestionario ayuda a comprobar tu comprensión del tema y refuerza los conceptos clave.
+Use estos cuestionarios después de leer las guías para comprobar los conceptos y los requisitos de ejecución. Los formatos varían según el tema: opción múltiple, respuestas escritas, ejercicios y preguntas avanzadas. Expanda cada pregunta para leer su respuesta.
 
-## Estructura del cuestionario
+Para los ejercicios, revise las versiones, los requisitos previos y el alcance de validación de la guía antes de ejecutar comandos.
 
-Cada cuestionario está estructurado de la siguiente manera:
-- Preguntas de opción múltiple
-- Preguntas de respuesta corta
-- Preguntas prácticas (cuando corresponda)
-- Preguntas avanzadas (cuando corresponda)
+## Índice completo de cuestionarios
 
-Todas las preguntas de los cuestionarios incluyen respuestas en formato desplegable, para que puedas intentar responder primero y luego consultar las respuestas.
+### Introducción
 
-## Lista de cuestionarios
+- [Cuestionario de lectura con LLMs — llms.txt](./llm-guide-quiz.md)
+- [Cuestionario de la hoja de ruta de la guía](./roadmap-quiz.md)
 
-### Conceptos básicos
-- [Cuestionario de conceptos básicos de Linux](./basics/01-linux-basics-quiz.md)
-- [Cuestionario de operaciones de Linux](./basics/02-linux-advanced-quiz.md)
+### AI/ML
+
+- [Cuestionario de cargas de trabajo de AI/ML](./ai-ml/03-ai-ml-workloads-quiz.md)
+- [Cuestionario de frameworks de inferencia](./ai-ml/04-inference-frameworks-quiz.md)
+- [Cuestionario de Deployment de vLLM](./ai-ml/04-vllm-deployment-quiz.md)
+- [Cuestionario de entrenamiento de modelos en EKS](./ai-ml/05-model-training-quiz.md)
+- [Cuestionario de infraestructura de AI en EKS](./ai-ml/06-ai-infrastructure-quiz.md)
+- [Cuestionario de prácticas recomendadas de AI/ML](./ai-ml/07-ai-ml-best-practices-quiz.md)
+- [Cuestionario de plataforma de AI agéntica en EKS](./ai-ml/08-agentic-ai-platform-quiz.md)
+- [Cuestionario de LLM Gateway](./ai-ml/08-llm-gateway-quiz.md)
+- [Cuestionario de arquitectura e instalación de Kubeflow en EKS](./ai-ml/kubeflow/01-architecture-installation-quiz.md)
+- [Cuestionario de Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines-quiz.md)
+- [Cuestionario de Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks-quiz.md)
+- [Parte 4: Cuestionario de Katib — ajuste de hiperparámetros y AutoML](./ai-ml/kubeflow/04-katib-quiz.md)
+- [Cuestionario de Kubeflow Trainer y entrenamiento distribuido](./ai-ml/kubeflow/05-training-operator-quiz.md)
+- [Cuestionario de KServe](./ai-ml/kubeflow/06-kserve-quiz.md)
+- [Cuestionario de seguimiento de MLflow](./ai-ml/mlflow/01-tracking-quiz.md)
+- [Cuestionario de Model Registry de MLflow](./ai-ml/mlflow/02-model-registry-quiz.md)
+- [Cuestionario de Deployment de MLflow en EKS](./ai-ml/mlflow/03-eks-deployment-quiz.md)
+- [Cuestionario de arquitectura de Ray](./ai-ml/ray/01-architecture-quiz.md)
+- [Cuestionario de KubeRay Operator](./ai-ml/ray/02-kuberay-operator-quiz.md)
+- [Cuestionario de Ray Train / Tune](./ai-ml/ray/03-ray-train-tune-quiz.md)
+- [Cuestionario de Ray Serve](./ai-ml/ray/04-ray-serve-quiz.md)
+- [Cuestionario de arquitectura de la plataforma SageMaker Qwen](./ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
+- [Cuestionario de datos PII sintéticos y tokenización](./ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
+- [Cuestionario de ejecución de SageMaker AI y MLflow](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
+- [Cuestionario de resultados de validación factual de SageMaker Qwen](./ai-ml/sagemaker-ai/04-validation-results-quiz.md)
+
+### Escalado automático
+
+- [Cuestionario de Knative](./autoscaling/03-knative-quiz.md)
+- [Cuestionario de KEDA](./autoscaling/05-keda-quiz.md)
+- [Cuestionario de Karpenter](./autoscaling/06-karpenter-quiz.md)
+
+### Fundamentos
+
+- [Cuestionario de fundamentos de Linux](./basics/01-linux-basics-quiz.md)
+- [Cuestionario de habilidades operativas de Linux](./basics/02-linux-advanced-quiz.md)
 - [Cuestionario de tecnología de contenedores](./basics/03-container-technology-quiz.md)
 - [Cuestionario de introducción a Kubernetes](./basics/04-kubernetes-introduction-quiz.md)
 - [Cuestionario de fundamentos de eBPF](./basics/05-ebpf-fundamentals-quiz.md)
+- [Cuestionario de fundamentos de redes, parte 1 — modelo de capas, enlace y enrutamiento](./basics/06-network-fundamentals-part1-quiz.md)
+- [Cuestionario de fundamentos de redes, parte 2 — transporte y TLS](./basics/06-network-fundamentals-part2-quiz.md)
+- [Cuestionario de fundamentos de redes, parte 3 — protocolos de aplicación](./basics/06-network-fundamentals-part3-quiz.md)
+- [Cuestionario de fundamentos de redes, parte 4 — el recorrido y la nube](./basics/06-network-fundamentals-part4-quiz.md)
 
-### Conceptos principales de Kubernetes
-- [Cuestionario de arquitectura de Cluster](./core/01-cluster-architecture-quiz.md)
-- [Cuestionario de Pods y Workloads](./core/02-pods-and-workloads-quiz.md)
+### Registros de contenedores
+
+- [Cuestionario de Docker Hub](./container-registry/01-docker-hub-quiz.md)
+- [Cuestionario de Amazon ECR](./container-registry/02-amazon-ecr-quiz.md)
+- [Cuestionario de Harbor](./container-registry/03-harbor-quiz.md)
+- [Cuestionario de prácticas recomendadas para registros de contenedores](./container-registry/04-best-practices-quiz.md)
+
+### Núcleo de Kubernetes
+
+- [Cuestionario de arquitectura de clúster](./core/01-cluster-architecture-quiz.md)
+- [Cuestionario de Pods y cargas de trabajo](./core/02-pods-and-workloads-quiz.md)
 - [Cuestionario de Services y redes](./core/03-services-networking-quiz.md)
 - [Cuestionario de almacenamiento](./core/04-storage-quiz.md)
 - [Cuestionario de configuración](./core/05-configuration-secrets-quiz.md)
 - [Cuestionario de seguridad](./core/06-security-quiz.md)
 - [Cuestionario de políticas](./core/07-policies-quiz.md)
-- [Cuestionario de Scheduling, Preemption y Eviction](./core/08-scheduling-preemption-eviction-quiz.md)
-- [Cuestionario de administración de Cluster](./core/09-cluster-administration-quiz.md)
+- [Cuestionario de programación, preferencia y expulsión](./core/08-scheduling-preemption-eviction-quiz.md)
+- [Cuestionario de administración de clúster](./core/09-cluster-administration-quiz.md)
 - [Cuestionario de Windows en Kubernetes](./core/10-windows-in-kubernetes-quiz.md)
-- [Cuestionario de extensión de Kubernetes](./core/11-extending-kubernetes-quiz.md)
+- [Cuestionario de extensiones de Kubernetes](./core/11-extending-kubernetes-quiz.md)
+
+### Datos en EKS
+
+- [Cuestionario de anatomía de un pipeline de datos moderno](./data-on-eks/01-data-pipeline-anatomy-quiz.md)
+- [Cuestionario de arquitectura de Airflow](./data-on-eks/airflow/01-architecture-quiz.md)
+- [Cuestionario de Deployment de Helm y elección de Executor](./data-on-eks/airflow/02-helm-deployment-quiz.md)
+- [Cuestionario de patrones DAG y KubernetesPodOperator](./data-on-eks/airflow/03-dag-patterns-quiz.md)
+- [Cuestionario de integración de MWAA](./data-on-eks/airflow/04-mwaa-integration-quiz.md)
+- [Parte 5: Cuestionario de operaciones y seguridad](./data-on-eks/airflow/05-operations-quiz.md)
+- [Cuestionario de arquitectura de Flink en Kubernetes](./data-on-eks/flink/01-architecture-quiz.md)
+- [Cuestionario de Flink Kubernetes Operator](./data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
+- [Cuestionario de patrones de estado, checkpointing y streaming](./data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+- [Cuestionario de operaciones, HA y Flink administrado](./data-on-eks/flink/04-operations-ha-quiz.md)
+- [Cuestionario de fundamentos de Kafka](./data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+- [Cuestionario de Strimzi Operator](./data-on-eks/kafka/02-strimzi-operator-quiz.md)
+- [Cuestionario de operaciones de Kafka](./data-on-eks/kafka/03-kafka-operations-quiz.md)
+- [Cuestionario de Schema Registry](./data-on-eks/kafka/04-schema-registry-quiz.md)
+- [Cuestionario de Kafka Connect y MirrorMaker](./data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+- [Cuestionario de integración de MSK](./data-on-eks/kafka/06-msk-integration-quiz.md)
+- [Parte 7: Cuestionario de monitoreo](./data-on-eks/kafka/07-monitoring-quiz.md)
+- [Parte 8: Cuestionario de prácticas recomendadas](./data-on-eks/kafka/08-best-practices-quiz.md)
+- [Parte 9: Cuestionario de revisión de benchmarks de Kafka](./data-on-eks/kafka/09-kafka-benchmark-quiz.md)
+- [Cuestionario de gobernanza de dominios y proyectos de Unified Studio](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
+- [Cuestionario de fundamentos de Spark en Kubernetes](./data-on-eks/spark/01-spark-fundamentals-quiz.md)
+- [Cuestionario de Spark Operator](./data-on-eks/spark/02-spark-operator-quiz.md)
+- [Cuestionario de Amazon EMR en EKS](./data-on-eks/spark/03-emr-on-eks-quiz.md)
+- [Parte 4: Cuestionario de ajuste de rendimiento y costos](./data-on-eks/spark/04-performance-tuning-quiz.md)
+- [Parte 5: Cuestionario de prácticas recomendadas y seguridad](./data-on-eks/spark/05-best-practices-quiz.md)
+
+### Bases de datos
+
+- [Cuestionario de benchmark medido de ClickHouse en EKS](./database/01-clickhouse-on-eks-quiz.md)
 
 ### Amazon EKS
+
 - [Cuestionario de introducción a EKS](./eks/01-eks-introduction-quiz.md)
-- [Cuestionario de creación de Cluster EKS - Parte 1](./eks/02-eks-cluster-creation-part1-quiz.md)
-- [Cuestionario de creación de Cluster EKS - Parte 2](./eks/02-eks-cluster-creation-part2-quiz.md)
-- [Cuestionario de creación de Cluster EKS - Parte 3](./eks/02-eks-cluster-creation-part3-quiz.md)
-- [Cuestionario de creación de Cluster EKS - Parte 4](./eks/02-eks-cluster-creation-part4-quiz.md)
-- [Cuestionario de creación de Cluster EKS - Parte 5](./eks/02-eks-cluster-creation-part5-quiz.md)
+- [Cuestionario de creación de clúster EKS - Parte 1](./eks/02-eks-cluster-creation-part1-quiz.md)
+- [Cuestionario de creación de clúster EKS - Parte 2](./eks/02-eks-cluster-creation-part2-quiz.md)
+- [Cuestionario de creación de clúster EKS - Parte 3](./eks/02-eks-cluster-creation-part3-quiz.md)
+- [Cuestionario de creación de clúster EKS - Parte 4](./eks/02-eks-cluster-creation-part4-quiz.md)
+- [Cuestionario de creación de clúster EKS - Parte 5](./eks/02-eks-cluster-creation-part5-quiz.md)
 - [Cuestionario de redes de EKS - Parte 1](./eks/03-eks-networking-part1-quiz.md)
 - [Cuestionario de redes de EKS - Parte 2](./eks/03-eks-networking-part2-quiz.md)
 - [Cuestionario de redes de EKS - Parte 3](./eks/03-eks-networking-part3-quiz.md)
 - [Cuestionario de almacenamiento de EKS - Parte 1](./eks/04-eks-storage-part1-quiz.md)
 - [Cuestionario de almacenamiento de EKS - Parte 2](./eks/04-eks-storage-part2-quiz.md)
-- [Cuestionario de almacenamiento de EKS - Parte 3](./eks/04-eks-storage-part3-quiz.md)
-- [Cuestionario de seguridad de EKS](./eks/05-eks-security-quiz.md)
-- [Cuestionario de monitoreo y registro de EKS](./eks/06-eks-monitoring-logging-quiz.md)
-- [Cuestionario de optimización de costos de EKS](./eks/07-eks-cost-optimization-quiz.md)
-- [Cuestionario de actualizaciones de EKS](./eks/08-eks-upgrades-quiz.md)
-- [Cuestionario de solución de problemas de EKS](./eks/09-eks-troubleshooting-quiz.md)
+- [Cuestionario de almacenamiento de EKS, parte 3](./eks/04-eks-storage-part3-quiz.md)
+- [Cuestionario de seguridad de Amazon EKS](./eks/05-eks-security-quiz.md)
+- [Cuestionario de monitoreo y logging de Amazon EKS](./eks/06-eks-monitoring-logging-quiz.md)
+- [Cuestionario de optimización de costos de Amazon EKS](./eks/07-eks-cost-optimization-quiz.md)
+- [Cuestionario de actualizaciones de Amazon EKS](./eks/08-eks-upgrades-quiz.md)
+- [Cuestionario de solución de problemas de Amazon EKS](./eks/09-eks-troubleshooting-quiz.md)
+- [Cuestionario de alta disponibilidad y resiliencia de Amazon EKS](./eks/10-eks-resiliency-quiz.md)
+- [Cuestionario de depuración avanzada de Amazon EKS](./eks/11-eks-advanced-debugging-quiz.md)
+- [Cuestionario de características de versiones y hoja de ruta de Kubernetes](./eks/12-kubernetes-version-roadmap-quiz.md)
 
-### Cilium
-- [Parte 1: Cuestionario de introducción](./networking/cilium/01-introduction-quiz.md)
-- [Parte 2: Cuestionario de eBPF](./networking/cilium/02-ebpf-quiz.md)
-- [Parte 3: Cuestionario de redes](./networking/cilium/03-networking-quiz.md)
-- [Parte 4: Cuestionario de IPAM y políticas](./networking/cilium/04-ipam-policy-quiz.md)
-- [Parte 5: Cuestionario de redes L2-L7](./networking/cilium/05-l2-l7-networking-quiz.md)
-- [Parte 6: Cuestionario de seguridad y visibilidad](./networking/cilium/06-security-visibility-quiz.md)
-- [Parte 7: Cuestionario de temas avanzados](./networking/cilium/07-advanced-topics-quiz.md)
-- [Cuestionario de conceptos de redes](./networking/cilium/networking-concepts-quiz.md)
-- [Cuestionario de glosario](./networking/cilium/glossary-quiz.md)
+### EKS Auto Mode
 
-### AI/ML
-- [Cuestionario de Workloads de AI/ML](./ai-ml/03-ai-ml-workloads-quiz.md)
-- [Cuestionario de infraestructura de AI](./ai-ml/06-ai-infrastructure-quiz.md)
-- [Cuestionario de entrenamiento de modelos](./ai-ml/05-model-training-quiz.md)
-- [Cuestionario de frameworks de inferencia](./ai-ml/04-inference-frameworks-quiz.md)
-- [Cuestionario de Deployment de vLLM](./ai-ml/04-vllm-deployment-quiz.md)
-- [Cuestionario de plataforma de AI agéntica en EKS](./ai-ml/08-agentic-ai-platform-quiz.md)
-- [Cuestionario de buenas prácticas de AI/ML](./ai-ml/07-ai-ml-best-practices-quiz.md)
+- [Cuestionario de inicio rápido de EKS Auto Mode](./eks-auto-mode/01-getting-started-quiz.md)
+- [Cuestionario de configuración de NodePool de EKS Auto Mode](./eks-auto-mode/02-nodepool-configuration-quiz.md)
+- [Cuestionario del comportamiento de escalado de EKS Auto Mode](./eks-auto-mode/03-scaling-behavior-quiz.md)
+- [Cuestionario de estrategias Spot de EKS Auto Mode](./eks-auto-mode/04-spot-strategies-quiz.md)
+- [Cuestionario de operaciones de EKS Auto Mode](./eks-auto-mode/05-operations-quiz.md)
+- [Cuestionario de gestión de costos de EKS Auto Mode](./eks-auto-mode/06-cost-management-quiz.md)
+- [Cuestionario del ciclo de vida de Node de EKS Auto Mode](./eks-auto-mode/07-node-lifecycle-quiz.md)
+- [Cuestionario de optimización de cargas de trabajo de EKS Auto Mode](./eks-auto-mode/08-workload-optimization-quiz.md)
+- [Cuestionario de guía de migración de EKS Auto Mode](./eks-auto-mode/09-migration-guide-quiz.md)
+
+### EKS Hybrid Nodes
+
+- [Cuestionario de requisitos previos de EKS Hybrid Nodes](./eks-hybrid-nodes/01-prerequisites-quiz.md)
+- [Cuestionario de configuración de red de EKS Hybrid Nodes](./eks-hybrid-nodes/02-network-configuration-quiz.md)
+- [Cuestionario de configuración del entorno air-gap de EKS Hybrid Nodes](./eks-hybrid-nodes/03-airgap-setup-quiz.md)
+- [Cuestionario de bootstrapping de Node de EKS Hybrid Nodes](./eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+- [Cuestionario de integración de GPU de EKS Hybrid Nodes](./eks-hybrid-nodes/05-gpu-integration-quiz.md)
+- [Cuestionario de ubicación de cargas de trabajo de EKS Hybrid Nodes](./eks-hybrid-nodes/06-workload-placement-quiz.md)
+- [Cuestionario de gestión del ciclo de vida de Node](./eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+- [Cuestionario de operaciones de EKS Hybrid Nodes](./eks-hybrid-nodes/08-operations-quiz.md)
+- [Cuestionario de instalación y migración del OS de servidor bare metal](./eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+- [Cuestionario de Gateway de EKS Hybrid Nodes](./eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+
+### GitOps
+
+- [Cuestionario de ArgoCD](./gitops/01-argocd-quiz.md)
+- [Cuestionario de FluxCD](./gitops/02-fluxcd-quiz.md)
+- [Cuestionario de comparación de herramientas GitOps](./gitops/03-gitops-comparison-quiz.md)
+- [Cuestionario de entrega progresiva de Flagger](./gitops/04-flagger-quiz.md)
+- [Cuestionario de Feature Flags y OpenFeature](./gitops/05-feature-flags-quiz.md)
+- [Cuestionario de instalación de ArgoCD](./gitops/argocd/01-installation-quiz.md)
+- [Cuestionario de aplicaciones de ArgoCD](./gitops/argocd/02-applications-quiz.md)
+- [Cuestionario de estrategias de sincronización de ArgoCD](./gitops/argocd/03-sync-strategies-quiz.md)
+- [Cuestionario de ApplicationSets de ArgoCD](./gitops/argocd/04-applicationsets-quiz.md)
+- [Cuestionario de gestión de tráfico de ArgoCD](./gitops/argocd/05-traffic-management-quiz.md)
+- [Cuestionario de proyectos y RBAC de ArgoCD](./gitops/argocd/06-projects-rbac-quiz.md)
+- [Cuestionario de seguridad de ArgoCD](./gitops/argocd/07-security-quiz.md)
+- [Cuestionario de notificaciones de ArgoCD](./gitops/argocd/08-notifications-quiz.md)
+- [Cuestionario de prácticas recomendadas de ArgoCD](./gitops/argocd/09-best-practices-quiz.md)
+- [Cuestionario de experimentos de Argo Rollouts](./gitops/argocd/10-rollouts-experiment-quiz.md)
+
+### Gobernanza de la nube
+
+- [Cuestionario de visión general de gobernanza de nube empresarial](./governance/00-governance-overview-quiz.md)
+- [Cuestionario de Landing Zone, OUs y control organizacional](./governance/01-landing-zone-and-ou-quiz.md)
+- [Cuestionario de estructura de cuentas y límites de IAM](./governance/02-account-and-iam-quiz.md)
+- [Cuestionario de arquitectura EKS multicuenta y multiclúster](./governance/03-eks-multi-account-multi-cluster-quiz.md)
+- [Cuestionario de VPC compartida y conectividad](./governance/04-shared-vpc-and-connectivity-quiz.md)
+- [Cuestionario de límites de datos y seguridad](./governance/05-data-security-boundaries-quiz.md)
+- [Cuestionario de framework de decisiones y diseño de PoC](./governance/06-decision-framework-and-poc-quiz.md)
 
 ### Redes
-- [Cuestionario de descripción general de redes](./networking/00-networking-overview-quiz.md)
-- [Cuestionario de VPC CNI](./networking/01-vpc-cni-quiz.md)
+
+- [Cuestionario de visión general de redes de Kubernetes](./networking/00-networking-overview-quiz.md)
+- [Cuestionario de Amazon VPC CNI](./networking/01-vpc-cni-quiz.md)
 - [Cuestionario de VPC Lattice](./networking/02-vpc-lattice-quiz.md)
 - [Cuestionario de AWS Load Balancer Controller](./networking/03-aws-lb-controller-quiz.md)
 - [Cuestionario de Gateway API](./networking/04-gateway-api-quiz.md)
+- [Cuestionario de conectividad VPC entre organizaciones](./networking/05-cross-org-vpc-connectivity-quiz.md)
+- [Cuestionario de benchmark de red de Pod](./networking/06-pod-network-benchmark-quiz.md)
+- [Cuestionario de introducción a Calico](./networking/calico/01-introduction-quiz.md)
+- [Cuestionario de arquitectura de Calico](./networking/calico/02-architecture-quiz.md)
+- [Cuestionario de modos de red de Calico](./networking/calico/03-networking-modes-quiz.md)
+- [Cuestionario avanzado de BGP](./networking/calico/04-bgp-deep-dive-quiz.md)
+- [Cuestionario de Network Policy](./networking/calico/05-network-policy-quiz.md)
+- [Cuestionario de dataplane eBPF](./networking/calico/06-ebpf-dataplane-quiz.md)
+- [Cuestionario de temas avanzados](./networking/calico/07-advanced-topics-quiz.md)
+- [Cuestionario de integración de EKS](./networking/calico/08-eks-integration-quiz.md)
+- [Cuestionario de operaciones](./networking/calico/09-operations-quiz.md)
+- [Cuestionario de glosario de Calico](./networking/calico/glossary-quiz.md)
 
-### Service Mesh
-- [Cuestionario de Istio](./service-mesh/02-istio-quiz.md)
+#### Cilium
+
+- [Cuestionario de introducción y conceptos básicos de Cilium](./networking/cilium/01-introduction-quiz.md)
+- [Cuestionario de Cilium eBPF](./networking/cilium/02-ebpf-quiz.md)
+- [Ejercicios de validación de redes de Cilium](./networking/cilium/03-networking-quiz.md)
+- [Cuestionario de IPAM y Network Policy de Cilium](./networking/cilium/04-ipam-policy-quiz.md)
+- [Cuestionario de redes y balanceo de carga L2–L7 de Cilium](./networking/cilium/05-l2-l7-networking-quiz.md)
+- [Cuestionario de seguridad y visibilidad de Cilium](./networking/cilium/06-security-visibility-quiz.md)
+- [Cuestionario avanzado de Cilium](./networking/cilium/07-advanced-topics-quiz.md)
+- [Cuestionario de glosario](./networking/cilium/glossary-quiz.md)
+- [Cuestionario de conceptos de redes de Cilium](./networking/cilium/networking-concepts-quiz.md)
+
+### Observabilidad
+
+- [Cuestionario de optimización de observabilidad](./observability/09-observability-optimization-quiz.md)
+- [Cuestionario de Prometheus Alertmanager](./observability/alerting/01-alertmanager-quiz.md)
+- [Cuestionario de alarmas de CloudWatch](./observability/alerting/02-cloudwatch-alarms-quiz.md)
+- [Cuestionario de Grafana OnCall](./observability/alerting/03-grafana-oncall-quiz.md)
+- [Cuestionario de dashboards de Grafana](./observability/grafana/grafana-quiz.md)
+- [Cuestionario del laboratorio de observabilidad, parte 1: configuración de infraestructura](./observability/labs/01-infrastructure-setup-quiz.md)
+- [Cuestionario del laboratorio de observabilidad, parte 2: stack de observabilidad](./observability/labs/02-observability-stack-quiz.md)
+- [Cuestionario del laboratorio de observabilidad, parte 3: Deployment de MSA y Canary](./observability/labs/03-msa-deployment-quiz.md)
+- [Cuestionario del laboratorio de observabilidad, parte 4: pruebas de carga y escalado automático](./observability/labs/04-load-testing-scaling-quiz.md)
+- [Cuestionario del laboratorio de observabilidad, parte 5: alertas y AIOps](./observability/labs/05-alerting-aiops-quiz.md)
+- [Cuestionario del laboratorio de observabilidad, parte 6: análisis de tracing distribuido](./observability/labs/06-distributed-tracing-quiz.md)
+- [Cuestionario de Grafana Loki](./observability/logging/01-loki-quiz.md)
+- [Cuestionario de Amazon OpenSearch Service](./observability/logging/02-opensearch-quiz.md)
+- [Cuestionario de CloudWatch Logs](./observability/logging/03-cloudwatch-logs-quiz.md)
+- [Cuestionario de ClickHouse para análisis de logs](./observability/logging/04-clickhouse-quiz.md)
+- [Cuestionario de comparación de recopiladores de logs](./observability/logging/05-collectors-quiz.md)
+- [Cuestionario de visión general de logging](./observability/logging/README-quiz.md)
+- [Cuestionario de visión general de métricas](./observability/metrics/00-metrics-overview-quiz.md)
+- [Cuestionario de Prometheus](./observability/metrics/01-prometheus-quiz.md)
+- [Cuestionario de VictoriaMetrics](./observability/metrics/02-victoriametrics-quiz.md)
+- [Cuestionario de Grafana Mimir](./observability/metrics/03-mimir-quiz.md)
+- [Cuestionario de métricas de CloudWatch](./observability/metrics/04-cloudwatch-metrics-quiz.md)
+- [Cuestionario de Datadog](./observability/metrics/05-datadog-quiz.md)
+- [Cuestionario de Grafana Tempo](./observability/tracing/01-tempo-quiz.md)
+- [Cuestionario de AWS X-Ray](./observability/tracing/02-xray-quiz.md)
+- [Cuestionario de OpenTelemetry](./observability/tracing/03-opentelemetry-quiz.md)
+- [Cuestionario de Dynatrace](./observability/tracing/04-dynatrace-quiz.md)
+
+### Operaciones
+
+- [Cuestionario de configuración de infraestructura](./ops/01-infrastructure-setup-quiz.md)
+- [Cuestionario avanzado de infraestructura](./ops/02-infrastructure-advanced-quiz.md)
+- [Cuestionario de pipelines de CI](./ops/03-ci-pipelines-quiz.md)
+- [Cuestionario de GitOps multiclúster](./ops/04-gitops-multi-cluster-quiz.md)
+- [Cuestionario de automatización GitOps](./ops/05-gitops-automation-quiz.md)
+- [Cuestionario de estrategias de escalado](./ops/06-scaling-strategies-quiz.md)
+- [Cuestionario de alertas de observabilidad](./ops/07-observability-alerts-quiz.md)
+- [Cuestionario de análisis de observabilidad](./ops/08-observability-analysis-quiz.md)
+- [Cuestionario de stack de observabilidad](./ops/09-observability-stack-quiz.md)
+- [Cuestionario de optimización de recursos](./ops/10-resource-optimization-quiz.md)
+- [Cuestionario de operaciones de actualización de EKS](./ops/11-upgrade-operations-quiz.md)
+- [Cuestionario de planificación de capacidad para eventos](./ops/12-event-capacity-planning-quiz.md)
+- [Cuestionario de plataforma de visibilidad de costos FinOps](./ops/13-finops-cost-platform-quiz.md)
+- [Cuestionario de Tekton Pipelines](./ops/14-tekton-pipelines-quiz.md)
+- [Cuestionario de operaciones de clúster zonal](./ops/15-zonal-operations-guide-quiz.md)
+- [Cuestionario de playbook de solución de problemas](./ops/16-troubleshooting-playbook-quiz.md)
+- [Cuestionario de experimentos de producción EKS Spot](./ops/17-spot-production-experiments-quiz.md)
+
+### Ingeniería de plataformas
+
+- [Cuestionario de visión general de ingeniería de plataformas](./platform-engineering/00-platform-engineering-overview-quiz.md)
+- [Cuestionario de Helm Package Manager](./platform-engineering/01-helm-quiz.md)
+- [Cuestionario de AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack-quiz.md)
+- [Cuestionario de migración de KRO Helm](./platform-engineering/03-kro-quiz.md)
+- [Cuestionario de mecanismos de extensión de Kubernetes](./platform-engineering/04-kubernetes-extensions-quiz.md)
+- [Cuestionario de Backstage IDP](./platform-engineering/06-backstage-idp-quiz.md)
+- [Cuestionario de Crossplane](./platform-engineering/07-crossplane-quiz.md)
+- [Cuestionario de vCluster](./platform-engineering/08-vcluster-quiz.md)
+
+### Programación
+
+- [Cuestionario de Scheduler personalizado (parte 1)](./scheduling/02-custom-scheduler-part1-quiz.md)
+- [Cuestionario de Scheduler personalizado (parte 2)](./scheduling/02-custom-scheduler-part2-quiz.md)
+- [Cuestionario de Scheduler personalizado (parte 3)](./scheduling/02-custom-scheduler-part3-quiz.md)
 
 ### Seguridad y políticas
-- [Cuestionario de gestión de políticas con Kyverno](./security/01-kyverno-policy-management-quiz.md)
+
+- [Cuestionario de gestión de políticas de Kyverno](./security/01-kyverno-policy-management-quiz.md)
 - [Cuestionario de autenticación y autorización de Kubernetes](./security/02-kubernetes-auth-authz-quiz.md)
 - [Cuestionario de Pod Security Standards](./security/03-pod-security-standards-quiz.md)
 - [Cuestionario de Network Policies](./security/04-network-policies-quiz.md)
 - [Cuestionario de gestión de Secrets](./security/05-secrets-management-quiz.md)
-- [Cuestionario de buenas prácticas de seguridad de EKS](./security/06-eks-security-best-practices-quiz.md)
-- [Cuestionario de seguridad de imágenes](./security/07-image-security-quiz.md)
-- [Cuestionario de seguridad en Runtime](./security/08-runtime-security-quiz.md)
+- [Cuestionario de prácticas recomendadas de seguridad de EKS](./security/06-eks-security-best-practices-quiz.md)
+- [Cuestionario de seguridad de imágenes de contenedor](./security/07-image-security-quiz.md)
+- [Cuestionario de seguridad en tiempo de ejecución](./security/08-runtime-security-quiz.md)
 - [Cuestionario de OPA Gatekeeper](./security/09-opa-gatekeeper-quiz.md)
+- [Cuestionario de cert-manager](./security/10-cert-manager-quiz.md)
+- [Cuestionario de Kubescape](./security/11-kubescape-quiz.md)
+- [Cuestionario de SPIFFE/SPIRE](./security/12-spiffe-spire-quiz.md)
 
-### GitOps
-- [Cuestionario de ArgoCD](./gitops/01-argocd-quiz.md)
+### Service Mesh
 
-### Autoscaling
-- [Cuestionario de KEDA](./autoscaling/05-keda-quiz.md)
-- [Cuestionario de Karpenter](./autoscaling/06-karpenter-quiz.md)
+- [Cuestionario de Istio](./service-mesh/02-istio-quiz.md)
+- [Cuestionario de arquitectura de Cilium Service Mesh](./service-mesh/cilium-service-mesh/architecture.md)
+- [Cuestionario de Ingress y Gateway de Cilium Service Mesh](./service-mesh/cilium-service-mesh/ingress-gateway.md)
+- [Cuestionario de observabilidad de Cilium Service Mesh](./service-mesh/cilium-service-mesh/observability.md)
+- [Cuestionario de seguridad de Cilium Service Mesh](./service-mesh/cilium-service-mesh/security.md)
+- [Cuestionario de gestión de tráfico de Cilium Service Mesh](./service-mesh/cilium-service-mesh/traffic-management.md)
+- [Cuestionario de temas avanzados de Istio](./service-mesh/istio/advanced.md)
+- [Cuestionario básico](./service-mesh/istio/basic.md)
+- [Cuestionario de comparación de Istio](./service-mesh/istio/comparison.md)
+- [Cuestionario de observabilidad](./service-mesh/istio/observability.md)
+- [Cuestionario de resiliencia](./service-mesh/istio/resilience.md)
+- [Cuestionario de seguridad](./service-mesh/istio/security.md)
+- [Cuestionario de gestión de tráfico](./service-mesh/istio/traffic-management.md)
+- [Cuestionario de arquitectura de Linkerd](./service-mesh/linkerd/architecture.md)
+- [Cuestionario de instalación de Linkerd](./service-mesh/linkerd/installation.md)
+- [Cuestionario multiclúster de Linkerd](./service-mesh/linkerd/multi-cluster.md)
+- [Cuestionario de observabilidad de Linkerd](./service-mesh/linkerd/observability.md)
+- [Cuestionario de seguridad de Linkerd](./service-mesh/linkerd/security.md)
+- [Cuestionario de gestión de tráfico de Linkerd](./service-mesh/linkerd/traffic-management.md)
 
-### Observabilidad
-- [Cuestionario de guía de optimización de observabilidad](./observability/09-observability-optimization-quiz.md)
+### Almacenamiento
 
-### Scheduling
-- [Cuestionario de Custom Scheduler - Parte 1](./scheduling/02-custom-scheduler-part1-quiz.md)
-- [Cuestionario de Custom Scheduler - Parte 2](./scheduling/02-custom-scheduler-part2-quiz.md)
-- [Cuestionario de Custom Scheduler - Parte 3](./scheduling/02-custom-scheduler-part3-quiz.md)
-
-### Platform Engineering
-- [Cuestionario de descripción general de Platform Engineering](./platform-engineering/00-platform-engineering-overview-quiz.md)
-- [Cuestionario de Helm](./platform-engineering/01-helm-quiz.md)
-- [Cuestionario de AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack-quiz.md)
-- [Cuestionario de Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro-quiz.md)
-- [Cuestionario de mecanismos de extensión de Kubernetes](./platform-engineering/04-kubernetes-extensions-quiz.md)
-
-## Cómo usar los cuestionarios
-
-1. Primero lee los materiales de aprendizaje del tema correspondiente.
-2. Realiza el cuestionario para comprobar tu comprensión.
-3. Haz clic en el desplegable "Mostrar respuesta" debajo de cada pregunta para consultar la respuesta.
-4. Si es necesario, vuelve a los materiales de aprendizaje para repasar los conceptos.
+- [Cuestionario de benchmark medido de EBS gp2 frente a gp3](./storage/01-ebs-gp2-gp3-benchmark-quiz.md)
