@@ -3,7 +3,7 @@
     "path": "ko/platform-engineering/08-vcluster.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "9fd418513d0918dfb138963a1bf3669f8b8e9b30a7650a1b173bbbaf3a2b81b5",
+    "reviewedSha256": "44172aad7c90a2cb7b1c4e8107eb6ee4981973e711c0e29165457418c7635fbc",
     "summary": "All4MD106uniqueblocks/8quiztopicseachreviewed;0.37schema/Helm/lifecycle/network/usage3/4MD10figures30responsivepassed;runtime/APIattemptlimitsexplicit.",
     "validationReport": "docs/reviews/2026-09-11/platform-vcluster-validation.json"
   },
@@ -19,7 +19,7 @@
     "path": "en/platform-engineering/08-vcluster.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "e2eecbb920c2e1cc6c8c002f23d2d13f55474c96625b0a1e981d480ff350e893",
+    "reviewedSha256": "78343173c79ca5372e8ff6a12731b3900347aa324d834d7e545cda5e82c2e2d9",
     "summary": "All4MD106uniqueblocks/8quiztopicseachreviewed;0.37schema/Helm/lifecycle/network/usage3/4MD10figures30responsivepassed;runtime/APIattemptlimitsexplicit.",
     "validationReport": "docs/reviews/2026-09-11/platform-vcluster-validation.json"
   },

@@ -86,17 +86,17 @@
     {
       "from": 160,
       "to": 248,
-      "label": "가상 클러스터 내부 — Deployment·ReplicaSet은 여기서만 존재"
+      "label": "Inside the virtual cluster: Deployment and ReplicaSet remain virtual"
     },
     {
       "from": 262,
       "to": 382,
-      "label": "syncToHost — Pod만 호스트로 동기화"
+      "label": "syncToHost: synchronize the Pod to the host"
     },
     {
       "from": 396,
       "to": 545,
-      "label": "상태 역전파 — 호스트 → 가상"
+      "label": "Status propagation: host to virtual cluster"
     }
   ],
   "messages": [

@@ -41,7 +41,7 @@
     "results": [
       {
         "path": "ko/platform-engineering/08-vcluster.md",
-        "sha256": "9fd418513d0918dfb138963a1bf3669f8b8e9b30a7650a1b173bbbaf3a2b81b5",
+        "sha256": "44172aad7c90a2cb7b1c4e8107eb6ee4981973e711c0e29165457418c7635fbc",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -158,7 +158,7 @@
       },
       {
         "path": "en/platform-engineering/08-vcluster.md",
-        "sha256": "e2eecbb920c2e1cc6c8c002f23d2d13f55474c96625b0a1e981d480ff350e893",
+        "sha256": "78343173c79ca5372e8ff6a12731b3900347aa324d834d7e545cda5e82c2e2d9",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -445,7 +445,7 @@
     {
       "document": "ko/platform-engineering/08-vcluster.md",
       "example": "examples/platform/vcluster/host-governance.yaml",
-      "sha256": "3bdd0eb2f2702cc5499d2ae20361c37ad5e8af8093309002fa8724e14db6ae3e"
+      "sha256": "8e49d4a4aca299d069182189fa7a6517d5aab147ae21d845ce90e6c7fc1f3c8d"
     },
     {
       "document": "ko/platform-engineering/08-vcluster.md",
@@ -470,7 +470,7 @@
     {
       "document": "en/platform-engineering/08-vcluster.md",
       "example": "examples/platform/vcluster/host-governance.yaml",
-      "sha256": "3bdd0eb2f2702cc5499d2ae20361c37ad5e8af8093309002fa8724e14db6ae3e"
+      "sha256": "8e49d4a4aca299d069182189fa7a6517d5aab147ae21d845ce90e6c7fc1f3c8d"
     },
     {
       "document": "en/platform-engineering/08-vcluster.md",
@@ -579,61 +579,6 @@
         "pass": true
       },
       {
-        "file": "en-platform-engineering-08-vcluster-11.html",
-        "width": 375,
-        "state": {
-          "width": 375,
-          "scroll": 375,
-          "svg": 2,
-          "theme": "light",
-          "bodyText": 954,
-          "missingImages": []
-        },
-        "errors": [],
-        "blocked": [
-          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-        ],
-        "pass": true
-      },
-      {
-        "file": "en-platform-engineering-08-vcluster-11.html",
-        "width": 768,
-        "state": {
-          "width": 768,
-          "scroll": 768,
-          "svg": 2,
-          "theme": "light",
-          "bodyText": 954,
-          "missingImages": []
-        },
-        "errors": [],
-        "blocked": [
-          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-        ],
-        "pass": true
-      },
-      {
-        "file": "en-platform-engineering-08-vcluster-11.html",
-        "width": 1920,
-        "state": {
-          "width": 1920,
-          "scroll": 1920,
-          "svg": 2,
-          "theme": "light",
-          "bodyText": 954,
-          "missingImages": [],
-          "svgExport": {
-            "bytes": 53797,
-            "valid": true
-          }
-        },
-        "errors": [],
-        "blocked": [
-          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-        ],
-        "pass": true
-      },
-      {
         "file": "en-platform-engineering-08-vcluster-12.html",
         "width": 375,
         "state": {
@@ -679,61 +624,6 @@
           "missingImages": [],
           "svgExport": {
             "bytes": 56595,
-            "valid": true
-          }
-        },
-        "errors": [],
-        "blocked": [
-          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-        ],
-        "pass": true
-      },
-      {
-        "file": "en-platform-engineering-08-vcluster-13.html",
-        "width": 375,
-        "state": {
-          "width": 375,
-          "scroll": 375,
-          "svg": 2,
-          "theme": "light",
-          "bodyText": 987,
-          "missingImages": []
-        },
-        "errors": [],
-        "blocked": [
-          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-        ],
-        "pass": true
-      },
-      {
-        "file": "en-platform-engineering-08-vcluster-13.html",
-        "width": 768,
-        "state": {
-          "width": 768,
-          "scroll": 768,
-          "svg": 2,
-          "theme": "light",
-          "bodyText": 987,
-          "missingImages": []
-        },
-        "errors": [],
-        "blocked": [
-          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-        ],
-        "pass": true
-      },
-      {
-        "file": "en-platform-engineering-08-vcluster-13.html",
-        "width": 1920,
-        "state": {
-          "width": 1920,
-          "scroll": 1920,
-          "svg": 2,
-          "theme": "light",
-          "bodyText": 987,
-          "missingImages": [],
-          "svgExport": {
-            "bytes": 54108,
             "valid": true
           }
         },
@@ -1072,6 +962,116 @@
           "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
         ],
         "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-11.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1022,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-11.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1022,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-11.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1022,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53865,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-13.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1040,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-13.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1040,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-13.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1040,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54160,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
       }
     ],
     "scope": "30 offline production-normalized viewers; motion/reduced-motion/visibility/theme/guided controls and10SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
@@ -1151,15 +1151,15 @@
     },
     {
       "path": "assets/diagrams/archify/en-platform-engineering-08-vcluster-11.sequence.json",
-      "sha256": "162206f9f98b6e423a25ceeff1dfde7c7c3c8907fe374955da5df4fda9447c66"
+      "sha256": "a93ffdec0efadb0cb953d1da7a2e7fea20a8eb0253b88eb92aaa7e6ad8571cc6"
     },
     {
       "path": "public/archmaps/en-platform-engineering-08-vcluster-11.html",
-      "sha256": "3a5e1a662fb00c1bfdaf745fee4cf816bbd0de81fe94ac2fb66894327d381e90"
+      "sha256": "d1aed3e3ce8fe716de517006091d856c4742c1c33b49905ef7065b0e85d0e95e"
     },
     {
       "path": "en/.gitbook/assets/en-platform-engineering-08-vcluster-11.png",
-      "sha256": "dd448c042533f6988930955fe6e2bfc0b27b55aad12cb4b244bddae8fa753ade"
+      "sha256": "0f24698bfa9d786d68f33938080d3bcc5f0bea8297cc557d0849dc365b57e610"
     },
     {
       "path": "assets/diagrams/archify/en-platform-engineering-08-vcluster-12.architecture.json",
@@ -1175,15 +1175,15 @@
     },
     {
       "path": "assets/diagrams/archify/en-platform-engineering-08-vcluster-13.sequence.json",
-      "sha256": "630ac38d4e30f61746d4d826faea0aa1be1505b8421b823ca01a989a93a34838"
+      "sha256": "e13b87427d22c0e98d56cea6134f31c70468d3fb12da0019be98c5179d140aeb"
     },
     {
       "path": "public/archmaps/en-platform-engineering-08-vcluster-13.html",
-      "sha256": "6f4c8c867929447bef69c83740ba87037ad9988a8361cf228705f0134b343ddf"
+      "sha256": "cc33efa08b234e3d9c9d3319aa63e241fe9ea3d7078fe1e220046dcc0eee2941"
     },
     {
       "path": "en/.gitbook/assets/en-platform-engineering-08-vcluster-13.png",
-      "sha256": "7a1e4f88eda87c5d76fd2520a4fbca5b738446c5b2b4aa68cabc94abed217144"
+      "sha256": "91e6f3d1d86776bb5edcaa0790c472a794831df734bbfde6810664b08b838c4b"
     },
     {
       "path": "assets/diagrams/archify/en-platform-engineering-08-vcluster-14.lifecycle.json",
@@ -1219,11 +1219,35 @@
       "public/archmaps/ko-platform-engineering-08-vcluster-13.html": "644106f42114a335f312743ef3d309f481ff03fc47c5f843a5e70709a98c0592",
       "public/archmaps/ko-platform-engineering-08-vcluster-14.html": "400f2f13ba658ae93ae434d1ce808a7ec38e20c1362cf514ecfa498ed1ef3303",
       "public/archmaps/en-platform-engineering-08-vcluster-10.html": "ff93c336e2bcdeb3aa719dc8bc6781dbec43ce79c9d77c32076de93695e72037",
-      "public/archmaps/en-platform-engineering-08-vcluster-11.html": "3a5e1a662fb00c1bfdaf745fee4cf816bbd0de81fe94ac2fb66894327d381e90",
+      "public/archmaps/en-platform-engineering-08-vcluster-11.html": "d1aed3e3ce8fe716de517006091d856c4742c1c33b49905ef7065b0e85d0e95e",
       "public/archmaps/en-platform-engineering-08-vcluster-12.html": "0ae741e093bbae575a76c0472cb4b0101fae8325d0ac4cbffd99a46b2872c8a8",
-      "public/archmaps/en-platform-engineering-08-vcluster-13.html": "6f4c8c867929447bef69c83740ba87037ad9988a8361cf228705f0134b343ddf",
+      "public/archmaps/en-platform-engineering-08-vcluster-13.html": "cc33efa08b234e3d9c9d3319aa63e241fe9ea3d7078fe1e220046dcc0eee2941",
       "public/archmaps/en-platform-engineering-08-vcluster-14.html": "aa41fd73179f3743bab86098e6fbde6acd9114b8e77b9aa3cf6acdd2445d2918"
     },
     "cases": "30responsive/motion/reduced-motion/visibility/theme/guidedcasesand10SVGexports;noJSerrors"
+  },
+  "reviewFixes": {
+    "ids": [
+      "VCL-R1-001",
+      "VCL-R1-002"
+    ],
+    "scope": "Translate6Englishsequencephaselabels;regenerate2HTML/PNG;6responsive/motion/exportcasespass;2PNGsindividuallyinspected",
+    "sourceHashes": {
+      "assets/diagrams/archify/en-platform-engineering-08-vcluster-11.sequence.json": "a93ffdec0efadb0cb953d1da7a2e7fea20a8eb0253b88eb92aaa7e6ad8571cc6",
+      "public/archmaps/en-platform-engineering-08-vcluster-11.html": "d1aed3e3ce8fe716de517006091d856c4742c1c33b49905ef7065b0e85d0e95e",
+      "en/.gitbook/assets/en-platform-engineering-08-vcluster-11.png": "0f24698bfa9d786d68f33938080d3bcc5f0bea8297cc557d0849dc365b57e610",
+      "assets/diagrams/archify/en-platform-engineering-08-vcluster-13.sequence.json": "e13b87427d22c0e98d56cea6134f31c70468d3fb12da0019be98c5179d140aeb",
+      "public/archmaps/en-platform-engineering-08-vcluster-13.html": "cc33efa08b234e3d9c9d3319aa63e241fe9ea3d7078fe1e220046dcc0eee2941",
+      "en/.gitbook/assets/en-platform-engineering-08-vcluster-13.png": "91e6f3d1d86776bb5edcaa0790c472a794831df734bbfde6810664b08b838c4b"
+    },
+    "ephemeralDefaults": {
+      "source": "examples/platform/vcluster/host-governance.yaml",
+      "sha256": "8e49d4a4aca299d069182189fa7a6517d5aab147ae21d845ce90e6c7fc1f3c8d",
+      "defaultRequest": "128Mi",
+      "defaultLimit": "1Gi",
+      "upstreamSource": "https://github.com/kubernetes/kubernetes/blob/v1.36.2/plugin/pkg/admission/limitranger/admission.go",
+      "upstreamSha256": "560c6a9e053f29031b13a1a27591036275a0c0d26e9f4f76380286cc0b120b42",
+      "verification": "ReadexactupstreamdefaultingloopsforContainersandInitContainers;2pairedMDcompiled;exactembeddedYAMLmatches. Noliveadmission/defaultingexecutionclaimed."
+    }
   }
 }

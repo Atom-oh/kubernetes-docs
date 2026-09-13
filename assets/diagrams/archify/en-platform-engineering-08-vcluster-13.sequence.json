@@ -85,17 +85,17 @@
     {
       "from": 160,
       "to": 280,
-      "label": "환경 요청 · PR 승인"
+      "label": "Environment request and PR approval"
     },
     {
       "from": 300,
       "to": 435,
-      "label": "GitOps 프로비저닝"
+      "label": "GitOps provisioning"
     },
     {
       "from": 455,
       "to": 590,
-      "label": "완료 알림 · 접속"
+      "label": "Completion notification and access"
     }
   ],
   "messages": [

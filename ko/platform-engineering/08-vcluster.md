@@ -180,10 +180,14 @@ spec:
       defaultRequest:
         cpu: 100m
         memory: 128Mi
+        ephemeral-storage: 128Mi
       default:
         cpu: "1"
         memory: 512Mi
+        ephemeral-storage: 1Gi
 ```
+
+LimitRange는 선언이 없는 일반·init container에 ephemeral-storage request/limit도 기본 적용합니다. Pod가 이 limit을 생략하면 ephemeral-storage quota가 강제되지 않을 수 있으므로, host로 변환된 tenant Pod와 control-plane init container의 최종 값을 확인하세요. 이 값은 quota 계산을 위한 예시이며 용량 예약이나 성능 보장이 아닙니다.
 
 chart의 control-plane Syncer는 기본 UID 0으로 렌더링됩니다. 따라서 host namespace에 restricted를 무조건 적용하면 control plane부터 거부될 수 있습니다. 위 namespace의 baseline과 profile의 policies.podSecurityStandard: restricted는 대상이 다릅니다. 전자는 host admission, 후자는 virtual workload 검사이며 실제 번역된 Pod와 host 정책을 함께 검증해야 합니다.
 

@@ -180,10 +180,14 @@ spec:
       defaultRequest:
         cpu: 100m
         memory: 128Mi
+        ephemeral-storage: 128Mi
       default:
         cpu: "1"
         memory: 512Mi
+        ephemeral-storage: 1Gi
 ```
+
+LimitRange also defaults ephemeral-storage requests/limits for ordinary and init containers that omit them. A Pod without this limit may escape ephemeral-storage quota enforcement; inspect the final translated tenant Pods and control-plane init containers. These example values support quota accounting, not capacity reservations or performance guarantees.
 
 The chart renders the control-plane Syncer as UID 0. Applying restricted blindly to the host namespace can reject the control plane. Host baseline admission and profile policies.podSecurityStandard: restricted target different layers: host Pods versus virtual workload validation. Check translated Pods against actual host policy.
 
