@@ -2054,7 +2054,7 @@
           "scroll": 375,
           "svg": 2,
           "theme": "light",
-          "bodyText": 998,
+          "bodyText": 994,
           "missingImages": []
         },
         "errors": [],
@@ -2071,7 +2071,7 @@
           "scroll": 768,
           "svg": 2,
           "theme": "light",
-          "bodyText": 998,
+          "bodyText": 994,
           "missingImages": []
         },
         "errors": [],
@@ -2088,10 +2088,10 @@
           "scroll": 1920,
           "svg": 2,
           "theme": "light",
-          "bodyText": 998,
+          "bodyText": 994,
           "missingImages": [],
           "svgExport": {
-            "bytes": 53279,
+            "bytes": 53273,
             "valid": true
           }
         },
@@ -2109,7 +2109,7 @@
           "scroll": 375,
           "svg": 2,
           "theme": "light",
-          "bodyText": 906,
+          "bodyText": 912,
           "missingImages": []
         },
         "errors": [],
@@ -2126,7 +2126,7 @@
           "scroll": 768,
           "svg": 2,
           "theme": "light",
-          "bodyText": 906,
+          "bodyText": 912,
           "missingImages": []
         },
         "errors": [],
@@ -2143,10 +2143,10 @@
           "scroll": 1920,
           "svg": 2,
           "theme": "light",
-          "bodyText": 906,
+          "bodyText": 912,
           "missingImages": [],
           "svgExport": {
-            "bytes": 53417,
+            "bytes": 53423,
             "valid": true
           }
         },
@@ -2384,7 +2384,7 @@
           "scroll": 375,
           "svg": 2,
           "theme": "light",
-          "bodyText": 688,
+          "bodyText": 650,
           "missingImages": []
         },
         "errors": [],
@@ -2401,7 +2401,7 @@
           "scroll": 768,
           "svg": 2,
           "theme": "light",
-          "bodyText": 688,
+          "bodyText": 650,
           "missingImages": []
         },
         "errors": [],
@@ -2418,10 +2418,10 @@
           "scroll": 1920,
           "svg": 2,
           "theme": "light",
-          "bodyText": 688,
+          "bodyText": 650,
           "missingImages": [],
           "svgExport": {
-            "bytes": 52822,
+            "bytes": 52781,
             "valid": true
           }
         },
@@ -2439,7 +2439,7 @@
           "scroll": 375,
           "svg": 2,
           "theme": "light",
-          "bodyText": 681,
+          "bodyText": 668,
           "missingImages": []
         },
         "errors": [],
@@ -2456,7 +2456,7 @@
           "scroll": 768,
           "svg": 2,
           "theme": "light",
-          "bodyText": 681,
+          "bodyText": 668,
           "missingImages": []
         },
         "errors": [],
@@ -2473,10 +2473,10 @@
           "scroll": 1920,
           "svg": 2,
           "theme": "light",
-          "bodyText": 681,
+          "bodyText": 668,
           "missingImages": [],
           "svgExport": {
-            "bytes": 52617,
+            "bytes": 52603,
             "valid": true
           }
         },
@@ -2947,11 +2947,11 @@
       },
       {
         "file": "en-observability-alerting-02-cloudwatch-alarms-3.html",
-        "sha256": "33a873785c7512ed67047b2b5acf82902c8662883ebce689d7918725090a8cf3"
+        "sha256": "7c630faefe908f21a4dffc3d6ddb4c436f9fcbe87d9fa8d590171cd918033ffa"
       },
       {
         "file": "en-observability-alerting-02-cloudwatch-alarms-4.html",
-        "sha256": "01b1f70d9c60fe27423d45c9ad3cfc6aff98094965c00df82c4e1170ad6f0208"
+        "sha256": "5aefe708428f3a95e21970abca6ff7bff2fa7a80c37503eb07d2ef7e4b0c1607"
       },
       {
         "file": "en-observability-alerting-02-cloudwatch-alarms-5.html",
@@ -2971,11 +2971,11 @@
       },
       {
         "file": "ko-observability-alerting-02-cloudwatch-alarms-3.html",
-        "sha256": "a4bc6670a862bcdc2fd5d4208110dc7d7ffb56f4851bfa5b3cc9a05825e7e8e8"
+        "sha256": "c61e7567cbd4f59be06f89fb8a38f194f3f6924b7ba211cfa5528fc85c20635d"
       },
       {
         "file": "ko-observability-alerting-02-cloudwatch-alarms-4.html",
-        "sha256": "1e1bfdc38339109b9659c23991b7a633e4645429aa2321b2ce22c96eec0bef70"
+        "sha256": "e28cbc5771e07da500a860556cf0a88ef59922d95ceab18c359b8dec31c0bd5e"
       },
       {
         "file": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
@@ -3003,11 +3003,11 @@
     },
     {
       "path": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-3.workflow.json",
-      "sha256": "bd7614aeb2ae494a026e9d1be41c02fac258f8a7b27e947cde2c6bd64b7cabc9"
+      "sha256": "36f421dca4203ad5ffedd87b4851bcf1c719fd6d1578fc64990d642241d7fd47"
     },
     {
       "path": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-4.workflow.json",
-      "sha256": "04343bef14a058e6b5473ea3e71a810b40839d8b37842d4caf59c5caa36b42bc"
+      "sha256": "3141b03a9698d051735b2b4ccee3ee540301ba8d107e8f335dfcae97e75292b8"
     },
     {
       "path": "assets/diagrams/archify/en-observability-alerting-02-cloudwatch-alarms-5.architecture.json",
@@ -3027,11 +3027,11 @@
     },
     {
       "path": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-3.workflow.json",
-      "sha256": "3bb5e1d5d68a52941b5c8ce31f0d40b0bba7a485be872d2407f4bd9275bde269"
+      "sha256": "685c364c213dacffd9fffed6094866eab463a7b35d8687ce3d9c607fc1b2d27b"
     },
     {
       "path": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-4.workflow.json",
-      "sha256": "80256ae5b303c7e0d126c0e709edbcdb3daf11c56c3364e7bf385f27a372abeb"
+      "sha256": "27f4290de044c9d23093fb92e9e0223a7c0ef98769552a1ec0db5499a9f92782"
     },
     {
       "path": "assets/diagrams/archify/ko-observability-alerting-02-cloudwatch-alarms-5.architecture.json",
@@ -3051,11 +3051,11 @@
     },
     {
       "path": "en/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png",
-      "sha256": "a91ec514d1a0d4da69a9e9e82ff82b62c375a6712cba383e48fc0f6bb36f64ac"
+      "sha256": "df7dfb84ec12eacc978afea44234fbad99b0991fe03d2b911ea82f09b65d577c"
     },
     {
       "path": "en/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png",
-      "sha256": "690ef076a5491835123a49eaadc2623f66d51cfcd2f41d8d44bc9504f43186d1"
+      "sha256": "ab6052235feb5a9c5f00c2d17e7484f9fdf4ecc7ab0867787982b60ee2dd89e2"
     },
     {
       "path": "en/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png",
@@ -3095,11 +3095,11 @@
     },
     {
       "path": "ko/.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-3.png",
-      "sha256": "731de9a00815b0a252d5a8de35ae59b58863b38996428f753d88f5fc7b5d6de8"
+      "sha256": "acbb566ab6620635de262bfd651f77f8a5af7ab3da870a541431f1bb8eecf3c0"
     },
     {
       "path": "ko/.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-4.png",
-      "sha256": "d1f47a67b088f17b7da9fa76031c244b25b5a0f59f7a440bb97dc63e3acd1e48"
+      "sha256": "b8a4e5b2e57898134238f9fd2e6ccc68989c202af9aee4c7cd33b0142792345b"
     },
     {
       "path": "ko/.gitbook/assets/ko-observability-alerting-02-cloudwatch-alarms-5.png",
@@ -3127,11 +3127,11 @@
     },
     {
       "path": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-3.html",
-      "sha256": "b4b7657eaaff843c96e59fadc375e64cc334b707deda9060c7d1c6b268af5ead"
+      "sha256": "927cd8a396f1f9191c0d6c4ae6f1222b7778f091599fbb6a3b2413a61bd1c4db"
     },
     {
       "path": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-4.html",
-      "sha256": "248dae23364198b197e07f283cb78c6b89b3414dcb17e5b61850762e293ed3bb"
+      "sha256": "fabac5f89dde72471eb89427b23c17fb7ac07ad24d242f7a53eb280c73fc6685"
     },
     {
       "path": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-5.html",
@@ -3151,11 +3151,11 @@
     },
     {
       "path": "public/archmaps/ko-observability-alerting-02-cloudwatch-alarms-3.html",
-      "sha256": "d977ed4fa64918f5341615c09b67245e4ce21bb3c072557f92d49dea91860009"
+      "sha256": "9653662548b02d8e5b390e41847e34799c8606e3546f5ad37f63e8fcacee6f75"
     },
     {
       "path": "public/archmaps/ko-observability-alerting-02-cloudwatch-alarms-4.html",
-      "sha256": "b411beff8a64b3923db753a31ad6b601597fce9e55c7537084d649d0d7638e2e"
+      "sha256": "89b43037cde8967f358292a69aeec3021f002c9878293caf763a6e43901e8dbe"
     },
     {
       "path": "public/archmaps/ko-observability-alerting-02-cloudwatch-alarms-5.html",
@@ -3185,5 +3185,13 @@
     "AWS official pages disagree about DynamoDB missing-data overrides; no blanket DynamoDB claim is added.",
     "Browser MCP unavailable because configured Chrome is absent; actual installed Playwright/Chromium used with offline fonts.",
     "Full VitePress build runs only in GitHub ARM CI."
-  ]
+  ],
+  "legendFollowup": {
+    "finding": "CLOUDWATCH-R1-001",
+    "change": "FourworkflowlegendsnownameProcessing/Metricdata/Decision/Lambdafunctions/AWSservicesinappropriateauthorlanguage;topologyunchanged.",
+    "responsiveCases": 12,
+    "desktopCases": 16,
+    "individualPNGReinspection": 4,
+    "scope": "Onlylegendlabelsandgeneratedartifactschanged;document/code/nativecontractsunchanged."
+  }
 }

@@ -38,7 +38,30 @@
         ],
         "note": "SSM Runbook을 실행하거나 Step Functions 복구 워크플로우를 시작합니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Lambda 함수"
+        },
+        "database": {
+          "label": "메트릭 데이터"
+        },
+        "security": {
+          "label": "라우팅 규칙"
+        },
+        "cloud": {
+          "label": "AWS 서비스"
+        },
+        "external": {
+          "label": "알림"
+        },
+        "messagebus": {
+          "label": "이벤트 버스"
+        }
+      }
+    }
   },
   "lanes": [
     {

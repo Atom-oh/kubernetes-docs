@@ -29,7 +29,30 @@
         ],
         "note": "범위 이탈 datapoint를 M-of-N 설정으로 평가합니다. 단일 이탈이 항상 즉시 ALARM은 아닙니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리"
+        },
+        "database": {
+          "label": "메트릭 데이터"
+        },
+        "security": {
+          "label": "판정"
+        },
+        "cloud": {
+          "label": "클라우드 구성요소"
+        },
+        "external": {
+          "label": "알림"
+        },
+        "messagebus": {
+          "label": "이벤트 버스"
+        }
+      }
+    }
   },
   "lanes": [
     {

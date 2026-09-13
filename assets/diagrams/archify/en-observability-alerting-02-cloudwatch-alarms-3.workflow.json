@@ -30,7 +30,30 @@
         ],
         "note": "Breaching points are evaluated with the configured M-of-N settings; one outlier does not always trigger ALARM."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Processing"
+        },
+        "database": {
+          "label": "Metric data"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "cloud": {
+          "label": "Cloud component"
+        },
+        "external": {
+          "label": "Notification"
+        },
+        "messagebus": {
+          "label": "Event bus"
+        }
+      }
+    }
   },
   "lanes": [
     {

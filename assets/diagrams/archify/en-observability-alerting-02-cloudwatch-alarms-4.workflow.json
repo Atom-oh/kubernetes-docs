@@ -39,7 +39,30 @@
         ],
         "note": "Run an SSM runbook or start a Step Functions recovery workflow."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Lambda function"
+        },
+        "database": {
+          "label": "Metric data"
+        },
+        "security": {
+          "label": "Routing rule"
+        },
+        "cloud": {
+          "label": "AWS service"
+        },
+        "external": {
+          "label": "Notification"
+        },
+        "messagebus": {
+          "label": "Event bus"
+        }
+      }
+    }
   },
   "lanes": [
     {
