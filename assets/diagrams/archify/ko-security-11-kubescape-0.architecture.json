@@ -32,7 +32,7 @@
           "rbac",
           "risk"
         ],
-        "note": "프레임워크 기준의 컨트롤 평가, 이미지 취약점 스캔, RBAC 분석 결과가 Risk Calculator에서 하나의 위험도로 합쳐진다."
+        "note": "구성 컨트롤의 score와 complianceScore, 이미지 CVE 결과는 서로 다른 항목이다. 하나의 위험도로 합친다고 가정하지 않는다."
       },
       {
         "id": "outputs",
@@ -44,7 +44,7 @@
           "cloud",
           "alert"
         ],
-        "note": "산정된 위험도는 리포트로 취합되어 JSON/SARIF, Kubescape Cloud, 알림 채널로 전달된다."
+        "note": "결과는 선택한 형식으로 출력한다. SaaS 제출과 알림은 명시적으로 구성한 경로만 사용한다."
       }
     ],
     "legend": {
@@ -126,7 +126,7 @@
       "id": "vuln",
       "type": "backend",
       "label": "Vulnerability Scanner",
-      "sublabel": "이미지 취약점 스캔",
+      "sublabel": "선택 기능 · 이미지/DB 필요",
       "pos": [
         330,
         300
@@ -139,8 +139,8 @@
     {
       "id": "rbac",
       "type": "backend",
-      "label": "RBAC Analyzer",
-      "sublabel": "권한 분석",
+      "label": "RBAC Controls",
+      "sublabel": "구성 스캔의 권한 검사",
       "pos": [
         330,
         430
@@ -153,8 +153,8 @@
     {
       "id": "risk",
       "type": "security",
-      "label": "Risk Calculator",
-      "sublabel": "통합 위험도 산정",
+      "label": "결과 집계",
+      "sublabel": "Posture · CVE 별도 항목",
       "pos": [
         620,
         300
@@ -196,7 +196,7 @@
       "id": "cloud",
       "type": "cloud",
       "label": "Kubescape Cloud",
-      "sublabel": "중앙 대시보드",
+      "sublabel": "명시적으로 구성한 backend",
       "pos": [
         1160,
         300
@@ -210,7 +210,7 @@
       "id": "alert",
       "type": "messagebus",
       "label": "알림 / 알람",
-      "sublabel": "Slack · SIEM 등",
+      "sublabel": "별도 연동 설정 필요",
       "pos": [
         1160,
         430
@@ -298,8 +298,12 @@
       "id": "risk-to-report",
       "from": "risk",
       "to": "report",
-      "label": "위험도 점수",
-      "variant": "emphasis"
+      "label": "별도 결과 항목",
+      "variant": "emphasis",
+      "labelAt": [
+        860,
+        282
+      ]
     },
     {
       "id": "report-to-json",
@@ -310,12 +314,19 @@
       "id": "report-to-cloud",
       "from": "report",
       "to": "cloud",
-      "variant": "dashed"
+      "variant": "dashed",
+      "label": "선택 연동",
+      "labelAt": [
+        1245,
+        285
+      ]
     },
     {
       "id": "report-to-alert",
       "from": "report",
-      "to": "alert"
+      "to": "alert",
+      "variant": "dashed",
+      "label": "선택 연동"
     }
   ]
 }

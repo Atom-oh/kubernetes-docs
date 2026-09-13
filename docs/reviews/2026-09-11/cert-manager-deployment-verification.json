@@ -1,0 +1,614 @@
+{
+  "status": "passed",
+  "http": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T04:18:20.270371+00:00",
+    "deploymentRun": 34736969812,
+    "mergeCommit": "d07cc1eec1d37ed1fafbffd9d5b17983647ea9b1",
+    "includedPRs": [
+      252
+    ],
+    "pages": [
+      {
+        "path": "ko/security/10-cert-manager.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/security/10-cert-manager",
+        "status": 200,
+        "sha256": "e0355bf5e0107fd8f1580e49f992678fc32fca1835abb8935cdf2e2a6869577d",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-10-cert-manager-0.i_VXIc5f.png",
+            "status": 200,
+            "sha256": "536f2ab35121ea2f1264f613512a1826f13fc3f45b3864a4355ffb8f56e426de",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-10-cert-manager-1.DqRehDd-.png",
+            "status": 200,
+            "sha256": "23bbba2d1a2bf48667abb2541ddf02cfa0eac580b6c94a15e3779b9ba960b793",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-10-cert-manager-2.Bsp4_RqG.png",
+            "status": 200,
+            "sha256": "45840e1669f2acea3225441263ddb2cc3a1ce66dc944c44eb3857dc007654269",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-10-cert-manager-3.DNGR3hkd.png",
+            "status": 200,
+            "sha256": "f989dfcd39a92155635b902ad992a6c3c0b7118672a89555ef511a2e0128eea7",
+            "matchesMain": true
+          }
+        ],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 519061,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "en/security/10-cert-manager.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/security/10-cert-manager",
+        "status": 200,
+        "sha256": "5378404f8c4797bf70cf23e9ffc81015a718d3a80b41efcd4a258c0c280f56ca",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-10-cert-manager-0.NJg4155k.png",
+            "status": 200,
+            "sha256": "61ccfbd7cbc613ce7700f0c6ff1c37f6cbfe0db5dd11ff56d875e3a751760693",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-10-cert-manager-1.DwCb_Xjq.png",
+            "status": 200,
+            "sha256": "c2b4a446897eb06772cfa26a68a96a8a9a45a685f8a6acf501d7acabf4bcf9f4",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-10-cert-manager-2.BgZmmlzs.png",
+            "status": 200,
+            "sha256": "a92fe7fabe8547cf525172cda1cf6ad621cac01633ce03eaf912ad3eb9e57dc2",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-10-cert-manager-3.DzLdJIT5.png",
+            "status": 200,
+            "sha256": "84af369a796452fce5ad53331d4076a48a79501f09e125bf7ad528c618ff6c89",
+            "matchesMain": true
+          }
+        ],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 513609,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "ko/quizzes/security/10-cert-manager-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/security/10-cert-manager-quiz",
+        "status": 200,
+        "sha256": "caa944c235764f6f5e113b716cdc3e3d1824184dd90ddb61aaadd26b3c933047",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 430771,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "en/quizzes/security/10-cert-manager-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/security/10-cert-manager-quiz",
+        "status": 200,
+        "sha256": "c193298f290e9e3e14d9d9d37617649eae59ecf10c615a17eb46eada96853e57",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 428138,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      }
+    ],
+    "viewers": [
+      {
+        "name": "ko-security-10-cert-manager-0.html",
+        "status": 200,
+        "bytes": 720652,
+        "sha256": "6766048eb4ac7c188fef6a393da3ca8030fad8e9c27edbf41cc6cb961d737b08"
+      },
+      {
+        "name": "ko-security-10-cert-manager-1.html",
+        "status": 200,
+        "bytes": 714861,
+        "sha256": "71e5259a7c33e65aa1d5b68c8414360ab65072b30853f50d244fce0cf44fdf52"
+      },
+      {
+        "name": "ko-security-10-cert-manager-2.html",
+        "status": 200,
+        "bytes": 718841,
+        "sha256": "1b6f71bb807d5e58353e6cceaadd9dbdb68e49f389f7d57f1268c3898ba578ab"
+      },
+      {
+        "name": "ko-security-10-cert-manager-3.html",
+        "status": 200,
+        "bytes": 721773,
+        "sha256": "5e27aee3dc42e1d4568735abe2d645a420203aa1d9f1dfff294adec90cb8c065"
+      },
+      {
+        "name": "en-security-10-cert-manager-0.html",
+        "status": 200,
+        "bytes": 720603,
+        "sha256": "7e02c0f35281e0ef8be4bab7dc432f90842a7feb60ec57205ebdb01f87c1684c"
+      },
+      {
+        "name": "en-security-10-cert-manager-1.html",
+        "status": 200,
+        "bytes": 714610,
+        "sha256": "edc62fa5da54bc462b21adec4fa23a19ea074a54caf2c1c4d74823b485e3fa05"
+      },
+      {
+        "name": "en-security-10-cert-manager-2.html",
+        "status": 200,
+        "bytes": 718548,
+        "sha256": "86b5e750b5d1c6b83e7eb69d9ac5c7a142a44f6e636b6a49c739c09b20fc80f6"
+      },
+      {
+        "name": "en-security-10-cert-manager-3.html",
+        "status": 200,
+        "bytes": 721627,
+        "sha256": "e36e496d8315141eaf5a49f66cfbcbcc8d714610890ac8841758be7092cf0e73"
+      }
+    ],
+    "scope": "HTTP source and exact hashed PNG comparison; no analytics events or real application execution."
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-security-10-cert-manager-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1665,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1665,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1665,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 61019,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1079,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1079,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1079,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55659,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1380,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1380,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1380,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58909,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1126,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1126,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-10-cert-manager-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1126,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 62757,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1171,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1171,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1171,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 60104,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 769,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 769,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 769,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55130,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1039,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1039,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1039,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58314,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 904,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 904,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-10-cert-manager-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 904,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 62256,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "24caseson8fetchedproductionviewers; motion/reduced-motion/visibility/theme/guided controls and8SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "scope": "Fourlivepages/eightviewers/eightPNGhashesand24browsercasesverifiedoncert-managerdeployment34736969812;noanalyticsorrealCAcalls"
+}

@@ -18,7 +18,7 @@
           "build",
           "scan"
         ],
-        "note": "A code change is committed, triggers the pipeline, and after the image build a Kubescape scan runs."
+        "note": "Render manifests and scan explicit local files. Image vulnerability scanning is a separate job."
       },
       {
         "id": "gate-decision",
@@ -32,7 +32,7 @@
           "block",
           "notify"
         ],
-        "note": "The risk score is compared with the threshold: pass deploys, exceeding it blocks the deployment and sends a notification."
+        "note": "Pass only when minimum compliance/severity gates and command execution succeed; errors or missing reports also block deployment."
       }
     ],
     "viewBox": [
@@ -125,8 +125,9 @@
       "lane": "ci",
       "col": 2,
       "type": "backend",
-      "label": "Image Build",
-      "width": 120
+      "label": "Render Manifests",
+      "width": 120,
+      "sublabel": "Helm / Kustomize"
     },
     {
       "id": "scan",
@@ -134,7 +135,7 @@
       "col": 3,
       "type": "security",
       "label": "Kubescape",
-      "sublabel": "scan framework nsa, mitre",
+      "sublabel": "Local YAML + pinned policy",
       "tag": "key decision step",
       "width": 120
     },
@@ -144,7 +145,7 @@
       "col": 3,
       "type": "security",
       "label": "Gate Check",
-      "sublabel": "risk score vs threshold",
+      "sublabel": "Score · severity · exit",
       "width": 120
     },
     {
@@ -180,7 +181,7 @@
       "col": 4,
       "type": "security",
       "label": "Block Deploy",
-      "sublabel": "pipeline exit 1",
+      "sublabel": "nonzero → fail closed",
       "width": 120
     },
     {
@@ -188,8 +189,8 @@
       "lane": "blocked",
       "col": 5,
       "type": "messagebus",
-      "label": "Notify",
-      "sublabel": "PR comment / alert",
+      "label": "Save Reports",
+      "sublabel": "Artifact · optional alert",
       "width": 120
     }
   ],
@@ -224,7 +225,7 @@
     {
       "from": "threshold",
       "to": "pass",
-      "label": "Score ≤ Threshold",
+      "label": "All gates pass",
       "variant": "emphasis"
     },
     {
@@ -238,7 +239,7 @@
     {
       "from": "threshold",
       "to": "fail",
-      "label": "Score > Threshold",
+      "label": "Gate failure / error",
       "variant": "security",
       "role": "error"
     },

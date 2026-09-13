@@ -17,7 +17,7 @@
           "build",
           "scan"
         ],
-        "note": "코드 변경이 Git Commit으로 파이프라인을 트리거하고, 이미지 빌드 후 Kubescape 스캔이 실행되는 구간이다."
+        "note": "매니페스트를 렌더링한 뒤 명시한 파일만 스캔한다. 이미지 취약점 스캔은 별도 작업이다."
       },
       {
         "id": "gate-decision",
@@ -31,7 +31,7 @@
           "block",
           "notify"
         ],
-        "note": "리스크 점수를 임계값과 비교해 통과 시 배포를 진행하고, 초과 시 배포를 차단한 뒤 알림을 보낸다."
+        "note": "최소 compliance와 severity 조건을 만족하고 명령이 성공해야 통과한다. 오류/결과 누락도 배포를 차단한다."
       }
     ],
     "viewBox": [
@@ -124,8 +124,9 @@
       "lane": "ci",
       "col": 2,
       "type": "backend",
-      "label": "이미지 빌드",
-      "width": 120
+      "label": "매니페스트 렌더링",
+      "width": 120,
+      "sublabel": "Helm / Kustomize"
     },
     {
       "id": "scan",
@@ -133,7 +134,7 @@
       "col": 3,
       "type": "security",
       "label": "Kubescape",
-      "sublabel": "framework nsa, mitre 스캔",
+      "sublabel": "로컬 YAML + 고정 정책",
       "tag": "핵심 판정 단계",
       "width": 120
     },
@@ -143,7 +144,7 @@
       "col": 3,
       "type": "security",
       "label": "임계값 검사",
-      "sublabel": "리스크 점수 vs 임계값",
+      "sublabel": "준수 점수 + 심각도 + exit",
       "width": 120
     },
     {
@@ -179,7 +180,7 @@
       "col": 4,
       "type": "security",
       "label": "배포 차단",
-      "sublabel": "파이프라인 exit 1",
+      "sublabel": "nonzero → fail closed",
       "width": 120
     },
     {
@@ -187,8 +188,8 @@
       "lane": "blocked",
       "col": 5,
       "type": "messagebus",
-      "label": "알림 발송",
-      "sublabel": "PR 코멘트 / 알림",
+      "label": "결과 보관",
+      "sublabel": "artifact · 선택 알림",
       "width": 120
     }
   ],
@@ -223,7 +224,7 @@
     {
       "from": "threshold",
       "to": "pass",
-      "label": "점수 ≤ 임계값",
+      "label": "모든 게이트 통과",
       "variant": "emphasis"
     },
     {
@@ -237,7 +238,7 @@
     {
       "from": "threshold",
       "to": "fail",
-      "label": "점수 > 임계값",
+      "label": "게이트 실패 / 오류",
       "variant": "security",
       "role": "error"
     },

@@ -1,0 +1,29 @@
+clusterName: documentation-cluster
+defaultFrameworks:
+- nsa
+- mitre
+capabilities:
+  continuousScan: enable
+  configurationScan: enable
+  nodeScan: disable
+  nodeSbomGeneration: disable
+  vulnerabilityScan: disable
+  relevancy: disable
+  runtimeObservability: disable
+  networkPolicyService: disable
+  networkEventsStreaming: disable
+  runtimeDetection: disable
+  nodeProfileService: disable
+  admissionController: disable
+  httpDetection: disable
+  seccompProfileService: disable
+  prometheusExporter: enable
+  riskAcceptance: disable
+  remediation: disable
+  manageWorkloads: disable
+global:
+  enableClusterWideSecretAccess: false
+persistence:
+  storageClass: gp3
+kubescapeScheduler:
+  scanSchedule: 0 8 * * *

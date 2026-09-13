@@ -14,21 +14,20 @@
           "cron",
           "ctrl",
           "config",
-          "vuln",
-          "rbac",
           "targets"
         ],
-        "note": "A CronJob wakes the Operator Controller, which runs the three scanners against cluster resources."
+        "note": "The CronJob requests an operator scan; the configuration scanner evaluates API resources and RBAC controls."
       },
       {
         "id": "results-baseline",
-        "label": "Results storage and Baseline comparison",
+        "label": "Storage and queries",
         "focus": [
-          "ctrl",
+          "config",
           "crd",
+          "rbac",
           "baseline"
         ],
-        "note": "The Operator Controller stores scan results as CRDs and compares them with the Baseline to detect changes."
+        "note": "The storage component serves spdx results through an aggregated API; CLI baseline diff and metrics are explicit consumers."
       },
       {
         "id": "runtime-external",
@@ -41,7 +40,7 @@
           "alert",
           "siem"
         ],
-        "note": "Node Agent eBPF events flow into the Controller; detected changes go to Alerting, SIEM/SOAR and Kubescape Cloud."
+        "note": "Node Agent, image scanning, SaaS and alerts are optional; the posture-only example disables several capabilities."
       }
     ],
     "locale": "en",
@@ -58,7 +57,7 @@
       "sublabel": "Schedule trigger",
       "pos": [
         40,
-        210
+        50
       ],
       "size": [
         150,
@@ -69,7 +68,7 @@
       "id": "ctrl",
       "type": "backend",
       "label": "Operator Controller",
-      "sublabel": "Scan coordination · CRD management",
+      "sublabel": "Coordinates scan requests",
       "pos": [
         280,
         210
@@ -83,7 +82,7 @@
       "id": "nodeagent",
       "type": "security",
       "label": "Node Agent",
-      "sublabel": "DaemonSet · eBPF runtime detection",
+      "sublabel": "Optional · kernel requirements",
       "pos": [
         280,
         50
@@ -100,7 +99,7 @@
       "sublabel": "Configuration checks",
       "pos": [
         40,
-        370
+        210
       ],
       "size": [
         170,
@@ -111,7 +110,7 @@
       "id": "vuln",
       "type": "security",
       "label": "Vulnerability Scanner",
-      "sublabel": "Kubevuln · image vulnerabilities",
+      "sublabel": "Optional · image CVEs",
       "pos": [
         280,
         370
@@ -124,10 +123,10 @@
     {
       "id": "rbac",
       "type": "security",
-      "label": "RBAC Scanner",
-      "sublabel": "Permission analysis",
+      "label": "Prometheus Exporter",
+      "sublabel": "Scan-result metrics",
       "pos": [
-        510,
+        580,
         370
       ],
       "size": [
@@ -139,7 +138,7 @@
       "id": "targets",
       "type": "backend",
       "label": "Scan Targets",
-      "sublabel": "Deployments · Pods · Services · Secrets · ServiceAccounts",
+      "sublabel": "Workloads/RBAC within authorized API scope",
       "pos": [
         190,
         530
@@ -152,8 +151,8 @@
     {
       "id": "baseline",
       "type": "database",
-      "label": "Baseline",
-      "sublabel": "Comparison baseline",
+      "label": "CLI Snapshot / Diff",
+      "sublabel": "Explicit comparison baseline",
       "pos": [
         580,
         50
@@ -166,8 +165,8 @@
     {
       "id": "crd",
       "type": "database",
-      "label": "Scan Results CRDs",
-      "sublabel": "Scan results storage",
+      "label": "Storage API",
+      "sublabel": "Aggregated API + PVC",
       "pos": [
         580,
         210
@@ -181,7 +180,7 @@
       "id": "cloud",
       "type": "cloud",
       "label": "Kubescape Cloud",
-      "sublabel": "Central dashboard",
+      "sublabel": "Explicit account/submission",
       "pos": [
         940,
         210
@@ -195,7 +194,7 @@
       "id": "alert",
       "type": "external",
       "label": "Alerting",
-      "sublabel": "Change detection alerts",
+      "sublabel": "Configured metrics/alert path",
       "pos": [
         940,
         370
@@ -252,48 +251,63 @@
       "from": "cron",
       "to": "ctrl",
       "label": "Schedule trigger",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "id": "ctrl-to-config",
       "from": "ctrl",
-      "to": "config"
+      "to": "config",
+      "fromSide": "left",
+      "toSide": "right"
     },
     {
       "id": "ctrl-to-vuln",
       "from": "ctrl",
       "to": "vuln",
       "label": "Run scans",
-      "labelDy": 24
+      "labelDy": 24,
+      "variant": "dashed"
     },
     {
       "id": "ctrl-to-rbac",
-      "from": "ctrl",
-      "to": "rbac"
+      "from": "crd",
+      "to": "rbac",
+      "label": "Read results",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        710,
+        330
+      ]
     },
     {
       "id": "nodeagent-to-ctrl",
       "from": "nodeagent",
-      "to": "ctrl",
-      "label": "eBPF events",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "to": "crd",
+      "label": "Optional runtime data",
+      "variant": "dashed"
     },
     {
       "id": "ctrl-to-crd",
       "from": "ctrl",
       "to": "crd",
-      "label": "Store scan results as CRDs",
+      "label": "Posture results",
       "variant": "emphasis",
-      "labelDy": -24
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        565,
+        282
+      ]
     },
     {
       "id": "config-to-targets",
       "from": "config",
       "to": "targets",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "left"
     },
     {
       "id": "vuln-to-targets",
@@ -302,66 +316,71 @@
     },
     {
       "id": "rbac-to-targets",
-      "from": "rbac",
-      "to": "targets",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "from": "vuln",
+      "to": "crd",
+      "label": "Optional CVE results",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "labelAt": [
+        500,
+        350
+      ]
     },
     {
       "id": "baseline-to-crd",
-      "from": "baseline",
-      "to": "crd",
-      "label": "Compare",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "labelDy": 24
+      "from": "crd",
+      "to": "baseline",
+      "label": "Optional CLI diff",
+      "variant": "dashed"
     },
     {
       "id": "crd-to-cloud",
       "from": "crd",
       "to": "cloud",
-      "label": "Publish results"
+      "label": "Publish results",
+      "variant": "dashed"
     },
     {
       "id": "crd-to-alert",
-      "from": "crd",
+      "from": "rbac",
       "to": "alert",
-      "label": "Change detected",
-      "variant": "emphasis"
+      "label": "Configured alerts",
+      "variant": "dashed"
     },
     {
       "id": "alert-to-siem",
       "from": "alert",
-      "to": "siem"
+      "to": "siem",
+      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Scan targets per scanner",
+      "title": "APIs and data",
       "items": [
-        "Configuration Scanner: Deployments · Pods · Services",
-        "Vulnerability Scanner: container images of Pods",
-        "RBAC Scanner: ServiceAccounts · Secrets"
+        "spdx results: storage aggregated API",
+        "SecurityException / ClusterSecurityException: kubescape.io/v1beta1",
+        "Inspect RBAC and resource kinds for the installed version"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Operator component resources",
+      "title": "Validation baseline",
       "items": [
-        "Operator 256Mi / 200m — scan coordination, CRD management",
-        "Kubevuln 512Mi / 500m — image vulnerability scanning",
-        "Node Agent 500Mi / 500m per node — eBPF runtime detection",
-        "Storage 1Gi PVC, Gateway 128Mi / 100m — Cloud integration, API"
+        "CLI 4.0.14 / Operator chart 1.40.4",
+        "Chart scanner 4.0.13 differs from local CLI 4.0.14",
+        "Validate CPU/memory/PVC sizing for the workload"
       ]
     },
     {
       "dot": "amber",
-      "title": "Scan schedule (ConfigMap)",
+      "title": "Schedule and permissions",
       "items": [
-        "scanSchedule 0 */6 * * * — configuration scan every 6 hours",
-        "vulnerabilityScanSchedule 0 2 * * * — vulnerability scan daily at 02:00",
-        "frameworks nsa, mitre · severityThreshold medium · continuousScanning true"
+        "kubescapeScheduler.scanSchedule",
+        "defaultFrameworks / requestBody.commands.scanV1",
+        "Choose node/runtime/remediation capabilities explicitly"
       ]
     }
   ]

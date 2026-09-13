@@ -1,0 +1,17 @@
+{
+  "downloadedAt": "2026-09-13T03:58:12Z",
+  "tool": "Kubescape4.0.14 download artifacts",
+  "upstream": "https://github.com/kubescape/regolibrary",
+  "license": "Apache-2.0",
+  "scope": "SnapshotofNSAbundleandcontrolinputsforofflineexampletests;notallframeworks;recordhashesandreviewbeforeupdating",
+  "files": [
+    {
+      "path": "nsa.json",
+      "sha256": "115db60001ff89f4d22941f9d693b2aff38c2ce85c7d0bb779c45e20be6107ee"
+    },
+    {
+      "path": "controls-inputs.json",
+      "sha256": "db1f5d85949a578a8791b2861818743255cfce55af3fffe987029a0b44a0bf59"
+    }
+  ]
+}

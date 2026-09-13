@@ -33,7 +33,7 @@
           "rbac",
           "risk"
         ],
-        "note": "Framework-based control evaluation, image vulnerability scanning, and RBAC analysis are merged into one score by the Risk Calculator."
+        "note": "Posture score, complianceScore, and image CVE results are separate fields; do not assume one combined risk number."
       },
       {
         "id": "outputs",
@@ -45,7 +45,7 @@
           "cloud",
           "alert"
         ],
-        "note": "The computed risk score is compiled into a report and delivered as JSON/SARIF, to Kubescape Cloud, and to alert channels."
+        "note": "Emit the selected report format; SaaS submission and alerts require explicit configuration."
       }
     ]
   },
@@ -124,7 +124,7 @@
       "id": "vuln",
       "type": "backend",
       "label": "Vulnerability Scanner",
-      "sublabel": "Image vulnerability scan",
+      "sublabel": "Optional · image and DB access",
       "pos": [
         330,
         300
@@ -137,8 +137,8 @@
     {
       "id": "rbac",
       "type": "backend",
-      "label": "RBAC Analyzer",
-      "sublabel": "Permission analysis",
+      "label": "RBAC Controls",
+      "sublabel": "Checks within posture scan",
       "pos": [
         330,
         430
@@ -151,8 +151,8 @@
     {
       "id": "risk",
       "type": "security",
-      "label": "Risk Calculator",
-      "sublabel": "Aggregated risk score",
+      "label": "Result Aggregation",
+      "sublabel": "Separate posture/CVE fields",
       "pos": [
         620,
         300
@@ -194,7 +194,7 @@
       "id": "cloud",
       "type": "cloud",
       "label": "Kubescape Cloud",
-      "sublabel": "Central dashboard",
+      "sublabel": "Explicitly configured backend",
       "pos": [
         1160,
         300
@@ -208,7 +208,7 @@
       "id": "alert",
       "type": "messagebus",
       "label": "Alerts / Alarms",
-      "sublabel": "Slack · SIEM etc.",
+      "sublabel": "Separately configured outputs",
       "pos": [
         1160,
         430
@@ -296,8 +296,12 @@
       "id": "risk-to-report",
       "from": "risk",
       "to": "report",
-      "label": "Risk score",
-      "variant": "emphasis"
+      "label": "Separate result fields",
+      "variant": "emphasis",
+      "labelAt": [
+        860,
+        282
+      ]
     },
     {
       "id": "report-to-json",
@@ -308,12 +312,19 @@
       "id": "report-to-cloud",
       "from": "report",
       "to": "cloud",
-      "variant": "dashed"
+      "variant": "dashed",
+      "label": "Optional",
+      "labelAt": [
+        1245,
+        285
+      ]
     },
     {
       "id": "report-to-alert",
       "from": "report",
-      "to": "alert"
+      "to": "alert",
+      "variant": "dashed",
+      "label": "Optional"
     }
   ]
 }

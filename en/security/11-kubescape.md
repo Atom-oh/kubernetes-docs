@@ -1,1490 +1,424 @@
 # Security Posture Management with Kubescape
 
-> **Supported Versions**: Kubescape 3.0+, Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 13, 2026
+> **Validation baseline**: CLI 4.0.14 and Operator chart 1.40.4. The chart's scanner image is 4.0.13, separate from the CLI. Policy hashes are recorded in the example directory.
 
-Kubescape is an open-source Kubernetes security platform that provides comprehensive security posture management, vulnerability scanning, and compliance checking. As a CNCF Sandbox project, it helps organizations identify misconfigurations, vulnerabilities, and compliance violations across their Kubernetes environments.
+Kubescape evaluates Kubernetes configuration and selected image/runtime data. **Passing a scan is not a security guarantee or compliance certification; unavailable coverage must be identified separately.** This guide was checked with local YAML, policy bundles, the actual CLI, and chart rendering. No live cluster scan, node-agent installation, registry image/DB scan, or SaaS submission was performed.
 
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Installation](#installation)
-3. [Security Frameworks](#security-frameworks)
-4. [CLI Scanning](#cli-scanning)
-5. [Operator Mode (In-Cluster)](#operator-mode-in-cluster)
-6. [Risk Scoring](#risk-scoring)
-7. [CI/CD Integration](#cicd-integration)
-8. [EKS-Specific Guide](#eks-specific-guide)
-9. [Control Exception Handling](#control-exception-handling)
-10. [Best Practices](#best-practices)
-11. [Summary and References](#summary-and-references)
-
----
+<span id="what-kubescape-solves"></span>
+<span id="cncf-sandbox-project"></span>
+<span id="comparison-with-similar-tools"></span>
+<span id="kubescape-architecture"></span>
 
 ## Overview
 
-### What Kubescape Solves
+Kubescape joined CNCF on December 13, 2022 and became **Incubating on January 13, 2025**. The former Sandbox description and stale tool-maturity comparison table are not current guidance.
 
-Kubescape addresses critical security challenges in Kubernetes environments:
+The CLI performs explicit file or cluster scans; the Operator provides continuous/scheduled behavior according to enabled capabilities. Configuration controls, RBAC analysis, image CVEs, and runtime detection have different scopes. Compare kube-bench's node/CIS checks, Polaris workload policies, and Trivy image/configuration scans against versioned requirements rather than broad superiority claims.
 
-- **Misconfiguration Detection**: Identifies security misconfigurations in workloads, RBAC, network policies, and cluster settings
-- **Compliance Verification**: Validates clusters against industry frameworks (NSA-CISA, CIS, MITRE ATT&CK)
-- **Vulnerability Scanning**: Detects vulnerabilities in container images and Kubernetes components
-- **RBAC Analysis**: Visualizes and analyzes role-based access control configurations
-- **Shift-Left Security**: Scans manifests and Helm charts before deployment
+![Kubescape inputs, controls, separate results and optional outputs](../.gitbook/assets/en-security-11-kubescape-0.png)
 
-### CNCF Sandbox Project
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-0.html)
 
-Kubescape joined the CNCF Sandbox in 2022, demonstrating its commitment to open-source principles and community-driven development. The project is actively maintained by ARMO and the open-source community.
 
-### Comparison with Similar Tools
-
-| Feature | Kubescape | kube-bench | Polaris | Trivy |
-|---------|-----------|------------|---------|-------|
-| **CIS Benchmark** | Yes | Yes | No | Yes |
-| **NSA-CISA Framework** | Yes | No | No | No |
-| **MITRE ATT&CK** | Yes | No | No | No |
-| **Image Scanning** | Yes | No | No | Yes |
-| **RBAC Analysis** | Yes | No | No | No |
-| **Helm/YAML Scanning** | Yes | No | Yes | Yes |
-| **In-Cluster Operator** | Yes | Limited | Yes | Yes |
-| **Risk Scoring** | Yes | No | Yes | Yes |
-| **Custom Frameworks** | Yes | No | Yes | No |
-| **CI/CD Integration** | Native | Manual | Native | Native |
-| **Runtime Detection** | Yes (with Node Agent) | No | No | No |
-| **License** | Apache 2.0 | Apache 2.0 | Apache 2.0 | Apache 2.0 |
-
-### Kubescape Architecture
-
-![Kubescape architecture: CLI, Operator, and CI/CD scan requests pass through framework-based control evaluation, vulnerability scanning, and RBAC analysis into a Risk Calculator, whose report goes to JSON/SARIF, Kubescape Cloud, and alerts.](../.gitbook/assets/en-security-11-kubescape-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-0.html)
-
----
+<span id="linux-and-macos"></span>
+<span id="windows"></span>
+<span id="container-image"></span>
+<span id="helm-operator-installation-in-cluster"></span>
+<span id="operator-configuration-values"></span>
+<span id="kubescape-cloud-saas"></span>
 
 ## Installation
 
 ### CLI Installation
 
-#### Linux and macOS
+Download the matching OS/CPU asset from the [official 4.0.14 release](https://github.com/kubescape/kubescape/releases/tag/v4.0.14) and verify its checksum. This Linux AMD64 example pins the reviewed archive hash; ARM64 needs a different archive/hash.
 
 ```bash
-# Using curl (recommended)
-curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash
-
-# Using Homebrew (macOS/Linux)
-brew install kubescape
-
-# Using Krew (kubectl plugin manager)
-kubectl krew install kubescape
-
-# Verify installation
-kubescape version
+curl --fail --location \
+  https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64.tar.gz \
+  --output kubescape.tgz
+printf '%s  %s\n' '1d253b70f88e80b74f68af73ccd422f897381468300be7cc486fdd656d907a40' kubescape.tgz | sha256sum --check
+tar -xzf kubescape.tgz kubescape
+./kubescape version
+./kubescape scan --help
 ```
 
-#### Windows
+Check the actual package version when using Homebrew/Krew or other installers. Limit installer execution and kubeconfig exposure to the intended scope. Omitting a file target from `kubescape scan` can scan the current cluster.
 
-```powershell
-# Using PowerShell
-iwr -useb https://raw.githubusercontent.com/kubescape/kubescape/master/install.ps1 | iex
+### Helm Operator Installation
 
-# Using Chocolatey
-choco install kubescape
-
-# Using Scoop
-scoop install kubescape
-```
-
-#### Container Image
+Download the [example directory](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/kubescape) and run these commands from `examples/security/kubescape`. The profile focuses on posture checks and metrics, explicitly disabling node/image/runtime/remediation capabilities.
 
 ```bash
-# Run Kubescape as a container
-docker run -v ~/.kube:/root/.kube quay.io/kubescape/kubescape:latest scan framework nsa
-
-# With specific kubeconfig
-docker run -v /path/to/kubeconfig:/root/.kube/config \
-    quay.io/kubescape/kubescape:latest scan framework cis
+helm repo add kubescape https://kubescape.github.io/helm-charts
+helm repo update kubescape
+helm upgrade --install kubescape kubescape/kubescape-operator \
+  --version 1.40.4 --namespace kubescape --create-namespace \
+  --values operator-values.yaml
 ```
-
-### Helm Operator Installation (In-Cluster)
-
-The Kubescape Operator provides continuous scanning and monitoring capabilities within your cluster.
-
-```bash
-# Add Kubescape Helm repository
-helm repo add kubescape https://kubescape.github.io/helm-charts/
-helm repo update
-
-# Install Kubescape Operator with default settings
-helm install kubescape kubescape/kubescape-operator \
-    -n kubescape \
-    --create-namespace
-
-# Install with custom configuration
-helm install kubescape kubescape/kubescape-operator \
-    -n kubescape \
-    --create-namespace \
-    --set clusterName=my-eks-cluster \
-    --set capabilities.continuousScan=enable \
-    --set capabilities.vulnerabilityScan=enable \
-    --set capabilities.nodeScan=enable \
-    --set capabilities.runtimeDetection=enable
-```
-
-#### Operator Configuration Values
 
 ```yaml
-# values.yaml
-clusterName: "production-eks-cluster"
-
+clusterName: documentation-cluster
+defaultFrameworks:
+- nsa
+- mitre
 capabilities:
   continuousScan: enable
-  vulnerabilityScan: enable
-  nodeScan: enable
-  runtimeDetection: enable
-  networkPolicyService: enable
-
-kubescape:
-  serviceMonitor:
-    enabled: true
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-
-storage:
-  enabled: true
-  storageClassName: gp3
-  size: 10Gi
-
-nodeAgent:
-  enabled: true
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 200m
-      memory: 256Mi
-
-gateway:
-  enabled: true
-  service:
-    type: ClusterIP
+  configurationScan: enable
+  nodeScan: disable
+  nodeSbomGeneration: disable
+  vulnerabilityScan: disable
+  relevancy: disable
+  runtimeObservability: disable
+  networkPolicyService: disable
+  networkEventsStreaming: disable
+  runtimeDetection: disable
+  nodeProfileService: disable
+  admissionController: disable
+  httpDetection: disable
+  seccompProfileService: disable
+  prometheusExporter: enable
+  riskAcceptance: disable
+  remediation: disable
+  manageWorkloads: disable
+global:
+  enableClusterWideSecretAccess: false
+persistence:
+  storageClass: gp3
+kubescapeScheduler:
+  scanSchedule: 0 8 * * *
 ```
 
-### Kubescape Cloud (SaaS)
 
-Kubescape Cloud provides a centralized dashboard for managing security across multiple clusters.
+Prepare the gp3 StorageClass/CSI driver and verify namespaces, RBAC, CRDs, and aggregated API availability. EKS Auto Mode and ordinary EBS CSI StorageClasses can use different provisioners. Helm rendering does not establish installation, persistence, or scanning success.
 
-```bash
-# Connect to Kubescape Cloud
-kubescape scan framework nsa --account <ACCOUNT_ID> --submit
+credentials.cloudSecret is an existing Secret name, not an account ID. Configure and authorize the backend/account/accessKey/data scope explicitly when SaaS is needed. CLI --submit requests submission; local examples use --keep-local and an isolated cache. Enable node/runtime features separately after checking host privileges, kernels/BTF, and supported node types.
 
-# Generate account ID
-kubescape config set accountID <YOUR_ACCOUNT_ID>
-
-# Verify cloud connectivity
-kubescape config view
-```
-
----
+<span id="nsa-cisa-kubernetes-hardening-guide"></span>
+<span id="cis-kubernetes-benchmark"></span>
+<span id="mitre-att-ck-framework"></span>
+<span id="framework-comparison"></span>
 
 ## Security Frameworks
 
-Kubescape supports multiple security frameworks for comprehensive compliance checking.
+### Frameworks and Controls
 
-### NSA-CISA Kubernetes Hardening Guide
-
-The NSA-CISA framework provides security recommendations from the U.S. National Security Agency and Cybersecurity & Infrastructure Security Agency.
+Framework names and control counts depend on the policy bundle. The reviewed download contained NSA, MITRE, SOC2, ArmoBest, DevOpsBest, AllControls, and versioned CIS frameworks. NSA contained 26 controls, not all applicable to a local Pod.
 
 ```bash
-# Scan against NSA-CISA framework
-kubescape scan framework nsa
-
-# Scan specific namespaces
-kubescape scan framework nsa --include-namespaces production,staging
+kubescape list frameworks
+kubescape list controls --framework NSA
+kubescape list controls --framework NSA --search container
 ```
 
-Key control categories:
-- Pod Security
-- Network Separation
-- Authentication and Authorization
-- Audit Logging
-- Upgrade and Patching
+Example names in the reviewed bundle include cis-v1.12.0 and cis-eks-t1.8.0. Do not assume cis-v1.23 or cis is a universal alias. Policy updates change coverage/scores; record binary versions and policy hashes together.
 
-### CIS Kubernetes Benchmark
+| Control ID | Reviewed bundle name |
+|---|---|
+| C-0004 | Resources memory limit and request |
+| C-0009 | Resource limits |
+| C-0013 | Non-root containers |
+| C-0016 | Allow privilege escalation |
+| C-0034 | Automatic mapping of service account |
+| C-0035 | Administrative Roles |
+| C-0036 | Validate admission controller (validating) |
+| C-0039 | Validate admission controller (mutating) |
+| C-0057 | Privileged container |
 
-The Center for Internet Security (CIS) Benchmark provides prescriptive security configuration guidelines.
-
-```bash
-# Scan against CIS Benchmark
-kubescape scan framework cis
-
-# CIS v1.8 for Kubernetes 1.27+
-kubescape scan framework cis-v1.8
-
-# EKS-specific CIS benchmark
-kubescape scan framework cis-eks
-```
-
-CIS Benchmark sections:
-- Control Plane Components
-- etcd Configuration
-- Control Plane Configuration
-- Worker Node Security
-- Policies
-
-### MITRE ATT&CK Framework
-
-The MITRE ATT&CK framework maps security controls to known attack techniques.
-
-```bash
-# Scan against MITRE ATT&CK
-kubescape scan framework mitre
-
-# View specific attack techniques
-kubescape scan framework mitre --verbose
-```
-
-Attack categories covered:
-- Initial Access
-- Execution
-- Persistence
-- Privilege Escalation
-- Defense Evasion
-- Credential Access
-- Discovery
-- Lateral Movement
-- Impact
+C-0036/0039 are not wildcard-RBAC/risky-ServiceAccount controls. Severity also depends on the bundle: the reviewed C-0057 was High, not universally Critical.
 
 ### Custom Frameworks
 
-Create custom frameworks for organization-specific requirements.
+--use-from loads a local policy object. A YAML name and unresolved list of control IDs is not necessarily an executable framework. The example policies/nsa.json is the tested bundle with license, provenance, and SHA records. Author/test new Rego controls with current CLI features such as kubescape policy init and kubescape policy test, then review organizational requirements.
 
-```yaml
-# custom-framework.yaml
-name: "Organization Security Standards"
-description: "Custom security framework for internal compliance"
-controls:
-  - controlID: C-0001
-  - controlID: C-0002
-  - controlID: C-0009
-  - controlID: C-0034
-  - controlID: C-0038
-  - controlID: C-0041
-  - controlID: C-0044
-  - controlID: C-0055
-  - controlID: C-0057
-```
-
-```bash
-# Scan with custom framework
-kubescape scan framework --custom-framework custom-framework.yaml
-
-# List available controls
-kubescape list controls
-```
-
-### Framework Comparison
-
-| Framework | Focus Area | Controls | Best For |
-|-----------|------------|----------|----------|
-| **NSA-CISA** | Government hardening | 30+ | Federal/Government compliance |
-| **CIS** | Configuration baseline | 100+ | General security baseline |
-| **MITRE ATT&CK** | Threat mapping | 40+ | Threat modeling, red team |
-| **CIS-EKS** | AWS EKS specific | 50+ | EKS deployments |
-| **SOC2** | Compliance | 20+ | SOC 2 audits |
-| **Custom** | Organization-specific | Variable | Internal standards |
-
----
+<span id="scanning-pipeline-flow"></span>
+<span id="cluster-scanning"></span>
+<span id="specific-control-scanning"></span>
+<span id="yaml-and-helm-manifest-scanning-shift-left"></span>
+<span id="image-vulnerability-scanning"></span>
+<span id="rbac-visualization-and-analysis"></span>
 
 ## CLI Scanning
 
-### Scanning Pipeline Flow
+![Kubescape input, evaluation, score fields and report formats](../.gitbook/assets/en-security-11-kubescape-1.png)
 
-![Sequential workflow diagram showing a Kubescape scan traveling from the CLI through framework selection, resource collection, control checks, and severity assessment to risk scoring and report generation.](../.gitbook/assets/en-security-11-kubescape-1.png)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-1.html)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-1.html)
 
-### Cluster Scanning
-
-```bash
-# Full cluster scan with NSA-CISA framework
-kubescape scan framework nsa
-
-# Scan with verbose output
-kubescape scan framework nsa --verbose
-
-# Scan specific namespaces
-kubescape scan framework nsa \
-    --include-namespaces production,staging \
-    --exclude-namespaces kube-system,monitoring
-
-# Scan with severity threshold
-kubescape scan framework nsa --severity-threshold high
-
-# Output to JSON
-kubescape scan framework nsa --format json --output results.json
-
-# Output to SARIF (for GitHub integration)
-kubescape scan framework nsa --format sarif --output results.sarif
-
-# Generate HTML report
-kubescape scan framework nsa --format html --output report.html
-```
-
-### Specific Control Scanning
+### Cluster versus Local Input
 
 ```bash
-# List all available controls
-kubescape list controls
-
-# Scan for a specific control
-kubescape scan control C-0034
-
-# Scan multiple controls
-kubescape scan control C-0034,C-0038,C-0041
-
-# Get control details
-kubescape describe control C-0034
+# This accesses the current cluster; check authorization and scope first.
+kubescape scan framework nsa --include-namespaces production
+# Explicit local-file scan:
+kubescape scan framework nsa secure-pod.yaml \
+  --use-from policies/nsa.json --controls-config policies/controls-inputs.json \
+  --exceptions no-exceptions.json --keep-local \
+  --format json --output report.json
 ```
 
-Common security controls:
+--format/-f selects the format; --output/-o names the file. `-o json > report.json` does not select JSON output. Version 4.0.14 supports JSON/SARIF/HTML/PDF/JUnit/gitlab-sast and other formats; choose the one the receiving tool expects.
 
-| Control ID | Name | Description |
-|------------|------|-------------|
-| C-0001 | Forbidden Container Registries | Detect images from untrusted registries |
-| C-0002 | Exec into Container | Detect exec permissions |
-| C-0009 | Resource Limits | Check for missing resource limits |
-| C-0016 | Allow Privilege Escalation | Detect privilege escalation risk |
-| C-0017 | Immutable Container Filesystem | Check for read-only root filesystem |
-| C-0034 | Automatic Mapping of SA | Detect automatic service account mounting |
-| C-0038 | Host PID/IPC Privileges | Detect host namespace sharing |
-| C-0041 | HostNetwork Access | Detect host network usage |
-| C-0044 | Container Hostport | Detect hostPort usage |
-| C-0046 | Insecure Capabilities | Detect dangerous capabilities |
-| C-0055 | Linux Hardening | Check seccomp/AppArmor profiles |
-| C-0057 | Privileged Container | Detect privileged containers |
+Render Helm/Kustomize locally before scanning to make effective values explicit. Local checks do not reproduce API defaulting, admission, IAM authorization, or network behavior. --include-api-audit, --custom-framework, and --sort-by were unknown in the reviewed CLI. Do not present scan rbac as a separate current subcommand.
 
-### YAML and Helm Manifest Scanning (Shift-Left)
+### Actual Local Results
 
-Scan manifests before deployment to catch issues early.
+insecure-pod.yaml is a **synthetic scan fixture, not a deployment recipe**. It uses real privileged/runAsUser fields rather than nonexistent runAsRoot. secure-pod.yaml also demonstrates configuration only; replace its application image before any real deployment.
 
-```bash
-# Scan YAML files
-kubescape scan *.yaml
+| Local input | Compliance | score | Result |
+|---|---:|---:|---|
+| Insecure Pod | 55 | 62.5 | High failures |
+| Secure Pod | 95 | 6.818182 | High gate passes; not every control passes |
 
-# Scan a directory
-kubescape scan ./manifests/
+These values apply to the attached policy snapshot and one local Pod. They do not measure cluster security or exploitability.
 
-# Scan Helm chart
-kubescape scan ./my-chart/
+### Image and RBAC Analysis
 
-# Scan Helm chart with values
-kubescape scan ./my-chart/ --helm-set key=value
+Request image scanning explicitly with kubescape scan image IMAGE. CLI 4.0.14 uses Grype 0.104.1 and Syft 1.42.3 in its source dependencies; the Operator kubevuln component is separately versioned. Verify registry credentials, platform, database freshness, and scan errors. Host scanning differs from image scanning and can require additional host access/resource creation.
 
-# Scan from URL
-kubescape scan https://raw.githubusercontent.com/org/repo/main/deployment.yaml
+RBAC controls evaluate collected Roles/Bindings within authorized API scope. A RoleBinding grants access within its namespace, not every namespace. Static analysis does not by itself establish unused permissions, external IAM authorization, or every effective access path.
 
-# Scan with specific framework
-kubescape scan framework nsa ./manifests/
-
-# Fail on high severity findings
-kubescape scan ./manifests/ --severity-threshold high --fail-threshold 0
-```
-
-Example manifest scan output:
-
-```
-Controls: 25 (Failed: 3, Excluded: 0, Skipped: 0)
-Failed Resources: 5
-Compliance Score: 88%
-
-┌──────────────┬────────────────────────────────────────┬──────────────┬────────┐
-│ SEVERITY     │ CONTROL NAME                           │ FAILED       │ STATUS │
-├──────────────┼────────────────────────────────────────┼──────────────┼────────┤
-│ High         │ Privileged container                   │ 1            │ failed │
-│ High         │ Allow privilege escalation             │ 2            │ failed │
-│ Medium       │ Resource limits                        │ 2            │ failed │
-└──────────────┴────────────────────────────────────────┴──────────────┴────────┘
-```
-
-### Image Vulnerability Scanning
-
-```bash
-# Scan a specific image
-kubescape scan image nginx:latest
-
-# Scan all images in cluster
-kubescape scan image --cluster
-
-# Scan images in specific namespace
-kubescape scan image --namespace production
-
-# Filter by severity
-kubescape scan image nginx:latest --severity critical,high
-
-# Output vulnerabilities as JSON
-kubescape scan image nginx:latest --format json --output vulns.json
-```
-
-Example vulnerability output:
-
-```
-Image: nginx:1.21.0
-Vulnerabilities Found: 12 (Critical: 2, High: 4, Medium: 6)
-
-┌─────────────────┬──────────────┬──────────┬─────────────────────────────────┐
-│ CVE             │ SEVERITY     │ PACKAGE  │ FIX VERSION                     │
-├─────────────────┼──────────────┼──────────┼─────────────────────────────────┤
-│ CVE-2023-44487  │ Critical     │ openssl  │ 1.1.1w                          │
-│ CVE-2023-38545  │ Critical     │ curl     │ 8.4.0                           │
-│ CVE-2023-4911   │ High         │ glibc    │ 2.38-1                          │
-└─────────────────┴──────────────┴──────────┴─────────────────────────────────┘
-
-Recommendation: Update to nginx:1.25.3 or later
-```
-
-### RBAC Visualization and Analysis
-
-```bash
-# Scan RBAC configuration
-kubescape scan rbac
-
-# Analyze specific service account
-kubescape scan rbac --service-account default:default
-
-# Analyze specific user
-kubescape scan rbac --user admin@example.com
-
-# List subjects with cluster-admin equivalent
-kubescape scan rbac --list-cluster-admins
-
-# Export RBAC graph
-kubescape scan rbac --format json --output rbac.json
-```
-
-RBAC analysis capabilities:
-- Identify over-privileged service accounts
-- Detect cluster-admin equivalent permissions
-- Visualize role bindings and their scope
-- Find unused roles and bindings
-- Highlight risky permission combinations
-
----
+<span id="continuous-scanning-architecture"></span>
+<span id="operator-components"></span>
+<span id="scheduled-scanning-configuration"></span>
+<span id="vulnerability-scanning-integration"></span>
+<span id="runtime-threat-detection-node-agent-with-ebpf"></span>
+<span id="kubernetes-api-attack-detection"></span>
 
 ## Operator Mode (In-Cluster)
 
-### Continuous Scanning Architecture
+![Kubescape operator coordination and aggregated storage API](../.gitbook/assets/en-security-11-kubescape-2.png)
 
-![A CronJob triggers the Kubescape Operator Controller to run the configuration, vulnerability and RBAC scanners plus node-agent eBPF events, store results as CRDs, compare them with the baseline and publish to Kubescape Cloud, alerting and SIEM/SOAR.](../.gitbook/assets/en-security-11-kubescape-2.png)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-2.html)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-2.html)
 
-### Operator Components
+Use the chart's kubescapeScheduler.scanSchedule and requestBody.commands[].args.scanV1 fields. defaultFrameworks supplies defaults for requests without targets; explicit targetNames wins. An arbitrary ConfigMap with scanSchedule does not establish that a controller consumes it.
 
-```bash
-# Verify operator installation
-kubectl get pods -n kubescape
-
-# Expected output:
-# NAME                                    READY   STATUS    RESTARTS   AGE
-# kubescape-operator-7d8f9c6b4d-x2h8k    1/1     Running   0          2h
-# kubescape-storage-6b9d4f5c8a-m3n7p     1/1     Running   0          2h
-# kubescape-gateway-5c7e8d9f6b-q4w2r     1/1     Running   0          2h
-# node-agent-abcd1                        1/1     Running   0          2h
-# node-agent-efgh2                        1/1     Running   0          2h
-
-# Check CRDs
-kubectl get crd | grep kubescape
-```
-
-### Scheduled Scanning Configuration
-
-```yaml
-# scanning-schedule.yaml
-apiVersion: kubescape.io/v1alpha1
-kind: ScanSchedule
-metadata:
-  name: daily-compliance-scan
-  namespace: kubescape
-spec:
-  schedule: "0 2 * * *"  # Daily at 2 AM
-  scanType: framework
-  framework: nsa
-  namespaces:
-    include:
-      - production
-      - staging
-    exclude:
-      - kube-system
-  severityThreshold: medium
-  notifications:
-    slack:
-      enabled: true
-      channel: "#security-alerts"
-    email:
-      enabled: true
-      recipients:
-        - security-team@example.com
-```
+spdx.softwarecomposition.kubescape.io/v1beta1 results are served by the storage component's **aggregated API**, not all ordinary CRDs. Separate CRDs include SecurityException, ClusterSecurityException, and OperatorCommand. Discover actual names/scopes before querying results.
 
 ```bash
-# Apply scanning schedule
-kubectl apply -f scanning-schedule.yaml
-
-# View scan results
-kubectl get vulnerabilitymanifests -n kubescape
-kubectl get configurationscans -n kubescape
+kubectl get apiservices v1beta1.spdx.softwarecomposition.kubescape.io
+kubectl api-resources --api-group=spdx.softwarecomposition.kubescape.io
+kubectl get pods,pvc -n kubescape
 ```
 
-### Vulnerability Scanning Integration
+Do not present the old ScanSchedule, VulnerabilityScanConfig, ThreatDetectionConfig, AcceptedRisk, and ScanConfiguration examples as APIs installed by this chart. Node-agent profiles/detection must use actual APIs/capabilities for the chosen image. Enabled configuration is not proof of healthy collection or detection on all nodes.
 
-```yaml
-# vulnerability-scan-config.yaml
-apiVersion: kubescape.io/v1alpha1
-kind: VulnerabilityScanConfig
-metadata:
-  name: image-scanning
-  namespace: kubescape
-spec:
-  enabled: true
-  scanNewImages: true
-  scanInterval: "24h"
-  registries:
-    - url: "123456789012.dkr.ecr.us-west-2.amazonaws.com"
-      credentials:
-        secretRef: ecr-credentials
-  severityThreshold: high
-  ignoredCVEs:
-    - CVE-2023-12345  # Known false positive
-```
-
-### Runtime Threat Detection (Node Agent with eBPF)
-
-The Node Agent uses eBPF for low-overhead runtime monitoring.
-
-```yaml
-# node-agent configuration
-nodeAgent:
-  enabled: true
-
-  config:
-    applicationProfile:
-      enabled: true
-      interval: "1m"
-
-    networkPolicy:
-      enabled: true
-
-    runtimeDetection:
-      enabled: true
-      rules:
-        - name: "Crypto Mining Detection"
-          enabled: true
-        - name: "Reverse Shell Detection"
-          enabled: true
-        - name: "Privilege Escalation"
-          enabled: true
-        - name: "Container Escape"
-          enabled: true
-
-    alertThreshold: warning
-```
-
-Runtime detection capabilities:
-- Process execution anomalies
-- File system access monitoring
-- Network connection tracking
-- Capability usage detection
-- Syscall monitoring
-
-### Kubernetes API Attack Detection
-
-```yaml
-# api-threat-detection.yaml
-apiVersion: kubescape.io/v1alpha1
-kind: ThreatDetectionConfig
-metadata:
-  name: api-monitoring
-  namespace: kubescape
-spec:
-  apiServer:
-    enabled: true
-    detectionRules:
-      - name: "Suspicious kubectl exec"
-        severity: high
-        pattern:
-          verb: create
-          resource: pods/exec
-
-      - name: "Secret Enumeration"
-        severity: medium
-        pattern:
-          verb: list
-          resource: secrets
-
-      - name: "RBAC Modification"
-        severity: high
-        pattern:
-          verb: ["create", "update", "patch", "delete"]
-          resource: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
-
-      - name: "Service Account Token Access"
-        severity: medium
-        pattern:
-          verb: create
-          resource: serviceaccounts/token
-```
-
----
+<span id="risk-score-calculation"></span>
+<span id="severity-levels"></span>
+<span id="viewing-risk-scores"></span>
+<span id="prioritization-strategy"></span>
 
 ## Risk Scoring
 
-### Risk Score Calculation
-
-Kubescape calculates risk scores based on multiple factors:
-
-```
-Risk Score = Σ (Control Severity × Resource Count × Exposure Factor)
-           ─────────────────────────────────────────────────────────
-                          Total Controls × Max Severity
-```
-
-Components:
-- **Control Severity**: Critical (10), High (7), Medium (4), Low (1)
-- **Resource Count**: Number of affected resources
-- **Exposure Factor**: Network exposure, privilege level, data sensitivity
-
-### Severity Levels
-
-| Level | Score Range | Description | Action Required |
-|-------|-------------|-------------|-----------------|
-| **Critical** | 9-10 | Immediate exploitation risk | Immediate remediation |
-| **High** | 7-8 | Significant security risk | Remediate within 24 hours |
-| **Medium** | 4-6 | Moderate security concern | Remediate within 7 days |
-| **Low** | 1-3 | Minor security improvement | Remediate within 30 days |
-| **Negligible** | 0 | Informational | No action required |
-
-### Viewing Risk Scores
+summaryDetails.complianceScore and summaryDetails.score are different aggregates. Higher compliance indicates more checks passing; risk score is neither the same value nor simply 100-compliance. Do not present invented severity weights or response SLAs as a universal Kubescape formula.
 
 ```bash
-# Scan with detailed risk scoring
-kubescape scan framework nsa --verbose
-
-# Get risk score summary
-kubescape scan framework nsa --format json | jq '.riskScore'
-
-# Sort results by risk score
-kubescape scan framework nsa --format pretty-printer
+jq '{compliance: .summaryDetails.complianceScore, risk: .summaryDetails.score,
+     failed: [.summaryDetails.controls[] | select(.status == "failed") | {controlID, name, severity}]}' report.json
 ```
 
-Example risk score output:
+Use --compliance-threshold as a **minimum compliance score**, and --severity-threshold for failed-control severity. A local score of 55 returned exit 0 at threshold 55 and exit 1 at 56. --min-severity filters output; it does not replace current gate calculations.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            Risk Assessment Summary                           │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  Overall Risk Score: 34/100                                                 │
-│  Compliance Score: 76%                                                      │
-│                                                                             │
-│  ┌─────────────┬──────────┬───────────────────────────────────────────┐   │
-│  │ Severity    │ Controls │ Progress                                  │   │
-│  ├─────────────┼──────────┼───────────────────────────────────────────┤   │
-│  │ Critical    │ 0/2      │ ████████████████████ 100%                │   │
-│  │ High        │ 3/8      │ ██████████████░░░░░░ 62%                 │   │
-│  │ Medium      │ 5/15     │ ████████████████░░░░ 67%                 │   │
-│  │ Low         │ 2/10     │ ████████████████████ 80%                 │   │
-│  └─────────────┴──────────┴───────────────────────────────────────────┘   │
-│                                                                             │
-│  Top 5 Risks:                                                               │
-│  1. Privileged containers in production (Score: 9.2)                        │
-│  2. Missing network policies (Score: 7.8)                                   │
-│  3. Containers with CAP_SYS_ADMIN (Score: 7.5)                             │
-│  4. Service accounts with cluster-admin (Score: 6.9)                        │
-│  5. Images from untrusted registries (Score: 6.2)                          │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+**Version 4.0.14 accepts --fail-threshold as a deprecated compatibility flag but ignores its value.** The test returned exit 0 with failed findings when only --fail-threshold 0 was supplied. Distinguish that inert flag from still-processed options such as --scan-images/--skip-controls and genuinely unknown flags.
 
-### Prioritization Strategy
-
-```bash
-# Focus on critical and high severity first
-kubescape scan framework nsa --severity-threshold high
-
-# Get prioritized remediation list
-kubescape scan framework nsa --format json | \
-    jq '[.results[].controls[] | select(.status == "failed")] |
-        sort_by(.severity) | reverse'
-```
-
----
+<span id="ci-cd-integration-workflow"></span>
+<span id="github-actions-workflow"></span>
+<span id="gitlab-ci-cd-integration"></span>
+<span id="jenkins-pipeline-integration"></span>
+<span id="threshold-based-gates"></span>
 
 <span id="cicd-integration"></span>
 
 ## CI/CD Integration
 
-### CI/CD Integration Workflow
+![CI gates based on minimum compliance, severity and command exit](../.gitbook/assets/en-security-11-kubescape-3.png)
 
-![Kubescape CI/CD integration workflow: a code change and Git commit fire the CI trigger, then the image build and a Kubescape scan (framework nsa, mitre); the security gate's gate check compares the risk score with the threshold — at or below it the run passes and deploys to the cluster, above it the run fails, deployment is blocked (exit 1), and a PR comment or alert is sent.](../.gitbook/assets/en-security-11-kubescape-3.png)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-3.html)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-3.html)
 
-### GitHub Actions Workflow
-
-```yaml
-# .github/workflows/security-scan.yaml
-name: Kubernetes Security Scan
-
-on:
-  push:
-    branches: [main, develop]
-    paths:
-      - 'k8s/**'
-      - 'helm/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'k8s/**'
-      - 'helm/**'
-
-jobs:
-  kubescape-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Kubescape
-        run: |
-          curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash
-
-      - name: Scan Kubernetes manifests
-        id: scan
-        run: |
-          kubescape scan framework nsa ./k8s/ \
-            --format sarif \
-            --output results.sarif \
-            --severity-threshold high \
-            --compliance-threshold 75
-
-      - name: Upload SARIF results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: results.sarif
-
-      - name: Scan Helm charts
-        run: |
-          kubescape scan framework cis ./helm/my-app/ \
-            --format json \
-            --output helm-results.json
-
-      - name: Check compliance score
-        run: |
-          SCORE=$(cat helm-results.json | jq -r '.complianceScore')
-          echo "Compliance Score: $SCORE%"
-          if [ $(echo "$SCORE < 75" | bc) -eq 1 ]; then
-            echo "Compliance score below threshold!"
-            exit 1
-          fi
-
-      - name: Upload scan artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: kubescape-results
-          path: |
-            results.sarif
-            helm-results.json
-
-  image-scan:
-    runs-on: ubuntu-latest
-    needs: kubescape-scan
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Kubescape
-        run: |
-          curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash
-
-      - name: Scan container images
-        run: |
-          # Extract image names from manifests
-          IMAGES=$(grep -r "image:" ./k8s/ | awk '{print $2}' | sort -u)
-
-          for IMAGE in $IMAGES; do
-            echo "Scanning: $IMAGE"
-            kubescape scan image "$IMAGE" \
-              --format json \
-              --output "image-scan-$(echo $IMAGE | tr '/:' '-').json" \
-              --severity critical,high || true
-          done
-
-      - name: Check for critical vulnerabilities
-        run: |
-          CRITICAL=$(find . -name "image-scan-*.json" -exec cat {} \; | \
-            jq -s '[.[].vulnerabilities[] | select(.severity == "Critical")] | length')
-
-          if [ "$CRITICAL" -gt 0 ]; then
-            echo "Critical vulnerabilities found: $CRITICAL"
-            exit 1
-          fi
-```
-
-### GitLab CI/CD Integration
-
-```yaml
-# .gitlab-ci.yml
-stages:
-  - security-scan
-  - deploy
-
-variables:
-  KUBESCAPE_VERSION: "latest"
-  COMPLIANCE_THRESHOLD: 75
-  SEVERITY_THRESHOLD: "high"
-
-kubescape-scan:
-  stage: security-scan
-  image: quay.io/kubescape/kubescape:${KUBESCAPE_VERSION}
-  script:
-    - kubescape scan framework nsa ./manifests/
-        --format json
-        --output gl-security-report.json
-        --severity-threshold ${SEVERITY_THRESHOLD}
-    - |
-      SCORE=$(cat gl-security-report.json | jq -r '.complianceScore')
-      echo "Compliance Score: $SCORE%"
-      if [ $(echo "$SCORE < ${COMPLIANCE_THRESHOLD}" | bc) -eq 1 ]; then
-        echo "Security scan failed: compliance below threshold"
-        exit 1
-      fi
-  artifacts:
-    reports:
-      sast: gl-security-report.json
-    paths:
-      - gl-security-report.json
-    when: always
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-```
-
-### Jenkins Pipeline Integration
-
-```groovy
-// Jenkinsfile
-pipeline {
-    agent any
-
-    environment {
-        KUBESCAPE_ACCOUNT = credentials('kubescape-account-id')
-    }
-
-    stages {
-        stage('Install Kubescape') {
-            steps {
-                sh '''
-                    curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash
-                '''
-            }
-        }
-
-        stage('Security Scan') {
-            steps {
-                sh '''
-                    kubescape scan framework nsa ./k8s/ \
-                        --format json \
-                        --output kubescape-results.json \
-                        --severity-threshold high \
-                        --account ${KUBESCAPE_ACCOUNT} \
-                        --submit
-                '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'kubescape-results.json'
-                    publishHTML([
-                        allowMissing: false,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: '.',
-                        reportFiles: 'kubescape-results.html',
-                        reportName: 'Kubescape Security Report'
-                    ])
-                }
-            }
-        }
-
-        stage('Gate Check') {
-            steps {
-                script {
-                    def results = readJSON file: 'kubescape-results.json'
-                    def score = results.complianceScore
-
-                    if (score < 75) {
-                        error "Security compliance score (${score}%) below threshold (75%)"
-                    }
-                    echo "Security scan passed with score: ${score}%"
-                }
-            }
-        }
-    }
-}
-```
-
-### Threshold-Based Gates
+### Shared Security Gate
 
 ```bash
-# Set compliance threshold
-kubescape scan framework nsa ./manifests/ \
-    --compliance-threshold 80 \
-    --fail-threshold 5
-
-# Fail on any high/critical findings
-kubescape scan framework nsa ./manifests/ \
-    --severity-threshold high \
-    --fail-threshold 0
-
-# Custom exit codes
-kubescape scan framework nsa ./manifests/ \
-    --format json \
-    --output results.json
-
-# Check results and set exit code
-CRITICAL=$(jq '[.results[].controls[] | select(.status == "failed" and .severity == "Critical")] | length' results.json)
-HIGH=$(jq '[.results[].controls[] | select(.status == "failed" and .severity == "High")] | length' results.json)
-
-if [ "$CRITICAL" -gt 0 ]; then
-    echo "Critical findings: $CRITICAL"
-    exit 2
-elif [ "$HIGH" -gt 3 ]; then
-    echo "Too many high findings: $HIGH"
-    exit 1
+#!/usr/bin/env bash
+# Scan explicit local manifests. Never falls back to the current cluster.
+set -euo pipefail
+if [[ $# -ne 2 ]]; then
+  printf 'Usage: %s LOCAL_MANIFEST OUTPUT_JSON\n' "$0" >&2
+  exit 2
 fi
+manifest_path=$1
+report_path=$2
+if [[ ! -f $manifest_path ]]; then
+  printf 'Expected an existing local manifest file: %s\n' "$manifest_path" >&2
+  exit 2
+fi
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+: "${KUBESCAPE_BIN:=kubescape}"
+: "${COMPLIANCE_MINIMUM:=90}"
+: "${SEVERITY_LIMIT:=high}"
+: "${KS_CACHE_DIR:=${TMPDIR:-/tmp}/kubescape-example-cache}"
+# This does not make the CI score a compliance certification or runtime test.
+exec "$KUBESCAPE_BIN" --cache-dir "$KS_CACHE_DIR" scan framework nsa "$manifest_path" \
+  --use-from "$script_dir/policies/nsa.json" \
+  --controls-config "$script_dir/policies/controls-inputs.json" \
+  --exceptions "$script_dir/no-exceptions.json" \
+  --keep-local \
+  --compliance-threshold "$COMPLIANCE_MINIMUM" \
+  --severity-threshold "$SEVERITY_LIMIT" \
+  --format json --output "$report_path"
 ```
 
----
+
+Missing input, scan errors, and failed thresholds return nonzero. Do not hide them with continue-on-error or `|| true`. Report upload can run after failure but does not determine success. Excluding a control changes the evaluated denominator and must be recorded.
+
+### GitHub Actions
+
+The [validated workflow](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/kubescape/github-actions.yaml) pins the binary/checksum and scans only k8s/rendered.yaml using the local policy snapshot. The project must produce that file first; absence fails the job. Permissions are contents:read, with no PR comments or SaaS submission.
+
+### GitLab and Jenkins
+
+Both systems can preserve the same scan-manifests.sh exit code and archive reports. Generic Kubescape JSON is not GitLab SAST or Code Quality schema. For integrated SAST reporting, validate current --format gitlab-sast output against the receiving version. Jenkins readJSON/publishHTML require plugins; do not publish an HTML file the pipeline never generated.
+
+<span id="eks-specific-controls"></span>
+<span id="aws-auth-configmap-analysis"></span>
+<span id="irsa-iam-roles-for-service-accounts-validation"></span>
+<span id="eks-security-best-practices-scan"></span>
 
 ## EKS-Specific Guide
 
-### EKS-Specific Controls
+Kubernetes manifest scans do not fully validate EKS control-plane configuration, IAM, access entries, Pod Identity/IRSA, or node policies. aws-auth is a legacy authentication path; inspect the current authentication mode and access entries. system:masters or an emergency IAM user is not a least-privilege example.
 
-```bash
-# Scan with EKS-specific CIS benchmark
-kubescape scan framework cis-eks
+C-0034 checks service account token automounting, not complete IRSA trust/aud/sub/IAM policy. Distinguish the projected STS token from automatic Kubernetes API token mounting. Validate actual workload identity and allowed AWS operations separately.
 
-# Scan for EKS-specific controls
-kubescape scan control \
-    C-0001,C-0034,C-0035,C-0036,C-0037 \
-    --verbose
-```
+Review host-scanning and remediation permissions/mutations before enabling them. The example disables cluster-wide Secret access and remediation, while operators must still inspect the scanner/operator/storage RBAC needed for their installation.
 
-### aws-auth ConfigMap Analysis
-
-```bash
-# Analyze aws-auth ConfigMap permissions
-kubectl get configmap aws-auth -n kube-system -o yaml
-
-# Kubescape RBAC scan includes aws-auth analysis
-kubescape scan rbac --verbose | grep -A 20 "aws-auth"
-```
-
-Common aws-auth issues:
-- Overly permissive mapRoles entries
-- Direct root account mappings
-- Missing group restrictions
-
-Example secure aws-auth configuration:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aws-auth
-  namespace: kube-system
-data:
-  mapRoles: |
-    - rolearn: arn:aws:iam::123456789012:role/EKSNodeRole
-      username: system:node:{{EC2PrivateDNSName}}
-      groups:
-        - system:bootstrappers
-        - system:nodes
-    - rolearn: arn:aws:iam::123456789012:role/EKSAdminRole
-      username: eks-admin
-      groups:
-        - system:masters
-    - rolearn: arn:aws:iam::123456789012:role/EKSDeveloperRole
-      username: eks-developer
-      groups:
-        - eks-developers  # Custom group with limited permissions
-```
-
-### IRSA (IAM Roles for Service Accounts) Validation
-
-```bash
-# Check service accounts with IRSA annotations
-kubectl get sa -A -o json | jq '.items[] |
-    select(.metadata.annotations["eks.amazonaws.com/role-arn"] != null) |
-    {namespace: .metadata.namespace, name: .metadata.name, role: .metadata.annotations["eks.amazonaws.com/role-arn"]}'
-
-# Kubescape validates IRSA configuration
-kubescape scan control C-0034 --verbose  # Automatic SA token mounting
-```
-
-IRSA security checklist:
-- Disable automatic service account token mounting when not needed
-- Use dedicated service accounts per workload
-- Apply least-privilege IAM policies
-- Enable OIDC provider conditions in IAM trust policies
-
-```yaml
-# Secure IRSA service account configuration
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: my-app
-  namespace: production
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/MyAppRole
-automountServiceAccountToken: false  # Disable unless needed
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-  namespace: production
-spec:
-  template:
-    spec:
-      serviceAccountName: my-app
-      automountServiceAccountToken: true  # Enable only where needed
-      containers:
-        - name: app
-          image: my-app:latest
-```
-
-### EKS Security Best Practices Scan
-
-```bash
-# Comprehensive EKS security scan
-kubescape scan framework nsa,cis-eks \
-    --verbose \
-    --format json \
-    --output eks-security-report.json
-
-# Check for EKS-specific misconfigurations
-kubescape scan control \
-    C-0001 \  # Container registries
-    C-0002 \  # Exec permissions
-    C-0034 \  # SA token mounting
-    C-0035 \  # Cluster admin binding
-    C-0038 \  # Host namespaces
-    C-0041 \  # Host network
-    C-0044 \  # Host ports
-    C-0046 \  # Insecure capabilities
-    C-0055 \  # Linux hardening
-    C-0057    # Privileged containers
-```
-
----
+<span id="exception-policies"></span>
+<span id="applying-exceptions-via-cli"></span>
+<span id="accepted-risks-documentation"></span>
+<span id="inline-resource-exceptions"></span>
 
 ## Control Exception Handling
 
-### Exception Policies
+### CLI Exceptions
 
-Create exceptions for known acceptable risks or false positives.
-
-```yaml
-# exceptions.yaml
-apiVersion: kubescape.io/v1alpha1
-kind: ControlException
-metadata:
-  name: allow-privileged-monitoring
-  namespace: kubescape
-spec:
-  controlID: C-0057  # Privileged Container
-  resources:
-    - namespace: monitoring
-      kind: DaemonSet
-      name: node-exporter
-    - namespace: monitoring
-      kind: DaemonSet
-      name: fluent-bit
-  reason: "Required for host metrics collection"
-  approvedBy: "security-team@example.com"
-  expiresAt: "2027-02-25T00:00:00Z"
----
-apiVersion: kubescape.io/v1alpha1
-kind: ControlException
-metadata:
-  name: allow-hostnetwork-ingress
-  namespace: kubescape
-spec:
-  controlID: C-0041  # HostNetwork access
-  resources:
-    - namespace: ingress-nginx
-      kind: DaemonSet
-      name: ingress-nginx-controller
-  reason: "Ingress controller requires host network for port 80/443"
-  approvedBy: "platform-team@example.com"
-  expiresAt: "2027-02-25T00:00:00Z"
+```json
+[
+  {
+    "name": "documentation-privileged-exception",
+    "policyType": "postureExceptionPolicy",
+    "actions": [
+      "alertOnly"
+    ],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "demo-app",
+          "kind": "Pod",
+          "name": "insecure-example"
+        }
+      }
+    ],
+    "posturePolicies": [
+      {
+        "controlID": "C-0057"
+      }
+    ]
+  }
+]
 ```
 
-### Applying Exceptions via CLI
 
-```bash
-# Apply exceptions file
-kubescape scan framework nsa --exceptions exceptions.yaml
+This is a **JSON array** consumed by the CLI, not a ConfigMap wrapper. The tested alertOnly exception marked C-0057 acknowledged while preserving failure and compliance 55. --exclude-controls C-0057 removed the control from evaluation, changing the denominator and score. An exception is not a remediation.
 
-# Exclude specific namespaces
-kubescape scan framework nsa \
-    --exclude-namespaces kube-system,monitoring,ingress-nginx
-
-# Exclude by label
-kubescape scan framework nsa \
-    --exclude-label "kubescape.io/ignore=true"
-
-# Skip specific controls
-kubescape scan framework nsa \
-    --skip-controls C-0057,C-0041
-```
-
-### Accepted Risks Documentation
+### In-Cluster Exceptions
 
 ```yaml
-# accepted-risks.yaml
-apiVersion: kubescape.io/v1alpha1
-kind: AcceptedRisk
+apiVersion: kubescape.io/v1beta1
+kind: SecurityException
 metadata:
-  name: legacy-app-privileges
-  namespace: kubescape
+  name: documentation-privileged-exception
+  namespace: demo-app
 spec:
-  description: "Legacy application requires elevated privileges pending migration"
-
-  affectedControls:
+  author: documentation-security-team
+  reason: Synthetic scan example; replace with an approved owner and justification.
+  expiresAt: '2026-09-30T00:00:00Z'
+  match:
+    resources:
+      - apiGroup: ''
+        kind: Pod
+        name: insecure-example
+  posture:
     - controlID: C-0057
-      severity: high
-      justification: "Application binary requires CAP_NET_ADMIN for network management"
-    - controlID: C-0016
-      severity: high
-      justification: "Required for privilege escalation within container"
-
-  affectedResources:
-    - namespace: legacy
-      kind: Deployment
-      name: legacy-network-app
-
-  mitigations:
-    - "Network policies restrict communication to essential services only"
-    - "Pod security context limits other capabilities"
-    - "Runtime monitoring enabled via Falco"
-
-  riskOwner: "legacy-team@example.com"
-  approvedBy: "ciso@example.com"
-  approvalDate: "2026-02-01"
-  reviewDate: "2026-08-01"
-  status: "accepted"
+      action: alert_only
 ```
 
-### Inline Resource Exceptions
 
-```yaml
-# Annotate resources to skip specific controls
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: node-exporter
-  namespace: monitoring
-  annotations:
-    kubescape.io/ignore: "true"  # Skip all controls
-    kubescape.io/ignore-controls: "C-0057,C-0038"  # Skip specific controls
-    kubescape.io/exception-reason: "Required for host metrics collection"
-spec:
-  template:
-    spec:
-      containers:
-        - name: node-exporter
-          image: prom/node-exporter:latest
-          securityContext:
-            privileged: true  # Required for host access
-```
+The current APIs are kubescape.io/v1beta1 SecurityException/ClusterSecurityException. Set namespace scope, match, posture action, expiry, and ownership according to approved policy. Schema success does not establish controller enforcement, RBAC, or CEL behavior. CLI alertOnly differs from CRD alert_only. Do not rely on invented ignore annotations for exception processing.
 
----
+<span id="periodic-scanning-schedule"></span>
+<span id="scanning-configuration"></span>
+<span id="compliance-reporting"></span>
+<span id="remediation-workflow"></span>
+<span id="integration-with-other-security-tools"></span>
+<span id="prometheus-metrics-integration"></span>
 
 ## Best Practices
 
-### Periodic Scanning Schedule
+![Remediation verification and separately tracked risk acceptance](../.gitbook/assets/en-security-11-kubescape-4.png)
 
-| Environment | Framework | Frequency | Threshold |
-|-------------|-----------|-----------|-----------|
-| Production | NSA-CISA + CIS | Daily | Critical: 0, High: 0 |
-| Staging | NSA-CISA | Daily | Critical: 0, High: 5 |
-| Development | Custom (core controls) | Weekly | Critical: 0 |
-| Pre-production | Full (all frameworks) | Per deployment | Critical: 0, High: 0 |
-| CI/CD | NSA-CISA | Per commit | Critical: 0 |
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-4.html)
 
-### Scanning Configuration
+
+Record scope, passed/failed/unavailable checks, policy hashes, tool images, exception owners, and expiry dates. Compare scores only across equivalent inputs/policies. Node scanning, image scanning, and runtime detection are separate sources of evidence.
+
+### Prometheus Integration
 
 ```yaml
-# production-scan-config.yaml
-apiVersion: kubescape.io/v1alpha1
-kind: ScanConfiguration
-metadata:
-  name: production-compliance
-spec:
-  frameworks:
-    - nsa
-    - cis
-
-  schedule:
-    continuous:
-      enabled: true
-      interval: "1h"
-    full:
-      enabled: true
-      cron: "0 2 * * *"
-
-  namespaces:
-    include:
-      - production
-      - production-*
-    exclude:
-      - kube-system
-
-  thresholds:
-    compliance: 90
-    severities:
-      critical: 0
-      high: 0
-      medium: 10
-
-  notifications:
-    onFailure:
-      slack:
-        channel: "#security-alerts"
-        priority: immediate
-      pagerduty:
-        enabled: true
-    onSuccess:
-      slack:
-        channel: "#security-daily"
-        priority: low
-```
-
-### Compliance Reporting
-
-```bash
-# Generate compliance report
-kubescape scan framework nsa,cis \
-    --format html \
-    --output compliance-report-$(date +%Y%m%d).html
-
-# Generate executive summary
-kubescape scan framework nsa \
-    --format json \
-    --output results.json
-
-# Extract key metrics
-jq '{
-  date: now | strftime("%Y-%m-%d"),
-  overallScore: .complianceScore,
-  criticalFindings: [.results[].controls[] | select(.status == "failed" and .severity == "Critical")] | length,
-  highFindings: [.results[].controls[] | select(.status == "failed" and .severity == "High")] | length,
-  totalControls: .results[].controls | length,
-  passedControls: [.results[].controls[] | select(.status == "passed")] | length
-}' results.json > executive-summary.json
-```
-
-### Remediation Workflow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         Remediation Workflow                                 │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  1. Scan & Identify                                                         │
-│     └─▶ kubescape scan framework nsa --format json --output findings.json  │
-│                                                                             │
-│  2. Prioritize by Risk                                                      │
-│     └─▶ Sort findings by severity and exposure                             │
-│     └─▶ Critical → High → Medium → Low                                     │
-│                                                                             │
-│  3. Assign & Track                                                          │
-│     └─▶ Create tickets for each finding                                    │
-│     └─▶ Assign to appropriate team                                         │
-│     └─▶ Set SLA based on severity                                          │
-│                                                                             │
-│  4. Remediate                                                               │
-│     └─▶ Apply fixes to manifests                                           │
-│     └─▶ Validate in dev/staging                                            │
-│     └─▶ Deploy to production                                               │
-│                                                                             │
-│  5. Verify                                                                  │
-│     └─▶ Re-scan to confirm remediation                                     │
-│     └─▶ Update ticket status                                               │
-│     └─▶ Document exceptions if needed                                      │
-│                                                                             │
-│  6. Monitor                                                                 │
-│     └─▶ Set up alerts for regression                                       │
-│     └─▶ Track compliance trends                                            │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Integration with Other Security Tools
-
-```yaml
-# Multi-tool security pipeline
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: security-scan-pipeline
-  namespace: security
-spec:
-  schedule: "0 3 * * *"
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            # Kubescape for configuration scanning
-            - name: kubescape
-              image: quay.io/kubescape/kubescape:latest
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  kubescape scan framework nsa,cis \
-                    --format json \
-                    --output /reports/kubescape-$(date +%Y%m%d).json \
-                    --submit
-              volumeMounts:
-                - name: reports
-                  mountPath: /reports
-
-            # Trivy for image scanning
-            - name: trivy
-              image: aquasec/trivy:latest
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  trivy k8s --report summary \
-                    --output /reports/trivy-$(date +%Y%m%d).json \
-                    --format json
-              volumeMounts:
-                - name: reports
-                  mountPath: /reports
-
-          volumes:
-            - name: reports
-              persistentVolumeClaim:
-                claimName: security-reports
-          restartPolicy: OnFailure
-```
-
-### Prometheus Metrics Integration
-
-```yaml
-# ServiceMonitor for Kubescape metrics
 apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+kind: PodMonitor
 metadata:
-  name: kubescape
+  name: kubescape-posture
   namespace: monitoring
 spec:
+  namespaceSelector:
+    matchNames: [kubescape]
   selector:
     matchLabels:
-      app: kubescape
-  endpoints:
+      app.kubernetes.io/name: kubescape-operator
+      app.kubernetes.io/instance: kubescape
+      app.kubernetes.io/component: prometheus-exporter
+  podMetricsEndpoints:
     - port: metrics
-      interval: 60s
       path: /metrics
+      interval: 60s
 ```
 
-Key metrics to monitor:
 
-| Metric | Description | Alert Threshold |
-|--------|-------------|-----------------|
-| `kubescape_compliance_score` | Overall compliance percentage | < 80% |
-| `kubescape_critical_findings` | Number of critical findings | > 0 |
-| `kubescape_high_findings` | Number of high findings | > 5 |
-| `kubescape_scan_duration_seconds` | Scan execution time | > 600 |
-| `kubescape_last_scan_timestamp` | Last successful scan time | > 24h ago |
+The reviewed exporter Pod names container port 8080 metrics, while its Service port is unnamed. This example therefore uses a PodMonitor matching the actual Pod labels and named port. Prometheus Operator and Prometheus PodMonitor selection are separate prerequisites.
 
----
+Actual exporter 0.2.23 gauge examples are kubescape_controls_total_cluster_high and kubescape_controls_total_workload_high. A _total suffix does not make them counters. The old kubescape_compliance_score/critical_findings/last_scan_timestamp names are not established common metrics. Monitor missing scrapes and stale data separately.
+
+<span id="table-of-contents"></span>
+<span id="key-takeaways"></span>
+<span id="quick-reference-commands"></span>
+<span id="references"></span>
+<span id="related-documentation"></span>
 
 ## Summary and References
 
-### Key Takeaways
+Local validation covered binary/checksum, policy snapshot, threshold boundaries/severity/deprecated gate, exception/exclusion behavior, the published shell gate, Helm rendering, SecurityException schema, PodMonitor targeting, GitHub Actions syntax, and thirty diagram browser cases. No real AWS/Kubernetes/registry/notification/SaaS operations were performed.
 
-1. **Multi-Framework Support**: Kubescape supports NSA-CISA, CIS, MITRE ATT&CK, and custom frameworks for comprehensive compliance coverage.
-
-2. **Shift-Left Security**: Scan manifests and Helm charts in CI/CD pipelines before deployment to catch issues early.
-
-3. **Continuous Monitoring**: Deploy the operator for ongoing security posture monitoring with scheduled scans.
-
-4. **Risk-Based Prioritization**: Use risk scoring to prioritize remediation efforts on the most impactful findings.
-
-5. **Exception Management**: Document and track accepted risks with proper approval workflows.
-
-6. **EKS Integration**: Leverage EKS-specific controls and IRSA validation for AWS deployments.
-
-### Quick Reference Commands
-
-```bash
-# Basic cluster scan
-kubescape scan framework nsa
-
-# Scan with multiple frameworks
-kubescape scan framework nsa,cis,mitre
-
-# Scan manifests before deployment
-kubescape scan ./manifests/
-
-# Image vulnerability scan
-kubescape scan image nginx:latest
-
-# RBAC analysis
-kubescape scan rbac
-
-# CI/CD integration (fail on high severity)
-kubescape scan framework nsa \
-    --severity-threshold high \
-    --compliance-threshold 80 \
-    --format sarif \
-    --output results.sarif
-
-# Generate HTML report
-kubescape scan framework nsa --format html --output report.html
-```
-
-### References
-
-- [Kubescape Official Documentation](https://kubescape.io/docs/)
-- [Kubescape GitHub Repository](https://github.com/kubescape/kubescape)
-- [NSA-CISA Kubernetes Hardening Guide](https://media.defense.gov/2022/Aug/29/2003066362/-1/-1/0/CTR_KUBERNETES_HARDENING_GUIDANCE_1.2_20220829.PDF)
-- [CIS Kubernetes Benchmark](https://www.cisecurity.org/benchmark/kubernetes)
-- [MITRE ATT&CK for Containers](https://attack.mitre.org/matrices/enterprise/containers/)
-- [Kubescape Cloud Platform](https://cloud.armosec.io/)
-- [CNCF Sandbox Projects](https://www.cncf.io/sandbox-projects/)
-
----
-
-## Related Documentation
-
-- [Kyverno Policy Management](./01-kyverno-policy-management.md)
-- [Pod Security Standards](./03-pod-security-standards.md)
-- [EKS Security Best Practices](./06-eks-security-best-practices.md)
-- [Image Security](./07-image-security.md)
-- [Runtime Security](./08-runtime-security.md)
-- [OPA Gatekeeper](./09-opa-gatekeeper.md)
+- [CNCF Kubescape history](https://www.cncf.io/projects/kubescape/)
+- [Kubescape documentation](https://kubescape.io/docs/)
+- [Frameworks and controls](https://kubescape.io/docs/frameworks-and-controls/)
+- [Operator documentation](https://kubescape.io/docs/operator/)
+- [CLI 4.0.14](https://github.com/kubescape/kubescape/releases/tag/v4.0.14)
+- [Pinned CLI flags](https://github.com/kubescape/kubescape/blob/v4.0.14/cmd/scan/scan.go)
+- [Operator chart 1.40.4](https://github.com/kubescape/helm-charts/releases/tag/kubescape-operator-1.40.4)
+- [Policy library](https://github.com/kubescape/regolibrary)
+- [Exporter metrics 0.2.23](https://github.com/kubescape/prometheus-exporter/blob/v0.2.23/metrics/metrics.go)
+- [Runtime security](./08-runtime-security.md)
+- [EKS security practices](./06-eks-security-best-practices.md)

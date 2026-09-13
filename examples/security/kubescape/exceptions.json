@@ -1,0 +1,24 @@
+[
+  {
+    "name": "documentation-privileged-exception",
+    "policyType": "postureExceptionPolicy",
+    "actions": [
+      "alertOnly"
+    ],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "demo-app",
+          "kind": "Pod",
+          "name": "insecure-example"
+        }
+      }
+    ],
+    "posturePolicies": [
+      {
+        "controlID": "C-0057"
+      }
+    ]
+  }
+]
