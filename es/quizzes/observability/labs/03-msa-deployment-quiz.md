@@ -1,185 +1,177 @@
-# Laboratorio de Observabilidad, Parte 3: Cuestionario sobre despliegue de MSA y Canary
+# Cuestionario del laboratorio de Observability 03
 
-> **Última actualización**: February 22, 2026
+<span id="observability-lab-part-3-msa-deployment-and-canary-quiz"></span>
 
-Pon a prueba tu comprensión de los conceptos de despliegue de MSA y lanzamiento Canary tratados en el Laboratorio End-to-End de Observabilidad, Parte 3.
+> **Última actualización**: September 13, 2026
 
----
-
-1. ¿Qué tipo de Generator de ApplicationSet de ArgoCD es el más adecuado para desplegar la misma aplicación en varios clusters?
-   - A) List Generator con nombres de cluster codificados de forma fija
-   - B) Cluster Generator que descubre automáticamente los clusters registrados según labels
-   - C) Git Generator que lee las configuraciones de cluster desde el repositorio
-   - D) Pull Request Generator para entornos efímeros
+1. ¿Cuál es el límite de transacción de pedido/outbox?
+   - A) Confirmar el pedido y luego ignorar los fallos de mensajería.
+   - B) Ambos se confirman o se revierten en una transacción de DB.
+   - C) SNS y DB son automáticamente atómicos.
+   - D) Inicializar la DB para cada solicitud.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cluster Generator que descubre automáticamente los clusters registrados según labels**
+**Respuesta: B) Ambos se confirman o se revierten en una transacción de DB.**
 
-**Explicación:**
-El Cluster Generator descubre dinámicamente los clusters registrados en ArgoCD y genera Applications para cada uno. Al usar labels de cluster (por ejemplo, `environment: production`, `region: us-east-1`), puedes seleccionar clusters de forma específica. Esto es más fácil de mantener que las listas codificadas de forma fija, porque añadir o eliminar clusters solo requiere actualizar los registros y labels de cluster, no modificar las definiciones de ApplicationSet.
+Valide la reversión de DB y la retención de registros de outbox no publicados.
 
 </details>
 
 ---
 
-2. ¿Cuál es la principal ventaja del patrón App-of-Apps en ArgoCD?
-   - A) Reduce el número total de Applications de ArgoCD necesarias
-   - B) Permite una gestión jerárquica en la que una Application principal administra Applications secundarias, proporcionando estructura organizativa y operaciones por lotes
-   - C) Mejora el rendimiento de sincronización al paralelizar todos los despliegues
-   - D) Elimina la necesidad de Helm o Kustomize
+2. ¿Quién es propietario de la carga de trabajo de payment?
+   - A) Deployment y Rollout simultáneamente.
+   - B) Un único Rollout.
+   - C) KEDA y Rollout compiten por las réplicas.
+   - D) Grafana.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Permite una gestión jerárquica en la que una Application principal administra Applications secundarias, proporcionando estructura organizativa y operaciones por lotes**
+**Respuesta: B) Un único Rollout.**
 
-**Explicación:**
-El patrón App-of-Apps crea una jerarquía en la que los manifests de una Application raíz contienen definiciones para otras Applications. Esto proporciona: gestión centralizada de múltiples aplicaciones, herencia de configuración coherente, inicialización más sencilla de plataformas completas y la capacidad de aplicar cambios a múltiples aplicaciones actualizando la Application principal. Es especialmente útil para equipos de plataforma que gestionan múltiples microservices o entornos multi-tenant.
+Mantenga explícitos la propiedad del controller y el estado deseado de Git.
 
 </details>
 
 ---
 
-3. ¿Qué controlan las configuraciones de weight y limits en un NodePool de Karpenter?
-   - A) Weight determina la asignación de CPU por Pod; limits establece los límites de memoria
-   - B) Weight establece la prioridad de scheduling entre NodePools; limits restringe los recursos totales que Karpenter puede aprovisionar para ese pool
-   - C) Weight controla los niveles de precio de los nodos; limits establece el número máximo de nodos
-   - D) Weight determina la densidad de Pods; limits establece el ancho de banda de red
+3. ¿Por qué separar las queues de notification y analytics?
+   - A) Competir en una queue es fanout.
+   - B) Para que cada consumidor reciba de forma independiente el mismo evento.
+   - C) SQS solo admite una queue.
+   - D) Elimina todos los duplicados.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Weight establece la prioridad de scheduling entre NodePools; limits restringe los recursos totales que Karpenter puede aprovisionar para ese pool**
+**Respuesta: B) Para que cada consumidor reciba de forma independiente el mismo evento.**
 
-**Explicación:**
-El weight de NodePool (0-100) determina la preferencia cuando varios NodePools pueden satisfacer los requisitos de un Pod: un weight más alto significa mayor prioridad. Limits define los recursos máximos (CPU, memoria) que Karpenter puede aprovisionar para ese NodePool, lo que evita un escalado ilimitado. Esto permite crear infraestructura por niveles: pools de weight alto para tipos de instancia preferidos con limits para controlar los costes y pools de respaldo de weight más bajo para capacidad excedente.
+El fanout de SNS y la deduplicación de event-ID de cada consumidor son responsabilidades independientes.
 
 </details>
 
 ---
 
-4. ¿Qué tipos de métricas puede usar el scaler SQS de KEDA para las decisiones de escalado?
-   - A) Solo ApproximateNumberOfMessages
-   - B) ApproximateNumberOfMessages, ApproximateNumberOfMessagesNotVisible o ApproximateNumberOfMessagesDelayed
-   - C) Solo métricas personalizadas de CloudWatch
-   - D) Los scalers SQS solo admiten escalado basado en el tiempo
+4. ¿Qué ocurre con un pago sintético idéntico repetido?
+   - A) Crear siempre un nuevo pago.
+   - B) Reutilizar el resultado almacenado; los valores conflictivos devuelven 409.
+   - C) Cobrar una tarjeta real.
+   - D) Tener éxito siempre, incluso sin un pedido.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) ApproximateNumberOfMessages, ApproximateNumberOfMessagesNotVisible o ApproximateNumberOfMessagesDelayed**
+**Respuesta: B) Reutilizar el resultado almacenado; los valores conflictivos devuelven 409.**
 
-**Explicación:**
-El scaler SQS de KEDA admite varias métricas de cola: `ApproximateNumberOfMessages` (mensajes visibles listos para procesar), `ApproximateNumberOfMessagesNotVisible` (mensajes que se están procesando pero aún no se han eliminado) y `ApproximateNumberOfMessagesDelayed` (mensajes en la cola de retraso). Puedes elegir según tu estrategia de escalado: normalmente `ApproximateNumberOfMessages` para escalar según el backlog o métricas combinadas para tener una percepción más completa de la profundidad de la cola.
+El laboratorio no implementa ninguna pasarela de pago real.
 
 </details>
 
 ---
 
-5. ¿Cuál es la diferencia clave entre la auto-instrumentación de OpenTelemetry y la instrumentación manual?
-   - A) La auto-instrumentación proporciona traces más detallados que la instrumentación manual
-   - B) La auto-instrumentación captura automáticamente telemetría de frameworks compatibles sin cambios de código, mientras que la instrumentación manual requiere llamadas explícitas al SDK para spans y métricas personalizados
-   - C) La instrumentación manual está obsoleta en favor de la auto-instrumentación
-   - D) La auto-instrumentación solo funciona con lenguajes interpretados
+5. ¿Qué sucede si ocurre un fallo después de la publicación en SNS, pero antes de la marca en DB?
+   - A) Exactamente una vez es automático.
+   - B) Es posible una nueva entrega, por lo que los consumidores necesitan deduplicación.
+   - C) Eliminar cada fila de outbox.
+   - D) Confirmar siempre el mensaje.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) La auto-instrumentación captura automáticamente telemetría de frameworks compatibles sin cambios de código, mientras que la instrumentación manual requiere llamadas explícitas al SDK para spans y métricas personalizados**
+**Respuesta: B) Es posible una nueva entrega, por lo que los consumidores necesitan deduplicación.**
 
-**Explicación:**
-La auto-instrumentación (mediante agents, manipulación de bytecode o monkey-patching) captura automáticamente telemetría de frameworks, librerías y runtimes populares sin modificar el código de la aplicación. La instrumentación manual usa el SDK de OTel para crear explícitamente spans, añadir atributos, registrar métricas y emitir logs. La práctica recomendada es combinar ambas: auto-instrumentación para la cobertura estándar de frameworks e instrumentación manual para spans específicos del negocio y métricas personalizadas.
+Los efectos secundarios externos requieren contratos de idempotencia adicionales.
 
 </details>
 
 ---
 
-6. ¿Qué habilita el argumento de JVM `-javaagent:opentelemetry-javaagent.jar` para los services Java?
-   - A) Habilita únicamente la monitorización JMX
-   - B) Adjunta el agent Java de OTel para la instrumentación automática de frameworks y librerías Java comunes
-   - C) Configura la telemetría de recolección de basura de Java
-   - D) Habilita la integración con Java Flight Recorder
+6. ¿Qué carga de trabajo se escala con el backlog de SQS?
+   - A) Siempre solo el productor de API.
+   - B) El consumidor de esa queue.
+   - C) El administrador de la base de datos.
+   - D) El NLB.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Adjunta el agent Java de OTel para la instrumentación automática de frameworks y librerías Java comunes**
+**Respuesta: B) El consumidor de esa queue.**
 
-**Explicación:**
-El agent Java de OpenTelemetry usa instrumentación de bytecode para capturar automáticamente telemetría de frameworks Java populares (Spring, JAX-RS, gRPC), clientes HTTP (Apache HttpClient, OkHttp), bases de datos (JDBC, Hibernate) y sistemas de mensajería (Kafka, RabbitMQ). El agent se adjunta al iniciar la JVM mediante `-javaagent` y no requiere cambios de código. La configuración se realiza mediante variables de entorno (por ejemplo, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SERVICE_NAME`).
+KEDA lee atributos de la queue; no consume mensajes.
 
 </details>
 
 ---
 
-7. ¿Qué función desempeña AnalysisTemplate en los despliegues Canary de Argo Rollouts?
-   - A) Define el análisis de la imagen de contenedor para el escaneo de seguridad
-   - B) Especifica las consultas de métricas y los criterios de éxito que determinan si un lanzamiento Canary debe continuar o hacer rollback
-   - C) Configura los porcentajes de división del tráfico durante Canary
-   - D) Gestiona el número de réplicas durante la entrega progresiva
+7. ¿Qué debe seleccionar la consulta de éxito de canary?
+   - A) Todo el tráfico stable y canary.
+   - B) Solo la nueva revisión de pod-template.
+   - C) Cada namespace.
+   - D) Solo el promedio previo al Deployment.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Especifica las consultas de métricas y los criterios de éxito que determinan si un lanzamiento Canary debe continuar o hacer rollback**
+**Respuesta: B) Solo la nueva revisión de pod-template.**
 
-**Explicación:**
-AnalysisTemplate define el análisis automatizado para los lanzamientos Canary. Especifica: proveedores de métricas (Prometheus, Datadog, CloudWatch), consultas que evaluar (por ejemplo, tasa de errores, latencia), umbrales de éxito/error e intervalos de medición. Durante un rollout, Argo Rollouts crea AnalysisRuns a partir de la plantilla y evalúa continuamente las métricas. Si los criterios fallan, el rollout se pausa automáticamente o hace rollback, lo que permite una entrega progresiva segura sin intervención manual.
+No permita que un gran volumen de tráfico stable oculte un canary con fallos.
 
 </details>
 
 ---
 
-8. ¿Qué mide una consulta PromQL de tasa de éxito como `sum(rate(http_requests_total{status=~"2.."}[5m])) / sum(rate(http_requests_total[5m]))`?
-   - A) El número total de solicitudes exitosas en los últimos 5 minutos
-   - B) La proporción de respuestas HTTP 2xx respecto al total de respuestas, que representa la tasa de éxito
-   - C) El tiempo de respuesta medio para las solicitudes exitosas
-   - D) El número de usuarios únicos exitosos
+8. ¿Cómo se deben tratar los resultados vacíos/NaN/Inf?
+   - A) Siempre como un éxito del 100 %.
+   - B) No deben cumplir la condición de éxito.
+   - C) Convertirlos todos a cero y aprobarlos.
+   - D) Las métricas son innecesarias.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) La proporción de respuestas HTTP 2xx respecto al total de respuestas, que representa la tasa de éxito**
+**Respuesta: B) No deben cumplir la condición de éxito.**
 
-**Explicación:**
-Esta consulta PromQL calcula la tasa de éxito dividiendo las solicitudes exitosas (códigos de estado HTTP 2xx, coincidentes mediante la regex `2..`) entre el total de solicitudes, ambas calculadas como tasas de 5 minutos. La función `rate()` calcula el promedio por segundo durante la ventana y `sum()` agrega todas las dimensiones de labels. El resultado es una proporción entre 0 y 1, normalmente mostrada como porcentaje. Este es un SLI clave para la fiabilidad del service.
+Compruebe conjuntamente los conteos mínimos de solicitudes y la observability.
 
 </details>
 
 ---
 
-9. ¿Qué sucede automáticamente cuando un AnalysisRun de Argo Rollouts devuelve un estado FAIL?
-   - A) El rollout continúa, pero envía una alerta
-   - B) El rollout se pausa y espera intervención manual
-   - C) El rollout se cancela automáticamente y reduce el Canary, restaurando la versión estable para todo el tráfico
-   - D) El AnalysisRun se reinicia con parámetros distintos
+9. ¿Qué labels pertenecen a las métricas?
+   - A) Cada ID de pedido.
+   - B) Service, ruta acotada, estado y revisión.
+   - C) Datos de cliente/tarjeta.
+   - D) El cuerpo completo de la solicitud.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) El rollout se cancela automáticamente y reduce el Canary, restaurando la versión estable para todo el tráfico**
+**Respuesta: B) Service, ruta acotada, estado y revisión.**
 
-**Explicación:**
-Cuando un AnalysisRun falla (las métricas superan los umbrales de error), Argo Rollouts activa automáticamente un rollback: el ReplicaSet Canary se escala a cero, todo el tráfico vuelve a la versión estable y el estado del Rollout pasa a ser "Degraded". Este rollback automatizado es una función de seguridad clave de la entrega progresiva: los lanzamientos problemáticos se revierten automáticamente sin requerir intervención humana, lo que minimiza el blast radius de los despliegues defectuosos.
+Los ID únicos generan problemas de cardinalidad/privacidad; use la correlación de trace/log de forma adecuada.
 
 </details>
 
 ---
 
-10. ¿Por qué es importante la propagación de contexto de W3C TraceContext al usar el SDK de OpenTelemetry?
-    - A) Es necesaria para la recopilación de métricas
-    - B) Habilita el tracing distribuido al transmitir el contexto de trace (trace ID, span ID, flags) a través de los límites entre services en headers HTTP
-    - C) Mejora la compresión de logs
-    - D) Solo es necesaria para los services gRPC
+10. ¿Qué significa abortar un Rollout?
+   - A) Git revierte automáticamente.
+   - B) Es independiente de la reversión de Git o la restauración de la imagen deseada; restaure explícitamente la fuente de verdad.
+   - C) Todas las escrituras de DB se revierten.
+   - D) La nueva imagen se elimina permanentemente.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Habilita el tracing distribuido al transmitir el contexto de trace (trace ID, span ID, flags) a través de los límites entre services en headers HTTP**
+**Respuesta: B) Es independiente de la reversión de Git o la restauración de la imagen deseada; restaure explícitamente la fuente de verdad.**
 
-**Explicación:**
-W3C TraceContext es un formato estandarizado para propagar información de trace distribuido mediante headers HTTP (`traceparent`, `tracestate`). Cuando el service A llama al service B, la propagación de contexto transmite el trace ID y el span ID principal, lo que permite vincular los spans del service B al trace del service A. Sin una propagación adecuada, los traces se interrumpen en los límites entre services y muestran segmentos desconectados en lugar de flujos de solicitudes completos. El SDK de OTel gestiona esto automáticamente cuando está configurado, pero los services deben reenviar los headers.
+No use Helm directo y ArgoCD como propietarios simultáneos.
 
 </details>
+
+---
+
+[Volver a la guía](../../../labs/observability/03-msa-deployment-lab.md)

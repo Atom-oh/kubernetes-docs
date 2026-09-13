@@ -1,1185 +1,169 @@
-# 第 3 部分：MSA 部署与金丝雀发布
+# 第 3 部分：MSA 部署和金丝雀发布
 
-> **难度**：高级 **预计时间**：60 分钟 **最后更新**：February 23, 2026
+<span id="application-structure"></span>
+<span id="architecture-overview"></span>
+<span id="canary-state-diagram"></span>
+<span id="cleanup"></span>
+<span id="exercise-1-msa-application-overview"></span>
+<span id="exercise-2-karpenter-nodepool-configuration"></span>
+<span id="exercise-3-keda-scaledobject-configuration"></span>
+<span id="exercise-4-argocd-application-deployment"></span>
+<span id="exercise-5-opentelemetry-auto-instrumentation"></span>
+<span id="exercise-6-argo-rollouts-canary-deployment"></span>
+<span id="exercise-7-intentional-failure-and-automatic-rollback"></span>
+<span id="learning-objectives"></span>
+<span id="next-steps"></span>
+<span id="prerequisites"></span>
+<span id="references"></span>
+<span id="repository-structure"></span>
+<span id="sample-code-snippets"></span>
+<span id="service-call-flow"></span>
+<span id="steps"></span>
+<span id="steps-1"></span>
+<span id="steps-2"></span>
+<span id="steps-3"></span>
+<span id="steps-4"></span>
+<span id="steps-5"></span>
+<span id="summary"></span>
+<span id="troubleshooting"></span>
+<span id="verification"></span>
+<span id="verification-1"></span>
+<span id="verification-2"></span>
+<span id="verification-3"></span>
+<span id="verification-4"></span>
+<span id="verification-5"></span>
 
-## 学习目标
+> **难度**：高级
+> **最后更新**：September 13, 2026
+将五个可运行的 Python 角色部署为独立工作负载。 [应用 README](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/application)定义了代码、DB、镜像和 chart 输入。支付和通知均为模拟操作；不会实际扣费或发送电子邮件/SMS。
 
-* 使用 ArgoCD 多集群管理部署 MSA 应用程序
-* 使用 AnalysisTemplate 配置 Argo Rollouts 以进行金丝雀发布
-* 为所有服务实施 OpenTelemetry 自动插桩
-* 通过可观测性驱动的晋级/回滚执行金丝雀发布
+![独立工作负载、事务性 outbox、SNS 扇出和消费者](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-10.png)
 
-## 前置条件
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-10.html)
 
-* [ ] 已完成[第 1 部分：基础设施设置](01-infrastructure-setup-lab.md)
-* [ ] 已完成[第 2 部分：可观测性栈](02-observability-stack-lab.md)
-* [ ] ArgoCD 和 Argo Rollouts 正在运行
-* [ ] 可观测性栈正在收集数据
+## 1. 共享 API 和持久化契约 {#contracts}
 
-***
+| 请求/角色 | 契约 |
+|---|---|
+| `POST /orders` | 201 + `id`；订单和 outbox 一起提交 |
+| `POST /payments` | 200 + `status: completed`；相同订单/金额/方法具有幂等性 |
+| `GET /orders/{id}` | 200 + 相同 ID，或404 |
+| `notification` | 自有 SQS 队列，持久化的模拟通知 |
+| `analytics` | 独立 SQS 队列，独立持久化的结果 |
 
-## 架构概览
+W3C 上下文会跨越 gateway/service HTTP 以及 producer/consumer 边界。在 outbox 发布后但 DB 标记前发生崩溃会导致重新投递，因此消费者会以事务方式去重事件 ID。这并不能使外部电子邮件/支付效果实现恰好一次。未包含针对订单 POST 的通用 Idempotency-Key 处理。
 
-![MSA Service Map](../../.gitbook/assets/msa-service-map.png)
+应用指标为 `lab_http_requests_total` 和 `lab_http_request_duration_seconds`，按 service/route/status/revision 添加标签。JSON 日志包含 service/level/trace_id/span_id；客户/支付载荷不是指标标签。
 
-### 服务调用流程
+## 2. 数据库文件和镜像 {#image-database}
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant APIGW as API Gateway<br/>(Go)
-    participant Order as Order Service<br/>(Python)
-    participant Payment as Payment Service<br/>(Java)
-    participant Aurora as Aurora PostgreSQL
-    participant SQS as SQS Queue
-    participant Notif as Notification<br/>(Node.js)
-
-    Client->>APIGW: POST /orders
-    activate APIGW
-    APIGW->>APIGW: Validate JWT
-    APIGW->>Order: CreateOrder()
-    activate Order
-    Order->>Aurora: INSERT order
-    Order->>Payment: ProcessPayment()
-    activate Payment
-    Payment->>Aurora: INSERT payment
-    Payment-->>Order: PaymentResult
-    deactivate Payment
-    Order->>SQS: PublishOrderEvent
-    Order-->>APIGW: OrderResponse
-    deactivate Order
-    APIGW-->>Client: 201 Created
-    deactivate APIGW
-
-    Note over SQS,Notif: Async Processing
-    SQS-->>Notif: ConsumeEvent
-    activate Notif
-    Notif->>Notif: SendEmail/SMS
-    deactivate Notif
-```
-
-***
-
-## 练习 1：MSA 应用程序概览
-
-### 应用程序结构
-
-| 服务                 | 语言     | 框架        | 端口 | 描述                             |
-| -------------------- | -------- | ----------- | ---- | -------------------------------- |
-| API Gateway          | Go       | Gin         | 8080 | 请求路由、身份验证               |
-| Order Service        | Python   | FastAPI     | 8000 | 订单管理                         |
-| Payment Service      | Java     | Spring Boot | 8080 | 支付处理                         |
-| Notification Service | Node.js  | Express     | 3000 | 电子邮件/SMS 通知                |
-| Analytics Batch      | Python   | -           | -    | 每日分析（由 MWAA 触发）         |
-
-### 仓库结构
-
-```
-obs-lab-msa/
-├── api-gateway/
-│   ├── main.go
-│   ├── Dockerfile
-│   └── k8s/
-│       ├── deployment.yaml
-│       ├── service.yaml
-│       └── rollout.yaml
-├── order-service/
-│   ├── main.py
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── k8s/
-├── payment-service/
-│   ├── src/main/java/...
-│   ├── pom.xml
-│   ├── Dockerfile
-│   └── k8s/
-├── notification-service/
-│   ├── index.js
-│   ├── package.json
-│   ├── Dockerfile
-│   └── k8s/
-├── analytics-batch/
-│   ├── main.py
-│   ├── Dockerfile
-│   └── k8s/
-└── argocd/
-    ├── app-of-apps.yaml
-    └── applicationset.yaml
-```
-
-### 示例代码片段
-
-**API Gateway（使用 OTel 的 Go）**
-
-```go
-package main
-
-import (
-    "github.com/gin-gonic/gin"
-    "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-    "go.opentelemetry.io/otel"
-    "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-    "go.opentelemetry.io/otel/sdk/trace"
-)
-
-func main() {
-    // Initialize OTel
-    exporter, _ := otlptracehttp.New(ctx,
-        otlptracehttp.WithEndpoint("otel-collector:4318"),
-        otlptracehttp.WithInsecure(),
-    )
-    tp := trace.NewTracerProvider(trace.WithBatcher(exporter))
-    otel.SetTracerProvider(tp)
-
-    r := gin.New()
-    r.Use(otelgin.Middleware("api-gateway"))
-
-    r.POST("/orders", createOrderHandler)
-    r.Run(":8080")
-}
-```
-
-**Order Service（使用 OTel 的 Python）**
-
-```python
-from fastapi import FastAPI
-from opentelemetry import trace
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-
-app = FastAPI()
-
-# Auto-instrumentation
-FastAPIInstrumentor.instrument_app(app)
-SQLAlchemyInstrumentor().instrument()
-
-tracer = trace.get_tracer(__name__)
-
-@app.post("/orders")
-async def create_order(order: OrderRequest):
-    with tracer.start_as_current_span("create_order") as span:
-        span.set_attribute("order.amount", order.amount)
-        # Business logic...
-        return {"order_id": order_id}
-```
-
-***
-
-## 练习 2：Karpenter NodePool 配置
-
-### 步骤
-
-**步骤 2.1：切换到服务集群**
+使用第 1 部分的专用运行时账户/私有连接文件。Pod 路径为 `/run/database-ca/global-bundle.pem` 和 `/run/database/connection.json`；将连接文件和公共 RDS CA 分别挂载为 Secret/ConfigMap。
 
 ```bash
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-service)
+cd examples/labs/observability/application
+kubectl --context service create namespace msa --dry-run=client -o yaml | kubectl --context service apply -f -
+kubectl --context service -n msa create secret generic lab-database --from-file=connection.json="$LAB_STATE/runtime-pod-connection.json"
+kubectl --context service -n msa create configmap lab-database-ca --from-file=global-bundle.pem="$LAB_STATE/global-bundle.pem"
+docker buildx build --platform linux/amd64 \
+  --tag "$IMAGE_REPOSITORY:$IMAGE_TAG" --push .
+docker buildx imagetools inspect "$IMAGE_REPOSITORY:$IMAGE_TAG"
 ```
+使用第 1 部分选定的不可变版本。按照组织的轮换流程更新现有 Secret，不要打印其值，也不要将其放入 chart 文件。Dockerfile 固定了基础 digest、UID10001 和受限的构建上下文。
 
-**步骤 2.2：为 MSA 工作负载创建专用 NodePool**
+生成的 `m6i.large` 节点使用 AMD64。请使用 AMD64 或支持跨平台的 Buildx builder，并在部署前确认推送的 manifest 中包含 `linux/amd64`。审计中的本地 ARM64 smoke test 不验证 AMD64 构建。
 
-```bash
-cat <<'EOF' | kubectl apply -f -
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: msa-workloads
-spec:
-  template:
-    metadata:
-      labels:
-        workload-type: msa
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot", "on-demand"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - m5.large
-            - m5.xlarge
-            - m5.2xlarge
-            - c5.large
-            - c5.xlarge
-            - c5.2xlarge
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values:
-            - us-west-2a
-            - us-west-2b
-            - us-west-2c
-      nodeClassRef:
-        name: msa-nodeclass
-      taints:
-        - key: workload-type
-          value: msa
-          effect: NoSchedule
-  limits:
-    cpu: 200
-    memory: 400Gi
-  disruption:
-    consolidationPolicy: WhenUnderutilized
-    consolidateAfter: 60s
-    budgets:
-      - nodes: "20%"
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: msa-nodeclass
-spec:
-  amiFamily: AL2
-  subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: obs-service
-  securityGroupSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: obs-service
-  role: KarpenterNodeRole-obs-service
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        volumeSize: 100Gi
-        volumeType: gp3
-        iops: 3000
-        throughput: 125
-        deleteOnTermination: true
-  tags:
-    Environment: lab
-    ManagedBy: karpenter
-    WorkloadType: msa
-EOF
-```
-
-### 验证
-
-```bash
-kubectl get nodepools
-kubectl get ec2nodeclasses
-# Expected: msa-workloads NodePool and msa-nodeclass EC2NodeClass created
-```
-
-***
-
-## 练习 3：KEDA ScaledObject 配置
-
-### 步骤
-
-**步骤 3.1：安装 KEDA**
+## 3. 安装 controller 和 chart {#deployment}
 
 ```bash
 helm repo add kedacore https://kedacore.github.io/charts
-helm repo update
-
-helm install keda kedacore/keda \
-  --namespace keda \
-  --create-namespace \
-  --version 2.13.0 \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::${ACCOUNT_ID}:role/obs-lab-keda \
-  --wait
+helm repo add argo https://argoproj.github.io/argo-helm
+helm upgrade --install keda kedacore/keda --version 2.20.2   --kube-context service -n keda --create-namespace -f "$LAB_STATE/helm-inputs/keda.yaml"
+helm upgrade --install argo-rollouts argo/argo-rollouts --version 2.43.1   --kube-context service -n argo-rollouts --create-namespace
+helm upgrade --install observability-lab ./chart --kube-context service -n msa   -f "$LAB_STATE/helm-inputs/application.yaml"
+kubectl --context service -n msa get deployment,rollout,pods,svc,scaledobject
 ```
+验证全部五个 ServiceAccount 和 IRSA subject。Gateway 没有 AWS role；publisher 访问 SNS，consumer 访问各自的队列，KEDA 仅访问队列属性。不要为一个工作负载配置重复的 Pod Identity/IRSA 路径。Readiness 检查 DB/schema，而不是成功的 SQS/IAM 投递。
 
-**步骤 3.2：为 Notification Service 创建 ScaledObject（基于 SQS）**
+ServiceMonitor 标签与 service Prometheus release 匹配，且 `honorLabels` 保留应用 service 标签。托管 node group 可以运行基线；仅在其[单独指南](../../autoscaling/02-karpenter.md)验证 IAM/discovery/EC2NodeClass/AMI/taints 后再添加 Karpenter。
+
+![跨 management/service 范围的部署和可观测性](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-0.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-0.html)
+
+## 4. 验证 HTTP 和异步处理 {#verify}
 
 ```bash
-kubectl create namespace msa
-
-cat <<'EOF' | kubectl apply -f -
-apiVersion: keda.sh/v1alpha1
-kind: TriggerAuthentication
-metadata:
-  name: aws-credentials
-  namespace: msa
-spec:
-  podIdentity:
-    provider: aws-eks
----
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: notification-scaler
-  namespace: msa
-spec:
-  scaleTargetRef:
-    name: notification-service
-  pollingInterval: 15
-  cooldownPeriod: 60
-  minReplicaCount: 1
-  maxReplicaCount: 20
-  triggers:
-    - type: aws-sqs-queue
-      authenticationRef:
-        name: aws-credentials
-      metadata:
-        queueURL: "${SQS_QUEUE_URL}"
-        queueLength: "10"
-        awsRegion: "${AWS_REGION}"
-        identityOwner: operator
-EOF
+kubectl --context service -n msa port-forward svc/api-gateway 8080:8080
+# Run in another terminal from the repository root:
+BASE_URL=http://127.0.0.1:8080 LOAD_PROFILE=smoke   k6 run --no-usage-report examples/labs/observability/load-test/k6-scenario.js
 ```
+仅读取已创建的 ID，并验证模拟支付状态。验证独立队列投递以及持续增长的 consumer `/stats`/DB 计数/日志。通知和分析使用独立队列；同一队列上的竞争 consumer 不会实现扇出。失败/有毒消息保持未确认状态，以遵循 DLQ 策略。
 
-**步骤 3.3：为 Order Service 创建 ScaledObject（基于 Prometheus）**
+对比 CloudWatch/Loki JSON trace_id、实际 Tempo span 和 Prometheus exemplar ID。安装 collector 并不等同于端到端验证。
+
+## 5. 金丝雀发布和 GitOps 所有权 {#canary}
+
+
+![手动检查、仅金丝雀分析、晋级或中止](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-1.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-1.html)
+单个 Rollout 管理 payment-service。使用五个副本时，20% 步骤基于副本数，并不保证实际请求的20%。在分析前的手动暂停期间，向新 revision 生成流量。查询选择 `rollouts-pod-template-hash`，要求至少五个近期请求和99%成功率，并拒绝空/NaN/Inf/多序列结果。
+
+已测试实际的 Rollouts1.10.0 条件评估和 PromQL，但未执行 cluster 晋级。中止并不是 Git revert 或所需镜像恢复。对于可选的 ArgoCD，请遵循其[安装指南](../../gitops/argocd/01-installation.md)，指向本仓库实际的 chart 路径/已审核 revision，并避免同时由直接 Helm 管理。请引用现有 Secret，而不是提交它们。仅凭 app-of-apps sync wave 并不能保证子项就绪。
+
+### 执行手动暂停
+
+这些步骤使用 Helm 作为所需状态所有者。在 GitOps 下，请在 Git 中审核镜像更改和恢复，不要混用直接 Helm 写入。检查 [Argo Rollouts 1.10.0 release](https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0)二进制文件和校验和后，安装匹配的 OS/CPU plugin。
 
 ```bash
-cat <<'EOF' | kubectl apply -f -
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: order-service-scaler
-  namespace: msa
-spec:
-  scaleTargetRef:
-    name: order-service
-  pollingInterval: 15
-  cooldownPeriod: 120
-  minReplicaCount: 2
-  maxReplicaCount: 30
-  advanced:
-    horizontalPodAutoscalerConfig:
-      behavior:
-        scaleDown:
-          stabilizationWindowSeconds: 300
-          policies:
-            - type: Percent
-              value: 10
-              periodSeconds: 60
-        scaleUp:
-          stabilizationWindowSeconds: 0
-          policies:
-            - type: Percent
-              value: 100
-              periodSeconds: 15
-            - type: Pods
-              value: 4
-              periodSeconds: 15
-          selectPolicy: Max
-  triggers:
-    - type: prometheus
-      metadata:
-        serverAddress: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
-        metricName: http_requests_per_second
-        threshold: "100"
-        query: |
-          sum(rate(http_server_request_count{service="order-service"}[1m]))
-EOF
+# ROLLOUTS_BINARY: checksum-verified binary for your OS/architecture.
+: "${ROLLOUTS_BINARY:?Set the verified Argo Rollouts 1.10.0 binary path}"
+mkdir -p "$HOME/.local/bin"
+install -m 755 "$ROLLOUTS_BINARY" "$HOME/.local/bin/kubectl-argo-rollouts"
+export PATH="$HOME/.local/bin:$PATH"
+kubectl argo rollouts version --short
 ```
 
-### 验证
+在使用第 3 部分构建流程，以新不可变 tag 发布经过实际审核的 AMD64 镜像之前，请确认一个稳定的 Rollout 并保留其完整 values。初始安装没有先前的稳定 revision，不适用于此更新练习。该 chart 在所有角色间共享一个镜像设置，因此更改它也会将其他角色作为普通 Deployment 更新；仅 payment 遵循 Rollout 步骤。
 
 ```bash
-kubectl get scaledobjects -n msa
-kubectl get hpa -n msa
-# Expected: ScaledObjects created, HPAs auto-generated
+# Run from examples/labs/observability/application.
+: "${CANARY_IMAGE_TAG:?Set an actually built and reviewed immutable AMD64 image tag}"
+# Keep the original application.yaml as the stable revision's complete values.
+CANARY_VALUES="$LAB_STATE/helm-inputs/canary-image.yaml"
+python3 - "$CANARY_VALUES" "$CANARY_IMAGE_TAG" <<'PYIMAGE'
+import sys, json
+with open(sys.argv[1], "w") as output:
+    json.dump({"image": {"tag": sys.argv[2]}}, output)
+PYIMAGE
+helm upgrade observability-lab ./chart --kube-context service -n msa \
+  -f "$LAB_STATE/helm-inputs/application.yaml" -f "$CANARY_VALUES"
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
 ```
 
-***
+将 --watch 显示保留在单独的终端中，并在需要时使用 Ctrl+C 停止它。在另一个终端中运行流量和晋级/中止命令。
 
-## 练习 4：ArgoCD Application 部署
-
-### 步骤
-
-**步骤 4.1：切换到受管集群（ArgoCD 主机）**
+处于 Paused 状态时，继续第4节的流量，并在 Prometheus 中验证至少五个近期请求已到达新的 rollouts-pod-template-hash revision。缺少流量/查询失败并不表示成功。检查后，推进下面的手动暂停，以便执行配置的 AnalysisRun 和后续步骤。不要使用 --full：它会跳过分析和暂停。
 
 ```bash
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-managed)
+kubectl argo rollouts promote payment-service --context service -n msa
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
+kubectl --context service -n msa get analysisruns
 ```
 
-**步骤 4.2：创建 ArgoCD App-of-Apps**
+如果发生问题，请中止而非晋级，然后通过原始完整 values 恢复所需镜像。仅中止不会恢复 spec.template 或 Git。
 
 ```bash
-cat <<'EOF' | kubectl apply -f -
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: obs-lab-msa
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/your-org/obs-lab-msa.git
-    targetRevision: main
-    path: argocd
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - PruneLast=true
-EOF
+kubectl argo rollouts abort payment-service --context service -n msa
+helm upgrade observability-lab ./chart --kube-context service -n msa \
+  -f "$LAB_STATE/helm-inputs/application.yaml"
+kubectl argo rollouts get rollout payment-service --context service -n msa --watch
 ```
 
-**步骤 4.3：为 MSA 服务创建 ApplicationSet**
+成功晋级后，请在后续 Helm 命令中保留已批准的镜像 overlay，或将其纳入受管理的所需 values。保留失败分析证据并检查最终状态。此审计验证了 CLI 校验和/help 以及 chart/analysis 逻辑；未执行这些 cluster 更新/晋级/中止命令。
 
-```bash
-cat <<'EOF' | kubectl apply -f -
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: msa-services
-  namespace: argocd
-spec:
-  generators:
-    - list:
-        elements:
-          - service: api-gateway
-            language: go
-            port: "8080"
-          - service: order-service
-            language: python
-            port: "8000"
-          - service: payment-service
-            language: java
-            port: "8080"
-          - service: notification-service
-            language: nodejs
-            port: "3000"
-  template:
-    metadata:
-      name: '{{service}}'
-      namespace: argocd
-      labels:
-        app.kubernetes.io/name: '{{service}}'
-        app.kubernetes.io/part-of: obs-lab-msa
-    spec:
-      project: default
-      source:
-        repoURL: https://github.com/your-org/obs-lab-msa.git
-        targetRevision: main
-        path: '{{service}}/k8s'
-        helm:
-          valueFiles:
-            - values.yaml
-          parameters:
-            - name: image.tag
-              value: latest
-            - name: service.port
-              value: '{{port}}'
-      destination:
-        server: https://obs-service-cluster-endpoint  # Service cluster
-        namespace: msa
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-EOF
-```
+继续前往[第 4 部分](./04-load-testing-scaling-lab.md)。请遵循[第 6 部分](./06-distributed-tracing-lab.md#cleanup)进行考虑所有权/依赖关系的清理。
 
-**步骤 4.4：直接部署示例 MSA 清单（用于实验）**
+## 验证范围
 
-```bash
-# Switch to Service Cluster
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-service)
-
-# Create namespace
-kubectl create namespace msa --dry-run=client -o yaml | kubectl apply -f -
-
-# Deploy API Gateway
-cat <<'EOF' | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-gateway
-  namespace: msa
-  labels:
-    app: api-gateway
-    version: v1
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: api-gateway
-  template:
-    metadata:
-      labels:
-        app: api-gateway
-        version: v1
-      annotations:
-        instrumentation.opentelemetry.io/inject-go: "true"
-    spec:
-      tolerations:
-        - key: workload-type
-          value: msa
-          effect: NoSchedule
-      nodeSelector:
-        workload-type: msa
-      containers:
-        - name: api-gateway
-          image: obs-lab/api-gateway:v1
-          ports:
-            - containerPort: 8080
-          env:
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otel-collector-gateway.opentelemetry.svc.cluster.local:4317"
-            - name: OTEL_SERVICE_NAME
-              value: "api-gateway"
-            - name: ORDER_SERVICE_URL
-              value: "http://order-service:8000"
-            - name: PAYMENT_SERVICE_URL
-              value: "http://payment-service:8080"
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 5
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-gateway
-  namespace: msa
-spec:
-  selector:
-    app: api-gateway
-  ports:
-    - port: 8080
-      targetPort: 8080
-  type: LoadBalancer
-EOF
-
-# Deploy Order Service
-cat <<'EOF' | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: order-service
-  namespace: msa
-  labels:
-    app: order-service
-    version: v1
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: order-service
-  template:
-    metadata:
-      labels:
-        app: order-service
-        version: v1
-      annotations:
-        instrumentation.opentelemetry.io/inject-python: "true"
-    spec:
-      tolerations:
-        - key: workload-type
-          value: msa
-          effect: NoSchedule
-      containers:
-        - name: order-service
-          image: obs-lab/order-service:v1
-          ports:
-            - containerPort: 8000
-          env:
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otel-collector-gateway.opentelemetry.svc.cluster.local:4317"
-            - name: OTEL_SERVICE_NAME
-              value: "order-service"
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: aurora-credentials
-                  key: url
-            - name: SQS_QUEUE_URL
-              value: "${SQS_QUEUE_URL}"
-          resources:
-            requests:
-              cpu: 200m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: order-service
-  namespace: msa
-spec:
-  selector:
-    app: order-service
-  ports:
-    - port: 8000
-      targetPort: 8000
-EOF
-
-# Deploy Payment Service
-cat <<'EOF' | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: payment-service
-  namespace: msa
-  labels:
-    app: payment-service
-    version: v1
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: payment-service
-  template:
-    metadata:
-      labels:
-        app: payment-service
-        version: v1
-      annotations:
-        instrumentation.opentelemetry.io/inject-java: "true"
-    spec:
-      tolerations:
-        - key: workload-type
-          value: msa
-          effect: NoSchedule
-      containers:
-        - name: payment-service
-          image: obs-lab/payment-service:v1
-          ports:
-            - containerPort: 8080
-          env:
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otel-collector-gateway.opentelemetry.svc.cluster.local:4317"
-            - name: OTEL_SERVICE_NAME
-              value: "payment-service"
-            - name: SPRING_DATASOURCE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: aurora-credentials
-                  key: jdbc-url
-          resources:
-            requests:
-              cpu: 200m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 2Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: payment-service
-  namespace: msa
-spec:
-  selector:
-    app: payment-service
-  ports:
-    - port: 8080
-      targetPort: 8080
-EOF
-
-# Deploy Notification Service
-cat <<'EOF' | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: notification-service
-  namespace: msa
-  labels:
-    app: notification-service
-    version: v1
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: notification-service
-  template:
-    metadata:
-      labels:
-        app: notification-service
-        version: v1
-      annotations:
-        instrumentation.opentelemetry.io/inject-nodejs: "true"
-    spec:
-      tolerations:
-        - key: workload-type
-          value: msa
-          effect: NoSchedule
-      containers:
-        - name: notification-service
-          image: obs-lab/notification-service:v1
-          ports:
-            - containerPort: 3000
-          env:
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otel-collector-gateway.opentelemetry.svc.cluster.local:4317"
-            - name: OTEL_SERVICE_NAME
-              value: "notification-service"
-            - name: SQS_QUEUE_URL
-              value: "${SQS_QUEUE_URL}"
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: notification-service
-  namespace: msa
-spec:
-  selector:
-    app: notification-service
-  ports:
-    - port: 3000
-      targetPort: 3000
-EOF
-```
-
-### 验证
-
-```bash
-kubectl get pods -n msa
-kubectl get svc -n msa
-# Expected: All 4 services running
-```
-
-***
-
-## 练习 5：OpenTelemetry 自动插桩
-
-### 步骤
-
-**步骤 5.1：安装 OpenTelemetry Operator**
-
-```bash
-# Install cert-manager (required by OTel Operator)
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
-
-# Wait for cert-manager
-kubectl wait --for=condition=available --timeout=300s deployment/cert-manager -n cert-manager
-kubectl wait --for=condition=available --timeout=300s deployment/cert-manager-webhook -n cert-manager
-
-# Install OTel Operator
-kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/download/v0.95.0/opentelemetry-operator.yaml
-```
-
-**步骤 5.2：创建 Instrumentation 资源**
-
-```bash
-cat <<'EOF' | kubectl apply -f -
-apiVersion: opentelemetry.io/v1alpha1
-kind: Instrumentation
-metadata:
-  name: otel-instrumentation
-  namespace: msa
-spec:
-  exporter:
-    endpoint: http://otel-collector-gateway.opentelemetry.svc.cluster.local:4317
-  propagators:
-    - tracecontext
-    - baggage
-    - b3
-  sampler:
-    type: parentbased_traceidratio
-    argument: "1"
-
-  python:
-    env:
-      - name: OTEL_PYTHON_LOG_CORRELATION
-        value: "true"
-      - name: OTEL_PYTHON_LOG_LEVEL
-        value: "info"
-      - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
-        value: "true"
-
-  java:
-    env:
-      - name: OTEL_JAVAAGENT_DEBUG
-        value: "false"
-      - name: OTEL_INSTRUMENTATION_JDBC_ENABLED
-        value: "true"
-      - name: OTEL_INSTRUMENTATION_SPRING_WEBMVC_ENABLED
-        value: "true"
-
-  nodejs:
-    env:
-      - name: OTEL_NODE_RESOURCE_DETECTORS
-        value: "env,host,os"
-
-  go:
-    env:
-      - name: OTEL_GO_AUTO_TARGET_EXE
-        value: "/app/api-gateway"
-EOF
-```
-
-**步骤 5.3：自动插桩覆盖范围表**
-
-| 语言    | 已插桩的库                           | 注解                                                     |
-| -------- | ------------------------------------ | -------------------------------------------------------- |
-| Go       | gin, net/http, gRPC                  | `instrumentation.opentelemetry.io/inject-go: "true"`     |
-| Python   | FastAPI, SQLAlchemy, boto3, requests | `instrumentation.opentelemetry.io/inject-python: "true"` |
-| Java     | Spring Boot, JDBC, Kafka, gRPC       | `instrumentation.opentelemetry.io/inject-java: "true"`   |
-| Node.js  | Express, pg, aws-sdk, http           | `instrumentation.opentelemetry.io/inject-nodejs: "true"` |
-
-**步骤 5.4：重启 Deployment 以应用插桩**
-
-```bash
-kubectl rollout restart deployment -n msa
-kubectl rollout status deployment -n msa --timeout=300s
-```
-
-### 验证
-
-```bash
-# Check pods have init containers injected
-kubectl get pods -n msa -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.initContainers[*].name}{"\n"}{end}'
-
-# Check traces are being generated
-kubectl logs -n opentelemetry -l app=otel-collector --tail=50 | grep "trace"
-```
-
-***
-
-## 练习 6：Argo Rollouts 金丝雀发布
-
-### 步骤
-
-**步骤 6.1：将 Order Service 转换为 Rollout**
-
-```bash
-cat <<'EOF' | kubectl apply -f -
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: order-service
-  namespace: msa
-spec:
-  replicas: 4
-  revisionHistoryLimit: 3
-  selector:
-    matchLabels:
-      app: order-service
-  template:
-    metadata:
-      labels:
-        app: order-service
-      annotations:
-        instrumentation.opentelemetry.io/inject-python: "true"
-    spec:
-      tolerations:
-        - key: workload-type
-          value: msa
-          effect: NoSchedule
-      containers:
-        - name: order-service
-          image: obs-lab/order-service:v1
-          ports:
-            - containerPort: 8000
-          env:
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otel-collector-gateway.opentelemetry.svc.cluster.local:4317"
-            - name: OTEL_SERVICE_NAME
-              value: "order-service"
-            - name: VERSION
-              value: "v1"
-          resources:
-            requests:
-              cpu: 200m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
-  strategy:
-    canary:
-      canaryService: order-service-canary
-      stableService: order-service-stable
-      trafficRouting:
-        nginx:
-          stableIngress: order-service-ingress
-      steps:
-        - setWeight: 20
-        - pause: {duration: 2m}
-        - analysis:
-            templates:
-              - templateName: success-rate
-            args:
-              - name: service-name
-                value: order-service
-        - setWeight: 40
-        - pause: {duration: 2m}
-        - analysis:
-            templates:
-              - templateName: success-rate
-        - setWeight: 60
-        - pause: {duration: 2m}
-        - setWeight: 80
-        - pause: {duration: 2m}
-        - setWeight: 100
-      analysis:
-        templates:
-          - templateName: success-rate
-        startingStep: 2
-        args:
-          - name: service-name
-            value: order-service
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: order-service-stable
-  namespace: msa
-spec:
-  selector:
-    app: order-service
-  ports:
-    - port: 8000
-      targetPort: 8000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: order-service-canary
-  namespace: msa
-spec:
-  selector:
-    app: order-service
-  ports:
-    - port: 8000
-      targetPort: 8000
-EOF
-```
-
-**步骤 6.2：创建 AnalysisTemplate**
-
-```bash
-cat <<'EOF' | kubectl apply -f -
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: success-rate
-  namespace: msa
-spec:
-  args:
-    - name: service-name
-  metrics:
-    - name: success-rate
-      interval: 30s
-      count: 5
-      successCondition: result[0] >= 0.95
-      failureLimit: 3
-      provider:
-        prometheus:
-          address: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
-          query: |
-            sum(rate(http_server_request_count{service="{{args.service-name}}",http_status_code!~"5.."}[2m]))
-            /
-            sum(rate(http_server_request_count{service="{{args.service-name}}"}[2m]))
-
-    - name: latency-p99
-      interval: 30s
-      count: 5
-      successCondition: result[0] <= 500
-      failureLimit: 3
-      provider:
-        prometheus:
-          address: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
-          query: |
-            histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{service="{{args.service-name}}"}[2m])) by (le)) * 1000
-
-    - name: error-count
-      interval: 30s
-      count: 5
-      successCondition: result[0] <= 5
-      failureLimit: 2
-      provider:
-        prometheus:
-          address: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
-          query: |
-            sum(increase(http_server_request_count{service="{{args.service-name}}",http_status_code=~"5.."}[2m]))
-EOF
-```
-
-### 金丝雀状态图
-
-```mermaid
-stateDiagram-v2
-    [*] --> SetWeight20: Deploy v2
-    SetWeight20 --> Pause2m: 20% traffic to v2
-    Pause2m --> Analysis1: Wait 2 minutes
-    Analysis1 --> SetWeight40: Success rate >= 95%
-    Analysis1 --> Rollback: Success rate < 95%
-    SetWeight40 --> Pause2m_2: 40% traffic to v2
-    Pause2m_2 --> Analysis2: Wait 2 minutes
-    Analysis2 --> SetWeight60: Analysis passed
-    Analysis2 --> Rollback: Analysis failed
-    SetWeight60 --> Pause2m_3: 60% traffic to v2
-    Pause2m_3 --> SetWeight80: Wait 2 minutes
-    SetWeight80 --> Pause2m_4: 80% traffic to v2
-    Pause2m_4 --> SetWeight100: Wait 2 minutes
-    SetWeight100 --> [*]: Promotion complete
-    Rollback --> [*]: Rolled back to v1
-```
-
-**步骤 6.3：触发金丝雀发布（更新镜像）**
-
-```bash
-# Update to v2
-kubectl argo rollouts set image order-service \
-  order-service=obs-lab/order-service:v2 \
-  -n msa
-
-# Watch rollout progress
-kubectl argo rollouts get rollout order-service -n msa --watch
-```
-
-### 验证
-
-```bash
-# Check rollout status
-kubectl argo rollouts status order-service -n msa
-
-# View in Argo Rollouts dashboard
-ROLLOUTS_DASHBOARD=$(kubectl -n argo-rollouts get svc argo-rollouts-dashboard \
-  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-echo "Dashboard: http://$ROLLOUTS_DASHBOARD:3100/rollout/msa/order-service"
-```
-
-***
-
-## 练习 7：故意制造故障与自动回滚
-
-### 步骤
-
-**步骤 7.1：部署一个故障版本**
-
-```bash
-# Deploy v3 with intentional errors (returns 500 for 30% of requests)
-kubectl argo rollouts set image order-service \
-  order-service=obs-lab/order-service:v3-failing \
-  -n msa
-```
-
-**步骤 7.2：监控金丝雀分析**
-
-```bash
-# Watch analysis results
-kubectl argo rollouts get rollout order-service -n msa --watch
-
-# Check AnalysisRun
-kubectl get analysisruns -n msa -l rollouts-pod-template-hash
-kubectl describe analysisrun -n msa $(kubectl get analysisruns -n msa -o jsonpath='{.items[0].metadata.name}')
-```
-
-**步骤 7.3：验证自动回滚**
-
-```bash
-# After analysis failure, rollout should automatically abort
-kubectl argo rollouts status order-service -n msa
-
-# Expected output: "Degraded - RolloutAborted: Rollout aborted due to analysis failure"
-```
-
-**步骤 7.4：检查 Grafana 中的流量拆分**
-
-```bash
-# Open Grafana and check:
-# 1. Request rate by version (v1 vs v3-failing)
-# 2. Error rate spike during canary
-# 3. Automatic rollback to v1
-
-echo "Grafana URL: http://$GRAFANA_URL"
-echo "Check dashboard: Kubernetes / Deployment"
-```
-
-### 验证
-
-```bash
-# Verify all pods are running v1 after rollback
-kubectl get pods -n msa -l app=order-service -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].image}{"\n"}{end}'
-
-# All should show v1 or stable version
-```
-
-***
-
-## 总结
-
-在本实验中，你已完成：
-
-| 任务                                  | 状态     |
-| ------------------------------------- | -------- |
-| 用于 MSA 的 Karpenter NodePool        | 已配置   |
-| KEDA ScaledObject（SQS + Prometheus） | 已创建   |
-| ArgoCD ApplicationSet                 | 已部署   |
-| MSA 服务（4 个服务）                  | 正在运行 |
-| OTel 自动插桩                          | 已启用   |
-| Argo Rollouts 金丝雀发布              | 已配置   |
-| AnalysisTemplate                      | 已创建   |
-| 故障/回滚测试                         | 已完成   |
-
-## 清理
-
-将在[第 6 部分](06-distributed-tracing-lab.md#cleanup)中执行清理。
-
-## 故障排除
-
-<details>
-
-<summary>OTel 插桩未注入</summary>
-
-* 验证 OTel Operator 是否正在运行：`kubectl get pods -n opentelemetry-operator-system`
-* 检查 Instrumentation 资源：`kubectl get instrumentation -n msa`
-* 确保 Pod 注解正确
-* 创建 Instrumentation 后重启 Pod
-
-</details>
-
-<details>
-
-<summary>金丝雀分析总是失败</summary>
-
-* 检查 AnalysisTemplate 中的 Prometheus 查询语法
-* 验证是否正在收集指标：在 Grafana Explore 中测试查询
-* 检查 AnalysisRun 日志：`kubectl describe analysisrun -n msa <name>`
-* 根据需要调整成功/失败条件
-
-</details>
-
-<details>
-
-<summary>KEDA 未扩缩容</summary>
-
-* 验证用于访问 SQS 的 IRSA 权限
-* 检查 KEDA Operator 日志：`kubectl logs -n keda -l app=keda-operator`
-* 测试 SQS 指标：`aws sqs get-queue-attributes --queue-url $SQS_QUEUE_URL --attribute-names ApproximateNumberOfMessages`
-
-</details>
-
-## 后续步骤
-
-继续学习[第 4 部分：负载测试与自动扩缩容](04-load-testing-scaling-lab.md)，对 MSA 应用程序进行压力测试。
-
-## 参考资料
-
-* [ArgoCD 文档](../../gitops/argocd/README.md)
-* [Argo Rollouts 文档](../../gitops/argocd/05-traffic-management.md)
-* [KEDA 文档](../../autoscaling/01-keda.md)
-* [Karpenter 文档](../../autoscaling/02-karpenter.md)
-* [OpenTelemetry 文档](../../observability/tracing/03-opentelemetry.md)
+检查覆盖了本地 SQLite/PostgreSQL、三个 HTTP service、OTel correlation、SNS/SQS SDK stub、container smoke、Helm/CRD 以及 PromQL/Argo 条件。未演练实际的 AuroraTLS、EKS/IRSA、SNS 扇出、KEDA/Karpenter 和金丝雀流量拆分。
