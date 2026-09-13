@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Shared Nodes의 Pod 동기화",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      620
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "virtual-side",
+        "label": "가상 클러스터 내부",
+        "focus": [
+          "dev",
+          "vapi",
+          "syncer"
+        ],
+        "note": "검토한 vCluster 0.37.0 Shared Nodes profile의 개념도입니다. 실제 실행·복구·격리는 별도 검증합니다."
+      },
+      {
+        "id": "host-side",
+        "label": "호스트 실행",
+        "focus": [
+          "syncer",
+          "hostapi",
+          "kubelet"
+        ],
+        "note": "검토한 vCluster 0.37.0 Shared Nodes profile의 개념도입니다. 실제 실행·복구·격리는 별도 검증합니다."
+      },
+      {
+        "id": "status-back",
+        "label": "상태 역전파",
+        "focus": [
+          "kubelet",
+          "hostapi",
+          "syncer",
+          "vapi",
+          "dev"
+        ],
+        "note": "검토한 vCluster 0.37.0 Shared Nodes profile의 개념도입니다. 실제 실행·복구·격리는 별도 검증합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    },
+    "output": "ko-platform-engineering-08-vcluster-11.html"
+  },
+  "participants": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "개발자",
+      "sublabel": "kubectl"
+    },
+    {
+      "id": "vapi",
+      "type": "frontend",
+      "label": "가상 API Server",
+      "sublabel": "vCluster 컨트롤 플레인"
+    },
+    {
+      "id": "syncer",
+      "type": "backend",
+      "label": "Syncer",
+      "sublabel": "이름 변환 · NS 매핑"
+    },
+    {
+      "id": "hostapi",
+      "type": "cloud",
+      "label": "호스트 API Server",
+      "sublabel": "EKS 컨트롤 플레인"
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "호스트 Kubelet",
+      "sublabel": "워커 노드"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 248,
+      "label": "가상 클러스터 내부 — Deployment·ReplicaSet은 여기서만 존재"
+    },
+    {
+      "from": 262,
+      "to": 382,
+      "label": "syncToHost — Pod만 호스트로 동기화"
+    },
+    {
+      "from": 396,
+      "to": 545,
+      "label": "상태 역전파 — 호스트 → 가상"
+    }
+  ],
+  "messages": [
+    {
+      "id": "apply",
+      "from": "dev",
+      "to": "vapi",
+      "y": 184,
+      "label": "kubectl apply",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
+      "from": "vapi",
+      "to": "syncer",
+      "y": 228,
+      "label": "Pod 변경 감지 (watch)",
+      "note": "가상 controller가 Deployment/ReplicaSet으로 Pod를 생성"
+    },
+    {
+      "id": "create-host",
+      "from": "syncer",
+      "to": "hostapi",
+      "y": 300,
+      "label": "변환된 Pod 생성 요청",
+      "variant": "emphasis",
+      "note": "Syncer가 이름 변환 + 네임스페이스 매핑 수행"
+    },
+    {
+      "id": "schedule",
+      "from": "hostapi",
+      "to": "kubelet",
+      "y": 360,
+      "label": "스케줄링 + 실행"
+    },
+    {
+      "id": "status",
+      "from": "kubelet",
+      "to": "hostapi",
+      "y": 416,
+      "label": "Pod 상태 업데이트",
+      "variant": "return"
+    },
+    {
+      "id": "status-watch",
+      "from": "hostapi",
+      "to": "syncer",
+      "y": 456,
+      "label": "상태 변경 감지",
+      "variant": "return"
+    },
+    {
+      "id": "vstatus",
+      "from": "syncer",
+      "to": "vapi",
+      "y": 494,
+      "label": "가상 Pod 상태 갱신",
+      "variant": "return"
+    },
+    {
+      "id": "get-pods",
+      "from": "vapi",
+      "to": "dev",
+      "y": 532,
+      "label": "kubectl get pods (반영됨)",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "vapi",
+      "from": 184,
+      "to": 536,
+      "type": "frontend"
+    },
+    {
+      "participant": "syncer",
+      "from": 228,
+      "to": 498,
+      "type": "backend"
+    },
+    {
+      "participant": "hostapi",
+      "from": 300,
+      "to": 460,
+      "type": "cloud"
+    },
+    {
+      "participant": "kubelet",
+      "from": 360,
+      "to": 420,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "가상 리소스",
+      "items": [
+        "기본 Shared Nodes에서 상위 workload controller는 가상 클러스터에 있음",
+        "추가 sync 옵션을 켜면 동작·권한 범위가 달라짐"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "호스트 실행",
+      "items": [
+        "Syncer가 Pod와 선택된 참조 리소스를 동기화",
+        "이름 변환은 버전·길이·설정에 따라 달라질 수 있음",
+        "호스트 admission과 네트워크 정책이 실제 Pod에 적용"
+      ]
+    }
+  ]
+}

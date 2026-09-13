@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "vCluster lifecycle and retention",
+    "output": "en-platform-engineering-08-vcluster-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      640
+    ],
+    "views": [
+      {
+        "id": "provision",
+        "label": "Provision",
+        "focus": [
+          "requested",
+          "approved",
+          "provisioning",
+          "running"
+        ],
+        "note": "Conceptual vCluster0.37 Shared Nodes flow; actual runtime, access and recovery require validation."
+      },
+      {
+        "id": "sleep-wake",
+        "label": "Sleep Wake",
+        "focus": [
+          "running",
+          "sleeping",
+          "paused"
+        ],
+        "note": "Conceptual vCluster0.37 Shared Nodes flow; actual runtime, access and recovery require validation."
+      },
+      {
+        "id": "ttl",
+        "label": "Ttl",
+        "focus": [
+          "running",
+          "sleeping",
+          "deleting",
+          "deleted"
+        ],
+        "note": "Conceptual vCluster0.37 Shared Nodes flow; actual runtime, access and recovery require validation."
+      }
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Provisioning"
+    },
+    {
+      "id": "idle",
+      "label": "Pause and sleep"
+    },
+    {
+      "id": "terminal",
+      "label": "Deletion"
+    }
+  ],
+  "states": [
+    {
+      "id": "requested",
+      "type": "start",
+      "label": "Requested",
+      "sublabel": "Developer request",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "approved",
+      "type": "active",
+      "label": "Approved",
+      "sublabel": "Reviewed PR merged",
+      "lane": "main",
+      "col": 1
+    },
+    {
+      "id": "provisioning",
+      "type": "active",
+      "label": "Provisioning",
+      "sublabel": "GitOps synchronization",
+      "lane": "main",
+      "col": 2
+    },
+    {
+      "id": "running",
+      "type": "success",
+      "label": "Running",
+      "sublabel": "Readiness verified",
+      "lane": "main",
+      "col": 3
+    },
+    {
+      "id": "sleeping",
+      "type": "waiting",
+      "label": "Sleeping",
+      "sublabel": "Configured automatic sleep",
+      "lane": "idle",
+      "col": 0
+    },
+    {
+      "id": "paused",
+      "type": "waiting",
+      "label": "Paused",
+      "sublabel": "Manual pause",
+      "lane": "idle",
+      "col": 2
+    },
+    {
+      "id": "deleting",
+      "type": "failure",
+      "label": "Deleting",
+      "sublabel": "Configured deletion policy",
+      "lane": "terminal",
+      "col": 1
+    },
+    {
+      "id": "deleted",
+      "type": "neutral",
+      "label": "Deleted",
+      "sublabel": "Cleanup verified",
+      "lane": "terminal",
+      "col": 0
+    }
+  ],
+  "transitions": [
+    {
+      "from": "requested",
+      "to": "approved",
+      "label": "merge",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "approved",
+      "to": "provisioning",
+      "label": "sync",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "provisioning",
+      "to": "running",
+      "label": "ready",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "running",
+      "to": "sleeping",
+      "label": "configured idle",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 1,
+      "labelDy": -12
+    },
+    {
+      "from": "sleeping",
+      "to": "running",
+      "label": "configured wake",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "labelSegment": 0,
+      "labelDx": 8,
+      "labelDy": 14
+    },
+    {
+      "from": "running",
+      "to": "paused",
+      "label": "pause",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": -14,
+      "labelSegment": 1
+    },
+    {
+      "from": "paused",
+      "to": "running",
+      "label": "resume",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right",
+      "labelSegment": 0,
+      "labelDy": 0,
+      "labelDx": 42
+    },
+    {
+      "from": "running",
+      "to": "deleting",
+      "label": "deletion policy",
+      "fromSide": "right",
+      "toSide": "right",
+      "route": "right-channel",
+      "channelX": 840
+    },
+    {
+      "from": "sleeping",
+      "to": "deleting",
+      "label": "deletion policy",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 1,
+      "labelDy": -12
+    },
+    {
+      "from": "deleting",
+      "to": "deleted",
+      "label": "complete",
+      "route": "straight",
+      "fromSide": "left",
+      "toSide": "right",
+      "labelDy": -23
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Pause and resume",
+      "items": [
+        "Pause removes workloads; resume recreates them",
+        "PVCs and Services follow retention settings",
+        "Manual pause and automatic wake have distinct behavior"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Automation boundaries",
+      "items": [
+        "Verify support and permissions for automatic policies",
+        "A TTL label alone deletes nothing",
+        "Reduced active hours are not identical bill savings"
+      ]
+    }
+  ]
+}
