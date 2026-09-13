@@ -1,237 +1,219 @@
 # EKS Auto Mode Cost Management Quiz
 
 > **Related Document**: [Cost Management](../../eks-auto-mode/06-cost-management.md)
+> **Last Updated**: September 12, 2026
 
 ## Multiple Choice Questions
 
-### 1. Approximately what percentage of cost savings can be achieved by including Graviton (ARM) instances for cost optimization?
+### 1. How should the prior “20% Graviton saving” be used when allowing ARM nodes?
 
-- A) 5%
-- B) 10%
-- C) 20%
-- D) 50%
+- A) As a universal AWS guarantee
+- B) As a discount on the entire bill
+- C) As an unverified example; compare compatible workloads and actual rates
+- D) As proof every image runs on ARM
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) 20%**
+**Answer: C) As an unverified example; compare compatible workloads and actual rates**
 
 **Explanation:**
-AWS Graviton processor-based instances (arm64) are approximately 20% cheaper than comparable x86 instances while delivering excellent performance.
-
-```yaml
-spec:
-  template:
-    spec:
-      requirements:
-        # Include Graviton (ARM) instances
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]
-```
-
-**Cost Optimization Strategies:**
-- Using Graviton (ARM) instances: ~20% savings
-- Using Spot instances: Up to 70-90% savings
-- Aggressive Consolidation: Consolidate underutilized nodes
-- Appropriate resource requests: Prevent overprovisioning
+The old ~20% ARM and 70–90% Spot figures were planning examples, not a verified comparison for this workload. Check multi-architecture images, dependencies, performance per useful work, current regional rates and Auto Mode/other fees. Allowing `amd64` and `arm64` does not validate application compatibility or guarantee either architecture is selected.
 
 </details>
 
-### 2. What does it mean when CPU limit is set to 500 in NodePool's `limits` setting?
+### 2. What does a dynamic NodePool `limits.cpu: 500` constrain?
 
-- A) Maximum CPU per node is 500 cores
-- B) NodePool can provision up to 500 vCPU total
-- C) Maximum 500m CPU per Pod
-- D) Cluster-wide CPU limit
+- A) Each node to 500 cores
+- B) Aggregate CPU resources provisioned by that pool
+- C) Each Pod to 500m
+- D) All AWS spending in the account
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) NodePool can provision up to 500 vCPU total**
+**Answer: B) Aggregate CPU resources provisioned by that pool**
 
 **Explanation:**
-NodePool's `limits` restricts the total amount of resources that NodePool can provision.
-
+It is a pool-level resource ceiling, with possible temporary overshoot during rapid eventually consistent provisioning. `1Ti` means 1 TiB (1024 GiB), not one decimal TB. Resource limits help constrain growth but do not price instances, include other services, or enforce a hard monetary budget.
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: compute-optimized
 spec:
-  limits:
-    cpu: 500      # Maximum 500 vCPU
-    memory: 1Ti   # Maximum 1TB memory
   template:
     spec:
       requirements:
-        - key: eks.amazonaws.com/instance-category
-          operator: In
-          values: ["c"]
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - m
+        - c
+        - r
+        - i
+        - d
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+        - arm64
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
+        - on-demand
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
+      taints:
+      - key: cost-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        cost-lab: 'true'
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
+    budgets:
+    - nodes: 10%
+  limits:
+    cpu: '500'
+    memory: 1Ti
 ```
 
-This helps prevent cost overruns and manage budgets.
 
 </details>
 
-### 3. What Consolidation policy automatically cleans up underutilized nodes to optimize costs?
+### 3. Which policy permits consolidation of empty and underutilized nodes when rescheduling/cost constraints allow it?
 
-- A) `consolidationPolicy: WhenEmpty`
-- B) `consolidationPolicy: WhenEmptyOrUnderutilized`
-- C) `consolidationPolicy: Always`
-- D) `consolidationPolicy: Aggressive`
+- A) `WhenEmpty`
+- B) `WhenEmptyOrUnderutilized`
+- C) `Always`
+- D) `Aggressive`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) `consolidationPolicy: WhenEmptyOrUnderutilized`**
+**Answer: B) `WhenEmptyOrUnderutilized`**
 
 **Explanation:**
-The `WhenEmptyOrUnderutilized` policy targets both empty and underutilized nodes for consolidation.
-
-```yaml
-disruption:
-  consolidationPolicy: WhenEmptyOrUnderutilized
-  consolidateAfter: 5m
-```
-
-**Policy Comparison:**
-- `WhenEmpty`: Only removes empty nodes (conservative, stability-first)
-- `WhenEmptyOrUnderutilized`: Aggressive cost optimization
-
-Cost savings effect: Consolidate underutilized nodes to reduce total node count and infrastructure costs
+This evaluates request-based scheduling feasibility and cost; it does not delete every node below a measured CPU threshold. `consolidateAfter` is a debounce, and PDBs, budgets and placement constraints can block consolidation. `WhenEmpty` is narrower; neither policy guarantees savings or disables every other disruption method.
 
 </details>
 
-### 4. What is the recommended approach when using Savings Plans with EKS Auto Mode?
+### 4. Which option gives billing flexibility when eligible EC2 usage may change family or region?
 
-- A) Compute Savings Plans for instance family flexibility
-- B) EC2 Instance Savings Plans for specific instance types
-- C) Use only Reserved Instances
-- D) Don't use Savings Plans
+- A) Compute Savings Plans
+- B) An EC2 Instance Savings Plan fixed to one family and region
+- C) Only one exact-size Standard RI
+- D) Exclude all commitment discounts
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) Compute Savings Plans for instance family flexibility**
+**Answer: A) Compute Savings Plans**
 
 **Explanation:**
-Auto Mode uses various instance types depending on workloads, making Compute Savings Plans most suitable.
-
-**Savings Plans Comparison:**
-| Type | Flexibility | Discount |
-|------|-------------|----------|
-| Compute Savings Plans | Instance family, size, region, OS flexible | Up to 66% |
-| EC2 Instance Savings Plans | Specific instance family fixed | Up to 72% |
-
-```
-Recommended Strategy:
-1. Analyze baseline workload volume (3-month baseline)
-2. Cover 70% of minimum usage with Compute Savings Plans
-3. Run remainder flexibly with Spot/On-Demand
-```
+Compute Savings Plans offer family/size/region/OS/tenancy flexibility; EC2 Instance Savings Plans are family-and-region commitments with size/OS/tenancy flexibility. The advertised maxima remain up to 66% and 72%, not expected rates. Match a USD/hour commitment to sustained eligible uncovered usage, existing commitments and planned changes. The old three-month/70%-coverage strategy is an unverified planning example. Spot and the separate Auto Mode charge do not receive EC2 Savings Plans discounts; there is no special ARM plan or universal GPU exclusion.
 
 </details>
 
-### 5. What is required for Pod-level cost allocation in cost analysis using Kubecost?
+### 5. What is required for useful Kubecost Pod-level allocation?
 
-- A) Automatically supported without configuration
-- B) Add cost-center label to Pods
-- C) Install Kubecost agent and cluster integration
-- D) AWS Cost Explorer is sufficient
+- A) No setup or data sources
+- B) Only a Pod cost-center label
+- C) A configured agent/cluster integration and appropriate cost data
+- D) Cost Explorer alone without Kubernetes allocation data
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Install Kubecost agent and cluster integration**
+**Answer: C) A configured agent/cluster integration and appropriate cost data**
 
 **Explanation:**
-Kubecost is a Kubernetes-native cost monitoring tool that provides detailed cost analysis.
+The reviewed Kubecost 3.2.4 chart is `kubecost/kubecost` from the new repository. Version 3's FinOps agent/ClickHouse architecture differs from the old cost-analyzer deployment. Configure licensing, private access, storage/retention, workload IAM and billing reconciliation. Render the reviewed values before installation; labels alone do not create actual cost data.
 
 ```bash
-# Kubecost installation (Helm)
-helm repo add kubecost https://kubecost.github.io/cost-analyzer/
-helm install kubecost kubecost/cost-analyzer \
-    --namespace kubecost \
-    --create-namespace
+: "${KUBECOST_VALUES:?Set the reviewed Kubecost 3.2.4 values file}"
+test -f "$KUBECOST_VALUES"
+helm repo add kubecost https://kubecost.github.io/kubecost/
+helm repo update kubecost
+helm show chart kubecost/kubecost --version 3.2.4
+helm template cost-review kubecost/kubecost --version 3.2.4 \
+  --namespace kubecost --values "$KUBECOST_VALUES" \
+  > "$WORK_DIR/kubecost-rendered.yaml"
 ```
 
-Kubecost features:
-- Cost analysis by namespace/workload
-- Resource efficiency recommendations
-- Budget alert settings
-- AWS integration for actual cost accuracy
 
 </details>
 
-### 6. What is the best practice to prevent overprovisioning when setting resource requests?
+### 6. What evidence should guide resource-request changes?
 
-- A) Always set limits and requests equal
-- B) Reference VPA recommendations based on actual usage
-- C) Set requests as high as possible
-- D) Omit requests setting
+- A) Always make requests and limits equal
+- B) VPA recommendations plus representative workload/SLO evidence
+- C) Maximize all requests
+- D) Remove requests
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Reference VPA recommendations based on actual usage**
+**Answer: B) VPA recommendations plus representative workload/SLO evidence**
 
 **Explanation:**
-Use Vertical Pod Autoscaler (VPA) to analyze actual resource usage and set appropriate request values.
-
+`Off` does not apply recommendations and still needs functioning VPA components/metrics. Check every container, confidence/history, startup peaks, memory limits and CPU throttling. A recommendation does not guarantee performance, prevent every OOM or prove a saving. Do not strip Kubernetes unit suffixes when comparing quantities.
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: my-app-vpa
+  name: cost-app-vpa
+  namespace: cost-lab
 spec:
   targetRef:
-    apiVersion: "apps/v1"
+    apiVersion: apps/v1
     kind: Deployment
-    name: my-app
+    name: cost-efficient-app
   updatePolicy:
-    updateMode: "Off"  # Only provide recommendations, no auto-apply
+    updateMode: 'Off'
+  resourcePolicy:
+    containerPolicies:
+    - containerName: '*'
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+      maxAllowed:
+        cpu: '4'
+        memory: 8Gi
 ```
 
-Check recommendations:
-```bash
-kubectl describe vpa my-app-vpa
-```
-
-This enables:
-- Prevent overprovisioning (cost savings)
-- Prevent underprovisioning (performance guarantee)
 
 </details>
 
-### 7. What is the cost-efficient NodePool separation strategy for multi-tier workloads?
+### 7. When tiers have genuinely different interruption or architecture requirements, which design can express them?
 
-- A) Place all workloads in single NodePool
-- B) Separate NodePool by tier (frontend/API/batch/ML)
-- C) Separate NodePool by instance size
-- D) Separate NodePool by availability zone
+- A) Require identical placement for every tier
+- B) Use appropriate tier pools and matching workload constraints
+- C) Create a separate pool for every instance size
+- D) Assume each AZ is a separate billing discount
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Separate NodePool by tier (frontend/API/batch/ML)**
+**Answer: B) Use appropriate tier pools and matching workload constraints**
 
 **Explanation:**
-Separating NodePools according to workload characteristics achieves optimal cost/performance balance.
+Separate pools may express real constraints, but fragmentation can increase idle cost. A Spot-only batch pool has no On-Demand fallback; use it only for compatible interruption-tolerant jobs with recovery. A pool name alone does not route workloads: set selectors/tolerations as in the guide.
 
-| Tier | Strategy | Expected Savings |
-|------|----------|-----------------|
+| Tier | Prior strategy | Original unverified saving |
+|------|----------------|----------------------------|
 | Frontend | On-Demand + Graviton | ~20% |
-| API | Spot mixed + Graviton | ~40% |
-| Batch | Spot only + diversification | ~70% |
-| ML | Appropriate instance size selection | ~30% |
+| API | Mixed Spot + Graviton | ~40% |
+| Batch | Spot + diversity | ~70% |
+| ML | Instance sizing | ~30% |
 
 ```yaml
-# Batch tier example - Maximum cost savings
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
@@ -240,51 +222,66 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]  # Spot only
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]  # Include Graviton
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - m
+        - c
+        - r
+        - i
+        - d
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+        - arm64
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
+      taints:
+      - key: cost-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        cost-lab: 'true'
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
+    budgets:
+    - nodes: 10%
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ```
+
 
 </details>
 
-### 8. What is needed to categorize EKS Auto Mode costs by tag in AWS Cost Explorer?
+### 8. What is needed for custom NodeClass tags to support AWS cost allocation?
 
-- A) All tags are automatically applied
-- B) Need to set tags field in NodeClass
-- C) Configure in AWS Organizations
-- D) Tag-based categorization not possible
+- A) Every Kubernetes label automatically propagates
+- B) Valid NodeClass/tagging permissions, actual resource tags and Billing activation
+- C) Only creating an AWS Organization
+- D) Tag allocation is impossible
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Need to set tags field in NodeClass**
+**Answer: B) Valid NodeClass/tagging permissions, actual resource tags and Billing activation**
 
 **Explanation:**
-Apply cost allocation tags to provisioned nodes through the tags field in NodeClass.
-
-```yaml
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: production-nodeclass
-spec:
-  tags:
-    Environment: production
-    Team: platform
-    CostCenter: engineering-001
-    Project: kubernetes-platform
-```
-
-AWS Cost Explorer setup:
-1. Enable Cost Allocation Tags in Billing Console
-2. Select desired tag keys
-3. Available in Cost Explorer after 24 hours
+The related guide supplies a complete NodeClass with identity/network selectors. Review node access entries and tag permissions, reference that class from the intended pool, verify actual tags and activate the keys in Billing. User-defined keys can take up to 24 hours to appear and another up to 24 hours to activate; reporting latency is separate. The AWS-generated EC2 cluster key is `aws:eks:cluster-name`; it does not include control-plane charges. Namespace labels alone neither propagate nor allocate all AWS costs.
 
 </details>
+
+## References
+
+- [EKS pricing](https://aws.amazon.com/eks/pricing/)
+- [Savings Plans types](https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html)
+- [EKS billing tags](https://docs.aws.amazon.com/eks/latest/userguide/eks-using-tags.html)

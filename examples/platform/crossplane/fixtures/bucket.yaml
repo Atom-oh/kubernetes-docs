@@ -1,0 +1,21 @@
+apiVersion: s3.aws.m.upbound.io/v1beta1
+kind: Bucket
+metadata:
+  name: app-data
+  namespace: team-alpha
+  annotations:
+    crossplane.io/external-name: replace-with-globally-unique-bucket
+spec:
+  managementPolicies:
+  - Observe
+  - Create
+  - Update
+  - LateInitialize
+  forProvider:
+    region: us-west-2
+    forceDestroy: false
+    tags:
+      Environment: Development
+  providerConfigRef:
+    kind: ProviderConfig
+    name: team-aws

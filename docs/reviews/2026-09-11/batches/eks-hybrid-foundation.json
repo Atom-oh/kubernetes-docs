@@ -1,0 +1,354 @@
+[
+  {
+    "path": "en/eks-hybrid-nodes/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full hybrid foundation audit: accurate current support/provider boundaries, nodeadm signer requirement, safe credential preparation and source-backed prerequisite plans.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-prereqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://api.github.com/repos/aws/eks-hybrid/releases/latest",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/hybrid-nodes.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-create-session.html",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ssm-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ira-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/README.md",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/hybrid-nodes-template.pkr.hcl",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_rhel.sh",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_ubuntu.sh",
+      "https://docs.nvidia.com/deploy/cuda-compatibility/",
+      "https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html"
+    ],
+    "findings": [
+      "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
+      "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
+      "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
+      "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
+      "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
+      "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
+      "Public+privateisDNS-pathrisk/notuniversalunsupported;privatebidirectionalconnectivity,IPv4RFC1918orCGNAT,15CIDRseach,oneouterwrapperandSG10250directioncorrected.",
+      "UpstreamPacker1.0.20knownlimitationsdocumented:K8S_VERSIONonly1.26–1.31,NODEADM_ARCHamd/armappends64,noAL2023target,TLS/defaultpassword/mutablebinaryissues. No currentimagebuild/readinessclaimed.",
+      "Sixquizzesreconciledhardware/OS/GPU/initrequirements. Existingparentquizlinksanddiagramassetsretained;4diagramtextsreviewed."
+    ],
+    "validation": [
+      "All6originalsfullyread1924lines,includingboth633lineguidesincontiguousranges;originalsnapshotspreserved.",
+      "eksctl0.229nativeemittedschema + AWSCreateCluster/CreateAccessEntry/CreateProfile/CreateActivation inputmodels passed.",
+      "30nativeBash/Python/crypto/CIDR/mockAWSfixturespassed:wrongaccount/invalidactivation/region/nodeCSRname/existingkey,CAdate/type/privatekey/duplicatecert,CGNAT/15CIDRs/overlaps/publicIPv6/16CIDRs.",
+      "OpenSSLCSRself-signature + cryptographykeymatch/issignaturevalid;keyandactivationmodes600/privatefolder700 verified. NoPKIissuerauthority/revocationorIAMauthorizationclaim.",
+      "cfn-lint returnednoerrors;2redundantDependsOnwarningsinupstreamIRAtemplate retainedincfn-lint.txt. CorrectCNparameterAllowedValuesverifiedlocally.",
+      "Pairedfences,6quizkeysCBDBCD,Bash/YAML/JSONsyntax,61localrefs,gitdiffcheckpassed.",
+      "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json"
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
+  },
+  {
+    "path": "ko/eks-hybrid-nodes/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full hybrid foundation audit: accurate current support/provider boundaries, nodeadm signer requirement, safe credential preparation and source-backed prerequisite plans.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-prereqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://api.github.com/repos/aws/eks-hybrid/releases/latest",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/hybrid-nodes.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-create-session.html",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ssm-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ira-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/README.md",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/hybrid-nodes-template.pkr.hcl",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_rhel.sh",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_ubuntu.sh",
+      "https://docs.nvidia.com/deploy/cuda-compatibility/",
+      "https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html"
+    ],
+    "findings": [
+      "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
+      "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
+      "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
+      "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
+      "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
+      "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
+      "Public+privateisDNS-pathrisk/notuniversalunsupported;privatebidirectionalconnectivity,IPv4RFC1918orCGNAT,15CIDRseach,oneouterwrapperandSG10250directioncorrected.",
+      "UpstreamPacker1.0.20knownlimitationsdocumented:K8S_VERSIONonly1.26–1.31,NODEADM_ARCHamd/armappends64,noAL2023target,TLS/defaultpassword/mutablebinaryissues. No currentimagebuild/readinessclaimed.",
+      "Sixquizzesreconciledhardware/OS/GPU/initrequirements. Existingparentquizlinksanddiagramassetsretained;4diagramtextsreviewed."
+    ],
+    "validation": [
+      "All6originalsfullyread1924lines,includingboth633lineguidesincontiguousranges;originalsnapshotspreserved.",
+      "eksctl0.229nativeemittedschema + AWSCreateCluster/CreateAccessEntry/CreateProfile/CreateActivation inputmodels passed.",
+      "30nativeBash/Python/crypto/CIDR/mockAWSfixturespassed:wrongaccount/invalidactivation/region/nodeCSRname/existingkey,CAdate/type/privatekey/duplicatecert,CGNAT/15CIDRs/overlaps/publicIPv6/16CIDRs.",
+      "OpenSSLCSRself-signature + cryptographykeymatch/issignaturevalid;keyandactivationmodes600/privatefolder700 verified. NoPKIissuerauthority/revocationorIAMauthorizationclaim.",
+      "cfn-lint returnednoerrors;2redundantDependsOnwarningsinupstreamIRAtemplate retainedincfn-lint.txt. CorrectCNparameterAllowedValuesverifiedlocally.",
+      "Pairedfences,6quizkeysCBDBCD,Bash/YAML/JSONsyntax,61localrefs,gitdiffcheckpassed.",
+      "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json"
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
+  },
+  {
+    "path": "en/eks-hybrid-nodes/01-prerequisites.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full hybrid foundation audit: accurate current support/provider boundaries, nodeadm signer requirement, safe credential preparation and source-backed prerequisite plans.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-prereqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://api.github.com/repos/aws/eks-hybrid/releases/latest",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/hybrid-nodes.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-create-session.html",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ssm-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ira-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/README.md",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/hybrid-nodes-template.pkr.hcl",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_rhel.sh",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_ubuntu.sh",
+      "https://docs.nvidia.com/deploy/cuda-compatibility/",
+      "https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html"
+    ],
+    "findings": [
+      "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
+      "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
+      "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
+      "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
+      "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
+      "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
+      "Public+privateisDNS-pathrisk/notuniversalunsupported;privatebidirectionalconnectivity,IPv4RFC1918orCGNAT,15CIDRseach,oneouterwrapperandSG10250directioncorrected.",
+      "UpstreamPacker1.0.20knownlimitationsdocumented:K8S_VERSIONonly1.26–1.31,NODEADM_ARCHamd/armappends64,noAL2023target,TLS/defaultpassword/mutablebinaryissues. No currentimagebuild/readinessclaimed.",
+      "Sixquizzesreconciledhardware/OS/GPU/initrequirements. Existingparentquizlinksanddiagramassetsretained;4diagramtextsreviewed.",
+      "2026-09-12Hybrid04reconciliation:PodIdentityonBottlerocketalso requiresOS1.39.0+,addedtopairedcompatibilityrow."
+    ],
+    "validation": [
+      "All6originalsfullyread1924lines,includingboth633lineguidesincontiguousranges;originalsnapshotspreserved.",
+      "eksctl0.229nativeemittedschema + AWSCreateCluster/CreateAccessEntry/CreateProfile/CreateActivation inputmodels passed.",
+      "30nativeBash/Python/crypto/CIDR/mockAWSfixturespassed:wrongaccount/invalidactivation/region/nodeCSRname/existingkey,CAdate/type/privatekey/duplicatecert,CGNAT/15CIDRs/overlaps/publicIPv6/16CIDRs.",
+      "OpenSSLCSRself-signature + cryptographykeymatch/issignaturevalid;keyandactivationmodes600/privatefolder700 verified. NoPKIissuerauthority/revocationorIAMauthorizationclaim.",
+      "cfn-lint returnednoerrors;2redundantDependsOnwarningsinupstreamIRAtemplate retainedincfn-lint.txt. CorrectCNparameterAllowedValuesverifiedlocally.",
+      "Pairedfences,6quizkeysCBDBCD,Bash/YAML/JSONsyntax,61localrefs,gitdiffcheckpassed.",
+      "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json",
+      "Targetedreconciliationevidence:.vitepress/cache/core-audit/eks-hybrid-bootstrap/foundation-reconciliation.json;closedfullreadproofpreserved."
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
+  },
+  {
+    "path": "ko/eks-hybrid-nodes/01-prerequisites.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full hybrid foundation audit: accurate current support/provider boundaries, nodeadm signer requirement, safe credential preparation and source-backed prerequisite plans.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-prereqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://api.github.com/repos/aws/eks-hybrid/releases/latest",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/hybrid-nodes.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-create-session.html",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ssm-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ira-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/README.md",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/hybrid-nodes-template.pkr.hcl",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_rhel.sh",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_ubuntu.sh",
+      "https://docs.nvidia.com/deploy/cuda-compatibility/",
+      "https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html"
+    ],
+    "findings": [
+      "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
+      "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
+      "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
+      "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
+      "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
+      "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
+      "Public+privateisDNS-pathrisk/notuniversalunsupported;privatebidirectionalconnectivity,IPv4RFC1918orCGNAT,15CIDRseach,oneouterwrapperandSG10250directioncorrected.",
+      "UpstreamPacker1.0.20knownlimitationsdocumented:K8S_VERSIONonly1.26–1.31,NODEADM_ARCHamd/armappends64,noAL2023target,TLS/defaultpassword/mutablebinaryissues. No currentimagebuild/readinessclaimed.",
+      "Sixquizzesreconciledhardware/OS/GPU/initrequirements. Existingparentquizlinksanddiagramassetsretained;4diagramtextsreviewed.",
+      "2026-09-12Hybrid04reconciliation:PodIdentityonBottlerocketalso requiresOS1.39.0+,addedtopairedcompatibilityrow."
+    ],
+    "validation": [
+      "All6originalsfullyread1924lines,includingboth633lineguidesincontiguousranges;originalsnapshotspreserved.",
+      "eksctl0.229nativeemittedschema + AWSCreateCluster/CreateAccessEntry/CreateProfile/CreateActivation inputmodels passed.",
+      "30nativeBash/Python/crypto/CIDR/mockAWSfixturespassed:wrongaccount/invalidactivation/region/nodeCSRname/existingkey,CAdate/type/privatekey/duplicatecert,CGNAT/15CIDRs/overlaps/publicIPv6/16CIDRs.",
+      "OpenSSLCSRself-signature + cryptographykeymatch/issignaturevalid;keyandactivationmodes600/privatefolder700 verified. NoPKIissuerauthority/revocationorIAMauthorizationclaim.",
+      "cfn-lint returnednoerrors;2redundantDependsOnwarningsinupstreamIRAtemplate retainedincfn-lint.txt. CorrectCNparameterAllowedValuesverifiedlocally.",
+      "Pairedfences,6quizkeysCBDBCD,Bash/YAML/JSONsyntax,61localrefs,gitdiffcheckpassed.",
+      "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json",
+      "Targetedreconciliationevidence:.vitepress/cache/core-audit/eks-hybrid-bootstrap/foundation-reconciliation.json;closedfullreadproofpreserved."
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
+  },
+  {
+    "path": "en/quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full hybrid foundation audit: accurate current support/provider boundaries, nodeadm signer requirement, safe credential preparation and source-backed prerequisite plans.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-prereqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://api.github.com/repos/aws/eks-hybrid/releases/latest",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/hybrid-nodes.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-create-session.html",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ssm-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ira-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/README.md",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/hybrid-nodes-template.pkr.hcl",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_rhel.sh",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_ubuntu.sh",
+      "https://docs.nvidia.com/deploy/cuda-compatibility/",
+      "https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html"
+    ],
+    "findings": [
+      "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
+      "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
+      "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
+      "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
+      "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
+      "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
+      "Public+privateisDNS-pathrisk/notuniversalunsupported;privatebidirectionalconnectivity,IPv4RFC1918orCGNAT,15CIDRseach,oneouterwrapperandSG10250directioncorrected.",
+      "UpstreamPacker1.0.20knownlimitationsdocumented:K8S_VERSIONonly1.26–1.31,NODEADM_ARCHamd/armappends64,noAL2023target,TLS/defaultpassword/mutablebinaryissues. No currentimagebuild/readinessclaimed.",
+      "Sixquizzesreconciledhardware/OS/GPU/initrequirements. Existingparentquizlinksanddiagramassetsretained;4diagramtextsreviewed."
+    ],
+    "validation": [
+      "All6originalsfullyread1924lines,includingboth633lineguidesincontiguousranges;originalsnapshotspreserved.",
+      "eksctl0.229nativeemittedschema + AWSCreateCluster/CreateAccessEntry/CreateProfile/CreateActivation inputmodels passed.",
+      "30nativeBash/Python/crypto/CIDR/mockAWSfixturespassed:wrongaccount/invalidactivation/region/nodeCSRname/existingkey,CAdate/type/privatekey/duplicatecert,CGNAT/15CIDRs/overlaps/publicIPv6/16CIDRs.",
+      "OpenSSLCSRself-signature + cryptographykeymatch/issignaturevalid;keyandactivationmodes600/privatefolder700 verified. NoPKIissuerauthority/revocationorIAMauthorizationclaim.",
+      "cfn-lint returnednoerrors;2redundantDependsOnwarningsinupstreamIRAtemplate retainedincfn-lint.txt. CorrectCNparameterAllowedValuesverifiedlocally.",
+      "Pairedfences,6quizkeysCBDBCD,Bash/YAML/JSONsyntax,61localrefs,gitdiffcheckpassed.",
+      "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json"
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
+  },
+  {
+    "path": "ko/quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full hybrid foundation audit: accurate current support/provider boundaries, nodeadm signer requirement, safe credential preparation and source-backed prerequisite plans.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-prereqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://api.github.com/repos/aws/eks-hybrid/releases/latest",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/hybrid-nodes.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-create-session.html",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ssm-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/hybrid-ira-cfn.yaml",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/README.md",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/hybrid-nodes-template.pkr.hcl",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_rhel.sh",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/example/packer/provisioner_ubuntu.sh",
+      "https://docs.nvidia.com/deploy/cuda-compatibility/",
+      "https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html"
+    ],
+    "findings": [
+      "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
+      "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
+      "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
+      "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
+      "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
+      "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
+      "Public+privateisDNS-pathrisk/notuniversalunsupported;privatebidirectionalconnectivity,IPv4RFC1918orCGNAT,15CIDRseach,oneouterwrapperandSG10250directioncorrected.",
+      "UpstreamPacker1.0.20knownlimitationsdocumented:K8S_VERSIONonly1.26–1.31,NODEADM_ARCHamd/armappends64,noAL2023target,TLS/defaultpassword/mutablebinaryissues. No currentimagebuild/readinessclaimed.",
+      "Sixquizzesreconciledhardware/OS/GPU/initrequirements. Existingparentquizlinksanddiagramassetsretained;4diagramtextsreviewed."
+    ],
+    "validation": [
+      "All6originalsfullyread1924lines,includingboth633lineguidesincontiguousranges;originalsnapshotspreserved.",
+      "eksctl0.229nativeemittedschema + AWSCreateCluster/CreateAccessEntry/CreateProfile/CreateActivation inputmodels passed.",
+      "30nativeBash/Python/crypto/CIDR/mockAWSfixturespassed:wrongaccount/invalidactivation/region/nodeCSRname/existingkey,CAdate/type/privatekey/duplicatecert,CGNAT/15CIDRs/overlaps/publicIPv6/16CIDRs.",
+      "OpenSSLCSRself-signature + cryptographykeymatch/issignaturevalid;keyandactivationmodes600/privatefolder700 verified. NoPKIissuerauthority/revocationorIAMauthorizationclaim.",
+      "cfn-lint returnednoerrors;2redundantDependsOnwarningsinupstreamIRAtemplate retainedincfn-lint.txt. CorrectCNparameterAllowedValuesverifiedlocally.",
+      "Pairedfences,6quizkeysCBDBCD,Bash/YAML/JSONsyntax,61localrefs,gitdiffcheckpassed.",
+      "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json"
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
+  }
+]

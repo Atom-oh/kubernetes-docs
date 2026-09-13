@@ -1,14 +1,4 @@
 {
-  "status": "in_progress_not_complete",
-  "date": "2026-09-11",
-  "branch": "audit/full-content-2026-09",
-  "latestCoverage": {
-    "documents": 2707,
-    "fullyRead": 726,
-    "fixed": 718,
-    "verified": 0,
-    "followup": 8
-  },
   "parentCompleted": [
     "ko/en container-registry all 5 articles and 4 quizzes each (18 files)",
     "ko/en storage+database articles/README/quizzes (12 files)",
@@ -28,39 +18,6 @@
     "ko/enFlagger04+quizzes(4files)",
     "ko/enFeatureFlags05+quizzes(4files)"
   ],
-  "parentNext": [
-    "SUMMARY navigation and quiz/lab overview coverage still pending",
-    "gitops (16 source files per locale plus quizzes)",
-    "ops (17 source files per locale plus quizzes)",
-    "data-on-eks (31 source files per locale plus quizzes)",
-    "ai-ml (28 source files per locale plus quizzes)",
-    "news archive/currentness and any unassigned leftovers"
-  ],
-  "workers": {
-    "Ohm": "01a08e3c-824e-7310-a511-f7f686057086; resumed after checkpoint, continues all service-mesh, networking, observability and matching quizzes/labs",
-    "Peirce": "01a08e3c-c1ff-7e00-890e-af89768485c3; resumed after checkpoint, core done, basics in progress then autoscaling/scheduling/labs/EKS family/security/platform/governance"
-  },
-  "checks": {
-    "docsTests": "110/110 /tmp/kubernetes-docs-full-review/docs-test-after-security.log",
-    "internalKoEnLinks": "29 remaining mostly unreviewed service-mesh + Knative, workers informed",
-    "mechanicalInventory": "2707 docs; 2845 image refs; 2534 unique local referenced images; missing local images=0; 30 external image URLs; 98138 link refs; 175 missing local refs mainly translations; 7 structural findings (6 translated core quiz H1 missing + ko Istio04 twoH1 owner informed)",
-    "harbor": "65 fences syntax check, chart1.19.2 rendered, updated architecture delivered for ko/en and PNG rendered; final HTML containment at4desktop sizes passed; receipts in review directory, images outside public in /tmp",
-    "registryPractices": "59 fences classified; actionlint1.7.12 official checksum validated, example GHA passed; workflows reviewed statically, not run against registries",
-    "storageDatabase": "28 fences parsed, Bash/YAML validated; SQL reviewed statically, no100M-row benchmark rerun; historical measurements retained and limits explained",
-    "pricing": "AWS Pricing GetProducts read-only confirmed gp2.114/gp3.0912/extraIOPS.0057/throughput.0456/m5.xlarge.236 Seoul; compact evidence JSON saved"
-  },
-  "outstanding": [
-    "Independent review of parent shared maintenance helpers and large content edits before merge",
-    "Full production build/browser after stable complete changes",
-    "Translation prose synchronization/backfill after source review; do not manually rewrite cn/jp/es prose",
-    "External 404/timeout findings need final contextual disposition",
-    "Audit branch has existing commits through5d100d7a (another session); this continuation changes uncommitted. Keep unrelated user files untouched; integrate currentmainincludingstats218whenstable."
-  ],
-  "temporarySources": [
-    "/tmp/kubernetes-docs-full-review/registry-sources",
-    "/tmp/kubernetes-docs-full-review/storage-sources",
-    "/tmp/kubernetes-docs-full-review/database-sources"
-  ],
   "toolsNotes": [
     "Use /tmp/kubernetes-docs-full-review/update-coverage.py after new batch JSONs",
     "inventory.mjs refreshes inventory and detail; then update-coverage.py merges batch records",
@@ -70,8 +27,695 @@
     "web.run is available and must be used for current/niche research. It was successfully invoked for official VitePress using-Vue documentation; use primary sources. Live official urllib/AWS documentation and read-only Pricing evidence are also retained.",
     "GOCACHE nowrepoignored .vitepress/cache/content-review-go after second /tmp inode exhaustion; removed onlyownreproducible go-cache1886entries."
   ],
+  "checks": {
+    "docsTests": "110/110 /tmp/kubernetes-docs-full-review/docs-test-after-security.log",
+    "internalKoEnLinks": "29 remaining mostly unreviewed service-mesh + Knative, workers informed",
+    "mechanicalInventory": "2707 docs; 2845 image refs; 2534 unique local referenced images; missing local images=0; 30 external image URLs; 98138 link refs; 175 missing local refs mainly translations; 7 structural findings (6 translated core quiz H1 missing + ko Istio04 twoH1 owner informed)",
+    "harbor": "65 fences syntax check, chart1.19.2 rendered, updated architecture delivered for ko/en and PNG rendered; final HTML containment at4desktop sizes passed; receipts in review directory, images outside public in /tmp",
+    "registryPractices": "59 fences classified; actionlint1.7.12 official checksum validated, example GHA passed; workflows reviewed statically, not run against registries",
+    "storageDatabase": "28 fences parsed, Bash/YAML validated; SQL reviewed statically, no100M-row benchmark rerun; historical measurements retained and limits explained",
+    "pricing": "AWS Pricing GetProducts read-only confirmed gp2.114/gp3.0912/extraIOPS.0057/throughput.0456/m5.xlarge.236 Seoul; compact evidence JSON saved"
+  },
+  "aggregationScope": "Counts reflect existing document paths and committed batch records, grouping followup/needs_followup together. Other worker/check fields are historical checkpoints, not a whole-corpus completion claim.",
+  "continuation": {
+    "kafkaSchemaRegistry": {
+      "status": "complete4files/36questions/18nativecases/21schemaobjects/20fences; nofigures",
+      "sources": "/tmp/kubernetes-docs-full-review/schema-registry-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/schema-registry-fixtures",
+      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-schema-registry",
+      "facts": [
+        "Apicurio Constants.java health/ready and health/live on9000",
+        "RegistryConfigSource environment underscore-to-dot mapping",
+        "KafkaSqlConfiguration common client properties; explicit HTTPS required because released default hostname algorithm empty",
+        "KafkaAdminUtil requires cleanup.policy delete; comment says compaction has no benefit, so no invented universal data-loss claim",
+        "KafkaSqlRegistryStorage initializes all3topics and stores snapshot paths; external snapshotfiles required",
+        "Pinned v7 OpenAPI register/config requests validated"
+      ],
+      "next": "Kafka05Connect/MM2; then06MSK/07monitoring/08bestpractices/09benchmark"
+    },
+    "kafkaConnectMirrorMaker": {
+      "status": "complete4files/36questions/22strictschemaobjects/2nativepluginconfigs+10MM2cases",
+      "sources": "/tmp/kubernetes-docs-full-review/connect-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/connect-fixtures",
+      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-connect",
+      "facts": [
+        "Corrected Connect broker group coordination versus worker leader assignment, standalone Kubernetes claim and source/sink offset storage.",
+        "Migrated actual Strimzi v1 Connect identity/topic fields and MM2 target/mirrors[].source structure; removed obsolete heartbeatConnector field and old API mappings.",
+        "Pinned checksum-verified Debezium3.6.2/Aiven3.4.3 artifacts; fixed absent Aiven class and unsupported flush.size/rotate.schedule.interval.ms keys using actual JAR definitions.",
+        "Added TLS/SCRAM, scoped internal/data ACLs, precreated compacted internal topics, safe mounted-directory config provider, PostgreSQL TLS/publication and concrete dependency requirements.",
+        "Separated ECR Buildah push identity/token expiry from runtime S3 workload identity; aligned JSON converter envelopes and CDC archive semantics.",
+        "Verified native default-policy cycle detection allows legitimate multi-hop, Identity loses cycle provenance, heartbeat generation needs no source connection; corrected DR/ACL/offset/freshness/compression claims.",
+        "Revised all36quizquestions and all20fences; native2connectorconfig validations/10MM2-provider-codec cases/strict22schemaobjects pass; nofigures."
+      ],
+      "next": "Kafka06MSK/07monitoring/08bestpractices/09benchmark"
+    },
+    "kafkaMSK": {
+      "status": "complete4files/36questions/26policycases/2nativeJavaIAMconfigs/3offlineCLI/18fences",
+      "sources": "/tmp/kubernetes-docs-full-review/msk-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/msk-fixtures",
+      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-msk",
+      "facts": [
+        "Separated Provisioned Standard/Express/Serverless and complete pricing dimensions; removed unsubstantiated cost/portability/GitOps claims.",
+        "Corrected Serverless IAM-only/topic-settings/250GiBperpartition+7d retention and separate monitoring/tenancy responsibilities.",
+        "Corrected sameVPCdoesnotguaranteeaccess, alladvertisedbrokers, PrivateLinkmultiVPC, IPv4/public/IPv6endpointportdistinctions.",
+        "Added official OAUTHBEARER/nonJava helpers and PodIdentity/IRSA credential refresh; two Java configs validated againstaws-msk-iam-auth2.3.8.",
+        "Removed AlterCluster/*Topic* grants, added grouppermissions/exactclusterUUID andsplitproducerconsumer policies; idempotent/transactional scope andKafka>=3.8WriteTxnMarkers explained.",
+        "Verified MSKConnectAPIauthNONE/IAM andruntime2.7.1Java11/3.7.xJava17; pluginbytecode belowJava18isnotservicecompatibilityproof; actualS3plugincreation notconnectorcreation and immutableplugincontents.",
+        "Corrected nativeMSKLambda/Firehose integrations, Kinesiscurrentcapacitymodes/retention andpartitioncountsemantics; all36questionsrewritten."
+      ],
+      "next": "Kafka07monitoring/08bestpractices/09benchmark"
+    },
+    "kafkaMonitoring": {
+      "status": "complete4files/34questions/27schemaobjects/24fences/9nativemetrics/108alertexpectations",
+      "sources": "/tmp/kubernetes-docs-full-review/kafka-monitoring-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/kafka-monitoring-fixtures",
+      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-kafka-monitoring",
+      "facts": [
+        "Corrected supported JMX/StrimziMetricsReporter choices, JMX mapping versus target relabeling, CruiseControl nested configuration rather than CRD.",
+        "Replaced archived seglo/kafka-lag-exporter recommendation with Strimzi KafkaExporter1.9.0 automatic internal TLS; actual metric kafka_consumergroup_lag labelconsumergroup.",
+        "Added v1 mergepatch preserving baseline, scoped node/exporter PodMonitors and explicitnamespace/cluster/component/role labels, nofalseServiceMonitorunreliability.",
+        "Verified final JMX1.6/Kafka4.3.1 rules against isolatedrunningbroker andreal15records; committedoffsetsexportlag3/5/5; allstartedprocessesstopped.",
+        "Fixed counter/rate/gauge handling, perclustercontrolleraggregation/duplicateandmissingcases; no splitbrainordatalossclaimfromonecount.",
+        "Defined lagasnextoffsetdistancewithcompaction/transaction/businesscommitlimits; negative/missingoffsetsseparatefromzero.",
+        "Ninealerts108expectationsacross12scenariosinclallabsent, metricmissing, scrapedown, partialreplication, highlag, unknownoffset, transientandotherclusterisolation.",
+        "KEDA2.20.2TLS/SCRAMwithreadonlyKafkaUserandTriggerAuthsameNamespace; aggregateLagThreshold, min1nozero/cooldown andexplicitHPAstabilization; max10within12partitions.",
+        "Updated34quizquestionsandversionedKafka/KRaft/Exporter/Connect/CruiseControldashboardreferences; nofigures."
+      ],
+      "next": "Kafka08bestpractices/09benchmark then remainingdataAInewsnavigation",
+      "sessions": "AllnativeKafka/exporterprocessesstopped; no pending tool sessions."
+    },
+    "kafkaBestPractices": {
+      "status": "complete4files/36questions/12native+8partitioncases/9schemaobjects/26fences",
+      "sources": "/tmp/kubernetes-docs-full-review/kafka-best-practices-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/kafka-best-practices-fixtures",
+      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-kafka-best-practices",
+      "facts": [
+        "Replaced PartitionCount-headercount with currentTopicCommand partitionrow inventory inclLeader:none; logicalpartitionsvsreplicaplacement distinguished.",
+        "Removed universalpartitionlimits/resource-costformulas, scopedJavaMurmur2serializedkeys, salting/order/compaction/joins consequences andnon-universalremapping.",
+        "Correctedacks/minISR/idempotenceconflicts/batch.size/defaultlinger/deadline/compressionandend-to-endtransactionclaims.",
+        "Explicitclassicconsumerprofile, staticmembertimeoutlimits, actualenvironmentresolutioninsteadliteralPOD_NAME, synchronousprocess-before-commit andabort-on-failure; warnedagainstuncoordinatedthreadpool.",
+        "CorrectedclientsCAvsclusterCA, listenerexposuretypevsTLSauthentication, separatev1mTLSuserandadditionallistenerpreservingSCRAMbaseline.",
+        "CorrectedonepeerANDvsseparateOR andadditiveCNIpolicysemantics; explicitcrossnamespacecredentialdistribution/rotationrequirements.",
+        "StorageClassencryptedtrue/WaitForFirstConsumer/Retain; AutoModenodediskencryptionnotdynamicPVCproof, parameterdefaultfalsecurrentdoc, no retroactiveencryption.",
+        "TieredStoragecurrentcustompluginintegration, retention3d/50GiBperpartition, asynccompactionnotstoragecap, Spot/rack/AZandPDBlimits; removedcheckboxproductionguarantee.",
+        "Updatedall36questions, addedPart9navigation; native12+partition8+9schemaobjects/26fencespass; nofigures."
+      ],
+      "next": "Kafka09benchmark then Spark/Airflow/Flink/UnifiedStudio AI/news/navigation",
+      "sessions": "No active processes or pending native tools."
+    },
+    "kafkaBenchmark": {
+      "status": "complete4files/16questions/14measurementtablespreserved/10nativeCLIcases/5callbackcountcases/18schemaobjects/16fences/4figures9of9+desktop+8mobile",
+      "sources": "/tmp/kubernetes-docs-full-review/kafka-benchmark-sources",
+      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-kafka-benchmark",
+      "next": "RemainingData: Spark/Airflow/Flink/UnifiedStudio; thenAI/news/navigation/unassignedlabs/globaltests",
+      "sourceEvidence": "Originalcommitc9345a53 PR166 Sep2 read via gh; PRbodyrepeatsmeasurementsbutno rawtelemetry/priceartifactlinks. Repo rg and tmp/cachetargetednames foundnooriginalrawlogs; do notaccusefabrication, labelhistoricalreporteddataandreviewlimits.",
+      "criticalFacts": [
+        "AWSnetworkdocsCONFIRMSseparateinbound/outboundcreditbuckets. F1rx134-136MiB/s≈1.13Gbpsandtx80-108≈.91Gbps EACHbelowm5xlarge1.25Gbpsbaseline; summingrx+txisNOTproofburst. F4client~2.83Gbps>.75baselinevalidclientburstevidence. Newsourceec2-network.text.",
+        "M5xlargeEBSbaseline1150Mbps143.75MB/s,MAX4750Mbps593.75MB/s,IOPS6000/18750;not137MiBsabsolutehardcap. Currentgp3max2000MiBs80kIOPS64TiB;old1000outdated.",
+        "F1~75s9.5GiBnotcertifiedsustainedceiling;134.74payloadMiBs>125devicecapmeansbuffers/interval/unitsmustreconcile. Highest~135sysfssampleNOTsteadystatesubstitute; oldsamplertsoneperroundseconds, sequentialkubectl≈12s,reusedtsnotpercountertime,norawfiles.",
+        "F1RF3acksallvsF4RF1acks1 changesRFANDacks; durations/cache/clientlimitsdiffer. 2.51ratioobservednotpurecausaltax. F6batch+linger+recordcountalldiffer;10.12percentthroughputdifferencecannotcallnoisewithoutrepeats;CPU39percentmidpointnotisolatedeffect.",
+        "E4producer+consumer shareone1.9CPUclient;brokerCPUlowdoesnotruleoutclientcontention. E1steadyinterval/E3arithmeticmean/E4overall/fetch-time ratesdifferentdenominators. Partialcoldnotallcachecold,noforcedcacheevictionneededonsharednodes.",
+        "CodecorderingandratiosONLYpaddedcorpus;notuniversalupperboundororderingtransfer. compression.type=producer doesnotmeanzeroCPUbroker;brokersvalidate/checksum/decompressasneeded. NativeProducerPerformancepayloadgenerationhappensBEFOREsendlatencystart;payloadgenerationaffectsthroughputbutnotreportedlatency. Errorsnotcountedinsuccessstats.",
+        "ProducerPerformanceperiodicsamplingnumRecords/min(numRecords,500000);notrandomreservoir,histquantilesmillisecondvalues. --producer-props deprecated likely verify; modern--command-property. Consumer--messagesDEPRECATEDsince4.2,use--num-records; pollbatchcanovershootcount.",
+        "Dataflowcurrentlyroutesclusterwide134MiBsthroughoneleader:changeoneillustratedpartitionandaggregatecards;RF3alleachbrokerrequires3B+3RFandskewconditions. SequenceHWisnextoffset:commitrecordrneedsHW>r / >=batchnextoffset; oldHW>=recordoffsetoffbyone. StableISR3traceonly, min2doesnotrequirebothfollowersalways.",
+        "ReproSCgp3undefined/defaultunknown,AZnotpinnedthoughhistoricalsingleAZ; adddedicatedSC3000IOPS125MiBs encryptedtrue/WFFC/Delete, pinAZbothclient+brokers, publishNotReadyAddresses/headless+probes, labelchangesnotexacthistoricalspec. Do NOTrunAWSbenchmark/createcloudresources.",
+        "Reproexplicitcreate/populatet-lat/t-bigbeforeconsumer; newUUID/groupperrun, persiststdoutstderrchecksums/timestamps; finiteboundedtestsnot10GiBguarantee. Frozenoriginalguides/quizzesinignoredcache.",
+        "Historicalprices$.236/h$.0912/GBmonthkeepasreportedassumptionsandcheckDecimalarithmetic,NOTclaimnewPriceAPIreceipt. 730hourmonthlyplanningnotactualSeptemberinvoice. ExcludesclientEKS/networkothercosts;assigned50minnotactualinvoice."
+      ],
+      "figures": [
+        "ko-data-on-eks-kafka-09-kafka-benchmark-0.dataflow.json",
+        "en-data-on-eks-kafka-09-kafka-benchmark-0.dataflow.json",
+        "ko-data-on-eks-kafka-09-kafka-benchmark-1.sequence.json",
+        "en-data-on-eks-kafka-09-kafka-benchmark-1.sequence.json"
+      ],
+      "newSources": [
+        "ProducerPerformance.java",
+        "ConsumerPerformance.java",
+        "apache-image-Dockerfile",
+        "linux-iostats",
+        "gp3",
+        "ec2-network(.text)",
+        "ec2-general(.text)"
+      ],
+      "failedSource": "DelayedProduce.scalaoldpath404, likelymovedtoserver/src/main/java/...;needfindactualsourceforHWlastoffset+1.",
+      "factsFinal": [
+        "Preserved14coremeasurementtables and attributedhistoricalsingle-runresults toPR166; rawtelemetry/payloadhashnotbundled and noAWSrerunclaimed.",
+        "Corrected30M×1024B=28.610GiB, F6+10.12percent, RF4/F1=2.507, CPUmidpoint39.19percent, E4drop44.49percent; costsasattributed730hplanningnotbill/currentpricequote.",
+        "Removedcertified130-135MiBsceiling/10GiBthreshold/noise/tail-only/codec-order-transfer/exclusiveIObottleneckclaims; controlledRFacks/defaultidempotence/duration/cache/sharedclient/ratetimebases discussed.",
+        "CorrectedEC2directionalnetworkcredits: F1rx136=1.141Gbps/tx108=.906Gbps EACHbelow1.25; sumwasnotburstevidence. m5xlargeEBSbaseline137.09/max566.24MiBs/currentgp3max2000conditional.",
+        "VerifiedperformanceCLIunits,payloadgenerationbeforelatency,periodicsampling,callbackfailurenotcounted,consumerpollovershoot; updateddeprecatedflagsandtested10nativecaseswithoutclients.",
+        "ReproducedpublishedAWKlocally20000valid1008BJSONrows/padding63.17percent; localzlib15.92/6.53differsreported18.5/7.8, preservedprovenanceanddidnotclaimhistoricalhash.",
+        "ReproductionmanifestnowexplicitAZ/gp3performance+encryption/headlessDNS/readiness/privatebenchmarkNetworkPolicy/tokenautomountfalse; changedtemplateclearlydisclosed. Scriptscreate/populatetopics,checksuccessfulcounts,finitewalltimeout,verifieddevice/actualmonotonicsampletiming; onlyreadonlylocalhostsamplertested.",
+        "Corrected4diagramsone-partitionversusclusteraggregate/FetchResponsedirection/backgroundwriteback/HW>=lastOffset+1; sourceKafkaReplicaManager/Partitionconfirmed.",
+        "4figures9of9delivery+desktopvisual+8mobilecases/menus/zoom/theme/presentation; PNGsregeneratedandpairedvisuallyinspected.",
+        "Updated16quizquestions;18schemaobjects16fences14preservedtables5successcountcases passed."
+      ],
+      "fixtures": "/tmp/kubernetes-docs-full-review/kafka-benchmark-fixtures",
+      "sessions": "Allnative/browser/PNGtoolscompleted; no active local servers."
+    },
+    "globalFollowupsAdditional": [
+      "Validate internal/legacy heading fragment links across rewritten pages; current perchapterrelative-linktestscheckpaths only. Preserve useful old anchors or update crossreferences.",
+      "Archify locale supports en/zh-CN only; omit locale for Korean text. visual-check usesARCHIFY_CHROME andARCHIFY_CHROME_NO_SANDBOX=1, PNGscriptusesARCHMAP_CHROME.",
+      "Disk~478MBfree/root;tmp~8GB4386inodesbeforelast4figures. Avoidlargeinstalls; ownregenerablecachescanbefreedafterchecks, keepfixtures/reports/userfiles."
+    ],
+    "sparkFoundation": {
+      "status": "complete6files/18questions/14nativefeaturecases/localPi/23schemaobjects/12fences/4figures9of9+desktop+8mobile",
+      "sources": "/tmp/kubernetes-docs-full-review/spark-foundation-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/spark-foundation-fixtures",
+      "runtime": "/tmp/kubernetes-docs-full-review/spark-runtime",
+      "facts": [
+        "LatestSparkdocsactual4.2.0; Mavenrelease4.2.0. Spark4.2Kubernetesprereq>=1.34 NOT1.30. Clientsupportsince2.4; clusterandclientbothsupported,clientdrivercaninside/outsidepod. APIserverdoesnotperformnodescheduling;Kubescheduler/kubeletdistinctfromSparkdriverexecutorallocation/taskcoordination.",
+        "OfficialDockerlibrarytags spark:4.2.0-scala2.13-java21-ubuntu available sourceofficial-image-tags. spark-docker42 copiesexamples and symlink /opt/spark/examples/jars/spark-examples.jar; UID185, UbuntuJammy/Java21, /opt/decom.sh included/executable,procps/coreutilsavailable.",
+        "DO NOT falselyassert flagslackterminationhook! NativeBasicExecutorFeatureStep when spark.decommission.enabled=true INJECTS preStop /opt/decom.sh bydefault and overrides lifecycle. ScriptfindsexecutorJavaprocess, sendsSIGPWR, waitsviatail--pid. executor.decommission.signaldefaultPWR; customsignals/imagesneedalignedscript. Flagsbest-effortnotmigrationguarantee; graceincludespreStop, forcekill/nodefailuremaypreventcompletion.",
+        "CPUrequestsdefaultdriver/executorcores;CPU LIMIT NONEunlesslimit.coresconfigured. Memoryreq=limit heap+overhead(driver);executoraddsapplicableoffheap/Pythonmemory. NativeJVM1g->1408Miwithdefaultmin384Mi. CustomResourceProfilescanignoreK8sCPUoverrideconfig; defaultprofileexamplesenough.",
+        "DRAshuffleTrackingdefaultTRUE,introduced3.0 notonlystable3.3. StockK8sESSunsupported; alternativesdecommissionShuffleBlocks/reliableShuffleDataIO. DRAvalidationrequiresoneofmechanisms,notunconditionallybothflags. Shuffletrackingtimeouts/cachedidle/destructionlimits. Initialexecmaxofmin/initial/static executor.instances; useconsistentfixed2andDRAinitial2.",
+        "PodTemplateFiles accessibletoSUBMITTER; executor template automaticallymountedintodriver bySpark. DoNOTclaimmustprebakeexecutorTemplateinimage. MissingimagevalidTEMPLATEonly,notkubectlapplyPod;labelas.templateandwirepodTemplateFile.",
+        "ExecutorSAdefaultfallbackdriverSA; explicitseparateexecutorSArecommendedwhennoAPIaccessneeded. driverSAneedsnamespaceRBACpods/services/configmaps; userauthsubmissionseparateAWSdataplaneS3IRSA/PIoptionalforPi. Preserveflags/rbacactualgeneratedpodinspection.",
+        "NoSpark-specificYARNmanagerdoesNOTmeaninfrastructuremaintenancefree:K8scontrolplane/nodes/capacity/images/RBAC/network/storageremain. SparkDRAexecutorcount≠KubernetesDRAdeviceallocation.",
+        "4figures: assets/diagrams/archify/{ko,en}-data-on-eks-spark-readme-0.architecture.json and...01-spark-fundamentals-0.sequence.json. CurrentAPIboxclaimsSchedule/startanddriveractsasScheduler; fixlogicalroles (canaddKubeScheduler/kubelet oraggregateKubernetescontrolplane+nodeagentboxexplicit). Onlyclustermodeshown; clientmodeelsewheredescribed. ExplicitSpark taskassignmentdriver→executor,dontclaimpulltasks."
+      ],
+      "native": {
+        "localPi": "4.2.0 local[2], UIoff, bind/host127.0.0.1; Pi3.140947852369631, cleanstopped. local-runtime-validation.json",
+        "featureSteps": "PodChecks.scala compiledactualSparkjars;10checksPASS memory1408, noCPUlimits,override500m independent2slots,shuffleTrackingtrue,decommflaginjects/opt/decom.sh,PWR. native-pod-validation.json andnative-pods/containerJSON. NoKubeclientcreated.",
+        "binary": "Officialtgz555409690bytes SHA5123a6559e8546ff387db8fe7a04b8fe4008853b467b972c2e343df8e14a81450534777719fc5d4998dd96519a86fdf9de140cee753c61e2e94db044d5f9555ddc4;361selectedbin/conf/jars/examplesfiles478988337bytes extractedtmp runtime(276jars). binary-validation.json."
+      },
+      "sessions": "Allprocessesandtoolscomplete; no local serversrunning.",
+      "next": "Spark02operator03EMR04performance05bestpractices; thenAirflow/Flink/UnifiedStudio/AI/news/navigation",
+      "finalFindings": [
+        "ConfirmedSpark4.2.0andKubernetesminimum1.34; correctedclient+clusterdeploysupportsince2.4andremovedAPIServer/driverreplacesKubeschedulerclaims.",
+        "AddedrealofficialSparkPiimage/examplejar,namespaceRBAC,separateddriver/executorSA,templatewiringandexplicitresource/CPUlimits; noanglebracketshellredirectplaceholders.",
+        "NativeCPUlimitnoneunlessconfigured,CPUrequestoverrides≠taskslots,andJVM1g+384MiB=1408MiBmemoryrequest/limitconfirmed.",
+        "CorrectedDRAshuffletrackingdefaulttrue/since3.0,ESSunsupportedstockK8s,alternatives/timeouts/overlaplimits andinitialcountversusmin/staticinstances.",
+        "NativeBasicExecutorFeatureStepautomaticallyinjects/opt/decom.shpreStop whenenabled;officialimagescriptusesSIGPWR. Keptcorrectbehaviorratherthanclaimingmanualhookalwaysrequired.",
+        "Foundandfixedrealtemplateoverride:Spark4.1+terminationGraceconfig(default30s)overridesPodtemplate60. Added spark.kubernetes.executor.terminationGracePeriodSeconds=60s;14nativecasesinclcounterexamplepass.",
+        "Correctedbest-effortdecommission/time/capacity/Spot/drivercheckpointlimitsandnormalversusfailurecleanup/clientmodeownerreferences.",
+        "4diagramspodplacement/scheduler+kubelets separatedfromSparkrequests/taskcoordination, regenerated4PNG andvisuallyinspected;4x9deliverychecks/desktop+8mobilepass.",
+        "6files18quizquestions23schemaobjects12fencesverified;localSparkPipassed(loopback/UIoff),noKubeclientorAWSoperations."
+      ],
+      "newImportantFact": "Spark4.1+ .kubernetes.executor.terminationGracePeriodSeconds default30s overridesPodTemplate grace; explicit60srequired, nativecounterexample+fixedcaseverified."
+    },
+    "sparkOperator": {
+      "status": "complete4files40questions53schemaobjects3negativecases30fences2figures9of9desktop4mobile",
+      "sources": "/tmp/kubernetes-docs-full-review/spark-operator-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/spark-operator-fixtures",
+      "facts": [
+        "Kubeflow2.5.2chartapp2.5.2/controllerSpark4.0.4;Apacheoperator1.0.0chart1.8.0/v1also servesv1beta1;API-onlymigrationinvalid.",
+        "Kubeflowindexdigestmismatchactualreleaseasset;actual762be5b8632ecfe12eb20fff54450ddae0427f09506422107c508a0d1d38655b matchesGitHubassetmetadata/download. Directverifiedarchiveused.",
+        "Kubeflowexecutor.serviceAccountANDtimeZoneVALID;driver/executor.volumesINVALID;spec.volumes+volumeMounts;local-dirprefixnativeSparkconfigroute.",
+        "webhooktruebydefaultKubeflow;Apachechartnonequivalentwebhook. Watchscopeexplicit spark-jobs;ApacheNamespaceRoles/reusesjobRBAC.",
+        "Rawsubmitwaitsupported;Kubeflowsetsfalseandreconcilesbothdriverandexecutorstates. Retrynotexactlyonce.",
+        "ApachettlAfterStopMillis600000deletesapp+secondaryafterfinalstop;retainAlwaysdoesnotcontrolSparkdriverexecutor/servicecleanuporretries.",
+        "NoKubeclient/cloudAPIoperation. Allbrowser/nativechecksfinished."
+      ]
+    },
+    "sparkEMR": {
+      "status": "complete4files36questions14fences2figures9of9desktop4mobile",
+      "sources": "/tmp/kubernetes-docs-full-review/spark-emr-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/spark-emr-fixtures",
+      "facts": [
+        "EMRSpark8.0.0GAApril2026Spark4.0.2-amzn-0;7.13Spark3.5.6-amzn-2;latestaliasmutable,datepinned20260421reprobaseline.",
+        "EMR6.10operatorseparateHelm/KubernetesCRsubmission,NOTStartJobRuninternallydelegating/noautomaticEMRjobAPIID.",
+        "StartJobRunPodIdentitysince7.3;create-role-associations3submitter/driver/executor;CLI>=2.24.0;IRSAupdatetrustonlynotdatapermissions.",
+        "CAMregistrationcanautomateaccessentriesandinitialSLR;notno-side-effectpointer. createAPIreturnsid.",
+        "OfficialcurrentAPI+virtualclusterGUIDEschedulerConfiguration real butinstalledAWSCLI2.35.11model lacks it; omittedmainexample/explicitcompatnote. DoNOTfalselyclaimAPIunsupported.",
+        "AWSCLIoutput-skeleton6of8operationsgenerateinvalidarnstring3<60;2passed;independentinstalledmodelstrictCreate/Startrequests+negativeunknownfields passed. Customhelpershelp onlyexit0;NOcloudmutation.",
+        "EMRStudiousesCreateManagedEndpoint/JupyterEnterpriseGatewaynotStartJobRuncells;configuredlogsmetrics/rules/state machinepermissions;podtemplates/customimagespossible.",
+        "LocalactualsmokeonupstreamSpark4.2/Python3.12passed10rows/sum45;notEMRruntime. Python/usr/bin3.9failed4.2syntaxfirstthenfixedruntime.",
+        "Sparkarchiveextracted2morepython/libzips3.8MB;runtimeavailable. Alllocalprocessesandbrowsersstopped."
+      ]
+    },
+    "sparkPerformance": {
+      "status": "complete4files28questions13schemaobjects12nativecases12fences2figuresdesktop4mobile",
+      "sources": "/tmp/kubernetes-docs-full-review/spark-performance-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/spark-performance-fixtures",
+      "facts": [
+        "OldlsblkNVMe/unmounted->mkfsunsafeEBSrootcouldmatch;removedformatterentirely. Nitrodoesnotmeaninstance-store.",
+        "Karpenter1.14instanceStorePolicyRAID0AL2023automaticNodeConfigsetupkubelet+containerd+allocatable;existingverifiedNodeClasses prerequisitefieldfragmentonly;newexecutorclassandinstance-local-nvmeGt0;emptyDirnotmandatoryhostPath.",
+        "SparkLocalDirsFeatureStep prefixspark-local-dir-;oldnamespark-local-dirdoesNOTmatchcreatesduplicateatconfmountpath;nativecounterexampleandfixedcasepass. SettinglocaldiralonecreatesemptyDir.",
+        "Native12checks:defaultemptyDir,configuredmount,tmpfsMemory,prefixduplicatecounterexample/reuse/SPARK_LOCAL_DIRS,ephemeralrequest10Gi,4gJVMmemory4505MiB,CPUlimit2,auto/opt/decom.shgrace120s,noscratchhostPath.",
+        "No metrics-serverneededKarpenterpendingprovisioning;DRAcountvsK8sallocatorbatchseparate. ConsolidateAftertimerspodchangesvsidle/cache/shuffle noorderingguarantee. WhenEmptydefinitioncanincludepodszerodisruptioncost.",
+        "OnDemanddriverstillfault/drift/expiry;Spotonlynocapacityfallback;warningsbestefforthibernationimmediate;SQS/EventBridgeconfigured. Migration/fallbacknotautomaticguarantee;explicitfallbackpathshuffle,rdddifferent,retrycanfailjob.",
+        "BothNativeSpark4.2andKarpenterCRDsused.NoEC2/KubeAPI/diskformat/perfbenchmark.Allbrowserprocessescomplete."
+      ]
+    },
+    "sparkBestPractices": {
+      "status": "complete4files36questions32schemaobjects24fences20NPcases8nativeauth2liveendpoints3restoredhistoryjobs",
+      "sources": "/tmp/kubernetes-docs-full-review/spark-best-practices-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/spark-best-practices-fixtures",
+      "facts": [
+        "ActualSpark4.2binaryHadoopclient3.5.0;hadoop-aws3.5.0requiresSDKv2bundle2.35.4. Downloadedbothverifiedcentralsha1plusownsha256;686MBbundlein/tmp.",
+        "NativeS3AChecks8passed noresolvecredentials/noS3STS.Explicitsoftware.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider loads;ContainerCredentialsProviderloads. DefaultchainlackswebidentitycontainsIAMInstanceCredentialsProvider(containerthenIMDS);oldcom.amazonaws.auth.WebIdentityTokenCredentialsProvidernotautomapped/noSDKv1classpathfailsInstantiationIOException;otherlegacyaliaseslikeEnvDOmap.",
+        "SparkPrometheusServlet experimentalUIendpoint/metrics/prometheus driverDropwizard;aggregatedexecutormetricsseparate /metrics/executors/prometheus;UI_PROMETHEUS_ENABLEDspark.ui.prometheus.enableddefaultTRUEsince3.0. NoHTTPUIoneveryexecutor. JMXagentthreadnotseparateprocess;operatorchartmetricsnotSparkJVMautomatic.",
+        "HistoryServer accepts --properties-file actualconfigloader;defaultport18080;readingeventlognotcheckpoint/logrestoreforalljobs;missing/incomplete/unflushedeventspossible;cleanerfalsedefaultread-onlyhistorySAcanomitDelete butlifecycleexternal.",
+        "Sparksecurityauthdefaultfalse;K8sautogeneratesappsecretwhenenabled,propagatesexecutorenvsoPodreadpermissionsseesecret. FileSecretalternatives;RPCcryptoAES/GCMrecommendedauthEngineVersion2saslFallbackfalse ifmatchingversions;NetworkPolicy≠encryption/UIauth.",
+        "Originalrole-onlyNetworkPolicyallowsotherjobs;sameSAforDriverExecutorovergrantsAPI;RBACnamespaceRoleDOESNOTrestrictlabels/ownpods;ClusterRole+RoleBindingCANscope namespace. PodcreationcanelevatethroughotherSAs/hostpodunlessadmission.",
+        "Needfinishnativeobservation thenprepare/writedocs36quizvalidation.Spark05nofigures."
+      ],
+      "sessions": {
+        "status": "Allnative/browsers/subprocessescompletedandstopped"
+      },
+      "finalFindings": [
+        "Spark4.2Hadoopclient3.5.0, hadoop-aws3.5.0+SDKbundle2.35.4+analyticsaccelerator-s3:1.3.1+wildfly-openssl:2.2.5.Final runtimeMaventreeverified. DocsminimalpomcopydepsDockerfile;NOimagebuild/pushperformed.",
+        "HadoopS3Abuilt-instandardsourceproviderorderdiffdoc,butbothlacksWebIdentity;IRSAexplicitsoftware.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider,PIexplicitContainerCredentialsProvider. LegacyWebIdentitynotmapped2-onlyCNFE;EnvlegacyDOESmap;8nativecasespass.",
+        "Job/Historydriversrolepermissionseparate3SAs;executor/historyautomountAPItokenfalse;IRSAprojectedtoken separate;RoleBindingonlydriver. RolecanmanageallmatchingresourcesnamespaceNOTownPodsonly;ClusterRole+RoleBindingvalidnamespacescope;admission/trustboundaryneeded.",
+        "Per-runlabels+NPgeneratornamespace/PodselectorsAND/protocol/port;20positive/negativecasesplus5invalidrunids;legacyrole-onlycrossjobcounterexample verified. Ingressonly/additive/nodehost/selfexceptionsnotsimulated.",
+        "spark.port.maxRetries0pinsfailurebehavior,7,078RPC7,079block4040UI;SparkauthRPCnotUI,K8sautoappsecretinexecutorenvvisiblepodreaders;AESGCMauthengine2explicit.",
+        "NativeSparkUI loopbacktwoendpoints:337driverDropwizardseriesnames42executoraggregate;notidentical;PrometheusServletstilldocumentedexperimental;UIprometheusdefaulttrue;noHTTPUIperexecutor;JMXagentnotseparateprocess;operatorchartnotautomaticSparkJMX.",
+        "NativePython3.12Spark4.2localjob sum499500,eventlogs persisted;driverprocessstoppedthenHistoryServer--properties-file readlocaldirectoryandrestored3SUCCEEDEDjobs. Nativeobservationpathsreceiptsinreport;allprocessesclosed.",
+        "HistoryDeploymentconfigexplicitcommandforeground/S3depsseparateimage/readonlyrolecleanerfalse/ClusterIP+denyIngress/portforward127-only;templatevalidatednotdeployed.",
+        "Removedproductioncertification/mandatoryoperator-clustermode-IRSAanduniversalDRAshuffleprerequisiteclaims. All4filesreviewedclosed."
+      ]
+    },
+    "airflowFoundation": {
+      "status": "complete6files18questions85schemaobjects3chartrenders4figures9of9desktop8mobile",
+      "sources": "/tmp/kubernetes-docs-full-review/airflow-foundation-sources",
+      "chart": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/airflow",
+      "facts": [
+        "LatestPyPIcore/main3.3.1;Airflow2.11.2EOLApr22,2026correctkeep.",
+        "Chartstable1.22.0latestsemversorted,defaultapp3.2.2NOT3.3.1;requiresAirflow>=3.1,Helm>=3.19.0;availableHelm3.21.3. Archive291304bytes SHA2561f7d1dfe3d58e2c54899950aba907a43625a18c8b6fb3c54760c21592129a5b6 verifiedindex.",
+        "Airflow3.3.1 testedPython3.10-3.14,Postgres14-18/MySQL8.0,8.4,Innovation/SQLite3.15+devonly(noMariaDB),K8s1.30-1.35;dontclaim1.36testedjustbecauseEKSlatest.",
+        "PostgresnotmandatorybackendMySQLalso;RedisnotmandatoryCelerybrokersalternatives;KubernetesExecutoronlyper-taskpods noteveryHelm executor,controlplane/nodecostsstillidle;KEDACeleryscalezero possible.",
+        "DAGprocessorrequired,triggererOPTIONALifnodeferrals;triggererexecutesTRIGGERS,notwholeoperators,workerstart/resume;deferredworkerfree/defaultpoolfreesconfigurable;asyncPython3.2keepsworkerslot;resumabletasksseparate.",
+        "TaskSDK supervisedPythonTaskprocess->Supervisor(process/socket)->ExecutionAPIshortlivedJWT->DB;taskcodeAPIcontractnodirectmetadataDB. BackendCeleryresultstore/systemworkerneedsseparate,avoidabsoluteworkerneverDBclaim. Go/JavaSDKexperimentalnotneededbroadclaimalltasksPython.",
+        "DAGbundlesneededbydagprocessorANDworkers;GitDagBundleversioningyes,Local/S3/GCSbundlesNOversioningcurrentlyevenifS3bucketversioningenabled. git-syncchartstillpresentv4.4.2,notremoved/replaceduniversally.",
+        "MultiexecutorconcurrentSINCE2.10;hybridLocalKubernetes/CeleryKubernetesremoved3.0. DAG-levelexecutorusesdefault_args executor;taskexplicitoverridealiasesconfiguredrequired.",
+        "2.xscheduleralreadyusesserializedDAGandmulti-schedulerHA;separateDAGprocessorpossible;oldparsingnotallinoneprocess;parserdelays/sharedDBresourcecontentionstillcanhurt3.xscheduling.",
+        "CharttriggererkindStatefulSetwhenpersistenceelseDeployment;dontclaimfourDeploymentsalways. ChartmetadataDBandworkerstate dependsvalues."
+      ],
+      "next": "Airflow02Helm4filesfullyread;reviewcurrentchartdefaults/constraints/secrets/defaultlogin/KEDAquery/PVCretention/taskimagerequirements",
+      "disk": "Root~296MBfreeafterMavenmetadata;tmp6.5GBfree. AvoidfullAirflowinstalluntilspaceplan;chartonlysmall. Ownterraformcache971MB andOpenfeatureSDK1003MB exist,doNOTdeleteactive/sharedSDK. AllSparkcheckscomplete.",
+      "fixtures": "/tmp/kubernetes-docs-full-review/airflow-foundation-fixtures",
+      "finalFindings": [
+        "Old2.11DAGprocessingactualcanonicalauthoring-and-scheduling/dagfile-processing.html;subprocessManager+fileprocess/optionalstandalone confirmed,oldURL107bytesHTMLrefreshnotrealcontent corrected.",
+        "Actualchart3variantnativeHelm3.21.3 Kube1.35.0 targets Airflow3.3.1 override;Kubernetes28objects,Celery29,git-sync28. Schema1.36cachedcommonresources used onlyshape notcompatibilityproof.",
+        "Triggererpersistencetrue->StatefulSet, false->Deployment;CeleryworkerDeploymentwhenpersistencefalse;StatsDadditionalDeployment. git-syncsidecarsprocessor+triggererandtaskpodinit confirmed.",
+        "All6files18MCQsupdated;4diagramssimplifiedplanargraphnowincludeK8s/Celerysupervisor->ExecutionAPIarrows,metadataDBalternatives/optionaltriggerer andDAGbundleworkerrequirements. No unconditional4Deployments/postgresalways/Redisalways/HAguarantee/noidlecost/gitsyncremovalclaims.",
+        "4figure9of9+desktop+8mobile;PNG4regeneratedand2pairedsheetsinspected. Allsessionscompleted."
+      ]
+    },
+    "airflowHelm": {
+      "status": "COMPLETE4files36questions5chartvariants18fences2figures6viewports;historical24SQLcasesrecorded",
+      "sources": "/tmp/kubernetes-docs-full-review/airflow-helm-sources",
+      "fixtures": "/tmp/kubernetes-docs-full-review/airflow-helm-fixtures",
+      "preparedExamples": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/helm-examples",
+      "facts": [
+        "Actualchart1.22defaultexecutorCeleryExecutor NOTKubernetes;Airflowdefault3.2.2 override3.3.1. Redisconditionalflag+builtin/externalbroker notexecutoronly;workerStatefulSetifpersisttrue,Deploymentfalse.",
+        "Chart1.16READMEKubernetes1.29+,NOT1.30. Chart1.22README1.30+,Helm3.0+stalevsannotationsminHelm3.19. NoChart.yamlkubeVersion/HelmVersionconstraints;native--kube-version1.29renderssuccesssoNOclaimoldversionsautomaticallyrejected/supportproof.",
+        "Stablekeyrefs fer netKeySecretName(fernet-key),apiSecretKeySecretName(api-secret-key),jwtSecretName(jwt-secret). BuiltinJWTcanchangeonupgrade causingtasksfail;keepnameskeysstable. createUserJob.enabledfalsebaseline,currentdefaultUserundercreateUserJob (oldwebserverdefaultUsercompatstillworks);chartdefaultFABauthmanager. NeedverifyinteractiveFABcreateCLIpasswordprompt thenpublishsafeadminbootstrap.",
+        "metadataSecretName precedence;metadataConnectionisfallback. PostgreSQLfalsewithoutURIsecretincomplete. UseexternalDB/Secret/TLSpreconditions. KEDAusesAIRFLOW_CONN_AIRFLOW_DB(connectionkey) normally;KEDA_DB_CONN(kedaConnectionkey)whenMySQLorPgBouncernotused;URIpostgresql://vsSQLAlchemy+drivercompat andCApathmustexistinscalerprocessnotonlyAirflow.",
+        "BuiltinPostgres16.1.0-debian11r15bitnamilegacy publiclyresolves200amd64arm64butoldfrozenimageavoidproductionquickinstall. HelmUninstallPodgoneNOTautomaticPVCdata deletion;retention/reclaimactualverify.",
+        "ActualKEDAdefaultpoll5s/cooldown30s NOT10s/300s. Newpreparedexamplesexplicit10s/300s+HPA300s;cooldownzero vsHPA1-N distinct;KEDAalsoStatefulSets/trigggerer/scaledjobsbroaderthanlongDeploymentonly.",
+        "worker_concurrency4newfixture,countliteral4SQL. Queryqueuefilterandexecutorfiltersrequiredmixed. Originalbareworker_concurrencySQLidentifiererror42703. TaskInstance.source self.executor=task.executor preservesalias. ChartdefaultexcludeKubernetesExecutorliteralbutaliask8scounted. Preparedmixedcustomquery executorNULLorCeleryExecutor+defaultqueue excludesaliask8s/Local/Kubernetes,requiresupdatesforotheraliasesqueues.",
+        "NativePGlite0.5.8/PostgreSQL18.3WASM in-memory24casesPASS:0/1/4/5 tasks,states/queues,mixedexecutors,aliascounterexample,count25abovecap20,andundefinedidentifier. NoactualAirflowDB/KEDA/TLS/credentials/APIactions. Package308files25MB extractedtmp;hashSHA512verifiedNPMmetadata.",
+        "5nativeHelmvariants Kubernetes24,Celery26,mixed26,aliasedchartdefault26,stateful26;KEDAproperkindpolicy10/300,externalsecrets/noDBbrokerpods/noCreateUserJob. UnsupportedKube1.29counterexamplerenderssuccess.",
+        "Officialconstraints3.3.1Python3.12:providerCelery3.23.1,cncf-kubernetes10.21.0,FAB3.8.0. OCIairflow3.3.1existsamd64arm64digestsha256:0c4bcc0370e526de1b7892a3bf4343d260c6c82359c66f77155b53cd773d6339;Noimagepull.",
+        "Needremovefixed1-2mincoldstart/universalisolation/scalability/noidlecost/arbitraryK8sexecutorimageclaims;K8sexecutortaskimageneedsAirflowruntime;KPOarbitrarychildimage separate. FailedtaskPodretentionconfigurable. ValuesfuturePart3DAGdelivery+Part5logsnecessaryforendtoendsmoketest."
+      ],
+      "sessions": "No local processes left;boundedbrowser closed",
+      "next": "Airflow03DAGpatterns,04MWAA,05operations;thenFlink/UnifiedStudio/AIremaining",
+      "evidence": "docs/reviews/2026-09-11/airflow-helm-validation.json"
+    },
+    "statisticsOwnerSetup": {
+      "status": "CANCELLED by explicit user instruction. Do not ask for Cloud Shell, GA4 Viewer grant, credentials or project setup. Three GitHub API variables removed and 404 readback verified.",
+      "privateState": "/home/atomoh/kubernetes-docs/.vitepress/cache/site-statistics-connection.json"
+    },
+    "statisticsRemoval": {
+      "status": "COMPLETE PR220merged/deployed/liveverified;118tests;AI26/26noCriticalMajor;content90/90;hostedbuildpass",
+      "worktree": "/home/atomoh/kubernetes-docs/.vitepress/cache/site-statistics",
+      "branch": "fix/ga4-dashboard-only",
+      "base": "54c446c1",
+      "change": "Revert PR218 ba541316 without commit, plus docs/operations/search-and-analytics.md updated for GA4 property396631876 only. RemovesstatsUIpages/footer/nav/publicJSON/serverfetch/OIDCauth/dailyschedule. Analytics.mjs+GA4measurementG-GWVLEW5JLL+docs_page_viewpreserved. node_modules pre-existinguntrackedsymlinkNEVERstage.",
+      "validation": "/tmp/kubernetes-docs-full-review/ga4-dashboard-only-validate.log:118/118allpass+links/assets/parity. Fullbuild custom staging /dev/shm but samebuildfunctions/localecommands, script /tmp/.../ga4-dashboard-build.mjs, log /tmp/.../ga4-dashboard-build.log.",
+      "buildSession": 45305,
+      "review": "Peirce resumed forREADONLY latestHEAD code+contentreview; reporttarget worktree/.vitepress/cache/ga4-dashboard-only/ai-review.json",
+      "next": "No further onsite statistics or Google Cloud setup. Continue original whole-content audit.",
+      "pr": 220,
+      "head": "7885e131d1da12db4a90b6503e215b065b622936",
+      "localBuild": "INTERRUPTED byinstance stop/start; /tmp and/dev/shm lost. Do notrestartfullbuild. Bounded1GBdevpreviewalsoOOM; stopped. No localfullbuildorbrowserpass claimed.",
+      "ciRun": 34697080975,
+      "deploymentRun": 34697657957,
+      "evidence": "docs/reviews/2026-09-11/ga4-dashboard-deployment.json"
+    },
+    "instanceIncident": {
+      "observed": "2026-09-12T13:26Z restart",
+      "evidence": "/home/atomoh/kubernetes-docs/.vitepress/cache/incidents/2026-09-12/incident-summary.json",
+      "confirmed": "ConsoleStopInstances skipOsShutdown=true thenStart. Swap100%,rootdiskmax99.95%;EC2statuschecksnormal, noOOMkernelentryfound. Resourcepressureplausiblecauseofunresponsiveness,notprovenOOM.",
+      "prevention": "FullbuildoffloadedtoGitHubhostedARMPRCI. No large localbuild. Persist logs/checkpoints underworkspaceEBS nottmp. Do notkillotheruserprocesses orresizecloudresourcewithoutauthorization.",
+      "recovery": "Sourceedits+90batchledgerspreserved. Temporarytestfixturesandlongbuildoutputs lost; reconstituteonlynecessaryfromdurablereports/code. Latestrootgitc817a1fd/75e16992 containfollowupedits;do notrepeatclosedreviews."
+    },
+    "airflowDagPatterns": {
+      "status": "COMPLETE4filesfixed/30questions/13releasedmergemethodcases/2diagrams/6responsivecases",
+      "sources": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/dag-patterns/sources",
+      "workspace": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/dag-patterns",
+      "next": "Airflow04MWAA,05operations, then Flink/UnifiedStudio/AI remaining",
+      "resourcePolicy": "NofullVitepress/localdevserver;boundedtests;persistallartifactsworkspace.",
+      "evidence": "docs/reviews/2026-09-11/airflow-dag-patterns-validation.json"
+    },
+    "airflowMwaa": {
+      "status": "COMPLETE4files/24questions/2diagrams/6responsivecases",
+      "evidence": "docs/reviews/2026-09-11/airflow-mwaa-validation.json",
+      "next": "Airflow05operations then Flink/UnifiedStudio/AI remaining"
+    },
+    "airflowOperations": {
+      "status": "COMPLETE4files/20questions/5nativeuploadfilecases",
+      "evidence": "docs/reviews/2026-09-11/airflow-operations-validation.json",
+      "next": "Flink README01–04,UnifiedStudioREADME01,AIremaining"
+    },
+    "flinkFoundation": {
+      "status": "COMPLETE6files/16questions/4figures/12responsivecases",
+      "workspace": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-flink",
+      "evidence": "docs/reviews/2026-09-11/flink-foundation-validation.json",
+      "next": "Flink02Operator,03state/checkpoints,04operations;UnifiedStudioREADME01;AIremaining"
+    },
+    "flinkOperator": {
+      "status": "COMPLETE4files/40questions/2figures/6responsivecases",
+      "workspace": ".vitepress/cache/content-review-flink/operator",
+      "checkpoint": ".vitepress/cache/content-review-flink/operator/work-in-progress.json",
+      "next": "Flink03state/checkpoints,04operations;UnifiedStudioREADME01;AIremaining",
+      "evidence": "docs/reviews/2026-09-11/flink-operator-validation.json"
+    },
+    "latestResume": "ContinueSageMaker02;allData-on-EKSandSageMakerfoundationclosed. No localfullbuild/devserver orGPU/cloudexperiment. Preserveworkerchanges;PR221hasmerged.",
+    "flinkState": {
+      "status": "COMPLETE4files/30questions/2JavaProfiles/2SQLplans/2schemas/2figures/6responsivecases",
+      "workspace": ".vitepress/cache/content-review-flink/state",
+      "sourceDirectory": ".vitepress/cache/content-review-flink/state/sources",
+      "next": "Flink04operations/HA, thenUnifiedStudioREADME01 andAIremaining",
+      "facts": [
+        "Iceberg latestrelease1.11.0May19,2026;publishedruntimejars2.1/2.0/1.20 not2.2. PinreleasedGitHubsource because /docs/1.11.0/... returns404.",
+        "DynamicIcebergSink.forInput(...).generator((input,out)->out.collect(newDynamicRecord(...))).catalogLoader(...).append(); oldforRecords/withTableIdentifierSelector/withSchemaEvolutionEnabledbogus. DynamicRecordnoargconstructorpackageprivate;latestdocsCustomRecordGeneratorreturnsDynamicRecordexamplealsoincorrectforrelease1.11actualvoidgenerate(input,Collector).",
+        "FlinkKafka5.0artifactversions5.0.0-2.1and5.0.0-2.2;defaulttransactiontimeout1hour;defaultNamingStrategyINCREMENTING,POOLINGoptional requiresKafka3+/topicreadperm andmigrationcare.",
+        "Flink2.2.1S3hadooppluginHadoop3.3.4,AWSSDKv1.12.779 notSparkHadoop3.5/v2. Needverifycredentialproviderclassv1default/IRSA/PodIdentitybeforepublishing. S3Factory noAWSshadedprefixmapping.",
+        "DockerENABLE_BUILT_IN_PLUGINS copieslinks matchingoptJARandfailsifmissing;canuseflink-s3-fs-hadoop-2.2.1.jar.JM+TMneedplugin;CRDmaptypedconsistent.",
+        "ForStStateBackendexperimental2.2,remoteSST/statebeyondlocaldisk;asyncincrementals;notonlyHashMap/RocksDB. RocksDBoneinstanceperkeyedoperatornotperslot;memorybudgetsharedperslot.",
+        "IncrementalSSTcompactionmakesuploadsnotproportionalonlylogicalchanges;sharedfiledependencyretention,fullcheckpointnotonefile;restorerebuildcanonicalcost.",
+        "Snapshotscanbetriggeredmanually/periodicallyandcleanedbyoperator;JobManagercheckpointstoragealternative;savepointcanonical/native/CLAIMNO_CLAIM semantics.SourceclaimsNOCLAIMallotherbackendsfullstalevsForSt.",
+        "Needcorrectwatermarknotguarantee,noeventtimestampforallrecords;positiveallowedlatenesscanrefirewindow,sideoutputrequiresconfiguration,SQLlatenessnotgenericDataStreamoption."
+      ],
+      "evidence": "docs/reviews/2026-09-11/flink-state-validation.json"
+    },
+    "flinkOperations": {
+      "status": "COMPLETE4files/26questions/2nativeMemoryCases/3CRDcases/2workflows/6responsivecases",
+      "workspace": ".vitepress/cache/content-review-flink/operations",
+      "evidence": "docs/reviews/2026-09-11/flink-operations-validation.json",
+      "next": "SageMakerUnifiedStudioREADME/01;thenAI/MLremaining,news/navigation/global"
+    },
+    "unifiedStudio": {
+      "status": "COMPLETE6files/10questions/2nativeCLIshapeCases/6documentcompiles",
+      "workspace": ".vitepress/cache/content-review-unified-studio",
+      "evidence": "docs/reviews/2026-09-11/unified-studio-validation.json",
+      "next": "AI/MLunreviewedguides/quizzes;SageMakerQwenrelatedhistoriesfirst"
+    },
+    "sagemakerFoundation": {
+      "status": "COMPLETE7docs/10questions/30componentTests/2figures/6responsivecases",
+      "workspace": ".vitepress/cache/content-review-sagemaker/foundation",
+      "pythonEnv": ".vitepress/cache/content-review-sagemaker/python-env",
+      "evidence": "docs/reviews/2026-09-11/sagemaker-foundation-validation.json",
+      "next": "SageMaker02PIIdata/tokenization;03execution;04results,thenotherAI/ML",
+      "codeReviewFollowups": [
+        "train.py/config directmodelIDnopinnedrevision;documentedlimitation. Consideraddingpinonlyafterfull03review.",
+        "Currentquantization/doublequant/dtypehardcodedwhileconfigcontainsvalues;inspectactualcontractbeforechanging.",
+        "Reviewpredictiontruncation,parse-successdefinition,privacyofaggregates/rawcompletions,adaptertargetcoverage andpeakGPUtimingscope in02/03.",
+        "Diagramrepositoryevidencepinned621d8611;refreshpin/renderifreferencedcodechangeslater."
+      ]
+    },
+    "sagemakerTokenization": {
+      "status": "CODE+DOCSCOMPLETE:4docs/10MCquestions/50CPUtests/2200oracle;integrationreviewpending",
+      "workspace": ".vitepress/cache/content-review-sagemaker/tokenization",
+      "codeFiles": [
+        "examples/ai-ml/qwen-pii-finetuning/src/pii_tokens.py",
+        "examples/ai-ml/qwen-pii-finetuning/src/metrics.py",
+        "examples/ai-ml/qwen-pii-finetuning/tests/test_pii_tokens.py",
+        "examples/ai-ml/qwen-pii-finetuning/tests/test_metrics.py"
+      ],
+      "changes": [
+        "TokenizationResult addsNFCsource spans;tokensallocatedonactualmatchesper(type,surface);distinctspellingsgetdifferenttokens;identicalspellingsreuse;reservessourceTOKEN_PATTERNnamestoavoidcollisions.",
+        "Sharedfind_entity_spans enforcesnumericboundariesinparseandreplacement. Numericvariantsrejectinventedletters(onlydecimal/whitespace/-./phone+()normalization);literalalphanumericvaluesstillmatch.",
+        "Metricsleakagechecksunionofreplacementspanscoversallgoldvalueoccurrences;dedupgoldpairs;avoidsplaceholderfalsepositivesandpartial-redactionfalsenegatives.",
+        "Hallucinationssourceabsenceindependentparseflag;denominatormatchesevaluatedrecords;normalizedpertypecounts;rejectunknown/duplicatepredictionIDs,duplicaterecordIDs,invalidgoldannotationswithoutprintingvalues.",
+        "ExistingNFCvarianttestupdatedfordistinctsurfacepreservingTokens;newbugsfirstreproducedred12casesandnumericred4,thenfixed."
+      ],
+      "verification": {
+        "fullSuite": "50passed in .vitepress/cache/content-review-sagemaker/tokenization/full-tests.log",
+        "initialRed": "12failed16passed;red-tests.log",
+        "numericRed": "4failed;numeric-red.log",
+        "oracle": "Earlier2200truthoraclepassed/datasethashesunchanged;finalrerunafterguardisexecsession93291,needsresultpoll."
+      },
+      "next": [
+        "PrepareisolatedPIIfixintegrationandreviewsasappropriate;refreshfoundationevidencepinandtestcountaftercodecommits",
+        "ContinueSageMaker03executionand04results;thenremainingAI/ML/news/navigation/global"
+      ],
+      "limits": "NoGPU/modelweights/currentAWSqueriesorcloudmutations. No localfullVitepressbuild/devserver. FullbuildCIonly.",
+      "evidence": "docs/reviews/2026-09-11/sagemaker-tokenization-validation.json"
+    },
+    "sagemakerExecution": {
+      "phase": "integration",
+      "worktree": "/home/atomoh/kubernetes-docs/.vitepress/cache/qwen-audit-integration",
+      "branch": "fix/qwen-audit-execution",
+      "codeCommit": "86fcb8b3868092621130ea1e26dc6beb070c3b48",
+      "baseCommit": "32964fda910b2785dc6ca74e55b64269c4e764e2",
+      "pythonTestsPassed": 100,
+      "siteTestsPassed": 122,
+      "markdownFilesCompiled": 19,
+      "sourceBackedDiagramPins": "86fcb8b3; final PNG re-render in progress",
+      "reviewStatus": "LatestHEAD AI/content>=85 and PR/CI/merge pending",
+      "runtimeStatus": "PyTorch2.8 DLC EOP2026-08-06; resource/GPUexecute blocked; noAWSresourcechanges",
+      "parentNext": "Finish SageMaker integration then remaining AI/ML104originalqueue minus19SageMaker reviewed files; full audit NOT COMPLETE",
+      "pr": 226,
+      "prUrl": "https://github.com/Atom-oh/kubernetes-docs/pull/226",
+      "head": "ed7d220656866fae50703d242d9acf26967fad93",
+      "ci": "qwen-contracts,validate,hostedARMfullbuild,GitBook PASS",
+      "review": "Ohm independentlatestHEAD/code/security/content inprogress; DO NOTmerge untilcomplete85+noCriticalMajor"
+    },
+    "mlflow": {
+      "version": "3.16.0",
+      "foundation": "6files/20questions/4figures/12responsiveclosed; docs/reviews/2026-09-11/mlflow-foundation-validation.json",
+      "registry": "4files/20questions/2figures/6responsiveclosed; mlflow-registry-validation.json",
+      "next": "EKS4fullyread,communitychart1.11.7pulled/sourcesread; pauseforPR226fixes",
+      "cache": ".vitepress/cache/content-review-mlflow",
+      "phase": "all14ko/enfilesclosed",
+      "reports": [
+        "mlflow-foundation-validation.json",
+        "mlflow-registry-validation.json",
+        "mlflow-eks-validation.json"
+      ],
+      "figures": 8,
+      "responsiveCases": 24,
+      "publication": "notyetintegrated"
+    },
+    "qwenReviewFixes": {
+      "updatedAt": "2026-09-12T18:32:17.167956+00:00",
+      "pr": 226,
+      "reviewedRejectedHead": "ed7d220656866fae50703d242d9acf26967fad93",
+      "newHead": "not committed yet; root changes pending worker",
+      "review": "64/64files,88.5/90content,1Critical3Major1Minor; MUST re-reviewnewHEAD",
+      "findings": {
+        "QWEN-001": "PodIdentityAgent/association/role exact5S3objects + ConfigMaploader; implementedinroot,workerfinalreportpending",
+        "QWEN-002": "Spotpaths+29teststeprestored inroot CI;29testsPASS inintegrationbase",
+        "QWEN-003": "Previewunique path; immutable request+job reservations undercleanup flock;9testsPASS",
+        "QWEN-004": "ImplementedcanonicalUUIDprovenanceinprivateinventory/export/verify;nativeboundarchivePASS;workerfinalreportpending",
+        "QWEN-005": "ko/en9labelglossaryrestored"
+      },
+      "parentTargetedTests": 23,
+      "next": [
+        "finishPeirceidentity/provenancechanges",
+        "reviewandtestallupdatedsource/minimalPython",
+        "syncrootfixestoisolatedPRworktree, preserveSpotbasegates",
+        "commitcode thenrepinsourcediagramsandrender/update19docsha/reports",
+        "pushnewHEAD andOhm64+changedpathsrereviewraw>=85/noCriticalMajor",
+        "CI/inlinecomments/latestHEADcheckthenauthorizedmergeanddeploymentverify"
+      ],
+      "parallelAudit": "MLflowfoundation6files+registry4closed; EKS4fullyreadresearchpaused forQwenfixes",
+      "currentFullTests": 119,
+      "nativeBoundArchive": "native-bound-archive/validation.json: native3.1.4positive8filearchive andwrongexecutionreject",
+      "head": "e1d4d0874f3afc17184384defd32750f5537b627",
+      "fixCodeCommit": "0a9f2ffcb92f8bfd95edec2d601f2c844d408051",
+      "phase": "newHEADindependentreviewandCI",
+      "pythonTestsPassed": 121,
+      "spotTestsPassed": 29,
+      "siteTestsPassed": 122,
+      "newReviewReport": ".vitepress/cache/content-review-sagemaker/execution/final-ai-review-e1d4d087.json",
+      "worker": "Peirce resumedoriginalaudit;OhmreviewingnewHEAD",
+      "must": "No mergeuntilnewHEADreviewcomplete85+noCriticalMajor+allCI;readGitHubreviews/inlinecomments;verifycurrentHEAD/base/predecessors"
+    },
+    "qwenR2": {
+      "reviewedHead": "e1d4d0874f3afc17184384defd32750f5537b627",
+      "issue": "QWEN-R2-001 acceptedcreatepostjournal failure lacksstop",
+      "rootFix": "outeraccepted/terminalhandler + best-effortstopjournal; fournewregressions",
+      "rootTestsPassed": 125,
+      "status": "rootfixready; waitcompletee1d4reviewthennewcommit/sourcepins/AI/CI",
+      "worktreeStillReviewedHead": true,
+      "doNotMerge": "LatestpublicHEADstillhasMajor; rootfixNOT yetcommitted"
+    },
+    "qwenR3": {
+      "pr": 226,
+      "head": "5da6883cf92c49d0662281f6de25ecb81e307424",
+      "codeCommit": "2ad43f6a0ee602874fc788c22fe0a225a68dc092",
+      "worktree": ".vitepress/cache/qwen-audit-integration",
+      "branch": "fix/qwen-audit-execution",
+      "pythonTests": 125,
+      "spotTests": 29,
+      "nodeTests": 122,
+      "reviewer": "Ohm",
+      "reviewReport": ".vitepress/cache/content-review-sagemaker/execution/final-ai-review-5da6883c.json",
+      "status": "merged/deployed/liveverified; keepreviewrecords; do notredo",
+      "oldFindings": "R1fivefixed;R2oneMajorpostacceptancepersistfixedwith4newregressions",
+      "next": "readnewreview/checklatestGitHubreviews+inlinecomments+CI+targetHEAD/base/predecessors;mergeauthorizedwhengreen;verifydeploy;resumeMLflowEKSandfullaudit"
+    },
+    "qwenMerged": {
+      "pr": 226,
+      "reviewHead": "5da6883cf92c49d0662281f6de25ecb81e307424",
+      "mergeCommit": "8cce6f0aeae7dcf0225f5bdb7aa861e091f7f055",
+      "mergedAt": "2026-09-12T19:08:47Z",
+      "review": "PASS70/70,90/90,zeroissues",
+      "ci": "success34712776516",
+      "deploymentRun": 34713296051,
+      "deployment": "success; actualko/enpages+diagrams+fingerprintedPNGhashesverified",
+      "branchProtection": "mainprotectedfalse;activebranchrulesempty;inline/reviewsnoneverifiedbeforemerge",
+      "verification": "qwen-deployment-verification.json"
+    },
+    "rayFoundation": {
+      "phase": "closed6docs/20questions/4figures/12responsive;ray-foundation-validation.json",
+      "versions": "Ray2.58.0,KubeRay1.7.0",
+      "native": "singlelocalRay,CPU2/objectstore80MiB,.remote/ObjectRefdependency/actorstate/read-onlyNumPy PASS; ray.shutdowncompleted",
+      "cache": ".vitepress/cache/content-review-ray/foundation",
+      "next": "finishsourceverificationthenrewrite6docs/quizzes+4diagrams; allremainingRay/Kubeflow/rootAIunread"
+    },
+    "rayOperator": {
+      "phase": "closed4files/20questions/2figures/6responsive;ray-operator-validation.json",
+      "versions": "KubeRay1.7.0/Ray2.58.0",
+      "chart": "nativeHelmpull/templateincludeCRDs passed;4CRDsv1(RayCluster/RayJob/RayServicealso deprecatedv1alpha1);RayCronJobgatefalse",
+      "featureGates": "RayServiceIncrementalUpgradeBetaenabled;MTLS/NetworkPolicy/HistorycollectorAlphadisabled;HistoryServerBeta;RocksDBGCSFTAlpha",
+      "nativeAutoscaler": "5casespassed pure2.58generator: Podlimits GPU1,rayStartParamsGPU2,structuredresourcesGPU3,numOfHosts2 max4->8,globalidle120s/group30s",
+      "schema": "CPUdemoClusterIP/headCPU0/workermin0max2/versionv2 schema passed;noCEL/API/controllerexecution",
+      "sourceFindings": [
+        "OperatorcreatesPods/Services directly;zero workerGroupsallowedbyCRD",
+        "AutoscalingrequiresenableInTreeAutoscaling;headsidecarownRBAC notalwayson",
+        "GPUstructuredresources/rayStartParams overridePodlimits;verifyactualstart/resources/driver/devicePlugin",
+        "Minreplicas/labels/placementrequests/CPUworkcanrequireGPUgroup;notonlypendingGPUtasks",
+        "RayJobshutdownAfterJobFinishesdefaultfalse;TTLworkswithtrue;deletionStrategies/CELconstraints;externalPVC/artifacts/notallEC2cleanup",
+        "RayServiceNewClustervsNewClusterWithIncrementalUpgrade bothnewcluster;GatewayAPI+implementation+capacity/readiness;notinplaceorunconditionalzeroDowntime",
+        "KarpenterPendingcapacityscaleup isnotallcontrollerbehavior;image/PVC/quotareasonsnotfixedbyaddingnode",
+        "HelmCRDsnotautomaticallyupgraded/deleted;operatorinstallnotRayworkload",
+        "Tokenmodeoptin andnotTLS;version/pathsupportcheckneeded"
+      ],
+      "image": "rayproject/ray:2.58.0-py312 tagmetadata verified linuxamd64/arm64",
+      "next": "rewrite4docs/20questions;2diagrams+6responsive+MDcompile;recordvalidation"
+    },
+    "rayTrainTune": {
+      "phase": "closed4docs/20questions/2figures/6responsive",
+      "native": "6APIcases+2scalarTune trialspassed;noTorch/GPU/cloud",
+      "report": "ray-train-tune-validation.json"
+    },
+    "rayServe": {
+      "phase": "closed4files",
+      "report": "ray-serve-validation.json"
+    },
+    "rayFamily": {
+      "phase": "closed18ko/enfiles",
+      "versions": "Ray2.58.0/KubeRay1.7.0",
+      "figures": 10,
+      "responsiveCases": 30,
+      "publication": "pending",
+      "next": "MLflow14+Ray18PRcohort;thenKubeflow/rootAIandfullremainingaudit"
+    },
+    "mlflowRayIntegration": {
+      "phase": "latestHEADAIpass;fullbuildpending",
+      "worktree": "/home/atomoh/kubernetes-docs/.vitepress/cache/qwen-audit-integration",
+      "branch": "docs/mlflow-ray-audit-2026-09-12",
+      "base": "8cce6f0aeae7dcf0225f5bdb7aa861e091f7f055",
+      "paths": 100,
+      "documents": 32,
+      "figures": 18,
+      "batches": [
+        "mlflow-foundation",
+        "mlflow-registry",
+        "mlflow-eks",
+        "ray-foundation",
+        "ray-operator",
+        "ray-train-tune",
+        "ray-serve"
+      ],
+      "next": "confirmfullCIlatestHEAD+inline/reviews/base/precedingPR226;mergewithoutapprovalwhengreen;verifydeploy;continueKubeflow/fullaudit",
+      "pr": 227,
+      "url": "https://github.com/Atom-oh/kubernetes-docs/pull/227",
+      "head": "9b466848db282da5cf13d3d80da7266440216bc8",
+      "reviewer": "Ohm resumedoriginalaudit",
+      "reviewReport": ".vitepress/cache/mlflow-ray-integration/review-9b466848.json",
+      "checks": "site122/local links/png/parity/32MDpass;18figures/54responsivepreviousbatchchecks",
+      "rootPendingFix": {
+        "id": "MLR-R1-001",
+        "severity": "Minor",
+        "path": "docs/reviews/2026-09-11/ray-serve-validation.json",
+        "proof": "4/4freshcompilespassed",
+        "action": "Leavee178reviewtreeunchangeduntilfullreview;decideintegrationwithanyotherfindings"
+      },
+      "previousHead": "e17872e6d517f74dcbcce1bbb77e9b8dbcdd4861",
+      "previousReview": "PASS_WITH_MINOR88.5/90,noCriticalMajor;100/100coverage",
+      "delta": "oneServevalidationreportrefreshedfrom4freshMDcompiles",
+      "review": "PASS100paths,90/90,zeroissues",
+      "ciRun": 34717401843,
+      "ci": "qwen-contracts+validate+GitBookPASS;buildinprogress",
+      "reviewComment": "https://github.com/Atom-oh/kubernetes-docs/pull/227#issuecomment-5648534764"
+    },
+    "kubeflowFoundation": {
+      "phase": "All6read;sourceevidenceinprogress;noKubeflowfileeditsyet",
+      "next": [
+        "All6readcomplete; continueprimarysourceverification",
+        "verifyCNCF2026-08-17officialannouncement,currentcommunitydistribution26.03.x+bundledversions",
+        "inspectawslabs/kubeflow-manifestsstatus/releases/support/KFPv2IRSA/PodIdentity;nostaticcredentialrecommendationwithoutverifiedneed",
+        "reviewProfilequota/Istio/network/storage/appauthseparateboundaries;CentralDashboardnotcontrolplane",
+        "boundedkustomizerender/schema/sourceproofifuseful;noKube/AWSdeployment",
+        "fix6docs/quizzes+4figures/12responsive;recordbatch"
+      ],
+      "initialSources": {
+        "cncfAnnouncement": "URLretrieved200;needreadbodyandremoveinferredregulatedindustrycertificationclaim",
+        "communityLatest": "26.03.1 published2026-06-15;releasebodylistsKFP2.16.1,Trainer2.2,KServe0.18,dashboardv2,workspacesbeta;mustverifybundledfilesatTAGnotmaster",
+        "awsRepo": "notarchived;defaultmain;pushed2026-08-10;READMEbadgeKubeflow1.7.0;donotinfercurrent26.03compatibilityfromrepoactivity",
+        "cache": ".vitepress/cache/content-review-kubeflow/foundation/sources"
+      },
+      "verifiedFindings": [
+        "AWS latestrelease v1.7.0-aws-b1.0.3 published2023-09-01 explicitlywarnsnewinstallsnotworkingbecauseOIDCimagewasremoved; repositorynotarchived/activitydoesnotprove26.03compatibility",
+        "Communitylatest26.03.1 release2026-06-15;tagREADMEtableincludesKFP2.16.1/Trainer2.2/Notebooks1.11/workspacesbeta/Katib0.19/KServe0.18/dashboard2/Hub0.3.9; verifyactualbundledfilesnext",
+        "TagREADMEhasEKS-specificoauth2m2m overlay, IstioCNI,optionalKFPKubernetesNativeAPImode(Pipeline/PipelineVersionCRDs);notallcomponentconceptsareCRDs",
+        "OriginalCNCFregulatorysuitabilityclaimisstrongerthanprojectgraduation;announcementbodyverificationpending",
+        "OriginalProfilequota/Istiocompleteisolation/everycomponentownnamespace/generalmanagedserviceclaimsmustbenarrowed",
+        "Do notcopyupstreamunboundedretry --force-conflicts installloopasvalidatedsafedefault"
+      ],
+      "cncfReadback": "Announcement confirmsAug17graduation,thirdpartysecurityaudit,steering/codeofconduct;mentioningregulatedenterprisesisnotanenvironmentcompliancecertification",
+      "profileReadback": "ProfileCRwrapsnamespace;owner+contributors;ProfileControllerownsProfile/namespace whileKFAMhandlescontributors;resourceQuotaSpecoptional;needbundledcontrollercodeverification",
+      "additionalVerifiedSources": [
+        "AWS currentmainPipelinesguide describesAwsIamForServiceAccount plugin/default-editorannotation andsampleworkflow;notitselfproofKFP2.16IRSA/PodIdentityartifactcompatibility",
+        "BundledDashboard2ProfileController createsResourceQuotaonlywhenResourceQuotaSpec.Hardnonempty;noautomaticquotaifomitted",
+        "ProfileControllercreatesownerRBAC/IstioAuthorizationPolicy;KFAMhandlescontributors;NetworkPolicyandstorageIAMarenotsealedbyProfilealone",
+        "26.03.1profilecontrollerbase namespaceprofiles-system;dashboard2migrationrequirespreserveProfilesCRD/Profile/namespaces;oldresourcecleanupmustbescoped"
+      ],
+      "nativeValidation": "profile-render-validation.json: release26.03.1profileKubeflowoverlay rendered withkubectl1.36.2/kustomize5.8.1;finalnamespacekubeflow,manager+KFAMimagesdashboardv2.0.0,onecontrollerNetworkPolicy/AuthPolicy;noNamespaceobjectinthisoverlay",
+      "correctionToEarlierNote": "Base usesprofiles-system,butkubeflowoverlayoverridesnamespace;do notclaimactualbundledeploysprofiles-system",
+      "remainingBeforeRewrite": [
+        "ConfirmProfileCRDnamespace/quota/deletionsemanticsandscopeofcontrollerNetworkPolicy",
+        "Readreleaseexample overlays/defaultdependencyversionsforwholecomponentmap",
+        "ConfirmcurrentKFP2.16artifactidentitycapabilityfromKFPsource;separaterelevantoldAWSreleasewarning",
+        "Rewrite6ko/enREADME/01/quizzes16questions+4diagrams;native/schema/MD/browservalidation"
+      ],
+      "latestProfileProof": "Profile CRD cluster-scoped;resourceQuotaSpec optional;controllercreatesquotaonlynonemptyhardandremovesitsmanagedquotaifempty. BundledNetworkPolicyprotectscontroller/KFAMingressinkubeflow,notautomaticall-profile isolation.",
+      "nextWork": "VerifySDKversion/credentialproviderlimitationsifneeded;thenrewrite6foundationdocs/quizzes16questions,update4diagrams,runboundedMD/browser/schema checks. Avoidfullplatformbuild/clouddeployment.",
+      "kfpIdentityEvidence": "CurrentupstreamKFPobject-storeguide(lastmodified2026-06-13)explicitlydescribesIRSA and credentials.fromEnv;oldAWSdistributionhistoricalKFPv2limitationisnotcurrentuniversalKFPv2constraint. Needpin2.16.1launchersource/actualproviderconfigbeforeclaimingPodIdentity.",
+      "profilePluginEvidence": "Dashboard2.0AwsIamForServiceAccount plugin patchesdefault-editorannotation ANDcallsIAMUpdateAssumeRolePolicy;requirescontrollerAWSpermissionsandmutatestrust. NotjustpassiveannotationorautomaticPodIdentity.",
+      "currentKFPSource": "KFP2.16.1v2OpenBucket:FromEnvtrue->createS3BucketSessionreturnsnil->blob.OpenBucket(ctx,bucketURL)defaultprovider. ExplicitStaticCredentialbranchusesAWSGoSDKv2config.LoadDefaultConfig+WithCredentialsProvider. NeedgocloudpinnedimplementationbeforeexactPodIdentitySDKclaim. CurrentupstreamguideexplicitIRSA;oldAWSKFPv1-onlynoteisnotthecurrentuniversalKFPv2constraint."
+    }
+  },
+  "status": "in_progress_not_complete",
+  "latestCoverage": {
+    "documents": 2707,
+    "fullyRead": 1039,
+    "fixed": 1035,
+    "verified": 0,
+    "followup": 4
+  },
+  "currentWorkspaceBranch": "docs/review-followup-2026-09-12",
+  "branch": "audit/full-content-2026-09",
   "parentActive": {
-    "next": "Kafka04schemaRegistry+quiz then05Connect/MM2,06MSK,07metrics,08bestpractices,09benchmark;remainingdata/AI/news/nav/global",
+    "next": "SageMaker03/04;remainingAI/ML;news/navigation/global",
     "argocdSync03": "Completed50fences41YAML8Bash10App/AppProject schema checks. Windowsko/en+retryko diagramscorrected. Reportbatchargocd-sync. Sourcepath sync_windows.md fixed.",
     "argocdAppSets04": "Completed50fences46YAML35fullAppSetCRDs.90representativetemplateinstancesexecutedGo text/template + Sprig3.3.0;4Helmvaluesparsed;generatedApplication schemaspass. Plugin/ClusterDecision/RollingSync/deletioncasesfixed. TemplatePatch3.5.2USESStrategicMergePatch(Application{}); NOTJSONMergePatch! sourceappset-template-patch-src verified, docscorrected. Scriptsfix-argocd-appsets-part1/2 areNONIDEMPOTENT.",
     "appsetsDiagrams": "All5fixedspecs pass9/9composition; copiesnormalizedthroughproductionfonthelperpass4viewports and finalscreenshotsinspected. KOdataflow2compactedrow0/1withmerge&finalyOffset57,viewBox1040x400,override-inlabelAt208314 toavoidoversizedcropping. SourceHTMLunmodifiedfonts;copiedbuiltHTMLnormalized. AssetsPNGsregenerated.",
@@ -459,7 +1103,8 @@
         "Reassign--verifycanMUTATEthrottleconfigswhencomplete;--preserve-throttlesforstatuschecks;doesNOTcheckallURP/offlinepartitions. SourceclearAllThrottles resetsbrokers/topicsthrottles;coordinateotherreassignments."
       ],
       "next": []
-    }
+    },
+    "current": "SageMaker02code/docsclosed50tests;next03execution/04results;integrationpending"
   },
   "publicStatistics": {
     "branch": "feat/public-docs-statistics",
@@ -486,363 +1131,29 @@
     "deployState": "Pages34609565483SUCCESS2026-09-11T14:31:46Z;liveHTTP4routes200incloriginalIstioinstall;realbrowserko1920/390+en390passed;statsJSONunavailableasexpected;noGArequests/fixturesinliveQA",
     "evidence": "docs/reviews/2026-09-11/public-statistics-deployment.json"
   },
-  "continuation": {
-    "kafkaSchemaRegistry": {
-      "status": "complete4files/36questions/18nativecases/21schemaobjects/20fences; nofigures",
-      "sources": "/tmp/kubernetes-docs-full-review/schema-registry-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/schema-registry-fixtures",
-      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-schema-registry",
-      "facts": [
-        "Apicurio Constants.java health/ready and health/live on9000",
-        "RegistryConfigSource environment underscore-to-dot mapping",
-        "KafkaSqlConfiguration common client properties; explicit HTTPS required because released default hostname algorithm empty",
-        "KafkaAdminUtil requires cleanup.policy delete; comment says compaction has no benefit, so no invented universal data-loss claim",
-        "KafkaSqlRegistryStorage initializes all3topics and stores snapshot paths; external snapshotfiles required",
-        "Pinned v7 OpenAPI register/config requests validated"
-      ],
-      "next": "Kafka05Connect/MM2; then06MSK/07monitoring/08bestpractices/09benchmark"
-    },
-    "kafkaConnectMirrorMaker": {
-      "status": "complete4files/36questions/22strictschemaobjects/2nativepluginconfigs+10MM2cases",
-      "sources": "/tmp/kubernetes-docs-full-review/connect-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/connect-fixtures",
-      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-connect",
-      "facts": [
-        "Corrected Connect broker group coordination versus worker leader assignment, standalone Kubernetes claim and source/sink offset storage.",
-        "Migrated actual Strimzi v1 Connect identity/topic fields and MM2 target/mirrors[].source structure; removed obsolete heartbeatConnector field and old API mappings.",
-        "Pinned checksum-verified Debezium3.6.2/Aiven3.4.3 artifacts; fixed absent Aiven class and unsupported flush.size/rotate.schedule.interval.ms keys using actual JAR definitions.",
-        "Added TLS/SCRAM, scoped internal/data ACLs, precreated compacted internal topics, safe mounted-directory config provider, PostgreSQL TLS/publication and concrete dependency requirements.",
-        "Separated ECR Buildah push identity/token expiry from runtime S3 workload identity; aligned JSON converter envelopes and CDC archive semantics.",
-        "Verified native default-policy cycle detection allows legitimate multi-hop, Identity loses cycle provenance, heartbeat generation needs no source connection; corrected DR/ACL/offset/freshness/compression claims.",
-        "Revised all36quizquestions and all20fences; native2connectorconfig validations/10MM2-provider-codec cases/strict22schemaobjects pass; nofigures."
-      ],
-      "next": "Kafka06MSK/07monitoring/08bestpractices/09benchmark"
-    },
-    "kafkaMSK": {
-      "status": "complete4files/36questions/26policycases/2nativeJavaIAMconfigs/3offlineCLI/18fences",
-      "sources": "/tmp/kubernetes-docs-full-review/msk-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/msk-fixtures",
-      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-msk",
-      "facts": [
-        "Separated Provisioned Standard/Express/Serverless and complete pricing dimensions; removed unsubstantiated cost/portability/GitOps claims.",
-        "Corrected Serverless IAM-only/topic-settings/250GiBperpartition+7d retention and separate monitoring/tenancy responsibilities.",
-        "Corrected sameVPCdoesnotguaranteeaccess, alladvertisedbrokers, PrivateLinkmultiVPC, IPv4/public/IPv6endpointportdistinctions.",
-        "Added official OAUTHBEARER/nonJava helpers and PodIdentity/IRSA credential refresh; two Java configs validated againstaws-msk-iam-auth2.3.8.",
-        "Removed AlterCluster/*Topic* grants, added grouppermissions/exactclusterUUID andsplitproducerconsumer policies; idempotent/transactional scope andKafka>=3.8WriteTxnMarkers explained.",
-        "Verified MSKConnectAPIauthNONE/IAM andruntime2.7.1Java11/3.7.xJava17; pluginbytecode belowJava18isnotservicecompatibilityproof; actualS3plugincreation notconnectorcreation and immutableplugincontents.",
-        "Corrected nativeMSKLambda/Firehose integrations, Kinesiscurrentcapacitymodes/retention andpartitioncountsemantics; all36questionsrewritten."
-      ],
-      "next": "Kafka07monitoring/08bestpractices/09benchmark"
-    },
-    "kafkaMonitoring": {
-      "status": "complete4files/34questions/27schemaobjects/24fences/9nativemetrics/108alertexpectations",
-      "sources": "/tmp/kubernetes-docs-full-review/kafka-monitoring-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/kafka-monitoring-fixtures",
-      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-kafka-monitoring",
-      "facts": [
-        "Corrected supported JMX/StrimziMetricsReporter choices, JMX mapping versus target relabeling, CruiseControl nested configuration rather than CRD.",
-        "Replaced archived seglo/kafka-lag-exporter recommendation with Strimzi KafkaExporter1.9.0 automatic internal TLS; actual metric kafka_consumergroup_lag labelconsumergroup.",
-        "Added v1 mergepatch preserving baseline, scoped node/exporter PodMonitors and explicitnamespace/cluster/component/role labels, nofalseServiceMonitorunreliability.",
-        "Verified final JMX1.6/Kafka4.3.1 rules against isolatedrunningbroker andreal15records; committedoffsetsexportlag3/5/5; allstartedprocessesstopped.",
-        "Fixed counter/rate/gauge handling, perclustercontrolleraggregation/duplicateandmissingcases; no splitbrainordatalossclaimfromonecount.",
-        "Defined lagasnextoffsetdistancewithcompaction/transaction/businesscommitlimits; negative/missingoffsetsseparatefromzero.",
-        "Ninealerts108expectationsacross12scenariosinclallabsent, metricmissing, scrapedown, partialreplication, highlag, unknownoffset, transientandotherclusterisolation.",
-        "KEDA2.20.2TLS/SCRAMwithreadonlyKafkaUserandTriggerAuthsameNamespace; aggregateLagThreshold, min1nozero/cooldown andexplicitHPAstabilization; max10within12partitions.",
-        "Updated34quizquestionsandversionedKafka/KRaft/Exporter/Connect/CruiseControldashboardreferences; nofigures."
-      ],
-      "next": "Kafka08bestpractices/09benchmark then remainingdataAInewsnavigation",
-      "sessions": "AllnativeKafka/exporterprocessesstopped; no pending tool sessions."
-    },
-    "kafkaBestPractices": {
-      "status": "complete4files/36questions/12native+8partitioncases/9schemaobjects/26fences",
-      "sources": "/tmp/kubernetes-docs-full-review/kafka-best-practices-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/kafka-best-practices-fixtures",
-      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-kafka-best-practices",
-      "facts": [
-        "Replaced PartitionCount-headercount with currentTopicCommand partitionrow inventory inclLeader:none; logicalpartitionsvsreplicaplacement distinguished.",
-        "Removed universalpartitionlimits/resource-costformulas, scopedJavaMurmur2serializedkeys, salting/order/compaction/joins consequences andnon-universalremapping.",
-        "Correctedacks/minISR/idempotenceconflicts/batch.size/defaultlinger/deadline/compressionandend-to-endtransactionclaims.",
-        "Explicitclassicconsumerprofile, staticmembertimeoutlimits, actualenvironmentresolutioninsteadliteralPOD_NAME, synchronousprocess-before-commit andabort-on-failure; warnedagainstuncoordinatedthreadpool.",
-        "CorrectedclientsCAvsclusterCA, listenerexposuretypevsTLSauthentication, separatev1mTLSuserandadditionallistenerpreservingSCRAMbaseline.",
-        "CorrectedonepeerANDvsseparateOR andadditiveCNIpolicysemantics; explicitcrossnamespacecredentialdistribution/rotationrequirements.",
-        "StorageClassencryptedtrue/WaitForFirstConsumer/Retain; AutoModenodediskencryptionnotdynamicPVCproof, parameterdefaultfalsecurrentdoc, no retroactiveencryption.",
-        "TieredStoragecurrentcustompluginintegration, retention3d/50GiBperpartition, asynccompactionnotstoragecap, Spot/rack/AZandPDBlimits; removedcheckboxproductionguarantee.",
-        "Updatedall36questions, addedPart9navigation; native12+partition8+9schemaobjects/26fencespass; nofigures."
-      ],
-      "next": "Kafka09benchmark then Spark/Airflow/Flink/UnifiedStudio AI/news/navigation",
-      "sessions": "No active processes or pending native tools."
-    },
-    "kafkaBenchmark": {
-      "status": "complete4files/16questions/14measurementtablespreserved/10nativeCLIcases/5callbackcountcases/18schemaobjects/16fences/4figures9of9+desktop+8mobile",
-      "sources": "/tmp/kubernetes-docs-full-review/kafka-benchmark-sources",
-      "code": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-kafka-benchmark",
-      "next": "RemainingData: Spark/Airflow/Flink/UnifiedStudio; thenAI/news/navigation/unassignedlabs/globaltests",
-      "sourceEvidence": "Originalcommitc9345a53 PR166 Sep2 read via gh; PRbodyrepeatsmeasurementsbutno rawtelemetry/priceartifactlinks. Repo rg and tmp/cachetargetednames foundnooriginalrawlogs; do notaccusefabrication, labelhistoricalreporteddataandreviewlimits.",
-      "criticalFacts": [
-        "AWSnetworkdocsCONFIRMSseparateinbound/outboundcreditbuckets. F1rx134-136MiB/s≈1.13Gbpsandtx80-108≈.91Gbps EACHbelowm5xlarge1.25Gbpsbaseline; summingrx+txisNOTproofburst. F4client~2.83Gbps>.75baselinevalidclientburstevidence. Newsourceec2-network.text.",
-        "M5xlargeEBSbaseline1150Mbps143.75MB/s,MAX4750Mbps593.75MB/s,IOPS6000/18750;not137MiBsabsolutehardcap. Currentgp3max2000MiBs80kIOPS64TiB;old1000outdated.",
-        "F1~75s9.5GiBnotcertifiedsustainedceiling;134.74payloadMiBs>125devicecapmeansbuffers/interval/unitsmustreconcile. Highest~135sysfssampleNOTsteadystatesubstitute; oldsamplertsoneperroundseconds, sequentialkubectl≈12s,reusedtsnotpercountertime,norawfiles.",
-        "F1RF3acksallvsF4RF1acks1 changesRFANDacks; durations/cache/clientlimitsdiffer. 2.51ratioobservednotpurecausaltax. F6batch+linger+recordcountalldiffer;10.12percentthroughputdifferencecannotcallnoisewithoutrepeats;CPU39percentmidpointnotisolatedeffect.",
-        "E4producer+consumer shareone1.9CPUclient;brokerCPUlowdoesnotruleoutclientcontention. E1steadyinterval/E3arithmeticmean/E4overall/fetch-time ratesdifferentdenominators. Partialcoldnotallcachecold,noforcedcacheevictionneededonsharednodes.",
-        "CodecorderingandratiosONLYpaddedcorpus;notuniversalupperboundororderingtransfer. compression.type=producer doesnotmeanzeroCPUbroker;brokersvalidate/checksum/decompressasneeded. NativeProducerPerformancepayloadgenerationhappensBEFOREsendlatencystart;payloadgenerationaffectsthroughputbutnotreportedlatency. Errorsnotcountedinsuccessstats.",
-        "ProducerPerformanceperiodicsamplingnumRecords/min(numRecords,500000);notrandomreservoir,histquantilesmillisecondvalues. --producer-props deprecated likely verify; modern--command-property. Consumer--messagesDEPRECATEDsince4.2,use--num-records; pollbatchcanovershootcount.",
-        "Dataflowcurrentlyroutesclusterwide134MiBsthroughoneleader:changeoneillustratedpartitionandaggregatecards;RF3alleachbrokerrequires3B+3RFandskewconditions. SequenceHWisnextoffset:commitrecordrneedsHW>r / >=batchnextoffset; oldHW>=recordoffsetoffbyone. StableISR3traceonly, min2doesnotrequirebothfollowersalways.",
-        "ReproSCgp3undefined/defaultunknown,AZnotpinnedthoughhistoricalsingleAZ; adddedicatedSC3000IOPS125MiBs encryptedtrue/WFFC/Delete, pinAZbothclient+brokers, publishNotReadyAddresses/headless+probes, labelchangesnotexacthistoricalspec. Do NOTrunAWSbenchmark/createcloudresources.",
-        "Reproexplicitcreate/populatet-lat/t-bigbeforeconsumer; newUUID/groupperrun, persiststdoutstderrchecksums/timestamps; finiteboundedtestsnot10GiBguarantee. Frozenoriginalguides/quizzesinignoredcache.",
-        "Historicalprices$.236/h$.0912/GBmonthkeepasreportedassumptionsandcheckDecimalarithmetic,NOTclaimnewPriceAPIreceipt. 730hourmonthlyplanningnotactualSeptemberinvoice. ExcludesclientEKS/networkothercosts;assigned50minnotactualinvoice."
-      ],
-      "figures": [
-        "ko-data-on-eks-kafka-09-kafka-benchmark-0.dataflow.json",
-        "en-data-on-eks-kafka-09-kafka-benchmark-0.dataflow.json",
-        "ko-data-on-eks-kafka-09-kafka-benchmark-1.sequence.json",
-        "en-data-on-eks-kafka-09-kafka-benchmark-1.sequence.json"
-      ],
-      "newSources": [
-        "ProducerPerformance.java",
-        "ConsumerPerformance.java",
-        "apache-image-Dockerfile",
-        "linux-iostats",
-        "gp3",
-        "ec2-network(.text)",
-        "ec2-general(.text)"
-      ],
-      "failedSource": "DelayedProduce.scalaoldpath404, likelymovedtoserver/src/main/java/...;needfindactualsourceforHWlastoffset+1.",
-      "factsFinal": [
-        "Preserved14coremeasurementtables and attributedhistoricalsingle-runresults toPR166; rawtelemetry/payloadhashnotbundled and noAWSrerunclaimed.",
-        "Corrected30M×1024B=28.610GiB, F6+10.12percent, RF4/F1=2.507, CPUmidpoint39.19percent, E4drop44.49percent; costsasattributed730hplanningnotbill/currentpricequote.",
-        "Removedcertified130-135MiBsceiling/10GiBthreshold/noise/tail-only/codec-order-transfer/exclusiveIObottleneckclaims; controlledRFacks/defaultidempotence/duration/cache/sharedclient/ratetimebases discussed.",
-        "CorrectedEC2directionalnetworkcredits: F1rx136=1.141Gbps/tx108=.906Gbps EACHbelow1.25; sumwasnotburstevidence. m5xlargeEBSbaseline137.09/max566.24MiBs/currentgp3max2000conditional.",
-        "VerifiedperformanceCLIunits,payloadgenerationbeforelatency,periodicsampling,callbackfailurenotcounted,consumerpollovershoot; updateddeprecatedflagsandtested10nativecaseswithoutclients.",
-        "ReproducedpublishedAWKlocally20000valid1008BJSONrows/padding63.17percent; localzlib15.92/6.53differsreported18.5/7.8, preservedprovenanceanddidnotclaimhistoricalhash.",
-        "ReproductionmanifestnowexplicitAZ/gp3performance+encryption/headlessDNS/readiness/privatebenchmarkNetworkPolicy/tokenautomountfalse; changedtemplateclearlydisclosed. Scriptscreate/populatetopics,checksuccessfulcounts,finitewalltimeout,verifieddevice/actualmonotonicsampletiming; onlyreadonlylocalhostsamplertested.",
-        "Corrected4diagramsone-partitionversusclusteraggregate/FetchResponsedirection/backgroundwriteback/HW>=lastOffset+1; sourceKafkaReplicaManager/Partitionconfirmed.",
-        "4figures9of9delivery+desktopvisual+8mobilecases/menus/zoom/theme/presentation; PNGsregeneratedandpairedvisuallyinspected.",
-        "Updated16quizquestions;18schemaobjects16fences14preservedtables5successcountcases passed."
-      ],
-      "fixtures": "/tmp/kubernetes-docs-full-review/kafka-benchmark-fixtures",
-      "sessions": "Allnative/browser/PNGtoolscompleted; no active local servers."
-    },
-    "globalFollowupsAdditional": [
-      "Validate internal/legacy heading fragment links across rewritten pages; current perchapterrelative-linktestscheckpaths only. Preserve useful old anchors or update crossreferences.",
-      "Archify locale supports en/zh-CN only; omit locale for Korean text. visual-check usesARCHIFY_CHROME andARCHIFY_CHROME_NO_SANDBOX=1, PNGscriptusesARCHMAP_CHROME.",
-      "Disk~478MBfree/root;tmp~8GB4386inodesbeforelast4figures. Avoidlargeinstalls; ownregenerablecachescanbefreedafterchecks, keepfixtures/reports/userfiles."
-    ],
-    "sparkFoundation": {
-      "status": "complete6files/18questions/14nativefeaturecases/localPi/23schemaobjects/12fences/4figures9of9+desktop+8mobile",
-      "sources": "/tmp/kubernetes-docs-full-review/spark-foundation-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/spark-foundation-fixtures",
-      "runtime": "/tmp/kubernetes-docs-full-review/spark-runtime",
-      "facts": [
-        "LatestSparkdocsactual4.2.0; Mavenrelease4.2.0. Spark4.2Kubernetesprereq>=1.34 NOT1.30. Clientsupportsince2.4; clusterandclientbothsupported,clientdrivercaninside/outsidepod. APIserverdoesnotperformnodescheduling;Kubescheduler/kubeletdistinctfromSparkdriverexecutorallocation/taskcoordination.",
-        "OfficialDockerlibrarytags spark:4.2.0-scala2.13-java21-ubuntu available sourceofficial-image-tags. spark-docker42 copiesexamples and symlink /opt/spark/examples/jars/spark-examples.jar; UID185, UbuntuJammy/Java21, /opt/decom.sh included/executable,procps/coreutilsavailable.",
-        "DO NOT falselyassert flagslackterminationhook! NativeBasicExecutorFeatureStep when spark.decommission.enabled=true INJECTS preStop /opt/decom.sh bydefault and overrides lifecycle. ScriptfindsexecutorJavaprocess, sendsSIGPWR, waitsviatail--pid. executor.decommission.signaldefaultPWR; customsignals/imagesneedalignedscript. Flagsbest-effortnotmigrationguarantee; graceincludespreStop, forcekill/nodefailuremaypreventcompletion.",
-        "CPUrequestsdefaultdriver/executorcores;CPU LIMIT NONEunlesslimit.coresconfigured. Memoryreq=limit heap+overhead(driver);executoraddsapplicableoffheap/Pythonmemory. NativeJVM1g->1408Miwithdefaultmin384Mi. CustomResourceProfilescanignoreK8sCPUoverrideconfig; defaultprofileexamplesenough.",
-        "DRAshuffleTrackingdefaultTRUE,introduced3.0 notonlystable3.3. StockK8sESSunsupported; alternativesdecommissionShuffleBlocks/reliableShuffleDataIO. DRAvalidationrequiresoneofmechanisms,notunconditionallybothflags. Shuffletrackingtimeouts/cachedidle/destructionlimits. Initialexecmaxofmin/initial/static executor.instances; useconsistentfixed2andDRAinitial2.",
-        "PodTemplateFiles accessibletoSUBMITTER; executor template automaticallymountedintodriver bySpark. DoNOTclaimmustprebakeexecutorTemplateinimage. MissingimagevalidTEMPLATEonly,notkubectlapplyPod;labelas.templateandwirepodTemplateFile.",
-        "ExecutorSAdefaultfallbackdriverSA; explicitseparateexecutorSArecommendedwhennoAPIaccessneeded. driverSAneedsnamespaceRBACpods/services/configmaps; userauthsubmissionseparateAWSdataplaneS3IRSA/PIoptionalforPi. Preserveflags/rbacactualgeneratedpodinspection.",
-        "NoSpark-specificYARNmanagerdoesNOTmeaninfrastructuremaintenancefree:K8scontrolplane/nodes/capacity/images/RBAC/network/storageremain. SparkDRAexecutorcount≠KubernetesDRAdeviceallocation.",
-        "4figures: assets/diagrams/archify/{ko,en}-data-on-eks-spark-readme-0.architecture.json and...01-spark-fundamentals-0.sequence.json. CurrentAPIboxclaimsSchedule/startanddriveractsasScheduler; fixlogicalroles (canaddKubeScheduler/kubelet oraggregateKubernetescontrolplane+nodeagentboxexplicit). Onlyclustermodeshown; clientmodeelsewheredescribed. ExplicitSpark taskassignmentdriver→executor,dontclaimpulltasks."
-      ],
-      "native": {
-        "localPi": "4.2.0 local[2], UIoff, bind/host127.0.0.1; Pi3.140947852369631, cleanstopped. local-runtime-validation.json",
-        "featureSteps": "PodChecks.scala compiledactualSparkjars;10checksPASS memory1408, noCPUlimits,override500m independent2slots,shuffleTrackingtrue,decommflaginjects/opt/decom.sh,PWR. native-pod-validation.json andnative-pods/containerJSON. NoKubeclientcreated.",
-        "binary": "Officialtgz555409690bytes SHA5123a6559e8546ff387db8fe7a04b8fe4008853b467b972c2e343df8e14a81450534777719fc5d4998dd96519a86fdf9de140cee753c61e2e94db044d5f9555ddc4;361selectedbin/conf/jars/examplesfiles478988337bytes extractedtmp runtime(276jars). binary-validation.json."
-      },
-      "sessions": "Allprocessesandtoolscomplete; no local serversrunning.",
-      "next": "Spark02operator03EMR04performance05bestpractices; thenAirflow/Flink/UnifiedStudio/AI/news/navigation",
-      "finalFindings": [
-        "ConfirmedSpark4.2.0andKubernetesminimum1.34; correctedclient+clusterdeploysupportsince2.4andremovedAPIServer/driverreplacesKubeschedulerclaims.",
-        "AddedrealofficialSparkPiimage/examplejar,namespaceRBAC,separateddriver/executorSA,templatewiringandexplicitresource/CPUlimits; noanglebracketshellredirectplaceholders.",
-        "NativeCPUlimitnoneunlessconfigured,CPUrequestoverrides≠taskslots,andJVM1g+384MiB=1408MiBmemoryrequest/limitconfirmed.",
-        "CorrectedDRAshuffletrackingdefaulttrue/since3.0,ESSunsupportedstockK8s,alternatives/timeouts/overlaplimits andinitialcountversusmin/staticinstances.",
-        "NativeBasicExecutorFeatureStepautomaticallyinjects/opt/decom.shpreStop whenenabled;officialimagescriptusesSIGPWR. Keptcorrectbehaviorratherthanclaimingmanualhookalwaysrequired.",
-        "Foundandfixedrealtemplateoverride:Spark4.1+terminationGraceconfig(default30s)overridesPodtemplate60. Added spark.kubernetes.executor.terminationGracePeriodSeconds=60s;14nativecasesinclcounterexamplepass.",
-        "Correctedbest-effortdecommission/time/capacity/Spot/drivercheckpointlimitsandnormalversusfailurecleanup/clientmodeownerreferences.",
-        "4diagramspodplacement/scheduler+kubelets separatedfromSparkrequests/taskcoordination, regenerated4PNG andvisuallyinspected;4x9deliverychecks/desktop+8mobilepass.",
-        "6files18quizquestions23schemaobjects12fencesverified;localSparkPipassed(loopback/UIoff),noKubeclientorAWSoperations."
-      ],
-      "newImportantFact": "Spark4.1+ .kubernetes.executor.terminationGracePeriodSeconds default30s overridesPodTemplate grace; explicit60srequired, nativecounterexample+fixedcaseverified."
-    },
-    "sparkOperator": {
-      "status": "complete4files40questions53schemaobjects3negativecases30fences2figures9of9desktop4mobile",
-      "sources": "/tmp/kubernetes-docs-full-review/spark-operator-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/spark-operator-fixtures",
-      "facts": [
-        "Kubeflow2.5.2chartapp2.5.2/controllerSpark4.0.4;Apacheoperator1.0.0chart1.8.0/v1also servesv1beta1;API-onlymigrationinvalid.",
-        "Kubeflowindexdigestmismatchactualreleaseasset;actual762be5b8632ecfe12eb20fff54450ddae0427f09506422107c508a0d1d38655b matchesGitHubassetmetadata/download. Directverifiedarchiveused.",
-        "Kubeflowexecutor.serviceAccountANDtimeZoneVALID;driver/executor.volumesINVALID;spec.volumes+volumeMounts;local-dirprefixnativeSparkconfigroute.",
-        "webhooktruebydefaultKubeflow;Apachechartnonequivalentwebhook. Watchscopeexplicit spark-jobs;ApacheNamespaceRoles/reusesjobRBAC.",
-        "Rawsubmitwaitsupported;Kubeflowsetsfalseandreconcilesbothdriverandexecutorstates. Retrynotexactlyonce.",
-        "ApachettlAfterStopMillis600000deletesapp+secondaryafterfinalstop;retainAlwaysdoesnotcontrolSparkdriverexecutor/servicecleanuporretries.",
-        "NoKubeclient/cloudAPIoperation. Allbrowser/nativechecksfinished."
-      ]
-    },
-    "sparkEMR": {
-      "status": "complete4files36questions14fences2figures9of9desktop4mobile",
-      "sources": "/tmp/kubernetes-docs-full-review/spark-emr-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/spark-emr-fixtures",
-      "facts": [
-        "EMRSpark8.0.0GAApril2026Spark4.0.2-amzn-0;7.13Spark3.5.6-amzn-2;latestaliasmutable,datepinned20260421reprobaseline.",
-        "EMR6.10operatorseparateHelm/KubernetesCRsubmission,NOTStartJobRuninternallydelegating/noautomaticEMRjobAPIID.",
-        "StartJobRunPodIdentitysince7.3;create-role-associations3submitter/driver/executor;CLI>=2.24.0;IRSAupdatetrustonlynotdatapermissions.",
-        "CAMregistrationcanautomateaccessentriesandinitialSLR;notno-side-effectpointer. createAPIreturnsid.",
-        "OfficialcurrentAPI+virtualclusterGUIDEschedulerConfiguration real butinstalledAWSCLI2.35.11model lacks it; omittedmainexample/explicitcompatnote. DoNOTfalselyclaimAPIunsupported.",
-        "AWSCLIoutput-skeleton6of8operationsgenerateinvalidarnstring3<60;2passed;independentinstalledmodelstrictCreate/Startrequests+negativeunknownfields passed. Customhelpershelp onlyexit0;NOcloudmutation.",
-        "EMRStudiousesCreateManagedEndpoint/JupyterEnterpriseGatewaynotStartJobRuncells;configuredlogsmetrics/rules/state machinepermissions;podtemplates/customimagespossible.",
-        "LocalactualsmokeonupstreamSpark4.2/Python3.12passed10rows/sum45;notEMRruntime. Python/usr/bin3.9failed4.2syntaxfirstthenfixedruntime.",
-        "Sparkarchiveextracted2morepython/libzips3.8MB;runtimeavailable. Alllocalprocessesandbrowsersstopped."
-      ]
-    },
-    "sparkPerformance": {
-      "status": "complete4files28questions13schemaobjects12nativecases12fences2figuresdesktop4mobile",
-      "sources": "/tmp/kubernetes-docs-full-review/spark-performance-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/spark-performance-fixtures",
-      "facts": [
-        "OldlsblkNVMe/unmounted->mkfsunsafeEBSrootcouldmatch;removedformatterentirely. Nitrodoesnotmeaninstance-store.",
-        "Karpenter1.14instanceStorePolicyRAID0AL2023automaticNodeConfigsetupkubelet+containerd+allocatable;existingverifiedNodeClasses prerequisitefieldfragmentonly;newexecutorclassandinstance-local-nvmeGt0;emptyDirnotmandatoryhostPath.",
-        "SparkLocalDirsFeatureStep prefixspark-local-dir-;oldnamespark-local-dirdoesNOTmatchcreatesduplicateatconfmountpath;nativecounterexampleandfixedcasepass. SettinglocaldiralonecreatesemptyDir.",
-        "Native12checks:defaultemptyDir,configuredmount,tmpfsMemory,prefixduplicatecounterexample/reuse/SPARK_LOCAL_DIRS,ephemeralrequest10Gi,4gJVMmemory4505MiB,CPUlimit2,auto/opt/decom.shgrace120s,noscratchhostPath.",
-        "No metrics-serverneededKarpenterpendingprovisioning;DRAcountvsK8sallocatorbatchseparate. ConsolidateAftertimerspodchangesvsidle/cache/shuffle noorderingguarantee. WhenEmptydefinitioncanincludepodszerodisruptioncost.",
-        "OnDemanddriverstillfault/drift/expiry;Spotonlynocapacityfallback;warningsbestefforthibernationimmediate;SQS/EventBridgeconfigured. Migration/fallbacknotautomaticguarantee;explicitfallbackpathshuffle,rdddifferent,retrycanfailjob.",
-        "BothNativeSpark4.2andKarpenterCRDsused.NoEC2/KubeAPI/diskformat/perfbenchmark.Allbrowserprocessescomplete."
-      ]
-    },
-    "sparkBestPractices": {
-      "status": "complete4files36questions32schemaobjects24fences20NPcases8nativeauth2liveendpoints3restoredhistoryjobs",
-      "sources": "/tmp/kubernetes-docs-full-review/spark-best-practices-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/spark-best-practices-fixtures",
-      "facts": [
-        "ActualSpark4.2binaryHadoopclient3.5.0;hadoop-aws3.5.0requiresSDKv2bundle2.35.4. Downloadedbothverifiedcentralsha1plusownsha256;686MBbundlein/tmp.",
-        "NativeS3AChecks8passed noresolvecredentials/noS3STS.Explicitsoftware.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider loads;ContainerCredentialsProviderloads. DefaultchainlackswebidentitycontainsIAMInstanceCredentialsProvider(containerthenIMDS);oldcom.amazonaws.auth.WebIdentityTokenCredentialsProvidernotautomapped/noSDKv1classpathfailsInstantiationIOException;otherlegacyaliaseslikeEnvDOmap.",
-        "SparkPrometheusServlet experimentalUIendpoint/metrics/prometheus driverDropwizard;aggregatedexecutormetricsseparate /metrics/executors/prometheus;UI_PROMETHEUS_ENABLEDspark.ui.prometheus.enableddefaultTRUEsince3.0. NoHTTPUIoneveryexecutor. JMXagentthreadnotseparateprocess;operatorchartmetricsnotSparkJVMautomatic.",
-        "HistoryServer accepts --properties-file actualconfigloader;defaultport18080;readingeventlognotcheckpoint/logrestoreforalljobs;missing/incomplete/unflushedeventspossible;cleanerfalsedefaultread-onlyhistorySAcanomitDelete butlifecycleexternal.",
-        "Sparksecurityauthdefaultfalse;K8sautogeneratesappsecretwhenenabled,propagatesexecutorenvsoPodreadpermissionsseesecret. FileSecretalternatives;RPCcryptoAES/GCMrecommendedauthEngineVersion2saslFallbackfalse ifmatchingversions;NetworkPolicy≠encryption/UIauth.",
-        "Originalrole-onlyNetworkPolicyallowsotherjobs;sameSAforDriverExecutorovergrantsAPI;RBACnamespaceRoleDOESNOTrestrictlabels/ownpods;ClusterRole+RoleBindingCANscope namespace. PodcreationcanelevatethroughotherSAs/hostpodunlessadmission.",
-        "Needfinishnativeobservation thenprepare/writedocs36quizvalidation.Spark05nofigures."
-      ],
-      "sessions": {
-        "status": "Allnative/browsers/subprocessescompletedandstopped"
-      },
-      "finalFindings": [
-        "Spark4.2Hadoopclient3.5.0, hadoop-aws3.5.0+SDKbundle2.35.4+analyticsaccelerator-s3:1.3.1+wildfly-openssl:2.2.5.Final runtimeMaventreeverified. DocsminimalpomcopydepsDockerfile;NOimagebuild/pushperformed.",
-        "HadoopS3Abuilt-instandardsourceproviderorderdiffdoc,butbothlacksWebIdentity;IRSAexplicitsoftware.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider,PIexplicitContainerCredentialsProvider. LegacyWebIdentitynotmapped2-onlyCNFE;EnvlegacyDOESmap;8nativecasespass.",
-        "Job/Historydriversrolepermissionseparate3SAs;executor/historyautomountAPItokenfalse;IRSAprojectedtoken separate;RoleBindingonlydriver. RolecanmanageallmatchingresourcesnamespaceNOTownPodsonly;ClusterRole+RoleBindingvalidnamespacescope;admission/trustboundaryneeded.",
-        "Per-runlabels+NPgeneratornamespace/PodselectorsAND/protocol/port;20positive/negativecasesplus5invalidrunids;legacyrole-onlycrossjobcounterexample verified. Ingressonly/additive/nodehost/selfexceptionsnotsimulated.",
-        "spark.port.maxRetries0pinsfailurebehavior,7,078RPC7,079block4040UI;SparkauthRPCnotUI,K8sautoappsecretinexecutorenvvisiblepodreaders;AESGCMauthengine2explicit.",
-        "NativeSparkUI loopbacktwoendpoints:337driverDropwizardseriesnames42executoraggregate;notidentical;PrometheusServletstilldocumentedexperimental;UIprometheusdefaulttrue;noHTTPUIperexecutor;JMXagentnotseparateprocess;operatorchartnotautomaticSparkJMX.",
-        "NativePython3.12Spark4.2localjob sum499500,eventlogs persisted;driverprocessstoppedthenHistoryServer--properties-file readlocaldirectoryandrestored3SUCCEEDEDjobs. Nativeobservationpathsreceiptsinreport;allprocessesclosed.",
-        "HistoryDeploymentconfigexplicitcommandforeground/S3depsseparateimage/readonlyrolecleanerfalse/ClusterIP+denyIngress/portforward127-only;templatevalidatednotdeployed.",
-        "Removedproductioncertification/mandatoryoperator-clustermode-IRSAanduniversalDRAshuffleprerequisiteclaims. All4filesreviewedclosed."
-      ]
-    },
-    "airflowFoundation": {
-      "status": "complete6files18questions85schemaobjects3chartrenders4figures9of9desktop8mobile",
-      "sources": "/tmp/kubernetes-docs-full-review/airflow-foundation-sources",
-      "chart": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/airflow",
-      "facts": [
-        "LatestPyPIcore/main3.3.1;Airflow2.11.2EOLApr22,2026correctkeep.",
-        "Chartstable1.22.0latestsemversorted,defaultapp3.2.2NOT3.3.1;requiresAirflow>=3.1,Helm>=3.19.0;availableHelm3.21.3. Archive291304bytes SHA2561f7d1dfe3d58e2c54899950aba907a43625a18c8b6fb3c54760c21592129a5b6 verifiedindex.",
-        "Airflow3.3.1 testedPython3.10-3.14,Postgres14-18/MySQL8.0,8.4,Innovation/SQLite3.15+devonly(noMariaDB),K8s1.30-1.35;dontclaim1.36testedjustbecauseEKSlatest.",
-        "PostgresnotmandatorybackendMySQLalso;RedisnotmandatoryCelerybrokersalternatives;KubernetesExecutoronlyper-taskpods noteveryHelm executor,controlplane/nodecostsstillidle;KEDACeleryscalezero possible.",
-        "DAGprocessorrequired,triggererOPTIONALifnodeferrals;triggererexecutesTRIGGERS,notwholeoperators,workerstart/resume;deferredworkerfree/defaultpoolfreesconfigurable;asyncPython3.2keepsworkerslot;resumabletasksseparate.",
-        "TaskSDK supervisedPythonTaskprocess->Supervisor(process/socket)->ExecutionAPIshortlivedJWT->DB;taskcodeAPIcontractnodirectmetadataDB. BackendCeleryresultstore/systemworkerneedsseparate,avoidabsoluteworkerneverDBclaim. Go/JavaSDKexperimentalnotneededbroadclaimalltasksPython.",
-        "DAGbundlesneededbydagprocessorANDworkers;GitDagBundleversioningyes,Local/S3/GCSbundlesNOversioningcurrentlyevenifS3bucketversioningenabled. git-syncchartstillpresentv4.4.2,notremoved/replaceduniversally.",
-        "MultiexecutorconcurrentSINCE2.10;hybridLocalKubernetes/CeleryKubernetesremoved3.0. DAG-levelexecutorusesdefault_args executor;taskexplicitoverridealiasesconfiguredrequired.",
-        "2.xscheduleralreadyusesserializedDAGandmulti-schedulerHA;separateDAGprocessorpossible;oldparsingnotallinoneprocess;parserdelays/sharedDBresourcecontentionstillcanhurt3.xscheduling.",
-        "CharttriggererkindStatefulSetwhenpersistenceelseDeployment;dontclaimfourDeploymentsalways. ChartmetadataDBandworkerstate dependsvalues."
-      ],
-      "next": "Airflow02Helm4filesfullyread;reviewcurrentchartdefaults/constraints/secrets/defaultlogin/KEDAquery/PVCretention/taskimagerequirements",
-      "disk": "Root~296MBfreeafterMavenmetadata;tmp6.5GBfree. AvoidfullAirflowinstalluntilspaceplan;chartonlysmall. Ownterraformcache971MB andOpenfeatureSDK1003MB exist,doNOTdeleteactive/sharedSDK. AllSparkcheckscomplete.",
-      "fixtures": "/tmp/kubernetes-docs-full-review/airflow-foundation-fixtures",
-      "finalFindings": [
-        "Old2.11DAGprocessingactualcanonicalauthoring-and-scheduling/dagfile-processing.html;subprocessManager+fileprocess/optionalstandalone confirmed,oldURL107bytesHTMLrefreshnotrealcontent corrected.",
-        "Actualchart3variantnativeHelm3.21.3 Kube1.35.0 targets Airflow3.3.1 override;Kubernetes28objects,Celery29,git-sync28. Schema1.36cachedcommonresources used onlyshape notcompatibilityproof.",
-        "Triggererpersistencetrue->StatefulSet, false->Deployment;CeleryworkerDeploymentwhenpersistencefalse;StatsDadditionalDeployment. git-syncsidecarsprocessor+triggererandtaskpodinit confirmed.",
-        "All6files18MCQsupdated;4diagramssimplifiedplanargraphnowincludeK8s/Celerysupervisor->ExecutionAPIarrows,metadataDBalternatives/optionaltriggerer andDAGbundleworkerrequirements. No unconditional4Deployments/postgresalways/Redisalways/HAguarantee/noidlecost/gitsyncremovalclaims.",
-        "4figure9of9+desktop+8mobile;PNG4regeneratedand2pairedsheetsinspected. Allsessionscompleted."
-      ]
-    },
-    "airflowHelm": {
-      "status": "COMPLETE4files36questions5chartvariants18fences2figures6viewports;historical24SQLcasesrecorded",
-      "sources": "/tmp/kubernetes-docs-full-review/airflow-helm-sources",
-      "fixtures": "/tmp/kubernetes-docs-full-review/airflow-helm-fixtures",
-      "preparedExamples": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/helm-examples",
-      "facts": [
-        "Actualchart1.22defaultexecutorCeleryExecutor NOTKubernetes;Airflowdefault3.2.2 override3.3.1. Redisconditionalflag+builtin/externalbroker notexecutoronly;workerStatefulSetifpersisttrue,Deploymentfalse.",
-        "Chart1.16READMEKubernetes1.29+,NOT1.30. Chart1.22README1.30+,Helm3.0+stalevsannotationsminHelm3.19. NoChart.yamlkubeVersion/HelmVersionconstraints;native--kube-version1.29renderssuccesssoNOclaimoldversionsautomaticallyrejected/supportproof.",
-        "Stablekeyrefs fer netKeySecretName(fernet-key),apiSecretKeySecretName(api-secret-key),jwtSecretName(jwt-secret). BuiltinJWTcanchangeonupgrade causingtasksfail;keepnameskeysstable. createUserJob.enabledfalsebaseline,currentdefaultUserundercreateUserJob (oldwebserverdefaultUsercompatstillworks);chartdefaultFABauthmanager. NeedverifyinteractiveFABcreateCLIpasswordprompt thenpublishsafeadminbootstrap.",
-        "metadataSecretName precedence;metadataConnectionisfallback. PostgreSQLfalsewithoutURIsecretincomplete. UseexternalDB/Secret/TLSpreconditions. KEDAusesAIRFLOW_CONN_AIRFLOW_DB(connectionkey) normally;KEDA_DB_CONN(kedaConnectionkey)whenMySQLorPgBouncernotused;URIpostgresql://vsSQLAlchemy+drivercompat andCApathmustexistinscalerprocessnotonlyAirflow.",
-        "BuiltinPostgres16.1.0-debian11r15bitnamilegacy publiclyresolves200amd64arm64butoldfrozenimageavoidproductionquickinstall. HelmUninstallPodgoneNOTautomaticPVCdata deletion;retention/reclaimactualverify.",
-        "ActualKEDAdefaultpoll5s/cooldown30s NOT10s/300s. Newpreparedexamplesexplicit10s/300s+HPA300s;cooldownzero vsHPA1-N distinct;KEDAalsoStatefulSets/trigggerer/scaledjobsbroaderthanlongDeploymentonly.",
-        "worker_concurrency4newfixture,countliteral4SQL. Queryqueuefilterandexecutorfiltersrequiredmixed. Originalbareworker_concurrencySQLidentifiererror42703. TaskInstance.source self.executor=task.executor preservesalias. ChartdefaultexcludeKubernetesExecutorliteralbutaliask8scounted. Preparedmixedcustomquery executorNULLorCeleryExecutor+defaultqueue excludesaliask8s/Local/Kubernetes,requiresupdatesforotheraliasesqueues.",
-        "NativePGlite0.5.8/PostgreSQL18.3WASM in-memory24casesPASS:0/1/4/5 tasks,states/queues,mixedexecutors,aliascounterexample,count25abovecap20,andundefinedidentifier. NoactualAirflowDB/KEDA/TLS/credentials/APIactions. Package308files25MB extractedtmp;hashSHA512verifiedNPMmetadata.",
-        "5nativeHelmvariants Kubernetes24,Celery26,mixed26,aliasedchartdefault26,stateful26;KEDAproperkindpolicy10/300,externalsecrets/noDBbrokerpods/noCreateUserJob. UnsupportedKube1.29counterexamplerenderssuccess.",
-        "Officialconstraints3.3.1Python3.12:providerCelery3.23.1,cncf-kubernetes10.21.0,FAB3.8.0. OCIairflow3.3.1existsamd64arm64digestsha256:0c4bcc0370e526de1b7892a3bf4343d260c6c82359c66f77155b53cd773d6339;Noimagepull.",
-        "Needremovefixed1-2mincoldstart/universalisolation/scalability/noidlecost/arbitraryK8sexecutorimageclaims;K8sexecutortaskimageneedsAirflowruntime;KPOarbitrarychildimage separate. FailedtaskPodretentionconfigurable. ValuesfuturePart3DAGdelivery+Part5logsnecessaryforendtoendsmoketest."
-      ],
-      "sessions": "No local processes left;boundedbrowser closed",
-      "next": "Airflow03DAGpatterns,04MWAA,05operations;thenFlink/UnifiedStudio/AIremaining",
-      "evidence": "docs/reviews/2026-09-11/airflow-helm-validation.json"
-    },
-    "statisticsOwnerSetup": {
-      "status": "CANCELLED by explicit user instruction. Do not ask for Cloud Shell, GA4 Viewer grant, credentials or project setup. Three GitHub API variables removed and 404 readback verified.",
-      "privateState": "/home/atomoh/kubernetes-docs/.vitepress/cache/site-statistics-connection.json"
-    },
-    "statisticsRemoval": {
-      "status": "COMPLETE PR220merged/deployed/liveverified;118tests;AI26/26noCriticalMajor;content90/90;hostedbuildpass",
-      "worktree": "/home/atomoh/kubernetes-docs/.vitepress/cache/site-statistics",
-      "branch": "fix/ga4-dashboard-only",
-      "base": "54c446c1",
-      "change": "Revert PR218 ba541316 without commit, plus docs/operations/search-and-analytics.md updated for GA4 property396631876 only. RemovesstatsUIpages/footer/nav/publicJSON/serverfetch/OIDCauth/dailyschedule. Analytics.mjs+GA4measurementG-GWVLEW5JLL+docs_page_viewpreserved. node_modules pre-existinguntrackedsymlinkNEVERstage.",
-      "validation": "/tmp/kubernetes-docs-full-review/ga4-dashboard-only-validate.log:118/118allpass+links/assets/parity. Fullbuild custom staging /dev/shm but samebuildfunctions/localecommands, script /tmp/.../ga4-dashboard-build.mjs, log /tmp/.../ga4-dashboard-build.log.",
-      "buildSession": 45305,
-      "review": "Peirce resumed forREADONLY latestHEAD code+contentreview; reporttarget worktree/.vitepress/cache/ga4-dashboard-only/ai-review.json",
-      "next": "No further onsite statistics or Google Cloud setup. Continue original whole-content audit.",
-      "pr": 220,
-      "head": "7885e131d1da12db4a90b6503e215b065b622936",
-      "localBuild": "INTERRUPTED byinstance stop/start; /tmp and/dev/shm lost. Do notrestartfullbuild. Bounded1GBdevpreviewalsoOOM; stopped. No localfullbuildorbrowserpass claimed.",
-      "ciRun": 34697080975,
-      "deploymentRun": 34697657957,
-      "evidence": "docs/reviews/2026-09-11/ga4-dashboard-deployment.json"
-    },
-    "instanceIncident": {
-      "observed": "2026-09-12T13:26Z restart",
-      "evidence": "/home/atomoh/kubernetes-docs/.vitepress/cache/incidents/2026-09-12/incident-summary.json",
-      "confirmed": "ConsoleStopInstances skipOsShutdown=true thenStart. Swap100%,rootdiskmax99.95%;EC2statuschecksnormal, noOOMkernelentryfound. Resourcepressureplausiblecauseofunresponsiveness,notprovenOOM.",
-      "prevention": "FullbuildoffloadedtoGitHubhostedARMPRCI. No large localbuild. Persist logs/checkpoints underworkspaceEBS nottmp. Do notkillotheruserprocesses orresizecloudresourcewithoutauthorization.",
-      "recovery": "Sourceedits+90batchledgerspreserved. Temporarytestfixturesandlongbuildoutputs lost; reconstituteonlynecessaryfromdurablereports/code. Latestrootgitc817a1fd/75e16992 containfollowupedits;do notrepeatclosedreviews."
-    },
-    "airflowDagPatterns": {
-      "status": "COMPLETE4filesfixed/30questions/13releasedmergemethodcases/2diagrams/6responsivecases",
-      "sources": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/dag-patterns/sources",
-      "workspace": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/dag-patterns",
-      "next": "Airflow04MWAA,05operations, then Flink/UnifiedStudio/AI remaining",
-      "resourcePolicy": "NofullVitepress/localdevserver;boundedtests;persistallartifactsworkspace.",
-      "evidence": "docs/reviews/2026-09-11/airflow-dag-patterns-validation.json"
-    },
-    "airflowMwaa": {
-      "status": "COMPLETE4files/24questions/2diagrams/6responsivecases",
-      "evidence": "docs/reviews/2026-09-11/airflow-mwaa-validation.json",
-      "next": "Airflow05operations then Flink/UnifiedStudio/AI remaining"
-    },
-    "airflowOperations": {
-      "status": "COMPLETE4files/20questions/5nativeuploadfilecases",
-      "evidence": "docs/reviews/2026-09-11/airflow-operations-validation.json",
-      "next": "Flink README01–04,UnifiedStudioREADME01,AIremaining"
-    },
-    "flinkFoundation": {
-      "status": "COMPLETE6files/16questions/4figures/12responsivecases",
-      "workspace": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-flink",
-      "evidence": "docs/reviews/2026-09-11/flink-foundation-validation.json",
-      "next": "Flink02Operator,03state/checkpoints,04operations;UnifiedStudioREADME01;AIremaining"
-    },
-    "flinkOperator": {
-      "status": "4filesfullyread;primarysources/chartchecked;public02noteditedyet",
-      "workspace": ".vitepress/cache/content-review-flink/operator",
-      "checkpoint": ".vitepress/cache/content-review-flink/operator/work-in-progress.json",
-      "next": "Continue02then03/04;UnifiedStudio/AIremaining"
-    }
-  },
-  "aggregationScope": "Counts reflect existing document paths and committed batch records, grouping followup/needs_followup together. Other worker/check fields are historical checkpoints, not a whole-corpus completion claim.",
-  "currentWorkspaceBranch": "docs/review-followup-2026-09-12"
+  "temporarySources": [
+    "/tmp/kubernetes-docs-full-review/registry-sources",
+    "/tmp/kubernetes-docs-full-review/storage-sources",
+    "/tmp/kubernetes-docs-full-review/database-sources"
+  ],
+  "outstanding": [
+    "Independent review of parent shared maintenance helpers and large content edits before merge",
+    "Full production build/browser after stable complete changes",
+    "Translation prose synchronization/backfill after source review; do not manually rewrite cn/jp/es prose",
+    "External 404/timeout findings need final contextual disposition",
+    "Audit branch has existing commits through5d100d7a (another session); this continuation changes uncommitted. Keep unrelated user files untouched; integrate currentmainincludingstats218whenstable."
+  ],
+  "parentNext": [
+    "SUMMARY navigation and quiz/lab overview coverage still pending",
+    "gitops (16 source files per locale plus quizzes)",
+    "ops (17 source files per locale plus quizzes)",
+    "data-on-eks (31 source files per locale plus quizzes)",
+    "ai-ml (28 source files per locale plus quizzes)",
+    "news archive/currentness and any unassigned leftovers"
+  ],
+  "date": "2026-09-11",
+  "workers": {
+    "Ohm": "01a08e3c-824e-7310-a511-f7f686057086; resumed after checkpoint, continues all service-mesh, networking, observability and matching quizzes/labs",
+    "Peirce": "01a08e3c-c1ff-7e00-890e-af89768485c3; resumed after checkpoint, core done, basics in progress then autoscaling/scheduling/labs/EKS family/security/platform/governance"
+  }
 }

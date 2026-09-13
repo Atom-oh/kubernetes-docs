@@ -1,6 +1,6 @@
 # EKS Storage
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: September 12, 2026
 
 When running applications on Amazon EKS, there are various storage options for storing and managing data. This document covers the basic concepts of EKS storage and how to use Amazon EBS (Elastic Block Store) and Amazon EFS (Elastic File System).
 
@@ -108,7 +108,7 @@ Amazon EBS provides block-level storage volumes that can be attached to EC2 inst
 
 ### Installing EBS CSI Driver
 
-For ordinary Linux EC2 nodes, install a compatible EBS CSI add-on through the infrastructure owner. Auto Mode manages block storage with `ebs.csi.eks.amazonaws.com`; standard `ebs.csi.aws.com` volumes are separate, and migration uses snapshots rather than editing a bound PVC’s provisioner. EBS cannot be mounted by Fargate Pods or Hybrid Nodes. The EBS controller can run on Fargate, but its node plugin cannot; that is a different deployment/identity design.
+For ordinary Linux EC2 nodes, install a compatible EBS CSI add-on through the infrastructure owner. Auto Mode manages block storage with `ebs.csi.eks.amazonaws.com`; standard `ebs.csi.aws.com` volumes use a different provisioner. Migration is not an in-place edit of a bound PVC or its driver. Use a tested backup/snapshot restore plan, or the current [AWS migration guide's stopped-workload, Retain and static PV/PVC recreation procedure](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html) to reuse an existing EBS volume. Validate backup recovery, volume/AZ/KMS ownership, IAM/tag permissions, reclaim policy, finalizers and new bindings before resuming writes. EBS cannot be mounted by Fargate Pods or Hybrid Nodes. The EBS controller can run on Fargate, but its node plugin cannot; that is a different deployment/identity design.
 
 The shared workflow below supports EBS or EFS. Set `CSI_ADDON_NAME=aws-ebs-csi-driver` for this section, inspect the catalog, and choose an exact compatible add-on version. The AWS API does not use the literal string `latest` as an add-on version. `eksctl --version latest` is a separate tool convenience, not an AWS API value.
 ```bash

@@ -1,0 +1,690 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T17:18:17.445747+00:00",
+  "scope": [
+    "en/observability/README.md",
+    "ko/observability/README.md"
+  ],
+  "fullyRead": 2,
+  "fixedAndValidated": 2,
+  "originalRead": {
+    "en/observability/README.md": {
+      "lines": 216,
+      "sha256": "8d611da2449115c9949cc65e4efd063cbce3a82d11c759e524fea728a9e6e8d9"
+    },
+    "ko/observability/README.md": {
+      "lines": 216,
+      "sha256": "60e146b7fa8169b21ab20ba4404844bb1706de4638b4117b9eaa33cfaf41d375"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/README.md",
+        "sha256": "f71ca8863b869e757817ccf61c5991fbdff2b40fbced7729a2f58dc4001aa412",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/README.md",
+        "sha256": "bb40f9d01942e8a7c50c1b18f079cf2631b1db9598af8e84b6df838d9bab416e",
+        "passed": true
+      }
+    ],
+    "newExamples": [
+      {
+        "path": "en/observability/README.md",
+        "family": "http_request_duration_seconds",
+        "unit": "seconds",
+        "samples": 4,
+        "exemplar": {
+          "labels": {
+            "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+          },
+          "value": 0.42
+        },
+        "IDsValid": true,
+        "timestampPreserved": "2025-02-15T10:30:00Z"
+      },
+      {
+        "path": "ko/observability/README.md",
+        "family": "http_request_duration_seconds",
+        "unit": "seconds",
+        "samples": 4,
+        "exemplar": {
+          "labels": {
+            "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+          },
+          "value": 0.42
+        },
+        "IDsValid": true,
+        "timestampPreserved": "2025-02-15T10:30:00Z"
+      }
+    ],
+    "oldRegressions": [
+      {
+        "path": "en/observability/README.md",
+        "originalTraceId": "abc123def456",
+        "originalSpanId": "789xyz",
+        "originalExemplarRejected": true,
+        "parserError": "Invalid line: # Prometheus Exemplar"
+      },
+      {
+        "path": "ko/observability/README.md",
+        "originalTraceId": "abc123def456",
+        "originalSpanId": "789xyz",
+        "originalExemplarRejected": true,
+        "parserError": "Invalid line: # Prometheus Exemplar"
+      }
+    ],
+    "parser": {
+      "package": "prometheus-client",
+      "version": "0.26.0",
+      "path": ".vitepress/cache/observability-foundation-audit/prometheus_client-0.26.0-py3-none-any.whl",
+      "sha256": "fa93d06737aa02bacd05794768508bb97d2fbee28cb3bca04eaae92f0ca953d6",
+      "bytes": 64494,
+      "metadataSource": "https://pypi.org/pypi/prometheus-client/json",
+      "sourceURL": "https://files.pythonhosted.org/packages/eb/a3/b69efbf4143b5b9859b977770bbbabcc2796b702fa69dc40271e45cd5a56/prometheus_client-0.26.0-py3-none-any.whl",
+      "installation": "zipimport wheel, no installation/dependency tree"
+    },
+    "retainedFiguresEach": [
+      2,
+      3,
+      4
+    ],
+    "removedFiguresEach": [
+      0,
+      1,
+      5
+    ],
+    "figuresActuallyViewed": 12,
+    "sources": [
+      {
+        "fetchedURL": "https://opentelemetry.io/docs/concepts/signals/",
+        "cacheKey": "d2e6da6b56ba",
+        "status": 200,
+        "finalURL": "https://opentelemetry.io/docs/concepts/signals/",
+        "sha256": "573929aa7eddd08414c7fcdb8da6404052d5d4a4a667f8ba52af9ac28ac4dff7",
+        "label": "OpenTelemetry signals",
+        "publishedURL": "https://opentelemetry.io/docs/concepts/signals/"
+      },
+      {
+        "fetchedURL": "https://opentelemetry.io/docs/collector/",
+        "cacheKey": "7acdc98654f0",
+        "status": 200,
+        "finalURL": "https://opentelemetry.io/docs/collector/",
+        "sha256": "aead401bd92376dec71e79d7523ed152b15c77bc7b14157adaa6c7acdc85a2ee",
+        "label": "OpenTelemetry Collector",
+        "publishedURL": "https://opentelemetry.io/docs/collector/"
+      },
+      {
+        "fetchedURL": "https://opentelemetry.io/docs/specs/otel/logs/data-model/",
+        "cacheKey": "7adae090d59a",
+        "status": 200,
+        "finalURL": "https://opentelemetry.io/docs/specs/otel/logs/data-model/",
+        "sha256": "53118bcd7e08d08057b8994a2ceeb4c7da49f6838ceadf1cb4839a730d67deac",
+        "label": "OpenTelemetry log data model",
+        "publishedURL": "https://opentelemetry.io/docs/specs/otel/logs/data-model/"
+      },
+      {
+        "fetchedURL": "https://www.w3.org/TR/trace-context/",
+        "cacheKey": "6a0029787a22",
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/trace-context/",
+        "sha256": "9e7228d2a91c5aa4bef6e7f610366a2000274ee51699053e10c8ac3f0b8965be",
+        "label": "W3C Trace Context",
+        "publishedURL": "https://www.w3.org/TR/trace-context/"
+      },
+      {
+        "fetchedURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/concepts/metric_types.md",
+        "cacheKey": "7b4322e45f1d",
+        "status": 200,
+        "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/concepts/metric_types.md",
+        "sha256": "6cd936ac134836d2b4786b98675520ca364081839a5a083a4e7b427808b3be62",
+        "label": "Prometheus metric types",
+        "publishedURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/concepts/metric_types.md"
+      },
+      {
+        "fetchedURL": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md",
+        "cacheKey": "e60b738fd5de",
+        "status": 200,
+        "finalURL": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md",
+        "sha256": "3115ed69476ddb5e4b64ebf363f1a8f5d0f0a7cc2a6263ea612360d5357f877e",
+        "label": "OpenMetrics specification",
+        "publishedURL": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md"
+      },
+      {
+        "fetchedURL": "https://opentelemetry.io/docs/concepts/sampling/",
+        "cacheKey": "986c244a0345",
+        "status": 200,
+        "finalURL": "https://opentelemetry.io/docs/concepts/sampling/",
+        "sha256": "ccb20f036c686d55620b6844db2ec4af55abcb25c3e37ae33a7c95ae918bce74",
+        "label": "OpenTelemetry sampling",
+        "publishedURL": "https://opentelemetry.io/docs/concepts/sampling/"
+      },
+      {
+        "fetchedURL": "https://grafana.com/docs/opentelemetry/",
+        "cacheKey": "7440c0e3c3f9",
+        "status": 200,
+        "finalURL": "https://grafana.com/docs/opentelemetry/",
+        "sha256": "e3e5f3a97a586adc9fe0a8f665e19252d31cd467c75e13fb20ffa5bf914f43ba",
+        "label": "Grafana OpenTelemetry documentation",
+        "publishedURL": "https://grafana.com/docs/opentelemetry/"
+      },
+      {
+        "fetchedURL": "https://docs.aws.amazon.com/eks/latest/userguide/eks-observe.html",
+        "cacheKey": "29bbc87dcf3b",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/eks-observe.html",
+        "sha256": "fe8df54eb7be0f6624c0f5d709b1d78e6e2ec356a3d3a2b38102241c23ff8f6a",
+        "label": "Amazon EKS monitoring and logging",
+        "publishedURL": "https://docs.aws.amazon.com/eks/latest/userguide/eks-observe.html"
+      },
+      {
+        "fetchedURL": "https://aws-observability.github.io/observability-best-practices/",
+        "cacheKey": "d5c35a441425",
+        "status": 200,
+        "finalURL": "https://aws-observability.github.io/observability-best-practices/",
+        "sha256": "802bf2b614e116ef08f95a922a508e0119895a542ed91527ced69494c84e99fe",
+        "label": "AWS Observability Best Practices",
+        "publishedURL": "https://aws-observability.github.io/observability-best-practices/"
+      },
+      {
+        "fetchedURL": "https://sre.google/workbook/monitoring/",
+        "cacheKey": "fb6403b1f384",
+        "status": 200,
+        "finalURL": "https://sre.google/workbook/monitoring/",
+        "sha256": "5fd2f4a0c4f1fd2b4714d802489a8f78963a22c6e92dc554e501bebca768292f",
+        "label": "SRE Workbook — Monitoring",
+        "publishedURL": "https://sre.google/workbook/monitoring/"
+      },
+      {
+        "fetchedURL": "https://docs.datadoghq.com/watchdog/",
+        "cacheKey": "411235dee857",
+        "status": 200,
+        "finalURL": "https://docs.datadoghq.com/watchdog/",
+        "sha256": "9106cfccccb0126456a6ad2190a1d34dbc74b503ef969f52aaa7336aa72af5fc",
+        "label": "Datadog Watchdog",
+        "publishedURL": "https://docs.datadoghq.com/watchdog/"
+      },
+      {
+        "fetchedURL": "https://docs.dynatrace.com/docs/discover-dynatrace/platform/davis-ai",
+        "cacheKey": "f88c95669e58",
+        "status": 200,
+        "finalURL": "https://docs.dynatrace.com/docs/dynatrace-intelligence",
+        "sha256": "e0e9e199b38332d72e3f9b141b1a4a2924e84c23b4d2b02520397bf3f60b9faf",
+        "label": "Dynatrace Intelligence",
+        "publishedURL": "https://docs.dynatrace.com/docs/dynatrace-intelligence"
+      }
+    ],
+    "inboundFragments": [],
+    "gitDiffCheck": "passed",
+    "limits": [
+      "Actual prometheus-client0.26 OpenMetrics parser and W3C ID-format checks; not an end-to-end telemetry deployment.",
+      "No collector/backend/cloud provisioning or telemetry export; native checks used clean telemetry-disabled process environment.",
+      "Wheel SHA256 verified from official PyPI metadata and zipimported as one file; no dependency tree or home configuration changed.",
+      "No full local build/devserver; two-document Markdown/Vue compilation is separate."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 1024,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/README.md",
+        "sha256": "f71ca8863b869e757817ccf61c5991fbdff2b40fbced7729a2f58dc4001aa412",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-overview"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h2",
+            "id": "observability-vs-monitoring"
+          },
+          {
+            "tag": "h2",
+            "id": "the-three-pillars-of-observability"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-logs"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-metrics"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-traces"
+          },
+          {
+            "tag": "h2",
+            "id": "correlation-between-the-three-pillars"
+          },
+          {
+            "tag": "h3",
+            "id": "trace-to-log-correlation"
+          },
+          {
+            "tag": "h3",
+            "id": "metric-to-trace-correlation-exemplars"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry-and-standardization"
+          },
+          {
+            "tag": "h2",
+            "id": "observability-strategy-for-eks-environments"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-layer-based-observability"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-example-tool-choices"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-cost-optimization-strategies"
+          },
+          {
+            "tag": "h2",
+            "id": "observability-maturity-model"
+          },
+          {
+            "tag": "h2",
+            "id": "section-guide"
+          },
+          {
+            "tag": "h3",
+            "id": "logging"
+          },
+          {
+            "tag": "h3",
+            "id": "metrics"
+          },
+          {
+            "tag": "h3",
+            "id": "tracing"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana-dashboards"
+          },
+          {
+            "tag": "h3",
+            "id": "alerting"
+          },
+          {
+            "tag": "h3",
+            "id": "observability-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "integrated-labs"
+          },
+          {
+            "tag": "h2",
+            "id": "getting-started"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "observability-overview",
+          "introduction",
+          "observability-vs-monitoring",
+          "the-three-pillars-of-observability",
+          "_1-logs",
+          "_2-metrics",
+          "_3-traces",
+          "correlation-between-the-three-pillars",
+          "trace-to-log-correlation",
+          "metric-to-trace-correlation-exemplars",
+          "opentelemetry-and-standardization",
+          "observability-strategy-for-eks-environments",
+          "_1-layer-based-observability",
+          "_2-example-tool-choices",
+          "_3-cost-optimization-strategies",
+          "observability-maturity-model",
+          "section-guide",
+          "logging",
+          "metrics",
+          "tracing",
+          "grafana-dashboards",
+          "alerting",
+          "observability-optimization",
+          "integrated-labs",
+          "getting-started",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/observability/README.md",
+        "sha256": "bb40f9d01942e8a7c50c1b18f079cf2631b1db9598af8e84b6df838d9bab416e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "observability-개요"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h2",
+            "id": "observability-vs-monitoring"
+          },
+          {
+            "tag": "h2",
+            "id": "관측성의-3가지-축-three-pillars"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-logs-로그"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-metrics-메트릭"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-traces-추적"
+          },
+          {
+            "tag": "h2",
+            "id": "_3가지-축의-상호-연관성"
+          },
+          {
+            "tag": "h3",
+            "id": "trace-to-log-상관분석"
+          },
+          {
+            "tag": "h3",
+            "id": "metric-to-trace-상관분석-exemplars"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry와-표준화"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-환경에서의-관측성-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-계층별-관측성"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-도구-선택-예시"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-비용-최적화-전략"
+          },
+          {
+            "tag": "h2",
+            "id": "관측성-성숙도-모델"
+          },
+          {
+            "tag": "h2",
+            "id": "섹션-가이드"
+          },
+          {
+            "tag": "h3",
+            "id": "logging-로깅"
+          },
+          {
+            "tag": "h3",
+            "id": "metrics-메트릭"
+          },
+          {
+            "tag": "h3",
+            "id": "tracing-추적"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana-대시보드"
+          },
+          {
+            "tag": "h3",
+            "id": "alerting-알림"
+          },
+          {
+            "tag": "h3",
+            "id": "관측성-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "통합-실습"
+          },
+          {
+            "tag": "h2",
+            "id": "시작하기"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "observability-개요",
+          "소개",
+          "observability-vs-monitoring",
+          "관측성의-3가지-축-three-pillars",
+          "_1-logs-로그",
+          "_2-metrics-메트릭",
+          "_3-traces-추적",
+          "_3가지-축의-상호-연관성",
+          "trace-to-log-상관분석",
+          "metric-to-trace-상관분석-exemplars",
+          "opentelemetry와-표준화",
+          "eks-환경에서의-관측성-전략",
+          "_1-계층별-관측성",
+          "_2-도구-선택-예시",
+          "_3-비용-최적화-전략",
+          "관측성-성숙도-모델",
+          "섹션-가이드",
+          "logging-로깅",
+          "metrics-메트릭",
+          "tracing-추적",
+          "grafana-대시보드",
+          "alerting-알림",
+          "관측성-최적화",
+          "통합-실습",
+          "시작하기",
+          "참고-자료"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://opentelemetry.io/docs/concepts/signals/",
+      "cacheKey": "d2e6da6b56ba",
+      "fetchedAt": "2026-09-12T16:58:12.590894+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/concepts/signals/",
+      "sha256": "573929aa7eddd08414c7fcdb8da6404052d5d4a4a667f8ba52af9ac28ac4dff7"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/concepts/signals/traces/",
+      "cacheKey": "f94e6a8959c5",
+      "fetchedAt": "2026-09-12T16:58:13.426741+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/concepts/signals/traces/",
+      "sha256": "0aa1ad0a9266ae2c5e1cb990ef309149840d24d7d0aa25f5cc5bb8248632ef50"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/specs/otel/logs/data-model/",
+      "cacheKey": "7adae090d59a",
+      "fetchedAt": "2026-09-12T16:58:12.940470+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/specs/otel/logs/data-model/",
+      "sha256": "53118bcd7e08d08057b8994a2ceeb4c7da49f6838ceadf1cb4839a730d67deac"
+    },
+    {
+      "url": "https://www.w3.org/TR/trace-context/",
+      "cacheKey": "6a0029787a22",
+      "fetchedAt": "2026-09-12T16:58:13.017353+00:00",
+      "status": 200,
+      "finalURL": "https://www.w3.org/TR/trace-context/",
+      "sha256": "9e7228d2a91c5aa4bef6e7f610366a2000274ee51699053e10c8ac3f0b8965be"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md",
+      "cacheKey": "e60b738fd5de",
+      "fetchedAt": "2026-09-12T17:00:27.570820+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md",
+      "sha256": "3115ed69476ddb5e4b64ebf363f1a8f5d0f0a7cc2a6263ea612360d5357f877e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/docs/main/docs/concepts/metric_types.md",
+      "cacheKey": "7b4322e45f1d",
+      "fetchedAt": "2026-09-12T17:06:24.330146+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/concepts/metric_types.md",
+      "sha256": "6cd936ac134836d2b4786b98675520ca364081839a5a083a4e7b427808b3be62"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/histograms.md",
+      "cacheKey": "6fc0f924e51a",
+      "fetchedAt": "2026-09-12T17:06:24.308810+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/histograms.md",
+      "sha256": "ebe64305d7d6156ca6b7021604c84eb5eab1868f35510089670ffe6fe387dcd2"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/collector/",
+      "cacheKey": "7acdc98654f0",
+      "fetchedAt": "2026-09-12T17:00:29.063172+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/collector/",
+      "sha256": "aead401bd92376dec71e79d7523ed152b15c77bc7b14157adaa6c7acdc85a2ee"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/concepts/sampling/",
+      "cacheKey": "986c244a0345",
+      "fetchedAt": "2026-09-12T17:00:29.579542+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/concepts/sampling/",
+      "sha256": "ccb20f036c686d55620b6844db2ec4af55abcb25c3e37ae33a7c95ae918bce74"
+    },
+    {
+      "url": "https://grafana.com/docs/opentelemetry/",
+      "cacheKey": "7440c0e3c3f9",
+      "fetchedAt": "2026-09-12T17:00:28.179933+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/opentelemetry/",
+      "sha256": "e3e5f3a97a586adc9fe0a8f665e19252d31cd467c75e13fb20ffa5bf914f43ba"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/eks-observe.html",
+      "cacheKey": "29bbc87dcf3b",
+      "fetchedAt": "2026-09-12T17:00:28.007672+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/eks-observe.html",
+      "sha256": "fe8df54eb7be0f6624c0f5d709b1d78e6e2ec356a3d3a2b38102241c23ff8f6a"
+    },
+    {
+      "url": "https://aws-observability.github.io/observability-best-practices/",
+      "cacheKey": "d5c35a441425",
+      "fetchedAt": "2026-09-12T16:58:13.667260+00:00",
+      "status": 200,
+      "finalURL": "https://aws-observability.github.io/observability-best-practices/",
+      "sha256": "802bf2b614e116ef08f95a922a508e0119895a542ed91527ced69494c84e99fe"
+    },
+    {
+      "url": "https://sre.google/workbook/monitoring/",
+      "cacheKey": "fb6403b1f384",
+      "fetchedAt": "2026-09-12T16:58:14.043475+00:00",
+      "status": 200,
+      "finalURL": "https://sre.google/workbook/monitoring/",
+      "sha256": "5fd2f4a0c4f1fd2b4714d802489a8f78963a22c6e92dc554e501bebca768292f"
+    },
+    {
+      "url": "https://docs.datadoghq.com/watchdog/",
+      "cacheKey": "411235dee857",
+      "fetchedAt": "2026-09-12T17:03:24.984806+00:00",
+      "status": 200,
+      "finalURL": "https://docs.datadoghq.com/watchdog/",
+      "sha256": "9106cfccccb0126456a6ad2190a1d34dbc74b503ef969f52aaa7336aa72af5fc"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/discover-dynatrace/platform/davis-ai",
+      "cacheKey": "f88c95669e58",
+      "fetchedAt": "2026-09-12T17:03:27.031613+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/dynatrace-intelligence",
+      "sha256": "e0e9e199b38332d72e3f9b141b1a4a2924e84c23b4d2b02520397bf3f60b9faf"
+    },
+    {
+      "url": "https://pypi.org/pypi/prometheus-client/json",
+      "cacheKey": "fde4d27a0bd9",
+      "fetchedAt": "2026-09-12T16:58:13.883680+00:00",
+      "status": 200,
+      "finalURL": "https://pypi.org/pypi/prometheus-client/json",
+      "sha256": "ab4e1370efe407eab4a4f1450f81e828440593ca10efcde25b57e4d87992ff60"
+    }
+  ],
+  "findings": [
+    "Monitoring/observabilityarecomplementary;removedexclusiveWhat/Whyandsimple/complexclassificationusingSREprimary.",
+    "Threecommonsignalsnotexhaustive;OpenTelemetryprofilessupportunderdevelopmentandcomponentsignalmaturityvaries.",
+    "Logsimmutabilityandcomplete-traceguaranteesqualified;instrumentation/sampling/lossandretentioncontrolsexplicit.",
+    "Prometheuscounterresets,gaugedirection,classic/nativehistogramsandsummaryquantileaggregationlimitscorrected.",
+    "InvalidtraceIdabc123def456andspanId789xyzreplacedwithvalidW3C32/16lowerhexnonzeroIDs;original2025sampletimestampretained.",
+    "Incompleteexemplarmissingobservationvaluerejectedbyactualprometheus-client0.26OpenMetricsparser;completeclassic-histogramexpositionwithHELP/TYPE/UNIT/buckets/sum/count/EOFand0.42exemplarvalidated. WrongYAMLfencechangedtotext.",
+    "TraceIDinexemplar/logsnotordinaryper-requestmetriclabels;collector/backendretentionanddatasourcelinkingnotautomatic;customapplicationJSONnotOTLPpayload.",
+    "Collectorillustrationqualifiedasonepattern;directSDKexportpossible,receivers/processors/exportersandsignalmaturityneedconfiguration.",
+    "EKSdiagramtool/layerassignmentillustrative;compute-modecollectoraccessandmultilayerbackendcoveragequalified;noAWSresourcesprovisioned.",
+    "Toolmatrixnowself-hosted/managed/commercialexamplesratherthanblanketlicenseorrequiredstackclaim;OpenSearchaddedtomatchmaintainedloggingtopic.",
+    "Sampling/tiering/aggregationcosttradeoffsqualified;tailsamplingstillreceives/buffersdataandaggregationlosesdetail.",
+    "Maturitytableisgoal-basedplanningexample,optionalautomationnotmandatoryAIranking;DynatracecurrentIntelligencenameverifiedfromofficialDavisURLredirect.",
+    "OldGrafanaLGTMreference404replacedwithcontent-verifiedGrafanaOpenTelemetrydocumentation200.",
+    "AddedmissingAlerting,OptimizationandIntegratedLabssectionlinks;gettingstartedbeginswithservicegoals/existingplatformandallowmanagedbackends.",
+    "All12figuresactuallyviewed;removed0/1/5(redundantfalseexclusive/immutable/completetrace/mandatoryAIrepresentations),retained2/3/4withscope/abbreviatedIDcaptions."
+  ],
+  "figures": {
+    "actuallyViewed": 12,
+    "removedIndicesEachLanguage": [
+      0,
+      1,
+      5
+    ],
+    "retainedIndicesEachLanguage": [
+      2,
+      3,
+      4
+    ],
+    "externalRepair": "Parentsemanticregeneration/source-syncifremovedfiguresorforeigntranslationsarereused;assets/foreignproseunchanged. RetainedcorrelationfigureIDsareexplicitlyabbreviated;real wire format is shown in the validated code example."
+  },
+  "artifactDirectory": ".vitepress/cache/observability-foundation-audit",
+  "limits": [
+    "Actual prometheus-client0.26 OpenMetrics parser and W3C ID-format checks; not an end-to-end telemetry deployment.",
+    "No collector/backend/cloud provisioning or telemetry export; native checks used clean telemetry-disabled process environment.",
+    "Wheel SHA256 verified from official PyPI metadata and zipimported as one file; no dependency tree or home configuration changed.",
+    "No full local build/devserver; two-document Markdown/Vue compilation is separate."
+  ],
+  "sourceAccessNotes": [
+    "Prometheuswebsite403notclassifiedbroken;officialprometheus/docsrepositorytreeprovidedcurrentdocs/concepts/metric_types.md path.",
+    "Grafanaoss/lgtm-stack404confirmed;replacementgrafana/docs/opentelemetry200contentread.",
+    "DatadogHTTPbodywasgzip;sourcecachetextreaderupdatedtodecompressgzipwhilepreservingrawresponseSHA. ActualWatchdogtitle/bodythenread.",
+    "DynatraceDavisURLredirectstoofficial/docs/dynatrace-intelligence;currentbrandingread."
+  ]
+}

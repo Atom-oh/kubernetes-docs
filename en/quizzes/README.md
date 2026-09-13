@@ -204,6 +204,9 @@ For exercises, check the guide’s versions, prerequisites and validation scope 
 - [EKS Integration Quiz](./networking/calico/08-eks-integration-quiz.md)
 - [Operations Quiz](./networking/calico/09-operations-quiz.md)
 - [Calico Glossary Quiz](./networking/calico/glossary-quiz.md)
+
+#### Cilium
+
 - [Cilium Introduction and Basic Concepts Quiz](./networking/cilium/01-introduction-quiz.md)
 - [Cilium eBPF Quiz](./networking/cilium/02-ebpf-quiz.md)
 - [Cilium Networking Validation Exercises](./networking/cilium/03-networking-quiz.md)

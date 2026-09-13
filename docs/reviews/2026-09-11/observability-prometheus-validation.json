@@ -1,0 +1,988 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T20:07:37.733798+00:00",
+  "scope": [
+    "en/observability/metrics/01-prometheus.md",
+    "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+    "ko/observability/metrics/01-prometheus.md",
+    "ko/quizzes/observability/metrics/01-prometheus-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/metrics/01-prometheus.md": {
+      "lines": 923,
+      "sha256": "bb6da90afd436fd5ad228369c1dca445383d4b4ae38b0508585a72d90f676a8e"
+    },
+    "en/quizzes/observability/metrics/01-prometheus-quiz.md": {
+      "lines": 183,
+      "sha256": "e373d92b8e99eed7101c5b9dce61f1eace909ed38eea174a87680917d7f1e297"
+    },
+    "ko/observability/metrics/01-prometheus.md": {
+      "lines": 1375,
+      "sha256": "2461f91f90ea222684253de34ed25d3039eda30fc1dcaf142888be8a931a527a"
+    },
+    "ko/quizzes/observability/metrics/01-prometheus-quiz.md": {
+      "lines": 183,
+      "sha256": "96246500eaffa4e4b7de7a5dbb87fa70cc88d86c65e2dfa5ccad5c6b77e04ca5"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "sha256": "c1beff9799bbb4977edaca882f8baa32f7fdb46c42f2d4eb8c850d727383ac02",
+        "lines": 763,
+        "fences": 24,
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+        "sha256": "3bddcc9057c88c6e1b360e9b7a12611ee1916078daaba9493e51c7525313333c",
+        "lines": 165,
+        "fences": 0,
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "sha256": "8ca8491950bd8b05501a7259e67468731ac4575c0a0a3903c443a322c35dc073",
+        "lines": 763,
+        "fences": 24,
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/01-prometheus-quiz.md",
+        "sha256": "95ab7845e678c85eeeaef63d2407ed193a4315184530bb91e86e49db4a96c5d2",
+        "lines": 165,
+        "fences": 0,
+        "passed": true
+      }
+    ],
+    "publishedCounts": {
+      "coreQueries": 76,
+      "yamlExamples": 20,
+      "jsonPolicies": 2,
+      "shellFragments": 12,
+      "quizQuestions": 20
+    },
+    "localLinks": [
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "#introduction-and-versions",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "#architecture-and-components",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "#promql",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "#discovery-and-operator-selectors",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "#kube-prometheus-stack-installation",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "#rules-and-alertmanager",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "#remote-write-and-amp",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "#performance-ha-and-troubleshooting",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "../../.gitbook/assets/en-observability-metrics-01-prometheus-0.png",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "README.md",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "README.md#pull-vs-push-model",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "README.md",
+        "passed": true
+      },
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "target": "../../quizzes/observability/metrics/01-prometheus-quiz.md",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+        "target": "../../../observability/metrics/01-prometheus.md",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "#소개와-버전",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "#아키텍처와-구성-요소",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "#promql",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "#discovery와-operator-selector",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "#kube-prometheus-stack-설치",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "#rule과-alertmanager",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "#remote-write와-amp",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "#성능·ha·문제-해결",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "../../.gitbook/assets/ko-observability-metrics-01-prometheus-0.png",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "README.md",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "../../.gitbook/assets/ko-observability-metrics-01-prometheus-1.png",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "README.md#pull-vs-push-모델",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "README.md",
+        "passed": true
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "target": "../../quizzes/observability/metrics/01-prometheus-quiz.md",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/01-prometheus-quiz.md",
+        "target": "../../../observability/metrics/01-prometheus.md",
+        "passed": true
+      }
+    ],
+    "nativeConfiguration": {
+      "helm": {
+        "version": "v3.21.3+g1ad6e68",
+        "profiles": [
+          {
+            "name": "base",
+            "renderedResources": 106,
+            "passed": true,
+            "prometheus": "metrics-demo-prometheus",
+            "alertmanager": "metrics-demo-alertmanager",
+            "grafanaCredentialDelivery": "SecretKeyRef environment injection, not plaintext Helm values; not a claim of zero runtime environment secrets"
+          },
+          {
+            "name": "alerting",
+            "renderedResources": 106,
+            "passed": true,
+            "prometheus": "metrics-demo-prometheus",
+            "alertmanager": "metrics-demo-alertmanager",
+            "grafanaCredentialDelivery": "SecretKeyRef environment injection, not plaintext Helm values; not a claim of zero runtime environment secrets"
+          },
+          {
+            "name": "amp",
+            "renderedResources": 106,
+            "passed": true,
+            "prometheus": "metrics-demo-prometheus",
+            "alertmanager": "metrics-demo-alertmanager",
+            "grafanaCredentialDelivery": "SecretKeyRef environment injection, not plaintext Helm values; not a claim of zero runtime environment secrets"
+          }
+        ]
+      },
+      "schemaAndNativeChecks": [
+        {
+          "kind": "ServiceMonitor",
+          "schema": "released Operator v0.93.1",
+          "passed": true
+        },
+        {
+          "kind": "PodMonitor",
+          "schema": "released Operator v0.93.1",
+          "passed": true
+        },
+        {
+          "kind": "PrometheusRule",
+          "schema": "released Operator v0.93.1",
+          "passed": true
+        },
+        {
+          "kind": "AlertmanagerConfig",
+          "schema": "released Operator v0.93.1",
+          "passed": true
+        },
+        {
+          "file": "rules.yaml",
+          "passed": true,
+          "output": "Checking /home/atomoh/kubernetes-docs/.vitepress/cache/observability-prometheus-audit/rules.yaml\n  SUCCESS: 6 rules found\n\n"
+        },
+        {
+          "file": "scrape-limits.yaml",
+          "passed": true,
+          "output": "Checking /home/atomoh/kubernetes-docs/.vitepress/cache/observability-prometheus-audit/scrape-limits.yaml\n SUCCESS: /home/atomoh/kubernetes-docs/.vitepress/cache/observability-prometheus-audit/scrape-limits.yaml is valid prometheus config file syntax\n\n"
+        },
+        {
+          "file": "alertmanager-native.yaml",
+          "passed": true,
+          "output": "Checking '/home/atomoh/kubernetes-docs/.vitepress/cache/observability-prometheus-audit/alertmanager-native.yaml'  SUCCESS\nFound:\n - global config\n - route\n - 1 inhibit rules\n - 4 receivers\n - 0 templates\n\n"
+        }
+      ],
+      "alertmanagerRouteCases": [
+        {
+          "labels": [
+            "severity=critical",
+            "team=backend"
+          ],
+          "receiver": "pagerduty-critical",
+          "passed": true,
+          "output": "pagerduty-critical\n"
+        },
+        {
+          "labels": [
+            "severity=warning",
+            "team=backend"
+          ],
+          "receiver": "slack-backend",
+          "passed": true,
+          "output": "slack-backend\n"
+        },
+        {
+          "labels": [
+            "severity=warning",
+            "team=infrastructure"
+          ],
+          "receiver": "slack-warnings",
+          "passed": true,
+          "output": "slack-warnings\n"
+        },
+        {
+          "labels": [
+            "severity=info",
+            "team=frontend"
+          ],
+          "receiver": "default",
+          "passed": true,
+          "output": "default\n"
+        }
+      ],
+      "inhibitionIdentityModels": [
+        {
+          "changedIdentity": null,
+          "equalLabelsMatch": true
+        },
+        {
+          "changedIdentity": "cluster",
+          "equalLabelsMatch": false
+        },
+        {
+          "changedIdentity": "namespace",
+          "equalLabelsMatch": false
+        },
+        {
+          "changedIdentity": "service",
+          "equalLabelsMatch": false
+        },
+        {
+          "changedIdentity": "instance",
+          "equalLabelsMatch": false
+        },
+        {
+          "changedIdentity": "pod",
+          "equalLabelsMatch": false
+        },
+        {
+          "changedIdentity": "container",
+          "equalLabelsMatch": false
+        }
+      ],
+      "iam": {
+        "action": "aps:RemoteWrite",
+        "exactWorkspaceResource": true,
+        "passed": true
+      },
+      "limits": [
+        "No Kubernetes/Helm installation, discovery, IAM mutation, AMP request or notification delivery.",
+        "Released structural CRD schema checks do not execute Kubernetes CEL/admission or controller reconciliation.",
+        "Native Alertmanager routing uses synthetic receiver names; Secret loading and provider delivery need deployment verification.",
+        "The Grafana existingSecret chart path still injects credentials from SecretKeyRefs into containers; do not describe it as a no-environment-secret deployment."
+      ]
+    },
+    "nativePromQL": {
+      "version": "Prometheus 3.14.0",
+      "corePassed": true,
+      "publishedQueries": [
+        "abs",
+        "business_hours_utc",
+        "cardinality",
+        "ceil",
+        "clamp",
+        "cpu_percent",
+        "delta",
+        "deriv",
+        "disk_percent",
+        "error_percent",
+        "forecast",
+        "gauge_quantile",
+        "hist_mean",
+        "hist_p95",
+        "hist_p99_method",
+        "increase",
+        "instant",
+        "irate",
+        "label_filter",
+        "ln",
+        "max_memory",
+        "memory_percent",
+        "negative_filter",
+        "network_rate",
+        "offset",
+        "range",
+        "rate",
+        "restarts",
+        "running_pods",
+        "sample_hour",
+        "sample_time",
+        "sqrt",
+        "stddev",
+        "subquery",
+        "sum_by_method",
+        "sum_without_instance",
+        "time",
+        "top_pod_cpu"
+      ],
+      "queryCount": 38,
+      "groups": 17,
+      "queryAssertions": 56,
+      "alertAssertions": 2,
+      "experimentalFunction": {
+        "syntaxWithRequiredFlag": "passed",
+        "valueAssertionPassed": false,
+        "valueTestOutput": "\n\n  FAILED:\n    expr: \"double_exponential_smoothing(example_queue_depth{job=\\\"example-app\\\"}[1h], 0.5, 0.5)\", time: 1h, err: 1:1: parse error: function \"double_exponential_smoothing\" is not enabled\n",
+        "note": "The released promtool 3.14 test query engine rejected the experimental function despite the global flag; do not count this as a passing value assertion."
+      },
+      "limits": [
+        "Actual PromQL/rule engine with synthetic samples; no server or cluster.",
+        "Range-vector/subquery examples are exercised inside range functions; scalar time() is wrapped with vector() for the fixture comparator.",
+        "Experimental smoothing passed native parser formatting only. Its value fixture failed with function-not-enabled even with the flag; preserved as a tool/runtime validation gap, not a successful computation."
+      ]
+    },
+    "limits": [
+      "No Kubernetes/Helm installation, discovery, IAM mutation, AMP request or notification delivery.",
+      "Released structural CRD schema checks do not execute Kubernetes CEL/admission or controller reconciliation.",
+      "Native Alertmanager routing uses synthetic receiver names; Secret loading and provider delivery need deployment verification.",
+      "The Grafana existingSecret chart path still injects credentials from SecretKeyRefs into containers; do not describe it as a no-environment-secret deployment.",
+      "Actual PromQL/rule engine with synthetic samples; no server or cluster.",
+      "Range-vector/subquery examples are exercised inside range functions; scalar time() is wrapped with vector() for the fixture comparator.",
+      "Experimental smoothing passed native parser formatting only. Its value fixture failed with function-not-enabled even with the flag; preserved as a tool/runtime validation gap, not a successful computation.",
+      "No Kubernetes/Helm installation, cloud mutations, notification sending or full site build.",
+      "Experimental smoothing has parser-only verification; its failed value evaluation is not counted as a pass."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 1024,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/metrics/01-prometheus.md",
+        "sha256": "c1beff9799bbb4977edaca882f8baa32f7fdb46c42f2d4eb8c850d727383ac02",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "prometheus"
+          },
+          {
+            "tag": "h2",
+            "id": "contents"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction-and-versions"
+          },
+          {
+            "tag": "h3",
+            "id": "historical-july-2026-updates"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture-and-components"
+          },
+          {
+            "tag": "h3",
+            "id": "tsdb-and-configuration-layers"
+          },
+          {
+            "tag": "h2",
+            "id": "promql"
+          },
+          {
+            "tag": "h3",
+            "id": "selectors-ranges-and-rates"
+          },
+          {
+            "tag": "h3",
+            "id": "aggregation-gauges-and-time"
+          },
+          {
+            "tag": "h3",
+            "id": "distributions-and-forecasts"
+          },
+          {
+            "tag": "h3",
+            "id": "operational-examples"
+          },
+          {
+            "tag": "h2",
+            "id": "discovery-and-operator-selectors"
+          },
+          {
+            "tag": "h3",
+            "id": "a-coherent-application-scrape"
+          },
+          {
+            "tag": "h3",
+            "id": "other-discovery-paths"
+          },
+          {
+            "tag": "h2",
+            "id": "kube-prometheus-stack-installation"
+          },
+          {
+            "tag": "h2",
+            "id": "rules-and-alertmanager"
+          },
+          {
+            "tag": "h3",
+            "id": "alertmanagerconfig-and-namespace-boundaries"
+          },
+          {
+            "tag": "h2",
+            "id": "remote-write-and-amp"
+          },
+          {
+            "tag": "h3",
+            "id": "scoped-amp-ingestion"
+          },
+          {
+            "tag": "h3",
+            "id": "other-receivers"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-ha-and-troubleshooting"
+          },
+          {
+            "tag": "h3",
+            "id": "tune-from-measurements"
+          },
+          {
+            "tag": "h3",
+            "id": "ha-boundaries"
+          },
+          {
+            "tag": "h3",
+            "id": "troubleshooting-from-an-owned-release"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-references"
+          }
+        ],
+        "renderedIds": [
+          "prometheus",
+          "contents",
+          "introduction-and-versions",
+          "historical-july-2026-updates",
+          "architecture-and-components",
+          "tsdb-and-configuration-layers",
+          "promql",
+          "selectors-ranges-and-rates",
+          "aggregation-gauges-and-time",
+          "distributions-and-forecasts",
+          "operational-examples",
+          "discovery-and-operator-selectors",
+          "a-coherent-application-scrape",
+          "other-discovery-paths",
+          "kube-prometheus-stack-installation",
+          "rules-and-alertmanager",
+          "alertmanagerconfig-and-namespace-boundaries",
+          "remote-write-and-amp",
+          "scoped-amp-ingestion",
+          "other-receivers",
+          "performance-ha-and-troubleshooting",
+          "tune-from-measurements",
+          "ha-boundaries",
+          "troubleshooting-from-an-owned-release",
+          "validation-and-references"
+        ]
+      },
+      {
+        "path": "ko/observability/metrics/01-prometheus.md",
+        "sha256": "8ca8491950bd8b05501a7259e67468731ac4575c0a0a3903c443a322c35dc073",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "prometheus"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "소개와-버전"
+          },
+          {
+            "tag": "h3",
+            "id": "_2026년-7월의-업데이트-기록"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처와-구성-요소"
+          },
+          {
+            "tag": "h3",
+            "id": "tsdb와-설정-계층"
+          },
+          {
+            "tag": "h2",
+            "id": "promql"
+          },
+          {
+            "tag": "h3",
+            "id": "selector·구간·변화율"
+          },
+          {
+            "tag": "h3",
+            "id": "집계·gauge·시간"
+          },
+          {
+            "tag": "h3",
+            "id": "분포와-예측"
+          },
+          {
+            "tag": "h3",
+            "id": "운영-쿼리-예시"
+          },
+          {
+            "tag": "h2",
+            "id": "discovery와-operator-selector"
+          },
+          {
+            "tag": "h3",
+            "id": "일관된-애플리케이션-scrape"
+          },
+          {
+            "tag": "h3",
+            "id": "다른-discovery-경로"
+          },
+          {
+            "tag": "h2",
+            "id": "kube-prometheus-stack-설치"
+          },
+          {
+            "tag": "h2",
+            "id": "rule과-alertmanager"
+          },
+          {
+            "tag": "h3",
+            "id": "alertmanagerconfig와-namespace-경계"
+          },
+          {
+            "tag": "h2",
+            "id": "remote-write와-amp"
+          },
+          {
+            "tag": "h3",
+            "id": "범위를-제한한-amp-수집"
+          },
+          {
+            "tag": "h3",
+            "id": "다른-수신기"
+          },
+          {
+            "tag": "h2",
+            "id": "성능·ha·문제-해결"
+          },
+          {
+            "tag": "h3",
+            "id": "측정에-근거한-튜닝"
+          },
+          {
+            "tag": "h3",
+            "id": "ha-경계"
+          },
+          {
+            "tag": "h3",
+            "id": "소유한-release를-기준으로-문제-해결"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "prometheus",
+          "목차",
+          "소개와-버전",
+          "_2026년-7월의-업데이트-기록",
+          "아키텍처와-구성-요소",
+          "tsdb와-설정-계층",
+          "promql",
+          "selector·구간·변화율",
+          "집계·gauge·시간",
+          "분포와-예측",
+          "운영-쿼리-예시",
+          "discovery와-operator-selector",
+          "일관된-애플리케이션-scrape",
+          "다른-discovery-경로",
+          "kube-prometheus-stack-설치",
+          "rule과-alertmanager",
+          "alertmanagerconfig와-namespace-경계",
+          "remote-write와-amp",
+          "범위를-제한한-amp-수집",
+          "다른-수신기",
+          "성능·ha·문제-해결",
+          "측정에-근거한-튜닝",
+          "ha-경계",
+          "소유한-release를-기준으로-문제-해결",
+          "검증과-참고-자료"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
+        "sha256": "3bddcc9057c88c6e1b360e9b7a12611ee1916078daaba9493e51c7525313333c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "prometheus-quiz"
+          }
+        ],
+        "renderedIds": [
+          "prometheus-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/01-prometheus-quiz.md",
+        "sha256": "95ab7845e678c85eeeaef63d2407ed193a4315184530bb91e86e49db4a96c5d2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "prometheus-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "prometheus-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://raw.githubusercontent.com/prometheus-community/helm-charts/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/Chart.yaml",
+      "cacheKey": "eaf5c49fe3fa",
+      "fetchedAt": "2026-09-12T19:21:56.723363+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus-community/helm-charts/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/Chart.yaml",
+      "sha256": "87cc2698d54418d8529ad1bedfea005d5428d93d32e8699abfeb732d2ecdd61d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus-community/helm-charts/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/values.yaml",
+      "cacheKey": "67dd6223ba35",
+      "fetchedAt": "2026-09-12T19:21:56.769625+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus-community/helm-charts/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/values.yaml",
+      "sha256": "777903d285ddb10c472bffb6fc0f58337db9912a69c0c29c3249bf3259647ef0"
+    },
+    {
+      "url": "https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/",
+      "cacheKey": "695b8d535971",
+      "fetchedAt": "2026-09-12T19:21:56.770161+00:00",
+      "status": 200,
+      "finalURL": "https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/",
+      "sha256": "e7ad8ecf9846d124f6c8329f5eb5108c3dd00654f3b2447b1adbe6faaa1a7884"
+    },
+    {
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/",
+      "cacheKey": "1b8d906694d4",
+      "fetchedAt": "2026-09-12T19:21:57.048397+00:00",
+      "status": 200,
+      "finalURL": "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/",
+      "sha256": "0181ab94590ab2984f6bab85f8c5477b5ca9585399a8cef5b3d71f34d620fae0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/Documentation/api-reference/api.md",
+      "cacheKey": "34b5b7038ff3",
+      "fetchedAt": "2026-09-12T19:23:34.549392+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/Documentation/api-reference/api.md",
+      "sha256": "5d6363bcc1784d6ef14779b737f8f3c7a962b8d4d1965d9488593b84aabd4b4a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/cmd/prometheus/main.go",
+      "cacheKey": "5363e4ee3efc",
+      "fetchedAt": "2026-09-12T19:23:34.687107+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/cmd/prometheus/main.go",
+      "sha256": "f9151115ab2e4b2d4f1b20f61615ef70cabe06d62ab51506af59280d9f89e250"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus-community/helm-charts/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/README.md",
+      "cacheKey": "fb7b8754562a",
+      "fetchedAt": "2026-09-12T19:23:34.819193+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus-community/helm-charts/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/README.md",
+      "sha256": "aa40f18ea2300535fda518bb6519770d204b24cc74efeb4c59fda822b1070820"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-ingest-dedupe.html",
+      "cacheKey": "335d9df6f345",
+      "fetchedAt": "2026-09-12T19:23:34.907315+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-ingest-dedupe.html",
+      "sha256": "1459a51d65754f56d6fcd32b304a6659809b78d1c76706a466d9f751063779db"
+    },
+    {
+      "url": "https://api.github.com/repos/prometheus-community/helm-charts/releases/tags/kube-prometheus-stack-90.0.0",
+      "cacheKey": "f44086835a2e",
+      "fetchedAt": "2026-09-12T19:25:33.829490+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/prometheus-community/helm-charts/releases/tags/kube-prometheus-stack-90.0.0",
+      "sha256": "de7df722c7bb601ba5ad683a9169c664d4f6ae94db862207e61b49d951ee12cc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/prometheus/promcfg.go",
+      "cacheKey": "c3e64ca55ada",
+      "fetchedAt": "2026-09-12T19:25:34.126774+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/prometheus/promcfg.go",
+      "sha256": "ec3f2332d674c14f045c2936fd05318dd809528dc3e5d86326669e2bc68d8ce6"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go",
+      "cacheKey": "dd9612b75355",
+      "fetchedAt": "2026-09-12T19:25:34.058723+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go",
+      "sha256": "dfae729fc64fe4944b87774f7d7b75931563dae958f91d6e2d56e8989848e83e"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-ingest-metrics-existing-Prometheus.html",
+      "cacheKey": "20cb7b29058c",
+      "fetchedAt": "2026-09-12T19:25:34.275882+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-ingest-metrics-existing-Prometheus.html",
+      "sha256": "dc92237a4753228f8294efd9298ef25f9bf52866720c71ac558f7518c1c98772"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP_quotas.html",
+      "cacheKey": "ae52c089b6e6",
+      "fetchedAt": "2026-09-12T19:25:34.328658+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/prometheus/latest/userguide/AMP_quotas.html",
+      "sha256": "102e4b79e302ff7d77cd11a8c36462a0677a347c66b08db25a8b39f39de930b3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/cmd/promtool/main.go",
+      "cacheKey": "79c04e97ad39",
+      "fetchedAt": "2026-09-12T19:40:49.410439+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/cmd/promtool/main.go",
+      "sha256": "6a97f90baa111d34c290293a1d89030a5491b55d59e10846810d43304ba992b1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/cmd/promtool/unittest.go",
+      "cacheKey": "90afa1bda93e",
+      "fetchedAt": "2026-09-12T19:40:49.417682+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/cmd/promtool/unittest.go",
+      "sha256": "1f418cadce0686299b458b0586937d5c54ca9d525b95716c4f308a491c000766"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/unit_testing_rules.md",
+      "cacheKey": "941da198876f",
+      "fetchedAt": "2026-09-12T19:40:49.620675+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/unit_testing_rules.md",
+      "sha256": "91cce055d270e16897eb65e173a66156f7e3a95dd210440e02e7dbba165dab5e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/docs/configuration.md",
+      "cacheKey": "381e58715b68",
+      "fetchedAt": "2026-09-12T19:59:24.920216+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/docs/configuration.md",
+      "sha256": "74d6e6c75fb5ada6b92d7c2a4e4188e57740161326775c9962511c018370c252"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/querying/functions.md",
+      "cacheKey": "17d6c65aed35",
+      "fetchedAt": "2026-09-12T17:29:10.601551+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/querying/functions.md",
+      "sha256": "21a0b70b5178dbe74a0d707818f533f827cee0368133067bda0228aaccb09821"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/configuration.md",
+      "cacheKey": "6f3cb0ae20bb",
+      "fetchedAt": "2026-09-12T17:29:10.519276+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/configuration.md",
+      "sha256": "41fce997567ed5d4c7047cb0623324ca3b88ab7efd3dfb6b7c250b1db7cfca46"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/storage.md",
+      "cacheKey": "da4ffe207416",
+      "fetchedAt": "2026-09-12T17:29:10.760801+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/storage.md",
+      "sha256": "7ea93bb1e7b4a733072d510dc068d0f66d678b46285c76fae55fa96a58d9173a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/remote_write.md",
+      "cacheKey": "495581e073bb",
+      "fetchedAt": "2026-09-12T17:29:11.008824+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/remote_write.md",
+      "sha256": "9c34492c0f726928abf3560a000bf6857fff3786e1b6eb0d5077a41a0bcecc44"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/histograms.md",
+      "cacheKey": "6fc0f924e51a",
+      "fetchedAt": "2026-09-12T17:06:24.308810+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/histograms.md",
+      "sha256": "ebe64305d7d6156ca6b7021604c84eb5eab1868f35510089670ffe6fe387dcd2"
+    }
+  ],
+  "findings": [
+    "Top-levelstorage.tsdbYAMLnotPrometheusconfig;useCLIflagsoroperatorfields.",
+    "StandaloneKSMDeploymentmissingSA/RBAC/Serviceandold2.10.1;node-exporterold1.7.0hostmountprivileges/platformassumptions.",
+    "count(kube_pod_status_phase{phase=Running})countszeros;require==1. quantile(0.95,http_duration)notrequesthistquantile;range[1h:5m]issubqueryevaluationnotdownsampledrawsamples.",
+    "AllProm2.x/3.xsupportclaimtoo broad;pincohortverifiedchart/operator/Prom/K8savailability.",
+    "K8sSDannotationportrewriteIPv4only,schemeannotationignored,duplicatetargetsexitedpods.",
+    "HelmtwoinstallcommandsduplicateName,unversionedchart,implicitStorageClassgp3/driver,selectorbooleansnotnamespacecoverageandCRnamespatchingliveunknown.",
+    "ServiceMonitorandRulelabelsnotselectedconsistently;AlertmanagerConfignamespace/globalroutingmatcherrestrictionsandmissingselector/secrets.",
+    "AMPIRSApermissionResource*withunneededreadAPI;scopeRemoteWritetoexactworkspace,HAcluster/__replica__labelsandshardingseparate.",
+    "Missing5xxnumeratorempty;ratioalertthreshold0.01then$valueprintedpercentfactorwrong.",
+    "sample_limitfailsscrapeinsteadtruncate;labeldropmaycollideseries;droppinggo/processnotgeneralhighcardremedy;retentionnotmainhead-memorycontrol.",
+    "VerifydatedJulyK8scustomexporterblogandAMP1.5Bquotaannouncementprimary,donotblindlyerasehistoricalnews.",
+    "EnglishquizQ4explicitlyrecommendsSummaryforexactquantiles;Q10WALrecoverymustnotpromisealllossrecovery/backupequivalence.",
+    "KO-onlyholt_winters removed/renamedinProm3;doubleexponential smoothingisnotseasonalmodelandrequiresappropriategauge/featureconfiguration.",
+    "KO-onlymath/time/businesshourqueriesneedUTC/subquery/argumentsemantics;preserveusefulcoverageinbothlanguages.",
+    "KO-onlyGrafanaadminPassword=adminunsafe;currentchart90GrafanacommunityexistingSecretkeysverify.",
+    "KO-nodeSDCA/kubeletRBAC/blackboxprobeprerequisites;noinsecureSkipVerifydefaultrecommendation.",
+    "KO-VMdropsentireAPIServer/etcdhistogramsandallsubsecondbucketseries;removerandombucketpruningbecausequantile/SLOsemanticsbreak.",
+    "KO-TSDBadditionalArgsstringsvsNameValueAPIandunknownhead-chunks-max-mmap-bytesflag;verifyactualversion/avoidunmeasuredinternaltuning.",
+    "KO-AlertmanagerConfigroutingfirst-matchmeansbackendteamrouteafterwarningsnevermatcheswithoutcontinue/reordering;globalvsnamespacedconfigurationenforcementneedsproof.",
+    "KO-recording-rule suffixrate5musesirateinstantandpercentvsratio;fixnames/unitsandnamespacejobscopes.",
+    "OriginalKOinhibitionequal(alertname,namespace)couldsuppressdifferentnodes/services;includeappropriateidentitylabelsandmodelcross-resourcecases.",
+    "Chart90.0.0published2026-09-06,operator0.93.1,Prometheus3.14.0-distroless,Alertmanager0.34.0,Grafana13.2.1fromsubchart13.2.2,KSM2.20.0from8.4.2,node-exporter1.12.1from4.56.3;minimumchartkubeVersionguard>=1.25notcompletecompatibilityproof.",
+    "ReleasedCRDservesAlertmanagerConfigv1alpha1only;donotblindlymigratetov1beta1. Prometheus/Alertmanager/SM/PM/Rulesv1.",
+    "Operatoruses$(POD_NAME)forbuiltinreplicaexternallabel;earliertentativeliteralclaimwithdrawn. Configure replicaExternalLabelName=__replica__forAMPandseparateHAclusteridentitypershard;operatorstripsconfiguredreplicalabelforAlertmanagerdedup.",
+    "Grafanacurrentrootadmin.existingSecret/userKey/passwordKeyvalid;file-providerconditionalalsoexists;plainadminpasswordmustberemovedandactualchartcredentialdeliveryaccuratelydocumented.",
+    "GlobalalertmanagerConfiguration.namefieldexistsbutAPIreferencecallsitexperimental;globalconfigurationdoesnotenforcenamespace. SelectednamespacedAlertmanagerConfigsdoenforcenamespacedefault;needexplicitstrategy/documentboundary.",
+    "NativeHelm3.21.3defaultchart90renders5.17MBoffline;CRDparseusesliteralconstructorforYAML1.1 = value-tag emittedinenum. Nativeamtool0.34.0available;allversionsmatchchartcohort.",
+    "BothdatedJuly2026newslinksverifiedprimary200;preservehistoricaldatesandqualifyquotaincreaseversusdefaultguarantee.",
+    "Finalscope:NoCloud/Kubernetesinstallation,noactualnotifications;syntheticcorequery/ruleandconfigchecks. ExistingGrafanaSecretusesSecretKeyRefenvironmentnotno-env-secretdesign;documentedratherthanclaimedotherwise.",
+    "Promtool3.14experimentalparseracceptsdouble_exponential_smoothingwithflagbutunit-testqueryenginedidnotenableit;valueassertionfailed,preservedandnotcountedaspass. Publishedfunctionoptionalwithprimary/APIrequirements.",
+    "CurrentKoreanselfTOCmiddle-dotanchorcorrectedusingactualrendererID;noNFC/NFDprosechange."
+  ],
+  "figures": {
+    "viewed": 4,
+    "retainedPerLocale": [
+      0,
+      1
+    ],
+    "captionCorrections": [
+      "ArchitecturePushgatewayisoptionalservice-levelbatchpath,notdefaultforallshort-livedPods.",
+      "HierarchyPrometheus/AlertmanagernodesmeanCRs;OperatorreconcilesactualStatefulSets;selectorsnottheCRobjectscreateworkloads."
+    ],
+    "scopeExternal": []
+  },
+  "artifactDirectory": ".vitepress/cache/observability-prometheus-audit",
+  "limits": [
+    "No Kubernetes/Helm installation, discovery, IAM mutation, AMP request or notification delivery.",
+    "Released structural CRD schema checks do not execute Kubernetes CEL/admission or controller reconciliation.",
+    "Native Alertmanager routing uses synthetic receiver names; Secret loading and provider delivery need deployment verification.",
+    "The Grafana existingSecret chart path still injects credentials from SecretKeyRefs into containers; do not describe it as a no-environment-secret deployment.",
+    "Actual PromQL/rule engine with synthetic samples; no server or cluster.",
+    "Range-vector/subquery examples are exercised inside range functions; scalar time() is wrapped with vector() for the fixture comparator.",
+    "Experimental smoothing passed native parser formatting only. Its value fixture failed with function-not-enabled even with the flag; preserved as a tool/runtime validation gap, not a successful computation.",
+    "No Kubernetes/Helm installation, cloud mutations, notification sending or full site build.",
+    "Experimental smoothing has parser-only verification; its failed value evaluation is not counted as a pass."
+  ],
+  "sourceAccessNotes": [
+    "AninitialguessedOperatorplatformMarkdownpathreturned404andwasnotpublished;releasedAPIreferenceandcontrollerconfiggeneratorused.",
+    "CurrentChartarchiveSHA256verifiedagainstGitHubreleaseassetdigest;310entriesextractedwithoutrepository/dependencycopies.",
+    "Experimentalfunctionparserandvalue-enginebehaviorseparatelyrecorded;nofabricatedvalue-pass."
+  ]
+}

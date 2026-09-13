@@ -1,0 +1,920 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T16:21:50.154212+00:00",
+  "scope": [
+    "en/networking/cilium/07-advanced-topics.md",
+    "en/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+    "ko/networking/cilium/07-advanced-topics.md",
+    "ko/quizzes/networking/cilium/07-advanced-topics-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/networking/cilium/07-advanced-topics.md": {
+      "lines": 645,
+      "sha256": "acadd4b89d27724a9d044c0b3a98ef27288edc0e2ecb673ac4deb0b6ec60bccb"
+    },
+    "en/quizzes/networking/cilium/07-advanced-topics-quiz.md": {
+      "lines": 318,
+      "sha256": "e987268cbe04e32958575573eda4def961d0136fb6f82f3f8a2c56170c205b9c"
+    },
+    "ko/networking/cilium/07-advanced-topics.md": {
+      "lines": 644,
+      "sha256": "6043926f1962cd9010975dc0b40b08c02596b48cf0b19228f844ded7f3301766"
+    },
+    "ko/quizzes/networking/cilium/07-advanced-topics-quiz.md": {
+      "lines": 318,
+      "sha256": "6391f5ca5392bd70b4f0c8d19c8801ee0bf7b0262c1f95ff938bef55b694d444"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/networking/cilium/07-advanced-topics.md",
+        "sha256": "1893f4155f916c94372dd2f274a9980de18791fb7a1702737332fb3ee295fe79",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+        "sha256": "9fcf57b0be16581e74bb4757695c31f5e5dfdb16c9c45420350ba057190de9e7",
+        "passed": true
+      },
+      {
+        "path": "ko/networking/cilium/07-advanced-topics.md",
+        "sha256": "7627550fc34ac2b6e0f4984f5fce86c488f82db43cff955516b1186990852357",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+        "sha256": "0aa515492d979a57bc5e8fda94ff9e3bb8c14231808b9866676a5870e418a842",
+        "passed": true
+      }
+    ],
+    "schemaObjects": 6,
+    "helmFragments": 8,
+    "bashBlocks": 14,
+    "questions": 50,
+    "bgpBundle": {
+      "peerReferenceResolved": true,
+      "advertisementSelectorMatches": true,
+      "IPv4PeerWithoutCIDR": true,
+      "timerRelationship": true
+    },
+    "bgpNegativeCases": [
+      {
+        "field": "virtualRouters",
+        "rejected": true
+      },
+      {
+        "field": "unknownSetting",
+        "rejected": true
+      },
+      {
+        "field": "negativeholdtimer",
+        "rejected": true
+      },
+      {
+        "field": "missingpeerref",
+        "structurallyValid": true,
+        "bundleCheckRejects": true
+      }
+    ],
+    "agentSelectionCases": [
+      {
+        "case": "one",
+        "exit": 0,
+        "mockExecCalls": 6
+      },
+      {
+        "case": "none",
+        "exit": 5,
+        "mockExecCalls": 0
+      },
+      {
+        "case": "multiple",
+        "exit": 5,
+        "mockExecCalls": 0
+      },
+      {
+        "case": "missingname",
+        "exit": 1,
+        "mockExecCalls": 0
+      },
+      {
+        "case": "queryfails_validlooking",
+        "exit": 1,
+        "mockExecCalls": 0
+      },
+      {
+        "case": "queryfails_empty",
+        "exit": 5,
+        "mockExecCalls": 0
+      }
+    ],
+    "cleanupCases": [
+      {
+        "case": "owned",
+        "exit": 0,
+        "deleteCalls": 1
+      },
+      {
+        "case": "other",
+        "exit": 1,
+        "deleteCalls": 0
+      },
+      {
+        "case": "missing",
+        "exit": 1,
+        "deleteCalls": 0
+      },
+      {
+        "case": "failure_with_label",
+        "exit": 1,
+        "deleteCalls": 0
+      }
+    ],
+    "nominalBudgetCases": [
+      {
+        "nodeGiB": 32,
+        "ratio": 0.005,
+        "nominalMapMiB": 163.84,
+        "exactAllocationClaim": false
+      },
+      {
+        "nodeGiB": 32,
+        "ratio": 0.0025,
+        "nominalMapMiB": 81.92,
+        "exactAllocationClaim": false
+      },
+      {
+        "nodeGiB": 64,
+        "ratio": 0.005,
+        "nominalMapMiB": 327.68,
+        "exactAllocationClaim": false
+      },
+      {
+        "nodeGiB": 8,
+        "ratio": 0.005,
+        "nominalMapMiB": 40.96,
+        "exactAllocationClaim": false
+      }
+    ],
+    "mapClampModels": 6,
+    "oldFindings": [
+      {
+        "language": "en",
+        "unattributedPercentages": [
+          "30%",
+          "40%",
+          "80%",
+          "50%",
+          "70%",
+          "90%",
+          "60%",
+          "80%",
+          "50%",
+          "75%",
+          "40%",
+          "20%",
+          "15%",
+          "30%"
+        ],
+        "obsoleteBGPPeeringPolicyPresent": true,
+        "invalidHubbleDNSFlagPresent": true
+      },
+      {
+        "language": "ko",
+        "unattributedPercentages": [
+          "30%",
+          "40%",
+          "80%",
+          "50%",
+          "70%",
+          "90%",
+          "60%",
+          "80%",
+          "50%",
+          "75%",
+          "40%",
+          "20%",
+          "15%",
+          "30%"
+        ],
+        "obsoleteBGPPeeringPolicyPresent": true,
+        "invalidHubbleDNSFlagPresent": true
+      }
+    ],
+    "sources": [
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/performance/tuning.rst",
+        "cacheKey": "d9730471f8c7",
+        "status": 200,
+        "sha256": "9d29c771b06000acf61568be2e9e0e08c7446ad01f24bf7754277e026f70b343"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.yaml",
+        "cacheKey": "ab96902e3fca",
+        "status": 200,
+        "sha256": "48e57492486c8672b85c7fca96b3d9ae48025f1913beea12f3d3dd11b7500ae1"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/templates/cilium-configmap.yaml",
+        "cacheKey": "ca1c09dd8495",
+        "status": 200,
+        "sha256": "d8ff1cbcdff051c59db0b1ebacb92a350513a8cc078f7b27a063b15ee2ac9e19"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/ebpf/maps.rst",
+        "cacheKey": "09679a0853f4",
+        "status": 200,
+        "sha256": "b7a6e18c6f547936979b467b73480d9787d2db32a7524ac94fbd73204c9e3977"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/option/config.go",
+        "cacheKey": "d9c0dfea2c70",
+        "status": 200,
+        "sha256": "b9029d6153a25710aa5c487d8a376bbe03058b9756f3c4eb79ee437c2454de13"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade.rst",
+        "cacheKey": "b2908395146d",
+        "status": 200,
+        "sha256": "0b21f2d581aa95a7558ac17832e2c7ba8682d50265761db1eecb423ad557864d"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade-warning.rst",
+        "cacheKey": "1ac53b707f0e",
+        "status": 200,
+        "sha256": "a0fcd92896140ee0ae2494e163089b5b702186ccea6d44b6043da857f5001adf"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst",
+        "cacheKey": "d22b9e16808d",
+        "status": 200,
+        "sha256": "f108f647f12b8f52012ab6171b391228ddbe0c1130647ccbdb713c270cbe333d"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane-operation.rst",
+        "cacheKey": "53020d6527cf",
+        "status": 200,
+        "sha256": "dc8d4c27f0f7a21f49e127eebb4413fedeeeb2386be0770a53fb78b1717e8d0c"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/bandwidth-manager.rst",
+        "cacheKey": "f72e5af948e8",
+        "status": 200,
+        "sha256": "f7e607d1cfed9198104df9aaa247cea1f30890e80d4c1e27c64cf9bf665c1419"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/egress-gateway/egress-gateway.rst",
+        "cacheKey": "bf5bd9cb4b15",
+        "status": 200,
+        "sha256": "c0604ae15274e36d0fb0f8533076b2833ddc556ea1966b2a26b93394c1a28710"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/performance/scalability/report.rst",
+        "cacheKey": "77b087a7ee76",
+        "status": 200,
+        "sha256": "25462c71150cae5e4b7b2196092b65822de6860a593d0031b99d9f849368dae1"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/community/roadmap.rst",
+        "cacheKey": "ffbfe807565c",
+        "status": 200,
+        "sha256": "b1e0caa09221a9992697d59a0dd363f82c772533ba46e824cc80d5d850c69c7f"
+      },
+      {
+        "url": "https://www.kernel.org/doc/html/latest/networking/ip-sysctl.html",
+        "cacheKey": "92576f57cb0f",
+        "status": 200,
+        "sha256": "428982958a960b9f4c574d5cf6f31f5f37f0b16a05272a79893a9eec996ca66d"
+      }
+    ],
+    "gitDiffCheck": "passed",
+    "limitations": [
+      "BGP structural schemas do not emulate Kubernetes admission/CEL, routers, route propagation or data paths.",
+      "Agent selection uses real jq and Bash with kubectl mocked; no Kubernetes/cloud mutation or network workload ran.",
+      "Map-budget/clamp fixtures use illustrative weights; no production map memory or performance measurement is claimed.",
+      "No Helm render, full local build/devserver, Cilium upgrade, workload load generation, encryption or node tuning."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 1024,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/networking/cilium/07-advanced-topics.md",
+        "sha256": "1893f4155f916c94372dd2f274a9980de18791fb7a1702737332fb3ee295fe79",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "advanced-topics-and-real-world-cases"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h3",
+            "id": "performance-testing-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-tuning-and-troubleshooting"
+          },
+          {
+            "tag": "h3",
+            "id": "performance-tuning-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "performance-tuning-areas"
+          },
+          {
+            "tag": "h3",
+            "id": "map-sizing"
+          },
+          {
+            "tag": "h3",
+            "id": "hubble-cost-and-event-loss"
+          },
+          {
+            "tag": "h3",
+            "id": "advanced-datapath-prerequisites"
+          },
+          {
+            "tag": "h3",
+            "id": "targeted-troubleshooting-commands"
+          },
+          {
+            "tag": "h3",
+            "id": "common-troubleshooting-scenarios"
+          },
+          {
+            "tag": "h2",
+            "id": "large-scale-deployment-strategies"
+          },
+          {
+            "tag": "h3",
+            "id": "large-scale-deployment-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "rollout-and-recovery"
+          },
+          {
+            "tag": "h2",
+            "id": "real-world-use-case-studies"
+          },
+          {
+            "tag": "h3",
+            "id": "a-documented-historical-scalability-experiment"
+          },
+          {
+            "tag": "h3",
+            "id": "design-scenario-1-large-scale-e-commerce"
+          },
+          {
+            "tag": "h3",
+            "id": "design-scenario-2-financial-services"
+          },
+          {
+            "tag": "h3",
+            "id": "design-scenario-3-telecommunications-and-edge"
+          },
+          {
+            "tag": "h2",
+            "id": "future-roadmap-and-development-direction"
+          },
+          {
+            "tag": "h2",
+            "id": "current-bgp-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "advanced-topics-and-real-world-cases",
+          "lab-environment-setup",
+          "performance-testing-environment-setup",
+          "performance-tuning-and-troubleshooting",
+          "performance-tuning-architecture",
+          "performance-tuning-areas",
+          "map-sizing",
+          "hubble-cost-and-event-loss",
+          "advanced-datapath-prerequisites",
+          "targeted-troubleshooting-commands",
+          "common-troubleshooting-scenarios",
+          "large-scale-deployment-strategies",
+          "large-scale-deployment-architecture",
+          "rollout-and-recovery",
+          "real-world-use-case-studies",
+          "a-documented-historical-scalability-experiment",
+          "design-scenario-1-large-scale-e-commerce",
+          "design-scenario-2-financial-services",
+          "design-scenario-3-telecommunications-and-edge",
+          "future-roadmap-and-development-direction",
+          "current-bgp-configuration",
+          "next-steps",
+          "primary-references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/networking/cilium/07-advanced-topics.md",
+        "sha256": "7627550fc34ac2b6e0f4984f5fce86c488f82db43cff955516b1186990852357",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "고급-주제-및-실제-사례"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "성능-테스트-환경-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "성능-튜닝-및-문제-해결"
+          },
+          {
+            "tag": "h3",
+            "id": "성능-튜닝-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "성능-튜닝-영역"
+          },
+          {
+            "tag": "h3",
+            "id": "맵-크기-조정"
+          },
+          {
+            "tag": "h3",
+            "id": "hubble-비용과-이벤트-손실"
+          },
+          {
+            "tag": "h3",
+            "id": "고급-데이터-경로-전제-조건"
+          },
+          {
+            "tag": "h3",
+            "id": "대상-노드를-지정한-문제-해결-명령"
+          },
+          {
+            "tag": "h3",
+            "id": "일반적인-문제-해결-시나리오"
+          },
+          {
+            "tag": "h2",
+            "id": "대규모-배포-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "대규모-배포-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "롤아웃과-복구"
+          },
+          {
+            "tag": "h2",
+            "id": "실제-사용-사례-연구"
+          },
+          {
+            "tag": "h3",
+            "id": "문서화된-과거-확장성-실험"
+          },
+          {
+            "tag": "h3",
+            "id": "설계-시나리오-1-대규모-전자-상거래"
+          },
+          {
+            "tag": "h3",
+            "id": "설계-시나리오-2-금융-서비스"
+          },
+          {
+            "tag": "h3",
+            "id": "설계-시나리오-3-통신과-엣지"
+          },
+          {
+            "tag": "h2",
+            "id": "미래-로드맵-및-발전-방향"
+          },
+          {
+            "tag": "h2",
+            "id": "현재-bgp-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-근거"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "고급-주제-및-실제-사례",
+          "실습-환경-설정",
+          "성능-테스트-환경-설정",
+          "성능-튜닝-및-문제-해결",
+          "성능-튜닝-아키텍처",
+          "성능-튜닝-영역",
+          "맵-크기-조정",
+          "hubble-비용과-이벤트-손실",
+          "고급-데이터-경로-전제-조건",
+          "대상-노드를-지정한-문제-해결-명령",
+          "일반적인-문제-해결-시나리오",
+          "대규모-배포-전략",
+          "대규모-배포-아키텍처",
+          "롤아웃과-복구",
+          "실제-사용-사례-연구",
+          "문서화된-과거-확장성-실험",
+          "설계-시나리오-1-대규모-전자-상거래",
+          "설계-시나리오-2-금융-서비스",
+          "설계-시나리오-3-통신과-엣지",
+          "미래-로드맵-및-발전-방향",
+          "현재-bgp-구성",
+          "다음-단계",
+          "공식-근거",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+        "sha256": "9fcf57b0be16581e74bb4757695c31f5e5dfdb16c9c45420350ba057190de9e7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cilium-advanced-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "ebpf-technology"
+          },
+          {
+            "tag": "h2",
+            "id": "networking-models"
+          },
+          {
+            "tag": "h2",
+            "id": "ipam-and-network-policies"
+          },
+          {
+            "tag": "h2",
+            "id": "l2–l7-networking"
+          },
+          {
+            "tag": "h2",
+            "id": "security-and-visibility"
+          },
+          {
+            "tag": "h2",
+            "id": "advanced-topics-and-use-cases"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-and-troubleshooting"
+          }
+        ],
+        "renderedIds": [
+          "cilium-advanced-quiz",
+          "ebpf-technology",
+          "networking-models",
+          "ipam-and-network-policies",
+          "l2–l7-networking",
+          "security-and-visibility",
+          "advanced-topics-and-use-cases",
+          "performance-and-troubleshooting"
+        ]
+      },
+      {
+        "path": "ko/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+        "sha256": "0aa515492d979a57bc5e8fda94ff9e3bb8c14231808b9866676a5870e418a842",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cilium-고급-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "ebpf-기술"
+          },
+          {
+            "tag": "h2",
+            "id": "네트워킹-모델"
+          },
+          {
+            "tag": "h2",
+            "id": "ipam-및-네트워크-정책"
+          },
+          {
+            "tag": "h2",
+            "id": "l2–l7-네트워킹"
+          },
+          {
+            "tag": "h2",
+            "id": "보안-및-가시성"
+          },
+          {
+            "tag": "h2",
+            "id": "고급-주제-및-사용-사례"
+          },
+          {
+            "tag": "h2",
+            "id": "성능-및-문제-해결"
+          }
+        ],
+        "renderedIds": [
+          "cilium-고급-퀴즈",
+          "ebpf-기술",
+          "네트워킹-모델",
+          "ipam-및-네트워크-정책",
+          "l2–l7-네트워킹",
+          "보안-및-가시성",
+          "고급-주제-및-사용-사례",
+          "성능-및-문제-해결"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/performance/tuning.rst",
+      "cacheKey": "d9730471f8c7",
+      "fetchedAt": "2026-09-12T16:13:32.801440+00:00",
+      "status": 200,
+      "sha256": "9d29c771b06000acf61568be2e9e0e08c7446ad01f24bf7754277e026f70b343"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade.rst",
+      "cacheKey": "b2908395146d",
+      "fetchedAt": "2026-09-12T16:13:33.050137+00:00",
+      "status": 200,
+      "sha256": "0b21f2d581aa95a7558ac17832e2c7ba8682d50265761db1eecb423ad557864d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/bandwidth-manager.rst",
+      "cacheKey": "f72e5af948e8",
+      "fetchedAt": "2026-09-12T16:13:33.058114+00:00",
+      "status": 200,
+      "sha256": "f7e607d1cfed9198104df9aaa247cea1f30890e80d4c1e27c64cf9bf665c1419"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/egress-gateway/egress-gateway.rst",
+      "cacheKey": "bf5bd9cb4b15",
+      "fetchedAt": "2026-09-12T16:13:33.328648+00:00",
+      "status": 200,
+      "sha256": "c0604ae15274e36d0fb0f8533076b2833ddc556ea1966b2a26b93394c1a28710"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/community/roadmap.rst",
+      "cacheKey": "ffbfe807565c",
+      "fetchedAt": "2026-09-12T16:13:33.293688+00:00",
+      "status": 200,
+      "sha256": "b1e0caa09221a9992697d59a0dd363f82c772533ba46e824cc80d5d850c69c7f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_map_list.md",
+      "cacheKey": "800901952f1e",
+      "fetchedAt": "2026-09-12T16:13:33.537909+00:00",
+      "status": 200,
+      "sha256": "2722254537f477b458027fc54645ee1505fa6bb366c1fa145b00b867ecb94fd6"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_monitor.md",
+      "cacheKey": "f580d7e092e5",
+      "fetchedAt": "2026-09-12T16:13:33.562040+00:00",
+      "status": 200,
+      "sha256": "b9b51ce7ca4300c9733a22e007ae741980f2176fe98edccb393088f901fe3dda"
+    },
+    {
+      "url": "https://www.kernel.org/doc/html/latest/networking/ip-sysctl.html",
+      "cacheKey": "92576f57cb0f",
+      "fetchedAt": "2026-09-12T16:13:33.859924+00:00",
+      "status": 200,
+      "sha256": "428982958a960b9f4c574d5cf6f31f5f37f0b16a05272a79893a9eec996ca66d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumbgpadvertisements.yaml",
+      "cacheKey": "64c4471e51ba",
+      "fetchedAt": "2026-09-12T16:14:35.768641+00:00",
+      "status": 200,
+      "sha256": "44f04798cdfcfece42128630836086ee8c160ece8a4801dcb02eb03b1eadc5f7"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumbgpclusterconfigs.yaml",
+      "cacheKey": "65aee5a2d4f2",
+      "fetchedAt": "2026-09-12T16:14:35.783779+00:00",
+      "status": 200,
+      "sha256": "51206558786549a8962fa7c6e178583409a655a480f9fc5e5c277fb48969908c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumbgppeerconfigs.yaml",
+      "cacheKey": "1bcdf70943ba",
+      "fetchedAt": "2026-09-12T16:14:36.000718+00:00",
+      "status": 200,
+      "sha256": "91ab4563c9b4a6fd4314e9fe0b128fcd77f15b50f3a5be6a32a7703dede70f60"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/templates/cilium-configmap.yaml",
+      "cacheKey": "ca1c09dd8495",
+      "fetchedAt": "2026-09-12T16:14:36.020269+00:00",
+      "status": 200,
+      "sha256": "d8ff1cbcdff051c59db0b1ebacb92a350513a8cc078f7b27a063b15ee2ac9e19"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade-warning.rst",
+      "cacheKey": "1ac53b707f0e",
+      "fetchedAt": "2026-09-12T16:14:36.235520+00:00",
+      "status": 200,
+      "sha256": "a0fcd92896140ee0ae2494e163089b5b702186ccea6d44b6043da857f5001adf"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade-notes.inc",
+      "cacheKey": "68eb55e669a5",
+      "fetchedAt": "2026-09-12T16:14:36.254215+00:00",
+      "status": 200,
+      "sha256": "1d471dbfb1e4bc045837ff0f147e5ee43d510a5aeb24e0da74f02bdabb20f384"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/ebpf/maps.rst",
+      "cacheKey": "09679a0853f4",
+      "fetchedAt": "2026-09-12T16:14:36.484381+00:00",
+      "status": 200,
+      "sha256": "b7a6e18c6f547936979b467b73480d9787d2db32a7524ac94fbd73204c9e3977"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/performance/scalability/report.rst",
+      "cacheKey": "77b087a7ee76",
+      "fetchedAt": "2026-09-12T16:14:36.514960+00:00",
+      "status": 200,
+      "sha256": "25462c71150cae5e4b7b2196092b65822de6860a593d0031b99d9f849368dae1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/option/config.go",
+      "cacheKey": "d9c0dfea2c70",
+      "fetchedAt": "2026-09-12T14:47:02.830164+00:00",
+      "status": 200,
+      "sha256": "b9029d6153a25710aa5c487d8a376bbe03058b9756f3c4eb79ee437c2454de13"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.yaml",
+      "cacheKey": "ab96902e3fca",
+      "fetchedAt": "2026-09-12T14:02:08.604636+00:00",
+      "status": 200,
+      "sha256": "48e57492486c8672b85c7fca96b3d9ae48025f1913beea12f3d3dd11b7500ae1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.schema.json",
+      "cacheKey": "f8f20476ed28",
+      "fetchedAt": "2026-09-12T14:02:08.816699+00:00",
+      "status": 200,
+      "sha256": "5e0d378b3748df1dea5704cf5cc985c5709f88123f8300694e56267891036abd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst",
+      "cacheKey": "d22b9e16808d",
+      "fetchedAt": "2026-09-12T14:04:21.339699+00:00",
+      "status": 200,
+      "sha256": "f108f647f12b8f52012ab6171b391228ddbe0c1130647ccbdb713c270cbe333d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst",
+      "cacheKey": "32d588751973",
+      "fetchedAt": "2026-09-12T14:02:08.567856+00:00",
+      "status": 200,
+      "sha256": "2817d5068db658d64ab3175f7197eddbb61ffb5e9016759b9dd3ad617899579c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane-operation.rst",
+      "cacheKey": "53020d6527cf",
+      "fetchedAt": "2026-09-12T14:24:54.145675+00:00",
+      "status": 200,
+      "sha256": "dc8d4c27f0f7a21f49e127eebb4413fedeeeb2386be0770a53fb78b1717e8d0c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/bgp.go",
+      "cacheKey": "63ee9e714295",
+      "fetchedAt": "2026-09-12T14:24:54.341836+00:00",
+      "status": 200,
+      "sha256": "ecf8ae083eb36852e0c9c6cdc92d832ae640f64b8da701b298060c9973192f00"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go",
+      "cacheKey": "61f064654894",
+      "fetchedAt": "2026-09-12T14:04:52.541705+00:00",
+      "status": 200,
+      "sha256": "19cad47bc6756d815ed03bee098e2f964ac127390ff013c449b40ce8d7f8696d"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+      "cacheKey": "f8ab97c61343",
+      "fetchedAt": "2026-09-12T14:02:09.863620+00:00",
+      "status": 200,
+      "sha256": "11af91669e9aa0579305000f96034ab7fbd45b65131b0ea791ff578a8675da0c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "cacheKey": "68e8148446c9",
+      "fetchedAt": "2026-09-12T13:53:41.051310+00:00",
+      "status": 200,
+      "sha256": "4119df582c01582bc082c529b6faf29167d07f129c1cec2583117fc37e2e4b13"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/policy/api/rule.go",
+      "cacheKey": "8f0d098abb54",
+      "fetchedAt": "2026-09-12T14:34:46.747241+00:00",
+      "status": 200,
+      "sha256": "1c90156c8c0c9f5187cd445903913ff11826ac623d43ddfa2204523161ac60c3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "cacheKey": "f79fc9587de7",
+      "fetchedAt": "2026-09-12T13:56:49.524401+00:00",
+      "status": 200,
+      "sha256": "65c36cebf69b753e96c14193632a9fc964cff434d4cc1e18dbf41f8414ac4797"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "cacheKey": "6050aa75f1a1",
+      "fetchedAt": "2026-09-12T13:56:49.743616+00:00",
+      "status": 200,
+      "sha256": "6cfda4c36fd22aeaa063a67034c747675a381fba2d9eabaef4d642153e0293c0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+      "cacheKey": "2e97c35c1c5d",
+      "fetchedAt": "2026-09-12T15:55:34.463939+00:00",
+      "status": 200,
+      "sha256": "62be30f49546fc787dd42d83b3b184c8ab5c706ffbf33252f6e3551fbd971672"
+    }
+  ],
+  "findings": [
+    "Replaced unpinned skandyla/wrk idle Deployment with actual CiliumCLI0.20 connectivity perf contract; active resource/traffic scope, always-suffixed namespace and per-scenario duration documented; no benchmark executed.",
+    "Corrected somaxconn/SYNbacklog meanings and nonexistent unsuffixed gc_thresh; Netfilter conntrack_max distinguished from CiliumBPFCT maps.",
+    "Replaced fakeproxy-memory/thread/XDP andremovedtunnel/strict flags with currentHelm contracts; candidates not blanketproductionrecipes or liveCNIreconfiguration.",
+    "Dynamicmapratio0.005 means nominal0.5% input, not exactall-memorylimit. Explicitmapmax overridesdynamicforthatmap; limits/CPUrounding/overheads anddistributedLRUmap-recreation risks documented.",
+    "Primarysourcepitfall: releasedtuningguide says bpf.events.monitorInterval; releasedvalues/template use bpf.monitorInterval. Correct field verified against actualtemplate.",
+    "Optionalhubble.eventQueueSize is commented out indefaults/schema but explicitlyimplementedbycharttemplate; validatorrecognizesactualoptionalcontract instead of falselyrejectingit.",
+    "Hubblequeue enlargement handlesbursts,not sustainedCPUdeficit. Aggregation/rate-limit/suppression affectobservability; eventlossisnot itselfapplicationpacketloss.",
+    "NetkitBeta6.8+/migration,combinedBIGTCPprofile,NIC/XDPpath,BPFhostroutingintegration andBBR5.18 prerequisites added. BandwidthegressEDT/ingresstokenbucket/perPodMbit andL7/kindlimits corrected.",
+    "Standalonecilium versusagent-localcilium-dbg separated. Targetnode/uniquePodselection uses realjq andpipefail; failuresincludingvalidlookingoutputcannotrunexec. EndpointIDlocality andboundedlogs explained.",
+    "Maplistmeansagentknownopenmaps,notallkernelmaps. MonitorisBPFemittedevents/traces,notlosslesstcpdump. WrongHubble--dns--typeA/5xx filters corrected.",
+    "Eachmanagedclusterneedsitsownoperator/agents;centralmanagementdiagramcorrected. CiliumEndpointSlicedistinguishedfromK8sEndpointSlice; ClusterMeshdoesnotreplicateallpolicyresources.",
+    "EgressGatewaySNATnotoriginalsourcepreservation;preparedinterfaces/IPs,CRDidentity,BPFmasq/KPR,newPodenforcementdelay andClusterMesh/CESincompatibility explicit.",
+    "Upgradeguideconsecutive-minors/latestcurrentpatch/preflight/no-reuse-valuescrossminor preserved;proxyreconnections/newfeaturedowngradeconstraints preventzero-downtime/automaticrollbackguarantees.",
+    "Threeunattributedindustrypercentageclaims removed asunverifiedresults whilepreservingdesignscenarios. Originalpercentage list retainedinreport; no actualhistoricalmeasurementversion wasupdated.",
+    "Added accuratelyboundedprimaryhistorical1000worker/3controller/kernel5.4.0-1009-gcp experiment; source setup doesnotidentifyCiliumversion,not relabeled1.20.1 or currentsupportmatrix.",
+    "Roadmapnowdescribesplanningquestionsandcommunityno-datecommitments,not inventedMLIDS/5G/IoT/GPUdeliverypromises.",
+    "Replaced obsoleteBGPPeeringPolicy withthreev2CRDs,validpeerIP,matchingreferences/advertisementselector andIPAMspecificPodCIDRprereqs. BGPadsdo notinstalllocalroutes or DNS.",
+    "All50MCQs reviewed andaligned; verifiernoguarantee,XDPoptional,EKSIPAMquestionunambiguous,hostnodeSelector,UIcapabilities,egressSNAT,BGPandmap/endpoint/monitorcommands fixed."
+  ],
+  "artifactDirectory": ".vitepress/cache/networking-cilium-advanced-audit",
+  "figures": {
+    "actuallyViewed": 2,
+    "retained": [
+      "en-networking-cilium-07-advanced-topics-0",
+      "ko-networking-cilium-07-advanced-topics-0"
+    ],
+    "reason": "Conceptualfour-areafigurevalidwithqualifiedcaption. LocalinteractiveHTMLexists andhasnoneoftheoldinvalidliteralflags;noassetedit.",
+    "asciiDiagram": "Eachworkloadclustercontainsoperator/agents/Hubble;centralmanagementshownseparately."
+  },
+  "limits": [
+    "BGP structural schemas do not emulate Kubernetes admission/CEL, routers, route propagation or data paths.",
+    "Agent selection uses real jq and Bash with kubectl mocked; no Kubernetes/cloud mutation or network workload ran.",
+    "Map-budget/clamp fixtures use illustrative weights; no production map memory or performance measurement is claimed.",
+    "No Helm render, full local build/devserver, Cilium upgrade, workload load generation, encryption or node tuning.",
+    "Four-documentMarkdown/Vuecompilationonly,Nodeheap1GiB;noincomingrelativefragmentreferences."
+  ]
+}

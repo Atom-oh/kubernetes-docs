@@ -7,19 +7,14 @@
     "en/quizzes/networking/**"
   ],
   "inventory": 108,
-  "fullyRead": 88,
-  "fixedAndValidated": 88,
-  "currentBatch": "networking-cilium L2-L7",
-  "currentFiles": [
-    "en/networking/cilium/05-l2-l7-networking.md",
-    "en/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
-    "ko/networking/cilium/05-l2-l7-networking.md",
-    "ko/quizzes/networking/cilium/05-l2-l7-networking-quiz.md"
-  ],
+  "fullyRead": 108,
+  "fixedAndValidated": 108,
+  "currentBatch": null,
+  "currentFiles": [],
   "remaining": {
     "root": 0,
     "calico": 0,
-    "cilium": 20
+    "cilium": 0
   },
   "completedSubbatches": [
     {
@@ -136,9 +131,36 @@
       "name": "cilium-ipam-policy",
       "documents": 4,
       "report": "docs/reviews/2026-09-11/networking-cilium-ipam-policy-validation.json"
+    },
+    {
+      "name": "cilium-l2-l7",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-l2l7-validation.json"
+    },
+    {
+      "name": "cilium-security-visibility",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-security-validation.json"
+    },
+    {
+      "name": "cilium-advanced-topics",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-advanced-validation.json"
+    },
+    {
+      "name": "cilium-glossary",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-glossary-validation.json"
+    },
+    {
+      "name": "cilium-networking-concepts",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-concepts-validation.json"
     }
   ],
   "perDocumentReport": "docs/reviews/2026-09-11/batches/networking-cilium.json",
   "blockers": [],
-  "pendingValidation": []
+  "pendingValidation": [],
+  "status": "complete",
+  "coverage": "docs/reviews/2026-09-11/networking-coverage.json"
 }

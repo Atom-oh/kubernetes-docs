@@ -1,125 +1,73 @@
-# EKS Hybrid Nodes 노드 부트스트래핑 퀴즈
+# EKS Hybrid Nodes 노드 부트스트랩 퀴즈
 
-> **관련 문서**: [노드 부트스트래핑](../../eks-hybrid-nodes/04-node-bootstrap.md)
+> **관련 문서**: [Node Bootstrap](../../eks-hybrid-nodes/04-node-bootstrap.md)
+> **마지막 업데이트**: 2026년 9월 12일
 
-## 객관식 문제
+### 1. Hybrid nodeadm의 역할은?
 
-### 1. nodeadm의 주요 역할은 무엇인가요?
+A. EKS 컨트롤 플레인 생성
 
-A. EKS 클러스터 생성
-B. 노드의 kubelet, containerd 등 구성 요소 설치 및 부트스트래핑
-C. Pod 스케줄링 결정
-D. 클러스터 네트워크 정책 관리
+B. aws/eks-hybrid 구현으로 Hybrid 노드 구성 요소 설치·초기화
 
-<details>
-<summary>정답 보기</summary>
+C. 애플리케이션 Pod 스케줄링
 
-**정답: B. 노드의 kubelet, containerd 등 구성 요소 설치 및 부트스트래핑**
-
-**설명:**
-nodeadm은 EKS 노드 부트스트래핑을 위한 공식 도구로, kubelet, containerd, aws-iam-authenticator 등 필요한 구성 요소를 설치하고 구성합니다.
-
-```bash
-# nodeadm 설치
-curl -L -o nodeadm https://github.com/awslabs/amazon-eks-ami/releases/download/nodeadm-v0.1.0/nodeadm-linux-amd64
-chmod +x nodeadm
-sudo mv nodeadm /usr/local/bin/
-
-# nodeadm으로 노드 초기화
-sudo nodeadm init --config-source file://nodeadm-config.yaml
-```
-
-**nodeadm 기능:**
-- Kubernetes 구성 요소 설치 (kubelet, containerd)
-- AWS IAM Authenticator 구성
-- kubelet 인증서 부트스트래핑
-- 노드 레이블 및 taints 설정
-
-</details>
-
-### 2. nodeadm을 사용하여 Hybrid Node를 초기화할 때 반드시 제공해야 하는 3가지 클러스터 정보는 무엇인가요?
-
-A. 클러스터 이름, VPC ID, 서브넷 ID
-B. 클러스터 이름, API 서버 엔드포인트, CA 인증서
-C. 클러스터 이름, IAM 역할, 보안 그룹
-D. 클러스터 이름, 리전, 가용 영역
+D. CNI 컨트롤러 대체
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 클러스터 이름, API 서버 엔드포인트, CA 인증서**
+**정답: B. aws/eks-hybrid 구현으로 Hybrid 노드 구성 요소 설치·초기화**
 
-**설명:**
-nodeadm 설정 파일에서 필수 항목:
-
-```yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  cluster:
-    name: my-cluster                    # 필수 1
-    region: ap-northeast-2
-    apiServerEndpoint: https://xxxxx.eks.amazonaws.com  # 필수 2
-    certificateAuthority: LS0tLS1CRUdJTi...             # 필수 3
-```
-
-```bash
-# EKS에서 필수 정보 가져오기
-aws eks describe-cluster --name my-cluster \
-  --query "cluster.{name:name,endpoint:endpoint,ca:certificateAuthority.data}" \
-  --output json
-```
+**설명:** EC2용 amazon-eks-ami nodeadm이 아닌 Hybrid 설치 프로그램을 사용합니다. init 전에 의존성을 설치하고 OS·런타임 소스를 선택하며 승인 바이너리를 검증합니다. 현재 SSM 신규 설치·업그레이드는 nodeadm1.0.19 이상이 필요합니다.
 
 </details>
 
-### 3. EKS Hybrid Nodes에서 IAM 인증에 사용되는 방식은?
+### 2. 일반적인 Hybrid NodeConfig의 클러스터 입력은?
 
-A. 정적 토큰
-B. x509 인증서만
-C. IAM Roles Anywhere 또는 IAM 사용자 자격 증명
-D. LDAP 인증
+A. 클러스터 이름·리전과 지원 자격 증명 공급자
+
+B. VPC ID와 subnet ID만
+
+C. 항상 수동 작성해야 하는 이름·엔드포인트·CA 세 필드
+
+D. IAM 사용자 액세스 키와 비밀번호
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C. IAM Roles Anywhere 또는 IAM 사용자 자격 증명**
+**정답: A. 클러스터 이름·리전과 지원 자격 증명 공급자**
 
-**설명:**
-EKS Hybrid Nodes는 온프레미스에서 AWS IAM 인증이 필요합니다. IAM Roles Anywhere를 사용하면 온프레미스 서버에서도 IAM 역할을 사용할 수 있습니다.
-
-```bash
-# IAM Roles Anywhere Trust Anchor 생성
-aws rolesanywhere create-trust-anchor \
-  --name hybrid-nodes-anchor \
-  --source "sourceType=CERTIFICATE_BUNDLE,sourceData={x509CertificateData=$CERT_DATA}"
-
-# IAM Roles Anywhere Profile 생성
-aws rolesanywhere create-profile \
-  --name hybrid-node-profile \
-  --role-arns arn:aws:iam::123456789012:role/HybridNodeRole \
-  --duration-seconds 3600
-```
-
-```yaml
-# nodeadm 설정에서 IAM Roles Anywhere 사용
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  iam:
-    mode: rolesAnywhere
-    rolesAnywhere:
-      trustAnchorArn: arn:aws:rolesanywhere:ap-northeast-2:123456789012:trust-anchor/xxxxx
-      profileArn: arn:aws:rolesanywhere:ap-northeast-2:123456789012:profile/xxxxx
-      roleArn: arn:aws:iam::123456789012:role/HybridNodeRole
-```
+**설명:** 문서화된 Hybrid 설정은 spec.cluster.name/region과 spec.hybrid.ssm 또는 spec.hybrid.iamRolesAnywhere를 사용합니다. 준비한 Hybrid 역할이 클러스터 조회 권한을 제공합니다. 모든 일반 초기화에 수동 복사한 원본 PEM CA가 필수라는 설명은 잘못입니다.
 
 </details>
 
-### 4. NodeConfig에서 kubelet 설정 시 사용할 수 있는 옵션이 아닌 것은?
+### 3. nodeadm이 지원하는 자격 증명 공급자 조합은?
+
+A. IAM 사용자 키와 LDAP
+
+B. 정적 Kubernetes 토큰과 로컬 비밀번호
+
+C. SSM hybrid activation과 IAM Roles Anywhere
+
+D. EC2 instance profile과 kubeconfig 비밀번호
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C. SSM hybrid activation과 IAM Roles Anywhere**
+
+**설명:** ssm 또는 iam-ra 중 하나를 선택합니다. SSM은 spec.hybrid.ssm 아래 activationCode·activationId, IAM Roles Anywhere는 spec.hybrid.iamRolesAnywhere를 사용합니다. 둘 다 준비한 Hybrid 역할과 클러스터 접근 권한이 필요합니다.
+
+</details>
+
+### 4. kubelet 설정 필드가 아닌 것은?
 
 A. maxPods
+
 B. clusterDNS
-C. clusterCIDR
+
+C. clusterDomain
+
 D. podScheduler
 
 <details>
@@ -127,166 +75,121 @@ D. podScheduler
 
 **정답: D. podScheduler**
 
-**설명:**
-`podScheduler`는 NodeConfig의 kubelet 설정 옵션이 아닙니다. 스케줄링은 컨트롤 플레인의 kube-scheduler가 담당합니다.
-
-```yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  kubelet:
-    config:
-      maxPods: 110              # 노드당 최대 Pod 수
-      clusterDNS:               # 클러스터 DNS 서버
-        - 10.100.0.10
-      clusterDomain: cluster.local
-      evictionHard:             # 리소스 부족 시 Pod 퇴거 임계값
-        memory.available: "100Mi"
-        nodefs.available: "10%"
-    flags:
-      - "--node-labels=location=onprem"
-      - "--register-with-taints=dedicated=hybrid:NoSchedule"
-```
+**설명:** podScheduler는 kubelet 설정 필드가 아니며 스케줄러는 컨트롤 플레인에서 실행됩니다. 이전 선택지 clusterCIDR도 kubelet 설정 필드가 아니어서 옛 문제는 정답이 모호했습니다. NodeConfig의 kubelet 설정은 CNI IPAM 계획을 대체하지 않습니다.
 
 </details>
 
-### 5. SSM(Systems Manager)을 사용하여 Hybrid Node를 등록할 때 필요한 구성 요소는?
+### 5. 자동화의 init-command-completed 기록이 증명하는 것은?
 
-A. SSM Agent와 활성화 코드
-B. CloudWatch Agent만
-C. AWS CLI만
-D. EC2 인스턴스 프로파일
+A. Node가 영구적으로 Ready임
+
+B. 당시 init 명령과 로컬 검사가 완료되었으며 클러스터 readiness는 별도 확인 필요
+
+C. 모든 이미지 풀과 자격 증명 갱신 시험 완료
+
+D. 신원을 포함한 호스트 복제가 안전함
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: A. SSM Agent와 활성화 코드**
+**정답: B. 당시 init 명령과 로컬 검사가 완료되었으며 클러스터 readiness는 별도 확인 필요**
 
-**설명:**
-온프레미스 서버를 SSM으로 관리하려면 SSM Agent를 설치하고 하이브리드 활성화를 통해 등록해야 합니다.
-
-```bash
-# 1. SSM 하이브리드 활성화 생성 (AWS 콘솔 또는 CLI)
-aws ssm create-activation \
-  --default-instance-name "hybrid-node" \
-  --iam-role service-role/AmazonEC2RunCommandRoleForManagedInstances \
-  --registration-limit 10
-
-# 출력: ActivationId, ActivationCode
-
-# 2. 온프레미스 서버에서 SSM Agent 설치 및 등록
-sudo amazon-ssm-agent -register \
-  -code "activation-code" \
-  -id "activation-id" \
-  -region "ap-northeast-2"
-
-# 3. SSM Agent 시작
-sudo systemctl start amazon-ssm-agent
-sudo systemctl enable amazon-ssm-agent
-```
-
-```yaml
-# nodeadm에서 SSM 모드 사용
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  hybrid:
-    ssm: true
-    ssmActivationId: "activation-id"
-    ssmActivationCode: "activation-code"
-```
+**설명:** 기록을 호스트·설정·바이너리에 결합하고 중단 시 started 상태를 보존하며 알 수 없는 상태를 자동 재실행하지 않습니다. network-online.target과 RemainAfterExit는 AWS 접근이나 Node readiness 증거가 아닙니다.
 
 </details>
 
-### 6. CA 인증서를 nodeadm 설정에 제공하는 목적은?
+### 6. Kubernetes API 서버 CA의 올바른 의미는?
 
-A. 노드 간 트래픽 암호화
-B. kubelet이 API 서버의 신뢰성을 검증
-C. Pod 간 mTLS 구성
-D. Harbor 레지스트리 인증
+A. 매 TLS handshake마다 kubelet 클라이언트 인증서를 자동 발급
+
+B. 레지스트리 로그인 자격 증명
+
+C. 서버 인증서 신뢰 검증에 사용하며 클라이언트 인증서 승인·발급은 별도
+
+D. Hybrid IAM 역할 대체
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. kubelet이 API 서버의 신뢰성을 검증**
+**정답: C. 서버 인증서 신뢰 검증에 사용하며 클라이언트 인증서 승인·발급은 별도**
 
-**설명:**
-CA(Certificate Authority) 인증서는 kubelet이 EKS API 서버에 연결할 때 서버의 신뢰성을 검증하는 데 사용됩니다.
-
-```yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  cluster:
-    name: my-cluster
-    apiServerEndpoint: https://xxxxx.eks.amazonaws.com
-    certificateAuthority: |
-      LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM...
-      # Base64 인코딩된 CA 인증서
-```
-
-**인증서 흐름:**
-```
-kubelet ----TLS 연결----> EKS API Server
-   |                          |
-   |-- CA로 서버 인증서 검증 --|
-   |                          |
-   |<-- 클라이언트 인증서 발급 -|
-```
-
-```bash
-# EKS 클러스터에서 CA 인증서 가져오기
-aws eks describe-cluster --name my-cluster \
-  --query "cluster.certificateAuthority.data" \
-  --output text | base64 -d > ca.crt
-
-# CA 인증서 내용 확인
-openssl x509 -in ca.crt -text -noout
-```
+**설명:** 서버 호스트명과 CA 체인을 검증하며 curl -k를 신뢰 검사로 사용하지 않습니다. 클러스터 CA, 프라이빗 레지스트리 CA와 IAM Roles Anywhere 호스트 신원은 서로 다른 신뢰 용도입니다.
 
 </details>
 
-### 7. nodeadm init 명령 실행 후 노드가 클러스터에 조인되지 않는 경우, 가장 먼저 확인해야 할 항목은?
+### 7. 조인 실패나 부분 초기화에 대한 적절한 대응은?
 
-A. Pod 배포 상태
-B. kubelet 로그 및 네트워크 연결
-C. Deployment 설정
-D. ConfigMap 내용
+A. nodeadm status 후 즉시 uninstall --force
+
+B. 제한된 비공개 kubelet 로그·nodeadm debug와 신원·네트워크 확인 후 기록된 상태 정리
+
+C. 공유 클러스터의 Cilium CRD 모두 삭제
+
+D. Node 객체를 삭제하면 SSM 등록도 취소되었다고 가정
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. kubelet 로그 및 네트워크 연결**
+**정답: B. 제한된 비공개 kubelet 로그·nodeadm debug와 신원·네트워크 확인 후 기록된 상태 정리**
 
-**설명:**
-노드 조인 실패 시 kubelet 로그와 네트워크 연결 상태를 먼저 확인해야 합니다.
+**설명:** 확인한 CLI에는 nodeadm status가 아닌 nodeadm debug가 있습니다. Debug는 AWS·클러스터 서비스에 접근하므로 출력을 비공개로 보관합니다. Node 삭제는 kubelet 중지나 SSM 등록 취소가 아닙니다. Uninstall은 통제된 제거 작업이며 일반 인증 오류 해결책이 아닙니다.
 
-```bash
-# 1. kubelet 서비스 상태 확인
-sudo systemctl status kubelet
+</details>
 
-# 2. kubelet 로그 확인
-sudo journalctl -u kubelet -f
+### 8. Bottlerocket Pod Identity 설명으로 올바른 것은?
 
-# 3. 네트워크 연결 테스트
-curl -vk https://<eks-api-endpoint>:443
+A. Ubuntu와 동일한 NodeConfig·nodeadm 사용
 
-# 4. DNS 해결 확인
-nslookup <eks-api-endpoint>
+B. settings.hybrid.ssm만으로 문서화된 전체 bootstrap 구성 완료
 
-# 5. 방화벽 규칙 확인
-sudo iptables -L -n | grep 443
+C. Bottlerocket1.39.0 이상에서 공급자 bootstrap credentials-file 지원과 hybrid-bottlerocket agent DaemonSet 사용
 
-# 6. nodeadm 상태 확인
-sudo nodeadm status
-```
+D. Base64 user data가 개인 키를 암호화
 
-**일반적인 실패 원인:**
-- API 서버 엔드포인트 접근 불가 (방화벽)
-- CA 인증서 불일치
-- IAM 인증 실패
-- DNS 해결 실패
-- 시간 동기화 문제 (NTP)
+<details>
+<summary>정답 보기</summary>
+
+**정답: C. Bottlerocket1.39.0 이상에서 공급자 bootstrap credentials-file 지원과 hybrid-bottlerocket agent DaemonSet 사용**
+
+**설명:** Bottlerocket은 별도 settings·bootstrap-container 입력을 사용합니다. 에이전트 호환성 최소값은 v1.3.7-eksbuild.2이며 임시 자격 증명 경로는 /var/eks-hybrid/.aws/credentials입니다. 현재 호환되는 애드온을 선택하고 user data를 보호합니다. 인코딩은 암호화가 아닙니다.
+
+</details>
+
+### 9. 범위를 올바르게 정한 Cilium 수명 주기 작업은?
+
+A. 기존 cluster-pool CIDR을 제자리 변경
+
+B. Hybrid 범위 preflight를 수행하고 DaemonSet 커버리지·검증 Deployment readiness 확인 후 업그레이드
+
+C. 기존 Helm 값을 검토 없이 항상 재사용
+
+D. 노드 하나를 고치려고 cilium이 포함된 모든 CRD 삭제
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B. Hybrid 범위 preflight를 수행하고 DaemonSet 커버리지·검증 Deployment readiness 확인 후 업그레이드**
+
+**설명:** Preflight는 별도 node selector를 사용합니다. 기존 pool 항목과 mask size는 변경하지 않으며, 확장은 EKS·라우팅 변경을 함께 검토한 새 pool 항목을 추가할 수 있습니다. CNI·CRD 제거는 소유자가 통제할 중단 작업입니다.
+
+</details>
+
+### 10. 확인한 릴리스에서 nodeadm uninstall --force의 의미는?
+
+A. /var/lib/kubelet을 포함한 모든 mount 경로 제거 보장
+
+B. 일반 확인 우회이며 drain 대체
+
+C. 추가 기본 경로를 제거하지만 v1.0.9 이후 /var/lib/kubelet 보호 동작은 유지
+
+D. 새 대체 노드 자동 검증
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C. 추가 기본 경로를 제거하지만 v1.0.9 이후 /var/lib/kubelet 보호 동작은 유지**
+
+**설명:** Mount된 kubelet 경로를 무조건 삭제하지 않습니다. 워크로드를 비우고 데이터·공급자·CNI 정리를 검토하며 복구 증거를 보존합니다. 승인한 재설치에는 제거 후 init만이 아닌 install → config check → init이 필요합니다.
 
 </details>
 

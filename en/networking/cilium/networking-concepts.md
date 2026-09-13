@@ -1,8 +1,9 @@
 # Deep Dive into Networking Concepts
 
-> **Last Updated**: February 22, 2026
+> **Review baseline**: Cilium 1.20.1.
+> **Last reviewed**: September 12, 2026.
 
-This document provides in-depth explanations of core networking concepts needed to understand Cilium. It explores technical concepts that form the foundation of Cilium, including container networking, overlay networks, and routing protocols.
+This document provides in-depth explanations of core networking concepts needed to understand Cilium. It explores container networking, overlays, NAT, routing, DNS, load balancing and policy. Examples are conceptual or partial Helm/API configurations for prepared test environments, not complete installation or migration recipes. Verify platform and version prerequisites in [the Cilium overview](README.md); managed platforms do not all permit the same CNI features.
 
 ## Learning Objectives
 
@@ -14,7 +15,7 @@ Through this document, you will understand:
 
 ## Table of Contents
 
-1. [OSI Model and TCP/IP Stack](#osi-model-and-tcpip-stack)
+1. [OSI Model and TCP/IP Stack](#osi-model-and-tcp-ip-stack)
 2. [Container Networking Basics](#container-networking-basics)
 3. [Overlay Networks](#overlay-networks)
 4. [Network Address Translation (NAT)](#network-address-translation-nat)
@@ -35,17 +36,19 @@ The OSI (Open Systems Interconnection) model is a conceptual framework that clas
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-0.html)
 
+The mapping is a teaching approximation, not a protocol implementation specification. SSL is a legacy label in the figure; use supported TLS versions for current systems.
+
 ### OSI 7-Layer Model
 
 1. **Physical Layer**
    - Converts bit streams into electrical, optical, or wireless signals
-   - Includes physical devices such as cables, switches, and hubs
+   - Includes cables, transceivers and physical signaling; a switch also implements functions at higher layers
    - Data unit: Bit
 
 2. **Data Link Layer**
    - Responsible for data transfer between nodes on a physical network
    - Device identification using MAC (Media Access Control) addresses
-   - Error detection and correction
+   - Error detection and, where the link protocol provides it, recovery; Ethernet error detection does not itself correct damaged frames
    - Data unit: Frame
    - Ethernet and Wi-Fi protocols operate at this layer
 
@@ -59,23 +62,23 @@ The OSI (Open Systems Interconnection) model is a conceptual framework that clas
 4. **Transport Layer**
    - End-to-end communication control
    - Data segmentation and reassembly
-   - Flow control and error recovery
-   - Data unit: Segment
+   - TCP provides flow control and retransmission; UDP does not provide those guarantees
+   - Data unit: TCP segment or UDP datagram
    - TCP (Transmission Control Protocol) and UDP (User Datagram Protocol) are the main protocols of this layer
 
 5. **Session Layer**
    - Establishment, maintenance, and termination of communication sessions
    - Synchronization and dialog control
    - Checkpoint setting and recovery
-   - NetBIOS and RPC (Remote Procedure Call) are examples of this layer
+   - Session management can be discussed at this layer; real RPC implementations do not necessarily map to a single OSI layer
 
 6. **Presentation Layer**
    - Data format conversion and encryption
    - Character encoding, data compression, encryption/decryption
-   - SSL/TLS, JPEG, ASCII are examples of this layer
+   - Encoding/compression illustrate this responsibility; TLS is an Internet protocol, not a literal OSI presentation-layer implementation
 
 7. **Application Layer**
-   - Provides user interface and application services
+   - Provides network services used by applications, not necessarily a graphical user interface
    - Services such as email, file transfer, web browsing
    - HTTP, FTP, SMTP, DNS are examples of this layer
 
@@ -85,14 +88,16 @@ Cilium operates at multiple OSI layers:
 
 | OSI Layer | Cilium Feature | Example |
 |-----------|----------------|---------|
-| L2 (Data Link) | ARP handling, MAC filtering | MAC address verification between nodes |
+| L2 (Data Link) | Link-level reachability; optional L2 Announcements | ARP/NDP responses for configured Service VIPs |
 | L3 (Network) | IP routing, CIDR-based policy | IP routing between pods |
 | L4 (Transport) | Port-based filtering, connection tracking | Service port access control |
-| L7 (Application) | HTTP, gRPC, Kafka filtering | API path-based access control |
+| L7 (Application) | Supported HTTP/gRPC and DNS proxy rules | HTTP path policy or DNS query policy |
+
+L2 Announcements remains Beta in this baseline and requires its controller/device configuration. It is distinct from a general MAC-address security-policy interface.
 
 ### TCP/IP Stack
 
-The TCP/IP stack is a set of protocols that form the foundation of the Internet, a simplified 4-layer model of the OSI model.
+The TCP/IP stack is a set of protocols that form the foundation of the Internet, an architecture often described with four layers and compared with OSI; it is not a direct implementation of the seven-layer model.
 
 1. **Network Interface Layer**
    - Corresponds to the Physical and Data Link layers of the OSI model
@@ -102,7 +107,7 @@ The TCP/IP stack is a set of protocols that form the foundation of the Internet,
 2. **Internet Layer**
    - Corresponds to the Network layer of the OSI model
    - Packet routing using IP (Internet Protocol)
-   - Includes ICMP (Internet Control Message Protocol) and ARP (Address Resolution Protocol)
+   - Includes ICMP (Internet Control Message Protocol); ARP resolves IPv4 next-hop link-layer addresses at the link boundary, while IPv6 uses Neighbor Discovery
 
 3. **Transport Layer**
    - Same as the Transport layer of the OSI model
@@ -118,10 +123,10 @@ The TCP/IP stack is a set of protocols that form the foundation of the Internet,
 
 Cilium provides features at various network layers:
 
-- **L2 (Data Link Layer)**: MAC address-based filtering, ARP spoofing prevention
+- **L2 (Data Link Layer)**: Link reachability and optional L2 service announcements; this is not a general MAC-address NetworkPolicy API or universal ARP-spoofing protection
 - **L3 (Network Layer)**: IP address-based routing and filtering, IPAM
 - **L4 (Transport Layer)**: Port-based filtering, load balancing, connection tracking
-- **L7 (Application Layer)**: Protocol-aware filtering and load balancing for HTTP, gRPC, Kafka, etc.
+- **L7 (Application Layer)**: Configured HTTP/gRPC proxy functions and DNS policy; the former Kafka L7 policy API is removed
 
 ## Container Networking Basics
 
@@ -129,7 +134,7 @@ Container networking is a mechanism that allows containerized applications to co
 
 ### Container Network Interface (CNI)
 
-CNI (Container Network Interface) defines a standard interface between container runtimes and network plugins. This allows various networking solutions to be integrated into container platforms.
+CNI (Container Network Interface) defines a standard interface between container runtimes and network plugins. Current Kubernetes uses a CRI container runtime to invoke CNI plugins. This interface allows multiple networking implementations; the CNI specification does not require every plugin to implement Kubernetes NetworkPolicy.
 
 #### Key Components of CNI:
 
@@ -142,7 +147,7 @@ CNI (Container Network Interface) defines a standard interface between container
 - Adding/removing interfaces to/from container network namespaces
 - Allocating and releasing IP addresses
 - Configuring routing tables
-- Applying network policies
+- A networking implementation may separately provide policy controllers/datapath enforcement; policy is not a mandatory CNI execution operation
 
 ### Container Networking Models
 
@@ -153,22 +158,26 @@ There are several container networking models, each suitable for different use c
 - Creates a virtual bridge on the host to connect containers
 - Each container connects to the bridge through virtual ethernet (veth) pairs
 - Efficient communication between containers on the same host
-- Default networking mode for Docker
+- The default bridge is an example from standalone Linux Docker; it is not the Kubernetes or Cilium networking model
 
 ![Diagram showing two containers each connected through a veth pair to the docker0 Linux bridge on the Docker host, which forwards traffic onto the host network via eth0.](../../.gitbook/assets/en-networking-cilium-networking-concepts-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-1.html)
 
+This is a Linux Docker bridge example with illustrative addresses. The host's routing/NAT path is simplified; it is not Cilium's default bridge topology.
+
 #### 2. Host Networking
 
 - Container directly uses the host's network namespace
 - No separate network isolation
-- Provides best network performance
+- Avoids a separate container network namespace; performance still depends on the actual workload and path
 - Potential for port conflicts
 
 ![Diagram showing two containers inside one host sharing the host network stack (eth0, 192.168.1.10) directly, with no separate network namespace or isolation layer between them.](../../.gitbook/assets/en-networking-cilium-networking-concepts-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-2.html)
+
+“No isolation” here means sharing the network namespace. It does not mean that every process, filesystem or other container isolation boundary is removed.
 
 #### 3. Overlay Networking
 
@@ -181,6 +190,8 @@ There are several container networking models, each suitable for different use c
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-3.html)
 
+This generic VXLAN illustration uses standard UDP 4789 and a shared L2 subnet. Cilium's default VXLAN port is 8472; its Pod CIDR allocations must follow the selected IPAM mode rather than copying this drawing.
+
 #### 4. Underlay Networking (Direct Routing)
 
 - Directly utilizes physical network infrastructure
@@ -192,13 +203,17 @@ There are several container networking models, each suitable for different use c
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-4.html)
 
+The entries illustrate host routes. An actual deployment still needs reachable next hops and valid forward/return routes for its Pod addresses.
+
 ### Kubernetes Networking Model
 
-Kubernetes has a fundamental requirement that all pods must be able to communicate with each other without NAT. To achieve this, it defines the following networking model:
+The Kubernetes model provides direct Pod connectivity **barring intentional network segmentation**:
 
-1. **Pod-to-Pod Communication**: All pods must be able to communicate with each other without NAT
-2. **Node-to-Pod Communication**: Nodes must be able to communicate with all pods without NAT
-3. **Pod-to-External Communication**: Pods must be able to communicate with external networks (typically using NAT)
+1. Pods can communicate with other Pods without a mandatory proxy or NAT in the Pod network.
+2. Node agents must be able to communicate with Pods **on that node**. This is not a blanket requirement that every host reach every Pod.
+3. External connectivity follows the cluster's routing and security policy; unrestricted internet access is not required.
+
+NetworkPolicy enforcement depends on a capable network implementation. The API can exist even when the installed plugin does not enforce it.
 
 #### Kubernetes Network Components:
 
@@ -212,10 +227,12 @@ Kubernetes has a fundamental requirement that all pods must be able to communica
 Cilium leverages eBPF to provide a high-performance, scalable container networking solution:
 
 1. **eBPF-based Data Path**: Direct packet processing within the kernel
-2. **Support for Various Networking Modes**: Overlay (VXLAN, Geneve) and underlay (direct routing)
+2. **Support for Various Networking Modes**: Overlay (VXLAN, Geneve) and native routing; the generic Helm default is tunnel mode with VXLAN, subject to platform overrides
 3. **Advanced Load Balancing**: kube-proxy replacement functionality
 4. **Network Policies**: Granular policies at L3-L7 levels
 5. **Integrated IPAM**: Support for various IP address allocation strategies
+
+A generic Helm installation without platform overrides defaults to cluster-pool IPAM: the operator allocates node CIDRs and agents allocate Pod IPs from their node's pool. `ipam.mode: kubernetes` uses the Node's `spec.podCIDR`/`spec.podCIDRs`. ENI mode uses EC2 interfaces and VPC addresses; it is not a universal recommendation for every EKS compute mode. See [IPAM and policies](04-ipam-policy.md).
 
 ## Overlay Networks
 
@@ -237,8 +254,8 @@ Overlay networks work using encapsulation technology. Original packets are encap
 VXLAN is one of the most widely used overlay protocols in container networking.
 
 - **VXLAN Tunnel Endpoint (VTEP)**: Responsible for encapsulation and decapsulation of packets
-- **VXLAN Network Identifier (VNI)**: Supports up to 16,777,216 virtual networks
-- **UDP Encapsulation**: VXLAN packets are transmitted via UDP port 4789
+- **VXLAN Network Identifier (VNI)**: A 24-bit field with 16,777,216 possible values; this is not Cilium's supported tenant/endpoint capacity
+- **UDP Encapsulation**: Standard VXLAN uses UDP 4789; Cilium's default VXLAN tunnel port is UDP 8472
 - **MAC-in-UDP Encapsulation**: Encapsulates original L2 frames into UDP packets
 
 VXLAN Packet Structure:
@@ -246,6 +263,8 @@ VXLAN Packet Structure:
 ![Diagram of a VXLAN-encapsulated packet, showing the outer Ethernet, IP, and UDP headers wrapping a VXLAN header, which itself wraps the original Ethernet frame, IP header, TCP/UDP header, and payload.](../../.gitbook/assets/en-networking-cilium-networking-concepts-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-5.html)
+
+This is the generic VXLAN wire format. UDP 4789 and the 24-bit VNI describe the standard; Cilium defaults to UDP 8472 and uses overlay metadata for identity. Field width is not a cluster-capacity guarantee.
 
 #### GENEVE (Generic Network Virtualization Encapsulation)
 
@@ -260,10 +279,10 @@ GENEVE is a more flexible overlay protocol designed to overcome VXLAN limitation
 
 IPsec is a protocol suite that provides security services at the IP packet level.
 
-- **Authentication and Encryption**: Ensures data integrity and confidentiality
+- **Authentication and Encryption**: IPsec provides mechanisms for integrity/authentication and, with the appropriate mode, confidentiality
 - **Transport and Tunnel Modes**: Supports various deployment scenarios
 - **Security Association (SA)**: Defines security parameters between communicating parties
-- **Internet Key Exchange (IKE)**: Automates security key management
+- **Internet Key Exchange (IKE)**: A general IPsec negotiation mechanism. Cilium's IPsec setup instead uses an administrator-provided key Secret and its documented rotation procedure
 
 ### Advantages and Disadvantages of Overlay Networks
 
@@ -271,7 +290,7 @@ IPsec is a protocol suite that provides security services at the IP packet level
 
 - **Flexibility**: Can configure virtual networks independently of physical network topology
 - **Scalability**: Supports large network segments and numerous endpoints
-- **Isolation**: Provides network isolation between different tenants or applications
+- **Isolation**: Logical segments can separate traffic when configured correctly; encapsulation alone is not authentication, encryption or a complete policy boundary
 - **Compatibility**: Can work with existing network infrastructure
 
 #### Disadvantages:
@@ -279,7 +298,7 @@ IPsec is a protocol suite that provides security services at the IP packet level
 - **Overhead**: Increased packet size and processing overhead due to encapsulation
 - **MTU Considerations**: Reduced Maximum Transmission Unit (MTU) due to encapsulation
 - **Complexity**: Troubleshooting and debugging can be more complex
-- **Latency**: Slight latency added during encapsulation and decapsulation
+- **Latency**: Encapsulation adds processing work; measure the actual effect with the selected implementation and offloads
 
 ### Overlay Networks in Cilium
 
@@ -288,22 +307,28 @@ Cilium supports overlay protocols like VXLAN and Geneve, leveraging eBPF to prov
 - **eBPF-based VXLAN Processing**: Direct packet encapsulation and decapsulation within the kernel
 - **Efficient Routing**: Packet forwarding through optimized paths
 - **Encryption Options**: Encrypted overlay via IPsec or WireGuard
-- **Hybrid with Direct Routing**: Can combine overlay and direct routing as needed
+- **Mode Selection**: Choose a supported routing mode. Enabling automatic direct node routes together with tunnel mode is rejected; it is not a fallback mechanism
 
 #### Cilium VXLAN Configuration Example:
 
+Helm values for a **new, prepared IPv4 test installation**; choose non-overlapping Pod CIDRs. This is not a live IPAM migration or a replacement ConfigMap.
+
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  tunnel: "vxlan"
-  enable-ipv4: "true"
-  enable-ipv6: "false"
-  ipv4-range: "10.0.0.0/16"
-  ipv4-tunnel-endpoint-selector: "kubernetes.io/hostname"
+# vxlan-values.yaml
+routingMode: tunnel
+tunnelProtocol: vxlan
+tunnelPort: 8472
+autoDirectNodeRoutes: false
+ipv4:
+  enabled: true
+ipv6:
+  enabled: false
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+    - 10.244.0.0/16
+    clusterPoolIPv4MaskSize: 24
 ```
 
 ## Network Address Translation (NAT)
@@ -316,7 +341,7 @@ Network Address Translation (NAT) is the process of modifying the source or dest
 
 Source NAT modifies the source IP address of packets. It is typically used when devices on private networks access the internet.
 
-- **How It Works**: Translates the private IP address of internal hosts to a public IP address
+- **How It Works**: Rewrites a source address, and sometimes its port; private-to-public translation is one common use
 - **Use Cases**: Internet access, outbound connections
 - **Tracking**: Stores connection state in NAT table
 
@@ -324,11 +349,13 @@ Source NAT modifies the source IP address of packets. It is typically used when 
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-6.html)
 
+The documentation-range addresses illustrate one private-to-public SNAT case. SNAT means source translation; the replacement need not always be a public address.
+
 #### 2. Destination NAT (DNAT)
 
 Destination NAT modifies the destination IP address of packets. It is typically used when accessing services on private networks from the public internet.
 
-- **How It Works**: Translates public IP addresses to private IP addresses of internal hosts
+- **How It Works**: Rewrites a destination address/port; public-to-private forwarding is one example
 - **Use Cases**: Port forwarding, load balancing, inbound connections
 - **Configuration**: Defines mappings for specific ports or port ranges
 
@@ -336,33 +363,35 @@ Destination NAT modifies the destination IP address of packets. It is typically 
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-7.html)
 
+This shows one public-to-private DNAT case with documentation addresses. DNAT is destination translation and also appears in other address realms.
+
 #### 3. Port Address Translation (PAT)
 
 PAT modifies both IP addresses and port numbers. This allows multiple internal hosts to share a single public IP address.
 
 - **How It Works**: Translates IP:port combinations of internal hosts to different ports of a single public IP
 - **Use Cases**: IP address conservation, support for many internal hosts
-- **Limitations**: Limited by the number of available ports (approximately 65,000)
+- **Limitations**: Finite port and state resources; the number of simultaneous flows also depends on protocol, destination tuples and mapping reuse, not a universal 65,000-connection ceiling
 
 ![Diagram showing two internal hosts sharing a single public IP (198.51.100.1) through a PAT router, which maps each host to a distinct public port (5000 and 5001) when reaching a server on the internet.](../../.gitbook/assets/en-networking-cilium-networking-concepts-8.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-8.html)
 
-#### 4. Bi-directional NAT
+The example uses different translated ports for the same remote server. The roughly 65,000-port space is not a universal cap on all NAT connections; protocol, destination tuple, mapping behavior and state capacity matter.
 
-Bi-directional NAT modifies both source and destination addresses. This enables communication between two networks with overlapping network address spaces.
+#### 4. Twice NAT and Bi-directional NAT
 
-- **How It Works**: Address translation in both directions
-- **Use Cases**: Network mergers, address space conflict resolution
-- **Complexity**: More complex configuration and maintenance
+**Twice NAT** changes both source and destination addresses as traffic crosses address realms, and can help reconcile overlapping address spaces. The address mappings, DNS/application assumptions and return path must all be designed together.
+
+**Bi-directional NAT** in RFC 2663 instead describes allowing sessions to be initiated from either realm. It does not, by definition, mean changing both addresses in each packet.
 
 ### Advantages and Disadvantages of NAT
 
 #### Advantages:
 
 - **IP Address Conservation**: Supports many internal hosts with a limited number of public IP addresses
-- **Enhanced Security**: Hides internal network topology
-- **Network Isolation**: Can connect networks with overlapping address spaces
+- **Address Hiding**: May conceal internal addresses, but NAT is not a substitute for firewall policy or authentication
+- **Address-Realm Reconciliation**: Appropriate translation can connect overlapping realms; that does not provide isolation by itself
 - **Flexible Network Design**: Can change ISP without reconfiguring internal network
 
 #### Disadvantages:
@@ -378,10 +407,10 @@ Bi-directional NAT modifies both source and destination addresses. This enables 
 
 Kubernetes uses NAT in various scenarios:
 
-1. **Communication Outside the Cluster**: SNAT when pods communicate outside the cluster
-2. **Service Implementation**: Cluster IP services use DNAT to redirect traffic to pods
-3. **NodePort Services**: DNAT from node IP:port to pods
-4. **LoadBalancer Services**: DNAT from external load balancer IP to pods
+1. **Communication Outside the Cluster**: SNAT may be used depending on address reachability, masquerading exclusions and the chosen datapath
+2. **Service Implementation**: Packet-based implementations can translate a Service destination; socket-level load balancing may choose a backend before such a packet exists
+3. **NodePort Services**: The implementation forwards a node IP:port to selected backends; return-path behavior depends on SNAT/DSR and traffic policy
+4. **LoadBalancer Services**: Provider/controller behavior varies and need not be a single DNAT step from a public address to a Pod
 
 #### NAT in Cilium
 
@@ -389,29 +418,30 @@ Cilium leverages eBPF to provide efficient NAT implementation:
 
 1. **eBPF-based NAT**: Performs NAT directly within the kernel
 2. **High-Performance Connection Tracking**: Connection state tracking using optimized BPF maps
-3. **NAT Policies**: Can define granular NAT rules
-4. **Masquerading**: Automatic SNAT for communication from pods to outside the cluster
+3. **NAT Controls**: Supported masquerading exclusions, service forwarding and Egress Gateway features have distinct configuration and prerequisites
+4. **Masquerading**: Conditional source translation on configured paths/devices; excluded CIDRs and supported modes affect the result
+
+Egress Gateway is a separate feature that directs matching outbound traffic through selected nodes and SNATs it to configured gateway addresses. It changes the original source IP; interfaces, addresses and return paths must be prepared. New Pods can send traffic before policy convergence, so it is not an immediate fail-closed source-IP guarantee.
 
 #### Cilium NAT Configuration Example:
 
+This Helm fragment assumes a prepared kube-proxy replacement/BPF masquerading environment with a reachable API endpoint. Review the actual attached devices and routes first. Excluding a CIDR from SNAT does not create a return route; the NAT size is an example, not a recommended universal capacity.
+
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable masquerading for communication outside the cluster
-  enable-ipv4-masquerade: "true"
-
-  # Use eBPF-based masquerading
-  enable-bpf-masquerade: "true"
-
-  # NAT map size setting
-  bpf-nat-global-max: "262144"
-
-  # Exclude specific CIDRs from masquerading
-  ipv4-masquerade-exclude-cidr: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+# masquerade-values.yaml
+enableIPv4Masquerade: true
+kubeProxyReplacement: true
+bpf:
+  masquerade: true
+  natMax: 262144
+ipMasqAgent:
+  enabled: true
+  config:
+    nonMasqueradeCIDRs:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+    masqLinkLocal: false
 ```
 
 ## Routing Protocols
@@ -428,15 +458,15 @@ Interior Gateway Protocols are used to exchange routing information within a sin
 
 - **RIP (Routing Information Protocol)**
   - Uses hop count as metric
-  - Maximum 15 hop limit
+  - Valid metrics reach 15 hops; metric 16 represents unreachable
   - Simple implementation, suitable for small networks
-  - Updates entire routing table every 30 seconds
+  - Periodic updates are approximately every 30 seconds, with timer randomization and triggered updates for changes
 
 - **EIGRP (Enhanced Interior Gateway Routing Protocol)**
-  - Composite metric considering bandwidth, delay, load, reliability
+  - Configurable composite metric; default coefficients use throughput/bandwidth and delay, not load or reliability
   - Sends only partial updates
   - Fast convergence
-  - Cisco proprietary protocol (formerly)
+  - Cisco-origin protocol documented in Informational RFC 7868; that publication is not an IETF Standards Track designation
 
 ##### Link State Protocols
 
@@ -473,34 +503,32 @@ In container environments, traditional routing protocols are used alongside cont
 
 BGP is gaining popularity in container networking for the following reasons:
 
-- **Direct Routing**: Routes pod IPs directly without overlay overhead
+- **Reachability Advertisement**: Advertises Pod or Service prefixes to routers; the local forwarding implementation still determines how traffic travels
 - **Scalability**: Supports large-scale clusters and multi-cluster environments
 - **Existing Network Integration**: Integration with data center network infrastructure
-- **High Availability**: Support for multiple paths and fast failover
+- **Availability**: Multipath and convergence depend on router policy, timers and a functioning datapath; a session alone does not guarantee fast failover
 
 #### 2. Container Network Routing Mechanisms
 
-- **Host-based Routing**: Each node advertises routing information for its own pod CIDR
+- **Host-based Routing**: Hosts maintain Pod routes and may participate in a separately configured route-advertisement mechanism
 - **Centralized Routing**: Controller manages routing decisions centrally
 - **Distributed Routing**: Direct routing information exchange between nodes
 - **Policy-based Routing**: Routing decisions based on traffic characteristics
 
 ### Routing in Cilium
 
-Cilium implements efficient routing using eBPF and supports various routing modes.
+Cilium implements routing with eBPF and supports different datapath modes. **Host routing is a separate axis**: BPF host routing optimizes forwarding inside the node and can bypass parts of the host stack/netfilter. It requires compatible kube-proxy replacement/BPF masquerading and has integration constraints. It does not mean selecting native rather than tunnel routing between nodes.
 
 #### 1. Native Routing (Direct Routing)
 
 In native routing mode, Cilium routes pod IPs directly without overlay encapsulation.
 
-- **How It Works**: Each node advertises routing information for its pod CIDR
-- **Advantages**: No encapsulation overhead, optimal performance
-- **Requirements**: Routable network between nodes
+- **How It Works**: Pod traffic uses underlay routes without overlay encapsulation; enabling native mode does not automatically enable BGP
+- **Advantages**: Avoids overlay encapsulation overhead; actual performance requires measurement
+- **Requirements**: Valid routes for the relevant Pod addresses and their return traffic, not merely reachability between node IPs
 - **Use Cases**: Performance-critical workloads, single-subnet clusters
 
-![Diagram of Cilium native routing showing two Kubernetes nodes, each routing pod traffic through a local routing table directly onto the physical network with no overlay encapsulation.](../../.gitbook/assets/en-networking-cilium-networking-concepts-9.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-9.html)
+Native routing needs valid Pod routes, but choosing `routingMode: native` does not automatically advertise them with BGP. Provision the underlay/return routes or configure the appropriate route-distribution mechanism. The earlier host-route illustration shows the forwarding principle.
 
 #### 2. BGP Routing
 
@@ -521,56 +549,36 @@ Cilium can route pod traffic between nodes using overlay protocols like VXLAN or
 
 #### 4. Hybrid Routing
 
-Cilium supports a hybrid approach combining direct routing and overlay routing.
+Do not assume Cilium automatically uses native routes when reachable and otherwise falls back to an overlay. Current tunnel mode cannot be combined with `autoDirectNodeRoutes: true`; the agent rejects that configuration. Choose a supported datapath and provision its underlay.
 
-- **How It Works**: Uses direct routing when possible, overlay otherwise
-- **Advantages**: Balance between performance and flexibility
-- **Use Cases**: Mixed network environments, cloud and on-premises deployments
+The valid load-balancer mode called `hybrid` is a different feature: TCP uses DSR while UDP uses SNAT. It is not an overlay/native routing fallback.
 
 ### Cilium Routing Configuration Examples
 
 #### Native Routing Configuration:
 
+This native-routing fragment assumes the intended Pod CIDR and nodes reachable on a shared L2 network for automatic direct routes. Other topologies need an appropriate routing mechanism. It must not be combined with tunnel mode as an automatic fallback.
+
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  tunnel: "disabled"
-  enable-auto-direct-node-routes: "true"
-  ipv4-native-routing-cidr: "10.0.0.0/16"
+# native-values.yaml
+routingMode: native
+autoDirectNodeRoutes: true
+ipv4NativeRoutingCIDR: 10.244.0.0/16
 ```
 
 #### BGP Routing Configuration:
 
+The feature flag below is only one prerequisite. Configure the current `CiliumBGPClusterConfig`, `CiliumBGPPeerConfig` and `CiliumBGPAdvertisement` resources and the external router as described in [Advanced Topics](07-advanced-topics.md). BGP advertisement and the datapath routing mode are independent choices.
+
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  tunnel: "disabled"
-  enable-bgp: "true"
-  bgp-announce-pod-cidr: "true"
-  bgp-config-path: "/var/lib/cilium/bgp/config.yaml"
+# bgp-values.yaml
+bgpControlPlane:
+  enabled: true
 ```
 
 #### Overlay Routing Configuration:
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  tunnel: "vxlan"
-  enable-ipv4: "true"
-  ipv4-range: "10.0.0.0/16"
-```
+Use the complete VXLAN values example above. Verify the running mode and port in agent status; do not overwrite installation settings with a small ConfigMap.
 
 ## DNS and Service Discovery
 
@@ -599,9 +607,17 @@ DNS is a distributed system that translates human-readable domain names into IP 
 
 #### DNS Resolution Process
 
-![Sequence diagram showing a client's iterative DNS query walking from the root DNS server to the .com TLD server to the example.com authoritative server, which returns the final IP address.](../../.gitbook/assets/en-networking-cilium-networking-concepts-10.png)
+A common uncached lookup separates the application's stub resolver from a recursive resolver:
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-10.html)
+| Step | Query/response |
+| --- | --- |
+| 1 | The stub asks its configured recursive resolver for `www.example.com`. |
+| 2 | The resolver asks a root server and receives a referral to `.com` servers. |
+| 3 | The resolver asks a `.com` server and receives a referral to `example.com` authoritative servers. |
+| 4 | The resolver asks the authoritative server and obtains the relevant answer. |
+| 5 | The resolver caches according to TTL and returns the answer to the stub. |
+
+The authoritative servers do not normally forward this sequence among themselves. Caches, aliases and configured forwarders can change the exact exchanges.
 
 ### Service Discovery in Container Environments
 
@@ -641,29 +657,36 @@ Kubernetes provides built-in mechanisms for service discovery within the cluster
 
 Kubernetes Services provide stable endpoints for sets of pods:
 
-- **ClusterIP**: Virtual IP accessible only within the cluster
-- **NodePort**: Accessible through specific port on all nodes
-- **LoadBalancer**: Accessible through external load balancer
+- **ClusterIP**: A Service virtual IP, normally used inside the cluster; any external routability is an explicit network design, not an intrinsic security boundary
+- **NodePort**: A node port exposed on eligible node addresses, subject to traffic policy, routing and firewall rules
+- **LoadBalancer**: Requests a provider/controller implementation, which may be public or internal
 - **ExternalName**: DNS alias for external service
 
 #### Kubernetes DNS
 
 Kubernetes runs a cluster DNS service (typically CoreDNS) to support service discovery:
 
-- **Service DNS**: `<service-name>.<namespace>.svc.cluster.local`
-- **Pod DNS**: `<pod-ip>.<namespace>.pod.cluster.local`
-- **Headless Services**: Service name resolves to DNS records of all pod IPs
+- **Service DNS**: `<service-name>.<namespace>.svc.<cluster-domain>`; `cluster.local` is a common configured domain, not a universal constant
+- **Pod DNS**: The old address-based `pod.<cluster-domain>` form is implementation-dependent/legacy. Stable Pod names commonly use hostname/subdomain with a corresponding headless Service
+- **Headless Services**: DNS can return endpoint addresses rather than a VIP; readiness and `publishNotReadyAddresses` affect which records are published
 
-![Sequence diagram showing Pod A querying CoreDNS for service-b, CoreDNS resolving it against Service B (ClusterIP 10.0.0.1) and selecting one of backend pods B1, B2, B3, then returning 10.0.0.1 to Pod A.](../../.gitbook/assets/en-networking-cilium-networking-concepts-11.png)
+DNS lookup and Service forwarding are separate:
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-11.html)
+| Phase | Responsibility |
+| --- | --- |
+| DNS lookup | CoreDNS resolves an ordinary Service name to its ClusterIP using Kubernetes object state. It does not choose the application backend for that connection. |
+| Connection | The client sends traffic to the returned Service address. |
+| Forwarding | The Service implementation, such as Cilium's datapath, selects an eligible backend using its Service/EndpointSlice-derived state. |
+| Headless Service | DNS returns endpoint addresses instead of a Service VIP; client-side behavior determines which address is used. |
+
+Object watches and datapath updates are asynchronous; a DNS response is not a backend health probe.
 
 #### Kubernetes Service Discovery Mechanisms
 
-1. **Environment Variables**: Environment variables for active services are injected into each pod
+1. **Environment Variables**: Service links can reflect Services present when the Pod is created; they are not a live discovery feed and can be disabled
 2. **DNS**: Service name resolution through cluster DNS
 3. **API Server**: Retrieve service information by directly querying Kubernetes API
-4. **Endpoint Objects**: Provide IP and port information of service backend pods
+4. **EndpointSlice Objects**: Provide backend address, port and readiness information for Service implementations
 
 ### DNS and Service Discovery in Cilium
 
@@ -674,22 +697,43 @@ Cilium integrates with Kubernetes service discovery mechanisms and provides addi
 Cilium can define network policies based on DNS names:
 
 - **DNS Name-based Filtering**: Access control for specific domain names
-- **Wildcard Support**: Pattern matching like `*.example.com`
+- **Wildcard Support**: `*.example.com` matches one subdomain level; `**.example.com` supports multiple levels in this version, and neither includes the apex without an explicit match
 - **FQDN Policies**: Policies based on Fully Qualified Domain Names (FQDNs)
 
+This policy-only example requires the namespace, labeled workload and verified resolver path to exist. DNS observation and TCP 443 destination allowances are separate. The DNS `*` permits all query names; toFQDNs is not hostname authentication.
+
 ```yaml
-apiVersion: "cilium.io/v2"
+# dns-policy.yaml
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "dns-policy"
+  name: dns-policy
+  namespace: cilium-fqdn-demo
 spec:
   endpointSelector:
     matchLabels:
       app: myapp
   egress:
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: '53'
+        protocol: UDP
+      - port: '53'
+        protocol: TCP
+      rules:
+        dns:
+        - matchPattern: '*'
   - toFQDNs:
-    - matchName: "api.example.com"
-    - matchPattern: "*.api.example.com"
+    - matchName: api.example.com
+    - matchPattern: '*.api.example.com'
+    toPorts:
+    - ports:
+      - port: '443'
+        protocol: TCP
 ```
 
 #### Cilium's Service Discovery Enhancements
@@ -704,44 +748,48 @@ Cilium provides several features that enhance Kubernetes service discovery:
 2. **Global Services**:
    - Service discovery across multiple clusters
    - Cross-cluster load balancing
-   - Unified service namespace
+   - Matching Service names/namespaces and explicit sharing/ClusterMesh configuration
 
 3. **Service Affinity**:
    - Session affinity support
-   - Consistent backend selection based on source IP
+   - ClientIP affinity is separate from the load-balancing algorithm; socket-level paths can use a network-namespace cookie
    - Stateful connection support
 
 4. **Health Check Integration**:
-   - Backend health monitoring
-   - Automatic removal of unhealthy backends
-   - Fast failure detection and recovery
+   - Backend state follows Kubernetes readiness/EndpointSlice information and configured proxy checks
+   - Changes are propagated asynchronously
+   - Do not assume every Cilium Service performs active application probes or instantaneous failover
 
 #### Cilium Service Configuration Example:
 
+Session affinity is configured on the Service; Global Services use an annotation and a working ClusterMesh. Peer Services must have the same name and namespace. This example does not create the application, ClusterMesh or an external load balancer.
+
 ```yaml
+# global-service.yaml
 apiVersion: v1
-kind: ConfigMap
+kind: Service
 metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable kube-proxy replacement
-  enable-k8s-services: "true"
-  kube-proxy-replacement: "strict"
-
-  # Enable DNS policy support
-  enable-fqdn-filter: "true"
-
-  # Configure service affinity
-  enable-session-affinity: "true"
-
-  # Enable global services
-  enable-global-services: "true"
+  name: api
+  namespace: cilium-service-demo
+  annotations:
+    service.cilium.io/global: 'true'
+spec:
+  type: ClusterIP
+  selector:
+    app: api
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
 ```
 
 ## Load Balancing Concepts
 
-Load balancing is a technology that distributes network traffic across multiple servers or backend services to optimize resource utilization, increase throughput, reduce latency, and ensure high availability. In container environments, effectively distributing traffic among dynamically changing backend instances is particularly important.
+Load balancing is a technology that distributes network traffic across multiple servers or backend services to optimize resource utilization, support throughput, latency and availability goals when combined with suitable capacity and backend health handling. In container environments, effectively distributing traffic among dynamically changing backend instances is particularly important.
 
 ### Types of Load Balancing
 
@@ -758,18 +806,22 @@ L4 load balancing distributes traffic based on transport layer information such 
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-12.html)
 
+The branches represent possible backend choices, not broadcasting a connection to both servers. L4 forwarding can carry TLS without inspecting the encrypted HTTP payload.
+
 #### 2. L7 (Application Layer) Load Balancing
 
 L7 load balancing distributes traffic based on application layer information such as HTTP headers, URLs, and cookies.
 
 - **How It Works**: Routing decisions by inspecting HTTP/HTTPS request contents
 - **Advantages**: Content-based routing, advanced traffic management, security features
-- **Disadvantages**: Higher processing overhead, SSL termination required for encrypted traffic
+- **Disadvantages**: Proxy processing cost; HTTP content inspection of HTTPS needs appropriate TLS termination
 - **Use Cases**: Web applications, microservices, API gateways
 
 ![Diagram showing a client HTTP request routed by an application-layer load balancer to one of two backend services, based on URL path and header inspection.](../../.gitbook/assets/en-networking-cilium-networking-concepts-13.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-13.html)
+
+The selected route depends on the request attributes. HTTP content routing over HTTPS requires an appropriate TLS termination/inspection path.
 
 ### Load Balancing Algorithms
 
@@ -778,7 +830,7 @@ Load balancing algorithms determine how traffic is distributed to backend server
 #### 1. Round Robin
 
 - **How It Works**: Distributes requests to each backend server sequentially
-- **Advantages**: Simple implementation, even distribution
+- **Advantages**: Simple sequencing; equal request counts do not imply equal backend work
 - **Disadvantages**: Does not consider server capacity differences or current load
 - **Variants**: Weighted Round Robin (applies weights based on server capacity)
 
@@ -792,7 +844,7 @@ Load balancing algorithms determine how traffic is distributed to backend server
 #### 3. IP Hash
 
 - **How It Works**: Hashes client IP address for consistent backend server selection
-- **Advantages**: Provides session persistence, same client routed to same server
+- **Advantages**: Can provide stable selection while inputs/backend membership remain stable; it is not permanent session storage
 - **Disadvantages**: Possible uneven distribution, potential overload on specific servers
 - **Variants**: Source-Destination IP Hash (considers both source and destination IPs)
 
@@ -817,13 +869,13 @@ Load balancing algorithms determine how traffic is distributed to backend server
 - **Characteristics**: Dedicated physical equipment
 - **Advantages**: High performance, reliability, dedicated hardware acceleration
 - **Disadvantages**: Cost, limited scalability, lack of flexibility
-- **Examples**: F5 BIG-IP, Citrix ADC, A10 Networks
+- **Examples**: Application delivery controller appliances; some product families also offer virtual/software editions
 
 #### 2. Software Load Balancers
 
 - **Characteristics**: Software running on general-purpose servers
 - **Advantages**: Flexibility, cost efficiency, programmability
-- **Disadvantages**: Generally lower performance than hardware load balancers
+- **Disadvantages**: Capacity depends on implementation, hardware and workload; software is not inherently slower than every appliance
 - **Examples**: NGINX, HAProxy, Envoy
 
 #### 3. Cloud Load Balancers
@@ -854,14 +906,14 @@ Kubernetes provides multiple levels of load balancing:
 #### 2. Ingress Controllers
 
 - L7 load balancing and routing
-- URL-based routing, SSL termination, authentication
-- Various implementations: NGINX, Traefik, HAProxy, Istio
+- URL-based routing and TLS termination; authentication capabilities depend on the controller and configuration
+- Implementations include Traefik, HAProxy and Istio-based controllers. Community `ingress-nginx` retired in March 2026; remaining artifacts are not a maintained installation recommendation
 
 #### 3. Service Mesh
 
 - Advanced traffic management between microservices
 - Granular routing, traffic splitting, fault injection
-- Examples: Istio, Linkerd, Consul Connect
+- Examples: Istio, Linkerd and Consul service mesh; their traffic-management and security feature sets differ
 
 ### Load Balancing in Cilium
 
@@ -870,7 +922,7 @@ Cilium implements efficient load balancing using eBPF:
 #### 1. eBPF-based Load Balancing
 
 - **kube-proxy Replacement**: Direct service load balancing within the kernel
-- **Performance Improvement**: Reduced latency through network stack bypass
+- **Performance**: Supported BPF paths can avoid parts of the conventional stack; quantify the result for the actual workload
 - **Scalability**: Supports large-scale services and endpoints
 - **Connection Tracking Optimization**: Efficient state management
 
@@ -878,14 +930,13 @@ Cilium implements efficient load balancing using eBPF:
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-14.html)
 
+This depicts a packet-path Service translation. Socket-level load balancing can instead select a backend before a Service-IP packet exists. Latency improvements require measurement for the actual path.
+
 #### 2. Load Balancing Algorithms
 
-Cilium supports various load balancing algorithms:
+The BPF Service algorithms are **random** (the default) and **Maglev**. Maglev hashes flow information; it is not simply source-IP affinity. Ordinary socket-level east-west selection is a different path from the external packet paths where Maglev is applied.
 
-- **Round Robin**: Default algorithm, even distribution
-- **Maglev**: Consistent backend selection based on source IP
-- **Session Affinity**: Persistent connections based on client IP
-- **Maglev Timeout**: Rebalancing after specified time
+`ClientIP` session affinity is configured independently on a Service. Its timeout is not a “Maglev timeout”; Maglev has no timer that periodically rebalances sessions. Membership, seed or table changes can remap selection, and a removed backend cannot continue serving a connection merely because hashing is consistent.
 
 #### 3. L7 Load Balancing
 
@@ -894,38 +945,28 @@ Cilium also supports L7 (Application Layer) load balancing:
 - **HTTP Header-based Routing**: Routing based on specific header values
 - **URL Path-based Routing**: Traffic distribution based on URL patterns
 - **gRPC Routing**: Routing based on gRPC methods and metadata
-- **Kafka Routing**: Routing based on Kafka topics and message keys
+- **Kafka**: Current Cilium does not provide the former Kafka topic L7 policy/routing feature; use broker-appropriate controls
 
 #### 4. Global Service Load Balancing
 
 Cilium supports load balancing across multiple clusters:
 
 - **Cross-cluster Load Balancing**: Traffic distribution among backends across multiple clusters
-- **Location-aware Routing**: Backend selection considering latency and location
-- **Failover**: Automatic failover during cluster failures
+- **Locality Preference**: Configured local/remote affinity is not automatic measurement of network latency
+- **Failure Handling**: Depends on endpoint state and remote-cache behavior; the default zero cache TTL can retain stale remote state, so application failover must be tested
 
 #### Cilium Load Balancing Configuration Example:
 
+These are Helm values for a prepared installation. The shown hash seed is a valid **12-byte base64 demonstration value**. For deployment, generate and persist a common random seed for the participating nodes, and review a seed/table change as a connection-impacting operation. See the [prepared load-balancing profile](05-l2-l7-networking.md).
+
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Enable kube-proxy replacement
-  kube-proxy-replacement: "strict"
-
-  # Configure load balancing algorithm
-  load-balancing-algorithm: "maglev"
-  maglev-hash-seed: "Cilium"
-  maglev-table-size: "16381"
-
-  # Configure session affinity
-  enable-session-affinity: "true"
-
-  # Enable L7 load balancing
-  enable-l7-proxy: "true"
+# load-balancing-values.yaml
+kubeProxyReplacement: true
+loadBalancer:
+  algorithm: maglev
+maglev:
+  tableSize: 16381
+  hashSeed: AAECAwQFBgcICQoL
 ```
 
 ## Network Security Basics
@@ -936,11 +977,11 @@ Network security is the practice of protecting network infrastructure, applicati
 
 #### 1. Defense in Depth
 
-Defense in depth is an approach that implements multiple security layers so that the failure of a single security mechanism does not lead to a complete system security breach.
+Defense in depth combines controls to reduce the impact of an individual failure. Shared dependencies or a common misconfiguration can still affect multiple layers.
 
 - **Multiple Security Layers**: Protection at network, host, application, and data levels
 - **Redundant Controls**: Combination of various security mechanisms
-- **Failure Isolation**: Failure in one layer does not affect other layers
+- **Failure Isolation**: Design and test boundaries; independence of failures is not automatic
 - **Threat Detection and Response**: Monitoring and response at each layer
 
 #### 2. Principle of Least Privilege
@@ -965,7 +1006,7 @@ Network segmentation is a technique that divides a network into smaller segments
 
 Encryption is the process of transforming data so that it cannot be read by unauthorized parties.
 
-- **Encryption in Transit**: Protecting data moving over the network (e.g., TLS/SSL)
+- **Encryption in Transit**: Protecting data moving over the network (e.g., supported TLS)
 - **Encryption at Rest**: Protecting data stored on disk or in databases
 - **End-to-End Encryption**: Protecting data across the entire communication path
 - **Key Management**: Secure generation, storage, and rotation of encryption keys
@@ -991,7 +1032,7 @@ Container environments present unique security challenges:
 #### 3. Container-Specific Threats
 
 - **Image Vulnerabilities**: Container images containing vulnerable components
-- **Privilege Escalation**: Elevation of privileges from container to host
+- **Privilege Escalation**: Gaining permissions within or across a boundary; it is not always the same event as a container escape
 - **Lateral Movement**: Unauthorized access from one container to another
 - **Volume Mount Exploitation**: Access to sensitive host paths
 
@@ -1028,7 +1069,7 @@ Network policies are sets of rules that define allowed communication within a ne
 
 Encryption protocols provide secure communication over networks.
 
-- **TLS/SSL**: Protecting web traffic and API communication
+- **TLS**: Protecting web traffic and API communication; SSL protocols are obsolete
 - **IPsec**: Network layer encryption
 - **WireGuard**: Modern and efficient VPN protocol
 - **mTLS (mutual TLS)**: Authentication of both client and server
@@ -1039,22 +1080,29 @@ Kubernetes provides several mechanisms for network security of containerized app
 
 #### 1. Network Policies
 
-Kubernetes Network Policies are specifications that control communication between pods.
+Kubernetes NetworkPolicy specifies L3/L4 allowances for selected Pods. It needs an enforcing network implementation; allows from applicable policies combine, and existing/host-network paths require their own semantics.
 
 - **Pod Selectors**: Selecting pods to which policies apply based on labels
 - **Ingress Rules**: Controlling incoming traffic
 - **Egress Rules**: Controlling outgoing traffic
 - **CIDR-based Rules**: Filtering based on IP ranges
 
+This L4 example uses its own namespace and assumes matching frontend/API/database workloads and the stated CoreDNS labels. It includes DNS egress. Keep it separate from the later L7 example: a broad L4 allow can bypass an overlapping L7 restriction.
+
 ```yaml
+# api-l4-policy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: api-allow
+  namespace: cilium-policy-l4-demo
 spec:
   podSelector:
     matchLabels:
       app: api
+  policyTypes:
+  - Ingress
+  - Egress
   ingress:
   - from:
     - podSelector:
@@ -1071,6 +1119,18 @@ spec:
     ports:
     - protocol: TCP
       port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ```
 
 #### 2. Service Mesh Security
@@ -1088,7 +1148,7 @@ Security contexts define privilege and access control settings for pods and cont
 
 - **Privilege Restriction**: Running as non-root user
 - **Capability Restriction**: Allowing only necessary Linux capabilities
-- **Read-only Filesystem**: Immutable container filesystem
+- **Read-only Root Filesystem**: Restricts writes to the container root filesystem; mounted volumes can remain writable
 - **seccomp and AppArmor**: Restricting system calls and application behavior
 
 ### Cilium's Network Security Features
@@ -1097,30 +1157,32 @@ Cilium leverages eBPF to provide powerful network security features:
 
 #### 1. Identity-based Security
 
-Cilium applies security policies based on workload identity rather than IP addresses.
+Cilium supports workload-identity policy derived from security-relevant labels, alongside explicit CIDR/IP controls where configured.
 
 - **Label-based Policies**: Consistent security in dynamic environments
 - **Service Account-based Policies**: Access control based on Kubernetes service accounts
 - **DNS-based Policies**: Egress control based on FQDNs
 - **API-aware Security**: Filtering based on HTTP methods and paths
 
+`toCIDR` selects destination ranges, but by default CIDR selectors do not match managed in-cluster Pods/nodes; this version has an explicit Beta opt-in for those cases. The `world` entity covers external endpoints rather than all known cluster/ClusterMesh identities. Use the appropriate identity/entity scope instead of treating `world` as an allow-all-clusters synonym.
+
 #### 2. Transparent Encryption
 
-Cilium can encrypt network traffic without application modification.
+Cilium can encrypt supported paths without application changes. Node tunnels do not cover same-node traffic or every external destination. The separate SPIRE mutual-authentication handshake does not itself encrypt application traffic; Beta ztunnel workload mTLS has its own prerequisites.
 
 - **IPsec**: Network layer encryption for inter-node traffic
 - **WireGuard**: Modern and efficient encryption protocol
 - **Transparent Integration**: Encryption applied without application changes
-- **Key Rotation**: Automated encryption key management
+- **Key Rotation**: Follow the chosen mode's key lifecycle; Cilium IPsec requires provisioned key material and its documented Secret rotation procedure
 
 #### 3. Threat Detection and Visibility
 
-Cilium provides deep visibility into network activity and threat detection capabilities.
+Cilium/Hubble provides network observations that can support investigation. A complete IDS/WAF, runtime enforcement or alert/response workflow requires the appropriate separate configuration or integration.
 
 - **Hubble**: Network flow monitoring and analysis
 - **Flow Logs**: Detailed logs of pod-to-pod communication
-- **Anomaly Detection**: Identifying abnormal network patterns
-- **Security Event Alerts**: Alerts for policy violations and attack attempts
+- **Anomaly Detection**: External detection rules can analyze observed patterns; Hubble does not automatically classify every attack
+- **Security Event Alerts**: Configure an alerting/SIEM integration and account for event loss, noise and incomplete observations
 
 #### 4. L3-L7 Policy Enforcement
 
@@ -1129,15 +1191,19 @@ Cilium provides comprehensive policy enforcement from network layer to applicati
 - **L3/L4 Policies**: IP and port-based filtering
 - **L7 HTTP Filtering**: URL, method, header-based control
 - **L7 gRPC Filtering**: gRPC method and metadata-based control
-- **L7 Kafka Filtering**: Kafka topic and message-based control
+- **DNS Policy**: Query filtering and DNS observation for FQDN rules; no current Kafka topic L7 policy
 
 #### Cilium Network Security Configuration Example:
 
+This alternative L7 policy uses a different namespace from the L4 example. It requires visible plaintext HTTP or an appropriate TLS inspection path, real labeled dependencies and resolver reachability. The `.example` external name is a placeholder; no working external service is provisioned.
+
 ```yaml
-apiVersion: "cilium.io/v2"
+# api-l7-policy.yaml
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "secure-api"
+  name: secure-api
+  namespace: cilium-policy-l7-demo
 spec:
   endpointSelector:
     matchLabels:
@@ -1145,28 +1211,43 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:io.kubernetes.pod.namespace: cilium-policy-l7-demo
+        k8s:app: frontend
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: "GET"
-          path: "/api/v1/products"
+        - method: GET
+          path: /api/v1/products
   egress:
   - toEndpoints:
     - matchLabels:
-        app: database
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "5432"
+      - port: '53'
+        protocol: UDP
+      - port: '53'
+        protocol: TCP
+      rules:
+        dns:
+        - matchPattern: '*'
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: cilium-policy-l7-demo
+        k8s:app: database
+    toPorts:
+    - ports:
+      - port: '5432'
         protocol: TCP
   - toFQDNs:
-    - matchName: "api.external-service.com"
+    - matchName: api.external-service.example
     toPorts:
     - ports:
-      - port: "443"
+      - port: '443'
         protocol: TCP
 ```
 
@@ -1199,6 +1280,33 @@ spec:
 - Detect anomalies and potential threats
 - Alerts and response to security events
 - Regular security audits and vulnerability assessments
+
+## Primary References
+
+- [Cilium routing](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/routing.rst)
+- [Cilium chart values](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.yaml)
+- [Kube-proxy replacement](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst)
+- [Masquerading](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/masquerading.rst)
+- [BGP Control Plane](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst)
+- [Global Services](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/clustermesh/global-services.rst)
+- [Policy language](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer3.rst)
+- [DNS policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/dns.rst)
+- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ipsec.rst)
+- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
+- [Kubernetes network model](https://kubernetes.io/docs/concepts/services-networking/)
+- [Services](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
+- [NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [CNI specification](https://raw.githubusercontent.com/containernetworking/cni/main/SPEC.md)
+- [Docker bridge networking](https://docs.docker.com/engine/network/drivers/bridge/)
+- [Docker host networking](https://docs.docker.com/engine/network/drivers/host/)
+- [Ingress NGINX retirement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)
+- [Internet architecture / RFC 1122](https://www.rfc-editor.org/rfc/rfc1122.txt)
+- [DNS / RFC 1034](https://www.rfc-editor.org/rfc/rfc1034.txt)
+- [NAT terminology / RFC 2663](https://www.rfc-editor.org/rfc/rfc2663.txt)
+- [NAT mapping behavior / RFC 4787](https://www.rfc-editor.org/rfc/rfc4787.txt)
+- [RIP v2 / RFC 2453](https://www.rfc-editor.org/rfc/rfc2453.txt)
+- [EIGRP / RFC 7868](https://www.rfc-editor.org/rfc/rfc7868.txt)
 
 ## Quiz
 

@@ -1,0 +1,178 @@
+[
+  {
+    "path": "en/eks-auto-mode/06-cost-management.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full cost-management source/quiz audit: separate actual billing from snapshots; correct Savings Plans, tags, Kubecost/VPA and resource diagnostics.",
+    "sources": [
+      "https://aws.amazon.com/eks/pricing/",
+      "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-auto-mode-gpu-price",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html",
+      "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/aws-tags.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html",
+      "https://kubecost.github.io/kubecost/index.yaml",
+      "https://docs.aws.amazon.com/eks/latest/userguide/eks-using-tags.html",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/sp-ris.html",
+      "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-cost-control.html",
+      "https://raw.githubusercontent.com/kubernetes/autoscaler/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md",
+      "https://kubecost.github.io/kubecost/kubecost-3.2.4.tgz",
+      "https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md",
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://karpenter.sh/v1.14/concepts/nodepools/"
+    ],
+    "findings": [
+      "Confirmed July1GPUAutoMode fee35/60percent reduction withprimaryannouncement; distinguished feecomponent fromtotalbill.",
+      "Corrected management-fee vsEC2discount eligibility, USD/hour SPcommitment, family/region scope, eligibleGPU/ARM, nonstackingSpot/RI and nonreservation semantics.",
+      "Corrected aws:eks:cluster-name billingkey, activation/reportingdelay and EC2-only attribution; valid NodeClass identity/network/tagging prerequisites.",
+      "Preserved original savings/coverage/tier percentages as unverified planning examples with no new measurements.",
+      "Replaced fabricated Karpenter costmetrics and mislabeleddailybilling/nodehours with proper AWS/Billing month-to-date currency/region and billing evidence.",
+      "Replaced unfilteredSpotprice/API-error swallowing and zero-division snapshots with scopedJSON and error-preserving monetaryCErequest.",
+      "Updated to verifiedstableKubecostchart/app3.2.4/newrepo and VPA1.7.1installation; localrenderworkflowrequiresreviewedvalues,storage/IAM/retention.",
+      "Complete RestrictednonrootDeployment and labplacement; quantitiespreserved, allcontainerVPArecommendations, no suffixstripping or limits-as-binning claims.",
+      "Prometheusreviewrules nowdeduplicate,excludecgroups,guardzero/missing/partialusage, and clearly requireactualcollectors."
+    ],
+    "validation": [
+      "All4originals fullyread1397lines; originalsnapshots retained.",
+      "7complete objects validated againstKubernetes1.36.2,Karpenter1.14.1,VPA1.7.1CRD; selector/namespace/target consistency passed.",
+      "12nativeBash/jq/Python fixtures passed includingzero/missinglabels,APIerrors,invalid/futuredates,unitpreservation,privatefieldexclusion.",
+      "BotocoreGetCostAndUsage+GetSavingsPlansPurchaseRecommendation requestmodels passedwithoutclients/network.",
+      "Promtool3.14 passedduplicate/missing/partial/zerorequest/infrastructurecgroup/low/highusage andalertcases.",
+      "Pairedexecutablefences,8quizkeysCBBACBBB,Bash/YAML/JSONsyntax,10localrefs,gitdiffcheck passed.",
+      "Kubecostreleasedchartarchive/index+VPApinnedinstallationverified; nochartinstallation,billingquery,cloudmutation,imageexecution,orfullbuild.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-cost/final-validation.json"
+    ]
+  },
+  {
+    "path": "ko/eks-auto-mode/06-cost-management.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full cost-management source/quiz audit: separate actual billing from snapshots; correct Savings Plans, tags, Kubecost/VPA and resource diagnostics.",
+    "sources": [
+      "https://aws.amazon.com/eks/pricing/",
+      "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-auto-mode-gpu-price",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html",
+      "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/aws-tags.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html",
+      "https://kubecost.github.io/kubecost/index.yaml",
+      "https://docs.aws.amazon.com/eks/latest/userguide/eks-using-tags.html",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/sp-ris.html",
+      "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-cost-control.html",
+      "https://raw.githubusercontent.com/kubernetes/autoscaler/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md",
+      "https://kubecost.github.io/kubecost/kubecost-3.2.4.tgz",
+      "https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md",
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://karpenter.sh/v1.14/concepts/nodepools/"
+    ],
+    "findings": [
+      "Confirmed July1GPUAutoMode fee35/60percent reduction withprimaryannouncement; distinguished feecomponent fromtotalbill.",
+      "Corrected management-fee vsEC2discount eligibility, USD/hour SPcommitment, family/region scope, eligibleGPU/ARM, nonstackingSpot/RI and nonreservation semantics.",
+      "Corrected aws:eks:cluster-name billingkey, activation/reportingdelay and EC2-only attribution; valid NodeClass identity/network/tagging prerequisites.",
+      "Preserved original savings/coverage/tier percentages as unverified planning examples with no new measurements.",
+      "Replaced fabricated Karpenter costmetrics and mislabeleddailybilling/nodehours with proper AWS/Billing month-to-date currency/region and billing evidence.",
+      "Replaced unfilteredSpotprice/API-error swallowing and zero-division snapshots with scopedJSON and error-preserving monetaryCErequest.",
+      "Updated to verifiedstableKubecostchart/app3.2.4/newrepo and VPA1.7.1installation; localrenderworkflowrequiresreviewedvalues,storage/IAM/retention.",
+      "Complete RestrictednonrootDeployment and labplacement; quantitiespreserved, allcontainerVPArecommendations, no suffixstripping or limits-as-binning claims.",
+      "Prometheusreviewrules nowdeduplicate,excludecgroups,guardzero/missing/partialusage, and clearly requireactualcollectors."
+    ],
+    "validation": [
+      "All4originals fullyread1397lines; originalsnapshots retained.",
+      "7complete objects validated againstKubernetes1.36.2,Karpenter1.14.1,VPA1.7.1CRD; selector/namespace/target consistency passed.",
+      "12nativeBash/jq/Python fixtures passed includingzero/missinglabels,APIerrors,invalid/futuredates,unitpreservation,privatefieldexclusion.",
+      "BotocoreGetCostAndUsage+GetSavingsPlansPurchaseRecommendation requestmodels passedwithoutclients/network.",
+      "Promtool3.14 passedduplicate/missing/partial/zerorequest/infrastructurecgroup/low/highusage andalertcases.",
+      "Pairedexecutablefences,8quizkeysCBBACBBB,Bash/YAML/JSONsyntax,10localrefs,gitdiffcheck passed.",
+      "Kubecostreleasedchartarchive/index+VPApinnedinstallationverified; nochartinstallation,billingquery,cloudmutation,imageexecution,orfullbuild.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-cost/final-validation.json"
+    ]
+  },
+  {
+    "path": "en/quizzes/eks-auto-mode/06-cost-management-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full cost-management source/quiz audit: separate actual billing from snapshots; correct Savings Plans, tags, Kubecost/VPA and resource diagnostics.",
+    "sources": [
+      "https://aws.amazon.com/eks/pricing/",
+      "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-auto-mode-gpu-price",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html",
+      "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/aws-tags.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html",
+      "https://kubecost.github.io/kubecost/index.yaml",
+      "https://docs.aws.amazon.com/eks/latest/userguide/eks-using-tags.html",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/sp-ris.html",
+      "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-cost-control.html",
+      "https://raw.githubusercontent.com/kubernetes/autoscaler/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md",
+      "https://kubecost.github.io/kubecost/kubecost-3.2.4.tgz",
+      "https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md",
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://karpenter.sh/v1.14/concepts/nodepools/"
+    ],
+    "findings": [
+      "Confirmed July1GPUAutoMode fee35/60percent reduction withprimaryannouncement; distinguished feecomponent fromtotalbill.",
+      "Corrected management-fee vsEC2discount eligibility, USD/hour SPcommitment, family/region scope, eligibleGPU/ARM, nonstackingSpot/RI and nonreservation semantics.",
+      "Corrected aws:eks:cluster-name billingkey, activation/reportingdelay and EC2-only attribution; valid NodeClass identity/network/tagging prerequisites.",
+      "Preserved original savings/coverage/tier percentages as unverified planning examples with no new measurements.",
+      "All8quiz keys reconciled; no VPAperformance guarantee, 1Ti=1024Gi not1TB, pool limitsnotcurrencycap."
+    ],
+    "validation": [
+      "All4originals fullyread1397lines; originalsnapshots retained.",
+      "7complete objects validated againstKubernetes1.36.2,Karpenter1.14.1,VPA1.7.1CRD; selector/namespace/target consistency passed.",
+      "12nativeBash/jq/Python fixtures passed includingzero/missinglabels,APIerrors,invalid/futuredates,unitpreservation,privatefieldexclusion.",
+      "BotocoreGetCostAndUsage+GetSavingsPlansPurchaseRecommendation requestmodels passedwithoutclients/network.",
+      "Promtool3.14 passedduplicate/missing/partial/zerorequest/infrastructurecgroup/low/highusage andalertcases.",
+      "Pairedexecutablefences,8quizkeysCBBACBBB,Bash/YAML/JSONsyntax,10localrefs,gitdiffcheck passed.",
+      "Kubecostreleasedchartarchive/index+VPApinnedinstallationverified; nochartinstallation,billingquery,cloudmutation,imageexecution,orfullbuild.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-cost/final-validation.json"
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks-auto-mode/06-cost-management-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full cost-management source/quiz audit: separate actual billing from snapshots; correct Savings Plans, tags, Kubecost/VPA and resource diagnostics.",
+    "sources": [
+      "https://aws.amazon.com/eks/pricing/",
+      "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-auto-mode-gpu-price",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html",
+      "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/aws-tags.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html",
+      "https://kubecost.github.io/kubecost/index.yaml",
+      "https://docs.aws.amazon.com/eks/latest/userguide/eks-using-tags.html",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html",
+      "https://docs.aws.amazon.com/savingsplans/latest/userguide/sp-ris.html",
+      "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-cost-control.html",
+      "https://raw.githubusercontent.com/kubernetes/autoscaler/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md",
+      "https://kubecost.github.io/kubecost/kubecost-3.2.4.tgz",
+      "https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/installation.md",
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://karpenter.sh/v1.14/concepts/nodepools/"
+    ],
+    "findings": [
+      "Confirmed July1GPUAutoMode fee35/60percent reduction withprimaryannouncement; distinguished feecomponent fromtotalbill.",
+      "Corrected management-fee vsEC2discount eligibility, USD/hour SPcommitment, family/region scope, eligibleGPU/ARM, nonstackingSpot/RI and nonreservation semantics.",
+      "Corrected aws:eks:cluster-name billingkey, activation/reportingdelay and EC2-only attribution; valid NodeClass identity/network/tagging prerequisites.",
+      "Preserved original savings/coverage/tier percentages as unverified planning examples with no new measurements.",
+      "All8quiz keys reconciled; no VPAperformance guarantee, 1Ti=1024Gi not1TB, pool limitsnotcurrencycap."
+    ],
+    "validation": [
+      "All4originals fullyread1397lines; originalsnapshots retained.",
+      "7complete objects validated againstKubernetes1.36.2,Karpenter1.14.1,VPA1.7.1CRD; selector/namespace/target consistency passed.",
+      "12nativeBash/jq/Python fixtures passed includingzero/missinglabels,APIerrors,invalid/futuredates,unitpreservation,privatefieldexclusion.",
+      "BotocoreGetCostAndUsage+GetSavingsPlansPurchaseRecommendation requestmodels passedwithoutclients/network.",
+      "Promtool3.14 passedduplicate/missing/partial/zerorequest/infrastructurecgroup/low/highusage andalertcases.",
+      "Pairedexecutablefences,8quizkeysCBBACBBB,Bash/YAML/JSONsyntax,10localrefs,gitdiffcheck passed.",
+      "Kubecostreleasedchartarchive/index+VPApinnedinstallationverified; nochartinstallation,billingquery,cloudmutation,imageexecution,orfullbuild.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-cost/final-validation.json"
+    ]
+  }
+]

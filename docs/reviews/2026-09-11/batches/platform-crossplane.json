@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/platform-engineering/07-crossplane.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "616fd7d45abaf1c7a1762ff5ed9daf46f534bb84f9d9fa23e2cf955493919b34",
+    "summary": "All4originalMD83fencedplusindentedblocks/8quiztopicseachreviewed;actualCLI/core/functions3renders/schema/CELnegative/XRDconvert/4MD10figures30responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-crossplane-validation.json"
+  },
+  {
+    "path": "ko/quizzes/platform-engineering/07-crossplane-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b224c757be1f053e47633d35956c549c1a3da63167fe02301740217cedf5d8d2",
+    "summary": "All4originalMD83fencedplusindentedblocks/8quiztopicseachreviewed;actualCLI/core/functions3renders/schema/CELnegative/XRDconvert/4MD10figures30responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-crossplane-validation.json"
+  },
+  {
+    "path": "en/platform-engineering/07-crossplane.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "7df89961163abe216adac4ef4209ca53db0eb697e60b186e5b4ed0e98fd8dc11",
+    "summary": "All4originalMD83fencedplusindentedblocks/8quiztopicseachreviewed;actualCLI/core/functions3renders/schema/CELnegative/XRDconvert/4MD10figures30responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-crossplane-validation.json"
+  },
+  {
+    "path": "en/quizzes/platform-engineering/07-crossplane-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "5a8c341b0b57951d2b83a55aaccc7c257db031adfcee7340cbe316a63deca8c5",
+    "summary": "All4originalMD83fencedplusindentedblocks/8quiztopicseachreviewed;actualCLI/core/functions3renders/schema/CELnegative/XRDconvert/4MD10figures30responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-crossplane-validation.json"
+  }
+]

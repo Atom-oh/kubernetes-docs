@@ -1,0 +1,10 @@
+FROM cgr.dev/chainguard/python:latest-dev@sha256:b0bc807f4334fea6adaac0f4dfbde255b9938ca957facb26eaed8bb448fce473 AS builder
+WORKDIR /app
+COPY requirements.txt ./
+RUN python -m venv /app/venv && /app/venv/bin/pip install --no-cache-dir -r requirements.txt
+FROM cgr.dev/chainguard/python:latest@sha256:b5decb00aa1cb65ab71bb3f6632a44bb8e6fd8d661de1f0342fd513a06837b9a
+WORKDIR /app
+COPY --from=builder /app/venv /app/venv
+COPY app.py /app/app.py
+USER 65532:65532
+ENTRYPOINT ["/app/venv/bin/python", "/app/app.py"]

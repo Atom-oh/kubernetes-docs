@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Backstage + Crossplane 통합 아키텍처",
+    "title": "Backstage · GitOps · Crossplane v2",
     "output": "ko-platform-engineering-07-crossplane-4.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -15,7 +15,7 @@
           "tpl",
           "scf"
         ],
-        "note": "개발자가 Backstage 폼에 입력하면 Scaffolder가 Crossplane Claim YAML을 생성한다."
+        "note": "승인된 GitOps 변경 후 Namespaced XR를 적용합니다. 실제 AWS API 호출은 Provider가 수행합니다."
       },
       {
         "id": "gitops",
@@ -26,7 +26,7 @@
           "argo",
           "claim"
         ],
-        "note": "Claim YAML은 Git에 푸시되고 ArgoCD가 클러스터에 적용한다."
+        "note": "승인된 GitOps 변경 후 Namespaced XR를 적용합니다. 실제 AWS API 호출은 Provider가 수행합니다."
       },
       {
         "id": "provisioning",
@@ -39,7 +39,7 @@
           "s3",
           "sg"
         ],
-        "note": "Claim이 Composite Resource와 Managed Resource를 거쳐 AWS 리소스로 프로비저닝된다."
+        "note": "승인된 GitOps 변경 후 Namespaced XR를 적용합니다. 실제 AWS API 호출은 Provider가 수행합니다."
       }
     ],
     "legend": {
@@ -99,7 +99,7 @@
       "id": "scf",
       "type": "backend",
       "label": "Scaffolder",
-      "sublabel": "Claim YAML 생성",
+      "sublabel": "XR YAML 생성",
       "pos": [
         470,
         80
@@ -112,8 +112,8 @@
     {
       "id": "repo",
       "type": "external",
-      "label": "Git Repository",
-      "sublabel": "GitHub",
+      "label": "Git PR → Merge",
+      "sublabel": "검토한 main branch",
       "pos": [
         700,
         80
@@ -140,8 +140,8 @@
     {
       "id": "claim",
       "type": "backend",
-      "label": "Claim",
-      "sublabel": "Namespace-scoped",
+      "label": "Namespaced XR",
+      "sublabel": "PostgreSQLDatabase",
       "pos": [
         910,
         300
@@ -154,8 +154,8 @@
     {
       "id": "xr",
       "type": "backend",
-      "label": "Composite Resource",
-      "sublabel": "XR",
+      "label": "Composition Functions",
+      "sublabel": "원하는 MR 계산",
       "pos": [
         690,
         300
@@ -272,7 +272,7 @@
       "id": "tpl-scf",
       "from": "tpl",
       "to": "scf",
-      "label": "2. Claim YAML 생성",
+      "label": "2. XR YAML",
       "variant": "emphasis",
       "labelDy": -24
     },
@@ -280,15 +280,16 @@
       "id": "scf-repo",
       "from": "scf",
       "to": "repo",
-      "label": "3. Git Push",
+      "label": "3. PR 생성",
       "variant": "emphasis"
     },
     {
       "id": "repo-argo",
       "from": "repo",
       "to": "argo",
-      "label": "4. Sync",
-      "variant": "emphasis"
+      "label": "4. merge 후 sync",
+      "variant": "emphasis",
+      "labelDy": -24
     },
     {
       "id": "argo-claim",
@@ -304,7 +305,7 @@
       "id": "claim-xr",
       "from": "claim",
       "to": "xr",
-      "label": "6. XR 생성",
+      "label": "6. Pipeline",
       "variant": "emphasis",
       "labelDy": -24
     },
@@ -342,18 +343,20 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "셀프서비스",
+      "title": "포털과 배포",
       "items": [
-        "개발자는 Backstage UI에서 폼 입력만으로 데이터베이스 등 인프라를 요청한다",
-        "Software Template이 입력값을 Crossplane Claim YAML로 변환한다"
+        "Scaffolder는 준비된 skeleton과 action을 실행",
+        "PR 생성과 실제 AWS 프로비저닝 완료는 다른 상태",
+        "catalog 등록은 merge 후 유효한 source를 사용"
       ]
     },
     {
-      "dot": "emerald",
-      "title": "GitOps + Crossplane",
+      "dot": "amber",
+      "title": "수명 주기",
       "items": [
-        "Claim은 Git에 커밋되고 ArgoCD가 클러스터에 적용한다",
-        "Composition이 Claim을 RDS, S3, SecurityGroup 등 Managed Resource로 확장한다"
+        "ArgoCD prune은 XR·MR 삭제로 이어질 수 있음",
+        "managementPolicies / RDS deletion protection / backups를 함께 검토",
+        "Git 기록만으로 전체 AWS 감사 로그를 대체하지 않음"
       ]
     }
   ]

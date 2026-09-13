@@ -1,0 +1,1618 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T00:25:06.947704+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 16,
+    "originalUniqueFencedBlocks": 83,
+    "additionalIndentedBlocksRead": true,
+    "exampleFiles": 12,
+    "figures": 10
+  },
+  "originalFiles": [
+    {
+      "path": "ko/platform-engineering/07-crossplane.md",
+      "lines": 1958,
+      "proseLines": 664,
+      "sha256": "fa138e3d06e6f3bfdf0e4e08548a7b75c73b768a0c081270e4059fc0b0aacc4d"
+    },
+    {
+      "path": "ko/quizzes/platform-engineering/07-crossplane-quiz.md",
+      "lines": 143,
+      "proseLines": 143,
+      "sha256": "299088265cc89817b72dfd691eebbd2e6ac4a73ea411a22ef0aeff392c5df959"
+    },
+    {
+      "path": "en/platform-engineering/07-crossplane.md",
+      "lines": 1827,
+      "proseLines": 678,
+      "sha256": "6625e324486a171d073da093a7d5a864b8cb9eb7584602b489fd656d1f6a41c3"
+    },
+    {
+      "path": "en/quizzes/platform-engineering/07-crossplane-quiz.md",
+      "lines": 143,
+      "proseLines": 143,
+      "sha256": "dc36317e67f85cc3e10987a6474fb6e7a8281ced2e3b9cc960d4bfd5c65d458a"
+    }
+  ],
+  "contentPreservation": "AllProvider/MR/XRD/XR/Claimslegacy/Composition/connection/IAM/network/S3/RDS/adoption/monitoring/GitOps/backup/deletiontopicsand8quiztopicseachretained. Current2.4namespaceAPIs,P&Tpipelineandconditionalmanagementreplaceinvalidv1examples;legacyClaimsdocumentedexplicitly.",
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/platform-engineering/07-crossplane.md",
+        "sha256": "616fd7d45abaf1c7a1762ff5ed9daf46f534bb84f9d9fa23e2cf955493919b34",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "crossplane"
+          },
+          {
+            "tag": "h2",
+            "id": "개념과-v2-변경"
+          },
+          {
+            "tag": "h2",
+            "id": "core-설치·provider·권한"
+          },
+          {
+            "tag": "h2",
+            "id": "namespace-범위-s3-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "postgresql-플랫폼-api"
+          },
+          {
+            "tag": "h3",
+            "id": "function-pipeline"
+          },
+          {
+            "tag": "h3",
+            "id": "개발·운영-입력"
+          },
+          {
+            "tag": "h2",
+            "id": "connection-secret과-readiness"
+          },
+          {
+            "tag": "h2",
+            "id": "기존-리소스·삭제·업그레이드"
+          },
+          {
+            "tag": "h2",
+            "id": "관찰과-조정-주기"
+          },
+          {
+            "tag": "h2",
+            "id": "ack·backstage·gitops"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          }
+        ],
+        "renderedIds": [
+          "crossplane",
+          "개념과-v2-변경",
+          "core-설치·provider·권한",
+          "namespace-범위-s3-예제",
+          "postgresql-플랫폼-api",
+          "function-pipeline",
+          "개발·운영-입력",
+          "connection-secret과-readiness",
+          "기존-리소스·삭제·업그레이드",
+          "관찰과-조정-주기",
+          "ack·backstage·gitops",
+          "검증-범위"
+        ]
+      },
+      {
+        "path": "ko/quizzes/platform-engineering/07-crossplane-quiz.md",
+        "sha256": "b224c757be1f053e47633d35956c549c1a3da63167fe02301740217cedf5d8d2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "crossplane-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-composition은-무엇을-해결하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-v2-xr와-기존-claim의-관계는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-irsa나-pod-identity만-선택하면-최소-권한-구성이-끝나나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-terraform과-crossplane의-주요-차이는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-ack와-crossplane은-어떻게-공존하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-v2-connection-secret은-어떻게-제공하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-backstage와-gitops의-올바른-흐름은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-drift-수정과-삭제-보존은-무엇으로-제어하나요"
+          }
+        ],
+        "renderedIds": [
+          "crossplane-퀴즈",
+          "_1-composition은-무엇을-해결하나요",
+          "_2-v2-xr와-기존-claim의-관계는-무엇인가요",
+          "_3-irsa나-pod-identity만-선택하면-최소-권한-구성이-끝나나요",
+          "_4-terraform과-crossplane의-주요-차이는-무엇인가요",
+          "_5-ack와-crossplane은-어떻게-공존하나요",
+          "_6-v2-connection-secret은-어떻게-제공하나요",
+          "_7-backstage와-gitops의-올바른-흐름은-무엇인가요",
+          "_8-drift-수정과-삭제-보존은-무엇으로-제어하나요"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/07-crossplane.md",
+        "sha256": "7df89961163abe216adac4ef4209ca53db0eb697e60b186e5b4ed0e98fd8dc11",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "crossplane"
+          },
+          {
+            "tag": "h2",
+            "id": "concepts-and-v2-changes"
+          },
+          {
+            "tag": "h2",
+            "id": "core-providers-and-permissions"
+          },
+          {
+            "tag": "h2",
+            "id": "namespaced-s3-example"
+          },
+          {
+            "tag": "h2",
+            "id": "postgresql-platform-api"
+          },
+          {
+            "tag": "h3",
+            "id": "function-pipeline"
+          },
+          {
+            "tag": "h3",
+            "id": "development-and-production-inputs"
+          },
+          {
+            "tag": "h2",
+            "id": "connection-secrets-and-readiness"
+          },
+          {
+            "tag": "h2",
+            "id": "adoption-deletion-and-upgrades"
+          },
+          {
+            "tag": "h2",
+            "id": "observability-and-reconciliation"
+          },
+          {
+            "tag": "h2",
+            "id": "ack-backstage-and-gitops"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-scope"
+          }
+        ],
+        "renderedIds": [
+          "crossplane",
+          "concepts-and-v2-changes",
+          "core-providers-and-permissions",
+          "namespaced-s3-example",
+          "postgresql-platform-api",
+          "function-pipeline",
+          "development-and-production-inputs",
+          "connection-secrets-and-readiness",
+          "adoption-deletion-and-upgrades",
+          "observability-and-reconciliation",
+          "ack-backstage-and-gitops",
+          "verification-scope"
+        ]
+      },
+      {
+        "path": "en/quizzes/platform-engineering/07-crossplane-quiz.md",
+        "sha256": "5a8c341b0b57951d2b83a55aaccc7c257db031adfcee7340cbe316a63deca8c5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "crossplane-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-does-a-composition-provide"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-how-do-v2-xrs-differ-from-legacy-claims"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-does-selecting-irsa-or-pod-identity-complete-least-privilege"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-what-primarily-differs-between-terraform-and-crossplane"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-how-can-ack-and-crossplane-coexist"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-how-are-connection-secrets-provided-in-v2"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-what-is-the-backstage-gitops-workflow"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-what-controls-drift-correction-and-retention"
+          }
+        ],
+        "renderedIds": [
+          "crossplane-quiz",
+          "_1-what-does-a-composition-provide",
+          "_2-how-do-v2-xrs-differ-from-legacy-claims",
+          "_3-does-selecting-irsa-or-pod-identity-complete-least-privilege",
+          "_4-what-primarily-differs-between-terraform-and-crossplane",
+          "_5-how-can-ack-and-crossplane-coexist",
+          "_6-how-are-connection-secrets-provided-in-v2",
+          "_7-what-is-the-backstage-gitops-workflow",
+          "_8-what-controls-drift-correction-and-retention"
+        ]
+      }
+    ]
+  },
+  "binaries": [
+    {
+      "url": "https://cli.crossplane.io/stable/v2.4.0/bin/linux_arm64/crossplane",
+      "sha256": "9ef420c378cb2b4ee18711146991215e0cb5a1e278bc14dc51dc53d7554c3342",
+      "checksumVerified": true,
+      "bytes": 94961826
+    },
+    {
+      "url": "https://releases.crossplane.io/stable/v2.4.0/bin/linux_arm64/crossplane",
+      "sha256": "c20fc27c5a0741169ab9469cc896ffb608b6106c08e8d202df00137be8c0ae1c",
+      "bytes": 66322580,
+      "checksumVerified": true
+    }
+  ],
+  "native": {
+    "standaloneMRs": {
+      "summary": {
+        "total": 5,
+        "valid": 5,
+        "invalid": 0,
+        "missingSchemas": 0
+      },
+      "resources": [
+        {
+          "apiVersion": "s3.aws.m.upbound.io/v1beta1",
+          "kind": "BucketServerSideEncryptionConfiguration",
+          "name": "app-data-encryption",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "s3.aws.m.upbound.io/v1beta1",
+          "kind": "BucketPublicAccessBlock",
+          "name": "app-data-public-access",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "s3.aws.m.upbound.io/v1beta1",
+          "kind": "BucketVersioning",
+          "name": "app-data-versioning",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "s3.aws.m.upbound.io/v1beta1",
+          "kind": "Bucket",
+          "name": "app-data",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "aws.m.upbound.io/v1beta1",
+          "kind": "ProviderConfig",
+          "name": "team-aws",
+          "namespace": "team-alpha",
+          "status": "valid"
+        }
+      ]
+    },
+    "providerRuntime": {
+      "summary": {
+        "total": 2,
+        "valid": 2,
+        "invalid": 0,
+        "missingSchemas": 0
+      },
+      "resources": [
+        {
+          "apiVersion": "pkg.crossplane.io/v1beta1",
+          "kind": "DeploymentRuntimeConfig",
+          "name": "provider-aws-s3-reviewed",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "pkg.crossplane.io/v1",
+          "kind": "Provider",
+          "name": "provider-aws-s3",
+          "status": "valid"
+        }
+      ]
+    },
+    "devRenderSchema": {
+      "summary": {
+        "total": 5,
+        "valid": 5,
+        "invalid": 0,
+        "missingSchemas": 0
+      },
+      "resources": [
+        {
+          "apiVersion": "platform.example.com/v1alpha1",
+          "kind": "PostgreSQLDatabase",
+          "name": "orders-db",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "rds.aws.m.upbound.io/v1beta1",
+          "kind": "Instance",
+          "name": "orders-db-2967e96af86f",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "ec2.aws.m.upbound.io/v1beta1",
+          "kind": "SecurityGroup",
+          "name": "orders-db-779d4eb3cacf",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "ec2.aws.m.upbound.io/v1beta1",
+          "kind": "SecurityGroupRule",
+          "name": "orders-db-129abe788fc7",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "rds.aws.m.upbound.io/v1beta1",
+          "kind": "SubnetGroup",
+          "name": "orders-db-e485ed3d4d14",
+          "namespace": "team-alpha",
+          "status": "valid"
+        }
+      ]
+    },
+    "prodRenderSchema": {
+      "summary": {
+        "total": 5,
+        "valid": 5,
+        "invalid": 0,
+        "missingSchemas": 0
+      },
+      "resources": [
+        {
+          "apiVersion": "platform.example.com/v1alpha1",
+          "kind": "PostgreSQLDatabase",
+          "name": "orders-db",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "rds.aws.m.upbound.io/v1beta1",
+          "kind": "Instance",
+          "name": "orders-db-2967e96af86f",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "ec2.aws.m.upbound.io/v1beta1",
+          "kind": "SecurityGroup",
+          "name": "orders-db-779d4eb3cacf",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "ec2.aws.m.upbound.io/v1beta1",
+          "kind": "SecurityGroupRule",
+          "name": "orders-db-129abe788fc7",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "rds.aws.m.upbound.io/v1beta1",
+          "kind": "SubnetGroup",
+          "name": "orders-db-e485ed3d4d14",
+          "namespace": "team-alpha",
+          "status": "valid"
+        }
+      ]
+    },
+    "observedCustomSchema": {
+      "summary": {
+        "total": 5,
+        "valid": 5,
+        "invalid": 0,
+        "missingSchemas": 0
+      },
+      "resources": [
+        {
+          "apiVersion": "platform.example.com/v1alpha1",
+          "kind": "PostgreSQLDatabase",
+          "name": "orders-db",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "rds.aws.m.upbound.io/v1beta1",
+          "kind": "Instance",
+          "name": "orders-db-2967e96af86f",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "ec2.aws.m.upbound.io/v1beta1",
+          "kind": "SecurityGroup",
+          "name": "orders-db-779d4eb3cacf",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "ec2.aws.m.upbound.io/v1beta1",
+          "kind": "SecurityGroupRule",
+          "name": "orders-db-129abe788fc7",
+          "namespace": "team-alpha",
+          "status": "valid"
+        },
+        {
+          "apiVersion": "rds.aws.m.upbound.io/v1beta1",
+          "kind": "SubnetGroup",
+          "name": "orders-db-e485ed3d4d14",
+          "namespace": "team-alpha",
+          "status": "valid"
+        }
+      ]
+    },
+    "secret": {
+      "status": "passed",
+      "officialCoreOpenAPISource": ".vitepress/cache/content-review-ai-root/workloads/sources/api__v1_openapi.json",
+      "schemaSha256": "a3cbb14c08e7832e80776e717a5658a178dccb3562cc5c1238193634b6985ff8",
+      "namespace": "team-alpha",
+      "dataKeys": [
+        "endpoint",
+        "username"
+      ],
+      "base64ValuesMatchedSyntheticInput": true,
+      "scope": "SeparateKubernetescoreSecretOpenAPIschemaandbase64check;CrossplaneCLIreportsmissingbuiltinSecretschema,notignored."
+    },
+    "negativeXR": {
+      "status": "passed",
+      "cases": [
+        {
+          "case": "invalid-db-name",
+          "rejected": true,
+          "errors": [
+            {
+              "type": "schema",
+              "field": "spec.parameters.dbName",
+              "message": "spec.parameters.dbName: Invalid value: \"orders-db\": spec.parameters.dbName in body should match '^[a-z][a-z0-9]{0,62}$'",
+              "value": "orders-db"
+            }
+          ]
+        },
+        {
+          "case": "invalid-provider",
+          "rejected": true,
+          "errors": [
+            {
+              "type": "schema",
+              "field": "spec.parameters.providerConfigName",
+              "message": "spec.parameters.providerConfigName: Unsupported value: \"another-team\": supported values: \"team-aws\"",
+              "value": "another-team"
+            }
+          ]
+        },
+        {
+          "case": "storage-too-small",
+          "rejected": true,
+          "errors": [
+            {
+              "type": "schema",
+              "field": "spec.parameters.storageGB",
+              "message": "spec.parameters.storageGB: Invalid value: 1: spec.parameters.storageGB in body should be greater than or equal to 20",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    "XRDconversion": {
+      "status": "passed",
+      "cases": [
+        {
+          "input": "v2Namespaced",
+          "outputCRDs": 1,
+          "scope": "Namespaced"
+        },
+        {
+          "input": "v1LegacyClusterwithclaimNames",
+          "outputCRDs": 2,
+          "scopes": [
+            "Cluster",
+            "Namespaced"
+          ]
+        }
+      ],
+      "scope": "ActualCrossplane2.4CLIXRDconversion;notKubernetesCRDinstallation."
+    },
+    "renderCases": {
+      "status": "passed",
+      "checks": [
+        {
+          "case": "prod",
+          "renderedKinds": [
+            "PostgreSQLDatabase",
+            "Instance",
+            "SecurityGroup",
+            "SecurityGroupRule",
+            "SubnetGroup"
+          ],
+          "passed": true
+        },
+        {
+          "case": "observed-ready",
+          "renderedKinds": [
+            "PostgreSQLDatabase",
+            "Instance",
+            "Secret",
+            "SecurityGroup",
+            "SecurityGroupRule",
+            "SubnetGroup"
+          ],
+          "passed": true
+        }
+      ],
+      "scope": "Actualcore2.4+P&T0.10.10+autoReady0.7localgRPCfunctions;syntheticobservationonly.NoAWS/Kubernetesresources."
+    },
+    "monitoring": {
+      "status": "passed",
+      "corePodLabelsFromActualHelmRender": true,
+      "corePort": "metrics:8080",
+      "providerPodLabelsFromValidatedDRC": true,
+      "providerMetricsBindDefault": ":8080",
+      "source": "sources/aws-cmd_provider_s3_zz_main.go",
+      "limits": "Selector/port/sourceverifiedonly;nolivePrometheus/PodMonitorCRDadmission/scrape.KSMcustomresourcemetricsarenotbuiltin."
+    }
+  },
+  "registry": [
+    {
+      "url": "https://xpkg.crossplane.io/v2/crossplane-contrib/provider-aws-s3/manifests/v2.7.0",
+      "status": 200,
+      "digest": "sha256:ff52892246fd492f9fe00d2b7c45bc2181e824da66903c9a22a266d4cec58eef",
+      "mediaType": "application/vnd.oci.image.index.v1+json",
+      "bytes": 641
+    },
+    {
+      "url": "https://xpkg.upbound.io/v2/upbound/provider-aws-s3/manifests/v2.7.0",
+      "status": 200,
+      "digest": "sha256:36c8e1a828a151989ccb8aee02f960e681bd88e83a515f3b721b0c291a29b019",
+      "mediaType": "application/vnd.oci.image.index.v1+json",
+      "bytes": 513
+    }
+  ],
+  "exactPublishedMatches": [
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/provider-s3.yaml",
+      "sha256": "1a781cd97278de90b9d946de29ef3e1527b07fda11ff97a5a670d5cc7fd18c5c"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/podmonitors.yaml",
+      "sha256": "485a03881986cdc83a096e3f68e2fc4b59e68ba4521697660e0c2afbda894775"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/fixtures/provider-config.yaml",
+      "sha256": "1e656179e088eba056735229a32777ca53d2d0922b708347e7ede99ed9cd8893"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/fixtures/bucket.yaml",
+      "sha256": "59e6eb1bd9953b2722d080383874f2ca09ea93d416aa64eb4e2c2e704bbb9d4f"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/fixtures/bucket-public-access.yaml",
+      "sha256": "a35c48e64a8cd0dd18582e2c229c0917c94fef205a37a3a368e954572f558591"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/fixtures/bucket-versioning.yaml",
+      "sha256": "c37670c7137a1d65fa4d7fe961c64c4f2e934a06013928d837b714542543eab1"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/fixtures/bucket-encryption.yaml",
+      "sha256": "97b199a67ac92ebfc3e7bdb5135b223e41c35511e653a3ef15406a262f810a05"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/composition/xrd.yaml",
+      "sha256": "4ad106f0f7e6135381216508a0a07a85410ec1382d316a0b7f411ac962461f6f"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/composition/composition.yaml",
+      "sha256": "f424e22c16face86f4dab5f3e6c391a9df6ec76bd74f9633fd0593075e34ae5b"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/composition/xr-dev.yaml",
+      "sha256": "b106a9a62c126e34f218c91e6f7d1208f927baf46668255e7d1b6cf322e374f5"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/composition/xr-prod.yaml",
+      "sha256": "cd2d4edf5e19064b9ee3de969f001c631ff00e8fcf81cc38092fe454d2302e26"
+    },
+    {
+      "document": "ko/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/composition/functions.yaml",
+      "sha256": "6740ff11631b902e4f92f6ec74eb42cff28e5a585b059d5d7b8d94651c11d47a"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/provider-s3.yaml",
+      "sha256": "1a781cd97278de90b9d946de29ef3e1527b07fda11ff97a5a670d5cc7fd18c5c"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/podmonitors.yaml",
+      "sha256": "485a03881986cdc83a096e3f68e2fc4b59e68ba4521697660e0c2afbda894775"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/fixtures/provider-config.yaml",
+      "sha256": "1e656179e088eba056735229a32777ca53d2d0922b708347e7ede99ed9cd8893"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/fixtures/bucket.yaml",
+      "sha256": "59e6eb1bd9953b2722d080383874f2ca09ea93d416aa64eb4e2c2e704bbb9d4f"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/fixtures/bucket-public-access.yaml",
+      "sha256": "a35c48e64a8cd0dd18582e2c229c0917c94fef205a37a3a368e954572f558591"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/fixtures/bucket-versioning.yaml",
+      "sha256": "c37670c7137a1d65fa4d7fe961c64c4f2e934a06013928d837b714542543eab1"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/fixtures/bucket-encryption.yaml",
+      "sha256": "97b199a67ac92ebfc3e7bdb5135b223e41c35511e653a3ef15406a262f810a05"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/composition/xrd.yaml",
+      "sha256": "4ad106f0f7e6135381216508a0a07a85410ec1382d316a0b7f411ac962461f6f"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/composition/composition.yaml",
+      "sha256": "f424e22c16face86f4dab5f3e6c391a9df6ec76bd74f9633fd0593075e34ae5b"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/composition/xr-dev.yaml",
+      "sha256": "b106a9a62c126e34f218c91e6f7d1208f927baf46668255e7d1b6cf322e374f5"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/composition/xr-prod.yaml",
+      "sha256": "cd2d4edf5e19064b9ee3de969f001c631ff00e8fcf81cc38092fe454d2302e26"
+    },
+    {
+      "document": "en/platform-engineering/07-crossplane.md",
+      "example": "examples/platform/crossplane/composition/functions.yaml",
+      "sha256": "6740ff11631b902e4f92f6ec74eb42cff28e5a585b059d5d7b8d94651c11d47a"
+    }
+  ],
+  "primaryLinks": [
+    {
+      "url": "https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/",
+      "status": 200,
+      "finalUrl": "https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/",
+      "sha256": "b24fbb128de31dcbbd9d0ab24cac426b43736f02a4ecf3c681a062ef4bbb9647"
+    },
+    {
+      "url": "https://docs.crossplane.io/v2.4/",
+      "status": 200,
+      "finalUrl": "https://docs.crossplane.io/v2.4/",
+      "sha256": "b91c223bc9db5a6537944f772657d0a7e9a8c817d15ad15a0b5e4455158f80e6"
+    },
+    {
+      "url": "https://docs.crossplane.io/v2.4/guides/connection-details-composition/",
+      "status": 200,
+      "finalUrl": "https://docs.crossplane.io/v2.4/guides/connection-details-composition/",
+      "sha256": "d5de1955e72301305320f3bfb649a2c47204fe50657aaa5d66068e2ba27b166a"
+    },
+    {
+      "url": "https://github.com/crossplane-contrib/function-patch-and-transform/tree/v0.10.10",
+      "status": 200,
+      "finalUrl": "https://github.com/crossplane-contrib/function-patch-and-transform/tree/v0.10.10",
+      "sha256": "5c3ae01563f6f634476daedca7b88f2043011663dd0d4cacf6e99ada1570d185"
+    },
+    {
+      "url": "https://github.com/crossplane-contrib/provider-upjet-aws/tree/v2.7.0",
+      "status": 200,
+      "finalUrl": "https://github.com/crossplane-contrib/provider-upjet-aws/tree/v2.7.0",
+      "sha256": "134a487ee851f09b00c7151e7cace3e1342a55887f039f9bea4dd19dfe0b3f22"
+    },
+    {
+      "url": "https://www.cncf.io/projects/crossplane/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/projects/crossplane/",
+      "sha256": "c5e4dcaf320ebf3b226c5d82ee42530dff8a648f0045e420f0d181985c7c0b6e"
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "0ceeff5cf83996ec87abfb78499d9d512a39fa1912811c451d326c4f50db9c4c"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "0ceeff5cf83996ec87abfb78499d9d512a39fa1912811c451d326c4f50db9c4c"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "0ceeff5cf83996ec87abfb78499d9d512a39fa1912811c451d326c4f50db9c4c"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "a32d3a6becc9413705699a9fd2cbb9fd7c3afbd81bbbcab8b13b299127050faa"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "a32d3a6becc9413705699a9fd2cbb9fd7c3afbd81bbbcab8b13b299127050faa"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "a32d3a6becc9413705699a9fd2cbb9fd7c3afbd81bbbcab8b13b299127050faa"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "b3d368f37ddff19401c9afe8dc35cfde89bb3e680abf26981975567e76750192"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "b3d368f37ddff19401c9afe8dc35cfde89bb3e680abf26981975567e76750192"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "b3d368f37ddff19401c9afe8dc35cfde89bb3e680abf26981975567e76750192"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "6eb4403536daa1c02f51a470d526a10b0c117236f3cacc888d28cdfbb6b1c834"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "6eb4403536daa1c02f51a470d526a10b0c117236f3cacc888d28cdfbb6b1c834"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "6eb4403536daa1c02f51a470d526a10b0c117236f3cacc888d28cdfbb6b1c834"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "21b46a48e09fd7fbdeb31b460bbe75c7681caa2b3b76b0ca77d9cf43fed27d84"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "21b46a48e09fd7fbdeb31b460bbe75c7681caa2b3b76b0ca77d9cf43fed27d84"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "21b46a48e09fd7fbdeb31b460bbe75c7681caa2b3b76b0ca77d9cf43fed27d84"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "4c070bd8d475a107fa3b5262d5e7fdb20ded8e49b707ae54fb80a6d9b47fb829"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "4c070bd8d475a107fa3b5262d5e7fdb20ded8e49b707ae54fb80a6d9b47fb829"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "4c070bd8d475a107fa3b5262d5e7fdb20ded8e49b707ae54fb80a6d9b47fb829"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "35803e0c82686d5f9eb13c074dfcc47f7a3ce8d248e8288fc91d84459a496fe3"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "35803e0c82686d5f9eb13c074dfcc47f7a3ce8d248e8288fc91d84459a496fe3"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "35803e0c82686d5f9eb13c074dfcc47f7a3ce8d248e8288fc91d84459a496fe3"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "df400989ea54588d83e30c348c90ff2d16dc0c1d7814fada2a9de1b6297d4b42"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "df400989ea54588d83e30c348c90ff2d16dc0c1d7814fada2a9de1b6297d4b42"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "df400989ea54588d83e30c348c90ff2d16dc0c1d7814fada2a9de1b6297d4b42"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "f46547ba8db83ec90428a38fa59e62754961f9308dac76219c24a7b94f5c25c6"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "f46547ba8db83ec90428a38fa59e62754961f9308dac76219c24a7b94f5c25c6"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "f46547ba8db83ec90428a38fa59e62754961f9308dac76219c24a7b94f5c25c6"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "9bc1afaf085df05359320745830d3af827fad0add227d0861ae262c75d678d0b"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "9bc1afaf085df05359320745830d3af827fad0add227d0861ae262c75d678d0b"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "9bc1afaf085df05359320745830d3af827fad0add227d0861ae262c75d678d0b"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "diagrams": [
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-07-crossplane-0.architecture.json",
+      "sha256": "6cc5a65cc6175a8ec8442351bce48a2248bc16b3f63231e50a2c64e85e5072dc"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-07-crossplane-0.html",
+      "sha256": "0ceeff5cf83996ec87abfb78499d9d512a39fa1912811c451d326c4f50db9c4c"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-07-crossplane-0.png",
+      "sha256": "ca33bec55fa31f5293c459ca8926d7550d6068dc3a01852712c3f806aa51269a"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-07-crossplane-1.architecture.json",
+      "sha256": "71f96381e49db4cd76f819f92efe110a4bf5edfeddedd46be70a3e6f22f6320f"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-07-crossplane-1.html",
+      "sha256": "15d32633f805ff23112914ac2643085b7f33ff170319c91b1cf802176e3819be"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-07-crossplane-1.png",
+      "sha256": "9958a284f2bfd4b3d98edade5ee3f2c9e3d5029a8323eaad582266cb62def28f"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-07-crossplane-2.architecture.json",
+      "sha256": "06a8655e6ed0c8b39b751277808fbc8a0af31ae4774519496d9b52dae1c6e4e5"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-07-crossplane-2.html",
+      "sha256": "21b46a48e09fd7fbdeb31b460bbe75c7681caa2b3b76b0ca77d9cf43fed27d84"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-07-crossplane-2.png",
+      "sha256": "f4ace5e43f37863ef63ee5d58cdcbd85f1d758fc240a788285bc851722e2f79b"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-07-crossplane-3.sequence.json",
+      "sha256": "2f92ad52e8472164f3236c1c2caf5f49dc020f6d5183c93efc5e30f68a44170d"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-07-crossplane-3.html",
+      "sha256": "35803e0c82686d5f9eb13c074dfcc47f7a3ce8d248e8288fc91d84459a496fe3"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-07-crossplane-3.png",
+      "sha256": "91b220624a82c8adf8a7ceb4567b349b4665fd9624dd7010d99884b289106b07"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-07-crossplane-4.architecture.json",
+      "sha256": "3bfcdcd14812fbb273b89f6bc7917df4629f723e11619990e5a9ac705aabd027"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-07-crossplane-4.html",
+      "sha256": "f46547ba8db83ec90428a38fa59e62754961f9308dac76219c24a7b94f5c25c6"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-07-crossplane-4.png",
+      "sha256": "f9b8dfcfc58741d0c3b4c6fef8542c829bfdd06a78809244534264491ae663fb"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-07-crossplane-0.architecture.json",
+      "sha256": "f050937c9c07ce22149ef3cef4df0ed8aba531a9f0ede951252bdae25ca43b8a"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-07-crossplane-0.html",
+      "sha256": "a32d3a6becc9413705699a9fd2cbb9fd7c3afbd81bbbcab8b13b299127050faa"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-07-crossplane-0.png",
+      "sha256": "09713167daf0526f68e864c99d0fc8b02ea3ea0b1ceccdca9ca9bb64d610e961"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-07-crossplane-1.architecture.json",
+      "sha256": "bd3b55ca05d477c3b250a248f4f1e5351b9b96e128ca624f3f73233e3b3b71cf"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-07-crossplane-1.html",
+      "sha256": "303cff70b6f094a867dc349e5270d1fa891fdd27f463dd7ca0102cc4ed1e1c8c"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-07-crossplane-1.png",
+      "sha256": "fc6e2c5b7dac2386bd882930df49d1ef0c67269de25724c61c08b9dd18a1cfdf"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-07-crossplane-2.architecture.json",
+      "sha256": "94e6e5da674c59facf6d45780c342ec2fba364e22488d4bb67cd060354ee83cb"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-07-crossplane-2.html",
+      "sha256": "4c070bd8d475a107fa3b5262d5e7fdb20ded8e49b707ae54fb80a6d9b47fb829"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-07-crossplane-2.png",
+      "sha256": "a3ffbd9c737579f6cbf4ede0b14137e9a43678faf387a501aab2d2f23027f06d"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-07-crossplane-3.sequence.json",
+      "sha256": "d543435f8c291df85fd8ef4617cc9ab3244f492b6cf3e2afd5c9003ba3992a7c"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-07-crossplane-3.html",
+      "sha256": "df400989ea54588d83e30c348c90ff2d16dc0c1d7814fada2a9de1b6297d4b42"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-07-crossplane-3.png",
+      "sha256": "dc5d4ac25a9ca5e141352c20ecf826e89da28a53681044ad9f36823594924333"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-07-crossplane-4.architecture.json",
+      "sha256": "2c647c889f928574039034b4a886bc1e23db1c26a062f3de56d94046bf91014e"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-07-crossplane-4.html",
+      "sha256": "fe2f0250b84a734f0e968f4451e52ae8ca2a21e252c0fe52033ec4a9758ba2af"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-07-crossplane-4.png",
+      "sha256": "2cd8943eca93f01454297b54ce5f5e286310326342a4e989500bb235fb02f55e"
+    }
+  ],
+  "limits": [
+    "Actualcore2.4/P&T0.10.10/autoReady0.7localgRPCrendering;alllocalfunctionprocessesstopped. NoAWS/Kubernetes/cloudresourcesorproviderauthentication.",
+    "Renderednames/UIDs/timestamps/statusaresynthetic;ReadyTrueinobservedcaseisnothardware/serviceproof.",
+    "GeneratedConnectionSecretcontainsonlyendpoint/username;passwordstaysprepreparedSecretnotclaimedgenerated.",
+    "CrossplaneCLIhasnobuiltincoreSecretschema;strictmissing-schemafailurewasrecordedthenSecretseparatelycheckedwithcachedofficialKubernetesOpenAPIandbase64validation. Customresourcevalidationkept--error-on-missing-schemas.",
+    "ProviderIAMactualrole/DBclassregionavailability/backups/restore/HA/load/Prometheusscraperemainoperatorvalidation.",
+    "Browserinitialprocessclosedbeforefirstcase;freshretrycompleted30casesexit0. No full local VitePress build."
+  ],
+  "boundaryCorrection": {
+    "checkedAt": "2026-09-13",
+    "baseCommit": "a0c06152e805e81ff55c31f34a3e986e6bdb99ea",
+    "finding": "CP-M1",
+    "changes": [
+      "Both figure-1 locales separate namespaced XR/MR boundaries from cluster-scoped Composition; client and AWS API remain outside the cluster boundary.",
+      "English figure4 distinguishes Backstage, GitOps, Crossplane and external AWS resources."
+    ],
+    "changedArtifacts": [
+      "assets/diagrams/archify/ko-platform-engineering-07-crossplane-1.architecture.json",
+      "public/archmaps/ko-platform-engineering-07-crossplane-1.html",
+      "ko/.gitbook/assets/ko-platform-engineering-07-crossplane-1.png",
+      "assets/diagrams/archify/en-platform-engineering-07-crossplane-1.architecture.json",
+      "public/archmaps/en-platform-engineering-07-crossplane-1.html",
+      "en/.gitbook/assets/en-platform-engineering-07-crossplane-1.png",
+      "assets/diagrams/archify/en-platform-engineering-07-crossplane-4.architecture.json",
+      "public/archmaps/en-platform-engineering-07-crossplane-4.html",
+      "en/.gitbook/assets/en-platform-engineering-07-crossplane-4.png"
+    ],
+    "deliveries": [
+      {
+        "diagram": "ko-platform-engineering-07-crossplane-1",
+        "specificationSha256": "71f96381e49db4cd76f819f92efe110a4bf5edfeddedd46be70a3e6f22f6320f",
+        "htmlSha256": "15d32633f805ff23112914ac2643085b7f33ff170319c91b1cf802176e3819be",
+        "artifactChecksPassed": 9,
+        "artifactCheckCount": 9,
+        "compositionErrors": 0,
+        "compositionWarnings": 0
+      },
+      {
+        "diagram": "en-platform-engineering-07-crossplane-1",
+        "specificationSha256": "bd3b55ca05d477c3b250a248f4f1e5351b9b96e128ca624f3f73233e3b3b71cf",
+        "htmlSha256": "303cff70b6f094a867dc349e5270d1fa891fdd27f463dd7ca0102cc4ed1e1c8c",
+        "artifactChecksPassed": 9,
+        "artifactCheckCount": 9,
+        "compositionErrors": 0,
+        "compositionWarnings": 0
+      },
+      {
+        "diagram": "en-platform-engineering-07-crossplane-4",
+        "specificationSha256": "2c647c889f928574039034b4a886bc1e23db1c26a062f3de56d94046bf91014e",
+        "htmlSha256": "fe2f0250b84a734f0e968f4451e52ae8ca2a21e252c0fe52033ec4a9758ba2af",
+        "artifactChecksPassed": 9,
+        "artifactCheckCount": 9,
+        "compositionErrors": 0,
+        "compositionWarnings": 0
+      }
+    ],
+    "visualValidation": {
+      "viewerCount": 3,
+      "viewports": [
+        [
+          1440,
+          900
+        ],
+        [
+          1600,
+          1000
+        ],
+        [
+          1920,
+          1080
+        ],
+        [
+          2048,
+          1320
+        ]
+      ],
+      "containmentPassed": true,
+      "captures": 12,
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "manualInspection": "Twelve desktop captures reviewed in a contact sheet; all three 1600x1080 PNG fallbacks inspected individually.",
+      "limits": "Contact-sheet review is composition-level; no full-site, real-device or screen-reader validation."
+    },
+    "priorEvidence": "The existing browser field records the preceding snapshot. These new receipts supersede it for the three corrected viewers; other diagram source/artifact bytes are unchanged."
+  }
+}

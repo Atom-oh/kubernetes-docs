@@ -1,0 +1,22 @@
+apiVersion: s3.aws.m.upbound.io/v1beta1
+kind: BucketPublicAccessBlock
+metadata:
+  name: app-data-public-access
+  namespace: team-alpha
+spec:
+  managementPolicies:
+  - Observe
+  - Create
+  - Update
+  - LateInitialize
+  forProvider:
+    region: us-west-2
+    bucketRef:
+      name: app-data
+    blockPublicAcls: true
+    blockPublicPolicy: true
+    ignorePublicAcls: true
+    restrictPublicBuckets: true
+  providerConfigRef:
+    kind: ProviderConfig
+    name: team-aws

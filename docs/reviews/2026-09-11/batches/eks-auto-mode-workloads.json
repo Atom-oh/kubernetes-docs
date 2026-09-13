@@ -1,0 +1,162 @@
+[
+  {
+    "path": "en/eks-auto-mode/08-workload-optimization.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full workload source/quiz audit: complete bounded web/batch examples, inactive GPU templates, current AutoMode EFA contract and explicit runtime limitations.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/device-management-efa.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ml-node-pools.html",
+      "https://aws.amazon.com/ec2/instance-types/g5/",
+      "https://aws.amazon.com/ec2/instance-types/p5/",
+      "https://raw.githubusercontent.com/kubeflow/trainer/master/README.md",
+      "https://raw.githubusercontent.com/kubeflow/training-operator/v1.9.3/manifests/base/crds/kubeflow.org_pytorchjobs.yaml",
+      "https://hub.docker.com/v2/repositories/library/busybox/tags/1.37.0",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/job/",
+      "https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/",
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://docs.docker.com/build/building/multi-platform/"
+    ],
+    "findings": [
+      "AutoMode08H1andintroalreadyintact; earliercore08titleissuewasdistinct.",
+      "Complete nonrootwebDeployment/PDB/probes/matchingtopology; boundedIndexedbatchsmokejob withretry/deadline/TTL andactualmultiarchimageindex.",
+      "Corrected OnDemandvsavailability,Spotbatchvscheckpoint/OnFailure,consolidateAftervsstartup and resource/QoS/packing claims.",
+      "Replaced invalidAutoGPU NodeClassfields with ephemeralStorage; EFAusesadvancedNetworking.networkInterfaces +separateEFAdeviceplugin; currentlynoAutoModeDRA.",
+      "StaticEFAIPv4only,primary/efa-onlyIPconstraints,noafterlaunchIPgrowth,privateAZ/placement/SG prerequisites explicit.",
+      "GPU4CPU16GiPodexcludesg5.xlargeallocatablemismatch; GPUmemorytotalvsperdeviceandcapacitynotbillingcap corrected.",
+      "Inferencezero replicas andlegacyv1.9.3PyTorchJobsuspended;32GPU4homogeneousP5nodes,4EFAdevicesperPod,placeholderimage/launch/data/checkpoint/securitycontractexplicitlyunverified.",
+      "Sixquizanswersaligned;UTCdaily14hpeakwindow replaceshourlyoverlap;digestplatformguard andlocalOCIoutputreplacegenericpublicpush;40percentestimatepreservedunverified."
+    ],
+    "validation": [
+      "All4originalsfullyread1468lines andsnapshotspreserved.",
+      "12completeobjectschemachecks:Kubernetes1.36.2,Karpenter1.14.1,TrainingOperator1.9.3;allrenderedquizmanifestscheckedtoo.",
+      "NativeRestrictedv1.36policy:75checksfor5templates;privilegedmutantrejected. Nativecron5dailyUTC/KSTboundariespassed.",
+      "8mockBash/jqfixtures:twoarchitectures/missingplatform/singlemanifest/APIerrors/digestrejectbeforequery/deviceabsentfield;onelocalprintfbodycheck,noimageexecution.",
+      "EFAcard/deviceuniquenessandallocation,32GPUarithmetic,suspendeddefaults,selector/toleration/PDBconsistencychecked.",
+      "Pairedfences,6quizkeysBBBCBB,Bash/YAMLsyntax,12localrefs,gitdiffcheckpassed.",
+      "No cloud/GPU/model execution,fullbuild or dependencytreeinstallation. Noactualruntime/EFA/driver/managedadmissionvalidation claimed.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-workloads/final-validation.json"
+    ]
+  },
+  {
+    "path": "ko/eks-auto-mode/08-workload-optimization.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full workload source/quiz audit: complete bounded web/batch examples, inactive GPU templates, current AutoMode EFA contract and explicit runtime limitations.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/device-management-efa.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ml-node-pools.html",
+      "https://aws.amazon.com/ec2/instance-types/g5/",
+      "https://aws.amazon.com/ec2/instance-types/p5/",
+      "https://raw.githubusercontent.com/kubeflow/trainer/master/README.md",
+      "https://raw.githubusercontent.com/kubeflow/training-operator/v1.9.3/manifests/base/crds/kubeflow.org_pytorchjobs.yaml",
+      "https://hub.docker.com/v2/repositories/library/busybox/tags/1.37.0",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/job/",
+      "https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/",
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://docs.docker.com/build/building/multi-platform/"
+    ],
+    "findings": [
+      "AutoMode08H1andintroalreadyintact; earliercore08titleissuewasdistinct.",
+      "Complete nonrootwebDeployment/PDB/probes/matchingtopology; boundedIndexedbatchsmokejob withretry/deadline/TTL andactualmultiarchimageindex.",
+      "Corrected OnDemandvsavailability,Spotbatchvscheckpoint/OnFailure,consolidateAftervsstartup and resource/QoS/packing claims.",
+      "Replaced invalidAutoGPU NodeClassfields with ephemeralStorage; EFAusesadvancedNetworking.networkInterfaces +separateEFAdeviceplugin; currentlynoAutoModeDRA.",
+      "StaticEFAIPv4only,primary/efa-onlyIPconstraints,noafterlaunchIPgrowth,privateAZ/placement/SG prerequisites explicit.",
+      "GPU4CPU16GiPodexcludesg5.xlargeallocatablemismatch; GPUmemorytotalvsperdeviceandcapacitynotbillingcap corrected.",
+      "Inferencezero replicas andlegacyv1.9.3PyTorchJobsuspended;32GPU4homogeneousP5nodes,4EFAdevicesperPod,placeholderimage/launch/data/checkpoint/securitycontractexplicitlyunverified.",
+      "Sixquizanswersaligned;UTCdaily14hpeakwindow replaceshourlyoverlap;digestplatformguard andlocalOCIoutputreplacegenericpublicpush;40percentestimatepreservedunverified."
+    ],
+    "validation": [
+      "All4originalsfullyread1468lines andsnapshotspreserved.",
+      "12completeobjectschemachecks:Kubernetes1.36.2,Karpenter1.14.1,TrainingOperator1.9.3;allrenderedquizmanifestscheckedtoo.",
+      "NativeRestrictedv1.36policy:75checksfor5templates;privilegedmutantrejected. Nativecron5dailyUTC/KSTboundariespassed.",
+      "8mockBash/jqfixtures:twoarchitectures/missingplatform/singlemanifest/APIerrors/digestrejectbeforequery/deviceabsentfield;onelocalprintfbodycheck,noimageexecution.",
+      "EFAcard/deviceuniquenessandallocation,32GPUarithmetic,suspendeddefaults,selector/toleration/PDBconsistencychecked.",
+      "Pairedfences,6quizkeysBBBCBB,Bash/YAMLsyntax,12localrefs,gitdiffcheckpassed.",
+      "No cloud/GPU/model execution,fullbuild or dependencytreeinstallation. Noactualruntime/EFA/driver/managedadmissionvalidation claimed.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-workloads/final-validation.json"
+    ]
+  },
+  {
+    "path": "en/quizzes/eks-auto-mode/08-workload-optimization-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full workload source/quiz audit: complete bounded web/batch examples, inactive GPU templates, current AutoMode EFA contract and explicit runtime limitations.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/device-management-efa.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ml-node-pools.html",
+      "https://aws.amazon.com/ec2/instance-types/g5/",
+      "https://aws.amazon.com/ec2/instance-types/p5/",
+      "https://raw.githubusercontent.com/kubeflow/trainer/master/README.md",
+      "https://raw.githubusercontent.com/kubeflow/training-operator/v1.9.3/manifests/base/crds/kubeflow.org_pytorchjobs.yaml",
+      "https://hub.docker.com/v2/repositories/library/busybox/tags/1.37.0",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/job/",
+      "https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/",
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://docs.docker.com/build/building/multi-platform/"
+    ],
+    "findings": [
+      "AutoMode08H1andintroalreadyintact; earliercore08titleissuewasdistinct.",
+      "Complete nonrootwebDeployment/PDB/probes/matchingtopology; boundedIndexedbatchsmokejob withretry/deadline/TTL andactualmultiarchimageindex.",
+      "Corrected OnDemandvsavailability,Spotbatchvscheckpoint/OnFailure,consolidateAftervsstartup and resource/QoS/packing claims.",
+      "Replaced invalidAutoGPU NodeClassfields with ephemeralStorage; EFAusesadvancedNetworking.networkInterfaces +separateEFAdeviceplugin; currentlynoAutoModeDRA.",
+      "StaticEFAIPv4only,primary/efa-onlyIPconstraints,noafterlaunchIPgrowth,privateAZ/placement/SG prerequisites explicit.",
+      "GPU4CPU16GiPodexcludesg5.xlargeallocatablemismatch; GPUmemorytotalvsperdeviceandcapacitynotbillingcap corrected.",
+      "Inferencezero replicas andlegacyv1.9.3PyTorchJobsuspended;32GPU4homogeneousP5nodes,4EFAdevicesperPod,placeholderimage/launch/data/checkpoint/securitycontractexplicitlyunverified.",
+      "Sixquizanswersaligned;UTCdaily14hpeakwindow replaceshourlyoverlap;digestplatformguard andlocalOCIoutputreplacegenericpublicpush;40percentestimatepreservedunverified."
+    ],
+    "validation": [
+      "All4originalsfullyread1468lines andsnapshotspreserved.",
+      "12completeobjectschemachecks:Kubernetes1.36.2,Karpenter1.14.1,TrainingOperator1.9.3;allrenderedquizmanifestscheckedtoo.",
+      "NativeRestrictedv1.36policy:75checksfor5templates;privilegedmutantrejected. Nativecron5dailyUTC/KSTboundariespassed.",
+      "8mockBash/jqfixtures:twoarchitectures/missingplatform/singlemanifest/APIerrors/digestrejectbeforequery/deviceabsentfield;onelocalprintfbodycheck,noimageexecution.",
+      "EFAcard/deviceuniquenessandallocation,32GPUarithmetic,suspendeddefaults,selector/toleration/PDBconsistencychecked.",
+      "Pairedfences,6quizkeysBBBCBB,Bash/YAMLsyntax,12localrefs,gitdiffcheckpassed.",
+      "No cloud/GPU/model execution,fullbuild or dependencytreeinstallation. Noactualruntime/EFA/driver/managedadmissionvalidation claimed.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-workloads/final-validation.json"
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks-auto-mode/08-workload-optimization-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full workload source/quiz audit: complete bounded web/batch examples, inactive GPU templates, current AutoMode EFA contract and explicit runtime limitations.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/device-management-efa.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ml-node-pools.html",
+      "https://aws.amazon.com/ec2/instance-types/g5/",
+      "https://aws.amazon.com/ec2/instance-types/p5/",
+      "https://raw.githubusercontent.com/kubeflow/trainer/master/README.md",
+      "https://raw.githubusercontent.com/kubeflow/training-operator/v1.9.3/manifests/base/crds/kubeflow.org_pytorchjobs.yaml",
+      "https://hub.docker.com/v2/repositories/library/busybox/tags/1.37.0",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/job/",
+      "https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/",
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://docs.docker.com/build/building/multi-platform/"
+    ],
+    "findings": [
+      "AutoMode08H1andintroalreadyintact; earliercore08titleissuewasdistinct.",
+      "Complete nonrootwebDeployment/PDB/probes/matchingtopology; boundedIndexedbatchsmokejob withretry/deadline/TTL andactualmultiarchimageindex.",
+      "Corrected OnDemandvsavailability,Spotbatchvscheckpoint/OnFailure,consolidateAftervsstartup and resource/QoS/packing claims.",
+      "Replaced invalidAutoGPU NodeClassfields with ephemeralStorage; EFAusesadvancedNetworking.networkInterfaces +separateEFAdeviceplugin; currentlynoAutoModeDRA.",
+      "StaticEFAIPv4only,primary/efa-onlyIPconstraints,noafterlaunchIPgrowth,privateAZ/placement/SG prerequisites explicit.",
+      "GPU4CPU16GiPodexcludesg5.xlargeallocatablemismatch; GPUmemorytotalvsperdeviceandcapacitynotbillingcap corrected.",
+      "Inferencezero replicas andlegacyv1.9.3PyTorchJobsuspended;32GPU4homogeneousP5nodes,4EFAdevicesperPod,placeholderimage/launch/data/checkpoint/securitycontractexplicitlyunverified.",
+      "Sixquizanswersaligned;UTCdaily14hpeakwindow replaceshourlyoverlap;digestplatformguard andlocalOCIoutputreplacegenericpublicpush;40percentestimatepreservedunverified."
+    ],
+    "validation": [
+      "All4originalsfullyread1468lines andsnapshotspreserved.",
+      "12completeobjectschemachecks:Kubernetes1.36.2,Karpenter1.14.1,TrainingOperator1.9.3;allrenderedquizmanifestscheckedtoo.",
+      "NativeRestrictedv1.36policy:75checksfor5templates;privilegedmutantrejected. Nativecron5dailyUTC/KSTboundariespassed.",
+      "8mockBash/jqfixtures:twoarchitectures/missingplatform/singlemanifest/APIerrors/digestrejectbeforequery/deviceabsentfield;onelocalprintfbodycheck,noimageexecution.",
+      "EFAcard/deviceuniquenessandallocation,32GPUarithmetic,suspendeddefaults,selector/toleration/PDBconsistencychecked.",
+      "Pairedfences,6quizkeysBBBCBB,Bash/YAMLsyntax,12localrefs,gitdiffcheckpassed.",
+      "No cloud/GPU/model execution,fullbuild or dependencytreeinstallation. Noactualruntime/EFA/driver/managedadmissionvalidation claimed.",
+      "Evidence:.vitepress/cache/core-audit/eks-auto-mode-workloads/final-validation.json"
+    ]
+  }
+]

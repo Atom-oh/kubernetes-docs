@@ -1,183 +1,165 @@
 # Prometheus Quiz
 
-A quiz to test your understanding of Prometheus.
+> Reviewed: 2026-09-12
 
----
+1. What is Prometheus's normal metric collection path?
 
-1. What is Prometheus's data collection method?
-   - A) Push-based - Applications send metrics
-   - B) Pull-based - Prometheus scrapes metrics from targets
-   - C) Streaming-based - Real-time data streams
-   - D) Batch-based - Periodic file transfers
+   - A) Applications must push every sample directly
+   - B) Prometheus scrapes configured targets over HTTP
+   - C) Only a streaming event log
+   - D) Only periodic CSV imports
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Pull-based - Prometheus scrapes metrics from targets**
+**Answer: B**
 
-**Explanation:**
-Prometheus is a Pull-based metrics collection system that periodically scrapes metrics from targets' /metrics endpoints via HTTP. The advantages of this approach are central control of collection targets and intervals, and automatic detection of target availability.
+The normal path is pull/scrape. Remote write and optional batch integrations add other delivery paths. up reports scrape success, not complete application availability.
 
 </details>
 
----
+2. Which expression gives a Counter's average per-second rate over five minutes?
 
-2. What is the correct PromQL query to calculate HTTP request rate over the last 5 minutes?
    - A) `rate(http_requests_total, 5m)`
    - B) `rate(http_requests_total[5m])`
    - C) `increase(http_requests_total[5m])`
    - D) `avg(http_requests_total[5m])`
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) `rate(http_requests_total[5m])`**
+**Answer: B**
 
-**Explanation:**
-The `rate()` function calculates the average per-second increase rate of Counter metrics. Range vectors specify time in square brackets `[]`. `increase()` returns total increase, and `avg()` is an aggregation function that calculates averages. `rate(http_requests_total[5m])` calculates requests per second over 5 minutes.
+rate() uses a range vector and handles observed resets/extrapolation. increase() estimates total increase, not the per-second rate. Apply rate before aggregation and do not interpret it as recovery of every missed increment.
 
 </details>
 
----
+3. What must a working ServiceMonitor describe?
 
-3. What is the role of ServiceMonitor in Prometheus Operator?
-   - A) Deploys the Prometheus server
-   - B) Defines alerting rules
-   - C) Defines services to monitor and scrape configurations
-   - D) Creates Grafana dashboards
+   - A) A Grafana dashboard
+   - B) Only a Prometheus container image
+   - C) Selected Services and scrape endpoints, with selectors/port names matching the Prometheus setup
+   - D) A complete application Deployment
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Defines services to monitor and scrape configurations**
+**Answer: C**
 
-**Explanation:**
-ServiceMonitor is a CRD of Prometheus Operator that declaratively defines scrape configurations for monitoring Kubernetes services. You can configure target service selectors, endpoints, scrape intervals, label relabeling, etc. PrometheusRule handles alerting rules, and the Prometheus CRD handles server deployment.
+Prometheus first selects the monitor's namespace and labels; the monitor selects target Services. Its endpoint port is the Service port name. RBAC, TLS/network access and an instrumented application are additional requirements.
 
 </details>
 
----
+4. What does histogram_quantile() return for classic histograms?
 
-4. Which statement about the histogram_quantile function is correct?
-   - A) It can only be used with Summary metrics
-   - B) It calculates quantiles from Histogram buckets
-   - C) It returns exact quantile values
-   - D) It calculates the rate of change for Counter metrics
+   - A) An exact Summary percentile
+   - B) A bucket-based quantile estimate
+   - C) An exact percentile independent of bucket resolution
+   - D) A Counter's request rate
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) It calculates quantiles from Histogram buckets**
+**Answer: B**
 
-**Explanation:**
-`histogram_quantile()` calculates quantiles from Histogram bucket data. For example, `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))` calculates p95 latency. It returns approximations based on bucket boundaries; use Summary for exact quantiles.
+Aggregate compatible classic buckets while retaining le. The result interpolates within buckets. Summary quantiles also have algorithm/window-dependent error and cannot be averaged into a fleet percentile.
 
 </details>
 
----
+5. Which component is not part of the kube-prometheus-stack package?
 
-5. Which component is NOT included in the kube-prometheus-stack Helm chart?
    - A) Prometheus Operator
    - B) Grafana
    - C) VictoriaMetrics
    - D) Alertmanager
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) VictoriaMetrics**
+**Answer: C**
 
-**Explanation:**
-kube-prometheus-stack is a Helm chart that includes Prometheus Operator, Prometheus, Alertmanager, Grafana, kube-state-metrics, node-exporter, and more. VictoriaMetrics is a separate project, installed via the victoria-metrics-k8s-stack chart.
+The chart packages Prometheus/Alertmanager, Operator, Grafana and exporters, subject to enabled values. VictoriaMetrics is a separate deployment. Pin the inspected chart cohort rather than mixing arbitrary image versions.
 
 </details>
 
----
+6. What is remote write used for?
 
-6. What is the primary purpose of Remote Write in Prometheus?
-   - A) Improve local storage performance
-   - B) Send data to long-term metrics storage
-   - C) Send real-time alerts
-   - D) Sync Grafana dashboards
+   - A) Sending Alertmanager notifications
+   - B) Asynchronous sample delivery to a configured external receiver
+   - C) Guaranteeing unlimited outage buffering
+   - D) Synchronizing Grafana dashboards
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Send data to long-term metrics storage**
+**Answer: B**
 
-**Explanation:**
-Remote Write is a feature that sends metrics collected by Prometheus to external systems (VictoriaMetrics, Mimir, AMP, Cortex, etc.). Since Prometheus's local storage has retention and scalability limitations, Remote Write is used to send data to dedicated storage for long-term retention.
+Receivers include AMP, VictoriaMetrics and Mimir. Each has its own endpoint, identity, quotas and HA contract. WAL buffering is finite, and local Prometheus retention itself is configurable rather than universally capped at 30 days.
 
 </details>
 
----
+7. What does an alert rule's for duration control?
 
-7. What is the role of the `for` field in PrometheusRule CRD?
-   - A) Set rule evaluation interval
-   - B) Set condition duration time before alert fires
-   - C) Set alert resend interval
-   - D) Set metric retention period
+   - A) Metric retention
+   - B) How long the same alert condition/label set remains pending before firing
+   - C) Alertmanager's repeat interval
+   - D) The number of Prometheus replicas
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Set condition duration time before alert fires**
+**Answer: B**
 
-**Explanation:**
-The `for` field in PrometheusRule sets the wait time after an alert condition is met before the alert actually fires. For example, `for: 5m` means the condition must persist for 5 minutes before the alert fires. This prevents unnecessary alerts from temporary spikes.
+The condition must remain satisfied through evaluations for that alert identity. Missing data or label changes can interrupt pending state. Notification grouping and timing are separate Alertmanager settings.
 
 </details>
 
----
+8. How should predict_linear() be interpreted?
 
-8. What is the purpose of the `predict_linear` function in PromQL?
-   - A) Calculate absolute value of current value
-   - B) Predict future values based on linear regression
-   - C) Sort time series data
-   - D) Transform label values
+   - A) A guaranteed disk failure deadline
+   - B) A fitted Gauge trend extrapolated into the future
+   - C) Seasonal triple-exponential prediction
+   - D) A replacement for all capacity measurements
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Predict future values based on linear regression**
+**Answer: B**
 
-**Explanation:**
-`predict_linear(v range-vector, t scalar)` uses linear regression to predict future values. For example, `predict_linear(node_filesystem_avail_bytes[6h], 24*60*60) < 0` predicts whether disk space will be exhausted in 24 hours at the current trend. Useful for capacity planning and proactive alerting.
+It projects the observed linear trend. Workload changes, cleanup, sparse data and non-linear behavior can invalidate it. The old holt_winters name is replaced in Prometheus 3 by an explicitly experimental double-exponential smoothing function; that is not a seasonal model.
 
 </details>
 
----
+9. What does AlertmanagerConfig groupBy do?
 
-9. What is the role of Alertmanager's `groupBy` setting?
-   - A) Send alerts only to specific groups
-   - B) Group alerts by specified labels
-   - C) Set alert priority
-   - D) Remove duplicate alerts
+   - A) Automatically authorizes alerts from every namespace
+   - B) Groups notifications by selected labels
+   - C) Defines Prometheus's for duration
+   - D) Makes every matching sibling route run
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Group alerts by specified labels**
+**Answer: B**
 
-**Explanation:**
-`groupBy` groups alerts by specified labels and sends them as a single notification. For example, `groupBy: ['alertname', 'namespace']` groups alerts with the same alertname and namespace. This prevents alert storms and allows related alerts to be viewed together.
+groupBy becomes group_by in native configuration. Routes normally stop at the first sibling match unless continue is configured. Inhibition needs meaningful resource-identity equal labels to avoid suppressing unrelated service/node warnings.
 
 </details>
 
----
+10. What does the TSDB WAL provide?
 
-10. What is the role of WAL (Write-Ahead Log) in Prometheus TSDB?
-    - A) Query caching
-    - B) Write-ahead recording to prevent data loss
-    - C) Store alert history
-    - D) Store dashboard settings
+   - A) A query-result cache
+   - B) Sequential recording that supports crash recovery before block persistence
+   - C) A backup that survives losing the volume
+   - D) An unlimited remote-write delivery queue
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Write-ahead recording to prevent data loss**
+**Answer: B**
 
-**Explanation:**
-WAL (Write-Ahead Log) is a log that records data sequentially before it's fully written from memory to disk blocks. Even if Prometheus terminates abnormally, data can be recovered through the WAL to prevent data loss. This is a durability mechanism commonly used in databases.
+WAL replay is a durability mechanism, not a promise of zero loss under corruption, volume failure or long remote outages. Retention and WAL/head/compaction disk requirements are separate; preserve verified backups and recovery procedures.
 
 </details>
+
+[Return to the guide](../../../observability/metrics/01-prometheus.md)

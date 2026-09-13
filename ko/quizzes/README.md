@@ -204,6 +204,9 @@
 - [Calico EKS 통합 퀴즈](./networking/calico/08-eks-integration-quiz.md)
 - [Calico 운영 퀴즈](./networking/calico/09-operations-quiz.md)
 - [Calico 용어집 퀴즈](./networking/calico/glossary-quiz.md)
+
+#### Cilium
+
 - [Cilium 소개 및 기본 개념 퀴즈](./networking/cilium/01-introduction-quiz.md)
 - [Cilium eBPF 퀴즈](./networking/cilium/02-ebpf-quiz.md)
 - [Cilium 네트워킹 검증 실습](./networking/cilium/03-networking-quiz.md)

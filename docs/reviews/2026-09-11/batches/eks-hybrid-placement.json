@@ -1,0 +1,170 @@
+[
+  {
+    "path": "en/eks-hybrid-nodes/06-workload-placement.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "CorrectedHybrid/cloudeligibility,cloudburstconstraintsandbest-effortdeletioncost;replacedunsafewebhook/CronJobwithreviewablesingle-Podpatch.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/pkg/controller/controller_utils.go",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://raw.githubusercontent.com/aws/karpenter-provider-aws/v1.14.1/pkg/apis/crds/karpenter.k8s.aws_ec2nodeclasses.yaml",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/utils/disruption/disruption.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/utils/pod/pod.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/types.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/balanced.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/consolidation.go",
+      "https://karpenter.sh/docs/upgrading/compatibility/",
+      "https://kubernetes.io/docs/concepts/storage/volumes/",
+      "https://kubernetes.io/docs/concepts/storage/storage-classes/"
+    ],
+    "findings": [
+      "ReplacedcloudDoesNotExistclassificationwithpositiveownedlocation/NodePoolconstraints;noaffinity/taint/data-locality/HAguarantees.",
+      "KeptonpremGPU4CPU16memory64GiasunverifiedsizingandlinkedboundedGPUJobs;completeCPUDeploymentexamplesarezero-replicaandrequireapprovedimages.",
+      "NodePoolAZbelongsinrequirements;uniqueEC2NodeClassusesapprovedimmutableAMIplaceholder+AL2023family+preparedEC2profile;opt-inbursttaint;largeCPU1000/memory4000Giplanninglimitsnotspendcap.",
+      "ConfirmedRSv1.36.2sort:unassigned,phase,readinessprecededeletioncost;10-to4cloud6/onprem4outcomeconditional,notprotected.",
+      "ConfirmedKarpenter1.14.1also readsPodDeletionCostinnormalizedEvictionCost;notReplicaSet-onlyorabsoluteprotection.",
+      "Removedpre-bindingCREATEwebhookthatcannotknoweventualnodeandlacksfunctionalService/TLS/backend/RBAC.",
+      "Replacedunimplementedall-namespaceCronJob/mutableBitnamiimagewithreadonlyone-Podowner-boundplan;JSONPatchtestsUID/resourceVersion/node,preservesotherannotations,refusesunknown/readerrors.",
+      "Clarifiedtopologyeligible-domain/global-minimum,softScheduleAnyway,localPV/PVCaffinity/WFC,andnoautomaticcloud-to-onpremmigration.",
+      "Parentfollowup2diagramHTML+PNGs:best-effortdeletion,DaemonSetemptysemantics,andlegacyWhenUnderutilizedlegend;sourcecaptionscorrected."
+    ],
+    "validation": [
+      "Originalfullyread:447lines.",
+      "5localtestmethodspassed:13rejectedstates,3validprivateplans,3K8sDeployment+2KarpenterCRDstructures.",
+      "NativeAPI-serverJSONPatchlibrary:3positiveupdatespreservedotherannotations;9staleUID/RV/nodecasesrejected.",
+      "Kubernetesnativeaffinity15casesand45RestrictedPSSchecks passed.",
+      "paired5codeblocks;Bash/YAMLparse;18locallinks;10quizanswers",
+      "Karpentercompatibility/localPV/WFCprimarysourcesreverifiedSep13;post-testchangesonlydate/reference/captionprose;scopedgitdiff--checkpassed.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-placement/{validation,native-validation,diagram-followups}.json;nolivecloud/Pod/Nodechanges."
+    ]
+  },
+  {
+    "path": "ko/eks-hybrid-nodes/06-workload-placement.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "CorrectedHybrid/cloudeligibility,cloudburstconstraintsandbest-effortdeletioncost;replacedunsafewebhook/CronJobwithreviewablesingle-Podpatch.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/pkg/controller/controller_utils.go",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://raw.githubusercontent.com/aws/karpenter-provider-aws/v1.14.1/pkg/apis/crds/karpenter.k8s.aws_ec2nodeclasses.yaml",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/utils/disruption/disruption.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/utils/pod/pod.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/types.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/balanced.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/consolidation.go",
+      "https://karpenter.sh/docs/upgrading/compatibility/",
+      "https://kubernetes.io/docs/concepts/storage/volumes/",
+      "https://kubernetes.io/docs/concepts/storage/storage-classes/"
+    ],
+    "findings": [
+      "ReplacedcloudDoesNotExistclassificationwithpositiveownedlocation/NodePoolconstraints;noaffinity/taint/data-locality/HAguarantees.",
+      "KeptonpremGPU4CPU16memory64GiasunverifiedsizingandlinkedboundedGPUJobs;completeCPUDeploymentexamplesarezero-replicaandrequireapprovedimages.",
+      "NodePoolAZbelongsinrequirements;uniqueEC2NodeClassusesapprovedimmutableAMIplaceholder+AL2023family+preparedEC2profile;opt-inbursttaint;largeCPU1000/memory4000Giplanninglimitsnotspendcap.",
+      "ConfirmedRSv1.36.2sort:unassigned,phase,readinessprecededeletioncost;10-to4cloud6/onprem4outcomeconditional,notprotected.",
+      "ConfirmedKarpenter1.14.1also readsPodDeletionCostinnormalizedEvictionCost;notReplicaSet-onlyorabsoluteprotection.",
+      "Removedpre-bindingCREATEwebhookthatcannotknoweventualnodeandlacksfunctionalService/TLS/backend/RBAC.",
+      "Replacedunimplementedall-namespaceCronJob/mutableBitnamiimagewithreadonlyone-Podowner-boundplan;JSONPatchtestsUID/resourceVersion/node,preservesotherannotations,refusesunknown/readerrors.",
+      "Clarifiedtopologyeligible-domain/global-minimum,softScheduleAnyway,localPV/PVCaffinity/WFC,andnoautomaticcloud-to-onpremmigration.",
+      "Parentfollowup2diagramHTML+PNGs:best-effortdeletion,DaemonSetemptysemantics,andlegacyWhenUnderutilizedlegend;sourcecaptionscorrected."
+    ],
+    "validation": [
+      "Originalfullyread:447lines.",
+      "5localtestmethodspassed:13rejectedstates,3validprivateplans,3K8sDeployment+2KarpenterCRDstructures.",
+      "NativeAPI-serverJSONPatchlibrary:3positiveupdatespreservedotherannotations;9staleUID/RV/nodecasesrejected.",
+      "Kubernetesnativeaffinity15casesand45RestrictedPSSchecks passed.",
+      "paired5codeblocks;Bash/YAMLparse;18locallinks;10quizanswers",
+      "Karpentercompatibility/localPV/WFCprimarysourcesreverifiedSep13;post-testchangesonlydate/reference/captionprose;scopedgitdiff--checkpassed.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-placement/{validation,native-validation,diagram-followups}.json;nolivecloud/Pod/Nodechanges."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Aligned10quizquestionswithplacement/PDB/taint/topologylimits,post-bindingownershipandactualRS/Karpenterdeletioncostbehavior.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/pkg/controller/controller_utils.go",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://raw.githubusercontent.com/aws/karpenter-provider-aws/v1.14.1/pkg/apis/crds/karpenter.k8s.aws_ec2nodeclasses.yaml",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/utils/disruption/disruption.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/utils/pod/pod.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/types.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/balanced.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/consolidation.go",
+      "https://karpenter.sh/docs/upgrading/compatibility/",
+      "https://kubernetes.io/docs/concepts/storage/volumes/",
+      "https://kubernetes.io/docs/concepts/storage/storage-classes/"
+    ],
+    "findings": [
+      "All6originalquiztopicsread;removedduplicateYAMLkeys,incompleteDeployments,hostPathportabilityandunqualifiedHA/cloudcapacityguarantees.",
+      "Expandedto10questionscoveringactualdeletioncostprecedence,pre-bindingwebhooklimitationandnarrowCASpatch.",
+      "PairedanswersequenceDBCBBBCCBC."
+    ],
+    "validation": [
+      "Originalfullyread:300lines.",
+      "5localtestmethodspassed:13rejectedstates,3validprivateplans,3K8sDeployment+2KarpenterCRDstructures.",
+      "NativeAPI-serverJSONPatchlibrary:3positiveupdatespreservedotherannotations;9staleUID/RV/nodecasesrejected.",
+      "Kubernetesnativeaffinity15casesand45RestrictedPSSchecks passed.",
+      "paired5codeblocks;Bash/YAMLparse;18locallinks;10quizanswers",
+      "Karpentercompatibility/localPV/WFCprimarysourcesreverifiedSep13;post-testchangesonlydate/reference/captionprose;scopedgitdiff--checkpassed.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-placement/{validation,native-validation,diagram-followups}.json;nolivecloud/Pod/Nodechanges."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Aligned10quizquestionswithplacement/PDB/taint/topologylimits,post-bindingownershipandactualRS/Karpenterdeletioncostbehavior.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/pkg/controller/controller_utils.go",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://raw.githubusercontent.com/aws/karpenter-provider-aws/v1.14.1/pkg/apis/crds/karpenter.k8s.aws_ec2nodeclasses.yaml",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/utils/disruption/disruption.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/utils/pod/pod.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/types.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/balanced.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/controllers/disruption/consolidation.go",
+      "https://karpenter.sh/docs/upgrading/compatibility/",
+      "https://kubernetes.io/docs/concepts/storage/volumes/",
+      "https://kubernetes.io/docs/concepts/storage/storage-classes/"
+    ],
+    "findings": [
+      "All6originalquiztopicsread;removedduplicateYAMLkeys,incompleteDeployments,hostPathportabilityandunqualifiedHA/cloudcapacityguarantees.",
+      "Expandedto10questionscoveringactualdeletioncostprecedence,pre-bindingwebhooklimitationandnarrowCASpatch.",
+      "PairedanswersequenceDBCBBBCCBC."
+    ],
+    "validation": [
+      "Originalfullyread:300lines.",
+      "5localtestmethodspassed:13rejectedstates,3validprivateplans,3K8sDeployment+2KarpenterCRDstructures.",
+      "NativeAPI-serverJSONPatchlibrary:3positiveupdatespreservedotherannotations;9staleUID/RV/nodecasesrejected.",
+      "Kubernetesnativeaffinity15casesand45RestrictedPSSchecks passed.",
+      "paired5codeblocks;Bash/YAMLparse;18locallinks;10quizanswers",
+      "Karpentercompatibility/localPV/WFCprimarysourcesreverifiedSep13;post-testchangesonlydate/reference/captionprose;scopedgitdiff--checkpassed.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-placement/{validation,native-validation,diagram-followups}.json;nolivecloud/Pod/Nodechanges."
+    ]
+  }
+]

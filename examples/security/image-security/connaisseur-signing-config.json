@@ -1,0 +1,1 @@
+{"mediaType":"application/vnd.dev.sigstore.signingconfig.v0.2+json", "rekorTlogUrls":[{"url":"https://rekor.sigstore.dev", "majorApiVersion":1, "validFor":{"start":"2021-01-01T00:00:00Z"}, "operator":"sigstore.dev"}], "rekorTlogConfig":{"selector":"ANY"}, "tsaConfig":{}}
