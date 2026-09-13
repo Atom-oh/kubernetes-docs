@@ -1,6 +1,6 @@
 {
   "status": "passed-scoped-audit",
-  "reviewedAt": "2026-09-13T04:23:27.793059+00:00",
+  "reviewedAt": "2026-09-13T05:03:46.831080+00:00",
   "scope": {
     "documents": 4,
     "originalLines": 3719,
@@ -39,7 +39,7 @@
     "results": [
       {
         "path": "ko/security/11-kubescape.md",
-        "sha256": "f108bd9a6491c76dbf61468874072e43ea7e40134bf8788b71b08a2739a70eba",
+        "sha256": "cad97cc3769766ee37ed6adcb9ce1ca033d8aec90eab5c6d8ab0dd321efaf192",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -220,7 +220,7 @@
       },
       {
         "path": "en/security/11-kubescape.md",
-        "sha256": "149a5e722a8325feb12290af1e868df334c5ced84c7e66bf645055a6655f9eeb",
+        "sha256": "6e9feb544a16f42a7181be6545279bacd7613cc28aa5b6176604cf91e6aa8b64",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -596,8 +596,8 @@
   "examples": [
     {
       "path": "examples/security/kubescape/README.md",
-      "sha256": "dfcd78fed2ffce4fcf83f47efe37f0cc08ce7842cdf5ac1236f86daf461b2dbe",
-      "bytes": 3566
+      "sha256": "6fd8079b82ff6096e82784b891e75ebca009a8c6aef2e82dd1bfad0466f55fe2",
+      "bytes": 3825
     },
     {
       "path": "examples/security/kubescape/exceptions.json",
@@ -606,8 +606,8 @@
     },
     {
       "path": "examples/security/kubescape/github-actions.yaml",
-      "sha256": "522bde3564433105f8b211407e17ff1218c8ff50c2f29571ef9d11905196c1a8",
-      "bytes": 1926
+      "sha256": "5187e771ef59dd9ba000e92856069494279dea574d4667e69c362be78879fe55",
+      "bytes": 1739
     },
     {
       "path": "examples/security/kubescape/insecure-pod.yaml",
@@ -651,8 +651,8 @@
     },
     {
       "path": "examples/security/kubescape/scan-manifests.sh",
-      "sha256": "bc373c9ae520b1b99f9116ed975795eb43267eebbf8504b7633146b69eb8ae84",
-      "bytes": 1057
+      "sha256": "9ae3fe4b28f92c46c68693e90efad6e2d3e9b48165a8adc1a6f928fac4905c35",
+      "bytes": 1738
     },
     {
       "path": "examples/security/kubescape/secure-pod.yaml",
@@ -698,18 +698,18 @@
     },
     {
       "path": "assets/diagrams/archify/en-security-11-kubescape-2.architecture.json",
-      "sha256": "1657235188ec7e4fa4815fe3157fe4278ba0148917d5b0ac552620a32e0d56a4",
-      "bytes": 7707
+      "sha256": "09d77d1644999bcd15517d04248dbcdf19f44bc83acf9080be2bac0a6465a340",
+      "bytes": 7714
     },
     {
       "path": "public/archmaps/en-security-11-kubescape-2.html",
-      "sha256": "fd49d3f809c31074016820f634bbe35b7a0721ceaef24247cf87afedb2eaaf8a",
-      "bytes": 719754
+      "sha256": "bac3639bcba699514ed3121d31ee9ef5d871804f98b615274b0121a13b1ef5e3",
+      "bytes": 719761
     },
     {
       "path": "en/.gitbook/assets/en-security-11-kubescape-2.png",
-      "sha256": "f7d003f568670fc4b1e3337b8b280c1802a34d5f53074d43db9263b8c80d0683",
-      "bytes": 182277
+      "sha256": "62d5a47cc2aff02019a0603e9862c2bf24be1bdd83659cba7343c9e0065d5caa",
+      "bytes": 182849
     },
     {
       "path": "assets/diagrams/archify/en-security-11-kubescape-3.workflow.json",
@@ -773,18 +773,18 @@
     },
     {
       "path": "assets/diagrams/archify/ko-security-11-kubescape-2.architecture.json",
-      "sha256": "48e198beaece5dca17f17c3c837bfcadea4dbaeb73bb980b5a472cbcbd9e041e",
-      "bytes": 7731
+      "sha256": "78965041983db3173c7580631f1c5399356ea7f8b527e4b9896efeac00b28069",
+      "bytes": 7738
     },
     {
       "path": "public/archmaps/ko-security-11-kubescape-2.html",
-      "sha256": "2f96250762311502a213331cbd92625722c17f2803de71ad6b4055924bb2baff",
-      "bytes": 719821
+      "sha256": "16840a7b85e6e5e74545519c9bd48e29b7a9a9f151d8f3ae4cca8514608dcc15",
+      "bytes": 719828
     },
     {
       "path": "ko/.gitbook/assets/ko-security-11-kubescape-2.png",
-      "sha256": "1096b1172f1b9479a339aba8cdf708ec11f5233284609c07e25aa51d14f90674",
-      "bytes": 175157
+      "sha256": "73913925d0b45dc944693c0a68362d10f71b625fbedee20a09c53383d488bfab",
+      "bytes": 175773
     },
     {
       "path": "assets/diagrams/archify/ko-security-11-kubescape-3.workflow.json",
@@ -1391,7 +1391,8 @@
           "passed": true
         }
       ],
-      "scope": "Actualpublishedshell+Kubescape4.0.14localYAML/offlinepolicy;noimage/cluster/SaaS"
+      "scope": "Originalpre-reviewhelperregression;currentfixcoveredseparatelybyisolatedGate.",
+      "historicalHead": "1f0c79ce4878de5c9ff9f0671209db67e17c656b"
     },
     "securityException": {
       "status": "passed",
@@ -1633,7 +1634,7 @@
             "scroll": 375,
             "svg": 2,
             "theme": "light",
-            "bodyText": 1486,
+            "bodyText": 1493,
             "missingImages": []
           },
           "errors": [],
@@ -1650,7 +1651,7 @@
             "scroll": 768,
             "svg": 2,
             "theme": "light",
-            "bodyText": 1486,
+            "bodyText": 1493,
             "missingImages": []
           },
           "errors": [],
@@ -1667,7 +1668,7 @@
             "scroll": 1920,
             "svg": 2,
             "theme": "light",
-            "bodyText": 1486,
+            "bodyText": 1493,
             "missingImages": [],
             "svgExport": {
               "bytes": 61863,
@@ -1908,7 +1909,7 @@
             "scroll": 375,
             "svg": 2,
             "theme": "light",
-            "bodyText": 1096,
+            "bodyText": 1103,
             "missingImages": []
           },
           "errors": [],
@@ -1925,7 +1926,7 @@
             "scroll": 768,
             "svg": 2,
             "theme": "light",
-            "bodyText": 1096,
+            "bodyText": 1103,
             "missingImages": []
           },
           "errors": [],
@@ -1942,7 +1943,7 @@
             "scroll": 1920,
             "svg": 2,
             "theme": "light",
-            "bodyText": 1096,
+            "bodyText": 1103,
             "missingImages": [],
             "svgExport": {
               "bytes": 60889,
@@ -2067,7 +2068,7 @@
         }
       ],
       "scope": "30caseson10production-normalizedKubescapeviewers; motion/reduced-motion/visibility/theme/guided controls and10SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild",
-      "retryNote": "NinefinalcasesreplaceEN1/EN2/KO2afterlayout/cardimprovements."
+      "retryNote": "Sixfinalschedule-cardcasesreplacepriorKO/EN2;all30finalcasespass."
     },
     "legacyAnchors": [
       {
@@ -2699,6 +2700,89 @@
         "v1beta1.spdx.softwarecomposition.kubescape.io"
       ],
       "scope": "Posture-onlyvalues;noinstallation;generatedcertificatesarenotpublished"
+    },
+    "inlineGate": {
+      "status": "passed-reproduction-and-fix",
+      "skippedControlIDs": [
+        "C-0013",
+        "C-0016",
+        "C-0017",
+        "C-0030",
+        "C-0034",
+        "C-0055",
+        "C-0057",
+        "C-0270",
+        "C-0271"
+      ],
+      "cases": [
+        {
+          "script": "original.sh",
+          "exitCode": 0,
+          "expected": 0,
+          "complianceScore": 100,
+          "passed": true
+        },
+        {
+          "script": "fixed.sh",
+          "exitCode": 1,
+          "expected": 1,
+          "complianceScore": 55,
+          "passed": true
+        }
+      ],
+      "scope": "SyntheticlocalannotatedPod+actualCLI4.0.14;noSaaSclusterorimagecalls"
+    },
+    "isolatedGate": {
+      "status": "passed",
+      "cases": [
+        {
+          "case": "hostile-insecure",
+          "exitCode": 1,
+          "expected": 1,
+          "complianceScore": 55,
+          "reportNonempty": true,
+          "requests": 0,
+          "passed": true
+        },
+        {
+          "case": "hostile-inline",
+          "exitCode": 1,
+          "expected": 1,
+          "complianceScore": 55,
+          "reportNonempty": true,
+          "requests": 0,
+          "passed": true
+        },
+        {
+          "case": "option-filename",
+          "exitCode": 1,
+          "expected": 1,
+          "complianceScore": null,
+          "reportNonempty": false,
+          "requests": 0,
+          "passed": true
+        },
+        {
+          "case": "option-yaml-filename",
+          "exitCode": 1,
+          "expected": 1,
+          "complianceScore": 55,
+          "reportNonempty": true,
+          "requests": 0,
+          "passed": true
+        },
+        {
+          "case": "hostile-secure",
+          "exitCode": 0,
+          "expected": 0,
+          "complianceScore": 95,
+          "reportNonempty": true,
+          "requests": 0,
+          "passed": true
+        }
+      ],
+      "apiRequests": [],
+      "scope": "RealCLI+syntheticYAML+hostileloopbackkubeconfigandinclusterenv;noactualK8scredentials/API;fivecaseszeromockrequests"
     }
   },
   "limits": [
@@ -2708,5 +2792,11 @@
     "The generated chart scanner image is4.0.13; nativeCLItestingused4.0.14.",
     "Browser validation used375/768/1920andlocalfontfallback;all10PNGsvisuallyinspectedafterfinalchanges.",
     "The policy bundle license andSHAprovenance are shippedwiththeofflineexamples."
+  ],
+  "reviewFixes": [
+    "DisableinlineexceptionsforCI",
+    "Freshper-runemptykubeconfig/cache;clearKubernetesenvironmentanddisablehostscan",
+    "Normalizeinputtoabsolutepath;leading-optionfilenamefailsclosed",
+    "CorrectschedulecardtorequestBody.commands[].args.scanV1"
   ]
 }

@@ -237,7 +237,7 @@ jq '{compliance: .summaryDetails.complianceScore, risk: .summaryDetails.score,
 
 ```bash
 #!/usr/bin/env bash
-# Scan explicit local manifests. Never falls back to the current cluster.
+# Scan explicit local manifests with an isolated Kubernetes/client configuration.
 set -euo pipefail
 if [[ $# -ne 2 ]]; then
   printf 'Usage: %s LOCAL_MANIFEST OUTPUT_JSON\n' "$0" >&2
@@ -249,22 +249,41 @@ if [[ ! -f $manifest_path ]]; then
   printf 'Expected an existing local manifest file: %s\n' "$manifest_path" >&2
   exit 2
 fi
+# An absolute operand cannot be parsed as a flag such as --help.
+manifest_path="$(cd -- "$(dirname -- "$manifest_path")" && pwd)/$(basename -- "$manifest_path")"
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 : "${KUBESCAPE_BIN:=kubescape}"
 : "${COMPLIANCE_MINIMUM:=90}"
 : "${SEVERITY_LIMIT:=high}"
-: "${KS_CACHE_DIR:=${TMPDIR:-/tmp}/kubescape-example-cache}"
-# This does not make the CI score a compliance certification or runtime test.
-exec "$KUBESCAPE_BIN" --cache-dir "$KS_CACHE_DIR" scan framework nsa "$manifest_path" \
+umask 077
+scan_temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/kubescape-local.XXXXXX")
+trap 'rm -rf -- "$scan_temp_dir"' EXIT
+mkdir -- "$scan_temp_dir/cache"
+cat > "$scan_temp_dir/kubeconfig" <<'YAML'
+apiVersion: v1
+kind: Config
+clusters: []
+contexts: []
+users: []
+current-context: ''
+YAML
+# Block inherited in-cluster discovery as well as kubeconfig and cached backend state.
+env -u KUBERNETES_SERVICE_HOST -u KUBERNETES_SERVICE_PORT -u KUBERNETES_PORT -u KUBERNETES_MASTER \
+  KUBECONFIG="$scan_temp_dir/kubeconfig" KS_CACHE_DIR="$scan_temp_dir/cache" \
+  "$KUBESCAPE_BIN" --cache-dir "$scan_temp_dir/cache" scan framework nsa "$manifest_path" \
+  --kubeconfig "$scan_temp_dir/kubeconfig" --host-scan=false \
   --use-from "$script_dir/policies/nsa.json" \
   --controls-config "$script_dir/policies/controls-inputs.json" \
   --exceptions "$script_dir/no-exceptions.json" \
+  --honor-inline-exceptions=false \
   --keep-local \
   --compliance-threshold "$COMPLIANCE_MINIMUM" \
   --severity-threshold "$SEVERITY_LIMIT" \
   --format json --output "$report_path"
 ```
 
+
+검사 대상의 skip-control 어노테이션은 CI에서 무시하며, 빈 kubeconfig와 새 캐시를 사용해 기존 cluster 예외를 읽지 않습니다. --keep-local만으로 Kubernetes API 연결을 막을 수는 없습니다. 로컬 모의 API를 둔 5개 시험에서 요청 0건과 실패/성공 종료 코드를 확인했습니다.
 
 잘못된 경로·스캔 오류·기준 미달은 nonzero로 끝나며 continue-on-error나 `|| true`로 숨기지 않습니다. 결과 업로드는 실패 뒤에도 실행할 수 있지만 성공 판정을 대신하지 않습니다. 예외로 control을 제외하면 검사 분모가 바뀐다는 사실도 기록합니다.
 

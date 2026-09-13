@@ -381,7 +381,7 @@
       "title": "스케줄과 권한",
       "items": [
         "kubescapeScheduler.scanSchedule",
-        "defaultFrameworks / requestBody.commands.scanV1",
+        "defaultFrameworks / requestBody.commands[].args.scanV1",
         "node/runtime/remediation은 명시적으로 선택"
       ]
     }

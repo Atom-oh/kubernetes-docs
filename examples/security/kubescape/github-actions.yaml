@@ -21,7 +21,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/kubescape-bin" "$RUNNER_TEMP/kubescape-cache"
+          mkdir -p "$RUNNER_TEMP/kubescape-bin"
           archive="$RUNNER_TEMP/kubescape.tgz"
           curl --fail --location --retry 3 \
             https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64.tar.gz \
@@ -29,8 +29,6 @@ jobs:
           printf '%s  %s\n' '1d253b70f88e80b74f68af73ccd422f897381468300be7cc486fdd656d907a40' "$archive" | sha256sum --check
           tar -xzf "$archive" -C "$RUNNER_TEMP/kubescape-bin" kubescape
           echo "KUBESCAPE_BIN=$RUNNER_TEMP/kubescape-bin/kubescape" >> "$GITHUB_ENV"
-          echo "KS_CACHE_DIR=$RUNNER_TEMP/kubescape-cache" >> "$GITHUB_ENV"
-          echo "KUBECONFIG=$RUNNER_TEMP/no-cluster-kubeconfig" >> "$GITHUB_ENV"
       - name: Validate and scan local manifests
         shell: bash
         run: |

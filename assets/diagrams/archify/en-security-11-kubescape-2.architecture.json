@@ -379,7 +379,7 @@
       "title": "Schedule and permissions",
       "items": [
         "kubescapeScheduler.scanSchedule",
-        "defaultFrameworks / requestBody.commands.scanV1",
+        "defaultFrameworks / requestBody.commands[].args.scanV1",
         "Choose node/runtime/remediation capabilities explicitly"
       ]
     }

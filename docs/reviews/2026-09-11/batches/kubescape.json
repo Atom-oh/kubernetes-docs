@@ -3,7 +3,7 @@
     "path": "ko/security/11-kubescape.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "f108bd9a6491c76dbf61468874072e43ea7e40134bf8788b71b08a2739a70eba",
+    "reviewedSha256": "cad97cc3769766ee37ed6adcb9ce1ca033d8aec90eab5c6d8ab0dd321efaf192",
     "summary": "Read4MD3719lines/20quiz;correctedCNCF/CLIscoregates/controlIDs/OperatorAPIs/exceptions/IAMscope;localCLIpolicyfixtures+shellCI+chart+10diagrams30browsercases;118oldfragmentsplus2mainaliases.",
     "validationReport": "docs/reviews/2026-09-11/kubescape-validation.json"
   },
@@ -11,7 +11,7 @@
     "path": "en/security/11-kubescape.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "149a5e722a8325feb12290af1e868df334c5ced84c7e66bf645055a6655f9eeb",
+    "reviewedSha256": "6e9feb544a16f42a7181be6545279bacd7613cc28aa5b6176604cf91e6aa8b64",
     "summary": "Read4MD3719lines/20quiz;correctedCNCF/CLIscoregates/controlIDs/OperatorAPIs/exceptions/IAMscope;localCLIpolicyfixtures+shellCI+chart+10diagrams30browsercases;118oldfragmentsplus2mainaliases.",
     "validationReport": "docs/reviews/2026-09-11/kubescape-validation.json"
   },

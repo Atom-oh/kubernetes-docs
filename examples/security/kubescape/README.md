@@ -2,7 +2,7 @@
 
 Reviewed on September 13, 2026 with CLI 4.0.14 and Operator chart 1.40.4. The chart renders scanner image 4.0.13. Policy snapshots have their own hashes; tool and policy versions are separate inputs.
 
-Run commands from this directory after obtaining a checksum-verified Kubescape binary. `scan-manifests.sh` requires an existing local file and returns the scanner exit code. It cannot silently fall back to the current cluster. The bundled NSA policy and control inputs are an Apache-2.0 snapshot from Kubescape's public artifact download; see `policies/provenance.json` and `policies/LICENSE`.
+Run commands from this directory after obtaining a checksum-verified Kubescape binary. `scan-manifests.sh` requires an existing local file and returns the scanner exit code. It normalizes the input to an absolute path, creates a fresh private cache and empty kubeconfig, clears inherited in-cluster discovery variables, disables host scans and inline exceptions, and preserves nonzero scanner errors. --keep-local alone is not cluster isolation. The bundled NSA policy and control inputs are an Apache-2.0 snapshot from Kubescape's public artifact download; see `policies/provenance.json` and `policies/LICENSE`.
 
 ```bash
 # Pass the actual absolute binary path if it is not on PATH.
@@ -13,7 +13,7 @@ KUBESCAPE_BIN=/absolute/path/to/kubescape bash scan-manifests.sh insecure-pod.ya
 
 | File | Purpose and prerequisites |
 |---|---|
-| `scan-manifests.sh` | Local policy/input, no exceptions, keep-local, minimum compliance 90 and high-severity gate. Missing input or scan errors fail. Override thresholds only as an explicit policy decision. |
+| `scan-manifests.sh` | Local policy/input, isolated empty kubeconfig, inline exceptions disabled, keep-local, minimum compliance 90 and high-severity gate. Missing input or scan errors fail. Override thresholds only as an explicit policy decision. |
 | `secure-pod.yaml`, `insecure-pod.yaml` | Synthetic input fixtures. The insecure Pod is only for scanning. The secure Pod's app image is a placeholder and local results are not a deployment certification. |
 | `policies/` | Tested NSA/control-input snapshot, license and SHA provenance. Review policy changes before replacing it. |
 | `no-exceptions.json`, `exceptions.json` | CLI JSON arrays. The narrow example uses alertOnly; it acknowledges a finding without fixing it. It is not the default gate's exception policy. |
