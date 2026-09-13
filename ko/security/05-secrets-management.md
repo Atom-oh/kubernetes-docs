@@ -671,14 +671,6 @@ SOPS_AGE_KEY_FILE=/secure/keys/docs-age.key sops edit app-secret.enc.yaml
 GitRepository를 참조합니다. Kubernetes/RBAC와 Flux 복호화 권한도 보안
 경계입니다.
 
-### AWS KMS with SOPS
-
-유효한 KMS 키 ARN과 제한된 identity·키 정책을 사용합니다. 여러 recipient는
-보통 대체 복호화 경로를 제공하며 모든 키 승인을 요구하지 않습니다.
-threshold key group은 별도 기능입니다. `sops updatekeys`는 recipient,
-`sops rotate`는 파일 데이터 키를 바꾸며 파일 안의 앱·DB 자격 증명을
-교체하지는 않습니다.
-
 ```yaml
 # Create flux-system/sops-age from a private age.agekey file separately.
 # Never put an actual AGE-SECRET-KEY value in a tracked manifest.
@@ -699,6 +691,15 @@ spec:
     secretRef:
       name: sops-age
 ```
+
+### AWS KMS with SOPS
+
+유효한 KMS 키 ARN과 제한된 identity·키 정책을 사용합니다. 여러 recipient는
+보통 대체 복호화 경로를 제공하며 모든 키 승인을 요구하지 않습니다.
+threshold key group은 별도 기능입니다. `sops updatekeys`는 recipient,
+`sops rotate`는 파일 데이터 키를 바꾸며 파일 안의 앱·DB 자격 증명을
+교체하지는 않습니다.
+
 
 ## EKS Pod Identity와 IRSA
 
