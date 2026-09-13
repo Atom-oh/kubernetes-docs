@@ -1,185 +1,189 @@
 # Cuestionario de Grafana Tempo
 
-Pon a prueba tus conocimientos sobre Grafana Tempo.
+> **Última actualización**: September 13, 2026
+
+Referencia: Tempo 3.0.3 y chart 3.6.0.
 
 ---
 
-1. ¿Cuál es la característica principal de Grafana Tempo?
-   - A) Indexa todos los datos para realizar búsquedas rápidas
-   - B) Almacenamiento basado en TraceID que elimina los costos de indexación
-   - C) Procesamiento de streaming en tiempo real
-   - D) Detección automática de anomalías
+1. ¿Qué describe mejor el almacenamiento y la búsqueda de Tempo?
+
+   - A) Cada atributo debe indexarse en Elasticsearch
+   - B) Los bloques Parquet del almacenamiento de objetos admiten TraceID/TraceQL; el almacenamiento y las consultas siguen teniendo costos
+   - C) Conocer un ID recupera cada span descartado
+   - D) Tempo retiene traces para siempre
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Almacenamiento basado en TraceID que elimina los costos de indexación**
+**Respuesta: B) Los bloques Parquet del almacenamiento de objetos admiten TraceID/TraceQL; el almacenamiento y las consultas siguen teniendo costos**
 
-**Explicación:**
-Tempo almacena y busca datos de trazas utilizando únicamente TraceID, sin indexación. Esto permite almacenar datos de trazas a gran escala a bajo costo. Otros sistemas de tracing indexan diversos campos para mejorar el rendimiento de las búsquedas, pero esto incrementa los costos de almacenamiento.
+Las columnas dedicadas, los metadatos y las cachés no implican un costo de indexación o consulta cero. Solo están disponibles los datos ingeridos y retenidos correctamente.
 
 </details>
 
 ---
 
-2. ¿Qué componente de la arquitectura de Tempo recibe y valida los datos de trazas?
-   - A) Ingester
+2. ¿Qué componente recibe y valida los datos de trace antes de que la ruta de escritura distribuida de Tempo 3 los confirme en Kafka?
+
+   - A) Block-builder
    - B) Querier
    - C) Distributor
-   - D) Compactor
+   - D) Backend worker
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: C) Distributor**
 
-**Explicación:**
-El Distributor recibe datos de trazas en diversos formatos (Jaeger, Zipkin, OTLP, etc.) y los valida. Los datos validados se distribuyen a los Ingesters adecuados según el hashing. Los Ingesters almacenan datos en búfer y los guardan, mientras que los Queriers realizan las búsquedas.
+El distributor escribe en Kafka. Los live-stores, block-builders y metrics-generators opcionales consumen por separado; esta no es la ruta de ingester de Tempo 2.
 
 </details>
 
 ---
 
-3. ¿Cuál es la consulta TraceQL correcta para recuperar únicamente spans con estado de error?
-   - A) `{ error = true }`
+3. ¿Qué consulta TraceQL selecciona spans con estado de error?
+
+   - A) `{ duration > 1s }`
    - B) `{ status = error }`
-   - C) `{ span.error = 1 }`
-   - D) `{ state = "ERROR" }`
+   - C) `{ status = ok }`
+   - D) `{ span.http.response.status_code = 200 }`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) { status = error }**
+**Respuesta: B) `{ status = error }`**
 
-**Explicación:**
-En TraceQL, utiliza la sintaxis `{ status = error }` para filtrar spans de error. El campo status puede tener los valores ok, error o unset, que se corresponden con SpanStatus de OpenTelemetry.
+El error de estado del span es distinto de un umbral de latencia o de una condición de respuesta HTTP arbitraria.
 
 </details>
 
 ---
 
-4. ¿Cuál es el método de autenticación de AWS recomendado cuando se utiliza S3 como almacenamiento de backend de Tempo?
-   - A) Almacenar la Access Key en variables de entorno
-   - B) Almacenar las credenciales en Secret
-   - C) IRSA (IAM Roles for Service Accounts)
-   - D) EC2 Instance Profile
+4. ¿Qué configuración de identidad utiliza este ejemplo de EKS/S3?
+
+   - A) Claves de acceso estáticas en los values de Helm
+   - B) El rol de nodo compartido por cada workload
+   - C) IRSA vinculado a monitoring:tempo con sub/aud exactos de OIDC y permisos de S3 con alcance limitado
+   - D) Un ServiceAccount no relacionado sin asociación con Pod
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) IRSA (IAM Roles for Service Accounts)**
+**Respuesta: C) IRSA vinculado a monitoring:tempo con sub/aud exactos de OIDC y permisos de S3 con alcance limitado**
 
-**Explicación:**
-Se recomienda IRSA en entornos EKS. IRSA vincula roles de IAM con ServiceAccounts de Kubernetes, lo que permite una administración de permisos detallada a nivel de Pod. Es más seguro que almacenar credenciales estáticas y la rotación de credenciales se gestiona automáticamente.
+La anotación de rol y el ServiceAccount de cada Pod de Tempo deben coincidir. Otros enfoques de identidad de workload necesitan su propia comprobación de compatibilidad con imágenes fijadas.
 
 </details>
 
 ---
 
-5. ¿Cuál NO es un tipo de métrica generado por Metrics Generator de Tempo?
-   - A) Métricas de Service Graph
-   - B) Métricas de Span
-   - C) Métricas de logs
-   - D) Métricas RED (Rate, Error, Duration)
+5. ¿Cuál no se genera a partir de traces mediante los processors de metrics-generator ilustrados?
+
+   - A) Métricas de grafo de servicios
+   - B) Métricas de span
+   - C) Métricas arbitrarias de logs de aplicaciones
+   - D) Métricas de tasa/error/duración derivadas de spans
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Métricas de logs**
+**Respuesta: C) Métricas arbitrarias de logs de aplicaciones**
 
-**Explicación:**
-Metrics Generator de Tempo genera métricas de Service Graph y métricas de Span (incluidas las métricas RED) a partir de datos de trazas. Estas métricas se envían a Prometheus y se utilizan para la visualización de mapas de servicios y la supervisión del rendimiento. Las métricas de logs las genera Loki y están fuera del alcance de Tempo.
+Span-metrics y service-graphs requieren la activación explícita del processor y remote write. No convierten logs arbitrarios en métricas.
 
 </details>
 
 ---
 
-6. ¿Cómo se llama la función del modo Distributed de Tempo que mantiene réplicas en varios Ingesters para garantizar la durabilidad de los datos?
-   - A) Sharding
-   - B) Replication Factor
-   - C) Partitioning
-   - D) Mirroring
+6. ¿Qué afirmación sobre la durabilidad de Tempo 3 es correcta?
+
+   - A) Tres réplicas de Tempo siempre garantizan cero pérdidas
+   - B) Los microservicios usan Kafka; su replicación, ISR, retención y recuperación deben diseñarse por separado
+   - C) El modo monolítico siempre requiere Kafka
+   - D) Cada StatefulSet tiene automáticamente un PVC persistente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Replication Factor**
+**Respuesta: B) Los microservicios usan Kafka; su replicación, ISR, retención y recuperación deben diseñarse por separado**
 
-**Explicación:**
-Replication Factor determina en cuántos Ingesters se replica cada traza. Por ejemplo, replication_factor=3 significa que cada traza se almacena en 3 Ingesters, por lo que no se pierden datos aunque falle un Ingester. Esta es una configuración importante para la alta disponibilidad de Tempo.
+El chart usa emptyDir para los datos de live-store/block-builder. La durabilidad de Kafka no queda establecida por un número de réplicas de Tempo; el modo monolítico no requiere Kafka.
 
 </details>
 
 ---
 
-7. ¿Qué configuración se necesita para implementar la correlación Trace-to-Log integrando Tempo y Loki en Grafana?
-   - A) Realizar el despliegue en el mismo namespace
-   - B) Configurar derivedFields para extraer TraceID
-   - C) Utilizar el mismo bucket de S3
-   - D) Utilizar etiquetas idénticas
+7. ¿Qué dirección de correlación de Grafana es correcta?
+
+   - A) El mismo namespace por sí solo crea correlación
+   - B) Tempo tracesToLogsV2 proporciona Trace→Logs; Loki derivedFields proporciona Logs→Trace
+   - C) Ambos sistemas deben compartir un bucket de S3
+   - D) derivedFields hace que las aplicaciones generen TraceIDs
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Configurar derivedFields para extraer TraceID**
+**Respuesta: B) Tempo tracesToLogsV2 proporciona Trace→Logs; Loki derivedFields proporciona Logs→Trace**
 
-**Explicación:**
-Configura derivedFields en los ajustes de la fuente de datos de Loki para extraer TraceID de los logs y crear enlaces a Tempo. Al hacer coincidir TraceID con un patrón regex y vincularlo a la fuente de datos de Tempo, puedes consultar trazas relacionadas directamente desde los logs.
+Los identificadores, los UID de data sources, las labels y el intervalo de tiempo consultado deben coincidir con datos reales. Un enlace no puede recuperar telemetría ausente.
 
 </details>
 
 ---
 
-8. ¿Cuál es la función del Compactor en Tempo?
-   - A) Procesamiento de consultas en tiempo real
-   - B) Recepción y distribución de datos de trazas
-   - C) Compresión de bloques almacenados y aplicación de políticas de retención
-   - D) Gestión de búferes de memoria
+8. ¿Qué componentes gestionan el trabajo de compactación y retención en segundo plano de Tempo 3?
+
+   - A) Pestañas del navegador de Grafana
+   - B) Clientes OTLP
+   - C) Backend scheduler y backend workers
+   - D) La configuración del compactor antiguo copiada sin cambios
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Compresión de bloques almacenados y aplicación de políticas de retención**
+**Respuesta: C) Backend scheduler y backend workers**
 
-**Explicación:**
-El Compactor comprime y optimiza los bloques de trazas almacenados en Object Storage. También aplica políticas de retención según la configuración block_retention para eliminar datos antiguos. El Compactor normalmente se ejecuta como una única instancia, con solo una activa por clúster.
+Estos reemplazan la arquitectura del compactor antiguo. La retención es asíncrona, y una regla general e independiente de expiración de S3 puede entrar en conflicto con las operaciones del backend.
 
 </details>
 
 ---
 
-9. ¿Cuál es la consulta TraceQL correcta para encontrar patrones de llamadas del Service A al Service B?
-   - A) `{ resource.service.name = "A" } AND { resource.service.name = "B" }`
-   - B) `{ resource.service.name = "A" } >> { resource.service.name = "B" }`
-   - C) `{ resource.service.name = "A" } -> { resource.service.name = "B" }`
-   - D) `{ resource.service.name = "A" } | { resource.service.name = "B" }`
+9. ¿Qué selecciona `{ resource.service.name = "A" } >> { resource.service.name = "B" }`?
+
+   - A) Cualquier par de spans en traces diferentes
+   - B) Descendientes B coincidentes de spans A coincidentes
+   - C) Solo padres A, nunca B
+   - D) Solo hijos B directos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) { resource.service.name = "A" } >> { resource.service.name = "B" }**
+**Respuesta: B) Descendientes B coincidentes de spans A coincidentes**
 
-**Explicación:**
-En TraceQL, el operador `>>` realiza una coincidencia estructural para encontrar casos en los que el span que coincide con la primera condición es un ancestro del span que coincide con la segunda condición. Esto permite analizar patrones de llamadas entre servicios. El operador `>` coincide únicamente con relaciones directas entre padre e hijo.
+El resultado está en el lado derecho. Usa > para hijos directos. Ni la coincidencia entre siblings ni una prueba de pertenencia al mismo trace significan lo mismo.
 
 </details>
 
 ---
 
-10. ¿Cuál NO es una configuración recomendada para optimizar el rendimiento de Tempo?
-    - A) Establecer max_block_duration en 30 minutos
-    - B) Utilizar Memcached como caché
-    - C) Indexar todos los atributos
-    - D) Habilitar query sharding en Query Frontend
+10. ¿Cuál es la primera respuesta más segura ante consultas lentas y búsquedas recientes aparentemente vacías?
+
+   - A) Copiar ingester.max_block_duration: 30m desde Tempo 2
+   - B) Deshabilitar todas las protecciones contra el retraso y las consultas recientes
+   - C) Comprobar el intervalo de tiempo, los datos realmente recibidos, el retraso, el volumen de escaneo y los límites antes de ajustar
+   - D) Convertir la telemetría ausente y el tráfico cero en un valor saludable garantizado
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Indexar todos los atributos**
+**Respuesta: C) Comprobar el intervalo de tiempo, los datos realmente recibidos, el retraso, el volumen de escaneo y los límites antes de ajustar**
 
-**Explicación:**
-El principio de diseño fundamental de Tempo es minimizar la indexación para reducir los costos. Indexar todos los atributos anularía las ventajas de Tempo e incrementaría significativamente los costos de almacenamiento. En su lugar, optimiza el rendimiento ajustando max_block_duration, usando caché y aplicando query sharding.
+Tempo 3 tiene componentes y valores predeterminados diferentes. Los resultados vacíos, el tráfico cero y los fallos son distintos; solo renderizar la configuración no demuestra que un sistema de producción funcione.
 
 </details>
 
 ---
+
+[Revisa la guía de Tempo](../../../observability/tracing/01-tempo.md).

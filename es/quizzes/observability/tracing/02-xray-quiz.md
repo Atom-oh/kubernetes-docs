@@ -1,28 +1,31 @@
 # Cuestionario de AWS X-Ray
 
-Pon a prueba tus conocimientos sobre AWS X-Ray.
+> **Última actualización**: September 13, 2026
+
+[AWS X-Ray](../../../observability/tracing/02-xray.md)
 
 ---
 
-1. ¿Cuál NO es una característica principal de AWS X-Ray?
-   - A) Visualización del mapa de servicios
-   - B) Trazado distribuido
-   - C) Agregación de logs
-   - D) Análisis de rendimiento
+1. ¿Qué comportamiento NO proporciona automáticamente un pipeline de trazas de X-Ray?
+   - A) Visualización de dependencias de Service a partir de las trazas recopiladas
+   - B) Trazado distribuido de solicitudes
+   - C) Recopilación de los archivos de logs habituales de todas las aplicaciones
+   - D) Análisis de los tiempos de los spans recopilados
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Agregación de logs**
+**Respuesta: C) Recopilación de los archivos de logs habituales de todas las aplicaciones**
 
 **Explicación:**
-AWS X-Ray proporciona trazado distribuido, visualización del mapa de servicios y análisis de rendimiento. La agregación de logs es una característica de CloudWatch Logs. X-Ray puede integrarse con CloudWatch Logs para vincular traces y logs, pero no recopila ni almacena logs por sí mismo.
+
+Tracing no configura un recopilador general de logs de aplicaciones. CloudWatch Transaction Search puede almacenar spans estructurados en aws/spans, pero esto es distinto de recopilar todos los logs habituales de aplicaciones. Metrics/logs necesitan sus propios pipelines configurados y controles de acceso.
 
 </details>
 
 ---
 
-2. ¿Cuál es la forma recomendada de desplegar el daemon de X-Ray en EKS?
+2. Para la ruta del daemon heredado, ¿qué workload de Kubernetes puede ejecutar un daemon en cada worker de EC2 elegible?
    - A) Deployment
    - B) StatefulSet
    - C) DaemonSet
@@ -34,13 +37,14 @@ AWS X-Ray proporciona trazado distribuido, visualización del mapa de servicios 
 **Respuesta: C) DaemonSet**
 
 **Explicación:**
-Se recomienda desplegar el X-Ray Daemon como un DaemonSet. Un DaemonSet ejecuta un Pod en cada nodo, lo que permite que todos los Pods de aplicación de ese nodo envíen datos de trace al X-Ray Daemon local. Esto minimiza la latencia de red y garantiza una transmisión de datos fiable.
+
+DaemonSet selecciona nodes elegibles; no es compatible con EKS Fargate. Un Service ClusterIP puede seleccionar un daemon en otro node, por lo que la ubicación del DaemonSet por sí sola no garantiza la entrega UDP local al node ni sin pérdidas. Los SDK/daemon de X-Ray están en modo de mantenimiento; la guía utiliza un Deployment de OpenTelemetry collector independiente para la instrumentación nueva.
 
 </details>
 
 ---
 
-3. ¿Cuál NO es un parámetro utilizado al configurar reglas de sampling centralizadas en X-Ray?
+3. ¿Cuál NO es un campo de una regla de sampling centralizada de X-Ray?
    - A) FixedRate
    - B) ReservoirSize
    - C) Priority
@@ -52,133 +56,141 @@ Se recomienda desplegar el X-Ray Daemon como un DaemonSet. Un DaemonSet ejecuta 
 **Respuesta: D) RetentionDays**
 
 **Explicación:**
-Las reglas de sampling de X-Ray incluyen FixedRate (proporción fija de sampling), ReservoirSize (muestras mínimas por segundo) y Priority (prioridad de la regla). RetentionDays no es un parámetro de regla de sampling, sino que está relacionado con la configuración de retención de datos de X-Ray. El período de retención de datos predeterminado es de 30 días.
+
+FixedRate, ReservoirSize y Priority son campos de sampling. RetentionDays no es un parámetro de regla de sampling. Un reservoir no garantiza un número mínimo de trazas cuando no hay tráfico. Las reglas requieren un remote sampler compatible; el head sampling no puede seleccionar un error de respuesta que aún no ha ocurrido.
 
 </details>
 
 ---
 
-4. ¿Cuál es la diferencia entre Annotation y Metadata en X-Ray?
-   - A) El máximo de Annotation es 100, Metadata es ilimitada
-   - B) Annotation está indexada y se puede filtrar, Metadata no está indexada
-   - C) Annotation solo admite cadenas, Metadata admite todos los tipos
-   - D) Annotation se genera automáticamente, Metadata se agrega manualmente
+4. ¿Qué afirmación distingue correctamente entre annotations y metadata de X-Ray?
+   - A) Cada segment recibe de forma independiente 100 annotations indexadas
+   - B) Las annotations se indexan para el filtrado de X-Ray; la metadata no indexada permanece almacenada y accesible
+   - C) Las annotations solo aceptan strings
+   - D) La metadata se redacta automáticamente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Annotation está indexada y se puede filtrar, Metadata no está indexada**
+**Respuesta: B) Las annotations se indexan para el filtrado de X-Ray; la metadata no indexada permanece almacenada y accesible**
 
 **Explicación:**
-Las Annotations están indexadas y se pueden buscar mediante expresiones de filtro en la consola de X-Ray (máximo 50). Metadata no está indexada y no se puede buscar, pero se utiliza para almacenar información detallada. Usa Annotations para identificadores importantes (user_id, order_id, etc.) y Metadata para información detallada, como los cuerpos de solicitud/respuesta.
+
+X-Ray indexa hasta50annotations por trace. La metadata no se indexa como annotations, pero no indexada no significa secreta ni inaccesible. Usa campos delimitados deliberadamente y elimina payloads sensibles, identificadores, tokens y parámetros SQL antes de la recopilación. index_all_attributes=false no es un processor de redacción.
 
 </details>
 
 ---
 
-5. ¿Cuál NO es una ventaja de utilizar el Collector de ADOT (AWS Distro for OpenTelemetry)?
-   - A) Utiliza estándares neutrales para proveedores
-   - B) Compatibilidad con múltiples backends
-   - C) Optimización específica de X-Ray
-   - D) Compatibilidad con el protocolo OpenTelemetry
+5. ¿Qué afirmación sobre ADOT Collector es falsa?
+   - A) Acepta protocolos de OpenTelemetry compatibles
+   - B) Puede conectar pipelines compatibles a múltiples backends
+   - C) Declarar un exporter de CloudWatch Logs sin usar convierte automáticamente las trazas en logs
+   - D) Debe comprobarse el inventario de componentes de su versión publicada
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Optimización específica de X-Ray**
+**Respuesta: C) Declarar un exporter de CloudWatch Logs sin usar convierte automáticamente las trazas en logs**
 
 **Explicación:**
-El ADOT Collector es neutral para proveedores y se basa en OpenTelemetry; puede enviar datos a diversos backends (Prometheus, Jaeger, Datadog, etc.) además de X-Ray. La optimización específica de X-Ray es una característica del X-Ray Daemon. Las ventajas de ADOT son la instrumentación estandarizada y la compatibilidad con múltiples backends.
+
+Los receivers, processors y exporters deben conectarse en el pipeline correspondiente de logs/metrics/traces. ADOT incluye integraciones de AWS como awsxray, por lo que el comportamiento específico de AWS no es exclusivo del daemon heredado. No asumas que todos los exporters upstream de Contrib existen en la versión de ADOT seleccionada.
 
 </details>
 
 ---
 
-6. ¿Cuándo aparece un nodo en rojo en el mapa de servicios de X-Ray?
-   - A) Cuando el tiempo de respuesta es lento
-   - B) Cuando el tráfico es alto
-   - C) Cuando la tasa de errores es alta
-   - D) Cuando es un servicio recién agregado
+6. ¿Qué representa la categoría de tráfico roja en el trace map de X-Ray/CloudWatch?
+   - A) Cada solicitud lenta
+   - B) Volumen alto de tráfico
+   - C) Fallos de servidor, como HTTP5xx
+   - D) Services descubiertos recientemente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Cuando la tasa de errores es alta**
+**Respuesta: C) Fallos de servidor, como HTTP5xx**
 
 **Explicación:**
-Los colores de los nodos en el mapa de servicios de X-Ray indican el estado de salud del servicio. El rojo indica servicios con tasas de error elevadas, el amarillo indica servicios con problemas de nivel de advertencia y el verde indica servicios normales. Esto permite identificar rápidamente los servicios problemáticos.
+
+El rojo representa fallos de servidor, el amarillo errores de cliente, el púrpura throttling como HTTP429 y el verde tráfico exitoso. Estas categorías no son umbrales de latencia arbitrarios ni afirman que cada Service rojo haya superado una alarma de tasa de errores alta definida por el usuario.
 
 </details>
 
 ---
 
-7. ¿Qué configuración se necesita para recibir datos de trace de OpenTelemetry en X-Ray?
-   - A) Instalar X-Ray SDK
-   - B) Configurar AWS X-Ray Propagator e ID Generator
-   - C) Instalar CloudWatch Agent
-   - D) Agregar Lambda Layer
+7. ¿Qué se requiere para enviar spans de OpenTelemetry a través de la ruta de recopilación de X-Ray de la guía?
+   - A) Cada productor debe usar el SDK de X-Ray heredado
+   - B) Un pipeline de collector/export de OTLP compatible y autenticado con la identidad de AWS correcta
+   - C) Cada aplicación debe instalar un CloudWatch Agent
+   - D) Cada Pod de EKS debe instalar una Lambda Layer
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Configurar AWS X-Ray Propagator e ID Generator**
+**Respuesta: B) Un pipeline de collector/export de OTLP compatible y autenticado con la identidad de AWS correcta**
 
 **Explicación:**
-Para enviar datos de trace desde OpenTelemetry a X-Ray, debes configurar AWS X-Ray Propagator (propagación de contexto) y AWS X-Ray ID Generator (genera TraceIDs en formato X-Ray). Esto permite generar datos de trace compatibles con X-Ray mientras se utilizan los estándares de OpenTelemetry.
+
+La guía envía OTLP con mTLS a ADOT, cuyo exporter awsxray invoca la API clásica firmada de X-Ray. X-Ray admite IDs W3C de 128 bits; un generador/propagador de ID de X-Ray especial no es obligatorio universalmente. El endpoint alternativo nativo de HTTPS de OTLP requiere SigV4 y Transaction Search. Configura la propagación para la integración real.
 
 </details>
 
 ---
 
-8. ¿Cuál es la consulta de expresión de filtro de X-Ray correcta para encontrar solicitudes con un tiempo de respuesta superior a 2 segundos?
-   - A) `duration > 2`
+8. ¿Qué filtro de tiempo de respuesta de X-Ray selecciona valores estrictamente mayores que dos segundos?
+   - A) `responsetime > 2000`
    - B) `responsetime > 2`
-   - C) `latency >= 2000`
+   - C) `responsetime >= 2`
    - D) `time > 2s`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) responsetime > 2**
+**Respuesta: B) `responsetime > 2`**
 
 **Explicación:**
-En las expresiones de filtro de X-Ray, la palabra clave `responsetime` se utiliza para el tiempo de respuesta y la unidad es segundos. `responsetime > 2` filtra las solicitudes que tardaron más de 2 segundos. Otros filtros útiles incluyen `fault = true` (errores del servidor), `error = true` (errores del cliente) y `service("name")` (servicio específico).
+
+Los valores de tiempo de respuesta están en segundos. >2 excluye exactamente 2 segundos; >=2 los incluye. Estas son expresiones de filtro de X-Ray, no comandos de shell ni Logs Insights QL. duration también es una keyword documentada de X-Ray y no debe presentarse como una keyword inválida inventada.
 
 </details>
 
 ---
 
-9. ¿Cuál NO es una característica proporcionada al integrar X-Ray con CloudWatch ServiceLens?
-   - A) Vista integrada de traces y métricas
-   - B) Mostrar alarmas de CloudWatch en el mapa de servicios
-   - C) Instrumentación automática del código
-   - D) Vincular logs y traces
+9. ¿Qué NO demuestra el simple hecho de abrir el trace map de CloudWatch?
+   - A) Una vista de dependencias de trazas ya recopiladas
+   - B) Correlación con metrics/alarms configuradas
+   - C) Instrumentación automática y recopilación exitosa de cada aplicación
+   - D) Enlaces a logs correlacionados adecuadamente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Instrumentación automática del código**
+**Respuesta: C) Instrumentación automática y recopilación exitosa de cada aplicación**
 
 **Explicación:**
-CloudWatch ServiceLens proporciona una vista integrada de traces de X-Ray, métricas de CloudWatch y logs. Muestra las alarmas de CloudWatch en el mapa de servicios y ofrece características para vincular logs y traces. Sin embargo, la instrumentación automática del código debe realizarse mediante X-Ray SDK o la instrumentación automática de OpenTelemetry.
+
+La instrumentación, la recopilación, la identidad y la correlación deben configurarse por separado. El antiguo mapa de ServiceLens y X-Ray se combinan en el trace map de CloudWatch. La telemetría existente puede correlacionarse allí, pero un ConfigMap sin montar o una vista vacía no son evidencia de que los agents y las aplicaciones estén configurados.
 
 </details>
 
 ---
 
-10. ¿Cuál es el propósito principal de los X-Ray Groups?
-    - A) Gestión de permisos de usuarios
-    - B) Agrupación y alertas de traces basadas en filtros
-    - C) Asignación de costos de recursos
-    - D) Configuración de políticas de retención de datos
+10. ¿Cuál es el propósito de los Groups de X-Ray?
+   - A) Reemplazar la autorización de IAM
+   - B) Agrupar trazas coincidentes para análisis y metrics/alarms asociadas
+   - C) Asignar automáticamente la propiedad de facturación de AWS
+   - D) Establecer la retención mediante una regla de sampling
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Agrupación y alertas de traces basadas en filtros**
+**Respuesta: B) Agrupar trazas coincidentes para análisis y metrics/alarms asociadas**
 
 **Explicación:**
-Los X-Ray Groups utilizan expresiones de filtro para agrupar traces. Por ejemplo, puedes crear grupos para entornos de producción, servicios específicos, solicitudes con errores, etc. Para cada grupo, puedes configurar alarmas de CloudWatch para recibir alertas sobre condiciones específicas (como el aumento de las tasas de error).
+
+Los Groups seleccionan trazas con expresiones de filtro. Revisa las metrics resultantes y configura las alarms de CloudWatch por separado. Crear un group no instrumenta a los productores, no anula el sampling, no define el aislamiento de IAM ni prueba que se haya activado una alerta de extremo a extremo.
 
 </details>
 

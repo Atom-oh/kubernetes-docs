@@ -1,185 +1,189 @@
 # Grafana Tempo クイズ
 
-Grafana Tempo に関する理解度を確認しましょう。
+> **最終更新**: September 13, 2026
+
+ベースライン: Tempo 3.0.3 および chart 3.6.0。
 
 ---
 
-1. Grafana Tempo の主な特徴は何ですか？
-   - A) 高速検索のためにすべてのデータをIndex化する
-   - B) Indexing コストを不要にする TraceID ベースのストレージ
-   - C) リアルタイムのストリーミング処理
-   - D) 自動異常検知
+1. Tempo のストレージと検索を最も適切に説明しているものはどれですか？
+
+   - A) すべての attribute を Elasticsearch でインデックス化する必要がある
+   - B) Object-store の Parquet block は TraceID/TraceQL をサポートするが、ストレージとクエリには依然としてコストがかかる
+   - C) ID がわかれば、drop されたすべての span を復元できる
+   - D) Tempo は trace を永久に保持する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Indexing コストを不要にする TraceID ベースのストレージ**
+**回答: B) Object-store の Parquet block は TraceID/TraceQL をサポートするが、ストレージとクエリには依然としてコストがかかる**
 
-**解説:**
-Tempo は Indexing を行わず、TraceID のみを使用してトレースデータを保存・検索します。これにより、大規模なトレースデータを低コストで保存できます。ほかの tracing システムでは検索性能を向上させるためにさまざまなフィールドをIndex化しますが、その結果ストレージコストが増加します。
+専用 column、metadata、cache があっても、インデックス化やクエリのコストがゼロになるわけではありません。正常に ingest され、保持されたデータのみが利用可能です。
 
 </details>
 
 ---
 
-2. Tempo のアーキテクチャで、トレースデータを受信して検証するコンポーネントはどれですか？
-   - A) Ingester
+2. Tempo 3 の分散 write path が Kafka に commit する前に、trace data を受信して検証する component はどれですか？
+
+   - A) Block-builder
    - B) Querier
    - C) Distributor
-   - D) Compactor
+   - D) Backend worker
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: C) Distributor**
 
-**解説:**
-Distributor はさまざまな形式（Jaeger、Zipkin、OTLP など）のトレースデータを受信して検証します。検証済みのデータは、hashing に基づいて適切な Ingester に分散されます。Ingester はデータをバッファリングして保存し、Querier は検索を処理します。
+Distributor は Kafka に書き込みます。Live-store、block-builder、任意の metrics-generator はそれぞれ個別に consume します。これは Tempo 2 の ingester path ではありません。
 
 </details>
 
 ---
 
-3. error ステータスの span のみを取得する正しい TraceQL クエリはどれですか？
-   - A) `{ error = true }`
+3. error status を持つ span を選択する TraceQL query はどれですか？
+
+   - A) `{ duration > 1s }`
    - B) `{ status = error }`
-   - C) `{ span.error = 1 }`
-   - D) `{ state = "ERROR" }`
+   - C) `{ status = ok }`
+   - D) `{ span.http.response.status_code = 200 }`
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) { status = error }**
+**回答: B) `{ status = error }`**
 
-**解説:**
-TraceQL では、`{ status = error }` 構文を使用して error span をフィルタリングします。status フィールドには ok、error、unset の値を指定でき、OpenTelemetry の SpanStatus に対応します。
+Span status の error は、latency threshold や任意の HTTP response condition とは異なります。
 
 </details>
 
 ---
 
-4. S3 を Tempo のバックエンドストレージとして使用する場合に推奨される AWS 認証方法はどれですか？
-   - A) Access Key を環境変数に保存する
-   - B) 認証情報を Secret に保存する
-   - C) IRSA (IAM Roles for Service Accounts)
-   - D) EC2 Instance Profile
+4. この EKS/S3 の例では、どの identity configuration を使用していますか？
+
+   - A) Helm values 内の static access key
+   - B) すべての workload で共有される node role
+   - C) 正確な OIDC sub/aud とスコープを限定した S3 permission で monitoring:tempo に bind された IRSA
+   - D) Pod との関連付けがない無関係な ServiceAccount
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) IRSA (IAM Roles for Service Accounts)**
+**回答: C) 正確な OIDC sub/aud とスコープを限定した S3 permission で monitoring:tempo に bind された IRSA**
 
-**解説:**
-IRSA は EKS 環境で推奨されます。IRSA は IAM role を Kubernetes ServiceAccount に関連付け、Pod レベルでのきめ細かな権限管理を可能にします。静的な認証情報を保存するより安全であり、認証情報のローテーションも自動で処理されます。
+role annotation とすべての Tempo Pod ServiceAccount は一致している必要があります。他の workload-identity approach には、それぞれ独自の pinned-image compatibility check が必要です。
 
 </details>
 
 ---
 
-5. Tempo の Metrics Generator が生成する metric type ではないものはどれですか？
-   - A) Service Graph metrics
+5. 図示された metrics-generator processor によって trace から生成されないものはどれですか？
+
+   - A) Service graph metrics
    - B) Span metrics
-   - C) Log metrics
-   - D) RED metrics (Rate, Error, Duration)
+   - C) 任意の application log metrics
+   - D) span から導出された rate/error/duration metrics
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) Log metrics**
+**回答: C) 任意の application log metrics**
 
-**解説:**
-Tempo の Metrics Generator は、トレースデータから Service Graph metrics と Span metrics（RED metrics を含む）を生成します。これらの metrics は Prometheus に送信され、service map の可視化とパフォーマンス監視に使用されます。Log metrics は Loki によって生成され、Tempo の対象範囲外です。
+Span-metrics と service-graphs には、明示的な processor activation と remote write が必要です。これらは任意の log を metrics に変換するものではありません。
 
 </details>
 
 ---
 
-6. Tempo Distributed mode で、データ耐久性のために複数の Ingester 間で replica を維持する機能の名称は何ですか？
-   - A) Sharding
-   - B) Replication Factor
-   - C) Partitioning
-   - D) Mirroring
+6. Tempo 3 の durability について正しい記述はどれですか？
+
+   - A) Tempo replica が 3 つあれば、常に loss がゼロであることが保証される
+   - B) Microservices は Kafka を使用する。その replication、ISR、retention、recovery は個別に設計する必要がある
+   - C) Monolithic mode は常に Kafka を必要とする
+   - D) すべての StatefulSet には自動的に永続的な PVC がある
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Replication Factor**
+**回答: B) Microservices は Kafka を使用する。その replication、ISR、retention、recovery は個別に設計する必要がある**
 
-**解説:**
-Replication Factor は、各 trace を何個の Ingester に複製するかを決定します。たとえば、replication_factor=3 は各 trace が 3 つの Ingester に保存されることを意味するため、1 つの Ingester に障害が発生してもデータは失われません。これは Tempo の高可用性構成における重要な設定です。
+chart は live-store/block-builder data に emptyDir を使用します。Kafka durability は Tempo replica 数によって確立されるものではありません。monolithic mode は Kafka を必要としません。
 
 </details>
 
 ---
 
-7. Grafana で Tempo と Loki を統合して Trace-to-Log correlation を実装するには、どの設定が必要ですか？
-   - A) 同じ namespace にデプロイする
-   - B) TraceID を抽出するよう derivedFields を設定する
-   - C) 同じ S3 bucket を使用する
-   - D) 同一の label を使用する
+7. 正しい Grafana correlation direction はどれですか？
+
+   - A) 同じ namespace であるだけで correlation が作成される
+   - B) Tempo tracesToLogsV2 は Trace→Logs を提供し、Loki derivedFields は Logs→Trace を提供する
+   - C) 両方の system が S3 bucket を共有する必要がある
+   - D) derivedFields によって application が TraceID を生成する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) TraceID を抽出するよう derivedFields を設定する**
+**回答: B) Tempo tracesToLogsV2 は Trace→Logs を提供し、Loki derivedFields は Logs→Trace を提供する**
 
-**解説:**
-Loki data source の設定で derivedFields を構成し、ログから TraceID を抽出して Tempo へのリンクを作成します。regex pattern で TraceID を照合して Tempo data source にリンクすることで、ログから関連する trace を直接クエリできます。
+identifier、data-source UID、label、クエリ対象の time range は実際の data と一致している必要があります。link では欠落した telemetry を復元できません。
 
 </details>
 
 ---
 
-8. Tempo における Compactor の役割は何ですか？
-   - A) リアルタイムのクエリ処理
-   - B) トレースデータの受信と分散
-   - C) 保存された block の圧縮と retention policy の適用
-   - D) メモリバッファの管理
+8. Tempo 3 のバックグラウンド compaction および retention 作業を処理する component はどれですか？
+
+   - A) Grafana browser tab
+   - B) OTLP client
+   - C) Backend scheduler と backend worker
+   - D) 変更せずにコピーされた古い compactor configuration
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) 保存された block の圧縮と retention policy の適用**
+**回答: C) Backend scheduler と backend worker**
 
-**解説:**
-Compactor は Object Storage に保存された trace block を圧縮・最適化します。また、block_retention 設定に従って retention policy を適用し、古いデータを削除します。Compactor は通常 single instance として実行され、cluster ごとにアクティブなのは 1 つだけです。
+これらは古い compactor architecture を置き換えます。retention は非同期であり、独立した包括的な S3 expiration rule は backend operation と競合する可能性があります。
 
 </details>
 
 ---
 
-9. Service A から Service B への呼び出しパターンを検索する正しい TraceQL クエリはどれですか？
-   - A) `{ resource.service.name = "A" } AND { resource.service.name = "B" }`
-   - B) `{ resource.service.name = "A" } >> { resource.service.name = "B" }`
-   - C) `{ resource.service.name = "A" } -> { resource.service.name = "B" }`
-   - D) `{ resource.service.name = "A" } | { resource.service.name = "B" }`
+9. `{ resource.service.name = "A" } >> { resource.service.name = "B" }` は何を選択しますか？
+
+   - A) 異なる trace 内の任意の 2 つの span
+   - B) 一致する A span の descendant である一致する B
+   - C) A parent のみで、B は含まれない
+   - D) 直接の B child のみ
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) { resource.service.name = "A" } >> { resource.service.name = "B" }**
+**回答: B) 一致する A span の descendant である一致する B**
 
-**解説:**
-TraceQL では、`>>` 演算子が構造的なマッチングを行い、最初の条件に一致する span が 2 番目の条件に一致する span の ancestor であるケースを検索します。これにより、Service 間の呼び出しパターンを分析できます。`>` 演算子は直接の parent-child relationship のみを照合します。
+結果は右辺にあります。直接の child には > を使用します。sibling matching も同一 trace membership test も、同じ意味ではありません。
 
 </details>
 
 ---
 
-10. Tempo のパフォーマンス最適化で推奨されない設定はどれですか？
-    - A) max_block_duration を 30 分に設定する
-    - B) cache として Memcached を使用する
-    - C) すべての attribute をIndex化する
-    - D) Query Frontend で query sharding を有効化する
+10. query が遅く、最近の検索結果が空に見える場合に最も安全な最初の対応はどれですか？
+
+   - A) Tempo 2 の `ingester.max_block_duration: 30m` をコピーする
+   - B) すべての lag および recent-query protection を無効にする
+   - C) tuning の前に time range、実際に受信した data、lag、scan volume、limit を確認する
+   - D) 欠落した telemetry と traffic ゼロを、確実に健全な値にする
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) すべての attribute をIndex化する**
+**回答: C) tuning の前に time range、実際に受信した data、lag、scan volume、limit を確認する**
 
-**解説:**
-Tempo の中核となる設計原則は、コストを削減するために Indexing を最小限に抑えることです。すべての attribute をIndex化すると Tempo の利点が損なわれ、ストレージコストが大幅に増加します。代わりに、max_block_duration のチューニング、caching、query sharding によってパフォーマンスを最適化します。
+Tempo 3 では component/default が異なります。空の結果、traffic ゼロ、failure はそれぞれ異なります。configuration の rendering だけでは、production system が動作している証明にはなりません。
 
 </details>
 
 ---
+
+[Tempo ガイドを確認する](../../../observability/tracing/01-tempo.md).

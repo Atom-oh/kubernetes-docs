@@ -1,185 +1,189 @@
 # Grafana Tempo 测验
 
-测试您对 Grafana Tempo 的理解。
+> **最后更新**: September 13, 2026
+
+基准版本：Tempo 3.0.3 和 chart 3.6.0。
 
 ---
 
-1. Grafana Tempo 的主要特点是什么？
-   - A) 为快速搜索而索引所有数据
-   - B) 消除索引成本的基于 TraceID 的存储
-   - C) 实时流处理
-   - D) 自动异常检测
+1. 下列哪项最准确地描述了 Tempo 存储和搜索？
+
+   - A) 每个属性都必须在 Elasticsearch 中建立索引
+   - B) 对象存储 Parquet 块支持 TraceID/TraceQL；存储和查询仍然会产生成本
+   - C) 知道一个 ID 就能恢复每个被丢弃的 span
+   - D) Tempo 会永久保留 traces
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 消除索引成本的基于 TraceID 的存储**
+**答案：B) 对象存储 Parquet 块支持 TraceID/TraceQL；存储和查询仍然会产生成本**
 
-**说明:**
-Tempo 仅使用 TraceID 存储和搜索 trace 数据，无需索引。这使得能够以较低成本存储大规模 trace 数据。其他 tracing 系统会对各种字段建立索引以提升搜索性能，但这会导致存储成本增加。
+专用列、元数据和缓存并不意味着索引或查询成本为零。只有成功摄取并保留的数据才可用。
 
 </details>
 
 ---
 
-2. Tempo 架构中的哪个组件接收并验证 trace 数据？
-   - A) Ingester
+2. 在 Tempo 3 分布式写入路径提交到 Kafka 之前，哪个组件接收并验证 trace 数据？
+
+   - A) Block-builder
    - B) Querier
    - C) Distributor
-   - D) Compactor
+   - D) Backend worker
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) Distributor**
+**答案：C) Distributor**
 
-**说明:**
-Distributor 接收各种格式的 trace 数据（Jaeger、Zipkin、OTLP 等）并对其进行验证。验证后的数据会根据哈希分发到相应的 Ingester。Ingester 负责缓冲和存储数据，而 Querier 负责搜索。
+Distributor 写入 Kafka。Live-stores、block-builders 和可选的 metrics-generators 分别进行消费；这不是 Tempo 2 的 ingester 路径。
 
 </details>
 
 ---
 
-3. 仅检索错误状态 span 的正确 TraceQL 查询是什么？
-   - A) `{ error = true }`
+3. 哪个 TraceQL 查询会选择状态为 error 的 spans？
+
+   - A) `{ duration > 1s }`
    - B) `{ status = error }`
-   - C) `{ span.error = 1 }`
-   - D) `{ state = "ERROR" }`
+   - C) `{ status = ok }`
+   - D) `{ span.http.response.status_code = 200 }`
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) { status = error }**
+**答案：B) `{ status = error }`**
 
-**说明:**
-在 TraceQL 中，使用 `{ status = error }` 语法筛选错误 span。status 字段可取值为 ok、error 或 unset，它们分别对应 OpenTelemetry 的 SpanStatus。
+Span 状态 error 不同于延迟阈值或任意 HTTP 响应条件。
 
 </details>
 
 ---
 
-4. 将 S3 用作 Tempo 后端存储时，推荐使用哪种 AWS 身份验证方法？
-   - A) 将 Access Key 存储在环境变量中
-   - B) 将凭证存储在 Secret 中
-   - C) IRSA (IAM Roles for Service Accounts)
-   - D) EC2 Instance Profile
+4. 此 EKS/S3 示例使用了哪种身份配置？
+
+   - A) Helm values 中的静态访问密钥
+   - B) 每个工作负载共享的节点角色
+   - C) 绑定到 monitoring:tempo、具有精确 OIDC sub/aud 和限定 S3 权限的 IRSA
+   - D) 与任何 Pod 无关联的不相关 ServiceAccount
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) IRSA (IAM Roles for Service Accounts)**
+**答案：C) 绑定到 monitoring:tempo、具有精确 OIDC sub/aud 和限定 S3 权限的 IRSA**
 
-**说明:**
-建议在 EKS 环境中使用 IRSA。IRSA 将 IAM roles 与 Kubernetes ServiceAccounts 关联，可在 Pod 级别实现细粒度的权限管理。与存储静态凭证相比，它更安全，并且凭证轮换会自动处理。
+角色注解和每个 Tempo Pod ServiceAccount 必须保持一致。其他工作负载身份方法需要各自进行固定镜像兼容性检查。
 
 </details>
 
 ---
 
-5. 以下哪项不是 Tempo 的 Metrics Generator 生成的指标类型？
-   - A) Service Graph 指标
-   - B) Span 指标
-   - C) 日志指标
-   - D) RED 指标（Rate、Error、Duration）
+5. 下列哪项不会由所示 metrics-generator processors 从 traces 生成？
+
+   - A) Service graph metrics
+   - B) Span metrics
+   - C) 任意应用程序日志 metrics
+   - D) 从 spans 派生的 rate/error/duration metrics
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) 日志指标**
+**答案：C) 任意应用程序日志 metrics**
 
-**说明:**
-Tempo 的 Metrics Generator 会从 trace 数据中生成 Service Graph 指标和 Span 指标（包括 RED 指标）。这些指标会发送到 Prometheus，用于服务地图可视化和性能监控。日志指标由 Loki 生成，不属于 Tempo 的范围。
+Span-metrics 和 service-graphs 需要显式启用 processor 并进行 remote write。它们不会将任意 logs 转换为 metrics。
 
 </details>
 
 ---
 
-6. 在 Tempo Distributed 模式中，用于在多个 Ingester 之间维护副本以确保持久性的功能名称是什么？
-   - A) Sharding
-   - B) Replication Factor
-   - C) Partitioning
-   - D) Mirroring
+6. 关于 Tempo 3 持久性的哪项陈述正确？
+
+   - A) 三个 Tempo replicas 始终保证零丢失
+   - B) Microservices 使用 Kafka；其复制、ISR、保留和恢复必须单独设计
+   - C) Monolithic 模式始终需要 Kafka
+   - D) 每个 StatefulSet 都会自动拥有持久性 PVC
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Replication Factor**
+**答案：B) Microservices 使用 Kafka；其复制、ISR、保留和恢复必须单独设计**
 
-**说明:**
-Replication Factor 决定每个 trace 被复制到多少个 Ingester。例如，replication_factor=3 表示每个 trace 存储在 3 个 Ingester 上，因此即使一个 Ingester 发生故障也不会丢失数据。这是 Tempo 高可用性配置中的重要设置。
+该 chart 对 live-store/block-builder 数据使用 emptyDir。Kafka 持久性并非由 Tempo replica 数量决定；monolithic 模式不需要 Kafka。
 
 </details>
 
 ---
 
-7. 通过在 Grafana 中集成 Tempo 和 Loki 实现 Trace-to-Log 关联，需要进行什么配置？
-   - A) 部署在同一个 namespace 中
-   - B) 配置 derivedFields 以提取 TraceID
-   - C) 使用同一个 S3 bucket
-   - D) 使用相同的 labels
+7. 哪个 Grafana 关联方向正确？
+
+   - A) 仅相同 namespace 就会创建关联
+   - B) Tempo tracesToLogsV2 提供 Trace→Logs；Loki derivedFields 提供 Logs→Trace
+   - C) 两个系统必须共享一个 S3 bucket
+   - D) derivedFields 会使应用程序生成 TraceIDs
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 配置 derivedFields 以提取 TraceID**
+**答案：B) Tempo tracesToLogsV2 提供 Trace→Logs；Loki derivedFields 提供 Logs→Trace**
 
-**说明:**
-在 Loki 数据源设置中配置 derivedFields，从日志中提取 TraceID 并创建指向 Tempo 的链接。通过使用正则表达式模式匹配 TraceID 并将其链接到 Tempo 数据源，您可以直接从日志中查询相关 trace。
+标识符、数据源 UID、labels 和所查询的时间范围必须与真实数据匹配。链接无法恢复缺失的 telemetry。
 
 </details>
 
 ---
 
-8. Compactor 在 Tempo 中的作用是什么？
-   - A) 实时查询处理
-   - B) 接收和分发 trace 数据
-   - C) 压缩已存储的 block 并应用保留策略
-   - D) 内存缓冲区管理
+8. 哪些组件负责 Tempo 3 后台 compaction 和 retention 工作？
+
+   - A) Grafana 浏览器标签页
+   - B) OTLP clients
+   - C) Backend scheduler 和 backend workers
+   - D) 原样复制的旧 compactor 配置
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) 压缩已存储的 block 并应用保留策略**
+**答案：C) Backend scheduler 和 backend workers**
 
-**说明:**
-Compactor 会压缩并优化存储在 Object Storage 中的 trace block。它还会根据 block_retention 设置应用保留策略，以删除旧数据。Compactor 通常以单个实例运行，每个 cluster 中只有一个处于活动状态。
+它们取代了旧的 compactor 架构。Retention 是异步的，独立的全局 S3 expiration rule 可能会与 backend 操作冲突。
 
 </details>
 
 ---
 
-9. 用于查找从 Service A 到 Service B 的调用模式的正确 TraceQL 查询是什么？
-   - A) `{ resource.service.name = "A" } AND { resource.service.name = "B" }`
-   - B) `{ resource.service.name = "A" } >> { resource.service.name = "B" }`
-   - C) `{ resource.service.name = "A" } -> { resource.service.name = "B" }`
-   - D) `{ resource.service.name = "A" } | { resource.service.name = "B" }`
+9. `{ resource.service.name = "A" } >> { resource.service.name = "B" }` 选择什么？
+
+   - A) 不同 traces 中任意两个 spans
+   - B) 与匹配 A spans 对应的匹配 B 后代
+   - C) 仅 A 父级，绝不包括 B
+   - D) 仅直接 B 子级
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) { resource.service.name = "A" } >> { resource.service.name = "B" }**
+**答案：B) 与匹配 A spans 对应的匹配 B 后代**
 
-**说明:**
-在 TraceQL 中，`>>` 运算符执行结构匹配，用于查找与第一个条件匹配的 span 是与第二个条件匹配的 span 的祖先的情况。这使得可以分析服务之间的调用模式。`>` 运算符仅匹配直接的父子关系。
+结果位于右侧。使用 > 表示直接子级。sibling 匹配和同一 trace 成员资格测试都不表示相同的含义。
 
 </details>
 
 ---
 
-10. 以下哪项不是 Tempo 性能优化的推荐设置？
-    - A) 将 max_block_duration 设置为 30 分钟
-    - B) 使用 Memcached 作为缓存
-    - C) 为所有属性建立索引
-    - D) 在 Query Frontend 中启用查询分片
+10. 面对缓慢查询和看似为空的近期搜索，最安全的首要应对措施是什么？
+
+   - A) 从 Tempo 2 复制 `ingester.max_block_duration: 30m`
+   - B) 禁用所有 lag 和近期查询保护机制
+   - C) 调优前检查时间范围、实际接收的数据、lag、扫描量和限制
+   - D) 将缺失的 telemetry 和零流量变为有保证的健康值
 
 <details>
 <summary>显示答案</summary>
 
-**答案: C) 为所有属性建立索引**
+**答案：C) 调优前检查时间范围、实际接收的数据、lag、扫描量和限制**
 
-**说明:**
-Tempo 的核心设计原则是尽可能减少索引以降低成本。为所有属性建立索引会抵消 Tempo 的优势，并显著增加存储成本。相反，应通过调整 max_block_duration、缓存和查询分片来优化性能。
+Tempo 3 具有不同的组件和默认值。空结果、零流量和故障各不相同；仅渲染配置并不能证明生产系统能够正常运行。
 
 </details>
 
 ---
+
+[查看 Tempo 指南](../../../observability/tracing/01-tempo.md)。

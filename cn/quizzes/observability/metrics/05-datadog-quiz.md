@@ -1,183 +1,167 @@
 # Datadog 测验
 
-用于测试您对 Datadog 理解程度的测验。
+> **最后更新**: September 13, 2026
 
----
+1. 使用 Datadog SaaS 后，团队仍需负责什么？
 
-1. Datadog 的主要部署模式是什么？
-   - A) 仅自托管
-   - B) SaaS（Software as a Service）
-   - C) 仅本地部署
-   - D) 必须采用混合模式
+   - A) 安装 Agent 后无需负责任何事
+   - B) 仅选择仪表板颜色
+   - C) 收集器、身份、埋点、数据处理、监控器和成本
+   - D) Datadog 的物理数据库服务器
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) SaaS（Software as a Service）**
+**答案: C**
 
-**说明：**
-Datadog 是以 SaaS 模式提供的统一可观测性平台。用户只需部署 Datadog Agent，而数据存储、处理和可视化均由 Datadog 的云基础设施负责。这使您无需承担运维开销即可使用强大的监控功能。
+SaaS 管理后端。APM、性能分析、日志和其他产品具有各自的授权与计费方式；一个 Agent 并不包含所有功能。
+
+</details>
+
+2. 关于凭证/集成，哪项陈述是正确的？
+
+   - A) 基础 Agent 数据采集需要 API key；application key 和 AWS account role 用于其他特定功能
+   - B) 每个 Agent 都需要 application key 和宽泛的 AWS 读取 role
+   - C) 添加 IRSA 会自动配置 Datadog SaaS AWS 集成
+   - D) 推测出的 service-account 名称已足够
+
+<details>
+<summary>显示答案</summary>
+
+**答案: A**
+
+外部指标提供程序需要额外的 API 权限/key 配置。SaaS AWS 集成使用已授权的跨账户 role/external ID。请解析实际渲染出的 Agent SA。
+
+</details>
+
+3. 仅凭 admission.datadoghq.com/enabled=true 能证明 APM SDK 注入吗？
+
+   - A) 是的，会自动包含每种语言/版本
+   - B) 否；请配置 SDK annotations 或 SSI targets，然后验证新准入的 Pods 和实际 trace 数据
+   - C) 是的，即使在 Cluster Agent namespace 中也是如此
+   - D) 是的，只要存在 trace socket
+
+<details>
+<summary>显示答案</summary>
+
+**答案: B**
+
+变更/连接设置与 library 注入是不同的。当前本地注入不包括 kube-system 和 Cluster Agent namespace。仍需考虑 library、runtime、挂载和安全兼容性。
+
+</details>
+
+4. 应用程序 Pod 应如何访问节点上的 DogStatsD Agent？
+
+   - A) 始终使用应用程序的 localhost
+   - B) 在每个 UDP packet 中放入 API key
+   - C) 创建一个无关的 ConfigMap
+   - D) 使用配置的可达端点，例如挂载的 Linux UDS directory
+
+<details>
+<summary>显示答案</summary>
+
+**答案: D**
+
+应用程序的 localhost 不是节点 Agent。UDS paths、权限和 SDK 参数格式必须匹配。Datagram 不会确认 SaaS 数据采集；counter 也不是恰好一次的账本。
+
+</details>
+
+5. 哪项指标解读是正确的？
+
+   - A) kubernetes.cpu.usage.total 是百分比
+   - B) 所有缺失的旧目录指标都已被移除
+   - C) kubernetes.cpu.usage.total 是 nanocores；Kubelet restart metrics 是累积 gauge
+   - D) 对重复的 restart samples 求和可以计算新增 restart 次数
+
+<details>
+<summary>显示答案</summary>
+
+**答案: C**
+
+system.cpu.idle 是百分比。Kubelet 和 State Core 有不同的有效 metric names 和 tags。示例 restart monitor 会明确评估 total；近期增量需要进行可感知重置的验证。
+
+</details>
+
+6. .as_count() error-ratio 路径计算的是什么？
+
+   - A) 经时间聚合的 error count 与 total count 之比
+   - B) 每个 time bucket ratio 的总和
+   - C) 全局 p95
+   - D) 流量为零时自动 100% 成功
+
+<details>
+<summary>显示答案</summary>
+
+**答案: A**
+
+使用 sum aggregation 和匹配的 groups。该 helper 会显式输出零 good/error counts。零流量、缺失数据和无错误流量仍是不同的状态。
+
+</details>
+
+7. 关于 OpenMetrics/log 配置，哪项陈述是正确的？
+
+   - A) 任何 ConfigMap 都会自动挂载
+   - B) 使用匹配的 container annotations/current check fields；Logs Grok 规则使用 match_rules/support_rules
+   - C) chart root 的 prometheus.enabled 会配置所有内容
+   - D) Grok 的 camelCase keys 和 snake_case keys 是等效的
+
+<details>
+<summary>显示答案</summary>
+
+**答案: B**
+
+当前 OpenMetrics check 使用 openmetrics_endpoint。datadog.confd 提供 chart 所有的挂载；独立的 ConfigMaps 不会自行安装。请求 schema 验证并不等同于实时 scrape 或 Grok parse。
+
+</details>
+
+8. 手动 trace-log 关联应保留什么？
+
+   - A) 仅保留 dd.trace_id，删除所有其他 MDC fields
+   - B) 对 128-bit ID 进行任意 numeric cast
+   - C) 硬编码一个成功的 trace ID
+   - D) 调用方先前的 MDC context、string IDs，以及实际的 instrumentation/data 前提条件
+
+<details>
+<summary>显示答案</summary>
+
+**答案: D**
+
+即使 application code 抛出异常，该 helper 也会恢复 context。它是同步的。自动注入/解析、一致的 service tags 和可用的 traces 是独立的要求。
+
+</details>
+
+9. 将 50 个 services 按 50 个 APM hosts 计价有什么问题？
+
+   - A) APM 始终免费
+   - B) 日志数据采集就是全部日志账单
+   - C) Services 和可计费 hosts 是不同单位；必须计算产品/合同配额和用量
+   - D) 每个 cluster 都有一个 host
+
+<details>
+<summary>显示答案</summary>
+
+**答案: C**
+
+旧估算并非经过测量的账单。索引/保留、span 配额、custom metrics 和其他产品都很重要。nonLocalTraffic 是可达性，而非成本配额。
+
+</details>
+
+10. 哪项 Watchdog/SLO/diagnostic 实践是正确的？
+
+   - A) 一条 Watchdog insight 可以证明已送达 page
+   - B) 匹配 SLO model 和 good/total policy，测试路由，并在共享前检查本地 diagnostic bundles
+   - C) 本地 flare 会自动授权上传
+   - D) traces 缺失时导出每个 DD_ environment value
+
+<details>
+<summary>显示答案</summary>
+
+**答案: B**
+
+Datadog 支持 metric-、monitor- 和 time-slice SLOs。通知和 no-data 行为需要验证。env dumps 可能暴露 keys；--local 会将初始 flare 收集保留在本地。
 
 </details>
 
 ---
 
-2. Datadog Cluster Agent 的作用是什么？
-   - A) 容器日志收集
-   - B) 集群级指标和事件收集
-   - C) APM 追踪处理
-   - D) Dashboard 渲染
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 集群级指标和事件收集**
-
-**说明：**
-Datadog Cluster Agent 从 Kubernetes 集群收集集群级指标和事件。它还为 HPA（Horizontal Pod Autoscaler）提供自定义指标服务器角色，并通过 Admission Controller 自动注入 APM 插桩。
-
-</details>
-
----
-
-3. 如何在 Datadog 中启用自动 APM 插桩？
-   - A) 必须修改应用程序代码
-   - B) 使用 Admission Controller 和 Pod 标签
-   - C) 部署独立的 APM 服务器
-   - D) 手动注入库
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 使用 Admission Controller 和 Pod 标签**
-
-**说明：**
-启用 Datadog Admission Controller 后，APM 插桩库会自动注入带有 `admission.datadoghq.com/enabled: "true"` 标签的 Pod。它支持包括 Java、Python、Node.js、.NET 和 Ruby 在内的主要语言，让您无需修改代码即可开始追踪。
-
-</details>
-
----
-
-4. DogStatsD 的作用是什么？
-   - A) 日志收集
-   - B) 自定义指标收集（兼容 StatsD）
-   - C) 创建 Dashboard
-   - D) 告警路由
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 自定义指标收集（兼容 StatsD）**
-
-**说明：**
-DogStatsD 是 Datadog Agent 内置的、兼容 StatsD 的指标收集守护进程。应用程序可以通过 UDP 发送自定义指标（计数器、仪表、直方图、分布）。它兼容 StatsD 协议，并增加了标签功能。
-
-</details>
-
----
-
-5. 如何在 Datadog 中关联追踪和日志？
-   - A) 手动上传日志文件
-   - B) 在日志中包含 trace_id 和 span_id
-   - C) 部署独立的关联服务
-   - D) 匹配日志和追踪的时间戳
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 在日志中包含 trace_id 和 span_id**
-
-**说明：**
-要在 Datadog 中关联追踪和日志，日志必须包含 `dd.trace_id` 和 `dd.span_id`。Datadog APM 库可以通过 MDC（Mapped Diagnostic Context）自动注入此信息。这样便可直接从 APM 查看相关日志。
-
-</details>
-
----
-
-6. 在 Datadog 的成本结构中，基础设施监控的计费单位是什么？
-   - A) 指标数量
-   - B) 主机数量
-   - C) API 调用次数
-   - D) 数据传输量
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 主机数量**
-
-**说明：**
-Datadog 基础设施监控按主机数量计费。每个节点、实例和容器主机都是一个可计费项。APM、日志管理和其他功能具有独立的计费结构，而基于主机的计费使成本预测更容易。
-
-</details>
-
----
-
-7. Datadog Watchdog 的功能是什么？
-   - A) 手动配置告警
-   - B) 基于 AI 的自动异常检测
-   - C) 日志搜索
-   - D) 创建 Dashboard
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 基于 AI 的自动异常检测**
-
-**说明：**
-Watchdog 是 Datadog 基于 AI/ML 的自动异常检测功能。它会自动检测基础设施、APM 和日志数据中的异常模式并生成告警。您无需手动设置阈值即可识别异常。
-
-</details>
-
----
-
-8. 如何使用 Datadog Agent 收集 Prometheus 指标？
-   - A) 必须使用独立的 Prometheus 服务器
-   - B) 使用 Pod 注解配置自动发现
-   - C) 手动注册每个端点
-   - D) 用 Datadog 替换 Prometheus
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 使用 Pod 注解配置自动发现**
-
-**说明：**
-Datadog Agent 使用 `ad.datadoghq.com/<container>.checks` 注解自动发现并收集 Prometheus 指标端点。配置方式与 Prometheus 抓取设置类似，无需独立的 Prometheus 服务器即可收集指标。
-
-</details>
-
----
-
-9. 在 Datadog 中设置 SLO（Service Level Objective）时可以使用哪些类型的指标？
-   - A) 仅日志事件
-   - B) 基于指标、基于监控器、基于时间片
-   - C) 仅 APM 追踪
-   - D) 仅基础设施指标
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 基于指标、基于监控器、基于时间片**
-
-**说明：**
-Datadog SLO 支持三种类型：基于指标（成功/失败计数）、基于监控器（现有监控器状态）和基于时间片（每个时间间隔的状态）。可使用包括 APM 追踪、自定义指标和基于日志的指标在内的各种数据源。
-
-</details>
-
----
-
-10. 以下哪项不是有效的 Datadog 成本优化策略？
-    - A) 调整 APM 追踪采样率
-    - B) 过滤不必要的日志
-    - C) 以最高分辨率收集所有指标
-    - D) 管理自定义指标基数
-
-<details>
-<summary>显示答案</summary>
-
-**答案：C) 以最高分辨率收集所有指标**
-
-**说明：**
-对于 Datadog 成本优化，APM 追踪采样、日志过滤和自定义指标基数管理非常重要。以最高分辨率收集所有指标会导致成本激增。应仅选择性收集必要指标并采用适当的采样。
-
-</details>
+[返回指南](../../../observability/metrics/05-datadog.md)

@@ -1,184 +1,196 @@
 # AWS X-Ray クイズ
 
-AWS X-Ray についての理解度を確認しましょう。
+> **最終更新**: September 13, 2026
+
+[AWS X-Ray](../../../observability/tracing/02-xray.md)
 
 ---
 
-1. AWS X-Ray の主要な機能では**ない**ものはどれですか？
-   - A) Service map visualization
-   - B) Distributed tracing
-   - C) Log aggregation
-   - D) Performance analysis
+1. X-Ray trace pipeline で自動的に提供されない動作はどれですか？
+   - A) 収集した trace に基づく Service 依存関係の可視化
+   - B) 分散リクエストトレーシング
+   - C) すべてのアプリケーションの通常ログファイルの収集
+   - D) 収集した span タイミングの分析
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: C) Log aggregation**
+**回答: C) すべてのアプリケーションの通常ログファイルの収集**
 
 **解説:**
-AWS X-Ray は Distributed tracing、Service map visualization、Performance analysis を提供します。Log aggregation は CloudWatch Logs の機能です。X-Ray は CloudWatch Logs と統合して trace と log を関連付けることができますが、log 自体を収集または保存することはありません。
+
+Tracing は、汎用的なアプリケーションログコレクターを設定しません。CloudWatch Transaction Search は構造化 span を aws/spans に保存できますが、これは通常のアプリケーションログをすべて収集することとは異なります。Metrics/logs には、それぞれ独自に設定した pipeline とアクセス制御が必要です。
 
 </details>
 
 ---
 
-2. EKS で X-Ray daemon をデプロイする推奨方法はどれですか？
+2. レガシー daemon パスでは、各適格な EC2 worker 上で daemon を実行できる Kubernetes workload はどれですか？
    - A) Deployment
    - B) StatefulSet
    - C) DaemonSet
    - D) Job
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: C) DaemonSet**
 
 **解説:**
-X-Ray Daemon を DaemonSet としてデプロイすることが推奨されます。DaemonSet は各 node で 1 つの Pod を実行するため、その node 上のすべての application Pod が local X-Ray Daemon に trace data を送信できます。これにより network latency が最小化され、信頼性の高い data transmission が確保されます。
+
+DaemonSet は適格な node を選択します。EKS Fargate ではサポートされません。ClusterIP Service は別の node 上の daemon を選択する可能性があるため、DaemonSet の配置だけでは node-local または損失のない UDP 配信を保証しません。X-Ray SDK/daemon はメンテナンスモードです。このガイドでは、新しい instrumentation に対して別の OpenTelemetry collector Deployment を使用します。
 
 </details>
 
 ---
 
-3. X-Ray で centralized sampling rules を設定する際に使用され**ない**パラメータはどれですか？
+3. X-Ray の集中型 sampling rule のフィールドではないものはどれですか？
    - A) FixedRate
    - B) ReservoirSize
    - C) Priority
    - D) RetentionDays
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 **回答: D) RetentionDays**
 
 **解説:**
-X-Ray sampling rules には FixedRate（固定 sampling ratio）、ReservoirSize（1 秒あたりの最小 sample 数）、Priority（rule priority）が含まれます。RetentionDays は sampling rule のパラメータではなく、X-Ray の data retention settings に関連します。デフォルトの data retention period は 30 日です。
+
+FixedRate、ReservoirSize、Priority は sampling フィールドです。RetentionDays は sampling-rule parameter ではありません。トラフィックがない場合、reservoir は trace の最小数を保証するものではありません。rule には互換性のある remote sampler が必要です。head sampling は、まだ発生していない response error を選択できません。
 
 </details>
 
 ---
 
-4. X-Ray における Annotation と Metadata の違いは何ですか？
-   - A) Annotation の最大数は 100、Metadata は無制限
-   - B) Annotation は indexed され filterable、Metadata は indexed されない
-   - C) Annotation は string のみをサポートし、Metadata はすべての type をサポートする
-   - D) Annotation は自動生成され、Metadata は手動で追加される
+4. X-Ray annotations と metadata を正しく区別している記述はどれですか？
+   - A) すべての segment はそれぞれ 100 個のインデックス付き annotation を受け取る
+   - B) annotations は X-Ray のフィルタリング用にインデックス化され、インデックス化されない metadata は保存されアクセス可能なままである
+   - C) annotations が受け付けるのは文字列のみである
+   - D) metadata は自動的にマスキングされる
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) Annotation は indexed され filterable、Metadata は indexed されない**
+**回答: B) annotations は X-Ray のフィルタリング用にインデックス化され、インデックス化されない metadata は保存されアクセス可能なままである**
 
 **解説:**
-Annotations は indexed され、X-Ray console の filter expressions を使用して検索できます（最大 50 個）。Metadata は indexed されず検索できませんが、詳細情報の保存に使用されます。重要な identifier（user_id、order_id など）には Annotations を、request/response body などの詳細情報には Metadata を使用します。
+
+X-Ray は trace ごとに最大50個の annotation をインデックス化します。Metadata は annotation としてインデックス化されませんが、インデックス化されないことは秘密であることやアクセス不能であることを意味しません。収集前に、意図的に制限したフィールドを使用し、機密 payload、identifier、token、SQL parameter を削除してください。index_all_attributes=false は redaction processor ではありません。
 
 </details>
 
 ---
 
-5. ADOT（AWS Distro for OpenTelemetry）Collector を使用する利点では**ない**ものはどれですか？
-   - A) vendor-neutral standards を使用する
-   - B) multi-backend support
-   - C) X-Ray-specific optimization
-   - D) OpenTelemetry protocol support
+5. ADOT Collector について誤っている記述はどれですか？
+   - A) サポートされている OpenTelemetry protocol を受け入れる
+   - B) サポートされている pipeline を複数の backend に接続できる
+   - C) 使用されていない CloudWatch Logs exporter を宣言すると、trace は自動的に logs に変換される
+   - D) リリースされた component inventory を確認する必要がある
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: C) X-Ray-specific optimization**
+**回答: C) 使用されていない CloudWatch Logs exporter を宣言すると、trace は自動的に logs に変換される**
 
 **解説:**
-ADOT Collector は OpenTelemetry をベースとした vendor-neutral な Collector であり、X-Ray に加えてさまざまな backend（Prometheus、Jaeger、Datadog など）に data を送信できます。X-Ray-specific optimization は X-Ray Daemon の特性です。ADOT の利点は standardized instrumentation と multi-backend support です。
+
+receiver、processor、exporter は、適切な logs/metrics/traces pipeline に接続する必要があります。ADOT には awsxray などの AWS integration が含まれるため、AWS 固有の動作はレガシー daemon 専用ではありません。選択した ADOT リリースに、upstream Contrib のすべての exporter が存在すると想定しないでください。
 
 </details>
 
 ---
 
-6. X-Ray service map で node が赤色で表示されるのはどのような場合ですか？
-   - A) response time が遅い場合
-   - B) traffic が多い場合
-   - C) error rate が高い場合
-   - D) 新しく追加された service の場合
+6. X-Ray/CloudWatch trace map の赤いトラフィックカテゴリは何を表しますか？
+   - A) すべての低速なリクエスト
+   - B) 高トラフィック量
+   - C) HTTP5xx などの server fault
+   - D) 新たに検出された Service
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: C) error rate が高い場合**
+**回答: C) HTTP5xx などの server fault**
 
 **解説:**
-X-Ray service map の node color は service health status を示します。赤色は error rate が高い service、黄色は warning level の問題がある service、緑色は正常な service を示します。これにより問題のある service をすばやく特定できます。
+
+赤は server fault、黄は client error、紫は HTTP429 などの throttling、緑は正常なトラフィックを表します。これらのカテゴリは任意の latency threshold ではなく、また、すべての赤い Service がユーザー定義の高エラー率アラームのしきい値を超えたことを示すものでもありません。
 
 </details>
 
 ---
 
-7. X-Ray で OpenTelemetry trace data を受信するには、どの設定が必要ですか？
-   - A) X-Ray SDK をインストールする
-   - B) AWS X-Ray Propagator と ID Generator を設定する
-   - C) CloudWatch Agent をインストールする
-   - D) Lambda Layer を追加する
+7. ガイドの X-Ray collection パスを通じて OpenTelemetry span を送信するために必要なものは何ですか？
+   - A) すべての producer がレガシー X-Ray SDK を使用すること
+   - B) 正しい AWS identity を持つ、互換性があり認証された OTLP collector/export pipeline
+   - C) すべてのアプリケーションが CloudWatch Agent をインストールすること
+   - D) すべての EKS Pod が Lambda Layer をインストールすること
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) AWS X-Ray Propagator と ID Generator を設定する**
+**回答: B) 正しい AWS identity を持つ、互換性があり認証された OTLP collector/export pipeline**
 
 **解説:**
-OpenTelemetry から X-Ray に trace data を送信するには、AWS X-Ray Propagator（context propagation）と AWS X-Ray ID Generator（X-Ray format の TraceIDs を生成）を設定する必要があります。これにより、OpenTelemetry standards を使用しながら X-Ray と互換性のある trace data を生成できます。
+
+このガイドでは、mTLS を使用して OTLP を ADOT に送信し、その awsxray exporter が署名付きの classic X-Ray API を呼び出します。X-Ray は W3C128-bit ID をサポートします。特別な X-Ray ID generator/propagator が常に必須というわけではありません。代替のネイティブ OTLP HTTPS endpoint には SigV4 と Transaction Search が必要です。実際の integration に合わせて propagation を設定してください。
 
 </details>
 
 ---
 
-8. response time が 2 秒を超える request を検索する正しい X-Ray filter expression query はどれですか？
-   - A) `duration > 2`
+8. 2 秒より厳密に大きい値を選択する X-Ray response-time filter はどれですか？
+   - A) `responsetime > 2000`
    - B) `responsetime > 2`
-   - C) `latency >= 2000`
+   - C) `responsetime >= 2`
    - D) `time > 2s`
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) responsetime > 2**
+**回答: B) `responsetime > 2`**
 
 **解説:**
-X-Ray filter expressions では、response time に `responsetime` keyword を使用し、unit は秒です。`responsetime > 2` は 2 秒を超えてかかった request を filter します。ほかに便利な filter として、`fault = true`（server error）、`error = true`（client error）、`service("name")`（特定の service）があります。
+
+Response-time の値は秒単位です。>2 はちょうど2秒を除外し、>=2 はそれを含みます。これらは X-Ray filter expression であり、shell command や Logs Insights QL ではありません。duration も文書化された X-Ray keyword であり、架空の無効な keyword として提示してはなりません。
 
 </details>
 
 ---
 
-9. X-Ray を CloudWatch ServiceLens と統合した際に提供される機能では**ない**ものはどれですか？
-   - A) trace と metric の統合ビュー
-   - B) service map 上に CloudWatch alarm を表示する
-   - C) automatic code instrumentation
-   - D) log と trace を関連付ける
+9. CloudWatch trace map を開くだけでは、何を確立できませんか？
+   - A) すでに収集された trace 依存関係のビュー
+   - B) 設定済み metrics/alarms との相関
+   - C) すべてのアプリケーションの自動 instrumentation と収集の成功
+   - D) 適切に相関付けられた logs へのリンク
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: C) automatic code instrumentation**
+**回答: C) すべてのアプリケーションの自動 instrumentation と収集の成功**
 
 **解説:**
-CloudWatch ServiceLens は、X-Ray trace、CloudWatch metric、log の統合ビューを提供します。service map 上に CloudWatch alarm を表示し、log と trace を関連付ける機能を提供します。ただし、automatic code instrumentation は X-Ray SDK または OpenTelemetry auto-instrumentation を通じて行う必要があります。
+
+Instrumentation、collection、identity、correlation は個別に設定する必要があります。以前の ServiceLens と X-Ray map は CloudWatch trace map に統合されています。既存の telemetry はそこで相関付けられますが、mount されていない ConfigMap や空のビューは、agent とアプリケーションが設定されている証拠にはなりません。
 
 </details>
 
 ---
 
-10. X-Ray Groups の主な目的は何ですか？
-    - A) user permission management
-    - B) filter-based trace grouping と alerting
-    - C) resource cost allocation
-    - D) data retention policy settings
+10. X-Ray Groups の目的は何ですか？
+   - A) IAM authorization を置き換えること
+   - B) 分析および関連する metrics/alarms のために一致する trace をグループ化すること
+   - C) AWS billing の所有者を自動的に割り当てること
+   - D) sampling rule を通じて retention を設定すること
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**回答: B) filter-based trace grouping と alerting**
+**回答: B) 分析および関連する metrics/alarms のために一致する trace をグループ化すること**
 
 **解説:**
-X-Ray Groups は filter expressions を使用して trace を group 化します。たとえば、production environment、特定の service、error request などの group を作成できます。各 group に対して CloudWatch alarm を設定し、特定の条件（error rate の上昇など）に関する alert を受け取れます。
+
+Groups は filter expression を使用して trace を選択します。結果の metrics を確認し、CloudWatch alarms を別途設定してください。group を作成しても、producer を instrument したり、sampling を上書きしたり、IAM isolation を定義したり、end-to-end alert が発生したことを証明したりはしません。
 
 </details>
 
