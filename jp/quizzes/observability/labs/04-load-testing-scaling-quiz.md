@@ -1,185 +1,175 @@
-# Observability ラボ パート 4: 負荷テストとオートスケーリング クイズ
+# Observability ラボ パート 4 クイズ
 
-> **最終更新**: February 22, 2026
+> **最終更新**: September 13, 2026
 
-Observability エンドツーエンドラボ パート 4 で扱った負荷テストとオートスケーリングの概念についての理解を確認しましょう。
-
----
-
-1. k6 における Virtual User (VU) とは何ですか。また、段階的な負荷パターンはどのように設定しますか？
-   - A) VU はネットワーク接続であり、フェーズは JSON ファイルで設定する
-   - B) VU はテストスクリプトを同時実行するシミュレートされたユーザーを表し、フェーズはターゲット VU 数と期間を含む stages を使用して設定する
-   - C) VU は CPU スレッドであり、フェーズはコマンドラインフラグでのみ設定する
-   - D) VU はリクエストキューであり、フェーズには個別のテストスクリプトが必要である
+1. k6 VU は RPS とどのような関係がありますか？
+   - A) 1 つの VU は常に 1 RPS に等しい。
+   - B) VU は同時実行コンテキストであり、RPS はリクエスト、レイテンシ、sleep にも依存する。
+   - C) VU は Node 数に等しい。
+   - D) RPS はレスポンスタイムに依存しない。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) VU はテストスクリプトを同時実行するシミュレートされたユーザーを表し、フェーズはターゲット VU 数と期間を含む stages を使用して設定する**
+**回答: B) VU は同時実行コンテキストであり、RPS はリクエスト、レイテンシ、sleep にも依存する。**
 
-**解説:**
-k6 では、Virtual User (VU) はテストスクリプトを実行する独立した実行コンテキストであり、各 VU はリクエストを行う実際のユーザーをシミュレートします。段階的な負荷パターンでは、`options` ブロックの `stages` オプションを使用します。各ステージでは、`target`（VU 数）と `duration`（そのターゲットに到達するまでの時間）を定義します。たとえば、2 分間で 100 VU まで増加させ、5 分間維持した後、減少させます。これにより、段階的なランプアップ、定常状態、スパイクテストなどの現実的な負荷プロファイルを実現できます。
+異なるワークロードと待機時間では、VU が同数であってもスループットが同じとは限りません。
 
 </details>
 
 ---
 
-2. 負荷テストにおける k6 と Locust の主な違いは何ですか？
-   - A) k6 は Python で書かれており、Locust は Go で書かれている
-   - B) k6 はパフォーマンスのために Go ランタイムと JavaScript のテストスクリプトを使用する一方、Locust は分散アーキテクチャと Python を使用する
-   - C) Locust は HTTP/1.1 のみをサポートし、k6 はすべてのプロトコルをサポートする
-   - D) k6 には GUI が必要であり、Locust は CLI 専用である
+2. 失敗した k6 check は CI をどのように失敗させるべきですか？
+   - A) check を呼び出すと常にコード 1 で終了する。
+   - B) checks/failure-rate のしきい値を設定し、終了コードを確認する。
+   - C) summary JSON ファイルが成功を証明する。
+   - D) HTTP 200 レスポンスのみを数える。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) k6 はパフォーマンスのために Go ランタイムと JavaScript のテストスクリプトを使用する一方、Locust は分散アーキテクチャと Python を使用する**
+**回答: B) checks/failure-rate のしきい値を設定し、終了コードを確認する。**
 
-**解説:**
-k6 は Go ベースのランタイムによる高いパフォーマンスを提供しつつ、テストスクリプトには馴染みのある JavaScript/ES6 を使用でき、組み込みメトリクスと優れた CI/CD 統合を備えています。Locust はテストスクリプトに Python を使用するため、Python 開発者にとって扱いやすく、複雑なテストロジックにも非常に柔軟に対応できます。また、リアルタイム監視用の Web UI と容易な分散テスト機能を備えています。一般に、k6 はインスタンスあたりより高い負荷を処理でき、Locust はテストロジックの柔軟性とより視覚的な体験を提供します。
+HTTP の成功とビジネス上の成功は異なります。JSON、ID、支払い状態も検証してください。
 
 </details>
 
 ---
 
-3. KEDA の SQS scaler は、いつ Pod をスケールするかをどのように判断しますか？
-   - A) 既存 Pod の CPU 使用率に基づいてスケールする
-   - B) SQS キューメトリクスをクエリし、キューメッセージ数と Pod ごとに設定したターゲット値の比率に基づいて Pod をスケールする
-   - C) キュー内のメッセージの経過時間に基づいてスケールする
-   - D) スケジュールされた時間枠でのみスケールする
+3. 負荷テストはどの order ID を読み取るべきですか？
+   - A) 1 から 1000 までのランダムな ID。
+   - B) テストで実際に作成した ID。
+   - C) Customer ID。
+   - D) HTTP ステータスコード。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) SQS キューメトリクスをクエリし、キューメッセージ数と Pod ごとに設定したターゲット値の比率に基づいて Pod をスケールする**
+**回答: B) テストで実際に作成した ID。**
 
-**解説:**
-KEDA の SQS scaler は定期的に SQS に対してキュー深度メトリクスをクエリします。必要なレプリカ数は次のように計算されます: `queue_length / queueLength_target`。たとえば、メッセージが 100 件で `queueLength: 10` の場合、KEDA は 10 Pod をターゲットにします。また、`minReplicaCount` と `maxReplicaCount` の範囲も遵守します。キューが空の場合は、設定されていればゼロまでスケールでき、メッセージの到着に応じてスケールアップします。この scaler は SQS メトリクスへのアクセスに IAM 認証情報（IRSA 経由）を使用します。
+ランダムな 404 がワークロードに混入しないよう、作成レスポンスの ID を使用してください。
 
 </details>
 
 ---
 
-4. KEDA の Prometheus scaler は、スケーリング判断のためにどのようにメトリクスをクエリしますか？
-   - A) Prometheus の組み込みメトリクスのみをサポートする
-   - B) Prometheus サーバーに対して設定済みの PromQL クエリを実行し、返された値をしきい値と比較してスケールする
-   - C) Prometheus 内に特別な KEDA metrics exporter が必要である
-   - D) counter メトリクスのみをクエリでき、gauge はクエリできない
+4. SQS バックログに直接連動してスケールすべきものは何ですか？
+   - A) 常に API producer のみ。
+   - B) その queue を処理する consumer。
+   - C) Alertmanager replica。
+   - D) queue 名。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Prometheus サーバーに対して設定済みの PromQL クエリを実行し、返された値をしきい値と比較してスケールする**
+**回答: B) その queue を処理する consumer。**
 
-**解説:**
-KEDA Prometheus scaler は、設定された Prometheus エンドポイントに対して有効な任意の PromQL クエリを実行します。`serverAddress`、`query`（PromQL）、および `threshold` を指定します。KEDA は `query_result / threshold = replica_count` となるように Pod をスケールします。これにより、ビジネスメトリクス（リクエスト数/秒、キュー深度）、カスタムアプリケーションメトリクス、またはクエリ可能な任意のデータに基づくスケーリングが可能になります。認証では、保護された Prometheus インスタンスに対して bearer token または TLS をサポートします。
+KEDA は queue attribute を読み取り、HPA によるスケーリングを管理します。メッセージを消費するわけではありません。
 
 </details>
 
 ---
 
-5. Karpenter は Pending Pod をどのように検出し、適切な Node をプロビジョニングしますか？
-   - A) PodScheduled=False の Pod を Kubernetes API でポーリングし、その要件を NodePool テンプレートと照合する
-   - B) Pod が annotations を介して Karpenter プロビジョニングを明示的にリクエストする必要がある
-   - C) クラスターの CPU 使用率を監視し、事前に Node をプロビジョニングする
-   - D) プロビジョニング前に Horizontal Pod Autoscaler のシグナルを待機する
+5. KEDA cooldownPeriod はいつ適用されますか？
+   - A) すべての 10 から 9 への replica 変更時。
+   - B) 最後のアクティブな trigger の後にゼロへスケールする時。
+   - C) EC2 の起動遅延時。
+   - D) Log の保持期間。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A) PodScheduled=False の Pod を Kubernetes API でポーリングし、その要件を NodePool テンプレートと照合する**
+**回答: B) 最後のアクティブな trigger の後にゼロへスケールする時。**
 
-**解説:**
-Karpenter はスケジュール不能な Pod（既存の Node では要件を満たせないため Pending となっている Pod）を監視します。検出されると、Pod の要件（リソースリクエスト、node selector、toleration、トポロジー制約）を分析し、設定済み NodePool から最適な EC2 インスタンスをプロビジョニングします。Karpenter の bin-packing アルゴリズムは Pending Pod を効率的にグループ化し、要件を満たしながらコストを最小化するインスタンスタイプを選択します。この「just-in-time」プロビジョニングは、Cluster Autoscaler の node group ベースのアプローチより高速です。
+1..N replicas の範囲でのスケーリングについては、HPA behavior と stabilization window を確認してください。
 
 </details>
 
 ---
 
-6. Karpenter の Consolidation ポリシーは、コスト最適化のために何を行いますか？
-   - A) 既存の Node 内でのみ Pod を集約する
-   - B) 低使用率または空の Node を特定し、ワークロードを移行して Node 総数を減らし、不要な Node を終了する
-   - C) 複数の Node のログを集約する
-   - D) スケジュールされたメンテナンス時間枠でのみ機能する
+6. HPA の scale-down stabilization window は何をしますか？
+   - A) すべての Node を停止する。
+   - B) window 内で最も高い replica 推奨値を考慮する。
+   - C) 瞬間的な CPU のみを使用する。
+   - D) 設定された interval ごとに Pod を 1 つ削除する。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 低使用率または空の Node を特定し、ワークロードを移行して Node 総数を減らし、不要な Node を終了する**
+**回答: B) window 内で最も高い replica 推奨値を考慮する。**
 
-**解説:**
-Karpenter の consolidation は、クラスターの効率を継続的に評価します。空の Node を即座に終了する、要件を満たしつつより安価な代替 Node に置き換える、複数の低使用率 Node 上のワークロードをより少数の Node に集約するといった方法で、コスト削減の機会を特定します。consolidation は Pod Disruption Budget を尊重し、graceful termination を使用します。この自動的な適正サイジングにより、必要なキャパシティに対してのみ支払うことができ、インテリジェントなスケールダウンでスケールアップを補完します。
+これは単純な無条件の固定遅延ではありません。policy と推奨値の履歴が重要です。
 
 </details>
 
 ---
 
-7. 負荷テスト中に Grafana ダッシュボードで観測すべき主要な RED メトリクスは何ですか？
-   - A) RAM、Ethernet、Disk
-   - B) Rate（リクエスト数/秒）、Errors（エラー率/件数）、Duration（レイテンシ分布）
-   - C) Replicas、Events、Deployments
-   - D) Reads、Executions、Deletions
+7. Karpenter が通常対処できる問題はどれですか？
+   - A) スペルミスのある image 名。
+   - B) NodePool と互換性のある capacity を必要とするスケジュール不能な Pod。
+   - C) application の構文エラー。
+   - D) 誤った database password。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Rate（リクエスト数/秒）、Errors（エラー率/件数）、Duration（レイテンシ分布）**
+**回答: B) NodePool と互換性のある capacity を必要とするスケジュール不能な Pod。**
 
-**解説:**
-RED メトリクスは、サービス監視の標準的な方法論です。Rate はスループット（リクエスト数/秒）を測定し、Errors は失敗率または件数（4xx、5xx レスポンス）を追跡し、Duration はレイテンシ分布（p50、p95、p99 のレスポンスタイム）を捉えます。負荷テスト中、これらのメトリクスはストレス下でシステムがどのように動作するかを明らかにします。スループットは頭打ちになるか、エラーは急増するか、レイテンシは劣化するかを確認できます。RED ダッシュボードはサービスの健全性を即座に可視化し、限界点の特定に役立ちます。
+Node を増やしても image pull や application bug は解決しません。最初に scheduling reason を確認してください。
 
 </details>
 
 ---
 
-8. Prometheus メトリクスを使用して、スケーリングイベント中の Pod 数の変化をどのように追跡できますか？
-   - A) `kube_pod_created` のタイムスタンプのみを使用する
-   - B) `kube_deployment_status_replicas` を使用して現在のレプリカ数を追跡し、`kube_deployment_spec_replicas` と比較して必要な数を確認する
-   - C) Pod 数メトリクスは Prometheus では利用できない
-   - D) Pod ごとに集計した `container_cpu_usage` を使用する
+8. kube_deployment_status_replicas は何を測定しますか？
+   - A) 常に ready な replica。
+   - B) ready replica とは異なる、Deployment replica の合計数。
+   - C) Rollout を含むすべての controller replica。
+   - D) Node 数。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) `kube_deployment_status_replicas` を使用して現在のレプリカ数を追跡し、`kube_deployment_spec_replicas` と比較して必要な数を確認する**
+**回答: B) ready replica とは異なる、Deployment replica の合計数。**
 
-**解説:**
-kube-state-metrics は Deployment のレプリカ情報を公開します。`kube_deployment_spec_replicas` は必要なレプリカ数（HPA/KEDA がターゲットとする数）を示し、`kube_deployment_status_replicas` は現在 Ready なレプリカ数を示し、`kube_deployment_status_replicas_available` は利用可能なレプリカ数を示します。これらを時系列でグラフ化すると、実際のレプリカが必要な数にどれだけ速く一致するか、振動の有無、スケールアップ/ダウンのタイミングといったスケーリング動作を明らかにできます。HPA 固有のメトリクスについては、`kube_horizontalpodautoscaler_*` メトリクスが追加の詳細を提供します。
+ready replica には kube_deployment_status_replicas_ready を使用してください。Rollout には専用の state/exporter が必要です。
 
 </details>
 
 ---
 
-9. `stabilizationWindowSeconds` 設定は、KEDA のスケーリング動作においてどのような役割を果たしますか？
-   - A) Pod が終了前に実行されなければならない最小時間を設定する
-   - B) スケールダウン時に、その期間の最も高い推奨値を考慮することで急激な振動を防ぐためのルックバックウィンドウを定義する
-   - C) メトリクスクエリ間の間隔を設定する
-   - D) Pod 起動の最大時間を設定する
+9. phase metric から Running Pod をどのようにカウントすべきですか？
+   - A) 値でフィルタリングせずに、すべての Running series を数える。
+   - B) Running phase の 0/1 gauge を直接合計する。
+   - C) Pod 名の長さを合計する。
+   - D) 常に 3 を返す。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) スケールダウン時に、その期間の最も高い推奨値を考慮することで急激な振動を防ぐためのルックバックウィンドウを定義する**
+**回答: B) Running phase の 0/1 gauge を直接合計する。**
 
-**解説:**
-`stabilizationWindowSeconds` は、スケールダウン時のスラッシングを防ぎます。スケールダウン時、KEDA は過去 N 秒間（安定化ウィンドウ）のすべてのスケール推奨値を確認し、最も高い値を使用します。これにより、短時間のメトリクス低下がスケールダウンを引き起こし、負荷が戻ると直後にスケールアップが続くような状況を防止します。たとえば、300 秒のウィンドウでは、メトリクスが 5 分間一貫して低い場合にのみスケールダウンが発生します。通常、負荷増加への迅速な対応を確保するため、スケールアップは安定化されません。
+Running phase series は値がゼロでも存在しうるため、フィルタリングなしのカウントでは過大計上になります。gauge を合計すると、すべて Pending の Pod ではゼロが返され、telemetry が欠けている場合は存在しないままです。
 
 </details>
 
 ---
 
-10. キューベースのワークロードアーキテクチャにおいて、SQS Queue Depth は Pod のスケーリングとどのように相関しますか？
-    - A) Queue Depth と Pod 数は常に反比例する
-    - B) Queue Depth が増加すると、KEDA はメッセージをより速く処理するために Pod をスケールアップして Queue Depth を減らし、キューが空になるにつれて Pod をスケールダウンする
-    - C) Queue Depth はメモリ割り当てにのみ影響し、Pod 数には影響しない
-    - D) Pod のスケーリングは Queue Depth と独立して行われる
+10. 負荷実験の成功を示す証拠は何ですか？
+   - A) 期待される documentation の数値からコピーした表。
+   - B) 測定されたリクエスト、エラー、レイテンシ、queue、replica、Node、終了ステータス。
+   - C) Job 作成の成功。
+   - D) Node 数が少ないことだけ。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) Queue Depth が増加すると、KEDA はメッセージをより速く処理するために Pod をスケールアップして Queue Depth を減らし、キューが空になるにつれて Pod をスケールダウンする**
+**回答: B) 測定されたリクエスト、エラー、レイテンシ、queue、replica、Node、終了ステータス。**
 
-**解説:**
-キューベースのアーキテクチャでは、フィードバックループが存在します。受信メッセージが Queue Depth を増加させ、KEDA がこれを検出して consumer Pod をスケールアップし、より多くの Pod がメッセージをより速く処理することで（スループットが増加し）、Queue Depth が減少し、最終的にキューを処理可能な状態になると KEDA が Pod をスケールダウンします。`queueLength` しきい値は、Pod あたりのターゲットメッセージ数を決定します。Queue Depth と Pod 数を併せて観測すると、処理キャパシティを把握できます。最大 Pod 数に達しても Queue Depth が増加する場合は、最適化またはより高い制限値が必要なボトルネックを発見したことになります。
+測定していないスループット、可用性、コスト削減を結果として提示しないでください。
 
 </details>
+
+---
+
+[ガイドに戻る](../../../labs/observability/04-load-testing-scaling-lab.md)
