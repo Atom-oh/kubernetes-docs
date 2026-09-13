@@ -97,7 +97,7 @@ TargetGroupBinding 的基本/高级/多端口配置见 [`networking/03-aws-lb-co
 | **分区原地升级 + 原生回滚** | 您已因可用性需求（而非仅仅为了升级）运行分区集群，希望避免始终运行两组完整集群的成本，并且可以接受约 7 天的回滚资格窗口而非立即在集群级别故障恢复 |
 | **Route 53 加权 DNS 切换** | 集群位于完全不同的 Regions/accounts，或者您需要替换 NLB 层本身 |
 
-执行 runbook（迁移 NLB 权重 -> 原地升级 -> 验证 -> 恢复权重，以及完整蓝绿集群组仍是正确选择的情形）已记录在 [`ops/11-upgrade-operations.md` 的“Alternative: Zonal In-Place Upgrade with Native Rollback”](11-upgrade-operations.md#alternative-zonal-in-place-upgrade-with-native-rollback) 部分，因此本文不再重复。有关回滚具备资格的确切条件（以目标版本创建的集群无法回滚、已再次升级的集群无法回滚等），请参阅 [`eks/08-eks-upgrades.md` 的 Rollback Procedure](../eks/08-eks-upgrades.md#rollback-procedure)。
+执行 runbook（迁移 NLB 权重 -> 原地升级 -> 验证 -> 恢复权重，以及完整蓝绿集群组仍是正确选择的情形）已记录在 [`ops/11-upgrade-operations.md` 的“Alternative: Zonal In-Place Upgrade with Native Rollback”](11-upgrade-operations.md) 部分，因此本文不再重复。有关回滚具备资格的确切条件（以目标版本创建的集群无法回滚、已再次升级的集群无法回滚等），请参阅 [`eks/08-eks-upgrades.md` 的 Rollback Procedure](../eks/08-eks-upgrades.md#rollback-procedure)。
 
 ***
 

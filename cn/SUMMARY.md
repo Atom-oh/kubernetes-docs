@@ -130,6 +130,7 @@
   * [第 6 部分：MSK 集成](data-on-eks/kafka/06-msk-integration.md)
   * [第 7 部分：监控](data-on-eks/kafka/07-monitoring.md)
   * [第 8 部分：最佳实践](data-on-eks/kafka/08-best-practices.md)
+  * [Kafka 基准测试第 9 部分（英文指南）](data-on-eks/kafka/09-kafka-benchmark.md)
 * [EKS 上的 Spark 深入探讨](data-on-eks/spark/README.md)
   * [第 1 部分：Kubernetes 上的 Spark 基础](data-on-eks/spark/01-spark-fundamentals.md)
   * [第 2 部分：Spark Operator](data-on-eks/spark/02-spark-operator.md)
@@ -151,6 +152,9 @@
 ## 网络
 
 * [网络概览](networking/README.md)
+  * [网络基础第 1 部分（英文指南）](basics/06-network-fundamentals-part1.md)
+  * [网络基础第 2 部分（英文指南）](basics/06-network-fundamentals-part2.md)
+  * [网络基础第 3 部分（英文指南）](basics/06-network-fundamentals-part3.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Cilium 深入探讨](networking/cilium/README.md)
   * [第 1 部分：简介](networking/cilium/01-introduction.md)
@@ -476,6 +480,7 @@
   * [第 6 部分：MSK 集成测验](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
   * [第 7 部分：监控测验](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [第 8 部分：最佳实践测验](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+  * [Kafka 基准测试第 9 部分测验（英文）](quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
   * [第 1 部分：Kubernetes 上的 Spark 基础测验](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
   * [第 2 部分：Spark Operator 测验](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
   * [第 3 部分：EKS 上的 Amazon EMR 测验](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)

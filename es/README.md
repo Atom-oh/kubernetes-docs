@@ -139,9 +139,14 @@ Este contenido de formación proporciona cuestionarios para cada tema junto con 
    - [Parte 6: Integración con MSK](./data-on-eks/kafka/06-msk-integration.md) | [Cuestionario](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
    - [Parte 7: Monitoring](./data-on-eks/kafka/07-monitoring.md) | [Cuestionario](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [Parte 8: Buenas prácticas](./data-on-eks/kafka/08-best-practices.md) | [Cuestionario](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+   - [Benchmark de Kafka, parte 9 (guía en inglés)](./data-on-eks/kafka/09-kafka-benchmark.md)
+   - [Cuestionario del benchmark de Kafka, parte 9 (en inglés)](./quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
 
 ### Networking
 1. [Descripción general de Networking](./networking/README.md) | [Cuestionario](./quizzes/networking/00-networking-overview-quiz.md)
+   - [Fundamentos de redes, parte 1 (guía en inglés)](./basics/06-network-fundamentals-part1.md)
+   - [Fundamentos de redes, parte 2 (guía en inglés)](./basics/06-network-fundamentals-part2.md)
+   - [Fundamentos de redes, parte 3 (guía en inglés)](./basics/06-network-fundamentals-part3.md)
 2. [VPC CNI](./networking/01-vpc-cni.md) | [Cuestionario](./quizzes/networking/01-vpc-cni-quiz.md)
 3. **Análisis profundo de Cilium**
    - [Introducción a Cilium](./networking/cilium/README.md)

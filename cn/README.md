@@ -139,9 +139,14 @@
    - [第 6 部分：MSK 集成](./data-on-eks/kafka/06-msk-integration.md) | [测验](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
    - [第 7 部分：监控](./data-on-eks/kafka/07-monitoring.md) | [测验](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [第 8 部分：最佳实践](./data-on-eks/kafka/08-best-practices.md) | [测验](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+   - [Kafka 基准测试第 9 部分（英文指南）](./data-on-eks/kafka/09-kafka-benchmark.md)
+   - [Kafka 基准测试第 9 部分测验（英文）](./quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
 
 ### 网络
 1. [网络概览](./networking/README.md) | [测验](./quizzes/networking/00-networking-overview-quiz.md)
+   - [网络基础第 1 部分（英文指南）](./basics/06-network-fundamentals-part1.md)
+   - [网络基础第 2 部分（英文指南）](./basics/06-network-fundamentals-part2.md)
+   - [网络基础第 3 部分（英文指南）](./basics/06-network-fundamentals-part3.md)
 2. [VPC CNI](./networking/01-vpc-cni.md) | [测验](./quizzes/networking/01-vpc-cni-quiz.md)
 3. **Cilium 深入解析**
    - [Cilium 简介](./networking/cilium/README.md)

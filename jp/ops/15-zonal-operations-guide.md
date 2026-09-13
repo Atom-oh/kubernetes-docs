@@ -97,7 +97,7 @@ TargetGroupBinding の基本/高度/マルチポート構成は [`networking/03-
 | **ゾーン型インプレース + ネイティブロールバック** | アップグレードだけでなく可用性の理由からすでにゾーンクラスターを運用しており、常に完全な 2 つのクラスターフリートを運用するコストを避けたく、即時のクラスター単位フェイルバックではなく約 7 日間のロールバック適格期間を許容できる場合 |
 | **Route 53 weighted DNS カットオーバー** | クラスターが完全に異なる Region/account に存在する場合、または NLB レイヤー自体を置き換える必要がある場合 |
 
-実行 runbook（NLB の重みをシフト -> インプレースアップグレード -> 検証 -> 重みを復元、および完全な blue/green フリートが依然として適切なケース）は、すでに [`ops/11-upgrade-operations.md` の「Alternative: Zonal In-Place Upgrade with Native Rollback」](11-upgrade-operations.md#alternative-zonal-in-place-upgrade-with-native-rollback) セクションに記載されているため、ここでは繰り返しません。ロールバックが適格となる正確な条件（ターゲットバージョンで作成したクラスターはロールバックできない、すでに再アップグレードしたクラスターはできないなど）は、[`eks/08-eks-upgrades.md` の Rollback Procedure](../eks/08-eks-upgrades.md#rollback-procedure) を参照してください。
+実行 runbook（NLB の重みをシフト -> インプレースアップグレード -> 検証 -> 重みを復元、および完全な blue/green フリートが依然として適切なケース）は、すでに [`ops/11-upgrade-operations.md` の「Alternative: Zonal In-Place Upgrade with Native Rollback」](11-upgrade-operations.md) セクションに記載されているため、ここでは繰り返しません。ロールバックが適格となる正確な条件（ターゲットバージョンで作成したクラスターはロールバックできない、すでに再アップグレードしたクラスターはできないなど）は、[`eks/08-eks-upgrades.md` の Rollback Procedure](../eks/08-eks-upgrades.md#rollback-procedure) を参照してください。
 
 ***
 

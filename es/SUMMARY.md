@@ -130,6 +130,7 @@
   * [Parte 6: Integración de MSK](data-on-eks/kafka/06-msk-integration.md)
   * [Parte 7: Monitoreo](data-on-eks/kafka/07-monitoring.md)
   * [Parte 8: Mejores prácticas](data-on-eks/kafka/08-best-practices.md)
+  * [Benchmark de Kafka, parte 9 (guía en inglés)](data-on-eks/kafka/09-kafka-benchmark.md)
 * [Análisis detallado de Spark en EKS](data-on-eks/spark/README.md)
   * [Parte 1: Fundamentos de Spark en Kubernetes](data-on-eks/spark/01-spark-fundamentals.md)
   * [Parte 2: Operator Spark](data-on-eks/spark/02-spark-operator.md)
@@ -151,6 +152,9 @@
 ## Redes
 
 * [Descripción general de redes](networking/README.md)
+  * [Fundamentos de redes, parte 1 (guía en inglés)](basics/06-network-fundamentals-part1.md)
+  * [Fundamentos de redes, parte 2 (guía en inglés)](basics/06-network-fundamentals-part2.md)
+  * [Fundamentos de redes, parte 3 (guía en inglés)](basics/06-network-fundamentals-part3.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Análisis detallado de Cilium](networking/cilium/README.md)
   * [Parte 1: Introducción](networking/cilium/01-introduction.md)
@@ -476,6 +480,7 @@
   * [Cuestionario de la parte 6: integración de MSK](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
   * [Cuestionario de la parte 7: monitoreo](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [Cuestionario de la parte 8: mejores prácticas](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+  * [Cuestionario del benchmark de Kafka, parte 9 (en inglés)](quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
   * [Cuestionario de la parte 1: fundamentos de Spark en Kubernetes](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
   * [Cuestionario de la parte 2: Operator Spark](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
   * [Cuestionario de la parte 3: Amazon EMR en EKS](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)

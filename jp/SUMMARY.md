@@ -130,6 +130,7 @@
   * [パート 6: MSK 統合](data-on-eks/kafka/06-msk-integration.md)
   * [パート 7: モニタリング](data-on-eks/kafka/07-monitoring.md)
   * [パート 8: ベストプラクティス](data-on-eks/kafka/08-best-practices.md)
+  * [Kafka ベンチマークパート 9（英語ガイド）](data-on-eks/kafka/09-kafka-benchmark.md)
 * [EKS 上の Spark 詳細解説](data-on-eks/spark/README.md)
   * [パート 1: Kubernetes 上の Spark の基礎](data-on-eks/spark/01-spark-fundamentals.md)
   * [パート 2: Spark Operator](data-on-eks/spark/02-spark-operator.md)
@@ -151,6 +152,9 @@
 ## ネットワーキング
 
 * [ネットワーキングの概要](networking/README.md)
+  * [ネットワーク基礎パート 1（英語ガイド）](basics/06-network-fundamentals-part1.md)
+  * [ネットワーク基礎パート 2（英語ガイド）](basics/06-network-fundamentals-part2.md)
+  * [ネットワーク基礎パート 3（英語ガイド）](basics/06-network-fundamentals-part3.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Cilium 詳細解説](networking/cilium/README.md)
   * [パート 1: 導入](networking/cilium/01-introduction.md)
@@ -476,6 +480,7 @@
   * [パート 6: MSK 統合クイズ](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
   * [パート 7: モニタリングクイズ](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [パート 8: ベストプラクティスクイズ](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+  * [Kafka ベンチマークパート 9 クイズ（英語）](quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
   * [パート 1: Kubernetes 上の Spark の基礎クイズ](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
   * [パート 2: Spark Operator クイズ](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
   * [パート 3: Amazon EMR on EKS クイズ](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)

@@ -1560,7 +1560,7 @@ istioctl proxy-config all <pod-name> -o json | jq '.configs[] | select(.name | c
 - [Istio WASM Plugin](https://istio.io/latest/docs/concepts/wasm/)
 - [Proxy-Wasm SDK](https://github.com/proxy-wasm)
 - [WebAssembly Official Site](https://webassembly.org/)
-- [Ambient Mode - WASM](advanced/01-ambient-mode.md#wasm-plugin)
+- [Ambient Mode - WASM](advanced/01-ambient-mode.md)
 
 ---
 
