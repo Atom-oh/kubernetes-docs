@@ -18,6 +18,8 @@
 
 ---
 
+<span id="the-role-and-importance-of-alerting"></span>
+
 ## 告警的作用与重要性
 
 ### 告警在可观测性三大支柱中的位置
@@ -53,6 +55,8 @@ Prometheus 规则评估指标。日志和追踪则通过各后端特定的规则
 | **重复性** | 相关告警已分组 | 同一个问题产生数十条告警 |
 
 ---
+
+<span id="alert-lifecycle"></span>
 
 ## 告警生命周期
 
@@ -108,6 +112,8 @@ groups:
 - **解决通知**：问题修复后发送解决通知
 
 ---
+
+<span id="alert-design-principles"></span>
 
 ## 告警设计原则
 
@@ -204,6 +210,8 @@ annotations:
 
 ---
 
+<span id="alert-routing-and-escalation"></span>
+
 ## 告警路由与升级
 
 ### 路由策略
@@ -264,6 +272,8 @@ inhibit_rules:
 
 ---
 
+<span id="on-call-rotation"></span>
+
 ## On-Call 轮值
 
 ### On-Call 概念
@@ -292,6 +302,8 @@ On-Call 指在指定时间段内负责处理系统问题的指定响应者。
 - **报告**：on-call 活动分析
 
 ---
+
+<span id="alerting-strategy-for-eks-environments"></span>
 
 ## EKS 环境的告警策略
 
@@ -455,6 +467,8 @@ EKS 1.28+ 在 AWS/EKS 中提供部分控制平面指标；这并不会将每个�
 | VPC / NAT Gateway | NAT 指标；单独启用的 Flow Logs 中的接受/拒绝记录 | CloudWatch 指标/Logs；Flow Logs 不是告警引擎 |
 
 ---
+
+<span id="solution-comparison"></span>
 
 ## 方案对比
 

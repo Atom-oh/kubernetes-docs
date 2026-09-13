@@ -18,6 +18,8 @@
 
 ---
 
+<span id="the-role-and-importance-of-alerting"></span>
+
 ## El papel y la importancia de las alertas
 
 ### La posición de las alertas en los tres pilares de la observabilidad
@@ -53,6 +55,8 @@ Las reglas de Prometheus evalúan métricas. Los logs y las trazas alimentan ale
 | **Duplicación** | Las alertas relacionadas se agrupan | Decenas de alertas por el mismo problema |
 
 ---
+
+<span id="alert-lifecycle"></span>
 
 ## Ciclo de vida de las alertas
 
@@ -109,11 +113,13 @@ groups:
 
 ---
 
+<span id="alert-design-principles"></span>
+
 ## Principios de diseño de alertas
 
 ### 1. Alertas procesables
 
-Las páginas que interrumpen a una persona necesitan una respuesta procesable inmediata. Los eventos informativos y el trabajo a más largo plazo pueden ir en su lugar a tickets o dashboards.
+Los avisos urgentes que interrumpen a una persona necesitan una respuesta procesable inmediata. Los eventos informativos y el trabajo a más largo plazo pueden ir en su lugar a tickets o dashboards.
 
 **Ejemplo malo:**
 ```
@@ -204,6 +210,8 @@ annotations:
 
 ---
 
+<span id="alert-routing-and-escalation"></span>
+
 ## Enrutamiento y escalamiento de alertas
 
 ### Estrategia de enrutamiento
@@ -252,7 +260,7 @@ inhibit_rules:
 
 ### Política de escalamiento
 
-Lo siguiente es ilustrativo. Configura las zonas horarias, las ventanas de reconocimiento, los respaldos y el comportamiento de reenvío de páginas en el servicio de guardia, y pruébalos en un simulacro:
+Lo siguiente es ilustrativo. Configura las zonas horarias, las ventanas de reconocimiento, los respaldos y el comportamiento de repetición de los avisos urgentes en el servicio de guardia, y pruébalos en un simulacro:
 
 | Paso | Tiempo | Destino | Canal |
 |------|------|--------|---------|
@@ -263,6 +271,8 @@ Lo siguiente es ilustrativo. Configura las zonas horarias, las ventanas de recon
 | 5 | 60 min | CTO/VP de ingeniería | Teléfono |
 
 ---
+
+<span id="on-call-rotation"></span>
 
 ## Rotación de guardias
 
@@ -292,6 +302,8 @@ La guardia se refiere a un respondedor designado responsable de los problemas de
 - **Informes**: Análisis de actividad de guardia
 
 ---
+
+<span id="alerting-strategy-for-eks-environments"></span>
 
 ## Estrategia de alertas para entornos EKS
 
@@ -455,6 +467,8 @@ EKS 1.28+ proporciona métricas seleccionadas del plano de control en AWS/EKS; e
 | VPC / NAT Gateway | Métricas de NAT; registros aceptados/rechazados en Flow Logs habilitados por separado | Métricas/logs de CloudWatch; Flow Logs no es un motor de alarmas |
 
 ---
+
+<span id="solution-comparison"></span>
 
 ## Comparación de soluciones
 
