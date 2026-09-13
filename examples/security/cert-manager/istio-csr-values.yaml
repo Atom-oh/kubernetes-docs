@@ -1,0 +1,21 @@
+app:
+  certmanager:
+    issuer:
+      name: lab-ca
+      kind: ClusterIssuer
+      group: cert-manager.io
+  tls:
+    rootCAFile: /var/run/istio-csr-root/ca-bundle.pem
+    certificateDNSNames:
+      - cert-manager-istio-csr.cert-manager.svc
+    certificateDuration: 1h
+    istiodCertificateDuration: 1h
+    istiodCertificateRenewBefore: 30m
+volumes:
+  - name: serving-root
+    configMap:
+      name: application-trust
+volumeMounts:
+  - name: serving-root
+    mountPath: /var/run/istio-csr-root
+    readOnly: true

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trust-consumer
+  namespace: demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trust-consumer
+  template:
+    metadata:
+      labels:
+        app: trust-consumer
+    spec:
+      containers:
+        - name: app
+          image: registry.example.com/team/app:REPLACE_WITH_APPROVED_IMAGE
+          env:
+            - name: SSL_CERT_FILE
+              value: /etc/application-trust/ca-bundle.pem
+          volumeMounts:
+            - name: trust
+              mountPath: /etc/application-trust
+              readOnly: true
+      volumes:
+        - name: trust
+          configMap:
+            name: application-trust

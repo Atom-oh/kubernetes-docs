@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "ACME 인증서 발급 흐름",
+    "title": "ACME HTTP/DNS 검증 흐름 (Let’s Encrypt 예)",
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
@@ -285,7 +285,15 @@
       "items": [
         "DNS TXT 레코드로 도메인 소유권을 증명",
         "와일드카드 인증서 발급에 필수",
-        "EKS에서는 Route53 + IRSA로 자격 증명 없이 레코드 관리"
+        "Route 53은 IRSA/Pod Identity 등 임시 자격 증명과 DNS 권한이 필요"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "검증 경로 범위",
+      "items": [
+        "기존 authorization 재사용 시 새 challenge가 필요 없을 수 있음",
+        "ACM ACME는 관리자 사전 도메인 검증과 EAB 등록을 사용"
       ]
     }
   ]

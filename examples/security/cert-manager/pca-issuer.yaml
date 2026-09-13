@@ -1,0 +1,28 @@
+apiVersion: awspca.cert-manager.io/v1beta1
+kind: AWSPCAClusterIssuer
+metadata:
+  name: private-ca
+spec:
+  arn: arn:aws:acm-pca:ap-northeast-2:111122223333:certificate-authority/00000000-0000-0000-0000-000000000000
+  region: ap-northeast-2
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: private-service-tls
+  namespace: demo-app
+spec:
+  secretName: private-service-tls
+  dnsNames: [service.example.internal]
+  duration: 24h
+  renewBeforePercentage: 33
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    encoding: PKCS8
+    rotationPolicy: Always
+  usages: [server auth, client auth]
+  issuerRef:
+    name: private-ca
+    kind: AWSPCAClusterIssuer
+    group: awspca.cert-manager.io

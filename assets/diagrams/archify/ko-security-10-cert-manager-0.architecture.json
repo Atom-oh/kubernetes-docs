@@ -57,10 +57,10 @@
           "label": "cert-manager 컨트롤 플레인"
         },
         "cloud": {
-          "label": "커스텀 리소스 (CRD)"
+          "label": "커스텀 리소스(CR)"
         },
         "external": {
-          "label": "외부 발급자"
+          "label": "발급자 구현"
         },
         "database": {
           "label": "Kubernetes Secret"
@@ -173,8 +173,8 @@
     {
       "id": "external",
       "type": "external",
-      "label": "외부 발급자",
-      "sublabel": "Let's Encrypt · Vault · AWS PCA · Self-Signed",
+      "label": "발급자 구현",
+      "sublabel": "ACME · Vault · AWS PCA · CA · SelfSigned",
       "pos": [
         720,
         400
@@ -257,7 +257,7 @@
       "id": "cert-certreq",
       "from": "cert",
       "to": "certreq",
-      "label": "발급 요청 생성",
+      "label": "controller가 요청 생성",
       "variant": "emphasis"
     },
     {
@@ -280,7 +280,7 @@
       "id": "cert-secret",
       "from": "cert",
       "to": "secret",
-      "label": "인증서 저장",
+      "label": "controller가 결과 저장",
       "variant": "emphasis",
       "fromSide": "bottom",
       "toSide": "top",
@@ -308,7 +308,7 @@
       "id": "cainjector-webhook",
       "from": "cainjector",
       "to": "webhook",
-      "label": "CA 번들 주입",
+      "label": "웹훅 구성의 CA bundle",
       "variant": "security"
     },
     {
@@ -325,17 +325,18 @@
       "title": "컨트롤 플레인 구성요소",
       "items": [
         "controller: Certificate·Issuer 리소스 감시 및 인증서 수명주기 관리",
-        "webhook: CRD 유효성 검증, 기본값 설정, 버전 변환",
-        "cainjector: ValidatingWebhookConfiguration·MutatingWebhookConfiguration에 CA 번들 자동 주입"
+        "webhook: 커스텀 리소스 검증, 기본값 설정, 버전 변환",
+        "cainjector: ValidatingWebhookConfiguration · MutatingWebhookConfiguration에 CA 번들 자동 주입"
       ]
     },
     {
       "dot": "amber",
       "title": "발급 흐름",
       "items": [
-        "Certificate CR 생성 시 자동 발급, 만료 30일 전 자동 갱신",
+        "기본 갱신은 실제 발급 수명의 2/3 시점; 설정·ARI에 따라 달라짐",
         "Let's Encrypt, Vault, AWS PCA, Self-Signed 등 다중 Issuer 지원",
-        "결과는 tls.crt·tls.key를 담은 Secret으로 저장"
+        "결과는 tls.crt·tls.key를 담은 Secret으로 저장",
+        "Secret 소비자의 reload와 CA trust rollout은 별도 관리"
       ]
     }
   ]
