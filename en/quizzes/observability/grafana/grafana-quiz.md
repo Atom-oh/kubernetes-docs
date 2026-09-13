@@ -1,6 +1,8 @@
 # Grafana Dashboard Quiz
 
-Test your understanding of Grafana.
+> **Last Updated**: September 13, 2026
+
+Test your understanding of Grafana 13.2.1 configuration and operation.
 
 ---
 
@@ -16,7 +18,7 @@ Test your understanding of Grafana.
 **Answer: C) Environment variables**
 
 **Explanation:**
-Grafana data sources can be provisioned through YAML files in the provisioning directory, sidecar approach using ConfigMaps, or the Grafana API. Environment variables are used for Grafana configuration (grafana.ini) but are not used to directly define data sources.
+Grafana data sources can be provisioned through YAML files in the provisioning directory, sidecar approach using ConfigMaps, or the Grafana API. Environment variables can supply grafana.ini settings and values such as URLs or credentials inside data source provisioning YAML. Variables alone do not create a data source object.
 
 </details>
 
@@ -42,17 +44,17 @@ The RED Method is a methodology for analyzing service-level metrics. It monitors
 
 3. What configuration is needed to implement trace-to-log correlation by connecting Tempo and Loki in Grafana?
    - A) Use the same database
-   - B) Configure tracesToLogs in Tempo data source
+   - B) Configure tracesToLogsV2 in Tempo data source
    - C) Install a separate plugin
    - D) Grafana Enterprise license
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Configure tracesToLogs in Tempo data source**
+**Answer: B) Configure tracesToLogsV2 in Tempo data source**
 
 **Explanation:**
-Configuring the tracesToLogs section in the Tempo data source settings allows direct navigation from traces to related logs. Specify Loki with datasourceUid and set labels for connection using tags. This is a built-in Grafana feature that doesn't require additional plugins.
+Configuring the tracesToLogsV2 section in the Tempo data source settings allows direct navigation from traces to related logs. Specify Loki with datasourceUid and map actual trace attributes to Loki labels using tags. Log fields such as trace_id must match the pipeline contract. This is a built-in Grafana feature that doesn't require additional plugins.
 
 </details>
 
@@ -142,7 +144,7 @@ Using dashboard variables allows monitoring multiple clusters, namespaces, and s
 **Answer: B) Linking metrics and trace data**
 
 **Explanation:**
-Exemplar is a feature that links TraceIDs to Prometheus metrics. By storing sample TraceIDs in histogram or counter metrics, clicking a specific point on a metric graph in Grafana allows you to immediately query the trace data from that moment.
+Exemplars link selected metric observations to TraceIDs; they do not capture every request. By storing sample TraceIDs in histogram or counter metrics, clicking a specific point on a metric graph in Grafana allows you to immediately query the trace data from that moment.
 
 </details>
 
@@ -151,22 +153,22 @@ Exemplar is a feature that links TraceIDs to Prometheus metrics. By storing samp
 9. Which is a correct difference between Grafana Cloud and Self-hosted Grafana?
    - A) Grafana Cloud is free
    - B) Self-hosted cannot install plugins
-   - C) Grafana Cloud provides automatic scaling and SLA
+   - C) Grafana Cloud is managed and its SLA depends on the contract
    - D) Self-hosted has data source limitations
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Grafana Cloud provides automatic scaling and SLA**
+**Answer: C) Grafana Cloud is managed and its SLA depends on the contract**
 
 **Explanation:**
-Grafana Cloud is a managed service providing automatic scaling, 99.9% SLA, automatic updates, etc. Self-hosted offers complete control and allows all plugin installations but requires infrastructure management. Both options support various data sources.
+Check the actual Cloud plan and service agreement for its SLA, usage limits and features. Self-hosted operators manage databases, backups, upgrades and plugin compatibility/signature policy. Do not assume a fixed 99.9% SLA applies to every Cloud plan.
 
 </details>
 
 ---
 
-10. What label is required on a ConfigMap when using sidecar for Grafana dashboard provisioning?
+10. Which ConfigMap label does this chapter’s sidecar profile (label=grafana_dashboard, labelValue="true") select?
     - A) `app: grafana`
     - B) `grafana_dashboard: "true"`
     - C) `type: dashboard`
@@ -178,7 +180,7 @@ Grafana Cloud is a managed service providing automatic scaling, 99.9% SLA, autom
 **Answer: B) grafana_dashboard: "true"**
 
 **Explanation:**
-When using the Grafana Helm chart's sidecar feature, you need to add the `grafana_dashboard: "true"` label to ConfigMaps containing dashboard JSON. The sidecar container watches ConfigMaps with this label and automatically provisions dashboards.
+This profile selects `grafana_dashboard: "true"`. Both label and labelValue are configurable rather than universal Grafana requirements. The optional profile watches only ConfigMaps in the monitoring namespace.
 
 </details>
 

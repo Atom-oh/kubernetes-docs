@@ -1,0 +1,11 @@
+serviceMonitor:
+  enabled: true
+  labels:
+    release: prometheus
+  basicAuth:
+    username:
+      name: grafana-metrics-auth
+      key: username
+    password:
+      name: grafana-metrics-auth
+      key: password

@@ -1,6 +1,8 @@
 # Grafana 대시보드 퀴즈
 
-Grafana에 대한 이해도를 테스트하는 퀴즈입니다.
+> **마지막 업데이트**: 2026년 9월 13일
+
+Grafana 13.2.1 구성과 운영에 대한 이해도를 확인합니다.
 
 ---
 
@@ -16,7 +18,7 @@ Grafana에 대한 이해도를 테스트하는 퀴즈입니다.
 **정답: C) 환경 변수**
 
 **설명:**
-Grafana 데이터 소스는 provisioning 디렉토리의 YAML 파일, ConfigMap을 사용한 sidecar 방식, 또는 Grafana API를 통해 프로비저닝할 수 있습니다. 환경 변수는 Grafana 설정(grafana.ini)에 사용되지만, 데이터 소스를 직접 정의하는 데는 사용되지 않습니다.
+Grafana 데이터 소스는 provisioning 디렉토리의 YAML 파일, ConfigMap을 사용한 sidecar 방식, 또는 Grafana API를 통해 프로비저닝할 수 있습니다. 환경 변수는 grafana.ini 설정뿐 아니라 데이터 소스 provisioning YAML 안의 URL·인증 값에도 사용할 수 있습니다. 다만 환경 변수만 설정하는 것으로 데이터 소스 객체가 생성되지는 않습니다.
 
 </details>
 
@@ -42,17 +44,17 @@ RED Method는 서비스 수준 메트릭을 분석하기 위한 방법론입니�
 
 3. Grafana에서 Tempo와 Loki를 연결하여 trace-to-log 상관분석을 구현할 때 필요한 설정은?
    - A) 동일한 데이터베이스 사용
-   - B) Tempo 데이터 소스의 tracesToLogs 설정
+   - B) Tempo 데이터 소스의 tracesToLogsV2 설정
    - C) 별도의 플러그인 설치
    - D) Grafana Enterprise 라이선스
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Tempo 데이터 소스의 tracesToLogs 설정**
+**정답: B) Tempo 데이터 소스의 tracesToLogsV2 설정**
 
 **설명:**
-Tempo 데이터 소스 설정에서 tracesToLogs 섹션을 구성하면 추적에서 관련 로그로 바로 이동할 수 있습니다. datasourceUid로 Loki를 지정하고, tags로 연결에 사용할 레이블을 설정합니다. 이는 Grafana의 기본 기능으로 추가 플러그인이 필요하지 않습니다.
+Tempo 데이터 소스 설정에서 tracesToLogsV2 섹션을 구성하면 추적에서 관련 로그로 바로 이동할 수 있습니다. datasourceUid로 Loki를 지정하고, tags로 실제 trace attribute와 Loki 라벨의 대응을 설정합니다. JSON 로그의 trace_id 등 필드 계약도 일치해야 합니다. 이는 Grafana의 기본 기능으로 추가 플러그인이 필요하지 않습니다.
 
 </details>
 
@@ -142,7 +144,7 @@ Dashboard variable을 사용하면 하나의 대시보드로 여러 클러스터
 **정답: B) 메트릭과 추적 데이터 연결**
 
 **설명:**
-Exemplar는 Prometheus 메트릭에 TraceID를 연결하는 기능입니다. 히스토그램이나 카운터 메트릭에 샘플 TraceID를 저장하여, Grafana에서 메트릭 그래프의 특정 지점을 클릭하면 해당 시점의 추적 데이터를 바로 조회할 수 있습니다.
+Exemplar는 선택된 메트릭 표본에 TraceID를 연결하는 기능이며 모든 요청을 기록하지는 않습니다. 히스토그램이나 카운터 메트릭에 샘플 TraceID를 저장하여, Grafana에서 메트릭 그래프의 특정 지점을 클릭하면 해당 시점의 추적 데이터를 바로 조회할 수 있습니다.
 
 </details>
 
@@ -151,22 +153,22 @@ Exemplar는 Prometheus 메트릭에 TraceID를 연결하는 기능입니다. 히
 9. Grafana Cloud와 Self-hosted Grafana의 차이점으로 올바른 것은?
    - A) Grafana Cloud는 무료
    - B) Self-hosted는 플러그인 설치 불가
-   - C) Grafana Cloud는 자동 확장 및 SLA 제공
+   - C) Grafana Cloud는 관리형 서비스이며 SLA는 계약에 따라 다름
    - D) Self-hosted는 데이터 소스 제한 있음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Grafana Cloud는 자동 확장 및 SLA 제공**
+**정답: C) Grafana Cloud는 관리형 서비스이며 SLA는 계약에 따라 다름**
 
 **설명:**
-Grafana Cloud는 관리형 서비스로 자동 확장, 99.9% SLA, 자동 업데이트 등을 제공합니다. Self-hosted는 완전한 제어권과 모든 플러그인 설치가 가능하지만 인프라 관리가 필요합니다. 두 옵션 모두 다양한 데이터 소스를 지원합니다.
+Grafana Cloud의 SLA·사용 한도·기능은 실제 요금제와 서비스 계약을 확인해야 합니다. Self-hosted는 DB·백업·업그레이드를 직접 운영하고 플러그인 호환성과 서명 정책도 관리합니다. 모든 Cloud 요금제에 고정 99.9% SLA가 있다고 가정하면 안 됩니다.
 
 </details>
 
 ---
 
-10. Grafana 대시보드 프로비저닝에서 sidecar를 사용할 때 ConfigMap에 필요한 레이블은?
+10. 이 장의 sidecar 프로필(label=grafana_dashboard, labelValue="true")이 선택하는 ConfigMap 레이블은?
     - A) `app: grafana`
     - B) `grafana_dashboard: "true"`
     - C) `type: dashboard`
@@ -178,7 +180,7 @@ Grafana Cloud는 관리형 서비스로 자동 확장, 99.9% SLA, 자동 업데�
 **정답: B) grafana_dashboard: "true"**
 
 **설명:**
-Grafana Helm 차트의 sidecar 기능을 사용할 때, 대시보드 JSON을 포함한 ConfigMap에 `grafana_dashboard: "true"` 레이블을 추가해야 합니다. Sidecar 컨테이너가 이 레이블을 가진 ConfigMap을 감시하고 자동으로 대시보드를 프로비저닝합니다.
+이 예제는 `grafana_dashboard: "true"`를 선택하도록 설정했습니다. label과 labelValue는 변경 가능하며 모든 Grafana 설치에 고정된 규칙은 아닙니다. 선택 프로필은 monitoring namespace의 ConfigMap만 감시합니다.
 
 </details>
 

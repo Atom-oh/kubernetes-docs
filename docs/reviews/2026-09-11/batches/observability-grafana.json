@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/observability/grafana/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "1e1db326d40bd5e905cb5c4428123352ca5ee96e1bce5933036be170d8ab04c2",
+    "summary": "Full review; Grafana13.2.1 native13checks, four chartprofiles/RBAC, eightPromQL/4edgecases, 20quizquestions, twofigures/6responsivecases/2SVGexports,22legacyaliases; cloud/HA/SSO not executed.",
+    "validationReport": "docs/reviews/2026-09-11/grafana-validation.json"
+  },
+  {
+    "path": "ko/quizzes/observability/grafana/grafana-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "3bae8c34768902cd4c86950219fd7d87afcb7c15d8e42a927922c228bc10465e",
+    "summary": "Full review; Grafana13.2.1 native13checks, four chartprofiles/RBAC, eightPromQL/4edgecases, 20quizquestions, twofigures/6responsivecases/2SVGexports,22legacyaliases; cloud/HA/SSO not executed.",
+    "validationReport": "docs/reviews/2026-09-11/grafana-validation.json"
+  },
+  {
+    "path": "en/observability/grafana/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "d1f9e4375251eea54b0b4d3ca413800921c8990b14d41f0a53e994539bd1a92c",
+    "summary": "Full review; Grafana13.2.1 native13checks, four chartprofiles/RBAC, eightPromQL/4edgecases, 20quizquestions, twofigures/6responsivecases/2SVGexports,22legacyaliases; cloud/HA/SSO not executed.",
+    "validationReport": "docs/reviews/2026-09-11/grafana-validation.json"
+  },
+  {
+    "path": "en/quizzes/observability/grafana/grafana-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "8b31b52dddeb47b79a7f84e6600daa9e672cda51a9d2dda9fed9ad61c0dbfc06",
+    "summary": "Full review; Grafana13.2.1 native13checks, four chartprofiles/RBAC, eightPromQL/4edgecases, 20quizquestions, twofigures/6responsivecases/2SVGexports,22legacyaliases; cloud/HA/SSO not executed.",
+    "validationReport": "docs/reviews/2026-09-11/grafana-validation.json"
+  }
+]

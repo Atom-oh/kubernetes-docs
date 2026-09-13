@@ -18,7 +18,7 @@
           "postgres",
           "redis"
         ],
-        "note": "User requests pass through the Frontend and Backend and are persisted to the metadata DB and session cache."
+        "note": "The shared DB stores dashboards and authentication sessions; query caching is optional."
       },
       {
         "id": "datasource-path",
@@ -116,7 +116,7 @@
       "id": "postgres",
       "type": "database",
       "label": "PostgreSQL / MySQL",
-      "sublabel": "Metadata",
+      "sublabel": "Config · auth sessions",
       "pos": [
         80,
         400
@@ -129,8 +129,8 @@
     {
       "id": "redis",
       "type": "database",
-      "label": "Redis / Memcached",
-      "sublabel": "Session cache",
+      "label": "Optional query cache",
+      "sublabel": "Enterprise / Cloud",
       "pos": [
         320,
         400
@@ -144,7 +144,7 @@
       "id": "datasources",
       "type": "external",
       "label": "Data Sources",
-      "sublabel": "Prometheus · Loki · Tempo · CloudWatch",
+      "sublabel": "Metrics · logs · traces",
       "pos": [
         560,
         400
@@ -216,7 +216,7 @@
       "id": "backend-to-postgres",
       "from": "backend",
       "to": "postgres",
-      "label": "Store metadata",
+      "label": "Persist",
       "fromSide": "bottom",
       "toSide": "top"
     },
@@ -224,11 +224,12 @@
       "id": "backend-to-redis",
       "from": "backend",
       "to": "redis",
-      "label": "Session cache",
+      "label": "Optional",
       "fromSide": "bottom",
       "toSide": "top",
       "labelDy": 80,
-      "labelDx": 44
+      "labelDx": 44,
+      "variant": "dashed"
     },
     {
       "id": "plugin-to-datasources",
@@ -255,25 +256,25 @@
       "dot": "cyan",
       "title": "Grafana Server",
       "items": [
-        "Frontend (React) serves the dashboard UI",
-        "Backend (Go) handles API requests",
-        "Plugin System extends the supported data sources"
+        "Serve UI and API requests",
+        "Shared DB: config and sessions",
+        "HA needs DB and alert peers"
       ]
     },
     {
       "dot": "emerald",
       "title": "Data Sources",
       "items": [
-        "Prometheus, VictoriaMetrics, Loki, Tempo, CloudWatch, Elasticsearch",
-        "Metrics, logs and traces in a single dashboard"
+        "Backends retain metrics, logs and traces",
+        "Correlation needs matching UIDs and labels"
       ]
     },
     {
       "dot": "amber",
       "title": "Alerting",
       "items": [
-        "Condition-based alert rule evaluation",
-        "Notifications to Slack, PagerDuty, Email and Webhook"
+        "Evaluate rules and route notifications",
+        "Configure HA deduplication separately"
       ]
     }
   ]

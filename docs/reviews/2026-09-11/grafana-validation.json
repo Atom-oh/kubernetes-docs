@@ -1,0 +1,737 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T08:03:36.962830+00:00",
+  "scope": "Four Korean/English Grafana guides/quizzes; pinned example files and two diagrams",
+  "originalFiles": [
+    {
+      "path": "ko/observability/grafana/README.md",
+      "lines": 971,
+      "sha256": "00e44cdbf37d08e121a66628539d7bfd5597f87f31fcb883d9c361c860853367"
+    },
+    {
+      "path": "ko/quizzes/observability/grafana/grafana-quiz.md",
+      "lines": 185,
+      "sha256": "b80ed855d56311e9cc9a09e25e1fd29d07fbe357844bc74db45c52bdcd3e17a5"
+    },
+    {
+      "path": "en/observability/grafana/README.md",
+      "lines": 733,
+      "sha256": "e2193996c48b3b529906e3126ad190472f593dc89636af868f626b043ef92167"
+    },
+    {
+      "path": "en/quizzes/observability/grafana/grafana-quiz.md",
+      "lines": 185,
+      "sha256": "0cd6ceef64b114c4e5379e5bb2cd29df04446e5e8fe3b70d8d3ab72fe6c1ac35"
+    }
+  ],
+  "originalLines": 2074,
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/observability/grafana/README.md",
+        "sha256": "1e1db326d40bd5e905cb5c4428123352ca5ee96e1bce5933036be170d8ab04c2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-대시보드"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "기본-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "values-yaml-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "고가용성-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "데이터-소스-연동"
+          },
+          {
+            "tag": "h3",
+            "id": "파일-프로비저닝과-uid"
+          },
+          {
+            "tag": "h3",
+            "id": "cloudwatch-irsa-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "대시보드-설계-패턴"
+          },
+          {
+            "tag": "h2",
+            "id": "대시보드-프로비저닝"
+          },
+          {
+            "tag": "h3",
+            "id": "sidecar"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana-operator-사용"
+          },
+          {
+            "tag": "h2",
+            "id": "알림-규칙-grafana-alerting"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana-자체-메트릭"
+          },
+          {
+            "tag": "h2",
+            "id": "인증과-접근-제어"
+          },
+          {
+            "tag": "h2",
+            "id": "grafana-cloud-vs-self-hosted-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위와-참고-문서"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "grafana-대시보드",
+          "주요-특징",
+          "설치-실행",
+          "configmap을-통한-데이터-소스-프로비저닝",
+          "use-method-utilization-saturation-errors",
+          "red-method-rate-errors-duration",
+          "_4-golden-signals",
+          "알림-규칙-구성",
+          "알림-연락처-구성",
+          "grafana-cloud-연결-hybrid",
+          "_1-대시보드-구조화",
+          "_2-변수-활용",
+          "_3-성능-최적화",
+          "소개",
+          "아키텍처",
+          "helm-배포",
+          "기본-설치",
+          "values-yaml-구성",
+          "고가용성-구성",
+          "데이터-소스-연동",
+          "파일-프로비저닝과-uid",
+          "cloudwatch-irsa-설정",
+          "대시보드-설계-패턴",
+          "대시보드-프로비저닝",
+          "sidecar",
+          "grafana-operator-사용",
+          "알림-규칙-grafana-alerting",
+          "grafana-자체-메트릭",
+          "인증과-접근-제어",
+          "grafana-cloud-vs-self-hosted-비교",
+          "best-practices",
+          "검증-범위와-참고-문서",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/observability/grafana/README.md",
+        "sha256": "d1f9e4375251eea54b0b4d3ca413800921c8990b14d41f0a53e994539bd1a92c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-dashboards"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "basic-installation"
+          },
+          {
+            "tag": "h3",
+            "id": "values-yaml-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "high-availability"
+          },
+          {
+            "tag": "h2",
+            "id": "data-source-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "file-provisioning-and-uids"
+          },
+          {
+            "tag": "h3",
+            "id": "cloudwatch-irsa"
+          },
+          {
+            "tag": "h2",
+            "id": "dashboard-design-patterns"
+          },
+          {
+            "tag": "h2",
+            "id": "dashboard-provisioning"
+          },
+          {
+            "tag": "h3",
+            "id": "sidecar"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "alert-rules-grafana-alerting"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana-s-own-metrics"
+          },
+          {
+            "tag": "h2",
+            "id": "authentication-and-access"
+          },
+          {
+            "tag": "h2",
+            "id": "grafana-cloud-vs-self-hosted-comparison"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope-and-references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "grafana-dashboards",
+          "key-features",
+          "run-installation",
+          "data-source-provisioning-via-configmap",
+          "use-method-utilization-saturation-errors",
+          "red-method-rate-errors-duration",
+          "_4-golden-signals",
+          "alert-rule-configuration",
+          "_1-dashboard-organization",
+          "_2-variable-usage",
+          "_3-performance-optimization",
+          "introduction",
+          "architecture",
+          "helm-deployment",
+          "basic-installation",
+          "values-yaml-configuration",
+          "high-availability",
+          "data-source-integration",
+          "file-provisioning-and-uids",
+          "cloudwatch-irsa",
+          "dashboard-design-patterns",
+          "dashboard-provisioning",
+          "sidecar",
+          "grafana-operator",
+          "alert-rules-grafana-alerting",
+          "grafana-s-own-metrics",
+          "authentication-and-access",
+          "grafana-cloud-vs-self-hosted-comparison",
+          "best-practices",
+          "validation-scope-and-references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/grafana/grafana-quiz.md",
+        "sha256": "3bae8c34768902cd4c86950219fd7d87afcb7c15d8e42a927922c228bc10465e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-대시보드-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "grafana-대시보드-퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/grafana/grafana-quiz.md",
+        "sha256": "8b31b52dddeb47b79a7f84e6600daa9e672cda51a9d2dda9fed9ad61c0dbfc06",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-dashboard-quiz"
+          }
+        ],
+        "renderedIds": [
+          "grafana-dashboard-quiz"
+        ]
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/en-observability-grafana-readme-0.architecture.json",
+      "sha256": "8febe4d6f012ac84900fa61535adfa415012e22123cd4efacdab508d166589ee"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-grafana-readme-0.architecture.json",
+      "sha256": "23d25eb70f9f60ef9c451caca23105165833ff07b63a9f7cba7521e9005131c3"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-grafana-readme-0.png",
+      "sha256": "40934b2792e0bb6ed814bb7daf601f065db932716e330bd21c1229dd0d8176d9"
+    },
+    {
+      "path": "en/observability/grafana/README.md",
+      "sha256": "d1f9e4375251eea54b0b4d3ca413800921c8990b14d41f0a53e994539bd1a92c"
+    },
+    {
+      "path": "en/quizzes/observability/grafana/grafana-quiz.md",
+      "sha256": "8b31b52dddeb47b79a7f84e6600daa9e672cda51a9d2dda9fed9ad61c0dbfc06"
+    },
+    {
+      "path": "examples/observability/grafana/.gitignore",
+      "sha256": "240f82652a085deb031eabee857ee995c25c290281cc377cca087940a58720fe"
+    },
+    {
+      "path": "examples/observability/grafana/alerts.yaml",
+      "sha256": "9c3b8c2616c24ad33636eeb0156f17c00dfee96723d3071a1eb0c294d92cf714"
+    },
+    {
+      "path": "examples/observability/grafana/dashboard.json",
+      "sha256": "0520ff323984fc65b15fcd3fd19664ec712e9492e67743f0eb43497223931833"
+    },
+    {
+      "path": "examples/observability/grafana/datasources.yaml",
+      "sha256": "dbabc60c0cae454f29ea8040517815011724f4ddfe0803b4c54300fa8775b895"
+    },
+    {
+      "path": "examples/observability/grafana/endpoints.yaml",
+      "sha256": "800e8097fdee32d33265365bf6bfde1446d79154ccce1f513ab1438e9861ac3b"
+    },
+    {
+      "path": "examples/observability/grafana/sidecar-role.yaml",
+      "sha256": "3ef12fe4be1798cab4204135cf8284e518d89c60248f5c72fc04fd347ff54d34"
+    },
+    {
+      "path": "examples/observability/grafana/values-ha.yaml",
+      "sha256": "a12c2baa310da73360810492a25f1bd5abd220e8d8a0f8d6a14c052fea92df6c"
+    },
+    {
+      "path": "examples/observability/grafana/values-metrics.yaml",
+      "sha256": "c485ce9c944873df7c0c90d9fc58a22c209a8d0e56277fc5ff63156cde9a0a7c"
+    },
+    {
+      "path": "examples/observability/grafana/values-sidecar.yaml",
+      "sha256": "904cfa3ea51fca26adb46a5c26e065168f5a90f34d5632712fea3e1786725558"
+    },
+    {
+      "path": "examples/observability/grafana/values.yaml",
+      "sha256": "201f0f4e3aefd1480e30afdaf7e740e0bceb52f630666d6a09f34eef2ade356a"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-grafana-readme-0.png",
+      "sha256": "bafa5d02c46247743b725bfdb4519c692628d76dc29aa8d5b28a1c256a05a35d"
+    },
+    {
+      "path": "ko/observability/grafana/README.md",
+      "sha256": "1e1db326d40bd5e905cb5c4428123352ca5ee96e1bce5933036be170d8ab04c2"
+    },
+    {
+      "path": "ko/quizzes/observability/grafana/grafana-quiz.md",
+      "sha256": "3bae8c34768902cd4c86950219fd7d87afcb7c15d8e42a927922c228bc10465e"
+    },
+    {
+      "path": "public/archmaps/en-observability-grafana-readme-0.html",
+      "sha256": "a8574a77437571d33bd8401ed46fb311043fea1d3af9905b341a9dfa7cecc6b9"
+    },
+    {
+      "path": "public/archmaps/ko-observability-grafana-readme-0.html",
+      "sha256": "e8449e4753922726b43a31b81423fe05ca49bddbfe55cbe85e15da1529348bcd"
+    }
+  ],
+  "native": {
+    "status": "passed",
+    "checks": [
+      "native Grafana 13.2.1 ready",
+      "three data sources provisioned",
+      "endpoint environment substitution",
+      "escaped Loki link variable preserved",
+      "Tempo trace/log tag template preserved",
+      "Tempo metric selector template preserved",
+      "eight dashboard panels provisioned",
+      "paused alert provisioned with full A B C model",
+      "native reduce and threshold evaluated",
+      "threshold keeps instance label",
+      "90 exceeds 80 threshold",
+      "metrics rejects unauthenticated request",
+      "metrics accepts configured basic auth"
+    ],
+    "imageId": "sha256:9a76b52cccaa8107fe69a234bb3a02927b143d51796075dc30b9afcfe1b7bd2b",
+    "repoDigests": [
+      "grafana/grafana@sha256:f772d434e8fab0049deb2b1b30abd43342bcfca1537614aa8d36080232cf4283"
+    ],
+    "architecture": "arm64",
+    "sourceHashes": {
+      "examples/observability/grafana/values.yaml": "a20afb5b8a463d06be1b55e09dbccc8117803f42bb64433076a8708fbfe99ebd",
+      "examples/observability/grafana/values-ha.yaml": "a12c2baa310da73360810492a25f1bd5abd220e8d8a0f8d6a14c052fea92df6c",
+      "examples/observability/grafana/values-metrics.yaml": "c485ce9c944873df7c0c90d9fc58a22c209a8d0e56277fc5ff63156cde9a0a7c",
+      "examples/observability/grafana/endpoints.yaml": "800e8097fdee32d33265365bf6bfde1446d79154ccce1f513ab1438e9861ac3b",
+      "examples/observability/grafana/datasources.yaml": "dbabc60c0cae454f29ea8040517815011724f4ddfe0803b4c54300fa8775b895",
+      "examples/observability/grafana/dashboard.json": "0520ff323984fc65b15fcd3fd19664ec712e9492e67743f0eb43497223931833",
+      "examples/observability/grafana/alerts.yaml": "9c3b8c2616c24ad33636eeb0156f17c00dfee96723d3071a1eb0c294d92cf714",
+      "examples/observability/grafana/values-sidecar.yaml": "712b69b99e9be6c67e683050c1834e48775dbaca3b88031dffcbbc8f7272a89c"
+    },
+    "scope": "Actual bounded Grafana container and loopback synthetic Prometheus HTTP fixture. Alert models evaluated via native /api/ds/query; scheduled rule remains paused; no notifications, real backends, cloud, HA database or Kubernetes installation."
+  },
+  "helm": {
+    "profiles": [
+      {
+        "profile": "single",
+        "resources": 5,
+        "passed": true
+      },
+      {
+        "profile": "ha",
+        "resources": 6,
+        "passed": true
+      },
+      {
+        "profile": "metrics",
+        "resources": 6,
+        "passed": true
+      },
+      {
+        "profile": "sidecar",
+        "resources": 7,
+        "passed": true
+      }
+    ],
+    "rbac": "No cluster-wide roles; optional sidecar binds external ConfigMap-only namespaced Role; no token for other profiles"
+  },
+  "promql": {
+    "status": "passed",
+    "nativeVersion": "Prometheus 3.14.0",
+    "parsedExpressions": 8,
+    "syntheticCases": [
+      "healthy missing error series =0",
+      "10% 5xx",
+      "zero traffic empty",
+      "absent collection empty"
+    ],
+    "limits": "Synthetic query evaluation; no cluster scraping"
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-grafana-readme-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 935,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-grafana-readme-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 935,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-grafana-readme-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 935,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56512,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-grafana-readme-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 676,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-grafana-readme-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 676,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-grafana-readme-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 676,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56086,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "6 cases on 2 locally generated viewers; motion/reduced-motion/visibility/theme/guided controls and 2 SVG exports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "visualInspection": {
+    "status": "passed",
+    "individuallyInspected": [
+      "ko/.gitbook/assets/ko-observability-grafana-readme-0.png",
+      "en/.gitbook/assets/en-observability-grafana-readme-0.png"
+    ],
+    "notes": "Both complete PNGs visually inspected; labels, arrows, cards and controls legible without clipping."
+  },
+  "legacyAnchors": [
+    {
+      "path": "ko/observability/grafana/README.md",
+      "legacyIds": [
+        "grafana-대시보드",
+        "소개",
+        "주요-특징",
+        "아키텍처",
+        "helm-배포",
+        "기본-설치",
+        "values-yaml-구성",
+        "설치-실행",
+        "데이터-소스-연동",
+        "configmap을-통한-데이터-소스-프로비저닝",
+        "cloudwatch-irsa-설정",
+        "대시보드-설계-패턴",
+        "use-method-utilization-saturation-errors",
+        "red-method-rate-errors-duration",
+        "_4-golden-signals",
+        "대시보드-프로비저닝",
+        "grafana-operator-사용",
+        "알림-규칙-grafana-alerting",
+        "알림-규칙-구성",
+        "알림-연락처-구성",
+        "grafana-cloud-vs-self-hosted-비교",
+        "grafana-cloud-연결-hybrid",
+        "best-practices",
+        "_1-대시보드-구조화",
+        "_2-변수-활용",
+        "_3-성능-최적화",
+        "퀴즈"
+      ],
+      "preservedAliases": [
+        "주요-특징",
+        "설치-실행",
+        "configmap을-통한-데이터-소스-프로비저닝",
+        "use-method-utilization-saturation-errors",
+        "red-method-rate-errors-duration",
+        "_4-golden-signals",
+        "알림-규칙-구성",
+        "알림-연락처-구성",
+        "grafana-cloud-연결-hybrid",
+        "_1-대시보드-구조화",
+        "_2-변수-활용",
+        "_3-성능-최적화"
+      ]
+    },
+    {
+      "path": "en/observability/grafana/README.md",
+      "legacyIds": [
+        "grafana-dashboards",
+        "introduction",
+        "key-features",
+        "architecture",
+        "helm-deployment",
+        "basic-installation",
+        "values-yaml-configuration",
+        "run-installation",
+        "data-source-integration",
+        "data-source-provisioning-via-configmap",
+        "dashboard-design-patterns",
+        "use-method-utilization-saturation-errors",
+        "red-method-rate-errors-duration",
+        "_4-golden-signals",
+        "alert-rules-grafana-alerting",
+        "alert-rule-configuration",
+        "grafana-cloud-vs-self-hosted-comparison",
+        "best-practices",
+        "_1-dashboard-organization",
+        "_2-variable-usage",
+        "_3-performance-optimization",
+        "quiz"
+      ],
+      "preservedAliases": [
+        "key-features",
+        "run-installation",
+        "data-source-provisioning-via-configmap",
+        "use-method-utilization-saturation-errors",
+        "red-method-rate-errors-duration",
+        "_4-golden-signals",
+        "alert-rule-configuration",
+        "_1-dashboard-organization",
+        "_2-variable-usage",
+        "_3-performance-optimization"
+      ]
+    }
+  ],
+  "sources": {
+    "correction": "All earlier webCitation IDs and web.run success claims were invalid. No actual web.run results were available. The following records use real Python HTTPS retrieval only.",
+    "method": "urllib.request HTTPS",
+    "sources": [
+      {
+        "url": "https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/",
+        "finalUrl": "https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/",
+        "httpStatus": 200,
+        "bytes": 326598,
+        "sha256": "2ef9723f5552a16ce641e932add6fcb16dc4d4d104573fe7cb9c1d4d671880e2",
+        "cache": ".vitepress/cache/content-review-observability-finish/official-grafana-0.html",
+        "retrievedAt": "2026-09-13T07:51:31.426893+00:00"
+      },
+      {
+        "url": "https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/",
+        "finalUrl": "https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/",
+        "httpStatus": 200,
+        "bytes": 382607,
+        "sha256": "8bcfd664c2453814f888b16b6460bddbbe332973285619253b6dbc4d137db026",
+        "cache": ".vitepress/cache/content-review-observability-finish/official-grafana-1.html",
+        "retrievedAt": "2026-09-13T07:51:31.934574+00:00"
+      },
+      {
+        "url": "https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/generic-oauth/",
+        "finalUrl": "https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/generic-oauth/",
+        "httpStatus": 200,
+        "bytes": 382195,
+        "sha256": "388773873d244fb7c5b43d21bac362351598aa07568dc6c75202202e230bfb2b",
+        "cache": ".vitepress/cache/content-review-observability-finish/official-grafana-2.html",
+        "retrievedAt": "2026-09-13T07:51:32.035318+00:00"
+      },
+      {
+        "url": "https://grafana.com/docs/grafana/latest/administration/data-source-management/",
+        "finalUrl": "https://grafana.com/docs/grafana/latest/administration/data-source-management/",
+        "httpStatus": 200,
+        "bytes": 336342,
+        "sha256": "68d0a8d2e8b021403cb82f033d0b42e1c3fbd661121afcc0caa23f8876ca11bd",
+        "cache": ".vitepress/cache/content-review-observability-finish/official-grafana-3.html",
+        "retrievedAt": "2026-09-13T07:51:31.964718+00:00"
+      }
+    ]
+  },
+  "versions": {
+    "grafana": "13.2.1",
+    "helmChart": "13.2.2",
+    "prometheus": "3.14.0"
+  },
+  "limits": [
+    "Native Grafana used one bounded ARM64 container and synthetic loopback Prometheus responses, not live telemetry backends.",
+    "No Kubernetes installation, HA database failover, SSO/IRSA authorization or external notification delivery.",
+    "Sidecar/profile changes after native run were re-rendered and RBAC asserted; native runtime provisioning files remained unchanged.",
+    "Current unified_alerting.min_interval is valid in 13.2.1; retained after checking pinned defaults."
+  ]
+}
