@@ -36,7 +36,7 @@ violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
 }
 ```
 
-Unlike Kyverno, you need to learn a new language, but it allows expressing more complex policy logic.
+Learn Rego sets, comprehensions and input contracts, then select a policy engine against your requirements and tests.
 
 </details>
 
@@ -85,20 +85,17 @@ spec:
     - engine: Rego
       source:
         version: v1
-        rego: "package docsrequiredlabels
-valid_label(key) if {
-  value := input.review.object.metadata.labels[key]
-\
-          \  is_string(value)
-  value != \"\"
-}
-violation contains {\"msg\": sprintf(\"\
-          required nonempty label: %v\", [key])} if {
-  some key in input.parameters.labels
-\
-          \  not valid_label(key)
-}
-"
+        rego: |
+          package docsrequiredlabels
+          valid_label(key) if {
+            value := input.review.object.metadata.labels[key]
+            is_string(value)
+            value != ""
+          }
+          violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
+            some key in input.parameters.labels
+            not valid_label(key)
+          }
 ```
 
 Constraints are created based on ConstraintTemplates to apply actual policies.
@@ -209,7 +206,7 @@ This syntax is a core Rego pattern used when evaluating multiple values within r
 
 ```bash
 # Check violations in Constraint
-kubectl describe k8srequiredlabels require-labels
+kubectl describe docsrequiredlabels required-labels
 
 # Check violations in Status section:
 # Status:
@@ -403,35 +400,21 @@ tests:
 
 ***
 
-### 10. What is Gatekeeper's advantage when comparing Gatekeeper and Kyverno?
+<span id="_10-what-is-gatekeeper-s-advantage-when-comparing-gatekeeper-and-kyverno"></span>
 
-* A) Lower learning curve
-* B) YAML native policies
-* C) Resource generation feature
-* D) Complex policy logic expressiveness
+### 10. Which concrete requirement can motivate choosing a Rego policy?
+
+* A) Guaranteed lower memory use for every policy
+* B) Automatically generating every resource without checks
+* C) Always handling more complex logic than another engine
+* D) Applying set operations and comprehensions to JSON inputs and validating them with tests
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: D) Complex policy logic expressiveness**
+**Answer: D) Applying set operations and comprehensions to JSON inputs and validating them with tests**
 
-**Explanation:** Gatekeeper (OPA) vs Kyverno comparison:
-
-| Feature             | Gatekeeper         | Kyverno   |
-| ------------------- | ------------------ | --------- |
-| Policy Language     | Rego               | YAML      |
-| Learning Curve      | High               | Low       |
-| Complex Logic       | Assess requirements | Assess requirements |
-| Resource Generation | Not Supported      | Supported |
-| External Data       | Synced inventory / explicit providers | API Call  |
-
-Gatekeeper's flexibility with Rego makes it easier to handle:
-
-* Complex condition combinations
-* Nested JSON traversal and comprehensions
-* Advanced set operations
-* External data integration
+**Explanation:** Rego provides declarative operations for this requirement. Compare actual policy expression, team skills, tests and operating needs rather than asserting universal performance or complexity superiority.
 
 </details>
 
@@ -450,7 +433,7 @@ Gatekeeper's flexibility with Rego makes it easier to handle:
 
 **Answer: B) All rules are evaluated as OR**
 
-**Explanation:** In Rego, multiple rules with the same name are evaluated as OR:
+**Explanation:** Multiple definitions of this partial-set violation rule contribute their results to the same set:
 
 ```rego
 package examples

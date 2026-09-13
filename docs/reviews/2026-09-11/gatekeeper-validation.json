@@ -314,7 +314,7 @@
       },
       {
         "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
-        "sha256": "16eefce10c39a6c409640e6a8a7bff82d9af2fe361fcc426bca4f6d40e00da40",
+        "sha256": "46e84c6ac40738cd384cb395032d2e122544765213e2ff8ec04d4d237456123d",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -365,7 +365,7 @@
           },
           {
             "tag": "h3",
-            "id": "_10-gatekeeper와-kyverno-비교-시-gatekeeper의-장점은"
+            "id": "_10-rego-정책을-선택할-구체적인-요구-사례는"
           },
           {
             "tag": "h3",
@@ -398,6 +398,7 @@
           "_8-gatekeeper에서-다른-네임스페이스의-리소스를-참조하기-위해-필요한-설정은",
           "_9-gatekeeper-정책-테스트를-위한-공식-cli-도구는",
           "_10-gatekeeper와-kyverno-비교-시-gatekeeper의-장점은",
+          "_10-rego-정책을-선택할-구체적인-요구-사례는",
           "_11-rego에서-violation-규칙이-여러-개-정의되어-있을-때-평가-방식은",
           "_12-gatekeeper에서-constraint가-특정-네임스페이스에만-적용되도록-설정하는-필드는",
           "점수-계산",
@@ -406,7 +407,7 @@
       },
       {
         "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
-        "sha256": "45fe1f7ccd09751e55ebc825f636cfbcf1366796ae0e8bc82feaa576c2013f2d",
+        "sha256": "010aeff3eb88670f8c54f22a107a8608cb3035289de817b5c4fa5215e062b884",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -457,7 +458,7 @@
           },
           {
             "tag": "h3",
-            "id": "_10-what-is-gatekeeper-s-advantage-when-comparing-gatekeeper-and-kyverno"
+            "id": "_10-which-concrete-requirement-can-motivate-choosing-a-rego-policy"
           },
           {
             "tag": "h3",
@@ -490,6 +491,7 @@
           "_8-what-configuration-is-needed-in-gatekeeper-to-reference-resources-from-other-namespaces",
           "_9-what-is-the-official-cli-tool-for-testing-gatekeeper-policies",
           "_10-what-is-gatekeeper-s-advantage-when-comparing-gatekeeper-and-kyverno",
+          "_10-which-concrete-requirement-can-motivate-choosing-a-rego-policy",
           "_11-when-multiple-violation-rules-are-defined-in-rego-how-are-they-evaluated",
           "_12-what-field-in-gatekeeper-configures-a-constraint-to-apply-only-to-specific-namespaces",
           "score-calculation",
@@ -513,7 +515,7 @@
     },
     {
       "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
-      "sha256": "45fe1f7ccd09751e55ebc825f636cfbcf1366796ae0e8bc82feaa576c2013f2d"
+      "sha256": "010aeff3eb88670f8c54f22a107a8608cb3035289de817b5c4fa5215e062b884"
     },
     {
       "path": "en/security/09-opa-gatekeeper.md",
@@ -741,7 +743,7 @@
     },
     {
       "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
-      "sha256": "16eefce10c39a6c409640e6a8a7bff82d9af2fe361fcc426bca4f6d40e00da40"
+      "sha256": "46e84c6ac40738cd384cb395032d2e122544765213e2ff8ec04d4d237456123d"
     },
     {
       "path": "ko/security/09-opa-gatekeeper.md",
@@ -1147,6 +1149,10 @@
         {
           "id": "_6-gatekeeper-v3-10-에서-지원하는-리소스-자동-수정-기능의-crd는",
           "target": "### 6. Gatekeeper 3.23.1에서 지원하는 리소스 자동 수정 기능의 CRD는?"
+        },
+        {
+          "id": "_10-gatekeeper와-kyverno-비교-시-gatekeeper의-장점은",
+          "target": "### 10. Rego 정책을 선택할 구체적인 요구 사례는?"
         }
       ]
     },
@@ -1341,6 +1347,10 @@
         {
           "id": "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-v3-10",
           "target": "### 6. What CRD is used for automatic resource modification in Gatekeeper 3.23.1?"
+        },
+        {
+          "id": "_10-what-is-gatekeeper-s-advantage-when-comparing-gatekeeper-and-kyverno",
+          "target": "### 10. Which concrete requirement can motivate choosing a Rego policy?"
         }
       ]
     }
@@ -1416,5 +1426,243 @@
     "Noimagepullsorworkloaddeployment;exampleimageURLsarepolicyfixtures.",
     "Noequality/uniquenessguaranteeforconcurrentIngresscreationorwildcardhosts.",
     "Onlyselectedpolicychecks;notfullPodSecurityStandards."
-  ]
+  ],
+  "reviewFix": {
+    "findings": [
+      "GK-R1-001",
+      "GK-R1-002",
+      "GK-R1-003"
+    ],
+    "changes": [
+      "LiteralblockRego inquizCT;lambda replacementpreservesexactnewlines",
+      "AuditdiagnosticusesinstalledDocsRequiredLabels/required-labels",
+      "ConcreteRegoset/comprehensionquestionreplacesblanketKyverno superiority claims"
+    ],
+    "nativeMarkdownPolicies": {
+      "status": "passed",
+      "cases": [
+        {
+          "path": "ko/security/09-opa-gatekeeper.md",
+          "fence": 0,
+          "gatorExit": 0,
+          "violationCount": 1,
+          "extractedFile": ".vitepress/cache/content-review-gatekeeper/markdown-policy-checks/ko-guide-0.yaml"
+        },
+        {
+          "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+          "fence": 0,
+          "gatorExit": 0,
+          "violationCount": 1,
+          "extractedFile": ".vitepress/cache/content-review-gatekeeper/markdown-policy-checks/ko-quiz-0.yaml"
+        },
+        {
+          "path": "en/security/09-opa-gatekeeper.md",
+          "fence": 0,
+          "gatorExit": 0,
+          "violationCount": 1,
+          "extractedFile": ".vitepress/cache/content-review-gatekeeper/markdown-policy-checks/en-guide-0.yaml"
+        },
+        {
+          "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+          "fence": 0,
+          "gatorExit": 0,
+          "violationCount": 1,
+          "extractedFile": ".vitepress/cache/content-review-gatekeeper/markdown-policy-checks/en-quiz-0.yaml"
+        }
+      ],
+      "scope": "Each guide/quiz CT fence extracted to a distinctfile, compiled/evaluated bynativeGator3.23.1; exactone missing-label violation required. Dryrunexit0notusedasproofalone."
+    },
+    "markdown": {
+      "nodeHeapMiB": 512,
+      "scope": "Explicit documents only; no site build",
+      "results": [
+        {
+          "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+          "sha256": "46e84c6ac40738cd384cb395032d2e122544765213e2ff8ec04d4d237456123d",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "opa-gatekeeper-퀴즈"
+            },
+            {
+              "tag": "h2",
+              "id": "문제"
+            },
+            {
+              "tag": "h3",
+              "id": "_1-opa-gatekeeper에서-정책을-작성하는-데-사용되는-언어는"
+            },
+            {
+              "tag": "h3",
+              "id": "_2-gatekeeper에서-재사용-가능한-정책-템플릿을-정의하는-crd는"
+            },
+            {
+              "tag": "h3",
+              "id": "_3-gatekeeper-constraint의-enforcementaction-필드에서-지원하지-않는-값은"
+            },
+            {
+              "tag": "h3",
+              "id": "_4-rego에서-배열의-모든-요소를-순회하는-구문은"
+            },
+            {
+              "tag": "h3",
+              "id": "_5-gatekeeper에서-기존-클러스터-리소스의-정책-준수-여부를-확인하는-기능은"
+            },
+            {
+              "tag": "h3",
+              "id": "_6-gatekeeper-3-23-1에서-지원하는-리소스-자동-수정-기능의-crd는"
+            },
+            {
+              "tag": "h3",
+              "id": "_7-rego에서-두-집합의-차이를-계산하는-연산자는"
+            },
+            {
+              "tag": "h3",
+              "id": "_8-gatekeeper에서-다른-네임스페이스의-리소스를-참조하기-위해-필요한-설정은"
+            },
+            {
+              "tag": "h3",
+              "id": "_9-gatekeeper-정책-테스트를-위한-공식-cli-도구는"
+            },
+            {
+              "tag": "h3",
+              "id": "_10-rego-정책을-선택할-구체적인-요구-사례는"
+            },
+            {
+              "tag": "h3",
+              "id": "_11-rego에서-violation-규칙이-여러-개-정의되어-있을-때-평가-방식은"
+            },
+            {
+              "tag": "h3",
+              "id": "_12-gatekeeper에서-constraint가-특정-네임스페이스에만-적용되도록-설정하는-필드는"
+            },
+            {
+              "tag": "h2",
+              "id": "점수-계산"
+            },
+            {
+              "tag": "h2",
+              "id": "관련-문서"
+            }
+          ],
+          "renderedIds": [
+            "opa-gatekeeper-퀴즈",
+            "문제",
+            "_1-opa-gatekeeper에서-정책을-작성하는-데-사용되는-언어는",
+            "_2-gatekeeper에서-재사용-가능한-정책-템플릿을-정의하는-crd는",
+            "_3-gatekeeper-constraint의-enforcementaction-필드에서-지원하지-않는-값은",
+            "_4-rego에서-배열의-모든-요소를-순회하는-구문은",
+            "_5-gatekeeper에서-기존-클러스터-리소스의-정책-준수-여부를-확인하는-기능은",
+            "_6-gatekeeper-v3-10-에서-지원하는-리소스-자동-수정-기능의-crd는",
+            "_6-gatekeeper-3-23-1에서-지원하는-리소스-자동-수정-기능의-crd는",
+            "_7-rego에서-두-집합의-차이를-계산하는-연산자는",
+            "_8-gatekeeper에서-다른-네임스페이스의-리소스를-참조하기-위해-필요한-설정은",
+            "_9-gatekeeper-정책-테스트를-위한-공식-cli-도구는",
+            "_10-gatekeeper와-kyverno-비교-시-gatekeeper의-장점은",
+            "_10-rego-정책을-선택할-구체적인-요구-사례는",
+            "_11-rego에서-violation-규칙이-여러-개-정의되어-있을-때-평가-방식은",
+            "_12-gatekeeper에서-constraint가-특정-네임스페이스에만-적용되도록-설정하는-필드는",
+            "점수-계산",
+            "관련-문서"
+          ]
+        },
+        {
+          "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+          "sha256": "010aeff3eb88670f8c54f22a107a8608cb3035289de817b5c4fa5215e062b884",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "opa-gatekeeper-quiz"
+            },
+            {
+              "tag": "h2",
+              "id": "questions"
+            },
+            {
+              "tag": "h3",
+              "id": "_1-what-language-is-used-to-write-policies-in-opa-gatekeeper"
+            },
+            {
+              "tag": "h3",
+              "id": "_2-what-crd-defines-reusable-policy-templates-in-gatekeeper"
+            },
+            {
+              "tag": "h3",
+              "id": "_3-which-value-is-not-supported-in-the-enforcementaction-field-of-a-gatekeeper-constraint"
+            },
+            {
+              "tag": "h3",
+              "id": "_4-what-is-the-syntax-for-iterating-through-all-elements-of-an-array-in-rego"
+            },
+            {
+              "tag": "h3",
+              "id": "_5-what-feature-in-gatekeeper-checks-policy-compliance-of-existing-cluster-resources"
+            },
+            {
+              "tag": "h3",
+              "id": "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-3-23-1"
+            },
+            {
+              "tag": "h3",
+              "id": "_7-what-operator-calculates-the-difference-between-two-sets-in-rego"
+            },
+            {
+              "tag": "h3",
+              "id": "_8-what-configuration-is-needed-in-gatekeeper-to-reference-resources-from-other-namespaces"
+            },
+            {
+              "tag": "h3",
+              "id": "_9-what-is-the-official-cli-tool-for-testing-gatekeeper-policies"
+            },
+            {
+              "tag": "h3",
+              "id": "_10-which-concrete-requirement-can-motivate-choosing-a-rego-policy"
+            },
+            {
+              "tag": "h3",
+              "id": "_11-when-multiple-violation-rules-are-defined-in-rego-how-are-they-evaluated"
+            },
+            {
+              "tag": "h3",
+              "id": "_12-what-field-in-gatekeeper-configures-a-constraint-to-apply-only-to-specific-namespaces"
+            },
+            {
+              "tag": "h2",
+              "id": "score-calculation"
+            },
+            {
+              "tag": "h2",
+              "id": "related-documentation"
+            }
+          ],
+          "renderedIds": [
+            "opa-gatekeeper-quiz",
+            "questions",
+            "_1-what-language-is-used-to-write-policies-in-opa-gatekeeper",
+            "_2-what-crd-defines-reusable-policy-templates-in-gatekeeper",
+            "_3-which-value-is-not-supported-in-the-enforcementaction-field-of-a-gatekeeper-constraint",
+            "_4-what-is-the-syntax-for-iterating-through-all-elements-of-an-array-in-rego",
+            "_5-what-feature-in-gatekeeper-checks-policy-compliance-of-existing-cluster-resources",
+            "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-v3-10",
+            "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-3-23-1",
+            "_7-what-operator-calculates-the-difference-between-two-sets-in-rego",
+            "_8-what-configuration-is-needed-in-gatekeeper-to-reference-resources-from-other-namespaces",
+            "_9-what-is-the-official-cli-tool-for-testing-gatekeeper-policies",
+            "_10-what-is-gatekeeper-s-advantage-when-comparing-gatekeeper-and-kyverno",
+            "_10-which-concrete-requirement-can-motivate-choosing-a-rego-policy",
+            "_11-when-multiple-violation-rules-are-defined-in-rego-how-are-they-evaluated",
+            "_12-what-field-in-gatekeeper-configures-a-constraint-to-apply-only-to-specific-namespaces",
+            "score-calculation",
+            "related-documentation"
+          ]
+        }
+      ]
+    }
+  }
 }

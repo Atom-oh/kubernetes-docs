@@ -36,7 +36,7 @@ violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
 }
 ```
 
-Kyverno와 달리 새로운 언어를 배워야 하지만, 더 복잡한 정책 로직을 표현할 수 있습니다.
+Rego의 집합·comprehension·JSON 입력 계약을 익히고 실제 요구와 테스트에 맞춰 정책 도구를 선택합니다.
 
 </details>
 
@@ -85,20 +85,17 @@ spec:
     - engine: Rego
       source:
         version: v1
-        rego: "package docsrequiredlabels
-valid_label(key) if {
-  value := input.review.object.metadata.labels[key]
-\
-          \  is_string(value)
-  value != \"\"
-}
-violation contains {\"msg\": sprintf(\"\
-          required nonempty label: %v\", [key])} if {
-  some key in input.parameters.labels
-\
-          \  not valid_label(key)
-}
-"
+        rego: |
+          package docsrequiredlabels
+          valid_label(key) if {
+            value := input.review.object.metadata.labels[key]
+            is_string(value)
+            value != ""
+          }
+          violation contains {"msg": sprintf("required nonempty label: %v", [key])} if {
+            some key in input.parameters.labels
+            not valid_label(key)
+          }
 ```
 
 ConstraintTemplate을 기반으로 Constraint를 생성하여 실제 정책을 적용합니다.
@@ -209,7 +206,7 @@ container := input.review.object.spec.containers[i]
 
 ```bash
 # Constraint의 위반 사항 확인
-kubectl describe k8srequiredlabels require-labels
+kubectl describe docsrequiredlabels required-labels
 
 # Status 섹션에서 위반 확인:
 # Status:
@@ -403,37 +400,21 @@ tests:
 
 ***
 
-### 10. Gatekeeper와 Kyverno 비교 시 Gatekeeper의 장점은?
+<span id="_10-gatekeeper와-kyverno-비교-시-gatekeeper의-장점은"></span>
 
-* A) 더 낮은 학습 곡선
-* B) YAML 네이티브 정책
-* C) 리소스 생성(Generate) 기능
-* D) 복잡한 정책 로직 표현력
+### 10. Rego 정책을 선택할 구체적인 요구 사례는?
+
+* A) 어떤 정책이든 더 적은 메모리가 보장되어야 한다
+* B) 모든 리소스를 검사 없이 자동 생성해야 한다
+* C) 다른 엔진보다 항상 복잡한 로직을 처리해야 한다
+* D) JSON 입력에 집합 연산과 comprehension을 적용하고 테스트로 검증하려 한다
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: D) 복잡한 정책 로직 표현력**
+**정답: D) JSON 입력에 집합 연산과 comprehension을 적용하고 테스트로 검증하려 한다**
 
-**설명:** Gatekeeper(OPA) vs Kyverno 비교:
-
-| 특성     | Gatekeeper | Kyverno  |
-| ------ | ---------- | -------- |
-| 정책 언어  | Rego       | YAML     |
-| 학습 곡선  | 높음         | 낮음       |
-| 복잡한 로직 | 요구에 따라 선택 | 요구에 따라 선택 |
-| 리소스 생성 | 미지원        | 지원       |
-| 외부 데이터 | 동기화 inventory·명시적 provider  | API Call |
-
-Gatekeeper는 Rego의 유연성 덕분에:
-
-* 복잡한 조건 조합
-* 중첩 JSON 순회 및 comprehension
-* 고급 집합 연산
-* 외부 데이터 통합
-
-등이 더 쉽습니다.
+**설명:** Rego는 이 요구에 맞는 선언적 연산을 제공합니다. 특정 정책의 표현 방식, 팀의 숙련도, 테스트, 운영 요구를 비교해야 하며 Gatekeeper가 항상 더 빠르거나 더 복잡한 정책을 표현한다고 일반화하지 않습니다.
 
 </details>
 
@@ -452,7 +433,7 @@ Gatekeeper는 Rego의 유연성 덕분에:
 
 **정답: B) 모든 규칙을 OR로 평가**
 
-**설명:** Rego에서 같은 이름의 규칙이 여러 개 있으면 OR로 평가됩니다:
+**설명:** 같은 partial-set violation rule의 여러 정의는 각각의 결과를 집합에 추가합니다:
 
 ```rego
 package examples
