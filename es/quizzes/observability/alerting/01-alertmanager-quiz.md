@@ -1,109 +1,103 @@
 # Cuestionario de Prometheus Alertmanager
 
-Un cuestionario para poner a prueba tu comprensión de Prometheus Alertmanager.
+> **Última actualización**: September 13, 2026
 
 ---
 
-1. ¿Cuál es el estado intermedio por el que pasa una alerta antes de activarse en Alertmanager?
-   - A) Activa
-   - B) Pendiente
-   - C) Advertencia
-   - D) En espera
+1. Cuando una regla de alerta de Prometheus tiene una duración `for` positiva, ¿qué estado precede a Firing?
+   - A) Active
+   - B) Pending
+   - C) Warning
+   - D) Waiting
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Pendiente**
+**Respuesta: B) Pending**
 
-**Explicación:**
-Las alertas de Prometheus tienen tres estados: Inactive, Pending y Firing. Cuando se cumple la condición (expr) de una regla de alerta, primero pasa al estado Pending y, si la condición persiste durante el período especificado en la cláusula `for`, pasa al estado Firing y se envía a Alertmanager. Este mecanismo evita alertas innecesarias provocadas por picos temporales.
+Pending pertenece a la evaluación de reglas de Prometheus, no a una etapa de evaluación de Alertmanager. La condición debe permanecer presente en evaluaciones sucesivas durante la duración configurada. Sin `for` (o con valor cero), puede activarse en la primera evaluación coincidente. La agrupación de notificaciones añade retrasos independientes; `keep_firing_for` puede mantener Firing después de que la expresión deje de coincidir.
 
 </details>
 
 ---
 
-2. ¿Qué afirmación describe correctamente las funciones de `group_wait`, `group_interval` y `repeat_interval` en la configuración de enrutamiento de Alertmanager?
-   - A) group_wait: Tiempo de espera antes de enviar la primera notificación de un grupo de alertas
-   - B) group_interval: Intervalo para reenviar alertas idénticas
-   - C) repeat_interval: Tiempo de espera cuando se agregan nuevas alertas a un grupo
-   - D) Todas realizan la misma función
+2. ¿Qué afirmación sobre los temporizadores de agrupación es correcta?
+   - A) `group_wait` retrasa la primera notificación de un grupo nuevo.
+   - B) `group_interval` es solo el intervalo de repetición para alertas sin cambios.
+   - C) `repeat_interval` es el primer retraso para alertas recién añadidas.
+   - D) Los tres temporizadores son idénticos.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) group_wait: Tiempo de espera antes de enviar la primera notificación de un grupo de alertas**
+**Respuesta: A) `group_wait` retrasa la primera notificación de un grupo nuevo.**
 
-**Explicación:**
-- `group_wait`: Tiempo de espera después de crear un nuevo grupo de alertas antes de enviar la primera notificación. Durante este período, se recopilan otras alertas que pertenecen al mismo grupo y se envían juntas.
-- `group_interval`: Tiempo de espera antes de enviar la siguiente notificación cuando se agregan nuevas alertas al mismo grupo.
-- `repeat_interval`: Intervalo para reenviar la misma alerta cuando aún no se ha resuelto.
+`group_interval` programa comprobaciones posteriores del grupo, incluidos los cambios y las alertas resueltas. `repeat_interval` controla las notificaciones repetidas de alertas Firing sin cambios, comprobadas en los intervalos del grupo; use un múltiplo de `group_interval`. La retención del registro de notificaciones puede provocar una repetición anterior. Estos temporizadores son independientes del `for` de una regla de Prometheus.
 
 </details>
 
 ---
 
-3. ¿Qué afirmación describe correctamente la funcionalidad Inhibition de Alertmanager?
-   - A) Una funcionalidad para ignorar todas las alertas durante un período específico
-   - B) Una funcionalidad para suprimir alertas relacionadas cuando se activa una alerta específica
-   - C) Una funcionalidad para reducir automáticamente la severidad de las alertas
-   - D) Una funcionalidad para fusionar alertas duplicadas
+3. ¿Qué hace la inhibición?
+   - A) Ignora cada alerta durante una ventana de tiempo.
+   - B) Suprime las notificaciones de destino coincidentes mientras haya una alerta de origen coincidente activa.
+   - C) Cambia automáticamente la gravedad de la alerta.
+   - D) Elimina alertas duplicadas de Prometheus.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Una funcionalidad para suprimir alertas relacionadas cuando se activa una alerta específica**
+**Respuesta: B) Suprime las notificaciones de destino coincidentes mientras haya una alerta de origen coincidente activa.**
 
-**Explicación:**
-Inhibition es una funcionalidad que suprime las alertas relacionadas (target) cuando se activa una alerta de condición específica (source). Por ejemplo, cuando un nodo deja de funcionar, se pueden suprimir todas las alertas relacionadas con Pod de ese nodo para evitar tormentas de alertas. Silencing es una funcionalidad independiente que ignora las alertas durante un período específico.
+La inhibición cambia la idoneidad para recibir notificaciones, no la condición de alerta subyacente. Los matchers de origen/destino y las etiquetas de igualdad deben representar la dependencia prevista. Las etiquetas de igualdad ausentes se comparan como valores vacíos, por lo que se deben exigir etiquetas de correlación no vacías, como `cluster` y `node`, para evitar suprimir alertas no relacionadas. El orden de la lista de reglas no es un sistema de prioridades.
 
 </details>
 
 ---
 
-4. ¿Qué significa la siguiente regla de alerta en el CRD PrometheusRule?
+4. ¿Qué significa el `for` de esta regla?
+
    ```yaml
    - alert: HighCPU
-     expr: node_cpu_usage > 80
+     expr: 100 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 80
      for: 5m
      labels:
        severity: warning
    ```
-   - A) La alerta se activa inmediatamente cuando el uso de CPU supera el 80 %
-   - B) La alerta se activa cuando el uso de CPU supera el 80 % de forma continua durante 5 minutos
-   - C) El uso de CPU se comprueba cada 5 minutos y la alerta se activa si supera el 80 %
-   - D) La notificación de alerta se envía 5 minutos después de que la CPU supere el 80 %
+   - A) Notifica inmediatamente cuando la CPU supera el 80 %.
+   - B) Entra en Firing después de que la condición persista durante cinco minutos a lo largo de las evaluaciones.
+   - C) Evalúa la CPU solo una vez cada cinco minutos.
+   - D) Garantiza la entrega exactamente cinco minutos después del aumento físico de la CPU.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) La alerta se activa cuando el uso de CPU supera el 80 % de forma continua durante 5 minutos**
+**Respuesta: B) Entra en Firing después de que la condición persista durante cinco minutos a lo largo de las evaluaciones.**
 
-**Explicación:**
-La configuración `for: 5m` significa que la condición de alerta (expr) debe cumplirse de forma continua durante 5 minutos antes de pasar al estado Firing. Cuando se cumple la condición por primera vez, el estado se vuelve Pending y, si continúa cumpliéndose durante 5 minutos, pasa a Firing y se envía a Alertmanager. Esto evita alertas innecesarias provocadas por picos temporales.
+Esto supone contadores de CPU de node-exporter recopilados y un intervalo de evaluación adecuado. `for` no establece el intervalo de recopilación/evaluación ni garantiza un plazo de entrega. Un conjunto de etiquetas modificado identifica una alerta diferente; la recuperación restablece Pending a menos que se aplique un comportamiento independiente de retención de Firing. El ejemplo de CrashLoop primero usa una ventana de observación de cinco minutos y luego `for: 10m`: esto cubre los intervalos entre reintentos y descarta una espera aislada, con un retraso de limpieza relacionado con el período de búsqueda retrospectiva.
 
 </details>
 
 ---
 
-5. ¿Qué significa `send_resolved: true` en la configuración de receiver de Alertmanager?
-   - A) Enviar también las alertas resueltas al receiver
-   - B) Incluir el método de resolución en el mensaje de alerta
-   - C) Cambiar automáticamente la alerta al estado resuelto
-   - D) Conceder al receiver permiso para resolver alertas
+5. ¿Qué habilita `send_resolved: true`?
+   - A) Notificaciones de resolución para esa integración.
+   - B) Instrucciones de remediación automática.
+   - C) Cambiar la condición de alerta a saludable.
+   - D) Permiso para que el receptor repare el cluster.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) Enviar también las alertas resueltas al receiver**
+**Respuesta: A) Notificaciones de resolución para esa integración.**
 
-**Explicación:**
-La configuración `send_resolved: true` envía una notificación de resolución al receiver cuando se resuelve una alerta (cuando ya no se cumple la condición). Esto permite que quienes responden sepan que el problema se ha resuelto. El valor predeterminado varía según el tipo de receiver, pero generalmente se recomienda habilitarlo.
+Controla las notificaciones de resolución para la integración elegida; los valores predeterminados difieren según el receptor. Resolved es un estado del ciclo de vida de una alerta, no una prueba independiente de que un Service se haya recuperado. Los cambios en la expresión, la falta de datos o el comportamiento de actualización/expiración del cliente también pueden afectar a ese estado.
 
 </details>
 
 ---
 
-6. ¿Qué protocolo se utiliza para sincronizar el estado entre los miembros del clúster en la configuración de alta disponibilidad de Alertmanager?
+6. ¿Qué protocolo se utiliza para la sincronización del estado del cluster de Alertmanager?
    - A) Raft
    - B) Paxos
    - C) Gossip
@@ -114,106 +108,100 @@ La configuración `send_resolved: true` envía una notificación de resolución 
 
 **Respuesta: C) Gossip**
 
-**Explicación:**
-Los clústeres de Alertmanager utilizan el protocolo Gossip para sincronizar el estado entre los miembros. Esto permite compartir la información de Silence y los registros de notificaciones (nflog) entre todas las instancias, evitando notificaciones de alerta duplicadas. Al configurar un clúster, utiliza la opción `--cluster.peer` para especificar otros miembros.
+Gossip comparte los silences y el estado del registro de notificaciones con consistencia eventual. Envíe las mismas alertas a cada réplica; la capa Gossip no reemplaza esa distribución. La deduplicación se realiza según el mejor esfuerzo, y las particiones de red pueden producir duplicados. No se trata de una entrega exactamente una vez ni de una garantía contra toda pérdida de notificaciones.
 
 </details>
 
 ---
 
-7. En la siguiente configuración de enrutamiento de Alertmanager, ¿a qué receiver se enviará una alerta con `severity=critical` y `team=infra`?
+7. Para `severity=critical, team=infra`, ¿qué ruta se selecciona a continuación?
+
    ```yaml
    route:
-     receiver: 'default'
+     receiver: default
      routes:
-       - match:
-           severity: critical
-         receiver: 'critical-receiver'
-       - match:
-           team: infra
-         receiver: 'infra-team'
+       - matchers: ['severity="critical"']
+         receiver: critical-receiver
+       - matchers: ['team="infra"']
+         receiver: infra-team
    ```
    - A) default
    - B) critical-receiver
    - C) infra-team
-   - D) Ambos critical-receiver e infra-team
+   - D) Ambas rutas secundarias
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: B) critical-receiver**
 
-**Explicación:**
-El enrutamiento de Alertmanager funciona como una estructura de árbol y, de forma predeterminada, el procesamiento termina en la primera ruta coincidente. En este caso, la condición `severity=critical` coincide primero, por lo que la alerta se envía a `critical-receiver`. Para enviar a varias rutas, se requiere la configuración `continue: true`.
+Con el valor predeterminado `continue: false`, el primer elemento hermano coincidente detiene el recorrido de los elementos hermanos. Establezca `continue: true` en él para considerar elementos hermanos posteriores. Esto solo prueba el enrutamiento de etiquetas: una ruta inactiva/silenciada aún puede detener el recorrido, por lo que el comportamiento de las ventanas de tiempo requiere comprobaciones independientes. Varias integraciones dentro de un receptor no requieren `continue`. Las reglas de destino del proveedor siguen siendo aplicables: las URL de webhook entrante de Slack están vinculadas a un canal, por lo que los canales normales y críticos requieren archivos de webhook/claves de Secret distintos, no una anulación de canal.
 
 </details>
 
 ---
 
-8. ¿Cuál es el propósito principal del CRD AlertmanagerConfig?
-   - A) Definir la configuración global de Alertmanager
-   - B) Separar la configuración de alertas por namespace
-   - C) Definir reglas de alerta de Prometheus
-   - D) Configurar el clúster de Alertmanager
+8. ¿Qué habilita AlertmanagerConfig propiedad de un namespace?
+   - A) Omitir automáticamente todas las restricciones de namespace.
+   - B) Gestionar rutas/receptores estructurados seleccionados por una instancia de Alertmanager.
+   - C) Definir reglas de registro y de alerta de PromQL.
+   - D) Reemplazar la configuración de pares Gossip.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Separar la configuración de alertas por namespace**
+**Respuesta: B) Gestionar rutas/receptores estructurados seleccionados por una instancia de Alertmanager.**
 
-**Explicación:**
-El CRD AlertmanagerConfig es un recurso proporcionado por Prometheus Operator que permite gestionar la configuración de Alertmanager (receivers, rutas, reglas de inhibition, etc.) por separado según el namespace. Esto permite que cada equipo gestione de forma independiente la configuración de alertas en su propio namespace.
+El Operator debe seleccionar las etiquetas y el namespace del objeto, y los Secrets referenciados deben existir en el namespace requerido. Su estrategia de matchers controla la aplicación de namespace. El chart revisado de Operator 0.93.1 sirve `v1alpha1`; no invente una actualización de API obligatoria. El uso de configuración global es una opción independiente, y la coincidencia de etiquetas de namespace no autentica a los remitentes de alertas.
 
 </details>
 
 ---
 
-9. ¿Cuál NO es un caso de uso adecuado para crear un Silence en Alertmanager?
-   - A) Suprimir alertas durante mantenimiento planificado
-   - B) Evitar alertas repetidas de problemas conocidos
-   - C) Deshabilitar permanentemente alertas específicas
-   - D) Suprimir alertas durante un deployment
+9. ¿Cuál no es un propósito adecuado para un Silence?
+   - A) Mantenimiento planificado.
+   - B) Una ventana de investigación limitada.
+   - C) Deshabilitar permanentemente una regla de alerta.
+   - D) Una ventana de despliegue revisada.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Deshabilitar permanentemente alertas específicas**
+**Respuesta: C) Deshabilitar permanentemente una regla de alerta.**
 
-**Explicación:**
-Silence es una funcionalidad que suprime temporalmente las alertas y siempre debe especificar una hora de finalización. Para deshabilitar alertas de forma permanente, debes modificar o eliminar la propia regla de alerta. Los casos de uso principales de Silence son situaciones temporales como mantenimiento, deployment o la investigación de problemas conocidos.
+Un silence requiere una hora de finalización finita y afecta a las notificaciones. La expiración termina la supresión; no es una eliminación inmediata del historial de silences almacenado. Los cambios permanentes de reglas/enrutamiento requieren una revisión independiente. Registre el propietario, el motivo y el alcance aprobado; los recordatorios de expiración necesitan un flujo de trabajo configurado explícitamente.
 
 </details>
 
 ---
 
-10. ¿Cuál de las siguientes NO es una sintaxis válida de plantilla Go que puede utilizarse en las plantillas de Alertmanager?
-    - A) <code v-pre>{{ .Labels.alertname }}</code>
-    - B) <code v-pre>{{ if eq .Status "firing" }}Danger{{ end }}</code>
-    - C) <code v-pre>{{ range .Alerts }}{{ .Labels.severity }}{{ end }}</code>
-    - D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>
+10. ¿Qué expresión tiene una sintaxis no válida de plantilla Go?
+   - A) `{{ .CommonLabels.alertname }}`
+   - B) `{{ if eq .Status "firing" }}Danger{{ end }}`
+   - C) `{{ range .Alerts }}{{ .Labels.severity }}{{ end }}`
+   - D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>**
+**Respuesta: D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`**
 
-**Explicación:**
-Las plantillas Go no admiten el operador ternario (`? :`). En su lugar, debes utilizar sentencias <code v-pre>{{ if }}</code>. La sintaxis correcta sería:
-```
-{{ if gt (len .Annotations.description) 100 }}
-  {{ slice .Annotations.description 0 100 }}...
-{{ else }}
-  {{ .Annotations.description }}
+Las plantillas Go no admiten esta expresión ternaria. En la raíz, Alertmanager proporciona Data con CommonLabels/CommonAnnotations; Labels/Annotations/StartsAt pertenecen a una Alert individual dentro de `range .Alerts`. El ejemplo siguiente da formato a un máximo de 100 runas por descripción, evitando un corte de bytes que podría dividir texto coreano. Se trata de formato de salida, no de enmascaramiento de datos sensibles.
+
+```text
+{{ range .Alerts }}
+{{ printf "%.100s" .Annotations.description }}
 {{ end }}
 ```
-Las plantillas Go admiten pipes (`|`), condicionales (`if`/`else`), bucles (`range`), funciones integradas, etc.
 
 </details>
 
 ---
 
-## Recursos adicionales de aprendizaje
+## Recursos de aprendizaje adicionales
 
-- [Documentación de alertas de Prometheus](https://prometheus.io/docs/alerting/latest/alertmanager/)
-- [Configuración de Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/)
-- [Prometheus Operator - AlertmanagerConfig](https://prometheus-operator.dev/docs/user-guides/alerting/)
+- [Configuración de Alertmanager 0.34](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
+- [Referencia de plantillas de notificación](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/notifications.md)
+- [Alertas de Prometheus Operator](https://prometheus-operator.dev/docs/developer/alerting/)
+
+[Volver a la guía](../../../observability/alerting/01-alertmanager.md)

@@ -1,10 +1,10 @@
 # Prometheus Alertmanager クイズ
 
-Prometheus Alertmanager についての理解を確認するためのクイズです。
+> **最終更新**: September 13, 2026
 
 ---
 
-1. Alertmanager でアラートが Firing になる前に経る中間状態は何ですか？
+1. Prometheus のアラートルールに正の `for` 期間がある場合、Firing の前にどの状態になりますか？
    - A) Active
    - B) Pending
    - C) Warning
@@ -15,95 +15,89 @@ Prometheus Alertmanager についての理解を確認するためのクイズ�
 
 **回答: B) Pending**
 
-**解説:**
-Prometheus アラートには Inactive、Pending、Firing の3つの状態があります。アラートルールの条件（expr）が満たされると、まず Pending 状態に遷移し、`for` 句で指定された期間にわたって条件が継続すると、Firing 状態に遷移して Alertmanager に送信されます。この仕組みにより、一時的なスパイクによる不要なアラートを防止できます。
+Pending は Alertmanager の評価段階ではなく、Prometheus ルール評価に属します。設定された期間にわたり、連続する評価で条件が成立し続ける必要があります。`for` がない場合（またはゼロの場合）は、最初に一致した評価で Firing になります。通知のグループ化には別途遅延があり、式が一致しなくなった後も `keep_firing_for` により Firing を維持できます。
 
 </details>
 
 ---
 
-2. Alertmanager のルーティング設定における `group_wait`、`group_interval`、`repeat_interval` の役割を正しく説明しているものはどれですか？
-   - A) group_wait: アラートグループの最初の通知を送信する前の待機時間
-   - B) group_interval: 同一アラートを再送信する間隔
-   - C) repeat_interval: 新しいアラートがグループに追加された際の待機時間
-   - D) すべて同じ機能を実行する
+2. グループ化タイマーに関する正しい説明はどれですか？
+   - A) `group_wait` は新しいグループの最初の通知を遅延させる。
+   - B) `group_interval` は変更のないアラートに対する繰り返し間隔のみである。
+   - C) `repeat_interval` は新たに追加されたアラートの最初の遅延である。
+   - D) 3 つのタイマーはすべて同一である。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A) group_wait: アラートグループの最初の通知を送信する前の待機時間**
+**回答: A) `group_wait` は新しいグループの最初の通知を遅延させる。**
 
-**解説:**
-- `group_wait`: 新しいアラートグループが作成されてから最初の通知を送信するまでの待機時間です。この期間中に同じグループに属する他のアラートを収集し、まとめて送信します。
-- `group_interval`: 同じグループに新しいアラートが追加されたとき、次の通知を送信するまでの待機時間です。
-- `repeat_interval`: まだ解決されていない同じアラートを再送信する間隔です。
+`group_interval` は、変更および解決済みアラートを含む、後続のグループチェックをスケジュールします。`repeat_interval` は、変更のない Firing アラートに対する繰り返し通知を制御し、グループ間隔ごとに確認されます。`group_interval` の倍数を使用してください。通知ログの保持設定により、繰り返し通知が早まる場合があります。これらのタイマーは Prometheus ルールの `for` とは独立しています。
 
 </details>
 
 ---
 
-3. Alertmanager の Inhibition 機能を正しく説明しているものはどれですか？
-   - A) 特定の期間、すべてのアラートを無視する機能
-   - B) 特定のアラートが Firing したときに、関連するアラートを抑制する機能
-   - C) アラートの重大度を自動的に下げる機能
-   - D) 重複するアラートを統合する機能
+3. inhibition は何を行いますか？
+   - A) 時間枠の間、すべてのアラートを無視する。
+   - B) 一致する source アラートがアクティブな間、一致する target 通知を抑制する。
+   - C) アラートの severity を自動的に変更する。
+   - D) Prometheus から重複アラートを削除する。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) 特定のアラートが Firing したときに、関連するアラートを抑制する機能**
+**回答: B) 一致する source アラートがアクティブな間、一致する target 通知を抑制する。**
 
-**解説:**
-Inhibition は、特定の条件のアラート（source）が Firing したときに、関連するアラート（target）を抑制する機能です。たとえば、Node がダウンした場合、その Node に関連するすべての Pod アラートを抑制して、アラートストームを防ぐことができます。Silencing は、特定の期間アラートを無視する別の機能です。
+inhibition は、基になるアラート条件ではなく、通知の適格性を変更します。source/target matcher と等価ラベルは、意図した依存関係を表す必要があります。存在しない等価ラベルは空の値と同様に比較されるため、無関係なアラートを抑制しないよう `cluster` や `node` などの空でない相関ラベルを必須にしてください。ルールリストの順序は優先順位の仕組みではありません。
 
 </details>
 
 ---
 
-4. PrometheusRule CRD の次のアラートルールは何を意味しますか？
+4. このルールの `for` は何を意味しますか？
+
    ```yaml
    - alert: HighCPU
-     expr: node_cpu_usage > 80
+     expr: 100 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 80
      for: 5m
      labels:
        severity: warning
    ```
-   - A) CPU 使用率が 80% を超えると、アラートが直ちに Firing する
-   - B) CPU 使用率が 80% を5分間継続して超えると、アラートが Firing する
-   - C) CPU 使用率が5分ごとに確認され、80% を超えていればアラートが Firing する
-   - D) CPU 使用率が 80% を超えてから5分後に、アラート通知が送信される
+   - A) CPU が 80% を超えると直ちに通知する。
+   - B) 複数回の評価にわたり条件が 5 分間継続した後に Firing になる。
+   - C) CPU を 5 分ごとに 1 回だけ評価する。
+   - D) 物理 CPU の上昇から正確に 5 分後の配信を保証する。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) CPU 使用率が 80% を5分間継続して超えると、アラートが Firing する**
+**回答: B) 複数回の評価にわたり条件が 5 分間継続した後に Firing になる。**
 
-**解説:**
-`for: 5m` 設定は、Firing 状態に遷移する前にアラート条件（expr）が5分間継続して満たされなければならないことを意味します。条件が最初に満たされると状態は Pending になり、5分間満たされ続けると Firing に遷移して Alertmanager に送信されます。これにより、一時的なスパイクによる不要なアラートを防止できます。
+これは node-exporter の CPU カウンターがスクレイプされ、適切な評価間隔が設定されていることを前提としています。`for` はスクレイプ/評価間隔を設定せず、配信期限も保証しません。ラベルセットが変わると別のアラートとして識別されます。別の Firing 保持動作が適用されない限り、復旧すると Pending はリセットされます。CrashLoop の例では、最初に 5 分間の観測ウィンドウを使用し、その後 `for: 10m` を使用します。これにより再試行の間隔をつなぎ、一度限りの待機を除外しますが、lookback に関連したクリア遅延があります。
 
 </details>
 
 ---
 
-5. Alertmanager の receiver 設定における `send_resolved: true` は何を意味しますか？
-   - A) 解決済みのアラートも receiver に送信する
-   - B) アラートメッセージに解決方法を含める
-   - C) アラートを自動的に解決済み状態に変更する
-   - D) receiver にアラートを解決する権限を付与する
+5. `send_resolved: true` は何を有効にしますか？
+   - A) その integration の解決通知。
+   - B) 自動修復手順。
+   - C) アラート条件を正常に変更すること。
+   - D) receiver が cluster を修復するための権限。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: A) 解決済みのアラートも receiver に送信する**
+**回答: A) その integration の解決通知。**
 
-**解説:**
-`send_resolved: true` 設定は、アラートが解決されたとき（条件が満たされなくなったとき）に、receiver に解決通知を送信します。これにより、対応者は問題が解決されたことを把握できます。デフォルト値は receiver の種類によって異なりますが、一般的には有効にすることが推奨されます。
+これは選択した integration の解決通知を制御します。デフォルトは receiver により異なります。Resolved はアラートライフサイクルの状態であり、Service が復旧したことを独立して証明するものではありません。式の変更、データ欠損、またはクライアントの更新/期限切れ動作もその状態に影響する可能性があります。
 
 </details>
 
 ---
 
-6. Alertmanager の高可用性設定で、クラスターのメンバー間の状態を同期するために使用されるプロトコルは何ですか？
+6. Alertmanager cluster 状態の同期にはどのプロトコルが使用されますか？
    - A) Raft
    - B) Paxos
    - C) Gossip
@@ -114,106 +108,100 @@ Inhibition は、特定の条件のアラート（source）が Firing したと�
 
 **回答: C) Gossip**
 
-**解説:**
-Alertmanager クラスターは、メンバー間の状態を同期するために Gossip プロトコルを使用します。これにより、Silence 情報と通知ログ（nflog）をすべてのインスタンス間で共有でき、重複したアラート通知を防止します。クラスターを設定する際は、`--cluster.peer` フラグを使用して他のメンバーを指定します。
+Gossip は、結果整合性を伴って silence と通知ログの状態を共有します。同じアラートをすべての replica に送信してください。Gossip レイヤーはその fan-out を置き換えるものではありません。重複排除はベストエフォートであり、ネットワークパーティションでは重複が発生する可能性があります。これは exactly-once 配信でも、すべての通知喪失を防ぐ保証でもありません。
 
 </details>
 
 ---
 
-7. 次の Alertmanager ルーティング設定で、`severity=critical` と `team=infra` を持つアラートはどの receiver に送信されますか？
+7. `severity=critical, team=infra` の場合、以下ではどの route が選択されますか？
+
    ```yaml
    route:
-     receiver: 'default'
+     receiver: default
      routes:
-       - match:
-           severity: critical
-         receiver: 'critical-receiver'
-       - match:
-           team: infra
-         receiver: 'infra-team'
+       - matchers: ['severity="critical"']
+         receiver: critical-receiver
+       - matchers: ['team="infra"']
+         receiver: infra-team
    ```
    - A) default
    - B) critical-receiver
    - C) infra-team
-   - D) critical-receiver と infra-team の両方
+   - D) 両方の child route
 
 <details>
 <summary>回答を表示</summary>
 
 **回答: B) critical-receiver**
 
-**解説:**
-Alertmanager のルーティングはツリー構造で動作し、デフォルトでは最初に一致したルートで処理が終了します。この場合、`severity=critical` 条件が最初に一致するため、アラートは `critical-receiver` に送信されます。複数のルートに送信するには、`continue: true` 設定が必要です。
+デフォルトの `continue: false` では、最初に一致した sibling により sibling の走査が停止します。後続の sibling も考慮するには、そこに `continue: true` を設定します。これはラベルルーティングのみをテストしています。非アクティブまたはミュートされた route でも走査を停止できるため、時間枠の動作には別途確認が必要です。1 つの receiver 内に複数の integration があっても `continue` は必要ありません。Provider の宛先ルールも適用されます。Slack の incoming-webhook URL は channel に紐づくため、通常用と critical 用の channel には、channel override ではなく別々の webhook ファイル/Secret キーが必要です。
 
 </details>
 
 ---
 
-8. AlertmanagerConfig CRD の主な目的は何ですか？
-   - A) Alertmanager のグローバル設定を定義する
-   - B) namespace ごとにアラート設定を分離する
-   - C) Prometheus アラートルールを定義する
-   - D) Alertmanager クラスターを設定する
+8. namespace が所有する AlertmanagerConfig は何を可能にしますか？
+   - A) すべての namespace 制限を自動的に回避する。
+   - B) Alertmanager instance によって選択される構造化された route/receiver を管理する。
+   - C) PromQL の recording および alert ルールを定義する。
+   - D) Gossip peer の設定を置き換える。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B) namespace ごとにアラート設定を分離する**
+**回答: B) Alertmanager instance によって選択される構造化された route/receiver を管理する。**
 
-**解説:**
-AlertmanagerConfig CRD は Prometheus Operator が提供するリソースで、Alertmanager の設定（receivers、routes、inhibition rules など）を namespace ごとに個別に管理できます。これにより、各チームはそれぞれの namespace 内でアラート設定を独立して管理できます。
+Operator は object のラベルと namespace を選択する必要があり、参照される Secret は必要な namespace 内に存在する必要があります。その matcher 戦略が namespace の強制方法を制御します。確認済みの Operator 0.93.1 chart は `v1alpha1` を提供しています。必須の API アップグレードを勝手に想定しないでください。グローバル設定の使用は別の選択肢であり、namespace ラベルの一致はアラート送信者の認証ではありません。
 
 </details>
 
 ---
 
-9. Alertmanager で Silence を作成する適切なユースケースではないものはどれですか？
-   - A) 計画されたメンテナンス中にアラートを抑制する
-   - B) 既知の問題による繰り返しアラートを防止する
-   - C) 特定のアラートを恒久的に無効化する
-   - D) Deployment 中にアラートを抑制する
+9. Silence の適切な用途ではないものはどれですか？
+   - A) 計画的なメンテナンス。
+   - B) 期間を限定した調査ウィンドウ。
+   - C) アラートルールを恒久的に無効化すること。
+   - D) レビュー済みの Deployment ウィンドウ。
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C) 特定のアラートを恒久的に無効化する**
+**回答: C) アラートルールを恒久的に無効化すること。**
 
-**解説:**
-Silence はアラートを一時的に抑制する機能で、必ず終了時刻を指定する必要があります。アラートを恒久的に無効化するには、アラートルール自体を変更または削除する必要があります。Silence の主なユースケースは、メンテナンス、Deployment、既知の問題の調査などの一時的な状況です。
+silence には有限の終了時刻が必要であり、通知に影響します。期限切れにより抑制は終了します。保存済みの silence 履歴から直ちに削除されるわけではありません。恒久的なルール/ルーティングの変更には別途レビューが必要です。owner、理由、承認済みのスコープを記録してください。期限切れのリマインダーには、明示的に設定されたワークフローが必要です。
 
 </details>
 
 ---
 
-10. 次のうち、Alertmanager テンプレートで使用できる有効な Go template 構文ではないものはどれですか？
-    - A) <code v-pre>{{ .Labels.alertname }}</code>
-    - B) <code v-pre>{{ if eq .Status "firing" }}Danger{{ end }}</code>
-    - C) <code v-pre>{{ range .Alerts }}{{ .Labels.severity }}{{ end }}</code>
-    - D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>
+10. 無効な Go template 構文である式はどれですか？
+   - A) `{{ .CommonLabels.alertname }}`
+   - B) `{{ if eq .Status "firing" }}Danger{{ end }}`
+   - C) `{{ range .Alerts }}{{ .Labels.severity }}{{ end }}`
+   - D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>**
+**回答: D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`**
 
-**解説:**
-Go template は三項演算子（`? :`）をサポートしていません。代わりに <code v-pre>{{ if }}</code> 文を使用する必要があります。正しい構文は次のとおりです。
-```
-{{ if gt (len .Annotations.description) 100 }}
-  {{ slice .Annotations.description 0 100 }}...
-{{ else }}
-  {{ .Annotations.description }}
+Go template はこの三項式をサポートしていません。root では、Alertmanager は CommonLabels/CommonAnnotations を含む Data を提供します。Labels/Annotations/StartsAt は、`range .Alerts` 内の個々の Alert に属します。以下の例では、Korean テキストを分断しかねない byte slice を避け、各 description を最大 100 rune に整形します。これは出力整形であり、機密データの redaction ではありません。
+
+```text
+{{ range .Alerts }}
+{{ printf "%.100s" .Annotations.description }}
 {{ end }}
 ```
-Go template はパイプ（`|`）、条件分岐（`if`/`else`）、ループ（`range`）、組み込み関数などをサポートしています。
 
 </details>
 
 ---
 
-## 追加学習リソース
+## 追加の学習リソース
 
-- [Prometheus Alerting ドキュメント](https://prometheus.io/docs/alerting/latest/alertmanager/)
-- [Alertmanager 設定](https://prometheus.io/docs/alerting/latest/configuration/)
-- [Prometheus Operator - AlertmanagerConfig](https://prometheus-operator.dev/docs/user-guides/alerting/)
+- [Alertmanager 0.34 の設定](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
+- [通知テンプレートのリファレンス](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/notifications.md)
+- [Prometheus Operator のアラート](https://prometheus-operator.dev/docs/developer/alerting/)
+
+[ガイドに戻る](../../../observability/alerting/01-alertmanager.md)
