@@ -126,3 +126,8 @@
   docs: [blockchain/02-nodes-on-eks.md]
 - keywords: [amazon managed blockchain, amb access, amb query, qldb]
   docs: [blockchain/03-managed-blockchain.md]
+
+- keywords: [app mesh migration, vpc lattice migration, lattice sigv4, lattice tls passthrough]
+  docs: [service-mesh/vpc-lattice/03-auth-flow.md, service-mesh/vpc-lattice/06-constraints.md]
+- keywords: [consortium blockchain, permissioned ledger, validator key custody]
+  docs: [blockchain/04-financial-services.md]

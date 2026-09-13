@@ -36,9 +36,9 @@ Lattice는 link-local 대역을 "라우팅되지 않는 주소"라는 원래 의
 메시 init container는 Pod의 net namespace 안에서 "이 Pod에서 나가는 모든 outbound 트래픽을 Envoy 포트로 REDIRECT"하는 iptables 규칙을 심습니다. Lattice로 향하는 트래픽도 outbound이므로 이 규칙에 걸리고, Envoy는 `169.254.171.x`를 자기 클러스터 설정에서 찾을 수 없어 실패합니다. netfilter 규칙이 net namespace별이라는 성질 때문에 이 충돌이 Pod 안에서 발생합니다.
 </details>
 
-3. 이 충돌이 conntrack 포화와 달리 진단하기 쉬운 이유는?
+3. Interception된 요청은 어떻게 진단해야 합니까?
    - A) 커널 패닉이 발생하기 때문
-   - B) Envoy가 목적지를 모르면 즉시 에러를 반환하고 액세스 로그에 해당 요청이 남으므로, 조용한 드롭이 아님
+   - B) 실제 Envoy outbound policy·route·오류를 확인하며 미등록 대상은 전달 또는 거부될 수 있다
    - C) Pod가 즉시 CrashLoopBackOff에 빠지기 때문
    - D) kube-proxy가 경고 로그를 남기기 때문
 
@@ -46,10 +46,10 @@ Lattice는 link-local 대역을 "라우팅되지 않는 주소"라는 원래 의
 
 <summary>정답 보기</summary>
 
-**정답: B) Envoy가 목적지를 모르면 즉시 에러를 반환하고 액세스 로그에 해당 요청이 남으므로, 조용한 드롭이 아님**
+**정답: B) 실제 Envoy outbound policy·route·오류를 확인하며 미등록 대상은 전달 또는 거부될 수 있다**
 
 **설명:**
-Envoy가 목적지를 모르면 대개 연결 거부나 503을 즉시 반환하므로 증상이 명확합니다. conntrack 포화처럼 조용히 드롭되는 것과 달리 Envoy 액세스 로그에 알 수 없는 클러스터에 대한 요청으로 남습니다. 그래서 Lattice 호출이 실패하면 **먼저 Envoy 사이드카 로그를 확인**하고, 거기에 `169.254.171.x`로 향하는 요청이 찍혀 있으면 인터셉트가 원인입니다.
+Proxy log에 요청이 보이면 통과 사실은 알 수 있지만 유일한 실패 원인은 아닙니다. 즉시 실패를 가정하지 말고 선택한 bypass/서명 동작을 확인합니다.
 </details>
 
 4. 예외 CIDR을 등록했는데도 "가끔 실패"하는 증상의 가장 유력한 원인은?
@@ -97,12 +97,12 @@ IPv4만 제외하고 dual-stack 클러스터를 운영하면, 클라이언트가
 **정답: B) Pod net namespace의 REDIRECT가 DNAT이므로 되돌릴 정보를 기억해야 하고, 프록시→Lattice 연결 항목도 추가로 생김**
 
 **설명:**
-NAT는 conntrack 항목을 만듭니다. egress proxy 방식에서는 Pod net namespace의 REDIRECT(DNAT) 항목, 프록시에서 Lattice로 나가는 연결 항목, 노드 namespace의 SNAT 항목이 모두 생깁니다. 공통 라이브러리 방식은 REDIRECT가 없으므로 이 추가 부담이 없습니다. 고연결 환경에서 서명 방식을 선택할 때 노드의 conntrack 여유를 함께 고려해야 하는 이유입니다.
+Signing proxy는 local/upstream 연결 구간을 만들지만 pooling과 namespace/NAT 선택에 따라 tracking 비용이 달라집니다. Node table의 고정 증가를 가정하지 말고 Pod/node table과 eBPF map을 확인합니다.
 </details>
 
-7. `tcpdump`에 송신 패킷이 아예 잡히지 않는다면 무엇을 의심해야 하는가?
+7. Packet capture 가시성으로 무엇을 판단할 수 있습니까?
    - A) conntrack 포화
-   - B) Pod 내부 문제 — 라우팅, 인터셉트, DNS. Security Group에서 막히면 커널에 도달하지 않아 `tcpdump`에도 안 잡히므로 SG·라우팅도 후보
+   - B) 송수신 측·방향·interface·namespace별로 capture를 해석하고 다른 증거와 연결한다
    - C) qdisc 드롭
    - D) Lattice 인증 실패
 
@@ -110,10 +110,10 @@ NAT는 conntrack 항목을 만듭니다. egress proxy 방식에서는 Pod net na
 
 <summary>정답 보기</summary>
 
-**정답: B) Pod 내부 문제 — 라우팅, 인터셉트, DNS. Security Group에서 막히면 커널에 도달하지 않아 `tcpdump`에도 안 잡히므로 SG·라우팅도 후보**
+**정답: B) 송수신 측·방향·interface·namespace별로 capture를 해석하고 다른 증거와 연결한다**
 
 **설명:**
-Security Group은 커널의 netfilter가 아니라 VPC 수준에서 ENI에 적용되는 AWS의 상태 기반 방화벽이고, 인스턴스 밖에서 집행됩니다. 그래서 노드에서 `iptables -L`을 봐도 SG 규칙은 안 보이고, SG에서 막히면 패킷이 노드 커널에 도달하지 않아 `tcpdump`로도 안 보입니다. 반대로 커널까지 왔는데 드롭된 것이라면 카운터에 남습니다. 따라서 **"아무것도 안 잡힌다"는 것 자체가 진단 정보**입니다.
+전달 전에 거부된 inbound packet은 수신 측에 없지만 outbound packet은 외부 SG drop 전에 송신 측에서 보일 수 있습니다. 응답 부재만으로 SG 실패가 증명되지는 않습니다.
 </details>
 
 8. "일부 노드에서만 Lattice 호출이 실패한다"는 패턴이 진단에 주는 정보는?

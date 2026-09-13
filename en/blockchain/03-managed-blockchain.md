@@ -12,13 +12,14 @@
 
 AMB is not one service but a bundle of components with different characters.
 
-| Component | What it provides |
-|---|---|
-| **AMB Access — Hyperledger Fabric** | Private/consortium Fabric networks (members, peer nodes, channels) |
-| **AMB Access — public chain nodes** | Nodes on public networks such as Ethereum and Bitcoin, managed |
-| **AMB Query** | API access to data on supported public chains (without running nodes) |
+| Offering | What it provides | Cost/operations boundary |
+|---|---|---|
+| **Hyperledger Fabric** | Permissioned network/member/peer resources | Component/node/storage and network pricing; customer retains application, channel and identity responsibilities |
+| **Dedicated Ethereum nodes** | Managed node access on supported networks | Node/storage/network charges where applicable |
+| **Serverless AMB Access** | Supported public-chain RPC access without dedicated node provisioning | Request pricing; verify current chains, methods and Regions |
+| **AMB Query** | Indexed blockchain-data APIs | API/request pricing and supported query coverage; not an arbitrary full-node RPC substitute |
 
-The three solve different problems — building a consortium network, offloading node operations, and needing **data without nodes** at all.
+These offerings have different provisioning, API, billing and responsibility models. Choose the required network and method first; do not treat AMB as one universally per-node service.
 
 ::: warning Needs verification
 AMB's **supported frameworks and chains, regional availability, and preview/GA status vary over time per component.** Confirmed changes include the end of support for the Ethereum Goerli testnet (April 1, 2024) and the Polygon Mumbai testnet (April 15, 2024), and Polygon PoS mainnet was at one point offered in **Public Preview**.
@@ -41,7 +42,7 @@ Contrasting with the burdens covered in the [self-operation document](./02-nodes
 | Fabric certificate issuance infrastructure | **Largely handled** (managed CA) |
 | Node availability and monitoring foundation | **Handled** |
 
-**Hard fork response and disk growth management** are the substantive benefits in particular. [Fundamentals](./01-fundamentals.md) called a hard fork "a migration with a deadline" — and now that Ethereum has moved to a twice-yearly schedule, this is **a recurring operational burden.** Managed means AWS handles that schedule.
+Managed providers handle the node/service maintenance promised by the selected offering. Verify supported networks, upgrade notices, API behavior and your retained application responsibilities; a protocol cadence does not by itself define an AWS service guarantee.
 
 ## What It Cannot Do
 
@@ -55,7 +56,7 @@ This is the crux of the decision.
 | **Archive mode** | Coverage may be limited |
 | **Validator operation** | Managed nodes are generally for **queries and transaction submission**. Running a staking validator is a separate matter |
 | **Region and network configuration** | Limited to AMB-supported regions and connectivity options |
-| **Cost structure** | Per-node billing — heavy usage may be cheaper self-operated |
+| **Cost structure** | Depends on offering: provisioned node/component costs or serverless request/API charges; measure equivalent coverage and usage |
 
 **Validator operation is an especially important distinction.** AMB Access public chain nodes are for reading chain data and submitting transactions; **participating as a PoS validator to earn staking rewards is a different set of requirements** (key management, signing availability, slashing risk). If staking is the goal, AMB does not solve it.
 
@@ -78,7 +79,7 @@ This is the crux of the decision.
 
 **Step 2 — do you need control?** If you need any of client choice, tuning, archive, or validator participation, self-operate.
 
-**Step 3 — cost?** Managed bills per node; self-operating costs instances, storage, and staff. There is a crossover where **managed wins with few nodes and self-operating wins with many.**
+**Step 3 — cost?** Price the selected offering: dedicated resources, serverless requests or Query APIs as applicable. Compare EC2/EKS, storage, transfer, redundancy and staff costs under equivalent coverage and availability. There is no measured universal crossover based only on node count.
 
 **Step 4 — can you mix?** Usually yes, and often sensible in practice — for instance, managed for general queries and self-operated for special purposes.
 
@@ -125,7 +126,7 @@ This risk cannot be eliminated, only **mitigated.**
 | **Stay on standard protocols** | With open protocols like Ethereum or Fabric, you can move to self-operation or another provider if the managed offering disappears |
 | **An abstraction layer** | Keep the application from depending directly on AMB APIs. Abstracting the RPC interface makes swapping backends easy |
 | **Data independence** | Keep chain data in your own index or warehouse too. Historical data survives a provider change |
-| **Custody of your own keys** | Even with keys in AWS KMS/CloudHSM, secure an **export and backup strategy** |
+| **Key recovery and exit** | KMS private signing keys cannot be exported. Plan recovery/exit before funding or enrolling an identity; distinguish public-key download, imported-key backups, CloudHSM backup/wrapping rules and account/contract rotation options |
 | **Estimate migration time** | Measuring how long node resync and data migration take lets you judge whether you could respond within a notice period |
 
 **The "abstraction layer" is the most effective response.** If the application speaks a standard RPC interface (Ethereum JSON-RPC and the like), the backend can be AMB, self-operated, or third-party. Coupling directly to AMB-specific APIs forfeits that flexibility.
@@ -158,15 +159,15 @@ For private connectivity, concepts from the [VPC Lattice section](../service-mes
 | **Tunable scope** | Limited | **Everything** |
 | **Validator operation** | Difficult | **Possible** |
 | **Supported chains** | AMB's list | **Unconstrained** |
-| **Cost structure** | Per-node billing | Instances + storage + staff |
+| **Cost structure** | Depends on offering: provisioned node/component costs or serverless request/API charges; measure equivalent coverage and usage |
 | **IAM integration** | **Built in** | Build it yourself |
-| **Service discontinuation risk** | **Exists** | None (open source) |
+| **Service lifecycle risk** | Managed offering availability/support can change | Open-source/client maintenance, protocol and infrastructure dependencies also remain |
 | **Portability** | Possible on standard protocols | — |
 
 ## Summary
 
 - AMB bundles **AMB Access Fabric** (consortium networks), **AMB Access public nodes** (node operations offloaded), and **AMB Query** (data without nodes), each solving a different problem.
-- The substantive managed benefits are **hard fork response and disk growth management.** With Ethereum on a twice-yearly fork schedule, that burden is now recurring work.
+- Managed maintenance can reduce node-operation work, but offering-specific duties, upgrade notices and application validation remain relevant.
 - Among the things it cannot do, the most important distinction is **validator operation.** Managed nodes are for queries and submission; staking is a different requirement set.
 - Decision order: **① do you really need a node → ② do you need control → ③ cost → ④ can you mix.** Many cases are filtered out at step 1.
 - **QLDB ended on July 31, 2025**, and its migration path (Aurora PostgreSQL) **does not provide cryptographic verifiability.** It is a case study in managed services being discontinued and replacements not being functionally equivalent.
@@ -183,3 +184,6 @@ Next: [Financial Services Perspective](./04-financial-services.md) covers regula
 - [AMB Query document history](https://docs.aws.amazon.com/managed-blockchain/latest/ambq-dg/doc-history.html)
 - [AMB Access Polygon document history](https://docs.aws.amazon.com/managed-blockchain/latest/ambp-dg/doc-history.html)
 - [Running Blockchain Nodes on EKS](./02-nodes-on-eks.md) — the burdens when self-operating
+
+- [AMB pricing by offering](https://aws.amazon.com/managed-blockchain/pricing/)
+- [AWS KMS asymmetric key specifications](https://docs.aws.amazon.com/kms/latest/developerguide/asymmetric-key-specs.html) — public key access does not export the private key

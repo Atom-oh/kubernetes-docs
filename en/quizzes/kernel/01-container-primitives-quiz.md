@@ -84,9 +84,9 @@ A CPU limit is a bandwidth limit. `cpu.max` of `20000 100000` means "up to 20ms 
 nftables mode matured alpha 1.29 → beta 1.31 → **GA 1.33**, offering O(1) lookup and incremental rule updates (requires kernel 5.13+ on workers; AL2023 satisfies it). IPVS mode was **deprecated in 1.35 (December 2025)** with removal targeted for 1.38, and the recommended replacement is nftables. For compatibility **the default is still iptables**, so switching to nftables is an explicit decision. If you run IPVS, you need a migration plan.
 </details>
 
-6. What are the symptom and the direct evidence of conntrack table exhaustion?
+6. How should suspected conntrack exhaustion be verified?
    - A) A clear kernel panic — immediately visible in `dmesg`
-   - B) New connections are silently dropped and the application only sees timeouts. The direct evidence is `insert_failed` in `conntrack -S`
+   - B) Correlate conntrack count/max, insertion/drop counters and kernel logs; insert_failed alone is not unique proof of exhaustion
    - C) All existing connections drop immediately
    - D) CPU utilization rises to 100%
 
@@ -94,10 +94,10 @@ nftables mode matured alpha 1.29 → beta 1.31 → **GA 1.33**, offering O(1) lo
 
 <summary>Show Answer</summary>
 
-**Answer: B) New connections are silently dropped and the application only sees timeouts. The direct evidence is `insert_failed` in `conntrack -S`**
+**Answer: B) Correlate conntrack count/max, insertion/drop counters and kernel logs; insert_failed alone is not unique proof of exhaustion**
 
 **Explanation:**
-Since Kubernetes DNATs every Service, all Service traffic creates conntrack entries and the table is easy to exhaust. On exhaustion there is no loud error — new connections are silently dropped and the application sees only timeouts or refusals, with no way to know why from its side. `insert_failed` in `conntrack -S` is the direct evidence of insert failures, and the `nf_conntrack: table full` warning in `dmesg` is a secondary signal.
+Tracking can apply to non-NAT traffic too. Headless Service DNS avoids VIP DNAT but does not inherently bypass connection tracking.
 </details>
 
 7. What must you watch out for when adjusting conntrack values on EKS?

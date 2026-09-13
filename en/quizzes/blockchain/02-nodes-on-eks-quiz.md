@@ -86,7 +86,7 @@ P2P protocols advertise their own address to peers. If the address seen inside t
 
 6. Why be careful with CPU limits on blockchain nodes while also dedicating nodes to them?
    - A) CPU limits affect memory usage
-   - B) Throttling turns into block-processing delay, but without a limit a node can consume the whole machine — on a dedicated node, no limit harms no other workload
+   - B) Dedicated nodes reduce tenant contention, but system daemons still require reservations and headroom
    - C) CPU limits are ignored on dedicated nodes
    - D) Guaranteed QoS requires dedicated nodes
 
@@ -94,15 +94,15 @@ P2P protocols advertise their own address to peers. If the address seen inside t
 
 <summary>Show Answer</summary>
 
-**Answer: B) Throttling turns into block-processing delay, but without a limit a node can consume the whole machine — on a dedicated node, no limit harms no other workload**
+**Answer: B) Dedicated nodes reduce tenant contention, but system daemons still require reservations and headroom**
 
 **Explanation:**
-A CPU limit is a bandwidth limit, so exhausting the quota within a period forces a stop. If block processing lands there, latency appears and for a validator it is a missed opportunity. But removing the limit risks consuming the whole node. The resolution is **dedicating nodes with taints/tolerations and giving generous requests** — on a dedicated node, no limit harms no other workload.
+Kubelet, CNI/CSI, monitoring and OS services remain. Test sustained load and node health even when application CPU limits are omitted.
 </details>
 
 7. What operational impact did Pectra's EIP-7251 have?
    - A) Node disk requirements halved
-   - B) The validator max effective balance (MaxEB) rose from 32 ETH to 2,048 ETH, so validators can be consolidated, reducing the keys and instances to manage
+   - B) EIP-7251 permits eligible validator consolidation, but validator keys are not one-to-one with processes or VMs
    - C) The execution and consensus clients merged into one
    - D) The hard fork schedule dropped to once a year
 
@@ -110,15 +110,15 @@ A CPU limit is a bandwidth limit, so exhausting the quota within a period forces
 
 <summary>Show Answer</summary>
 
-**Answer: B) The validator max effective balance (MaxEB) rose from 32 ETH to 2,048 ETH, so validators can be consolidated, reducing the keys and instances to manage**
+**Answer: B) EIP-7251 permits eligible validator consolidation, but validator keys are not one-to-one with processes or VMs**
 
 **Explanation:**
-Pectra, applied to mainnet on May 7, 2025, raised MaxEB from 32 ETH to 2,048 ETH via EIP-7251. Previously, increasing stake meant adding validators in 32 ETH units, each a separate key and process. Consolidation reduces the keys and instances to manage, so **operational burden and infrastructure cost drop together.** Note Ethereum then applied Fusaka (headlined by PeerDAS) on December 3, 2025, and the protocol keeps changing, so verify current state before designing.
+A validator client can manage many keys. Reduced validator records/key-management work does not prove proportional infrastructure or cost reduction.
 </details>
 
-8. What is cited as the most common cause of outages in Hyperledger Fabric operations?
+8. Which maintenance action addresses Fabric MSP/TLS certificate expiry?
    - A) Orderer Raft consensus failure
-   - B) Certificate expiry — managing renewal of MSP signing certificates and TLS certificates
+   - B) Monitor MSP/TLS certificate expiry and rehearse renewal alongside channel, policy and consensus operations
    - C) Chaincode execution errors
    - D) Channel policy conflicts
 
@@ -126,10 +126,10 @@ Pectra, applied to mainnet on May 7, 2025, raised MaxEB from 32 ETH to 2,048 ETH
 
 <summary>Show Answer</summary>
 
-**Answer: B) Certificate expiry — managing renewal of MSP signing certificates and TLS certificates**
+**Answer: B) Monitor MSP/TLS certificate expiry and rehearse renewal alongside channel, policy and consensus operations**
 
 **Explanation:**
-Fabric manages organizations and identities via MSP and all communication is TLS. You must manage MSP signing certificates and TLS certificates for peers, orderers, and the CA each, and **certificate expiry causes real outages.** Automating renewal and setting expiry alarms is mandatory, and integrating external PKI such as HashiCorp Vault is used in practice. Note also that the orderer's persistent volume is non-negotiable — losing the Raft log breaks consensus state.
+Certificate expiry is a concrete risk, not a measured most-common-outage ranking in this material. Validate operator compatibility and peer transaction validation as well.
 </details>
 
 9. What verification is essential after a hard fork?

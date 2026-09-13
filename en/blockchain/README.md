@@ -17,9 +17,9 @@ Most Kubernetes workloads are one of two kinds — stateless, so you can kill an
 | Common assumption | For a blockchain node |
 |---|---|
 | "Pods are replaceable at any time" | Rebuilding hundreds of GB to several TB of local state can take **days** |
-| "Scaling out increases throughput" | Adding nodes does not increase throughput — **every node repeats the same work** |
+| "Scaling out increases throughput" | Replicas can scale RPC reads and availability, but do not automatically raise the base chain’s write/consensus capacity |
 | "If the health check passes, it can serve" | A node behind on sync passes the health check while **returning wrong data** |
-| "Rolling updates give zero-downtime deploys" | A hard fork requires **the entire network to switch at a fixed block, simultaneously** |
+| "Rolling updates give zero-downtime deploys" | Fork-compatible releases can be canaried/rolled out before activation; the protocol deadline and post-fork rollback compatibility are separate constraints |
 | "Restore data from backups" | State is replayable from the chain, but **lose the keys and it is over** |
 
 These differences drive real operational decisions. Covering them is the purpose of this section.
@@ -45,7 +45,7 @@ Document 1 is prerequisite for 2–4. If blockchain is familiar you can start at
 
 This section has two kinds of uncertainty, handled differently.
 
-**① Fast-moving protocol specifications** — Ethereum moved to a **twice-yearly hard fork schedule** starting in 2025. Hardware requirements, staking parameters, and blob handling change with each fork. This section states facts with their dates rather than asserting them as "current requirements."
+**① Fast-moving protocol specifications** — use announced activation dates rather than assuming a fixed upgrade cadence. Hardware, staking and blob handling can change; figures below are dated guidance, not guaranteed current requirements.
 
 **② Figures that are not primary sources** — values like node hardware requirements are often community or vendor estimates rather than official specifications. Such values are marked with the nature of their source and given as ranges.
 

@@ -20,9 +20,9 @@ This quiz tests your understanding of the consortium choice, privacy, key manage
 Blockchain's essence is "agreeing without a trusted arbiter," paid for in throughput and complexity. If a single organization owns the data, or an arbiter exists whom everyone trusts, an ordinary database is better in every respect. **The case where only tamper detection is needed** is an especially common misconception — audit trails and integrity proofs can be achieved with signed append-only logs, hash chains, or object storage WORM features, with far simpler operations.
 </details>
 
-2. What are the two most decisive reasons financial services choose consortium over public chains?
+2. What must be assessed before claiming that a network choice satisfies financial compliance?
    - A) Throughput and fees
-   - B) Participant identification obligations (KYC/AML) and control of data sovereignty and location
+   - B) Assess counterparty identification and data-location obligations for the actual activity and jurisdiction
    - C) Governance and error handling
    - D) Development convenience and hiring
 
@@ -30,10 +30,10 @@ Blockchain's essence is "agreeing without a trusted arbiter," paid for in throug
 
 <summary>Show Answer</summary>
 
-**Answer: B) Participant identification obligations (KYC/AML) and control of data sovereignty and location**
+**Answer: B) Assess counterparty identification and data-location obligations for the actual activity and jurisdiction**
 
 **Explanation:**
-Financial institutions have a legal obligation to identify counterparties and must control the location of and access to customer data. Public chains structurally conflict with both, through transacting with anonymous parties and replication to nodes worldwide. Throughput, governance, fees, and error handling are also consortium advantages but secondary.
+Public and permissioned systems can use different controls. Consortium membership alone proves neither KYC/AML nor privacy compliance; obtain the appropriate legal/compliance assessment.
 </details>
 
 3. What substantive value remains when choosing a consortium chain, and why should review define it that way?
@@ -54,7 +54,7 @@ Going consortium removes much of the public chain's value — censorship resista
 
 4. What is the particular risk of storing data encrypted on a blockchain?
    - A) Performance degradation from encryption
-   - B) A blockchain cannot delete data, so ciphertext remains permanently, a key leak exposes the entire past retroactively, and re-encryption is impossible
+   - B) Historical ciphertext copies may persist, and a key compromise can expose records encrypted under that key
    - C) Encrypted data is excluded from consensus
    - D) The encryption key is stored on the chain alongside
 
@@ -62,15 +62,15 @@ Going consortium removes much of the public chain's value — censorship resista
 
 <summary>Show Answer</summary>
 
-**Answer: B) A blockchain cannot delete data, so ciphertext remains permanently, a key leak exposes the entire past retroactively, and re-encryption is impossible**
+**Answer: B) Historical ciphertext copies may persist, and a key compromise can expose records encrypted under that key**
 
 **Explanation:**
-With an ordinary database you could delete or re-encrypt, but on a blockchain you cannot. Ciphertext remains on the ledger permanently and a key leak exposes the entire past retroactively. Designs putting long-retention data on-chain encrypted must explicitly evaluate this risk; the alternative is keeping sensitive data off-chain with only hashes or pointers on-chain.
+Re-encrypting new records does not erase old copies. Permissioned private-data purge has different semantics; validate retention, key lifecycle and legal requirements rather than asserting every chain has identical deletion behavior.
 </details>
 
 5. Where does PoS validator key management clash with ordinary HA wisdom?
    - A) Keys must be replicated to several regions
-   - B) Signing in two places at once means slashing and forfeited stake, so active-active redundancy itself creates the risk
+   - B) Uncoordinated signers can produce conflicting slashable messages for the same validator
    - C) HSMs do not support multiple instances
    - D) Key rotation requires downtime
 
@@ -78,10 +78,10 @@ With an ordinary database you could delete or re-encrypt, but on a blockchain yo
 
 <summary>Show Answer</summary>
 
-**Answer: B) Signing in two places at once means slashing and forfeited stake, so active-active redundancy itself creates the risk**
+**Answer: B) Uncoordinated signers can produce conflicting slashable messages for the same validator**
 
 **Explanation:**
-A validator has signing opportunities every slot, so the key must be online continuously — yet signing in two places at once is slashable. So "redundancy for high availability" itself creates the risk. It must be **strictly active-passive**, with fencing to guarantee the old node has definitively stopped signing on failover. This is the central challenge when evaluating validator operations.
+Use fencing and preserved slashing-protection history. A deliberately distributed signer needs proven coordination; duplicated identical signatures are not automatically equivalent to a slashable conflict.
 </details>
 
 6. What kind of answer does the review question "how do you reverse an incorrect transaction" require?
@@ -134,7 +134,7 @@ A failure between writing to the DB and submitting the chain transaction creates
 
 9. Which stage must come before technical validation in a realistic adoption path?
    - A) PoC and pilot
-   - B) Securing participating institutions and agreeing governance — with one institution blockchain has no value, and without agreed governance nothing proceeds
+   - B) Agree participant roles, governance and the measurable benefit compared with simpler alternatives
    - C) Infrastructure sizing and cost estimation
    - D) Building the monitoring stack
 
@@ -142,8 +142,8 @@ A failure between writing to the DB and submitting the chain transaction creates
 
 <summary>Show Answer</summary>
 
-**Answer: B) Securing participating institutions and agreeing governance — with one institution blockchain has no value, and without agreed governance nothing proceeds**
+**Answer: B) Agree participant roles, governance and the measurable benefit compared with simpler alternatives**
 
 **Explanation:**
-The path is ① validate the problem ② secure participating institutions ③ agree governance ④ design privacy ⑤ legal/compliance confirmation ⑥ PoC ⑦ pilot ⑧ operations. Stages 2 and 3 precede technology because even a successful technical validation goes nowhere without participating institutions or agreed governance. In practice, many financial-services blockchain projects stopped at this stage.
+Do not assert that one institutional arrangement has universally zero value or automatic compliance. The review concerns explicit requirements, trust assumptions and operational responsibilities.
 </details>

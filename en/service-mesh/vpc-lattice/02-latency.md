@@ -1,7 +1,7 @@
 # Latency Impact Analysis
 
-> **Supported Versions**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+
-> **Last Updated**: September 3, 2026
+> **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
+> **Last Updated**: September 13, 2026
 
 ## What This Document Covers
 
@@ -11,7 +11,7 @@
 
 ## First: this document does not give you numbers
 
-It is tempting to answer a latency question with "it adds N milliseconds," but in this migration **the sign of that answer changes with the environment.** The improvement from removing a proxy hop and the degradation from adding a network traversal compete in the same magnitude range — hundreds of microseconds to a few milliseconds.
+The latency impact can differ by workload. Proxy processing, network paths, connection reuse, signing, credential refresh and policy evaluation can all change. **No Lattice latency measurements are supplied in this chapter**, so neither a magnitude nor a guaranteed direction is asserted.
 
 Which one wins depends on things like: how much node CPU your Envoy sidecars currently consume, how short your requests are (the relative weight of fixed overhead), whether you use keepalive, whether you enable IAM Auth, and what fraction of your calls cross an AZ. These values differ per organization.
 
@@ -29,8 +29,8 @@ This difference is largest for **Pod-to-Pod communication that used to be on the
 
 Enabling IAM Auth adds two computations per request.
 
-- **Signing on the caller side**: build the canonical request → derive a signing key via four chained HMAC-SHA256 operations → compute the final signature. Each operation is microseconds, but it happens **per request.**
-- **Verification on the Lattice side**: recompute and compare the signature, then evaluate policy.
+- Caller-side signing adds canonicalization and signature computation. Lattice requires `UNSIGNED-PAYLOAD`; do not benchmark generic payload hashing as required Lattice signing work.
+- Lattice-side verification and enabled-policy evaluation add work. Measure the complete path rather than assuming a per-operation duration.
 
 The real cost here may be less the crypto itself and more the **credential acquisition path.** SigV4 signing needs STS temporary credentials; those are cached, but a refresh happens at expiry. If the refresh is implemented so that it blocks the request path, the request at that moment absorbs the STS call latency in full. This barely shows up in p50 and **appears in the p99 tail** (see [document 03](./03-auth-flow.md)).
 
@@ -40,8 +40,8 @@ If you sign via an egress proxy, add the cost of one more proxy hop.
 
 Do not assume Lattice picks a Target in the caller's own AZ. If you were pinning traffic within an AZ using zone-aware routing or topology-aware hints in AS-IS, you must separately confirm whether that optimization survives.
 
-::: warning Needs verification
-Whether Lattice's Target selection takes the caller's AZ into account, and whether you can control it, could not be confirmed in official documentation. **This is an item to verify by measurement in your PoC** — which is why the matrix below includes a cross-AZ axis.
+::: note Documented AZ behavior
+AWS describes AZ affinity for the service/resource address returned to the client, with alternatives if the AZ is unavailable. Backend targets may still span AZs; the target-group documentation describes round-robin routing. This does not guarantee a same-AZ backend. Measure the actual target placement in the PoC.
 
 Separately, **on the billing side there is no additional inter-AZ charge for traffic through Lattice.** It is included in the data processing charge. So cross-AZ is **a latency factor but not an additional billing factor** in this migration.
 :::
@@ -60,7 +60,7 @@ This is why you must audit your applications' HTTP client settings (connection p
 
 A single request in AS-IS passes through a proxy **twice**: once at the caller's Envoy (routing decision, mTLS initiation, metrics) and once at the receiver's Envoy (mTLS termination, authorization, metrics). Each traversal is a full userspace receive-process-send cycle.
 
-TO-BE passes through Lattice **once.** This is a pure reduction.
+This removes the two **customer-managed sidecar traversals** in the illustrated path. Lattice internal implementation, signing proxies and changed network routes prevent treating this as a guaranteed reduction in end-to-end latency.
 
 ### 2. Envoy sidecar CPU contention goes away
 
@@ -70,9 +70,9 @@ There is one Envoy sidecar per Pod, and each consumes node CPU. When a node is u
 
 Removing the sidecar removes the contention itself. So **on clusters with high Pod density and tight CPU, p99 may improve.** At the same time, more CPU and memory become available per node, creating room to increase Pod density.
 
-### 3. Configuration propagation delay disappears
+### 3. Configuration convergence changes
 
-While the App Mesh control plane distributes configuration to thousands of Envoys via xDS, those proxies temporarily see different configurations. Routing mismatches during that convergence window, and the retries they cause, show up as latency. In Lattice, configuration state lives in one AWS-managed place, changing the nature of this problem.
+AWS manages the Lattice data plane, but controller reconciliation, endpoint registration, health checks and policy propagation still take time. AWS documents that auth-policy updates can take a few minutes. Measure convergence and rollout behavior rather than assuming propagation delay disappears.
 
 ## Factor Summary — Sign and Where It Shows
 
@@ -82,9 +82,9 @@ While the App Mesh control plane distributes configuration to thousands of Envoy
 | SigV4 signing/verification | Degrades | p50 slightly, **p99** (credential refresh) | IAM Auth enabled, short requests |
 | Cross-AZ traversal | Degrades | p50, p99 | You relied on AZ-aware routing |
 | TLS handshake pattern change | Degrades | p50, p99 | No keepalive, no connection pool tuning |
-| Two proxies → one | **Improves** | p50, p99 | Always |
+| Sidecar removal | Potential improvement | p50, p99 | Depends on removed work, signing path and network topology |
 | Envoy CPU contention removed | **Improves** | **p99** | Node CPU pressure exists |
-| Config propagation delay removed | Improves | p99 tail, during rollouts | Large mesh, frequent config changes |
+| Configuration convergence | Must measure | Availability/latency during changes | Controller, target health and policy propagation |
 
 The key point of this table is that **p50 and p99 have different factor compositions.** Degrading factors (added path) likely dominate p50; improving factors (removed CPU contention) may dominate p99. **Looking at the average alone hides this structure.**
 
@@ -98,9 +98,9 @@ To observe these factors separately, split your measurements along axes.
 |---|---|---|
 | **Percentile** | p50, p99 | Separates the added-path effect from the CPU-contention effect |
 | **AZ placement** | Same AZ / Cross-AZ | Cross-AZ traversal cost, whether Lattice is AZ-aware |
-| **IAM Auth** | on / off | The pure cost of SigV4 signing and verification |
+| **IAM Auth** | on / off in an isolated approved test | Combined signing, credential and policy-evaluation effect |
 
-Three axes give **eight cells**, plus an AS-IS (App Mesh) baseline measured on the same axes for comparison.
+AZ placement and auth mode are configuration axes; p50/p99 are two outputs from each run, not independent trials. Use repeated matched runs, randomize ordering where practical, and report errors/throughput as well as latency.
 
 ### Measurement table template
 
@@ -110,7 +110,7 @@ Three axes give **eight cells**, plus an AS-IS (App Mesh) baseline measured on t
 | TO-BE: Lattice, IAM Auth **off** | | | | |
 | TO-BE: Lattice, IAM Auth **on** | | | | |
 
-The delta between `IAM Auth on` and `off` is the **pure SigV4 cost.** The delta between `AS-IS` and `IAM Auth off` is the **pure effect of the path change.** Obtaining those two numbers separately is the whole point of this matrix.
+The auth-on/off delta is the **combined effect of signing, credential handling and enabled-policy evaluation under those conditions**. The App Mesh/Lattice delta includes proxy, routing, TLS and other configuration changes. Neither difference identifies a pure causal component without additional controls.
 
 ### Conditions you must record alongside
 
@@ -138,10 +138,10 @@ Recording only the numbers makes later interpretation impossible. Record these t
 
 ## Conclusion
 
-- Degrading and improving factors compete in the same magnitude range, so **the latency impact of this migration differs in sign by environment.** It cannot be stated in advance.
+- This chapter supplies a measurement design, not measured Lattice latency or a guaranteed improvement.
 - p50 may degrade while p99 may improve. Judging from a single average hides this structure.
 - keepalive and connection pool settings can matter more than the proxy hop change. Auditing client configuration is mandatory during migration.
-- Isolate the factors with the eight-cell matrix (p50/p99 × AZ placement × IAM Auth on/off), and measure the AS-IS baseline on the same axes for comparison.
+- Compare AZ/auth configurations with repeated matched runs; report p50/p99, failures and throughput for each run.
 
 Next: [IAM Authentication Flow in Detail](./03-auth-flow.md) covers what SigV4 overhead actually consists of and the credential dependency behind it.
 
@@ -151,3 +151,6 @@ Next: [IAM Authentication Flow in Detail](./03-auth-flow.md) covers what SigV4 o
 - [Amazon VPC Lattice pricing](https://aws.amazon.com/vpc/lattice/pricing/) — inter-AZ included in data processing
 - [Access logs for Amazon VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html)
 - [Monitoring Amazon VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-overview.html)
+
+
+The linked Pod benchmark is a separate workload baseline. Its HTTP keepalive numbers are not measurements of TLS handshakes or Lattice itself.

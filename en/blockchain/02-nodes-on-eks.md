@@ -46,7 +46,8 @@ There are still reasons to use EKS.
 
 The "stable peer identity" and "per-Pod state" requirements from [Fundamentals](./01-fundamentals.md) are exactly what StatefulSets provide.
 
-### Minimal skeleton
+### Incomplete test-only shape — not a deployable manifest
+This fragment omits the required StatefulSet selector/template labels, image/arguments, headless Service, StorageClass and post-Merge EL/CL Engine API/JWT configuration. Do not apply it as-is. Complete and validate those resources in an isolated test environment with **no real funds or validator signing keys**. Keep JSON-RPC and the Engine API private/authenticated; P2P reachability must not expose RPC or signing endpoints.
 
 ```yaml
 apiVersion: apps/v1
@@ -125,7 +126,7 @@ Chain data grows **monotonically.** That changes the nature of capacity planning
 
 ### Official hardware guidance — EIP-7870
 
-Ethereum's node hardware requirements are governed by **[EIP-7870](https://eips.ethereum.org/EIPS/eip-7870)**, which [ethereum.org's Run a node](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/) page cites.
+Use [EIP-7870](https://eips.ethereum.org/EIPS/eip-7870) and the [Run a node guide](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/) as **starting recommendations**, not a guarantee for an EKS instance or EBS volume. Verify the selected client, fork, pruning and measured growth.
 
 | Item | Minimum | **Recommended (EIP-7870, full node)** |
 |---|---|---|
@@ -138,7 +139,7 @@ Three things matter in how you read this.
 
 **① The bottleneck is disk.** ethereum.org states it explicitly — "The bottleneck for your hardware is mostly disk space. Syncing the Ethereum blockchain is very input/output intensive." That is why IOPS came first above.
 
-**② Drive quality is part of the spec.** "DRAM-less and QLC drives are discouraged" — matching the capacity and IOPS numbers is not enough; **the drive type is a requirement.** On EBS, using gp3/io2 manages this, but it is something to check if you use instance store or your own hardware.
+**② EIP-7870 is hardware guidance, not proof that a particular EBS configuration meets it.** EC2/EBS latency, instance bandwidth and volume IOPS/throughput differ from local NVMe. Measure sync and steady-state processing with the selected client and storage profile.
 
 **③ The 2 TB minimum has an expiry date.** ethereum.org notes 2 TB is "likely exceeded by 2027" — **the reason growth must be in your capacity plan.**
 
@@ -162,7 +163,7 @@ As seen in [Fundamentals](./01-fundamentals.md), **chain data is re-obtainable f
 
 ## Health Checks — Why the Ordinary Approach Fails
 
-This is **the most frequently misconfigured part** of blockchain node operations.
+A health check that ignores synchronization can send application traffic to a stale node. This is a design risk to test, not a measured ranking of operational mistakes.
 
 ### The problem
 
@@ -256,7 +257,7 @@ Blockchain nodes **use CPU and IOPS steadily.** Blocks keep arriving, verificati
 
 **The CPU limit judgment matters most.** As seen in the [kernel documents](../kernel/01-container-primitives.md), a CPU limit is a bandwidth limit, so exhausting the quota within a period forces a stop. If block processing lands in that window, latency appears — and for a validator, a missed opportunity.
 
-At the same time, without a limit a node can consume the whole machine. **The resolution is dedicating nodes and giving generous requests** — on a dedicated node, no limit still harms no other workload.
+Dedicated nodes reduce tenant contention, but kubelet, CNI/CSI, observability and OS services still share the node. Preserve reservations and headroom even if application CPU limits are omitted; test latency, sync and node health under sustained load.
 
 ## Ethereum Nodes — A Two-Client Structure
 
@@ -282,16 +283,15 @@ They communicate over the **Engine API** and share a JWT secret.
 
 ### Recent protocol changes with operational impact
 
-::: warning Needs verification
-The following are **facts as of their stated dates.** Ethereum moved to a twice-yearly hard fork schedule in 2025, so **there may be further changes since.** Before designing, check the current state in the [ethereum.org roadmap](https://ethereum.org/roadmap/) and your client's release notes.
+The following are **dated protocol events**, not a guaranteed future cadence. Check the [roadmap](https://ethereum.org/roadmap/), activation announcements and selected client release notes before planning an upgrade.
 
 | Date | Upgrade | Operational significance |
 |---|---|---|
-| **May 7, 2025** | **Pectra** mainnet | **EIP-7251** raised the validator max effective balance (MaxEB) from **32 ETH to 2,048 ETH**. Multiple validators can be consolidated into one → **fewer validator instances to operate** |
+| **May 7, 2025** | **Pectra** mainnet | EIP-7251 raised the maximum effective balance for eligible validators to 2,048 ETH; consolidation changes validator records, not necessarily process/VM count |
 | **December 3, 2025** | **Fusaka** mainnet (epoch 411392) | The headline is **PeerDAS** (Peer Data Availability Sampling) — verifying blob data by sampling rather than in full. Expands blob throughput |
 :::
 
-**The MaxEB change has large operational significance.** Previously, increasing stake meant adding validators in 32 ETH units, each a separate key and process. Consolidation means **fewer keys and instances to manage** — operational burden and infrastructure cost drop together.
+A validator identity/key is **not a separate process or VM**: one validator client can manage many keys on a shared beacon-node stack. EIP-7251 consolidation can reduce validator records/key-management work, but does not prove proportional infrastructure or cost savings. Measure the actual client topology and preserve slashing protection during key migration.
 
 **PeerDAS affects storage and bandwidth planning.** A change in blob handling changes how much data a node retains and transfers, so existing sizing baselines should be revisited.
 
@@ -304,7 +304,7 @@ Fabric is different in character. Being **a consortium chain with known particip
 | Component | Role | Kubernetes placement |
 |---|---|---|
 | **Peer** | Holds the ledger, runs chaincode, validates transactions | StatefulSet + persistent volume |
-| **Orderer** | Orders transactions (Raft consensus) | **StatefulSet + persistent volume mandatory** |
+| **Orderer** | Orders transactions using the configured consensus: CFT Raft or, in Fabric 3.x, SmartBFT | StatefulSet + persistent storage; peer validation determines valid state updates |
 | **CA** (Fabric CA) | Issues member certificates | Deployment + persistent volume |
 | **Chaincode** | Smart contracts | External builder or separate Pods |
 
@@ -318,7 +318,7 @@ Fabric is different in character. Being **a consortium chain with known particip
 - TLS certificates (for peers, orderers, and the CA each)
 - **Expiry management** — certificate expiry causes real outages
 
-**Certificate expiry is cited as the most common cause of Fabric outages.** Automating renewal and setting expiry alarms is mandatory. Integrating with external PKI such as HashiCorp Vault is also used in practice.
+Certificate expiry is an important outage risk, but no frequency dataset is supplied here. Monitor and rehearse renewal for MSP and TLS credentials, and validate compatible operator/client versions.
 
 **③ Use an operator.** Fabric has a Kubernetes operator ecosystem.
 
@@ -334,8 +334,8 @@ An operator turns repetitive configuration into applying declarative resources. 
 | Item | Ethereum node | Hyperledger Fabric |
 |---|---|---|
 | **Participation** | Permissionless | Permissioned (MSP) |
-| **Consensus** | PoS | Raft (orderer) |
-| **Finality** | Checkpoint-based | Immediate (orderer settles) |
+| **Consensus** | PoS | Configured orderer mode: Raft (CFT) or SmartBFT (Fabric 3.x) |
+| **Finality** | Checkpoint-based under protocol assumptions | Ordering is final under the consensus assumptions; peers still validate transactions, and an ordered transaction can be invalid |
 | **Main operational burden** | Sync, disk growth, hard forks | **Certificate expiry**, channel and policy management |
 | **P2P exposure** | Inbound recommended | Inter-organization connections (known endpoints) |
 | **Storage growth** | Large, monotonic | Relatively small (depends on transaction volume) |
@@ -357,7 +357,7 @@ An operator turns repetitive configuration into applying declarative resources. 
 | **6. Monitor at the fork** | Chain height, peer count, whether the fork was recognized |
 | **7. Verify afterward** | That all nodes are on the same chain |
 
-**Easily missed**: a node left on a version that does not support the fork **silently splits onto a different chain.** The process is healthy and it keeps processing blocks, but it sees a different reality from the rest of the network. That is why steps 6 and 7 matter — **compare block hashes against other nodes and a public explorer right after the fork.**
+A node running an incompatible client may stop following the canonical chain or diverge after activation. Compare **the same block height and finality state** across independent trusted sources, while accounting for normal propagation/sync lag; do not compare unrelated latest heads as if they must match instantly.
 
 ## Monitoring
 
@@ -381,10 +381,10 @@ An operator turns repetitive configuration into applying declarative resources. 
 - **First decide whether to run this on EKS.** The criterion is whether other workload surrounds the node. A node standing alone is simpler on EC2.
 - **StatefulSet + headless Service + persistent volume** is the base skeleton, and `terminationGracePeriodSeconds` must be generous (a forced kill risks DB corruption).
 - For storage, **IOPS bottlenecks before capacity.** gp3's independent capacity/IOPS settings are the key advantage, and a volume expansion plan is mandatory.
-- **Health checks are the most frequently misconfigured part.** Sync in liveness causes a restart loop; leaving it out of readiness returns wrong data. The split is decisive.
+- Separate process liveness from synchronization readiness and test both; this chapter supplies no outage-frequency ranking.
 - When opening inbound P2P, **forgetting the advertised address means no peers arrive.**
 - Resources are sustained load, not bursts. **Dedicate nodes and decide CPU limits carefully.**
-- Ethereum has an **EL + CL two-client** structure, and Pectra's MaxEB increase (32 → 2,048 ETH) means **fewer validators to operate.**
+- Ethereum uses EL and CL clients; validator identities/keys are separate from process and VM counts. Consolidation does not by itself demonstrate cost savings.
 - Fabric's main operational burden is **certificate expiry.** Start with an operator and automate renewal.
 - After a hard fork, **compare block hashes with other nodes and explorers** to confirm you are on the same chain.
 

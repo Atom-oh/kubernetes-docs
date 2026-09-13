@@ -1,7 +1,7 @@
 # 레이턴시 영향 분석
 
-> **지원 버전**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+
-> **마지막 업데이트**: 2026년 9월 3일
+> **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
@@ -11,7 +11,7 @@
 
 ## 먼저: 이 문서는 수치를 제시하지 않습니다
 
-레이턴시 질문에 "몇 ms 늘어난다"로 답하고 싶은 유혹이 있지만, 이 전환에서 그 답은 **환경에 따라 부호가 바뀝니다.** 프록시 통과 횟수가 줄어드는 개선 요인과 네트워크 경유가 추가되는 악화 요인이 같은 크기 대(수백 마이크로초~수 밀리초)에서 경쟁하기 때문입니다.
+지연 변화는 워크로드마다 다릅니다. 프록시 처리·네트워크 경로·연결 재사용·서명·자격 증명 갱신·정책 평가가 모두 달라질 수 있습니다. **이 장에는 Lattice 지연 실측이 없으므로** 크기나 개선 방향을 보장하지 않습니다.
 
 어느 쪽이 이기는지는 이런 것들에 달려 있습니다 — 현재 Envoy sidecar가 노드 CPU를 얼마나 먹고 있는지, 요청이 얼마나 짧은지(고정 오버헤드의 상대적 비중), keepalive를 쓰는지, IAM Auth를 켜는지, AZ를 넘는 비율이 얼마인지. 이 값들은 조직마다 다릅니다.
 
@@ -29,8 +29,8 @@ AS-IS에서 호출자 Envoy는 수신자 **Pod IP로 직접** 연결했습니다
 
 IAM Auth를 켜면 요청마다 두 가지 연산이 추가됩니다.
 
-- **호출자 쪽 서명**: canonical request 구성 → HMAC-SHA256 4회 연쇄로 signing key 파생 → 최종 서명 계산. 개별 연산은 마이크로초 단위지만 **요청마다** 발생합니다.
-- **Lattice 쪽 검증**: 서명 재계산과 대조, 그리고 정책 평가.
+- 호출 측 서명에는 canonicalization과 서명 계산이 추가됩니다. Lattice는 `UNSIGNED-PAYLOAD`를 요구하므로 일반 payload hashing을 필수 Lattice 서명 비용으로 측정하지 않습니다.
+- Lattice의 검증과 활성 정책 평가도 작업을 추가합니다. 개별 연산 시간을 가정하지 말고 전체 경로를 측정합니다.
 
 여기서 실질적인 비용은 암호 연산 자체보다 **credential 획득 경로**일 수 있습니다. SigV4 서명에는 STS 임시 credential이 필요하고, 이 credential은 캐시되지만 만료 시점에 갱신이 일어납니다. 갱신이 요청 경로를 블로킹하도록 구현되어 있으면 그 순간의 요청이 STS 호출 지연을 그대로 받습니다. 이것은 p50에는 거의 안 보이고 **p99 이상의 꼬리에 나타납니다.** ([03번 문서](./03-auth-flow.md) 참고)
 
@@ -40,8 +40,8 @@ egress proxy 방식으로 서명하는 경우에는 프록시 홉이 하나 더 
 
 Lattice가 Target을 선택할 때 호출자와 같은 AZ의 Target을 고른다는 보장을 전제하면 안 됩니다. AS-IS에서 zone-aware routing이나 topology-aware hint로 같은 AZ에 붙이고 있었다면, 그 최적화가 유지되는지를 별도로 확인해야 합니다.
 
-::: warning 확인 필요
-Lattice의 Target 선택이 호출자 AZ를 고려하는지, 그리고 이를 사용자가 제어할 수 있는지는 공식 문서에서 확인하지 못했습니다. **PoC에서 실측으로 확인해야 하는 항목입니다** — 아래 측정 매트릭스에 Cross-AZ 축을 넣은 이유입니다.
+::: note 문서화된 AZ 동작
+AWS는 client에 반환하는 service/resource 주소의 AZ affinity와 해당 AZ 장애 시 대안을 설명합니다. Backend target은 여러 AZ에 있을 수 있고 target-group 문서는 round-robin routing을 설명합니다. 같은 AZ backend를 보장하지는 않으므로 PoC에서 실제 target 배치를 측정합니다.
 
 한편 **과금 관점에서는 Lattice 경유 트래픽에 별도의 inter-AZ 요금이 없습니다.** data processing 요금에 포함됩니다. 즉 Cross-AZ는 이 전환에서 **레이턴시 요인이지만 추가 과금 요인은 아닙니다.**
 :::
@@ -60,7 +60,7 @@ TO-BE에서 handshake가 일어나는 지점과 빈도가 바뀝니다. 클라�
 
 AS-IS의 요청 하나는 프록시를 **두 번** 지납니다. 호출자 Pod의 Envoy에서 한 번(라우팅 결정, mTLS 개시, 메트릭 기록), 수신자 Pod의 Envoy에서 한 번(mTLS 종료, 인가 판단, 메트릭 기록). 각 통과마다 사용자 공간 프록시의 수신-처리-송신 사이클이 있습니다.
 
-TO-BE는 Lattice를 **한 번** 지납니다. 이것은 순수한 감소입니다.
+그림의 경로에서는 **고객이 관리하는 sidecar 통과 두 번**이 제거됩니다. Lattice 내부 구현·서명 프록시·네트워크 경로 변경 때문에 이것을 전체 지연 개선의 보장으로 볼 수는 없습니다.
 
 ### 2. Envoy sidecar의 CPU 경합이 해소된다
 
@@ -70,9 +70,9 @@ Envoy sidecar는 Pod마다 하나씩 있고, 각각 노드의 CPU를 씁니다. 
 
 sidecar를 제거하면 이 경합 자체가 사라집니다. 그래서 **노드 밀도가 높고 CPU가 빡빡한 클러스터에서는 p99가 개선될 가능성이 있습니다.** 동시에 노드당 사용 가능한 CPU와 메모리가 늘어나므로 Pod 밀도를 높일 여지도 생깁니다.
 
-### 3. 설정 전파 지연이 사라진다
+### 3. 설정 수렴 경로가 달라짐
 
-App Mesh 컨트롤플레인이 xDS로 수천 개 Envoy에 설정을 배포하는 동안, 프록시들은 일시적으로 서로 다른 설정을 보고 있습니다. 이 수렴 지연 중에 발생하는 라우팅 불일치와 그로 인한 재시도는 지연으로 관측됩니다. Lattice에서는 설정 상태가 AWS 관리 영역 한 곳에 있어 이 문제의 성격이 달라집니다.
+Lattice 데이터 평면은 AWS가 관리하지만 controller 조정·endpoint 등록·health check·정책 전파에는 여전히 시간이 걸립니다. AWS는 auth policy 갱신에 몇 분이 걸릴 수 있다고 명시합니다. 전파 지연이 없어진다고 가정하지 말고 수렴과 rollout을 측정합니다.
 
 ## 요인 정리 — 부호와 관측 위치
 
@@ -82,9 +82,9 @@ App Mesh 컨트롤플레인이 xDS로 수천 개 Envoy에 설정을 배포하는
 | SigV4 서명·검증 | 악화 | p50 소폭, **p99** (credential 갱신) | IAM Auth 사용 시, 요청이 짧을 때 |
 | Cross-AZ 경유 | 악화 | p50, p99 | AZ 인지 라우팅에 의존하고 있었을 때 |
 | TLS handshake 패턴 변화 | 악화 | p50, p99 | keepalive 미사용, connection pool 미설정 |
-| 프록시 2회 → 1회 | **개선** | p50, p99 | 항상 |
+| Sidecar 제거 | 개선 가능 | p50, p99 | 제거된 처리량·서명 경로·네트워크 구성에 따라 다름 |
 | Envoy CPU 경합 해소 | **개선** | **p99** | 노드 CPU 압박이 있을 때 |
-| 설정 전파 지연 제거 | 개선 | p99 꼬리, 배포 중 | 대규모 메시, 빈번한 설정 변경 |
+| 설정 수렴 | 측정 필요 | 변경 중 가용성·지연 | Controller·target health·정책 전파 |
 
 이 표의 핵심은 **p50과 p99의 요인 구성이 다르다**는 점입니다. p50은 악화 요인(경로 추가)이 우세할 가능성이 높고, p99는 개선 요인(CPU 경합 해소)이 우세할 가능성이 있습니다. **평균만 보면 이 구조를 놓칩니다.**
 
@@ -98,9 +98,9 @@ App Mesh 컨트롤플레인이 xDS로 수천 개 Envoy에 설정을 배포하는
 |---|---|---|
 | **백분위** | p50, p99 | 경로 추가 효과와 CPU 경합 효과의 분리 |
 | **AZ 배치** | 동일 AZ / Cross-AZ | Cross-AZ 경유 비용, Lattice의 AZ 인지 여부 |
-| **IAM Auth** | on / off | SigV4 서명·검증 순수 비용 |
+| **IAM Auth** | 승인된 격리 시험에서 on/off | 서명·자격 증명·정책 평가의 결합 효과 |
 
-3개 축의 조합으로 **8개 셀**이 나오고, 여기에 AS-IS(App Mesh) 기준선을 같은 축으로 측정해 비교합니다.
+AZ 배치와 auth mode는 구성 축이며 p50/p99는 각 실행의 두 출력값이지 독립 시험이 아닙니다. 조건을 맞춘 반복 실행과 가능한 실행 순서 무작위화를 사용하고 오류·처리량도 보고합니다.
 
 ### 측정 테이블 양식
 
@@ -110,7 +110,7 @@ App Mesh 컨트롤플레인이 xDS로 수천 개 Envoy에 설정을 배포하는
 | TO-BE: Lattice, IAM Auth **off** | | | | |
 | TO-BE: Lattice, IAM Auth **on** | | | | |
 
-`IAM Auth on`과 `off`의 차이가 **SigV4 순수 비용**입니다. `AS-IS`와 `IAM Auth off`의 차이가 **경로 변경의 순수 효과**입니다. 이 두 값을 분리해서 얻는 것이 이 매트릭스의 목적입니다.
+Auth on/off 차이는 **해당 조건에서 서명·자격 증명 처리·활성 정책 평가가 합쳐진 효과**입니다. App Mesh/Lattice 차이에는 프록시·라우팅·TLS·기타 설정 변화가 포함됩니다. 추가 대조 없이 어느 차이도 단일 원인의 순수 비용을 나타내지 않습니다.
 
 ### 함께 기록해야 하는 조건
 
@@ -138,10 +138,10 @@ App Mesh 컨트롤플레인이 xDS로 수천 개 Envoy에 설정을 배포하는
 
 ## 결론
 
-- 악화 요인과 개선 요인이 같은 크기 대에서 경쟁하므로 **전환의 레이턴시 영향은 환경에 따라 부호가 갈립니다.** 사전에 단정할 수 없습니다.
+- 이 장은 측정 설계를 제공하며 Lattice 지연 실측이나 개선 보장을 제공하지 않습니다.
 - p50은 악화, p99는 개선 쪽으로 갈 가능성이 있습니다. 평균 하나로 판단하면 이 구조를 놓칩니다.
 - keepalive와 connection pool 설정이 프록시 홉 변화보다 큰 영향을 줄 수 있습니다. 전환 시 클라이언트 설정 점검이 필수입니다.
-- p50/p99 × AZ 배치 × IAM Auth on/off의 8셀 매트릭스로 요인을 분리하고, AS-IS 기준선을 같은 축으로 측정해 비교하십시오.
+- AZ/auth 구성을 조건이 같은 반복 실행으로 비교하고 실행별 p50/p99·실패·처리량을 보고합니다.
 
 다음: [IAM 인증 절차 상세](./03-auth-flow.md)에서 SigV4 오버헤드의 실제 내용과 credential 의존성을 봅니다.
 
@@ -151,3 +151,6 @@ App Mesh 컨트롤플레인이 xDS로 수천 개 Envoy에 설정을 배포하는
 - [Amazon VPC Lattice 요금](https://aws.amazon.com/vpc/lattice/pricing/) — data processing에 inter-AZ 포함
 - [Access logs for Amazon VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html)
 - [Monitoring Amazon VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-overview.html)
+
+
+연결한 Pod benchmark는 별도 workload 기준선입니다. HTTP keepalive 수치는 TLS handshake나 Lattice 자체의 실측이 아닙니다.

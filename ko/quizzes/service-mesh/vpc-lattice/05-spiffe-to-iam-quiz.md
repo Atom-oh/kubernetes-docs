@@ -22,7 +22,7 @@ SPIFFE ID는 `spiffe://<trust-domain>/<workload-path>` 형식으로, 경로 부�
 
 2. SPIRE의 Workload Attestation에서 bootstrapping 문제가 해소되는 결정적 지점은?
    - A) 워크로드가 미리 심어둔 토큰을 제시하는 단계
-   - B) Agent가 커널에서 상대 프로세스의 PID를 얻는 단계 — 위조할 수 없는 커널의 사실이며, 이를 Kubernetes의 기록과 대조한다
+   - B) Agent가 신뢰한 kernel/attestor 모델에서 kernel의 peer 정보를 얻고 workload selector와 대조한다
    - C) Server가 SVID에 서명하는 단계
    - D) Envoy가 SDS로 인증서를 받는 단계
 
@@ -30,31 +30,31 @@ SPIFFE ID는 `spiffe://<trust-domain>/<workload-path>` 형식으로, 경로 부�
 
 <summary>정답 보기</summary>
 
-**정답: B) Agent가 커널에서 상대 프로세스의 PID를 얻는 단계 — 위조할 수 없는 커널의 사실이며, 이를 Kubernetes의 기록과 대조한다**
+**정답: B) Agent가 신뢰한 kernel/attestor 모델에서 kernel의 peer 정보를 얻고 workload selector와 대조한다**
 
 **설명:**
-워크로드는 Workload API의 UDS에 자격증명 없이 연결합니다. Agent가 커널로부터 상대 PID를 얻고, PID → cgroup → 컨테이너 → Pod/namespace/ServiceAccount 순으로 조회해 selector를 구성한 뒤 Server에 제출합니다. 즉 워크로드는 자신이 누구인지 주장하지 않고, 커널이 사실을 알려주며 그 사실을 플랫폼 기록과 대조합니다. 이것이 "신원은 제시되는 것이 아니라 관찰되고 판정되는 것"이라는 원리이며, 위조하려면 커널이나 API 서버를 침해해야 합니다.
+공유 application secret을 workload에 미리 배포할 필요를 줄이지만 host 침해·잘못된 selector·attestor 설정에 대한 무조건적 보장은 아닙니다.
 </details>
 
 3. SVID가 짧은 수명으로 설계된 이유는?
    - A) 저장 공간을 절약하기 위해
-   - B) 폐기(revocation) 메커니즘 없이도 침해의 유효 기간을 제한하기 위해
+   - B) 짧은 수명은 자격 증명 사용 기간을 제한하지만 침해 대응이나 인가 제어를 대체하지 않는다
    - C) CA의 서명 부하를 분산하기 위해
-   - D) 갱신 과정에서 신원을 재검증하기 위해
+   - D) 실행 중 비밀과 모든 침해 대응 요구를 없애기 위해
 
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: B) 폐기(revocation) 메커니즘 없이도 침해의 유효 기간을 제한하기 위해**
+**정답: B) 짧은 수명은 자격 증명 사용 기간을 제한하지만 침해 대응이나 인가 제어를 대체하지 않는다**
 
 **설명:**
-CRL이나 OCSP 같은 인증서 폐기 메커니즘은 운영이 까다롭습니다. 자격증명이 수십 분에서 수 시간 안에 만료된다면 폐기 메커니즘 없이도 침해의 유효 기간이 제한됩니다. 중요한 것은 STS 임시 credential도 같은 이유로 짧은 수명을 갖는다는 점입니다. 따라서 "장기 비밀을 쓰지 않는다"는 심의 논점은 AS-IS와 TO-BE 양쪽에서 동일하게 만족되며, 전환 시 재논의 대상이 아닙니다.
+갱신·runtime 저장·replay 노출·긴급 Deny/폐기 동작을 검토합니다. 만료되는 자격 증명에도 비밀이 있으며 만료 전까지 자동으로 안전한 것은 아닙니다.
 </details>
 
 4. SPIFFE/SPIRE와 Lattice IAM Auth의 구조적 유사점 두 가지는?
    - A) 둘 다 X.509 인증서를 사용하고 둘 다 mTLS를 수행한다
-   - B) 둘 다 짧은 수명 자격증명을 쓰고, 둘 다 플랫폼 attestation에 기반해 워크로드가 비밀을 미리 보유하지 않는다
+   - B) 양쪽 모두 이미지 내 장기 비밀을 피할 수 있지만 runtime 개인 키나 임시 비밀 자격 증명은 보호해야 한다
    - C) 둘 다 고객이 CA를 운영하고 둘 다 연결 단위로 인증한다
    - D) 둘 다 AWS 외부 워크로드를 지원하고 둘 다 요청 단위로 인증한다
 
@@ -62,10 +62,10 @@ CRL이나 OCSP 같은 인증서 폐기 메커니즘은 운영이 까다롭습니
 
 <summary>정답 보기</summary>
 
-**정답: B) 둘 다 짧은 수명 자격증명을 쓰고, 둘 다 플랫폼 attestation에 기반해 워크로드가 비밀을 미리 보유하지 않는다**
+**정답: B) 양쪽 모두 이미지 내 장기 비밀을 피할 수 있지만 runtime 개인 키나 임시 비밀 자격 증명은 보호해야 한다**
 
 **설명:**
-SPIRE Agent가 UDS로 SVID를 제공하는 것과 Pod Identity Agent가 link-local 주소로 credential을 제공하는 것은 같은 아이디어입니다 — 로컬 인프라 구성요소가 워크로드를 판정하고 자격증명을 대신 받아옵니다. 노드 신원, 워크로드 판정, 자격증명 전달, 갱신의 네 단계가 행 단위로 대응됩니다. 이 유사성 덕분에 "장기 비밀 미사용"과 "워크로드가 비밀을 보유하지 않음"이라는 두 심의 논점이 그대로 유지됩니다.
+X.509-SVID 전달에는 key material이, IAM 자격 증명에는 secret access key와 session token이 포함됩니다. 플랫폼 attestation이 바꾸는 것은 provisioning이며 socket/endpoint·메모리·캐시 보호 필요성은 사라지지 않습니다.
 </details>
 
 5. 이 전환의 "결정적 차이 (a)"인 인증 방향성 변화의 실무적 함의는?
@@ -102,7 +102,7 @@ SPIRE 도입 자체가 그 심의를 통과한 결과일 가능성이 높습니�
 
 7. Lattice로 전환하면서 SPIRE를 계속 운영해야 할 수 있는 상황은?
    - A) IAM Auth를 쓰는 모든 경우
-   - B) AWS 외부 워크로드가 있는 경우, 또는 TLS Passthrough 구성을 택해 엔드포인트가 직접 mTLS를 수행해야 하는 경우
+   - B) 선택한 설계에 endpoint mTLS나 지원되는 AWS 외부 workload의 SPIFFE 신원이 계속 필요할 때
    - C) Gateway API Controller를 사용하는 경우
    - D) 멀티 클러스터 구성인 경우
 
@@ -110,8 +110,8 @@ SPIRE 도입 자체가 그 심의를 통과한 결과일 가능성이 높습니�
 
 <summary>정답 보기</summary>
 
-**정답: B) AWS 외부 워크로드가 있는 경우, 또는 TLS Passthrough 구성을 택해 엔드포인트가 직접 mTLS를 수행해야 하는 경우**
+**정답: B) 선택한 설계에 endpoint mTLS나 지원되는 AWS 외부 workload의 SPIFFE 신원이 계속 필요할 때**
 
 **설명:**
-IAM Auth는 IAM/STS 도달이 필요하므로 온프레미스나 타 클라우드 워크로드는 커버하지 못하고, 그 영역에서는 SPIRE가 계속 필요합니다. 또 규정이 종단간 암호화나 상호 인증을 요구해 TLS Passthrough를 택하면 엔드포인트가 직접 mTLS를 해야 하고 그 인증서를 SPIRE가 공급할 수 있습니다. 즉 App Mesh는 사라지지만 SPIRE는 남는 구성이 가능하며, App Mesh 지원 종료 대응과 SPIRE 존속은 별개 결정입니다. SPIRE 운영 부담 제거가 전환 목표였다면 이 조건들과 충돌하는지 먼저 확인해야 합니다.
+SPIRE 유지는 설계 선택이며 모든 AWS 외부 workload의 보편적 필수 사항은 아닙니다. 다른 credential provider와 지원 사설 network 경로도 평가할 수 있습니다.
 </details>

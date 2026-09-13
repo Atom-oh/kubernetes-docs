@@ -98,7 +98,7 @@ qdisc(queueing discipline)는 **패킷을 NIC로 보내기 전 큐에 넣고 순
 
 운영상 중요한 사실:
 
-> **트래픽 폭주 시 드롭은 대개 여기서 일어납니다.**
+> Qdisc overflow는 burst drop의 가능한 원인 중 하나입니다. Qdisc·NIC/driver·stack·cloud-network counter를 함께 확인한 뒤 원인을 판단합니다.
 
 qdisc 큐가 가득 차면 패킷을 버립니다. 이것은 NIC나 네트워크의 문제가 아니고 **노드 안에서 일어나는 드롭**입니다. 그래서 "네트워크가 패킷을 잃었다"고 생각하고 밖을 찾다가 시간을 버리기 쉽습니다.
 
@@ -123,7 +123,7 @@ NIC가 대신 해주는 일들이 **CPU 사용을 크게 줄입니다.**
 
 | 오프로드 | 하는 일 |
 |---|---|
-| **TSO/GSO** (TCP/Generic Segmentation Offload) | 큰 버퍼를 커널이 아니라 **NIC가 MSS 단위로 쪼갬** → 커널이 다룰 패킷 수가 줄어 CPU 절약 |
+| **TSO / GSO** | TSO는 지원 hardware에 segmentation을 위임하며 GSO는 kernel의 generic/software segmentation framework와 fallback입니다. 둘 다 NIC 전용 동작은 아닙니다 |
 | **GRO** (Generic Receive Offload) | 수신 시 작은 패킷들을 **합쳐서** 스택에 올림 → 스택 통과 횟수 감소 |
 | **체크섬 오프로드** | 체크섬 계산을 NIC가 수행 |
 | **RSS** (Receive Side Scaling) | 수신 패킷을 **여러 큐/코어에 해시로 분산** |
@@ -138,7 +138,7 @@ TSO/GRO의 효과는 큽니다 — 스택을 통과하는 횟수를 줄이는 �
 graph TB
     NIC2["NIC<br/>패킷 수신·DMA"] --> IRQ["하드웨어 인터럽트<br/>특정 CPU에 전달"]
     IRQ --> NAPI["NAPI 폴링<br/>인터럽트 끄고 배치 수거<br/>softirq 컨텍스트"]
-    NAPI --> XDPH["XDP 훅<br/>가장 이른 지점<br/>sk_buff 할당 전"]
+    NAPI --> XDPH["Native/driver XDP<br/>sk_buff 할당 이전"]
     XDPH --> SKB["sk_buff 구성<br/>GRO 병합"]
     SKB --> TCI["TC ingress<br/>eBPF 훅 지점"]
     TCI --> NFP["netfilter<br/>PREROUTING<br/>DNAT·필터"]
@@ -186,16 +186,16 @@ NAPI가 이를 막습니다. 첫 인터럽트가 오면 **인터럽트를 끄고
 
 | 항목 | **XDP** | **TC (eBPF)** | **netfilter** |
 |---|---|---|---|
-| **위치** | 드라이버 직후, **`sk_buff` 할당 전** | `sk_buff` 구성 후, 스택 진입 전/후 | 스택 내부 훅 |
+| **위치** | Native/driver XDP: `sk_buff` 이전. Generic XDP: skb 기반 | `sk_buff` 생성 후 ingress/egress | Stack hook |
 | **방향** | ingress 중심 | ingress + egress | 전 방향 |
 | **성능** | **가장 빠름** — 스택을 안 타고 즉시 드롭/전달 가능 | 빠름 | 상대적으로 느림 (규칙 수 영향) |
 | **볼 수 있는 정보** | 원시 패킷 (메타데이터 제한적) | `sk_buff` 메타데이터 전체 | 연결 상태(conntrack) 포함 |
 | **주 용도** | **DDoS 드롭**, 로드밸런싱, 패킷 리다이렉트 | 정책 집행, 관측, 리다이렉트 | NAT, 상태 기반 필터 |
-| **하드웨어 오프로드** | 일부 NIC에서 가능 | 일부 | 불가 |
+| **Hardware offload** | 일부 driver/NIC 조합 | 일부 | 일부 nftables flowtable offload. 모든 rule/path는 아님 |
 
-**왜 XDP가 빠른가**가 핵심입니다. `sk_buff` 할당 **전**이기 때문입니다. 버릴 패킷을 위해 구조체를 할당하고 초기화하는 비용 자체를 내지 않습니다. DDoS 방어에서 이 차이가 결정적입니다 — 초당 수백만 패킷을 버려야 할 때 패킷당 할당 비용을 없애는 것이 곧 처리 용량입니다.
+조기 drop의 장점은 skb 할당 이전의 **native/driver XDP** 설명입니다. Generic XDP에는 이미 skb가 있으며 실제 성능은 driver 지원과 프로그램 처리에 달려 있습니다. 한 mode의 설명을 보편적인 benchmark 결과로 사용하지 않습니다.
 
-반대로 **XDP는 아는 것이 적습니다.** conntrack 상태를 모르니 "기존 연결의 응답인가"를 판단할 수 없습니다. 상태 기반 판단이 필요하면 TC나 netfilter 계층이어야 합니다.
+XDP가 모든 socket/stack 문맥을 자동으로 받는 것은 아니지만 BPF map으로 상태를 유지하고 지원 helper로 정보를 얻을 수 있습니다. **XDP의 상태 기반 처리가 본질적으로 불가능한 것은 아닙니다.** 실제 프로그램·kernel·verifier·driver 제약을 평가합니다.
 
 Cilium이 두 훅을 함께 쓰는 이유가 여기 있습니다 — 가능한 것은 XDP에서 빠르게 처리하고, 상태나 L7 정보가 필요한 것은 TC 이후로 넘깁니다 ([Cilium eBPF](../networking/cilium/02-ebpf.md), [Cilium L2-L7 네트워킹](../networking/cilium/05-l2-l7-networking.md)).
 
@@ -205,17 +205,17 @@ Kubernetes에서 Pod 간 통신은 배치에 따라 **실제로 다른 커널 �
 
 ### 같은 노드의 Pod 간
 
-```
+```text
 Pod A [net ns A] → veth A → (노드 net ns) → veth B → Pod B [net ns B]
 ```
 
-**NIC를 거치지 않습니다.** veth 쌍은 커널 안의 가상 연결이라, 패킷이 메모리에서 메모리로 전달됩니다. 물리 계층도, 드라이버도, ring buffer도 없습니다.
+그림의 일반 veth/routed 동일 노드 경로는 물리 NIC를 통과할 필요가 없습니다. 다른 dataplane·overlay·SR-IOV·policy/service 우회 경로는 달라질 수 있으며 가상 장치도 kernel driver 처리를 거칩니다.
 
 벤치마크에서 같은 노드 단일 플로우가 **29.97 Gbps**까지 나온 것(다른 노드는 4.96 Gbps에서 EC2 단일 플로우 한도에 막힘)이 이 때문입니다. 병목이 네트워크가 아니라 **CPU**였습니다 — 클라이언트 코어 하나가 99.8%였습니다.
 
 ### 다른 노드의 Pod 간 (VPC CNI)
 
-```
+```text
 Pod A → veth → 노드 net ns → ENI → VPC 네트워크 → 대상 ENI → veth → Pod B
 ```
 
@@ -225,7 +225,7 @@ Amazon VPC CNI에서 Pod는 **VPC의 실제 IP**를 받으므로 오버레이 �
 
 ### AZ를 넘을 때
 
-경로 구조는 같고 **물리적 거리가 추가**됩니다. 벤치마크에서 AZ 경계는 RTT를 +0.21 ms 늘렸지만 **처리량은 바꾸지 않았습니다**(같은 AZ든 다른 AZ든 단일 플로우 4.96 Gbps). "AZ를 넘으면 대역폭도 준다"는 흔한 오해가 실측으로 반박된 지점입니다.
+인용한 단일 flow 실험에서는 RTT +0.21 ms와 두 cross-node 배치의 약 4.96 Gbps를 관측했습니다. 해당 instance·부하·경로의 결과이며 모든 cross-AZ 워크로드의 처리량이 같다는 증명은 아닙니다.
 
 ### MTU와 단편화
 
@@ -249,7 +249,7 @@ Amazon VPC CNI에서 Pod는 **VPC의 실제 IP**를 받으므로 오버레이 �
 | 인터럽트 | `/proc/interrupts`, `mpstat -P ALL` | 코어 편중, softirq 비중 |
 | 경로 추적 | `tcpdump`, `ss`, eBPF 도구 | 실제 패킷 |
 
-**진단 순서의 요령**: 위에서 아래로 내려가지 말고, **드롭 카운터부터** 보십시오. `conntrack -S`의 `insert_failed`, `tc -s qdisc`의 `dropped`, `ethtool -S`의 NIC 드롭 — 이 셋 중 하나가 증가하고 있으면 원인이 거기입니다. 드롭이 없으면 지연 문제이고, 그때 `ss -tin`의 RTT와 cwnd를 봅니다.
+Drop counter부터 확인한 뒤 시각·interface/namespace·traffic·resource pressure와 대조합니다. Counter 증가는 조사할 증거이지 유일한 원인의 증명은 아니며 counter 부재가 다른 곳의 손실을 배제하지도 않습니다. 필요하면 RTT/cwnd·앱 지표·packet capture를 사용합니다.
 
 ## 정리
 
@@ -271,3 +271,7 @@ Amazon VPC CNI에서 Pod는 **VPC의 실제 IP**를 받으므로 오버레이 �
 - [BBR congestion control](https://datatracker.ietf.org/doc/draft-cardwell-iccrg-bbr-congestion-control/)
 - [Pod 네트워크 실측 벤치마크](../networking/06-pod-network-benchmark.md)
 - [eBPF 기초와 실무 활용](../basics/05-ebpf-fundamentals.md)
+
+
+- [Linux segmentation offload](https://docs.kernel.org/networking/segmentation-offloads.html) — hardware TSO와 software GSO
+- [Linux IP sysctl](https://docs.kernel.org/networking/ip-sysctl.html) — TCP buffer 크기와 socket override

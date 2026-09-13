@@ -18,7 +18,7 @@ Kubernetes 문서는 대부분 **선언적 API 위에서** 설명됩니다. Pod�
 | 현장에서 만나는 증상 | 커널 계층의 실체 |
 |---|---|
 | "Pod가 OOMKilled인데 컨테이너 메모리는 limit 아래였다" | cgroup v2의 `memory.current`에 page cache가 포함됨. RSS만 보면 안 됨 |
-| "노드에서 새 연결이 조용히 끊긴다" | `nf_conntrack` 테이블 포화. `nf_conntrack_insert_failed` 카운터에만 나타남 |
+| "노드의 새 연결이 조용히 드롭된다" | 다른 packet drop 원인과 함께 conntrack count/max·insert/drop counter·kernel log 조사 |
 | "CPU limit을 걸었더니 p99가 튄다" | CFS/EEVDF throttling. 사용률은 낮은데 주기마다 강제로 멈춤 |
 | "같은 노드 Pod 간 통신이 유독 빠르다" | veth 쌍만 지나고 NIC를 거치지 않음 |
 | "Service 규칙이 수천 개인데 지연이 늘었다" | iptables 모드 kube-proxy의 선형 룰 평가 |

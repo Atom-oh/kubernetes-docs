@@ -4,9 +4,9 @@ This quiz tests your understanding of AMB's components, the managed/self-operate
 
 ## Multiple Choice Questions
 
-1. What problem does each of AMB's three components solve?
+1. How should the AMB offerings be compared?
    - A) All three solve the same problem at different price points
-   - B) AMB Access Fabric builds consortium networks, AMB Access public nodes offload node operations, and AMB Query serves cases needing data without nodes
+   - B) Distinguish Fabric/dedicated nodes, serverless Access and Query APIs, with offering-specific billing and capabilities
    - C) They are split by development, staging, and production environments
    - D) They are split by public, private, and hybrid chains
 
@@ -14,10 +14,10 @@ This quiz tests your understanding of AMB's components, the managed/self-operate
 
 <summary>Show Answer</summary>
 
-**Answer: B) AMB Access Fabric builds consortium networks, AMB Access public nodes offload node operations, and AMB Query serves cases needing data without nodes**
+**Answer: B) Distinguish Fabric/dedicated nodes, serverless Access and Query APIs, with offering-specific billing and capabilities**
 
 **Explanation:**
-AMB is a bundle of components with different characters rather than one service. AMB Access Hyperledger Fabric provides private/consortium Fabric networks, AMB Access public chain nodes provide managed Ethereum/Bitcoin nodes, and AMB Query provides supported public chain data via API. AMB Query in particular is for cases needing no node at all, which filters out many cases at step 1 of the decision.
+AMB is not universally per-node billed. Dedicated resources, serverless RPC requests and indexed Query APIs have different pricing and coverage.
 </details>
 
 2. What is the most important thing AMB managed nodes do *not* solve?

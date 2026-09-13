@@ -4,7 +4,7 @@
 
 ## What This Document Covers
 
-- The problem blockchain tries to solve, and why the solution becomes a structure where "every node repeats the same work"
+- Why some ledgers replicate validation, and how full-node, light-client and permissioned models differ
 - The role of consensus, Merkle trees, P2P, and finality — and the constraint each creates for infrastructure operations
 - Why a blockchain node must be treated differently from an ordinary stateful service
 
@@ -23,7 +23,7 @@ Blockchain's premise is different.
 | **Eligibility** | Operator-designated | **Anyone**, on public chains |
 | **Can it be reversed** | An operator can intervene | Only what the protocol allows |
 
-This difference is the root of every design decision. **Once you assume participants may lie, you need a way to decide who is right.** That way is the consensus algorithm, and because the basis for that decision must be independently verifiable by everyone, **every node verifies every transaction itself.**
+Many public-chain **full nodes** independently verify transactions and consensus rules. Light clients, pruned/snapshot-sync nodes and permissioned designs have different verification/data-distribution models. Permissioned membership does not by itself make a consensus algorithm Byzantine fault tolerant.
 
 From this comes blockchain's fundamental property.
 
@@ -35,7 +35,7 @@ Understand that, and every operational characteristic below follows naturally.
 
 A group of transactions forms a **block**, and each block contains **the hash of the immediately preceding block**.
 
-```
+```text
 Block N-1               Block N                 Block N+1
 ┌──────────────┐       ┌──────────────┐        ┌──────────────┐
 │ prev_hash:.. │       │ prev_hash: ──┼────────│ prev_hash: ──┤
@@ -47,7 +47,7 @@ Block N-1               Block N                 Block N+1
 
 The property this gives is **propagation of tampering.** Change one transaction in block N → block N's hash changes → block N+1's `prev_hash` no longer matches → everything after is invalid.
 
-So **changing the past requires remaking everything after it**, faster than the rest of the network. That is what "immutable" actually means — not physically impossible, but **economically and computationally impractical.**
+For a PoW chain, rewriting history requires rebuilding sufficient accepted work; other chains use different finality and governance assumptions. Hash links make tampering detectable, but do not alone establish finality or make every blockchain economically immutable.
 
 ### Merkle trees — why they are needed
 
@@ -55,7 +55,7 @@ The question is how to summarize a block's transactions. You could simply concat
 
 A Merkle tree is a binary tree hashing transactions pairwise upward.
 
-```
+```text
                 merkle_root
                /            \
          H(AB)                H(CD)
@@ -81,7 +81,8 @@ A consensus algorithm decides two things — **who proposes a block**, and **whi
 |---|---|---|---|
 | **PoW** (Proof of Work) | The node that first solves a computational puzzle | **Electricity and hardware** | Bitcoin |
 | **PoS** (Proof of Stake) | Selected with probability proportional to stake | **Staked capital + slashing on violation** | Ethereum |
-| **BFT family** | Votes from a known validator set | Membership management | Hyperledger Fabric (Raft), Tendermint |
+| **BFT family** | Votes under a defined Byzantine fault threshold | Membership/validator and quorum assumptions | Tendermint; Fabric 3.x SmartBFT |
+| **CFT permissioned ordering** | Known replicas use crash-fault-tolerant consensus | Does not tolerate arbitrary Byzantine ordering behavior | Fabric Raft |
 
 ### Why a cost is required
 
@@ -96,18 +97,18 @@ PoW makes the cost **computation**; PoS makes it **capital plus slashing risk**.
 | **Public** (permissionless) | Anyone | PoW/PoS | Low | Public assets, interoperability |
 | **Private/consortium** (permissioned) | Approved members | BFT/Raft | Relatively high | Inter-enterprise ledgers, regulated environments |
 
-**This is why financial services choose consortium chains.** When participants are known, Sybil defense is unnecessary, and then consensus can be BFT voting without PoW's electricity or PoS's stake. Throughput rises and finality gets faster. The price is **giving up decentralization** — a party controlling membership exists. [Financial Services Perspective](./04-financial-services.md) covers that trade-off.
+Permissioned designs can use known membership and explicit governance, with CFT or BFT chosen for the actual threat model. Financial applications may use permissioned or public networks with different controls; neither membership nor a consensus label establishes regulatory compliance.
 
 ## Finality — The Most Important Concept Operationally
 
-**Finality is "the point at which a transaction is guaranteed not to be reversed."** From an infrastructure perspective this is the most important concept, and it is frequently overlooked.
+**Finality describes settlement under a protocol’s security assumptions.** It is not an unconditional guarantee against every attack, governance intervention or application-level compensating transaction. Distinguish probabilistic confidence, economic finality and deterministic consensus guarantees.
 
 ### Probabilistic vs absolute finality
 
 | Type | Meaning | Example |
 |---|---|---|
 | **Probabilistic** | The more blocks pile up, the more the reversal probability decays exponentially. **Never exactly zero** | Bitcoin's PoW |
-| **Absolute/economic** | Once protocol conditions are met, reversing incurs enormous loss | Ethereum PoS finalized checkpoints |
+| **Economic** | Finalized checkpoints are protected under stake/slashing assumptions; reversal is not physically impossible | Ethereum PoS |
 | **Immediate** | Settled at the end of a consensus round | BFT family |
 
 ### Why this is an operations problem
@@ -173,7 +174,7 @@ Replaying and verifying every block from genesis (full sync) takes time proporti
 | Method | What it does | Trade-off |
 |---|---|---|
 | **full sync** | Verify and replay everything from genesis | Highest confidence, **slowest** |
-| **snap/fast sync** | Fetch a recent state snapshot from peers and verify only after | Much faster, trusts snapshot-providing peers |
+| **snap/fast sync** | Obtain state with proofs checked against an accepted state root; history checks depend on the client/mode | Faster, with explicit consensus/checkpoint and implementation trust assumptions; not blind trust in an arbitrary peer |
 | **checkpoint sync** | Start from a trusted checkpoint | Fastest, trusts the checkpoint's source |
 | **Snapshot restore** | Restore an operator-kept data directory | Fast, requires managing snapshot freshness and consistency |
 
@@ -205,12 +206,12 @@ Gathering the operational characteristics these concepts create:
 
 | Blockchain's design | Resulting operational characteristic | Implication in Kubernetes |
 |---|---|---|
-| Every node verifies every transaction | **Adding nodes does not increase throughput** | Scale-out is for availability and read distribution, not throughput |
+| Replicated full-node validation | Adding replicas does not by itself increase base-chain write capacity | It can increase aggregate RPC/read capacity and availability |
 | State accumulates locally | **Pod replacement is very expensive** | StatefulSet + persistent volume mandatory, consider node affinity |
 | Chain sync lags | **"Alive" and "able to serve" are different** | Include sync state in readiness |
 | Finality is not immediate | **Latest data is not final data** | Confirmation depth as an application contract |
 | P2P gossip | **Needs inbound connections and stable identity** | Headless Service, additional exposure design |
-| Hard forks change the protocol | **The whole network switches at a fixed point, simultaneously** | Mismatched with the rolling-update model — planning required |
+| Hard forks activate rules at a defined point | Upgrade compatible binaries before activation | Canary and rolling upgrades can prepare the fleet in advance |
 | Keys are authority | **Key loss = permanent loss** | KMS/HSM, separate backup strategies for keys and data |
 | Redundant verification is the point | **Steady CPU and IOPS consumption** | A poor fit for burst-oriented resource settings |
 
@@ -224,24 +225,24 @@ Where it clashes with Kubernetes conventional wisdom:
 
 | Kubernetes convention | At a hard fork |
 |---|---|
-| Gradual transition via rolling update | **Everything must already be switched** at the set point |
-| Canary a subset first | The canary node leaves the network at the fork |
+| Gradual transition via rolling update | Valid before activation, provided all required nodes support the new rules by the deadline |
+| Canary a subset first | Test fork-compatible binaries before activation; compare behavior on the appropriate testnet/mainnet phase |
 | Roll back if there are problems | Rolling back leaves that node on the old chain |
 | Upgrades are on the ops team's schedule | **The schedule is set externally** |
 
 **Practical recommendation**: treat a hard fork not as a deployment but as **a migration with a deadline.** Subscribe to client release notes, upgrade well before the fork date, and validate on a testnet first.
 
-Ethereum moved to a **twice-yearly hard fork schedule** starting in 2025 — meaning this migration has become **routine work.** [Running Blockchain Nodes on EKS](./02-nodes-on-eks.md) covers concrete cases and schedule management.
+Ethereum delivered Pectra and Fusaka in 2025 and has pursued more frequent upgrades. **Use published activation dates and client release notes, not a guaranteed twice-yearly schedule**, to plan maintenance.
 
 ## Summary
 
 - Blockchain's premise is **Byzantine faults** — the assumption that participants may lie. That is fundamentally different from etcd (crash faults).
-- Because of that assumption, **every node verifies every transaction**, making it a system that **accepts redundancy for verifiability rather than throughput.**
+- Many full-node designs replicate verification; light-client and permissioned models differ, and RPC/read capacity can scale separately from base-chain writes.
 - The `prev_hash` chain propagates tampering, and **Merkle trees** enable log-N-sized inclusion proofs (the basis for light clients).
 - Consensus needs a cost because of **Sybil defense.** Restricting participants (consortium) removes that need, allowing BFT with better throughput and finality at the cost of decentralization.
 - **Finality is the most important concept operationally.** Latest data is not final data, so put sync state in readiness and make confirmation depth an application contract.
 - State is replayable but **replay takes a long time**, which is why persistent volumes are mandatory.
-- **A hard fork is a migration with a deadline, not a deployment.** Ethereum's move to twice-yearly forks made this routine work.
+- A hard fork has an externally coordinated activation point; prepare compatible clients in advance and assess post-activation rollback separately.
 
 Next: [Running Blockchain Nodes on EKS](./02-nodes-on-eks.md) translates these characteristics into actual configuration.
 
@@ -252,3 +253,6 @@ Next: [Running Blockchain Nodes on EKS](./02-nodes-on-eks.md) translates these c
 - [Hyperledger Fabric Documentation](https://hyperledger-fabric.readthedocs.io/) — the structure of a permissioned chain
 - [Bitcoin Developer Guide](https://developer.bitcoin.org/devguide/) — PoW and Merkle trees
 - [Cluster Architecture — etcd and Raft](../core/01-cluster-architecture.md) — comparison with crash-fault consensus
+
+
+- [Fabric ordering service](https://hyperledger-fabric.readthedocs.io/en/latest/orderer/ordering_service.html) — CFT Raft versus SmartBFT

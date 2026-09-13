@@ -98,7 +98,7 @@ A qdisc (queueing discipline) **queues packets before handing them to the NIC an
 
 The operationally important fact:
 
-> **Drops during traffic bursts usually happen here.**
+> Qdisc overflow is one possible source of burst drops. Correlate qdisc, NIC/driver, stack and cloud-network counters before assigning a cause.
 
 When the qdisc queue fills, packets are discarded. This is not a NIC or network problem — it is **a drop inside the node.** It is easy to lose time looking outside, believing "the network lost packets."
 
@@ -123,7 +123,7 @@ What the NIC does on the kernel's behalf **substantially reduces CPU use.**
 
 | Offload | What it does |
 |---|---|
-| **TSO/GSO** (TCP/Generic Segmentation Offload) | **The NIC, not the kernel, splits** a large buffer into MSS units → fewer packets for the kernel to handle, saving CPU |
+| **TSO / GSO** | TSO delegates segmentation to supported hardware; GSO is the kernel’s generic/software segmentation framework and fallback. They are not both NIC-only operations |
 | **GRO** (Generic Receive Offload) | On receive, **coalesces** small packets before handing them up → fewer stack traversals |
 | **Checksum offload** | The NIC computes checksums |
 | **RSS** (Receive Side Scaling) | **Distributes** received packets across queues/cores by hash |
@@ -138,7 +138,7 @@ Receive is the reverse of transmit, but has **its own structure: interrupt handl
 graph TB
     NIC2["NIC<br/>packet received, DMA"] --> IRQ["hardware interrupt<br/>delivered to a CPU"]
     IRQ --> NAPI["NAPI polling<br/>interrupts off, batch harvest<br/>softirq context"]
-    NAPI --> XDPH["XDP hook<br/>earliest point<br/>before sk_buff allocation"]
+    NAPI --> XDPH["Native/driver XDP<br/>before sk_buff allocation"]
     XDPH --> SKB["sk_buff construction<br/>GRO coalescing"]
     SKB --> TCI["TC ingress<br/>eBPF hook point"]
     TCI --> NFP["netfilter<br/>PREROUTING<br/>DNAT, filtering"]
@@ -186,16 +186,16 @@ All are "intercept and process a packet," but **position determines performance 
 
 | Item | **XDP** | **TC (eBPF)** | **netfilter** |
 |---|---|---|---|
-| **Position** | Right after the driver, **before `sk_buff` allocation** | After `sk_buff` construction, before/after stack entry | Inside the stack at hooks |
+| **Position** | Native/driver XDP: before `sk_buff`; generic XDP: skb-based | After `sk_buff` construction, ingress/egress | Stack hooks |
 | **Direction** | Mostly ingress | ingress + egress | All directions |
 | **Performance** | **Fastest** — can drop/forward immediately without the stack | Fast | Relatively slower (affected by rule count) |
 | **Information available** | Raw packet (limited metadata) | Full `sk_buff` metadata | Includes connection state (conntrack) |
 | **Main uses** | **DDoS drops**, load balancing, packet redirect | Policy enforcement, observability, redirect | NAT, stateful filtering |
-| **Hardware offload** | Possible on some NICs | Some | No |
+| **Hardware offload** | Some driver/NIC combinations | Some | Selected nftables flowtable offload; not every rule/path |
 
-**Why XDP is fast** is the crux: it runs **before** `sk_buff` allocation. You never pay the cost of allocating and initializing a structure for a packet you will discard. That difference is decisive for DDoS defense — when dropping millions of packets per second, removing the per-packet allocation *is* the capacity.
+The early-drop advantage describes **native/driver XDP**, before skb allocation. Generic XDP already has an skb, and actual performance depends on driver support and program work. Do not use one mode’s explanation as a universal benchmark result.
 
-Conversely **XDP knows less.** Without conntrack state it cannot judge "is this the reply to an existing connection." Stateful decisions must live at TC or netfilter.
+XDP does not automatically receive all socket/stack context, but BPF maps can maintain state and supported helpers can expose additional information. **Stateful processing is not inherently impossible at XDP**; evaluate the actual program, kernel, verifier and driver limits.
 
 This is why Cilium uses both hooks — handling what it can at XDP quickly and deferring anything needing state or L7 information past TC ([Cilium eBPF](../networking/cilium/02-ebpf.md), [Cilium L2-L7 Networking](../networking/cilium/05-l2-l7-networking.md)).
 
@@ -205,17 +205,17 @@ In Kubernetes, Pod-to-Pod traffic **actually traverses different kernel paths** 
 
 ### Pods on the same node
 
-```
+```text
 Pod A [net ns A] → veth A → (node net ns) → veth B → Pod B [net ns B]
 ```
 
-**The NIC is never involved.** A veth pair is an in-kernel virtual link, so the packet moves memory to memory. No physical layer, no driver, no ring buffer.
+In the illustrated ordinary veth/routed same-node path, traffic need not traverse the physical NIC. Other dataplanes, overlays, SR-IOV or policy/service detours can change that path; virtual devices still have kernel driver processing.
 
 That is why same-node single-flow throughput reached **29.97 Gbps** in the benchmark (while cross-node hit the EC2 single-flow limit at 4.96 Gbps). The bottleneck was not the network but **CPU** — one client core at 99.8%.
 
 ### Pods on different nodes (VPC CNI)
 
-```
+```text
 Pod A → veth → node net ns → ENI → VPC network → target ENI → veth → Pod B
 ```
 
@@ -225,7 +225,7 @@ In exchange, this path traverses the whole transmit chain (qdisc, driver, NIC) a
 
 ### Crossing an AZ
 
-The path structure is the same with **physical distance added.** In the benchmark, the AZ boundary added +0.21 ms of RTT but **did not change throughput** (single flow 4.96 Gbps either way). This is where the common belief "crossing an AZ reduces bandwidth too" was refuted by measurement.
+The cited single-flow experiment observed +0.21 ms RTT and about 4.96 Gbps in both cross-node placements. That result applies to its instances, load and path; it does not prove that every cross-AZ workload has unchanged throughput.
 
 ### MTU and fragmentation
 
@@ -249,7 +249,7 @@ Each layer needs different things watched.
 | Interrupts | `/proc/interrupts`, `mpstat -P ALL` | Core skew, softirq share |
 | Packet trace | `tcpdump`, `ss`, eBPF tools | Actual packets |
 
-**A tip on diagnosis order**: do not walk top to bottom — **start with drop counters.** `insert_failed` in `conntrack -S`, `dropped` in `tc -s qdisc`, NIC drops in `ethtool -S` — if one of those three is increasing, that is your cause. If there are no drops, it is a latency problem, and then you look at RTT and cwnd in `ss -tin`.
+Start with drop counters, then correlate timing, interface/namespace, traffic and resource pressure. A rising counter is evidence to investigate, not proof of the only cause; missing counters do not rule out loss elsewhere. Use RTT/cwnd, application metrics and packet capture where appropriate.
 
 ## Summary
 
@@ -271,3 +271,7 @@ Next: [EKS Node Kernel Tuning](./03-eks-node-tuning.md) covers which parameters 
 - [BBR congestion control](https://datatracker.ietf.org/doc/draft-cardwell-iccrg-bbr-congestion-control/)
 - [Pod Network Benchmark](../networking/06-pod-network-benchmark.md)
 - [eBPF Fundamentals](../basics/05-ebpf-fundamentals.md)
+
+
+- [Linux segmentation offloads](https://docs.kernel.org/networking/segmentation-offloads.html) — hardware TSO and software GSO
+- [Linux IP sysctls](https://docs.kernel.org/networking/ip-sysctl.html) — TCP buffer sizing and socket overrides

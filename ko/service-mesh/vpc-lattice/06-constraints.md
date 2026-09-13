@@ -1,7 +1,7 @@
 # 제약사항과 의사결정 포인트
 
-> **지원 버전**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+, AWS App Mesh (2026년 9월 30일 지원 종료)
-> **마지막 업데이트**: 2026년 9월 3일
+> **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
@@ -13,16 +13,16 @@
 
 | # | 제약 | 성질 | 대안 존재 | 결정 시점 |
 |---|---|---|---|---|
-| 1 | TLS Passthrough + IAM Auth Policy 동시 적용 불가 | **원리적** — 해소되지 않음 | 2개 (택1) | **가장 먼저** |
-| 2 | Raw TCP 미지원 | **원리적** — 해소되지 않음 | Hybrid (NLB 병행) | 초기 |
+| 1 | TLS passthrough는 HTTP SigV4 신원을 인증하지 못함 | 현재 문서화된 서비스 동작 | Endpoint 인증·익명 네트워크 문맥 정책 | 우선 |
+| 2 | Raw TCP는 서비스 listener가 아님 | TCP resource connectivity와 구분 | Resource gateway 또는 기존 사설 경로/NLB | 초기 |
 | 3 | SigV4 서명의 애플리케이션 영향 | 구현 선택 | 3개 | 초기 |
-| 4 | 병행 운영 시 Envoy iptables 예외 | 설정 항목 | 필수 설정 | 전환 시작 전 |
+| 4 | Mesh 공존 route/서명 검증 | 설정에 따라 다름 | 명시적 bypass 또는 설정된 forwarding | 전환 전 |
 | 5 | Hop 단위 요청·데이터 과금 | 구조적 | 아키텍처 조정 | 설계 중 |
 | 6 | Failure domain 집중 + STS 의존성 | 구조적 | 완화만 가능 | 설계 중 |
 
-1번과 2번은 **AWS가 기능을 추가해도 해소되지 않는 원리적 제약**입니다 ([04번 문서](./04-networking-basics.md) 참고). 나머지는 설계와 운영으로 다룰 수 있습니다.
+제약 1·2는 **현재 기능과 신뢰 경계의 선택**이며 AWS가 영원히 기능을 추가할 수 없다는 예측이 아닙니다. 서비스 listener·resource connectivity·controller 지원을 구분합니다.
 
-## 제약 1 — TLS Passthrough와 IAM Auth Policy는 동시에 쓸 수 없다
+## 제약 1 — TLS passthrough와 인증된 HTTP 신원
 
 ### 원리
 
@@ -33,10 +33,10 @@
 
 TLS Passthrough는 정의상 TLS를 종료하지 않습니다. 따라서 **Lattice는 서명 헤더를 볼 수 없고, 요청 서명 기반 인증을 적용할 수 없습니다.**
 
-구조적 근거도 일치합니다. AWS Gateway API Controller의 `IAMAuthPolicy`는 **Gateway, HTTPRoute, GRPCRoute에만 부착 가능하며 `TLSRoute`는 부착 대상이 아닙니다.** TLS Passthrough 경로에는 애초에 정책을 붙일 수단이 없습니다.
+Controller 정책 연결과 AWS 서비스 기능은 별개입니다. 문서화된 IAMAuthPolicy 연결 대상에 TLSRoute는 없지만 AWS TLS listener는 익명 principal·네트워크 문맥 정책을 지원합니다.
 
-::: warning 확인 필요
-TLS_PASSTHROUGH listener에 auth policy를 설정하려 할 때 **API가 이를 거부하는지, 받아들이지만 평가하지 않는지**는 공식 문서에서 확정하지 못했습니다. 원리(헤더 검증에 TLS 종료 필요)와 컨트롤러의 부착 제한은 확실하지만, API 레벨 거동은 [VPC Lattice auth policies 문서](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)로 확인하십시오.
+::: note 확인된 제약
+TLS passthrough는 암호화된 HTTP SigV4 신원과 HTTP path/header 조건을 평가할 수 없습니다. 익명 principal 정책은 지원되므로 모든 정책이 거부·무시된다는 추측 대신 [TLS listener 문서](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html)를 확인합니다.
 :::
 
 ### 대안 2개
@@ -44,7 +44,7 @@ TLS_PASSTHROUGH listener에 auth policy를 설정하려 할 때 **API가 이를 
 | 대안 | 구성 | 얻는 것 | 잃는 것 |
 |---|---|---|---|
 | **A. HTTPS listener + IAM Auth** | Lattice가 TLS 종료, SigV4 검증, 3중 정책 평가 | IAM 기반 인가, 경로·메서드·헤더 조건, L7 라우팅, 상세 access log | 종단간 암호화 (Lattice에서 1회 종료), 엔드포인트 자체 mTLS |
-| **B. TLS Passthrough + 엔드포인트 mTLS** | Lattice는 SNI로만 라우팅, 엔드포인트가 TLS·mTLS 직접 수행 | 종단간 암호화, 상호 인증 유지, SPIRE 인증서 계속 활용 가능 | IAM Auth 전체, L7 라우팅, 경로·헤더 조건, HTTP 상세 로그 |
+| **B. TLS passthrough + endpoint mTLS** | Custom-domain SNI로 서비스를 선택하고 endpoint가 TLS 인증 | Endpoint 암호화·인증서 신원 | 인증된 HTTP SigV4 신원과 HTTP L7 검사 불가. 익명 네트워크 문맥 정책은 별개 |
 
 ### 어느 쪽을 고를 것인가
 
@@ -57,23 +57,19 @@ TLS_PASSTHROUGH listener에 auth policy를 설정하려 할 때 **API가 이를 
 
 혼합도 가능합니다. **서비스 단위로 A와 B를 나눌 수 있습니다** — 규정 대상 서비스만 B로, 나머지는 A로. 다만 두 인가 모델을 동시에 운영하는 부담이 생깁니다.
 
-## 제약 2 — Raw TCP 미지원
+## 제약 2 — 서비스와 리소스 연결 선택
 
 ### 원리
 
-[04번 문서](./04-networking-basics.md)에서 다룬 대로, 평문 TCP에는 라우팅 근거가 없습니다. TLS가 없으면 `ClientHello`가 없고, `ClientHello`가 없으면 SNI가 없습니다. 목적지 IP는 link-local이라 서비스를 식별하지 않고, 남는 것은 포트뿐입니다.
+Raw-TCP 서비스 listener가 없다고 TCP 리소스까지 배제되는 것은 아닙니다. Lattice resource configuration/resource gateway는 별도 접근 모델을 제공합니다. 서비스 TLS passthrough에서는 클라이언트가 TLS로 연결을 시작하고 설정한 custom-domain SNI를 보내야 합니다.
 
-**원리적 제약이므로 향후에도 해소를 기대하기 어렵습니다.**
+제품 전체의 영구적인 한계로 단정하지 말고 프로토콜 요구와 현재 controller 지원을 확인합니다.
 
 ### 영향 대상 식별
 
 전환 계획 초기에 **평문 TCP를 쓰는 East-West 통신을 모두 찾아야 합니다.** 흔한 것들:
 
-- 평문 Redis / Memcached
-- TLS를 쓰지 않는 DB 연결 (MySQL, PostgreSQL 등)
-- 커스텀 바이너리 프로토콜
-- 평문 Kafka
-- gRPC를 평문(h2c)으로 쓰는 경우
+평문 DB·cache·custom TCP 프로토콜을 조사합니다. HTTP/2(h2c)의 gRPC를 같은 미지원 범주에 넣지 말고 정확한 HTTP listener·route·target 구성을 검증합니다.
 
 ### 대안 — Hybrid 구성
 
@@ -81,11 +77,11 @@ TLS_PASSTHROUGH listener에 auth policy를 설정하려 할 때 **API가 이를 
 |---|---|
 | HTTP / HTTPS / gRPC | **VPC Lattice** |
 | TLS가 있는 TCP | Lattice **TLS Passthrough** (SNI 라우팅 가능하면) |
-| 평문 TCP | **NLB** (또는 기존 경로 유지) |
+| 평문 TCP | Lattice TCP resource connectivity·기존 사설 연결·NLB를 검토. 서비스 L7 기능이 자동 적용되지는 않음 |
 
 이 구성을 권하는 이유는 단순합니다. **모든 것을 Lattice로 옮기려는 시도가 전환을 지연시키는 가장 흔한 원인**입니다. 평문 TCP 서비스를 위해 TLS를 도입하는 작업까지 전환 범위에 넣으면 애플리케이션 변경이 필요하고 일정이 통제를 벗어납니다.
 
-App Mesh 지원 종료라는 기한이 있으므로, **기한 내에 반드시 옮겨야 하는 것(App Mesh에 의존하는 HTTP 통신)과 옮기지 않아도 되는 것(원래 App Mesh를 안 쓰던 평문 TCP)을 분리**하는 것이 실무적으로 중요합니다.
+App Mesh도 TCP route를 지원했습니다. HTTP만이 아니라 **실제로 App Mesh에 의존하는 모든 트래픽**을 조사하고 지원 종료 전에 대체합니다.
 
 ## 제약 3 — SigV4 서명의 애플리케이션 영향
 
@@ -103,15 +99,15 @@ IAM Auth를 쓰기로 했다면(제약 1의 대안 A), **누군가 요청에 서
 
 ②의 아이러니는 명확합니다. **Envoy 사이드카를 없애려고 전환했는데 서명 사이드카가 생깁니다.** 다만 `sigv4proxy`는 Envoy보다 훨씬 가볍고, xDS 컨트롤플레인이 없으며, 설정이 정적입니다. "사이드카를 없앤다"가 전환의 핵심 목표였다면 ①로 가야 하고, 그러면 애플리케이션 변경 계획을 세워야 합니다.
 
-**③은 심의 관점에서 권하지 않습니다.** 다만 전환을 단계적으로 진행할 때 **1단계에서 ③으로 경로만 옮기고, 2단계에서 IAM Auth를 켜는** 순서는 유효한 전략입니다. 이렇게 하면 경로 변경의 영향과 인증 도입의 영향을 분리해서 검증할 수 있고, [02번 문서](./02-latency.md)의 측정 매트릭스도 이 순서와 맞습니다.
+Auth-off 비교는 업무 트래픽이 없고 보완 network/app 제어가 있는 격리·명시 승인 시험 경로에서만 수행합니다. 전환이나 benchmark를 쉽게 만들기 위해 운영 인가를 끄지 않습니다.
 
 **어느 방식이든 [03번 문서](./03-auth-flow.md)의 함정 3개(Host 헤더, x-amz-date 시각, 서명은 최종 홉에서)를 점검해야 합니다.**
 
 ## 제약 4 — 병행 운영 시 Envoy iptables 예외 설정
 
-**이것은 선택이 아니라 필수 설정입니다.**
+제외 규칙이나 명시적 proxy 경로를 선택하기 전에 설치된 mesh 정책과 관측한 전달 동작을 확인합니다. 모든 Envoy 설정이 미등록 대상을 거부하는 것은 아닙니다.
 
-App Mesh와 Lattice를 동시에 운영하는 기간 동안, App Mesh의 init container가 심은 iptables 규칙이 **Lattice로 향하는 트래픽까지 Envoy로 가로챕니다.** Envoy는 그 목적지를 자신의 설정에서 찾을 수 없으므로 요청이 실패합니다.
+Mesh iptables가 Lattice 트래픽을 가로챌 수 있습니다. 전달·실패·서명 필드 변경 여부는 outbound policy와 route 설정에 달려 있습니다. 실제 규칙과 log를 확인한 후 선택한 IPv4/IPv6 서명 경로를 검증합니다.
 
 | 항목 | 값 |
 |---|---|
@@ -148,7 +144,7 @@ VPC Lattice 요금은 세 축입니다.
 
 과금이 **hop 단위**라는 점이 핵심입니다.
 
-프론트엔드 → 주문 → 상품 → 재고 → 가격의 4홉 체인이 있다면, 사용자 요청 하나가 **Lattice 요청 4건**을 만듭니다. 각 홉에서 데이터 처리 요금도 발생합니다. 즉 **비용은 사용자 요청 수 × 체인 depth**에 비례합니다.
+각 edge에 Lattice 요청 하나인 단순 4-call 체인은 사용자 작업 하나당 서비스 요청 4개를 만듭니다. 실제 비용에는 fan-out·retry·polling·payload량·provisioned 시간도 포함되므로 체인 깊이만으로 전체 비용을 설명할 수 없습니다.
 
 AS-IS(App Mesh)에서는 이 구조가 달랐습니다. App Mesh 자체에는 요청당 요금이 없었고, 비용은 Envoy가 소비하는 컴퓨팅 리소스로 나타났습니다. **비용 모델이 "컴퓨팅 리소스"에서 "요청 수"로 바뀌는 것**이 이 전환의 재무적 성격입니다.
 
@@ -159,7 +155,7 @@ AS-IS(App Mesh)에서는 이 구조가 달랐습니다. App Mesh 자체에는 �
 | **잡담이 많은(chatty) 서비스가 비싸진다** | 한 요청에 여러 번 호출하는 패턴을 배치·집계 호출로 통합 |
 | **깊은 체인이 비싸진다** | 체인 depth를 줄이는 것이 비용과 레이턴시를 동시에 개선 ([02번 문서](./02-latency.md)) |
 | **모든 통신을 Lattice로 옮기면 비용이 급증할 수 있다** | **클러스터 내부 통신은 Lattice를 거치지 않게 유지**하는 것이 합리적일 수 있음 |
-| **health check와 폴링이 요금에 잡힌다** | 고빈도 health check·폴링 간격 재검토 |
+| **클라이언트 polling은 트래픽 발생** | 과금 listener를 실제 통과하는 호출을 집계. 가격 확인 없이 클라이언트 probe와 Lattice 관리형 target health check를 혼동하지 않음 |
 
 **마지막 두 항목이 중요합니다.** Lattice의 강점은 클러스터·VPC·계정 경계를 넘는 통신이고, 같은 클러스터 안의 통신에는 별 이점이 없으면서 비용과 레이턴시를 추가합니다. **경계를 넘는 통신만 Lattice로, 클러스터 내부는 ClusterIP로** 두는 것이 비용과 성능 양쪽에서 합리적인 경우가 많습니다.
 
@@ -173,11 +169,11 @@ AS-IS(App Mesh)에서는 이 구조가 달랐습니다. App Mesh 자체에는 �
 |---|---|
 | Lattice로 옮길 서비스 개수 | 전환 범위 정의에서 |
 | 서비스 쌍별 요청 수 (RPS) | App Mesh Envoy 메트릭 또는 애플리케이션 메트릭 |
-| **평균 호출 체인 depth** | 현재 분산 추적 데이터 (전환 후에는 span이 없으니 **지금 수집**) |
+| **평균 호출 체인 깊이** | 전환 전후 애플리케이션 추적; Lattice request ID/log와 연결 |
 | 서비스 쌍별 데이터 전송량 | Envoy 메트릭 또는 flow log |
 | health check·폴링 빈도 | 각 서비스 설정 |
 
-**"평균 호출 체인 depth"는 지금 수집해야 합니다.** 전환 후에는 Lattice가 span을 만들지 않으므로 이 데이터를 얻기 어려워집니다 ([01번 문서](./01-appmesh-vs-lattice.md)).
+전환 과정에서 애플리케이션 추적을 유지하거나 추가합니다. Lattice가 네이티브 span을 만들지 않아도 애플리케이션 trace가 사라지거나 호출 체인 분석이 불가능해지는 것은 아닙니다.
 
 ## 제약 6 — Failure domain 집중과 STS 의존성
 
@@ -185,15 +181,13 @@ AS-IS(App Mesh)에서는 이 구조가 달랐습니다. App Mesh 자체에는 �
 
 AS-IS와 TO-BE의 장애 특성은 성격이 다릅니다.
 
-| 구분 | AS-IS: App Mesh sidecar | TO-BE: VPC Lattice |
+| 항목 | Sidecar 경로 | Lattice 경로 |
 |---|---|---|
-| **데이터플레인 장애 범위** | Envoy 하나 = Pod 하나 | Lattice 장애 = **East-West 전면** |
-| **장애 전파 방식** | 점진적·국소적 | 광역·동시 |
-| **컨트롤플레인 장애 시 데이터플레인** | Envoy가 마지막 설정으로 계속 동작 (graceful degradation) | 데이터 경로 자체가 관리형이므로 성격이 다름 |
-| **고객의 대응 수단** | Pod 재시작, 설정 롤백, sidecar 우회 | AWS 측 복구 대기 |
-| **가용성 책임** | 고객 (직접 운영) | AWS (관리형 서비스) |
+| 장애 범위 | Proxy는 개별 실패 가능하지만 공통 설정·신원·네트워크 의존성은 넓게 실패 가능 | 영향받은 서비스·AZ·정책·의존성에 따라 다르며 항상 모든 East-West 트래픽은 아님 |
+| 복구 | Workload/config rollback·용량 변경·승인된 대체 경로 | 고객 정책·target·controller 조치 및 필요한 AWS 측 복구 |
+| 책임 | 고객 workload와 공통 인프라 책임 | AWS 관리형 서비스와 고객 IAM·target·controller·앱 책임 |
 
-**트레이드오프의 본질**: 관리형 서비스는 개별 장애 확률이 낮지만, 장애가 발생하면 **범위가 넓고 고객이 직접 개입할 수단이 제한적**입니다. sidecar 모델은 장애가 잦을 수 있지만 국소적이고 고객이 손댈 수 있습니다.
+이 장에는 어느 모델의 장애 확률도 측정되어 있지 않습니다. 의존성별 장애 모델과 승인된 복구 경로를 시험하며, 관리형이라는 이유로 고객의 복구 책임이 없어지는 것은 아닙니다.
 
 ### STS 의존성
 
@@ -225,15 +219,15 @@ AS-IS에서 이 위치에 있던 것은 SPIRE Server였습니다. **의존성의
 ::: warning 확인 필요
 다음 항목들은 공식 문서로 확정하지 못했습니다. 설계에 영향이 있으면 반드시 직접 확인하십시오.
 
-**① API Gateway와 Lattice의 직접 연계** — API Gateway가 Lattice 서비스 네트워크를 private integration 대상으로 **네이티브 지원한다는 근거를 찾지 못했습니다.** 확인된 패턴은 API Gateway → VPC Link → ALB/NLB → Lattice, 또는 프록시·페더레이션 계층 경유입니다. 남북 트래픽과 Lattice를 잇는 설계라면 이 부분을 먼저 검증하십시오.
+**① API Gateway 연결** — 정확한 REST/HTTP API integration type을 확인합니다. Lattice service-network ARN이 VPC Link 대상이거나 ALB/NLB가 Lattice link-local 주소를 직접 target으로 쓸 수 있다고 가정하지 않습니다. 연결 설계에는 명시적으로 구현한 proxy/consumer와 지원 사설 경로, 별도의 auth·실패 처리가 필요합니다.
 
-**② Lattice quotas의 정확한 값** — AWS 네트워킹 블로그 기준으로 서비스 처리량 기본 quota는 **service 하나당 AZ당 10 Gbps, 10,000 requests/second**로 서술됩니다. 그 외 참고값: services/region 2,000, service networks/region 50, target groups per service 10, listeners per service 2, service associations per service network 500. **대부분 조정 가능하나 정확한 현재값은 Service Quotas 콘솔과 [VPC Lattice endpoints and quotas](https://docs.aws.amazon.com/general/latest/gr/vpc-lattice-service.html)에서 리전별로 확인**하십시오. 동시 connection 수 자체의 상한은 근거를 찾지 못했습니다.
+**② 할당량** — 필요한 리소스·target 수와 bandwidth·connection·request 제한을 [현재 quota 문서](https://docs.aws.amazon.com/general/latest/gr/vpc-lattice-service.html) 및 해당 계정/Region에서 확인합니다. 과거 기본값이나 조정 가능 여부를 보편적으로 적용하지 않습니다.
 
-**③ Lattice의 Target 선택이 호출자 AZ를 고려하는지** — AZ 인지 라우팅 여부와 사용자 제어 가능성을 확인하지 못했습니다. AS-IS에서 zone-aware routing에 의존하고 있었다면 **PoC 실측으로 확인**해야 합니다 ([02번 문서](./02-latency.md)의 측정 매트릭스).
+**③ AZ 동작** — AWS는 client 측 DNS AZ affinity를 문서화하지만 backend target은 여러 AZ에 있을 수 있습니다. DNS 동작에서 같은 AZ target 선택을 추론하지 말고 선택한 target·client 경로에서 측정합니다.
 
-**④ TLS_PASSTHROUGH listener에 auth policy 설정 시 API 거동** — 제약 1 참조.
+**④ TLS 정책 동작** — 익명 principal 정책은 적용 가능하지만 인증된 HTTP SigV4 신원은 사용할 수 없다는 점이 확인됐습니다. 제약 1을 확인합니다.
 
-**⑤ ECH(Encrypted Client Hello) 지원 여부** — 지원한다고 가정하지 마십시오 ([04번 문서](./04-networking-basics.md)).
+**⑤ ECH/ESNI** — AWS는 TLS listener에서 이를 지원하지 않는다고 명시합니다. [04번 문서](./04-networking-basics.md)를 확인합니다.
 :::
 
 **확정된 것과 대비하면**: link-local 대역(`169.254.171.0/24`, `fd00:ec2:80::/64`), SigV4 서비스명(`vpc-lattice-svcs`), listener protocol 3종(HTTP/HTTPS/TLS_PASSTHROUGH), condition key 목록, App Mesh 지원 종료일(2026년 9월 30일), Cross-AZ 요금이 data processing에 포함된다는 점, trace span 미지원은 확인되었습니다.
@@ -248,21 +242,21 @@ graph TD
     Q1 -->|"예"| B["TLS Passthrough 구성<br/>(제약 1 대안 B)"]
     Q1 -->|"아니오"| A["HTTPS listener + IAM Auth<br/>(제약 1 대안 A)"]
 
-    B --> B1["IAM Auth 사용 불가<br/>인가를 엔드포인트<br/>mTLS·앱에서 설계"]
+    B --> B1["인증된 HTTP SigV4 신원 없음<br/>endpoint 인증 + 네트워크 문맥 정책"]
     B1 --> B2["SPIRE 존속 검토<br/>(인증서 공급 주체)"]
     B2 --> B3["L7 라우팅 불가<br/>→ SNI 기반 설계"]
 
     A --> A1{"서명을 어디서<br/>붙이는가? (제약 3)"}
     A1 -->|"공통 라이브러리"| A2["애플리케이션 변경 필요<br/>언어별 구현"]
     A1 -->|"egress proxy"| A3["사이드카 재도입 수용<br/>iptables 규칙 2개<br/>상호작용 테스트"]
-    A1 -->|"단계적: 우선 미적용"| A4["1단계 경로 이전 →<br/>2단계 IAM Auth 활성화"]
+    A1 -->|"격리 진단 전용"| A4["명시적 제어 아래 auth-off 시험<br/>운영 무인증 단계로 사용하지 않음"]
 
     B3 --> C{"평문 TCP 통신이<br/>있는가? (제약 2)"}
     A2 --> C
     A3 --> C
     A4 --> C
 
-    C -->|"예"| C1["Hybrid: HTTP는 Lattice,<br/>평문 TCP는 NLB 유지"]
+    C -->|"Yes"| C1["TCP resource connectivity 검토<br/>또는 기존 사설 경로/NLB"]
     C -->|"아니오"| C2["전량 Lattice"]
 
     C1 --> D["체인 depth·요청량<br/>비용 추정 (제약 5)<br/>+ 내부 범위 결정"]
@@ -290,12 +284,12 @@ graph TD
 | **설계** | 평문 TCP 통신 목록 작성, Hybrid 범위 확정 |
 | **설계** | 서명 방식 결정 (라이브러리 / egress proxy / 단계적) |
 | **설계** | Lattice 경유 범위 결정 (경계 통과만 / 내부 포함), 내부 통신 인가 방안 |
-| **데이터** | **현재 분산 추적으로 호출 체인 depth 수집** (전환 후 불가) |
+| **데이터** | 앱 추적을 유지하고 전환 전후 호출 체인 동작 비교 |
 | **데이터** | 서비스 쌍별 RPS·데이터 전송량 수집 |
 | **데이터** | AS-IS 레이턴시 기준선 측정 ([02번 문서](./02-latency.md) 매트릭스, Envoy CPU 사용량 포함) |
 | **설정** | Envoy iptables 예외 CIDR 설정 (IPv4 + IPv6) 검증 |
 | **설정** | 노드 SG에 Lattice managed prefix list 인바운드 허용 |
-| **설정** | Lattice **access log 활성화** (인가 실패 진단의 유일한 수단) |
+| **설정** | Lattice access log를 켜고 request ID로 client/server log 연결 |
 | **설정** | Pod readiness gate 적용 검토 (무중단 롤링 업데이트) |
 | **확인** | 미확정 항목 ①~⑤를 최신 공식 문서로 확인 |
 | **확인** | 해당 리전의 quotas 현재값과 요금 단가 확인 |
@@ -306,11 +300,11 @@ graph TD
 
 ## 정리
 
-- **원리적 제약 2개는 해소되지 않습니다** — TLS Passthrough와 IAM Auth의 양립 불가, Raw TCP 미지원. 둘 다 "TLS를 종료해야 헤더를 볼 수 있고, TLS가 없으면 SNI도 없다"는 하나의 사실에서 나옵니다.
+- TLS의 인증된 신원과 익명 정책, 서비스 listener와 TCP resource connectivity를 구분합니다.
 - **첫 결정이 전체를 지배합니다.** 규정이 종단간 암호화·상호 인증을 요구하는지에 따라 이후 설계가 갈리므로, 기술 작업 전에 심의 담당자와 합의해야 합니다.
 - **모든 것을 Lattice로 옮기려 하지 마십시오.** 평문 TCP는 NLB로, 클러스터 내부 통신은 ClusterIP로 두는 Hybrid가 비용·레이턴시·일정 모두에서 합리적인 경우가 많습니다. 단 내부 통신 인가를 별도 설계해야 합니다.
 - **비용 모델이 컴퓨팅 리소스에서 요청 수로 바뀝니다.** 비용은 요청 수 × 체인 depth에 비례하며, chatty한 통신과 깊은 체인이 비싸집니다.
-- **호출 체인 depth 데이터는 지금 수집하십시오.** 전환 후에는 Lattice가 span을 만들지 않아 얻기 어려워집니다.
+- 앱 추적을 유지합니다. Lattice 네이티브 span 부재가 호출 체인 측정을 막지는 않습니다.
 - Failure domain 집중과 STS 의존성은 제거할 수 없고, **점진적 전환과 롤백 경로 확보로 완화**합니다.
 
 ## 참고 자료

@@ -6,7 +6,7 @@ This quiz tests your understanding of the degrading and improving latency factor
 
 1. Why can't the latency impact of a Lattice migration be stated in advance as "it adds N milliseconds"?
    - A) AWS does not publish latency figures
-   - B) The reduction in proxy traversals (improvement) and the added network traversal (degradation) compete in the same magnitude range, and which one wins depends on the environment
+   - B) Proxy work, network paths, TLS reuse and authentication change together, so measure the actual workload
    - C) Lattice is not yet GA
    - D) Latency is determined solely by region
 
@@ -14,15 +14,15 @@ This quiz tests your understanding of the degrading and improving latency factor
 
 <summary>Show Answer</summary>
 
-**Answer: B) The reduction in proxy traversals (improvement) and the added network traversal (degradation) compete in the same magnitude range, and which one wins depends on the environment**
+**Answer: B) Proxy work, network paths, TLS reuse and authentication change together, so measure the actual workload**
 
 **Explanation:**
-Both factors compete in the same range — hundreds of microseconds to a few milliseconds. Which one wins depends on how much node CPU your Envoy sidecars consume, request length (the relative weight of fixed overhead), whether keepalive is used, whether IAM Auth is enabled, and what fraction of calls cross an AZ. Those values differ per organization. Hence the conclusion is "measure it," and the sign of the result can change with the environment.
+No Lattice latency measurements are supplied here. The direction and magnitude depend on the tested configuration; do not present microsecond estimates or guaranteed improvement as observations.
 </details>
 
 2. What does it mean that p50 and p99 have different factor compositions?
    - A) p99 is always worse than p50, so looking at p50 alone is enough
-   - B) Degradation (added path) likely dominates p50 while improvement (removed Envoy CPU contention) may dominate p99, so judging from a single average hides the structure
+   - B) The median and tail can react differently to contention, cold starts and routing, so measure both
    - C) p50 and p99 are affected by the same factors, so measuring one is enough
    - D) p99 is noise and should be ignored
 
@@ -30,10 +30,10 @@ Both factors compete in the same range — hundreds of microseconds to a few mil
 
 <summary>Show Answer</summary>
 
-**Answer: B) Degradation (added path) likely dominates p50 while improvement (removed Envoy CPU contention) may dominate p99, so judging from a single average hides the structure**
+**Answer: B) The median and tail can react differently to contention, cold starts and routing, so measure both**
 
 **Explanation:**
-Envoy sidecar CPU contention barely shows in the average and shows heavily in the tail — most requests are scheduled immediately while some wait milliseconds to tens of milliseconds. Removing the sidecar removes that contention, so p99 may improve on clusters with tight node CPU. Meanwhile the added VPC traversal is reflected directly in p50 as well. Measuring both percentiles is required to understand the real impact.
+Different percentile responses are hypotheses to investigate, not a guarantee that p50 worsens while p99 improves. Keep errors, throughput and workload conditions alongside the distributions.
 </details>
 
 3. Which client setting was noted as potentially mattering more than one proxy hop?
@@ -49,12 +49,12 @@ Envoy sidecar CPU contention barely shows in the average and shows heavily in th
 **Answer: B) keepalive and connection pool settings**
 
 **Explanation:**
-In the Pod network benchmark, disabling keepalive raised p50 from 0.461 → 1.079 ms same-AZ and 0.704 → 1.517 ms cross-AZ — more than double. Every new connection adds an extra RTT and a TLS handshake per request. In AS-IS, Envoy managed connections on the application's behalf; once that layer is gone, the application's HTTP client configuration is exposed. This is a client configuration issue, not a Lattice characteristic.
+The cited benchmark shows that connection reuse mattered in that workload. New TCP connections add setup; TLS handshakes apply when TLS is used. That is not a Lattice latency measurement.
 </details>
 
 4. In the PoC measurement matrix, what does the delta between `IAM Auth on` and `IAM Auth off` tell you?
    - A) The cost of cross-AZ traversal
-   - B) The pure cost of SigV4 signing and verification
+   - B) The combined effect of signing, credential handling and enabled-policy evaluation under matched conditions
    - C) The effect of removing Envoy CPU contention
    - D) The pure effect of the path change
 
@@ -62,10 +62,10 @@ In the Pod network benchmark, disabling keepalive raised p50 from 0.461 → 1.07
 
 <summary>Show Answer</summary>
 
-**Answer: B) The pure cost of SigV4 signing and verification**
+**Answer: B) The combined effect of signing, credential handling and enabled-policy evaluation under matched conditions**
 
 **Explanation:**
-The matrix exists to isolate factors. The `IAM Auth on` vs `off` delta is the cost of introducing authentication alone, and the `AS-IS (App Mesh)` vs `IAM Auth off` delta is the effect of the path change alone. Obtaining those two separately is the point of including IAM Auth as an axis. Note that SigV4's real cost may be less the crypto itself and more the part that appears in the p99 tail when credential refresh blocks the request path.
+Auth on/off does not isolate HMAC alone. Repeat matched runs, keep load and connection settings constant, and report credential refresh, failures and throughput.
 </details>
 
 5. Which statement about cross-AZ traffic is correct?

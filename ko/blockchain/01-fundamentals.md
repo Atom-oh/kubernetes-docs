@@ -4,7 +4,7 @@
 
 ## 이 문서에서 다루는 것
 
-- 블록체인이 풀려는 문제와, 그 해법이 왜 "모든 노드가 같은 일을 반복"하는 구조가 되는가
+- 일부 ledger가 검증을 복제하는 이유와 full-node·light-client·permissioned 모델의 차이
 - 합의·머클 트리·P2P·파이널리티의 역할과, 각각이 인프라 운영에 만드는 제약
 - 왜 블록체인 노드가 일반적인 상태 저장 서비스와 다르게 다뤄져야 하는가
 
@@ -23,7 +23,7 @@
 | **참여 자격** | 운영자가 지정 | 퍼블릭 체인은 **누구나** |
 | **되돌릴 수 있는가** | 운영자가 개입 가능 | 프로토콜이 정한 것만 |
 
-이 차이가 모든 설계 결정의 근원입니다. **"거짓말하는 참여자가 있다"를 가정하면, 누가 옳은지 판단할 방법이 필요합니다.** 그 방법이 합의 알고리즘이고, 판단의 근거를 모두가 독립적으로 검증할 수 있어야 하므로 **모든 노드가 모든 거래를 직접 검증**합니다.
+많은 공개 체인의 **full node**는 transaction과 consensus 규칙을 독립 검증합니다. Light client·pruned/snapshot-sync node·permissioned 설계의 검증/데이터 배포 방식은 다릅니다. Permissioned membership 자체가 consensus 알고리즘에 Byzantine fault tolerance를 부여하지는 않습니다.
 
 여기서 블록체인의 근본적인 성질이 나옵니다.
 
@@ -35,7 +35,7 @@
 
 거래들을 묶은 것이 **블록**이고, 각 블록은 **직전 블록의 해시**를 담습니다.
 
-```
+```text
 블록 N-1                블록 N                  블록 N+1
 ┌──────────────┐       ┌──────────────┐        ┌──────────────┐
 │ prev_hash:.. │       │ prev_hash: ──┼────────│ prev_hash: ──┤
@@ -47,7 +47,7 @@
 
 이 구조가 주는 성질이 **변조의 파급**입니다. 블록 N의 거래 하나를 바꾸면 → 블록 N의 해시가 바뀌고 → 블록 N+1의 `prev_hash`가 안 맞고 → 그 뒤 전부가 무효가 됩니다.
 
-즉 **과거를 바꾸려면 그 이후 전부를 다시 만들어야** 하고, 그것을 네트워크의 나머지보다 빨리 해야 합니다. 이것이 "변조 불가"의 실제 의미입니다 — 물리적으로 불가능한 것이 아니라 **경제적·계산적으로 비현실적**입니다.
+PoW 체인의 이력 변경에는 충분히 수용되는 work를 다시 만들어야 하며 다른 체인은 다른 finality·governance 가정을 사용합니다. Hash 연결은 변조를 탐지하게 하지만 그 자체로 finality나 모든 체인의 경제적 불변성을 보장하지 않습니다.
 
 ### 머클 트리 — 왜 필요한가
 
@@ -55,7 +55,7 @@
 
 머클 트리는 거래들을 쌍쌍이 해시해 올라가는 이진 트리입니다.
 
-```
+```text
                 merkle_root
                /            \
          H(AB)                H(CD)
@@ -81,7 +81,8 @@
 |---|---|---|---|
 | **PoW** (Proof of Work) | 계산 퍼즐을 먼저 푼 노드 | **전기·하드웨어** | Bitcoin |
 | **PoS** (Proof of Stake) | 예치금(stake)에 비례한 확률로 선정 | **예치 자본 + 위반 시 몰수(slashing)** | Ethereum |
-| **BFT 계열** | 알려진 검증자 집합의 투표 | 멤버십 관리 | Hyperledger Fabric(Raft), Tendermint |
+| **BFT 계열** | 정의한 Byzantine fault threshold 아래 투표 | Membership/validator·quorum 가정 | Tendermint; Fabric 3.x SmartBFT |
+| **CFT permissioned ordering** | 알려진 replica가 crash-fault-tolerant consensus 사용 | 임의 Byzantine ordering 동작을 견디지 못함 | Fabric Raft |
 
 ### 왜 비용이 필요한가
 
@@ -96,18 +97,18 @@ PoW는 **계산**으로, PoS는 **자본과 몰수 위험**으로 비용을 만�
 | **퍼블릭** (permissionless) | 누구나 | PoW/PoS | 낮음 | 공개 자산, 상호운용 |
 | **프라이빗/컨소시엄** (permissioned) | 승인된 멤버 | BFT/Raft | 상대적으로 높음 | 기업 간 원장, 규제 환경 |
 
-**금융권에서 컨소시엄 체인을 선택하는 이유가 여기 있습니다.** 참여자를 알고 있으면 Sybil 방어가 불필요하고, 그러면 PoW의 전기나 PoS의 예치금 없이 BFT 투표로 합의할 수 있습니다. 처리량이 올라가고 파이널리티도 빨라집니다. 대가는 **탈중앙성의 포기**입니다 — 멤버십을 통제하는 주체가 존재합니다. [금융권 관점](./04-financial-services.md)에서 이 트레이드오프를 다룹니다.
+Permissioned 설계는 알려진 membership과 명시적 governance를 활용하며 실제 위협 모델에 따라 CFT/BFT를 선택합니다. 금융 앱은 서로 다른 제어 아래 permissioned 또는 public network를 사용할 수 있으며 membership이나 consensus 명칭만으로 규제 준수가 성립하지는 않습니다.
 
 ## 파이널리티 — 운영에서 가장 중요한 개념
 
-**파이널리티는 "이 거래가 되돌려지지 않음이 보장되는 시점"**입니다. 인프라 관점에서 이것이 가장 중요한 개념인데, 자주 간과됩니다.
+**Finality는 프로토콜의 보안 가정 아래 정산된 상태를 설명합니다.** 모든 공격·governance 개입·앱의 보정 transaction에 대한 무조건적 보장은 아닙니다. 확률적 신뢰·경제적 finality·결정적 consensus 보장을 구분합니다.
 
 ### 확률적 파이널리티 vs 절대적 파이널리티
 
 | 유형 | 의미 | 예 |
 |---|---|---|
 | **확률적** (probabilistic) | 블록이 쌓일수록 되돌릴 확률이 지수적으로 감소. **완전한 0은 아님** | Bitcoin의 PoW |
-| **절대적** (absolute/economic) | 프로토콜이 정한 조건 충족 시 되돌리려면 막대한 손실 발생 | Ethereum PoS의 finalized 체크포인트 |
+| **경제적** | Finalized checkpoint는 stake/slashing 가정으로 보호되며 변경이 물리적으로 불가능한 것은 아님 | Ethereum PoS |
 | **즉시** (immediate) | 합의 라운드 종료 시 확정 | BFT 계열 |
 
 ### 왜 이것이 운영 문제인가
@@ -173,7 +174,7 @@ PoW는 **계산**으로, PoS는 **자본과 몰수 위험**으로 비용을 만�
 | 방식 | 하는 일 | 트레이드오프 |
 |---|---|---|
 | **full sync** | 제네시스부터 전부 검증·재생 | 가장 신뢰도 높음, **가장 느림** |
-| **snap/fast sync** | 최근 상태 스냅샷을 피어에서 받고 이후만 검증 | 훨씬 빠름, 스냅샷 제공 피어를 신뢰 |
+| **snap/fast sync** | 수용한 state root로 검증하는 proof와 함께 state를 얻음. 이력 검증은 client/mode별로 다름 | 더 빠르지만 consensus/checkpoint·구현 신뢰 가정을 확인하며 임의 peer를 무조건 믿는 것은 아님 |
 | **checkpoint sync** | 신뢰하는 체크포인트에서 시작 | 가장 빠름, 체크포인트 출처를 신뢰 |
 | **스냅샷 복원** | 운영자가 보관한 데이터 디렉터리 복원 | 빠름, 스냅샷 최신성·정합성 관리 필요 |
 
@@ -205,12 +206,12 @@ PoW는 **계산**으로, PoS는 **자본과 몰수 위험**으로 비용을 만�
 
 | 블록체인의 설계 | 파생되는 운영 특성 | Kubernetes에서의 함의 |
 |---|---|---|
-| 모든 노드가 모든 거래를 검증 | **노드를 늘려도 처리량이 안 늘어남** | 스케일 아웃은 가용성·읽기 분산용, 처리량용이 아님 |
+| 복제된 full-node 검증 | Replica 추가 자체가 base-chain 쓰기 용량을 늘리지는 않음 | 전체 RPC/read 용량과 가용성은 늘릴 수 있음 |
 | 상태는 로컬에 누적 | **Pod 교체 비용이 매우 큼** | StatefulSet + 영구 볼륨 필수, 노드 어피니티 고려 |
 | 체인 동기화에 지연 | **"살아있음"과 "서비스 가능"이 다름** | readiness에 동기화 상태 포함 |
 | 파이널리티가 즉시가 아님 | **최신 데이터가 확정 데이터가 아님** | confirmation depth를 애플리케이션 계약으로 |
 | P2P 가십 | **인바운드 연결과 안정적 신원 필요** | Headless Service, 추가 노출 설계 |
-| 하드포크로 프로토콜 변경 | **정해진 시점에 전 네트워크 동시 전환** | 롤링 업데이트 모델과 불일치 — 사전 계획 필수 |
+| Hard fork가 정해진 시점에 규칙 활성화 | 활성화 전에 호환 binary 업그레이드 | 사전 canary·rolling upgrade로 fleet 준비 가능 |
 | 키가 곧 권한 | **키 유실 = 영구 손실** | KMS/HSM, 키와 데이터의 백업 전략 분리 |
 | 검증 중복이 본질 | **CPU·IOPS를 꾸준히 씀** | 버스트형 리소스 설정과 맞지 않음 |
 
@@ -224,24 +225,24 @@ Kubernetes 운영 상식과 충돌하는 지점:
 
 | Kubernetes 상식 | 하드포크에서 |
 |---|---|
-| 롤링 업데이트로 점진적 전환 | **정해진 시점에 전부 전환되어 있어야** 함 |
-| 카나리로 일부만 먼저 | 카나리 노드는 포크 시점에 네트워크에서 이탈 |
+| Rolling update로 점진 전환 | 활성화 전 가능하되 기한까지 필요한 모든 node가 새 규칙을 지원해야 함 |
+| 일부 node canary | 활성화 전에 fork-compatible binary를 시험하고 해당 testnet/mainnet 단계에서 동작 비교 |
 | 문제 있으면 롤백 | 롤백하면 그 노드만 구 체인에 남음 |
 | 업그레이드는 운영팀 일정 | **일정이 외부에서 정해짐** |
 
 **실무 권고**: 하드포크는 배포가 아니라 **기한이 있는 마이그레이션**으로 다루십시오. 클라이언트 릴리스 노트를 구독하고, 포크 예정일 전에 충분한 여유를 두고 업그레이드하고, 테스트넷에서 먼저 검증합니다.
 
-Ethereum은 2025년부터 **연 2회 하드포크 일정**으로 전환했습니다. 즉 이 마이그레이션이 **정기 업무**가 되었다는 뜻입니다. 구체적인 사례와 일정 관리는 [EKS에서 블록체인 노드 운영](./02-nodes-on-eks.md)에서 다룹니다.
+Ethereum은 2025년에 Pectra·Fusaka를 적용하고 더 잦은 업그레이드를 추진했습니다. 유지보수는 보장된 연 2회 일정이 아니라 **공개된 활성화 날짜와 client release note**를 기준으로 계획합니다.
 
 ## 정리
 
 - 블록체인의 전제는 **byzantine fault** — 참여자가 거짓말할 수 있다는 가정입니다. etcd(crash fault)와 근본적으로 다릅니다.
-- 그 가정 때문에 **모든 노드가 모든 거래를 검증**하고, 따라서 **처리량이 아니라 검증 가능성을 위해 중복을 감수**하는 시스템입니다.
+- 많은 full-node 설계는 검증을 복제하지만 light-client·permissioned 모델은 다르며 RPC/read 용량은 base-chain 쓰기와 별도로 확장할 수 있습니다.
 - 블록의 `prev_hash` 연쇄가 변조를 파급시키고, **머클 트리**가 log N 크기의 포함 증명을 가능하게 합니다(경량 클라이언트의 근거).
 - 합의에 비용이 필요한 이유는 **Sybil 방어**입니다. 참여자를 제한하면(컨소시엄) 그 비용이 불필요해져 BFT로 갈 수 있고, 처리량과 파이널리티가 개선되는 대신 탈중앙성을 포기합니다.
 - **파이널리티가 운영에서 가장 중요한 개념**입니다. 최신 데이터가 확정 데이터가 아니므로, 동기화 상태를 readiness에 넣고 confirmation depth를 애플리케이션 계약으로 정해야 합니다.
 - 상태는 재생 가능하지만 **재생에 오랜 시간**이 걸립니다. 그래서 영구 볼륨이 필수입니다.
-- **하드포크는 배포가 아니라 기한 있는 마이그레이션**입니다. Ethereum은 연 2회 일정으로 전환해 이것이 정기 업무가 되었습니다.
+- Hard fork에는 외부에서 조정한 활성화 시점이 있으므로 호환 client를 미리 준비하고 활성화 후 rollback을 별도 평가합니다.
 
 다음: [EKS에서 블록체인 노드 운영](./02-nodes-on-eks.md)에서 이 특성들을 실제 구성으로 옮깁니다.
 
@@ -252,3 +253,6 @@ Ethereum은 2025년부터 **연 2회 하드포크 일정**으로 전환했습니
 - [Hyperledger Fabric Documentation](https://hyperledger-fabric.readthedocs.io/) — permissioned 체인의 구조
 - [Bitcoin Developer Guide](https://developer.bitcoin.org/devguide/) — PoW와 머클 트리
 - [클러스터 아키텍처 — etcd와 Raft](../core/01-cluster-architecture.md) — crash fault 합의와의 비교
+
+
+- [Fabric ordering service](https://hyperledger-fabric.readthedocs.io/en/latest/orderer/ordering_service.html) — CFT Raft와 SmartBFT 구분

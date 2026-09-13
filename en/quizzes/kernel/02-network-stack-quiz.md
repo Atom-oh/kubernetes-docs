@@ -20,9 +20,9 @@ This quiz tests your understanding of the packet path, hook points, and Pod-to-P
 A qdisc queues packets before handing them to the NIC and decides order and rate. When its queue fills, packets are discarded — and that is not a NIC or network problem but **a drop inside the node.** It is easy to waste time looking outside, believing "the network lost packets." The `dropped` counter in `tc -s qdisc show dev <iface>` is the evidence; also check transmit drops in `ip -s link`.
 </details>
 
-2. What is the fundamental reason XDP is faster than TC or netfilter?
+2. Which XDP mode distinction matters when discussing early packet-drop performance?
    - A) It runs in hardware rather than as a kernel module
-   - B) It runs before `sk_buff` allocation, so it never pays the cost of allocating and initializing a structure for a packet it will discard
+   - B) Native/driver XDP runs before skb allocation; generic XDP already uses skb
    - C) It is JIT-compiled
    - D) It does not need to consult conntrack
 
@@ -30,10 +30,10 @@ A qdisc queues packets before handing them to the NIC and decides order and rate
 
 <summary>Show Answer</summary>
 
-**Answer: B) It runs before `sk_buff` allocation, so it never pays the cost of allocating and initializing a structure for a packet it will discard**
+**Answer: B) Native/driver XDP runs before skb allocation; generic XDP already uses skb**
 
 **Explanation:**
-XDP runs right after the driver, **before** `sk_buff` allocation, so for packets it drops it avoids the allocation and initialization cost entirely. That difference is decisive for DDoS defense — when dropping millions of packets per second, removing the per-packet allocation *is* the capacity. Conversely XDP knows less: without conntrack state it cannot judge "is this the reply to an existing connection," so stateful decisions must live at TC or netfilter.
+The early-drop advantage is mode-specific. BPF maps can maintain state, and performance depends on the kernel, program, driver and hardware rather than a universal fastest-path guarantee.
 </details>
 
 3. With heavy receive traffic, only one CPU is at 100% while the rest idle. What is the cause and at what layers is it solved?
@@ -70,7 +70,7 @@ Interrupting per packet leads under high load to livelock, where the system does
 
 5. Why did same-node Pod-to-Pod traffic reach 29.97 Gbps on a single flow with CPU as the bottleneck?
    - A) There is a dedicated high-speed network inside the node
-   - B) It only crosses the veth pair without touching the NIC, moving memory to memory — no physical layer, driver, or ring buffer
+   - B) In the illustrated ordinary veth/routed same-node path, packets can stay in kernel memory without traversing the physical NIC
    - C) The kernel compresses the packets
    - D) Same-node traffic does not use TCP
 
@@ -78,10 +78,10 @@ Interrupting per packet leads under high load to livelock, where the system does
 
 <summary>Show Answer</summary>
 
-**Answer: B) It only crosses the veth pair without touching the NIC, moving memory to memory — no physical layer, driver, or ring buffer**
+**Answer: B) In the illustrated ordinary veth/routed same-node path, packets can stay in kernel memory without traversing the physical NIC**
 
 **Explanation:**
-Same-node Pod traffic follows `Pod A [net ns A] → veth A → node net ns → veth B → Pod B [net ns B]`. A veth pair is an in-kernel virtual link, so packets move memory to memory with no physical layer, driver, or ring buffer. That is why cross-node traffic hit the EC2 single-flow limit at 4.96 Gbps while same-node reached 29.97 Gbps — and the bottleneck there was not the network but **CPU**, with one client core at 99.8%.
+Virtual devices still have driver processing. Different CNIs, SR-IOV, overlays or service/policy detours can change the path, so tie the claim to the actual configuration.
 </details>
 
 6. What is the classic cause of "the handshake works but data transfer stalls"?

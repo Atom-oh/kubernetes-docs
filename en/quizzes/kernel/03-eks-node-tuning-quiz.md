@@ -22,7 +22,7 @@ Values differing per node make incidents impossible to reproduce. Tunable names 
 
 2. What must you know about AL2023's kernel version transition as of 2026?
    - A) AL2023 offers only kernel 6.1
-   - B) From August 17, 2026, the default kernel for `al2023-ami-kernel-default` AMIs changed from 6.1 to 6.18, so node replacement alone changes the kernel
+   - B) A refreshed default/latest AMI can select a new kernel, while a pinned AMI ID remains unchanged
    - C) The kernel version is determined automatically by the EKS control plane version
    - D) AL2023 does not support kernel upgrades
 
@@ -30,10 +30,10 @@ Values differing per node make incidents impossible to reproduce. Tunable names 
 
 <summary>Show Answer</summary>
 
-**Answer: B) From August 17, 2026, the default kernel for `al2023-ami-kernel-default` AMIs changed from 6.1 to 6.18, so node replacement alone changes the kernel**
+**Answer: B) A refreshed default/latest AMI can select a new kernel, while a pinned AMI ID remains unchanged**
 
 **Explanation:**
-AL2023 launched in March 2023 with kernel 6.1, added 6.12 support in April 2025, and **its default kernel changed to 6.18 on August 17, 2026.** With `kernel-default` AMIs, node replacement alone — autoscaling, upgrades, spot reclamation — changes the kernel. To pin a kernel you must explicitly use a version-specific AMI such as `al2023-ami-kernel-6.1-*`, and a kernel transition should be treated with the same weight as a Kubernetes version upgrade.
+Verify the AMI selected by the launch template/provisioner and the running kernel. EKS-optimized AMI releases have their own selection; replacing a node alone is not proof of a kernel upgrade.
 </details>
 
 3. What is the most common root cause of CPU throttling, and the first response?
@@ -87,17 +87,17 @@ With insufficient `--system-reserved` and `--kube-reserved`, Pods consume all no
 6. Which of the following is NOT a representative case of "justified tuning"?
    - A) `vm.max_map_count` — OpenSearch-family software fails to start at the default
    - B) `net.core.somaxconn` — evidence available from the accept-queue overflow counter
-   - C) `net.ipv4.tcp_rmem` / `tcp_wmem` — pinning the defaults to improve performance
+   - C) Changing TCP buffer settings without a measured BDP/memory problem or understanding the per-socket override
    - D) `net.ipv4.ip_local_port_range` — source port exhaustion shows up directly as connection failures
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: C) `net.ipv4.tcp_rmem` / `tcp_wmem` — pinning the defaults to improve performance**
+**Answer: C) Changing TCP buffer settings without a measured BDP/memory problem or understanding the per-socket override**
 
 **Explanation:**
-The default for `tcp_rmem`/`tcp_wmem` is **not to touch them.** The kernel is auto-tuning under load, and pinning values disables that. You might consider ceiling adjustments on high-BDP long-distance paths, but it is not a general tuning target. A, B, and D all have clear symptoms and direct evidence counters — startup failure logs, `TcpExtListenOverflows` in `nstat`, and connection failures respectively.
+tcp_rmem/tcp_wmem define sizing bounds/defaults; changing them does not by itself disable autotuning. Explicit SO_RCVBUF/SO_SNDBUF disables the corresponding socket’s automatic sizing.
 </details>
 
 7. Which value cannot be changed via a Pod's `securityContext.sysctls`?

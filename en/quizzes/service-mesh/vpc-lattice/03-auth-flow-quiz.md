@@ -65,12 +65,12 @@ SigV4 always includes the `Host` header in the signature. When you attach a cust
 **Answer: B) Clock synchronization on that node — `x-amz-date` is signed and SigV4's tolerance is about 5 minutes**
 
 **Explanation:**
-Because `x-amz-date` is signed, the verifying side rejects requests whose timestamp differs too much from current time — which makes node clock synchronization a precondition for authentication. On EC2/EKS nodes using the Amazon Time Sync Service this is rarely an issue, but it occurs on on-premises or hybrid nodes with misconfigured NTP, or nodes resuming after a long suspend. The failure being intermittent and node-scoped is the diagnostic clue. Note that 5 minutes is standard SigV4 behavior, not a Lattice-specific value.
+AWS’s general SigV4 guidance says most requests must arrive within five minutes of their timestamp. Check the actual service error and UTC clock; do not treat this as a separately measured Lattice-specific guarantee.
 </details>
 
-5. Why does the rule "sign at the last hop" matter when signing via an egress proxy?
+5. What must be checked between signing and Lattice verification?
    - A) Multiple proxies increase latency
-   - B) The signature is bound to request content (path, query, Host, payload hash), so any proxy that modifies those after signing breaks verification
+   - B) Changing canonical signed fields can break verification; Lattice requires UNSIGNED-PAYLOAD, so body integrity also needs TLS/application controls
    - C) A proxy cannot cache credentials
    - D) An IAM Role can only be attached to one proxy
 
@@ -78,10 +78,10 @@ Because `x-amz-date` is signed, the verifying side rejects requests whose timest
 
 <summary>Show Answer</summary>
 
-**Answer: B) The signature is bound to request content (path, query, Host, payload hash), so any proxy that modifies those after signing breaks verification**
+**Answer: B) Changing canonical signed fields can break verification; Lattice requires UNSIGNED-PAYLOAD, so body integrity also needs TLS/application controls**
 
 **Explanation:**
-The canonical request includes the method, normalized path, sorted query string, signed headers, and payload hash. A proxy that rewrites paths, changes the Host, adds or reorders query parameters, or compresses/decompresses the payload after signing will cause a mismatch. The aws-samples reference implementation runs a `sigv4proxy` sidecar on 8080 with an init container using iptables to redirect only `169.254.171.0/24`-bound traffic, so the signed request goes straight out to Lattice with nothing in between.
+The signed Host/path/query values must match the request. Canonical sorting means equivalent query ordering is not necessarily a change. Lattice does not support payload signing; require the x-amz-content-sha256: UNSIGNED-PAYLOAD header.
 </details>
 
 6. Why might an auth policy not take effect for traffic inside the cluster?

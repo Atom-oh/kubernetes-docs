@@ -4,9 +4,9 @@ This quiz tests your understanding of consensus, Merkle trees, finality, and ope
 
 ## Multiple Choice Questions
 
-1. What is the fundamental difference in premise between blockchain and etcd (Raft)?
+1. How should fault models be compared?
    - A) Blockchain is distributed while etcd is single-node
-   - B) etcd assumes only crash faults (death, partition) while blockchain assumes Byzantine faults (lying, collusion)
+   - B) Compare the chosen consensus: etcd/Raft is CFT; some blockchains use BFT, while permissioned Fabric can also use CFT Raft
    - C) Blockchain provides strong consistency while etcd provides eventual consistency
    - D) etcd does not use cryptography
 
@@ -14,15 +14,15 @@ This quiz tests your understanding of consensus, Merkle trees, finality, and ope
 
 <summary>Show Answer</summary>
 
-**Answer: B) etcd assumes only crash faults (death, partition) while blockchain assumes Byzantine faults (lying, collusion)**
+**Answer: B) Compare the chosen consensus: etcd/Raft is CFT; some blockchains use BFT, while permissioned Fabric can also use CFT Raft**
 
 **Explanation:**
-etcd's premise is that participating nodes are run by the same organization and fail but do not lie. Blockchain assumes mutually unknown parties who may deliberately assert different values. This difference is the root of every design decision — assuming lying participants requires a way to decide who is right, and since that basis must be independently verifiable by everyone, every node verifies every transaction itself.
+Fabric 3.x also offers SmartBFT. Permissioned membership and the word blockchain do not by themselves imply Byzantine fault tolerance.
 </details>
 
-2. What supports the claim "blockchain is not a system designed for throughput"?
+2. Why do additional full-node replicas not automatically raise base-chain write capacity?
    - A) Cryptographic operations are slow
-   - B) It deliberately has every node redundantly verify every transaction, for the sake of verifiability and tamper resistance
+   - B) Replicated full-node validation does not automatically raise base-chain write capacity, although RPC reads can scale
    - C) P2P network bandwidth limits
    - D) Block size limits
 
@@ -30,10 +30,10 @@ etcd's premise is that participating nodes are run by the same organization and 
 
 <summary>Show Answer</summary>
 
-**Answer: B) It deliberately has every node redundantly verify every transaction, for the sake of verifiability and tamper resistance**
+**Answer: B) Replicated full-node validation does not automatically raise base-chain write capacity, although RPC reads can scale**
 
 **Explanation:**
-Assuming Byzantine faults means the basis for decisions must be independently verifiable by everyone, so every node verifies every transaction. This redundancy is not a side effect but **deliberate design.** From it follows directly the operational characteristic "adding nodes does not increase throughput" — adding nodes only adds parties repeating the same work. Scale-out is therefore for availability and read distribution, not throughput.
+Full nodes, light clients and permissioned data-distribution models differ. Avoid saying every node always verifies every transaction or that replica count cannot affect any throughput.
 </details>
 
 3. What is the key benefit a Merkle tree provides?
@@ -100,9 +100,9 @@ A node answers based on the latest chain it knows, and if that block is later re
 A node's state (balances, contract storage) can be derived by replaying block history, so it is theoretically rebuildable. But a full sync verifying and replaying from genesis takes time proportional to the chain's age, and at hundreds of GB to several TB that can be days. Losing state on Pod replacement means the node cannot serve during that time, so a persistent volume is not optional but mandatory.
 </details>
 
-7. Where does a hard fork clash with the Kubernetes operating model?
+7. How should hard-fork client upgrades be managed?
    - A) Container image size grows
-   - B) Rolling updates, canaries, and rollbacks all break down, and the whole network must already be switched at a fixed point
+   - B) Canary and roll out fork-compatible clients before activation; assess incompatible rollback separately afterward
    - C) Pod restart time increases
    - D) Network policies must be rewritten
 
@@ -110,15 +110,15 @@ A node's state (balances, contract storage) can be derived by replaying block hi
 
 <summary>Show Answer</summary>
 
-**Answer: B) Rolling updates, canaries, and rollbacks all break down, and the whole network must already be switched at a fixed point**
+**Answer: B) Canary and roll out fork-compatible clients before activation; assess incompatible rollback separately afterward**
 
 **Explanation:**
-A canary node leaves the network at the fork, rolling back leaves that node on the old chain, and the upgrade schedule is set externally. So a hard fork must be treated as **a migration with a deadline** rather than a deployment. Since Ethereum moved to a twice-yearly hard fork schedule in 2025, this migration has become **routine work.**
+The protocol activates at a defined point, but installing a compatible client early need not leave the current chain. Complete fleet readiness before the external deadline.
 </details>
 
 8. How does key management in blockchain differ decisively from password management in existing systems?
    - A) Keys are longer
-   - B) Losing a key permanently forfeits assets and authority with no party able to reverse it, making backups absolute while the backup itself is an exposure risk
+   - B) Plan custody and recovery before use; private signing-key loss can be irreversible, and KMS private keys are not exportable
    - C) Keys must be rotated periodically
    - D) Keys are transmitted in plaintext
 
@@ -126,8 +126,8 @@ A canary node leaves the network at the fork, rolling back leaves that node on t
 
 <summary>Show Answer</summary>
 
-**Answer: B) Losing a key permanently forfeits assets and authority with no party able to reverse it, making backups absolute while the backup itself is an exposure risk**
+**Answer: B) Plan custody and recovery before use; private signing-key loss can be irreversible, and KMS private keys are not exportable**
 
 **Explanation:**
-Existing systems let you reset a forgotten password and let an administrator freeze a compromised account; in blockchain no party can reverse it unless the protocol allows. So the nature of backup strategy differs — chain data can be re-fetched from the network so backing it up has low value, while keys must be backed up and that backup becomes an exposure path. This is why HSMs and KMS/CloudHSM matter, and validators face the contradictory requirement of a key that must be online to sign yet must not leak.
+Recovery depends on the key origin, contract/account controls and backup design. Protect validator slashing history and do not assume a managed HSM exposes its private key for migration.
 </details>

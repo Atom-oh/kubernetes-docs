@@ -57,7 +57,7 @@ Pod의 정체가 여기서 정해집니다. Kubernetes는 Pod마다 net namespac
 
 ### user namespace — 왜 오래 기본이 아니었는가
 
-user namespace는 컨테이너 안의 root(UID 0)를 호스트의 비특권 UID로 **매핑**합니다. 컨테이너가 탈출해도 호스트에서는 일반 사용자 권한밖에 없다는 뜻이라, 보안상 매력적입니다.
+User namespace는 컨테이너 UID/GID를 다른 host 범위로 매핑합니다. 여러 탈출 동작의 권한을 줄이지만 kernel 취약점이나 추가 권한 상승 경로까지 **봉쇄한다고 보장하지는 않습니다**.
 
 그런데 오래 기본이 아니었습니다. 이유는 **파일 소유권**입니다. 볼륨의 파일이 호스트 UID로 기록되어 있는데 컨테이너가 다른 UID로 보면 권한이 맞지 않습니다. 이를 해결하려면 마운트 시점에 UID를 변환해야 하고(idmapped mounts, 커널 5.12+), 스토리지 드라이버와 CSI도 이를 지원해야 합니다.
 
@@ -109,7 +109,7 @@ cgroup v2에서 반드시 알아야 할 사실입니다.
 
 | 오해 | 실제 |
 |---|---|
-| "`memory.current`가 limit 근처면 곧 OOM" | 대부분 page cache이고 회수됩니다. 정상일 수 있습니다 |
+| "`memory.current`가 limit 근처이면 OOM 직전" | 회수 가능한 file cache가 포함될 수 있으므로 구성을 가정하지 말고 anon/file/kernel 사용량·압력 확인 |
 | "RSS만 보면 된다" | RSS가 낮아도 OOM이 날 수 있습니다 (회수 못 따라가는 경우) |
 | "limit을 올리면 해결" | 원인이 회수 지연이면 올려도 재발합니다 |
 
@@ -186,7 +186,7 @@ Service 구현 방식이 세 갈래이고, **2025~2026년에 지형이 바뀌었
 
 | 모드 | 룰 평가 | 상태 |
 |---|---|---|
-| **iptables** | 규칙 체인 **선형 평가** — Service 수가 늘면 규칙 수가 비례해 늘고 갱신이 전체 재작성에 가까움 | 여전히 **기본값** (호환성) |
+| **iptables** | Rule-chain 조회 비용은 배치에 따라 다르며 현재 kube-proxy는 갱신을 최적화 | 명시 변경하지 않은 환경의 기본값. 설치 구현 확인 |
 | **IPVS** | 커널 L4 로드밸런서, 해시 기반 O(1) | **Kubernetes 1.35(2025년 12월)에서 deprecated**, 1.38 제거 목표 |
 | **nftables** | O(1) 조회 + **증분 규칙 갱신** | **Kubernetes 1.33에서 GA** (1.29 alpha → 1.31 beta). 워커 노드에 **커널 5.13+** 필요 |
 
@@ -201,7 +201,7 @@ Service 구현 방식이 세 갈래이고, **2025~2026년에 지형이 바뀌었
 
 netfilter가 NAT를 하려면 **연결을 기억해야** 합니다. 나갈 때 주소를 바꿨으면 돌아오는 패킷을 원래대로 되돌려야 하니까요. 이 기억을 담는 커널 테이블이 `nf_conntrack`입니다.
 
-Kubernetes가 Service마다 DNAT를 하므로 **모든 Service 통신이 conntrack 항목을 만듭니다.** 그래서 이 테이블이 포화되기 쉽습니다.
+Kube-proxy netfilter mode의 Service NAT는 connection tracking에 의존하지만 **NAT 없는 트래픽도 추적될 수 있습니다**. Headless Service·외부 endpoint·eBPF 구현의 경로는 다르므로 모든 Kubernetes Service가 같은 DNAT 경로를 반드시 거친다고 보면 안 됩니다.
 
 **포화되면 어떻게 되는가가 문제의 핵심입니다.** 에러 로그가 요란하게 나지 않습니다. 새 연결이 **조용히 드롭**되고, 애플리케이션은 연결 타임아웃이나 refused를 봅니다. 무엇이 원인인지 애플리케이션 쪽에서는 알 수 없습니다.
 
@@ -209,7 +209,7 @@ Kubernetes가 Service마다 DNAT를 하므로 **모든 Service 통신이 conntra
 |---|---|
 | `/proc/sys/net/netfilter/nf_conntrack_count` | 현재 항목 수 |
 | `/proc/sys/net/netfilter/nf_conntrack_max` | 상한 |
-| `conntrack -S`의 `insert_failed` | **삽입 실패 — 포화의 직접 증거** |
+| `conntrack -S` → `insert_failed` | 삽입 실패. 단독으로 포화를 확정하지 말고 count/max·drop·kernel log와 함께 확인 |
 | `conntrack -S`의 `drop` | 드롭된 패킷 |
 | `dmesg`의 `nf_conntrack: table full, dropping packet` | 커널 경고 |
 
@@ -217,19 +217,19 @@ Kubernetes가 Service마다 DNAT를 하므로 **모든 Service 통신이 conntra
 
 `nf_conntrack_max`를 올리면 **노드 메모리 사용이 늘어납니다.** 항목당 메모리를 쓰므로 무한정 올릴 수 없고, 노드 크기에 맞춰야 합니다. 구체적 설정은 [EKS 노드 커널 튜닝](./03-eks-node-tuning.md)에서 다룹니다.
 
-::: warning 확인 필요
-Bottlerocket에서 `settings.kernel.sysctl`로 conntrack 상한을 올려도 적용되지 않는 이슈가 있습니다([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), 2024년 9월 등록). 원인은 **kube-proxy 설정 파일(`/var/lib/kube-proxy-config/config`)이 커맨드라인 인자보다 우선**하기 때문이고, 알려진 우회책은 kube-proxy 인자에 **`--conntrack-max-per-core=0 --conntrack-min=0`**(0은 "변경하지 않음")을 주어 kube-proxy가 손대지 않게 하고 노드 sysctl 값이 살아남게 하는 것입니다.
-
-**이 이슈가 특정 Bottlerocket 릴리스에서 해결되었는지는 확인하지 못했습니다.** 어느 경로로 설정하든 적용 후 노드에서 실제 값을 직접 확인하십시오. 자세한 설정 경로는 [EKS 노드 커널 튜닝](./03-eks-node-tuning.md)에 있습니다.
+::: warning 실제 kube-proxy 설정 확인
+과거 Bottlerocket 보고에는 kube-proxy가 node sysctl을 덮어쓴 사례가 있습니다. `--config` 사용 시 덮어써지는 CLI flag가 아니라 **활성 설정**의 `conntrack.maxPerCore`·`conntrack.min`을 수정합니다. 둘 다 0으로 설정하는 것은 node sysctl에 상한 관리를 맡기는 의도적 선택이므로 설치한 add-on/version의 동작과 실제 node 값을 검증하고 메모리 예산을 유지합니다.
 :::
+
+과거 issue만으로 모든 현재 Bottlerocket release가 같은 동작이라고 단정할 수 없습니다. Rollout 후 유효 설정과 실제 sysctl을 확인합니다.
 
 ### conntrack을 피하는 방향
 
 conntrack 부하 자체를 줄이는 접근도 있습니다.
 
-- **Service를 거치지 않는 통신**: headless Service로 Pod IP 직접 연결 — DNAT가 없으니 conntrack 항목도 줄어듭니다
-- **eBPF 기반 데이터플레인**: Cilium의 kube-proxy 대체는 netfilter/conntrack 경로를 우회합니다 ([Cilium eBPF](../networking/cilium/02-ebpf.md))
-- **연결 재사용**: keepalive로 연결 수 자체를 줄이면 항목 생성률이 내려갑니다
+- Headless Service는 Service VIP DNAT를 피하지만 **conntrack을 본질적으로 우회하지는 않습니다**.
+- Cilium은 kube-proxy/netfilter 기능을 eBPF map으로 대체할 수 있으며 자체 tracking/map 압력과 남은 netfilter 경로를 측정합니다.
+- 연결 재사용은 churn을 줄이며 established 용량과 timeout 동작도 검증합니다.
 
 ## overlayfs — 이미지 계층이 합쳐지는 방식
 
@@ -256,7 +256,7 @@ conntrack 부하 자체를 줄이는 접근도 있습니다.
 - cgroup v2에서 **`memory.current`는 page cache를 포함**합니다. OOM 진단은 `memory.stat`의 `anon`과 `memory.events`, 그리고 **PSI(`memory.pressure`)**를 함께 봐야 합니다.
 - CPU limit은 **대역폭 제한**이라 사용률이 낮아도 throttling으로 지연이 튑니다. `cpu.stat`의 `nr_throttled`가 증거입니다.
 - kube-proxy는 **nftables가 1.33에서 GA, IPVS는 1.35에서 deprecated(1.38 제거 목표)**, 기본값은 여전히 iptables입니다.
-- **conntrack 포화는 조용히 연결을 드롭합니다.** `conntrack -S`의 `insert_failed`가 직접 증거이고, EKS에서는 `kube-proxy-config` ConfigMap이 우선한다는 점을 알아야 합니다.
+- Conntrack 포화는 신규 연결을 드롭할 수 있습니다. Count/max·drop/insert counter·log로 진단하고 상한 변경 전 유효 kube-proxy 설정을 확인합니다.
 
 다음: [커널 네트워킹 스택](./02-network-stack.md)에서 패킷이 지나는 전체 경로를 봅니다.
 

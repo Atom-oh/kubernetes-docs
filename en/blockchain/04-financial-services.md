@@ -16,7 +16,7 @@ As seen in [Fundamentals](./01-fundamentals.md), blockchain's essence is **"agre
 
 | Situation | Is blockchain right? |
 |---|---|
-| A single organization owns and controls the data | **No** — an ordinary database is better in every respect |
+| A single organization owns and controls the data | Usually start with database/audit-log alternatives; compare explicit verification and governance requirements |
 | An arbiter exists and everyone trusts them | **No** — the arbiter's database suffices |
 | Only tamper detection is needed | **Usually no** — hash chains, signed logs, or WORM storage suffice |
 | Multiple mutually distrusting institutions update **shared state** | **Worth evaluating** |
@@ -31,18 +31,18 @@ As seen in [Fundamentals](./01-fundamentals.md), blockchain's essence is **"agre
 
 ## Why Consortium
 
-Financial services choose consortium (permissioned) chains over public ones not for one reason but because of several constraints combined.
+Some financial applications choose permissioned networks for membership, governance and data-placement controls. Others use public networks with additional controls. **Network choice alone does not establish KYC/AML, privacy or other compliance**; assess the actual jurisdiction, activity, participants and data flows.
 
 | Constraint | The problem on a public chain | In a consortium |
 |---|---|---|
-| **Participant identification (KYC/AML)** | Transacting with anonymous parties — conflicts with anti-money-laundering obligations | Members are identity-verified institutions |
+| **Participant identification (KYC/AML)** | A public address alone does not identify a legal counterparty; application controls depend on the activity | Membership controls help, but do not themselves establish compliance |
 | **Data sovereignty and location** | Data replicated to nodes worldwide | Only on nodes the participating institutions control |
-| **Throughput and latency** | Low throughput, probabilistic finality | Immediate finality via BFT, higher throughput |
+| **Throughput and latency** | Protocol-specific throughput and probabilistic/economic finality | Consensus- and workload-specific; permissioning is not a performance guarantee |
 | **Governance** | Cannot control protocol changes | The consortium decides |
-| **Fee volatility** | Cost varies with network congestion | Infrastructure cost only |
+| **Fee model** | Network fees plus operating/integration costs | Network-specific fees, governance and infrastructure costs; not automatically infrastructure-only |
 | **Error handling** | Incorrect transactions cannot be reversed | Governance procedures can respond |
 
-**The first two are decisive.** Financial institutions have a legal obligation to identify counterparties and must control the location of and access to customer data. Public chains structurally conflict with both.
+Counterparty identification and customer-data handling must be designed for the specific activity and jurisdiction. Public addresses do not automatically establish legal anonymity, and consortium membership does not automatically satisfy identity or data-location obligations. Review these with qualified compliance/legal owners.
 
 ### What choosing consortium actually leaves you
 
@@ -88,7 +88,7 @@ There are ways to resolve the tension, each with a different price.
 
 Its limit is **transactions across channels.** With an A-B channel and a B-C channel, a transaction moving value A→C is hard to process atomically. If your business flow has that shape, the design needs rethinking.
 
-**The trap in encrypted storage** deserves emphasis. **A blockchain cannot delete data.** Ciphertext remains on the ledger permanently, and a key leak **exposes the entire past retroactively.** With an ordinary database you could delete or re-encrypt; here you cannot. Designs that put long-retention data on-chain encrypted must explicitly evaluate this risk.
+Encrypted records on an append-only/public ledger can remain in historical copies; later re-encryption does not erase those copies. A compromised key can reveal records encrypted under that key. Permissioned private-data purging has different semantics, so validate the actual retention and key model rather than declaring every blockchain unable to delete any data.
 
 **ZKP is powerful but hard to get through review.** Explaining "proving truth without revealing content" to a reviewer and assuring the correctness of the implementation are separate challenges. If the scheme requires a trusted setup, that setup's trustworthiness becomes an issue too.
 
@@ -123,7 +123,7 @@ This contradiction is **the hardest part to design** in financial-services block
 
 | Mechanism | What it provides | Limits |
 |---|---|---|
-| **HSM** (CloudHSM, on-premises HSM) | Keys never leave the hardware. FIPS certified | Verify supported curves/algorithms. Cost |
+| **HSM** (CloudHSM, on-premises HSM) | Hardware-backed signing and configurable key protections | Check algorithm support, extractability/wrapping and backup policy for the chosen module |
 | **AWS KMS** | Managed keys, IAM integration, CloudTrail auditing | Verify whether it supports the signature algorithms the blockchain requires |
 | **MPC** (Multi-Party Computation) | Keys held **distributed**, shares combined to sign — no complete key exists anywhere | Implementation complexity, vendor dependency |
 | **Multisig** | N-of-M signatures required at the protocol level | Needs chain/contract support. Higher transaction cost |
@@ -138,7 +138,7 @@ This contradiction is **the hardest part to design** in financial-services block
 | **Execution layer** (accounts, transactions) | **secp256k1** | Transaction signing, EOA accounts | **✅ Supported** — KMS key spec `ECC_SECG_P256K1`, usage restricted to `SIGN_VERIFY` |
 | **Consensus layer** (validators) | **BLS12-381** | Block proposal and attestation signing | **❌ Not supported** |
 
-**The execution layer is a solved problem.** Create an `ECC_SECG_P256K1` key in KMS, use it with `SIGN_VERIFY`, and you can sign Ethereum transactions. AWS documents this pattern in official blog posts. Bitcoin uses the same curve.
+KMS `ECC_SECG_P256K1` with `SIGN_VERIFY` can support an **adapted Ethereum ECDSA signing workflow**. Curve support alone is insufficient: validate digest handling, DER-to-chain signature conversion, low-S/recovery requirements and the exact transaction format. Bitcoin signature schemes differ; secp256k1 support does not imply support for every Schnorr/Taproot workflow. Test with no real funds.
 
 **The consensus layer is the problem.** BLS12-381 is not among KMS's key specs and CloudHSM does not support it either. **So a design that puts validator signing keys in KMS/HSM simply does not work.**
 
@@ -157,10 +157,10 @@ The support status above is as of the time of research, and **HSM support for BL
 Running a PoS validator adds a problem.
 
 - **The signing key must be online continuously** — signing opportunities arrive every slot
-- **Signing in two places at once means slashing** — stake is forfeited. Especially dangerous in HA configurations
+- **Conflicting signatures for the same validator can be slashable.** Multiple uncoordinated signers/key copies create that risk; not every duplicated identical signature is automatically slashed.
 - So **"redundancy for high availability" itself creates the risk**
 
-This runs directly against ordinary HA wisdom. It must be **strictly active-passive rather than active-active**, and failover must guarantee the old node has definitively stopped signing (fencing). If you are evaluating validator operations, this design is the central challenge.
+For ordinary deployments, use a single active signer with fenced failover and preserved slashing-protection history. Any active-active/distributed signer requires a proven shared slashing-protection design. Do not start a second signer with copied live validator keys merely to improve availability.
 
 ## Regulation and Review Issues
 
@@ -231,7 +231,7 @@ The point of this table is that **stages 2 and 3 come before technology.** Even 
 - **Filter out cases where blockchain is not the answer first.** If you cannot write "why this must have no arbiter" in one sentence, compare alternatives. If only tamper detection is needed, signed logs or WORM suffice.
 - The decisive reasons financial services go consortium are **KYC/AML obligations and data sovereignty.** Throughput and governance are secondary benefits.
 - Choosing consortium **removes much of blockchain's original value.** What remains substantively is **"reduced inter-institution reconciliation cost,"** and defining value that way is defensible in review.
-- Privacy and verifiability **conflict directly.** Channel separation is the common starting point, limited by cross-channel atomicity. **Encrypted storage risks retroactive exposure of the entire past** on key leak, and data cannot be deleted.
+- Choose privacy mechanisms for the actual data model. Historic ciphertext copies can outlive key rotation; validate retention, private-data purge and legal obligations explicitly.
 - Key management requirements are **mutually contradictory.** For PoS validators especially, **double signing means slashing**, so ordinary HA wisdom (active-active) creates risk.
 - The two items most underprepared in review are **error correction** (the answer is a compensating-transaction procedure, not technology) and **an exit strategy** (retention obligations mean "we turned it off" is not the end).
 - The core difficulty integrating with existing infrastructure is **the absence of atomicity.** Put eventual-consistency approaches like Saga/outbox into the design early.

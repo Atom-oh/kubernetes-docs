@@ -4,9 +4,9 @@
 
 ## 객관식 문제
 
-1. VPC Lattice에서 circuit breaker와 outlier detection이 제공되지 않는 근본적인 이유는?
+1. 마이그레이션 기능 차이는 어떻게 평가해야 합니까?
    - A) AWS가 아직 해당 기능을 구현하지 않았을 뿐이며 곧 추가될 예정이다
-   - B) Lattice의 프록시는 서비스 앞단에 있고 호출자별 상태를 갖지 않기 때문이다
+   - B) 실제 App Mesh와 Lattice API를 비교하며 proxy 위치만으로 기능 불가능성을 증명하지 않는다
    - C) 해당 기능들이 HTTP/2에서 동작하지 않기 때문이다
    - D) IAM 정책으로 대체할 수 있어 불필요하기 때문이다
 
@@ -14,10 +14,10 @@
 
 <summary>정답 보기</summary>
 
-**정답: B) Lattice의 프록시는 서비스 앞단에 있고 호출자별 상태를 갖지 않기 때문이다**
+**정답: B) 실제 App Mesh와 Lattice API를 비교하며 proxy 위치만으로 기능 불가능성을 증명하지 않는다**
 
 **설명:**
-circuit breaker는 호출자 쪽에서 동시 연결·대기 요청 수를 세야 하고, outlier detection은 호출자별 업스트림 실패 이력을 기억해야 합니다. sidecar 모델은 프록시가 호출자 Pod 안에 있어 이 상태를 자연스럽게 갖지만, Lattice의 프록시는 인프라 계층의 서비스 앞단에 있어 "이 호출자가 최근 어떤 실패를 겪었는가"를 호출자 단위로 유지하지 않습니다. 즉 기능 누락이 아니라 설계 선택의 필연적 결과이며, 대안은 애플리케이션 라이브러리(Resilience4j 등)입니다.
+일반 Envoy/Istio 기능이 자동으로 App Mesh 기능인 것은 아닙니다. 실제 설정 제어를 조사하고 현재 제품 API의 차이에 맞는 앱/proxy 대안을 선택합니다.
 </details>
 
 2. App Mesh의 VirtualNode가 VPC Lattice의 Target Group과 1:1로 대응되지 않는다고 말하는 이유는?
@@ -36,9 +36,9 @@ circuit breaker는 호출자 쪽에서 동시 연결·대기 요청 수를 세�
 VirtualNode는 "이 워크로드가 누구인지(신원), 어디로 나가는지(backends), 어디서 받는지(listeners, health check, connection pool, outlier detection)"를 하나의 리소스에 담았습니다. Lattice에서 대상 집합과 health check만 Target Group으로 가고, "어디로 나가는지"는 auth policy와 IAM 권한의 문제가 되며, "누구인지"는 IAM Role이 되고, connection pool과 outlier detection은 대응 리소스가 아예 없습니다. 매핑표는 리소스 이름의 대응이며 기능의 대응이 아닙니다.
 </details>
 
-3. 이 전환에서 실무적으로 가장 과소평가되는 기능 GAP은 무엇이며 그 이유는?
+3. 적절한 관측성 전환 과제는 무엇입니까?
    - A) circuit breaker — 구현 난도가 가장 높기 때문
-   - B) 관측성(분산 추적 span) — AS-IS에서는 애플리케이션 코드를 건드리지 않고 얻었던 것이 TO-BE에서는 애플리케이션 계측 작업이 되기 때문
+   - B) 앱 추적을 유지하고 기존 proxy가 실제 제공하던 관측 정보를 대체한다
    - C) traffic mirroring — 대안이 전혀 없기 때문
    - D) fault injection — 프로덕션 장애 대응에 필수이기 때문
 
@@ -46,10 +46,10 @@ VirtualNode는 "이 워크로드가 누구인지(신원), 어디로 나가는지
 
 <summary>정답 보기</summary>
 
-**정답: B) 관측성(분산 추적 span) — AS-IS에서는 애플리케이션 코드를 건드리지 않고 얻었던 것이 TO-BE에서는 애플리케이션 계측 작업이 되기 때문**
+**정답: B) 앱 추적을 유지하고 기존 proxy가 실제 제공하던 관측 정보를 대체한다**
 
 **설명:**
-circuit breaker나 retry는 "라이브러리를 넣는다"는 명확한 대안과 산정 가능한 비용이 있습니다. 반면 Envoy가 자동으로 만들어주던 span은 애플리케이션 코드 무변경으로 얻은 것이었고, 같은 수준의 추적을 얻으려면 모든 서비스에 OpenTelemetry 계측이 필요해 애플리케이션 팀의 작업 항목이 됩니다. 게다가 Lattice 구간 자체는 span이 없어 추적 그래프에 빈 구간으로 남고, 그 간격에 네트워크 지연과 Lattice 처리 지연이 섞여 분리되지 않습니다.
+Lattice 네이티브 trace span은 없지만 앱 span은 유지할 수 있습니다. Lattice request ID·access-log timing·client/server 관측을 연결합니다.
 </details>
 
 4. AWS Gateway API Controller가 멈추면 어떤 일이 발생하는가?

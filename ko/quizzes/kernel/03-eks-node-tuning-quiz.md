@@ -22,7 +22,7 @@
 
 2. AL2023의 커널 버전 전환에서 2026년 현재 알아야 할 사실은?
    - A) AL2023은 커널 6.1만 제공한다
-   - B) 2026년 8월 17일부터 `al2023-ami-kernel-default` AMI의 기본 커널이 6.1에서 6.18로 변경되어, 노드 교체만으로도 커널이 바뀐다
+   - B) Default/latest AMI를 다시 조회하면 새 kernel을 선택할 수 있지만 고정 AMI ID는 변하지 않는다
    - C) 커널 버전은 EKS 컨트롤플레인 버전에 따라 자동 결정된다
    - D) AL2023은 커널 업그레이드를 지원하지 않는다
 
@@ -30,10 +30,10 @@
 
 <summary>정답 보기</summary>
 
-**정답: B) 2026년 8월 17일부터 `al2023-ami-kernel-default` AMI의 기본 커널이 6.1에서 6.18로 변경되어, 노드 교체만으로도 커널이 바뀐다**
+**정답: B) Default/latest AMI를 다시 조회하면 새 kernel을 선택할 수 있지만 고정 AMI ID는 변하지 않는다**
 
 **설명:**
-AL2023은 2023년 3월 커널 6.1로 출시되었고, 2025년 4월에 6.12 지원이 추가되었으며, **2026년 8월 17일부터 기본 커널이 6.18로 변경**되었습니다. `kernel-default` AMI를 쓰면 오토스케일링·업그레이드·스팟 회수 같은 노드 교체만으로 커널이 바뀝니다. 특정 커널에 고정해야 하면 `al2023-ami-kernel-6.1-*` 같은 버전 지정 AMI를 명시적으로 써야 하고, 커널 전환은 Kubernetes 버전 업그레이드와 같은 무게로 다뤄야 합니다.
+Launch template/provisioner가 선택한 AMI와 실행 kernel을 확인합니다. EKS-optimized AMI는 별도 release 선택을 가지며 node 교체 자체가 kernel 업그레이드 증명은 아닙니다.
 </details>
 
 3. CPU throttling의 가장 흔한 근본 원인과 첫 대응은?
@@ -87,17 +87,17 @@ AL2023은 2023년 3월 커널 6.1로 출시되었고, 2025년 4월에 6.12 지�
 6. 다음 중 "근거 있는 튜닝"의 대표 사례가 아닌 것은?
    - A) `vm.max_map_count` — OpenSearch 계열이 기본값에서 시작 실패
    - B) `net.core.somaxconn` — accept 큐 오버플로 카운터로 증거 확인 가능
-   - C) `net.ipv4.tcp_rmem` / `tcp_wmem` — 기본값을 고정해 성능 향상
+   - C) 측정된 BDP/메모리 문제나 socket별 override 이해 없이 TCP buffer 설정을 바꾸는 것
    - D) `net.ipv4.ip_local_port_range` — 출발지 포트 고갈이 연결 실패로 직접 나타남
 
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: C) `net.ipv4.tcp_rmem` / `tcp_wmem` — 기본값을 고정해 성능 향상**
+**정답: C) 측정된 BDP/메모리 문제나 socket별 override 이해 없이 TCP buffer 설정을 바꾸는 것**
 
 **설명:**
-`tcp_rmem`/`tcp_wmem`은 **건드리지 않는 것이 기본**입니다. 커널이 부하에 따라 자동 조정하고 있고, 값을 고정하면 그 자동 조정이 비활성화됩니다. BDP가 큰 장거리 경로에서 상한 조정을 검토할 수는 있지만 일반적인 튜닝 대상이 아닙니다. 반면 A·B·D는 모두 명확한 증상과 직접적인 증거 카운터가 있어 근거 있는 조정의 사례입니다 — `vm.max_map_count`는 시작 실패 로그, `somaxconn`은 `nstat`의 `TcpExtListenOverflows`, 포트 범위는 연결 실패입니다.
+tcp_rmem/tcp_wmem은 크기 범위/기본값이며 변경 자체가 autotuning을 끄지는 않습니다. 명시적 SO_RCVBUF/SO_SNDBUF가 해당 socket 자동 크기 조정을 끕니다.
 </details>
 
 7. Pod의 `securityContext.sysctls`로 바꿀 수 없는 값은?

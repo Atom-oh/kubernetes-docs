@@ -4,9 +4,9 @@ This quiz tests your understanding of the structural differences between the sid
 
 ## Multiple Choice Questions
 
-1. What is the fundamental reason VPC Lattice does not provide circuit breaking and outlier detection?
+1. How should migration feature gaps be assessed?
    - A) AWS simply has not implemented them yet and will add them soon
-   - B) Lattice's proxy sits in front of the service and holds no per-caller state
+   - B) Compare the actual App Mesh and Lattice APIs; proxy placement alone does not prove feature impossibility
    - C) Those features do not work over HTTP/2
    - D) They are unnecessary because IAM policies can replace them
 
@@ -14,10 +14,10 @@ This quiz tests your understanding of the structural differences between the sid
 
 <summary>Show Answer</summary>
 
-**Answer: B) Lattice's proxy sits in front of the service and holds no per-caller state**
+**Answer: B) Compare the actual App Mesh and Lattice APIs; proxy placement alone does not prove feature impossibility**
 
 **Explanation:**
-Circuit breaking requires counting concurrent connections and pending requests on the caller side, and outlier detection requires remembering per-caller upstream failure history. In the sidecar model the proxy lives inside the calling Pod and naturally has that state; Lattice's proxy sits at the infrastructure layer in front of the service and does not maintain "what failures has this particular caller recently seen" per caller. This is not a missing feature but the necessary consequence of a design choice, and the alternative is application libraries such as Resilience4j.
+Generic Envoy/Istio features are not automatically App Mesh features. Inventory the configured controls and choose application/proxy replacements for gaps in the current product API.
 </details>
 
 2. Why is App Mesh's VirtualNode said not to map one-to-one onto a VPC Lattice Target Group?
@@ -36,9 +36,9 @@ Circuit breaking requires counting concurrent connections and pending requests o
 A VirtualNode packed "who this workload is (identity), where it goes (backends), and where it receives (listeners, health checks, connection pools, outlier detection)" into a single resource. In Lattice only the target set and health checks become a Target Group; "where it goes" becomes a matter of auth policies and IAM permissions; "who it is" becomes an IAM Role; and connection pools and outlier detection have no corresponding resource at all. The mapping table maps resource names, not capabilities.
 </details>
 
-3. Which feature gap is most often underestimated in practice, and why?
+3. What is an appropriate observability migration task?
    - A) Circuit breaking — it is the hardest to implement
-   - B) Observability (distributed trace spans) — what came for free without touching application code in AS-IS becomes an instrumentation project in TO-BE
+   - B) Preserve application tracing and replace the telemetry actually supplied by the old proxy
    - C) Traffic mirroring — there is no alternative at all
    - D) Fault injection — it is essential for production incident response
 
@@ -46,10 +46,10 @@ A VirtualNode packed "who this workload is (identity), where it goes (backends),
 
 <summary>Show Answer</summary>
 
-**Answer: B) Observability (distributed trace spans) — what came for free without touching application code in AS-IS becomes an instrumentation project in TO-BE**
+**Answer: B) Preserve application tracing and replace the telemetry actually supplied by the old proxy**
 
 **Explanation:**
-Circuit breaking and retries have a clear alternative ("add a library") with an estimable cost. But the spans Envoy produced automatically required no application code changes; getting the same tracing requires OpenTelemetry instrumentation in every service, which becomes an application-team work item. Moreover, the Lattice hop itself has no span, so it remains a blank gap in the trace graph where network latency and Lattice processing latency are mixed and cannot be separated.
+Lattice has no native trace span, but application spans remain possible. Correlate them with Lattice request IDs, access-log timing and client/server observations.
 </details>
 
 4. What happens if the AWS Gateway API Controller stops?

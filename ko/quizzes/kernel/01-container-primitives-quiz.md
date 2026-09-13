@@ -84,9 +84,9 @@ CPU limit은 대역폭 제한입니다. `cpu.max`가 `20000 100000`이면 "100ms
 nftables 모드는 1.29 alpha → 1.31 beta → **1.33 GA**로 성숙했고, O(1) 조회와 증분 규칙 갱신을 제공합니다(워커 노드에 커널 5.13+ 필요, AL2023은 충족). IPVS 모드는 **1.35(2025년 12월)에서 deprecated**되었고 1.38 제거가 목표이며 권장 대체는 nftables입니다. 다만 호환성을 위해 **기본값은 여전히 iptables**이므로 nftables 전환은 명시적 결정이 필요합니다. IPVS를 쓰고 있다면 이전 계획이 필요합니다.
 </details>
 
-6. conntrack 테이블 포화의 증상과 직접 증거는?
+6. Conntrack 포화 의심은 어떻게 검증해야 합니까?
    - A) 명확한 커널 패닉 — `dmesg`에서 즉시 확인
-   - B) 새 연결이 조용히 드롭되고 애플리케이션은 타임아웃만 봄. 직접 증거는 `conntrack -S`의 `insert_failed`
+   - B) Conntrack count/max·insert/drop counter·kernel log를 연결하며 insert_failed만으로 포화를 확정하지 않는다
    - C) 모든 기존 연결이 즉시 끊김
    - D) CPU 사용률이 100%로 상승
 
@@ -94,10 +94,10 @@ nftables 모드는 1.29 alpha → 1.31 beta → **1.33 GA**로 성숙했고, O(1
 
 <summary>정답 보기</summary>
 
-**정답: B) 새 연결이 조용히 드롭되고 애플리케이션은 타임아웃만 봄. 직접 증거는 `conntrack -S`의 `insert_failed`**
+**정답: B) Conntrack count/max·insert/drop counter·kernel log를 연결하며 insert_failed만으로 포화를 확정하지 않는다**
 
 **설명:**
-Kubernetes가 Service마다 DNAT를 하므로 모든 Service 통신이 conntrack 항목을 만들고, 테이블이 포화되기 쉽습니다. 포화되면 에러 로그가 요란하게 나지 않고 새 연결이 조용히 드롭되어, 애플리케이션은 연결 타임아웃이나 refused만 봅니다. 원인을 애플리케이션 쪽에서는 알 수 없습니다. `conntrack -S`의 `insert_failed`가 삽입 실패의 직접 증거이고, `dmesg`의 `nf_conntrack: table full` 경고가 보조 신호입니다.
+NAT 없는 트래픽에도 tracking이 적용될 수 있습니다. Headless Service DNS는 VIP DNAT를 피하지만 connection tracking을 본질적으로 우회하지는 않습니다.
 </details>
 
 7. EKS에서 conntrack 값을 조정할 때 주의할 점은?

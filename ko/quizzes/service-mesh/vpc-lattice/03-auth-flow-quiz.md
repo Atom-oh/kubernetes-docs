@@ -65,12 +65,12 @@ SigV4는 `Host` 헤더를 항상 서명 대상에 포함합니다. custom domain
 **정답: B) 그 노드의 시각 동기화 문제 — `x-amz-date`는 서명 대상이며 SigV4의 허용 오차는 약 5분이다**
 
 **설명:**
-`x-amz-date`가 서명 대상이므로 검증 측은 이 시각이 현재 시각과 크게 다르면 요청을 거부합니다. 즉 노드의 시각 동기화가 인증의 전제 조건입니다. Amazon Time Sync Service를 쓰는 EC2/EKS 노드에서는 보통 문제되지 않지만, NTP가 제대로 설정되지 않은 온프레미스·하이브리드 노드나 장시간 suspend 후 재개된 노드에서 발생합니다. 실패가 간헐적이고 노드 단위라는 특징이 진단의 단서입니다. 참고로 5분은 SigV4 공통 동작이며 Lattice 전용 값이 아닙니다.
+일반 AWS SigV4 안내는 대부분의 요청이 timestamp부터 5분 안에 도착해야 한다고 설명합니다. 실제 service 오류와 UTC 시계를 확인하며 별도 실측 Lattice 전용 보장으로 보지 않습니다.
 </details>
 
-5. egress proxy 방식으로 SigV4 서명을 할 때 "서명은 최종 홉에서 해야 한다"는 원칙이 중요한 이유는?
+5. 서명과 Lattice 검증 사이에서 무엇을 확인해야 합니까?
    - A) 프록시가 여러 개면 레이턴시가 증가하기 때문
-   - B) 서명은 요청 내용(경로, 쿼리, Host, payload hash 등)에 묶여 있어, 서명 이후에 그것을 건드리는 프록시가 있으면 검증이 깨지기 때문
+   - B) Canonical 서명 필드 변경은 검증을 깨뜨릴 수 있으며 Lattice의 UNSIGNED-PAYLOAD 본문은 TLS/앱 제어로 보호한다
    - C) 프록시는 credential을 캐시할 수 없기 때문
    - D) IAM Role은 하나의 프록시에만 연결할 수 있기 때문
 
@@ -78,10 +78,10 @@ SigV4는 `Host` 헤더를 항상 서명 대상에 포함합니다. custom domain
 
 <summary>정답 보기</summary>
 
-**정답: B) 서명은 요청 내용(경로, 쿼리, Host, payload hash 등)에 묶여 있어, 서명 이후에 그것을 건드리는 프록시가 있으면 검증이 깨지기 때문**
+**정답: B) Canonical 서명 필드 변경은 검증을 깨뜨릴 수 있으며 Lattice의 UNSIGNED-PAYLOAD 본문은 TLS/앱 제어로 보호한다**
 
 **설명:**
-canonical request에는 메서드, 정규화된 경로, 정렬된 쿼리 문자열, 서명 대상 헤더, payload 해시가 들어갑니다. 경로를 rewrite하거나 Host를 바꾸거나 쿼리를 추가·정렬 변경하거나 payload를 압축·해제하는 프록시가 서명 뒤에 있으면 서명이 불일치합니다. aws-samples 레퍼런스 구현은 `sigv4proxy` 사이드카를 8080에서 띄우고 init container가 iptables로 `169.254.171.0/24` 향 트래픽만 리다이렉트해, 프록시가 서명한 뒤 곧바로 Lattice로 나가게 만듭니다.
+서명한 Host/path/query 값은 실제 요청과 같아야 합니다. Canonical sorting 때문에 동등한 query 순서 변경은 반드시 변화가 아닙니다. Lattice는 payload signing을 지원하지 않으며 x-amz-content-sha256: UNSIGNED-PAYLOAD header가 필요합니다.
 </details>
 
 6. auth policy를 설정했는데도 클러스터 내부에서 인가가 적용되지 않는 경우의 원인은?

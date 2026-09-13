@@ -57,7 +57,7 @@ What follows:
 
 ### user namespaces — why they were not the default for so long
 
-A user namespace **maps** root (UID 0) inside the container to an unprivileged UID on the host. Even if a container escapes, it holds only ordinary user privileges on the host — attractive for security.
+A user namespace maps container UIDs/GIDs to a different host range. This reduces the privileges of many escaped operations but does **not guarantee** containment against a kernel vulnerability or other privilege-escalation path.
 
 Yet it was not the default for a long time. The reason is **file ownership.** Files on a volume are recorded with host UIDs; if the container sees a different UID, permissions do not line up. Solving it requires translating UIDs at mount time (idmapped mounts, kernel 5.12+), and storage drivers and CSI must support it too.
 
@@ -109,7 +109,7 @@ Practical implications:
 
 | Misconception | Reality |
 |---|---|
-| "`memory.current` near the limit means OOM is imminent" | Most of it is page cache and gets reclaimed. This can be perfectly normal |
+| "`memory.current` near the limit means OOM is imminent" | It may include reclaimable file cache; inspect anon/file/kernel usage and pressure instead of assuming its composition |
 | "Just look at RSS" | OOM can happen with low RSS (when reclaim can't keep up) |
 | "Raising the limit fixes it" | If the cause is slow reclaim, it will recur |
 
@@ -186,7 +186,7 @@ Service implementation comes in three flavors, and **the landscape shifted in 20
 
 | Mode | Rule evaluation | Status |
 |---|---|---|
-| **iptables** | **Linear evaluation** of rule chains — rule count grows with Service count and updates approach a full rewrite | Still the **default** (compatibility) |
+| **iptables** | Rule-chain lookup cost depends on rule layout; current kube-proxy optimizes updates | Default where not explicitly changed; verify the installed implementation |
 | **IPVS** | In-kernel L4 load balancer, hash-based O(1) | **Deprecated in Kubernetes 1.35 (December 2025)**, removal targeted for 1.38 |
 | **nftables** | O(1) lookup plus **incremental rule updates** | **GA in Kubernetes 1.33** (alpha 1.29 → beta 1.31). Requires **kernel 5.13+** on worker nodes |
 
@@ -201,7 +201,7 @@ How to read this:
 
 For netfilter to do NAT, it must **remember connections.** If you rewrote the address on the way out, you have to undo it on the way back. The kernel table holding that memory is `nf_conntrack`.
 
-Since Kubernetes DNATs every Service, **every Service connection creates a conntrack entry.** That makes the table easy to exhaust.
+In kube-proxy netfilter modes, Service NAT relies on connection tracking. However, **non-NAT traffic may also be tracked**, and headless Services, external endpoints and eBPF implementations have different paths. Do not equate every Kubernetes Service with one mandatory DNAT path.
 
 **What happens on exhaustion is the crux of the problem.** There is no loud error. New connections are **silently dropped**, and the application sees connection timeouts or refusals. From the application side there is no way to know why.
 
@@ -209,7 +209,7 @@ Since Kubernetes DNATs every Service, **every Service connection creates a connt
 |---|---|
 | `/proc/sys/net/netfilter/nf_conntrack_count` | Current entries |
 | `/proc/sys/net/netfilter/nf_conntrack_max` | Ceiling |
-| `conntrack -S` → `insert_failed` | **Insert failures — direct evidence of exhaustion** |
+| `conntrack -S` → `insert_failed` | Insert failures; correlate with count/max, drops and kernel logs rather than treating this as proof of exhaustion alone |
 | `conntrack -S` → `drop` | Dropped packets |
 | `dmesg` → `nf_conntrack: table full, dropping packet` | Kernel warning |
 
@@ -217,19 +217,19 @@ Since Kubernetes DNATs every Service, **every Service connection creates a connt
 
 Raising `nf_conntrack_max` **increases node memory use.** Each entry costs memory, so you cannot raise it without bound — it must match node size. Concrete settings are in [EKS Node Kernel Tuning](./03-eks-node-tuning.md).
 
-::: warning Needs verification
-On Bottlerocket, raising the conntrack ceiling via `settings.kernel.sysctl` does not take effect ([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), filed September 2024). The cause is that **the kube-proxy config file (`/var/lib/kube-proxy-config/config`) takes precedence over command-line arguments**, and the known workaround is passing **`--conntrack-max-per-core=0 --conntrack-min=0`** to kube-proxy (0 meaning "do not change") so kube-proxy leaves it alone and the node's sysctl value survives.
-
-**Whether this was resolved in a specific Bottlerocket release could not be confirmed.** Whichever path you use, verify the actual value on the node after applying. Configuration paths are covered in [EKS Node Kernel Tuning](./03-eks-node-tuning.md).
+::: warning Verify the active kube-proxy configuration
+A historical Bottlerocket report shows node sysctl values being overwritten by kube-proxy. When `--config` is used, edit the **active configuration** (`conntrack.maxPerCore` and `conntrack.min`), not CLI flags that it overrides. Setting both to 0 intentionally delegates the ceiling to node sysctl; confirm behavior against the deployed add-on/version and verify the resulting node value. Preserve the node-memory budget.
 :::
+
+The historical issue is not evidence that every current Bottlerocket release has the same behavior. Read the effective configuration and actual sysctl after rollout.
 
 ### Reducing conntrack pressure
 
 There are approaches that reduce the load itself.
 
-- **Bypass Services**: headless Services connecting directly to Pod IPs — no DNAT, so fewer conntrack entries
-- **eBPF dataplanes**: Cilium's kube-proxy replacement bypasses the netfilter/conntrack path ([Cilium eBPF](../networking/cilium/02-ebpf.md))
-- **Connection reuse**: keepalive reduces connection count, lowering the entry creation rate
+- Headless Services avoid Service VIP DNAT, but **do not inherently bypass conntrack**.
+- Cilium can replace kube-proxy/netfilter functions with eBPF maps; measure its own tracking/map pressure and any remaining netfilter path.
+- Connection reuse reduces connection churn; verify both established capacity and timeout behavior.
 
 ## overlayfs — How Image Layers Are Composed
 
@@ -256,7 +256,7 @@ The operationally important property is **copy-up.** Modifying a file from lower
 - In cgroup v2, **`memory.current` includes page cache.** OOM diagnosis needs `memory.stat` → `anon`, `memory.events`, and **PSI (`memory.pressure`)** together.
 - A CPU limit is a **bandwidth limit**, so throttling spikes latency even at low utilization. `cpu.stat` → `nr_throttled` is the evidence.
 - For kube-proxy, **nftables is GA in 1.33 and IPVS is deprecated in 1.35 (removal targeted 1.38)**; the default is still iptables.
-- **conntrack exhaustion silently drops connections.** `conntrack -S` → `insert_failed` is the direct evidence, and on EKS you must know the `kube-proxy-config` ConfigMap takes precedence.
+- Conntrack exhaustion can drop new connections. Diagnose with count/max, drop/insert counters and logs; check the effective kube-proxy configuration before changing limits.
 
 Next: [Kernel Networking Stack](./02-network-stack.md) walks the full path a packet travels.
 

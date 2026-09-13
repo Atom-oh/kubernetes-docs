@@ -86,7 +86,7 @@ P2P 프로토콜은 자기 주소를 다른 피어에게 광고합니다. 컨테
 
 6. 블록체인 노드에서 CPU limit을 신중히 다뤄야 하면서 동시에 노드 전용화를 권하는 이유는?
    - A) CPU limit이 메모리 사용에 영향을 주기 때문
-   - B) throttling이 블록 처리 지연으로 이어지지만 limit이 없으면 노드 전체를 먹을 수 있어, 전용 노드라면 limit 없이도 다른 워크로드에 피해가 없기 때문
+   - B) 전용 node는 tenant 경합을 줄이지만 시스템 daemon의 reservation·여유는 필요하다
    - C) 전용 노드에서는 CPU limit이 무시되기 때문
    - D) Guaranteed QoS를 받으려면 노드를 전용화해야 하기 때문
 
@@ -94,15 +94,15 @@ P2P 프로토콜은 자기 주소를 다른 피어에게 광고합니다. 컨테
 
 <summary>정답 보기</summary>
 
-**정답: B) throttling이 블록 처리 지연으로 이어지지만 limit이 없으면 노드 전체를 먹을 수 있어, 전용 노드라면 limit 없이도 다른 워크로드에 피해가 없기 때문**
+**정답: B) 전용 node는 tenant 경합을 줄이지만 시스템 daemon의 reservation·여유는 필요하다**
 
 **설명:**
-CPU limit은 대역폭 제한이라 주기 내에 할당량을 소진하면 강제로 멈춥니다. 블록 처리가 그 순간에 걸리면 지연이 생기고 검증자에게는 놓친 기회가 됩니다. 그런데 limit을 없애면 노드 전체를 먹을 위험이 있습니다. 해법은 taint/toleration으로 **노드를 전용화하고 request를 충분히 주는 것**입니다 — 전용 노드라면 limit 없이도 다른 워크로드에 피해를 주지 않습니다.
+Kubelet·CNI/CSI·monitoring·OS 서비스는 남습니다. 앱 CPU limit을 생략해도 지속 부하와 node health를 시험합니다.
 </details>
 
 7. Pectra 업그레이드의 EIP-7251이 운영에 준 영향은?
    - A) 노드 디스크 요구량이 절반으로 줄었다
-   - B) 검증자 최대 유효 잔액(MaxEB)이 32 ETH에서 2,048 ETH로 올라, 여러 검증자를 통합해 관리할 키와 인스턴스 수를 줄일 수 있게 되었다
+   - B) EIP-7251은 해당 validator의 consolidation을 허용하지만 validator key와 process/VM은 일대일이 아니다
    - C) 실행 클라이언트와 컨센서스 클라이언트가 하나로 통합되었다
    - D) 하드포크 일정이 연 1회로 줄었다
 
@@ -110,15 +110,15 @@ CPU limit은 대역폭 제한이라 주기 내에 할당량을 소진하면 강�
 
 <summary>정답 보기</summary>
 
-**정답: B) 검증자 최대 유효 잔액(MaxEB)이 32 ETH에서 2,048 ETH로 올라, 여러 검증자를 통합해 관리할 키와 인스턴스 수를 줄일 수 있게 되었다**
+**정답: B) EIP-7251은 해당 validator의 consolidation을 허용하지만 validator key와 process/VM은 일대일이 아니다**
 
 **설명:**
-2025년 5월 7일 메인넷에 적용된 Pectra의 EIP-7251은 MaxEB를 32 ETH에서 2,048 ETH로 올렸습니다. 이전에는 스테이킹 규모를 늘리려면 32 ETH 단위로 검증자를 계속 늘려야 했고 각각이 별도 키와 프로세스였습니다. 통합이 가능해지면 관리할 키와 인스턴스가 줄어들어 **운영 부담과 인프라 비용이 함께 내려갑니다.** 참고로 Ethereum은 이후 2025년 12월 3일 Fusaka(핵심은 PeerDAS)를 적용했고, 프로토콜은 계속 변하므로 설계 전 최신 상태 확인이 필요합니다.
+Validator client는 여러 키를 관리할 수 있습니다. Validator record/키 관리 감소가 비례하는 인프라·비용 감소를 증명하지는 않습니다.
 </details>
 
-8. Hyperledger Fabric 운영에서 가장 흔한 장애 원인으로 꼽히는 것은?
+8. 어떤 유지보수 조치가 Fabric MSP/TLS 인증서 만료에 대응합니까?
    - A) orderer의 Raft 합의 실패
-   - B) 인증서 만료 — MSP 서명 인증서와 TLS 인증서의 갱신 관리
+   - B) MSP/TLS 인증서 만료를 감시하고 channel·policy·consensus 운영과 함께 갱신을 연습한다
    - C) 체인코드 실행 오류
    - D) 채널 정책 충돌
 
@@ -126,10 +126,10 @@ CPU limit은 대역폭 제한이라 주기 내에 할당량을 소진하면 강�
 
 <summary>정답 보기</summary>
 
-**정답: B) 인증서 만료 — MSP 서명 인증서와 TLS 인증서의 갱신 관리**
+**정답: B) MSP/TLS 인증서 만료를 감시하고 channel·policy·consensus 운영과 함께 갱신을 연습한다**
 
 **설명:**
-Fabric은 MSP(Membership Service Provider)로 조직과 신원을 관리하며 모든 통신이 TLS입니다. peer·orderer·CA 각각의 MSP 서명 인증서와 TLS 인증서를 관리해야 하고, **인증서 만료가 실제로 장애를 만듭니다.** 갱신을 자동화하고 만료 알람을 걸어두는 것이 필수이며, HashiCorp Vault 등 외부 PKI와 연동하는 구성도 실무에서 쓰입니다. 참고로 orderer의 영구 볼륨은 타협 불가입니다 — Raft 로그가 소실되면 합의 상태가 깨집니다.
+인증서 만료는 구체적 위험이지만 이 자료의 실측 최다 장애 순위는 아닙니다. Operator 호환성과 peer transaction 검증도 확인합니다.
 </details>
 
 9. 하드포크 후 반드시 해야 하는 확인 작업은?

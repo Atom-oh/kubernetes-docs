@@ -22,7 +22,7 @@ A SPIFFE ID takes the form `spiffe://<trust-domain>/<workload-path>`, where the 
 
 2. In SPIRE's Workload Attestation, at which point is the bootstrapping problem decisively resolved?
    - A) When the workload presents a pre-planted token
-   - B) When the Agent obtains the peer process's PID from the kernel — an unforgeable kernel fact, which it then cross-checks against Kubernetes' records
+   - B) The Agent uses kernel-provided peer information under a trusted-kernel/attestor model and cross-checks workload selectors
    - C) When the Server signs the SVID
    - D) When Envoy receives the certificate over SDS
 
@@ -30,31 +30,31 @@ A SPIFFE ID takes the form `spiffe://<trust-domain>/<workload-path>`, where the 
 
 <summary>Show Answer</summary>
 
-**Answer: B) When the Agent obtains the peer process's PID from the kernel — an unforgeable kernel fact, which it then cross-checks against Kubernetes' records**
+**Answer: B) The Agent uses kernel-provided peer information under a trusted-kernel/attestor model and cross-checks workload selectors**
 
 **Explanation:**
-The workload connects to the Workload API's UDS with no credentials. The Agent obtains the peer PID from the kernel, then walks PID → cgroup → container → Pod/namespace/ServiceAccount to build selectors and submits them to the Server. The workload never claims who it is; the kernel reports a fact and that fact is cross-checked against platform records. This is the principle that "identity is not presented but observed and adjudicated" — forging it would require compromising the kernel or the API server.
+This avoids asking the workload to bootstrap with a pre-shared application secret. It is not an unconditional guarantee against host compromise, bad selectors or incorrect attestor configuration.
 </details>
 
 3. Why are SVIDs designed with short lifetimes?
    - A) To save storage space
-   - B) To bound the useful window of a compromise without needing a revocation mechanism
+   - B) Short lifetimes bound credential usefulness but do not replace compromise response or authorization controls
    - C) To distribute the CA's signing load
-   - D) To re-verify identity during each renewal
+   - D) To eliminate every runtime secret and all compromise-response requirements
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: B) To bound the useful window of a compromise without needing a revocation mechanism**
+**Answer: B) Short lifetimes bound credential usefulness but do not replace compromise response or authorization controls**
 
 **Explanation:**
-Certificate revocation mechanisms such as CRLs and OCSP are operationally awkward. If a credential expires within tens of minutes to a few hours, the useful window of a compromise is bounded without any revocation machinery. Importantly, STS temporary credentials are short-lived for the same reason — so the review argument "we do not use long-lived secrets" is satisfied equally in AS-IS and TO-BE and is not up for re-litigation during migration.
+Review renewal, runtime storage, replay exposure and emergency-deny/revocation behavior. Expiring credentials still contain secrets and are not automatically safe until expiry.
 </details>
 
 4. What are the two structural similarities between SPIFFE/SPIRE and Lattice IAM Auth?
    - A) Both use X.509 certificates and both perform mTLS
-   - B) Both use short-lived credentials, and both are based on platform attestation so the workload holds no secret in advance
+   - B) Both can avoid baked-in long-lived secrets, while runtime private keys or temporary secret credentials still need protection
    - C) Both have the customer operate a CA and both authenticate per connection
    - D) Both support workloads outside AWS and both authenticate per request
 
@@ -62,10 +62,10 @@ Certificate revocation mechanisms such as CRLs and OCSP are operationally awkwar
 
 <summary>Show Answer</summary>
 
-**Answer: B) Both use short-lived credentials, and both are based on platform attestation so the workload holds no secret in advance**
+**Answer: B) Both can avoid baked-in long-lived secrets, while runtime private keys or temporary secret credentials still need protection**
 
 **Explanation:**
-The SPIRE Agent serving SVIDs over UDS and the Pod Identity Agent serving credentials on a link-local address are the same idea — a local infrastructure component adjudicates the workload and obtains credentials on its behalf. Node identity, workload adjudication, credential delivery, and renewal correspond row for row between the two systems. Thanks to this similarity, the review arguments "no long-lived secrets" and "workloads hold no secrets" both carry over unchanged.
+X.509-SVID delivery includes key material; IAM credentials include a secret access key and session token. Platform attestation changes provisioning, not the need to protect sockets/endpoints, memory and caches.
 </details>
 
 5. What is the practical implication of decisive difference (a), the change in authentication directionality?
@@ -102,7 +102,7 @@ Adopting SPIRE was likely the result of passing that very review. Moving to Latt
 
 7. In which situation might you need to keep operating SPIRE after migrating to Lattice?
    - A) Any case where IAM Auth is used
-   - B) When you have workloads outside AWS, or when you choose the TLS Passthrough configuration so endpoints must perform mTLS themselves
+   - B) When the chosen architecture still needs SPIFFE endpoint identities, including endpoint mTLS or supported off-AWS workloads
    - C) When you use the Gateway API Controller
    - D) When you have a multi-cluster setup
 
@@ -110,8 +110,8 @@ Adopting SPIRE was likely the result of passing that very review. Moving to Latt
 
 <summary>Show Answer</summary>
 
-**Answer: B) When you have workloads outside AWS, or when you choose the TLS Passthrough configuration so endpoints must perform mTLS themselves**
+**Answer: B) When the chosen architecture still needs SPIFFE endpoint identities, including endpoint mTLS or supported off-AWS workloads**
 
 **Explanation:**
-IAM Auth requires reachability to IAM/STS, so it does not cover on-premises or other-cloud workloads, where SPIRE remains necessary. And if regulation requires end-to-end encryption or mutual authentication and you choose TLS Passthrough, endpoints must do mTLS themselves and SPIRE can supply those certificates. So a configuration where App Mesh is gone but SPIRE remains is possible — responding to App Mesh end of support and keeping SPIRE are separate decisions. If eliminating SPIRE's operational burden was a migration goal, check whether these conditions conflict with it.
+Keeping SPIRE is an architectural option, not a universal requirement for every off-AWS workload. Other credential providers and supported private network paths can be evaluated.
 </details>

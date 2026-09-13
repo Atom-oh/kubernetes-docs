@@ -46,7 +46,8 @@
 
 [기초 개념](./01-fundamentals.md)에서 본 "안정적인 피어 신원"과 "Pod별 상태 유지" 요구가 정확히 StatefulSet의 제공 사항입니다.
 
-### 최소 골격
+### 불완전한 시험용 구조 — 배포 가능한 manifest가 아님
+이 조각에는 필수 StatefulSet selector/template label·image/argument·headless Service·StorageClass와 post-Merge EL/CL Engine API/JWT 설정이 없습니다. 그대로 적용하지 않습니다. **실제 자금이나 validator signing key 없이** 격리된 시험 환경에서 리소스를 완성·검증합니다. JSON-RPC와 Engine API는 사설/인증 경로로 유지하고 P2P 연결 때문에 RPC·signing endpoint가 노출되지 않도록 합니다.
 
 ```yaml
 apiVersion: apps/v1
@@ -125,7 +126,7 @@ spec:
 
 ### 공식 하드웨어 가이던스 — EIP-7870
 
-Ethereum의 노드 하드웨어 요건은 **[EIP-7870](https://eips.ethereum.org/EIPS/eip-7870)**이 공식 가이던스이고, [ethereum.org의 Run a node](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/) 문서가 이를 인용합니다.
+[EIP-7870](https://eips.ethereum.org/EIPS/eip-7870)과 [Run a node 안내](https://ethereum.org/developers/docs/nodes-and-clients/run-a-node/)를 **초기 권고**로 사용하며 EKS instance/EBS volume의 보장값으로 보지 않습니다. 선택한 client·fork·pruning·실측 증가율을 검증합니다.
 
 | 항목 | 최소 | **권장 (EIP-7870, full node)** |
 |---|---|---|
@@ -138,7 +139,7 @@ Ethereum의 노드 하드웨어 요건은 **[EIP-7870](https://eips.ethereum.org
 
 **① 병목은 디스크입니다.** ethereum.org가 명시합니다 — "The bottleneck for your hardware is mostly disk space. Syncing the Ethereum blockchain is very input/output intensive." 앞에서 IOPS를 먼저 다룬 이유입니다.
 
-**② 드라이브 품질이 스펙에 들어가 있습니다.** "DRAM-less and QLC drives are discouraged" — 용량·IOPS 숫자만 맞추면 되는 게 아니라 **드라이브 종류가 요건**입니다. EBS에서는 gp3/io2를 쓰면 이 문제가 관리되지만, 인스턴스 스토어나 자체 하드웨어를 쓴다면 확인 대상입니다.
+**② EIP-7870은 hardware 권고이며 특정 EBS 설정의 충족 증명이 아닙니다.** EC2/EBS 지연·instance bandwidth·volume IOPS/throughput은 local NVMe와 다릅니다. 선택한 client·storage 설정으로 sync와 정상 처리 성능을 측정합니다.
 
 **③ 2 TB 최소치는 수명이 정해져 있습니다.** ethereum.org는 2 TB가 "likely exceeded by 2027"이라고 적고 있습니다. **용량 계획에 증가를 반드시 넣어야 하는 근거**입니다.
 
@@ -162,7 +163,7 @@ Ethereum의 노드 하드웨어 요건은 **[EIP-7870](https://eips.ethereum.org
 
 ## 헬스체크 — 일반 방식으로는 안 되는 이유
 
-여기가 블록체인 노드 운영에서 **가장 자주 잘못 구성되는 부분**입니다.
+동기화 상태를 무시하는 health check는 stale node로 앱 트래픽을 보낼 수 있습니다. 이는 시험할 설계 위험이며 실측 운영 실수 순위는 아닙니다.
 
 ### 문제
 
@@ -256,7 +257,7 @@ Pod별로 다른 주소를 광고해야 하므로, StatefulSet의 ordinal이나 
 
 **CPU limit에 대한 판단**이 특히 중요합니다. [커널 문서](../kernel/01-container-primitives.md)에서 본 대로 CPU limit은 대역폭 제한이라 주기 내에 할당량을 소진하면 강제로 멈춥니다. 블록 처리가 그 순간에 걸리면 지연이 생기고, 검증자에게는 놓친 기회가 됩니다.
 
-동시에 limit이 없으면 노드 전체를 먹을 수 있습니다. **해법은 노드를 전용화하고 request를 충분히 주는 것**입니다 — 전용 노드라면 limit 없이도 다른 워크로드에 피해를 주지 않습니다.
+전용 노드는 tenant 간 경합을 줄이지만 kubelet·CNI/CSI·관측성·OS 서비스는 노드를 공유합니다. 앱 CPU limit을 생략해도 reservation과 여유를 유지하고 지속 부하에서 지연·sync·node health를 시험합니다.
 
 ## Ethereum 노드 — 두 클라이언트 구조
 
@@ -282,16 +283,15 @@ Ethereum이 PoS로 전환한 뒤 노드는 **두 개의 프로세스**로 나뉩
 
 ### 최근 프로토콜 변경 — 운영에 영향을 준 것들
 
-::: warning 확인 필요
-아래는 **해당 시점의 사실**이며, Ethereum은 2025년부터 연 2회 하드포크 일정으로 전환했으므로 **이후 추가 변경이 있을 수 있습니다.** 설계 전에 [ethereum.org 로드맵](https://ethereum.org/roadmap/)과 사용 클라이언트의 릴리스 노트에서 현재 상태를 확인하십시오.
+다음은 보장된 미래 주기가 아니라 **날짜가 정해진 프로토콜 이력**입니다. 업그레이드 계획 전 [roadmap](https://ethereum.org/roadmap/)·활성화 발표·선택한 client release note를 확인합니다.
 
 | 시점 | 업그레이드 | 운영 관점의 의미 |
 |---|---|---|
-| **2025년 5월 7일** | **Pectra** 메인넷 | **EIP-7251**로 검증자 최대 유효 잔액(MaxEB)이 **32 ETH → 2,048 ETH**. 여러 검증자를 하나로 통합 가능 → **운영할 검증자 인스턴스 수를 줄일 수 있음** |
+| **2025년 5월 7일** | **Pectra** mainnet | EIP-7251은 해당 validator의 최대 effective balance를 2,048 ETH로 높였으며 consolidation은 record를 바꾸지만 process/VM 수를 반드시 줄이지는 않음 |
 | **2025년 12월 3일** | **Fusaka** 메인넷 (에폭 411392) | 핵심은 **PeerDAS**(Peer Data Availability Sampling) — 블롭 데이터를 전체가 아니라 샘플링으로 검증. 블롭 처리량 확대 |
 :::
 
-**MaxEB 변경의 운영 함의가 큽니다.** 이전에는 스테이킹 규모를 늘리려면 32 ETH 단위로 검증자를 계속 늘려야 했고, 각각이 별도 키와 프로세스였습니다. 통합이 가능해지면 **관리할 키와 인스턴스가 줄어듭니다** — 운영 부담과 인프라 비용이 함께 내려갑니다.
+Validator identity/key는 **별도 process나 VM과 동일하지 않습니다**. 하나의 validator client가 공유 beacon-node stack에서 여러 키를 관리할 수 있습니다. EIP-7251 consolidation은 validator record·키 관리 작업을 줄일 수 있지만 비례하는 인프라·비용 절감을 증명하지는 않습니다. 실제 client 구성을 측정하고 키 이전 시 slashing protection을 유지합니다.
 
 **PeerDAS는 스토리지·대역폭 계획에 영향**을 줍니다. 블롭 처리 방식이 바뀌면 노드가 보관·전송하는 데이터 양이 달라지므로, 기존 사이징 기준을 재검토해야 합니다.
 
@@ -304,7 +304,7 @@ Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**
 | 구성요소 | 역할 | Kubernetes 배치 |
 |---|---|---|
 | **Peer** | 원장 보관, 체인코드 실행, 거래 검증 | StatefulSet + 영구 볼륨 |
-| **Orderer** | 거래 순서 결정 (Raft 합의) | **StatefulSet + 영구 볼륨 필수** |
+| **Orderer** | 설정한 consensus로 transaction 순서 결정: CFT Raft 또는 Fabric 3.x SmartBFT | StatefulSet + 영속 저장소. 유효 state 갱신은 peer validation이 결정 |
 | **CA** (Fabric CA) | 멤버 인증서 발급 | Deployment + 영구 볼륨 |
 | **Chaincode** | 스마트 컨트랙트 | 외부 빌더 또는 별도 Pod |
 
@@ -318,7 +318,7 @@ Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**
 - TLS 인증서 (peer, orderer, CA 각각)
 - **만료 관리** — 인증서 만료가 실제로 장애를 만듭니다
 
-**인증서 만료는 Fabric 운영에서 가장 흔한 장애 원인**으로 꼽힙니다. 갱신을 자동화하고 만료 알람을 걸어두는 것이 필수입니다. HashiCorp Vault 등 외부 PKI와 연동하는 구성도 실무에서 쓰입니다.
+인증서 만료는 중요한 장애 위험이지만 이 문서에는 빈도 데이터가 없습니다. MSP·TLS credential 갱신을 감시·연습하고 operator/client 버전 호환성을 검증합니다.
 
 **③ 오퍼레이터 활용.** Fabric은 Kubernetes 오퍼레이터 생태계가 있습니다.
 
@@ -334,8 +334,8 @@ Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**
 | 항목 | Ethereum 노드 | Hyperledger Fabric |
 |---|---|---|
 | **참여** | permissionless | permissioned (MSP) |
-| **합의** | PoS | Raft (orderer) |
-| **파이널리티** | 체크포인트 기반 | 즉시 (orderer 확정) |
+| **Consensus** | PoS | 설정한 orderer mode: Raft(CFT) 또는 SmartBFT(Fabric 3.x) |
+| **Finality** | 프로토콜 가정 아래 checkpoint 기반 | Consensus 가정 아래 ordering은 확정되지만 peer가 transaction을 계속 검증하며 순서가 정해진 transaction도 invalid일 수 있음 |
 | **주 운영 부담** | 동기화, 디스크 증가, 하드포크 | **인증서 만료**, 채널·정책 관리 |
 | **P2P 노출** | 인바운드 권장 | 조직 간 연결 (알려진 엔드포인트) |
 | **스토리지 증가** | 큼, 단조 증가 | 상대적으로 작음 (거래량 의존) |
@@ -357,7 +357,7 @@ Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**
 | **6. 포크 시점 모니터링** | 체인 높이, 피어 수, 포크 인식 여부 |
 | **7. 사후 확인** | 모든 노드가 같은 체인에 있는지 |
 
-**놓치기 쉬운 것**: 포크를 지원하지 않는 버전으로 남은 노드는 **조용히 다른 체인으로 갈라집니다.** 프로세스는 정상이고 블록도 계속 처리하지만 네트워크의 나머지와 다른 현실을 봅니다. 그래서 6번과 7번이 중요합니다 — **포크 직후에 다른 노드·공개 익스플로러와 블록 해시를 대조**해야 합니다.
+호환되지 않는 client는 활성화 후 canonical chain 추적을 중단하거나 갈라질 수 있습니다. 정상 전파/sync 지연을 고려하며 독립적인 신뢰 소스에서 **같은 block height와 finality 상태**를 비교합니다. 서로 다른 최신 head가 즉시 일치해야 한다고 판단하지 않습니다.
 
 ## 모니터링
 
@@ -381,10 +381,10 @@ Fabric은 성격이 다릅니다. **참여자가 알려진 컨소시엄 체인**
 - **먼저 EKS에서 운영해야 하는지 판단하십시오.** 판단 기준은 노드 주변에 다른 워크로드가 있는가입니다. 노드만 있으면 EC2가 단순합니다.
 - **StatefulSet + Headless Service + 영구 볼륨**이 기본 골격이고, `terminationGracePeriodSeconds`를 넉넉히 주어야 합니다(강제 종료 시 DB 손상 위험).
 - 스토리지는 **용량보다 IOPS가 먼저 병목**입니다. gp3의 용량-IOPS 독립 설정이 핵심 이점이고, 볼륨 확장 계획은 필수입니다.
-- **헬스체크가 가장 자주 잘못 구성됩니다.** liveness에 동기화를 넣으면 재시작 루프, readiness에 안 넣으면 틀린 데이터 반환. 구분이 결정적입니다.
+- Process liveness와 synchronization readiness를 분리·시험하며 이 장은 장애 빈도 순위를 제공하지 않습니다.
 - P2P 인바운드를 열 때 **광고 주소 설정을 빠뜨리면 피어가 오지 않습니다.**
 - 리소스는 버스트가 아니라 지속 부하입니다. **노드를 전용화하고 CPU limit을 신중히** 결정하십시오.
-- Ethereum은 **EL + CL 두 클라이언트** 구조이며, Pectra의 MaxEB 상향(32 → 2,048 ETH)으로 **운영할 검증자 수를 줄일 수 있게** 되었습니다.
+- Ethereum은 EL·CL client를 사용하며 validator identity/key와 process·VM 수는 별개입니다. Consolidation 자체로 비용 절감이 입증되지는 않습니다.
 - Fabric의 주 운영 부담은 **인증서 만료**입니다. 오퍼레이터로 시작하고 갱신을 자동화하십시오.
 - 하드포크 후에는 **다른 노드·익스플로러와 블록 해시를 대조**해 같은 체인에 있는지 확인해야 합니다.
 

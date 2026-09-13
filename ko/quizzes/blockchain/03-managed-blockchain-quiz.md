@@ -4,9 +4,9 @@
 
 ## 객관식 문제
 
-1. AMB의 세 구성요소가 각각 해결하는 문제는?
+1. AMB 제공 방식은 어떻게 비교해야 합니까?
    - A) 세 구성요소 모두 같은 문제를 다른 가격대로 해결한다
-   - B) AMB Access Fabric은 컨소시엄 네트워크 구축, AMB Access 퍼블릭 노드는 노드 운영 부담, AMB Query는 노드 없이 데이터만 필요한 경우
+   - B) Fabric/전용 node·serverless Access·Query API를 구분하고 제공 방식별 과금과 기능을 확인한다
    - C) 개발·스테이징·프로덕션 환경별로 나뉜다
    - D) 퍼블릭·프라이빗·하이브리드 체인별로 나뉜다
 
@@ -14,10 +14,10 @@
 
 <summary>정답 보기</summary>
 
-**정답: B) AMB Access Fabric은 컨소시엄 네트워크 구축, AMB Access 퍼블릭 노드는 노드 운영 부담, AMB Query는 노드 없이 데이터만 필요한 경우**
+**정답: B) Fabric/전용 node·serverless Access·Query API를 구분하고 제공 방식별 과금과 기능을 확인한다**
 
 **설명:**
-AMB는 하나의 서비스가 아니라 성격이 다른 구성요소의 묶음입니다. AMB Access Hyperledger Fabric은 프라이빗/컨소시엄 Fabric 네트워크를, AMB Access 퍼블릭 체인 노드는 Ethereum·Bitcoin 등의 노드를 관리형으로, AMB Query는 지원 퍼블릭 체인 데이터를 API로 제공합니다. 특히 AMB Query는 노드 자체가 필요 없는 경우를 위한 것이라 의사결정 1단계에서 많은 경우를 걸러냅니다.
+AMB 전체가 node별 과금은 아닙니다. 전용 자원·serverless RPC 요청·indexed Query API는 가격과 지원 범위가 다릅니다.
 </details>
 
 2. AMB 관리형 노드로 해결되지 않는 것 중 가장 중요한 구분은?

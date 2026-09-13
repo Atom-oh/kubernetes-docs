@@ -36,9 +36,9 @@ Lattice does not use the link-local range in its original sense of "non-routable
 The mesh init container installs iptables rules inside the Pod's net namespace that REDIRECT all outbound traffic to Envoy's port. Lattice-bound traffic is also outbound, so it matches, and Envoy cannot find `169.254.171.x` in its cluster configuration and fails. This collision happens inside the Pod because netfilter rules are per net namespace.
 </details>
 
-3. Why is this collision easier to diagnose than conntrack exhaustion?
+3. How should an intercepted request be diagnosed?
    - A) It triggers a kernel panic
-   - B) When Envoy does not know the destination it returns an error immediately and the request appears in its access log — it is not a silent drop
+   - B) Inspect the actual Envoy outbound policy, route and error; unknown destinations can be forwarded or rejected
    - C) The Pod immediately enters CrashLoopBackOff
    - D) kube-proxy logs a warning
 
@@ -46,10 +46,10 @@ The mesh init container installs iptables rules inside the Pod's net namespace t
 
 <summary>Show Answer</summary>
 
-**Answer: B) When Envoy does not know the destination it returns an error immediately and the request appears in its access log — it is not a silent drop**
+**Answer: B) Inspect the actual Envoy outbound policy, route and error; unknown destinations can be forwarded or rejected**
 
 **Explanation:**
-Envoy usually returns a connection refusal or 503 immediately for an unknown destination, so the symptom is unambiguous. Unlike conntrack exhaustion's silent drops, it appears in Envoy's access log as a request to an unknown cluster. So **check the Envoy sidecar logs first** when Lattice calls fail — requests bound for `169.254.171.x` there mean interception is the cause.
+Seeing a request in a proxy log proves traversal, not a unique failure cause. Verify the chosen bypass/signing behavior rather than assuming an immediate failure.
 </details>
 
 4. You registered the exception CIDR but it still fails "occasionally." What is the most likely cause?
@@ -97,12 +97,12 @@ The signed packet the proxy emits is also destined for `169.254.171.x`. Without 
 **Answer: B) The REDIRECT in the Pod net namespace is DNAT and must be remembered to undo, plus the proxy→Lattice connection adds entries**
 
 **Explanation:**
-NAT creates conntrack entries. With the egress proxy, you get the REDIRECT (DNAT) entry in the Pod net namespace, the proxy's outbound connection to Lattice, and the node namespace SNAT entry. The shared-library approach has no REDIRECT and so avoids this extra load — which is why the node's conntrack headroom should be weighed when choosing a signing approach in high-connection environments.
+A signing proxy creates local and upstream connection segments, while pooling and namespace/NAT choices change the tracking cost. Inspect Pod/node tables and eBPF maps rather than assuming a fixed increase in the node table.
 </details>
 
-7. If `tcpdump` captures no outbound packets at all, what should you suspect?
+7. What does packet-capture visibility establish?
    - A) conntrack exhaustion
-   - B) A problem inside the Pod — routing, interception, DNS. Traffic blocked by a Security Group never reaches the kernel so it is invisible to `tcpdump` too, making SG and routing candidates as well
+   - B) Interpret packet capture by sender/receiver, direction, interface and namespace, then correlate other evidence
    - C) qdisc drops
    - D) Lattice authentication failure
 
@@ -110,10 +110,10 @@ NAT creates conntrack entries. With the egress proxy, you get the REDIRECT (DNAT
 
 <summary>Show Answer</summary>
 
-**Answer: B) A problem inside the Pod — routing, interception, DNS. Traffic blocked by a Security Group never reaches the kernel so it is invisible to `tcpdump` too, making SG and routing candidates as well**
+**Answer: B) Interpret packet capture by sender/receiver, direction, interface and namespace, then correlate other evidence**
 
 **Explanation:**
-A Security Group is not kernel netfilter but AWS's stateful firewall applied to the ENI at the VPC level, enforced outside the instance. So `iptables -L` on the node shows no SG rules, and traffic blocked by an SG never reaches the node kernel — invisible to `tcpdump`. Conversely, something dropped after reaching the kernel leaves a counter. So **"nothing is captured" is itself diagnostic information.**
+An inbound packet rejected before delivery is absent at the receiver. An outbound packet may be visible at the sender before an external SG drops it. Missing responses alone do not prove SG failure.
 </details>
 
 8. What does the pattern "Lattice calls fail only on some nodes" tell you?

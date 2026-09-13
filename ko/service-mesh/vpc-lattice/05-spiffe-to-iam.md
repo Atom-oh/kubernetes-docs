@@ -1,7 +1,7 @@
 # 워크로드 신원 모델 전환 — SPIFFE에서 IAM으로
 
-> **지원 버전**: SPIRE 1.x, Amazon VPC Lattice (GA), EKS Pod Identity
-> **마지막 업데이트**: 2026년 9월 3일
+> **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
@@ -31,7 +31,7 @@ SPIFFE(Secure Production Identity Framework For Everyone)는 워크로드 신원
 
 URI 형식으로 워크로드를 식별합니다.
 
-```
+```text
 spiffe://<trust-domain>/<workload-path>
 
 예: spiffe://finance.example.com/ns/prodcatalog/sa/prodcatalog-sa
@@ -143,7 +143,7 @@ Lattice IAM Auth의 절차는 [03번 문서](./03-auth-flow.md)에 있습니다.
 | **관측 수단** | Envoy 메트릭·로그 (SPIFFE ID 단위) | Lattice access log (principal 단위, span 없음) |
 | **운영 부담** | **높음** — SPIRE Server HA, CA 키 관리, CA 로테이션, Registration Entry 관리, Agent 배포·업그레이드, trust bundle 배포 | **낮음** — Pod Identity Agent 애드온 + ServiceAccount↔Role 연결. CA·키 관리 없음 |
 | **멀티 클러스터** | trust domain 설계와 federation 구성 필요 | Pod Identity로 Role 재사용, 클러스터별 추가 설정 최소 |
-| **AWS 외부 워크로드** | ✅ 가능 (온프레미스, 다른 클라우드) | ❌ IAM/STS 도달 필요 |
+| **AWS 외부 워크로드** | 적절한 SPIRE attestor로 가능 | 적절한 IAM credential provider와 지원 Lattice 연결 필요. IAM 자체의 금지는 아님 |
 
 ## 유사점 — 왜 이 전환이 가능한가
 
@@ -153,7 +153,7 @@ Lattice IAM Auth의 절차는 [03번 문서](./03-auth-flow.md)에 있습니다.
 
 SVID도, STS 임시 credential도 짧은 수명이며 자동 갱신됩니다. 둘 다 같은 이유로 그렇게 설계되었습니다 — **폐기 메커니즘 없이 침해의 유효 기간을 제한**하기 위해서입니다.
 
-이 유사성의 실무적 의미는 큽니다. AS-IS에서 이미 "장기 비밀을 쓰지 않는다"는 원칙을 심의에 통과시켰다면, TO-BE도 같은 원칙을 만족합니다. **심의에서 이 항목은 재논의 대상이 아닙니다.**
+두 방식 모두 장기 애플리케이션 비밀 배포를 피할 수 있지만 자격 증명 수명·갱신·침해 대응·인가를 여전히 검토해야 합니다. 짧은 수명이 폐기나 긴급 Deny 요구를 없애지는 않습니다.
 
 ### ② 둘 다 플랫폼 attestation에 기반한다
 
@@ -166,9 +166,9 @@ SVID도, STS 임시 credential도 짧은 수명이며 자동 갱신됩니다. �
 | 자격증명 전달 | Workload API (UDS) | Pod Identity Agent (link-local 주소) |
 | 자격증명 갱신 | Agent가 SVID 갱신 | SDK가 credential 갱신 |
 
-**두 열이 행 단위로 대응됩니다.** bootstrapping 문제를 푸는 방식이 같습니다. Pod Identity Agent가 link-local 주소로 credential을 제공하는 것은 SPIRE Agent가 UDS로 SVID를 제공하는 것과 같은 아이디어입니다 — 로컬 인프라 구성요소가 워크로드를 판정하고 자격증명을 대신 받아옵니다.
+두 방식 모두 플랫폼 증거를 활용하지만 selector·token 검증·자격 증명 노출·신뢰 경계가 다릅니다. 모델이 동등하다고 단정하지 말고 실제 attestor나 credential provider를 검증합니다.
 
-이 유사성 덕분에 **"워크로드가 비밀을 보유하지 않는다"는 심의 논점도 유지됩니다.**
+**사전 배포한 장기 비밀이 없다는 것과 실행 중 비밀이 없다는 것은 다릅니다.** X.509-SVID 전달에는 개인 키가, 임시 IAM 자격 증명에는 secret access key/session token이 포함됩니다. Agent socket/endpoint·메모리·log·캐시를 보호하며 attestation은 설정된 신뢰 가정에 의존합니다.
 
 ## 결정적 차이 2개
 
@@ -187,13 +187,13 @@ mTLS handshake에서 클라이언트와 서버가 **서로의** SVID를 검증�
 | 클라이언트 → 서버 (클라이언트 증명) | SVID 상호 인증 | **SigV4 요청 서명** (요청 단위, 더 세밀) |
 | 서버 → 클라이언트 (서버 증명) | SVID 상호 인증 | **TLS 서버 인증서** (일반 TLS 수준) |
 
-클라이언트 증명은 오히려 **더 세밀해집니다.** connection 1회가 아니라 요청마다 검증되므로, 연결이 탈취된 뒤 그 연결로 임의 요청을 보내는 시나리오가 차단됩니다. 경로·메서드·헤더 조건으로 요청 단위 인가도 가능합니다.
+SigV4는 요청의 서명된 필드를 인증하고 mTLS는 TLS peer를 인증하며, 양쪽 모두 별도로 요청별 인가를 적용할 수 있습니다. 어느 쪽이 보편적으로 더 강한 것은 아닙니다. Lattice는 `UNSIGNED-PAYLOAD`를 요구하므로 TLS로 본문을 보호하고 replay·자격 증명 탈취 위험을 검토합니다.
 
 **문제는 서버 증명입니다.** 클라이언트가 확인할 수 있는 것은 "이 TLS 인증서가 유효하고 도메인이 맞다"까지입니다. **"이 서비스가 진짜 그 팀이 운영하는 그 서비스인가"를 워크로드 신원 체계로 확인하는 단계가 없습니다.**
 
 심의에서 실제로 나오는 질문은 이렇습니다.
 
-> 서비스 네트워크 안에서 누군가 우리 서비스 이름으로 Lattice Service를 만들고 그쪽으로 트래픽을 받으면, 클라이언트는 그것을 구별할 수 있는가?
+> DNS·인증서·서비스 association·target 등록의 무단 변경으로 트래픽이 다른 곳으로 갈 수 있는가? Endpoint 인증과 함께 제어 평면 권한을 검토합니다. 같은 표시 이름을 만드는 것만으로 기존 generated service DNS 신원이 이전되지는 않습니다.
 
 정직한 답은 **"워크로드 신원 체계로는 구별할 수 없고, 서비스 네트워크와 Lattice 리소스에 대한 IAM 통제로 막아야 한다"**입니다. 즉 **방어선의 위치가 워크로드 간 상호 인증에서 리소스 생성 권한 통제로 이동**합니다.
 
@@ -206,12 +206,12 @@ mTLS handshake에서 클라이언트와 서버가 **서로의** SVID를 검증�
 | 항목 | AS-IS | TO-BE |
 |---|---|---|
 | **신뢰 근원** | 고객이 운영하는 SPIRE Server CA | AWS IAM / STS |
-| **CA 개인키 소유** | 고객 | (해당 없음 — 키 기반이 아님) |
+| **CA 개인 키 소유** | 고객 또는 설정한 upstream CA | 고객 Lattice CA는 없지만 임시 IAM 비밀 자격 증명은 존재 |
 | **누가 신원을 발급하는가** | 고객이 정의한 Registration Entry에 따라 고객의 CA | AWS STS |
 | **신원 발급 규칙의 결정권** | 고객이 완전 통제 | 고객이 IAM으로 통제, 실행은 AWS |
 | **감사 증적** | SPIRE Server 로그 (고객 보유) | CloudTrail (AWS 서비스) |
 | **CA 로테이션 결정권** | 고객 | (해당 없음) |
-| **AWS 외부에서 동작** | ✅ | ❌ |
+| **AWS 외부 사용** | Attestor와 연결에 따라 다름 | 적절한 credential provider와 지원 사설 연결로 가능하며 Pod Identity가 자동 제공하는 것은 아님 |
 | **운영 부담** | 고객 부담 | AWS 부담 |
 
 트레이드오프는 명확합니다. **운영 부담을 AWS에 넘기는 대가로 신뢰 근원의 소유권을 넘깁니다.**
@@ -225,7 +225,7 @@ Lattice IAM Auth로 옮기면 이 논거를 다시 세워야 합니다. 제시�
 | **책임 공유 모델** | IAM/STS는 AWS가 이미 여러 규제 프레임워크에서 인증받아 운영하는 통제 |
 | **정책 결정권 유지** | 누가 무엇을 호출할 수 있는가는 고객이 IAM 정책으로 완전히 정의 |
 | **감사 증적 확보** | CloudTrail로 credential 발급과 API 호출 이력 확보. Lattice access log로 데이터 경로 이력 확보 |
-| **키 보유 축소가 오히려 이점** | 고객이 CA 개인키를 보유하지 않으므로 키 유출 위험 자체가 제거됨 |
+| **CA 운영 부담 감소** | AWS가 서비스 PKI를 처리하지만 고객은 임시 자격 증명·역할·token·endpoint 키를 계속 보호 |
 | **자격 수명·attestation 유지** | 앞의 유사점 두 가지는 그대로 만족 |
 
 **다만 이것은 "동등하다"는 주장이 아니라 "다른 방식으로 통제된다"는 주장입니다.** 심의 담당자가 후자를 받아들일지는 조직의 기준에 달려 있고, 기술적으로 해소할 수 있는 문제가 아닙니다.
@@ -236,23 +236,23 @@ Lattice IAM Auth로 옮기면 이 논거를 다시 세워야 합니다. 제시�
 
 | 항목 | 심의 상태 | 근거 |
 |---|---|---|
-| 장기 비밀 미사용 | ✅ **재논의 불필요** | 둘 다 짧은 수명 자격증명 + 자동 갱신 |
-| 워크로드가 비밀을 보유하지 않음 | ✅ **재논의 불필요** | 둘 다 플랫폼 attestation 기반 |
-| 요청 단위 인가 세밀도 | ✅ **개선** | connection 단위 → 요청 단위, 경로·메서드·헤더 조건 |
-| 클라이언트 신원 증명 | ✅ **유지 이상** | SigV4가 요청마다 검증 |
+| 이미지 내 장기 비밀 회피 | 설정 검증 | 양쪽 모두 자동 갱신 단기 자격 증명 사용 가능 |
+| 실행 중 비밀 노출 | 검토 필요 | 단기 개인 키/token도 보호 필요 |
+| 요청별 인가 | 실제 정책 비교 | mTLS 신원으로도 요청별 인가 가능. SigV4만 가능한 것은 아님 |
+| 클라이언트 신원 증명 | 방식 변경 | TLS peer 증명과 요청 서명의 범위·위협 가정이 다름 |
 | **서버 신원 증명** | ⚠️ **약화 — 대체 통제 필요** | 워크로드 신원 체계에서 TLS 서버 인증서 수준으로. 방어선을 리소스 생성 권한 IAM 통제로 이동 |
 | **신뢰 근원 소유권** | ⚠️ **이전 — 논거 재작성 필요** | 고객 CA → AWS IAM/STS |
-| 종단간 암호화 | ⚠️ **트레이드오프** | HTTPS listener는 Lattice에서 TLS 1회 종료. 유지하려면 TLS Passthrough인데 IAM Auth 포기 ([04번](./04-networking-basics.md), [06번](./06-constraints.md)) |
+| End-to-end 암호화 | 신뢰 경계 선택 | HTTPS는 Lattice에서 종료. Passthrough는 endpoint TLS를 유지하지만 인증된 HTTP SigV4 신원은 사용 불가 |
 | 관측성 (추적) | ⚠️ **약화** | Envoy span 소멸. 애플리케이션 계측 필요 ([01번](./01-appmesh-vs-lattice.md)) |
-| AWS 외부 워크로드 | ❌ **범위 축소** | IAM/STS 도달 필요. 온프레미스·타 클라우드 워크로드는 별도 방안 |
+| AWS 외부 워크로드 | 별도 설계 | 불가능하다고 가정하지 말고 자격 증명과 지원 네트워크 경로 검토 |
 
-**실무 권고: 위 표의 ⚠️와 ❌ 항목을 전환 착수 전에 심의 담당자와 먼저 검토하십시오.** 기술 구현은 대부분 예측 가능하지만, 이 항목들은 조직의 판단에 달려 있고 결과에 따라 아키텍처가 바뀝니다(예: 서버 신원 증명이 필수로 판정되면 TLS Passthrough + 엔드포인트 mTLS 구성으로 가야 하고, 그러면 IAM Auth를 쓸 수 없어 인가 설계 전체가 달라집니다).
+바뀐 신뢰·운영 경계를 보안 담당자와 검토합니다. Endpoint mTLS·Lattice 인증 HTTP·익명 네트워크 문맥 정책은 서로 다른 제어입니다. 한 구성이 모든 조직의 검토 기준을 만족한다고 주장하지 말고 실제 요구에 따라 선택합니다.
 
 ### SPIRE를 계속 쓰는 선택지
 
 전환이 반드시 SPIRE 폐기를 의미하지는 않습니다.
 
-- **AWS 외부 워크로드가 있다면** SPIRE는 그 영역에서 계속 필요합니다
+- AWS 외부 워크로드에서는 SPIRE가 계속 유용할 수 있지만 다른 credential/identity 방식도 평가할 수 있습니다.
 - **TLS Passthrough 구성**을 택하면 엔드포인트가 직접 mTLS를 수행해야 하고, 그 인증서를 SPIRE가 계속 공급할 수 있습니다
 - 이 경우 App Mesh는 사라지지만 **SPIRE는 남는** 구성이 됩니다 — App Mesh 지원 종료의 대응과 SPIRE 존속은 별개 결정입니다
 
@@ -262,7 +262,7 @@ SPIRE 운영 부담 자체를 없애는 것이 전환의 목표 중 하나였다
 
 - SPIFFE 3요소는 **SPIFFE ID**(URI 형식 이름), **SVID**(짧은 수명 X.509/JWT), **Workload API**(UDS)입니다.
 - SPIRE의 attestation이 bootstrapping 문제를 푸는 원리는 **"신원은 제시되는 것이 아니라 관찰되고 판정되는 것"**입니다. 커널이 알려주는 PID는 위조할 수 없습니다.
-- IAM Auth도 같은 패턴입니다 — **짧은 수명 자격증명 + 플랫폼 attestation**. 그래서 심의의 상당 부분은 재논의 대상이 아닙니다.
+- 양쪽 모두 단기 자격 증명과 플랫폼 증거를 사용할 수 있지만 실행 중 비밀과 정책 차이는 계속 검토해야 합니다.
 - 결정적 차이는 둘입니다. **(a) 양방향 상호 인증이 단방향+요청 인증으로 바뀌어 서버 신원 증명이 약화**되고, **(b) 신뢰 근원이 고객 CA에서 AWS IAM/STS로 이전**됩니다.
 - 이 두 항목은 기술로 해소되지 않으며 조직의 판단이 필요합니다. **전환 착수 전에 심의 담당자와 검토해야 하고, 결과에 따라 아키텍처가 바뀝니다.**
 

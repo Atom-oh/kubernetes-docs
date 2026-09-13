@@ -19,7 +19,7 @@
 |---|---|
 | **재현 불가능한 구성** | 노드마다 값이 달라 장애 재현이 안 됨 |
 | **커널 업그레이드 시 깨짐** | 6.1에서 유효했던 튜너블이 6.18에서 이름·위치가 바뀌거나 사라짐 |
-| **자동 조정을 망가뜨림** | TCP 버퍼를 고정하면 커널의 자동 튜닝이 비활성화됨 |
+| **자동 튜닝 방해** | Socket별 SO_RCVBUF/SO_SNDBUF 명시는 해당 socket 자동 크기 조정을 끄며 sysctl 범위와는 다른 제어 |
 
 **튜닝의 전제 조건은 측정입니다.** 아래 순서를 지키십시오.
 
@@ -55,7 +55,7 @@
 ::: warning 확인 필요
 Bottlerocket에서 `settings.kernel.sysctl`로 conntrack 상한을 올려도 적용되지 않는 이슈가 있습니다([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), 2024년 9월 등록). 원인은 **kube-proxy 설정 파일(`/var/lib/kube-proxy-config/config`)이 커맨드라인 인자보다 우선**하기 때문입니다.
 
-알려진 우회책은 kube-proxy 인자에 **`--conntrack-max-per-core=0 --conntrack-min=0`**을 주는 것입니다 — 여기서 **0은 "변경하지 않음"**을 뜻하므로, kube-proxy가 conntrack을 건드리지 않고 노드 sysctl로 설정한 값이 살아남습니다.
+Kube-proxy 설정 파일을 사용하며 상한 관리를 node sysctl에 의도적으로 맡기려면 파일의 **`conntrack.maxPerCore`/`conntrack.min` 필드**를 변경합니다. 둘을 0으로 설정하더라도 `--config`가 무시하는 CLI flag에 의존하면 안 됩니다. Rollout 전 관리형 add-on 조정 동작과 메모리 여유를 확인합니다.
 
 **이 이슈가 특정 Bottlerocket 릴리스에서 해결되었는지는 확인하지 못했습니다.** 어느 경로로 설정하든 적용 후 노드에서 실제 값을 직접 확인하십시오.
 
@@ -79,7 +79,7 @@ conntrack -S | head
 
 **함의가 두 갈래입니다.**
 
-`al2023-ami-kernel-default-*` AMI를 쓰고 있다면, 그 날짜 이후 **새로 띄우는 노드는 커널 6.18**입니다. 노드 교체(오토스케일링, 업그레이드, 스팟 회수)만으로도 커널이 바뀝니다.
+기본 kernel **AMI 계열**이 바뀌어도 교체 노드는 launch template/provisioning 정책이 선택한 AMI를 사용합니다. 고정 AMI ID의 kernel은 새 노드를 시작한다고 바뀌지 않습니다. Latest/default AMI를 다시 조회하면 새 kernel을 선택할 수 있으며 EKS-optimized AMI는 별도 release 선택을 확인해야 합니다.
 
 특정 커널에 고정해야 하면 **버전 지정 AMI**(`al2023-ami-kernel-6.1-*` 등)를 명시적으로 쓰십시오.
 
@@ -189,7 +189,8 @@ cat /proc/pressure/cpu
 cat /proc/pressure/io
 
 # 특정 cgroup
-cat /sys/fs/cgroup/<path>/memory.pressure
+: "${KERNEL_CGROUP_PATH:?조회할 cgroup directory를 지정하세요}"
+cat "$KERNEL_CGROUP_PATH/memory.pressure"
 ```
 
 `some avg10`은 최근 10초간 **최소 하나의 태스크가 그 자원 때문에 지연된 시간의 비율**입니다. 사용량 그래프가 평온한데 이 값이 올라가고 있으면 회수나 경합에 시간을 쓰고 있다는 뜻입니다.
@@ -207,7 +208,7 @@ cat /sys/fs/cgroup/<path>/memory.pressure
 | 보조 신호 | `dmesg`의 `nf_conntrack: table full`, `nf_conntrack_count` / `nf_conntrack_max` 비율 |
 | 조정 경로 | **`kube-proxy-config` ConfigMap의 `conntrack.maxPerCore` / `conntrack.min`** (EKS에서 이것이 우선) |
 | 비용 | 항목당 노드 메모리. 무한정 올릴 수 없음 |
-| 근본 대응 | 연결 재사용(keepalive), headless Service, eBPF 데이터플레인으로 경로 우회 |
+| 근본 대응 | 연결 churn 감소와 dataplane/map 압력 조사. Headless DNS만으로 tracking이 꺼지지 않음 |
 
 **`maxPerCore`를 쓰는 이유**를 알아둘 가치가 있습니다. 절대값이 아니라 코어당 값이라, 노드 크기가 달라도 같은 설정으로 비례 조정됩니다. 절대값(`nf_conntrack_max`)을 직접 박으면 작은 노드에서는 과다, 큰 노드에서는 부족해집니다.
 
@@ -220,13 +221,13 @@ cat /sys/fs/cgroup/<path>/memory.pressure
 | `net.core.somaxconn` | **accept 큐 오버플로 시.** 연결 폭주를 받는 서버에서 흔한 조정 |
 | `net.ipv4.tcp_max_syn_backlog` | SYN 폭주 시 |
 | `net.core.netdev_max_backlog` | **수신 softirq가 못 따라갈 때** |
-| `net.ipv4.tcp_rmem` / `tcp_wmem` | **기본값 유지 권장** — 커널 자동 튜닝이 동작 중. 고정하면 자동 튜닝이 꺼짐. BDP가 큰 장거리 경로에서만 상한 조정 검토 |
+| `net.ipv4.tcp_rmem` / `tcp_wmem` | TCP 크기 범위/기본값. 변경 자체가 autotuning을 끄지는 않으며 BDP·메모리 실측 근거로만 조정 |
 | `net.ipv4.ip_local_port_range` | **출발지 포트 고갈 시.** egress가 많은 노드에서 실제로 발생 |
 | `net.ipv4.tcp_tw_reuse` | TIME_WAIT 누적 시. 거동을 이해하고 적용 |
 
 **`somaxconn`과 `ip_local_port_range`가 실무에서 근거 있는 조정의 대표 사례**입니다. 전자는 accept 큐 오버플로 카운터(`nstat`의 `TcpExtListenOverflows`)로 증거를 잡을 수 있고, 후자는 포트 고갈이 연결 실패로 직접 나타납니다.
 
-반면 **`tcp_rmem`/`tcp_wmem`은 건드리지 않는 것이 기본**입니다. 커널이 부하에 따라 자동 조정하고 있고, 값을 고정하면 그 자동 조정이 비활성화됩니다.
+실측 근거가 없으면 적절한 `tcp_rmem`/`tcp_wmem` 범위를 유지합니다. Linux 문서는 명시적 **SO_RCVBUF/SO_SNDBUF socket 설정**이 해당 socket autotuning을 끈다고 설명합니다. 이것을 sysctl min/default/max 설정과 혼동하면 안 됩니다.
 
 ### qdisc
 
@@ -289,11 +290,11 @@ cat /sys/fs/cgroup/<path>/memory.pressure
 
 - **대부분은 기본값을 두십시오.** 커널은 부하에 따라 자동 조정하고 있고, 근거 없는 튜닝은 재현 불가능한 구성과 커널 업그레이드 시 파손을 만듭니다.
 - 튜닝의 전제는 측정입니다. **드롭 카운터부터 보십시오** — `insert_failed`, qdisc `dropped`, NIC 드롭.
-- **AL2023 기본 커널이 2026년 8월 17일부터 6.18**입니다. `kernel-default` AMI를 쓰면 노드 교체만으로 커널이 바뀌므로, 커널 전환을 Kubernetes 업그레이드와 같은 무게로 다루십시오.
+- 선택한 AMI와 실행 중 kernel을 확인합니다. 기본 AMI 계열은 바뀔 수 있지만 고정 AMI ID가 노드 교체 시 자동 변경되는 것은 아닙니다.
 - CPU throttling의 근본 원인은 대개 **애플리케이션이 인식하는 CPU 수와 할당량의 불일치**입니다. `GOMAXPROCS`/`ActiveProcessorCount`부터 맞추십시오.
 - 노드 안정성에는 커널 튜닝보다 **kubelet 예약과 축출 임계**가 효과적입니다. 축출이 커널 OOM보다 낫습니다.
 - 근거 있는 조정의 대표 사례는 **conntrack 상한, `somaxconn`, `ip_local_port_range`, `vm.max_map_count`**입니다. 모두 직접적인 증거 카운터가 있습니다.
-- `tcp_rmem`/`tcp_wmem`은 **건드리지 않는 것이 기본**입니다 — 고정하면 커널 자동 튜닝이 꺼집니다.
+- TCP sysctl 범위와 socket별 autotuning override는 다르며 측정 근거로만 조정합니다.
 - **IPVS 모드를 쓰고 있으면 이전 계획이 필요합니다** (1.35 deprecated, 1.38 제거 목표).
 
 ## 참고 자료

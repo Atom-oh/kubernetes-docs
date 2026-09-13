@@ -1,12 +1,12 @@
 # VPC Lattice Deep Dive Overview
 
-> **Supported Versions**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+, Kubernetes 1.28+ (Amazon EKS)
-> **Last Updated**: September 3, 2026
+> **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
+> **Last Updated**: September 13, 2026
 
 ## What This Section Covers
 
 - What actually changes when you move from a sidecar-proxy service mesh (App Mesh, Istio) to a **managed data plane** (VPC Lattice)
-- How Lattice works internally — intercepting traffic via link-local addresses, SigV4 request signature verification, and triple auth policy evaluation
+- How documented Lattice addressing, SigV4 signing and applicable auth policies change the request path
 - The structural differences you hit when moving workload identity from SPIFFE/SPIRE to IAM, and why those become review board issues
 
 ## Why This Section Exists Separately
@@ -33,7 +33,8 @@ But App Mesh and Lattice are **not two implementations of the same thing.** The 
 | 3 | [IAM Authentication Flow in Detail](./03-auth-flow.md) | What happens across the four stages from signing a request to authorizing it? |
 | 4 | [Foundations — Link-Local and SNI](./04-networking-basics.md) | How is traffic intercepted without a sidecar? What do you lose by not terminating TLS? |
 | 5 | [Workload Identity Migration — SPIFFE to IAM](./05-spiffe-to-iam.md) | Can IAM do what SPIRE was doing? What is not replaced? |
-| 6 | [Constraints and Decision Points](./06-constraints.md) | What must you answer before finalizing the design? |
+| 6 | [Constraints and Decision Points](./06-constraints.md) | Which capability, trust, cost and recovery choices must be settled? |
+| 7 | [Kernel Datapath](./07-kernel-datapath.md) | How do Pod routing, proxy rules and connection tracking affect the path? |
 
 Reading in order from 1 is recommended. Document 4 (link-local, SNI) is prerequisite knowledge for the constraints in 3 and 6 — it is placed later, but if network fundamentals are unfamiliar, read 4 first.
 

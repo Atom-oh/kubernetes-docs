@@ -1,12 +1,12 @@
 # VPC Lattice 딥다이브 개요
 
-> **지원 버전**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+, Kubernetes 1.28+ (Amazon EKS)
-> **마지막 업데이트**: 2026년 9월 3일
+> **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 섹션에서 다루는 것
 
 - sidecar 프록시 기반 서비스 메시(App Mesh, Istio)에서 **관리형 데이터플레인**(VPC Lattice)으로 모델이 바뀔 때 실제로 무엇이 달라지는가
-- Lattice의 내부 동작 — link-local 주소로 트래픽을 가로채는 구조, SigV4 요청 서명 검증, 3중 auth policy 평가
+- 문서화된 Lattice 주소·SigV4 서명·적용 auth policy가 요청 경로를 어떻게 바꾸는지
 - SPIFFE/SPIRE 기반 워크로드 신원을 IAM 신원으로 옮길 때의 구조적 차이와, 그것이 왜 심의 쟁점이 되는가
 
 ## 왜 이 섹션이 따로 필요한가
@@ -33,7 +33,8 @@
 | 3 | [IAM 인증 절차 상세](./03-auth-flow.md) | 요청 하나가 서명되고 검증되고 인가되기까지 4단계에서 무엇이 일어나는가 |
 | 4 | [기반 개념 — link-local과 SNI](./04-networking-basics.md) | 사이드카 없이 어떻게 트래픽을 가로채는가. TLS를 종료하지 않으면 무엇을 잃는가 |
 | 5 | [워크로드 신원 모델 전환 — SPIFFE에서 IAM으로](./05-spiffe-to-iam.md) | SPIRE가 하던 일을 IAM이 대신할 수 있는가. 무엇이 대체되지 않는가 |
-| 6 | [제약사항과 의사결정 포인트](./06-constraints.md) | 설계를 확정하기 전에 반드시 답해야 하는 항목은 무엇인가 |
+| 6 | [제약과 의사결정](./06-constraints.md) | 어떤 기능·신뢰·비용·복구 선택을 결정해야 하는가? |
+| 7 | [커널 데이터패스](./07-kernel-datapath.md) | Pod routing·proxy 규칙·connection tracking이 경로에 어떻게 영향을 주는가? |
 
 1번부터 순서대로 읽는 것을 권합니다. 4번(link-local, SNI)은 3번과 6번의 제약을 이해하는 데 필요한 선행 개념이라 뒤에 두었지만, 네트워크 기반 개념이 익숙하지 않다면 4번을 먼저 읽어도 됩니다.
 

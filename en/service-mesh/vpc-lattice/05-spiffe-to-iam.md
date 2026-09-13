@@ -1,7 +1,7 @@
 # Workload Identity Migration — SPIFFE to IAM
 
-> **Supported Versions**: SPIRE 1.x, Amazon VPC Lattice (GA), EKS Pod Identity
-> **Last Updated**: September 3, 2026
+> **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
+> **Last Updated**: September 13, 2026
 
 ## What This Document Covers
 
@@ -31,7 +31,7 @@ SPIFFE (Secure Production Identity Framework For Everyone) is a **standard** for
 
 Identifies a workload as a URI.
 
-```
+```text
 spiffe://<trust-domain>/<workload-path>
 
 e.g.: spiffe://finance.example.com/ns/prodcatalog/sa/prodcatalog-sa
@@ -143,7 +143,7 @@ The Lattice IAM Auth procedure is in [document 03](./03-auth-flow.md). Item by i
 | **Observability** | Envoy metrics/logs (per SPIFFE ID) | Lattice access logs (per principal, no spans) |
 | **Operational burden** | **High** — SPIRE Server HA, CA key management, CA rotation, Registration Entry management, Agent deployment/upgrades, trust bundle distribution | **Low** — Pod Identity Agent add-on plus ServiceAccount↔Role association. No CA or key management |
 | **Multi-cluster** | Requires trust domain design and federation | Role reuse via Pod Identity, minimal per-cluster setup |
-| **Workloads outside AWS** | ✅ Possible (on-premises, other clouds) | ❌ Requires reachability to IAM/STS |
+| **Workloads outside AWS** | Possible with suitable SPIRE attestors | Requires a suitable IAM credential provider and supported Lattice connectivity; not an inherent IAM prohibition |
 
 ## Similarities — Why This Migration Is Feasible
 
@@ -153,7 +153,7 @@ The comparison table makes them look like entirely different systems, but **stru
 
 Both SVIDs and STS temporary credentials are short-lived and auto-renewed. Both were designed that way for the same reason — **to bound the useful window of a compromise without a revocation mechanism.**
 
-The practical implication is significant. If you already passed a review on the principle of "we do not use long-lived secrets" in AS-IS, TO-BE satisfies the same principle. **That item is not up for re-litigation.**
+Both approaches can avoid distributing long-lived application secrets, but the review must still cover credential lifetime, renewal, compromise response and authorization. Short lifetime does not remove revocation or emergency-deny requirements.
 
 ### ② Both are based on platform attestation
 
@@ -166,9 +166,9 @@ The workload does not hold a secret in advance; the platform vouches for it.
 | Credential delivery | Workload API (UDS) | Pod Identity Agent (link-local address) |
 | Credential renewal | Agent renews the SVID | SDK refreshes credentials |
 
-**The two columns correspond row for row.** They solve the bootstrapping problem the same way. The Pod Identity Agent serving credentials on a link-local address is the same idea as the SPIRE Agent serving SVIDs over UDS — a local infrastructure component adjudicates the workload and obtains credentials on its behalf.
+These approaches both use platform evidence, but their selectors, token validation, credential exposure and trust boundaries differ. Validate the actual attestor or credential provider rather than declaring the models equivalent.
 
-Thanks to this similarity, **the review argument "workloads do not hold secrets" also carries over.**
+**No pre-provisioned long-lived secret is not the same as no runtime secret.** X.509-SVID delivery includes private-key material, and temporary IAM credentials include a secret access key/session token. Protect agent sockets/endpoints, memory, logs and credential caches; attestation is only as strong as its configured trust assumptions.
 
 ## Two Decisive Differences
 
@@ -187,13 +187,13 @@ In an mTLS handshake, client and server verify **each other's** SVID. The client
 | Client → server (client proves) | SVID mutual authentication | **SigV4 request signature** (per request, finer-grained) |
 | Server → client (server proves) | SVID mutual authentication | **TLS server certificate** (ordinary TLS level) |
 
-Client proof actually becomes **finer-grained.** Verification happens per request rather than once per connection, blocking the scenario where a hijacked connection is used to send arbitrary requests. Per-request authorization on path, method, and headers also becomes possible.
+SigV4 authenticates each request’s signed fields, whereas mTLS authenticates the TLS peer; either design can also apply per-request authorization. Neither is universally stronger. Lattice requires `UNSIGNED-PAYLOAD`, so protect payloads with TLS and consider replay and credential-theft risks explicitly.
 
 **The problem is server proof.** All the client can confirm is "this TLS certificate is valid and the domain matches." **There is no step that confirms "is this really the service that team operates" within a workload identity system.**
 
 The question that actually comes up in a review is:
 
-> If someone inside the service network creates a Lattice Service under our service's name and receives traffic there, can the client tell the difference?
+> Could unauthorized changes to DNS, certificates, service associations or target registration redirect this workload’s traffic? Review those control-plane permissions along with endpoint authentication. A matching display name alone does not transfer an existing generated service DNS identity.
 
 The honest answer is **"not within the workload identity system — you must prevent it with IAM controls over the service network and Lattice resources."** In other words, **the line of defense moves from workload-to-workload mutual authentication to control over resource creation permissions.**
 
@@ -206,12 +206,12 @@ This is not a bad answer. Strictly limiting via IAM who can create Lattice Servi
 | Item | AS-IS | TO-BE |
 |---|---|---|
 | **Root of trust** | A SPIRE Server CA operated by the customer | AWS IAM / STS |
-| **CA private key ownership** | Customer | (N/A — not key-based) |
+| **CA private key ownership** | Customer or configured upstream CA | No customer Lattice CA; temporary IAM secret credentials still exist |
 | **Who issues identity** | The customer's CA, per customer-defined Registration Entries | AWS STS |
 | **Who decides issuance rules** | Fully controlled by the customer | Customer controls via IAM; AWS executes |
 | **Audit trail** | SPIRE Server logs (customer-held) | CloudTrail (an AWS service) |
 | **Who decides CA rotation** | Customer | (N/A) |
-| **Works outside AWS** | ✅ | ❌ |
+| **Works outside AWS** | Depends on attestors and connectivity | Possible with an appropriate credential provider and supported private connectivity; not provided by Pod Identity automatically |
 | **Operational burden** | Borne by the customer | Borne by AWS |
 
 The trade-off is explicit: **you hand the operational burden to AWS in exchange for handing over ownership of the root of trust.**
@@ -225,7 +225,7 @@ Moving to Lattice IAM Auth means rebuilding that argument. Available grounds:
 | **Shared responsibility model** | IAM/STS are controls AWS already operates under multiple certified regulatory frameworks |
 | **Policy authority retained** | Who may call what remains fully defined by the customer through IAM policies |
 | **Audit trail secured** | CloudTrail provides credential issuance and API call history; Lattice access logs provide data path history |
-| **Reduced key custody is itself a benefit** | The customer holds no CA private key, so key-leak risk is eliminated outright |
+| **Reduced CA operation** | AWS handles its service PKI, while the customer still protects temporary credentials, roles, tokens and endpoint keys |
 | **Lifetime and attestation preserved** | The two similarities above are still satisfied |
 
 **But this is an argument that "control is exercised differently," not that "it is equivalent."** Whether a reviewer accepts the former depends on organizational standards, and it is not a problem technology can resolve.
@@ -236,23 +236,23 @@ Summarizing how the review issues line up:
 
 | Item | Review status | Basis |
 |---|---|---|
-| No long-lived secrets | ✅ **No re-litigation needed** | Both use short-lived credentials with auto-renewal |
-| Workloads hold no secrets | ✅ **No re-litigation needed** | Both are based on platform attestation |
-| Per-request authorization granularity | ✅ **Improved** | Connection-scoped → request-scoped, with path/method/header conditions |
-| Client identity proof | ✅ **Maintained or better** | SigV4 verified per request |
+| Avoid baked-in long-lived secrets | Verify configuration | Both can use automatically renewed short-lived credentials |
+| Runtime secret exposure | Review required | Short-lived private keys/tokens still require protection |
+| Per-request authorization | Compare configured policies | mTLS identity can also feed request-level authorization; SigV4 is not the only way |
+| Client identity proof | Changed mechanism | TLS peer proof and request signing have different coverage and threat assumptions |
 | **Server identity proof** | ⚠️ **Weakened — compensating control required** | From workload identity system down to TLS server certificate level. Defense moves to IAM control over resource creation |
 | **Root of trust ownership** | ⚠️ **Transferred — argument must be rewritten** | Customer CA → AWS IAM/STS |
-| End-to-end encryption | ⚠️ **Trade-off** | HTTPS listener terminates TLS once at Lattice. Preserving it requires TLS Passthrough, which forfeits IAM Auth (documents [04](./04-networking-basics.md), [06](./06-constraints.md)) |
+| End-to-end encryption | Choose the trust boundary | HTTPS terminates at Lattice; passthrough preserves endpoint TLS but not authenticated HTTP SigV4 identity |
 | Observability (tracing) | ⚠️ **Weakened** | Envoy spans disappear. Application instrumentation required ([document 01](./01-appmesh-vs-lattice.md)) |
-| Workloads outside AWS | ❌ **Scope reduced** | Requires IAM/STS reachability. On-premises and other-cloud workloads need a separate approach |
+| Workloads outside AWS | Separate design | Evaluate credentials and supported network access rather than assuming impossibility |
 
-**Practical recommendation: review the ⚠️ and ❌ items above with your security reviewers before starting the migration.** Most of the technical implementation is predictable, but these items depend on organizational judgment and the answer changes the architecture (for example, if server identity proof is ruled mandatory, you must go to TLS Passthrough with endpoint mTLS — and then you cannot use IAM Auth, which changes the entire authorization design).
+Review the changed trust and operational boundaries with the responsible security team. Endpoint mTLS, Lattice authenticated HTTP and anonymous network-context policy provide different controls; choose from actual requirements without asserting that one configuration meets every organization’s review standards.
 
 ### The option of keeping SPIRE
 
 Migration does not necessarily mean decommissioning SPIRE.
 
-- **If you have workloads outside AWS**, SPIRE remains necessary there
+- For workloads outside AWS, SPIRE may remain useful; other credential/identity approaches can also be evaluated.
 - **If you choose the TLS Passthrough configuration**, endpoints must perform mTLS themselves, and SPIRE can keep supplying those certificates
 - In that case you end up with a configuration where **App Mesh is gone but SPIRE remains** — responding to App Mesh end of support and keeping SPIRE are separate decisions
 
@@ -262,7 +262,7 @@ If eliminating SPIRE's operational burden was one of the goals of the migration,
 
 - The three SPIFFE elements are **SPIFFE ID** (a URI-form name), **SVID** (short-lived X.509/JWT), and **Workload API** (over UDS).
 - SPIRE's attestation resolves bootstrapping because **identity is not presented but observed and adjudicated.** The PID the kernel reports cannot be forged.
-- IAM Auth follows the same pattern — **short-lived credentials plus platform attestation.** So much of the review does not need re-litigation.
+- Both can use short-lived credentials and platform evidence; runtime secrets and policy differences still need review.
 - The decisive differences are two: **(a) bidirectional mutual authentication becomes unidirectional plus request authentication, weakening server identity proof**, and **(b) the root of trust transfers from a customer CA to AWS IAM/STS.**
 - Neither is resolved by technology; both require organizational judgment. **Review them with security reviewers before starting, because the answer changes the architecture.**
 

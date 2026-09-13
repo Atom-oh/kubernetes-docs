@@ -1,7 +1,7 @@
 # Constraints and Decision Points
 
-> **Supported Versions**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+, AWS App Mesh (end of support September 30, 2026)
-> **Last Updated**: September 3, 2026
+> **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
+> **Last Updated**: September 13, 2026
 
 ## What This Document Covers
 
@@ -13,16 +13,16 @@
 
 | # | Constraint | Nature | Alternatives exist | When to decide |
 |---|---|---|---|---|
-| 1 | TLS Passthrough and IAM Auth Policy cannot be combined | **Of principle** — will not be resolved | 2 (pick one) | **First** |
-| 2 | Raw TCP unsupported | **Of principle** — will not be resolved | Hybrid (with NLB) | Early |
+| 1 | TLS passthrough cannot authenticate HTTP SigV4 identity | Current documented service behavior | Endpoint authentication; anonymous network-context policy | First |
+| 2 | Raw TCP is not a service listener | Distinguish TCP resource connectivity | Resource gateway or existing private path/NLB | Early |
 | 3 | Application impact of SigV4 signing | Implementation choice | 3 | Early |
-| 4 | Envoy iptables exception during coexistence | Configuration item | Mandatory setting | Before migration starts |
+| 4 | Mesh coexistence route/signing validation | Configuration-dependent | Explicit bypass or configured forwarding | Before migration |
 | 5 | Per-hop request and data charges | Structural | Architectural adjustment | During design |
 | 6 | Failure domain concentration + STS dependency | Structural | Mitigation only | During design |
 
-Constraints 1 and 2 are **constraints of principle that will not be resolved even if AWS adds features** (see [document 04](./04-networking-basics.md)). The rest can be managed through design and operations.
+Constraints 1 and 2 are **current capability and trust-boundary choices**, not predictions that AWS can never add features. Separate service listeners, resource connectivity and controller support.
 
-## Constraint 1 — TLS Passthrough and IAM Auth Policy Cannot Be Combined
+## Constraint 1 — TLS Passthrough and Authenticated HTTP Identity
 
 ### The principle
 
@@ -33,10 +33,10 @@ Two facts from documents [03](./03-auth-flow.md) and [04](./04-networking-basics
 
 TLS Passthrough by definition does not terminate TLS. Therefore **Lattice cannot see the signature header and cannot apply request-signature-based authentication.**
 
-The structural evidence agrees. The AWS Gateway API Controller's `IAMAuthPolicy` can be attached **only to a Gateway, HTTPRoute, or GRPCRoute — `TLSRoute` is not an attachment target.** There is no mechanism to attach a policy to a TLS Passthrough path at all.
+Controller policy attachment support and AWS service capabilities are separate. TLSRoute is not among the documented IAMAuthPolicy attachment targets; nevertheless AWS TLS listeners support policies based on anonymous principals and network context.
 
-::: warning Needs verification
-Whether the API **rejects** an auth policy on a TLS_PASSTHROUGH listener or **accepts but never evaluates** it could not be confirmed in official documentation. The principle (header verification requires TLS termination) and the controller's attachment restriction are certain, but confirm the API-level behavior against the [VPC Lattice auth policies documentation](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html).
+::: note Confirmed limitation
+TLS passthrough cannot evaluate encrypted HTTP SigV4 identity or HTTP path/header conditions. Anonymous-principal policies are supported; use the [TLS listener reference](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html), not speculation that every policy is rejected or ignored.
 :::
 
 ### The two alternatives
@@ -44,7 +44,7 @@ Whether the API **rejects** an auth policy on a TLS_PASSTHROUGH listener or **ac
 | Alternative | Configuration | What you gain | What you lose |
 |---|---|---|---|
 | **A. HTTPS listener + IAM Auth** | Lattice terminates TLS, verifies SigV4, evaluates three policies | IAM-based authorization, path/method/header conditions, L7 routing, detailed access logs | End-to-end encryption (terminated once at Lattice), endpoint's own mTLS |
-| **B. TLS Passthrough + endpoint mTLS** | Lattice routes on SNI only; endpoints perform TLS/mTLS themselves | End-to-end encryption, mutual authentication preserved, SPIRE certificates still usable | All of IAM Auth, L7 routing, path/header conditions, HTTP detail in logs |
+| **B. TLS Passthrough + endpoint mTLS** | Custom-domain SNI selects the service; endpoints authenticate TLS | Endpoint encryption and certificate identity | No authenticated HTTP SigV4 identity or HTTP L7 inspection; anonymous network-context policy is distinct |
 
 ### Which to choose
 
@@ -57,23 +57,19 @@ The criterion is **whether regulation requires end-to-end encryption or workload
 
 Mixing is possible. **You can split A and B per service** — B for services under regulation, A for the rest. The cost is operating two authorization models simultaneously.
 
-## Constraint 2 — Raw TCP Unsupported
+## Constraint 2 — Choose Service or Resource Connectivity
 
 ### The principle
 
-As covered in [document 04](./04-networking-basics.md), plaintext TCP offers no basis for routing. No TLS means no `ClientHello`; no `ClientHello` means no SNI. The destination IP is link-local and identifies no service, leaving only the port.
+The absence of a raw-TCP service listener does not exclude TCP resources: Lattice resource configurations/resource gateways provide a separate access model. For service TLS passthrough, the client must start with TLS and send the configured custom-domain SNI.
 
-**Because it is a constraint of principle, do not expect it to be resolved.**
+Check protocol requirements and current controller support rather than treating this as a permanent limit of the whole product.
 
 ### Identifying what is affected
 
 Early in planning, **find every East-West communication that uses plaintext TCP.** Common ones:
 
-- Plaintext Redis / Memcached
-- DB connections without TLS (MySQL, PostgreSQL, etc.)
-- Custom binary protocols
-- Plaintext Kafka
-- gRPC over plaintext (h2c)
+Inventory plaintext database/cache/custom TCP protocols. Do not put gRPC over HTTP/2 (h2c) in the same unsupported category; validate its exact HTTP listener/route/target configuration.
 
 ### The alternative — a Hybrid configuration
 
@@ -81,11 +77,11 @@ Early in planning, **find every East-West communication that uses plaintext TCP.
 |---|---|
 | HTTP / HTTPS / gRPC | **VPC Lattice** |
 | TCP with TLS | Lattice **TLS Passthrough** (if SNI routing is viable) |
-| Plaintext TCP | **NLB** (or keep the existing path) |
+| Plaintext TCP | Evaluate Lattice TCP resource connectivity, existing private connectivity, or an NLB; service L7 features do not transfer automatically |
 
 The reason to recommend this is simple: **trying to move everything to Lattice is the most common cause of migration delay.** If you pull "introduce TLS for plaintext TCP services" into migration scope, you need application changes and the schedule leaves your control.
 
-Since App Mesh end of support imposes a deadline, it is practically important to **separate what must move by the deadline (HTTP traffic that depends on App Mesh) from what need not move at all (plaintext TCP that never used App Mesh).**
+App Mesh also supported TCP routes. Inventory **all traffic that actually depends on App Mesh**, not just HTTP, and complete its replacement before the end-of-support deadline.
 
 ## Constraint 3 — Application Impact of SigV4 Signing
 
@@ -103,15 +99,15 @@ If you chose IAM Auth (Constraint 1, alternative A), **someone must attach signa
 
 The irony of ② is plain: **you migrated to remove the Envoy sidecar and gained a signing sidecar.** That said, `sigv4proxy` is far lighter than Envoy, has no xDS control plane, and has static configuration. If "eliminate sidecars" was the core goal, you need ① — and then you need an application change plan.
 
-**③ is not recommended from a review standpoint.** However, as a phased strategy, **moving only the path in phase 1 with ③ and enabling IAM Auth in phase 2** is valid. It lets you validate the impact of the path change separately from the impact of introducing authentication, and it lines up with the measurement matrix in [document 02](./02-latency.md).
+An auth-off comparison is only for an isolated, explicitly approved test path with no business traffic and compensating network/application controls. Do not disable production authorization merely to make migration or benchmarking easier.
 
 **Whichever approach you take, check the three pitfalls in [document 03](./03-auth-flow.md) (Host header, x-amz-date clock, sign at the last hop).**
 
 ## Constraint 4 — Envoy iptables Exception During Coexistence
 
-**This is not a choice; it is a mandatory setting.**
+Verify the installed mesh policy and observed forwarding behavior before choosing an exclusion or an explicitly configured proxy path. Unknown destinations are not rejected by every Envoy configuration.
 
-While App Mesh and Lattice run side by side, the iptables rules installed by App Mesh's init container **intercept traffic bound for Lattice as well.** Envoy cannot find that destination in its configuration and the request fails.
+Mesh iptables rules may intercept Lattice-bound traffic. Whether it forwards, fails or alters signed fields depends on outbound policy and route configuration. Inspect actual rules and logs, then validate the chosen IPv4/IPv6 signing path.
 
 | Item | Value |
 |---|---|
@@ -148,7 +144,7 @@ Unit prices vary by region and over time, and there are free tiers. **Before fin
 
 The key is that charges are **per hop.**
 
-If you have a four-hop chain — frontend → orders → catalog → inventory → pricing — then a single user request produces **four Lattice requests.** Data processing charges accrue at each hop too. So **cost is proportional to user request count × chain depth.**
+For a simple four-call chain with one Lattice request per edge, one user operation produces four service requests. Actual costs also include fan-out, retries, polling, payload volume and provisioned hours; chain depth alone is not a complete cost model.
 
 In AS-IS (App Mesh) the structure was different. App Mesh itself had no per-request charge; cost appeared as the compute resources Envoy consumed. **The shift of the cost model from "compute resources" to "request count"** is the financial character of this migration.
 
@@ -159,7 +155,7 @@ In AS-IS (App Mesh) the structure was different. App Mesh itself had no per-requ
 | **Chatty services get expensive** | Consolidate patterns that make many calls per request into batch/aggregate calls |
 | **Deep chains get expensive** | Reducing chain depth improves both cost and latency ([document 02](./02-latency.md)) |
 | **Moving all communication to Lattice can spike costs** | **Keeping intra-cluster communication off Lattice** may be the sensible choice |
-| **Health checks and polling are billable** | Revisit high-frequency health check and polling intervals |
+| **Client polling generates traffic** | Count calls that actually traverse billed listeners; do not conflate client probes with Lattice-managed target health checks without checking pricing |
 
 **The last two items matter most.** Lattice's strength is communication crossing cluster, VPC, and account boundaries; for traffic within the same cluster it offers little benefit while adding cost and latency. **Sending only boundary-crossing traffic through Lattice and leaving intra-cluster traffic on ClusterIP** is often the right answer for both cost and performance.
 
@@ -173,11 +169,11 @@ Collect these before migrating. Without them, cost estimation is impossible.
 |---|---|
 | Number of services moving to Lattice | From the migration scope definition |
 | Per-service-pair request rate (RPS) | App Mesh Envoy metrics or application metrics |
-| **Average call chain depth** | Your current distributed tracing data (**collect it now** — there will be no spans after migration) |
+| **Average call chain depth** | Application tracing before and after migration; correlate with Lattice request IDs/logs |
 | Per-service-pair data transfer volume | Envoy metrics or flow logs |
 | Health check / polling frequency | Each service's configuration |
 
-**"Average call chain depth" must be collected now.** After migration, Lattice creates no spans, making this data hard to obtain ([document 01](./01-appmesh-vs-lattice.md)).
+Preserve or add application tracing across the migration. Lattice does not create a native span, but this does not eliminate application traces or make call-chain analysis impossible.
 
 ## Constraint 6 — Failure Domain Concentration and STS Dependency
 
@@ -185,15 +181,13 @@ Collect these before migrating. Without them, cost estimation is impossible.
 
 AS-IS and TO-BE have different failure characteristics.
 
-| Aspect | AS-IS: App Mesh sidecar | TO-BE: VPC Lattice |
+| Aspect | Sidecar path | Lattice path |
 |---|---|---|
-| **Data plane failure scope** | One Envoy = one Pod | A Lattice failure = **all East-West traffic** |
-| **How failure propagates** | Gradual, localized | Broad, simultaneous |
-| **Data plane during control plane failure** | Envoy keeps running on its last configuration (graceful degradation) | The data path itself is managed, so the character differs |
-| **Customer's remediation options** | Restart Pods, roll back config, bypass the sidecar | Wait for AWS-side recovery |
-| **Availability responsibility** | Customer (self-operated) | AWS (managed service) |
+| Failure scope | A proxy can fail locally; shared configuration, identity and network dependencies can fail broadly | Depends on affected service, AZ, policy and underlying dependency; not necessarily all East-West traffic |
+| Remediation | Workload/config rollback, capacity changes, approved alternate path | Customer policy/target/controller remediation plus AWS-side recovery where applicable |
+| Responsibility | Customer workload and shared-infrastructure responsibilities | AWS-managed service plus customer IAM, target, controller and application responsibilities |
 
-**The essence of the trade-off**: a managed service has a lower probability of individual failure, but when a failure occurs **its scope is broad and the customer's ability to intervene is limited.** The sidecar model may fail more often but failures are localized and the customer can act.
+Neither model has a measured failure probability in this chapter. Build a dependency-specific fault model and test approved recovery paths; managed does not mean the customer has no remediation responsibilities.
 
 ### The STS dependency
 
@@ -225,15 +219,15 @@ This constraint cannot be removed, only mitigated.
 ::: warning Needs verification
 The following could not be confirmed against official documentation. Verify them directly if they affect your design.
 
-**① Direct integration between API Gateway and Lattice** — **no evidence was found** that API Gateway natively supports a Lattice service network as a private integration target. The confirmed patterns are API Gateway → VPC Link → ALB/NLB → Lattice, or going through a proxy/federation layer. If your design connects North-South traffic to Lattice, validate this part first.
+**① API Gateway bridging** — confirm the exact REST/HTTP API integration type. Do not assume a Lattice service-network ARN is a VPC Link target or that an ALB/NLB can directly target a Lattice link-local address. A bridging design needs an explicitly implemented proxy/consumer and supported private connectivity, with its own auth and failure behavior.
 
-**② Exact Lattice quota values** — per an AWS networking blog, the default service throughput quota is described as **10 Gbps and 10,000 requests/second per service per Availability Zone.** Other reference values: 2,000 services/region, 50 service networks/region, 10 target groups per service, 2 listeners per service, 500 service associations per service network. **Most are adjustable, but confirm current per-region values in the Service Quotas console and [VPC Lattice endpoints and quotas](https://docs.aws.amazon.com/general/latest/gr/vpc-lattice-service.html).** No basis was found for a limit on concurrent connections as such.
+**② Quotas** — verify the required resource count, target count, bandwidth, connection and request limits in the [current quota reference](https://docs.aws.amazon.com/general/latest/gr/vpc-lattice-service.html) and the account/Region. Do not treat old default numbers or adjustability as universal.
 
-**③ Whether Lattice's Target selection considers the caller's AZ** — AZ-aware routing behavior and user controllability could not be confirmed. If you relied on zone-aware routing in AS-IS, **verify by measurement in your PoC** (the matrix in [document 02](./02-latency.md)).
+**③ AZ behavior** — AWS documents client-side DNS AZ affinity, but backend targets can span AZs. Do not infer same-AZ target selection from that DNS behavior; measure it for the chosen targets and client path.
 
-**④ API behavior when setting an auth policy on a TLS_PASSTHROUGH listener** — see Constraint 1.
+**④ TLS policy behavior** — confirmed: anonymous-principal policies can apply; authenticated HTTP SigV4 identity cannot. See Constraint 1.
 
-**⑤ ECH (Encrypted Client Hello) support** — do not assume it is supported ([document 04](./04-networking-basics.md)).
+**⑤ ECH/ESNI** — AWS explicitly excludes these for TLS listeners; see [document 04](./04-networking-basics.md).
 :::
 
 **By contrast, the following are confirmed**: the link-local ranges (`169.254.171.0/24`, `fd00:ec2:80::/64`), the SigV4 service name (`vpc-lattice-svcs`), the three listener protocols (HTTP/HTTPS/TLS_PASSTHROUGH), the condition key list, the App Mesh end-of-support date (September 30, 2026), that cross-AZ charges are included in data processing, and that trace spans are not supported.
@@ -248,21 +242,21 @@ graph TD
     Q1 -->|"Yes"| B["TLS Passthrough<br/>(Constraint 1, alt B)"]
     Q1 -->|"No"| A["HTTPS listener + IAM Auth<br/>(Constraint 1, alt A)"]
 
-    B --> B1["IAM Auth unavailable<br/>authorize in endpoint<br/>mTLS or the app"]
+    B --> B1["No authenticated HTTP SigV4 identity<br/>endpoint auth + network-context policy"]
     B1 --> B2["Evaluate keeping SPIRE<br/>(certificate supplier)"]
     B2 --> B3["No L7 routing<br/>→ SNI-based design"]
 
     A --> A1{"Where do you sign?<br/>(Constraint 3)"}
     A1 -->|"Shared library"| A2["App change plan needed<br/>per-language impls"]
     A1 -->|"Egress proxy"| A3["Accept a new sidecar<br/>test two iptables rules"]
-    A1 -->|"Phased: not yet"| A4["Phase 1 move the path →<br/>Phase 2 enable IAM Auth"]
+    A1 -->|"Isolated diagnostic only"| A4["Auth-off test with explicit controls<br/>never an unauthenticated production phase"]
 
     B3 --> C{"Is there plaintext TCP<br/>traffic? (Constraint 2)"}
     A2 --> C
     A3 --> C
     A4 --> C
 
-    C -->|"Yes"| C1["Hybrid: HTTP on Lattice,<br/>plaintext TCP stays on NLB"]
+    C -->|"Yes"| C1["Evaluate TCP resource connectivity<br/>or an existing private path/NLB"]
     C -->|"No"| C2["All on Lattice"]
 
     C1 --> D["Cost estimate: chain<br/>depth × volume (C5)<br/>+ internal scope"]
@@ -290,12 +284,12 @@ graph TD
 | **Design** | Listed plaintext TCP traffic; fixed the Hybrid scope |
 | **Design** | Decided the signing approach (library / egress proxy / phased) |
 | **Design** | Decided Lattice scope (boundary-crossing only / including internal) and the authorization plan for internal traffic |
-| **Data** | **Collected call chain depth from current distributed tracing** (impossible after migration) |
+| **Data** | Preserve application tracing and compare call-chain behavior before/after migration |
 | **Data** | Collected per-service-pair RPS and data transfer volume |
 | **Data** | Measured the AS-IS latency baseline (matrix in [document 02](./02-latency.md), including Envoy CPU usage) |
 | **Config** | Validated Envoy iptables exception CIDRs (IPv4 + IPv6) |
 | **Config** | Allowed inbound from the Lattice managed prefix list on node SGs |
-| **Config** | Enabled Lattice **access logs** (the only way to diagnose authorization failures) |
+| **Config** | Enable Lattice access logs and correlate request IDs with client/server logs |
 | **Config** | Evaluated Pod readiness gates (zero-downtime rolling updates) |
 | **Verify** | Confirmed unconfirmed items ①–⑤ against current official documentation |
 | **Verify** | Confirmed current quota values and unit prices for your region |
@@ -306,11 +300,11 @@ graph TD
 
 ## Summary
 
-- **The two constraints of principle will not be resolved** — TLS Passthrough and IAM Auth are mutually exclusive, and raw TCP is unsupported. Both derive from one fact: you must terminate TLS to see headers, and without TLS there is no SNI.
+- Distinguish TLS authenticated identity from anonymous policy, and service listeners from TCP resource connectivity.
 - **The first decision governs everything.** Whether regulation requires end-to-end encryption or mutual authentication determines the rest of the design, so agree with security reviewers before technical work begins.
 - **Do not try to move everything to Lattice.** A hybrid — plaintext TCP on NLB, intra-cluster traffic on ClusterIP — is often the right answer for cost, latency, and schedule. But you must separately design authorization for internal traffic.
 - **The cost model shifts from compute resources to request count.** Cost is proportional to request count × chain depth, so chatty communication and deep chains get expensive.
-- **Collect call chain depth data now.** After migration Lattice creates no spans, making it hard to obtain.
+- Preserve application tracing; lack of a native Lattice span does not prevent call-chain measurement.
 - Failure domain concentration and the STS dependency cannot be removed — **mitigate with phased migration and a secured rollback path.**
 
 ## References

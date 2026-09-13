@@ -19,7 +19,7 @@ Kernel defaults are chosen to **behave reasonably across a wide range of workloa
 |---|---|
 | **Unreproducible configuration** | Values differ per node, so incidents cannot be reproduced |
 | **Breakage on kernel upgrade** | A tunable valid on 6.1 is renamed, moved, or gone on 6.18 |
-| **Defeating auto-tuning** | Pinning TCP buffers disables the kernel's auto-tuning |
+| **Defeating auto-tuning** | Explicit per-socket SO_RCVBUF/SO_SNDBUF disables that socket’s automatic sizing; sysctl bounds are a different control |
 
 **The precondition for tuning is measurement.** Follow this order.
 
@@ -55,7 +55,7 @@ Also, kubelet rejects "unsafe" sysctls by default. If you need one, allow it exp
 ::: warning Needs verification
 On Bottlerocket, raising the conntrack ceiling via `settings.kernel.sysctl` does not take effect ([bottlerocket-os/bottlerocket#4221](https://github.com/bottlerocket-os/bottlerocket/issues/4221), filed September 2024). The cause is that **the kube-proxy config file (`/var/lib/kube-proxy-config/config`) takes precedence over command-line arguments.**
 
-The known workaround is passing **`--conntrack-max-per-core=0 --conntrack-min=0`** to kube-proxy — where **0 means "do not change"** — so kube-proxy leaves conntrack alone and the value set via node sysctl survives.
+When using a kube-proxy configuration file, change its **`conntrack.maxPerCore`/`conntrack.min` fields** if intentionally delegating limit management to node sysctl. Setting both to 0 is not a reason to rely on CLI flags ignored by `--config`. Confirm managed add-on reconciliation and memory headroom before rollout.
 
 **Whether this was resolved in a specific Bottlerocket release could not be confirmed.** Whichever path you use, verify the actual value on the node after applying.
 
@@ -79,7 +79,7 @@ This is the change to know about right now.
 
 **Two implications follow.**
 
-If you use `al2023-ami-kernel-default-*` AMIs, **newly launched nodes after that date run kernel 6.18.** Node replacement alone — autoscaling, upgrades, spot reclamation — changes the kernel.
+The default-kernel **AMI family** changed, but replacement uses the AMI selected by your launch template or provisioning policy. A pinned AMI ID does not change its kernel merely because a new node starts. A refreshed latest/default AMI lookup can select a new kernel; EKS-optimized AMIs have their own release selection.
 
 If you must pin a kernel, use **version-specific AMIs** (`al2023-ami-kernel-6.1-*`, etc.) explicitly.
 
@@ -189,7 +189,8 @@ cat /proc/pressure/cpu
 cat /proc/pressure/io
 
 # A specific cgroup
-cat /sys/fs/cgroup/<path>/memory.pressure
+: "${KERNEL_CGROUP_PATH:?Set the inspected cgroup directory}"
+cat "$KERNEL_CGROUP_PATH/memory.pressure"
 ```
 
 `some avg10` is the fraction of the last 10 seconds in which **at least one task was stalled on that resource.** A calm usage graph with this value climbing means time is going into reclaim or contention.
@@ -207,7 +208,7 @@ As covered, **the item that most often causes real incidents.**
 | Secondary signals | `nf_conntrack: table full` in `dmesg`, `nf_conntrack_count` / `nf_conntrack_max` ratio |
 | Adjustment path | **`conntrack.maxPerCore` / `conntrack.min` in the `kube-proxy-config` ConfigMap** (takes precedence on EKS) |
 | Cost | Node memory per entry. Cannot be raised without bound |
-| Root fix | Connection reuse (keepalive), headless Services, eBPF dataplane to bypass the path |
+| Root fix | Reduce connection churn; investigate dataplane/map pressure. Headless DNS alone does not disable tracking |
 
 **Why `maxPerCore` is used** is worth knowing. Being per-core rather than absolute, the same setting scales proportionally across node sizes. Pinning an absolute value (`nf_conntrack_max`) over-provisions small nodes and under-provisions large ones.
 
@@ -220,13 +221,13 @@ Timeouts are also adjustable — reducing `nf_conntrack_tcp_timeout_established`
 | `net.core.somaxconn` | **On accept-queue overflow.** A common adjustment on servers taking connection bursts |
 | `net.ipv4.tcp_max_syn_backlog` | On SYN bursts |
 | `net.core.netdev_max_backlog` | **When receive softirq cannot keep up** |
-| `net.ipv4.tcp_rmem` / `tcp_wmem` | **Keep defaults** — kernel auto-tuning is active. Pinning disables it. Consider ceiling adjustments only on high-BDP long-distance paths |
+| `net.ipv4.tcp_rmem` / `tcp_wmem` | Bounds/defaults for TCP sizing; changing these does not by itself disable autotuning. Adjust only from measured BDP/memory evidence |
 | `net.ipv4.ip_local_port_range` | **On source port exhaustion.** Happens in practice on egress-heavy nodes |
 | `net.ipv4.tcp_tw_reuse` | On TIME_WAIT accumulation. Apply understanding the behavior |
 
 **`somaxconn` and `ip_local_port_range` are the representative cases of justified adjustment.** The former has an evidence counter (`TcpExtListenOverflows` in `nstat`), and the latter shows up directly as connection failures.
 
-By contrast **the default for `tcp_rmem`/`tcp_wmem` is not to touch them.** The kernel is auto-tuning under load, and pinning values disables that.
+Retain sensible `tcp_rmem`/`tcp_wmem` bounds unless measurements justify changes. Linux documents that explicit **SO_RCVBUF/SO_SNDBUF socket settings** disable the corresponding per-socket autotuning; do not confuse that with setting sysctl min/default/max values.
 
 ### qdisc
 
@@ -289,11 +290,11 @@ More important long-term than the tuning itself is **how you manage it.**
 
 - **Leave most of it at defaults.** The kernel is auto-tuning under load, and unfounded tuning creates unreproducible configurations and breakage on kernel upgrades.
 - The precondition for tuning is measurement. **Start with drop counters** — `insert_failed`, qdisc `dropped`, NIC drops.
-- **AL2023's default kernel is 6.18 as of August 17, 2026.** With `kernel-default` AMIs, node replacement alone changes the kernel — treat kernel transitions with the same weight as a Kubernetes upgrade.
+- Verify the selected AMI and running kernel. Default AMI families may advance; pinned AMI IDs do not change automatically on replacement.
 - The root cause of CPU throttling is usually **a mismatch between the CPU count the application perceives and its quota.** Start with `GOMAXPROCS`/`ActiveProcessorCount`.
 - For node stability, **kubelet reservations and eviction thresholds** beat kernel tuning. Eviction is better than a kernel OOM.
 - The representative justified adjustments are **conntrack ceiling, `somaxconn`, `ip_local_port_range`, and `vm.max_map_count`** — all have direct evidence counters.
-- The default for `tcp_rmem`/`tcp_wmem` is **not to touch them** — pinning disables kernel auto-tuning.
+- TCP sysctl bounds and per-socket autotuning overrides are different; tune only with measured evidence.
 - **If you run IPVS mode, you need a migration plan** (deprecated in 1.35, removal targeted 1.38).
 
 ## References

@@ -4,9 +4,9 @@ This quiz tests your understanding of the six migration constraints, the order o
 
 ## Multiple Choice Questions
 
-1. Which of the six constraints are "constraints of principle that will not be resolved even if AWS adds features"?
+1. Which statement correctly distinguishes TLS identity and TCP connectivity models?
    - A) The application impact of SigV4 signing and the Envoy iptables exception
-   - B) The incompatibility of TLS Passthrough with IAM Auth Policy, and the lack of raw TCP support
+   - B) Separate authenticated HTTP identity from anonymous TLS policy, and service listeners from TCP resource connectivity
    - C) Per-hop charges and the STS dependency
    - D) Failure domain concentration and quota limits
 
@@ -14,10 +14,10 @@ This quiz tests your understanding of the six migration constraints, the order o
 
 <summary>Show Answer</summary>
 
-**Answer: B) The incompatibility of TLS Passthrough with IAM Auth Policy, and the lack of raw TCP support**
+**Answer: B) Separate authenticated HTTP identity from anonymous TLS policy, and service listeners from TCP resource connectivity**
 
 **Explanation:**
-Both derive from one fact: you must terminate TLS to see headers, and without TLS there is no SNI. SigV4 verification presupposes parsing the `Authorization` header, so it is physically impossible without TLS termination; and plaintext TCP has no basis for routing at all. The remaining constraints (signing approach, iptables exception, billing, failure domain) are items you can manage through design and operations.
+These are current API/trust-boundary choices. They do not prove that every TLS auth policy is impossible or that the entire Lattice product lacks TCP resource access.
 </details>
 
 2. Which decision must be made first in the migration design?
@@ -36,9 +36,9 @@ Both derive from one fact: you must terminate TLS to see headers, and without TL
 This decision rests on organizational review standards rather than technology. Choosing TLS Passthrough forfeits all of IAM Auth and L7 routing, requires redesigning authorization in endpoint mTLS or the application, and pulls in the question of whether SPIRE stays. Choosing an HTTPS listener leads instead to the signing-approach decision. Confirming this late means unwinding every earlier design decision, so agree with security reviewers first.
 </details>
 
-3. What does "call chain depth dominates cost" mean for Lattice billing?
+3. How should Lattice cost be estimated?
    - A) A deep chain increases the service provisioning charge
-   - B) Charges are per hop, so in a four-hop chain a single user request produces four Lattice requests, and cost is proportional to request count × chain depth
+   - B) Count actual service calls, including chain depth, fan-out and retries, alongside data volume and provisioned hours
    - C) Chain depth determines the cross-AZ charge
    - D) A deep chain hits quotas sooner
 
@@ -46,15 +46,15 @@ This decision rests on organizational review standards rather than technology. C
 
 <summary>Show Answer</summary>
 
-**Answer: B) Charges are per hop, so in a four-hop chain a single user request produces four Lattice requests, and cost is proportional to request count × chain depth**
+**Answer: B) Count actual service calls, including chain depth, fan-out and retries, alongside data volume and provisioned hours**
 
 **Explanation:**
-The three billing axes are service provisioning (hourly), data processing (per GB, inter-AZ included), and request count (HTTP/HTTPS) or TCP connection count (TLS listeners). Request and data processing charges accrue at each hop, so chain depth becomes a cost multiplier. In AS-IS (App Mesh) there was no per-request charge and cost appeared as Envoy's compute consumption, so this migration shifts the cost model from "compute resources" to "request count" — making chatty communication and deep chains expensive.
+A simple four-call chain yields four requests only under that assumption. Hourly charges, transferred bytes, retries and access model also affect cost; no savings are measured here.
 </details>
 
-4. Why is it emphasized that call chain depth data must be collected before migrating?
+4. How should call-chain evidence be maintained?
    - A) Because applications change after migration and the chains differ
-   - B) Because after migration Lattice creates no trace spans, making the data hard to obtain
+   - B) Preserve application traces across migration and correlate them with Lattice logs and request IDs
    - C) Because CloudWatch does not provide a chain depth metric
    - D) Because cost estimation is unnecessary after migration
 
@@ -62,15 +62,15 @@ The three billing axes are service provisioning (hourly), data processing (per G
 
 <summary>Show Answer</summary>
 
-**Answer: B) Because after migration Lattice creates no trace spans, making the data hard to obtain**
+**Answer: B) Preserve application traces across migration and correlate them with Lattice logs and request IDs**
 
 **Explanation:**
-Lattice does not create X-Ray segments/spans and does not inject trace IDs. In AS-IS, Envoy produces spans so distributed tracing data reveals chain depth; after migration that data does not exist unless you add OpenTelemetry instrumentation to applications. Chain depth is a key input to cost estimation, so collect it now. For the same reason, collect per-service-pair RPS and data transfer volume while Envoy metrics are still available.
+Lattice lacks native spans; that does not erase application spans or make post-migration call-chain analysis impossible.
 </details>
 
 5. What configuration is recommended for an environment with plaintext TCP traffic?
    - A) Introduce TLS everywhere and move all of it to Lattice
-   - B) Hybrid — HTTP/HTTPS/gRPC on Lattice, TCP with TLS on TLS Passthrough, plaintext TCP on an NLB or the existing path
+   - B) Evaluate service HTTP/TLS listeners separately from TCP resource connectivity and existing private alternatives
    - C) Remove all plaintext TCP services
    - D) Enable Lattice's raw TCP listener
 
@@ -78,10 +78,10 @@ Lattice does not create X-Ray segments/spans and does not inject trace IDs. In A
 
 <summary>Show Answer</summary>
 
-**Answer: B) Hybrid — HTTP/HTTPS/gRPC on Lattice, TCP with TLS on TLS Passthrough, plaintext TCP on an NLB or the existing path**
+**Answer: B) Evaluate service HTTP/TLS listeners separately from TCP resource connectivity and existing private alternatives**
 
 **Explanation:**
-Trying to move everything to Lattice is the most common cause of migration delay. Pulling "introduce TLS for plaintext TCP services" into scope requires application changes and the schedule leaves your control. Since App Mesh end of support (September 30, 2026) imposes a deadline, it is practically important to separate what must move by then (HTTP traffic depending on App Mesh) from what need not move at all (plaintext TCP that never used App Mesh). D describes a feature that does not exist.
+Resource configurations support TCP without inheriting service L7 routing/authentication. Match each protocol to the correct model and verify controller/API support.
 </details>
 
 6. What is the trade-off of keeping intra-cluster communication off Lattice?
@@ -100,9 +100,9 @@ Trying to move everything to Lattice is the most common cause of migration delay
 Lattice's strength is communication crossing cluster, VPC, and account boundaries; within the same cluster it offers little benefit while adding cost and latency, so routing only boundary-crossing traffic through it is often sensible. However, `IAMAuthPolicy` authorizes only traffic traveling through Gateways/HTTPRoutes/GRPCRoutes, so taking internal traffic off Lattice removes authorization for that segment. This is where cost optimization and authorization consistency conflict.
 </details>
 
-7. Which statement correctly describes the failure domain difference between AS-IS (sidecar) and TO-BE (Lattice)?
+7. How should failure domains be compared?
    - A) Lattice is managed, so failures do not occur
-   - B) Sidecar failures are localized (one Envoy = one Pod) and the customer can intervene, whereas a Lattice failure affects all East-West traffic and the customer's direct remediation options are limited
+   - B) Both paths have local and shared dependencies; assess affected services, AZs, policies and recovery controls
    - C) The failure scope is identical in both models
    - D) The sidecar model has the broader failure scope
 
@@ -110,10 +110,10 @@ Lattice's strength is communication crossing cluster, VPC, and account boundarie
 
 <summary>Show Answer</summary>
 
-**Answer: B) Sidecar failures are localized (one Envoy = one Pod) and the customer can intervene, whereas a Lattice failure affects all East-West traffic and the customer's direct remediation options are limited**
+**Answer: B) Both paths have local and shared dependencies; assess affected services, AZs, policies and recovery controls**
 
 **Explanation:**
-A managed service has a lower probability of individual failure but a broader scope when failure occurs, with limited customer intervention. The sidecar model may fail more often but failures are localized and responses like Pod restarts, config rollback, or bypassing the sidecar are available. Adding IAM Auth makes STS a data path dependency: on refresh failure you cannot sign and unsigned requests are 403s. Mitigations are confirming credential cache lifetime, testing refresh-failure behavior, redundancy for critical paths, phased migration with a rollback path, and recalculating RTO/RPO.
+A proxy failure can be local, but shared mesh config can fail broadly. A Lattice failure is not automatically all East-West traffic, and customer policy/target/controller remediation still exists.
 </details>
 
 8. Which of the following is marked as `Needs verification` because it could not be confirmed in official documentation?

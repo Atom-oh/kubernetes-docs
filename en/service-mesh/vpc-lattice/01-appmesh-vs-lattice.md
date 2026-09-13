@@ -1,7 +1,7 @@
 # App Mesh vs VPC Lattice Architecture
 
-> **Supported Versions**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+, AWS App Mesh (end of support September 30, 2026)
-> **Last Updated**: September 3, 2026
+> **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
+> **Last Updated**: September 13, 2026
 
 ## What This Document Covers
 
@@ -15,9 +15,9 @@
 
 App Mesh and Istio put an Envoy inside the Pod because **some decisions require the application's context.**
 
-Remembering how many 5xx responses a given upstream instance recently returned so you can eject it from the pool (outlier detection), deciding whether to retry a request and whether to send the retry to a different instance (retry policy), failing fast once concurrent connections exceed a threshold (circuit breaker) — these decisions can only be made **on the caller side, holding caller-side state.** A proxy inside the calling Pod has that state naturally.
+A caller-side proxy can maintain connection pools, observe upstream failures and apply configured retries. The exact controls depend on the product and its API; an Envoy capability is not automatically an App Mesh feature. A managed service can also maintain state, so proxy placement alone does not prove a feature is impossible.
 
-The cost is clear. Every Pod runs one more proxy process, that process consumes CPU and memory, every configuration change must be distributed to thousands of proxies, and an Envoy version upgrade triggers application restarts. **The customer operates both the control plane and the data plane.**
+The customer operates the injected Envoy workloads and any separately deployed SPIRE infrastructure. **AWS operates the App Mesh control plane.** Proxy upgrades and resource consumption remain customer workload concerns; do not describe App Mesh as a fully self-operated control plane.
 
 ### The managed data plane model — push the proxy into the infrastructure
 
@@ -25,7 +25,7 @@ Lattice went the other direction. It pulls the proxy out of the Pod and places i
 
 The problems this design solves are scale and heterogeneity. Because there is no sidecar, proxies do not multiply with Pod count, and EKS, ECS, EC2, and Lambda can all participate in the service network **the same way.** You cannot put an Envoy inside a Lambda function, but an infrastructure-layer proxy can serve Lambda too. VPC and account boundaries — even overlapping IP ranges — are absorbed by the infrastructure.
 
-The cost is equally clear. **The party that held caller-side state is gone.** The infrastructure proxy sits in front of the service, so features that require remembering "what failures has this particular caller recently seen" and reacting per-caller are not provided. This is the root of every feature gap below.
+Removing Envoy changes where resilience and telemetry are implemented. Compare the **currently exposed App Mesh and Lattice APIs**, then identify which controls must move into the application or another proxy. Do not infer AWS internal state placement or permanent feature limits from this conceptual topology.
 
 ## AS-IS / TO-BE Architecture
 
@@ -90,7 +90,7 @@ Three differences stand out.
 
 | App Mesh | VPC Lattice | Relationship |
 |---|---|---|
-| **Mesh** | **Service Network** | Conceptually closest. But a Mesh is a Kubernetes-cluster-centric boundary while a Service Network is a boundary you **associate VPCs with** — the unit of participation differs |
+| **Mesh** | **Service Network** | Both are logical boundaries. An App Mesh mesh is not inherently Kubernetes-only; a Lattice service network associates services and VPCs, with resource connectivity as a separate capability. |
 | **VirtualService** | **Lattice Service** | Logical service name. A Lattice Service gets its own DNS name |
 | **VirtualRouter** + **Route** | **Listener** + **Listener Rule** | VirtualRouter's per-protocol routing role is absorbed by Listener; Route's match/action by Listener Rule |
 | **VirtualNode** | **Target Group** | VirtualNode packed "this workload's identity + backend config + listener config" into one resource; a Target Group expresses only the **set of backend targets** |
@@ -111,26 +111,23 @@ In other words, even where the right-hand column is filled in, not every attribu
 
 ## Feature Gaps
 
-The features that disappear are not accidental omissions — they are the **necessary consequence** of the design difference above. Lattice's proxy sits in front of the service (receiver side) and holds no per-caller state, so anything requiring a caller-side judgment structurally cannot be provided.
+These are **migration checks**, not proofs of what a managed data plane can never implement. App Mesh, Istio and raw Envoy expose different configuration surfaces; verify the source feature actually used before choosing its replacement.
 
-| Feature | App Mesh (Envoy) | VPC Lattice | Why it disappears | Alternative |
-|---|---|---|---|---|
-| **Circuit breaker** | ✅ connection pool thresholds | ❌ | Requires counting concurrent connections and pending requests on the caller side | Application libraries (Resilience4j, Polly, etc.) |
-| **Outlier detection** | ✅ ejects instances after consecutive 5xx | ❌ | Requires per-caller upstream failure history | Target Group health checks (passive, periodic, not immediate) |
-| **Fault injection** | ✅ inject delays and errors | ❌ | A chaos-testing feature, outside the scope of a managed data plane | Application layer, or a test-only proxy |
-| **Traffic mirroring** | ✅ duplicate and forward traffic | ❌ | Request duplication amplifies proxy load, hard to offer on shared infrastructure | Dual calls from the application, or a separate mirroring layer |
-| **Fine-grained retry policy** | ✅ conditions, counts, backoff, timeouts | ❌ | Retry is a caller-side decision | Application SDK retries (including AWS SDK default retries) |
-| **Client mTLS** | ✅ mutual authentication | ❌ Lattice terminates server TLS but **does not request a client certificate** | The identity proof model itself changes to SigV4 request signing | IAM Auth (SigV4), or hand it to TLS Passthrough so endpoints do mTLS themselves |
-| **Detailed Envoy metrics** | ✅ per-upstream histograms, retry counters, and many more | ⚠️ CloudWatch metrics + access logs | The producer of those metrics is gone | Ship Lattice access logs to CloudWatch/S3/Firehose |
-| **Distributed trace spans** | ✅ Envoy creates and propagates spans | ❌ Lattice does not create X-Ray segments/spans and **does not inject trace IDs** | Same as above | Instrument the application (OpenTelemetry/ADOT). The Lattice hop is observable only through access logs |
+| Capability | Migration check |
+|---|---|
+| Connection limits, retries and outlier handling | Inventory the controls exposed by the actual source product. Lattice health checks do not reproduce every Envoy client-side policy; validate application resilience and retry budgets. |
+| Fault injection and traffic mirroring | Do not label all Envoy/Istio capabilities as App Mesh features. Design a separate reviewed test/mirroring path when needed. |
+| Health checks | Target-group health checks actively probe targets; they are not passive per-request outlier detection. |
+| Client certificate identity | An HTTPS service listener and endpoint mTLS through TLS passthrough are different trust boundaries. See [networking](./04-networking-basics.md). |
+| Metrics and traces | Retain application OpenTelemetry spans. Lattice access logs and CloudWatch metrics add request/target timing and correlation, but do not supply a native Lattice trace span. |
 
 ### How to read these gaps in practice
 
-The most consistently underestimated items in this table are the last two rows: **observability.**
+An important migration task is **observability**: inventory the metrics, access logs and trace context supplied by each existing component, and verify the replacement path end to end.
 
 Circuit breakers and retries have a clear alternative — "add a library to the application" — with a cost you can estimate. Observability looks like it has a clear alternative too, but it is a different kind of work. In AS-IS, the spans Envoy produced automatically came **without touching application code.** Getting the same level of tracing in TO-BE means adding OpenTelemetry instrumentation to every service, and that becomes a work item for application teams.
 
-Also, **the Lattice hop itself has no span, so it remains a blank gap in the trace graph.** You end up inferring Lattice latency from the interval between where the caller's span ends and the receiver's span begins — and that interval mixes network latency with Lattice processing latency, with no way to separate them. Plan for the fact that during an incident, your only evidence for "is Lattice slow or is the network slow" will be access logs.
+A client span normally encloses the downstream server span, so subtracting the caller span end from the receiver span start is not a network-latency measurement. Correlate application spans with Lattice log fields such as `requestId`, `duration`, and `requestToTargetDuration` and `responseFromTargetDuration`; clock skew, instrumentation boundaries and network time limit causal attribution. Lattice adds `x-amzn-requestid` for HTTP correlation; that is not an OpenTelemetry span.
 
 ## The Role of the AWS Gateway API Controller
 
@@ -166,7 +163,7 @@ This matters especially in environments that also run ingress-nginx. The North-S
 
 ## Summary
 
-- The sidecar model put the proxy in the Pod to enable **decisions that need caller-side state**; the managed data plane model pushed the proxy into infrastructure for **scale and platform heterogeneity**. The feature gaps are the consequence of that choice.
+- Compare product APIs and configured capabilities; moving the proxy changes responsibilities but does not prove immutable feature gaps.
 - The resource mapping table maps names. The attributes VirtualNode held either scatter across several places or vanish.
 - The most underestimated gap is observability. Spans that Envoy gave you for free become an instrumentation project.
 - The AWS Gateway API Controller is what reflects Kubernetes endpoint changes into Lattice Targets, and its availability is tied to data path reliability.

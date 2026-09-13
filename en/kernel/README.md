@@ -18,7 +18,7 @@ But the knowledge you need when diagnosing an incident lives one layer below.
 | Symptom you meet in production | The reality at the kernel layer |
 |---|---|
 | "The Pod was OOMKilled but container memory was under the limit" | cgroup v2's `memory.current` includes page cache. Looking at RSS alone is not enough |
-| "New connections on the node are silently dropped" | `nf_conntrack` table exhaustion. It only shows in the `nf_conntrack_insert_failed` counter |
+| "New connections on the node are silently dropped" | Investigate conntrack count/max, insertion/drop counters and kernel logs alongside other packet-drop causes |
 | "I set a CPU limit and p99 got spiky" | CFS/EEVDF throttling. Utilization is low but the task is forcibly stopped every period |
 | "Pod-to-Pod on the same node is unusually fast" | It only traverses the veth pair and never touches the NIC |
 | "We have thousands of Service rules and latency went up" | Linear rule evaluation in iptables-mode kube-proxy |

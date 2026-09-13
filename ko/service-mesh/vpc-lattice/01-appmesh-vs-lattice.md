@@ -1,7 +1,7 @@
 # App Mesh와 VPC Lattice 아키텍처 대비
 
-> **지원 버전**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+, AWS App Mesh (2026년 9월 30일 지원 종료)
-> **마지막 업데이트**: 2026년 9월 3일
+> **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
 
@@ -15,9 +15,9 @@
 
 App Mesh와 Istio가 Pod 안에 Envoy를 넣는 이유는 **애플리케이션의 컨텍스트를 알아야 하는 결정이 있기 때문**입니다.
 
-어떤 업스트림 인스턴스가 최근 5xx를 몇 번 냈는지 기억해서 그 인스턴스를 풀에서 빼는 판단(outlier detection), 요청을 재시도할지 말지, 재시도할 때 이전과 다른 인스턴스로 보낼지의 판단(retry policy), 동시 연결 수가 임계를 넘었을 때 즉시 실패시키는 판단(circuit breaker) — 이런 결정은 **호출자 쪽에서, 호출자의 상태를 들고 있어야** 내릴 수 있습니다. 호출자 Pod 안의 프록시는 그 상태를 자연스럽게 갖습니다.
+호출 측 프록시는 연결 풀과 upstream 실패 상태를 유지하고 설정된 재시도를 적용할 수 있습니다. 구체적인 제어는 제품과 API에 달려 있으며 Envoy 기능이 곧 App Mesh 기능인 것은 아닙니다. 관리형 서비스도 상태를 유지할 수 있으므로 프록시 위치만으로 기능의 불가능성을 증명할 수 없습니다.
 
-대가는 명확합니다. Pod마다 프록시 프로세스가 하나 더 뜨고, 그 프로세스가 CPU와 메모리를 쓰고, 설정 변경 때마다 수천 개의 프록시에 설정을 배포해야 하며, Envoy 버전 업그레이드가 애플리케이션 재시작을 유발합니다. 컨트롤플레인과 데이터플레인을 **고객이 직접 운영**해야 합니다.
+고객은 주입된 Envoy 워크로드와 별도로 배포한 SPIRE를 운영합니다. **App Mesh 제어 평면은 AWS가 운영합니다.** 프록시 업그레이드와 자원 사용은 고객 워크로드의 운영 과제이지만 App Mesh 제어 평면까지 자체 운영한다고 설명하면 안 됩니다.
 
 ### 관리형 데이터플레인 모델 — 프록시를 인프라로 밀어낸다
 
@@ -25,7 +25,7 @@ Lattice는 반대 방향을 택했습니다. 프록시를 Pod에서 빼내고 **
 
 이 설계가 사는 문제는 규모와 이질성입니다. 사이드카를 쓰지 않으므로 Pod 수만큼 프록시가 늘지 않고, EKS·ECS·EC2·Lambda가 **같은 방식으로** 서비스 네트워크에 참여할 수 있습니다. Lambda 함수 안에 Envoy를 넣을 수는 없지만, 인프라 계층의 프록시라면 Lambda도 대상이 됩니다. VPC와 계정 경계, 심지어 IP 대역 중복까지 인프라가 흡수합니다.
 
-대가도 명확합니다. **호출자 쪽 상태를 들고 있던 주체가 사라집니다.** 인프라 프록시는 서비스 앞단에 있으므로 "이 호출자가 최근에 어떤 실패를 겪었는가"를 호출자 단위로 기억하고 대응하는 기능은 제공되지 않습니다. 이것이 뒤에 나오는 기능 GAP의 근원입니다.
+Envoy를 제거하면 복원력과 관측 기능의 구현 위치가 달라집니다. **현재 App Mesh와 Lattice API가 제공하는 기능**을 비교한 뒤 애플리케이션이나 다른 프록시로 옮길 제어를 구분합니다. 개념 구성도로 AWS 내부 상태 위치나 영구적인 기능 제약을 추론하지 않습니다.
 
 ## AS-IS / TO-BE 아키텍처
 
@@ -90,7 +90,7 @@ graph TB
 
 | App Mesh | VPC Lattice | 대응 관계 |
 |---|---|---|
-| **Mesh** | **Service Network** | 개념적으로 가장 가까움. 다만 Mesh는 Kubernetes 클러스터 중심 경계이고, Service Network는 **VPC를 associate하는** 경계라 참여 단위가 다름 |
+| **Mesh** | **Service Network** | 둘 다 논리적 경계입니다. App Mesh mesh는 Kubernetes 전용이 아니며, Lattice service network는 서비스와 VPC를 연결하고 별도로 resource connectivity를 제공합니다. |
 | **VirtualService** | **Lattice Service** | 논리적 서비스 이름. Lattice Service는 자체 DNS 이름을 부여받음 |
 | **VirtualRouter** + **Route** | **Listener** + **Listener Rule** | VirtualRouter의 프로토콜별 라우팅 역할이 Listener로, Route의 match/action이 Listener Rule로 나뉘어 흡수됨 |
 | **VirtualNode** | **Target Group** | VirtualNode는 "이 워크로드의 정체 + 백엔드 설정 + 리스너 설정"을 한 리소스에 담았지만, Target Group은 **백엔드 대상 집합**만 표현 |
@@ -111,26 +111,23 @@ graph TB
 
 ## 기능 GAP
 
-사라지는 기능들은 우연한 누락이 아니라 위에서 설명한 설계 차이의 **필연적 결과**입니다. Lattice의 프록시는 서비스 앞단(수신자 쪽)에 있고 호출자별 상태를 갖지 않으므로, 호출자 쪽 판단이 필요한 기능은 구조적으로 제공될 수 없습니다.
+다음은 **마이그레이션 점검 항목**이며 관리형 데이터 평면이 영원히 구현할 수 없는 기능의 증명이 아닙니다. App Mesh, Istio, Envoy의 설정 범위는 다르므로 실제 사용 중인 원본 기능을 먼저 확인합니다.
 
-| 기능 | App Mesh (Envoy) | VPC Lattice | 사라지는 이유 | 대안 |
-|---|---|---|---|---|
-| **Circuit breaker** | ✅ connection pool 임계값 기반 | ❌ | 호출자 쪽에서 동시 연결·대기 요청 수를 세야 함 | 애플리케이션 라이브러리 (Resilience4j, Polly 등) |
-| **Outlier detection** | ✅ 연속 5xx로 인스턴스 격리 | ❌ | 호출자별 업스트림 실패 이력이 필요 | Target Group health check (수동적·주기적이며 즉시성 없음) |
-| **Fault injection** | ✅ 지연·에러 주입 | ❌ | 카오스 테스트용 기능으로 관리형 데이터플레인 범위 밖 | 애플리케이션 계층 또는 테스트 환경 전용 프록시 |
-| **Traffic mirroring** | ✅ 트래픽 복제 전송 | ❌ | 요청 복제는 프록시 부하를 증폭시켜 공유 인프라에서 제공하기 어려움 | 애플리케이션 이중 호출, 또는 별도 미러링 계층 |
-| **세밀한 retry policy** | ✅ 조건·횟수·백오프·타임아웃 | ❌ | 재시도 판단은 호출자 쪽 결정 | 애플리케이션 SDK 재시도 (AWS SDK 기본 재시도 포함) |
-| **Client mTLS** | ✅ 상호 인증 | ❌ Lattice는 서버 TLS만 종료하고 **client certificate를 요청하지 않음** | 신원 증명 모델 자체가 SigV4 요청 서명으로 바뀜 | IAM Auth (SigV4), 또는 TLS Passthrough로 넘겨 엔드포인트가 직접 mTLS 수행 |
-| **Envoy 상세 메트릭** | ✅ 업스트림별 histogram, 재시도 카운터 등 다수 | ⚠️ CloudWatch 메트릭 + access log 수준 | 메트릭 생산 주체가 사라짐 | Lattice access log를 CloudWatch/S3/Firehose로 수집 |
-| **분산 추적 span** | ✅ Envoy가 span 생성·전파 | ❌ Lattice는 X-Ray segment/span을 만들지 않고 **trace ID도 주입하지 않음** | 위와 동일 | 애플리케이션 계측(OpenTelemetry/ADOT)으로 span 직접 생성. Lattice 구간 지연은 access log로만 관측 |
+| 기능 | 전환 점검 |
+|---|---|
+| 연결 제한·재시도·outlier 처리 | 실제 원본 제품이 노출하는 제어를 조사합니다. Lattice health check는 Envoy의 모든 클라이언트 정책을 대체하지 않으므로 앱 복원력과 retry budget을 검증합니다. |
+| 장애 주입·트래픽 미러링 | Envoy/Istio의 모든 기능을 App Mesh 기능으로 표시하지 않습니다. 필요하면 별도로 검토한 시험·미러링 경로를 설계합니다. |
+| Health check | Target group health check는 대상을 능동적으로 검사하며 요청 기반 수동 outlier detection과 다릅니다. |
+| 클라이언트 인증서 신원 | HTTPS 서비스 listener와 TLS passthrough의 endpoint mTLS는 신뢰 경계가 다릅니다. [네트워킹](./04-networking-basics.md)을 확인합니다. |
+| 지표·추적 | 애플리케이션 OpenTelemetry span을 유지합니다. Lattice access log와 CloudWatch 지표는 요청·대상 시간 및 상관관계를 제공하지만 네이티브 Lattice trace span은 만들지 않습니다. |
 
 ### GAP을 읽는 실무적 관점
 
-이 표에서 가장 자주 과소평가되는 항목은 마지막 두 줄, **관측성**입니다.
+중요한 전환 과제는 **관측성**입니다. 기존 각 구성요소의 지표·access log·trace context를 조사하고 대체 경로를 끝까지 검증합니다.
 
 기능 GAP 중 circuit breaker나 retry는 "애플리케이션에 라이브러리를 넣는다"는 명확한 대안이 있고, 비용도 산정 가능합니다. 반면 관측성은 대안이 명확해 보이지만 실제로는 성격이 다른 작업입니다. AS-IS에서 Envoy가 자동으로 만들어주던 span은 **애플리케이션 코드를 건드리지 않고** 얻은 것이었습니다. TO-BE에서 같은 수준의 추적을 얻으려면 모든 서비스에 OpenTelemetry 계측을 넣어야 하고, 이것은 애플리케이션 팀의 작업 항목이 됩니다.
 
-또한 Lattice 구간 자체는 **span이 없으므로 추적 그래프에서 빈 구간으로 남습니다.** 호출자의 span이 끝나는 시각과 수신자의 span이 시작하는 시각 사이의 간격으로 Lattice 지연을 추정하게 되는데, 이 간격에는 네트워크 지연과 Lattice 처리 지연이 섞여 있어 분리되지 않습니다. 장애 시 "Lattice가 느린 건지 네트워크가 느린 건지"를 판단할 근거가 access log뿐이라는 점을 전환 계획에 미리 반영해야 합니다.
+클라이언트 span은 일반적으로 downstream 서버 span을 포함하므로 호출 span 종료와 수신 span 시작의 차이를 네트워크 지연으로 해석하면 안 됩니다. 앱 span과 Lattice log의 `requestId`, `duration`, `requestToTargetDuration`·`responseFromTargetDuration` 등을 연결하되 시계 오차·계측 경계·네트워크 시간이 원인 분리를 제한합니다. Lattice의 `x-amzn-requestid`는 HTTP 상관관계용이며 OpenTelemetry span 자체가 아닙니다.
 
 ## AWS Gateway API Controller의 역할
 
@@ -166,7 +163,7 @@ Gateway API는 원래 남북(North-South, Ingress)과 동서(East-West, Mesh) �
 
 ## 정리
 
-- sidecar 모델은 **호출자 쪽 상태가 필요한 결정**을 위해 프록시를 Pod에 두었고, 관리형 데이터플레인 모델은 **규모와 플랫폼 이질성**을 위해 프록시를 인프라로 밀어냈습니다. 기능 GAP은 이 선택의 결과입니다.
+- 제품 API와 실제 설정 기능을 비교합니다. 프록시 이동은 책임을 바꾸지만 영구적인 기능 불가능성을 증명하지 않습니다.
 - 리소스 매핑표는 이름의 대응이며, VirtualNode가 갖고 있던 속성들은 여러 곳으로 흩어지거나 사라집니다.
 - 가장 과소평가되는 GAP은 관측성입니다. Envoy가 무료로 주던 span은 애플리케이션 계측 작업으로 바뀝니다.
 - AWS Gateway API Controller는 Kubernetes 엔드포인트 변화를 Lattice Target에 반영하는 주체이며, 그 가용성이 데이터 경로의 신뢰성에 연결됩니다.

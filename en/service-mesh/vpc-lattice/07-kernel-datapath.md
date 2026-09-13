@@ -1,6 +1,6 @@
 # Kernel Datapath — How Link-Local Interception Actually Works
 
-> **Supported Versions**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+, Linux 6.1 / 6.12 / 6.18 (Amazon Linux 2023)
+> **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
 > **Last Updated**: September 13, 2026
 
 ## What This Document Covers
@@ -46,11 +46,11 @@ graph TB
 
 Three things to note.
 
-**① The application does nothing special.** `169.254.171.x` is an ordinary IPv4 address and `connect()` is an ordinary call. It does not know Lattice exists.
+**① The IP stack uses an ordinary connection.** Authentication is separate: an application or signing proxy must still implement the selected Lattice request-authentication path.
 
 **② The route lookup happens in the Pod's routing table.** Since the net namespace is the Pod boundary ([Container Kernel Features](../../kernel/01-container-primitives.md)), `ip route` inside the Pod makes this decision. With VPC CNI, the Pod's default route goes through veth to the node, and the link-local range follows that default route.
 
-> **This is the crux of the link-local convention.** `169.254.0.0/16` is nominally a "non-routable" range, yet Lattice has the infrastructure steer packets in that range **all the way to an ingress endpoint inside the VPC.** In other words it does not strictly follow link-local semantics — it **reuses the range as a signal meaning "the infrastructure intercepts this."** The same reasoning explains why IPv6 uses a ULA (`fd00:ec2:80::/64`) rather than link-local (`fe80::/10`) — the traffic genuinely has to be routed.
+> The diagram is a conceptual VPC CNI route, not a claim about undocumented AWS internals. Ordinary link-local/ULA address scope and AWS’s service-specific routing behavior are separate. Inspect actual routes and supported connectivity in the target environment.
 
 **③ netfilter hooks are evaluated inside the Pod net namespace.** That is what makes the collision in the next section possible.
 
@@ -60,7 +60,7 @@ Three things to note.
 
 App Mesh's and Istio's init containers install iptables rules inside the Pod's net namespace. The core structure is simple.
 
-```
+```text
 # Conceptual form (real rules are more complex)
 OUTPUT  → jump to a custom chain
 custom chain:
@@ -79,22 +79,22 @@ graph TB
     OUT["netfilter OUTPUT<br/>(Pod net ns)"]
     CHK{"REDIRECT rule installed<br/>by the mesh init container<br/>is this an exception range?"}
     ENV["Envoy sidecar<br/>:15001, etc."]
-    FAIL["no such destination<br/>in Envoy's config<br/>→ request fails"]
+    FAIL["outbound policy decides<br/>forward or reject"]
     PASS["original destination kept<br/>→ veth → node → Lattice"]
 
     APP2 --> OUT --> CHK
-    CHK -->|"no exception<br/>(default state)"| ENV --> FAIL
+    CHK -->|"intercepted path"| ENV --> FAIL
     CHK -->|"exception registered"| PASS
 
     style FAIL fill:#fdecea,stroke:#d93025
     style PASS fill:#e8f5e9,stroke:#1e8e3e
 ```
 
-So the collision happens at **the `OUTPUT` hook of the Pod's net namespace.** Lattice traffic is also "outbound from the Pod," so it matches the rule, and Envoy cannot find `169.254.171.x` in its cluster configuration and fails.
+Mesh interception can occur at **Pod-netns OUTPUT**. Whether the intercepted request forwards, fails or has signed fields altered depends on Envoy outbound policy and configured destinations. Logging a request in Envoy proves traversal, not by itself the cause of failure.
 
-### Why this is a clear failure, not a silent one
+### Interpret proxy evidence with its configuration
 
-This is actually fortunate. When Envoy does not know a destination it usually **returns an error immediately** (connection refused or 503), so unlike conntrack exhaustion the symptom is unambiguous. It appears in Envoy access logs as a request to an unknown cluster.
+A restricted proxy can return an error for an unknown destination; an allow-any/passthrough policy can forward it. Validate both the route and the returned error instead of assuming every missing exception causes an immediate 503.
 
 **Diagnosis path**: when Lattice calls fail, check the Envoy sidecar logs first. If requests bound for `169.254.171.x` appear there, interception is the cause.
 
@@ -125,15 +125,20 @@ Ranges to exclude:
 ### Verification
 
 ```bash
-# Inspect the actual rules in the Pod's net namespace
-kubectl exec <pod> -c <sidecar-or-debug> -- iptables -t nat -L -n -v
+# Required, explicit test target; these are diagnostic reads.
+: "${LATTICE_CONTEXT:?}" "${LATTICE_NAMESPACE:?}" "${LATTICE_POD:?}"
+: "${LATTICE_DIAG_CONTAINER:?}" "${LATTICE_APP_CONTAINER:?}" "${LATTICE_URL:?}"
+kubectl --context "$LATTICE_CONTEXT" -n "$LATTICE_NAMESPACE" \
+  exec "$LATTICE_POD" -c "$LATTICE_DIAG_CONTAINER" -- iptables -t nat -L -n -v
 
-# Check whether the path to the destination goes through Envoy
-kubectl exec <pod> -c app -- curl -sv --max-time 5 \
-  http://<lattice-dns>/health
+# Unsigned connectivity observation: AWS_IAM may reject it.
+kubectl --context "$LATTICE_CONTEXT" -n "$LATTICE_NAMESPACE" \
+  exec "$LATTICE_POD" -c "$LATTICE_APP_CONTAINER" -- \
+  curl -sv --max-time 5 "$LATTICE_URL"
 
-# If the request shows up in Envoy's logs, it is being intercepted
-kubectl logs <pod> -c envoy --tail=50
+# Inspect the configured proxy container only when present.
+kubectl --context "$LATTICE_CONTEXT" -n "$LATTICE_NAMESPACE" \
+  logs "$LATTICE_POD" -c "$LATTICE_DIAG_CONTAINER" --tail=50
 ```
 
 Do this verification **before** starting the migration. This is constraint 4 in [document 06](./06-constraints.md).
@@ -141,6 +146,8 @@ Do this verification **before** starting the migration. This is constraint 4 in 
 ## The Kernel Layer of the Egress Proxy Approach
 
 Signing approach ② (egress proxy) from [document 03](./03-auth-flow.md) uses **the same iptables mechanism for the opposite purpose.**
+
+### Structure
 
 ```mermaid
 graph TB
@@ -171,7 +178,7 @@ The first branch in that diagram is **the mechanism preventing an infinite loop.
 
 The packet the proxy sends out, signed, is also destined for `169.254.171.x`. Without the UID exception it would match the rule again and be redirected to itself, looping.
 
-So the proxy runs under **a dedicated UID** (101 in the reference implementation) and traffic from that UID is `RETURN`ed. netfilter's `owner` match (`-m owner --uid-owner`) makes this possible.
+Use a **dedicated proxy UID** and a matching owner exception. UID 101 in the diagram is illustrative; verify the actual sample/installed manifest rather than assuming a fixed UID across releases. Keep its permissions separate from the application.
 
 **Practical implication**: the proxy container's `runAsUser` and the UID in the iptables rule **must match.** Change one and you either loop or lose signing. This is the most fragile link when customizing the manifests.
 
@@ -221,32 +228,32 @@ Also, a configuration that **adds a signing proxy init container** has two init 
 
 As seen in [Container Kernel Features](../../kernel/01-container-primitives.md), NAT creates conntrack entries. Where entries are created in this configuration:
 
-| Configuration | Where conntrack entries appear |
+| Configuration | Tracking to inspect |
 |---|---|
-| Application signs directly | Pod net ns (minimal without NAT), SNAT in the node ns |
-| Egress proxy signing | **REDIRECT (DNAT) in the Pod net ns** + the proxy→Lattice connection + node ns SNAT |
-| Mesh running alongside | All of the above plus entries on the mesh interception path |
+| Application signs directly | Pod/node tracking may exist without NAT; inspect the actual CNI path and any SNAT |
+| Egress signing proxy | App-to-proxy and proxy-to-service connections plus NAT as configured; connection pooling changes the count |
+| Mesh coexistence | Additional paths and namespaces; do not infer a fixed multiplier from proxy count alone |
 
-So **the egress proxy approach creates more conntrack entries**, because REDIRECT is DNAT and the kernel must remember how to undo it.
+An egress proxy introduces separate app-to-proxy and proxy-to-service connections. Their tracking cost depends on namespaces, connection reuse and NAT settings; do not infer a fixed increase in the node’s table from proxy count alone.
 
-What that means in high-connection environments: introducing a signing proxy **increases conntrack consumption**, so when choosing an approach in [document 03](./03-auth-flow.md) you should also weigh the node's conntrack headroom. The shared-library approach (①) does not carry this extra load.
+Measure Pod/node conntrack and any eBPF map occupancy during representative load. A proxy can pool upstream connections while adding a local connection segment, so assess the actual trade-off rather than assuming one universal multiplier.
 
 ### Diagnosis
 
 conntrack exhaustion **silently drops connections**, as covered in the [kernel section](../../kernel/03-eks-node-tuning.md). In a Lattice configuration, "connections drop intermittently" makes this a candidate.
 
 ```bash
-# Direct evidence of exhaustion
+# Correlate insertion/drop signals with count/max and kernel logs.
 conntrack -S | grep -E "insert_failed|drop"
 
 # Check entries toward the Lattice range
-conntrack -L 2>/dev/null | grep 169.254.171 | head
+conntrack -L | grep 169.254.171 | head
 
 # Utilization
 echo "$(cat /proc/sys/net/netfilter/nf_conntrack_count) / $(cat /proc/sys/net/netfilter/nf_conntrack_max)"
 ```
 
-**How to distinguish a Lattice failure from conntrack exhaustion**: exhaustion affects **all new connections**, not just Lattice. If only Lattice calls fail while other traffic is fine, it is interception or authentication, not conntrack. Conversely, if connectivity is broadly unstable, check conntrack first.
+A partial failure does not exclude conntrack pressure: namespaces, zones, tables, connection reuse and packet timing can differ. Correlate count/max, drop/insert counters and logs on the affected path; do not diagnose solely from whether other destinations still work.
 
 ## Security Groups and the Kernel
 
@@ -256,9 +263,9 @@ echo "$(cat /proc/sys/net/netfilter/nf_conntrack_count) / $(cat /proc/sys/net/ne
 
 What that means:
 
-- **`iptables -L` on the node will not show SG rules.** The two layers are separate
-- If an SG blocks traffic, the packet **never reaches the node kernel** → `tcpdump` will not see it either
-- Therefore **"tcpdump shows nothing" is a signal for an SG or routing problem.** Something dropped after reaching the kernel leaves a counter
+- Node iptables listings do not contain AWS SG rules.
+- An inbound packet rejected before delivery will not appear at the receiving node capture point.
+- An outbound packet can be captured inside the sender before an external SG drops it. Interpret `tcpdump` by interface, namespace and direction; absence of a response is not unique proof of an SG problem.
 
 As a diagnosis order:
 
@@ -286,12 +293,12 @@ This symptom narrows to a few causes.
 ## Summary
 
 - A packet bound for Lattice is **an ordinary IPv4/IPv6 connection.** The special handling is on the infrastructure side, not in the application.
-- The link-local convention **does not strictly follow "non-routable range" semantics — it reuses the range as a signal meaning "the infrastructure intercepts."** That is why IPv6 uses a ULA.
-- The mesh collision happens at **the `OUTPUT` hook of the Pod's net namespace.** Fortunately it is not a silent failure — evidence appears in Envoy's logs.
+- Distinguish IPv4 link-local, IPv6 ULA and the documented AWS service-specific path; do not infer internal routing from the prefix alone.
+- Inspect Pod-netns OUTPUT, outbound policy and real proxy logs; interception does not inevitably mean failure.
 - Exception pitfalls: **missing IPv6** (presents as intermittent failure), annotations applying only to new Pods, **rule ordering**, and excluding all of `169.254.0.0/16` also covering IMDS and Pod Identity.
 - The egress proxy approach requires **UID-based loop prevention**, and the proxy's `runAsUser` must match the iptables UID. It also **creates additional conntrack entries.**
 - When two sets of iptables rules coexist, **dumping the actual rules is the only trustworthy verification.**
-- **A Security Group is not kernel netfilter.** Traffic blocked by an SG does not appear in `tcpdump`, so "nothing is captured" becomes diagnostic information.
+- SGs and netfilter are different layers; packet-capture visibility depends on direction and capture point.
 
 ## References
 
@@ -303,3 +310,6 @@ This symptom narrows to a few causes.
 - [AWS Gateway API Controller — Deploy the controller](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
 - [iptables-extensions(8) — owner match](https://man7.org/linux/man-pages/man8/iptables-extensions.8.html)
 - [istio/istio — tools/istio-iptables/pkg/capture/run.go](https://github.com/istio/istio/blob/master/tools/istio-iptables/pkg/capture/run.go) — primary source for the rule ordering
+
+
+Diagnostic commands require the named utilities and permissions in the selected container/net namespace. An unsigned HTTP rejection is not proof of failed IAM configuration. Use the reviewed signing path for authorization tests, and redact credentials from verbose logs.

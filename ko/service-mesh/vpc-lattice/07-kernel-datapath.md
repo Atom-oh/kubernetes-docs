@@ -1,6 +1,6 @@
 # 커널 데이터패스 — link-local 인터셉트의 실제
 
-> **지원 버전**: Amazon VPC Lattice (GA), AWS Gateway API Controller v1.1+, Linux 6.1 / 6.12 / 6.18 (Amazon Linux 2023)
+> **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
 > **마지막 업데이트**: 2026년 9월 13일
 
 ## 이 문서에서 다루는 것
@@ -46,11 +46,11 @@ graph TB
 
 주목할 점 세 가지입니다.
 
-**① 애플리케이션은 특별한 것을 하지 않습니다.** `169.254.171.x`는 평범한 IPv4 주소이고, `connect()`도 평범합니다. Lattice의 존재를 모릅니다.
+**① IP stack은 일반 연결을 사용합니다.** 인증은 별개이며 앱이나 signing proxy가 선택한 Lattice 요청 인증 경로를 구현해야 합니다.
 
 **② 라우팅 조회는 Pod의 라우팅 테이블에서 일어납니다.** net namespace가 Pod 경계이므로([컨테이너 커널 기능](../../kernel/01-container-primitives.md)), Pod 안의 `ip route`가 이 결정을 합니다. VPC CNI 구성에서 Pod의 기본 경로는 veth를 통해 노드로 향하고, link-local 대역도 이 기본 경로를 따릅니다.
 
-> **여기가 link-local 관례의 핵심입니다.** `169.254.0.0/16`은 원래 "라우팅되지 않는" 대역인데, Lattice는 이 대역의 패킷이 **VPC 안의 인그레스 엔드포인트까지 도달하도록** 인프라가 유도합니다. 즉 link-local의 의미론을 엄격히 따르는 것이 아니라, **"인프라가 가로챈다"는 신호로 재사용**하고 있습니다. IPv6에서 굳이 link-local(`fe80::/10`) 대신 ULA(`fd00:ec2:80::/64`)를 고른 이유도 같습니다 — 실제로 라우팅되어야 하기 때문입니다.
+> 이 그림은 개념적인 VPC CNI 경로이며 미공개 AWS 내부 구현의 단정이 아닙니다. 일반 link-local/ULA 주소 scope와 AWS 서비스별 routing 동작은 별개입니다. 대상 환경의 실제 route와 지원 연결을 확인합니다.
 
 **③ netfilter 훅이 Pod net namespace 안에서 평가됩니다.** 이것이 다음 절의 충돌이 가능한 이유입니다.
 
@@ -60,7 +60,7 @@ graph TB
 
 App Mesh나 Istio의 init container는 Pod의 net namespace 안에서 iptables 규칙을 설치합니다. 핵심 구조는 단순합니다.
 
-```
+```text
 # 개념적 형태 (실제 규칙은 더 복잡합니다)
 OUTPUT  → 커스텀 체인으로 점프
 커스텀 체인:
@@ -79,22 +79,22 @@ graph TB
     OUT["netfilter OUTPUT<br/>(Pod net ns)"]
     CHK{"메시 init container가<br/>심은 REDIRECT 규칙<br/>예외 대역인가?"}
     ENV["Envoy sidecar<br/>:15001 등"]
-    FAIL["Envoy 설정에<br/>해당 목적지 없음<br/>→ 요청 실패"]
+    FAIL["outbound policy에 따라<br/>전달 또는 거부"]
     PASS["원래 목적지 유지<br/>→ veth → 노드 → Lattice"]
 
     APP2 --> OUT --> CHK
-    CHK -->|"예외 미등록<br/>(기본 상태)"| ENV --> FAIL
+    CHK -->|"interception 경로"| ENV --> FAIL
     CHK -->|"예외 등록됨"| PASS
 
     style FAIL fill:#fdecea,stroke:#d93025
     style PASS fill:#e8f5e9,stroke:#1e8e3e
 ```
 
-즉 충돌은 **Pod net namespace의 `OUTPUT` 훅**에서 일어납니다. Lattice 트래픽도 "Pod에서 나가는 outbound"이므로 규칙에 걸리고, Envoy는 `169.254.171.x`를 자기 클러스터 설정에서 찾을 수 없어 실패합니다.
+Mesh interception은 **Pod netns OUTPUT**에서 일어날 수 있습니다. 이후 전달·실패·서명 필드 변경 여부는 Envoy outbound policy와 설정한 대상에 달려 있습니다. Envoy log의 요청은 통과 사실을 보여주지만 단독으로 실패 원인을 증명하지는 않습니다.
 
-### 왜 "조용한 실패"가 아니라 명확한 실패인가
+### Proxy 증거를 설정과 함께 해석
 
-이 점은 오히려 다행입니다. Envoy가 목적지를 모르면 대개 **즉시 에러를 반환**하므로(연결 거부나 503), conntrack 포화처럼 조용히 드롭되는 것과 달리 증상이 명확합니다. Envoy 액세스 로그에 알 수 없는 클러스터에 대한 요청으로 남습니다.
+제한된 proxy는 미등록 대상에 오류를 반환할 수 있지만 allow-any/passthrough policy는 전달할 수 있습니다. 제외 규칙이 없으면 항상 즉시 503이라고 가정하지 말고 route와 반환 오류를 함께 검증합니다.
 
 **진단 경로**: Lattice 호출이 실패하면 먼저 Envoy 사이드카 로그를 확인하십시오. 거기에 `169.254.171.x`로 향하는 요청이 찍혀 있으면 인터셉트가 원인입니다.
 
@@ -125,15 +125,20 @@ graph TB
 ### 검증
 
 ```bash
-# Pod의 net namespace에서 실제 규칙 확인
-kubectl exec <pod> -c <sidecar-or-debug> -- iptables -t nat -L -n -v
+# 명시적인 시험 대상이 필요하며 진단 조회만 수행합니다.
+: "${LATTICE_CONTEXT:?}" "${LATTICE_NAMESPACE:?}" "${LATTICE_POD:?}"
+: "${LATTICE_DIAG_CONTAINER:?}" "${LATTICE_APP_CONTAINER:?}" "${LATTICE_URL:?}"
+kubectl --context "$LATTICE_CONTEXT" -n "$LATTICE_NAMESPACE" \
+  exec "$LATTICE_POD" -c "$LATTICE_DIAG_CONTAINER" -- iptables -t nat -L -n -v
 
-# 목적지로의 경로가 Envoy를 타는지 확인
-kubectl exec <pod> -c app -- curl -sv --max-time 5 \
-  http://<lattice-dns>/health
+# 서명 없는 연결 관측이므로 AWS_IAM에서 거부될 수 있습니다.
+kubectl --context "$LATTICE_CONTEXT" -n "$LATTICE_NAMESPACE" \
+  exec "$LATTICE_POD" -c "$LATTICE_APP_CONTAINER" -- \
+  curl -sv --max-time 5 "$LATTICE_URL"
 
-# Envoy 로그에 해당 요청이 찍히면 인터셉트되고 있다는 증거
-kubectl logs <pod> -c envoy --tail=50
+# 설정된 proxy container가 있을 때만 해당 log를 확인합니다.
+kubectl --context "$LATTICE_CONTEXT" -n "$LATTICE_NAMESPACE" \
+  logs "$LATTICE_POD" -c "$LATTICE_DIAG_CONTAINER" --tail=50
 ```
 
 전환 시작 **전에** 이 검증을 하시기 바랍니다. [06번 문서](./06-constraints.md)의 제약 4가 이것입니다.
@@ -173,7 +178,7 @@ aws-samples 레퍼런스 구현의 구조입니다 — init container가 iptable
 
 프록시가 서명을 붙여 Lattice로 내보내는 그 패킷도 목적지가 `169.254.171.x`입니다. UID 예외가 없으면 그 패킷이 다시 규칙에 걸려 자기 자신에게 리다이렉트되고, 루프가 돕니다.
 
-그래서 프록시를 **전용 UID로 실행하고**(레퍼런스 구현은 101), 그 UID에서 나온 트래픽은 `RETURN`시킵니다. netfilter의 `owner` 매치(`-m owner --uid-owner`)가 이를 가능하게 합니다.
+**전용 proxy UID**와 일치하는 owner 예외를 사용합니다. 그림의 UID 101은 예시이며 release마다 고정된 값이라고 가정하지 말고 실제 sample/설치 manifest를 확인합니다. 앱과 권한을 분리합니다.
 
 **실무 함의**: 프록시 컨테이너의 `runAsUser`와 iptables 규칙의 UID가 **반드시 일치**해야 합니다. 한쪽만 바꾸면 루프가 돌거나 서명이 붙지 않습니다. 이것은 매니페스트를 커스터마이즈할 때 가장 깨지기 쉬운 연결입니다.
 
@@ -223,32 +228,32 @@ Istio의 `istio-iptables`(`tools/istio-iptables/pkg/capture/run.go`)가 `ISTIO_O
 
 [컨테이너 커널 기능](../../kernel/01-container-primitives.md)에서 본 대로 NAT는 conntrack 항목을 만듭니다. 이 구성에서 항목이 생기는 지점을 정리하면:
 
-| 구성 | conntrack 항목이 생기는 곳 |
+| 구성 | 확인할 tracking |
 |---|---|
-| 애플리케이션 직접 서명 | Pod net ns(NAT 없으면 최소), 노드 ns의 SNAT |
-| egress proxy 서명 | **Pod net ns의 REDIRECT(DNAT)** + 프록시→Lattice 연결 + 노드 ns SNAT |
-| 메시 병행 운영 | 위에 더해 메시 인터셉트 경로의 항목 |
+| 앱 직접 서명 | NAT 없이도 Pod/node tracking 가능. 실제 CNI 경로와 SNAT 확인 |
+| Egress 서명 proxy | 설정에 따른 app-to-proxy·proxy-to-service 연결과 NAT. Connection pooling에 따라 개수 변화 |
+| Mesh 공존 | 추가 경로와 namespace 확인. Proxy 수만으로 고정 배수를 추론하지 않음 |
 
-즉 **egress proxy 방식은 conntrack 항목을 더 만듭니다.** REDIRECT가 DNAT이므로 되돌릴 정보를 기억해야 하기 때문입니다.
+Egress proxy는 app-to-proxy와 proxy-to-service 연결을 분리합니다. Tracking 비용은 namespace·연결 재사용·NAT 설정에 달려 있으며 proxy 수만으로 node table의 고정 증가를 추론하지 않습니다.
 
-고연결 환경에서 이것이 의미하는 바: 서명 프록시 도입이 **conntrack 사용량을 늘리므로**, [03번 문서](./03-auth-flow.md)의 방식 선택 시 노드의 conntrack 여유를 함께 고려해야 합니다. 공통 라이브러리 방식(①)은 이 추가 부담이 없습니다.
+대표 부하에서 Pod/node conntrack과 eBPF map 사용량을 측정합니다. Proxy는 local 연결 구간을 추가하면서 upstream 연결을 pooling할 수도 있으므로 보편적인 배수 대신 실제 절충을 평가합니다.
 
 ### 진단
 
 conntrack 포화는 [커널 섹션](../../kernel/03-eks-node-tuning.md)에서 다룬 대로 **조용히 연결을 드롭**합니다. Lattice 구성에서 "간헐적으로 연결이 끊긴다"면 이것이 후보입니다.
 
 ```bash
-# 포화 직접 증거
+# 삽입/drop 신호를 count/max 및 kernel log와 함께 확인합니다.
 conntrack -S | grep -E "insert_failed|drop"
 
 # Lattice 대역으로의 항목 확인
-conntrack -L 2>/dev/null | grep 169.254.171 | head
+conntrack -L | grep 169.254.171 | head
 
 # 사용률
 echo "$(cat /proc/sys/net/netfilter/nf_conntrack_count) / $(cat /proc/sys/net/netfilter/nf_conntrack_max)"
 ```
 
-**Lattice 실패와 conntrack 포화를 구별하는 방법**: conntrack 포화는 Lattice뿐 아니라 **모든 신규 연결**에 영향을 줍니다. Lattice 호출만 실패하고 다른 통신은 정상이면 conntrack이 아니라 인터셉트나 인증 문제입니다. 반대로 전반적으로 연결이 불안정하면 conntrack을 먼저 보십시오.
+일부 경로 실패만으로 conntrack 압력을 배제할 수 없습니다. Namespace·zone·table·연결 재사용·packet 시점이 다를 수 있습니다. 영향 경로의 count/max·drop/insert counter·log를 연결하며 다른 대상의 성공 여부만으로 진단하지 않습니다.
 
 ## Security Group과 커널의 관계
 
@@ -258,9 +263,9 @@ echo "$(cat /proc/sys/net/netfilter/nf_conntrack_count) / $(cat /proc/sys/net/ne
 
 이것이 의미하는 바:
 
-- **노드에서 `iptables -L`을 봐도 SG 규칙은 보이지 않습니다.** 두 계층이 별개입니다
-- SG에서 막히면 패킷이 **노드 커널에 도달하지 않습니다** → `tcpdump`로도 안 보입니다
-- 따라서 **"tcpdump에 아무것도 안 잡힌다"는 SG나 라우팅 문제의 신호**입니다. 커널까지 왔는데 드롭된 것이라면 카운터에 남습니다
+- Node iptables 목록에는 AWS SG 규칙이 없습니다.
+- 전달 전에 거부된 inbound packet은 수신 node의 capture 지점에 나타나지 않습니다.
+- Outbound packet은 외부 SG에서 drop되기 전에 송신 측에서 capture될 수 있습니다. `tcpdump`는 interface·namespace·방향에 따라 해석하며 응답 부재만으로 SG 문제를 확정하지 않습니다.
 
 진단 순서로 정리하면:
 
@@ -288,12 +293,12 @@ echo "$(cat /proc/sys/net/netfilter/nf_conntrack_count) / $(cat /proc/sys/net/ne
 ## 정리
 
 - Lattice로 향하는 패킷은 **평범한 IPv4/IPv6 연결**입니다. 특별한 처리는 애플리케이션이 아니라 인프라 쪽에 있습니다.
-- link-local 관례는 **"라우팅되지 않는 대역"의 의미론을 엄격히 따르는 것이 아니라 "인프라가 가로챈다"는 신호로 재사용**하는 것입니다. IPv6에서 ULA를 고른 이유가 여기 있습니다.
-- 메시 충돌은 **Pod net namespace의 `OUTPUT` 훅**에서 일어납니다. 다행히 조용한 실패가 아니라 Envoy 로그에 증거가 남습니다.
+- IPv4 link-local·IPv6 ULA·문서화된 AWS 서비스 경로를 구분하고 prefix만으로 내부 routing을 추론하지 않습니다.
+- Pod netns OUTPUT·outbound policy·실제 proxy log를 확인합니다. Interception이 항상 실패를 뜻하지는 않습니다.
 - 예외 등록의 함정: **IPv6 누락**(간헐적 실패로 나타남), 애노테이션이 새 Pod에만 적용, **규칙 순서**, `169.254.0.0/16` 전체 제외 시 IMDS·Pod Identity까지 포함됨.
 - egress proxy 방식은 **UID 기반 루프 방지**가 필수이며, 프록시의 `runAsUser`와 iptables UID가 일치해야 합니다. 또한 **conntrack 항목을 추가로 만듭니다.**
 - 두 iptables 규칙이 공존할 때 **실제 규칙을 덤프해 순서를 확인**하는 것이 유일하게 신뢰할 수 있는 검증입니다.
-- **Security Group은 커널 netfilter가 아닙니다.** SG에서 막히면 `tcpdump`에도 안 잡히므로, "아무것도 안 잡힌다"가 진단 정보가 됩니다.
+- SG와 netfilter는 다른 계층이며 packet capture 가시성은 방향과 capture 지점에 따라 다릅니다.
 
 ## 참고 자료
 
@@ -305,3 +310,6 @@ echo "$(cat /proc/sys/net/netfilter/nf_conntrack_count) / $(cat /proc/sys/net/ne
 - [AWS Gateway API Controller — Deploy the controller](https://www.gateway-api-controller.eks.aws.dev/latest/guides/deploy/)
 - [iptables-extensions(8) — owner match](https://man7.org/linux/man-pages/man8/iptables-extensions.8.html)
 - [istio/istio — tools/istio-iptables/pkg/capture/run.go](https://github.com/istio/istio/blob/master/tools/istio-iptables/pkg/capture/run.go) — 규칙 순서의 1차 근거
+
+
+진단 명령에는 선택한 container/net namespace의 해당 도구와 권한이 필요합니다. 서명 없는 HTTP 요청 거부는 IAM 설정 실패의 증명이 아닙니다. 인가 시험은 검토한 서명 경로를 사용하고 verbose log에서 자격 증명을 제거합니다.
