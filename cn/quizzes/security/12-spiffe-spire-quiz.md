@@ -1,447 +1,195 @@
 # SPIFFE/SPIRE 测验
 
-通过以下问题测试你对 SPIFFE/SPIRE workload identity（工作负载身份）的理解。
-
----
+> **最后更新**: September 13, 2026
 
 ## 问题
 
-### 1. SPIFFE ID 的正确格式是什么？
+<span id="_1-what-is-the-correct-format-for-a-spiffe-id"></span>
 
-- A) spiffe://workload/trust-domain/path
-- B) spiffe://trust-domain/path
-- C) trust-domain://spiffe/path
-- D) https://spiffe/trust-domain/path
+### 1. 以下哪个是有效的 SPIFFE ID？
 
-<details>
-<summary>显示答案</summary>
-
-**答案：B) spiffe://trust-domain/path**
-
-**解释：**
-SPIFFE ID 格式是具有以下结构的 URI：
-
-```
-spiffe://trust-domain/path
-```
-
-示例：
-```
-spiffe://example.org/ns/production/sa/frontend
-spiffe://cluster.local/k8s/ns/default/pod/nginx-abc123
-spiffe://acme.com/region/us-east-1/service/payment
-```
-
-组成部分：
-- **spiffe://**：必需的 scheme
-- **trust-domain**：组织的 identity namespace（例如 example.org）
-- **path**：workload 的分层标识符
-
-</details>
-
----
-
-### 2. X.509-SVID 和 JWT-SVID 的关键区别是什么？
-
-- A) X.509-SVID 用于认证，JWT-SVID 用于授权
-- B) X.509-SVID 用于 mTLS 连接，JWT-SVID 用于 API 认证
-- C) 它们在功能上完全相同
-- D) X.509-SVID 比 JWT-SVID 过期更快
+- A) `https://example.org/app`
+- B) `spiffe://example.org/app`
+- C) `spiffe://example.org:8443/app`
+- D) `spiffe://example.org/app?role=admin`
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) X.509-SVID 用于 mTLS 连接，JWT-SVID 用于 API 认证**
+**答案：B) spiffe://example.org/app**
 
-**解释：**
-SPIFFE 支持两种 SVID（SPIFFE Verifiable Identity Document）类型：
-
-**X.509-SVID：**
-- 用于 mTLS（mutual TLS）连接
-- 在 SAN（Subject Alternative Name）URI 中包含 SPIFFE ID
-- 生命周期较长（数小时到数天）
-- 最适合：Service-to-service mTLS
-
-**JWT-SVID：**
-- 用于 API 认证（HTTP headers）
-- 在 `sub` claim 中包含 SPIFFE ID
-- 生命周期较短（分钟级）
-- 最适合：REST APIs、serverless、跨网络调用
-
-```yaml
-# X.509-SVID use case
-service-a --mTLS--> service-b
-
-# JWT-SVID use case
-service-a --HTTP + JWT Bearer--> API Gateway
-```
+使用 spiffe scheme、trust domain 和可选路径。不允许端口、查询和片段。路径结构由站点定义，不限于 /ns/.../sa/...。
 
 </details>
 
----
+<span id="_2-what-is-the-key-difference-between-x-509-svid-and-jwt-svid"></span>
 
-### 3. SPIRE Server 的主要角色是什么？
+### 2. 以下哪项正确描述了 X.509/JWT-SVID 验证？
 
-- A) 运行 workloads
-- B) 签发 SVIDs 并管理 workload 注册
-- C) 对流量进行负载均衡
-- D) 存储应用程序 secrets
+- A) 只检查 X.509 CN
+- B) 有效的 JWT signature 使 audience 无需验证
+- C) 验证 X.509 URI SAN/chain 以及 JWT signature/sub/audience/expiry
+- D) JWT audience 检查可防止所有重放攻击
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 签发 SVIDs 并管理 workload 注册**
+**答案：C) 验证 X.509 URI SAN/chain 以及 JWT signature/sub/audience/expiry**
 
-**解释：**
-SPIRE Server 的职责：
-
-```
-┌─────────────────────────────────────────────┐
-│              SPIRE Server                    │
-├─────────────────────────────────────────────┤
-│  - Manages trust domain CA                   │
-│  - Issues X.509 and JWT SVIDs               │
-│  - Stores workload registration entries     │
-│  - Performs node attestation                │
-│  - Maintains federation relationships       │
-└─────────────────────────────────────────────┘
-                    │
-         ┌─────────┴─────────┐
-         ▼                   ▼
-   SPIRE Agent          SPIRE Agent
-     (Node 1)             (Node 2)
-```
-
-关键功能：
-- trust domain 的 Certificate Authority
-- workload 条目的注册 API
-- node 和 workload attestation 验证
-- SVID 签名与轮换
+证书 CN 不是 SPIFFE identity。即使 audience 匹配，JWT bearer token 仍可能被重放。生命周期取决于 policy；本章的 X.509/JWT 范围与处于 Incubating 阶段的 WIT-SVID specification 分开。
 
 </details>
 
----
+<span id="_3-what-is-the-primary-role-of-the-spire-server"></span>
 
-### 4. SPIRE Agent 的主要角色是什么？
+### 3. SPIRE Server 的作用是什么？
 
-- A) 管理 cluster 网络
-- B) 在 nodes 上运行，以 attestation workloads 并在本地交付 SVIDs
-- C) 存储 cluster secrets
-- D) 调度 pods
+- A) 自动加密每个应用连接
+- B) 管理 agent attestation、registration 和 SVID signing
+- C) 自动授权每个 Service 请求
+- D) 通过 CSI 向所有 Pod 分发 private-key 文件
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 在 nodes 上运行，以 attestation workloads 并在本地交付 SVIDs**
+**答案：B) 管理 agent attestation、registration 和 SVID signing**
 
-**解释：**
-SPIRE Agent 作为 DaemonSet 在每个 node 上运行：
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: spire-agent
-  namespace: spire
-spec:
-  template:
-    spec:
-      containers:
-      - name: spire-agent
-        image: ghcr.io/spiffe/spire-agent:1.8
-        volumeMounts:
-        - name: spire-agent-socket
-          mountPath: /run/spire/sockets
-```
-
-Agent 职责：
-- 向 SPIRE Server 进行 attestation（node attestation）
-- 验证本地 workload identity（workload attestation）
-- 从 Server 获取并缓存 SVIDs
-- 向本地 workloads 暴露 Workload API（Unix domain socket）
-- 处理 SVID 轮换
+区分 CA/JWT signing、DataStore 和 KeyManager 的职责。AWS PCA upstream 对 SPIRE intermediate CA 进行签名；它不会免除本地 leaf signing 或 key management。
 
 </details>
 
----
+<span id="_4-what-is-the-primary-role-of-the-spire-agent"></span>
 
-### 5. Amazon EKS 推荐使用哪种 node attestation 方法？
+### 4. 谁识别调用 Workload API 的应用？
 
-- A) aws_iid
-- B) k8s_sat
-- C) k8s_psat
-- D) join_token
+- A) 本地 SPIRE agent 的 workload attestor
+- B) DNS resolver
+- C) 检查文件名的 CSI
+- D) 仅由应用自行声明的 SPIFFE ID
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) k8s_psat**
+**答案：A) 本地 SPIRE agent 的 workload attestor**
 
-**解释：**
-Kubernetes 的 node attestation 方法：
-
-**k8s_psat (Projected Service Account Token)** - 推荐用于 EKS：
-```yaml
-# SPIRE Server configuration
-nodeAttestor "k8s_psat" {
-    plugin_data {
-        clusters = {
-            "eks-cluster" = {
-                service_account_allow_list = ["spire:spire-agent"]
-                kube_config_file = ""
-                allowed_node_label_keys = ["topology.kubernetes.io/zone"]
-            }
-        }
-    }
-}
-```
-
-为什么在 EKS 中使用 k8s_psat：
-- 使用 projected service account tokens（更安全）
-- Tokens 绑定 audience 且有时间限制
-- 可与 EKS OIDC provider 配合使用
-- Agents 上不需要 cloud provider credentials
-
-替代方案：
-- **k8s_sat**：Legacy service account tokens（安全性较低）
-- **aws_iid**：EC2 instance identity（用于非 EKS）
+agent 检查调用方的 PID/cgroups/Pod metadata，并匹配已授权的 entries/cache。在 agent Pod 内获取会 attestation 该调用方，而非实际应用上下文。
 
 </details>
 
----
+<span id="_5-which-node-attestation-method-is-recommended-for-amazon-eks"></span>
 
-### 6. k8s workload attestation 支持哪些 selector 类型？
+### 5. Server 如何验证 k8s_psat token？
 
-- A) 仅 Container image
-- B) Namespace、service account、pod labels 和 container image
-- C) 仅 IP address
-- D) 仅 Node name
+- A) 检查 IRSA role 的 S3 permissions
+- B) Kubernetes TokenReview 加上已配置的 audience/SA allowlist
+- C) 仅对 token 进行 base64 解码
+- D) 将其转换为永不过期的 join token
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Namespace、service account、pod labels 和 container image**
+**答案：B) Kubernetes TokenReview 加上已配置的 audience/SA allowlist**
 
-**解释：**
-Kubernetes workload attestation selectors：
-
-```bash
-# Create registration entry with selectors
-spire-server entry create \
-    -spiffeID spiffe://example.org/ns/production/sa/frontend \
-    -parentID spiffe://example.org/agent/node1 \
-    -selector k8s:ns:production \
-    -selector k8s:sa:frontend \
-    -selector k8s:pod-label:app:frontend \
-    -selector k8s:container-image:nginx:1.25
-```
-
-可用 selectors：
-| Selector | Example | Description |
-|----------|---------|-------------|
-| k8s:ns | k8s:ns:production | Namespace |
-| k8s:sa | k8s:sa:frontend | ServiceAccount |
-| k8s:pod-label | k8s:pod-label:app:web | Pod labels |
-| k8s:container-image | k8s:container-image:nginx | Container image |
-| k8s:pod-name | k8s:pod-name:nginx-xyz | Specific pod |
-| k8s:pod-uid | k8s:pod-uid:abc-123 | Pod UID |
+匹配 server/agent logical cluster names、token audience、SA allowlist 和 TokenReview permissions。aws_iid 是具有不同 trust assumptions 的替代方案，并非在 EKS 上普遍更强或被禁止。
 
 </details>
 
----
+<span id="_6-what-selector-types-does-k8s-workload-attestation-support"></span>
 
-### 7. SPIFFE CSI Driver 的用途是什么？
+### 6. 应如何解读 k8s:container-image:nginx:*？
 
-- A) 管理 persistent volumes
-- B) 无需 sidecars，直接将 SVIDs 挂载到 pods 中
-- C) 加密 node storage
-- D) Network policy enforcement
+- A) 自动对每个 nginx tag 执行 glob matching
+- B) 一个 selector value；不要假定支持 wildcard matching
+- C) 证明 image signature 已通过验证
+- D) 自动强制执行 namespace RBAC
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 无需 sidecars，直接将 SVIDs 挂载到 pods 中**
+**答案：B) 一个 selector value；不要假定支持 wildcard matching**
 
-**解释：**
-SPIFFE CSI Driver 提供了一种无需 sidecar 的 SVID 交付方式：
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-workload
-spec:
-  containers:
-  - name: app
-    image: my-app:latest
-    volumeMounts:
-    - name: spiffe
-      mountPath: /run/spiffe/certs
-      readOnly: true
-  volumes:
-  - name: spiffe
-    csi:
-      driver: "csi.spiffe.io"
-      readOnly: true
-```
-
-优势：
-- 不需要 sidecar container
-- SVIDs 会自动作为文件挂载
-- 透明的 certificate rotation
-- 降低 pod 复杂度
-- 可与任何期望使用 file-based certificates 的应用程序配合使用
-
-CSI driver 与 SPIRE Agent 通信，以获取并挂载 SVIDs。
+匹配 Kubernetes 实际报告的 image/ImageID values。仅凭 tag 无法建立 supply-chain trust。创建和修改 Pod/SA/label 的 permissions 也会影响 identity eligibility。
 
 </details>
 
----
+<span id="_7-what-is-the-purpose-of-the-spiffe-csi-driver"></span>
 
-### 8. SPIFFE Federation 支持什么？
+### 7. SPIFFE CSI 0.2.13 会向 Pod 挂载什么？
 
-- A) Database replication
-- B) 独立 SPIFFE deployments 之间的跨 trust-domain 通信
-- C) 跨 clusters 调度 Pod
-- D) Secret synchronization
+- A) 自动生成的 svid.pem/svid.key 文件
+- B) 包含 Workload API Unix socket 的目录
+- C) SPIRE CA private key
+- D) 共享的 PostgreSQL 数据
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 独立 SPIFFE deployments 之间的跨 trust-domain 通信**
+**答案：B) 包含 Workload API Unix socket 的目录**
 
-**解释：**
-SPIFFE Federation 允许不同 trust domains 中的 workloads 相互认证：
-
-```
-┌─────────────────────┐      Federation      ┌─────────────────────┐
-│  Trust Domain A     │◄──────────────────►│  Trust Domain B      │
-│  example.org        │     Bundle Exchange │  partner.com         │
-├─────────────────────┤                      ├─────────────────────┤
-│  spiffe://example.  │                      │  spiffe://partner.   │
-│  org/service/api    │   ─── mTLS ───►     │  com/service/db      │
-└─────────────────────┘                      └─────────────────────┘
-```
-
-配置：
-```yaml
-# SPIRE Server federation config
-federatesWith "partner.com" {
-    bundleEndpointURL = "https://spire.partner.com:8443"
-    bundleEndpointProfile "https_spiffe" {
-        endpointSPIFFEID = "spiffe://partner.com/spire/server"
-    }
-}
-```
-
-使用场景：
-- Multi-cloud deployments
-- Partner integrations
-- Mergers and acquisitions
-- 跨组织的 zero-trust 通信
+CSI 提供对 API socket 的访问。基于文件的应用需要单独的 adapter 和 reload handling。应用或 proxy 仍然要使用 API；集成并非普遍自动完成。
 
 </details>
 
----
+<span id="_8-what-does-spiffe-federation-enable"></span>
 
-### 9. SPIFFE/SPIRE 与 IAM Roles for Service Accounts (IRSA) 相比如何？
+### 8. 引导 https_spiffe federation 需要什么？
 
-- A) IRSA 是平台无关的，SPIFFE 仅适用于 AWS
-- B) SPIFFE 提供平台无关的 identity，IRSA 是 AWS 特定的
-- C) 它们是完全相同的技术
-- D) SPIFFE 仅适用于 Azure
+- A) 仅需一个 endpoint URL
+- B) 初始 trusted bundle 和正确的 endpoint SPIFFE ID
+- C) 交换两个 CA private key
+- D) 自动授权每个远程 workload
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) SPIFFE 提供平台无关的 identity，IRSA 是 AWS 特定的**
+**答案：B) 初始 trusted bundle 和正确的 endpoint SPIFFE ID**
 
-**解释：**
-SPIFFE/SPIRE 与 IRSA 对比：
-
-| Feature | SPIFFE/SPIRE | IRSA |
-|---------|--------------|------|
-| Platform | Any (multi-cloud) | AWS only |
-| Identity Format | SPIFFE ID (URI) | IAM Role ARN |
-| Credential Type | X.509/JWT SVID | AWS STS token |
-| Service-to-Service | Native mTLS | Not supported |
-| AWS Service Access | Via JWT exchange | Direct |
-| Setup Complexity | Higher | Lower (EKS native) |
-
-何时使用：
-- **IRSA**：访问 AWS services 的 AWS-native workloads
-- **SPIFFE/SPIRE**：Multi-cloud、service mesh、mTLS 需求
-
-你可以同时使用两者：
-```
-Pod --SPIFFE--> Service Mesh (mTLS)
-Pod --IRSA--> AWS Services (S3, DynamoDB)
-```
+配置每个 trust direction。bundle refresh、connectivity、TLS verification 和 workload authorization 是不同的职责。https_web 使用 endpoint 的 Web PKI validation path。
 
 </details>
 
----
+<span id="_9-how-does-spiffe-spire-compare-to-iam-roles-for-service-accounts-irsa"></span>
 
-### 10. SPIFFE 中 trust domain 命名的最佳实践是什么？
+### 9. 以下哪项正确比较了 IRSA 与 SPIFFE/SPIRE？
 
-- A) 使用随机字符串
-- B) 使用 IP addresses
-- C) 使用组织控制的 DNS-style names
-- D) 使用连续数字
+- A) IRSA 刷新始终需要重启 Pod
+- B) SPIFFE 消除了对 AWS IAM policy 的需求
+- C) IRSA 是 AWS credential path；SPIFFE 是 workload identity，两者均需验证
+- D) 一个 Pod annotation 即可完成 IRSA 和 CSI certificate-file delivery
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 使用组织控制的 DNS-style names**
+**答案：C) IRSA 是 AWS credential path；SPIFFE 是 workload identity，两者均需验证**
 
-**解释：**
-Trust domain 命名最佳实践：
-
-**推荐模式：**
-```
-# Organization domain
-spiffe://example.com/...
-
-# Environment-specific
-spiffe://prod.example.com/...
-spiffe://staging.example.com/...
-
-# Region-specific
-spiffe://us-east.example.com/...
-```
-
-**最佳实践：**
-1. 使用你拥有的 domains（防止冲突）
-2. 保持 trust domains 稳定（更改会造成中断）
-3. 考虑 environment separation
-4. 从一开始就规划 federation
-
-**应避免的反模式：**
-```
-# Bad: Generic names
-spiffe://cluster/...
-spiffe://kubernetes/...
-
-# Bad: Temporary names
-spiffe://test123/...
-
-# Bad: IP addresses
-spiffe://10.0.0.1/...
-```
-
-Trust domain names 会出现在所有 SVIDs 和日志中，因此请选择有意义且稳定的标识符。
+IRSA 通过受支持的 SDK/projected-token behavior 刷新，并支持 cross-account designs。验证 ServiceAccount annotations、aud/sub trust 和 AWS permissions。SPIFFE mTLS 还需要 credential consumption 和 peer authorization。
 
 </details>
 
----
+<span id="_10-what-are-best-practices-for-naming-trust-domains-in-spiffe"></span>
+
+### 10. 关于 trust domains 和 CA rotation，以下哪项正确？
+
+- A) trust domain 必须是可解析的 DNS name
+- B) bundle set 会自动轮换 CA private key
+- C) 选择稳定的名称，并区分 bundle changes 与 CA-key rotation
+- D) numeric 或 IPv4-shaped domains 始终会被 parser 拒绝
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C) 选择稳定的名称，并区分 bundle changes 与 CA-key rotation**
+
+DNS-like naming 是指导原则，而非完整的 syntax rule。bundles 是公开的 trust material；key rotation 是独立的生命周期。验证 authority overlap 和 consumer updates。
+
+</details>
 
 ## 分数计算
 
-- **9-10 correct**：优秀 - 你对 SPIFFE/SPIRE 有深入理解。
-- **7-8 correct**：良好 - 你扎实掌握了关键概念。
-- **5-6 correct**：一般 - 还有一些领域需要进一步学习。
-- **4 or fewer**：请再次查看文档。
+- 9–10：理解深入
+- 7–8：重新学习 trust、authorization 和 delivery paths
+- 6 或更少：复习指南和已验证的示例
 
 ## 相关文档
 
-- [使用 SPIFFE/SPIRE 实现 Workload Identity](../../security/12-spiffe-spire.md)
+- [SPIFFE/SPIRE](../../security/12-spiffe-spire.md)

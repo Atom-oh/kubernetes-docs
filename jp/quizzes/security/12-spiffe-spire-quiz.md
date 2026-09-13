@@ -1,447 +1,195 @@
 # SPIFFE/SPIRE クイズ
 
-以下の問題で、SPIFFE/SPIRE workload identity に関する理解を確認しましょう。
-
----
+> **最終更新**: September 13, 2026
 
 ## 問題
 
-### 1. SPIFFE ID の正しい形式はどれですか？
+<span id="_1-what-is-the-correct-format-for-a-spiffe-id"></span>
 
-- A) spiffe://workload/trust-domain/path
-- B) spiffe://trust-domain/path
-- C) trust-domain://spiffe/path
-- D) https://spiffe/trust-domain/path
+### 1. 有効な SPIFFE ID はどれですか？
 
-<details>
-<summary>答えを表示</summary>
-
-**回答: B) spiffe://trust-domain/path**
-
-**解説:**
-SPIFFE ID の形式は、次の構造を持つ URI です。
-
-```
-spiffe://trust-domain/path
-```
-
-例:
-```
-spiffe://example.org/ns/production/sa/frontend
-spiffe://cluster.local/k8s/ns/default/pod/nginx-abc123
-spiffe://acme.com/region/us-east-1/service/payment
-```
-
-構成要素:
-- **spiffe://**: 必須の scheme
-- **trust-domain**: 組織の identity namespace（例: example.org）
-- **path**: workload の階層的な識別子
-
-</details>
-
----
-
-### 2. X.509-SVID と JWT-SVID の主な違いは何ですか？
-
-- A) X.509-SVID は authentication 用、JWT-SVID は authorization 用
-- B) X.509-SVID は mTLS connections 用、JWT-SVID は API authentication 用
-- C) 機能は同一である
-- D) X.509-SVID は JWT-SVID より早く期限切れになる
+- A) `https://example.org/app`
+- B) `spiffe://example.org/app`
+- C) `spiffe://example.org:8443/app`
+- D) `spiffe://example.org/app?role=admin`
 
 <details>
 <summary>答えを表示</summary>
 
-**回答: B) X.509-SVID は mTLS connections 用、JWT-SVID は API authentication 用**
+**回答: B) spiffe://example.org/app**
 
-**解説:**
-SPIFFE は 2 種類の SVID（SPIFFE Verifiable Identity Document）をサポートしています。
-
-**X.509-SVID:**
-- mTLS（mutual TLS）connections に使用される
-- SAN（Subject Alternative Name）の URI に SPIFFE ID を含む
-- 長期間有効（数時間から数日）
-- 最適な用途: Service-to-service mTLS
-
-**JWT-SVID:**
-- API authentication（HTTP headers）に使用される
-- `sub` claim に SPIFFE ID を含む
-- 短期間有効（数分）
-- 最適な用途: REST APIs、serverless、cross-network calls
-
-```yaml
-# X.509-SVID use case
-service-a --mTLS--> service-b
-
-# JWT-SVID use case
-service-a --HTTP + JWT Bearer--> API Gateway
-```
+spiffe スキーム、trust domain（信頼ドメイン）、および任意のパスを使用します。ポート、クエリ、フラグメントは許可されません。パス構造はサイト側で定義するものであり、/ns/.../sa/... に限定されません。
 
 </details>
 
----
+<span id="_2-what-is-the-key-difference-between-x-509-svid-and-jwt-svid"></span>
 
-### 3. SPIRE Server の主な役割は何ですか？
+### 2. X.509/JWT-SVID の検証について正しく説明しているのはどれですか？
 
-- A) workloads を実行する
-- B) SVIDs を発行し、workload registration を管理する
-- C) traffic の load balancing を行う
-- D) application secrets を保存する
+- A) X.509 の CN のみを確認する
+- B) JWT の署名が有効であれば audience は不要になる
+- C) X.509 の URI SAN/証明書チェーンと、JWT の署名/sub/audience/有効期限を検証する
+- D) JWT の audience チェックによってすべてのリプレイを防止できる
 
 <details>
 <summary>答えを表示</summary>
 
-**回答: B) SVIDs を発行し、workload registration を管理する**
+**回答: C) X.509 の URI SAN/証明書チェーンと、JWT の署名/sub/audience/有効期限を検証する**
 
-**解説:**
-SPIRE Server の責務:
-
-```
-┌─────────────────────────────────────────────┐
-│              SPIRE Server                    │
-├─────────────────────────────────────────────┤
-│  - Manages trust domain CA                   │
-│  - Issues X.509 and JWT SVIDs               │
-│  - Stores workload registration entries     │
-│  - Performs node attestation                │
-│  - Maintains federation relationships       │
-└─────────────────────────────────────────────┘
-                    │
-         ┌─────────┴─────────┐
-         ▼                   ▼
-   SPIRE Agent          SPIRE Agent
-     (Node 1)             (Node 2)
-```
-
-主な機能:
-- trust domain の Certificate Authority
-- workload entries の Registration API
-- node と workload の attestation verification
-- SVID の signing と rotation
+証明書の CN は SPIFFE identity ではありません。JWT bearer token は audience が一致していてもリプレイされる可能性があります。有効期間はポリシーに依存し、本章で扱う X.509/JWT の範囲は Incubating の WIT-SVID 仕様とは別ものです。
 
 </details>
 
----
+<span id="_3-what-is-the-primary-role-of-the-spire-server"></span>
 
-### 4. SPIRE Agent の主な役割は何ですか？
+### 3. SPIRE Server の役割は何ですか？
 
-- A) cluster networking を管理する
-- B) nodes 上で実行され、workloads を attest し、SVIDs を local に配布する
-- C) cluster secrets を保存する
-- D) pods を scheduling する
+- A) すべてのアプリケーション接続を自動的に暗号化する
+- B) agent の attestation、登録、SVID の署名を管理する
+- C) すべてのサービスリクエストを自動的に認可する
+- D) CSI を通じてすべての Pod に秘密鍵ファイルを配布する
 
 <details>
 <summary>答えを表示</summary>
 
-**回答: B) nodes 上で実行され、workloads を attest し、SVIDs を local に配布する**
+**回答: B) agent の attestation、登録、SVID の署名を管理する**
 
-**解説:**
-SPIRE Agent は各 node 上で DaemonSet として実行されます。
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: spire-agent
-  namespace: spire
-spec:
-  template:
-    spec:
-      containers:
-      - name: spire-agent
-        image: ghcr.io/spiffe/spire-agent:1.8
-        volumeMounts:
-        - name: spire-agent-socket
-          mountPath: /run/spire/sockets
-```
-
-Agent の責務:
-- SPIRE Server に対して attest する（node attestation）
-- local workload identity を検証する（workload attestation）
-- Server から SVIDs を取得して cache する
-- local workloads に Workload API（Unix domain socket）を公開する
-- SVID rotation を処理する
+CA/JWT 署名、DataStore、KeyManager の責務を区別してください。AWS PCA を upstream にすると SPIRE の中間 CA に署名されますが、ローカルでの leaf 署名や鍵管理がなくなるわけではありません。
 
 </details>
 
----
+<span id="_4-what-is-the-primary-role-of-the-spire-agent"></span>
 
-### 5. Amazon EKS で推奨される node attestation method はどれですか？
+### 4. Workload API を呼び出しているアプリケーションを識別するのは誰ですか？
 
-- A) aws_iid
-- B) k8s_sat
-- C) k8s_psat
-- D) join_token
+- A) ローカルの SPIRE agent の workload attestor
+- B) DNS リゾルバー
+- C) ファイル名を確認する CSI
+- D) アプリケーションが自己申告した SPIFFE ID のみ
 
 <details>
 <summary>答えを表示</summary>
 
-**回答: C) k8s_psat**
+**回答: A) ローカルの SPIRE agent の workload attestor**
 
-**解説:**
-Kubernetes の node attestation methods:
-
-**k8s_psat (Projected Service Account Token)** - EKS で推奨:
-```yaml
-# SPIRE Server configuration
-nodeAttestor "k8s_psat" {
-    plugin_data {
-        clusters = {
-            "eks-cluster" = {
-                service_account_allow_list = ["spire:spire-agent"]
-                kube_config_file = ""
-                allowed_node_label_keys = ["topology.kubernetes.io/zone"]
-            }
-        }
-    }
-}
-```
-
-EKS で k8s_psat を使う理由:
-- projected service account tokens を使用する（より secure）
-- tokens は audience-bound かつ time-limited
-- EKS OIDC provider と連携する
-- agents に cloud provider credentials が不要
-
-代替手段:
-- **k8s_sat**: Legacy service account tokens（より secure ではない）
-- **aws_iid**: EC2 instance identity（non-EKS 向け）
+agent は呼び出し元の PID/cgroups/Pod メタデータを調べ、認可済みのエントリ/キャッシュと照合します。agent Pod 内から取得した場合は、実際のアプリケーションのコンテキストではなくその呼び出し元が attest されます。
 
 </details>
 
----
+<span id="_5-which-node-attestation-method-is-recommended-for-amazon-eks"></span>
 
-### 6. k8s workload attestation はどの selector types をサポートしていますか？
+### 5. server は k8s_psat token をどのように検証しますか？
 
-- A) Container image のみ
-- B) Namespace、service account、pod labels、container image
-- C) IP address のみ
-- D) Node name のみ
+- A) IRSA ロールの S3 権限を確認する
+- B) Kubernetes の TokenReview に加えて、設定された audience/SA の許可リストで検証する
+- C) token を base64 デコードするだけ
+- D) 有効期限のない join token に変換する
 
 <details>
 <summary>答えを表示</summary>
 
-**回答: B) Namespace、service account、pod labels、container image**
+**回答: B) Kubernetes の TokenReview に加えて、設定された audience/SA の許可リストで検証する**
 
-**解説:**
-Kubernetes workload attestation selectors:
-
-```bash
-# Create registration entry with selectors
-spire-server entry create \
-    -spiffeID spiffe://example.org/ns/production/sa/frontend \
-    -parentID spiffe://example.org/agent/node1 \
-    -selector k8s:ns:production \
-    -selector k8s:sa:frontend \
-    -selector k8s:pod-label:app:frontend \
-    -selector k8s:container-image:nginx:1.25
-```
-
-利用可能な selectors:
-| Selector | Example | Description |
-|----------|---------|-------------|
-| k8s:ns | k8s:ns:production | Namespace |
-| k8s:sa | k8s:sa:frontend | ServiceAccount |
-| k8s:pod-label | k8s:pod-label:app:web | Pod labels |
-| k8s:container-image | k8s:container-image:nginx | Container image |
-| k8s:pod-name | k8s:pod-name:nginx-xyz | Specific pod |
-| k8s:pod-uid | k8s:pod-uid:abc-123 | Pod UID |
+server/agent の論理クラスター名、token の audience、SA 許可リスト、TokenReview の権限を一致させてください。aws_iid は異なる信頼の前提を持つ代替手段であり、常に優れているわけでも EKS で禁止されているわけでもありません。
 
 </details>
 
----
+<span id="_6-what-selector-types-does-k8s-workload-attestation-support"></span>
 
-### 7. SPIFFE CSI Driver の目的は何ですか？
+### 6. k8s:container-image:nginx:* はどのように解釈すべきですか？
 
-- A) persistent volumes を管理する
-- B) sidecars なしで SVIDs を pods に直接 mount する
-- C) node storage を暗号化する
-- D) Network policy enforcement
+- A) すべての nginx タグに対する自動的な glob マッチング
+- B) selector の値であり、ワイルドカードマッチングを前提にしてはならない
+- C) イメージ署名が検証されていることの証明
+- D) namespace の RBAC を自動的に強制すること
 
 <details>
 <summary>答えを表示</summary>
 
-**回答: B) sidecars なしで SVIDs を pods に直接 mount する**
+**回答: B) selector の値であり、ワイルドカードマッチングを前提にしてはならない**
 
-**解説:**
-SPIFFE CSI Driver は、SVID delivery に対して sidecar-less なアプローチを提供します。
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-workload
-spec:
-  containers:
-  - name: app
-    image: my-app:latest
-    volumeMounts:
-    - name: spiffe
-      mountPath: /run/spiffe/certs
-      readOnly: true
-  volumes:
-  - name: spiffe
-    csi:
-      driver: "csi.spiffe.io"
-      readOnly: true
-```
-
-利点:
-- sidecar container が不要
-- SVIDs が自動的に files として mount される
-- 透過的な certificate rotation
-- pod の複雑さを軽減
-- file-based certificates を期待する任意の application で動作する
-
-CSI driver は SPIRE Agent と通信して SVIDs を取得し、mount します。
+Kubernetes が実際に報告する image/ImageID の値と一致させてください。タグだけではサプライチェーンの信頼は確立できません。Pod/SA/label の作成・変更権限も identity の適格性に影響します。
 
 </details>
 
----
+<span id="_7-what-is-the-purpose-of-the-spiffe-csi-driver"></span>
 
-### 8. SPIFFE Federation は何を可能にしますか？
+### 7. SPIFFE CSI 0.2.13 は Pod に何をマウントしますか？
 
-- A) Database replication
-- B) 別々の SPIFFE deployments 間での cross-trust-domain communication
-- C) clusters をまたいだ Pod scheduling
-- D) Secret synchronization
+- A) 自動生成された svid.pem/svid.key ファイル
+- B) Workload API の Unix socket を含むディレクトリ
+- C) SPIRE の CA 秘密鍵
+- D) 共有された PostgreSQL のデータ
 
 <details>
 <summary>答えを表示</summary>
 
-**回答: B) 別々の SPIFFE deployments 間での cross-trust-domain communication**
+**回答: B) Workload API の Unix socket を含むディレクトリ**
 
-**解説:**
-SPIFFE Federation により、異なる trust domains の workloads が認証できるようになります。
-
-```
-┌─────────────────────┐      Federation      ┌─────────────────────┐
-│  Trust Domain A     │◄──────────────────►│  Trust Domain B      │
-│  example.org        │     Bundle Exchange │  partner.com         │
-├─────────────────────┤                      ├─────────────────────┤
-│  spiffe://example.  │                      │  spiffe://partner.   │
-│  org/service/api    │   ─── mTLS ───►     │  com/service/db      │
-└─────────────────────┘                      └─────────────────────┘
-```
-
-設定:
-```yaml
-# SPIRE Server federation config
-federatesWith "partner.com" {
-    bundleEndpointURL = "https://spire.partner.com:8443"
-    bundleEndpointProfile "https_spiffe" {
-        endpointSPIFFEID = "spiffe://partner.com/spire/server"
-    }
-}
-```
-
-ユースケース:
-- Multi-cloud deployments
-- Partner integrations
-- Mergers and acquisitions
-- Zero-trust cross-organization communication
+CSI は API socket へのアクセスを提供します。ファイルベースのアプリケーションには別途アダプターとリロード処理が必要です。API を利用するのは依然としてアプリケーションまたは proxy であり、統合が常に自動で行われるわけではありません。
 
 </details>
 
----
+<span id="_8-what-does-spiffe-federation-enable"></span>
 
-### 9. SPIFFE/SPIRE は IAM Roles for Service Accounts（IRSA）と比べてどうですか？
+### 8. https_spiffe の federation をブートストラップするには何が必要ですか？
 
-- A) IRSA は platform-agnostic、SPIFFE は AWS-only
-- B) SPIFFE は platform-agnostic identity を提供し、IRSA は AWS-specific
-- C) これらは同一の technologies である
-- D) SPIFFE は Azure でのみ動作する
+- A) エンドポイント URL のみ
+- B) 初期の信頼済み bundle と正しいエンドポイントの SPIFFE ID
+- C) 双方の CA 秘密鍵を交換すること
+- D) すべてのリモート workload を自動的に認可すること
 
 <details>
 <summary>答えを表示</summary>
 
-**回答: B) SPIFFE は platform-agnostic identity を提供し、IRSA は AWS-specific**
+**回答: B) 初期の信頼済み bundle と正しいエンドポイントの SPIFFE ID**
 
-**解説:**
-SPIFFE/SPIRE と IRSA の比較:
-
-| Feature | SPIFFE/SPIRE | IRSA |
-|---------|--------------|------|
-| Platform | Any (multi-cloud) | AWS only |
-| Identity Format | SPIFFE ID (URI) | IAM Role ARN |
-| Credential Type | X.509/JWT SVID | AWS STS token |
-| Service-to-Service | Native mTLS | Not supported |
-| AWS Service Access | Via JWT exchange | Direct |
-| Setup Complexity | Higher | Lower (EKS native) |
-
-それぞれを使う場面:
-- **IRSA**: AWS services にアクセスする AWS-native workloads
-- **SPIFFE/SPIRE**: Multi-cloud、service mesh、mTLS requirements
-
-両方を併用できます。
-```
-Pod --SPIFFE--> Service Mesh (mTLS)
-Pod --IRSA--> AWS Services (S3, DynamoDB)
-```
+信頼の方向ごとに設定してください。bundle の更新、接続性、TLS 検証、workload の認可はそれぞれ別の責務です。https_web はエンドポイントの Web PKI 検証パスを使用します。
 
 </details>
 
----
+<span id="_9-how-does-spiffe-spire-compare-to-iam-roles-for-service-accounts-irsa"></span>
 
-### 10. SPIFFE で trust domains を naming する best practices は何ですか？
+### 9. IRSA と SPIFFE/SPIRE を正しく比較しているのはどれですか？
 
-- A) random strings を使用する
-- B) IP addresses を使用する
-- C) 組織が管理する DNS-style names を使用する
-- D) sequential numbers を使用する
+- A) IRSA の更新には必ず Pod の再起動が必要である
+- B) SPIFFE を使えば AWS IAM ポリシーは不要になる
+- C) IRSA は AWS の認証情報の経路であり、SPIFFE は workload identity で、いずれも検証が必要である
+- D) Pod の annotation だけで IRSA と CSI による証明書ファイルの配布が完結する
 
 <details>
 <summary>答えを表示</summary>
 
-**回答: C) 組織が管理する DNS-style names を使用する**
+**回答: C) IRSA は AWS の認証情報の経路であり、SPIFFE は workload identity で、いずれも検証が必要である**
 
-**解説:**
-Trust domain naming の best practices:
-
-**推奨 patterns:**
-```
-# Organization domain
-spiffe://example.com/...
-
-# Environment-specific
-spiffe://prod.example.com/...
-spiffe://staging.example.com/...
-
-# Region-specific
-spiffe://us-east.example.com/...
-```
-
-**Best practices:**
-1. 所有している domains を使用する（collision を防ぐ）
-2. trust domains を stable に保つ（変更は disruptive）
-3. environment separation を検討する
-4. 最初から federation を計画する
-
-**避けるべき anti-patterns:**
-```
-# Bad: Generic names
-spiffe://cluster/...
-spiffe://kubernetes/...
-
-# Bad: Temporary names
-spiffe://test123/...
-
-# Bad: IP addresses
-spiffe://10.0.0.1/...
-```
-
-Trust domain names はすべての SVIDs と logs に現れるため、意味があり stable な identifiers を選びましょう。
+IRSA はサポートされている SDK/projected token の挙動によって更新され、クロスアカウント構成にも対応します。ServiceAccount の annotation、aud/sub の信頼関係、AWS の権限を検証してください。SPIFFE の mTLS でも、認証情報の利用とピアの認可が必要です。
 
 </details>
 
----
+<span id="_10-what-are-best-practices-for-naming-trust-domains-in-spiffe"></span>
+
+### 10. trust domain と CA ローテーションについて正しいのはどれですか？
+
+- A) trust domain は解決可能な DNS 名でなければならない
+- B) bundle set は CA 秘密鍵を自動的にローテーションする
+- C) 安定した名前を選び、bundle の変更と CA 鍵のローテーションを区別する
+- D) 数値や IPv4 形式のドメインはパーサーによって常に拒否される
+
+<details>
+<summary>答えを表示</summary>
+
+**回答: C) 安定した名前を選び、bundle の変更と CA 鍵のローテーションを区別する**
+
+DNS 風の命名はガイダンスであり、構文規則のすべてではありません。bundle は公開された信頼情報であり、鍵のローテーションは別のライフサイクルです。authority の重複期間と利用側の更新を確認してください。
+
+</details>
 
 ## スコア計算
 
-- **9-10 correct**: 素晴らしい - SPIFFE/SPIRE について深く理解しています。
-- **7-8 correct**: 良い - 主要な concepts をしっかり把握しています。
-- **5-6 correct**: まずまず - 追加学習が必要な領域があります。
-- **4 or fewer**: documentation をもう一度確認してください。
+- 9〜10: しっかり理解できています
+- 7〜8: 信頼、認可、配布の経路を再確認しましょう
+- 6 以下: ガイドと検証済みの例を復習しましょう
 
 ## 関連ドキュメント
 
-- [SPIFFE/SPIRE による Workload Identity](../../security/12-spiffe-spire.md)
+- [SPIFFE/SPIRE](../../security/12-spiffe-spire.md)
