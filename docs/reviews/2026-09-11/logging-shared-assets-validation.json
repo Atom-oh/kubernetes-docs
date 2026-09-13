@@ -193,15 +193,15 @@
     },
     {
       "path": "assets/diagrams/archify/en-observability-logging-05-collectors-4.workflow.json",
-      "sha256": "677ac6813899bb992848acdfc32d9fe13e0f3ab11e6cb964983ae63167acc005"
+      "sha256": "b7196e714945efa262b2e260e59e4aac19ea26acce2fc5f88733f6d1953cd862"
     },
     {
       "path": "public/archmaps/en-observability-logging-05-collectors-4.html",
-      "sha256": "3e05e092f62b2dab800955096e3eb2ff47a73d29f86dfbdfbd2967dc9b814ca9"
+      "sha256": "371025a9e9f5c9711c35e7327c01cd6d4ac8072f03336a80374a9660fc2516b6"
     },
     {
       "path": "en/.gitbook/assets/en-observability-logging-05-collectors-4.png",
-      "sha256": "3d1917ec897380bff78227abea5e70e60ba080158bf3a60efda8c16f0113ce34"
+      "sha256": "321171268cc746baf32ab4f15223891d5a2be38da32a8783709082b41f79bd12"
     },
     {
       "path": "assets/clickhouse-3tier-pipeline.html",
@@ -1353,5 +1353,72 @@
     "Conceptualfigures;noAWS/Loki/ClickHousedeploymentorperformancebenchmark.",
     "Foreigntexttranslationbackfill/removalofoldreferencesstillrequiresfinalintegration.",
     "ClickHouseanimationexplicitlyillustrative;not a databaseengine/durabilitysimulator."
-  ]
+  ],
+  "reviewLabelFix": {
+    "finding": "LOGGING-R2-001",
+    "description": "Shortened English compare-node label to Review tools; no semantics/runtime behavior change.",
+    "verifiedAt": "2026-09-13T10:45:13.376383+00:00",
+    "browser": {
+      "status": "passed",
+      "cases": [
+        {
+          "file": "en-observability-logging-05-collectors-4.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 293,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-logging-05-collectors-4.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 293,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-observability-logging-05-collectors-4.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 293,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 45888,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        }
+      ],
+      "scope": "48cases on16locallygeneratedviewers; motion/reduced-motion/visibility/theme/guided controls and16SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+    },
+    "individualPngInspected": true
+  }
 }

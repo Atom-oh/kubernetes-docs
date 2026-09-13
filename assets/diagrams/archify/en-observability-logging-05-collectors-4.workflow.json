@@ -10,7 +10,7 @@
   "lanes": [
     {
       "id": "process",
-      "label": "Review \u2192 validate \u2192 operate"
+      "label": "Review → validate → operate"
     }
   ],
   "nodes": [
@@ -35,7 +35,7 @@
       "lane": "process",
       "col": 2,
       "type": "backend",
-      "label": "Compare maintained components",
+      "label": "Review tools",
       "width": 200
     },
     {
