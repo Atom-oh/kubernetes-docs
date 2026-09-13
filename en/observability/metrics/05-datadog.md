@@ -65,39 +65,47 @@ template render is not a Kubernetes deployment or runtime compatibility test.
 
 ### Credentials and installation ownership
 
-Baseline Agent ingestion needs an API key in the same namespace as the Agent.
-An application key is needed for API read/control features such as the external
-metrics provider; it is not required just to install the baseline Agent. Use a
-scoped application key only when the chosen feature requires one.
+This profile retrieves the Datadog API key and shared Cluster Agent token from
+AWS Secrets Manager using the native `aws.secrets` backend. An application key
+is not needed for baseline ingestion; external metrics remain disabled.
 
-Keep credentials in an approved Secret workflow. The file command below avoids the
-old unquoted `<YOUR_API_KEY>` shell-redirection problem and exposing a key in process
-arguments. Protect and remove temporary key files according to the credential
-workflow. Kubernetes Secrets also require appropriate access and encryption controls.
-Do not run this installation over resources owned by another release or controller.
+Prepare `observability/datadog` in `ap-northeast-2` with JSON string keys `api-key`
+and `cluster-token`; the token must be cryptographically random and at least
+32 characters. The API key must match the Datadog site. Both ServiceAccounts,
+`datadog` and `datadog-cluster-agent` in namespace `datadog`, require scoped IRSA
+roles, regional STS/Secrets Manager connectivity and KMS permission if applicable.
+Replace the two example role ARNs. EC2 metadata credential fallback is disabled.
+See [complete prerequisites and reusable profiles](../../../examples/observability/secret-profiles/README.md).
+
+Use Python 3/PyYAML 6.0.3 and the executable pinned-chart postrenderer from that
+repository directory. It replaces exactly seven hardcoded SecretKeyRef entries
+with **literal `ENC[...]` handles**, preserving node, trace, init and Cluster Agent
+consumers. Native resolution updates in-memory configuration, not the environment.
+The init script requires nonempty `DD_API_KEY`, so deleting it without a valid
+replacement breaks startup. The `must-use-secret-postrenderer` Secret is deliberately
+absent; do not create it to bypass an omitted renderer. Keep the renderer on every
+install/upgrade and review changes to the pinned chart, images or profile contract.
+
+These commands change the cluster only at installation; no deployment was executed
+in the audit. Run from the repository root, in an existing `datadog` namespace,
+with an owned release after preparing the IAM/secret prerequisites.
 
 ```bash
+PROFILE=examples/observability/secret-profiles
 helm repo add datadog https://helm.datadoghq.com
 helm repo update datadog
-kubectl create namespace datadog --dry-run=client -o yaml | kubectl apply -f -
-
-# The protected file contains only the API key; obtain it through your approved secret process.
-# Do not put the key in command-line literals, Git or terminal output.
-: "${DATADOG_API_KEY_FILE:?Set the path to the protected API-key file}"
-kubectl create secret generic datadog-secret --namespace datadog \
-  --from-file="api-key=$DATADOG_API_KEY_FILE" --dry-run=client -o yaml | kubectl apply -f -
-
 helm template datadog datadog/datadog --version 3.244.0 \
-  --namespace datadog --include-crds --values datadog-values.yaml > datadog-rendered.yaml
-
-# This changes the cluster. Review the rendered resources and installation ownership first.
+  --namespace datadog --include-crds -f "$PROFILE/datadog-values.yaml" \
+  --post-renderer "$PROFILE/datadog_postrender.py" > datadog-reviewed-render.yaml
+# Review resources and ownership first; retain the renderer on EVERY upgrade.
 helm upgrade --install datadog datadog/datadog --version 3.244.0 \
-  --namespace datadog --values datadog-values.yaml
+  --namespace datadog -f "$PROFILE/datadog-values.yaml" \
+  --post-renderer "$PROFILE/datadog_postrender.py"
 ```
 
 ### Reviewed values
 
-Save the following as `datadog-values.yaml`. Logs are opt-in by container
+The following matches the reusable `datadog-values.yaml`. Logs are opt-in by container
 configuration, APM/DogStatsD use UDS, and cluster-wide automatic library injection,
 external HPA metrics, discovery network statistics and optional process/network
 collection are not enabled here.
@@ -105,10 +113,11 @@ The application namespace should be separate from the Agent namespace; SSI does
 not instrument pods in the Agent's own namespace.
 
 ```yaml
+# datadog 3.244.0: postrenderer required; replace example IRSA role ARNs.
 targetSystem: linux
 registry: gcr.io/datadoghq
 datadog:
-  apiKeyExistingSecret: datadog-secret
+  apiKeyExistingSecret: must-use-secret-postrenderer
   clusterName: my-eks-cluster
   site: datadoghq.com
   tags:
@@ -151,6 +160,19 @@ datadog:
     collectConfigMaps: false
   operator:
     enabled: false
+  secretBackend:
+    type: aws.secrets
+    config:
+      aws_session:
+        aws_region: ap-northeast-2
+    enableGlobalPermissions: false
+  env: &id001
+  - name: AWS_EC2_METADATA_DISABLED
+    value: 'true'
+  - name: DD_SECRET_REFRESH_INTERVAL
+    value: '0'
+  - name: DD_SECRET_REFRESH_ON_API_KEY_FAILURE_INTERVAL
+    value: '0'
 clusterAgent:
   enabled: true
   replicas: 2
@@ -163,11 +185,37 @@ clusterAgent:
   admissionController:
     enabled: true
     mutateUnlabelled: false
+  tokenExistingSecret: must-use-secret-postrenderer
+  rbac:
+    create: true
+    serviceAccountAnnotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/datadog-cluster-agent-secrets
+  env: *id001
 agents:
   image:
     tag: 7.83.1
     digest: sha256:ed0bd588e955d82f661d1b8dd1cdf179c1023e74a2817e7a812c99d52f05c319
+  rbac:
+    create: true
+    serviceAccountAnnotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/datadog-agent-secrets
 ```
+
+The only credential-related environment values after postrendering are
+`ENC[observability/datadog;api-key]` and `ENC[observability/datadog;cluster-token]`.
+`DD_SECRET_BACKEND_TYPE`/`CONFIG` carry only the backend type and region. No shell
+exports a resolved value, no real key is placed in Helm values, and the profile
+does not need a Kubernetes credential Secret. The two init-volume containers only
+copy image configuration; init-config uses the API-key handle for its bootstrap
+check. Actual native backend authorization and Datadog ingestion still require
+runtime verification.
+
+Scheduled and API-failure secret refresh are explicitly disabled. Rotate through
+an approved coordinated restart of node/trace and Cluster Agent Pods; keep an old
+API key valid until the fleet uses the new key. A cluster-token change can interrupt
+node/Cluster Agent authentication during mixed-version rollout, so plan a
+maintenance window or separately validated transition. No zero-downtime rotation
+is claimed. See [Datadog secret backends](https://docs.datadoghq.com/agent/guide/secrets-management/).
 
 `processAgent.enabled` is deprecated; use the individual collection options.
 The chart already mounts `/etc/passwd` when applicable, so do not add duplicate

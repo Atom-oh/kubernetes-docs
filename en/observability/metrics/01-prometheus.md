@@ -1,6 +1,6 @@
 # Prometheus
 
-> Reviewed: September 12, 2026. Local configuration/query checks are described below; no cluster or cloud deployment was performed.
+> Reviewed: September 13, 2026. Local configuration/query checks are described below; no cluster or cloud deployment was performed.
 
 ## Contents
 
@@ -287,7 +287,7 @@ spec:
 
 ### Other discovery paths
 
-- Standalone/agent Pod discovery can use the [overview's named-port configuration](README.md#pull-vs-push-model), which preserves discovery-provided IPv4/IPv6 addresses. An annotation such as `prometheus.io/scheme` has no effect unless the actual configuration consumes it.
+- Standalone/agent Pod discovery can use the [overview's named-port configuration](README.md#metric-collection-models), which preserves discovery-provided IPv4/IPv6 addresses. An annotation such as `prometheus.io/scheme` has no effect unless the actual configuration consumes it.
 - Service blackbox probing needs an installed exporter, defined probe module, appropriate target URL/scheme and a `Probe`/scrape configuration. `up` describes exporter scraping; probe success is a separate signal.
 - Node discovery reaches kubelet endpoints, not node-exporter automatically. Verify serving certificates, the correct CA and node-metric RBAC. The Kubernetes API CA does not prove trust for arbitrary node certificates.
 - Use reviewed namespace/service/team labels rather than unrestricted node `labelmap`. Removing identity labels is not an aggregation operation.
@@ -300,13 +300,14 @@ Prerequisites for this profile:
 
 - Authorized Helm/Kubernetes access and sufficient Linux EC2 node resources.
 - A working default block-storage StorageClass/CSI driver, or explicit reviewed class names for every PVC. `gp3` is not guaranteed to exist.
-- An existing `monitoring` namespace and its `metrics-grafana-admin` Secret with `admin-user`/`admin-password` keys, managed through an approved secret workflow.
+- An existing `monitoring` namespace, Secrets Store CSI driver and AWS provider (ASCP) on the Linux EC2 nodes. Prepare `observability/grafana-admin` in AWS Secrets Manager (`ap-northeast-2`) with the JSON string key `admin-password`; do not synchronize it into a Kubernetes Secret.
+- The `metrics-demo-grafana` service account needs a scoped IRSA role for that secret. Replace the example IAM role ARN below and apply the matching SecretProviderClass. See the [complete identity, KMS, mount and rotation prerequisites](../../../examples/observability/secret-profiles/README.md).
 - Verified kubelet TLS trust. This profile enables certificate verification; supply the proper CA if certificates use another issuer rather than bypassing verification.
 
 Sizing is illustrative. Each Prometheus replica gets its own PVC; retention size does not bound WAL/head/compaction use. Grafana remains one replica with a PVC-backed database. Increasing replicas alone is not shared-database HA.
 
 ```yaml
-# values.yaml
+# kube-prometheus-stack 90.0.0; replace the example IRSA role ARN before use.
 fullnameOverride: metrics-demo
 kubeControllerManager:
   enabled: false
@@ -373,32 +374,67 @@ alertmanager:
 grafana:
   fullnameOverride: metrics-demo-grafana
   replicas: 1
-  admin:
-    existingSecret: metrics-grafana-admin
-    userKey: admin-user
-    passwordKey: admin-password
   persistence:
     enabled: true
     size: 10Gi
   sidecar:
     dashboards:
       searchNamespace: monitoring
+      skipReload: true
+      initDashboards: true
+      provider:
+        updateIntervalSeconds: 30
     datasources:
       searchNamespace: monitoring
+      skipReload: true
+      initDatasources: true
+  serviceAccount:
+    create: true
+    name: metrics-demo-grafana
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/metrics-grafana-secrets
+  env:
+    GF_SECURITY_ADMIN_USER: admin
+    GF_SECURITY_ADMIN_PASSWORD: $__file{/mnt/grafana-secrets/admin-password}
+  grafana.ini:
+    security:
+      admin_user: admin
+      admin_password: $__file{/mnt/grafana-secrets/admin-password}
+  extraVolumes:
+  - name: grafana-secrets
+    csi:
+      driver: secrets-store.csi.k8s.io
+      readOnly: true
+      volumeAttributes:
+        secretProviderClass: metrics-grafana-admin
+  extraVolumeMounts:
+  - name: grafana-secrets
+    mountPath: /mnt/grafana-secrets
+    readOnly: true
 ```
 
 This EKS profile disables monitors for managed control-plane components and kube-proxy endpoints whose exposure is not assumed here. It does not disable Kubernetes itself. ServiceMonitors in `monitoring`/`example-app` need matching release labels; rules are selected from `monitoring`.
 
-`grafana.admin.existingSecret` keeps the admin password out of Helm values. **The chart still injects that Secret through container SecretKeyRef environment entries.** It is not a no-environment-secret deployment. Protect Secret/Pod-debug access, or supply a separately reviewed file/SSO authentication profile if required.
+Grafana receives a **literal file-provider expression**, not a password value, in `GF_SECURITY_ADMIN_PASSWORD`. This suppresses the chart's automatic credential environment references. Grafana 13.2.1 evaluates `$__file{...}` inside its configuration after environment overrides; no `__FILE` entrypoint or shell exports the file contents. The read-only CSI file must be readable by UID/GID 472 (`fsGroup: 472`, mode `0440`), and only the main Grafana container mounts it. Use a password without leading/trailing whitespace, which the file provider trims.
 
-Install once with the reviewed values:
+The dashboard/datasource init containers populate provisioning files before startup. Sidecars keep watching files but use `skipReload: true`, so none needs admin credentials. Grafana polls dashboard files every 30 seconds; **datasource updates require a controlled Pod restart**. `admin_password` initializes a new database only: changing the AWS secret, CSI rotation or a restart does not reset the administrator password in an existing PVC/database. Use the approved password-change/SSO procedure and reconcile the secret; preserve the PVC.
+
+Use the complete [reusable profile](../../../examples/observability/secret-profiles/README.md), including `grafana-secret-provider.yaml`. Local render/tests cover config and mounts, not live CSI permissions, login or rotation. Primary contracts: [Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/) and [AWS ASCP](https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/README.md).
+
+From the repository root, install once after preparing the prerequisites:
 
 ```sh
+PROFILE=examples/observability/secret-profiles
+kubectl apply -f "$PROFILE/grafana-secret-provider.yaml"
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
+helm template kube-prom prometheus-community/kube-prometheus-stack \
+  --version 90.0.0 --namespace monitoring -f "$PROFILE/prometheus-values.yaml" \
+  > grafana-reviewed-render.yaml
+# Review resources, prerequisites and ownership before this cluster-changing command.
 helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
-  --version 90.0.0 --namespace monitoring --create-namespace \
-  -f values.yaml --wait --timeout 15m
+  --version 90.0.0 --namespace monitoring -f "$PROFILE/prometheus-values.yaml" \
+  --wait --timeout 15m
 ```
 
 Check CRD establishment, Operator health, PVC binding and actual targets. Apply the chosen application monitor/rules only after their CRDs are established.

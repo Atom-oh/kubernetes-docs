@@ -61,7 +61,14 @@
       "7relabelmodelsincludeIPv6;8mockPushgatewaycasesverifyguardrails/PUT/stablegroup/failure;2originalJobscriptssyntaxrejected.",
       "8originalPNGfiguresviewed;retainedpull/pushfigure0withsemanticcaption;wrongstorage/cost/collectionfigures1-3replacedbyaccuratetables.",
       "Evidence:docs/reviews/2026-09-11/observability-metrics-overview-validation.json"
-    ]
+    ],
+    "latestImplementation": {
+      "date": "2026-09-13",
+      "baseCommit": "a0c06152e805e81ff55c31f34a3e986e6bdb99ea",
+      "sourceSha256": "65a91452df7b6b6f17132370046b693e5e00247fccb90842593c6678ab9d9199",
+      "status": "pending_independent_review",
+      "record": "docs/reviews/2026-09-11/observability-secret-profiles-followup.json"
+    }
   },
   {
     "path": "ko/observability/metrics/README.md",
@@ -125,7 +132,14 @@
       "7relabelmodelsincludeIPv6;8mockPushgatewaycasesverifyguardrails/PUT/stablegroup/failure;2originalJobscriptssyntaxrejected.",
       "8originalPNGfiguresviewed;retainedpull/pushfigure0withsemanticcaption;wrongstorage/cost/collectionfigures1-3replacedbyaccuratetables.",
       "Evidence:docs/reviews/2026-09-11/observability-metrics-overview-validation.json"
-    ]
+    ],
+    "latestImplementation": {
+      "date": "2026-09-13",
+      "baseCommit": "a0c06152e805e81ff55c31f34a3e986e6bdb99ea",
+      "sourceSha256": "d6af0516aef8d18f26a271b172f0173f35ffb8c28ec944ec6cb6f92394ceb0cf",
+      "status": "pending_independent_review",
+      "record": "docs/reviews/2026-09-11/observability-secret-profiles-followup.json"
+    }
   },
   {
     "path": "en/quizzes/observability/metrics/00-metrics-overview-quiz.md",
@@ -326,7 +340,14 @@
       "NativeAlertmanager0.34configuration+4routingcasesand7inhibitionidentitymodels;no sends.",
       "4Vuecompilations+30localfile/anchorchecks;4originalPNGfiguresviewedandretainedwithclarifyingcaptions.",
       "Evidence:docs/reviews/2026-09-11/observability-prometheus-validation.json"
-    ]
+    ],
+    "latestImplementation": {
+      "date": "2026-09-13",
+      "baseCommit": "a0c06152e805e81ff55c31f34a3e986e6bdb99ea",
+      "sourceSha256": "bae49077815312625e84670a7c5c4e25938dbf7b65c922b2a5467f6952a8c587",
+      "status": "pending_independent_review",
+      "record": "docs/reviews/2026-09-11/observability-secret-profiles-followup.json"
+    }
   },
   {
     "path": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
@@ -472,7 +493,14 @@
       "NativeAlertmanager0.34configuration+4routingcasesand7inhibitionidentitymodels;no sends.",
       "4Vuecompilations+30localfile/anchorchecks;4originalPNGfiguresviewedandretainedwithclarifyingcaptions.",
       "Evidence:docs/reviews/2026-09-11/observability-prometheus-validation.json"
-    ]
+    ],
+    "latestImplementation": {
+      "date": "2026-09-13",
+      "baseCommit": "a0c06152e805e81ff55c31f34a3e986e6bdb99ea",
+      "sourceSha256": "9f44ecacfde054fa1320d847651c8a16bc6143ac64a57df451027575de8f7e3c",
+      "status": "pending_independent_review",
+      "record": "docs/reviews/2026-09-11/observability-secret-profiles-followup.json"
+    }
   },
   {
     "path": "ko/quizzes/observability/metrics/01-prometheus-quiz.md",
@@ -1370,7 +1398,14 @@
     ],
     "validation": [
       "Entire original source consumed: 1014 lines; original snapshot persisted before edits."
-    ]
+    ],
+    "latestImplementation": {
+      "date": "2026-09-13",
+      "baseCommit": "a0c06152e805e81ff55c31f34a3e986e6bdb99ea",
+      "sourceSha256": "54657a2cdc425eaaacbd502b5afb4181bd25ee4d7e6bfbd33d984e1deb913a05",
+      "status": "pending_independent_review",
+      "record": "docs/reviews/2026-09-11/observability-secret-profiles-followup.json"
+    }
   },
   {
     "path": "en/quizzes/observability/metrics/05-datadog-quiz.md",
@@ -1396,7 +1431,14 @@
     ],
     "validation": [
       "Entire original source consumed: 1014 lines; original snapshot persisted before edits."
-    ]
+    ],
+    "latestImplementation": {
+      "date": "2026-09-13",
+      "baseCommit": "a0c06152e805e81ff55c31f34a3e986e6bdb99ea",
+      "sourceSha256": "11e0c8c79164a98a36e459566c2a23bd8851cd36ed0f4def10c74b8da83497e5",
+      "status": "pending_independent_review",
+      "record": "docs/reviews/2026-09-11/observability-secret-profiles-followup.json"
+    }
   },
   {
     "path": "ko/quizzes/observability/metrics/05-datadog-quiz.md",

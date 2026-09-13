@@ -63,48 +63,57 @@ Kubernetes 배포나 runtime 호환성 시험을 뜻하지는 않습니다.
 
 ### Credential과 설치 소유권
 
-기본 Agent 수집에는 Agent와 같은 namespace의 API key가 필요합니다.
-Application key는 external metrics provider 같은 API 조회/제어 기능에 필요하며
-기본 Agent 설치만을 위해 요구되지는 않습니다. 선택한 기능에 필요한 범위로 제한해 사용합니다.
+이 profile은 native `aws.secrets` backend와 IRSA로 AWS Secrets Manager의 API key와
+공유 Cluster Agent token을 조회합니다. 기본 수집에는 application key가 필요하지
+않으며 external metrics는 계속 비활성화합니다.
 
-승인된 Secret 관리 절차를 사용합니다. 다음 파일 기반 명령은 기존 예제의 따옴표 없는
-`<YOUR_API_KEY>`가 shell redirect로 해석되는 문제와 process argument의 key 노출을
-피합니다. 임시 key 파일의 보호·삭제도 credential 절차에 따릅니다.
-Kubernetes Secret에도 접근·암호화 통제가 필요합니다. 다른 release/controller가
-소유한 자원 위에 이 설치를 그대로 실행하지 않습니다.
+`ap-northeast-2`에 `observability/datadog` secret을 준비하고 JSON string key `api-key`,
+`cluster-token`을 저장합니다. Token은 32자 이상의 암호학적 난수이며 API key는 선택한
+Datadog site와 일치해야 합니다. `datadog` namespace의 `datadog`,
+`datadog-cluster-agent` ServiceAccount에는 해당 secret으로 제한한 IRSA role,
+regional STS/Secrets Manager 연결과 필요한 KMS 권한이 있어야 합니다. 예제 role ARN
+두 개를 교체합니다. EC2 metadata credential fallback은 끕니다.
+[전체 전제조건과 재사용 profile](../../../examples/observability/secret-profiles/README.md)을 확인합니다.
+
+Python 3/PyYAML 6.0.3과 해당 repository의 실행 가능한 pinned-chart postrenderer를
+사용합니다. Chart에 고정된 SecretKeyRef 7개를 **`ENC[...]` 문자열 handle**로 바꾸며,
+node·trace·init·Cluster Agent 소비자를 모두 보존합니다. Native resolver는 값을
+환경 변수가 아닌 메모리 설정에 반영합니다. Init script는 비어 있지 않은 `DD_API_KEY`를
+요구하므로 대체 경로 없이 삭제하면 시작이 실패합니다. `must-use-secret-postrenderer`
+Secret은 의도적으로 만들지 않습니다. Renderer 누락을 우회하려고 생성하지 마세요.
+모든 install/upgrade에 renderer를 유지하고 chart·image·profile 계약 변경을 검토합니다.
+
+다음 명령은 install 단계에서 cluster를 변경하며 감사에서 배포를 실행한 것은 아닙니다.
+IAM/secret 전제조건, 기존 `datadog` namespace와 release 소유권을 확인한 뒤 repository
+root에서 실행합니다.
 
 ```bash
+PROFILE=examples/observability/secret-profiles
 helm repo add datadog https://helm.datadoghq.com
 helm repo update datadog
-kubectl create namespace datadog --dry-run=client -o yaml | kubectl apply -f -
-
-# The protected file contains only the API key; obtain it through your approved secret process.
-# Do not put the key in command-line literals, Git or terminal output.
-: "${DATADOG_API_KEY_FILE:?Set the path to the protected API-key file}"
-kubectl create secret generic datadog-secret --namespace datadog \
-  --from-file="api-key=$DATADOG_API_KEY_FILE" --dry-run=client -o yaml | kubectl apply -f -
-
 helm template datadog datadog/datadog --version 3.244.0 \
-  --namespace datadog --include-crds --values datadog-values.yaml > datadog-rendered.yaml
-
-# This changes the cluster. Review the rendered resources and installation ownership first.
+  --namespace datadog --include-crds -f "$PROFILE/datadog-values.yaml" \
+  --post-renderer "$PROFILE/datadog_postrender.py" > datadog-reviewed-render.yaml
+# Review resources and ownership first; retain the renderer on EVERY upgrade.
 helm upgrade --install datadog datadog/datadog --version 3.244.0 \
-  --namespace datadog --values datadog-values.yaml
+  --namespace datadog -f "$PROFILE/datadog-values.yaml" \
+  --post-renderer "$PROFILE/datadog_postrender.py"
 ```
 
 ### 검토한 values
 
-다음을 `datadog-values.yaml`로 저장합니다. Log는 container 설정으로 선택하고
+다음은 재사용 `datadog-values.yaml`과 같은 설정입니다. Log는 container 설정으로 선택하고
 APM/DogStatsD는 UDS를 사용합니다. Cluster 전체 자동 library 주입, external HPA
 metric, discovery network statistics, 선택적 process/network 수집은 여기서 켜지 않습니다.
 Application은 Agent와 다른 namespace에 둡니다. SSI는 Agent 자체 namespace의
 Pod를 계측하지 않습니다.
 
 ```yaml
+# datadog 3.244.0: postrenderer required; replace example IRSA role ARNs.
 targetSystem: linux
 registry: gcr.io/datadoghq
 datadog:
-  apiKeyExistingSecret: datadog-secret
+  apiKeyExistingSecret: must-use-secret-postrenderer
   clusterName: my-eks-cluster
   site: datadoghq.com
   tags:
@@ -147,6 +156,19 @@ datadog:
     collectConfigMaps: false
   operator:
     enabled: false
+  secretBackend:
+    type: aws.secrets
+    config:
+      aws_session:
+        aws_region: ap-northeast-2
+    enableGlobalPermissions: false
+  env: &id001
+  - name: AWS_EC2_METADATA_DISABLED
+    value: 'true'
+  - name: DD_SECRET_REFRESH_INTERVAL
+    value: '0'
+  - name: DD_SECRET_REFRESH_ON_API_KEY_FAILURE_INTERVAL
+    value: '0'
 clusterAgent:
   enabled: true
   replicas: 2
@@ -159,11 +181,35 @@ clusterAgent:
   admissionController:
     enabled: true
     mutateUnlabelled: false
+  tokenExistingSecret: must-use-secret-postrenderer
+  rbac:
+    create: true
+    serviceAccountAnnotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/datadog-cluster-agent-secrets
+  env: *id001
 agents:
   image:
     tag: 7.83.1
     digest: sha256:ed0bd588e955d82f661d1b8dd1cdf179c1023e74a2817e7a812c99d52f05c319
+  rbac:
+    create: true
+    serviceAccountAnnotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/datadog-agent-secrets
 ```
+
+Postrenderer 출력의 credential 관련 환경 변수 값은
+`ENC[observability/datadog;api-key]`, `ENC[observability/datadog;cluster-token]`
+handle뿐입니다. `DD_SECRET_BACKEND_TYPE`/`CONFIG`에는 backend 종류와 region만 들어갑니다.
+Shell이 실제 값을 export하지 않으며 Helm values나 Kubernetes credential Secret에 실제
+key를 넣지 않습니다. 두 init-volume container는 image 설정만 복사하고, init-config는
+API-key handle로 bootstrap 검사를 통과합니다. 실제 native backend 권한과 Datadog 수집은
+runtime에서 별도로 확인해야 합니다.
+
+예약/API 실패 시 secret refresh는 명시적으로 끕니다. 승인된 절차로 node/trace·Cluster
+Agent Pod를 함께 재시작해 rotation하고 전체 fleet 전환 전에는 기존 API key를 유지합니다.
+Cluster token 변경 중 구·신 Pod가 공존하면 인증이 끊길 수 있으므로 maintenance window나
+별도로 검증한 전환 절차를 준비합니다. 무중단 rotation을 보장하지 않습니다.
+[Datadog secret backend 문서](https://docs.datadoghq.com/agent/guide/secrets-management/)를 참고합니다.
 
 `processAgent.enabled`는 deprecated이며 개별 collection 옵션을 사용합니다.
 필요한 경우 chart가 이미 `/etc/passwd`를 mount하므로 수동 `passwd` volume/mount를

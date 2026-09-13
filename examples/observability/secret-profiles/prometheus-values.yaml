@@ -1,0 +1,104 @@
+# kube-prometheus-stack 90.0.0; replace the example IRSA role ARN before use.
+fullnameOverride: metrics-demo
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubelet:
+  serviceMonitor:
+    tlsConfig:
+      insecureSkipVerify: false
+prometheus:
+  serviceAccount:
+    create: true
+    name: metrics-demo-prometheus
+  prometheusSpec:
+    replicas: 1
+    shards: 1
+    retention: 15d
+    retentionSize: 15GB
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 20Gi
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        memory: 4Gi
+    externalLabels:
+      cluster: eks-metrics-demo
+    serviceMonitorSelectorNilUsesHelmValues: true
+    serviceMonitorNamespaceSelector: &id001
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: In
+        values:
+        - monitoring
+        - example-app
+    podMonitorSelectorNilUsesHelmValues: true
+    podMonitorNamespaceSelector: *id001
+    ruleSelectorNilUsesHelmValues: true
+    ruleNamespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: monitoring
+alertmanager:
+  alertmanagerSpec:
+    replicas: 1
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi
+grafana:
+  fullnameOverride: metrics-demo-grafana
+  replicas: 1
+  persistence:
+    enabled: true
+    size: 10Gi
+  sidecar:
+    dashboards:
+      searchNamespace: monitoring
+      skipReload: true
+      initDashboards: true
+      provider:
+        updateIntervalSeconds: 30
+    datasources:
+      searchNamespace: monitoring
+      skipReload: true
+      initDatasources: true
+  serviceAccount:
+    create: true
+    name: metrics-demo-grafana
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/metrics-grafana-secrets
+  env:
+    GF_SECURITY_ADMIN_USER: admin
+    GF_SECURITY_ADMIN_PASSWORD: $__file{/mnt/grafana-secrets/admin-password}
+  grafana.ini:
+    security:
+      admin_user: admin
+      admin_password: $__file{/mnt/grafana-secrets/admin-password}
+  extraVolumes:
+  - name: grafana-secrets
+    csi:
+      driver: secrets-store.csi.k8s.io
+      readOnly: true
+      volumeAttributes:
+        secretProviderClass: metrics-grafana-admin
+  extraVolumeMounts:
+  - name: grafana-secrets
+    mountPath: /mnt/grafana-secrets
+    readOnly: true

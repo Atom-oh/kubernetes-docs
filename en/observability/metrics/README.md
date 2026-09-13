@@ -1,6 +1,6 @@
 # Metrics Overview
 
-> Reviewed: September 12, 2026. Examples were checked locally with Prometheus 3.14.0 tooling; no cluster or cloud deployment was performed.
+> Reviewed: September 13, 2026. Examples were checked locally with Prometheus 3.14.0 tooling; no cluster or cloud deployment was performed.
 
 ## Table of Contents
 
@@ -153,6 +153,8 @@ The first expression returns each matching instance's reported p99. Averaging or
 | Can a different percentile/window be queried later? | From retained bucket samples | Not from only the precomputed quantile |
 
 For zero traffic the mean can be `NaN`; absent series can produce an empty result. Neither should silently become evidence of healthy traffic.
+
+<a id="metric-collection-models"></a>
 
 ## Pull vs Push Model
 

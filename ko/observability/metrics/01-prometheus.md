@@ -1,6 +1,6 @@
 # Prometheus
 
-> 검토: 2026년 9월 12일. 아래에 로컬 설정·쿼리 검증 범위를 명시합니다. 클러스터·클라우드 배포는 수행하지 않았습니다.
+> 검토: 2026년 9월 13일. 아래에 로컬 설정·쿼리 검증 범위를 명시합니다. 클러스터·클라우드 배포는 수행하지 않았습니다.
 
 ## 목차
 
@@ -287,7 +287,7 @@ spec:
 
 ### 다른 discovery 경로
 
-- Standalone·agent Pod discovery는 [개요의 named-port 설정](README.md#pull-vs-push-모델)처럼 제공된 IPv4/IPv6 주소를 유지합니다. `prometheus.io/scheme` 같은 annotation도 실제 설정에서 읽어야 효과가 있습니다.
+- Standalone·agent Pod discovery는 [개요의 named-port 설정](README.md#metric-collection-models)처럼 제공된 IPv4/IPv6 주소를 유지합니다. `prometheus.io/scheme` 같은 annotation도 실제 설정에서 읽어야 효과가 있습니다.
 - Service blackbox probe에는 설치된 exporter·정의된 module·올바른 대상 URL/scheme·Probe/scrape 설정이 필요합니다. `up`은 exporter scrape 상태이고 probe 성공은 별도 신호입니다.
 - Node discovery는 kubelet endpoint에 접근하며 node-exporter가 자동 연결되는 것은 아닙니다. Serving certificate·맞는 CA·node metric RBAC를 검증합니다. Kubernetes API CA가 임의 노드의 인증서까지 신뢰한다는 뜻은 아닙니다.
 - 무제한 Node `labelmap`보다 검토한 namespace·service·team 레이블을 사용합니다. 식별 레이블 삭제는 집계 연산이 아닙니다.
@@ -300,13 +300,14 @@ spec:
 
 - Helm·Kubernetes 접근 권한과 충분한 Linux EC2 node 자원
 - 정상적인 기본 block-storage StorageClass/CSI driver 또는 각 PVC에 명시할 검토된 class 이름. `gp3`가 항상 존재하지는 않음
-- 기존 `monitoring` namespace와 승인된 secret 관리 절차로 제공한 `metrics-grafana-admin` Secret의 `admin-user`·`admin-password` key
+- 기존 `monitoring` namespace와 Linux EC2 node의 Secrets Store CSI driver·AWS provider(ASCP)가 필요합니다. `ap-northeast-2`의 AWS Secrets Manager에 `observability/grafana-admin`을 준비하고 JSON string key `admin-password`를 저장합니다. Kubernetes Secret 동기화는 사용하지 않습니다.
+- `metrics-demo-grafana` ServiceAccount의 IRSA role을 해당 secret으로 제한합니다. 예제 IAM role ARN을 실제 role로 바꾸고 SecretProviderClass를 적용합니다. [전체 identity·KMS·mount·rotation 전제조건](../../../examples/observability/secret-profiles/README.md)을 확인합니다.
 - 검증한 kubelet TLS 신뢰 경로. Profile은 인증서 검증을 켜므로 다른 issuer를 쓰면 검증을 끄는 대신 올바른 CA를 제공
 
 자원 크기는 예시입니다. Prometheus 복제본마다 PVC가 생기고 retention size는 WAL·head·compaction 사용량을 제한하지 않습니다. Grafana는 PVC의 database를 쓰는 한 복제본입니다. 복제본 수만 늘리는 것은 공유 database 기반 HA가 아닙니다.
 
 ```yaml
-# values.yaml
+# kube-prometheus-stack 90.0.0; replace the example IRSA role ARN before use.
 fullnameOverride: metrics-demo
 kubeControllerManager:
   enabled: false
@@ -373,32 +374,67 @@ alertmanager:
 grafana:
   fullnameOverride: metrics-demo-grafana
   replicas: 1
-  admin:
-    existingSecret: metrics-grafana-admin
-    userKey: admin-user
-    passwordKey: admin-password
   persistence:
     enabled: true
     size: 10Gi
   sidecar:
     dashboards:
       searchNamespace: monitoring
+      skipReload: true
+      initDashboards: true
+      provider:
+        updateIntervalSeconds: 30
     datasources:
       searchNamespace: monitoring
+      skipReload: true
+      initDatasources: true
+  serviceAccount:
+    create: true
+    name: metrics-demo-grafana
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/metrics-grafana-secrets
+  env:
+    GF_SECURITY_ADMIN_USER: admin
+    GF_SECURITY_ADMIN_PASSWORD: $__file{/mnt/grafana-secrets/admin-password}
+  grafana.ini:
+    security:
+      admin_user: admin
+      admin_password: $__file{/mnt/grafana-secrets/admin-password}
+  extraVolumes:
+  - name: grafana-secrets
+    csi:
+      driver: secrets-store.csi.k8s.io
+      readOnly: true
+      volumeAttributes:
+        secretProviderClass: metrics-grafana-admin
+  extraVolumeMounts:
+  - name: grafana-secrets
+    mountPath: /mnt/grafana-secrets
+    readOnly: true
 ```
 
 이 EKS profile은 노출을 가정하지 않는 관리형 control-plane 컴포넌트와 kube-proxy endpoint monitor를 끕니다. Kubernetes 자체를 끄지는 않습니다. `monitoring`·`example-app`의 ServiceMonitor는 release 레이블도 일치해야 하고 rule은 `monitoring`에서 선택합니다.
 
-`grafana.admin.existingSecret`은 admin 암호를 Helm values에 넣지 않게 합니다. **차트는 해당 Secret을 컨테이너의 SecretKeyRef 환경 변수로 주입하므로** 환경 변수 비밀값이 전혀 없는 배포는 아닙니다. Secret·Pod 디버깅 접근을 통제하고 필요하면 별도로 검토한 file/SSO 인증 profile을 제공합니다.
+`GF_SECURITY_ADMIN_PASSWORD`에는 암호 값 대신 **file-provider 표현식 자체**를 넣어 chart의 자동 Secret 환경 변수 주입을 막습니다. Grafana 13.2.1은 환경 변수 override 후 설정 안에서 `$__file{...}`을 평가하며, `__FILE` entrypoint나 shell이 파일 내용을 환경 변수로 export하지 않습니다. CSI 파일은 read-only이고 UID/GID 472가 읽을 수 있어야 합니다(`fsGroup: 472`, mode `0440`). Main Grafana 컨테이너만 암호 volume을 mount합니다. File provider가 양끝 공백을 제거하므로 암호에 앞뒤 공백을 넣지 않습니다.
+
+Dashboard/datasource init container가 시작 전에 provisioning 파일을 채웁니다. Sidecar는 파일을 계속 감시하지만 `skipReload: true`로 admin credential을 사용하지 않습니다. Grafana는 dashboard 파일을 30초마다 확인하며 **datasource 변경에는 통제된 Pod 재시작이 필요합니다**. `admin_password`는 새 DB를 초기화할 때만 적용됩니다. AWS secret 변경·CSI rotation·재시작으로 기존 PVC/DB의 admin 암호가 바뀌지는 않습니다. 승인된 암호 변경/SSO 절차와 secret 값을 함께 관리하며 PVC는 보존합니다.
+
+`grafana-secret-provider.yaml`을 포함한 [재사용 profile](../../../examples/observability/secret-profiles/README.md)을 사용합니다. 로컬 render/test는 설정·mount 계약을 확인하며 실제 CSI 권한·로그인·rotation 검증은 아닙니다. Primary 문서: [Grafana 설정](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)과 [AWS ASCP](https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/README.md).
 
 검토한 values로 한 번 설치합니다.
 
 ```sh
+PROFILE=examples/observability/secret-profiles
+kubectl apply -f "$PROFILE/grafana-secret-provider.yaml"
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
+helm template kube-prom prometheus-community/kube-prometheus-stack \
+  --version 90.0.0 --namespace monitoring -f "$PROFILE/prometheus-values.yaml" \
+  > grafana-reviewed-render.yaml
+# Review resources, prerequisites and ownership before this cluster-changing command.
 helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
-  --version 90.0.0 --namespace monitoring --create-namespace \
-  -f values.yaml --wait --timeout 15m
+  --version 90.0.0 --namespace monitoring -f "$PROFILE/prometheus-values.yaml" \
+  --wait --timeout 15m
 ```
 
 CRD Established·Operator 상태·PVC 바인딩·실제 target을 확인합니다. 선택한 애플리케이션 monitor·rule은 CRD가 준비된 후 적용합니다.

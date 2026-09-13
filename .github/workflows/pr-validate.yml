@@ -13,6 +13,7 @@ on:
       - 'package-lock.json'
       - 'examples/ai-ml/qwen-pii-finetuning/**'
       - 'examples/eks/spot-production/**'
+      - 'examples/observability/secret-profiles/**'
       - 'examples/platform/**'
       - '.vitepress/**'
       - '.github/workflows/pr-validate.yml'
@@ -22,6 +23,38 @@ permissions:
   contents: read
 
 jobs:
+  observability-secret-profiles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      AWS_EC2_METADATA_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.21.3
+      - run: python -m pip install PyYAML==6.0.3
+      - name: Prepare isolated chart paths
+        run: |
+          printf 'PROMETHEUS_CHART=%s/kube-prometheus-stack-90.0.0.tgz\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          printf 'DATADOG_CHART=%s/datadog-3.244.0.tgz\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          printf 'HELM_CACHE_HOME=%s/helm-cache\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          printf 'HELM_CONFIG_HOME=%s/helm-config\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          printf 'HELM_DATA_HOME=%s/helm-data\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Fetch pinned public charts
+        run: |
+          curl --fail --location --retry 3 --output "$PROMETHEUS_CHART" \
+            https://github.com/prometheus-community/helm-charts/releases/download/kube-prometheus-stack-90.0.0/kube-prometheus-stack-90.0.0.tgz
+          curl --fail --location --retry 3 --output "$DATADOG_CHART" \
+            https://github.com/DataDog/helm-charts/releases/download/datadog-3.244.0/datadog-3.244.0.tgz
+      - name: Validate offline secret-delivery contracts
+        # Tests verify both archive SHA-256 values before Helm reads the charts.
+        run: python -B -m unittest discover -s examples/observability/secret-profiles -p 'test_*.py' -v
+
   replica-policy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
