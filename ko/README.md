@@ -1,4 +1,4 @@
-> [English Version](https://atomoh.gitbook.io/kubernetes-docs-en/)
+> [English Version](https://www.atomai.click/kubernetes-docs/en/)
 
 # Cloud Native Operations 교육 컨텐츠
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
@@ -12,7 +12,7 @@
 - [학습 자료 목차](#목차) - 주제별 학습 자료
 - [퀴즈 모음](./quizzes/README.md) - 주제별 퀴즈
 - [가이드북 로드맵](./roadmap.md) - 전체 학습 지도와 추천 학습 경로 | [퀴즈](./quizzes/roadmap-quiz.md)
-- [LLM과 함께 읽기](./llm-guide.md) - llms.txt로 AI에게 이 가이드북 전체를 읽히는 방법 | [퀴즈](./quizzes/llm-guide-quiz.md)
+- [LLM과 함께 읽기](./llm-guide.md) - llms.txt·문서 manifest·MCP로 필요한 자료를 검색하고 읽는 방법 | [퀴즈](./quizzes/llm-guide-quiz.md)
 
 ## 목차
 
@@ -207,7 +207,6 @@
 5. [vLLM 배포 및 최적화](./ai-ml/02-vllm-deployment.md) | [퀴즈](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [Agentic AI 플랫폼](./ai-ml/03-agentic-ai-platform.md) | [퀴즈](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML 모범 사례](./ai-ml/07-ai-ml-best-practices.md) | [퀴즈](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
-8. [LLM 게이트웨이(Inference Gateway) 딥다이브](./ai-ml/08-llm-gateway.md) | [퀴즈](./quizzes/ai-ml/08-llm-gateway-quiz.md)
 8. **Ray on EKS 딥다이브**
    - [Ray on EKS 소개](./ai-ml/ray/README.md)
    - [Part 1: Ray Architecture](./ai-ml/ray/01-architecture.md) | [퀴즈](./quizzes/ai-ml/ray/01-architecture-quiz.md)
@@ -234,6 +233,7 @@
    - [Part 3: SageMaker AI와 MLflow 실행](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
    - [Part 4: Unified Studio 거버넌스](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [퀴즈](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
    - [Part 5: 실제 검증 결과](./ai-ml/sagemaker-ai/04-validation-results.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
+12. [LLM 게이트웨이(Inference Gateway) 딥다이브](./ai-ml/08-llm-gateway.md) | [퀴즈](./quizzes/ai-ml/08-llm-gateway-quiz.md)
 
 ### Security & Policy
 1. [Kyverno를 사용한 정책 관리](./security/01-kyverno-policy-management.md) | [퀴즈](./quizzes/security/01-kyverno-policy-management-quiz.md)
@@ -342,6 +342,7 @@
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [Zonal 클러스터 운영 전략](./ops/15-zonal-operations-guide.md) | [퀴즈](./quizzes/ops/15-zonal-operations-guide-quiz.md)
 16. [트러블슈팅 플레이북](./ops/16-troubleshooting-playbook.md) | [퀴즈](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
+17. [EKS Spot 운영 적용 실험과 결과 판정](./ops/17-spot-production-experiments.md) | [퀴즈](./quizzes/ops/17-spot-production-experiments-quiz.md)
 
 ## 실습 가이드
 

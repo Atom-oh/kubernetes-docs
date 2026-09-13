@@ -381,6 +381,7 @@
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
   * [Zonal Cluster Operations](ops/15-zonal-operations-guide.md)
   * [Troubleshooting Playbook](ops/16-troubleshooting-playbook.md)
+  * [EKS Spot Production Experiments and Result Assessment](ops/17-spot-production-experiments.md)
 
 ## Lab Guides
 
@@ -687,3 +688,4 @@
   * [Tekton Pipelines Quiz](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [Zonal Cluster Operations Quiz](quizzes/ops/15-zonal-operations-guide-quiz.md)
   * [Troubleshooting Playbook Quiz](quizzes/ops/16-troubleshooting-playbook-quiz.md)
+  * [EKS Spot Production Experiments Quiz](quizzes/ops/17-spot-production-experiments-quiz.md)

@@ -1,70 +1,70 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="780" viewBox="0 0 1240 780" font-family="'Segoe UI', Helvetica, Arial, 'Noto Sans', sans-serif" font-size="14">
-<title>LLM gateway auto-routing decision stack</title>
-<defs>
-<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker>
-<marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/></marker>
-<marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#15803d"/></marker>
-<marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/></marker>
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="780" viewBox="0 0 1240 780" font-family="'Segoe UI', Helvetica, Arial, 'Noto Sans', sans-serif" font-size="14" role="img" aria-labelledby="diagram-title diagram-description">
+<title id="diagram-title">Proposed design: LLM gateway auto-routing decision stack</title>
+<desc id="diagram-description">Proposed composite gateway design, not a product feature guarantee. The accompanying Korean and English chapters explain policy, compatibility and failure limits.</desc><defs>
+<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151" /></marker>
+<marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b91c1c" /></marker>
+<marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#15803d" /></marker>
+<marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8" /></marker>
 </defs>
-<rect width="1240" height="780" fill="#ffffff"/>
+<rect width="1240" height="780" fill="#ffffff" />
 <text x="620" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#111827">Auto routing — the decision stack a request passes through</text>
-<rect x="30" y="70" width="250" height="90" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.6"/>
+<rect x="30" y="70" width="250" height="90" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.6" />
 <text x="155.0" y="92" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Incoming request</text>
-<text x="155.0" y="112" text-anchor="middle" font-size="12.5" fill="#374151">model: &quot;claude-sonnet&quot;</text>
+<text x="155.0" y="112" text-anchor="middle" font-size="12.5" fill="#374151">model: "claude-sonnet"</text>
 <text x="155.0" y="129" text-anchor="middle" font-size="12.5" fill="#374151">team: payments · user: alice</text>
 <text x="155.0" y="146" text-anchor="middle" font-size="12.5" fill="#374151">~38k input tokens · tools: 12</text>
-<rect x="30" y="190" width="250" height="62" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+<rect x="30" y="190" width="250" height="62" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
 <text x="155.0" y="212" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Name resolution</text>
 <text x="155.0" y="232" text-anchor="middle" font-size="12.5" fill="#374151">L1</text>
-<text x="300" y="216" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">alias → canonical id; unrouted model → same-family fallback (model_fallbacks)</text>
+<text x="300" y="216" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">alias → canonical id; unknown model → only an explicitly approved fallback</text>
 <text x="300" y="237" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. claude-sonnet ⇒ claude-sonnet-4-5</text>
-<line x1="155" y1="253" x2="155" y2="266" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
-<rect x="30" y="268" width="250" height="62" rx="10" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.6"/>
+<line x1="155" y1="253" x2="155" y2="266" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<rect x="30" y="268" width="250" height="62" rx="10" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.6" />
 <text x="155.0" y="290" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Policy (RBAC)</text>
 <text x="155.0" y="310" text-anchor="middle" font-size="12.5" fill="#374151">L2</text>
 <text x="300" y="294" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">team / user allow-list · region lock · most-restrictive-wins</text>
 <text x="300" y="315" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. payments may use {sonnet, haiku, glm}; region ∈ {ap-northeast-2}</text>
-<line x1="155" y1="331" x2="155" y2="344" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
-<rect x="30" y="346" width="250" height="62" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="1.6"/>
+<line x1="155" y1="331" x2="155" y2="344" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<rect x="30" y="346" width="250" height="62" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="1.6" />
 <text x="155.0" y="368" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Cost tier</text>
 <text x="155.0" y="388" text-anchor="middle" font-size="12.5" fill="#374151">L3</text>
-<text x="300" y="372" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">budget utilization ≥ threshold ⇒ substitute cheaper model; narrows only, never denies</text>
-<text x="300" y="393" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. team at 85 % of monthly budget ⇒ sonnet → glm-4.6 (tier &#x27;yellow&#x27;)</text>
-<line x1="155" y1="409" x2="155" y2="422" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
-<rect x="30" y="424" width="250" height="62" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="300" y="372" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">budget tier → reauthorize cheaper target; deny if no compliant route remains</text>
+<text x="300" y="393" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. team at 85 % of monthly budget ⇒ sonnet → glm-4.6 (tier 'yellow')</text>
+<line x1="155" y1="409" x2="155" y2="422" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<rect x="30" y="424" width="250" height="62" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
 <text x="155.0" y="446" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Intent / complexity</text>
 <text x="155.0" y="466" text-anchor="middle" font-size="12.5" fill="#374151">L4</text>
 <text x="300" y="450" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">classifier or small router model picks a capability tier; opt-in, adds latency</text>
-<text x="300" y="471" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. &#x27;rename variable&#x27; ⇒ small model · &#x27;design a schema&#x27; ⇒ frontier model</text>
-<line x1="155" y1="487" x2="155" y2="500" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
-<rect x="30" y="502" width="250" height="62" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="300" y="471" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. 'rename variable' ⇒ small model · 'design a schema' ⇒ frontier model</text>
+<line x1="155" y1="487" x2="155" y2="500" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<rect x="30" y="502" width="250" height="62" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
 <text x="155.0" y="524" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Context fit</text>
 <text x="155.0" y="544" text-anchor="middle" font-size="12.5" fill="#374151">L5</text>
-<text x="300" y="528" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">input tokens vs context_window; long prompt ⇒ long-context target; else fast-fail 400</text>
-<text x="300" y="549" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. 38k tokens fits 200k window ✔</text>
-<line x1="155" y1="565" x2="155" y2="578" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
-<rect x="30" y="580" width="250" height="62" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6"/>
+<text x="300" y="528" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">final input + output/reasoning allowance vs target limits; recheck after transforms</text>
+<text x="300" y="549" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. include tool/reasoning/output allowances</text>
+<line x1="155" y1="565" x2="155" y2="578" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<rect x="30" y="580" width="250" height="62" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6" />
 <text x="155.0" y="602" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Availability</text>
 <text x="155.0" y="622" text-anchor="middle" font-size="12.5" fill="#374151">L6</text>
-<text x="300" y="606" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">priority chain per model; circuit breaker per provider; failover PRE-TTFT only</text>
-<text x="300" y="627" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. bedrock(ap-ne-2) open? ⇒ try anthropic direct</text>
-<line x1="155" y1="643" x2="155" y2="656" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
-<rect x="30" y="658" width="250" height="62" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6"/>
+<text x="300" y="606" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">bounded priority chain; no transparent retry after downstream commitment</text>
+<text x="300" y="627" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. unhealthy target ⇒ try another policy-approved destination</text>
+<line x1="155" y1="643" x2="155" y2="656" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<rect x="30" y="658" width="250" height="62" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6" />
 <text x="155.0" y="680" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Endpoint picking</text>
 <text x="155.0" y="700" text-anchor="middle" font-size="12.5" fill="#374151">L7</text>
-<text x="300" y="684" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">self-hosted pools: KV-cache utilization · queue depth · prefix-cache affinity · LoRA</text>
+<text x="300" y="684" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">self-hosted: configured EPP plugins; queue/KV metrics, optional affinity/LoRA</text>
 <text x="300" y="705" text-anchor="start" font-size="12.5" font-weight="normal" fill="#6b7280" font-style="italic">e.g. EPP scores 3 vLLM pods ⇒ pod-2 (prefix hit, queue 1)</text>
-<line x1="155" y1="161" x2="155" y2="188" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
-<rect x="860" y="70" width="350" height="690" rx="14" fill="#fee2e2" fill-opacity="0.45" stroke="#b91c1c" stroke-width="1.4" stroke-dasharray="8 5"/>
+<line x1="155" y1="161" x2="155" y2="188" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<rect x="860" y="70" width="350" height="690" rx="14" fill="#fee2e2" fill-opacity="0.45" stroke="#b91c1c" stroke-width="1.4" stroke-dasharray="8 5" />
 <text x="874" y="92" font-size="15" font-weight="700" fill="#b91c1c">Invariants for safe auto routing</text>
 <text x="880" y="110" text-anchor="start" font-size="13" font-weight="600" fill="#111827">• Re-check RBAC after every substitution.</text>
 <text x="892" y="127" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">A fallback or tier target appended after the</text>
 <text x="892" y="144" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">allow-list ran is unchecked otherwise.</text>
 <text x="880" y="172" text-anchor="start" font-size="13" font-weight="600" fill="#111827">• Substitution narrows, never widens.</text>
 <text x="892" y="189" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">It may pick a cheaper allowed model; it may never</text>
-<text x="892" y="206" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">grant a model the principal lacks, nor turn into</text>
-<text x="892" y="223" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">a deny.</text>
-<text x="880" y="251" text-anchor="start" font-size="13" font-weight="600" fill="#111827">• Failover only before the first token.</text>
+<text x="892" y="206" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">grant a model the principal lacks. With no safe</text>
+<text x="892" y="223" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">route, deny the request.</text>
+<text x="880" y="251" text-anchor="start" font-size="13" font-weight="600" fill="#111827">• No retry after downstream commitment.</text>
 <text x="892" y="268" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">A mid-stream retry duplicates tokens the client</text>
 <text x="892" y="285" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">already saw; the client must retry.</text>
 <text x="880" y="313" text-anchor="start" font-size="13" font-weight="600" fill="#111827">• Make it visible.</text>
@@ -76,9 +76,9 @@
 <text x="892" y="426" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">the prompt cache and can break tool_use id</text>
 <text x="892" y="443" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">formats / thinking blocks.</text>
 <text x="880" y="471" text-anchor="start" font-size="13" font-weight="600" fill="#111827">• Price every route.</text>
-<text x="892" y="488" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">An unpriced target bills 0; boot-time check that</text>
+<text x="892" y="488" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">Refuse unpriced targets; check at boot that</text>
 <text x="892" y="505" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">each (provider, upstream model) has a rate.</text>
 <text x="880" y="533" text-anchor="start" font-size="13" font-weight="600" fill="#111827">• The router must not become the SPOF.</text>
-<text x="892" y="550" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">Classifier down ⇒ fall through to the requested</text>
-<text x="892" y="567" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">model, never 5xx.</text>
+<text x="892" y="550" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">Classifier down ⇒ consider the requested</text>
+<text x="892" y="567" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">model only if all policy checks still pass.</text>
 </svg>

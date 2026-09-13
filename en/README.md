@@ -1,9 +1,9 @@
-> [한국어 버전](https://atomoh.gitbook.io/kubernetes-docs/)
+> [한국어 버전](https://www.atomai.click/kubernetes-docs/ko/)
 
 # Kubernetes and Amazon EKS Training Content
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
-This repository is a comprehensive cloud guidebook covering Linux and container fundamentals, Kubernetes and Amazon EKS, networking, service mesh, storage, databases, data pipelines, AI/ML, and security & operations. Alongside the learning materials it provides benchmark data measured on real AWS environments, plus quizzes and hands-on labs for every topic.
+This repository is a comprehensive cloud guidebook covering Linux and container fundamentals, Kubernetes and Amazon EKS, networking, service mesh, storage, databases, data pipelines, AI/ML, and security & operations. Alongside the learning materials it provides benchmark data measured on real AWS environments, plus topic quizzes and selected hands-on labs.
 
 ## Learning Materials and Quizzes
 
@@ -12,7 +12,7 @@ This training content provides quizzes for each topic along with the learning ma
 - [Learning Materials Table of Contents](#table-of-contents) - Learning materials by topic
 - [Quiz Collection](./quizzes/README.md) - Quizzes by topic
 - [Guidebook Roadmap](./roadmap.md) - The full learning map and recommended learning paths | [Quiz](./quizzes/roadmap-quiz.md)
-- [Reading with LLMs](./llm-guide.md) - How to feed this entire guidebook to an AI via llms.txt | [Quiz](./quizzes/llm-guide-quiz.md)
+- [Reading with LLMs](./llm-guide.md) - Find and read source material through llms.txt, the manifest and MCP | [Quiz](./quizzes/llm-guide-quiz.md)
 
 ## Table of Contents
 
@@ -207,7 +207,6 @@ This training content provides quizzes for each topic along with the learning ma
 5. [vLLM Deployment & Optimization](./ai-ml/02-vllm-deployment.md) | [Quiz](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [Agentic AI Platform on EKS](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML Best Practices](./ai-ml/07-ai-ml-best-practices.md) | [Quiz](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
-8. [LLM Gateway (Inference Gateway) Deep Dive](./ai-ml/08-llm-gateway.md) | [Quiz](./quizzes/ai-ml/08-llm-gateway-quiz.md)
 8. **Ray on EKS Deep Dive**
    - [Ray on EKS Introduction](./ai-ml/ray/README.md)
    - [Part 1: Ray Architecture](./ai-ml/ray/01-architecture.md) | [Quiz](./quizzes/ai-ml/ray/01-architecture-quiz.md)
@@ -234,6 +233,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 3: SageMaker AI and MLflow Execution](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
    - [Part 4: Unified Studio Governance](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [Quiz](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
    - [Part 5: Factual Validation Results](./ai-ml/sagemaker-ai/04-validation-results.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
+12. [LLM Gateway (Inference Gateway) Deep Dive](./ai-ml/08-llm-gateway.md) | [Quiz](./quizzes/ai-ml/08-llm-gateway-quiz.md)
 
 ### Security & Policy
 1. [Policy Management with Kyverno](./security/01-kyverno-policy-management.md) | [Quiz](./quizzes/security/01-kyverno-policy-management-quiz.md)
@@ -305,7 +305,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [CloudWatch Metrics](./observability/metrics/04-cloudwatch-metrics.md) | [Quiz](./quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
    - [Datadog](./observability/metrics/05-datadog.md) | [Quiz](./quizzes/observability/metrics/05-datadog-quiz.md)
 3. **Logging**
-   - [Logging Overview](./observability/logging/README.md)
+   - [Logging Overview](./observability/logging/README.md) | [Quiz](./quizzes/observability/logging/README-quiz.md)
    - [Grafana Loki](./observability/logging/01-loki.md) | [Quiz](./quizzes/observability/logging/01-loki-quiz.md)
    - [OpenSearch](./observability/logging/02-opensearch.md) | [Quiz](./quizzes/observability/logging/02-opensearch-quiz.md)
    - [CloudWatch Logs](./observability/logging/03-cloudwatch-logs.md) | [Quiz](./quizzes/observability/logging/03-cloudwatch-logs-quiz.md)
@@ -342,6 +342,7 @@ This training content provides quizzes for each topic along with the learning ma
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [Quiz](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [Zonal Cluster Operations](./ops/15-zonal-operations-guide.md) | [Quiz](./quizzes/ops/15-zonal-operations-guide-quiz.md)
 16. [Troubleshooting Playbook](./ops/16-troubleshooting-playbook.md) | [Quiz](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
+17. [EKS Spot Production Experiments and Result Assessment](./ops/17-spot-production-experiments.md) | [Quiz](./quizzes/ops/17-spot-production-experiments-quiz.md)
 
 ## Lab Guides
 

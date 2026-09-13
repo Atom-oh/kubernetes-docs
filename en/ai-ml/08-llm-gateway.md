@@ -1,41 +1,41 @@
 # LLM Gateway (Inference Gateway) Deep Dive — Auto Routing, PII Guard, Prompt Integrity, Context Awareness
 
-> **Supported Versions**: Kubernetes 1.30+, Gateway API 1.2+, Gateway API Inference Extension v1.0+, vLLM 0.8+
-> **Last Updated**: September 9, 2026
+> **Scope**: Proposed gateway design; the InferencePool example follows `inference.networking.k8s.io/v1`. Pin compatible Kubernetes, Gateway API, controller, EPP and model-server releases before deployment.
+> **Last Updated**: September 13, 2026
 
 Once coding agents (Claude Code, OpenCode, Codex), RAG applications, and autonomous agents in one organization start calling several model providers at once (Anthropic, Amazon Bedrock, self-hosted vLLM), a moment arrives quickly where nobody can answer "who used which model, how much did it cost, and what data left the building on the way." An **LLM gateway** (also called an AI gateway or inference gateway) is the proxy that becomes the **single entry point** for all LLM traffic so that question has an answer.
 
 This chapter does not treat an LLM gateway as "an API gateway with a few model names bolted on." It explains, at the level of how things actually work, how token-based billing, streaming, prompt caches, and the fact that *a prompt is code and data at the same time* reshape gateway design. Four axes get the deepest treatment:
 
 1. **Auto routing** — the seven layers of name resolution, policy, cost, intent, context fit, availability, and endpoint picking
-2. **PII guard** — the detect → decide → transform → restore pipeline, and the cost trade-off where masking destroys the prompt cache
+2. **PII guard** — detect, decide, transform and restore with authorization; measure cache and latency trade-offs
 3. **Security and prompt integrity** — gateway-side system prompt injection (policy prompts) versus defending against prompt injection attacks
 4. **Context awareness** — how request, principal, session, and infrastructure context feed routing and transformation decisions
 
-> Implementation examples draw on the public designs of open-source gateways (for example [inferplane](https://github.com/inferplane/inferplane), LiteLLM, Envoy AI Gateway, and the Kubernetes Gateway API Inference Extension), but the principles are product-agnostic.
+> This is a proposed composite architecture, not a feature specification for inferplane, LiteLLM, Envoy AI Gateway or Gateway API Inference Extension. Policy YAML, headers and configuration names are illustrative unless identified as a published API. Verify each selected release, optional profile and limitation; a reference link does not establish support for this entire design.
 
 ---
 
 ## 1. How It Differs from an API Gateway
 
-A classic API gateway (Kong, Envoy, NGINX) treats the request body as **opaque bytes**. Authentication, routing, and rate limiting are decided from headers and paths alone. None of those assumptions hold for an LLM gateway.
+Traditional API gateways can inspect and transform bodies through filters or plugins. LLM traffic adds model-specific token accounting, prompt semantics and long-lived streams; these are additional responsibilities, not capabilities exclusive to a product named an LLM gateway.
 
 | Property | HTTP API gateway | LLM gateway |
 |----------|------------------|-------------|
-| Unit of cost | requests | **tokens** — input, output, cache read, and cache write each have their own rate |
-| When cost is known | at request time | **after the response ends** — the model decides how many output tokens |
-| Request body | opaque | **must be parsed** — model name, messages, tool definitions, `cache_control` all live in the body |
-| Response shape | one response | **SSE streaming**, lasting minutes, no retry after a mid-stream failure |
-| Meaning of failure | 5xx ⇒ retry | after the first token, **the client has already seen part of the answer** |
-| Byte fidelity | re-serialization is harmless | **a single changed byte breaks the prompt-cache prefix** |
-| Protocols | one (HTTP) | Anthropic Messages, OpenAI Chat Completions, Bedrock Converse — **mutual translation required** |
+| Unit of cost | request or service-specific | tokens plus applicable provider tool/request charges |
+| When cost is known | contract-dependent | final usage after completion; interrupted streams may need reconciliation |
+| Request body | optional parsing/filtering | model-specific messages, tools and cache controls |
+| Response shape | unary or streaming | SSE or provider-specific event streams |
+| Meaning of failure | retry depends on idempotency | no transparent retry after downstream response commitment |
+| Cache fidelity | application-specific | preserve prompt/token prefixes; raw HTTP JSON is not a universal cache key |
+| Protocols | protocol-specific adapters | Messages, Responses, Chat and Bedrock APIs require explicit compatibility checks |
 | Security boundary | body is data | **body is instruction and data** — prompt injection is command injection through the data channel |
 
 Every design consequence in this chapter descends from that table:
 
 - Cost is known late, so **governance must be two-phase** (pre-check, then settle).
-- The body is parsed, yet must be **forwarded verbatim whenever possible** to keep caches alive.
-- Streaming means **failover is only possible before the first token (TTFT)**.
+- Preserve supported prompt content/order/cache controls; raw forwarding is optional when policy permits it.
+- Stop transparent retries before downstream headers, events or tool deltas commit a response, not merely at the first text token.
 - The body carries instructions, so the gateway must know **who is allowed to instruct the model**.
 
 ---
@@ -53,86 +53,86 @@ The moment a gateway becomes the single entry point for all traffic, it is also 
 | Request path | **inside** — every inference request passes through | **outside** — never carries inference traffic |
 | Role | auth, RBAC, rate/quota/budget enforcement, filters, routing, audit | policy distribution, budget ledger and leases, usage collection, console, SSO |
 | State | in-memory counters + local audit WAL | durable store such as Postgres |
-| On failure | keeps serving with the **last policy it received** | only that node's traffic is affected if a data plane dies |
+| On failure | a failed replica affects its assigned traffic; recovery is required | bounded-age policy may remain usable; expired leases or required sync fail closed |
 | Deployment | node-local DaemonSet or sidecar, static binary | a few Deployment replicas |
 
-The split has a price. With N data planes there are N in-memory rate and quota counters, so without further work the **aggregate limit drifts up to N× the configured value**. "No SPOF" and "accurate enforcement" pull against each other, and the control plane's **budget lease** pattern is what stitches them together (section 3.2).
+N local rate/quota counters can admit N times a per-instance limit without coordination. Shared database enforcement may be synchronous; monetary leases can admit locally for a bounded period. State the availability trade-off explicitly. Money leases do not automatically globalize RPM/TPM.
 
 ### 2.2 The Request Pipeline — 13 Stages One Request Passes Through
 
-![Request path from auth, parse, route, RBAC re-check, pre-check, filters, and provider call; response path from stream relay, output guard, settle, cost, audit, and metrics; plus explanations of two-phase governance and the cache invariant.](../../assets/llm-gateway-request-pipeline.svg)
+![Proposed pipeline: authenticate, parse, route, reauthorize, transform, reserve and invoke; inspect output before relay, compute cost, settle and finish audit.](../../assets/llm-gateway-request-pipeline.svg)
 
 The order is not arbitrary. **Where a stage sits determines its security property.**
 
 | # | Stage | Why this position |
 |---|-------|-------------------|
-| 1 | **Auth** | Look up the virtual key (`ik_...`) by SHA-256 hash to build a `Principal` (team, user, allowed models, regions). Every later stage judges against this principal. |
-| 2 | **Parse** | Read model, messages, and tools per protocol, but **keep the raw bytes (RawBody)** for stage 7 to forward untouched. |
+| 1 | **Auth** | Authenticate high-entropy virtual keys or short-lived identity. Derive permissions from trusted policy, not caller headers; hash random keys at rest and rate-limit auth failures. |
+| 2 | **Parse** | Parse bounded input and retain RawBody only as a candidate fast path; final policy transformations determine whether it may be forwarded. |
 | 3 | **Route** | alias → canonical name, unrouted-model fallback, budget-tier substitution, priority chain + circuit breaker. |
 | 4 | **RBAC re-check** | Targets appended in stage 3 by fallback or substitution **never went through the original allow-list check**. Skip this and the fallback path becomes a privilege bypass. |
-| 5 | **PreCheck** | Rate, quota, and budget against estimated tokens. The deny (402/429) is decided **before any counter is charged**. |
-| 6 | **Filters** | PII masking, injection scanning, policy-prompt injection — the only stage that mutates the body. A masker error **fails closed**. |
-| 7 | **Provider call** | Same protocol ⇒ RawBody byte-for-byte; otherwise convert through a canonical schema. The provider credential is attached here and nowhere else. |
-| 8 | **Stream relay** | Frame-by-frame relay, TTFT measured. **No retry after the first token.** |
-| 9 | **Output guard** | As each content block completes: PII, secrets, `tool_use` allow-list. |
-| 10 | **Settle** | Debit quota with the provider's actual usage and true up the PreCheck estimate. |
-| 11 | **Cost** | Integer micro-USD (µUSD), round-half-even. Floating point drifts once millions of records accumulate. |
-| 12 | **Audit** | `request_started` and `request_completed` linked in a hash chain. Writing the start record first means "an attempt happened" survives a gateway crash. |
+| 5 | **Filters** | Apply required privacy and prompt policy; inspect the exact outbound representation. Required filter errors fail closed. External classifiers are approved egress destinations too. |
+| 6 | **PreCheck / reserve** | Recount transformed input plus output/reasoning allowance for the target; atomically reserve quota and money before dispatch. Denials have no inference spend debit, but abuse limits still apply. |
+| 7 | **Provider call** | Persist `request_started` before dispatch; send the inspected body. Preserve raw bytes only if the API and all required transformations permit it. Attach provider credentials here. |
+| 8 | **Output guard** | Inspect buffered text and complete tool arguments before release; bound buffer size/time and fail closed on inspection failure. |
+| 9 | **Stream relay** | Relay approved protocol events; measure upstream and user-visible TTFT separately. Never restart a committed response. |
+| 10 | **Cost** | Use versioned provider/model/region prices, non-overlapping usage fields and fixed-point/decimal arithmetic with explicit rounding. Refuse unpriced routes. |
+| 11 | **Settle** | Idempotently replace reservations with known actual charges; missing final usage retains conservative reservations pending reconciliation. Cancellation does not mean zero cost. |
+| 12 | **Audit completion** | Link completion/cancellation/unknown outcomes to the pre-dispatch start record; preserve a durable reconciliation journal and external integrity anchors. |
 | 13 | **Metrics** | OpenTelemetry GenAI semantic conventions (`gen_ai.*`). Label cardinality is bounded by config; key IDs and user IDs never become labels. |
 
 ### 2.3 The Cache Invariant — the Most Common Gateway Cost Incident
 
-Anthropic's prompt cache and vLLM's prefix cache decide hits by hashing the **exact prefix** of the request body (tools → system → messages). Coding agents resend the entire history every turn, so more than 90 % of their traffic is a cache hit, and a cache read costs 10 % of the base input rate.
+Cache identity is provider-specific. [Anthropic](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) requires identical prompt segments through the cache breakpoint, ordered tools → system → messages. [vLLM](https://docs.vllm.ai/en/latest/design/prefix_caching/) hashes token blocks and context such as adapters/multimodal inputs. Neither is a universal raw HTTP JSON-body hash contract.
 
-If the gateway merely parses and re-serializes the JSON (key reordering, whitespace normalization, number formatting) the prefix changes and **the whole cache misses**. The user changed nothing, yet the bill can jump by up to 10×.
+Changing prompt text, tools, order or models may invalidate reuse. Reformatting the JSON envelope alone need not change that prefix. There is no universal coding-agent hit rate or cost multiplier: model support, scope, minimum length, TTL and current pricing matter. Measure cache-read/write usage and server prefix-cache metrics.
 
-```
-Cache invariant
-  ingress protocol == provider protocol  ⇒  forward RawBody byte-for-byte.
+```text
+Cache preservation goal
+  preserve supported prompt content, order and cache controls after required policy transforms.
 
 Rules that follow from it
-  • Body-mutating filters (PII mask, policy prompt) are enabled only as an explicit opt-in with a cost warning.
-  • An injected policy prompt lives at the same position (the very front) and is the same bytes on every turn.
-  • A fallback that switches provider mid-conversation is a cold cache. Surface it in a header and an audit field.
+  • Required privacy/security filters run even when they reduce cache reuse; measure their cost.
+  • Keep policy prefixes stable inside the intended cache boundary; policy revisions create a new prefix.
+  • Caches do not transfer between providers; stable conversions can still warm the target cache.
 ```
 
 ### 2.4 Many Clients, One Entry Point — When the Protocols Differ
 
-Even inside one organization, developers use different coding agents. Claude Code speaks Anthropic Messages, Codex speaks OpenAI Responses (by default) or Chat Completions, Hermes Agent speaks OpenAI-compatible Chat Completions, and OpenCode speaks either, depending on its provider configuration. For the gateway to be a *single* entry point it must **accept each client's wire protocol as-is**, and everything behind the ingress must run once, independent of protocol.
+Clients need compatible ingress adapters. Claude Code commonly uses Messages; current Codex custom providers use Responses; OpenCode and Hermes vary by provider/release. Test the exact pair: an OpenAI-compatible Chat endpoint does not imply Responses or complete tool/stream compatibility.
 
-![Claude Code, Codex CLI, OpenCode, Hermes Agent, and custom apps enter the gateway through their own wire protocols (Anthropic Messages, OpenAI Responses, OpenAI Chat, Bedrock passthrough), collapse into a canonical request (Anthropic-superset schema), pass once through the protocol-agnostic core (auth, RBAC, routing, pre-check, filters, egress, settle, audit), and leave verbatim or converted toward Anthropic, Bedrock, vLLM, or OpenAI-compatible providers; a matrix shows which ingress × egress pairs forward verbatim, and a panel lists per-client quirks.](../../assets/llm-gateway-multi-client.svg)
+![Clients enter explicit protocol adapters and authenticated policy checks, then use capability-checked provider adapters; preservation and adaptation are distinguished.](../../assets/llm-gateway-multi-client.svg)
 
 **How each client points at the gateway, and what the gateway must absorb**
 
 | Client | Native protocol | Pointing it at the gateway | What the gateway must handle |
 |--------|-----------------|----------------------------|------------------------------|
-| **Claude Code** | Anthropic Messages (`/v1/messages`, `count_tokens`) | `ANTHROPIC_BASE_URL`, virtual key as the auth token | `count_tokens` must never return non-200. The harness system prompt and `cache_control` breakpoints must be preserved byte-for-byte |
-| **Codex CLI** | OpenAI Responses (default) or Chat Completions (`wire_api = "chat"`) | `model_providers.<id>.base_url` in `~/.codex/config.toml` | The Responses event stream is framed differently from Chat SSE; tool calls arrive as function items. Without a Responses ingress, set `wire_api = "chat"` |
+| **Claude Code** | Messages and token counting | `ANTHROPIC_BASE_URL`; supported credential helper for the gateway token | Preserve supported system/cache content, authentication/validation errors and independent count-endpoint limits |
+| **Codex CLI** | OpenAI Responses | `model_providers.<id>.base_url`, `wire_api = "responses"`, supported command-backed authentication | Current [configuration](https://developers.openai.com/codex/config-reference) supports Responses only; a Chat-only gateway needs a tested adapter |
 | **OpenCode** | Anthropic or OpenAI-compatible, chosen per provider entry | provider `baseURL` in `opencode.json` | One process may hit two ingresses at once; the same virtual key must resolve to the same team on both |
 | **Hermes Agent** | OpenAI-compatible Chat Completions | `base_url` + `api_key` in the agent config | Function-calling tools; tool results come back as `role=tool` messages, not `tool_result` blocks |
-| **Your app / AWS SDK** | any of the above, or direct Bedrock SDK calls | SDK base URL or Bedrock endpoint override | The Bedrock passthrough ingress (`/model/{id}/invoke`) lets SDK clients transit the gateway unchanged |
+| **Your app / AWS SDK** | Selected Bedrock runtime API | An explicitly supported AWS-compatible adapter, not merely an endpoint override | Validate ingress authentication, sign upstream calls with workload identity and implement the selected API/event-stream framing |
 
 **How it works — the three-stage ingress / canonical / egress structure**
 
 1. **Protocol ingress**: one per protocol, parses the request and keeps the RawBody.
-2. **Canonical request**: an Anthropic-superset schema. Only fields the pipeline interprets (model, system, messages, tools, `cache_control`, `thinking`) are typed; everything else is preserved verbatim in `Extra`. The schema's invariant is that a same-protocol round trip is lossless.
-3. **Protocol-agnostic core** (auth → RBAC → routing → PreCheck → filters → egress → settle → audit) runs once per request, identically for every client. The client's protocol never changes *who may use what* or *what it costs*.
-4. **Protocol egress** matches the provider. Same protocol as the ingress ⇒ RawBody verbatim (the cache invariant of section 2.3); different ⇒ convert through the canonical schema.
+2. **Canonical request**: type interpreted fields and retain protocol metadata. Check capabilities for tools, reasoning, multimodal content and provider-managed state. Reject unsupported semantics; an `Extra` map does not make arbitrary translation lossless.
+3. **Shared policy core** authenticates, routes, reauthorizes, transforms, reserves and accounts for each request. Protocol-specific capability and pricing rules still apply.
+4. **Protocol egress**: produce and inspect the final outbound payload. Raw forwarding is conditional on the API and policy; otherwise convert supported fields and verify stream errors, tool semantics and usage accounting.
 
 **Ingress × egress matrix — when does the body go out verbatim?**
 
-| Client protocol ↓ / provider → | Anthropic | Bedrock (Claude) | Bedrock (other models) | OpenAI-compatible |
+| Client protocol ↓ / provider → | Anthropic Messages | Bedrock InvokeModel (Claude) | Bedrock Converse | OpenAI-compatible API |
 |---|---|---|---|---|
-| Anthropic Messages (Claude Code, OpenCode) | **verbatim** | **verbatim*** | convert | convert |
-| OpenAI Chat (Codex chat, Hermes, OpenCode) | convert | convert | convert | **verbatim** |
-| OpenAI Responses (Codex default) | convert | convert | convert | convert† |
-| Bedrock passthrough (AWS SDK) | convert | **verbatim** | **verbatim** | convert |
+| Anthropic Messages | preserve if unmodified | **adapt*** | convert supported fields | convert if supported |
+| OpenAI Chat (Hermes, OpenCode) | convert | convert | convert | preserve only for matching Chat API |
+| OpenAI Responses (Codex) | capability-limited adapter | capability-limited adapter | capability-limited adapter | preserve only for matching Responses API |
+| Bedrock SDK API | convert if supported | preserve only for same runtime API | preserve only for Converse | convert if supported |
 
-\* Only the top-level model id is rewritten, cache-safely; the rest is byte-identical. † Verbatim only if the upstream itself speaks the Responses API.
+\* Bedrock Claude InvokeModel requires `anthropic_version: bedrock-2023-05-31`, a URI `modelId`, AWS authentication and event-stream framing. It is not a model-id-only rewrite of Messages. Converse has a different envelope. All preservation cells remain conditional on routing and required transforms.
 
-Every "convert" path is a **cache-cold path**, because the prompt cache lives on the provider side. Even a lossless conversion has a different cost profile, so which client is paired with which provider must be visible in headers and audit fields. The simplest cache optimization is a team policy that **matches client protocol to provider protocol**: "Codex users go to the OpenAI-compatible GPU pool, Claude Code users go to Anthropic/Bedrock."
+Provider/model changes may start without a reusable cache, but stable conversion is not permanently cache-cold. Choose compatible routes using tested features, privacy, task quality and measured cache usage, not protocol names alone.
 
-**One person, several clients.** Virtual keys are issued to users, not to clients. When the same user alternates between Claude Code and Codex, both requests resolve to the same `Principal`, share the same budget, rate limits, and model allow-list, and appear as the same user in the audit chain. The client type is an attribute on the audit record (User-Agent, ingress kind), never a policy subject.
+**One person, several clients.** Separate revocable user/client or workload credentials can map to shared policy. Authenticated client identity may affect authorization; a caller-supplied User-Agent, team or session header is not trusted identity.
 
 ---
 
@@ -140,32 +140,32 @@ Every "convert" path is a **cache-cold path**, because the prompt cache lives on
 
 ### 3.1 PreCheck and Settle
 
-```
+```text
 time →
 client ──request──▶ gateway                                              provider
                      │
-                     │ ① estimate = input tokens (heuristic or count_tokens) + max_tokens
+                     │ ① size transformed input + output/reasoning ceiling; conservative maximum cost
                      │ ② PreCheck: rate (RPM/TPM) · quota (daily tokens) · budget (µUSD)
-                     │    - any rule says block ⇒ 402/429; no counter touched yet
+                     │    - block ⇒ 402/429; no inference spend debit (abuse limits still apply)
                      │    - warn ⇒ pass with a warning header (block wins on tie)
-                     │ ③ provisionally debit the TPM bucket by the estimate
+                     │ ③ atomically reserve quota AND money; persist reservation/request IDs
                      │──────────────────────── request ────────────────────▶
                      │◀─────────────── SSE stream (with usage) ─────────────
-                     │ ④ Settle: actual usage (input, output, cache_read, cache_write_5m, cache_write_1h)
-                     │    - quota debited by the actual total, cache tiers included
-                     │    - TPM corrected by (actual − estimate): over-estimate ⇒ refund, under-estimate ⇒ bucket goes negative
-                     │    - cost = Σ(tokens × rate) as integer µUSD
-                     │ ⑤ budget counter debited ⇒ alert webhook if a threshold is crossed
+                     │ ④ Settle: normalize provider usage without double-counting cached input
+                     │    - unknown final usage ⇒ retain reservation pending reconciliation
+                     │    - known charges ⇒ idempotent settlement and release unused reservation
+                     │    - cost = priced usage + applicable tool/request charges; fixed-point/decimal
+                     │ ⑤ persist settlement ⇒ emit threshold event once
 ◀──── response ──────┘
 ```
 
-**Why debit the estimate up front?** Without it, 100 concurrent requests all observe "budget remaining" and all pass. The provisional debit acts as an optimistic lock, and settlement replaces the lock with the real value. Allowing the bucket to go negative is deliberate: tokens already consumed cannot be un-consumed, so being blocked until the next refill is the honest outcome.
+**Why reserve atomically?** A read-then-debit race lets concurrent calls observe the same balance. Reserve money and quota together before dispatch, using durable request IDs and idempotent settlement. TPM reservations alone do not cap money. A hard cap requires a conservative upper bound for all billable dimensions; heuristic estimates need a stated overshoot tolerance. Interrupted streams may omit final usage, so reconcile rather than refund them as zero.
 
 ### 3.2 Hard Caps Across Distributed Data Planes — Budget Leases
 
 With one data plane per node there is one team-budget counter per node. The control plane's **lease ledger** closes the gap.
 
-```
+```text
 Control-plane ledger (team payments, monthly limit $1,000)
   spent (reported total)   = $612
   outstanding grants       = { node-a: $40, node-b: $40, node-c: $40 }
@@ -173,11 +173,11 @@ Control-plane ledger (team payments, monthly limit $1,000)
 
 Data plane node-a (heartbeat every 10 s)
   lease { allowance: $40, expires: +30s }
-  each request debits lease.allowance by its estimated cost; at 0 or on expiry ⇒ 402 (fail-closed)
-  each heartbeat reports "spent $17 this period" and receives a fresh allowance
+  atomically reserve a conservative bound only if it fits the unexpired allowance; else 402
+  heartbeat reports cumulative spend with durable lease/request IDs; reconcile before granting more
 ```
 
-Accuracy here is **bounded, not exact**. The worst-case overspend is `Σ outstanding grants` ($120 in the example), never `N × limit`. If the control plane dies, lease renewal stops and expired leases refuse requests — this is the one deliberate exception to "no SPOF." Designers must therefore state explicitly, in policy, **which teams get lease-backed hard caps** and **which only get soft limits (warn)**.
+The invariant is **spent + outstanding reserved grants ≤ limit**. The $120 above is reserved capacity, not an overspend allowance. Use disjoint grants, atomic local reservations, conservative prices, durable recovery and idempotent reports. Expiry stops new admissions but does not prove capacity is safe to regrant while work or reports remain unresolved. Any overspend bound must separately include estimation error, outstanding work and failures. Require initial sync and fail closed on expired leases; document soft-limit policies separately.
 
 ### 3.3 Policy Units and Most-Restrictive-Wins
 
@@ -185,7 +185,7 @@ When several rules match one subject, **the most restrictive value wins**. A tea
 
 ```yaml
 # CRD-style GovernancePolicy (conceptual — the real schema differs per gateway)
-apiVersion: governance.inferplane.io/v1alpha1
+apiVersion: governance.example.com/v1alpha1  # illustrative, not an installed CRD
 kind: GovernancePolicy
 metadata:
   name: payments-team
@@ -214,7 +214,7 @@ spec:
 
 ## 4. Auto Routing — a Seven-Layer Decision Stack
 
-![An incoming request passes seven layers in order: name resolution, policy (RBAC), cost tier, intent/complexity, context fit, availability, and endpoint picking; alongside, the invariants: re-check RBAC after substitution, narrow only, failover before the first token, make it visible, keep one cache domain, price every route, and the router must not be the SPOF.](../../assets/llm-gateway-auto-routing.svg)
+![An incoming request passes seven layers in order: name resolution, policy (RBAC), cost tier, intent/complexity, context fit, availability, and endpoint picking; with reauthorization, final context fitting, policy-bounded failover and explicit pricing.](../../assets/llm-gateway-auto-routing.svg)
 
 "Auto routing" is not one feature. It is **several layers answering different questions**. Mixing the layers produces privilege bypasses and unpredictable cost.
 
@@ -222,7 +222,7 @@ spec:
 
 Clients call the same model `claude-sonnet`, `sonnet-latest`, or `anthropic.claude-sonnet-4-5-v1:0`. The first layer **collapses these to one canonical id**, and it must happen **before** RBAC — otherwise one alias missing from an allow-list is a bypass.
 
-**Model-level fallback** is the second face of this layer. When a hard-coded client asks for `claude-sonnet-4-7` that the operator has not registered yet, an explicit `model_fallbacks` mapping or **the highest registered version in the same name family** is substituted. When an upstream rejects a registered model as unknown (a 404 because it is not launched in that region, for instance), the same rule appends the fallback model's targets to the chain.
+Unknown models fail validation unless an explicit policy maps them to an approved target. Do not infer safe substitutions from lexical version ordering or a 404 alone. Recheck capabilities, privacy, region and authorization for every fallback and disclose substitutions to callers.
 
 ### 4.2 L2 — Policy (RBAC · Region Lock)
 
@@ -246,7 +246,7 @@ routing:
 
 Three design principles:
 
-1. **Narrow only, never widen.** The substitution target must itself pass the principal's allow-list. A substitution must never turn into a deny either: if the target is not allowed, skip the substitution and serve the original model.
+1. **Narrow only, never widen.** Reauthorize the target. If disallowed, retain the original only when its budget, privacy and capability checks still pass; otherwise deny.
 2. **Monotone within a window.** If utilization dips from 82 % to 79 % and the tier releases, users meet a different model on every request. A tier latches and resets only when the window (for example the month) rolls over.
 3. **Judge globally, apply locally.** Utilization is computed on the control-plane ledger and pushed down with the heartbeat; the data plane only applies the decision. A control-plane outage keeps the last tier state.
 
@@ -256,16 +256,16 @@ Sending "rename this variable" to a frontier model wastes money; sending "design
 
 | Method | Latency | Cost | Accuracy | Notes |
 |--------|---------|------|----------|-------|
-| rules/heuristics (token count, tool count, keywords) | ~0 | 0 | low | good first stage |
-| embedding similarity against labeled prompt clusters | a few ms | low | medium | the embedding model is itself a hop |
-| small classifier (hundreds of M parameters) | 10–50 ms | low | medium-high | self-host it |
-| LLM-as-router (ask a frontier model) | hundreds of ms | **high** | high | routing cost can eat the savings |
+| rules/heuristics | workload-dependent | local CPU | evaluate labeled tasks | cheap baseline; no accuracy guarantee |
+| embedding similarity | embedding lookup/inference | model-dependent | evaluate per domain | embedding service is another approved egress hop |
+| small classifier | measure deployed p50/p95 | serving cost | evaluate language/task | track drift and fallback |
+| LLM-as-router | additional model call | token/request charges | evaluate outcomes | include routing cost and privacy |
 
 Intent routing needs extra care with agent traffic. **Switching models inside one conversation** (a) cold-starts the prompt cache and (b) may make the new model reject the previous turns' `tool_use` id format or `thinking` blocks. In practice, **decide the tier on the first turn and pin it to the session**.
 
 ### 4.5 L5 — Context Fit
 
-When the estimated input tokens exceed the target's `context_window`, there are two roads: **re-route to a long-context model**, or **fail fast with a 400 that names both numbers** instead of the opaque 400 the provider would return. The fast-fail runs before PreCheck so a doomed request never touches a counter. The exception is the `count_tokens` family of endpoints that clients call to check limits: they must **never return a non-200** — some coding agents crash their session when that call fails.
+Fit **final transformed input plus output/reasoning allowance** within the target model limits, including system/tool/multimodal overhead. Byte ratios are rough estimates. Recheck sizing after transformations before reservation/invocation, even if initial routing selected a larger-context model. Preserve count-endpoint errors and independent rate limits; do not invent successful counts. See [token counting](https://platform.claude.com/docs/en/build-with-claude/token-counting).
 
 ### 4.6 L6 — Availability
 
@@ -281,11 +281,11 @@ circuit_breaker:
   open_duration: 30s           # after 30 s half-open, one probe request
 ```
 
-**Failover happens only before the first token (pre-TTFT).** If a stream fails halfway, the client has already seen half an answer; restarting on a new provider double-bills the tokens and stitches two responses together. The correct behavior is an `error` frame and a closed stream — the retry belongs to the client.
+**Stop transparent failover once the downstream response is committed**, including headers or tool/state events before a text token. Earlier retries still need bounded attempts/deadlines and accounting for possible upstream charges. Afterwards send a protocol-correct error/termination, record incomplete usage and never splice another answer. Anthropic/OpenAI SSE and AWS event streams are distinct transports.
 
 ### 4.7 L7 — Endpoint Picking (Self-Hosted Pools)
 
-In a self-hosted vLLM pool the question is not "which model" but "**which pod**." The Kubernetes **Gateway API Inference Extension** standardizes this.
+The following fragment follows the published [InferencePool v1 schema](https://gateway-api-inference-extension.sigs.k8s.io/reference/spec/), not a complete deployment. First install compatible Gateway API/Inference Extension CRDs, a supporting Gateway controller, the referenced Gateway and EPP Service/Deployment, and labeled model pods. Verify EPP port and scorer configuration against the pinned release.
 
 ```yaml
 apiVersion: inference.networking.k8s.io/v1
@@ -293,11 +293,16 @@ kind: InferencePool
 metadata:
   name: qwen-pool
 spec:
-  targetPortNumber: 8000
+  targetPorts:
+    - number: 8000
   selector:
-    app: vllm-qwen
-  extensionRef:
-    name: qwen-epp          # Endpoint Picker (EPP)
+    matchLabels:
+      app: vllm-qwen
+  endpointPickerRef:
+    name: qwen-epp
+    port:
+      number: 9002
+    failureMode: FailClose
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -313,52 +318,53 @@ spec:
           name: qwen-pool
 ```
 
-The Endpoint Picker (EPP) scores each pod on **queue depth, KV-cache utilization, prefix-cache hit likelihood, and loaded LoRA adapters** and picks one. The difference from round-robin is decisive: sending the next turn of the same conversation to the same pod skips most of the prefill phase; sending it elsewhere recomputes tens of thousands of tokens from scratch.
+Queue depth and KV-cache utilization are common EPP inputs; prefix affinity and LoRA-aware selection depend on release and enabled plugins. Affinity helps only while compatible blocks remain cached. Eviction and load balancing still matter; not every scorer is enabled by default.
 
 ### 4.8 Auto-Routing Invariants
 
 - **Re-check RBAC after every substitution.** L1 fallback, L3 tiers, and L6 chain extension all add targets after the allow-list check ran.
-- **Substitution narrows only.** It may choose a cheaper allowed model; it may never grant a model the principal lacks, nor turn into a deny.
-- **No failover after the first token.**
+- **Substitution narrows only.** Recheck authorization, budget, privacy and capabilities; deny if no compliant target remains.
+- **No transparent failover after downstream commitment.**
 - **Make it visible.** A response header (`x-<gateway>-model-fallback`) and the audit record's `model_substituted_from` carry the **originally requested model**; metrics count substitutions per team.
 - **Keep a conversation on one cache domain.** Anthropic-direct and Bedrock prompt caches do not transfer.
 - **Price every route.** A (provider, upstream model) pair without a rate settles at cost 0 and silently disables budget control. Check at boot.
-- **The router must not become the SPOF.** If the intent classifier is down, send the request to the model it asked for. Never 5xx.
+- **Classifier failure cannot bypass policy.** Use the requested model only if every check still passes; otherwise return a clear failure.
 
 ---
 
 ## 5. PII Guard — Detect, Decide, Transform, Restore
 
-![A client prompt passes detect (regex, NER, checksum), decide (block, mask, pseudonymize, tokenize), and transform (text blocks only); the mapping is stored in a session vault and the pseudonymized body goes to the provider; on the response side restore (de-tokenize) and an output guard return the original text; a footer lists where PII must never be persisted.](../../assets/llm-gateway-pii-guard.svg)
+![PII handling inspects supported egress fields and scoped mappings; output is guarded before authorized restoration. Unsupported sensitive content is blocked or routed internally.](../../assets/llm-gateway-pii-guard.svg)
 
 ### 5.1 Why at the Gateway
 
-If every application implements PII handling itself, the weakest app sets the organization's exposure. The gateway is **the only point every outbound prompt passes**, and the only place that can prove to an auditor that "no PII ever left for an external model."
+A gateway centralizes only traffic routed through it; network/IAM restrictions must prevent direct-provider bypass. Detection has false negatives, language limits and unsupported modalities, so it cannot prove that no PII ever leaves. Define approved destinations and test negative cases for every protected data class.
 
 ### 5.2 Detection — Three Layers of Recognizers
 
 | Recognizer | Targets | Strengths | Limits |
 |------------|---------|-----------|--------|
-| **regex + checksum** | email, card numbers (Luhn), national IDs, phone, IP | deterministic, microseconds, few false positives | cannot catch names or addresses |
-| **NER model** (Presidio, spaCy, fine-tuned) | names, addresses, organizations, dates | high recall | tens of ms, CPU/GPU cost, per-language models |
+| **regex + checksum** | structured identifier candidates | repeatable matching | validate locale coverage, false positives and false negatives |
+| **NER model** (Presidio, spaCy, fine-tuned) | names, addresses, organizations, dates | contextual detection | measure false positives/negatives and latency per language/domain |
 | **LLM-based classification** | contextual PII ("my manager's salary") | most flexible | expensive and slow, and **itself another data-egress path** |
 
-Run them as a pipeline: **the regex layer is always on**, the others are opt-in per team and data class. Locale matters: a Korean deployment adds resident registration numbers (`\d{6}-[1-4]\d{6}` plus validation), passport and bank-account patterns, and accepts that names are essentially undetectable without NER.
+Combine tested locale-specific recognizers according to data policy. A regex/checksum is a detector candidate, not proof of safe identifiers or complete coverage. Never send raw sensitive content to an external classifier before destination policy is satisfied.
 
 ### 5.3 Decision — Policy Picks the Action
 
 ```yaml
 plugins:
   - name: pii-guard
-    teams: [payments, hr]            # opt-in — the cache cost warning is shown in docs and as a runtime header
+    teams: [payments, hr]            # required for these teams, regardless of cache cost
     actions:
       EMAIL:       pseudonymize      # replaced by <EMAIL_1>, restored in the response
       CREDIT_CARD: mask              # 4111 **** **** 1111
       KR_RRN:      block             # a resident registration number rejects the request with 400
       PERSON:      pseudonymize
-      IP_ADDRESS:  allow             # in coding-agent traffic IPs are usually part of the code
+      IP_ADDRESS:  redact            # allow only through reviewed data-class policy
     scope:
-      text_blocks_only: true         # never touches cache_control, tools, or tool_use arguments
+      supported_egress_fields: [text, tool_descriptions, tool_arguments, tool_results]
+      unsupported_sensitive_content: block
     on_error: fail_closed
 ```
 
@@ -368,32 +374,34 @@ plugins:
 | `mask` | replace with `****` | information lost | no |
 | `redact` | `[REDACTED]` | information lost | no |
 | `pseudonymize` | consistent placeholder such as `<EMAIL_1>` | the model still knows it is "the same person" | yes, from the response |
-| `tokenize` | format-preserving token (a fake card number) | almost none | yes, via the vault |
+| `tokenize` | scoped reversible token; format preservation if required | evaluate task impact | only with authorized vault access |
 
 ### 5.4 Transform — What May and May Not Be Touched
 
-The masker operates on **text content blocks only**. `cache_control` markers, tool definitions, `tool_use` argument JSON, `thinking` blocks, and structural fields of the system prompt are off limits. Changing a string inside argument JSON breaks the tool call; changing a structural field breaks the protocol.
+PII may occur in system/user text, tool descriptions, arguments/results, attachments and images. Inspect all supported outbound surfaces. Preserve protocol structure, cache controls and signed/opaque reasoning fields; transform tool values only with schema-aware handling that preserves semantics. If inspection or safe transformation is unsupported, block or route to an approved internal destination rather than silently exempting the field.
 
-Under cross-protocol conversion (OpenAI ingress → Anthropic provider) masking must apply to **both the parsed canonical form and the RawBody**. Change only one and you get the worst outcome: the audit log says "masked" while the original text leaves. Combinations where that cannot be guaranteed (for example a masked team on an OpenAI ingress) are safer to reject outright.
+Inspection and serialization must share one authoritative post-policy representation. After canonical changes, disable the stale RawBody fast path and inspect the serialized outbound payload. Never log masked status while forwarding an earlier unmasked buffer.
 
 ### 5.5 The Cache Trade-off — Be Honest About It
 
-Masking mutates the body, so it **breaks the verbatim-forwarding cache invariant**. Re-serialization alone changes the prefix, and if every request produces a different placeholder (`<EMAIL_7f3a>`) every turn is a miss. Two mitigations:
+Masking changes prompt content and can reduce prefix reuse; JSON re-serialization alone does not imply a miss. Per-request random pseudonyms fragment prefixes. Two mitigations:
 
 1. **Deterministic, session-scoped pseudonyms.** Bind the vault to a session key so the same value always maps to the same placeholder (`<EMAIL_1>`) within a session. The prefix becomes stable across turns and the cache recovers after the first one.
-2. **Explicit opt-in plus a runtime warning.** Responses for a masked team carry a header such as `x-<gateway>-cache-degraded: pii-mask`, and the docs state the cost impact. Masking silently, as some products do, means users discover the reason only on the invoice.
+2. **Required privacy first, measured cost second.** Disclose and measure cache impact. Optional filters can be opt-in, but required controls cannot be disabled to save tokens.
 
 ### 5.6 The Response Side and Where Things Land
 
-- **Restore (de-tokenize)** in a stream **when a content block completes**. Token-by-token restoration splits placeholders across frame boundaries (`<EMA` `IL_1>`). Buffering per block does not delay TTFT; it only delays the end of each block slightly.
-- **The output guard** catches PII the model invented (a real email memorized from training data) and secret patterns.
-- **The vault** is memory-only, TTL-bound, discarded at session end. It never touches the audit store.
+- **Inspect before delivery and restore only with authorization.** Buffer across frame boundaries and complete tool arguments. Full-block buffering increases user-visible TTFT/latency; incremental scanners need bounded cross-chunk state. Bind mappings to authenticated tenant/principal/session and authorize the destination before revealing originals.
+- **Output inspection** detects supported PII/secret patterns, not every possible sensitive disclosure.
+- **The vault** holds sensitive correctness state. Bound retention/access; memory-only storage needs fail-closed behavior after restart or missing mappings. Never put original mappings in the audit store.
 - **The audit record** keeps **counts only**, such as `redactions: 2`. No original text reaches metrics labels, trace attributes, error messages, or gateway logs. If body capture is enabled, it stores the masked body, encrypted with a separate key, outside the audit chain.
-- **Region locking** is part of the PII guard. Allowing only `ap-northeast-2` for a team makes the routing layer guarantee that data never crosses the border.
+- **Region policy** covers processing, storage, classifiers, vaults and telemetry. A Bedrock source endpoint in `ap-northeast-2` does not prevent an inference profile routing elsewhere. Validate all [cross-Region inference](https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference.html) destinations; single-Region policies require approved in-Region resources.
 
 ### 5.7 Relationship to Provider-Side Guardrails
 
-Amazon Bedrock Guardrails' sensitive-information filter **complements, not replaces**, gateway masking. One trap matters: a guardrail is a **parameter of the `InvokeModel`/`Converse` API call** (`guardrailIdentifier`, `guardrailVersion`). Creating one in the console does nothing if a gateway in the middle does not attach that parameter — **every call goes out guardrail-free**. The gateway must enforce a provider-level default guardrail and let teams pick a *different* one, but never offer an *off* switch.
+Bedrock Guardrails can filter sensitive information, harmful content, denied topics and configured words; coverage depends on policy, API and model. [Converse/ConverseStream](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-use-converse-api.html) uses `guardrailConfig`; verify which `guardContent` blocks and filter types are evaluated. InvokeModel/InvokeModelWithResponseStream uses its `guardrailIdentifier`/`guardrailVersion` parameters (HTTP headers). `ApplyGuardrail` is a separate evaluation API without model invocation. Enforce approved IDs/versions with [IAM conditions](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-permissions-id.html) where supported and prevent direct-provider bypass. Merely creating a guardrail is insufficient.
+
+[Streaming mode matters](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-streaming.html): synchronous inspection adds latency; asynchronous chunks may reach users before detection and do not support sensitive-information masking. Disable unnecessary traces; invocation logs/traces may retain original sensitive content, so restrict access and configure encryption/retention. Neither gateway nor provider filters prove complete detection.
 
 ---
 
@@ -404,14 +412,14 @@ Amazon Bedrock Guardrails' sensitive-information filter **complements, not repla
 | Principle | Implementation |
 |-----------|----------------|
 | Clients know only a **virtual key** | the `ik_...` plaintext is shown once at creation; storage is SHA-256 |
-| Only the gateway knows the provider key | config accepts `env:` / `file:` / `secret:` references only; an inline key fails to load |
+| Only the gateway accesses provider secrets | Secrets Manager/SSM with workload identity, credential agents or access-controlled CSI-mounted files; no secret values in manifests, ConfigMaps or environment variables |
 | The two keys never mix | the client key is never forwarded upstream; the upstream key is never shown to the client |
 | Humans use SSO | OIDC login mints short-lived virtual keys (CLI `login`); groups map to teams |
-| Cloud credentials are brokered | data planes hold no long-lived IAM keys; a control-plane broker issues ≤ 1 h STS sessions |
+| Short-lived cloud credentials | use least-privilege EKS Pod Identity/IRSA roles; optional STS brokers must restrict roles, session policies, tags and destinations |
 
 ### 6.2 Tamper-Evident Audit
 
-The audit log must record "who used what" in a way nobody can later **repudiate**. When each record includes the hash of the previous one (a **hash chain**), deletion or edits in the middle show up on verification; anchoring the chain head periodically into WORM storage such as S3 Object Lock means even the gateway operator cannot rewrite history. ULID record ids give time ordering and collision-freedom at once.
+A hash chain detects changes relative to a trusted checkpoint; an attacker can rewrite or truncate an unanchored log. Anchor externally with separately controlled credentials and monitored retention. [S3 Object Lock](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) needs versioning and deliberate retention mode/policy; it protects retained versions, not events never recorded. ULIDs are sortable and probabilistically unique: handle collisions and clock disorder.
 
 ### 6.3 Leaks Through Observability
 
@@ -422,8 +430,8 @@ The audit log must record "who used what" in a way nobody can later **repudiate*
 ### 6.4 Request Boundaries
 
 - Cap the request body (`max_request_bytes`) — a limit **separate from** the body-capture cap used for audit.
-- `count_tokens` never returns a non-200 (section 4.5).
-- Where a control-plane connection is mandatory (`require_sync`), the data plane must be able to **fail closed** with 503 before the first successful heartbeat, or when the policy is older than a maximum age. Fail-open is a fine default, but the option must exist.
+- Token-count APIs retain authentication, authorization, validation errors and independent abuse/rate limits. Label estimates; never disguise them as authoritative provider counts.
+- Required policy sync, stale authorization and hard-budget leases fail closed. Any degraded mode needs bounded lifetime and approved policy; do not default protected traffic to fail-open.
 
 ### 6.5 Supply Chain
 
@@ -446,20 +454,20 @@ Open a single Anthropic Messages request and text written by different parties s
 
 | Location | Author | Trust | Gateway stance |
 |----------|--------|-------|----------------|
-| gateway policy prompt | operator | highest | inject, version, hash into the audit record |
-| `system` | application (e.g. the Claude Code harness) | high | **never removed** — the client depends on it |
-| `tools[]` definitions | application | high | allow-list by name |
+| gateway policy prompt | authenticated operator policy | operator-owned metadata | insert/version server-side; distrust caller-supplied policy markers |
+| `system` | client/application | depends on authenticated provenance | preserve supported behavior; role labels do not grant operator privilege |
+| `tools[]` definitions | client or MCP source | untrusted until validated | validate schemas, descriptions and executable capabilities |
 | `messages[role=user]` text | user | medium | scan for direct injection |
 | `messages[...tool_result]`, RAG chunks, web pages | **external data** | **lowest** | scan for indirect injection, mark the boundary |
 | `messages[role=assistant]` | model | low | verify `tool_use` against the allow-list |
 
-The key insight: **the model cannot tell these trust levels apart**. To the model, "ignore previous instructions…" inside a `tool_result` is text exactly like the user's words. Only the gateway (and the application) know where the boundaries are, so enforcement has to live there.
+Models use role structure, but it is not an authorization boundary and untrusted content can subvert it. Gateways and applications must derive privileges from authenticated identity and enforce them outside model-generated instructions.
 
 ### 7.2 Gateway-Side Policy Prompt Injection
 
 **Use cases**: organizational data-handling rules ("never include customer PII in output"), tool restrictions ("no writes to production databases"), language and tone, regulatory wording, an internal canary token.
 
-```
+```text
 How the prefix is computed for an Anthropic Messages request
 
   [tools]  →  [system blocks]  →  [messages...]
@@ -474,13 +482,13 @@ How the prefix is computed for an Anthropic Messages request
 
 **Rules of operation**
 
-1. **Front position, byte-identical content.** The front of the prefix must be stable for the cache to survive: the first request is a cache write (1.25×), everything after is a read (0.1×). Placing the block **after** the client's `cache_control` block nullifies the breakpoint the client chose.
-2. **Idempotent.** Agent loops resend the whole history each turn, and `system` arrives fresh each time; still, if the request already contains a policy block with the same hash (multiple gateway hops), do not add another.
-3. **Never remove or replace the client's system prompt.** Harnesses such as Claude Code run on top of their own system prompt. Prepend only.
+1. **Stable content inside the intended cache boundary.** A policy prefix can become reusable when minimum length, TTL and model requirements are met. A block after a cache marker is outside that earlier cached segment; it does not automatically invalidate the segment. Verify final cache layout and current provider pricing.
+2. **Authenticated idempotency.** Deduplicate only metadata from a trusted gateway hop. Caller-copied policy hashes/markers must never suppress required insertion or inspection.
+3. **Preserve supported client semantics.** Do not silently discard harness instructions, but reject requests incompatible with mandatory operator policy; a caller system role cannot override authorization.
 4. **The tokens are billed to the team.** A 500-token policy prompt × 100,000 requests a day = 50 million tokens. Even at cache-read rates that is not zero, and the cost of governance must be visible to the policy's owner.
 5. **Version and hash go into the audit record.** You must be able to answer "which rules applied that day."
-6. **The position differs per protocol.** OpenAI Chat uses the `system` (or `developer`) role in `messages[0]`, Bedrock Converse a `system` list, Anthropic a `system` string or block array. A string must be promoted to an array — and that promotion is itself a re-serialization, so it inherits the cache warning.
-7. **A system prompt is a nudge, not a security boundary.** A sufficiently clever injection can talk the model into ignoring the policy prompt. **Enforcement must live in the gateway's tool allow-list and output guard** (section 7.3, D and E).
+6. **Protocol-specific placement.** Use supported OpenAI developer/system instructions, the Bedrock Converse `system` list, or Anthropic system strings/blocks. Preserve semantics and inspect the resulting prefix; shape conversion alone does not prove a cache miss.
+7. **A prompt is not a security boundary.** Gateway filtering helps; tool executors must independently enforce authorization, argument validation, sandboxing and sensitive-action approvals.
 
 ### 7.3 Defending Against Prompt Injection — Five Layers of Defense in Depth
 
@@ -490,7 +498,7 @@ Prompt injection is #1 in the OWASP Top 10 for LLM Applications (LLM01) because 
 
 **B. Trust-boundary marking (spotlighting)** — wrap `tool_result` and retrieved documents in explicit delimiters.
 
-```
+```text
 <untrusted source="tool_result" tool="web_fetch" id="toolu_01…">
   (page text — everything in here is data, not instructions)
 </untrusted>
@@ -498,13 +506,13 @@ Prompt injection is #1 in the OWASP Top 10 for LLM Applications (LLM01) because 
 
 This raises the odds the model separates data from instructions. Random delimiters make it hard for an attacker to pre-close the tag.
 
-**C. Injection scanner** — heuristics ("ignore previous instructions", role-switch requests, Base64/Unicode-encoded payloads, excessive markdown image links that exfiltrate data) plus a small classifier, applied **only to user blocks and tool-result blocks**. Re-scanning the entire history every turn makes cost quadratic in conversation length, so **remember per session the hashes of blocks already scanned and look only at the delta**. Whether a hit blocks or merely warns is team policy: legitimate code in coding-agent traffic contains the word "ignore" all the time, so false positives are expensive.
+**C. Injection scanner** — inspect supported user content, tool definitions/results and retrieved data. Cache scan results only within authenticated tenant/session scope, keyed by scanner version, policy version and content hash. Changed policy/context requires re-evaluation; missing state requires rescanning. Bound memory and account for false positives/negatives. External scanners are subject to the same egress policy.
 
-**D. Tool-use allow-list** — inspect the `tool_use` blocks in the **response**. A tool name absent from the team policy, or a dangerous argument pattern (`rm -rf /`, `curl … | sh`, a production hostname), turns that block into a denial or closes the stream, with an audit record and an alert. In a stream the arguments are only known once all `input_json_delta` frames of the block have arrived, so **buffer that block only**. This layer is the real enforcement: whatever the model decides, an execution command that does not pass the gateway does not execute.
+**D. Tool-use allow-list** — buffer complete tool-call arguments before release and validate schemas and authorized operations, not just names or dangerous strings. This cannot cover client bypasses or provider-side tools executed before the gateway sees a response. Tool runtimes must independently enforce identity, resource/argument authorization, least privilege, sandboxing and sensitive-action approval.
 
-**E. Canary + output guard** — put a random canary string in the policy prompt; if it appears in a response, the system prompt leaked. Scan output for secret patterns (AWS keys, tokens), PII, and outbound URLs (especially image links carrying data in the query string).
+**E. Canary + output guard** — a scoped canary can signal exact prompt leakage when detected; its absence does not prove safety. Keep it stable during its intended lifetime and never use it as an authorization credential. Inspect secrets, PII and suspicious outbound URLs before delivery.
 
-```
+```text
 An indirect injection end to end, with each layer's intervention point
 
   ① the agent reads an issue page via web_fetch
@@ -534,13 +542,13 @@ An indirect injection end to end, with each layer's intervention point
 
 | Signal | Source | Used for |
 |--------|--------|----------|
-| input token count | heuristic (bytes/3.5), provider `count_tokens`, local tokenizer | PreCheck estimate, context fit (L5), long-context re-routing |
+| input token count | target-specific tokenizer/count API; byte ratios are rough estimates | size transformed system/tools/messages and multimodal input with a margin |
 | `max_tokens` | request body | output ceiling in PreCheck |
 | `cache_control` breakpoint positions | body parse | where to insert the policy prompt; cache-breakage warnings |
-| tool count and size | body parse | tens of thousands of tool-definition tokens ⇒ caching is essential ⇒ reconsider masking opt-in |
+| tool count and size | validated body | account for tool tokens and preserve required privacy regardless of cache cost |
 | `thinking` enabled | body parse | exclude fallback targets that do not support thinking |
 
-When the gateway proxies `count_tokens` to a provider, it **applies RBAC and routing but touches no governance counter**, and returns 200 with an estimate even on failure.
+Counting is distinct from inference spend but still needs auth, authorization and independent request/CPU limits. Preserve provider failures. Optional local-estimate fallback must disclose its approximate origin and cannot override denials or claim exact context fit.
 
 ### 8.2 Principal Context — Budget State Changes Routing
 
@@ -548,7 +556,7 @@ The same request goes to a different model at 50 % and at 90 % of the team budge
 
 ### 8.3 Session Context — Prefix Affinity
 
-```
+```text
 Session affinity (consistent hashing on the prefix)
 
   key = hash(team, tools[], system[0..k], messages[0..2])     ← hash only the early blocks (stable across turns)
@@ -559,21 +567,21 @@ Session affinity (consistent hashing on the prefix)
   a pod that disappears leaves the ring; only its conversations cold-start (no global reshuffle)
 ```
 
-Session context also holds the PII vault (section 5.5) and **the hashes of blocks already scanned** (section 7.3 C). The gateway should be stateless per request, but a small amount of per-session state (a few KB, TTL-bound, bounded memory) kept node-local does not create a SPOF — losing it degrades performance, never correctness.
+Separate performance hints from correctness state. Lost affinity causes recomputation; lost scan hints require rescanning. Missing PII mappings cannot safely restore originals: fail closed or recover from an authorized durable vault. Bound state, bind it to authenticated tenant/principal/session, and define restart, expiry and cross-replica behavior.
 
 ### 8.4 Infrastructure Context — Pool Health
 
-vLLM exposes `vllm:num_requests_waiting` and `vllm:gpu_cache_usage_perc` via Prometheus; the EPP reads them every few seconds to score pods. At the gateway level, per-provider circuit-breaker state, recent p95 TTFT, and per-region error rates are the infrastructure context. These signals may feed **only the availability (L6) and endpoint (L7) layers**, never the policy layer (L2): "Bedrock was slow so we sent it to a region that is not allowed" is not an incident, it is a compliance violation.
+Match EPP polling/plugins to the pinned model server. Current [vLLM metrics](https://docs.vllm.ai/en/latest/design/metrics/) include `vllm:num_requests_waiting` and `vllm:kv_cache_usage_perc`; older releases used `vllm:gpu_cache_usage_perc`. Health/load signals may choose among approved destinations but cannot widen region/model/privacy authorization.
 
 ### 8.5 Semantic Cache — a Context Feature to Approach Carefully
 
-A semantic cache that returns an earlier answer to a "similar" question can cut cost dramatically, but at the gateway level it is risky: (a) embedding similarity does not guarantee the same answer is correct, (b) an answer leaking from team A to team B is a PII or confidentiality breach, and (c) agent traffic is almost always unique. If adopted, the minimum bar is **team-scoped, limited to deterministic prompts (temperature 0), explicit opt-in**.
+Semantic similarity is not answer equivalence; temperature 0 guarantees neither determinism nor freshness. Opt in only for validated workloads, incorporating authorization/principal scope, model and prompt/policy versions, tool/retrieval context, TTL and invalidation. Never replay side-effecting tools or another user’s protected answer merely because both users share a team.
 
 ---
 
 ## 9. EKS Deployment Pattern
 
-```
+```text
 ┌────────────────────────────────── EKS cluster ───────────────────────────────────┐
 │                                                                                    │
 │  ┌── node A ─────────────┐   ┌── node B ─────────────┐   ┌── node C (GPU) ─────┐  │
@@ -599,14 +607,14 @@ A semantic cache that returns an earlier answer to a "similar" question can cut 
 
 | Decision | Options | Recommendation |
 |----------|---------|----------------|
-| data-plane placement | central Deployment vs node-local DaemonSet vs sidecar | many coding agents ⇒ **DaemonSet** (one hop fewer, node-level fault isolation); a few apps ⇒ central Deployment |
-| policy delivery | ConfigMap file vs GovernancePolicy CRD vs control-plane heartbeat | single cluster ⇒ CRD; multi-cluster or leases needed ⇒ control plane |
-| Bedrock credentials | node IAM vs IRSA/Pod Identity vs control-plane broker STS | per-team region lock ⇒ **broker STS** (session tags identify the data plane) |
+| data-plane placement | replicated Deployment, DaemonSet or sidecar | start with an HA private Service; choose node-local placement after capacity, latency and failure tests |
+| policy delivery | reviewed product CRD/file/sync API | use installed versioned schemas; define required-sync readiness and stale-policy limits |
+| Bedrock credentials | EKS Pod Identity/IRSA, optional constrained STS broker | scope roles and approved model/profile destinations; session tags alone are not authorization |
 | self-hosted routing | Service round-robin vs Inference Extension EPP | prefix-cache gains are large ⇒ **EPP** |
 | audit storage | local WAL only vs WAL + S3 Object Lock anchoring | regulated ⇒ anchoring |
-| observability | Prometheus `gen_ai.*` + Grafana, OTLP traces (opt-in) | one metrics system (Prometheus); OTLP for traces only |
+| observability | bounded OpenTelemetry/Prometheus metrics and optional traces | pin semantic conventions and exporter name mapping, restrict scrape access, disable prompt capture by default |
 
-Helm values to check: `dataplane.kind: DaemonSet`, `controlPlane.requireSync` (fail-closed or not), `policies.channel: crd|configmap|controlplane`, `plugins.piiGuard.teams`, `bedrock.guardrail.default`, `audit.anchor.s3ObjectLock`.
+This is a topology sketch, not a ready-to-install Helm chart. Use the selected product’s versioned values schema instead of invented common keys. Keep ingress private with TLS and authenticated clients; restrict `/metrics` and admin endpoints. Use workload identity, non-root containers, dropped capabilities, resource limits and network/egress policy. A DaemonSet/hostPort is not automatically node-local isolation: bind and firewall it deliberately, or use a private Service/sidecar. Prevent direct provider bypass. For audit buckets enable Block Public Access, encryption, versioning and approved Object Lock retention. No AWS/IAM resources are created by this chapter.
 
 ---
 
@@ -615,7 +623,7 @@ Helm values to check: `dataplane.kind: DaemonSet`, `controlPlane.requireSync` (f
 Every product calls itself an "AI gateway," yet the answers to these questions differ. Because product state changes quickly, this is a **question list rather than a feature table**.
 
 1. If the control plane dies, does inference traffic keep flowing? What happens to budget hard caps then?
-2. Is the body forwarded byte-for-byte when protocols match? (Compare prompt-cache hit rates before and after adoption.)
+2. Are prompt semantics, cache markers and supported fields preserved, with measured cache-read/write behavior?
 3. Is RBAC re-checked after fallback and substitution?
 4. How is a mid-stream failure handled? If it retries, what about double-billed tokens?
 5. Is the cache impact of PII masking stated in docs and at runtime? Where does the vault live?
@@ -631,32 +639,32 @@ Every product calls itself an "AI gateway," yet the answers to these questions d
 
 **Architecture**
 - [ ] Data plane and control plane are separate processes, and behavior during a control-plane outage is documented
-- [ ] Governance is two-phase (PreCheck/Settle) and denies happen before any counter is charged
+- [ ] Transform and size the final request before atomic money/quota reservation; reconcile uncertain usage
 - [ ] Hard-cap teams and soft-limit teams are distinguished in policy
 
 **Routing**
 - [ ] Alias canonicalization runs before RBAC
 - [ ] RBAC is re-checked after every substitution (fallback, tier, chain extension)
-- [ ] Failover is pre-TTFT only; substitutions surface in headers, audit, and metrics
+- [ ] Retries stop at downstream commitment; bounded attempts and usage uncertainty are recorded
 - [ ] Every (provider, upstream model) has a rate, validated at boot
 
 **PII / Security**
-- [ ] Masking is opt-in with a cache warning; a masker error fails closed
+- [ ] Required privacy controls cannot be disabled for cache savings; unsupported sensitive fields fail closed
 - [ ] No PII in audit, metrics, traces, logs, or error messages
 - [ ] Provider guardrails are enforced on the data-plane SDK call and teams cannot switch them off
 - [ ] Virtual keys hashed at rest, provider keys by reference only, no secret or key id on `/metrics`
 - [ ] An audit-chain verification CLI exists and external anchoring is possible
 
 **Prompt Integrity**
-- [ ] The policy prompt is at the front, byte-identical, idempotent, with version and hash in audit
-- [ ] The client's system prompt is never removed
-- [ ] `tool_result` and RAG text carry trust-boundary markers; only the delta is scanned
+- [ ] Policy prefixes are stable and versioned; only authenticated metadata permits deduplication
+- [ ] Preserve supported client semantics; reject conflicts with mandatory policy
+- [ ] Scan caches include authenticated scope, policy/scanner versions and content hash; tool runtime enforces authorization
 - [ ] Response `tool_use` blocks are checked against the per-team tool allow-list
 - [ ] Canary tokens detect system-prompt leakage
 
 **Context**
-- [ ] `count_tokens` never returns a non-200
-- [ ] Context-window overflow fails fast with 400 naming both numbers, before PreCheck
+- [ ] Counting endpoints retain auth/errors and independent limits; approximate fallback is clearly labeled
+- [ ] Context fit includes transformed input, tool/reasoning overhead and output allowance before reservation
 - [ ] The same conversation is pinned to one cache domain (pod or provider)
 - [ ] Infrastructure signals feed only the availability and endpoint layers, never policy decisions
 
@@ -670,5 +678,19 @@ Every product calls itself an "AI gateway," yet the answers to these questions d
 - [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/) — LLM01 prompt injection, LLM02 sensitive information disclosure, LLM06 excessive agency
 - [Microsoft Presidio](https://microsoft.github.io/presidio/) — PII recognizer framework
 - [OpenTelemetry GenAI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/) — `gen_ai.*` metrics and span attributes
-- [inferplane](https://github.com/inferplane/inferplane) — an Apache-2.0 gateway implementing the control/data-plane split, two-phase governance, budget leases, and the cache invariant (many of this chapter's principles are recorded there as ADRs)
+- [inferplane](https://github.com/inferplane/inferplane) — one project to evaluate against its current README and optional durability/shared-state profiles; not a compatibility guarantee for this chapter’s proposed keys
 - Related chapters: [Agentic AI Platform](./03-agentic-ai-platform.md) (Inference Gateway deployment), [vLLM Deployment & Optimization](./02-vllm-deployment.md) (prefix caching), [SageMaker AI Qwen PII Guidebook](./sagemaker-ai/README.md) (PII tokenization)
+
+- [Codex configuration reference](https://developers.openai.com/codex/config-reference)
+- [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)
+- [Anthropic token counting](https://platform.claude.com/docs/en/build-with-claude/token-counting)
+- [Anthropic streaming](https://platform.claude.com/docs/en/build-with-claude/streaming)
+- [Bedrock Claude request/response](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-anthropic-claude-messages-request-response.html)
+- [Bedrock Converse API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html)
+- [Bedrock InvokeModel API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html)
+- [Bedrock streaming guardrails](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-streaming.html)
+- [Bedrock cross-Region inference](https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference.html)
+- [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+- [InferencePool API reference](https://gateway-api-inference-extension.sigs.k8s.io/reference/spec/)
+- [vLLM prefix caching](https://docs.vllm.ai/en/latest/design/prefix_caching/)
+- [vLLM metrics](https://docs.vllm.ai/en/latest/design/metrics/)
