@@ -35,7 +35,7 @@
           "gw-standby",
           "api"
         ],
-        "note": "Two replicas elect a leader via a Kubernetes Lease; the standby waits in another subnet to take over."
+        "note": "Every replica watches CiliumNode and maintains local VXLAN/FDB/neighbor/routes. Only the leader changes AWS routes and VTEP configuration."
       }
     ],
     "locale": "en"
@@ -232,7 +232,7 @@
       "title": "Routing",
       "items": [
         "Hybrid Pod CIDR → leader gateway ENI routes kept up to date in the VPC route table",
-        "FDB, ARP and route entries updated as Hybrid Nodes join and leave"
+        "All replicas reconcile local entries from CiliumNode changes"
       ]
     }
   ]

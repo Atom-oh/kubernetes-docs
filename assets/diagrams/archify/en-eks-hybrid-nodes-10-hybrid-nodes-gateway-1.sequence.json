@@ -2,36 +2,35 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "VPC Route Table Auto-Management — Node Join and Leave",
+    "title": "Local Node Reconciliation and Separate Leader Setup",
     "locale": "en",
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
-      900,
-      540
+      960,
+      690
     ],
     "animation": "trace",
     "views": [
       {
-        "id": "join",
-        "label": "Node joins",
+        "id": "local",
+        "label": "Every replica: local state",
         "focus": [
           "hn",
           "k8s",
-          "gw",
-          "vpc"
+          "gw"
         ],
-        "note": "A new hybrid node becomes NodeReady; the leader programs FDB, ARP and a local route, then adds the Pod CIDR route to the VPC route table."
+        "note": "CiliumNode events update local VXLAN/FDB/neighbor/routes on every gateway replica."
       },
       {
-        "id": "leave",
-        "label": "Node leaves",
+        "id": "leader",
+        "label": "Leader setup",
         "focus": [
-          "k8s",
           "gw",
-          "vpc"
+          "vpc",
+          "k8s"
         ],
-        "note": "When the node is removed, the leader tears down the same entries and deletes the stale Pod CIDR route."
+        "note": "Leadership setup programs configured aggregate AWS routes, then CiliumVTEPConfig. Node departure does not trigger AWS DeleteRoute."
       }
     ]
   },
@@ -46,13 +45,13 @@
       "id": "k8s",
       "type": "backend",
       "label": "Kubernetes API",
-      "sublabel": "Node watch"
+      "sublabel": "CiliumNode / VTEP config"
     },
     {
       "id": "gw",
       "type": "backend",
-      "label": "Gateway (Leader)",
-      "sublabel": "hybrid_vxlan0"
+      "label": "Gateway Replicas",
+      "sublabel": "Local state on every replica"
     },
     {
       "id": "vpc",
@@ -64,13 +63,13 @@
   "segments": [
     {
       "from": 165,
-      "to": 315,
-      "label": "Node joins → program FDB / ARP / local route"
+      "to": 415,
+      "label": "CiliumNode events: local tunnel state only"
     },
     {
-      "from": 335,
-      "to": 480,
-      "label": "Node leaves → remove FDB / ARP / local route"
+      "from": 435,
+      "to": 590,
+      "label": "Separate leader setup: aggregate AWS routes, then VTEP"
     }
   ],
   "messages": [
@@ -79,65 +78,48 @@
       "from": "hn",
       "to": "k8s",
       "y": 195,
-      "label": "Node joins cluster (NodeReady)",
-      "variant": "default"
+      "label": "CiliumNode created / updated"
     },
     {
-      "id": "watch-add",
+      "id": "local-add",
       "from": "k8s",
       "to": "gw",
-      "y": 240,
-      "label": "Watch: new node → program FDB/ARP/route",
-      "variant": "default",
-      "note": "Leader programs FDB entry, ARP entry and local route for the node Pod CIDR"
-    },
-    {
-      "id": "create-route",
-      "from": "gw",
-      "to": "vpc",
-      "y": 285,
-      "label": "ec2:CreateRoute (Pod CIDR → leader ENI)",
-      "variant": "emphasis",
-      "note": "Route: 10.100.0.0/24 → eni-abc123"
+      "y": 250,
+      "label": "Reconcile local FDB / neighbor / route",
+      "note": "Every replica handles the node IP and allocated Pod CIDRs."
     },
     {
       "id": "leave",
       "from": "hn",
       "to": "k8s",
-      "y": 360,
-      "label": "Node leaves cluster",
-      "variant": "default"
+      "y": 330,
+      "label": "CiliumNode deleted"
     },
     {
-      "id": "watch-remove",
+      "id": "local-remove",
       "from": "k8s",
       "to": "gw",
-      "y": 405,
-      "label": "Watch: node removed → remove FDB/ARP/route",
-      "variant": "default",
-      "note": "Leader removes FDB entry, ARP entry and local route"
+      "y": 390,
+      "label": "Remove obsolete local node entries"
     },
     {
-      "id": "delete-route",
+      "id": "leader-routes",
       "from": "gw",
       "to": "vpc",
-      "y": 450,
-      "label": "ec2:DeleteRoute (Pod CIDR)",
-      "variant": "emphasis"
-    }
-  ],
-  "activations": [
-    {
-      "participant": "gw",
-      "from": 233,
-      "to": 297,
-      "type": "backend"
+      "y": 475,
+      "label": "Leader: CreateRoute / ReplaceRoute",
+      "variant": "emphasis",
+      "note": "Configured aggregate10.100.0.0/20 points to leader ENI; not a per-node AWS route."
     },
     {
-      "participant": "gw",
-      "from": 398,
-      "to": 462,
-      "type": "backend"
+      "id": "leader-vtep",
+      "from": "gw",
+      "to": "k8s",
+      "y": 560,
+      "label": "Then update CiliumVTEPConfig endpoints",
+      "variant": "emphasis",
+      "note": "Runtime does not call AWS DeleteRoute; uninstall cleanup is separately owned."
     }
-  ]
+  ],
+  "activations": []
 }

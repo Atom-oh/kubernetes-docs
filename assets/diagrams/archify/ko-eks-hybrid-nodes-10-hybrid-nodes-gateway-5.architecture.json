@@ -46,8 +46,8 @@
     {
       "id": "amp",
       "type": "cloud",
-      "label": "Amazon Managed Prometheus",
-      "sublabel": "메트릭 수집",
+      "label": "AMP managed scraper",
+      "sublabel": "관리형 collector",
       "pos": [
         700,
         50
@@ -235,6 +235,17 @@
           800,
           370
         ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "수집 경로의 전제",
+      "items": [
+        "AMP workspace 수신 endpoint와 scraper를 구분",
+        "Private cluster endpoint와 실제 metric endpoint 접근 필요",
+        "ALB/NLB target 경로도 route·보안·health check 검증 필요"
       ]
     }
   ]

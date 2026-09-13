@@ -6,8 +6,8 @@
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
-      900,
-      540
+      960,
+      650
     ],
     "animation": "trace",
     "views": [
@@ -27,7 +27,7 @@
           "lease",
           "follower"
         ],
-        "note": "리더가 멈추면 leaseDuration(3초) 뒤 Lease가 만료되고, 팔로워 Pod가 이를 감지해 Lease를 획득한다."
+        "note": "Lease 설정 기본값은3/2/1초이며 API 접근·실패 양상에 따라 실제 인계 시간이 달라진다."
       },
       {
         "id": "reroute",
@@ -36,7 +36,7 @@
           "follower",
           "vpcrt"
         ],
-        "note": "새 리더가 VPC 라우트 테이블의 Hybrid Pod CIDR 경로를 자신의 ENI로 바꾼다."
+        "note": "새 리더는 aggregate AWS route를 먼저 갱신하고 CiliumVTEPConfig endpoints를 다음에 갱신한다."
       }
     ],
     "legend": {
@@ -78,6 +78,12 @@
       "type": "cloud",
       "label": "VPC 라우트 테이블",
       "sublabel": "routeTableIDs"
+    },
+    {
+      "id": "vtep",
+      "type": "database",
+      "label": "CiliumVTEPConfig",
+      "sublabel": "spec.endpoints"
     }
   ],
   "segments": [
@@ -88,7 +94,7 @@
     },
     {
       "from": 255,
-      "to": 450,
+      "to": 545,
       "label": "리더 장애 발생 → 팔로워 승격"
     }
   ],
@@ -107,9 +113,9 @@
       "from": "lease",
       "to": "follower",
       "y": 300,
-      "label": "Lease 만료 감지 (3초 후)",
+      "label": "갱신 중단 후 Lease 만료 감지",
       "variant": "dashed",
-      "note": "리더의 갱신이 멈춤"
+      "note": "3초 설정은 end-to-end 복구 보장이 아님"
     },
     {
       "id": "acquire",
@@ -127,6 +133,15 @@
       "label": "라우트 테이블 업데이트 (새 ENI로 변경)",
       "variant": "emphasis",
       "note": "새로운 리더로 승격"
+    },
+    {
+      "id": "vtep-update",
+      "from": "follower",
+      "to": "vtep",
+      "y": 495,
+      "label": "이어서 endpoints 갱신",
+      "variant": "emphasis",
+      "note": "tunnelEndpoint / cidr / mac; 로컬 tunnel state는 모든 replica가 유지"
     }
   ],
   "activations": [
@@ -139,7 +154,7 @@
     {
       "participant": "follower",
       "from": 293,
-      "to": 417,
+      "to": 510,
       "type": "backend"
     }
   ]
