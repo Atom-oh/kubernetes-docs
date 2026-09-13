@@ -216,7 +216,7 @@ Este contenido de formación proporciona cuestionarios para cada tema junto con 
 0. [Descripción general de Platform Engineering](./platform-engineering/00-platform-engineering-overview.md) | [Cuestionario](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
 1. [Helm](./platform-engineering/01-helm.md) | [Cuestionario](./quizzes/platform-engineering/01-helm-quiz.md)
 2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [Cuestionario](./quizzes/platform-engineering/02-ack-quiz.md)
-3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [Cuestionario](./quizzes/platform-engineering/03-kro-quiz.md)
+3. [Kube Resource Orchestrator (kro)](./platform-engineering/03-kro.md) | [Cuestionario](./quizzes/platform-engineering/03-kro-quiz.md)
 4. [Mecanismos de extensión de Kubernetes](./platform-engineering/04-kubernetes-extensions.md) | [Cuestionario](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 5. [ExampleCorp: ejemplo de integración ACK + KRO](./platform-engineering/05-example-corp-app.md)
 6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [Cuestionario](./quizzes/platform-engineering/06-backstage-idp-quiz.md)

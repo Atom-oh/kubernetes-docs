@@ -1,101 +1,108 @@
 # 第 3 部分：Ray Train 和 Ray Tune
 
-> **支持的版本**：Ray 2.57.0
-> **最后更新**：August 20, 2026
+> **审查基线**：Ray 2.58.0 · 2026-09-12
 
 ## 实验环境设置
 
-要跟随本文档中的示例操作，您需要以下工具和环境：
+验证使用了 Python 3.12 和 `ray[train,tune]==2.58.0`。这些额外组件会安装 Ray 的 Train/Tune 依赖项；**PyTorch 等框架需单独安装**。请根据实际工作负载检查 PyTorch、CUDA 和驱动程序的配对。
 
-### 必需工具
+此处的检查涵盖配置、回调/检查点 API 以及一个小型 CPU 标量 Tune 示例。它们不是 PyTorch 训练、GPU、分布式梯度或 EKS 自动扩缩测试。
 
-* Python 3.10 或更高版本
-* `pip install "ray[train,tune]"`
-* 访问 Ray 集群（请参阅[第 2 部分：KubeRay Operator](02-kuberay-operator.md)，了解如何在 EKS 上部署集群；或者，为本文档中的示例在本地运行 `ray.init()`）
+## Ray Train V2 和训练代码职责
 
-## Ray Train：基于 Ray 原语的分布式训练
+在 2.58.0 中，当未设置 `RAY_TRAIN_V2_ENABLED` 时，V2 为默认版本。`ray.train.torch.TorchTrainer` 导入会相应地选择其 V2 实现。当环境变量选择较旧实现时，不要假定其契约完全相同。
 
-[第 1 部分](01-architecture.md)介绍了 Ray 的核心原语：任务、Actor 和对象存储。直接针对这些原语编写分布式训练作业是可行的，但这意味着需要手动编写大量样板代码：为每个 GPU 启动一个 worker 进程，设置这些 worker 用于同步梯度的通信组，以及在所有 worker 之间一致地协调 checkpoint。
+Trainer 协调 worker 和底层分布式进程组。它不会自动编写模型、优化器、损失/数据循环、数据分区或状态保存/恢复逻辑。对于 PyTorch，请使用 `prepare_model` 和 `prepare_data_loader` 等适当的辅助函数来完成设备/DDP/sampler 设置，然后验证数据重复、梯度同步和评估。框架集合通信不能全部描述为 Ray 对象存储传输。
 
-**Ray Train** 是一个构建在 Ray 任务和 Actor 原语之上的库，可处理这些样板工作。它接收一个根据熟悉的框架 API 编写的训练函数——最常见的情形是 PyTorch，不过 Ray Train 也支持其他框架——并按照您的要求在任意数量的分布式 worker 上运行该函数，而训练函数的作者无需直接管理 worker 启动、worker 间通信或 checkpoint 协调。
+## ScalingConfig 和资源需求
 
-### Ray Train V2
+`ScalingConfig` 指定 worker 数量以及每个 worker 的逻辑 CPU/GPU 资源。也支持弹性配置，因此请检查实际模式及其数据/恢复要求。在 2.58.0 V2 中，设置旧版 `trainer_resources` 会引发弃用错误。请区分 V2 controller、训练 worker 和 Tune trial-driver 资源。
 
-Ray Train 的公共 API 在项目历史中不断演进。面向用户的导入路径对于 PyTorch 训练仍然是 `ray.train.torch.TorchTrainer`，但该路径背后的实现已经被重写——这次重写（“Train V2”）整合并简化了早期一代 Trainer 类的内部工作方式，现在也是通过该导入获得的默认实现。如果您遇到一个固定在此次重写推出之前的 Ray 版本上的旧代码库，应将其视为运行在早期实现上，而不要假定它已损坏；具体细节请查阅 docs.ray.io 上的 Ray 文档，因为默认实现切换的确切版本会因 Ray 版本而变化。
+在框架进程初始化之前，放置组和 worker bundle 需要具备足够的容量。这既不能替代 Kubernetes 调度，也不能保证每个 Pod 都能原子调度。GPU 不足可能导致等待、超时或失败；Ray/KubeRay 边界、配额、镜像就绪情况以及 EC2 可用性也很重要。
 
-## Ray Train 核心概念
+## 检查点和报告
 
-### Trainer
+`Checkpoint.from_directory()` 会根据你准备的文件构建一个检查点引用。它不会自动捕获模型、优化器、RNG、调度器或数据集位置。请显式保存所需状态，然后在 worker 内加载 `train.get_checkpoint()` 返回的检查点。
 
-**Trainer**（例如 `TorchTrainer`）封装用户提供的训练函数。训练函数包含所选框架的常规模型训练逻辑：构建模型、迭代 batch、计算 loss，以及执行 optimizer step。Trainer 负责在底层框架的数据并行训练所期望的分布式进程组中为每个 worker 启动一次该函数（例如 PyTorch DDP 进程组），因此训练函数本身无需手动进行设置。
+**2.58.0 V2 的 `train.report` 调用是一个屏障，每个 worker 必须达到相同的调用次数。** 即使只有 rank 0 保存文件，其他 rank 也要以 `checkpoint=None` 参与。某些 worker 跳过报告可能导致训练停滞。指标不会在 worker 间自动求平均；请在训练代码中计算所需聚合值。
 
-### ScalingConfig
+检查点上传默认采用同步模式。若使用异步上传或验证，请检查完成状态、临时文件生命周期以及特定功能限制。当多个 worker 保存分片时，避免文件名冲突。
 
-**ScalingConfig** 告诉 Trainer 要启动多少个 worker，以及每个 worker 需要哪些资源——例如，要运行多少个 worker，以及每个 worker 是否需要 GPU。Trainer 使用此配置从底层 Ray 集群请求相应资源，方式与任何其他 Ray 任务或 Actor 相同。
+对于多个节点，请将 `train.RunConfig(storage_path=...)` 设置为所有 worker 都可访问的持久存储。本地 Pod 目录无法保证在节点/Pod 删除后仍能恢复。S3 路径仍需要 IAM、网络和保留配置。
 
-### Checkpoint
+### 故障类别和重试
 
-Ray Train worker 可以在训练期间报告 checkpoint。checkpoint 捕获足够的状态——通常是模型权重和 optimizer 状态——以便从该点恢复训练，而不是从头开始。这有两个目的：它使长时间运行的分布式训练作业能够在 worker 发生故障后恢复，而不会丢失此前的所有进度；并且它将已训练的模型交给工作流中的后续步骤，无论是后续的超参数调优决策（如下文所述），还是将结果注册为模型版本（概念上类似于本文档站点的 MLflow Model Registry 材料所涵盖的内容，尽管该材料并非 Ray 专用）。
+2.58.0 V2 的 `FailureConfig` 默认值为：训练 worker 错误的 `max_failures=0`、controller 错误的 `controller_failure_limit=-1`，以及抢占的 `max_preemption_failures=-1`。**仅设置 `max_failures=0` 并不会禁用所有重试类别。** 请将每个限制与 RayJob/运维截止时间一并配置。重试无法从缺失或不完整的检查点恢复进度。
 
-## Ray Tune：跨集群的超参数搜索
+## Ray Tune：搜索器和调度器
 
-**Ray Tune** 是一个同样构建在 Ray 之上的超参数调优库，它可在集群中并行运行许多训练 trial，并使用可插拔的搜索算法来决定接下来尝试哪些超参数组合。每个 trial 使用一组特定的超参数训练模型，并报告结果，供 Tune 的搜索算法决定下一步尝试什么。
+Tune 管理 trial 配置和执行。搜索器选择参数候选项；trial 调度器使用中间指标来停止、暂停或继续 trial。网格/随机搜索不一定会根据先前指标调整其下一个候选项。
 
-这在概念上与本文档站点的 Kubeflow 子树针对 Katib 所描述的内容相对应，但 Tune 是 Ray 生态系统原生的库，而不是基于独立 Kubernetes CRD 的系统。
+请一并审查 `max_concurrent_trials`、trial 资源、放置组和集群容量。避免 trial driver 占用嵌套 Train worker 所需的全部资源。仅 CPU/GPU 总数相加并不能保证每个 worker bundle 都能够被放置。
 
-## 结合使用 Ray Train 和 Ray Tune
+## 小型 Tune 示例
 
-Ray Tune 运行的 trial 不必是单进程函数。常见模式是向 Tune 提供一个 Ray Train `Trainer` 作为其搜索的 trainable：随后每个超参数 trial 都会成为各自的分布式 Ray Train 运行，可能跨越多个 GPU 或多个节点。
+这会运行**两个标量目标 trial**，而非模型训练。实际检查收集了两个结果，并选择 `x=3`，得分为 0。
 
-当模型的训练成本很高，以致单个 trial 本身就需要分布式训练才能在合理时间内完成时，这种组合就很重要。如果没有它，团队将面临一个棘手的选择：针对分布式训练作业串行调优超参数，或者在搜索阶段放弃分布式训练。由于两个库共享相同的底层 Ray 原语，Tune 可以驱动多个并发的 Ray Train 运行，每个运行都有各自的一组分布式 worker，而任一库都无需为另一方提供特殊集成代码。
+```python
+from pathlib import Path
+import ray
+from ray import tune
 
-```mermaid
-flowchart TB
-    Driver["Ray Tune Driver<br/>(search algorithm)"]
+def objective(config):
+    for step in range(2):
+        tune.report({"score": -(config["x"] - 3) ** 2, "step": step})
 
-    subgraph Trial1["Trial 1: Ray Train run"]
-        T1W1["Worker Actor 1"]
-        T1W2["Worker Actor 2"]
-        T1OS[("Object Store")]
-        T1W1 <--> T1OS
-        T1W2 <--> T1OS
-    end
-
-    subgraph Trial2["Trial 2: Ray Train run"]
-        T2W1["Worker Actor 1"]
-        T2W2["Worker Actor 2"]
-        T2OS[("Object Store")]
-        T2W1 <--> T2OS
-        T2W2 <--> T2OS
-    end
-
-    Driver -->|launches with hyperparameter set A| Trial1
-    Driver -->|launches with hyperparameter set B| Trial2
-    Trial1 -->|reports results/checkpoints| Driver
-    Trial2 -->|reports results/checkpoints| Driver
-    Driver -->|decides next round of trials| Driver
-
-    style Driver fill:#4fc3f7
-    style Trial1 fill:#81c784
-    style Trial2 fill:#ffb74d
+try:
+    ray.init(address="local", num_cpus=2, include_dashboard=False,
+             object_store_memory=80 * 1024 * 1024)
+    tuner = tune.Tuner(
+        tune.with_resources(objective, {"cpu": 1}),
+        param_space={"x": tune.grid_search([1, 3])},
+        tune_config=tune.TuneConfig(
+            metric="score", mode="max", max_concurrent_trials=1),
+        run_config=tune.RunConfig(
+            storage_path=str(Path(".tune-demo").resolve()),
+            name="scalar-example", verbose=0),
+    )
+    results = tuner.fit()
+    assert len(results) == 2 and not results.errors
+    best = results.get_best_result()
+    assert best.config["x"] == 3 and best.metrics["score"] == 0
+finally:
+    ray.shutdown()
 ```
 
-## 资源分配和集群自动扩缩器
+Ray 逻辑资源和对象存储大小并非整个进程的 OS 限制。在复用结果目录前，请确定你是要开始新运行还是进行恢复。
 
-Ray Train 和 Ray Tune 都通过 [第 1 部分](01-architecture.md)所述的 Ray 常规任务和 Actor 资源请求机制请求其 worker 所需的 CPU 和 GPU——不存在专门用于训练或调优的独立资源请求路径。这一点在 EKS 上很重要，因为这正是让第 2 部分所介绍的 KubeRay 管理的 autoscaler 能够响应训练或调优作业实际资源需求的机制。集群无需预先按其将要运行的最大作业进行扩容；当 Ray Tune sweep 启动更多并发 trial 时，autoscaler 可以请求更多 worker 节点，并在 trial 完成后缩减规模。
+## 当前的 Train/Tune 集成
 
-## 实用说明：EKS 上的协同调度和 GPU 节点准备时间
+**不要将直接向 `Tuner` 传递 V2 Trainer 实例描述为当前推荐路径。** 原生检查对 V2 DataParallelTrainer 实例引发了 `TuneError`。请区分较旧 BaseTrainer 的兼容性/弃用处理与 V2。
 
-构成单个 Ray Train 运行的分布式 worker 进程通常需要协同调度——它们都需要同时启动并占有所分配的 GPU，才能建立其组成的通信组，这类似于本文档站点其他分布式训练系统中讨论的 gang scheduling 需求。如果集群的 autoscaler 无法在合理时间窗口内配置所有请求的 GPU worker，训练运行可能会停滞，等待最后几个 worker 启动。
+当前文档化的模式使用**函数 trainable**，它会构建框架 Trainer 并调用 `.fit()`。通过 `train_loop_config` 传递 trial 参数，并为每个 trial 使用唯一的 Train 运行名称和存储路径。
 
-这直接关系到 GPU 节点池配置的准备时间：从节点池获取新的 GPU 容量需要时间，并且该时间通常比通用 CPU 节点更长、更难预测。本文档站点的 [Karpenter 指南](../../autoscaling/02-karpenter.md)深入介绍了节点配置机制；在规划 Ray Train/Tune 时需要理解的是，EKS 上训练作业的实际启动时间取决于集群能够多快地协同调度它请求的每一个 worker，而不只是取决于作业何时提交。
+要转发中间指标和检查点路径，请通过 Train `RunConfig(callbacks=[...])` 附加 `ray.tune.integration.ray_train.TuneReportCallback`。请在 Tune 会话内构建它。2.58.0 实现会转发第一个 worker 的指标字典，而不会求平均。它将现有检查点路径添加到指标中，而不是再次上传检查点。
 
-## 后续步骤
+对 Tuner 使用 `tune.RunConfig`，对 Trainer 使用 `train.RunConfig`。请将它们的故障、存储和回调设置分开。此集成需要显式连接和资源规划。
 
-第 3 部分介绍了 Ray Train 的 Trainer、ScalingConfig 和 checkpoint、Ray Tune 基于 trial 的超参数搜索，以及当调优 trial 本身需要分布式训练时二者如何结合。[第 4 部分：Ray Serve](04-ray-serve.md)从训练转向服务：将经过训练（以及可能经过调优）的模型置于可扩展的推理端点之后。
+![Tune trial 函数会创建独立的 Train 运行，其 worker 使用框架通信。检查点会进入共享持久存储；回调会将指标和检查点路径转发给 Tune。](../../.gitbook/assets/en-ai-ml-ray-03-ray-train-tune-0.png)
 
-[返回主页](./README.md)
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-03-ray-train-tune-0.html)
 
-## 测验
+## EKS 运维检查
 
-通过 [Ray Train 和 Ray Tune 测验](../../quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)测试您的理解。
+请分别检查 Ray 资源/放置需求、KubeRay worker-group 边界、Kubernetes Pod 放置以及物理节点供应。即使有可用容量，镜像拉取、数据集访问、框架初始化/通信和检查点权限也可能延迟启动。
+
+自动扩缩不会即时提供 GPU，也不会自动给出成本/完成时间的界限。请协调 trial 并发数、worker、最大副本数、重试类别和运维截止时间。在删除 RayJob 或集群前，验证结果/检查点是否保留。
+
+## 主要来源
+
+- [Train 概览](https://docs.ray.io/en/releases-2.58.0/train/overview.html)
+- [Train + Tune](https://docs.ray.io/en/releases-2.58.0/train/user-guides/hyperparameter-optimization.html)
+- [检查点](https://docs.ray.io/en/releases-2.58.0/train/user-guides/checkpoints.html)
+- [持久存储](https://docs.ray.io/en/releases-2.58.0/train/user-guides/persistent-storage.html)
+- [故障/抢占](https://docs.ray.io/en/releases-2.58.0/train/user-guides/fault-tolerance.html)
+- [PyTorch 准备](https://docs.ray.io/en/releases-2.58.0/train/getting-started-pytorch.html)
+- [2.58.0 report 实现](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/train/v2/api/train_fn_utils.py)
+
+[下一篇：Ray Serve](04-ray-serve.md) · [主页](README.md) · [测验](../../quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)

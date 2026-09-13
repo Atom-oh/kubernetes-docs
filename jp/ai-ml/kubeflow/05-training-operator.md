@@ -1,112 +1,92 @@
-# パート5: Kubeflow Trainer と分散トレーニング
+# パート 5: Kubeflow Trainer と分散トレーニング
 
-> **サポート対象バージョン**: Kubeflow Trainer v2.1（26.03 に同梱）から v2.3、レガシー Training Operator 1.9.2（Kubeflow Community Distribution 26.03 に同梱）
-> **最終更新**: August 19, 2026
+> **レビューのベースライン**: Trainer 2.2.0 / Community Distribution 26.03.1; 2.3.0 へのアップグレード比較を別途実施
+> **最終更新**: September 12, 2026
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例に沿って進めるには、次のツールと環境が必要です。
+互換性のある Kubernetes、Trainer controller/CRD、runtime、および JobSet などの依存関係を使用します。GPU はワークロードに依存します。CPU トレーニングも可能です。GPU ワークロードには、追加で driver、device plugin、node capacity、networking が必要です。ここでの検証は Helm のレンダリングと schema の確認であり、トレーニングの実行ではありません。
 
-### 必要なツール
+## フレームワーク固有の Operator から統一 API へ
 
-* kubectl v1.34 以降
-* GPU 対応ノードプールを持つ稼働中の Amazon EKS クラスター（[Karpenter](../../autoscaling/02-karpenter.md) および以下で参照する GPU ノードスケジューリングの資料を参照。このドキュメントではそのセットアップを再説明しません）
-* Community Distribution を通じてインストールされた Kubeflow、またはスタンドアロンでインストールされた Kubeflow Trainer
+Kubernetes 上の分散トレーニングは Kubeflow project 内で実際のアーキテクチャ上の転換を経験しており、これは YAML を扱う前に理解すべき最も重要な点です。
 
-## フレームワーク固有の Operator から統合 API へ
+### 当初の Training Operator (v1)
 
-Kubernetes 上の分散トレーニングは、Kubeflow プロジェクト内で実際にアーキテクチャ上の大きな変化を遂げています。YAML に触れる前に、これを理解することが最も重要です。
+Kubeflow が 2021 年に統合した Training Operator は、**フレームワーク固有の CRD** アプローチを採用していました。サポートする各 ML framework には固有の Custom Resource Definition があり、それぞれの controller が、その framework に固有の分散トレーニングの semantics を実装していました。
 
-### 元の Training Operator（v1）
+* **`PyTorchJob`** — controller は PyTorch の分散 launch 規則を理解し、`torch.distributed` が process group を形成できるよう、各 worker Pod に `MASTER_ADDR`、`RANK`、`WORLD_SIZE` などの environment variable を注入しました。
+* **`TFJob`** — controller は代わりに、TensorFlow の distribution strategy が期待する `TF_CONFIG` environment variable（cluster の task role — chief、worker、parameter server — を記述する JSON blob）を構築しました。
+* **`MPIJob`** — controller は Pod をまたいだ MPI job の起動を処理し、一連の worker Pod に対して `mpirun` スタイルの launcher を調整しました。
 
-Kubeflow が 2021 年に統合した Training Operator は、**フレームワーク固有の CRD** アプローチを採用していました。サポート対象の各 ML フレームワークには、それぞれ独自の Custom Resource Definition があり、各フレームワーク固有の分散トレーニングのセマンティクスを実装する独自の controller がありました。
-
-* **`PyTorchJob`** — controller は PyTorch の分散起動規約を理解し、各 worker Pod に `MASTER_ADDR`、`RANK`、`WORLD_SIZE` などの環境変数を注入して、`torch.distributed` がプロセスグループを形成できるようにしました。
-* **`TFJob`** — controller は代わりに、TensorFlow の分散ストラテジーが期待する `TF_CONFIG` 環境変数（クラスターのタスクロール — chief、worker、parameter server — を記述する JSON blob）を構築しました。
-* **`MPIJob`** — controller は Pod をまたいだ MPI job の起動を処理し、worker Pod 群に対して `mpirun` スタイルの launcher を調整しました。
-
-これら 3 つ以外にも、v1 Training Operator は少数の他のフレームワーク向け CRD を提供していました。各 CRD は、「worker が互いを見つけ、ロールについて合意する方法」というフレームワークごとの考え方を個別の controller に直接エンコードしていたため、新しいフレームワークの追加は既存の基盤を再利用するのではなく、まったく新しい controller を作成することを意味していました。
+この 3 つに加えて、v1 Training Operator には他のいくつかの framework 向けの CRD も含まれていました。各 CRD は、「worker が互いを発見し、role に合意する方法」という framework ごとの考え方を個別の controller に直接エンコードしていたため、framework の追加には integration が必要でした。一方で、共有の Job-controller 基盤は引き続き再利用できました。
 
 ### Kubeflow Trainer v2 への移行
 
-Kubeflow Trainer v2 は、フレームワークごとに 1 つの CRD ではなく、2 つの概念を中心に構築された単一の統合 API でこれを置き換えます。
+Kubeflow Trainer v2 は、framework ごとに 1 つの CRD を用意するのではなく、次の 2 つの概念を中心とする単一の統一 API に置き換えます。
 
-* **`TrainJob`** — *何を* 実行するかを記述します。トレーニングスクリプト/entrypoint、引数、リソース数（例: worker 数）、およびそれを実行する runtime への参照です。これは、ML 実務者が個別のトレーニング実行のために作成するオブジェクトです。
-* **`TrainingRuntime` / `ClusterTrainingRuntime`** — *どのように* 実行するかを記述します。コンテナイメージ、分散起動メカニズム（worker が互いを検出する方法、使用する環境変数または launcher プロセス）、デフォルトのリソース構成をカバーする、再利用可能でフレームワーク固有の実行テンプレートです。プラットフォームチームは、たとえば PyTorch DDP runtime や MPI runtime など、少数のこれらを一度定義し、多くの異なる `TrainJob` が多くのトレーニング実行にわたって同じ runtime を参照します。
+* **`TrainJob`** — 実行する*内容*を記述します。トレーニング script/entrypoint、argument、resource 数（例: worker 数）、およびそれを実行すべき runtime への参照です。これは ML practitioner が個別のトレーニング実行のために作成する object です。
+* **`TrainingRuntime` / `ClusterTrainingRuntime`** — 実行する*方法*を記述します。container image、分散 launch の仕組み（worker が互いを発見する方法、使用する env var または launcher process）、デフォルトの resource shape を含む、再利用可能で framework 固有の実行 template です。platform team は PyTorch DDP runtime や MPI runtime など、これらの小さなセットを一度定義します。その後、多くの異なる `TrainJob` が、多数のトレーニング実行で同じ runtime を参照します。
 
-これは Kubernetes の他の場所で見られるパターンを反映しています。再利用可能な「テンプレート」リソースとそれを利用する「インスタンス」を分離するもので、`StorageClass` が多くの `PersistentVolumeClaim` から参照される再利用可能なテンプレートであることと精神的に似ています。実用上の利点は、プラットフォームチームが難しい分散起動メカニズムを 1 か所（runtime）で管理し、バージョン管理できる点です。一方で job を送信する ML 実務者は、スクリプトを指定して名前で runtime を要求するだけで済み、rank の割り当てやアドレス検出が内部で実際にどのように行われるかを知る必要も気にする必要もありません。
+これは Kubernetes の他の場所にも見られるパターンを反映しています。再利用可能な「template」resource と、それを利用する「instance」を分離するもので、多数の `PersistentVolumeClaim` が参照する再利用可能な template である `StorageClass` と似た考え方です。実用上の利点は、platform team が複雑な分散 launch の仕組みを 1 か所（runtime）で所有・version 管理できる一方、job を送信する ML practitioner は script を指定し、名前で runtime を要求するだけでよいことです。runtime は繰り返しの設定を減らしますが、トレーニング code は引き続き、互換性のある分散 initialization、data sharding、checkpointing、recovery を処理する必要があります。
 
-[release notes](https://github.com/kubeflow/trainer/releases) によると、**Kubeflow Trainer v2.2**（2026 年 3 月頃にリリースされ、Kubeflow Community Distribution の 26.03.1 パッチから同梱されるバージョン。26.03 自体には v2.1.0 が同梱されます）は、次の機能によってこれを拡張しています。
+### 2.2.0 と 2.3.0 の違い
 
-* 既存の PyTorch サポートに加え、ファーストクラスの **JAX** および **XGBoost** トレーニング runtime を提供します。これにより、これらのフレームワークの分散トレーニングも、独自の CRD ではなく同じ `TrainJob`/runtime 分割を通じて実行されるようになりました。
-* 強化された **observability**: トレーニングの進行状況とメトリクスを、トレーニングスクリプト自体から `TrainJob` の status へ伝播できます。これにより、実行の進捗を確認するために operator がログや別のメトリクス backend を調べる必要がなくなります。
-* **Flux Framework integration**: MPI スタイルのワークロード向けに HPC スタイルの job launcher を Trainer エコシステムへ導入します。より単純な `mpirun` 起動ではなく、Flux のスケジューリングおよびプロセス起動モデルの恩恵を受ける、密結合で HPC 指向の分散 job に役立ちます。
+[Trainer 2.2.0](https://github.com/kubeflow/trainer/releases/tag/v2.2.0) は 2026 年 3 月 20 日にリリースされ、26.03.1 にバンドルされています。JAX/XGBoost runtime と Flux policy/integration が追加されていますが、機能が含まれることは、すべての image、network、accelerator 構成との互換性を証明するものではありません。
 
-### 移行は実際に進んでいますが、完了していません
+2.2.0 では `PodTemplateOverrides` が `RuntimePatches` に置き換えられ、Torch policy から `numProcPerNode` が削除され、`ElasticPolicy` も削除されました。runtime の Torch policy と実行ごとの `trainer.numProcPerNode` を混同しないでください。以前の 2.x manifest でも移行が必要になる場合があります。
 
-エコシステムの現状を過大評価しないことが重要です。**Kubeflow Community Distribution 26.03** には、そのリリース時点でなお **レガシー Training Operator 1.9.2** — v1 のフレームワーク固有 CRD の operator — が同梱されています。Kubeflow Trainer v2 とレガシー Training Operator は現在エコシステム内で共存しており、あるチームの job を `PyTorchJob`/`TFJob`/`MPIJob` manifest から `TrainJob` + runtime へ移行することは、すでに特定のクラスターで完了していると想定できる切り替えではなく、多くのチームがまだ途中段階にある**現在進行中の移行**です。
+`status.trainerStatus` の runtime progress/metrics には、**alpha TrainJobStatus feature gate（デフォルトでは無効）**が必要です。トレーニング code は、機能する TLS/projected ServiceAccount-token access で status server に report する必要があります。注入される token/CA environment value は secret の内容ではなく file path です。log を出力するだけでは、status metrics は自動的に設定されません。
 
-実際の移行を計画している場合、このドキュメントを移行ガイドとして扱わないでください。権威あるフィールド単位のリファレンスは、[kubeflow.org](https://www.kubeflow.org/docs/components/trainer/operator-guides/migration/) の **"Migrating to Kubeflow Trainer v2"** です。そのガイドでは、各 v1 CRD のフィールドを `TrainJob` とデフォルト runtime に対応付ける具体的なマッピングを扱っています。これをここで網羅的に繰り返すことは対象範囲外です。
+2026 年 8 月 7 日にリリースされた [2.3.0](https://github.com/kubeflow/trainer/releases/tag/v2.3.0) は、runtime finalizer/snapshot と Helm CRD の配置を変更します。release note では、2.0/2.1/2.2 の installation は、以降の version に進む前に 2.3 を経由する必要があるとされています。アップグレード前に CRD の Helm ownership と release 固有の移行を確認してください。既存の CRD の削除は通常のアップグレード修正ではありません。
 
-すでに Trainer v2 を実行している方への別の注意点として、**Trainer v2.3.0**（2026 年 8 月リリース）は、このドキュメントで説明する runtime CRD に対する破壊的変更を伴って v2.2 の後にリリースされました。Runtime Finalizer は削除され、CRD は Helm chart の template directory に移動しました。また、このバージョンの [release notes](https://github.com/kubeflow/trainer/releases) では、v2.0/v2.1/v2.2 のクラスターはさらにアップグレードする前に v2.3 へアップグレードする必要があると明記されています。すでに Trainer v2 を実行しているクラスターをアップグレードする前に、このガイダンスを直接確認してください。
+公開されている OCI chart も異なります。2.2 は 8 つの default runtime を直接レンダリングしますが、2.3 はそれらを post-install/post-upgrade installer Job によって適用される runtimes.yaml ConfigMap にパッケージ化します。2.3 hook は実行時に kubectl を install し、server-side で resource を force-apply し、その management label により prune します。pre-delete hook も存在します。GitOps の hook 処理、network access、runtime ownership を確認してください。このレビューでは hook を実行せずにレンダリングしました。
 
-## TrainJob の概念的な構成
+### レガシー API の移行
 
-概念的なレベルでは（このドキュメントで検証していない正確なフィールド名を作り出すことなく）、たとえば PyTorch の分散データ並列（DDP）実行用の `TrainJob` は、責務をおおよそ次のように分割します。
+26.03.1 には Trainer 2.2.0 と legacy Training Operator 1.9.2 が含まれています。それらが共存していることは、どの team の移行進捗も示しません。PyTorchJob/TFJob/MPIJob と TrainJob は異なる API であり、自動的には変換されません。
 
-* プラットフォームチームが一度作成する **`ClusterTrainingRuntime`**。トレーニングコンテナイメージ（またはベースイメージの要件）、デフォルトの worker replica 数、PyTorch DDP の分散起動メカニズム（worker が rendezvous address を検出し、rank/world size に合意する方法）をまとめます。
-* トレーニング実行ごとに作成される **`TrainJob`**。その名前で `ClusterTrainingRuntime` を参照し、実行固有の要素、すなわち実行する実際のトレーニングスクリプトまたはコマンド、スクリプト引数（学習率、dataset path、epoch 数など）、およびこの実行に必要な worker 数を指定します。
+[pinned official migration document](https://github.com/kubeflow/trainer/blob/v2.3.0/docs/operator-guides/migration.md) は、PyTorchJob から default Torch runtime への例と SDK の方向性を提供しますが、すべての framework/field に対応する網羅的な mapping ではありません。各ワークロードについて replica role、launch command、environment、retry、storage、scheduling/networking、checkpoint recovery を比較してください。
 
-`TrainJob` は意図的に「薄い」オブジェクトです。分散協調が*どのように*行われるかに関する複雑さのほとんどは、個々の job manifest ではなく runtime にあります。これにより runtime は多くのトレーニング実行で再利用可能になり、通常は個々のデータサイエンティストではなくプラットフォームチームが runtime 定義を所有して堅牢化する理由となります。
+## TrainJob と Runtime の責務
+
+`TrainingRuntime` は namespaced であり、`ClusterTrainingRuntime` は cluster-scoped です。どちらも実行 template と ML policy を含みます。`TrainJob.runtimeRef` は kind/name を選択し、trainer field では command/argument、training Pod 数、Pod ごとの resource を設定できます。permission と許可する override は別途管理する必要があります。
+
+デフォルトの `torch-distributed` runtime には `mlPolicy.numNodes: 1`、`torch: {}`、および JobSet template があります。2.2.0 では `pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime` を参照します。image/runtime の revision を記録し、architecture、driver、communication library を確認してください。このレビューでは image を実行せず、model のトレーニングも行っていません。
+
+ここでの numNodes はトレーニング Pod 数を表し、EC2 instance 数と 1 対 1 には対応しません。process 数、Pod ごとの GPU 数、複数の Pod の placement は個別に計算してください。
 
 ## Kubernetes 上の分散トレーニングの仕組み
 
-どのフレームワークの runtime が使われているかに関係なく、Kubernetes 上のマルチ worker 分散トレーニングは、一般に同じいくつかのプリミティブを通じて協調します。
+JobSet と runtime は Job/Pod を構成し、Service/DNS と rank/rendezvous 構成を用いて process discovery を行います。headless Service だけでは process state や IP は維持されません。stable Pod naming、hostname/subdomain、network condition も依然として重要です。
 
-* worker Pod の前に置かれる **headless Service**。これにより、再スケジュール時に変わり得る Pod IP に依存せず、各 worker が他の worker の安定して解決可能な DNS 名を得られます。
-* 各 worker にその rank、総 worker 数、および rendezvous/coordinator として動作する worker のアドレスを伝える **注入された環境変数**（または同等の config file/init ステップ）。これは PyTorch では `MASTER_ADDR`/`RANK`/`WORLD_SIZE`、TensorFlow では `TF_CONFIG` が担っていたメカニズムであり、Trainer v2 では runtime 抽象化のもとで一般化されています。
-* **Gang scheduling の考慮事項**: 分散トレーニング job は一般に、トレーニングを開始する前に*すべての* worker がスケジュールされ実行中になる必要があります。worker の半分だけがスケジュールされ、残りを無期限に待つ job は GPU 容量を無駄にし、deadlock する可能性があります。これが、分散トレーニング controller が各 Pod を独立してスケジュールする Kubernetes のデフォルト動作ではなく、job の Pod をグループ化して scheduler が全か無かの単位として扱う gang-scheduling プリミティブに一般的に依存する（または統合する）理由です。
+**Trainer を install しても、gang scheduling が自動的に有効になるわけではありません。** 2.2.0 の default Torch runtime には podGroupPolicy がありません。これらの PodGroup path に対応する Coscheduling/Volcano policy、CRD、scheduler integration は install/configure する必要があります。Kueue admission も実際の Pod scheduling とは別のものです。
 
-特に EKS では、これは GPU ノードプールのプロビジョニングとスケーリングの方法に直接関係します。たとえば 8 個の GPU worker を必要とする分散 job には、autoscaler によって 1 つずつ追加されるのではなく、8 個の GPU 対応ノード（または slot）が同時に利用可能である必要があります。GPU ノードプールのサイジングとスケーリングの仕組み（Karpenter NodePool、instance type の選択、GPU の binpacking）は、ここで再説明するのではなく、このサイトの autoscaling および GPU スケジューリング資料で扱っています。このドキュメントで要点として押さえるべきなのは、すべての worker を同時にスケジュールできないトレーニング job は、`TrainJob`/runtime の設定がどれほど正しくても停止してしまうため、gang-scheduling の要件と GPU ノードプールの弾力性を一緒に設計する必要があるということです。
+固定サイズの synchronous training では、通信に必要なすべての process が ready である必要がありますが、node が同時に作成される必要はありません。順次 provisioning でも rendezvous timeout 内に成功する可能性があり、サポートされる elastic workload には異なる rule があります。gang admission は部分的な allocation を減らしますが、すべての EC2 shortage や application deadlock を解決することはできません。[Karpenter](../../autoscaling/02-karpenter.md) capacity を JobSet、scheduler、framework の timeout/retry と調整してください。
 
-```mermaid
-flowchart TD
-    TJ[TrainJob<br/>script, args, worker count]
-    RT[ClusterTrainingRuntime<br/>image, launch mechanics]
-    C[Trainer Controller]
-    JS[JobSet / PodGroup<br/>gang-scheduled worker Pods]
-    SVC[Headless Service]
-    W1[Worker Pod 0<br/>RANK=0]
-    W2[Worker Pod 1<br/>RANK=1]
-    W3[Worker Pod N<br/>RANK=N]
-    ST[TrainJob.status<br/>progress, metrics, completion]
+![Trainer は TrainJob と runtime を JobSet に構成し、任意の PodGroup scheduling と opt-in runtime-status reporting を別個に示しています。](../../.gitbook/assets/en-ai-ml-kubeflow-05-training-operator-0.png)
 
-    TJ -->|references| RT
-    TJ -->|watched by| C
-    RT -->|watched by| C
-    C -->|creates| JS
-    JS --> W1
-    JS --> W2
-    JS --> W3
-    W1 <-->|discover peers via| SVC
-    W2 <-->|discover peers via| SVC
-    W3 <-->|discover peers via| SVC
-    W1 -->|progress/metrics| C
-    W2 -->|progress/metrics| C
-    W3 -->|progress/metrics| C
-    C -->|reports status| ST
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-05-training-operator-0.html)
 
 ## クロスリファレンス: Katib と TrainJob
 
-このシリーズのパート 4 では、Kubeflow のハイパーパラメータチューニングコンポーネントである Katib を扱います。experiment 内の各 Katib Trial では、1 つのハイパーパラメータの組み合わせを実際に実行するための基盤となるトレーニング job が必要です。Trainer v2 ベースのセットアップでは、その基盤 job は通常、Katib により Trial ごとにテンプレート化される `TrainJob` であり、各 Trial が選択したハイパーパラメータ値がスクリプト引数として注入されます。上記で説明した runtime/job の分割はここにも適用されます。Katib は分散起動メカニズムについて何も知る必要はなく、プラットフォームチームがすでに定義した runtime に対して Trial ごとに `TrainJob` を生成し、報告されたメトリクスを読み戻して次にどこを探索するかを判断するだけです。
+Katib 0.19.0 は、構成された Trial template で TrainJob を使用できます。trialResources の登録、runtime、success/failure condition、primary Pod/container、metric collection を一致させてください。Katib の metrics reporting は、Trainer の opt-in status server とは別です。成功した TrainJob が model を KServe に自動的に deploy することはありません。
+
+## 検証とソース
+
+公式 OCI Trainer Helm chart 2.2.0 および 2.3.0 を取得し、default runtime を有効にしてレンダリングしました。CRD/runtime schema を確認しました。API admission/CEL、実際の upgrade、JobSet 作成、分散/GPU トレーニング、status-server reporting は実行していません。
+
+- [2.2.0 TrainJob API](https://github.com/kubeflow/trainer/blob/v2.2.0/pkg/apis/trainer/v1alpha1/trainjob_types.go)
+- [TrainJobStatus のデフォルト feature gate](https://github.com/kubeflow/trainer/blob/v2.2.0/pkg/features/features.go)
+- [条件付き Coscheduling PodGroup 作成](https://github.com/kubeflow/trainer/blob/v2.2.0/pkg/runtime/framework/plugins/coscheduling/coscheduling.go)
+- [デフォルト Torch runtime](https://github.com/kubeflow/trainer/blob/v2.2.0/manifests/base/runtimes/torch_distributed.yaml)
 
 ## 次のステップ
 
-フレームワーク固有の CRD から統合された `TrainJob`/runtime モデルへの移行を踏まえ、[パート 6: KServe — Kubernetes 上のモデルサービング](./06-kserve.md) では、`TrainJob` によるトレーニングが完了したモデルがどうなるか、すなわち推論のために提供する方法を扱います。
+フレームワーク固有の CRD から統一された `TrainJob`/runtime model への移行を踏まえ、[パート 6: KServe — Kubernetes 上の Model Serving](./06-kserve.md) では、`TrainJob` によるトレーニングが完了した model に何が起こるか、すなわち inference のために serving する方法を取り上げます。
 
 [メインページに戻る](./README.md)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[トピッククイズ](../../quizzes/ai-ml/kubeflow/05-training-operator-quiz.md) に挑戦してください。
+この章で学んだ内容を確認するには、[トピッククイズ](../../quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)に挑戦してください。

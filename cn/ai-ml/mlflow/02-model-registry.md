@@ -1,102 +1,106 @@
 # 第 2 部分：MLflow 模型注册表
 
-> **支持的版本**：MLflow 3.15.1
-> **最后更新**：August 19, 2026
+> **审查基线**：MLflow 3.16.0 · 2026-09-12
 
 ## 实验环境设置
 
-要跟随本文档中的示例操作，您需要以下工具和环境：
-
-### 所需工具和资源
-- Python 3.10 或更高版本
-- `pip install mlflow`
-- 可访问具有注册表访问权限的正在运行的 MLflow Tracking Server（有关如何搭建，请参阅[第 1 部分：MLflow Tracking](01-tracking.md)；有关集群托管的 Server，请参阅[第 3 部分：在 EKS 上部署 MLflow](03-eks-deployment.md)）
+使用 Python 3.10 或更高版本以及 `mlflow==3.16.0`。注册表 API 也可与本地 SQLite 配合使用；不强制要求单独的 HTTP 服务器。有关团队部署，请参阅[第 3 部分](03-eks-deployment.md)；有关 Tracking 设置，请参阅[第 1 部分](01-tracking.md)。本章介绍开源版（OSS）MLflow。Databricks Unity Catalog 等托管注册表可能具有不同的权限、复制和保留行为。
 
 ## 什么是模型注册表
 
-[第 1 部分](01-tracking.md)介绍了 Tracking：针对 Runs 和 Experiments 记录参数、指标、工件和 `LoggedModel` 实体。Run 是一次训练尝试的记录。它并不适合作为“我们交付的模型”的标识，因为 Run 的身份与其发生的时间和方式相关，而不是与其业务含义相关。
-
-模型注册表通过引入**已注册模型（Registered Models）**解决了这个问题：它们是由模型版本组成的具有名称和版本控制的集合，为模型提供独立于任一单独训练运行或实验的稳定身份。团队无需询问“哪个 Run 产生了当前处于生产环境的模型”，而可以询问“`fraud-detector` 现在是什么”，无论之后运行了多少实验，都能得到一致的答案。
-
-注册表用于管理模型从开发到生产的生命周期：注册、审查、晋升以及最终退役，全部通过一个持久名称进行跟踪。
+注册表管理逻辑模型名称、编号版本、别名和元数据。记录候选模型、批准晋升以及部署端点是彼此独立的操作。拥有注册表并不会自动实现批准或服务行为。
 
 ## 核心概念
 
-### 已注册模型
-
-已注册模型是一个名称，例如 `fraud-detector`。它是注册表中的顶级实体。在模型的整个生命周期内，附加到模型的所有版本、别名、标签和描述都会累积在这一个名称下。
+| 实体 | 含义和变更边界 |
+|---|---|
+| 注册模型 | 位于逻辑名称下的版本集合，例如 `fraud-detector` |
+| 模型版本 | 包含源信息的编号记录；描述、标签、阶段/别名关系可以更改 |
+| 别名 | 指向一个版本的可变名称；多个别名可以指向同一版本 |
+| LoggedModel | 独立的 Tracking 模型实体；不同于注册模型和模型版本 |
 
 ### 模型版本
 
-模型版本是以已注册模型名称（`fraud-detector` 版本 1、版本 2 等）注册的不可变编号版本。每个版本只创建一次，之后永不更改；新的训练结果会成为一个新版本，而不是对旧版本的编辑。
+新的模型结果通常应成为新版本。但是，**并非每个版本字段和工件字节都是不可变的**。`update_model_version` 会更改描述；版本标签同样可变。拥有写入权限的人员可以更改外部 `source` URI 中的文件。注册表版本号并不强制对象不可变性或内容哈希。
 
-每个模型版本都指向其来源的底层 `LoggedModel`（或产生它的 Run）。这将注册表重新连接到 Tracking：版本是指向 Run 历史中特定时间点的指针，而不是已经偏离其来源的副本。
+`run_id` 和 `model_id` 在 `create_model_version` 中是可选的。从直接源 URI 注册时可以没有训练运行链接。注册是指针、复制工件，还是使用其他存储位置，取决于注册表后端和操作；请验证实际行为。
 
 ### 别名
 
-别名是指向特定模型版本的可变命名指针，例如 `champion` 或 `challenger`。与版本号不同，别名可以移动：今天 `champion` 可能指向版本 4，成功评估后，团队可以将其重新指向版本 7，而无需改动任何使用该别名的内容。
+`models:/fraud-detector@champion` 会在**解析/加载发生时**找到该别名对应的版本。`models:/fraud-detector/7` 是显式版本引用。移动别名不会自动替换已加载到内存或缓存中的模型。请分别实现服务控制器的部署、重新加载和缓存策略，并记录实际为请求提供服务的版本。
 
-别名是目前在注册表中表示模型角色或生命周期阶段的主要机制。服务系统或下游作业可以一次性编写为解析 `models:/fraud-detector@champion`，它始终会加载当前持有该别名的版本；当底层版本变化时，无需修改代码。
+`champion` 和 `challenger` 是由团队定义的名称。它们不会配置实时/影子流量百分比，也不会自行运行评估。别名更新并不能证明已获得质量或安全批准。
 
-### 旧版阶段模型（仅供参考）
+### 旧版阶段模型
 
-较旧的 MLflow 部署使用不同的机制：每个模型版本都带有一个**阶段（stage）**，即 `Staging`、`Production` 或 `Archived` 之一；推进模型意味着转换其阶段。该模型已被别名与标签的组合取代，它们更加灵活，因为一个版本可以拥有多个别名（或没有别名），并且别名名称不受固定生命周期标签集合的限制。新工作应使用别名和标签，而非阶段。遇到使用阶段转换的旧版 MLflow 部署的读者，看到的正是这种旧版方法。
+旧版阶段包括 `None`、`Staging`、`Production` 和 `Archived`。`transition_model_version_stage` 自 2.9.0 起已被**弃用**，并且仍存在于 3.16.0 API 中。不要将其描述为已从所有当前版本中移除。新工作流可以将别名和标签与环境特定的注册模型以及显式权限相结合。阶段名称或标签不是访问控制。
 
 ## 注册模型
 
-模型版本可通过两种方式之一创建，两者都基于第 1 部分涵盖的内容。
+记录实际风味模型后，调用 `mlflow.register_model(model_uri, name)`，或者将 `registered_model_name` 传递给该风味的 `log_model` 调用。更底层的 `MlflowClient.create_model_version` API 可以直接指定源。注册和别名重新分配是独立操作。
 
-**记录后注册。** 训练 Run 将模型作为工件（或根据第 1 部分作为 `LoggedModel`）记录后，可以通过调用 `mlflow.register_model(model_uri, name)` 单独注册，其中 `model_uri` 指向已记录的模型，`name` 是要在其下注册模型的已注册模型。当注册模型的决定与训练步骤本身分离时，这种方式非常适合——例如，一个审查步骤只注册满足评估阈值的模型。
+此**注册表元数据练习**不会创建可进行推理的模型。它已使用 Python 3.12、MLflow 3.16.0 和 SQLite 验证。
 
-**记录时注册。** 或者，特定 flavor 的 `log_model` 调用上的 `registered_model_name` 参数（例如 `mlflow.sklearn.log_model(..., registered_model_name="fraud-detector")`）会在记录模型的同一调用中，将模型注册为新的模型版本。当给定训练脚本的每次运行都应自动产生候选版本时，这种方式非常适合。
+```python
+from pathlib import Path
+import mlflow
+from mlflow import MlflowClient
 
-任一路径都会在指定的已注册模型下创建新的不可变模型版本。两条路径都不会移动别名——这是下文所述的一项独立且有意的操作。
+root = Path(".registry-demo").resolve()
+root.mkdir(exist_ok=True)
+mlflow.set_tracking_uri(f"sqlite:///{root / 'registry.db'}")
+client = MlflowClient()
+name = "registry-contract-demo"
+# Run once in a fresh demo DB. Inspect the existing name before repeating.
+client.create_registered_model(name)
+versions = []
+for number in (1, 2):
+    source = root / f"candidate-{number}"
+    source.mkdir(exist_ok=True)
+    (source / "metadata.json").write_text('{"fixture": true}')
+    versions.append(client.create_model_version(name, source=source.as_uri()))
+
+first, second = versions
+assert first.run_id is None
+client.update_model_version(name, first.version, description="metadata fixture")
+client.set_model_version_tag(name, first.version, "review_state", "demo-only")
+client.set_registered_model_alias(name, "champion", first.version)
+snapshot = client.get_model_version_by_alias(name, "champion")
+client.set_registered_model_alias(name, "champion", second.version)
+assert snapshot.version == first.version
+assert client.get_model_version_by_alias(name, "champion").version == second.version
+```
+
+`READY` 是注册状态。如上所示，没有模型风味或权重的元数据固定装置也可以注册；请单独测试推理兼容性和评估标准。该练习会将其本地数据库和固定装置保留在 `.registry-demo` 中。
 
 ## 治理与交接工作流
 
-注册表的主要组织价值在于，它是两项不同关注点之间的交接点：生成候选模型，以及决定哪个候选模型足够可信、可以提供服务。
+1. 记录实际源工件、模型/代码/数据哈希、依赖项以及运行/模型引用。
+2. 评估质量、安全性和业务标准；保留批准证据。
+3. 授权主体调用 `set_registered_model_alias`。完成训练并不等于自动批准。
+4. 服务系统解析新引用并执行重新加载或部署。在需要可复现性和回滚时，固定版本号和工件哈希。
 
-典型工作流如下：
+将候选模型创建与晋升分离需要身份验证、授权和运行管道。仅有 `review_state=approved` 这样的标签并不会限制写入权限，也无法使批准证据防篡改。请协调来自多个部署作业的并发别名更新。
 
-1. 数据科学团队训练模型，并使用上述任一注册路径，将每个有前景的结果注册为共享已注册模型名称下的新模型版本。
-2. 评估或审批流程——可在 CI/CD 中自动执行、手动执行，或两者兼有——根据测试数据、公平性检查或业务指标审查候选版本。
-3. 只有版本通过这些关卡后，才会有某个操作将 `champion` 别名移动为指向它；通常通过自动化流水线中的客户端 API（`set_registered_model_alias`）完成，而非手动操作。
-4. 本部分不涵盖的服务基础设施会一次性编写为解析 `models:/fraud-detector@champion`，且永远无需硬编码版本号。当 `champion` 移动时，下一次解析会直接获取新版本。
+![消费者将 champion 和 challenger 别名解析为模型版本引用。别名解析不会路由流量，也不会自动替换已经加载的模型。](../../.gitbook/assets/en-ai-ml-mlflow-02-model-registry-0.png)
 
-这种分离意味着生成候选模型的人员或系统永远无需直接控制生产环境中提供服务的内容，而使用模型的系统也永远无需手动跟踪版本号。`challenger` 别名通常与 `champion` 一同使用，用于标记正在评估以便晋升的版本，而不会干扰当前正在提供服务的内容。
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-02-model-registry-0.html)
 
-```mermaid
-flowchart LR
-    subgraph Registry["Registered Model: fraud-detector"]
-        V1[Version 1]
-        V2[Version 2]
-        V3[Version 3]
-        V4[Version 4]
-    end
+## 血缘与可复现性
 
-    CH((champion alias)) -.-> V2
-    CG((challenger alias)) -.-> V4
+血缘的完整性仅取决于所记录和保留的信息。注册表无法在事后重建缺失的 `run_id`、`model_id`、代码修订或数据集哈希。已更改的源文件、已删除的运行/模型版本以及工件清理也会留下不完整的链接。
 
-    S[Serving system] -->|resolves models:/fraud-detector@champion| CH
-    S -.->|evaluates via models:/fraud-detector@challenger| CG
-
-    style CH fill:#81c784
-    style CG fill:#fff176
-    style S fill:#4fc3f7
-```
-
-## 谱系与可复现性
-
-由于每个模型版本都保留了指向产生它的 Run 的链接（并通过该 Run 链接到第 1 部分中的参数、代码和数据集引用），团队始终可以回答这样的审计问题：“哪段确切的代码和哪些数据生成了当前作为 `champion` 提供服务的模型？”链路为：别名、模型版本、Run、该 Run 记录的参数和工件。
-
-模型版本还支持自己的标签和描述，独立于底层 Run 的标签。这对于记录注册表特有的上下文非常有用——例如，谁批准了某个版本的晋升，或证明移动别名合理的评估报告链接——而不会将该信息混入训练 Run 自己的元数据中。
+审计需要实际提供服务的版本/模型 ID、工件哈希和位置、源提交、数据集快照、依赖项，以及评估/批准记录。请共同维护元数据数据库和工件存储的备份与保留策略。别名不是所有更改的永久审计日志。
 
 ## 后续步骤
 
-第 2 部分介绍了注册表本身：已注册模型、模型版本、作为当前生命周期机制的别名，以及注册如何重新连接到[第 1 部分：MLflow Tracking](01-tracking.md)。将已注册模型加载到实际推理端点是另一个关注点，不在本系列的范围内——[第 3 部分：在 EKS 上部署 MLflow](03-eks-deployment.md)则介绍了设置 Tracking 和模型注册表都依赖的 Tracking Server 与后备存储。
+[第 3 部分：EKS 部署](03-eks-deployment.md)介绍服务器、数据库和工件权限边界。
 
-[返回主页面](./README.md)
+## 主要来源
 
-## 测验
+- [模型注册表](https://mlflow.org/docs/3.16.0/ml/model-registry/)
+- [3.16.0 注册表客户端 API](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/tracking/client.py)
+- [ModelVersion 字段](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/entities/model_registry/model_version.py)
+- [OSS SQL 注册表实现](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/store/model_registry/sqlalchemy_store.py)
 
-通过[模型注册表测验](../../quizzes/ai-ml/mlflow/02-model-registry-quiz.md)测试您的理解。
+[主页](README.md) · [测验](../../quizzes/ai-ml/mlflow/02-model-registry-quiz.md)

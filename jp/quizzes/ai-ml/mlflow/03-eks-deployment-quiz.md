@@ -1,165 +1,135 @@
-# EKS での MLflow デプロイメントクイズ
-
-このクイズでは、EKS 上の MLflow Tracking Server アーキテクチャ（backend store、artifact store、IAM アクセスパターン、Tracking Server をチーム共有サービスとして運用する際の考慮事項）に関する理解を確認します。
+# MLflow EKS デプロイメントクイズ
 
 ## 選択式問題
 
-1. SageMaker の MLflow 互換 Tracking 機能のようなマネージド代替手段ではなく、EKS で MLflow Tracking Server をセルフホストする場合の主なトレードオフは何ですか？
-   - A) チームの規模にかかわらず、セルフホストは常により安価である
-   - B) すでに EKS を利用しているチームは既存のデプロイメント、observability、IAM パターンを再利用できる一方で、Tracking Server、backend store、artifact store を自ら運用する必要がある
-   - C) マネージド代替手段では metrics や parameters をまったくログに記録できない
-   - D) トレードオフはない。2 つの選択肢は機能的に同一である
+1. EKS セルフホスティングにおける主なトレードオフは何ですか？
+   - A) マネージドサービスより常に低コストである
+   - B) サーバー、ストア、アクセス制御を運用しながら Kubernetes パターンを再利用する
+   - C) マネージドサービスでは実験を追跡できない
+   - D) S3 とデータベースが自動的に作成される
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) すでに EKS を利用しているチームは既存のデプロイメント、observability、IAM パターンを再利用できる一方で、Tracking Server、backend store、artifact store を自ら運用する必要がある**
+**回答: B**
 
-**解説:**
-セルフホストでは、チームは他の workload にすでに使用している Kubernetes Deployment、observability、IAM（IRSA/Pod Identity）パターンを再利用できます。その代わり、マネージド代替手段に委ねるのではなく、Tracking Server、その backend database、artifact store を直接運用することになります。
+運用作業、機能、サポート対象バージョン、測定された負荷を比較してください。
 </details>
 
-2. MLflow のデフォルト SQLite backend store がチーム共有の Tracking Server に適さないのはなぜですか？
-   - A) SQLite では浮動小数点の metric 値を保存できない
-   - B) SQLite は、共有 Tracking Server に必要なレベルの同時書き込みをサポートしない
-   - C) SQLite には別の EKS node group が必要である
-   - D) SQLite の artifacts は 30 日後に期限切れになる
+2. SQLite の同時実行性について正しい記述はどれですか？
+   - A) 2 人目のユーザーが常に即座に破損させる
+   - B) 複数のプロセスと直列化された書き込みは可能だが、writer、locking、shared-file の制限がある
+   - C) リレーショナルではない
+   - D) Pod ローカルの個別ファイルが自動的に 1 つの共有 DB を形成する
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) SQLite は、共有 Tracking Server に必要なレベルの同時書き込みをサポートしない**
+**回答: B**
 
-**解説:**
-SQLite は単一の実験担当者には問題なく機能しますが、複数のプロセスが同時に書き込む必要が生じると機能しなくなります。共有 Tracking Server が必要とする同時書き込みの規模をサポートしていません。このため、本番環境では RDS PostgreSQL や Aurora Serverless v2 などの実際の database に置き換えます。
+SQLite の機能とマルチ Pod ストレージトポロジーを区別してください。
 </details>
 
-3. artifact store と対比して、backend store にはどのようなデータが保持されますか？
-   - A) backend store にはシリアライズされた models などの大きなバイナリオブジェクトが保持され、artifact store には構造化 metadata が保持される
-   - B) backend store には構造化 metadata（experiments、runs、params、metrics、registered models、versions、aliases）が保持され、artifact store には大きなバイナリオブジェクト（models、plots、datasets）が保持される
-   - C) 両方の store は冗長性のためにすべてのデータの同一コピーを保持する
-   - D) backend store には usernames と passwords のみが保持される
+3. レビュー対象のコミュニティ Chart 1.11.7 のメタデータにおけるデフォルトは何ですか？
+   - A) 必須の RDS PostgreSQL
+   - B) S3 オブジェクト
+   - C) backendStore.defaultSqlitePath は :memory: である
+   - D) 自動的にプロビジョニングされる永続 PVC
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) backend store には構造化 metadata（experiments、runs、params、metrics、registered models、versions、aliases）が保持され、artifact store には大きなバイナリオブジェクト（models、plots、datasets）が保持される**
+**回答: C**
 
-**解説:**
-backend store は、experiments、runs、params、metrics、registered models、versions、aliases といった SQL でクエリ可能なすべてを保持する relational database です。artifact store（AWS では S3）は、ログに記録された models、plots、datasets など、backend store が保持しない大きなバイナリオブジェクトを保持します。
+この Chart のオーバーライドは、upstream CLI の新しい SQLite ファイルのデフォルトとは異なります。
 </details>
 
-4. AWS で、本番環境の MLflow backend store における標準的な選択肢となる 2 つのサービスはどれですか？
-   - A) DynamoDB と EFS
-   - B) PostgreSQL 向け Amazon RDS と Aurora Serverless v2
-   - C) ElastiCache と S3
-   - D) Redshift と Glacier
+4. 外部の tracking PostgreSQL データベースは、他のすべての状態を自動的に共有しますか？
+   - A) はい、すべての auth DB と cache を共有する
+   - B) はい、すべての worker memory を共有する
+   - C) はい、すべての session secret を共有する
+   - D) いいえ。個別の auth DB、secret、queue、cache を確認する
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) PostgreSQL 向け Amazon RDS と Aurora Serverless v2**
+**回答: D**
 
-**解説:**
-どちらも同時書き込みをサポートする実際の relational database です。Aurora Serverless v2 は、database を年間を通じてピーク負荷に合わせてサイジングするのではなく、突発的な tracking 負荷に応じてスケーリングできるため、特に検討する価値があります。
+レプリカを増やす前に、有効化された機能の共有状態を確認してください。
 </details>
 
-5. Kubernetes への MLflow デプロイメントで言及されている community Helm chart は何で、その repository はどのように追加しますか？
-   - A) `bitnami/mlflow`、`helm repo add bitnami https://charts.bitnami.com/bitnami` で追加する
-   - B) `community-charts/mlflow`、`helm repo add community-charts https://community-charts.github.io/helm-charts` で追加する
-   - C) MLflow 用にメンテナンスされている community chart はない
-   - D) `mlflow/mlflow-operator`、`kubectl apply -f` でのみインストールする
+5. Chart、image、source のバージョンはどのように扱うべきですか？
+   - A) 常に 1 つの番号を共有する
+   - B) source tag によって OCI package の存在が保証される
+   - C) それぞれを検証し、実際の package をダウンロードして render する
+   - D) latest tag があれば image digest を確認する必要はない
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) `community-charts/mlflow`、`helm repo add community-charts https://community-charts.github.io/helm-charts` で追加する**
+**回答: C**
 
-**解説:**
-`community-charts/helm-charts` は、設定可能な backend database と object storage の設定をサポートする MLflow chart をメンテナンスしており、独自の Deployment/Service/Ingress manifests を手作業で記述する実用的な代替手段となります。
+レビュー対象の upstream Chart source と appVersion も異なっていました。
 </details>
 
-6. 新しいデプロイメントで、Tracking Server の ServiceAccount に IAM role をバインドするための、よりモダンなデフォルトの選択肢として示されている EKS のメカニズムはどれですか？
-   - A) ConfigMap に保存された静的 IAM access keys
-   - B) EKS Pod Identity。ただし、すでに IRSA を標準化している cluster では IRSA も有効である
-   - C) worker node の EC2 instances に直接アタッチされた instance profiles
-   - D) container image に組み込まれた共有 root AWS account credential
+6. ServiceAccount の S3 への IAM アクセスは、PostgreSQL ログインを自動的に許可しますか？
+   - A) 常に許可する
+   - B) いいえ。DB networking、TLS、users/credentials、または IAM DB auth を個別に設定する
+   - C) bucket 名が一致する場合のみ許可する
+   - D) DB password を image に入れる
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) EKS Pod Identity。ただし、すでに IRSA を標準化している cluster では IRSA も有効である**
+**回答: B**
 
-**解説:**
-EKS Pod Identity は IAM roles を Pods にバインドするための新しいメカニズムであり、一般に EKS での新しい IAM-to-pod バインディングにおける推奨デフォルトとして採用が進んでいます。IRSA も、特にすでにそれを標準化しているチームや clusters では有効な選択肢です。
+これらは別個の authorization 層と authentication 層です。
 </details>
 
-7. Postgres をバックエンドにした MLflow Tracking Server は複数 replicas で安全に実行できる一方、SQLite をバックエンドにしたデフォルトはまったくスケールアウトできないのはなぜですか？
-   - A) Postgres replicas は Pods 間の in-memory state を自動的に同期する
-   - B) すべての共有 state は Pod の外部にあるため、Postgres と S3 をバックエンドにした Tracking Server は stateless である。一方、SQLite は同時書き込みに耐えられない
-   - C) SQLite は Postgres より多くの CPU を必要とするため、スケールアウトは無駄である
-   - D) Kubernetes では database を使用する Deployment を複数 replicas で実行することは禁止されている
+7. EKS Pod Identity に必要なものは何ですか？
+   - A) すべての Fargate および Windows Pod に対する無条件のサポート
+   - B) ServiceAccount 名のみ
+   - C) Linux EC2 worker、Agent、association、サポート対象の SDK、および関連するセットアップ
+   - D) 静的な root access key
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) すべての共有 state は Pod の外部にあるため、Postgres と S3 をバックエンドにした Tracking Server は stateless である。一方、SQLite は同時書き込みに耐えられない**
+**回答: C**
 
-**解説:**
-すべての永続 state は Pod 内ではなく backend store と artifact store にあるため、Postgres をバックエンドにした Tracking Server は stateless であり、安全に水平スケーリングできます。SQLite は同時書き込みをサポートしないため、単一プロセスのデフォルトをまったく安全にスケールアウトできません。
+IRSA と Pod Identity のサポートおよび設定は個別に確認してください。
 </details>
 
-8. model に registered version または alias が付与された後の自然な次のステップとして説明されているものは何ですか？また、それがこのシリーズの対象外である理由は何ですか？
-   - A) training job を再実行する。このシリーズの対象外なのは、training が Part 1 ですでに扱われたためである
-   - B) その model version を serving system（KServe、custom wrapper、SageMaker など）にロードする。serving infrastructure はそれ自体が広範なトピックであるため、このシリーズの対象外である
-   - C) model version を削除する。MLflow では削除がサポートされていないため、このシリーズの対象外である
-   - D) backend store を DynamoDB に移行する。DynamoDB がサポートされていないため、このシリーズの対象外である
+8. SecretKeyRef と allowed_hosts だけでセキュリティは完了しますか？
+   - A) environment exposure を排除し、すべての user authorization を実装する
+   - B) いいえ。secret delivery と application authentication/authorization を個別に確認する
+   - C) データベースを自動的にバックアップする
+   - D) すべての CORS origin を許可する必要がある
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) その model version を serving system（KServe、custom wrapper、SageMaker など）にロードする。serving infrastructure はそれ自体が広範なトピックであるため、このシリーズの対象外である**
+**回答: B**
 
-**解説:**
-model に registered version または alias が付与されると、多くのチームは KServe、custom FastAPI/Flask wrapper、SageMaker などの serving system にそれをロードする段階へ進みます。この serving layer はそれ自体が広範なトピックであり、この 3 部構成のシリーズでは明示的に対象外とされています。
+runtime secret injection と host-validation の境界を理解してください。
 </details>
 
-## 記述式問題
+## 短答式問題
 
-9. MLflow を EKS 上でチーム共有サービスとして実行するためにデプロイする必要がある 3 つのコアアーキテクチャ要素を挙げ、それぞれが保存または実行する内容を簡潔に説明してください。
+9. /health が 200 を返すことは、RDS と S3 が正常であることを証明しますか？
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
-- MLflow Tracking Server: `mlflow server` を実行し、REST API と UI を公開する stateless container。
-- backend store: 構造化 metadata（experiments、runs、params、metrics、registered models、versions、aliases）を保持する relational database（例: RDS PostgreSQL または Aurora Serverless v2）。
-- artifact store: ログに記録された models、plots、datasets などの大きなバイナリオブジェクトを保持する object storage（AWS では S3）。
-
-**解説:**
-複数の人が Tracking Server を共有するようになれば、この 3 つはどれも任意ではありません。Tracking Server は構造化 metadata と大きな artifacts の両方を書き込むための永続的な保存先を必要とし、どちらも Tracking Server Pod 自体に置くべきではありません。
+いいえ。検証済みの実装では、HTTP プロセスの応答性に対して OK、200 を返します。継続的なデータベース、S3、authorization、および実際の workload path を個別に確認してください。
 </details>
 
-10. Tracking Server Deployment において readiness probes と liveness probes が重要な理由と、このドキュメントが正確な health-check endpoint path を指定していない理由を説明してください。
+10. 頻繁な logging と Aurora Serverless v2 を評価する際に重要なことは何ですか？
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
-readiness probes と liveness probes により、Service は実際に requests を処理できる Pods にのみトラフィックをルーティングでき、応答しなくなった Pod は Kubernetes が自動的に再起動できます。これは長時間稼働するあらゆる Kubernetes service の標準的なプラクティスです。このドキュメントが正確な health-check path を指定していないのは、MLflow version によって異なる可能性があるためであり、想定するのではなく、デプロイする特定の version に対して確認すべきです。
-
-**解説:**
-実在しない、または version が一致しない endpoint path に対して probe を実行すると、正常な Pods が unready と判定されたり、実際に停止した Pod の検出に失敗したりします。そのため、使用する MLflow version の実際の path を確認するほうが安全です。
+レプリカや worker 全体で batching、transaction、metric history、trace payload、pool を測定してください。Aurora には capacity、connection、I/O、transaction の制限があります。無制限の burst absorption や最低コストは保証されません。
 </details>
 
 ---

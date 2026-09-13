@@ -1,73 +1,60 @@
 # パート 2: Kubeflow Pipelines
 
-> **サポート対象バージョン**: Kubeflow Pipelines 2.16.0, Kubeflow Community Distribution 26.03
-> **最終更新**: August 19, 2026
+> **サポート対象バージョン**: Kubeflow Pipelines 2.16.1, Kubeflow Community Distribution 26.03.1
+> **最終更新**: September 12, 2026
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例を実行するには、以下のツールと環境が必要です:
-
-### 必要なツール
-
-* パイプラインのコンパイル用に、`kfp` SDK（`pip install kfp`）をローカルにインストールした Python 3.10+
-* Kubeflow Pipelines がインストールされたクラスタを指す kubectl v1.34 以降（パート 1 を参照）
-* KFP の artifact store を S3 に指定する場合、S3 アクセスを付与する IRSA role または EKS Pod Identity association（下記の「EKS 固有の Artifact Storage」を参照）
+ローカルでのコンパイルには Python と `kfp==2.16.1` が必要です。この章は Python 3.12 で確認しました。コンパイル時にクラスターへ接続することはありません。リモート実行には、互換性のある KFP backend、認証済みクライアント、および namespace の権限が必要です。S3 ではさらに、実際に実行する ServiceAccount と artifact にアクセスするコンポーネント向けの workload identity が必要です。
 
 ## Kubeflow Pipelines とは
 
-Kubeflow Pipelines（KFP）は、Kubeflow プラットフォーム内の ML pipeline を構築、実行、追跡するための workflow orchestration engine です。ML pipeline は、型付けされた入力と出力をそれぞれ持つコンテナ化されたステップの DAG です。KFP SDK を使用して Python で pipeline を作成し、コンパイルして KFP backend に送信します。backend は各ステップを Pod としてスケジューリングし、Run の status と artifact を追跡します。
+KFP は、型付けされた parameter/artifact を使用してコンポーネントを接続し、Run を追跡します。ここで使用するオープンソースの KFP 2.16.1 backend は、IR を Argo Workflows に変換します。Argo は workflow の順序と Pod の作成を管理し、Kubernetes scheduler は Pod を node に配置します。キャッシュされた task、importer、ネストされた DAG があるため、すべての論理 task が個別の user-container 実行に対応するわけではありません。
 
-内部では、KFP の backend は [Argo Workflows](https://argoproj.github.io/workflows/) 上に構築されています。コンパイル済み pipeline が KFP API server に到達すると、Argo `Workflow` resource に変換され、実際に Pod を作成して順序付けるのは Argo の controller です。KFP は Argo 単体では提供しないレイヤー、すなわち作成用の Python SDK、Run と artifact を参照する UI、Experiment/Run tracking model、lineage 用の ML Metadata（MLMD）store を追加します。
+## KFP v2 アーキテクチャ: IR YAML と Backend 実行
 
-## KFP v2 Architecture: 直接の Argo YAML ではなく IR YAML
+Community Distribution 26.03.1 には KFP 2.16.1 が含まれています。従来の v1 のデフォルトのコンパイルパスは Argo Workflow YAML を生成していましたが、v2 の `Compiler().compile(...)` は PipelineSpec ベースの IR YAML を生成します。pipeline のアップロード/保存と Run の作成は別の操作です。アップロードだけでは実行されません。
 
-Kubeflow Pipelines 2.16.0 は、Kubeflow Community Distribution 26.03 リリースに含まれるバージョンです。これは KFP v2 SDK および backend 上に構築されており、Python pipeline 定義を実行可能な workflow にする方法は、legacy v1 SDK と比較して変更されました:
+IR により Argo object を直接記述する必要はなくなりますが、すべての backend に対する無制限の移植性が保証されるわけではありません。IR/SDK のバージョン、サポートされる機能、Kubernetes platform extension、認証、ストレージは対象環境と一致している必要があります。`kfp` package は client API と Python component 実行サポートも提供します。その役割はコンパイルだけで終わりません。
 
-* **v1 SDK**: `dsl-compile` は Python pipeline function を Argo `Workflow` YAML manifest に直接コンパイルしていました。コンパイル済み artifact は Argo 固有であり、異なる backend が必要な場合は別の compiler が必要でした。
-* **v2 SDK**: pipeline は **Intermediate Representation（IR）YAML**、すなわち DAG、component、型付き artifact、parameter を記述する backend 非依存の `PipelineSpec` にコンパイルされます。KFP backend は送信時にその IR を Argo `Workflow` に変換します。
+## コア概念
 
-実用上の利点は、Argo の object model に縛られない、安定して文書化された pipeline spec です。また、`kfp.compiler.Compiler().compile(...)` から得られる artifact、つまり IR YAML は、任意の KFP 互換 backend に渡すものであり、Argo manifest を一度だけ使用するのではなく、KFP API server が保存し、その pipeline の各 Run で再送信するものでもあります。
+| 概念 | 役割と範囲 |
+| --- | --- |
+| Pipeline | `@dsl.pipeline` で作成する graph。アップロードした definition/version と実行は別のもの |
+| Component / Task | 再利用可能な component definition と graph invocation。lightweight Python は container/importer/graph と並ぶ一形態 |
+| Run / Experiment | input を伴う実行と、関連する Run のグループ。Katib の Experiment CRD とは異なる |
+| Parameter | 文字列、数値、小規模な構造化 input/output 値 |
+| Artifact | URI、型、metadata を持つ Dataset/Model/Metrics 形式の object。必ずしも単一のファイルではない |
+| MLMD | 登録された execution、artifact、関係性。すべての外部 side effect やファイルの整合性を自動記録するものではない |
 
-## コアコンセプト
+Metadata の記録と artifact の bytes は別です。再現性やコンテンツの検証が重要な場合は、code/image/data の revision と hash を記録してください。
 
-* **Pipeline** — `@dsl.pipeline` decorator を用いて Python で作成され、IR YAML にコンパイルされる component の DAG。
-* **Component** — 型付けされた入力と出力を持つ、単一のコンテナ化されたステップ。`@dsl.component` を用いて作成され、component は固有の container spec にコンパイルされます。runtime では、1 つの Pod（または executor configuration によっては Pod 内の 1 ステップ）になります。
-* **Run** — 特定の入力 parameter セットに対する pipeline（または単一 component）の 1 回の実行。
-* **Experiment** — 関連する Run の名前付きグループ。結果の整理と比較に使用されます（例: 同一 pipeline での異なる hyperparameter Run）。
-* **Artifact** — component 間を流れる型付き出力で、object store 内のファイルにより裏付けられます。KFP v2 は artifact に `Dataset`、`Model`、`Metrics`、`ClassificationMetrics`、`HTML`、`Markdown` という first-class type を与えるため、component の signature は出力を生成することだけでなく、その種類も文書化します。
-* **ML Metadata（MLMD）store** — すべての component execution、その入力/出力、処理した artifact を記録する backing store（ほとんどの KFP install では MySQL-backed service）。これにより KFP UI は artifact lineage、すなわち学習済み model を、それを生成した正確な dataset と code を経由して Run をまたいで遡る追跡を表示できます。
+## Pipeline Run がシステムを流れる仕組み
 
-## Pipeline Run がシステムを通過する流れ
+![Kubeflow Pipelines の Run フロー: Python DSL pipeline は IR YAML にコンパイルされて KFP API server に送信され、component Pod を実行する Argo Workflow に変換されます。Pod は artifact を S3/MinIO に書き込み、metadata を MLMD に記録します。](../../.gitbook/assets/en-ai-ml-kubeflow-02-pipelines-0.png)
 
-```mermaid
-graph LR
-    A[Python pipeline<br/>@dsl.pipeline / @dsl.component] --> B[KFP SDK Compiler<br/>produces IR YAML]
-    B --> C[KFP API Server<br/>stores pipeline, accepts Run]
-    C --> D[Backend translates<br/>IR YAML to Argo Workflow]
-    D --> E[Argo Workflow Controller<br/>schedules steps]
-    E --> F[Component Pods execute]
-    F --> G[Artifacts written to<br/>object store: S3 / MinIO]
-    F --> H[Execution + artifact metadata<br/>recorded in MLMD]
-    G --> H
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-02-pipelines-0.html)
 
-KFP SDK の役割は IR YAML の生成で終了します。API server 以降のすべては backend の責任です。この分離により、「backend 非依存の spec」という主張が具体化されます。SDK は、基盤で Argo Workflows が scheduling を行っていることを認識する必要も、気にかける必要もありません。
+コンパイルはローカルで行われます。Run の作成後、API server、Argo、KFP driver/launcher、user container が連携します。launcher/runtime は artifact の path、転送、metadata を処理します。Kubernetes における node 配置は Argo の workflow 順序制御とは別です。
 
 ## EKS 固有の Artifact Storage
 
-KFP は、デフォルトの artifact store としてクラスタ内 MinIO deployment を提供します。再構成しない限り、component が生成するすべての artifact（`Dataset`、学習済み `Model`、metrics file）は実際の S3 bucket ではなく MinIO bucket に書き込まれます。自己完結型の demo には問題ありませんが、EKS では S3 が無料で提供する durability、クラスタ外からのアクセス、IAM-based access control を重複して提供する、追加の stateful service を実行・運用することになります。
+確認した Distribution のデフォルトインストールには MinIO が含まれますが、すべての KFP インストールまたは artifact URI で使用されるわけではありません。pipeline root、import した URI、provider の設定を確認してください。Metrics のような metadata 指向の artifact は、必ずしも metric file ではありません。
 
-`awslabs/kubeflow-manifests` project では、クラスタ内 MinIO の代わりに KFP の artifact store を S3 に指定するパターンを文書化しています。pipeline root と artifact object-store credential を再構成し、component が S3 bucket に直接 read/write するようにします。ここで [パート 1](./01-architecture-installation.md) で扱った identity mechanism が直接関係します。KFP pipeline Pod（特に `pipeline-runner` ServiceAccount）が実行される ServiceAccount には、その S3 bucket に対する permission を持つ IRSA role または EKS Pod Identity association が必要です。artifact の write/read 時に行われる object-store call は、クラスタ内 MinIO endpoint ではなく AWS に直接送られるためです。パート 1 では IRSA/Pod Identity のセットアップ方法を詳しく説明しています。このセクションでは、その identity が pipeline lifecycle のどこで使用されるかのみを示します。
+S3 では、[最新の object-store guide](https://www.kubeflow.org/docs/components/pipelines/operator-guides/configure-object-store/) に従い、`pipeline_root`、provider、credential chain を設定してください。S3 には storage、request、transfer の料金が発生します。無料のデフォルト artifact service ではありません。
+
+すべての環境で `pipeline-runner` が実行用 ServiceAccount であると仮定しないでください。Run で選択された account と実際の Pod、および API server/launcher が必要とする access を確認してください。IRSA は最新の guide に記載されています。Pod Identity では、SDK、agent、association、runtime support の確認が必要です。この章では AWS integration を実行していません。[Part 1](01-architecture-installation.md) では、これらの境界と従来の AWS distribution のインストール上の制限について説明しています。
 
 ## シンプルな 2 ステップ Pipeline
 
-以下は、最初の component から 2 番目の component に型付き `Dataset` artifact を渡す、KFP v2 SDK の decorator を使用した最小限の `data-prep -> train` pipeline を示します:
+以下は、KFP v2 SDK の decorator を使用し、最初の component から 2 番目へ型付けされた `Dataset` artifact を渡す、最小限の `data-prep -> train` pipeline を示します。
 
 ```python
 from kfp import dsl, compiler
 from kfp.dsl import Dataset, Model, Output, Input
 
-@dsl.component(base_image="python:3.11-slim")
+@dsl.component(base_image="python:3.12-slim", packages_to_install=["pandas==2.3.3"])
 def prepare_data(output_dataset: Output[Dataset]):
     import pandas as pd
 
@@ -75,7 +62,7 @@ def prepare_data(output_dataset: Output[Dataset]):
     df = pd.DataFrame({"feature": [1, 2, 3, 4], "label": [0, 1, 0, 1]})
     df.to_csv(output_dataset.path, index=False)
 
-@dsl.component(base_image="python:3.11-slim", packages_to_install=["scikit-learn", "pandas"])
+@dsl.component(base_image="python:3.12-slim", packages_to_install=["scikit-learn==1.7.2", "pandas==2.3.3"])
 def train_model(input_dataset: Input[Dataset], output_model: Output[Model]):
     import pandas as pd
     from sklearn.linear_model import LogisticRegression
@@ -97,27 +84,40 @@ compiler.Compiler().compile(
 )
 ```
 
-この例について注目すべき点をいくつか示します:
+`Output[Dataset]` から `Input[Dataset]` への接続は、graph の依存関係と artifact type を記録します。実際の `.path` の準備と転送は runtime 時に行われます。コンパイルでは storage や training を検証しません。
 
-* `output_dataset: Output[Dataset]` と `input_dataset: Input[Dataset]` は、KFP v2 で型付き artifact parameter を宣言する方法です。SDK は、各 component が書き込み/読み取りする storage path の provisioning を含め、`prep_task.outputs["output_dataset"]` を `train_model` の入力に接続します。
-* 各 `@dsl.component` は独自の container image build context にコンパイルされます（または、`packages_to_install` により指定した Python package をインストールした `base_image` を再利用します）。そのため、`prepare_data` と `train_model` は、宣言された artifact によってのみ接続される独立した Pod として実行されます。
-* `compiler.Compiler().compile(...)` は前述の IR YAML を生成します。これは KFP UI に upload するか、KFP Python client 経由で送信して Run を作成する file です。
+これらは lightweight Python component です。`@dsl.component` は function code を抽出しますが、image を自動的に build するわけではありません。`packages_to_install` は、base image 内で実行時に dependency をインストールします。以前の例では prepare_data から pandas を省略していましたが、現在は両 component が dependency を宣言し、function body はローカルで確認されています。本番環境では dependency を container に事前 build し、その digest を pin したうえで、その container を個別に test してください。ここでの Python image tag と transitive dependency は完全に lock された build ではありません。
+
+この演習で生成された信頼できる pickle のみを load してください。外部の pickle を load すると任意の code が実行される可能性があります。この小さな model は API を示すものであり、model quality の検証結果ではありません。
 
 ## Caching の動作
 
-KFP は、component の入力（parameter value、入力 artifact content、component 自身の定義）を hash 化して component execution を cache します。後続の Run が、過去の成功した execution と一致する input hash を持つ component を送信すると、KFP は再実行を省略して cache 済みの出力を再利用します。したがって、`train_model` ステップだけを修正後に pipeline を再実行しても、その入力と code が変更されていなければ、`prepare_data` を再実行して時間を浪費することはありません。
+2.16.1 では、key には input parameter value、input artifact の **name/ID**、output specification、container image string、command/argument、PVC name が含まれます。cache lookup の scope は pipeline name と namespace です。lookup ごとに input artifact file の byte を読み取り、hash 化することはありません。
 
-これは反復的な開発に便利ですが、実際には実行したい rerun を暗黙的に隠す可能性があります（例: 外部 state に依存するものの、宣言された入力に変更が反映されない component）。Caching は無効にできます:
+したがって、同じ artifact ID の背後にある file、image tag、外部 database/API state を変更しても、key は変わらない可能性があります。既存の cache metadata も、削除された output object が downstream で読み取り可能なままであることを保証しません。data version/hash を明示的な parameter として渡し、変更可能な外部 state や side effect については caching の無効化を検討してください。
 
-* Component 単位: pipeline function 内の task に対して `set_caching_options(enable_caching=False)` call を設定します。例: `prep_task.set_caching_options(enable_caching=False)`。
-* Run 単位: component ごとではなく pipeline submission 全体の caching を無効にします。この目的のために、KFP UI の「Run」dialog には submission 時の caching toggle があります。
+```python
+# Inside the pipeline function, disable caching for this task.
+prep_task.set_caching_options(enable_caching=False)
+```
+
+認証済み client の `create_run_from_pipeline_package(..., enable_caching=False)` は、Run の task caching を上書きします。`None` はコンパイル済みの task 設定を維持します。CLI のデフォルトと `KFP_DISABLE_EXECUTION_CACHING_BY_DEFAULT` もコンパイルのデフォルトを変更できます。environment variable は KFP を import する前に設定してください。
+
+## 検証とソース
+
+IR は Python 3.12 / KFP 2.16.1 でコンパイルし、dependency、type、caching 設定を確認しました。function body は pandas 2.3.3 / scikit-learn 1.7.2 を使用して CPU 上でローカル実行しました。Docker、Argo、cluster cache reuse、S3、Pod Identity の実行はテストしていません。
+
+- [2.16.1 cache-key implementation](https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/cacheutils/cache.go)
+- [2.16.1 cache lookup and reuse](https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/driver/cache.go)
+- [Official caching guide](https://www.kubeflow.org/docs/components/pipelines/user-guides/core-functions/caching/)
+- [Lightweight Python components](https://www.kubeflow.org/docs/components/pipelines/user-guides/components/lightweight-python-components/)
 
 ## 次のステップ
 
-pipeline を作成、コンパイル、実行した後、通常はそれらの pipeline component の背後にある interactive development を、そもそもどこで行うかが次の問いになります。[パート 3: Kubeflow Notebooks](./03-notebooks.md) では、team が pipeline component にパッケージ化される code を作成し反復するために使用する、ユーザーごとの notebook environment を扱います。また、このシリーズの後半にある [パート 6: KServe — Kubernetes 上の Model Serving](./06-kserve.md) では、それらの pipeline が最終的に生成する model の serving を扱います。
+pipeline を作成、コンパイル、実行した後、通常次に問われるのは、それらの pipeline component の背後にある対話的な開発作業がそもそもどこで行われるかです。[Part 3: Kubeflow Notebooks](./03-notebooks.md) では、team が pipeline component にまとめられる code を作成・反復するために使用する user ごとの notebook environment について説明します。また、このシリーズの後半では、[Part 6: KServe — Model Serving on Kubernetes](./06-kserve.md) で、その pipeline が最終的に生成する model の serving を扱います。
 
 [メインページに戻る](./README.md)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[トピッククイズ](../../quizzes/ai-ml/kubeflow/02-pipelines-quiz.md) に挑戦してください。
+この章で学んだことを確認するには、[トピッククイズ](../../quizzes/ai-ml/kubeflow/02-pipelines-quiz.md) に挑戦してください。

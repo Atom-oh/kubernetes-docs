@@ -1,73 +1,60 @@
 # Parte 2: Kubeflow Pipelines
 
-> **Versiones compatibles**: Kubeflow Pipelines 2.16.0, Kubeflow Community Distribution 26.03
-> **Última actualización**: August 19, 2026
+> **Versiones compatibles**: Kubeflow Pipelines 2.16.1, Kubeflow Community Distribution 26.03.1
+> **Última actualización**: September 12, 2026
 
-## Configuración del entorno de laboratorio
+## Preparación del entorno de laboratorio
 
-Para seguir los ejemplos de este documento, necesitará las siguientes herramientas y entorno:
-
-### Herramientas necesarias
-
-* Python 3.10+ con el SDK `kfp` (`pip install kfp`) instalado localmente para compilar pipelines
-* kubectl v1.34 o posterior, configurado para un clúster con Kubeflow Pipelines instalado (consulte la Parte 1)
-* Un rol de IRSA o una asociación de EKS Pod Identity que conceda acceso a S3, si planea configurar el almacén de artifacts de KFP en S3 (consulte "Almacenamiento de artifacts específico de EKS" más abajo)
+La compilación local requiere Python y `kfp==2.16.1`; este capítulo se verificó con Python 3.12. La compilación no se comunica con un clúster. La ejecución remota necesita un backend de KFP compatible, un cliente autenticado y permisos de namespace. S3 requiere además workload identity para la ServiceAccount de ejecución real y para los componentes que acceden a los artefactos.
 
 ## Qué es Kubeflow Pipelines
 
-Kubeflow Pipelines (KFP) es el motor de orquestación de workflows dentro de la plataforma Kubeflow para crear, ejecutar y rastrear pipelines de ML: DAG de pasos en contenedores, cada uno con entradas y salidas tipadas. Puede crear un pipeline en Python mediante el SDK de KFP, compilarlo y enviarlo al backend de KFP, que programa cada paso como un Pod y rastrea el estado y los artifacts de la ejecución.
+KFP conecta componentes mediante parámetros y artefactos tipados, y hace seguimiento de las ejecuciones (runs). El backend de KFP 2.16.1 de código abierto que se usa aquí traduce el IR a Argo Workflows. Argo gestiona el orden del workflow y la creación de Pods; el scheduler de Kubernetes coloca los Pods en los nodos. Las tareas en caché, los importers y los DAG anidados implican que no toda tarea lógica corresponde a una ejecución separada de un contenedor de usuario.
 
-Internamente, el backend de KFP se basa en [Argo Workflows](https://argoproj.github.io/workflows/): una vez que un pipeline compilado llega al servidor de API de KFP, se traduce a un recurso `Workflow` de Argo, y el controlador de Argo es quien realmente crea y secuencia los Pods. KFP añade las capas que Argo no proporciona por sí solo: un SDK de Python para la creación, una UI para explorar ejecuciones y artifacts, un modelo de seguimiento de Experiment/Run y el almacén de ML Metadata (MLMD) para el linaje.
+## Arquitectura de KFP v2: IR YAML y ejecución en el backend
 
-## Arquitectura de KFP v2: YAML de IR en lugar de YAML de Argo directo
+Community Distribution 26.03.1 incluye KFP 2.16.1. La antigua ruta de compilación predeterminada de v1 producía YAML de Argo Workflow; en v2, `Compiler().compile(...)` produce IR YAML basado en PipelineSpec. Subir o almacenar un pipeline y crear un Run son operaciones distintas. La subida por sí sola no lo ejecuta.
 
-Kubeflow Pipelines 2.16.0 es la versión incluida en la versión 26.03 de Kubeflow Community Distribution. Se basa en el SDK y backend de KFP v2, que cambiaron la forma en que una definición de pipeline en Python se convierte en un workflow ejecutable en comparación con el SDK v1 heredado:
+El IR evita escribir objetos de Argo directamente, pero no garantiza una portabilidad ilimitada a cualquier backend. Las versiones de IR/SDK, las funcionalidades compatibles, las extensiones de plataforma de Kubernetes, la autenticación y el almacenamiento deben coincidir con el destino. El paquete `kfp` también proporciona APIs de cliente y soporte para la ejecución de componentes en Python; su función no termina en la compilación.
 
-* **SDK v1**: `dsl-compile` compilaba una función de pipeline de Python directamente en un manifiesto YAML de `Workflow` de Argo. El artifact compilado era específico de Argo; si quería un backend diferente, necesitaría un compilador distinto.
-* **SDK v2**: el pipeline se compila en un **YAML de representación intermedia (IR)**: un `PipelineSpec` independiente del backend que describe el DAG, los componentes, los artifacts tipados y los parámetros. Después, el backend de KFP traduce esa IR en un `Workflow` de Argo en el momento del envío.
+## Conceptos clave
 
-El beneficio práctico es una especificación de pipeline estable y documentada que no está ligada al modelo de objetos de Argo. También significa que el artifact que obtiene de `kfp.compiler.Compiler().compile(...)` —el YAML de IR— es lo que entregaría a cualquier backend compatible con KFP, y lo que el servidor de API de KFP almacena y vuelve a enviar en cada ejecución de ese pipeline, en lugar de un manifiesto de Argo de un solo uso.
+| Concepto | Función y alcance |
+| --- | --- |
+| Pipeline | Grafo creado con `@dsl.pipeline`; las definiciones/versiones subidas y las ejecuciones son cosas distintas |
+| Component / Task | Definición de componente reutilizable y una invocación en el grafo; el Python ligero es una forma más, junto con contenedores, importers y grafos |
+| Run / Experiment | Ejecución con entradas y un grupo de ejecuciones relacionadas; distinto del CRD Experiment de Katib |
+| Parameter | Cadenas, números y valores de entrada/salida estructurados pequeños |
+| Artifact | Objeto de tipo Dataset/Model/Metrics con URI, tipo y metadatos; no necesariamente un único archivo |
+| MLMD | Ejecuciones, artefactos y relaciones registrados; no es un registro automático de cada efecto secundario externo ni de la integridad de los archivos |
 
-## Conceptos básicos
+Los registros de metadatos y los bytes de los artefactos son cosas separadas. Registra las revisiones y los hashes del código, la imagen y los datos cuando importen la reproducibilidad y la verificación del contenido.
 
-* **Pipeline** — un DAG de componentes, creado en Python con el decorador `@dsl.pipeline`, compilado a YAML de IR.
-* **Component** — un único paso en contenedor con entradas y salidas tipadas. Creado con `@dsl.component`, un componente se compila en su propia especificación de contenedor; en tiempo de ejecución se convierte en un Pod (o en un paso dentro de un Pod, según la configuración del executor).
-* **Run** — una ejecución de un pipeline (o de un único componente) con un conjunto específico de parámetros de entrada.
-* **Experiment** — una agrupación con nombre de Runs relacionados, utilizada para organizar y comparar resultados (por ejemplo, diferentes ejecuciones de hiperparámetros del mismo pipeline).
-* **Artifact** — una salida tipada que fluye entre componentes, respaldada por un archivo en un almacén de objetos. KFP v2 otorga a los artifacts tipos de primera clase: `Dataset`, `Model`, `Metrics`, `ClassificationMetrics`, `HTML`, `Markdown`; así, la firma de un componente documenta no solo que produce una salida, sino también de qué tipo es.
-* **Almacén de ML Metadata (MLMD)** — el almacén subyacente (un servicio respaldado por MySQL en la mayoría de las instalaciones de KFP) que registra cada ejecución de componente, sus entradas/salidas y los artifacts que utilizó. Esto permite a la UI de KFP mostrar el linaje de artifacts: rastrear un modelo entrenado hacia atrás a través del conjunto de datos y el código exactos que lo produjeron, entre distintas ejecuciones.
+## Cómo fluye la ejecución de un pipeline por el sistema
 
-## Cómo fluye una ejecución de pipeline por el sistema
+![Flujo de ejecución de Kubeflow Pipelines: un pipeline escrito con el DSL de Python se compila a IR YAML y se envía al servidor de API de KFP, se traduce en un Argo Workflow que ejecuta los Pods de los componentes, los cuales escriben artefactos en S3/MinIO y registran metadatos en MLMD.](../../.gitbook/assets/en-ai-ml-kubeflow-02-pipelines-0.png)
 
-```mermaid
-graph LR
-    A[Python pipeline<br/>@dsl.pipeline / @dsl.component] --> B[KFP SDK Compiler<br/>produces IR YAML]
-    B --> C[KFP API Server<br/>stores pipeline, accepts Run]
-    C --> D[Backend translates<br/>IR YAML to Argo Workflow]
-    D --> E[Argo Workflow Controller<br/>schedules steps]
-    E --> F[Component Pods execute]
-    F --> G[Artifacts written to<br/>object store: S3 / MinIO]
-    F --> H[Execution + artifact metadata<br/>recorded in MLMD]
-    G --> H
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-02-pipelines-0.html)
 
-El trabajo del SDK de KFP termina al producir el YAML de IR; todo lo que ocurre desde el servidor de API en adelante es responsabilidad del backend. Esta separación es exactamente lo que hace concreta la afirmación de una «especificación independiente del backend»: el SDK no sabe ni le importa que Argo Workflows realice la programación internamente.
+La compilación es local. Tras la creación del Run, cooperan el servidor de API, Argo, el driver/launcher de KFP y los contenedores de usuario. El launcher y el runtime se encargan de las rutas de los artefactos, la transferencia y los metadatos. La colocación en nodos de Kubernetes sigue siendo algo aparte de la secuenciación del workflow por parte de Argo.
 
-## Almacenamiento de artifacts específico de EKS
+## Almacenamiento de artefactos específico de EKS
 
-KFP incluye una implementación de MinIO dentro del clúster como almacén de artifacts predeterminado: cada artifact que produce un componente (un `Dataset`, un `Model` entrenado, un archivo de métricas) se escribe en un bucket de MinIO en lugar de en un bucket real de S3, a menos que se reconfigure. Esto está bien para una demostración autocontenida, pero en EKS implica ejecutar y operar un servicio stateful adicional que duplica lo que S3 ya ofrece gratuitamente: durabilidad, acceso desde fuera del clúster y control de acceso basado en IAM.
+La instalación predeterminada de la distribución revisada incluye MinIO, pero no todas las instalaciones de KFP ni todas las URI de artefactos lo usan. Inspecciona el pipeline root, las URI importadas y la configuración del proveedor. Los artefactos orientados a metadatos, como Metrics, no son necesariamente archivos de métricas.
 
-El proyecto `awslabs/kubeflow-manifests` documenta patrones para configurar el almacén de artifacts de KFP en S3 en lugar de MinIO dentro del clúster: reconfigurar la raíz del pipeline y las credenciales del almacén de objetos para que los componentes lean y escriban directamente en un bucket de S3. Aquí también es donde el mecanismo de identidad descrito en la [Parte 1](./01-architecture-installation.md) se vuelve directamente relevante. Cualquier ServiceAccount bajo el que se ejecuten los Pods de pipeline de KFP (y específicamente el ServiceAccount `pipeline-runner`) necesita un rol de IRSA o una asociación de EKS Pod Identity con permisos sobre ese bucket de S3, ya que las llamadas al almacén de objetos realizadas al escribir o leer artifacts van directamente a AWS en lugar de al endpoint de MinIO dentro del clúster. La Parte 1 cubre en profundidad los mecanismos de configuración de IRSA/Pod Identity; esta sección solo indica en qué punto del ciclo de vida del pipeline se utiliza esa identidad.
+Para S3, configura `pipeline_root`, el proveedor y la cadena de credenciales siguiendo la [guía actual de object store](https://www.kubeflow.org/docs/components/pipelines/operator-guides/configure-object-store/). S3 genera cargos por almacenamiento, solicitudes y transferencia; no es un servicio de artefactos gratuito por defecto.
+
+No asumas que `pipeline-runner` es la ServiceAccount de ejecución en todos los entornos. Inspecciona la cuenta seleccionada por el Run y los Pods reales, además de los accesos que necesitan el servidor de API y el launcher. IRSA está documentado en la guía actual. Pod Identity requiere verificar el soporte del SDK, el agente, la asociación y el runtime; este capítulo no ejecutó la integración con AWS. La [Parte 1](01-architecture-installation.md) explica estos límites y la limitación de instalación de la antigua distribución de AWS.
 
 ## Un pipeline sencillo de dos pasos
 
-Lo siguiente ilustra un pipeline mínimo `data-prep -> train` que utiliza los decoradores del SDK de KFP v2, con un artifact `Dataset` tipado que se pasa del primer componente al segundo:
+Lo siguiente ilustra un pipeline mínimo `data-prep -> train` usando los decoradores del SDK de KFP v2, con un artefacto `Dataset` tipado que se pasa del primer componente al segundo:
 
 ```python
 from kfp import dsl, compiler
 from kfp.dsl import Dataset, Model, Output, Input
 
-@dsl.component(base_image="python:3.11-slim")
+@dsl.component(base_image="python:3.12-slim", packages_to_install=["pandas==2.3.3"])
 def prepare_data(output_dataset: Output[Dataset]):
     import pandas as pd
 
@@ -75,7 +62,7 @@ def prepare_data(output_dataset: Output[Dataset]):
     df = pd.DataFrame({"feature": [1, 2, 3, 4], "label": [0, 1, 0, 1]})
     df.to_csv(output_dataset.path, index=False)
 
-@dsl.component(base_image="python:3.11-slim", packages_to_install=["scikit-learn", "pandas"])
+@dsl.component(base_image="python:3.12-slim", packages_to_install=["scikit-learn==1.7.2", "pandas==2.3.3"])
 def train_model(input_dataset: Input[Dataset], output_model: Output[Model]):
     import pandas as pd
     from sklearn.linear_model import LogisticRegression
@@ -97,27 +84,40 @@ compiler.Compiler().compile(
 )
 ```
 
-Algunos aspectos que conviene destacar de este ejemplo:
+La conexión de `Output[Dataset]` a `Input[Dataset]` registra una dependencia en el grafo y el tipo de artefacto. La preparación real de `.path` y la transferencia ocurren en tiempo de ejecución. La compilación no valida el almacenamiento ni el entrenamiento.
 
-* `output_dataset: Output[Dataset]` e `input_dataset: Input[Dataset]` son la forma en que KFP v2 declara parámetros de artifact tipados: el SDK se encarga de conectar `prep_task.outputs["output_dataset"]` con la entrada de `train_model`, incluido el aprovisionamiento de la ruta de almacenamiento en la que cada componente escribe o desde la que lee.
-* Cada `@dsl.component` se compila en su propio contexto de compilación de imagen de contenedor (o reutiliza una `base_image` con los paquetes de Python indicados instalados mediante `packages_to_install`), por lo que `prepare_data` y `train_model` se ejecutan como Pods independientes, conectados únicamente a través del artifact declarado.
-* `compiler.Compiler().compile(...)` produce el YAML de IR descrito anteriormente: este es el archivo que se cargaría en la UI de KFP o se enviaría mediante el cliente de Python de KFP para crear un Run.
+Estos son componentes ligeros de Python. `@dsl.component` extrae el código de la función; no construye imágenes automáticamente. `packages_to_install` instala las dependencias en tiempo de ejecución dentro de la imagen base. El ejemplo anterior omitía pandas en prepare_data; ahora ambos componentes declaran sus dependencias y sus cuerpos de función se verificaron localmente. Para producción, precompila las dependencias en un contenedor, fija su digest y prueba ese contenedor por separado. El tag de la imagen de Python y las dependencias transitivas aquí no constituyen una build completamente bloqueada.
 
-## Comportamiento de caché
+Carga únicamente el pickle de confianza generado por este ejercicio. Cargar un pickle externo puede ejecutar código arbitrario. Este modelo diminuto demuestra la API y no es un resultado de validación de la calidad del modelo.
 
-KFP almacena en caché la ejecución de un componente calculando un hash de sus entradas (valores de parámetros, contenido de artifacts de entrada y la propia definición del componente). Si una ejecución posterior envía un componente con un hash de entrada que coincide con una ejecución exitosa anterior, KFP omite ejecutarlo de nuevo y reutiliza las salidas en caché; por tanto, volver a ejecutar un pipeline después de corregir solo el paso `train_model` no desperdiciará tiempo ejecutando de nuevo `prepare_data` si sus entradas y código no han cambiado.
+## Comportamiento de la caché
 
-Esto resulta conveniente para el desarrollo iterativo, pero puede ocultar silenciosamente una nueva ejecución que realmente deseaba (por ejemplo, un componente que depende de un estado externo que cambió, pero que no se refleja en sus entradas declaradas). La caché se puede deshabilitar:
+En 2.16.1 la clave incluye los valores de los parámetros de entrada, los **nombres/IDs** de los artefactos de entrada, las especificaciones de salida, la cadena de la imagen del contenedor, el comando y los argumentos, y los nombres de PVC. La búsqueda en caché está delimitada por el nombre del pipeline y el namespace. No lee ni calcula el hash de los bytes de los archivos de los artefactos de entrada en cada búsqueda.
 
-* Por componente, estableciendo la llamada `set_caching_options(enable_caching=False)` en la tarea dentro de la función de pipeline, por ejemplo, `prep_task.set_caching_options(enable_caching=False)`.
-* Por ejecución, deshabilitando la caché para todo el envío del pipeline en lugar de hacerlo componente por componente; el diálogo «Run» de la UI de KFP muestra un selector de caché al momento del envío para este fin.
+Por tanto, modificar un archivo detrás del mismo ID de artefacto, un tag de imagen o el estado de una base de datos o API externa puede dejar la clave sin cambios. Los metadatos ya existentes en caché tampoco garantizan que los objetos de salida eliminados sigan siendo legibles más adelante. Pasa las versiones o los hashes de los datos como parámetros explícitos y considera deshabilitar la caché cuando haya estado externo mutable o efectos secundarios.
+
+```python
+# Inside the pipeline function, disable caching for this task.
+prep_task.set_caching_options(enable_caching=False)
+```
+
+En un cliente autenticado, `create_run_from_pipeline_package(..., enable_caching=False)` sobrescribe la configuración de caché de las tareas para ese Run; `None` conserva la configuración compilada de las tareas. Los valores predeterminados de la CLI y `KFP_DISABLE_EXECUTION_CACHING_BY_DEFAULT` también pueden cambiar los valores predeterminados de compilación; define la variable de entorno antes de importar KFP.
+
+## Validación y fuentes
+
+El IR se compiló con Python 3.12 / KFP 2.16.1 y se comprobaron las dependencias, los tipos y la configuración de caché. Los cuerpos de las funciones se ejecutaron localmente en CPU con pandas 2.3.3 / scikit-learn 1.7.2. No se probaron Docker, Argo, la reutilización de caché en el clúster, S3 ni la ejecución con Pod Identity.
+
+- [Implementación de la clave de caché en 2.16.1](https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/cacheutils/cache.go)
+- [Búsqueda y reutilización de caché en 2.16.1](https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/driver/cache.go)
+- [Guía oficial de caché](https://www.kubeflow.org/docs/components/pipelines/user-guides/core-functions/caching/)
+- [Componentes ligeros de Python](https://www.kubeflow.org/docs/components/pipelines/user-guides/components/lightweight-python-components/)
 
 ## Próximos pasos
 
-Con los pipelines creados, compilados y en ejecución, la siguiente pregunta suele ser dónde ocurre inicialmente el trabajo de desarrollo interactivo detrás de esos componentes de pipeline. La [Parte 3: Kubeflow Notebooks](./03-notebooks.md) cubre los entornos de notebook por usuario que los equipos utilizan para crear e iterar sobre el código que termina empaquetado en componentes de pipeline; y, más adelante en esta serie, la [Parte 6: KServe — Model Serving on Kubernetes](./06-kserve.md) cubre el servicio de los modelos que esos pipelines finalmente producen.
+Con los pipelines escritos, compilados y en ejecución, la siguiente pregunta suele ser dónde ocurre, en primer lugar, el trabajo de desarrollo interactivo que hay detrás de esos componentes del pipeline. La [Parte 3: Kubeflow Notebooks](./03-notebooks.md) cubre los entornos de notebook por usuario que los equipos utilizan para escribir e iterar el código que acaba empaquetado en los componentes del pipeline; y, más adelante en esta serie, la [Parte 6: KServe — Servicio de modelos en Kubernetes](./06-kserve.md) cubre el servicio de los modelos que esos pipelines producen al final.
 
 [Volver a la página principal](./README.md)
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido en este capítulo, pruebe el [Cuestionario del tema](../../quizzes/ai-ml/kubeflow/02-pipelines-quiz.md).
+Para poner a prueba lo aprendido en este capítulo, prueba el [cuestionario del tema](../../quizzes/ai-ml/kubeflow/02-pipelines-quiz.md).

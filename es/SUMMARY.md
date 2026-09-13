@@ -282,7 +282,7 @@
   * [Ejemplos de S3 e IAM](platform-engineering/ack/01-s3-iam.md)
   * [Ejemplos de SQS y SNS](platform-engineering/ack/02-sqs-sns.md)
   * [Ejemplos de ELBv2, Route 53 y RDS](platform-engineering/ack/03-elbv2-route53-rds.md)
-* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
+* [Kube Resource Orchestrator (kro)](platform-engineering/03-kro.md)
 * [Mecanismos de extensión de Kubernetes](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ejemplo de integración de ACK + KRO](platform-engineering/05-example-corp-app.md)
 * [Backstage IDP](platform-engineering/06-backstage-idp.md)

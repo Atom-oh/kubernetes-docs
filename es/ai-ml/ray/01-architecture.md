@@ -1,117 +1,118 @@
 # Parte 1: Arquitectura de Ray
 
-> **Versiones compatibles**: Ray 2.57.0
-> **Última actualización**: August 20, 2026
+> **Línea base de revisión**: Ray 2.58.0 · 2026-09-12
 
-## Configuración del entorno del laboratorio
+## Configuración del entorno de laboratorio
 
-Para seguir los ejemplos de este documento, necesitará las siguientes herramientas y entorno:
+El ejemplo local se verificó con Python 3.12, `ray==2.58.0` y `numpy==2.2.6`. Sus comprobaciones de task, actor y ObjectRef no requieren GPU, modelo entrenado ni Kubernetes. Verifica por separado las dependencias adicionales pertinentes al habilitar funciones como el dashboard.
 
-### Herramientas necesarias
-
-* Python 3.10 o posterior
-* `pip install ray[default]` (el extra `default` incluye las dependencias de dashboard y cluster-launcher utilizadas en ejemplos posteriores; un simple `pip install ray` proporciona únicamente las API centrales mostradas en este documento)
-* Una máquina local o VM con algunos núcleos de CPU libres es suficiente para ejecutar los ejemplos siguientes; no se requiere ningún cluster para la Parte 1
+El ejemplo configura explícitamente dos CPU lógicas y un object store de 80 MiB, y luego cierra Ray. La configuración de recursos de Ray no son límites del sistema operativo para el CPU/RAM total; los procesos de control y worker requieren memoria adicional.
 
 ## ¿Qué es Ray?
 
-Ray es un framework de computación distribuida de código abierto para escalar cargas de trabajo de Python. No es un framework creado para una carga de trabajo específica, como podría ser una herramienta exclusiva para entrenamiento o serving. En su lugar, Ray proporciona un pequeño conjunto de primitivas de propósito general que permiten tomar código Python común y ejecutarlo en muchos núcleos de CPU o muchas máquinas, con relativamente pocos cambios.
-
-Estas primitivas son lo bastante generales para abarcar una amplia gama de casos de uso: paralelizar un lote ad hoc de llamadas a funciones, ejecutar entrenamiento de modelos distribuido, realizar una búsqueda de hiperparámetros en muchos trials o servir un modelo detrás de un endpoint de inferencia escalable. Las bibliotecas de nivel superior de Ray — Ray Train, Ray Tune y Ray Serve, presentadas brevemente a continuación y cubiertas en profundidad en partes posteriores de esta serie — están todas construidas sobre las mismas primitivas subyacentes, en lugar de ser herramientas independientes y no relacionadas. Esta base compartida es la distinción arquitectónica clave de Ray frente a un ecosistema de herramientas especializadas, cada una con su propio modelo de ejecución, que simplemente se agrupan juntas.
+Ray Core proporciona funciones remotas (tasks), instancias remotas con estado (actors), ObjectRefs y object stores por nodo. Train, Tune y Serve se basan en esa base. Compartir Core no elimina sus propios controllers, reintentos, checkpoints ni lógica de comunicación del framework.
 
 ## Primitivas principales
 
-El modelo de programación de Ray se basa en tres primitivas: tasks, actors y el object store.
-
 ### Tasks
 
-Una **task** es una función sin estado que Ray ejecuta de forma remota en lugar de hacerlo en el proceso que la llama. Se convierte una función común de Python en una task aplicándole el decorador `@ray.remote`. Llamar a la función decorada devuelve inmediatamente un future (un `ObjectRef`) en lugar de bloquearse hasta que la función termine; Ray programa la ejecución real en algún worker del pool de recursos del cluster. Como una task no conserva estado entre llamadas, Ray puede ejecutar cualquier llamada dada en el worker que tenga capacidad disponible, lo que facilita escalar las tasks horizontalmente.
+Después de aplicar `@ray.remote`, envía mediante **`f.remote(...)`**. Llamarlo como un `f(...)` ordinario es incorrecto. Un ejemplo de retorno único produce un `ObjectRef`, que puede leerse con `ray.get()`.
 
-Las tasks son adecuadas de forma natural para trabajo vergonzosamente paralelo: aplicar la misma función a muchas entradas independientes, ejecutar muchas simulaciones independientes o preprocesar muchos fragmentos de datos. Como cada llamada a una task es independiente y sin estado, Ray puede programar grandes cantidades de ellas en todo el cluster sin necesidad de rastrear ninguna relación entre una llamada y la siguiente.
+Llamar a una task sin estado no garantiza una función pura sin efectos secundarios. Las mutaciones de archivos/base de datos necesitan una estrategia de idempotencia para los reintentos. Los workers pueden reutilizarse; una caché global del módulo que sobrevive de forma incidental es distinta de la gestión explícita del estado.
+
+Ray rastrea dependencias. Pasar un ObjectRef ascendente como argumento de nivel superior a otra task crea una dependencia de que ese valor esté listo. Las tasks no son necesariamente independientes entre sí.
 
 ### Actors
 
-Un **actor** es la contraparte con estado de una task. Aplicar `@ray.remote` a una clase de Python la convierte en un actor: Ray instancia la clase en un worker y mantiene esa instancia activa como un proceso remoto de larga duración, en lugar de como una única llamada que devuelve un resultado y desaparece. Las llamadas a métodos en un handle de actor se enrutan entonces a esa misma instancia activa, por lo que el estado almacenado en la instancia — los weights de un modelo, un contador, una conexión abierta — persiste entre llamadas.
+`Actor.remote()` crea un handle para una instancia remota; `handle.method.remote()` envía un método a esta. Los contadores, conexiones o modelos en la memoria de esa instancia pueden reutilizarse entre llamadas.
 
-Los actors son la primitiva adecuada cuando se necesita mantener estado entre llamadas: un contador acumulativo, un modelo cargado que se mantiene residente en memoria en lugar de volver a cargarse para cada solicitud, o una simulación con estado que avanza llamada a llamada. Las tasks y los actors son opciones complementarias, no competidoras: una aplicación típica de Ray combina ambos, utilizando tasks para trabajo paralelo sin estado y actors donde sea necesario que el estado persista.
+Esto no es almacenamiento durable automático. En 2.58.0, `max_restarts` tiene como valor predeterminado 0. Configurar reinicios vuelve a ejecutar el constructor; no restaura automáticamente el estado de la aplicación. Diseña los checkpoints y la recuperación por separado, y distingue la concurrencia/ordenación síncrona, async y mediante threads de los actors.
 
-### El Object Store
+### Object Store
 
-El **object store** es un almacén distribuido de memoria compartida que contiene los objetos que las tasks y los actors se pasan entre sí — argumentos de funciones, valores de retorno y cualquier otra cosa colocada explícitamente en él. Cada nodo del cluster ejecuta su propio object store local, y Ray coordina el movimiento de datos entre ellos según sea necesario para que una task que se ejecuta en un worker pueda leer un objeto producido en otro.
+Los valores remotos son inmutables y pueden almacenarse o replicarse en object stores locales de cada nodo. Las referencias a un valor no hacen que todos los nodos compartan una región de memoria física. El acceso entre nodos puede implicar costes de transporte y serialización.
 
-El object store es más importante para objetos grandes: un array grande de NumPy, un fragmento de dataset o los weights de un modelo. En vez de serializar y copiar dicho objeto en cada proceso que lo necesita, Ray puede mantener una copia en memoria compartida en un nodo y permitir que varios procesos locales lo lean sin duplicarlo en la memoria propia de cada proceso. Esto permite a Ray mover datos grandes entre tasks y actors de forma eficiente, en lugar de pagar un coste de serialización y copia en cada llamada.
+**Los arrays de NumPy en el mismo nodo** pueden leerse mediante vistas de memoria compartida de solo lectura. Cópialos antes de modificarlos. Esto no implica comportamiento de copia cero para todos los objetos de Python, transferencias entre nodos ni tensores de GPU/pesos de modelos. Los valores pequeños y grandes también pueden usar rutas de transferencia diferentes.
 
-## Arquitectura del cluster: Head Node y Worker Nodes
+## Ejemplo local pequeño
 
-Un cluster de Ray está formado por un **head node** y cualquier cantidad de **worker nodes**. Cada nodo — tanto head como worker — ejecuta procesos de Ray y aporta CPU, GPU y memoria al pool compartido de recursos del cluster.
+Esto comprueba el comportamiento de la API, no el rendimiento de entrenamiento ni un benchmark.
 
-El head node ejecuta algunas responsabilidades adicionales además de las que realiza un worker:
+```python
+import ray
+import numpy as np
 
-* **Global Control Store (GCS)**: el almacén de metadatos del cluster, que rastrea qué actors y objetos existen y dónde se encuentran, junto con otro estado del cluster del que dependen la programación y la recuperación ante fallos.
-* **Proceso driver**: si ejecuta su script de Ray de nivel superior o sesión interactiva en el head node, el driver que ejecuta ese script reside allí y envía tasks y llamadas a actors al cluster.
-* **Autoscaler**: el proceso que solicita worker nodes adicionales cuando la carga de trabajo pendiente del cluster requiere más recursos y elimina workers inactivos cuando ya no se necesitan.
+try:
+    ray.init(address="local", num_cpus=2, include_dashboard=False,
+             object_store_memory=80 * 1024 * 1024)
 
-Los worker nodes existen para ejecutar tasks y actors y para añadir su CPU, GPU y memoria al pool del que extrae recursos todo el cluster. De ello se deriva una propiedad clave del modelo de programación de Ray: Ray programa tasks y actors frente al pool de recursos combinado del cluster, no frente a los recursos de ningún nodo de forma aislada. Una task que solicita dos CPU puede ejecutarse en cualquier nodo del cluster que tenga dos CPU libres; el scheduler no elige un nodo de antemano como se haría al colocar manualmente trabajo en una máquina específica.
+    @ray.remote(num_cpus=1)
+    def twice(value):
+        return value * 2
 
-```mermaid
-flowchart TB
-    subgraph Head["Head Node"]
-        GCS["Global Control Store<br/>(cluster metadata)"]
-        Driver["Driver Process<br/>(if run on head)"]
-        Autoscaler["Autoscaler"]
-    end
+    first = twice.remote(2)
+    second = twice.remote(first)  # ObjectRef dependency
+    assert ray.get(second, timeout=15) == 8
 
-    subgraph W1["Worker Node 1"]
-        T1["Tasks"]
-        A1["Actors"]
-    end
+    @ray.remote(num_cpus=1)
+    class Counter:
+        def __init__(self):
+            self.value = 0
+        def increment(self):
+            self.value += 1
+            return self.value
 
-    subgraph W2["Worker Node 2"]
-        T2["Tasks"]
-        A2["Actors"]
-    end
-
-    subgraph W3["Worker Node N"]
-        T3["Tasks"]
-        A3["Actors"]
-    end
-
-    OS[("Distributed Object Store<br/>(shared across all nodes)")]
-
-    Head --> W1
-    Head --> W2
-    Head --> W3
-
-    W1 --- OS
-    W2 --- OS
-    W3 --- OS
-    Head --- OS
+    counter = Counter.remote()
+    assert ray.get([counter.increment.remote(),
+                    counter.increment.remote()], timeout=15) == [1, 2]
+    ref = ray.put(np.arange(256_000, dtype=np.int64))
+    array = ray.get(ref, timeout=15)
+    assert not array.flags.writeable
+finally:
+    ray.shutdown()
 ```
 
-Cada nodo participa en el object store distribuido, por lo que un objeto producido por una task en un worker node puede ser leído por una task o actor que se ejecute en un worker node diferente, y Ray gestiona el movimiento de datos entre ellos.
+Un ejercicio pequeño de un único nodo no demuestra la recuperación ante fallos multinodo, el uso compartido de memoria de GPU ni el rendimiento de red.
 
-## Bibliotecas de nivel superior construidas sobre la misma base
+## Arquitectura de clúster: Head Node y Worker Nodes
 
-Ray incluye varias bibliotecas de nivel superior que abordan cargas de trabajo específicas de ML, y todas están construidas sobre las tasks, actors y object store descritos anteriormente, en lugar de introducir su propio modelo de ejecución independiente:
+El head ejecuta componentes de control del clúster, incluido el **Global Control Service (GCS)**. Los raylets, procesos worker y object stores locales participan en la ejecución y el movimiento de datos en el head y los workers. Un head puede anunciar cero CPU lógicas para restringir la colocación de tasks de usuario; no necesita aportar los mismos recursos de cómputo que un worker.
 
-* **Ray Train** distribuye el entrenamiento de modelos entre muchos workers, cubierto en [Parte 3: Ray Train y Ray Tune](./03-ray-train-tune.md) de esta serie.
-* **Ray Tune** ejecuta búsquedas de hiperparámetros en paralelo en muchos trials, también cubierto en la Parte 3.
-* **Ray Serve** despliega modelos detrás de una capa de serving escalable, cubierto en [Parte 4: Ray Serve](./04-ray-serve.md) de esta serie.
+El driver ejecuta la aplicación de nivel superior. No tiene que ejecutarse en el head; la colocación depende del método de envío. Un autoscaler también es un componente de despliegue configurado, no una promesa de que cada `ray.init()` local aprovisione automáticamente más workers.
 
-Vale la pena destacar explícitamente esta base compartida: en lugar de agrupar herramientas independientes que cada una reimplementa la programación, la tolerancia a fallos y el movimiento de datos para un tipo de carga de trabajo, Ray implementa estas preocupaciones una vez en sus primitivas principales y permite que cada biblioteca de nivel superior las reutilice. El entrenamiento distribuido y el ajuste de hiperparámetros son ambos, en el fondo, workers que se ejecutan como actors o tasks de Ray e intercambian datos a través del mismo object store que utilizaría una función simple de `@ray.remote`.
+El GCS administra metadatos del clúster como actors, nodos y placement groups. **No lo describas como el propietario centralizado de todos los metadatos de objetos.** El proceso que crea el ObjectRef original es el propietario del objeto y puede diferir del worker que calcula el valor.
 
-Al momento de escribir esto, Ray 2.57.0 es la versión estable más reciente. Existe una línea de desarrollo de Ray 3.0 como contexto futuro que vale la pena conocer, pero aún no se ha publicado, por lo que este documento no depende de nada específico de ella.
+### Colocación de recursos
 
-## Por qué esto importa en Kubernetes
+Ray considera el estado del clúster al seleccionar candidatos, pero **cada task/actor debe caber en un nodo factible**. Dos nodos con un CPU libre cada uno no ejecutan conjuntamente una única task de dos CPU. La factibilidad, disponibilidad, localidad de datos y restricciones de colocación/etiqueta/afinidad son importantes.
 
-Ray tiene su propia noción de cluster — un head node, worker nodes y un autoscaler que amplía o reduce la flota de workers — y esa es una capa diferente de la programación y el autoscaling propios de Kubernetes. Ejecutar Ray en Kubernetes significa que algo debe traducir la forma de un cluster de Ray (un head, cierta cantidad de workers, cada uno con determinados requisitos de recursos) en objetos de Kubernetes como Pods y Deployments, que el scheduler de Kubernetes realmente entiende y puede colocar en nodos de EKS. Esa traducción es precisamente el problema que cubre a continuación [Parte 2: KubeRay Operator](./02-kuberay-operator.md) en esta serie.
+Los recursos lógicos de CPU/GPU guían la admisión y la programación. `num_cpus=1` no fuerza a cada thread del sistema operativo en el proceso a ejecutarse en un núcleo físico. Configura por separado los requests/limits del contenedor y los recuentos de threads de las bibliotecas.
 
-## Próximos pasos
+![El GCS del head de Ray es distinto de los raylets por nodo, los object stores locales y la ejecución de tasks/actors. Se muestran las dependencias de ObjectRef del driver y las transferencias de objetos entre nodos; los metadatos de propiedad de los objetos no están todos centralizados en el GCS.](../../.gitbook/assets/en-ai-ml-ray-01-architecture-0.png)
 
-Este documento cubrió qué es Ray, sus tres primitivas principales (tasks, actors y el object store), y cómo el head node y los worker nodes de un cluster de Ray cooperan para programar trabajo en un pool de recursos compartido. [Parte 2: KubeRay Operator](./02-kuberay-operator.md) cubre cómo el operador KubeRay asigna este modelo de cluster de Ray a recursos nativos de Kubernetes en EKS. [Parte 3: Ray Train y Ray Tune](./03-ray-train-tune.md) y [Parte 4: Ray Serve](./04-ray-serve.md) se basan en las primitivas presentadas aquí para cargas de trabajo de entrenamiento y serving, respectivamente.
+[Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-01-architecture-0.html)
 
-[Volver a la página principal](./README.md)
+## Recuperación ante fallos y bibliotecas de nivel superior
 
-## Cuestionario
+El GCS está en memoria de forma predeterminada; la recuperación después de un fallo del head requiere una configuración adicional de backend durable. La documentación de 2.58.0 distingue Redis externo compatible de RocksDB integrado **alpha**. Recuperar los metadatos del GCS no restaura el estado de la aplicación de cada actor ni el valor de cada objeto.
 
-Para comprobar lo que ha aprendido en este capítulo, pruebe el [Cuestionario del tema](../../quizzes/ai-ml/ray/01-architecture-quiz.md).
+La recuperación de objetos depende de la propiedad, el lineage y la elegibilidad para reintento/reconstrucción. No equipares los valores de `ray.put()` con las salidas de tasks recomputables, ni el object spilling con una copia de seguridad a largo plazo.
+
+Train, Tune y Serve reutilizan Core mientras añaden políticas como checkpoints de entrenamiento, programación de trials y controllers de serving. Los colectivos del framework y otras comunicaciones de entrenamiento no pueden describirse todos como tráfico a través de una única ruta de object store.
+
+## Por qué esto es importante en Kubernetes
+
+KubeRay reconcilia CRs como RayCluster, RayJob y RayService en Pods de Ray y recursos relacionados. La programación de tasks/actors de Ray, la colocación de Pods de Kubernetes y el aprovisionamiento real de EC2 mediante herramientas como Karpenter son capas independientes. KubeRay no es un dispatcher que selecciona automáticamente Train, Tune o Serve para una aplicación.
+
+## Fuentes principales
+
+- [Lanzamiento de Ray 2.58.0](https://github.com/ray-project/ray/releases/tag/ray-2.58.0)
+- [Objetos](https://docs.ray.io/en/releases-2.58.0/ray-core/objects.html)
+- [Serialización y copia cero de NumPy](https://docs.ray.io/en/releases-2.58.0/ray-core/objects/serialization.html)
+- [Programación](https://docs.ray.io/en/releases-2.58.0/ray-core/scheduling/index.html)
+- [Recursos lógicos](https://docs.ray.io/en/releases-2.58.0/ray-core/scheduling/resources.html)
+- [Tolerancia a fallos de actors](https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/actors.html)
+- [Tolerancia a fallos de objetos](https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/objects.html)
+- [Tolerancia a fallos de GCS](https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/gcs.html)
+
+[Siguiente: KubeRay](02-kuberay-operator.md) · [Página principal](README.md) · [Cuestionario](../../quizzes/ai-ml/ray/01-architecture-quiz.md)

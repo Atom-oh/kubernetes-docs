@@ -216,7 +216,7 @@
 0. [Platform Engineering 概览](./platform-engineering/00-platform-engineering-overview.md) | [测验](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
 1. [Helm](./platform-engineering/01-helm.md) | [测验](./quizzes/platform-engineering/01-helm-quiz.md)
 2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [测验](./quizzes/platform-engineering/02-ack-quiz.md)
-3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [测验](./quizzes/platform-engineering/03-kro-quiz.md)
+3. [Kube Resource Orchestrator (kro)](./platform-engineering/03-kro.md) | [测验](./quizzes/platform-engineering/03-kro-quiz.md)
 4. [Kubernetes 扩展机制](./platform-engineering/04-kubernetes-extensions.md) | [测验](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 5. [ExampleCorp：ACK + KRO 集成示例](./platform-engineering/05-example-corp-app.md)
 6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [测验](./quizzes/platform-engineering/06-backstage-idp-quiz.md)

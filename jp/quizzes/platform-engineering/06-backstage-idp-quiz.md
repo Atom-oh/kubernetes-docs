@@ -1,143 +1,77 @@
 # Backstage IDP クイズ
 
-1. Backstage Software Catalog に microservice（マイクロサービス）を登録するために使用される Entity Kind はどれですか？
-   - A) Service
-   - B) Component
-   - C) Application
-   - D) Workload
+[Backstage](../../platform-engineering/06-backstage-idp.md)
+
+元の 8 つのトピックは Backstage 1.54.7 のレビュー内容に更新されています。
+
+## 1. microservice を表す catalog kind はどれですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) Component**
-
-**解説:**
-Backstage Software Catalog では、microservices、websites、libraries はすべて `Component` Kind として登録されます。`spec.type` field によって service、website、library などが区別されます。
+Component であり、spec.type には service などを指定します。catalog の Resource は infrastructure を記述するもので、AWS resource を provision する controller ではありません。
 
 </details>
 
----
-
-2. Backstage Software Templates (Golden Paths) の主な目的は何ですか？
-   - A) 既存 service のパフォーマンスを監視する
-   - B) 新しい services/infrastructure を標準化された方法で自動作成する
-   - C) Kubernetes cluster security を監査する
-   - D) CI/CD pipelines を監視する
+## 2. Software Template は実際には何を作成しますか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) 新しい services/infrastructure を標準化された方法で自動作成する**
-
-**解説:**
-Software Templates (Golden Paths) により、developers は Backstage UI でいくつかの parameters を入力するだけで、標準化された project structure（Dockerfile、Helm chart、CI/CD、catalog-info.yaml など）を自動的に scaffold でき、organization の best practices を自然に適用できます。
+登録された action と提供された skeleton によって実装されたファイルと外部操作のみです。ガイドの小さな例では 3 つの catalog/TechDocs ファイルが作成されるだけで、application runtime や database は作成されません。golden path は認可や必須ポリシーを置き換えるものではありません。
 
 </details>
 
----
-
-3. Backstage で Kubernetes Pod status を表示するために catalog-info.yaml で必要な annotation はどれですか？
-   - A) kubernetes.io/pod-name
-   - B) backstage.io/kubernetes-id
-   - C) app.kubernetes.io/managed-by
-   - D) backstage.io/k8s-cluster
+## 3. Kubernetes workload はどのように catalog entity と対応付けられますか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) backstage.io/kubernetes-id**
-
-**解説:**
-`backstage.io/kubernetes-id` annotation は、Backstage Kubernetes plugin が catalog entities と Kubernetes resources を対応付けるために使用します。この値は Kubernetes Deployment 上の `backstage.io/kubernetes-id` label と一致している必要があります。
+backstage.io/kubernetes-id またはサポートされている label-selector annotation を、実際の workload の label と一致させます。Namespace/cluster の選択、認証情報、RBAC も必要です。メタデータの一致はユーザーごとの認可ではありません。
 
 </details>
 
----
-
-4. EKS production environment における Backstage に最も適した PostgreSQL setup はどれですか？
-   - A) Built-in SQLite
-   - B) In-cluster PostgreSQL StatefulSet
-   - C) Amazon RDS PostgreSQL (external managed)
-   - D) DynamoDB
+## 4. EKS 上で PostgreSQL と secret はどのように準備すべきですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**解答: C) Amazon RDS PostgreSQL (external managed)**
-
-**解説:**
-Production environments では、自動 backups、high availability (Multi-AZ)、monitoring のために Amazon RDS のような managed databases を使用するべきです。Helm values で `postgresql.enabled: false` を設定し、Secrets 経由で外部 RDS connection details を提供します。
+RDS のような外部 PostgreSQL を選択する場合は、同梱の database を無効化し、TLS、ネットワーク、スキーマ、マイグレーション、バックアップを設定します。承認された secret ファイルのマウントを使用し、$file のパスを一致させます。マネージド database だけでは HA/リカバリの検証は完了しません。
 
 </details>
 
----
-
-5. Backstage TechDocs が使用する documentation build tool はどれですか？
-   - A) Docusaurus
-   - B) GitBook
-   - C) MkDocs
-   - D) Sphinx
+## 5. TechDocs はどのようにビルドされ配信されますか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**解答: C) MkDocs**
-
-**解説:**
-Backstage TechDocs は MkDocs の上に構築されています。service repo の `docs/` directory と `mkdocs.yml` file から documentation を生成し、S3 のような storage に公開して、catalog から直接アクセスできるようにします。
+MkDocs と techdocs-core を使用します。外部 builder を使う場合は、CI が S3 などのストレージに publish し、Backstage backend がそれを読み取って UI に表示します。entity のキーとルートパスを揃え、publisher と reader の権限を分離します。バケットへのパブリックアクセスは不要です。
 
 </details>
 
----
-
-6. Backstage を段階的に導入する場合、どの feature から始めるべきですか？
-   - A) Software Templates
-   - B) Software Catalog
-   - C) TechDocs
-   - D) RBAC Permission Framework
+## 6. 段階的な導入の過程で何を確立すべきですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) Software Catalog**
-
-**解説:**
-Software Catalog は Backstage の基盤であり、他のすべての features はその上に構築されます。まず organization の services、APIs、team information を登録し、その後 Templates と TechDocs を段階的に追加します。
+小さく正確な catalog と信頼できる ownership/ソースから始め、その後 template と TechDocs を拡張します。認証、認可、信頼境界は最初から確立しておきます。
 
 </details>
 
----
-
-7. Backstage Software Template で GitHub repo creation と ArgoCD Application creation の両方を自動化するにはどうすればよいですか？
-   - A) Backstage が Kubernetes API を直接呼び出す
-   - B) Template steps が publish:github と argocd:create-resources actions を順番に実行する
-   - C) GitHub Webhooks が ArgoCD を自動的に trigger する
-   - D) Helm chart にすべての resources を含める
+## 7. GitHub への publish と ArgoCD の action をつなぐものは何ですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) Template steps が publish:github と argocd:create-resources actions を順番に実行する**
-
-**解説:**
-Backstage Scaffolder は、Template の `steps` section に定義された actions を順番に実行します。`publish:github` が repo を作成し、その output (remoteUrl) が input として `argocd:create-resources` に渡され、ArgoCD Application を自動作成します。最後に、`catalog:register` がそれを catalog に追加します。
+action モジュールを登録し、認証情報、権限、実際の入出力スキーマを設定します。Roadie 1.8.1 の argocd:create-resources はデプロイ先の namespace を受け取り、revision の入力はありません。マージされていない PR を作成した直後に main branch の catalog ファイルを登録してはいけません。
 
 </details>
 
----
-
-8. Backstage Permission Framework で、teams が自分たちの entities だけを変更できるよう制限するにはどうすればよいですか？
-   - A) Kubernetes RBAC ClusterRole
-   - B) policy で conditions field を使用して spec.owner と一致させる
-   - C) GitHub repository permissions
-   - D) Ingress network policies
+## 8. catalog の削除を ownership によって制限するにはどうすればよいですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) policy で conditions field を使用して spec.owner と一致させる**
-
-**解説:**
-Backstage Permission Framework policy の `conditions` field は、`spec.owner` が team name と等しい entities に一致させることができ、自分たちの entities に対してのみ update permissions を付与します。これにより、team autonomy を維持しながら、他の teams の entities の変更を read-only に制限できます。
+実際の PermissionPolicy モジュールを登録し、catalog の削除に対して IS_ENTITY_OWNER 条件を返して、catalog backend にそれを評価させます。この例では明示的な許可がない action は拒否されます。catalog の ownership、GitHub への書き込み、ArgoCD のデプロイ権限はそれぞれ別個のものです。Group/User のソースも保護しましょう。
 
 </details>

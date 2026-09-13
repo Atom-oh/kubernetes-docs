@@ -1,101 +1,108 @@
-# パート 3: Ray Train と Ray Tune
+# Part 3: Ray Train と Ray Tune
 
-> **対応バージョン**: Ray 2.57.0
-> **最終更新**: August 20, 2026
+> **レビュー基準**: Ray 2.58.0 · 2026-09-12
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例に沿って進めるには、以下のツールと環境が必要です。
+検証には Python 3.12 と `ray[train,tune]==2.58.0` を使用しました。これらの extras は Ray の Train/Tune 依存関係をインストールしますが、**PyTorch などのフレームワークは別途必要です**。実際のワークロードに合わせて PyTorch、CUDA、ドライバーの組み合わせを確認してください。
 
-### 必要なツール
+ここでの確認対象は、設定、callback/checkpoint API、および小規模な CPU スカラー Tune の例です。PyTorch のトレーニング、GPU、分散勾配、EKS の autoscaling のテストではありません。
 
-* Python 3.10 以降
-* `pip install "ray[train,tune]"`
-* Ray クラスターへのアクセス（EKS 上で起動する方法は [パート 2: KubeRay Operator](02-kuberay-operator.md) を参照するか、このドキュメントの例ではローカルで `ray.init()` を実行してください）
+## Ray Train V2 とトレーニングコードの責務
 
-## Ray Train: Ray のプリミティブを使用した分散トレーニング
+2.58.0 では、`RAY_TRAIN_V2_ENABLED` が未設定の場合に V2 がデフォルトになります。`ray.train.torch.TorchTrainer` の import はそれに応じて V2 実装を選択します。環境変数によって旧実装が選択されている場合、契約が同一であると想定しないでください。
 
-[パート 1](01-architecture.md) では、Ray のコアプリミティブであるタスク、Actor、Object Store を紹介しました。これらのプリミティブに対して直接分散トレーニングジョブを書くことも可能ですが、多くの定型処理を自ら実装する必要があります。具体的には、GPU ごとに 1 つの Worker プロセスを起動し、Worker が勾配を同期するために使用する通信グループを設定し、すべての Worker 間で一貫して Checkpoint を調整することです。
+Trainer は worker と、その基盤となる分散プロセスグループを調整します。モデル、optimizer、損失/データループ、データ分割、状態の保存/復元ロジックを自動的に記述するわけではありません。PyTorch では、デバイス/DDP/sampler のセットアップに `prepare_model` や `prepare_data_loader` などの適切なヘルパーを使用し、その上でデータの重複、勾配の同期、評価を検証してください。フレームワークの collective 通信のすべてを Ray object store の転送として説明することはできません。
 
-**Ray Train** は、Ray のタスクおよび Actor プリミティブ上に構築されたライブラリで、この定型処理を担います。一般的なフレームワーク API（最も一般的なのは PyTorch ですが、Ray Train は他のフレームワークもサポートします）に対して書かれたトレーニング関数を受け取り、要求した数の分散 Worker にわたって実行します。トレーニング関数の作成者は、Worker の起動、Worker 間通信、または Checkpoint の調整を直接管理する必要がありません。
+## ScalingConfig とリソース要求
 
-### Ray Train V2
+`ScalingConfig` は worker 数と worker あたりの論理 CPU/GPU リソースを指定します。サポートされている elastic 構成も存在するため、実際のモードとそのデータ/復旧要件を確認してください。従来の `trainer_resources` を設定すると、2.58.0 の V2 では非推奨エラーが発生します。V2 controller、トレーニング worker、Tune の trial driver のリソースを区別してください。
 
-Ray Train のパブリック API は、プロジェクトの歴史の中で進化してきました。PyTorch トレーニング向けのユーザー向けインポートパスは依然として `ray.train.torch.TorchTrainer` ですが、そのパスの背後にある実装は書き直されています。この書き直し（「Train V2」）により、以前の世代の Trainer クラスが内部でどのように動作するかが統合・簡素化され、現在は同じインポートから取得されるデフォルト実装です。この書き直しが導入される前の Ray リリースに固定された古いコードベースに遭遇した場合は、壊れていると考えるのではなく、以前の実装上で動作しているものとして扱ってください。デフォルトが切り替わった正確なバージョンのような詳細は Ray リリースごとに変わるため、詳細については docs.ray.io の Ray ドキュメントを参照してください。
+placement group と worker bundle には、フレームワークのプロセスが初期化できるだけの十分なキャパシティが事前に必要です。これは Kubernetes のスケジューリングを置き換えるものではなく、すべての Pod がアトミックにスケジュールされることを保証するものでもありません。GPU が不足すると待機、タイムアウト、失敗が発生する可能性があり、Ray/KubeRay の上限値、quota、イメージの準備状況、EC2 の在庫状況も影響します。
 
-## Ray Train の中核概念
+## Checkpoint とレポート
 
-### Trainer
+`Checkpoint.from_directory()` は、自分で準備したファイルから checkpoint の参照を構築します。モデル、optimizer、RNG、scheduler、データセットの位置を自動的に取得するわけではありません。必要な状態を明示的に保存し、worker 内で `train.get_checkpoint()` が返す checkpoint をロードしてください。
 
-`TorchTrainer` などの **Trainer** は、ユーザー提供のトレーニング関数をラップします。トレーニング関数には、選択したフレームワークにおける通常のモデルトレーニングロジック、すなわちモデルの構築、バッチの反復処理、損失の計算、Optimizer の実行が含まれます。Trainer は、基盤フレームワークのデータ並列トレーニングが期待する分散プロセスグループ（たとえば PyTorch DDP プロセスグループ）内で、Worker ごとに 1 回この関数を起動する役割を担うため、トレーニング関数自体がそれを手作業で設定する必要はありません。
+**2.58.0 の V2 における `train.report` の呼び出しは barrier であり、すべての worker が同じ回数到達しなければなりません。** rank 0 だけがファイルを保存する場合でも、他の rank は `checkpoint=None` で参加します。一部の worker でレポートをスキップすると、トレーニングが停止することがあります。メトリクスは worker 間で自動的に平均化されないため、必要な集約はトレーニングコード内で計算してください。
 
-### ScalingConfig
+checkpoint のアップロードはデフォルトで同期モードです。非同期アップロードや検証を使用する場合は、完了状況、一時ファイルの保持期間、機能固有の制約を確認してください。複数の worker がシャードを保存する場合は、ファイル名の衝突を避けてください。
 
-**ScalingConfig** は、起動する Worker 数と各 Worker に必要なリソース（たとえば、実行する Worker 数や各 Worker に GPU が必要かどうか）を Trainer に伝えます。Trainer は、この設定を使用して、他の Ray タスクや Actor と同様に、基盤となる Ray クラスターに対応するリソースを要求します。
+複数ノード構成では、すべての worker からアクセスできる永続ストレージを `train.RunConfig(storage_path=...)` に設定してください。Pod のローカルディレクトリでは、ノード/Pod の削除後の復旧は保証されません。S3 パスであっても IAM、ネットワーク、保持設定は別途必要です。
 
-### Checkpointing
+### 障害クラスと再試行
 
-Ray Train Worker は、トレーニング中に Checkpoint を報告できます。Checkpoint は、通常はモデルの重みと Optimizer の状態など、その時点から最初からではなくトレーニングを再開するのに十分な状態をキャプチャします。これは 2 つの目的に役立ちます。Worker 障害後に、それまでの進捗をすべて失わずに長時間実行される分散トレーニングジョブを復旧できること、そしてワークフローの次の段階（以下で説明する後続のハイパーパラメータチューニングの判断、または結果をモデルバージョンとして登録すること）にトレーニング済みモデルを引き渡せることです。後者は、このドキュメントサイトの MLflow Model Registry 資料で扱う内容と概念的に似ていますが、その資料は Ray 固有ではありません。
+2.58.0 の V2 における `FailureConfig` のデフォルトは、トレーニング worker のエラーに対して `max_failures=0`、controller のエラーに対して `controller_failure_limit=-1`、preemption に対して `max_preemption_failures=-1` です。**`max_failures=0` を設定するだけでは、すべての再試行クラスが無効になるわけではありません。** 各上限値を RayJob や運用上のデッドラインとあわせて設定してください。checkpoint が存在しない、または不完全な場合、再試行によって進捗を復旧することはできません。
 
-## Ray Tune: クラスター全体でのハイパーパラメータ検索
+## Ray Tune: Searcher と Scheduler
 
-**Ray Tune** は、Ray 上にも構築されたハイパーパラメータチューニングライブラリです。クラスター全体で多数のトレーニング Trial を並列実行し、プラグイン可能な検索アルゴリズムを使用して、次に試すハイパーパラメータの組み合わせを決定します。各 Trial は特定のハイパーパラメータセットでモデルをトレーニングし、Tune の検索アルゴリズムが次に試す内容を決定するために使用できる結果を返します。
+Tune は trial の設定と実行を管理します。searcher はパラメーターの候補を選択し、trial scheduler は中間メトリクスを用いて trial を停止、一時停止、継続します。grid/random search は、以前のメトリクスから次の候補を適応的に決めるとは限りません。
 
-これは、このドキュメントサイトの Kubeflow サブツリーが Katib について説明している内容と概念的には並列していますが、Tune は個別の Kubernetes CRD ベースのシステムではなく、Ray エコシステムにネイティブなライブラリです。
+`max_concurrent_trials`、trial のリソース、placement group、クラスターのキャパシティをあわせてレビューしてください。trial driver が、その配下の Train worker に必要なリソースをすべて占有しないようにしてください。CPU/GPU の合計数だけでは、各 worker bundle が配置できることは保証されません。
 
-## Ray Train と Ray Tune の組み合わせ
+## 小規模な Tune の例
 
-Ray Tune が実行する Trial は、単一プロセスの関数である必要はありません。一般的なパターンは、Tune が検索対象とする trainable として Ray Train の `Trainer` を渡すことです。すると各ハイパーパラメータ Trial は、それ自体が分散 Ray Train 実行となり、複数の GPU または複数のノードにまたがる可能性があります。
+これはモデルのトレーニングではなく、**2 つのスカラー目的関数の trial** を実行します。実際の確認では両方の結果を収集し、スコア 0 の `x=3` が選択されました。
 
-この組み合わせが重要になるのは、1 回の Trial 自体が妥当な時間内に完了するために分散トレーニングを必要とするほど、モデルのトレーニングコストが高い場合です。これがなければ、チームは扱いにくい選択を迫られます。分散トレーニングジョブに対してハイパーパラメータを直列にチューニングするか、検索フェーズ中の分散トレーニングをあきらめるかです。両方のライブラリは同じ基盤 Ray プリミティブを共有しているため、Tune は、多数の同時実行 Ray Train を、それぞれ独自の分散 Worker セットとともに実行できます。どちらのライブラリにも、もう一方のための特別な統合コードは必要ありません。
+```python
+from pathlib import Path
+import ray
+from ray import tune
 
-```mermaid
-flowchart TB
-    Driver["Ray Tune Driver<br/>(search algorithm)"]
+def objective(config):
+    for step in range(2):
+        tune.report({"score": -(config["x"] - 3) ** 2, "step": step})
 
-    subgraph Trial1["Trial 1: Ray Train run"]
-        T1W1["Worker Actor 1"]
-        T1W2["Worker Actor 2"]
-        T1OS[("Object Store")]
-        T1W1 <--> T1OS
-        T1W2 <--> T1OS
-    end
-
-    subgraph Trial2["Trial 2: Ray Train run"]
-        T2W1["Worker Actor 1"]
-        T2W2["Worker Actor 2"]
-        T2OS[("Object Store")]
-        T2W1 <--> T2OS
-        T2W2 <--> T2OS
-    end
-
-    Driver -->|launches with hyperparameter set A| Trial1
-    Driver -->|launches with hyperparameter set B| Trial2
-    Trial1 -->|reports results/checkpoints| Driver
-    Trial2 -->|reports results/checkpoints| Driver
-    Driver -->|decides next round of trials| Driver
-
-    style Driver fill:#4fc3f7
-    style Trial1 fill:#81c784
-    style Trial2 fill:#ffb74d
+try:
+    ray.init(address="local", num_cpus=2, include_dashboard=False,
+             object_store_memory=80 * 1024 * 1024)
+    tuner = tune.Tuner(
+        tune.with_resources(objective, {"cpu": 1}),
+        param_space={"x": tune.grid_search([1, 3])},
+        tune_config=tune.TuneConfig(
+            metric="score", mode="max", max_concurrent_trials=1),
+        run_config=tune.RunConfig(
+            storage_path=str(Path(".tune-demo").resolve()),
+            name="scalar-example", verbose=0),
+    )
+    results = tuner.fit()
+    assert len(results) == 2 and not results.errors
+    best = results.get_best_result()
+    assert best.config["x"] == 3 and best.metrics["score"] == 0
+finally:
+    ray.shutdown()
 ```
 
-## リソース割り当てとクラスターオートスケーラー
+Ray の論理リソースと object store のサイズは、プロセス全体に対する OS の制限ではありません。結果ディレクトリを再利用する前に、新規実行か復旧かを決めてください。
 
-Ray Train と Ray Tune はいずれも、[パート 1](01-architecture.md) で説明した Ray の通常のタスクおよび Actor のリソース要求メカニズムを通じて、Worker の CPU と GPU を要求します。トレーニングまたはチューニング専用の個別のリソース要求パスはありません。これは EKS で重要です。なぜなら、[パート 2](02-kuberay-operator.md) で扱った KubeRay 管理のオートスケーラーが、トレーニングまたはチューニングジョブの実際のリソース需要に応答できるのは、まさにこのためです。クラスターを、これまでに実行する最大のジョブ向けにあらかじめサイジングする必要はありません。Ray Tune のスイープがより多くの同時 Trial を起動すると、オートスケーラーはさらに Worker ノードを要求でき、Trial の完了後にはスケールダウンできます。
+## 現在の Train/Tune 連携
 
-## 実践上の注意: EKS における Co-Scheduling と GPU ノードのリードタイム
+**V2 の Trainer インスタンスを直接 `Tuner` に渡す方法を、現在推奨されるパスとして提示しないでください。** ネイティブな確認では、V2 の DataParallelTrainer インスタンスに対して `TuneError` が発生しました。旧 BaseTrainer の互換性/非推奨の扱いと V2 を区別してください。
 
-単一の Ray Train 実行を構成する分散 Worker プロセスは、通常 Co-Scheduling される必要があります。つまり、Worker が形成する通信グループを確立する前に、すべての Worker が同時に起動し、割り当てられた GPU を保持している必要があります。これは、このドキュメントサイトの他の分散トレーニングシステムで扱う Gang Scheduling の必要性と似ています。クラスターのオートスケーラーが妥当な時間内に要求されたすべての GPU Worker をプロビジョニングできない場合、トレーニング実行は最後の数個の Worker の起動を待って停止する可能性があります。
+現在ドキュメント化されているパターンは、フレームワークの Trainer を構築して `.fit()` を呼び出す **関数 trainable** を使用します。trial のパラメーターは `train_loop_config` 経由で渡し、trial ごとに一意な Train の実行名とストレージパスを使用してください。
 
-これは GPU ノードプールのプロビジョニングリードタイムと直接関係します。ノードプールから新しい GPU キャパシティを取得するには時間がかかり、その時間は一般用途の CPU ノードよりも長く、予測しにくいことがよくあります。このドキュメントサイトの [Karpenter ガイド](../../autoscaling/02-karpenter.md) では、ノードプロビジョニングの仕組みを詳しく扱っています。Ray Train/Tune の計画において押さえるべき点は、EKS 上のトレーニングジョブの実際の開始時刻は、ジョブが送信された時刻だけでなく、クラスターが要求されたすべての Worker をどれだけ速やかに Co-Scheduling できるかにも依存するということです。
+中間メトリクスと checkpoint のパスを転送するには、Train の `RunConfig(callbacks=[...])` を通じて `ray.tune.integration.ray_train.TuneReportCallback` をアタッチします。これは Tune セッション内で構築してください。2.58.0 の実装は、最初の worker のメトリクス辞書を平均化せずに転送します。また、checkpoint を再度アップロードするのではなく、既存の checkpoint パスをメトリクスに追加します。
 
-## 次のステップ
+Tuner には `tune.RunConfig`、Trainer には `train.RunConfig` を使用してください。それぞれの障害、ストレージ、callback の設定は分けて管理します。この連携には明示的な結線とリソース計画が必要です。
 
-パート 3 では、Ray Train の Trainer、ScalingConfig、Checkpointing、Ray Tune の Trial ベースのハイパーパラメータ検索、およびチューニング Trial 自体が分散トレーニングを必要とする場合に両者を組み合わせる方法を扱いました。[パート 4: Ray Serve](04-ray-serve.md) では、トレーニングからサービングへ進みます。トレーニング済み（およびチューニング済みの可能性がある）モデルを取得し、スケーラブルな推論エンドポイントの背後で公開します。
+![Tune の trial functions は個別の Train runs を作成し、その workers は framework の通信機構を使います。Checkpoints は共有の永続ストレージに保存され、callback が metrics と checkpoint paths を Tune に渡します。](../../.gitbook/assets/en-ai-ml-ray-03-ray-train-tune-0.png)
 
-[メインページに戻る](./README.md)
+[インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-03-ray-train-tune-0.html)
 
-## クイズ
+## EKS の運用上の確認事項
 
-[Ray Train と Ray Tune のクイズ](../../quizzes/ai-ml/ray/03-ray-train-tune-quiz.md) で理解度を確認してください。
+Ray のリソース/placement の要求、KubeRay の worker group の上限値、Kubernetes の Pod 配置、および物理ノードの供給を、それぞれ分けて確認してください。キャパシティに余裕があっても、イメージの pull、データセットへのアクセス、フレームワークの初期化/通信、checkpoint の権限によって起動が遅延することがあります。
+
+autoscaling は GPU を即座に提供するものでも、コスト/完了時間の上限を自動的に保証するものでもありません。trial の同時実行数、worker、最大レプリカ数、再試行クラス、運用上のデッドラインを調整してください。RayJob やクラスターを削除する前に、結果と checkpoint が保存されていることを検証してください。
+
+## 一次情報
+
+- [Train overview](https://docs.ray.io/en/releases-2.58.0/train/overview.html)
+- [Train + Tune](https://docs.ray.io/en/releases-2.58.0/train/user-guides/hyperparameter-optimization.html)
+- [Checkpoints](https://docs.ray.io/en/releases-2.58.0/train/user-guides/checkpoints.html)
+- [Persistent storage](https://docs.ray.io/en/releases-2.58.0/train/user-guides/persistent-storage.html)
+- [Failures/preemption](https://docs.ray.io/en/releases-2.58.0/train/user-guides/fault-tolerance.html)
+- [PyTorch preparation](https://docs.ray.io/en/releases-2.58.0/train/getting-started-pytorch.html)
+- [2.58.0 report implementation](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/train/v2/api/train_fn_utils.py)
+
+[次: Ray Serve](04-ray-serve.md) · [メインページ](README.md) · [クイズ](../../quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)

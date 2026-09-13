@@ -1,102 +1,122 @@
 # Part 2: MLflow Model Registry
 
-> **対応バージョン**: MLflow 3.15.1
-> **最終更新**: August 19, 2026
+> **確認基準**: MLflow 3.16.0 · 2026-09-12
 
-## Lab Environment Setup
+<span id="lab-environment-setup"></span>
 
-このドキュメントの例に沿って進めるには、次のツールと環境が必要です。
+## ラボ環境の準備
 
-### Required Tools and Resources
-- Python 3.10 以降
-- `pip install mlflow`
-- レジストリへのアクセス権を持つ、実行中の MLflow tracking server へのアクセス（セットアップ方法は [Part 1: MLflow Tracking](01-tracking.md)、またはクラスターでホストする server については [Part 3: Deploying MLflow on EKS](03-eks-deployment.md) を参照）
+Python 3.10 以降と `mlflow==3.16.0` を使用します。Registry API はローカル SQLite でも動作します。個別の HTTP サーバーは必須ではありません。チームでの Deployment については [Part 3](03-eks-deployment.md)、Tracking のセットアップについては [Part 1](01-tracking.md) を参照してください。この章では OSS MLflow について説明します。Databricks Unity Catalog などのマネージド Registry では、権限、コピー、および保持の動作が異なる場合があります。
 
-## What the Model Registry Is
+<span id="what-the-model-registry-is"></span>
 
-[Part 1](01-tracking.md) では、Tracking、すなわち Run と Experiment に対するパラメーター、メトリクス、artifact、`LoggedModel` エンティティの記録について説明しました。Run は 1 回のトレーニング試行の記録です。その識別子はビジネス上の意味ではなく、いつどのように実行されたかに紐づくため、「出荷するモデル」を扱うための適切な単位ではありません。
+## Model Registry とは
 
-Model Registry は、**Registered Models** を導入することでこの問題を解決します。これはモデルバージョンを名前付きかつバージョン管理された形で収集し、個々のトレーニング Run や Experiment から独立した、安定したモデルの識別子を提供します。「現在本番で使われているモデルを生成した Run はどれか」と問う代わりに、チームは「現在の `fraud-detector` とは何か」と問い、以降にいくつの Experiment が実行されたかにかかわらず一貫した回答を得られます。
+Registry は、論理的なモデル名、番号付きバージョン、エイリアス、メタデータを管理します。候補の記録、昇格の承認、エンドポイントの Deployment はそれぞれ別の操作です。Registry を持つだけでは、承認や serving の動作は自動的に実装されません。
 
-レジストリは、開発から本番までのモデルのライフサイクル、すなわち登録、レビュー、昇格、最終的な廃止を、すべて 1 つの永続的な名前に対して追跡しながら管理するために存在します。
+<span id="core-concepts"></span>
 
-## Core Concepts
+## 基本概念
 
-### Registered Model
-
-Registered Model は、たとえば `fraud-detector` のような名前です。これはレジストリにおける最上位のエンティティです。モデルに付加されたすべてのバージョン、alias、tag、description は、モデルの存続期間を通じてこの 1 つの名前の下に蓄積されます。
+| Entity | Meaning and mutation boundary |
+|---|---|
+| Registered Model | `fraud-detector` のような論理名の配下にあるバージョンのコレクション |
+| Model Version | ソース情報を持つ番号付きレコード。説明、タグ、stage/alias の関係は変更可能 |
+| Alias | 1 つのバージョンを指す変更可能な名前。複数の Alias が同じバージョンを指すことも可能 |
+| LoggedModel | 独立した Tracking のモデルエンティティ。Registered Models および Model Versions とは別物 |
 
 ### Model Version
 
-Model Version は、Registered Model の名前の下に登録される、不変で番号付けされたバージョンです（`fraud-detector` のバージョン 1、バージョン 2 など）。各バージョンは一度だけ作成され、その後は変更されません。新しいトレーニング結果は、古いバージョンの編集ではなく、新しいバージョンになります。
+通常、新しいモデルの結果は新しいバージョンにする必要があります。ただし、**すべてのバージョンフィールドと artifact のバイト列が不変というわけではありません**。`update_model_version` は説明を変更し、バージョンタグも変更可能です。書き込み権限を持つ人は、外部の `source` URI にあるファイルを変更できます。Registry のバージョン番号は、オブジェクトの不変性やコンテンツハッシュを強制しません。
 
-すべての Model Version は、元になった基盤の `LoggedModel`（またはそれを生成した Run）を参照します。これにより、レジストリは Tracking と結び付けられます。バージョンは Run の履歴における特定時点へのポインターであり、元のものから乖離したコピーではありません。
+`run_id` と `model_id` は、`create_model_version` ではオプションです。直接のソース URI から登録すると、トレーニング Run へのリンクがない場合があります。登録がポインターであるか、artifact をコピーするか、別の保存先を使用するかは、Registry バックエンドと操作に依存します。実際の動作を検証してください。
 
 ### Aliases
 
-alias は、特定の Model Version を指す可変の名前付きポインターです。たとえば `champion` や `challenger` が該当します。バージョン番号とは異なり、alias は移動できます。今日 `champion` がバージョン 4 を指していても、評価が成功した後には、alias を利用するものに手を加えずにチームはそれをバージョン 7 に付け替えられます。
+`models:/fraud-detector@champion` は、**解決/ロード時に** Alias のバージョンを見つけます。`models:/fraud-detector/7` は明示的なバージョン参照です。Alias を移動しても、すでにメモリまたはキャッシュにロードされているモデルは自動的に置き換えられません。serving-controller の Deployment、リロード、キャッシュのポリシーを別途実装し、実際にリクエストを処理しているバージョンを記録してください。
 
-alias は、現在、レジストリ内でモデルの役割またはライフサイクル段階を表す主要な仕組みです。Serving system または下流の job は、一度 `models:/fraud-detector@champion` を解決するように記述しておけば、基盤となるバージョンが変わってもコードを変更せずに、常にその alias を現在保持しているバージョンをロードします。
+`champion` と `challenger` はチームが定義する名前です。これらはライブ/シャドウトラフィックの割合を設定したり、自ら評価を実行したりしません。Alias の更新は、品質またはセキュリティ承認の証拠ではありません。
 
-### The Legacy Stage Model (For Reference Only)
+### The Legacy Stage Model
 
-以前の MLflow デプロイでは異なる仕組みが使われていました。各 Model Version は `Staging`、`Production`、`Archived` のいずれかの **stage** を持ち、モデルを先に進めるには stage を遷移させていました。このモデルは、tag と組み合わせた alias に置き換えられています。単一のバージョンが複数の alias（または alias なし）を保持でき、alias 名は固定されたライフサイクルラベルの集合に制限されないため、こちらの方が柔軟です。新しい作業では、stage ではなく alias と tag を使用してください。stage transition を使う古い MLflow デプロイに遭遇した場合、それはこのレガシーなアプローチです。
+レガシー stage は `None`、`Staging`、`Production`、`Archived` です。`transition_model_version_stage` は **2.9.0 以降非推奨** であり、3.16.0 API には引き続き存在します。すべての現行バージョンから削除されたものとして説明しないでください。新しいワークフローでは、Alias とタグを環境固有の Registered Models および明示的な権限と組み合わせることができます。stage 名またはタグはアクセス制御ではありません。
 
-## Registering a Model
+<span id="registering-a-model"></span>
 
-Model Version は 2 つの方法のいずれかで作成され、どちらも Part 1 で説明した内容を基にしています。
+## モデルの登録
 
-**ログ記録後に登録する。** トレーニング Run がモデルを artifact（または Part 1 に従い `LoggedModel`）としてログ記録した後、`mlflow.register_model(model_uri, name)` を呼び出すことで個別に登録できます。ここで、`model_uri` はすでにログ記録されたモデルを指し、`name` は登録先の Registered Model です。これは、モデルを登録する判断がトレーニングステップ自体とは独立している場合に適しています。たとえば、評価しきい値を満たすモデルだけを登録するレビューステップが該当します。
+実際の flavor model をログに記録した後、`mlflow.register_model(model_uri, name)` を呼び出すか、flavor の `log_model` 呼び出しに `registered_model_name` を渡します。より低レベルの `MlflowClient.create_model_version` API では、ソースを直接指定できます。登録と Alias の再割り当ては別の操作です。
 
-**ログ記録時に登録する。** あるいは、flavor 固有の `log_model` 呼び出しの `registered_model_name` パラメーター（たとえば `mlflow.sklearn.log_model(..., registered_model_name="fraud-detector")`）を使用すると、ログ記録と同じ呼び出しでモデルを新しい Model Version として登録します。これは、特定のトレーニング script の各 Run が自動的に候補バージョンを生成することを意図している場合に適しています。
+この **Registry メタデータ演習** では、推論可能なモデルは作成されません。Python 3.12、MLflow 3.16.0、SQLite で確認済みです。
 
-どちらの方法でも、名前付き Registered Model の下に新しい不変の Model Version が作成されます。どちらの方法でも alias は移動しません。これは、以下で説明する別個の意図的なアクションです。
+```python
+from pathlib import Path
+import mlflow
+from mlflow import MlflowClient
 
-## Governance and the Handoff Workflow
+root = Path(".registry-demo").resolve()
+root.mkdir(exist_ok=True)
+mlflow.set_tracking_uri(f"sqlite:///{root / 'registry.db'}")
+client = MlflowClient()
+name = "registry-contract-demo"
+# Run once in a fresh demo DB. Inspect the existing name before repeating.
+client.create_registered_model(name)
+versions = []
+for number in (1, 2):
+    source = root / f"candidate-{number}"
+    source.mkdir(exist_ok=True)
+    (source / "metadata.json").write_text('{"fixture": true}')
+    versions.append(client.create_model_version(name, source=source.as_uri()))
 
-レジストリの組織上の主な価値は、候補モデルを生成することと、どの候補が Serving できるほど信頼できるかを判断することという、異なる 2 つの関心事の間の引き渡し地点となることです。
-
-一般的なワークフローは次のとおりです。
-
-1. データサイエンスチームはモデルをトレーニングし、有望な各結果を、上記いずれかの登録方法を使用して、共有された Registered Model 名の下に新しい Model Version として登録します。
-2. CI/CD で自動化する、手動で行う、またはその両方による評価または承認プロセスが、テストデータ、公平性チェック、またはビジネスメトリクスに対して候補バージョンをレビューします。
-3. バージョンがそれらのゲートを通過した後にのみ、通常は手作業ではなく自動化された pipeline から client API（`set_registered_model_alias`）を介して、何らかの処理が `champion` alias をそのバージョンに向けます。
-4. このパートの対象外である Serving infrastructure は、`models:/fraud-detector@champion` を解決するよう一度だけ記述され、バージョン番号をハードコードする必要はありません。`champion` が移動すると、次の解決では単に新しいバージョンが取得されます。
-
-この分離により、候補モデルを生成する人や system が、本番で Serving するものを直接制御する必要がなくなり、モデルを利用する system もバージョン番号を手作業で追跡する必要がなくなります。現在 Serving しているものを妨げずに、昇格評価中のバージョンを示すため、`champion` と併せて `challenger` alias が一般的に使用されます。
-
-```mermaid
-flowchart LR
-    subgraph Registry["Registered Model: fraud-detector"]
-        V1[Version 1]
-        V2[Version 2]
-        V3[Version 3]
-        V4[Version 4]
-    end
-
-    CH((champion alias)) -.-> V2
-    CG((challenger alias)) -.-> V4
-
-    S[Serving system] -->|resolves models:/fraud-detector@champion| CH
-    S -.->|evaluates via models:/fraud-detector@challenger| CG
-
-    style CH fill:#81c784
-    style CG fill:#fff176
-    style S fill:#4fc3f7
+first, second = versions
+assert first.run_id is None
+client.update_model_version(name, first.version, description="metadata fixture")
+client.set_model_version_tag(name, first.version, "review_state", "demo-only")
+client.set_registered_model_alias(name, "champion", first.version)
+snapshot = client.get_model_version_by_alias(name, "champion")
+client.set_registered_model_alias(name, "champion", second.version)
+assert snapshot.version == first.version
+assert client.get_model_version_by_alias(name, "champion").version == second.version
 ```
 
-## Lineage and Reproducibility
+`READY` は登録ステータスです。上記のように、model flavor や weights を持たないメタデータ fixture でも登録できます。推論互換性と評価基準は別途テストしてください。この演習では、ローカル DB と fixture が `.registry-demo` に残ります。
 
-すべての Model Version は、それを生成した Run、およびその Run が持つ Part 1 のパラメーター、code、dataset reference へのリンクを保持するため、チームは「現在 `champion` として Serving されているモデルを生成した正確な code と data は何か」といった監査上の質問に常に答えられます。連鎖は、alias、Model Version、Run、その Run にログ記録されたパラメーターと artifact です。
+<span id="governance-and-the-handoff-workflow"></span>
 
-Model Version は、基盤となる Run の tag とは独立して、独自の tag と description もサポートします。これは、たとえば、バージョンの昇格を承認した人物や、alias の移動を正当化した評価 report へのリンクといった、レジストリ固有のコンテキストを、トレーニング Run 自体の metadata に混在させずに記録するのに役立ちます。
+## ガバナンスと引き継ぎワークフロー
 
-## Next Steps
+1. 実際のソース artifact、model/code/data hash、依存関係、Run/model 参照を記録します。
+2. 品質、安全性、ビジネス基準を評価し、承認の証拠を保存します。
+3. 権限を持つ担当者が `set_registered_model_alias` を呼び出します。トレーニングの完了は自動承認ではありません。
+4. serving システムが新しい参照を解決し、リロードまたは Deployment を実行します。再現性とロールバックのために必要に応じてバージョン番号と artifact hash を固定します。
 
-Part 2 では、レジストリ自体、すなわち Registered Model、Model Version、現在のライフサイクルの仕組みである alias、そして登録が [Part 1: MLflow Tracking](01-tracking.md) にどのように接続するかを説明しました。登録済みモデルを実際の inference endpoint にロードすることは別の関心事であり、このシリーズの対象外です。代わりに [Part 3: Deploying MLflow on EKS](03-eks-deployment.md) では、Tracking と Model Registry の両方が依存する tracking server と backing store のセットアップを説明します。
+候補の作成と昇格を分離するには、認証、認可、運用パイプラインが必要です。`review_state=approved` のようなタグだけでは、書き込みアクセスを制限したり、承認の証拠を改ざん不能にしたりすることはできません。複数の Deployment job からの同時 Alias 更新を調整してください。
 
-[メインページに戻る](./README.md)
+![コンシューマーは champion および challenger Alias を Model Version 参照へ解決します。Alias の解決はトラフィックをルーティングせず、すでにロードされているモデルを自動的に置き換えることもありません。](../../.gitbook/assets/en-ai-ml-mlflow-02-model-registry-0.png)
 
-## Quiz
+[インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-02-model-registry-0.html)
 
-[Model Registry クイズ](../../quizzes/ai-ml/mlflow/02-model-registry-quiz.md) で理解度を確認しましょう。
+<span id="lineage-and-reproducibility"></span>
+
+## Lineage と再現性
+
+Lineage の完全性は、記録および保持された情報と同程度に限られます。Registry は、欠落した `run_id`、`model_id`、コードリビジョン、データセットハッシュを後から復元できません。ソースファイルの変更、Run/Model Version の削除、artifact のクリーンアップによっても、リンクが不完全になる可能性があります。
+
+監査には、実際に serving しているバージョン/model ID、artifact hash と場所、ソース commit、データセット snapshot、依存関係、評価/承認記録が必要です。メタデータ DB と artifact-store のバックアップおよび保持を一緒に運用してください。Alias はすべての変更に対する恒久的な監査ログではありません。
+
+<span id="next-steps"></span>
+
+## 次のステップ
+
+[Part 3: EKS Deployment](03-eks-deployment.md) では、サーバー、データベース、artifact の権限境界について扱います。
+
+<span id="primary-sources"></span>
+
+## 一次資料
+
+- [Model Registry](https://mlflow.org/docs/3.16.0/ml/model-registry/)
+- [3.16.0 Registry client API](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/tracking/client.py)
+- [ModelVersion fields](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/entities/model_registry/model_version.py)
+- [OSS SQL registry implementation](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/store/model_registry/sqlalchemy_store.py)
+
+[メインページ](README.md) · [クイズ](../../quizzes/ai-ml/mlflow/02-model-registry-quiz.md)

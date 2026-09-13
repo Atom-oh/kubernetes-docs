@@ -1,165 +1,135 @@
-# Cuestionario: implementación de MLflow en EKS
-
-Este cuestionario evalúa tu comprensión de la arquitectura del tracking server de MLflow en EKS: el backend store, el artifact store, los patrones de acceso IAM y las consideraciones operativas para ejecutar el tracking server como un servicio compartido por el equipo.
+# Cuestionario sobre el Deployment de MLflow en EKS
 
 ## Preguntas de opción múltiple
 
-1. ¿Cuál es la principal contrapartida de alojar por cuenta propia el tracking server de MLflow en EKS en lugar de usar una alternativa administrada como la capacidad de tracking compatible con MLflow de SageMaker?
-   - A) El alojamiento propio siempre es más económico, independientemente del tamaño del equipo
-   - B) Un equipo que ya usa EKS reutiliza sus patrones existentes de implementación, observabilidad e IAM, pero asume la operación del tracking server, el backend store y el artifact store
-   - C) Las alternativas administradas no pueden registrar métricas ni parámetros
-   - D) No hay ninguna contrapartida; las dos opciones son funcionalmente idénticas
+1. ¿Cuál es la principal compensación del autoalojamiento en EKS?
+   - A) Siempre tiene un costo menor que los servicios administrados
+   - B) Reutilizar patrones de Kubernetes mientras se operan servidores, almacenes y controles de acceso
+   - C) Los servicios administrados no pueden realizar seguimiento de experimentos
+   - D) S3 y las bases de datos se crean automáticamente
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un equipo que ya usa EKS reutiliza sus patrones existentes de implementación, observabilidad e IAM, pero asume la operación del tracking server, el backend store y el artifact store**
+**Respuesta: B**
 
-**Explicación:**
-El alojamiento propio permite que un equipo reutilice los mismos patrones de implementación de Kubernetes, observabilidad e IAM (IRSA/Pod Identity) que ya utiliza para otras cargas de trabajo, a cambio de operar directamente el tracking server, su base de datos backend y su artifact store, en lugar de delegar esa tarea a una alternativa administrada.
+Compare el trabajo operativo, las características, las versiones compatibles y la carga medida.
 </details>
 
-2. ¿Por qué el backend store SQLite predeterminado de MLflow no es adecuado para un tracking server compartido por un equipo?
-   - A) SQLite no puede almacenar valores de métricas de punto flotante
-   - B) SQLite no admite el nivel de escrituras simultáneas que necesita un tracking server compartido
-   - C) SQLite requiere un node group de EKS independiente
-   - D) Los artifacts de SQLite expiran después de 30 días
+2. ¿Qué afirmación sobre la concurrencia de SQLite es correcta?
+   - A) El segundo usuario siempre lo rompe de inmediato
+   - B) Son posibles varios procesos y escrituras serializadas, con límites de escritor/bloqueo/archivo compartido
+   - C) No es relacional
+   - D) Los archivos locales del Pod separados forman automáticamente una DB compartida
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) SQLite no admite el nivel de escrituras simultáneas que necesita un tracking server compartido**
+**Respuesta: B**
 
-**Explicación:**
-SQLite funciona bien para una sola persona que experimenta, pero deja de ser adecuado cuando más de un proceso necesita escribir simultáneamente: no admite la escala de escritores simultáneos que requiere un tracking server compartido por un equipo. Por eso una base de datos real, como RDS PostgreSQL o Aurora Serverless v2, lo reemplaza en producción.
+Distinga las capacidades de SQLite de la topología de almacenamiento de varios Pods.
 </details>
 
-3. ¿Qué tipo de datos contiene el backend store, en contraste con el artifact store?
-   - A) El backend store contiene objetos binarios grandes, como modelos serializados; el artifact store contiene metadatos estructurados
-   - B) El backend store contiene metadatos estructurados (experimentos, ejecuciones, parámetros, métricas, modelos registrados, versiones, alias); el artifact store contiene objetos binarios grandes (modelos, gráficos, conjuntos de datos)
-   - C) Ambos stores contienen copias idénticas de todos los datos para redundancia
-   - D) El backend store solo contiene nombres de usuario y contraseñas
+3. ¿Cuál es el valor predeterminado de metadata del chart comunitario 1.11.7 revisado?
+   - A) RDS PostgreSQL obligatorio
+   - B) Objetos de S3
+   - C) backendStore.defaultSqlitePath is :memory:
+   - D) Un PVC duradero aprovisionado automáticamente
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El backend store contiene metadatos estructurados (experimentos, ejecuciones, parámetros, métricas, modelos registrados, versiones, alias); el artifact store contiene objetos binarios grandes (modelos, gráficos, conjuntos de datos)**
+**Respuesta: C**
 
-**Explicación:**
-El backend store es una base de datos relacional que contiene todo lo que se puede consultar con SQL: experimentos, ejecuciones, parámetros, métricas, modelos registrados, versiones y alias. El artifact store (S3 en AWS) contiene los objetos binarios grandes que el backend store no almacena, como modelos registrados, gráficos y conjuntos de datos.
+La anulación del chart difiere del nuevo valor predeterminado de archivo SQLite del CLI upstream.
 </details>
 
-4. En AWS, ¿qué dos servicios son las opciones estándar para el backend store de MLflow en producción?
-   - A) DynamoDB y EFS
-   - B) Amazon RDS for PostgreSQL y Aurora Serverless v2
-   - C) ElastiCache y S3
-   - D) Redshift y Glacier
+4. ¿Una base de datos PostgreSQL de tracking externa comparte automáticamente todos los demás estados?
+   - A) Sí, toda DB de autenticación y caché
+   - B) Sí, toda la memoria de los workers
+   - C) Sí, cada secreto de sesión
+   - D) No; inspeccione las DB de autenticación, los secretos, las colas y las cachés independientes
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Amazon RDS for PostgreSQL y Aurora Serverless v2**
+**Respuesta: D**
 
-**Explicación:**
-Ambos son bases de datos relacionales reales que admiten escritores simultáneos. Vale la pena considerar Aurora Serverless v2 específicamente porque puede escalar con una carga de tracking irregular, en lugar de requerir que la base de datos se dimensione para la carga máxima durante todo el año.
+Compruebe el estado compartido de las características habilitadas antes de aumentar las réplicas.
 </details>
 
-5. ¿Cuál es el chart Helm de la comunidad mencionado para implementar MLflow en Kubernetes y cómo se agrega su repositorio?
-   - A) `bitnami/mlflow`, agregado mediante `helm repo add bitnami https://charts.bitnami.com/bitnami`
-   - B) `community-charts/mlflow`, agregado mediante `helm repo add community-charts https://community-charts.github.io/helm-charts`
-   - C) No existe un chart de comunidad mantenido para MLflow
-   - D) `mlflow/mlflow-operator`, instalado únicamente mediante `kubectl apply -f`
+5. ¿Cómo se deben manejar las versiones de chart, imagen y código fuente?
+   - A) Siempre comparten un solo número
+   - B) Una etiqueta de código fuente garantiza que existe el paquete OCI
+   - C) Verifique cada una y descargue/renderice el paquete real
+   - D) Una etiqueta latest elimina la necesidad de revisar los digests de imagen
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) `community-charts/mlflow`, agregado mediante `helm repo add community-charts https://community-charts.github.io/helm-charts`**
+**Respuesta: C**
 
-**Explicación:**
-`community-charts/helm-charts` mantiene un chart de MLflow que admite configuraciones de base de datos backend y object storage, y ofrece una alternativa práctica a escribir a mano tus propios manifiestos de Deployment/Service/Ingress.
+El código fuente del chart upstream revisado y appVersion también diferían.
 </details>
 
-6. ¿Qué mecanismo de EKS se presenta como la opción predeterminada más moderna para asociar un rol IAM al ServiceAccount del tracking server en una nueva implementación?
-   - A) Claves de acceso IAM estáticas almacenadas en un ConfigMap
-   - B) EKS Pod Identity, manteniendo IRSA como una opción válida para los clusters que ya están estandarizados en ella
-   - C) Instance profiles asociados directamente a las instancias EC2 de los nodos de trabajo
-   - D) Una credencial compartida de la cuenta raíz de AWS incorporada en la imagen del contenedor
+6. ¿El acceso IAM de ServiceAccount a S3 permite automáticamente el inicio de sesión en PostgreSQL?
+   - A) Siempre
+   - B) No; configure por separado la red de DB, TLS, los usuarios/credenciales o la autenticación IAM de DB
+   - C) Solo si el nombre del bucket coincide
+   - D) Coloque la contraseña de DB en la imagen
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) EKS Pod Identity, manteniendo IRSA como una opción válida para los clusters que ya están estandarizados en ella**
+**Respuesta: B**
 
-**Explicación:**
-EKS Pod Identity es el mecanismo más reciente para asociar roles IAM a Pods y cada vez más se recomienda como la opción predeterminada para nuevas asociaciones de IAM a Pod en EKS en general. IRSA sigue siendo una opción válida, especialmente para equipos o clusters que ya están estandarizados en ella.
+Estas son capas independientes de autorización y autenticación.
 </details>
 
-7. ¿Por qué un tracking server de MLflow respaldado por Postgres puede ejecutar de forma segura varias réplicas, mientras que el valor predeterminado respaldado por SQLite no puede escalarse en absoluto?
-   - A) Las réplicas de Postgres sincronizan automáticamente el estado en memoria entre Pods
-   - B) El tracking server no tiene estado cuando está respaldado por Postgres y S3, ya que todo el estado compartido vive fuera del Pod, mientras que SQLite no tolera escritores simultáneos
-   - C) SQLite requiere más CPU que Postgres, por lo que escalarlo es un desperdicio
-   - D) Kubernetes prohíbe ejecutar más de una réplica de cualquier Deployment que use una base de datos
+7. ¿Qué requiere EKS Pod Identity?
+   - A) Compatibilidad incondicional con todos los Pods de Fargate y Windows
+   - B) Solo un nombre de ServiceAccount
+   - C) workers EC2 de Linux, Agent, asociación, SDK compatible y configuración relacionada
+   - D) Una clave de acceso root estática
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El tracking server no tiene estado cuando está respaldado por Postgres y S3, ya que todo el estado compartido vive fuera del Pod, mientras que SQLite no tolera escritores simultáneos**
+**Respuesta: C**
 
-**Explicación:**
-Como todo el estado persistente reside en el backend store y el artifact store en lugar de en el Pod, un tracking server respaldado por Postgres no tiene estado y es seguro escalarlo horizontalmente. La falta de compatibilidad de SQLite con escritores simultáneos hace que sea inseguro escalar en absoluto el valor predeterminado de un solo proceso.
+Compruebe por separado la compatibilidad y configuración de IRSA y Pod Identity.
 </details>
 
-8. ¿Qué se describe como el siguiente paso natural después de que un modelo tiene una versión o un alias registrados, y por qué está fuera del alcance de esta serie?
-   - A) Volver a ejecutar el trabajo de entrenamiento; está fuera del alcance porque el entrenamiento ya se cubrió en la Parte 1
-   - B) Cargar esa versión del modelo en un sistema de serving (KServe, un wrapper personalizado, SageMaker, etc.); está fuera del alcance porque la infraestructura de serving es un tema amplio en sí mismo
-   - C) Eliminar la versión del modelo; está fuera del alcance porque MLflow no admite la eliminación
-   - D) Migrar el backend store a DynamoDB; está fuera del alcance porque DynamoDB no es compatible
+8. ¿SecretKeyRef y allowed_hosts por sí solos completan la seguridad?
+   - A) Eliminan la exposición del entorno e implementan toda la autorización de usuarios
+   - B) No; revise por separado la entrega de secretos y la autenticación/autorización de la aplicación
+   - C) Realizan automáticamente copias de seguridad de las bases de datos
+   - D) Se deben permitir todos los orígenes de CORS
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cargar esa versión del modelo en un sistema de serving (KServe, un wrapper personalizado, SageMaker, etc.); está fuera del alcance porque la infraestructura de serving es un tema amplio en sí mismo**
+**Respuesta: B**
 
-**Explicación:**
-Una vez que un modelo tiene una versión o un alias registrados, muchos equipos pasan a cargarlo en un sistema de serving, como KServe, un wrapper personalizado de FastAPI/Flask o SageMaker. Esa capa de serving es un tema amplio por derecho propio y queda explícitamente fuera del alcance de esta serie de tres partes.
+Comprenda la inyección de secretos en tiempo de ejecución y los límites de validación de hosts.
 </details>
 
 ## Preguntas de respuesta corta
 
-9. Nombra las tres piezas principales de la arquitectura que deben implementarse para que MLflow se ejecute como un servicio compartido por un equipo en EKS y explica brevemente qué almacena o hace cada una.
+9. ¿Que /health devuelva 200 prueba que RDS y S3 están en buen estado?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-- El MLflow Tracking Server: un contenedor sin estado que ejecuta `mlflow server` y expone la API REST y la interfaz de usuario.
-- El backend store: una base de datos relacional (por ejemplo, RDS PostgreSQL o Aurora Serverless v2) que contiene metadatos estructurados: experimentos, ejecuciones, parámetros, métricas, modelos registrados, versiones y alias.
-- El artifact store: object storage (S3 en AWS) que contiene objetos binarios grandes, como modelos registrados, gráficos y conjuntos de datos.
-
-**Explicación:**
-Ninguna de las tres es opcional una vez que más de una persona comparte el tracking server: este necesita algún lugar persistente donde escribir tanto sus metadatos estructurados como sus artifacts grandes, y ninguno debe residir en el propio Pod del tracking server.
+No. La implementación verificada devuelve OK, 200 para la capacidad de respuesta del proceso HTTP. Compruebe por separado la base de datos continua, S3, la autorización y las rutas de carga de trabajo reales.
 </details>
 
-10. Explica por qué las probes de readiness y liveness son importantes para un Deployment de tracking server y por qué este documento no especifica una ruta exacta para el endpoint de health check.
+10. ¿Qué importa al evaluar el logging frecuente y Aurora Serverless v2?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-Las probes de readiness y liveness permiten que el Service dirija tráfico únicamente a Pods que realmente pueden atender solicitudes, y permiten que Kubernetes reinicie automáticamente un Pod que ha dejado de responder: una práctica estándar para cualquier servicio de Kubernetes de larga ejecución. Este documento no indica una ruta exacta de health check porque puede variar según la versión de MLflow, por lo que debe confirmarse con la versión específica que se va a implementar en lugar de darla por supuesta.
-
-**Explicación:**
-Realizar probes contra una ruta de endpoint inventada o que no coincida con la versión marcaría los Pods saludables como no listos o no detectaría un Pod realmente bloqueado, por lo que verificar la ruta real para tu versión de MLflow es el enfoque más seguro.
+Mida el batching, las transacciones, el historial de métricas, las cargas útiles de traces y los pools entre réplicas/workers. Aurora tiene límites de capacidad, conexiones, I/O y transacciones; no se garantiza una absorción de ráfagas ilimitada ni un costo mínimo.
 </details>
 
 ---

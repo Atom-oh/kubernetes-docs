@@ -1,284 +1,239 @@
-# Helm Package Manager クイズ
+# Helm パッケージマネージャークイズ
 
-> **関連ドキュメント**: [Helm Package Manager](../../platform-engineering/01-helm.md)
+> **関連ガイド**: [Helm](../../platform-engineering/01-helm.md)
 
-## 多肢選択問題
+この20問のトピックは、Helm 3.21.3 / 4.3.0 の復習に沿っています。
 
-### 1. Helm v3 で Tiller が削除された主な理由は何ですか？
+## 選択問題
 
-- A) パフォーマンスを向上させるため
-- B) セキュリティを強化し、アーキテクチャを簡素化するため
-- C) chart サイズを削減するため
-- D) Kubernetes バージョン互換性のため
+### 1. Tiller を削除したことで何が変わりましたか？
+
+- A) Chart のサイズだけが変わる。
+- B) クライアントは自身の Kubernetes 認証情報と RBAC を使用する。
+- C) すべての Chart が安全になる。
+- D) Kubernetes API が不要になる。
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) セキュリティを強化し、アーキテクチャを簡素化するため**
+**回答: B**
 
-**解説:**
-Helm v2 の Tiller は cluster 内で昇格された権限を持って実行され、セキュリティリスクを生じさせていました。Helm v3 では Tiller が削除され、client が Kubernetes API と直接通信するようになったため、セキュリティが強化され、アーキテクチャが簡素化されました。
+Helm 3 は Tiller を削除し、権限の経路を簡素化しました。安全でない manifest と広範なクライアント権限は、引き続きレビューが必要です。
 
 </details>
 
-### 2. Helm Chart における values.yaml ファイルの主な目的は何ですか？
+### 2. values.yaml は何のためにありますか？
 
-- A) chart metadata を保存すること
-- B) template で使用されるデフォルト設定値を定義すること
-- C) Kubernetes manifest を直接保存すること
-- D) chart dependencies を定義すること
+- A) Chart メタデータ
+- B) template によって使用されるデフォルト設定データ
+- C) Release 履歴
+- D) 自動的に実行される template
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) template で使用されるデフォルト設定値を定義すること**
+**回答: B**
 
-**解説:**
-values.yaml ファイルは、chart template で使用されるデフォルト設定値を定義します。ユーザーは --set flag または -f flag を使用してこれらの値を上書きし、異なる環境向けに deployment をカスタマイズできます。
+template によって使用される values だけが効果を持ちます。ファイルと --set バリアントでそれらを上書きできます。埋め込まれた template 文字列は自動的には評価されません。
 
 </details>
 
-### 3. `helm upgrade --install` コマンドの挙動は何ですか？
+### 3. helm upgrade --install は何をしますか？
 
-- A) 常に新しい release をインストールする
-- B) 常に既存の release を upgrade する
-- C) release が存在しない場合はインストールし、存在する場合は upgrade する
-- D) release を削除して再インストールする
+- A) 常に新しい Release を作成する。
+- B) 常に削除して再作成する。
+- C) 存在しない Release を install するか、既存の Release を upgrade する。
+- D) 外部操作の冪等性を保証する。
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: C) release が存在しない場合はインストールし、存在する場合は upgrade する**
+**回答: C**
 
-**解説:**
-`helm upgrade --install` は冪等な挙動を提供します。指定された release が存在しない場合は新しい release をインストールし、存在する場合は upgrade します。これは CI/CD pipeline で特に有用です。
+これは installation または upgrade を選択します。Hook、ランダム値、外部データベースの変更は冪等であるとは限りません。
 
 </details>
 
-### 4. Helm template 内の <code v-pre>{{ .Release.Name }}</code> は何を参照しますか？
+### 4. Release.Name とは何ですか？
 
 - A) Chart 名
-- B) Kubernetes cluster 名
-- C) インストールされた release の名前
-- D) Namespace 名
+- B) Cluster 名
+- C) 選択した Release 名
+- D) Image tag
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: C) インストールされた release の名前**
+**回答: C**
 
-**解説:**
-`.Release.Name` は、`helm install` コマンドで指定された release 名を参照する Helm built-in object です。たとえば `helm install my-app chart/` では、`.Release.Name` は "my-app" になります。
+`helm install demo ./chart` では、名前は demo です。これは Chart 名、appVersion、および Release revision とは異なります。
 
 </details>
 
-### 5. Chart.yaml の `dependencies` field における `condition` attribute の目的は何ですか？
+### 5. dependency condition は何を指定しますか？
 
-- A) dependency chart のバージョンを指定すること
-- B) dependency chart を有効化/無効化する values path を指定すること
-- C) dependency chart repository URL を指定すること
-- D) dependency chart の優先度を指定すること
+- A) Image tag
+- B) dependency を有効にするか制御する values path
+- C) Registry password
+- D) Pod priority
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) dependency chart を有効化/無効化する values path を指定すること**
+**回答: B**
 
-**解説:**
-`condition` attribute は、dependency chart を有効にするかどうかを決定する values.yaml 内の path を指定します。たとえば `condition: postgresql.enabled` は、`postgresql.enabled` の値が true の場合にのみ PostgreSQL subchart が含まれることを意味します。
+alias cache では、cache.enabled のような実際の Boolean path を使用します。path がない場合の動作をテストし、subchart に渡される values とは区別してください。
 
 </details>
 
-### 6. `pre-upgrade` Helm Hook はいつ実行されますか？
+### 6. pre-upgrade Hook はいつ実行されますか？
 
-- A) release deletion の前
-- B) upgrade request の後、resource が更新される前
-- C) すべての resource が作成された後
-- D) rollback completion の後
+- A) 削除後
+- B) rendering の後、通常の resource が upgrade される前
+- C) 常に新しい Pod が Ready になった後
+- D) rollback 後のみ
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) upgrade request の後、resource が更新される前**
+**回答: B**
 
-**解説:**
-`pre-upgrade` Hook は、upgrade request を受信した後、実際の resource 更新が開始される前に実行されます。database migration や backup operation によく使用されます。
+データベース migration では、データベースの可用性、retry、failure、および以前の app との互換性を考慮する必要があります。rollback はデータベースの変更を自動的に元に戻しません。
 
 </details>
 
-### 7. `helm template` コマンドの主な用途は何ですか？
+### 7. 通常の helm template の目的は何ですか？
 
-- A) chart を cluster にデプロイすること
-- B) 検証のために chart template をローカルでレンダリングすること
-- C) chart dependencies を更新すること
-- D) release を rollback すること
+- A) Cluster に install する。
+- B) manifest をローカルで render する。
+- C) 実際の webhook を検証する。
+- D) 自動的に roll back する。
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) 検証のために chart template をローカルでレンダリングすること**
+**回答: B**
 
-**解説:**
-`helm template` は chart template をローカルでレンダリングし、生成される Kubernetes manifest を事前に確認できるようにします。これにより、cluster に接続せずに template を検証できます。
+デフォルトのローカル rendering は、admission、RBAC、Image 実行、または接続性を証明しません。server に接続するオプションとは区別してください。
 
 </details>
 
-### 8. Helm における `_helpers.tpl` ファイルの目的は何ですか？
+### 8. _helpers.tpl は何のためにありますか？
 
-- A) chart metadata を保存すること
-- B) 再利用可能な template helper function を定義すること
-- C) デフォルト値を保存すること
-- D) post-installation message を表示すること
+- A) metadata を保存する。
+- B) 再利用可能な名前付き template を定義する。
+- C) デフォルト values を保存する。
+- D) Release 履歴を保存する。
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) 再利用可能な template helper function を定義すること**
+**回答: B**
 
-**解説:**
-`_helpers.tpl` ファイルは、複数の template で共通して使用される helper function (named template) を定義します。chart 名、label、selector などの反復的な logic をカプセル化します。
+名前付き template には define を使用し、それらを使用するには include を使用します。衝突を避けるために名前に prefix を付け、意図した context を渡してください。
 
 </details>
 
-### 9. `helm get values my-release --all` コマンドは何を出力しますか？
+### 9. helm get values demo --all は何を出力しますか？
 
-- A) ユーザーが指定した値のみ
-- B) デフォルトを含むすべての値
-- C) release manifest
-- D) release history
+- A) ユーザーによる override のみ
+- B) Chart defaults を含む計算済み values
+- C) manifest のみ
+- D) 履歴のみ
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) デフォルトを含むすべての値**
+**回答: B**
 
-**解説:**
-`--all` flag を使用すると、ユーザーが上書きした値と values.yaml にある chart のデフォルト値の両方を含む、すべての計算済み値が出力されます。
+正しい namespace と Release を選択してください。values には機密情報が含まれる可能性があるため、出力を保護してください。
 
 </details>
 
-### 10. Helm chart で `toYaml` と `nindent` function が一緒によく使用される理由は何ですか？
+### 10. toYaml と nindent を組み合わせるのはなぜですか？
 
-- A) YAML を JSON に変換するため
-- B) 複雑な値を適切な indentation で YAML に挿入するため
-- C) 値を Base64 encode するため
-- D) 文字列を引用符で囲むため
+- A) 自動 encryption
+- B) 構造化された values を YAML に serialize し、改行と indentation を追加する。
+- C) JSON のみを生成する。
+- D) 常に数値を文字列に変換する。
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) 複雑な値を適切な indentation で YAML に挿入するため**
+**回答: B**
 
-**解説:**
-`toYaml` は Go object を YAML 文字列に変換し、`nindent` は指定された数の space による indentation を適用します。この組み合わせは、resources や annotations のような複雑な構造を template に正しく挿入するために不可欠です。
+indent とは異なり、nindent は改行も先頭に追加します。挿入箇所で必要な indentation に合わせてください。
 
 </details>
 
 ## 短答問題
 
-### 1. Helm v3 で release 情報を保存するために使用される Kubernetes resource type は何ですか？
+### 1. デフォルトの Release storage resource は何ですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: Secret**
-
-**解説:**
-Helm v3 は、release 情報を release がデプロイされている namespace 内の Secrets として保存します。Secret 名の形式は `sh.helm.release.v1.<release-name>.v<version>` です。
+Release namespace 内の Secret で、名前は `sh.helm.release.v1.<release>.v<revision>` です。ConfigMap や SQL などの他の backend も設定できます。Base64 は encryption ではありません。
 
 </details>
 
-### 2. `helm dependency update` コマンドによって生成される lock file の名前は何ですか？
+### 2. dependency update はどの lock file を作成し、その制限は何ですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: Chart.lock**
-
-**解説:**
-`helm dependency update` は Chart.yaml 内の dependencies を解析し、正確なバージョンを含む Chart.lock ファイルを生成します。このファイルにより、再現可能な build が保証されます。
+Chart.lock。dependency build は lock された version を使用しますが、lock 単体では artifact integrity、固定された Image、または完全な再現性を保証しません。
 
 </details>
 
-### 3. Helm template で値が空の場合にデフォルト値を提供する function は何ですか？
+### 3. default を使用する際、どの空の values が重要ですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: default**
-
-**解説:**
-`default` function は、値が空または未定義の場合にデフォルト値を提供します。使用例: <code v-pre>{{ .Values.image.tag | default .Chart.AppVersion }}</code>
+false、zero、空文字列、および collection は空として扱われます。明示的な false/zero を保持する必要がある場合は、存在と type を確認してください。default はすべての nested lookup を保護するわけではありません。
 
 </details>
 
-### 4. Helm Hooks の実行順序を制御する annotation は何ですか？
+### 4. Hook の順序を制御する annotation はどれですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: helm.sh/hook-weight**
-
-**解説:**
-`helm.sh/hook-weight` annotation は、同じ Hook type 内での実行順序を決定します。小さい数値ほど先に実行され、負の値も許可されています。
+`helm.sh/hook-weight`。phase 内では、negative weight を含め、より小さい weight が先に実行されます。kind/name による同順位時の順序、Job completion、および timeout も考慮してください。
 
 </details>
 
-### 5. Helm chart の NOTES.txt ファイルはいつユーザーに表示されますか？
+### 5. NOTES.txt はいつ、なぜ使用されますか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: helm install または helm upgrade が正常に完了した後**
-
-**解説:**
-NOTES.txt は、インストールまたは upgrade が成功した後にユーザーに表示されます。通常、application access 手順と initial setup guidance が含まれます。
+成功した install/upgrade の後に表示され、`helm get notes` から利用できる手順を template 化します。手順を正確に保ち、Secret を避けてください。Notes は application readiness を証明しません。
 
 </details>
 
-## ハンズオン問題
+## ハンズオン
 
-### 1. 次の要件を満たす Helm コマンドを書いてください:
-
-- bitnami/nginx chart を "web-server" release としてインストールする
-- "frontend" namespace にデプロイする (存在しない場合は作成する)
-- replicaCount を 3 に設定する
+### 1. 例を frontend に web-server として 3 replicas で install してください。
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 ```bash
-helm install web-server bitnami/nginx \
-  -n frontend --create-namespace \
+helm install web-server examples/platform/helm/reviewed-app \
+  --namespace frontend --create-namespace \
   --set replicaCount=3
 ```
 
-**解説:**
-- `helm install web-server bitnami/nginx`: nginx chart を "web-server" release としてインストールする
-- `-n frontend`: frontend namespace を指定する
-- `--create-namespace`: namespace が存在しない場合に作成する
-- `--set`: 値を inline で上書きする
+承認済みの Cluster context と権限で、repository root から実行します。この監査では lint/template/package を実行しており、installation は実行していません。
 
 </details>
 
-### 2. 次の Helm template snippet の出力を予測してください:
-
-```yaml
-# values.yaml
-env:
-  LOG_LEVEL: debug
-  MAX_CONNECTIONS: "100"
-
-# template
-env:
-{{- range $key, $value := .Values.env }}
-  - name: {{ $key }}
-    value: {{ $value | quote }}
-{{- end }}
-```
+### 2. LOG_LEVEL=debug と MAX_CONNECTIONS="100" は env としてどのように render されるべきですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
 ```yaml
 env:
@@ -288,175 +243,43 @@ env:
     value: "100"
 ```
 
-**解説:**
-- `range` function は `.Values.env` map を反復処理します
-- `$key` は map key、`$value` は map value です
-- `quote` function は値を引用符で囲みます
-- map はアルファベット順にソートされます
+map を range で反復し、両方が文字列のままになるよう各 value を quote します。Go template は、基本的な順序付き key を持つ map を key 順に走査します。これは list の順序とは異なります。
 
 </details>
 
-### 3. 次の要件を満たす `_helpers.tpl` template を書いてください:
-
-- Name: mychart.labels
-- app.kubernetes.io/name: chart name
-- app.kubernetes.io/instance: release name
-- app.kubernetes.io/version: app version
+### 3. Chart、Release、および appVersion label のための helper を書いてください。
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-```yaml
+```text
 {{- define "mychart.labels" -}}
-app.kubernetes.io/name: {{ .Chart.Name }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/name: {{ .Chart.Name | quote }}
+app.kubernetes.io/instance: {{ .Release.Name | quote }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 ```
 
-**解説:**
-- `define` は再利用可能な named template を作成します
-- `.Chart.Name` は chart 名を参照します
-- `.Release.Name` は release 名を参照します
-- `.Chart.AppVersion` は app version を参照します (quote により string type が保証されます)
+意図した root context を渡し、call site で indent してください。appVersion は metadata であり、Image tag を自動的に選択しません。
 
 </details>
 
-## 高度な問題
+## 応用
 
-### 1. Helm chart を使用して Blue-Green deployment と Canary deployment を実装する方法を説明してください。
+### 1. Helm による Blue/Green と canary delivery には何が必要ですか？
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**Blue-Green Deployment:**
-```yaml
-# values.yaml
-deployment:
-  activeColor: blue
-
-blue:
-  enabled: true
-  image:
-    tag: "v1.0.0"
-
-green:
-  enabled: true
-  image:
-    tag: "v2.0.0"
-
-service:
-  selector:
-    color: "{{ .Values.deployment.activeColor }}"
-```
-
-**実装戦略:**
-1. Blue と Green 用に 2 つの Deployment template を作成する
-2. activeColor value を使用して Service selector を切り替える
-3. deployment 中に green.image.tag を新しいバージョンに設定する
-4. 検証後、deployment.activeColor を green に変更する
-5. 問題が発生した場合はすぐに blue に rollback する
-
-**Canary Deployment (with Istio):**
-```yaml
-# VirtualService for traffic distribution
-http:
-  - route:
-      - destination:
-          host: myapp
-          subset: stable
-        weight: 90
-      - destination:
-          host: myapp
-          subset: canary
-        weight: 10
-```
-
-**実装戦略:**
-1. Stable と Canary 用に 2 つの Deployments を作成する
-2. Istio VirtualService を使用して traffic ratio を制御する
-3. Canary ratio を段階的に増やす (10% -> 25% -> 50% -> 100%)
-4. metric monitoring に基づく自動 rollback を実装する
+Blue/Green には、label を持つ 2 つの Deployment と、検証後に active color を選択する実際の Service template が必要です。values.yaml 内の template 文字列は自動的には評価されません。Canary には、実際の route/subset または rollout controller、weight、observation metrics、および abort condition が必要です。values だけでは自動分析や rollback は作成されません。データベース互換性と in-flight request を考慮してください。
 
 </details>
 
-### 2. Helm chart のセキュリティのベストプラクティスを説明し、secret management strategy を設計してください。
+### 2. Chart security と Secret management を設計してください。
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**セキュリティのベストプラクティス:**
-
-1. **Value Validation (values.schema.json)**
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "required": ["image"],
-  "properties": {
-    "image": {
-      "type": "object",
-      "required": ["repository"],
-      "properties": {
-        "repository": {
-          "type": "string",
-          "pattern": "^[a-z0-9.-/]+$"
-        }
-      }
-    }
-  }
-}
-```
-
-2. **RBAC Least Privilege Principle**
-```yaml
-rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "list"]  # Grant only necessary permissions
-```
-
-3. **Pod Security Standards の適用**
-```yaml
-securityContext:
-  runAsNonRoot: true
-  readOnlyRootFilesystem: true
-  capabilities:
-    drop: ["ALL"]
-```
-
-**Secret Management Strategy:**
-
-1. **External Secrets Manager 連携 (AWS Secrets Manager)**
-```yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: {{ include "mychart.fullname" . }}
-spec:
-  refreshInterval: 1h
-  secretStoreRef:
-    name: aws-secrets-manager
-    kind: ClusterSecretStore
-  target:
-    name: {{ include "mychart.fullname" . }}-secrets
-  data:
-    - secretKey: database-password
-      remoteRef:
-        key: myapp/database
-        property: password
-```
-
-2. **Sealed Secrets の使用**
-```bash
-# Encrypt secret
-kubeseal --format=yaml < secret.yaml > sealed-secret.yaml
-```
-
-3. **Helm Secrets Plugin**
-```bash
-# Use encrypted values file
-helm secrets install myapp ./mychart -f secrets.yaml
-```
+サポートされている values.schema.json で必須 values と type を検証し、レビュー済みの Chart/Image revision を固定します。必要な ServiceAccount と RoleBinding を最小限の API 権限で接続します。Secret volume があるからといって、app にすべての Secret へのアクセスを付与する理由にはなりません。Secret value を default、CLI argument、および debug log に含めないでください。承認済みの file mount、rotation、および再読み込みを計画してください。ESO v1、Sealed Secrets、および helm-secrets には、それらの controller/plugin と provider/key 権限が必要です。復号された values が Release record に入るかを確認してください。non-root UID、drop した capability、read-only root、および必要な writable volume を組み合わせ、実際の Image compatibility を検証してください。
 
 </details>

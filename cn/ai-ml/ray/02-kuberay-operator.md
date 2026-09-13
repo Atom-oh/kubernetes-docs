@@ -1,90 +1,152 @@
 # 第 2 部分：KubeRay Operator
 
-> **支持的版本**: KubeRay v1.6.1, Ray 2.57.0
-> **最后更新**: August 20, 2026
+> **审查基线**：KubeRay 1.7.0 · Ray 2.58.0 · 2026-09-12
 
 ## 实验环境设置
 
-要跟随本文档中的示例操作，您需要以下工具和环境：
+准备受支持的 Kubernetes、兼容的 kubectl 和 Helm 3。审查 CPU 配置并不以 GPU 硬件和 Karpenter 为前提。实际 EKS 容量可以来自现有的托管节点组、Karpenter、Cluster Autoscaler，或集群选用的供应配置。
 
-### 必需工具
-
-* kubectl v1.34 或更高版本，已连接到一个可用的 Amazon EKS 集群
-* Helm v3
-* 如果您计划测试 GPU worker group，则需要通过 Karpenter 配置的、具备 GPU 能力的 `NodePool`/`EC2NodeClass` 组合
+此处的验证涵盖官方 chart 下载和原生 Helm 渲染、CRD schema 检查，以及 Ray 2.58.0 的 autoscaler 配置生成器。**它并不验证 API-server admission/CEL、controller reconciliation、实时 autoscaling 或 GPU 执行。**
 
 ## KubeRay 的作用
 
-[第 1 部分](01-architecture.md)介绍了一个 Ray 集群由一个 head node 和一个或多个 worker node 组构成。这种形态是 Ray 原生概念，而不是 Kubernetes 概念，因此需要某种机制将其转换为 Kubernetes 所理解的实际 Pod、Service 及其他对象。这个机制就是 KubeRay。
+KubeRay 会将 Ray CR 调谐为 Pods、Services 和相关资源。不要假设普通 RayCluster worker group 必然是 Deployment 或 StatefulSet。一个 Ray 节点通常对应一个 Ray Pod，与承载该 Pod 的 Kubernetes/EC2 节点不同。
 
-KubeRay 是一个 Kubernetes operator，它将 Ray 集群作为原生 Kubernetes custom resource 进行管理。operator 用户无需为 head node 和每个 worker group 手动编写 Deployment、StatefulSet 和 Service，而是在 YAML manifest 中声明所需的 Ray 集群形态；KubeRay 的 controller 会持续将集群的实时状态与该声明的 spec 进行协调。这正是“Ray on Kubernetes”具有声明式特性的原因：所需状态存在于 custom resource 中，而 operator 负责创建、更新和删除底层 Pod，使其与该状态匹配。
+安装 operator 不会启动 Ray 工作负载。请分别创建 RayCluster、RayJob 或 RayService 等资源。也不是每项 spec 变更都会自动原地应用到已有 Pod；请检查更新路径。
 
-本文档面向 **KubeRay v1.6.1**——请查看 [KubeRay releases page](https://github.com/ray-project/kuberay/releases) 获取当前版本，因为 KubeRay 有独立于本文档的发布节奏。KubeRay v1.6 增加了对 Ray authentication token mode 的完整支持（用于保护对运行中集群 dashboard 和 client port 的访问），并将 RayJob 切换为更轻量的默认 submitter image，从而提升了相对于此前默认配置的 RayJob 启动性能。更早的 v1.5 版本已经为 RayService 增加了增量式滚动升级，目标是在零停机更新的同时，比整个集群完整 blue-green 替换拥有更低的资源开销——但在依赖该功能前，请查看当前 release notes，因为随着项目成熟，此类功能可能会从需要显式启用、受 feature gate 控制的状态转变为默认启用。
+## CRD 和 Feature Gates
 
-## 核心 CRD
+1.7.0 chart 包含 **RayCluster、RayJob、RayService 和 RayCronJob** CRD。全部提供 `ray.io/v1`。前三者还保留已弃用的 `v1alpha1`；新示例使用 `v1`。
 
-KubeRay 通过三个 Custom Resource Definition 提供其大部分功能，每个 CRD 面向一种在 Kubernetes 上运行 Ray 的不同方式（KubeRay Helm chart 还会为较新的、仍在演进的能力安装 CRD——在认定这三个 CRD 已涵盖全部功能之前，请查看当前 release notes 了解完整列表）。
+| 资源 | 角色和边界 |
+|---|---|
+| RayCluster | 管理一个 head Pod 和 worker groups；也可以使用仅 head 的配置 |
+| RayJob | 批量提交和可选的 RayCluster 生命周期；区分现有集群和清理策略 |
+| RayService | 管理 RayCluster 和 Serve 应用程序；检查升级和流量切换条件 |
+| RayCronJob | 按计划创建 RayJobs；尽管安装了 CRD，其 controller feature gate 默认仍被禁用 |
 
-**RayCluster** 是基础资源：一个原始 Ray 集群，由一个 head Pod 和一个或多个 worker group 组成。每个 worker group 是一组同质的 worker Pod——例如，用于通用 Ray task 的 CPU worker group，以及用于模型训练或 inference 的独立 GPU worker group。KubeRay operator 持续将实际 Pod 与 RayCluster spec 进行协调，并在 spec（或下文介绍的 autoscaler）改变某个组所需 replica 数量时，创建或移除 worker Pod。
+Chart 默认启用 beta `RayServiceIncrementalUpgrade` gate。mTLS、RayCluster NetworkPolicy 和自动注入 History collector 的 alpha gates 均被禁用。History Server 的 beta 状态不同于 alpha 自动 collector 注入。可用的 feature gate 不代表资源已配置该功能。
 
-**RayJob** 向 Ray 集群提交 batch job，并且可以选择管理该集群的完整生命周期：创建 RayCluster、在其上运行提交的 job，以及在 job 完成后拆除集群。它非常适合一次性或定时的 batch workload，因为它避免了为两次运行之间处于闲置状态的集群持续付费。
+### RayJob 清理
 
-**RayService** 面向生产环境的模型服务。它管理一个 RayCluster 及其上部署的 Ray Serve application，并能够对底层集群和 application 执行旨在实现零停机的滚动升级——在生产环境中依赖该功能前，请查看当前 release notes，确认该升级路径的成熟度及任何前置条件。
+`shutdownAfterJobFinishes` 默认值为 false。默认的 `ttlSecondsAfterFinished: 0` 不会启用它。请显式配置清理、重试以及 pre-running/execution deadlines。1.7 版本还提供 `deletionStrategy`，并带有诸如不能混用旧版 onSuccess/onFailure policies 和 deletionRules 的约束。
 
-```mermaid
-graph TD
-    RC["RayCluster CR<br/>(head + worker group specs)"] --> OP[KubeRay Operator<br/>reconciles]
-    OP --> HP[Head Pod]
-    OP --> WG1[CPU Worker Group Pods]
-    OP --> WG2[GPU Worker Group Pods]
+区分共享集群选择与 controller 创建的集群的清理，并首先保留结果、checkpoints 和日志。删除 RayCluster 不会自动清理外部 artifacts/PVCs，也不会清理所有 EC2 费用。
 
-    WG1 -.monitored by.-> RA[Ray Autoscaler]
-    WG2 -.monitored by.-> RA
-    RA -->|requests more replicas| RC
+### RayService 升级
 
-    RA -->|pending Pods| KP[Karpenter]
-    KP -->|provisions matching EC2 nodes| WG1
-    KP -->|provisions matching EC2 nodes| WG2
+`NewCluster` 和 `NewClusterWithIncrementalUpgrade` 会创建一个新集群。后者使用 Kubernetes Gateway API 和适合的 GatewayClass 实现逐步切换流量。这不同于仅原地滚动几个 Pods。
 
-    style RC fill:#4fc3f7
-    style RA fill:#ffb74d
-    style KP fill:#81c784
-```
+尽管 incremental gate 在 1.7 中默认启用，策略、Gateway 配置、空闲容量、就绪状态和 draining 要求仍然很重要。零停机是目标，而非对每个应用程序的保证。[第 4 部分](04-ray-serve.md)会更详细地介绍 Serve 行为。
 
-## 双层自动扩缩：Ray Autoscaler 和 Karpenter
+## Autoscaling 层
 
-在 EKS 上运行 Ray 意味着需要处理两个独立的自动扩缩控制循环，本文档站点也针对 Flink 和 Katib 等其他自动扩缩 workload 介绍了这一模式。每个循环回答不同的问题，二者都无法回答对方的问题。
+使用 `enableInTreeAutoscaling: true` 启用 Ray autoscaling。KubeRay 会配置 head-Pod autoscaler sidecar 和所需权限。该示例显式设置 `autoscalerOptions.version: v2`，而不依赖对版本敏感的默认值。
 
-**Ray autoscaler** 作为 Ray 集群自身的一部分运行，并由 KubeRay 协调。它监控 Ray 自身的调度状态——无法部署到当前 worker 上的 pending task 和 actor——并决定需要多少 Ray worker Pod。它通过调整相关 RayCluster worker group 的 replica 数量来落实这一决定，进而指示 KubeRay operator 创建（或移除）worker Pod。autoscaler 还具有 `idleTimeoutSeconds` 设置，默认值为 60 秒；它定义了 worker Pod 在没有 task、actor 或被引用 object 的情况下，必须保持空闲多久才会被 autoscaler 缩容。
+Ray autoscaler 会检查 tasks、actors、placement/resource requests 和所需的 worker-group 大小；KubeRay 则调整 Pods。使用 `numOfHosts` 时，一个 group replica 可对应多个 Ray Pods，因此 `replicas == Pod count` 并不总是成立。
 
-**Karpenter**（或者在未使用 Karpenter 的集群上使用 Kubernetes Cluster Autoscaler）在下一层，即 Kubernetes node 层面运行。它不了解 Ray task 或 actor；它只对因没有 node 可容纳而处于 pending 状态的 Pod 作出响应，并配置大小与这些 pending Pod 相匹配的新 EC2 node。
+Kubernetes 放置 Pods，而 Karpenter 等 provisioner 则为不可调度的要求提供 EC2 容量。因 image pulls、PVCs、权限或 quotas 而处于 Pending 状态的 Pod，未必能通过增加节点解决。Karpenter consolidation 和 drift handling 也是独立的控制行为。
 
-综合来看：Ray autoscaler 决定集群需要*多少 Ray worker Pod*，而 Karpenter 决定实际运行它们需要*多少 EC2 node*。一个控制循环负责 Pod 数量，另一个控制循环负责 node 数量，它们只通过 pending Pod 的常规 Kubernetes 调度状态间接通信。有关该循环中 node 配置一侧的更深入说明，请参阅本仓库的 [Karpenter 文档](../../autoscaling/02-karpenter.md)。
+Ray 2.58.0 配置生成器默认将全局 idle timeout 设为 60 秒；group-level idle timeouts 可以覆盖该行为。最小/最大 replicas、活动情况、轮询和 draining conditions 意味着这并不承诺恰好在 60 秒后删除一个 Pod。
 
-## GPU 调度
+![KubeRay 将 RayCluster 的期望状态调谐为 Pods，Ray autoscaler 根据工作负载需求请求 worker 容量，而 Kubernetes 放置和 EC2 供应则作为独立层运行。](../../.gitbook/assets/en-ai-ml-ray-02-kuberay-operator-0.png)
 
-GPU worker group 的 Pod spec 是该组 Ray worker 能看到多少 GPU 的唯一事实来源。当 worker group 的 container spec 设置 GPU resource limit——例如 `nvidia.com/gpu: 1`——KubeRay 会读取该 limit，并将其作为生成的 worker Pod 上的 GPU capacity 通告给 Ray scheduler 和 Ray autoscaler。KubeRay 还会自动配置该 worker 上 Ray process 的 `--num-gpus` flag，使其与 Pod spec 的 GPU limit 相匹配，因此无需再手动维护另一处 GPU 数量。
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-02-kuberay-operator-0.html)
 
-这意味着，GPU 感知调度和 GPU 感知自动扩缩都源自同一份 Kubernetes 原生声明。只有在确实存在 GPU 绑定的 pending task 时，Ray autoscaler 才会请求更多 GPU worker replica；Karpenter 则使用 [Karpenter](../../autoscaling/02-karpenter.md) 中所述的 node pool 和 node class 配置来配置满足这些 Pod 需求的、由 GPU 支持的 EC2 node——本文档不再重复推导该机制。
+## CPU/GPU 资源声明
 
-## 安装 Operator
+**Pod GPU limit 并不总是唯一的配置来源。** 已审查的代码会在结构化 group `resources`、`rayStartParams` 和第一个 Ray container 的 limits/requests 之间应用优先级。显式的 `num-gpus` 不会无条件被 container GPU limit 覆盖。
 
-安装 KubeRay 的标准方法是使用官方 Helm chart，该 chart 发布自 `ray-project/kuberay-helm` repository：
+原生 Ray 2.58.0 配置检查生成的 GPU 值为：limit 1 时为 GPU 1、`rayStartParams.num-gpus=2` 时为 GPU 2、结构化 group `resources.GPU=3` 时为 GPU 3。这**不会创建更多物理 GPU**。请对齐 Kubernetes limits、device plugins、drivers、Ray logical resources 和可见硬件。
+
+最小 replicas 和 CPU/placement requirements 也会影响 GPU-group 大小；GPU Pods 并不一定只在 GPU tasks Pending 时出现。还应区分 Ray logical CPU 设置与 container enforcement。
+
+## 安装和升级 Operator
 
 ```bash
 helm repo add kuberay https://ray-project.github.io/kuberay-helm/
-helm repo update
-helm install kuberay-operator kuberay/kuberay-operator --version 1.6.1
+helm repo update kuberay
+helm pull kuberay/kuberay-operator --version 1.7.0 --untar --untardir ./vendor
+helm template kuberay-operator ./vendor/kuberay-operator \
+  --namespace kuberay-system --include-crds > operator.rendered.yaml
 ```
 
-这会将 operator 的 controller 及其 CRD（包括上述 RayCluster、RayJob 和 RayService）安装到集群中。operator Pod 运行后，会在整个集群中（或根据安装 flag 在某个 namespace 中）监控这些对象，并开始协调它们。
+检查 CRDs、RBAC、namespace watch scope 和 feature gates。Chart 默认启用 leader election 并在整个集群范围内 watch。若要缩小范围，请一并审查 `singleNamespaceInstall`、`watchNamespace` 和相关 RBAC 设置。
 
-## 后续步骤
+在验证 context 和管理权限后执行实际安装：
 
-本部分介绍了 KubeRay 是什么、其核心 CRD，以及其双层自动扩缩模型如何与 Karpenter 分工。下一部分将从集群机制转向运行在 KubeRay 管理集群之上的 Ray ML library：请参阅[第 3 部分：Ray Train 和 Ray Tune](03-ray-train-tune.md)。
+```bash
+helm upgrade --install kuberay-operator kuberay/kuberay-operator \
+  --version 1.7.0 --namespace kuberay-system --create-namespace
+kubectl rollout status deployment/kuberay-operator -n kuberay-system
+```
 
-[返回主页](./README.md)
+Helm 的 `crds/` 机制**不会自动升级或删除已有 CRDs**。不要假设 chart 升级已更新 schema。请检查已存储的 CRs 和 API-version compatibility，然后单独执行与该 release 相应的 CRD 更新。删除 CRD 可能会删除其 custom resources。
 
-## 测验
+## 最小 CPU 配置
 
-要检验您在本章所学的内容，请尝试完成[主题测验](../../quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)。
+此示例假定 `ray-demo` namespace 已存在。已验证 CRD schema；未执行 controller 执行、image 启动和 autoscaling 测试。
+
+```yaml
+apiVersion: ray.io/v1
+kind: RayCluster
+metadata:
+  name: ray-cpu-demo
+  namespace: ray-demo
+spec:
+  rayVersion: '2.58.0'
+  enableInTreeAutoscaling: true
+  autoscalerOptions:
+    version: v2
+    idleTimeoutSeconds: 60
+  headGroupSpec:
+    serviceType: ClusterIP
+    rayStartParams:
+      num-cpus: '0'
+    template:
+      spec:
+        containers:
+          - name: ray-head
+            image: rayproject/ray:2.58.0-py312
+            resources:
+              requests:
+                cpu: '1'
+                memory: 2Gi
+              limits:
+                cpu: '1'
+                memory: 2Gi
+  workerGroupSpecs:
+    - groupName: cpu
+      replicas: 0
+      minReplicas: 0
+      maxReplicas: 2
+      rayStartParams: {}
+      template:
+        spec:
+          containers:
+            - name: ray-worker
+              image: rayproject/ray:2.58.0-py312
+              resources:
+                requests:
+                  cpu: '1'
+                  memory: 2Gi
+                limits:
+                  cpu: '1'
+                  memory: 2Gi
+```
+
+完整 schema fixture 对 head 和 workers 使用 `rayproject/ray:2.58.0-py312`，并设置 CPU 1/memory 2 GiB requests 和 limits。设置 `rayVersion` 本身不会升级 container images。也请验证 runtime、Python 和 image compatibility。
+
+将 dashboard、Ray Client 和 job-submission entry points 限制为受信任的 actors。Token authentication 是独立配置，并非每个 application endpoint 的 TLS 或 access control。请根据组织策略检查 secret delivery，并将敏感 tokens 排除在公共 manifests 和日志之外。
+
+## 主要来源
+
+- [KubeRay 1.7.0 release](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+- [1.7.0 chart values](https://github.com/ray-project/kuberay/blob/v1.7.0/helm-chart/kuberay-operator/values.yaml)
+- [Pod/resource construction](https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/controllers/ray/common/pod.go)
+- [Ray 2.58.0 autoscaler configuration](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/autoscaler/_private/kuberay/autoscaling_config.py)
+- [RayJob API](https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/apis/ray/v1/rayjob_types.go)
+- [RayService API](https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/apis/ray/v1/rayservice_types.go)
+- [Helm CRD lifecycle](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/)
+
+[下一步：Train/Tune](03-ray-train-tune.md) · [主页](README.md) · [测验](../../quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)

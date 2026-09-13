@@ -282,7 +282,7 @@
   * [S3 と IAM の例](platform-engineering/ack/01-s3-iam.md)
   * [SQS と SNS の例](platform-engineering/ack/02-sqs-sns.md)
   * [ELBv2、Route 53、RDS の例](platform-engineering/ack/03-elbv2-route53-rds.md)
-* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
+* [Kube Resource Orchestrator (kro)](platform-engineering/03-kro.md)
 * [Kubernetes の拡張メカニズム](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ACK + KRO 統合例](platform-engineering/05-example-corp-app.md)
 * [Backstage IDP](platform-engineering/06-backstage-idp.md)

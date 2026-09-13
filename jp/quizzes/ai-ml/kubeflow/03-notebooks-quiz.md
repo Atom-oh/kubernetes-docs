@@ -1,141 +1,130 @@
 # Kubeflow Notebooks クイズ
 
-このクイズでは、Kubeflow Notebooks のアーキテクチャ、Profile ベースのマルチテナンシーモデル、ストレージとアイドル時の culling 動作、EKS 上の GPU スケジューリング、カスタム notebook image に関する理解を確認します。
+ベースライン: Notebooks 1.11.0 / Community Distribution 26.03.1。
 
-## 選択式問題
+## 選択問題
 
-1. Kubeflow Notebooks は、ユーザーが spawner で選択した項目（image、CPU/memory/GPU、storage）を実行中の notebook server に変換するために、どの Kubernetes ネイティブのメカニズムを使用しますか？
-   - A) dashboard が `kubectl` に対して直接実行する shell script
-   - B) controller が StatefulSet/pod に reconcile する `Notebook` custom resource
-   - C) dashboard の database を毎分ポーリングする cron job
-   - D) ユーザーが手動でインストールする Helm chart
+1. Notebook controller は何を reconcile しますか？
+
+   - A) ユーザーのノートPC上のブラウザープロセス
+   - B) Notebook CR から生成される StatefulSet、Service、および設定済みのルーティングリソース
+   - C) ユーザーごとの EC2 インスタンス
+   - D) HTML ダッシュボードのみ
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) controller が StatefulSet/pod に reconcile する `Notebook` custom resource**
+**回答: B) Notebook CR から生成される StatefulSet、Service、および設定済みのルーティングリソース**
 
-**解説:**
-Central Dashboard の spawner は、必要な環境を記述する `Notebook` custom resource を作成します。controller はその resource を監視し、dashboard が直接 pod を作成するのではなく、要求された image、resources、PVC を持つ通常の Kubernetes object（StatefulSet/pod）へと reconcile します。
+StatefulSet controller が Pod を作成し、Kubernetes がそれらをスケジュールします。ダッシュボードは UI のエントリポイントです。
 </details>
 
-2. Kubeflow Community Distribution 26.03 時点で、Kubeflow Notebooks v2 の正確な状況はどれですか？
-   - A) すでに GA となっており、v1 を完全に置き換えている
-   - B) alpha 版としてもまだ存在しない
-   - C) リリースが近づいており、新しい `Workspace`/`WorkspaceKind` CRD を対象とした alpha manifest がテスト用に利用可能だが、まだ GA ではない
-   - D) v1 を無期限に維持する方針となり、キャンセルされた
+2. ここでの正確なバージョンベースラインは何ですか？
+
+   - A) すべてのコンポーネントが Workspaces GA である
+   - B) Notebooks v1.11.0。26.03.1 では Workspaces は beta とされ、そのイメージは v2.0.0-alpha.3 である
+   - C) Notebook と Workspace は同一の API である
+   - D) この章では v1 のサポート終了日が確定している
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: C) リリースが近づいており、新しい `Workspace`/`WorkspaceKind` CRD を対象とした alpha manifest がテスト用に利用可能だが、まだ GA ではない**
+**回答: B) Notebooks v1.11.0。26.03.1 では Workspaces は beta とされ、そのイメージは v2.0.0-alpha.3 である**
 
-**解説:**
-26.03 distribution の時点では、新しい `Workspace` および `WorkspaceKind` custom resource を基盤とする Notebooks v2 は、テスト用の alpha manifest が利用可能ですが、一般提供には至っていません。本番環境で使用されるアーキテクチャは引き続き v1 の `Notebook` CRD であり、v2 が GA 対応となった後は保守専用のステータスに移行する見込みです。
+リリース説明とイメージタグは異なります。GA や v1 の廃止日を推測するのではなく、実際の API および移行サポートを確認してください。
 </details>
 
-3. Kubeflow Notebooks のマルチテナンシーモデルにおいて、Profile とは何ですか？
-   - A) ユーザーが保存した notebook の UI theme と keyboard shortcut
-   - B) ユーザーごとの namespace を作成し、そのユーザーのアクセス範囲を定める RBAC binding と Istio authorization policy をプロビジョニングする仕組み
-   - C) ユーザーが過去に spawn した image の記録
-   - D) ユーザーの AWS IAM identity に関連付けられた billing account
+3. Profile はすべての notebook を他のすべてのユーザーから自動的に分離しますか？
+
+   - A) はい。AWS とストレージも含みます
+   - B) いいえ。Profile は共有でき、ネットワーク、ストレージ、IAM、およびアプリケーション認可は別途考慮する必要があります
+   - C) はい。namespace がネットワークパケットをブロックするためです
+   - D) はい。RBAC が無関係なすべての権限付与を無効にするためです
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) ユーザーごとの namespace を作成し、そのユーザーのアクセス範囲を定める RBAC binding と Istio authorization policy をプロビジョニングする仕組み**
+**回答: B) いいえ。Profile は共有でき、ネットワーク、ストレージ、IAM、およびアプリケーション認可は別途考慮する必要があります**
 
-**解説:**
-Profile は、ユーザー（または team）専用の namespace、その namespace に対する権限の範囲を定める RBAC binding、および内部の service に到達できる identity を制限する Istio `AuthorizationPolicy` をプロビジョニングします。Notebook は常に Profile namespace 内に作成され、これによりデフォルトであるユーザーの notebook を別のユーザーのものから分離します。
+完全な UI は Profile namespace を選択します。Notebook CRD 自体は、すべての namespace で Profile オブジェクトを必要としません。
 </details>
 
-4. pod の再起動に対する notebook の耐障害性において、PersistentVolumeClaim が重要なのはなぜですか？
-   - A) pod が再起動するたびに PVC が自動的に削除され、再作成されるため
-   - B) 永続的な object は pod ではなく claim であり、そこから mount されたファイルとインストール済み package は pod の再起動、node の交換、stop/start cycle を経ても維持されるため
-   - C) PVC が重要なのは RStudio image のみであり、JupyterLab では重要ではないため
-   - D) PVC はユーザーファイルではなく log の保存にのみ使用されるため
+4. notebook Pod が置き換えられた場合、何が保持されますか？
+
+   - A) すべてのプロセスメモリ
+   - B) コンテナ内のどこかにインストールされたすべてのパッケージ
+   - C) 保持された永続ボリューム上のデータ。コンテナレイヤーのパッケージとカーネルメモリは保持されない
+   - D) 接続されているすべての EC2 インスタンス
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) 永続的な object は pod ではなく claim であり、そこから mount されたファイルとインストール済み package は pod の再起動、node の交換、stop/start cycle を経ても維持されるため**
+**回答: C) 保持された永続ボリューム上のデータ。コンテナレイヤーのパッケージとカーネルメモリは保持されない**
 
-**解説:**
-spawner により、ユーザーは通常 notebook の home directory に mount される PVC をアタッチできます。PVC は pod の lifecycle とは独立して永続化されるため、ユーザーの作業は pod の再起動、node の交換、または意図的な stop/start cycle を経ても保持されます。また、notebook を削除せず停止する culling では、PVC はそのまま残ります。
+マウント場所、PVC/volume のライフサイクル、およびバックアップを確認してください。ReadWriteOnce は単一ノードアクセスモードであり、単一 Pod を保証するものではありません。
 </details>
 
-5. とりわけ GPU 対応 notebook において、アイドル時の culling が重要なのはなぜですか？
-   - A) GPU は notebook pod からまったく要求できないため、culling は無関係である
-   - B) 実行中の notebook pod は、アクティブに使用されているかどうかにかかわらず存在する間 GPU allocation を保持するため、アイドル状態の GPU notebook は高価な capacity を数時間にわたり占有する可能性がある
-   - C) culling が notebook の PVC を削除して GPU memory を解放するため
-   - D) GPU node では capacity を回復するために cluster 全体の再起動が必要であり、culling がそれをトリガーするため
+5. 確認された idle-culling のデフォルト値は何ですか？
+
+   - A) 有効で、アイドルしきい値は 1 分
+   - B) 無効。アイドルしきい値は 1440 分、チェック間隔は 1 分
+   - C) すべての RStudio および shell プロセスで有効
+   - D) GPU notebook でのみ無効
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) 実行中の notebook pod は、アクティブに使用されているかどうかにかかわらず存在する間 GPU allocation を保持するため、アイドル状態の GPU notebook は高価な capacity を数時間にわたり占有する可能性がある**
+**回答: B) 無効。アイドルしきい値は 1440 分、チェック間隔は 1 分**
 
-**解説:**
-notebook pod は、誰かが実際に使用しているかどうかにかかわらず、実行中は要求した CPU、memory、GPU allocation を継続して保持します。culling は設定された期間の後にアイドル状態の notebook を停止します（削除はしません）。そのため、アイドル状態の GPU 対応 server が高価な accelerator capacity を無期限に占有することを防げる GPU notebook では、特に価値があります。
+culler は Jupyter kernel のアクティビティを使用します。失敗した、または空の API 結果では古いアクティビティが変わらず、停止につながる可能性があります。実際のイメージとアクセスパスをテストしてください。
 </details>
 
-6. EKS 上の notebook pod はどのように GPU access を要求しますか？また、cluster autoscaling とはどのように連携しますか？
-   - A) cluster の他の部分とは別の、Notebooks 専用 GPU scheduler を使用する
-   - B) 他の pod と同様に `resources.limits."nvidia.com/gpu"` を設定し、training job や inference workload で使用される同じ GPU 対応 node pool（例: Karpenter 管理の NodePool）を競合して使用する
-   - C) notebook の GPU access は、administrator が node に SSH して手動で割り当てる必要がある
-   - D) notebook pod は GPU を要求できず、KServe endpoint のみが要求できる
+6. v1.11.0 では、停止した Notebook はどのように表現されますか？
+
+   - A) spec.replicas: 0
+   - B) kubeflow-resource-stopped の存在。controller が StatefulSet replicas をゼロに設定する
+   - C) annotation の値 false は実行中を意味する
+   - D) その PVC を削除する
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) 他の pod と同様に `resources.limits."nvidia.com/gpu"` を設定し、training job や inference workload で使用される同じ GPU 対応 node pool（例: Karpenter 管理の NodePool）を競合して使用する**
+**回答: B) kubeflow-resource-stopped の存在。controller が StatefulSet replicas をゼロに設定する**
 
-**解説:**
-spawner での GPU 選択は、NVIDIA device plugin によって allocatable として公開される、pod spec 上の標準的な `nvidia.com/gpu` resource request に変換されます。これは独立した GPU subsystem ではありません。notebook pod は他の GPU workload と同じ GPU node pool を競合して使用し、EKS ではその capacity は一般に Karpenter によって動的にプロビジョニングされます。
+NotebookSpec には replicas フィールドがありません。annotation を削除して再開します。false という文字列であっても、存在していると見なされます。
 </details>
 
-7. team が stock spawner image をそのまま使用するのではなく、custom notebook image を構築する一般的な理由は何ですか？
-   - A) Kubeflow では custom image が必須であり、stock image はまったく使用できないため
-   - B) 実行中の container 内で package を手動でインストールする代わりに、team 固有の dependency をあらかじめインストールし、すべての data scientist に同一で再現可能な environment を提供するため
-   - C) stock image が PVC mount をサポートしていないため
-   - D) custom image により Profile namespace が不要になるため
+7. カスタムイメージの digest は何を保証しますか？
+
+   - A) すべてのユーザーが同一の完全なランタイム環境を持つこと
+   - B) 参照されるイメージコンテンツ。マウントされたデータとランタイムの変更は依然として異なる可能性がある
+   - C) すべての GPU driver との自動的な互換性
+   - D) UI のイメージ制限を API 経由で回避できないこと
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) 実行中の container 内で package を手動でインストールする代わりに、team 固有の dependency をあらかじめインストールし、すべての data scientist に同一で再現可能な environment を提供するため**
+**回答: B) 参照されるイメージコンテンツ。マウントされたデータとランタイムの変更は依然として異なる可能性がある**
 
-**解説:**
-ほとんどの本番 team は、upstream の Kubeflow/Jupyter base image を基に custom image を構築し、固定した Python/R package、internal library、対応する GPU framework version を追加したうえで、image を registry（例: EKS 上の Amazon ECR）に push し、spawner から直接参照します。これにより、同じ image tag を使用する 2 人のユーザーには、手動 install による差異ではなく、同一の package set が提供されます。
+テスト済みの server-prefix/port/UID の動作、依存関係、およびアーキテクチャを使用してください。mutable tag だけではイメージバイトを固定できません。
 </details>
 
-## 短答式問題
+## 短答問題
 
-8. notebook pod の GPU request が EKS 上で Karpenter とどのように連携するか、またこれが cost にとって重要である理由を、1 文または 2 文で説明してください。
+8. idle 状態の GPU notebook を停止しても、即時のコスト削減が保証されないのはなぜですか？
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
-notebook Pod の spec が `nvidia.com/gpu` resource を要求し、既存の node に capacity がない場合、Karpenter は pending Pod を満たすために新しい GPU 対応 EC2 instance をプロビジョニングします。GPU instance は高価であるため、idle-culling と notebook の GPU request の right-sizing は、アクティブな session の合間に team が未使用の GPU capacity に支払う cost を直接左右します。
+Pod requests は解放される可能性がありますが、他の workload、PDB、NodePool の制限/中断ポリシー、およびキャパシティ管理がノード終了に影響します。ノードが実行中のままであれば、EC2 の料金は継続する可能性があります。
 </details>
 
-9. namespace ごとの Istio isolation は、通常の Kubernetes namespace RBAC 単独では提供できない、Kubeflow Profile にどのような利点をもたらしますか？
+9. notebook において、RBAC、Istio authorization、および NetworkPolicy はどのように異なりますか？
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
-RBAC は、namespace 内の Kubernetes API object を誰が create/read/modify できるかを制御しますが、network traffic については制御しません。Istio の namespace ごとの `AuthorizationPolicy` は、どの service が network layer でユーザーの notebook Pod に実際に request を送信できるかをさらに制限し、RBAC 単独では cross-namespace の object access が一部許可される場合でも、ユーザーの notebook server 間の isolation を提供します。
+RBAC は Kubernetes API アクションを管理します。Istio authorization は、設定された proxy とポリシーで処理されるリクエストを制御します。NetworkPolicy は、CNI により適用される場合に許可される Pod ネットワークトラフィックを管理します。これらのいずれも単独では、ストレージ/IAM/アプリケーションの分離を保証しません。
 </details>
 
 ---

@@ -1,162 +1,153 @@
-# パート 6: KServe — Kubernetes 上の Model Serving クイズ
+# KServe クイズ
 
-このクイズでは、KServe と Kubeflow の関係、`InferenceService` コンポーネント、Serverless と Raw Deployment のトレードオフ、autoscaling の仕組み、canary rollout、EKS での GPU inference についての理解を確認します。
+ベースライン: KServe 0.18.0 / Community Distribution 26.03.1。
 
 ## 多肢選択問題
 
-1. KServe と Kubeflow の歴史的な関係は何ですか？
-   - A) KServe は常に Kubeflow との関係がない完全に独立したプロジェクトだった
-   - B) KServe は Kubeflow 内で KFServing として始まり、その後独自の top-level standalone project として独立した
-   - C) Kubeflow は KServe の subcomponent である
-   - D) KServe は Katib の rebranding である
+1. KServe は Kubeflow とどのような関係にありますか？
+
+   - A) KFServing から進化し、依存関係とともに独立して実行できる
+   - B) Katib の新しい名称である
+   - C) 常に Kubeflow ディストリビューション全体を必要とする
+   - D) Kubernetes を置き換える
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) KServe は Kubeflow 内で KFServing として始まり、その後独自の top-level standalone project として独立した**
+**回答: A) KFServing から進化し、依存関係とともに独立して実行できる**
 
-**解説:**
-KServe は、trained model を inference endpoint に変換する役割を担う Kubeflow 内のコンポーネントである KFServing として始まりました。その後、Kubeflow なしで任意の Kubernetes cluster にインストールできる独立した standalone project になりましたが、Kubeflow は引き続きこれをデフォルトの model-serving layer としてバンドルしています。
+すべての KServe インストールで、Kubeflow 全体と Models Web Application が前提条件になるわけではありません。
 </details>
 
-2. Kubeflow dashboard の KServe web app に表示される version が、KServe controller/CRD の version と一致すると想定できないのはなぜですか？
-   - A) Kubeflow dashboard は KServe version 情報を一切表示しない
-   - B) KServe には Kubeflow Community Distribution の calendar-versioned release train とは別の独自の release cadence があるため、platform team は web app とは独立して controller を upgrade できる
-   - C) KServe は deprecated であり、もはや version update を受け取らない
-   - D) Kubeflow web app と KServe controller は常に完全に同じ binary である
+2. この章ではどのバージョンを確認していますか？
+
+   - A) 0.16.1 の web app のみ
+   - B) Community 26.03.1 の KServe と web app 0.18.0。確認した最新の KServe は 0.20.0
+   - C) すべてのコンポーネントは異なるバージョンでなければならない
+   - D) web-app ラベルが、インストールされたすべての CRD を決定する
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) KServe には Kubeflow Community Distribution の calendar-versioned release train とは別の独自の release cadence があるため、platform team は web app とは独立して controller を upgrade できる**
+**回答: B) Community 26.03.1 の KServe と web app 0.18.0。確認した最新の KServe は 0.20.0**
 
-**解説:**
-Kubeflow Community Distribution 26.03 は KServe web app の v0.16.1 をバンドルしていますが、この番号は dashboard integration を表すものであり、cluster 上で実行されている基盤となる KServe controller/CRD の version を必ずしも表していません。controller は独自のスケジュールで upgrade できるためです。
+Controller、CRD、web app は別々のアーティファクトです。実際の互換性とリビジョンを記録する必要があります。
 </details>
 
-3. 他は optional である一方、必須の `InferenceService` コンポーネントはどれですか？
+3. 必須の InferenceService コンポーネントはどれですか？
+
    - A) Explainer
    - B) Transformer
    - C) Predictor
-   - D) 3 つすべてが必須である
+   - D) 3 つすべて
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: C) Predictor**
+**回答: C) Predictor**
 
-**解説:**
-predictor は model server 自体であり、`InferenceService` の唯一の必須コンポーネントです。transformer（pre/post-processing）と explainer（model explanations）は、use case で必要となる場合にのみ使用する optional add-on です。
+Transformer と explainer はオプションです。runtime/protocol の互換性と、実際の explanation route は依然として重要です。
 </details>
 
-4. KServe の Serverless deployment mode を定義づける機能と、そのコストは何ですか？
-   - A) plain Deployment と HPA を使用し、トレードオフはまったくない
-   - B) idle 時に Knative を介して pod を zero まで scale するが、scale-up 時に cold-start latency が発生する
-   - C) Kubernetes cluster をまったく必要としない
-   - D) predictor が不要になる
+4. Knative を選択すると、アイドル状態のすべての predictor は自動的にゼロまでスケールしますか？
+
+   - A) はい。設定は不要
+   - B) いいえ。KServe のデフォルトでは minReplicas は 1 であり、ゼロへのスケールには minReplicas 0 など、サポートされる autoscaler/policy 設定が必要
+   - C) はい。EC2 の課金も直ちに停止する
+   - D) Knative のインストールは不要
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) idle 時に Knative を介して pod を zero まで scale するが、scale-up 時に cold-start latency が発生する**
+**回答: B) いいえ。KServe のデフォルトでは minReplicas は 1 であり、ゼロへのスケールには minReplicas 0 など、サポートされる autoscaler/policy 設定が必要**
 
-**解説:**
-Serverless mode は pod lifecycle を Knative Serving に委任します。これにより、traffic がない場合は predictor（および transformer/explainer）pod を完全に zero まで scale でき、idle 時の GPU cost を削減できます。トレードオフは cold-start latency です。新しい pod の scheduling、container の起動、model artifact の loading には時間がかかるため、zero から scale した後の最初の request に応答できるまで待機が発生します。
+ゼロからのスケールには、capacity、image、model のロードが含まれます。Pod がゼロでも node の終了は保証されません。
 </details>
 
-5. Raw Deployment mode と Serverless mode の主な違いは何ですか？
-   - A) Raw Deployment mode は Knative dependency や scale-to-zero なしで plain Deployment/Service（および optional HPA）を管理する
-   - B) Raw Deployment mode は Knative Serving を必要とするが、transformer を自動的に追加する
-   - C) Raw Deployment mode は SKLearn model でのみ利用できる
-   - D) Raw Deployment mode は常に Serverless mode より多くの replica を実行する
+5. Standard mode に関する正しい記述はどれですか？
+
+   - A) 常にウォームで正常な replica を保証する
+   - B) Deployment/Service を使用する。デフォルトの HPA は少なくとも 1 を維持する一方、設定済みの KEDA path はゼロをサポートできる
+   - C) 常に Knative を必要とする
+   - D) autoscaling の選択肢を一切サポートしない
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: A) Raw Deployment mode は Knative dependency や scale-to-zero なしで plain Deployment/Service（および optional HPA）を管理する**
+**回答: B) Deployment/Service を使用する。デフォルトの HPA は少なくとも 1 を維持する一方、設定済みの KEDA path はゼロをサポートできる**
 
-**解説:**
-Raw Deployment mode は運用上よりシンプルであり（install/upgrade する Knative が不要）、cold start を完全に回避できます。しかし、Deployment の設定済み minimum replica count を下回る scale は行わないため、traffic に関係なく少なくともその数の predictor pod（GPU を使用する場合はその GPU も）が常に実行されます。
+KEDA には、インストール、有効な metrics/triggers、activation path が必要です。restart/rollout/scale-out の起動レイテンシーはいずれの mode にも残ります。
 </details>
 
-6. 2 つの deployment mode では autoscaling はどのように異なりますか？
-   - A) 両方の mode で、まったく同じ HPA ベースの CPU scaling を使用する
-   - B) Serverless mode は Knative の concurrency/RPS ベースの signal で scale し、Raw Deployment mode は CPU/memory または custom metrics を使用する標準 HPA で scale する
-   - C) Serverless mode は一切 scale しない
-   - D) Raw Deployment mode は Knative concurrency に基づいて scale し、Serverless mode は HPA を使用する
+6. 0.18.0 における最新の mode 名は何ですか？
+
+   - A) Serverless と RawDeployment だけが有効な名前である
+   - B) Knative と Standard。古い名前は非推奨のエイリアスである
+   - C) HPA と GPU
+   - D) Predictor と Transformer
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) Serverless mode は Knative の concurrency/RPS ベースの signal で scale し、Raw Deployment mode は CPU/memory または custom metrics を使用する標準 HPA で scale する**
+**回答: B) Knative と Standard。古い名前は非推奨のエイリアスである**
 
-**解説:**
-Serverless mode の Knative autoscaler は、concurrency や requests-per-second などの request-level signal に反応します。これは resource-utilization signal よりも bursty な inference traffic に素早く反応する傾向があります。一方、Raw Deployment mode は、cluster 上の他の Deployment と同じ autoscaling model である標準 Kubernetes HorizontalPodAutoscaler に依存します。
+実際の annotation と config を確認してください。code の fallback は Standard です。確認した OCI resource chart のデフォルトは Knative です。
 </details>
 
-7. KServe の built-in canary rollout mechanism は、このドキュメントの他の箇所で扱う Istio/Argo Rollouts の traffic-splitting pattern とどのような関係にありますか？
-   - A) 名前が異なるだけで、まったく同じ mechanism である
-   - B) KServe の canary rollout は KServe control plane に組み込まれた、model-serving 固有の独立した mechanism であり、service-mesh または progressive-delivery-controller の traffic-splitting とは異なる
-   - C) KServe には canary rollout capability がなく、代わりに Argo Rollouts を使用する必要がある
-   - D) Istio traffic-splitting は InferenceService 自体の必要性を置き換える
+7. 検証済みの canaryTrafficPercent path を実装するのは何ですか？
+
+   - A) KServe Controller がすべてのリクエストを自身で proxy する
+   - B) KServe が Knative revision の traffic target を設定し、Knative networking がリクエストをルーティングする
+   - C) すべての Standard Deployment が自動的に同じ revision splitting を持つ
+   - D) Argo Rollouts が必須である
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) KServe の canary rollout は KServe control plane に組み込まれた、model-serving 固有の独立した mechanism であり、service-mesh または progressive-delivery-controller の traffic-splitting とは異なる**
+**回答: B) KServe が Knative revision の traffic target を設定し、Knative networking がリクエストをルーティングする**
 
-**解説:**
-KServe は stable と canary の `InferenceService` revision 間で独自に traffic を分割し、confidence の向上に応じて traffic を徐々に移行できます。これは特に `InferenceService` revision の level で動作し、platform 上の他の workload に使用される Istio または Argo Rollouts ベースの traffic-splitting pattern とは別の tool です。置き換えの要件ではなく、独自の model-serving 固有の path です。
+Standard の rolling update は、同じ revision-percentage mechanism ではありません。promotion/rollback と保持される artifact は別途検証する必要があります。
 </details>
 
-8. `InferenceService` predictor が EKS で GPU を request するとき、Karpenter はどのような役割を果たしますか？
-   - A) Karpenter は KServe predictor の inference protocol を構成する
-   - B) Karpenter は pod の GPU request を既存 node が満たせない場合に対応する GPU-backed EC2 instance を provision し、その capacity が不要になったら consolidate/reclaim できる
-   - C) Karpenter は GPU device plugin の必要性を置き換える
-   - D) Karpenter は Raw Deployment mode でのみ動作し、Serverless mode では決して動作しない
+8. nvidia.com/gpu をリクエストすると、GPU inference は保証されますか？
+
+   - A) はい。すべての model で保証される
+   - B) いいえ。driver、image/backend、model/device 設定も一致している必要がある
+   - C) 必要なすべての driver を自動的にインストールする
+   - D) node capacity は不要になる
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) Karpenter は pod の GPU request を既存 node が満たせない場合に対応する GPU-backed EC2 instance を provision し、その capacity が不要になったら consolidate/reclaim できる**
+**回答: B) いいえ。driver、image/backend、model/device 設定も一致している必要がある**
 
-**解説:**
-EKS での GPU inference は、GPU device plugin が公開する resource に対する標準 Kubernetes resource request model に従います。Karpenter の GPU node pool は unschedulable な GPU request に反応して対応する capacity を provision し、その consolidation behavior は predictor（特に Serverless mode で zero まで scale する predictor）が不要になった capacity を reclaim できます。これは、このドキュメントの他の箇所の EKS でも使用される two-tier autoscaling pattern です。
+resource allocation と実際の model execution は別物です。Karpenter は、policy、quota、可用性に従って適格な capacity を供給します。
 </details>
 
 ## 短答問題
 
-9. 1 文または 2 文で、spiky で intermittent な inference traffic を持つ model には Serverless mode が適している一方、すべての request で一貫して低い latency を必要とする model には不向きである理由を説明してください。
+9. 常にウォームな状態とゼロへのスケールが、2 つの mode 間の絶対的な区別ではないのはなぜですか？
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: Serverless mode の scale-to-zero は idle period 中の GPU cost を削減するため、model が多くの時間 idle 状態にある spiky/intermittent traffic に適しています。しかし、zero からの scale-up には cold-start latency（pod scheduling、container start、model load）が発生するため、個々の request すべてに一貫して低い latency が必要な workload には受け入れられません。**
-
-**解説:**
-このトレードオフの本質は、cost（idle GPU savings）と latency predictability（cold start がないこと）の比較です。Raw Deployment mode は、このトレードオフを反転させ、idle 時にもその capacity の cost を支払う代わりに、minimum replica count を常に warm に保ちます。
+Knative は minimum setting を通じてウォームな replica を保持でき、Standard は適切な external signal とともに KEDA を使用できます。どちらの mode も可用性やレイテンシーを保証しません。readiness、ロード、capacity、recovery をテストしてください。
 </details>
 
-10. KServe における predictor の built-in framework support と custom container predictor の違いは何ですか？
+10. artifact URI だけでは不十分な理由と、TorchServe をどのように扱うべきですか？
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: Built-in predictor server（例: SKLearn、XGBoost、TorchServe 経由の PyTorch、NVIDIA Triton 用）では、predictor spec が model artifact location を指定するだけで、serving code を書くことなく動作する server を利用できます。custom container predictor はこれらの built-in framework の対象外に使用され、それ自体が KServe の inference protocol を実装する必要があります。**
-
-**解説:**
-この違いにより、必要な serving-side implementation work の量が決まります。built-in server は一般的な framework をすぐに利用できる形でカバーしますが、それ以外には KServe の protocol を話す手書きの container が必要です。
+runtime、model format/layout、library version、credentials、ports、protocol が一致している必要があります。TorchServe は、今後の security fix の予定がなく、もはや積極的にはメンテナンスされていないと述べています。そのため、古い runtime catalog entry は、メンテナンスされているデフォルトの証拠にはなりません。
 </details>
 
-11. KServe 自身の scaling decision と、それに対する Karpenter の response の間にある two-tier autoscaling relationship を説明してください。
+11. Pod autoscaling と EC2 scaling はどのように相互作用しますか？
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: KServe（Serverless mode では Knative、Raw Deployment mode では HPA 経由）は、request-level または resource-utilization signal に基づいて必要な predictor pod 数を決定します。これは node を認識しない pod-level decision です。Karpenter はこれとは別に、結果として生じる pod scheduling state（unschedulable な GPU request、または空の GPU node）に反応して、provision または reclaim する EC2 GPU capacity の量を決定します。これは pod が存在する理由を認識しない node-level decision です。**
-
-**解説:**
-これらは独立した 2 つの control loop であり、pod count/scheduling state を通じてのみ結び付いています。これは、このドキュメントの他の箇所の EKS における他の autoscaled workload でも使用される、同じ一般的な two-tier autoscaling pattern（まず job/pod-level decision が行われ、それに node-level decision が反応する）です。
+Knative/HPA/KEDA または別途設定された scaler が、必要な Pod 数を決定します。Kubernetes scheduling と Karpenter capacity policy は node provisioning/reclamation に影響します。model Pod がゼロになった後も、他の workload や disruption rule により EC2 node の課金が継続する可能性があります。
 </details>
 
 ---
