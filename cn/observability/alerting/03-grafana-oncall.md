@@ -1,1245 +1,431 @@
 # Grafana OnCall
 
-> **最后更新**: February 20, 2026
+> **最后更新**: September 13, 2026
 
 ## 目录
 
 - [Grafana OnCall 概述](#grafana-oncall-overview)
 - [架构](#architecture)
 - [安装](#installation)
-- [集成设置](#integration-setup)
-- [值班计划配置](#on-call-schedule-configuration)
-- [升级链](#escalation-chains)
+- [集成配置](#integration-setup)
+- [On-Call 排班配置](#on-call-schedule-configuration)
+- [升级链（Escalation Chains）](#escalation-chains)
 - [告警分组与路由](#alert-grouping-and-routing)
 - [ChatOps 集成](#chatops-integration)
 - [Grafana IRM 集成](#grafana-irm-integration)
 - [移动应用](#mobile-app)
-- [PagerDuty/OpsGenie 对比](#pagerdutyopsgenie-comparison)
+- [PagerDuty/OpsGenie 对比](#pagerduty-opsgenie-comparison)
 - [最佳实践](#best-practices)
 
 ---
 
-## Grafana OnCall 概述
+## Grafana OnCall 概述 {#grafana-oncall-overview}
 
-Grafana OnCall 是一款开源值班管理工具，提供告警路由、值班计划管理和升级策略。它可通过 Grafana Cloud 以 SaaS 形式使用，也可自行托管。
+**Grafana OnCall OSS 已于 2026-03-24 归档。** 其仓库已迁移至 `grafana-cold-storage/oncall`，且为只读状态。本章用于支持对现有安装的评审/迁移，并不表示推荐将其用于新的生产环境 OSS 部署。请另行确认仍在维护的 Grafana Cloud IRM 功能、API 与套餐。
+
+**Cloud Connection 已于 2026-03-24 终止。** 通过 Grafana IRM 应用的 OSS 移动推送，以及依赖 Cloud Connection 的 SMS/语音通知均已不再可用。单独配置的 Twilio 或其他通知服务属于不同的路径；这并不意味着所有自托管的电话/SMS 机制都已终止。
+
+本次评审所依据的归档源代码为 `af0fbd40558c9a63bcf438589894c440fc434a54`。最新发布版本标记为 v1.16.11，而该源代码的 Helm chart/appVersion 为 1.15.6；这两个版本标识不可互换使用。示例均已对照该源代码与官方 OnCall API 文档进行核对。未实际创建任何 OnCall 账户、执行 API 写入或发送通知。
 
 ### 主要功能
 
-1. **值班计划管理**：轮值、覆盖、节假日管理
-2. **升级链**：基于时间的自动升级
-3. **告警分组**：聚合相关告警
+1. **On-Call 排班管理**：轮值（rotation）、覆盖（override）、假期管理
+2. **升级链（Escalation Chains）**：基于时间的自动升级
+3. **告警分组**：合并相关告警
 4. **多种集成**：Alertmanager、Grafana、CloudWatch、Webhook
 5. **ChatOps**：Slack、MS Teams、Telegram 集成
-6. **移动应用**：iOS/Android 推送通知
+6. **通知渠道**：可用性取决于部署方式、集成以及用户规则
 
 ### Grafana OnCall vs PagerDuty vs OpsGenie
 
-| 功能 | Grafana OnCall | PagerDuty | OpsGenie |
-|---------|----------------|-----------|----------|
-| **类型** | 开源/SaaS | SaaS | SaaS |
-| **成本** | 免费(OSS)/付费(Cloud) | 付费 | 付费 |
-| **自行托管** | 是 | 否 | 否 |
-| **Grafana 集成** | 原生 | 插件 | 插件 |
-| **值班计划** | 是 | 高级 | 高级 |
-| **升级** | 是 | 高级 | 高级 |
-| **分析/报告** | 基础 | 高级 | 高级 |
-| **企业支持** | 付费 | 包含 | 包含 |
+| 选项 | 当前评审依据 |
+|---|---|
+| OnCall OSS | 已归档的现有安装；依赖项、恢复与迁移的归属责任 |
+| Grafana Cloud IRM / PagerDuty | 确认维护状态、所需渠道/排班/API、区域与合同条款 |
+| Opsgenie | 2025-06-04 停止销售；服务/支持计划于 2027-04-05 终止。现有用户需要制定迁移计划 |
+
+不要基于固定的集成数量、过时的价格或主观的“基础/高级”排名来选择产品。
 
 ---
 
-## 架构
+## 架构 {#architecture}
 
 ### Grafana OnCall 组件
 
-```mermaid
-graph TB
-    subgraph Sources["Alert Sources"]
-        AM[Alertmanager]
-        GA[Grafana Alerting]
-        CW[CloudWatch]
-        WH[Webhook]
-    end
+以下是逻辑职责划分，并不一定对应独立的 Deployment。请检查已安装配置中的 database.type、broker.type、Redis、engine/Celery 的部署位置以及插件连通性。
 
-    subgraph OnCall["Grafana OnCall"]
-        subgraph Core["Core Components"]
-            API[API Server]
-            Engine[Alert Engine]
-            Scheduler[Scheduler]
-        end
 
-        subgraph Data["Data Storage"]
-            DB[(PostgreSQL)]
-            Redis[(Redis)]
-            Celery[Celery Workers]
-        end
 
-        subgraph Features["Features"]
-            Routes[Routes]
-            Escalation[Escalation Chains]
-            Schedules[Schedules]
-            Groups[Alert Groups]
-        end
-    end
+![已归档 OnCall 安装的逻辑组件，包含已配置的 database/broker/cache 角色以及有条件可用的渠道。Cloud Connection 已于 2026-03-24 终止；须确认独立受支持的渠道。](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png)
 
-    subgraph Notifications["Notification Channels"]
-        Slack[Slack]
-        Teams[MS Teams]
-        Phone[Phone Call]
-        SMS[SMS]
-        Email[Email]
-        Mobile[Mobile App]
-    end
-
-    AM --> API
-    GA --> API
-    CW --> API
-    WH --> API
-
-    API --> Engine
-    Engine --> Routes
-    Routes --> Escalation
-    Escalation --> Schedules
-    Schedules --> Groups
-
-    Engine --> DB
-    Engine --> Redis
-    Celery --> Redis
-
-    Groups --> Slack
-    Groups --> Teams
-    Groups --> Phone
-    Groups --> SMS
-    Groups --> Email
-    Groups --> Mobile
-
-    style Core fill:#ff5722,color:#ffffff
-    style Data fill:#2196f3,color:#ffffff
-    style Features fill:#4caf50,color:#ffffff
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-0.html)
 
 ### 告警处理流程
 
-```mermaid
-sequenceDiagram
-    participant S as Alert Source
-    participant O as OnCall
-    participant R as Route
-    participant E as Escalation Chain
-    participant SC as Schedule
-    participant N as Notification
+![HTTP 接收与后台路由和人工确认（acknowledgment）相互独立；不意味着会自动更新源端规则。](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png)
 
-    S->>O: Alert received
-    O->>O: Alert grouping
-    O->>R: Evaluate routing rules
-    R->>E: Select escalation chain
-    E->>SC: Query current on-call responder
-    SC-->>E: Responder info
-    E->>N: Send notification
-
-    alt No response
-        E->>E: Wait time elapsed
-        E->>SC: Query next responder
-        SC-->>E: Next responder
-        E->>N: Escalation notification
-    end
-
-    N->>O: Responder acknowledges
-    O->>S: Status update
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-1.html)
 
 ---
 
-## 安装
+## 安装 {#installation}
 
-### 通过 Helm 安装 (EKS)
+### 通过 Helm 安装（EKS）
 
-```bash
-# Add Helm repository
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
+在考虑做出变更之前，先盘点现有的 release/chart/image 摘要（digest）、数据库、broker、Grafana 插件、认证与渠道依赖。对比 helm list、工作负载镜像以及受保护的 helm get values/manifest 输出。Values/manifests 可能包含真实凭据：请私密保存，不要放入聊天、Git 或构建日志中。
 
-# Create namespace
-kubectl create namespace oncall
+已归档的 chart 包含旧版本的 cert-manager、ingress-nginx 与数据库依赖。不要将不相关的当前版本 Grafana chart 与已归档源代码版本混用，也不要把一条简单的 helm install 命令当作当前仍有安全支持的证据。
 
-# Install after creating values.yaml
-helm install oncall grafana/oncall \
-  --namespace oncall \
-  -f oncall-values.yaml
-```
+### 基本 values.yaml 配置
 
-### 基础 values.yaml 配置
+以下是所检查的归档 chart 中的实际键（key）。它们区分了旧示例可能会被静默忽略或错误解读的设置。
 
-```yaml
-# oncall-values.yaml
-base_url: oncall.example.com
+| 职责 | 归档 chart 键 |
+|---|---|
+| API/engine 副本数 | `engine.replicaCount`，而非 `oncall.replicaCount` |
+| URL | `base_url` 以及 `base_url_protocol` |
+| 附加环境变量 | `env` map，而非原生 Kubernetes env 列表 |
+| 外部 PostgreSQL | `externalPostgresql.db_name`、`existingSecret`、`passwordKey`、TLS 选项 |
+| 外部 Redis | `externalRedis.existingSecret`、`passwordKey`、`ssl_options` |
+| 应用加密密钥 | `oncall.secrets.existingSecret`、`secretKey`、`mirageSecretKey` |
+| Telegram/Twilio | 嵌套的 `oncall.telegram` 与 `oncall.twilio` 设置 |
 
-# Database settings
-database:
-  type: postgresql
-
-postgresql:
-  enabled: true
-  auth:
-    database: oncall
-    username: oncall
-    password: "secure-password"
-  primary:
-    persistence:
-      enabled: true
-      size: 10Gi
-
-# Redis settings
-redis:
-  enabled: true
-  architecture: standalone
-  auth:
-    enabled: true
-    password: "redis-password"
-
-# Celery workers
-celery:
-  replicaCount: 2
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-    limits:
-      memory: 512Mi
-      cpu: 500m
-
-# API server
-oncall:
-  replicaCount: 2
-  resources:
-    requests:
-      memory: 512Mi
-      cpu: 200m
-    limits:
-      memory: 1Gi
-      cpu: 1000m
-
-# Ingress settings
-ingress:
-  enabled: true
-  className: alb
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:xxx:certificate/xxx
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-  hosts:
-    - host: oncall.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-
-# Grafana integration
-grafana:
-  enabled: false  # When using existing Grafana
-
-# Environment variables
-env:
-  - name: SECRET_KEY
-    valueFrom:
-      secretKeyRef:
-        name: oncall-secrets
-        key: secret-key
-  - name: DJANGO_SETTINGS_MODULE
-    value: settings.hobby
-```
+默认配置会启用 MariaDB、RabbitMQ、Redis、Grafana、ingress-nginx、cert-manager 等组件。把 database.type 改为 PostgreSQL 并不会自动禁用 MariaDB 或其他不相关的依赖。settings.hobby 与通用的 Firebase YAML 并非经过验证的生产配置。
 
 ### 生产环境 values.yaml
 
-```yaml
-# oncall-production-values.yaml
-base_url: oncall.example.com
+仅增加副本数并不能消除单点故障。请测试 engine、Celery、scheduler/beat、数据库、broker/cache、插件、通知服务商、DNS 与证书等各类故障，包括队列持久性、重复处理、重试与恢复。请区分 RabbitMQ broker 与 Redis 的职责，并检查实际的 broker.type。
 
-# External PostgreSQL (RDS)
-database:
-  type: postgresql
-
-externalPostgresql:
-  host: oncall-db.xxx.ap-northeast-2.rds.amazonaws.com
-  port: 5432
-  db: oncall
-  user: oncall
-  password:
-    secretName: oncall-db-secret
-    secretKey: password
-
-postgresql:
-  enabled: false
-
-# External Redis (ElastiCache)
-externalRedis:
-  host: oncall-redis.xxx.cache.amazonaws.com
-  port: 6379
-  password:
-    secretName: oncall-redis-secret
-    secretKey: password
-
-redis:
-  enabled: false
-
-# Celery workers (HA)
-celery:
-  replicaCount: 3
-  resources:
-    requests:
-      memory: 512Mi
-      cpu: 250m
-    limits:
-      memory: 1Gi
-      cpu: 1000m
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: celery
-            topologyKey: kubernetes.io/hostname
-
-# API server (HA)
-oncall:
-  replicaCount: 3
-  resources:
-    requests:
-      memory: 1Gi
-      cpu: 500m
-    limits:
-      memory: 2Gi
-      cpu: 2000m
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: oncall
-            topologyKey: kubernetes.io/hostname
-
-# Telegram/Twilio settings (for phone/SMS)
-telegramPolling:
-  enabled: true
-
-twilio:
-  enabled: true
-  accountSid:
-    secretName: twilio-secret
-    secretKey: account-sid
-  authToken:
-    secretName: twilio-secret
-    secretKey: auth-token
-  phoneNumber:
-    secretName: twilio-secret
-    secretKey: phone-number
-```
+现有部署的负责人必须评审 DB/Redis 的 TLS 校验、按角色分发密钥、网络访问、备份/恢复与迁移。面向互联网的 ALB 或外部数据库主机名并不能使配置达到生产就绪。本次审查未部署 EKS、未测试 HA，也未调用真实的通知服务商。
 
 ### 创建 Secret
 
-```bash
-# OnCall secrets
-kubectl create secret generic oncall-secrets \
-  --namespace oncall \
-  --from-literal=secret-key=$(openssl rand -base64 32)
-
-# Database secret
-kubectl create secret generic oncall-db-secret \
-  --namespace oncall \
-  --from-literal=password='db-password'
-
-# Redis secret
-kubectl create secret generic oncall-redis-secret \
-  --namespace oncall \
-  --from-literal=password='redis-password'
-
-# Twilio secret (for phone/SMS)
-kubectl create secret generic twilio-secret \
-  --namespace oncall \
-  --from-literal=account-sid='ACxxx' \
-  --from-literal=auth-token='xxx' \
-  --from-literal=phone-number='+1234567890'
-```
+不要通过 --from-literal 参数或明文 Helm values 传递真实值。请使用经批准的密钥存储/受保护文件，并将现有加密密钥与数据库备份一并管理。盲目更改现有安装的 Mirage key/IV 可能导致已存储数据无法解密。公共 API token、集成 webhook URL 以及 Slack/Twilio/Telegram 凭据具有不同的权限与轮换要求。
 
 ---
 
-## 集成设置
+## 集成配置 {#integration-setup}
 
 ### Alertmanager 集成
 
-```yaml
-# Alertmanager configuration
-receivers:
-  - name: 'grafana-oncall'
-    webhook_configs:
-      - url: 'https://oncall.example.com/api/v1/webhook/<integration-id>/'
-        send_resolved: true
-        http_config:
-          bearer_token: '<integration-token>'
+请使用**所选集成类型生成的完整 URL**。该 URL 本身可能就是机密，因此应保存在受保护的文件中。不要自行编造 `/api/v1/webhook/<id>/` 路径并与公共 API token 组合使用。下面的 Alertmanager 配置定义了当前的 matchers 与两个 receiver；它并未被用于实际发送通知。
 
+```yaml
+# Materialize the generated integration URL in this protected file.
+# This example is not enabled or contacted during the documentation audit.
 route:
-  receiver: 'default'
+  receiver: no-page
+  group_by: [alertname, cluster, namespace, service]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
   routes:
-    - match:
-        severity: critical
-      receiver: 'grafana-oncall'
-    - match:
-        severity: warning
-      receiver: 'grafana-oncall'
+    - matchers: ['severity=~"critical|warning"']
+      receiver: oncall
+receivers:
+  - name: no-page
+  - name: oncall
+    webhook_configs:
+      - url_file: /etc/oncall/integration-url
+        send_resolved: true
 ```
+
+amtool 0.34 验证了语法以及 critical/warning/info/fallback 四种路由场景。send_resolved 会转发源端的 resolved 消息；它并不会让在 OnCall 中的手动 resolve 自动更改源端规则。
 
 ### Grafana Alerting 集成
 
-```yaml
-# Grafana alerting configuration (grafana.ini)
-[unified_alerting]
-enabled = true
-
-[alerting]
-enabled = false
-
-# Contact Point setup (in Grafana UI)
-# 1. Alerting > Contact points
-# 2. New contact point
-# 3. Integration: Grafana OnCall
-# 4. URL: https://oncall.example.com
-# 5. Select Integration
-```
+请针对已安装的 Grafana/OnCall 插件版本，确认所支持的 contact point 与生成的集成。INI 设置、provisioning YAML 与 UI API 各不相同；旧示例错误地将 INI 标注为 YAML。Grafana Alerting 的规则/通知状态与 OnCall 的 alert-group 状态同样彼此独立。
 
 ### CloudWatch 集成
 
-```bash
-# Create SNS Topic
-aws sns create-topic --name cloudwatch-to-oncall
-
-# SNS subscription (OnCall Webhook)
-aws sns subscribe \
-  --topic-arn arn:aws:sns:ap-northeast-2:123456789012:cloudwatch-to-oncall \
-  --protocol https \
-  --notification-endpoint https://oncall.example.com/api/v1/webhook/<integration-id>/
-
-# Connect CloudWatch Alarm to SNS
-aws cloudwatch put-metric-alarm \
-  --alarm-name "HighCPU" \
-  --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:cloudwatch-to-oncall \
-  ...
-```
+请遵循 CloudWatch 专用集成对 SNS 订阅确认、签名与负载（payload）处理的要求。将 SNS 订阅到任意通用 webhook 并不能保证兼容性。请测试 ALARM/OK/INSUFFICIENT_DATA 状态转换、订阅确认、重复/重试、topic/endpoint 权限以及实际投递情况。本次审查未创建任何 SNS 订阅或告警动作。
 
 ### Webhook 集成
 
-```python
-# Custom alert sending example
-import requests
+通用 webhook 负载必须与显式配置的解析、分组与 resolution 模板相匹配。发送 alert_uid、state 与 labels 并不意味着每个集成都会以相同方式解读它们。请正确序列化 JSON，并设计好 HTTPS 校验、超时、错误处理以及重试/去重行为。不要将 URL、token 与个人数据写入日志。
 
-webhook_url = "https://oncall.example.com/api/v1/webhook/<integration-id>/"
-token = "<integration-token>"
+公共 API 使用文档所述的**原始 Authorization token**；不要自动添加 Bearer。使用 Grafana service-account-token 认证时还需要 X-Grafana-URL。API 来源与集成 webhook 属于两条独立的认证路径。
 
-alert = {
-    "alert_uid": "unique-alert-id",
-    "title": "High CPU Usage",
-    "message": "CPU usage is above 90% on production server",
-    "state": "alerting",  # alerting, ok
-    "severity": "critical",  # critical, warning, info
-    "link": "https://grafana.example.com/d/xxx",
-    "labels": {
-        "environment": "production",
-        "service": "api-server"
-    }
-}
-
-response = requests.post(
-    webhook_url,
-    json=alert,
-    headers={"Authorization": f"Bearer {token}"}
-)
-```
+该[只读盘点工具](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/oncall)仅使用 GET，并会校验分页的来源/集合/计数、TLS、重定向与文件权限。其输出可能包含机密的集成 URL 与个人数据；它并非完整的数据库/密钥/历史备份，也不是原子性的迁移快照。12 项本地 TLS fixture 测试均已通过，且未查询任何真实账户。
 
 ---
 
-## 值班计划配置
+## On-Call 排班配置 {#on-call-schedule-configuration}
 
-### 计划概念
+### 排班概念
 
-```mermaid
-graph TB
-    subgraph Schedule["On-Call Schedule"]
-        subgraph Rotation["Rotation"]
-            R1[Day Rotation]
-            R2[Night Rotation]
-        end
+请将时区、班次优先级与覆盖（override）一并评审。把层级命名为 primary/secondary 并不会自动配置备份升级。请在 API/UI 中检查最终的响应人，并测试空档、重叠、DST（夏令时）与交接边界。
 
-        subgraph Layers["Layers"]
-            L1[Primary Responder]
-            L2[Secondary Responder]
-            L3[Backup Responder]
-        end
+![班次 ID、优先级、时区与覆盖共同决定最终排班；备份升级需要单独的策略。](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png)
 
-        subgraph Override["Override"]
-            O1[Vacation Replacement]
-            O2[Temporary Change]
-        end
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-2.html)
 
-    R1 --> L1
-    R2 --> L1
-    L1 --> Final[Final Schedule]
-    L2 --> Final
-    L3 --> Final
-    O1 --> Final
-    O2 --> Final
+### 创建排班（API）
 
-    style Schedule fill:#e3f2fd
+web 类型排班的 `shifts` 包含的是**已有班次的 ID**，而不是嵌套的班次对象。请先在 `/api/v1/on_call_shifts/` 下创建班次，然后将返回的 ID 附加到 `/api/v1/schedules/` 的 web 排班上。以下是需由运维人员评审的请求示例，需要填入真实的 ID/日期；未执行任何写入操作。
+
+```json
+{
+  "name": "Illustrative weekly rotation",
+  "type": "rolling_users",
+  "time_zone": "Asia/Seoul",
+  "start": "2026-09-14T09:00:00",
+  "duration": 604800,
+  "frequency": "weekly",
+  "interval": 1,
+  "week_start": "MO",
+  "start_rotation_from_user_index": 0,
+  "rolling_users": [
+    ["REPLACE_WITH_USER_ID_A"],
+    ["REPLACE_WITH_USER_ID_B"]
+  ]
+}
 ```
 
-### 创建计划 (API)
-
-```bash
-# Create schedule
-curl -X POST https://oncall.example.com/api/v1/schedules/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "SRE Team On-Call",
-    "team_id": "<team-id>",
-    "time_zone": "Asia/Seoul",
-    "type": "web",
-    "shifts": [
-      {
-        "type": "rolling_users",
-        "start": "2025-02-17T09:00:00",
-        "duration": 604800,
-        "frequency": "weekly",
-        "interval": 1,
-        "rolling_users": [
-          ["<user-id-1>"],
-          ["<user-id-2>"],
-          ["<user-id-3>"]
-        ]
-      }
-    ]
-  }'
+```json
+{
+  "name": "Illustrative SRE schedule",
+  "type": "web",
+  "time_zone": "Asia/Seoul",
+  "shifts": ["REPLACE_WITH_EXISTING_SHIFT_ID"]
+}
 ```
+
 
 ### 轮值类型
 
-```yaml
-# Weekly rotation
-weekly-rotation:
-  type: rolling_users
-  start: "2025-02-17T09:00:00"
-  duration: 604800  # 7 days (seconds)
-  frequency: weekly
-  interval: 1
-  rolling_users:
-    - [user-1]
-    - [user-2]
-    - [user-3]
+按周重复需要 `week_start`、为正数的 `interval`，以及 rolling_users 的起始用户索引。按日/周/小时重复并不等同于仅修改 duration。源代码中的校验器接受 `YYYY-MM-DDTHH:MM:SS` 格式的 start，并搭配独立的 time_zone；不要照抄旧的带偏移量的字符串。JSON 中的日期仅为示例，并非实际运行的排班。
 
-# Daily rotation
-daily-rotation:
-  type: rolling_users
-  start: "2025-02-17T09:00:00"
-  duration: 86400  # 1 day (seconds)
-  frequency: daily
-  interval: 1
-  rolling_users:
-    - [user-1]
-    - [user-2]
+19 项检查实际执行了上游的纯校验器并检查了 serializer 字段。它们无法证明数据库中用户/班次的存在性，也无法证明最终的日历分配结果。
 
-# Shift rotation (8 hours x 3)
-shift-rotation:
-  shifts:
-    - type: rolling_users
-      start: "2025-02-17T00:00:00"
-      duration: 28800  # 8 hours
-      frequency: daily
-      rolling_users:
-        - [night-shift-1]
-        - [night-shift-2]
-    - type: rolling_users
-      start: "2025-02-17T08:00:00"
-      duration: 28800
-      frequency: daily
-      rolling_users:
-        - [day-shift-1]
-        - [day-shift-2]
-    - type: rolling_users
-      start: "2025-02-17T16:00:00"
-      duration: 28800
-      frequency: daily
-      rolling_users:
-        - [evening-shift-1]
-        - [evening-shift-2]
+### 覆盖（Override）设置
+
+在该源代码中，override 是 `/api/v1/on_call_shifts/` 下的一种独立类型，而不是旧文档所假设的 `/schedules/<id>/overrides/` 请求。请在保留现有班次 ID 的前提下，将其关联到目标排班。请确认所安装 API 的关联/优先级行为，并在受限的测试时间段内检查最终响应人。
+
+```json
+{
+  "name": "Illustrative temporary replacement",
+  "type": "override",
+  "time_zone": "Asia/Seoul",
+  "start": "2026-09-15T09:00:00",
+  "duration": 28800,
+  "users": ["REPLACE_WITH_EXISTING_USER_ID"]
+}
 ```
 
-### 覆盖设置
-
-```bash
-# Change responder for specific period
-curl -X POST https://oncall.example.com/api/v1/schedules/<schedule-id>/overrides/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "start": "2025-02-25T09:00:00+09:00",
-    "end": "2025-02-28T09:00:00+09:00",
-    "user_id": "<replacement-user-id>"
-  }'
-```
 
 ---
 
-## 升级链
+## 升级链（Escalation Chains） {#escalation-chains}
 
 ### 升级链结构
 
-```mermaid
-graph TB
-    A[Alert Fired] --> B[Step 1: Current On-Call]
+Acknowledge、Resolve 与 Silence 是不同的状态。确认（acknowledgment）并不会修复根本问题，也不会停用源端规则。请依据实际策略与集成状态确认 wait、stop 与重新呼叫（re-page）的条件。图中的 15 分钟窗口只是示例策略，并非产品保证。
 
-    B --> C{Response<br/>within 15min?}
-    C -->|Yes| D[Alert Resolved]
-    C -->|No| E[Step 2: Secondary On-Call]
+![示例中的等待与通知步骤最终导向确认（acknowledgment）；确认并不等于源端问题已解决。](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png)
 
-    E --> F{Response<br/>within 15min?}
-    F -->|Yes| D
-    F -->|No| G[Step 3: Team Lead]
-
-    G --> H{Response<br/>within 15min?}
-    H -->|Yes| D
-    H -->|No| I[Step 4: Entire Team]
-
-    style B fill:#4caf50
-    style E fill:#ff9800
-    style G fill:#f44336
-    style I fill:#9c27b0
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-3.html)
 
 ### 创建升级链
 
-```bash
-# Create escalation chain
-curl -X POST https://oncall.example.com/api/v1/escalation_chains/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Production Critical",
-    "team_id": "<team-id>"
-  }'
+请确认现有的 chain、schedule 与用户 ID 以及权限，并分别评审创建/更新请求。下面是 /api/v1/escalation_policies/ 的**一个 wait 步骤**，而不是完整的链创建请求。所检查的源代码接受 1 分钟到 24 小时的等待时长，以秒为单位表示。
 
-# Add escalation policy
-curl -X POST https://oncall.example.com/api/v1/escalation_policies/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "escalation_chain_id": "<chain-id>",
-    "position": 0,
-    "type": "notify_on_call_from_schedule",
-    "notify_on_call_from_schedule": "<schedule-id>",
-    "important": true
-  }'
-
-# Add wait step
-curl -X POST https://oncall.example.com/api/v1/escalation_policies/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "escalation_chain_id": "<chain-id>",
-    "position": 1,
-    "type": "wait",
-    "duration": 900
-  }'
-
-# Add secondary escalation
-curl -X POST https://oncall.example.com/api/v1/escalation_policies/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "escalation_chain_id": "<chain-id>",
-    "position": 2,
-    "type": "notify_persons",
-    "persons_to_notify": ["<user-id-1>", "<user-id-2>"],
-    "important": true
-  }'
+```json
+{
+  "escalation_chain_id": "REPLACE_WITH_EXISTING_CHAIN_ID",
+  "position": 1,
+  "type": "wait",
+  "duration": 900
+}
 ```
+
 
 ### 升级策略类型
 
-```yaml
-escalation-policy-types:
-  # Notify current on-call from schedule
-  - type: notify_on_call_from_schedule
-    notify_on_call_from_schedule: "<schedule-id>"
-    important: true  # Important notification (send via all channels)
+源代码中的 serializer 支持 schedule/user/team/group 通知、等待、时间/次数条件、自定义 webhook 以及在启用相应功能时声明 incident。自定义 webhook 的引用字段是 action_to_trigger；不要假设仍是旧的 webhook_id 或存在通用的 repeat_after 字段。declare_incident 确实存在，但需要在组织层面启用该功能。
 
-  # Notify specific users
-  - type: notify_persons
-    persons_to_notify:
-      - "<user-id-1>"
-      - "<user-id-2>"
+important:true 会选用该用户配置的**重要通知规则**；它不会无条件地向所有渠道扩散。请评审每个用户的默认/重要规则顺序、等待时间、渠道以及实际可用性。
 
-  # Notify user group
-  - type: notify_user_group
-    group_to_notify: "<group-id>"
-
-  # Wait time
-  - type: wait
-    duration: 900  # 15 minutes (seconds)
-
-  # Notify next on-call responder
-  - type: notify_on_call_from_schedule
-    notify_on_call_from_schedule: "<schedule-id>"
-    notify_if_time_from_start_matches: true
-
-  # Repeat previous steps
-  - type: repeat_escalation
-    repeat_after: 3600  # Repeat after 1 hour
-
-  # Trigger webhook
-  - type: trigger_webhook
-    webhook_id: "<webhook-id>"
-```
 
 ### 按严重级别划分的升级链
 
-```yaml
-# For Critical alerts
-critical-chain:
-  policies:
-    - position: 0
-      type: notify_on_call_from_schedule
-      schedule: primary-oncall
-      important: true
-    - position: 1
-      type: wait
-      duration: 300  # 5 minutes
-    - position: 2
-      type: notify_persons
-      persons: [secondary-oncall, team-lead]
-      important: true
-    - position: 3
-      type: wait
-      duration: 300
-    - position: 4
-      type: notify_user_group
-      group: entire-team
-    - position: 5
-      type: repeat_escalation
-      repeat_after: 1800  # 30 minutes
+请就各严重级别的用途、响应窗口、备份人员、工作时间与重新呼叫行为达成一致。再次通知同一个排班并不总意味着会通知到下一位不同的响应人。请确认实际的 repeat/条件步骤 API 字段，避免同一事件产生重复呼叫。真实的电话/SMS/webhook 投递需要经批准的测试路径，本次并未执行。
 
-# For Warning alerts
-warning-chain:
-  policies:
-    - position: 0
-      type: notify_on_call_from_schedule
-      schedule: primary-oncall
-      important: false  # Non-important (Slack only)
-    - position: 1
-      type: wait
-      duration: 900  # 15 minutes
-    - position: 2
-      type: notify_on_call_from_schedule
-      schedule: primary-oncall
-      important: true
-    - position: 3
-      type: wait
-      duration: 900
-    - position: 4
-      type: notify_persons
-      persons: [team-lead]
-```
 
 ---
 
-## 告警分组与路由
+## 告警分组与路由 {#alert-grouping-and-routing}
 
 ### 路由设置
 
-```mermaid
-graph TB
-    A[Alert Received] --> B{Integration<br/>Type?}
+请检查每个集成的实际负载、路由顺序，以及用于未匹配事件的默认路由。Alertmanager、Grafana 与 CloudWatch 的负载各不相同；匹配任意消息文本的正则可能导致错误路由。请测试正常、缺失、格式错误与相互冲突的场景。
 
-    B -->|Alertmanager| C{Labels?}
-    B -->|Grafana| D{Folder?}
-    B -->|CloudWatch| E{Namespace?}
+![示例中按集成划分的路由，包含已配置的顺序、兜底（fallback）以及嵌套的 Slack 渠道设置。](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png)
 
-    C -->|severity=critical| F[Critical Chain]
-    C -->|team=infra| G[Infra Chain]
-    C -->|default| H[Default Chain]
-
-    D -->|Production| F
-    D -->|Staging| I[Low Priority Chain]
-
-    E -->|AWS/EKS| G
-    E -->|AWS/RDS| J[DBA Chain]
-
-    style F fill:#f44336,color:#ffffff
-    style G fill:#ff9800,color:#ffffff
-    style H fill:#4caf50,color:#ffffff
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-4.html)
 
 ### 创建路由
 
-```bash
-# Create route
-curl -X POST https://oncall.example.com/api/v1/routes/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "integration_id": "<integration-id>",
-    "routing_regex": "\"severity\":\\s*\"critical\"",
-    "position": 0,
-    "escalation_chain_id": "<critical-chain-id>",
-    "slack_channel_id": "<critical-channel-id>"
-  }'
+该示例使用的是所检查的 route serializer 中存在的字段。Slack 使用嵌套的 slack.channel_id/enabled，而不是旧的扁平字段 slack_channel_id。需要真实的 integration/chain/channel ID 与授权。其中的正则仅针对特定负载作示例，并非适用于所有服务商的通用模板。
 
-# Team-based route
-curl -X POST https://oncall.example.com/api/v1/routes/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "integration_id": "<integration-id>",
-    "routing_regex": "\"team\":\\s*\"infra\"",
-    "position": 1,
-    "escalation_chain_id": "<infra-chain-id>",
-    "slack_channel_id": "<infra-channel-id>"
-  }'
+```json
+{
+  "integration_id": "REPLACE_WITH_EXISTING_INTEGRATION_ID",
+  "routing_type": "regex",
+  "routing_regex": "\"severity\"\\s*:\\s*\"critical\"",
+  "position": 0,
+  "escalation_chain_id": "REPLACE_WITH_EXISTING_CHAIN_ID",
+  "slack": {
+    "channel_id": "REPLACE_WITH_EXISTING_SLACK_CHANNEL_ID",
+    "enabled": true
+  }
+}
 ```
+
 
 ### 告警分组配置
 
-```yaml
-# Define grouping rules in Integration settings
-grouping:
-  # Grouping key criteria
-  grouping_key: "{{ payload.labels.alertname }}-{{ payload.labels.namespace }}"
+请在分组键中纳入合适的 cluster/environment/namespace/service 范围，以避免冲突。字段过少会把不相关的事件合并；使用无边界的 ID 则会把分组碎片化。旧的混合了 group_wait/group_interval/resolve_timeout 的 YAML 并不是通用的 OnCall 集成 schema。请区分 Alertmanager 的计时器与 OnCall 的分组/resolution 模板。
 
-  # Grouping time window
-  group_wait: 30s     # First alert wait
-  group_interval: 5m   # Additional alert wait
-  resolve_timeout: 5m  # Resolution wait
+请从集成的实际负载中选择模板变量。payload.labels 并不保证存在，也并非在所有 Alertmanager 请求中都位于顶层。请正确转义 JSON，且不要把用户输入当作可信代码。
 
-# Template examples
-templates:
-  grouping_key: |
-    {% if payload.labels %}
-      {{ payload.labels.alertname }}-{{ payload.labels.namespace }}
-    {% else %}
-      {{ payload.alert_uid }}
-    {% endif %}
-
-  title: |
-    [{{ payload.status | upper }}] {{ payload.labels.alertname }}
-
-  message: |
-    **Severity:** {{ payload.labels.severity }}
-    **Namespace:** {{ payload.labels.namespace }}
-    **Description:** {{ payload.annotations.description }}
-```
 
 ---
 
-## ChatOps 集成
+## ChatOps 集成 {#chatops-integration}
 
 ### Slack 集成
 
-```bash
-# Slack App setup (in OnCall UI)
-# 1. Settings > ChatOps > Slack
-# 2. Install Slack App
-# 3. Grant permissions
+请确认已安装 Slack 应用的 OAuth/signing secret、scope 与工作区连接。请通过路由中嵌套的 Slack 设置来引用已发现的 slack_channels；不要假设旧的 POST /slack_channels 示例会创建/连接渠道。应用安装与用户操作需要单独的授权操作流程，本次并未执行。
 
-# Connect Slack channel (API)
-curl -X POST https://oncall.example.com/api/v1/slack_channels/ \
-  -H "Authorization: Bearer <api-token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "slack_id": "C1234567890",
-    "integration_id": "<integration-id>"
-  }'
-```
 
 ### Slack 命令
 
-```bash
-# Available commands in Slack
-/oncall                    # Check current on-call responder
-/oncall schedule           # View schedule
-/oncall escalate           # Escalate alert
-/oncall ack                # Acknowledge alert
-/oncall resolve            # Resolve alert
-/oncall silence 2h         # Silence for 2 hours
-/oncall unsilence          # Remove silence
-```
+旧文档中的 /oncall ack、/oncall resolve 与 /oncall silence 列表并未在所检查的源代码中得到确认。该源代码使用可配置的根命令，并以 /grafana 作为示例。请查看已安装应用当前的帮助/文档与按钮；斜杠命令不是 Bash 命令。
+
 
 ### Slack 工作流
 
-```mermaid
-sequenceDiagram
-    participant A as Alert
-    participant O as OnCall
-    participant S as Slack
-    participant U as User
+Acknowledge/Resolve/Silence 按钮通过已授权用户的操作来改变 OnCall 状态。投递确认、Slack 消息更新与源端监控系统的状态彼此独立；不要假设会自动反向同步状态。
 
-    A->>O: Alert fired
-    O->>S: Send message to channel
-    S->>U: Display alert (with buttons)
+![已授权的 Slack 操作会更新 OnCall 与消息；源端监控系统的状态有其独立的生命周期。](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png)
 
-    alt Acknowledge
-        U->>S: Click "Acknowledge" button
-        S->>O: Acknowledge request
-        O->>O: Update status
-        O->>S: Update message
-    end
-
-    alt Resolve
-        U->>S: Click "Resolve" button
-        S->>O: Resolve request
-        O->>O: Update status
-        O->>S: Update message
-        O->>A: Resolution notification
-    end
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-5.html)
 
 ### MS Teams 集成
 
-```yaml
-# MS Teams Connector setup
-ms-teams:
-  # 1. Add Incoming Webhook connector to MS Teams channel
-  # 2. Copy Webhook URL
-  # 3. Set up Outgoing Webhook in OnCall
+请确认 Microsoft 当前支持的 webhook/workflow 与卡片格式。不要把旧的 Office connector URL 与 MessageCard JSON 照搬为通用的新集成方式。仅编写 YAML 并不会安装 outgoing webhook；其模板上下文、认证、负载、投递与失败处理都需要实际配置。未发送任何 Teams 消息。
 
-  outgoing-webhook:
-    url: "https://outlook.office.com/webhook/xxx"
-    headers:
-      Content-Type: "application/json"
-    template: |
-      {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "{{ 'FF0000' if alert.severity == 'critical' else 'FFA500' }}",
-        "summary": "{{ alert.title }}",
-        "sections": [{
-          "activityTitle": "{{ alert.title }}",
-          "facts": [
-            {"name": "Severity", "value": "{{ alert.severity }}"},
-            {"name": "Status", "value": "{{ alert.status }}"}
-          ],
-          "markdown": true
-        }]
-      }
-```
 
 ### Telegram 集成
 
-```bash
-# Telegram Bot setup
-# 1. Create bot with @BotFather
-# 2. Get Bot Token
-# 3. Enter Token in OnCall settings
+已归档的 chart 使用嵌套的 oncall.telegram token/existingSecret/tokenKey 设置以及独立的 telegramPolling。旧文档中标注为 Bash 的顶层 telegram.enabled 配置块并不是正确的 Helm 配置。请确认 bot 凭据、webhook/polling 的归属、用户关联以及当前可用性。未创建任何 bot，也未发送用户消息。
 
-# Enable Telegram in values.yaml
-telegram:
-  enabled: true
-  token:
-    secretName: telegram-secret
-    secretKey: bot-token
-
-# Connect user
-# 1. User sends /start message to bot
-# 2. Verify Telegram connection in OnCall UI
-```
 
 ---
 
-## Grafana IRM 集成
+## Grafana IRM 集成 {#grafana-irm-integration}
 
-### 事件响应管理
+### 事件响应管理（IRM）
 
-Grafana IRM（原 Grafana Incident）是一款事件管理工具，与 OnCall 集成，可管理从告警到事件的整个工作流程。
+请区分仍在维护的 Grafana Cloud IRM 告警/on-call/事件能力与已归档的 OnCall OSS。IRM 既不是 Grafana Incident 的简单改名，也不保证与 OSS 具有相同的 API、权限或功能覆盖。请确认目标平台当前的功能、合同、数据保留以及导出/导入支持。
 
-```mermaid
-graph LR
-    subgraph OnCall["Grafana OnCall"]
-        A[Alert] --> B[Alert Group]
-        B --> C[Escalation]
-    end
+![事件联动需要启用相应功能并配置对应步骤；alert-group 与 incident 的状态仍然彼此独立。](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png)
 
-    subgraph IRM["Grafana IRM"]
-        D[Incident Created]
-        E[Investigation]
-        F[Resolution]
-        G[Post-mortem]
-    end
-
-    C -->|"High Severity"| D
-    D --> E
-    E --> F
-    F --> G
-
-    style OnCall fill:#ff5722
-    style IRM fill:#2196f3
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-6.html)
 
 ### 自动创建事件
 
-```yaml
-# IRM integration in escalation policy
-escalation-policy:
-  - position: 0
-    type: notify_on_call_from_schedule
-    schedule: primary-oncall
-  - position: 1
-    type: wait
-    duration: 300
-  - position: 2
-    type: declare_incident  # Auto-create incident
-    severity: major
-    title_template: "{{ alert_group.title }}"
-```
+所检查的源代码中确实包含真实的 declare_incident 步骤，但会校验组织是否启用了该功能。随意添加 severity/title_template YAML 并不能配置出一个事件集成。请区分 alert group、incident、确认、解决与复盘（postmortem），并在经批准的测试中确认归属与状态转换。
 
 ---
 
-## 移动应用
+## 移动应用 {#mobile-app}
 
 ### 移动应用功能
 
-1. **推送通知**：即时接收告警
-2. **告警管理**：确认、解决、静默
-3. **计划视图**：查看值班计划
-4. **团队状态**：查看团队成员的值班状态
+受支持的应用/部署组合可以提供告警信息流、状态操作、排班与通知，但受后端连通性、操作系统权限、网络与用户规则的限制。并不保证在每个自托管安装上都能即时投递或推送正常工作。
+
 
 ### 移动应用配置
 
-```yaml
-# Configuration for mobile push notifications
-mobile:
-  # Automatic setup when using Grafana Cloud
-  # For self-hosted, Firebase configuration required
+旧文档中的 mobile.firebase 配置块并不是所检查的归档 chart 中的键。随意提供一个 Firebase 服务账号文件并不能让推送正常工作。Cloud Connection 已终止：使用该连接的 OSS Grafana IRM 应用推送以及 SMS/语音均不可用。请配置并验证独立受支持的 Twilio/通知服务路径或迁移目标。未创建任何 Firebase 项目/账户，也未发送推送通知。
 
-  firebase:
-    enabled: true
-    credentials:
-      secretName: firebase-credentials
-      secretKey: service-account.json
-
-# User notification preferences
-user-preferences:
-  notification-rules:
-    - type: default
-      important: true  # Important notifications
-      methods:
-        - push
-        - slack
-    - type: default
-      important: false  # Normal notifications
-      methods:
-        - slack
-```
 
 ### 通知渠道优先级
 
-```mermaid
-graph TB
-    A[Alert Fired] --> B{Importance?}
+Important/default 分别对应不同的个人通知规则集。其顺序、等待时间、渠道与可用性均生效；important 并不意味着同时向所有渠道投递。请测试投递、确认与升级行为。
 
-    B -->|Important| C[All Channels]
-    B -->|Default| D[Default Channels Only]
+![Important 与 default 选择的是已配置的个人通知规则，而非无条件向所有渠道扩散。Cloud Connection 已于 2026-03-24 终止；须确认独立受支持的渠道。](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png)
 
-    C --> E[Push Notification]
-    C --> F[Phone Call]
-    C --> G[SMS]
-    C --> H[Slack]
-    C --> I[Email]
-
-    D --> H
-    D --> I
-
-    style C fill:#f44336
-    style D fill:#4caf50
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-7.html)
 
 ---
 
-## PagerDuty/OpsGenie 对比
+<span id="pagerdutyopsgenie-comparison"></span>
+
+## PagerDuty/OpsGenie 对比 {#pagerduty-opsgenie-comparison}
 
 ### 功能对比
 
-| 功能 | Grafana OnCall | PagerDuty | OpsGenie |
-|---------|----------------|-----------|----------|
-| **价格** | OSS 免费 / Cloud 付费 | $21-41/用户/月 | $9-29/用户/月 |
-| **自行托管** | 是 | 否 | 否 |
-| **值班计划** | 是 | 高级 | 高级 |
-| **升级** | 是 | 高级 | 高级 |
-| **集成** | 30+ | 700+ | 200+ |
-| **分析/报告** | 基础 | 高级 | 高级 |
-| **Grafana 集成** | 原生 | 插件 | 插件 |
-| **AIOps** | 基础 | 高级 | 中等 |
-| **状态页面** | 否 | 是 | 是 |
-| **移动应用** | 是 | 是 | 是 |
-| **SSO/SAML** | 是 | 是 | 是 |
+请以相同的需求为基准，对照实际的套餐、用量与合同进行比较。旧的按用户价格、集成数量以及基础/高级排名并不能作为当前的选型依据。请检查排班/覆盖、条件升级、SSO、数据保留、API 权限、渠道/国家限制、支持以及迁移成本。OnCall OSS 已归档，而 Opsgenie 需要依据其公布的生命周期制定迁移计划。
+
 
 ### 迁移注意事项
 
-```mermaid
-graph TB
-    subgraph Current["Currently Using"]
-        P[PagerDuty/OpsGenie]
-    end
+默认方向已不再是从 PagerDuty/Opsgenie 新迁入 OnCall OSS。请先盘点现有 OnCall/即将停服工具的数据与依赖，然后验证仍在维护的目标平台的功能差异与恢复能力。免费的代码并不能消除托管、运维、支持与沟通成本。
 
-    subgraph Consider["Consider Grafana OnCall When"]
-        A[Need Cost Reduction?]
-        B[Using Grafana Stack?]
-        C[Prefer Self-Hosting?]
-        D[Basic Features Sufficient?]
-    end
+![盘点、备份、合同评审、投递/恢复测试，以及受控切换到仍在维护的目标平台。Cloud Connection 已于 2026-03-24 终止；须确认独立受支持的渠道。](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png)
 
-    subgraph Decision["Decision"]
-        Y[Migrate to OnCall]
-        N[Keep Current]
-    end
-
-    P --> A
-    A -->|Yes| B
-    A -->|No| N
-    B -->|Yes| C
-    B -->|No| N
-    C -->|Yes| D
-    C -->|No| D
-    D -->|Yes| Y
-    D -->|No| N
-
-    style Y fill:#4caf50
-    style N fill:#ff9800
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-8.html)
 
 ### 迁移检查清单
 
-```yaml
-migration-checklist:
-  before:
-    - [ ] Document current schedules
-    - [ ] Document escalation policies
-    - [ ] Verify integration list
-    - [ ] Backup alert templates
+- [ ] 盘点用户/团队、排班/时区/覆盖、升级链/路由、模板与集成
+- [ ] 准备独立的数据库/密钥/配置/历史备份并进行恢复测试
+- [ ] 确认目标平台的功能、ID 映射、权限、隐私与数据保留
+- [ ] 测试合成的 firing/resolved/缺失/重试/重复/无响应/交接等场景
+- [ ] 在并行运行期间防止重复呼叫；明确责任归属、切换与回滚标准
+- [ ] 按经批准的顺序切换源端 URL/token，并在验证后收回不必要的访问权限
+- [ ] 完成响应人培训与运维交接
 
-  during:
-    - [ ] Install and configure OnCall
-    - [ ] Create teams/users
-    - [ ] Recreate schedules
-    - [ ] Set up escalation chains
-    - [ ] Connect integrations
-    - [ ] Send test alerts
+固定的一到两周并行期并不是一种保证，通过 API 做的盘点也不等于完整备份。
 
-  after:
-    - [ ] Run in parallel (1-2 weeks)
-    - [ ] Verify alert reception
-    - [ ] Verify escalation behavior
-    - [ ] Disable old system
-    - [ ] Team training
-```
 
 ---
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
-### 值班计划设计
+### On-Call 排班设计
 
-```yaml
-best-practices-schedule:
-  # 1. Appropriate rotation cycle
-  rotation:
-    - Weekly rotation recommended (prevent burnout)
-    - Rotate among at least 3-4 people
-    - Provide shadowing period for new hires
+请依据实际时区、假期、交接、备份与人员配置来商定排班。每周班次、09:00 交接或至少三/四人并不是普适答案。请移交进行中的事件、即将到期的 silence 以及覆盖空档。
 
-  # 2. Backup responder
-  backup:
-    - Always designate secondary responder
-    - Auto-override for vacations
-
-  # 3. Handoff time
-  handoff:
-    - Handoff during business hours (09:00 recommended)
-    - Conduct handoff meeting
-    - Transfer ongoing issues
-```
 
 ### 升级设计
 
-```yaml
-best-practices-escalation:
-  # 1. Appropriate wait times
-  wait-times:
-    critical: 5-10 minutes
-    warning: 15-30 minutes
-    info: 1 hour
+请记录各严重级别的处理动作/响应目标、备份/管理上报路径、重新呼叫与停止条件。会打断人的呼叫必须对应可执行的响应；非紧急信息可以走其他路径。Important 并不保证电话/SMS 一定送达。
 
-  # 2. Clear escalation path
-  escalation-path:
-    - 1st: Current on-call
-    - 2nd: Backup on-call
-    - 3rd: Team lead
-    - 4th: Entire team
-
-  # 3. Alert fatigue prevention
-  fatigue-prevention:
-    - Non-important alerts via Slack only
-    - Phone only for Critical outside business hours
-    - Adjust repeat alert intervals
-```
 
 ### 告警质量管理
 
-```yaml
-best-practices-alerts:
-  # 1. Only actionable alerts
-  actionable:
-    - Include response method in all alerts
-    - Runbook link required
-    - Regularly remove unnecessary alerts
+请评审重复、误报、漏报、投递失败以及实际的响应结果。在更改过滤器/模板/分组/源端 URL 之后，重新核对数据与状态转换，并保留一条安全的恢复路径。
 
-  # 2. Appropriate severity
-  severity:
-    - Critical: Immediate response needed
-    - Warning: Response within business hours
-    - Info: For reference only
 
-  # 3. Regular review
-  review:
-    - Weekly alert review meeting
-    - Monthly on-call retrospective
-    - Quarterly policy improvement
-```
+### On-Call 健康度
 
-### 值班健康
+请与团队就工作量、补偿、恢复时间与责任范围达成一致。减少反复发生的事件根因，并改进 runbook、自动化与交接流程。具体的班次/恢复时长属于因情况而定的运营策略。
 
-```yaml
-oncall-wellness:
-  # 1. Appropriate compensation
-  compensation:
-    - Pay on-call allowance
-    - Extra compensation for nights/weekends
-    - Provide compensatory time off
-
-  # 2. Workload management
-  workload:
-    - Minimize other work during on-call
-    - Ensure recovery time after on-call
-    - Monitor alert count
-
-  # 3. Continuous improvement
-  improvement:
-    - Fix root cause of recurring alerts
-    - Introduce automation
-    - Improve runbooks
-```
 
 ---
 
 ## 测验
 
-通过 [Grafana OnCall 测验](../../quizzes/observability/alerting/03-grafana-oncall-quiz.md) 测试您的知识。
+通过 [Grafana OnCall 测验](../../quizzes/observability/alerting/03-grafana-oncall-quiz.md) 测试你的知识。
+
+## 参考资料
+
+- [OnCall OSS lifecycle](https://grafana.com/docs/oncall/latest/)
+- [OnCall API reference](https://grafana.com/docs/oncall/latest/oncall-api-reference/)
+- [Archived source contract](https://github.com/grafana-cold-storage/oncall/tree/af0fbd40558c9a63bcf438589894c440fc434a54)
+- [Opsgenie lifecycle](https://www.atlassian.com/software/opsgenie)
+- [Cloud Connection cutoff and alternatives](https://grafana.com/docs/oncall/latest/set-up/open-source/)
