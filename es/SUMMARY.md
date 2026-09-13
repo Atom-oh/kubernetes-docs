@@ -347,6 +347,7 @@
   * [Laboratorio de ConfigMap y Secret](labs/core/05-configuration-secrets-lab.md)
   * [Laboratorio de creación de clúster de EKS](labs/eks/01-eks-cluster-creation-lab.md)
 
+  * Laboratorios integrales de observabilidad
     * [Introducción a la serie de laboratorios](labs/observability/README.md)
     * [Parte 1: Configuración de infraestructura](labs/observability/01-infrastructure-setup-lab.md)
     * [Parte 2: Stack de observabilidad](labs/observability/02-observability-stack-lab.md)
@@ -522,7 +523,6 @@
   * [Cuestionario de cert-manager](quizzes/security/10-cert-manager-quiz.md)
   * [Cuestionario de Kubescape](quizzes/security/11-kubescape-quiz.md)
   * [Cuestionario de SPIFFE/SPIRE](quizzes/security/12-spiffe-spire-quiz.md)
-* Registro de contenedores
 
 * GitOps
   * [Cuestionario de ArgoCD](quizzes/gitops/01-argocd-quiz.md)

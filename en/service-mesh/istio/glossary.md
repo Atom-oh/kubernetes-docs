@@ -1,9 +1,11 @@
 # Istio Glossary
 
 > **Reviewed Version**: Istio 1.31.0
-> **Last Updated**: September 11, 2026
+> **Last Updated**: September 13, 2026
 
 This glossary organizes key terms related to Istio and Service Mesh in grouped reference sections.
+
+> **Reference language:** The Architecture and DestinationRule section links below use the maintained English guides. These links provide the current reference where locale translations have not yet been synchronized.
 
 ## Table of Contents
 
@@ -225,7 +227,7 @@ A high-performance L7 proxy that forms the Data Plane of Istio.
 - Routers: Routing decisions
 - Clusters: Upstream services
 
-**Related Documentation**: [Architecture - Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
+**Related Documentation**: [Architecture - Envoy Proxy](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#data-plane-envoy-proxy)
 
 ---
 
@@ -331,7 +333,7 @@ iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 15006
 
 **Setup alternative**: Istio CNI performs privileged network setup at node level.
 
-**Related Documentation**: [Architecture - iptables](03-architecture.md#iptables-and-traffic-interception)
+**Related Documentation**: [Architecture - iptables](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#iptables-and-traffic-interception)
 
 ---
 
@@ -354,7 +356,7 @@ The unified Control Plane component in Istio 1.5+.
 - Simplified operations
 - Resource efficiency
 
-**Related Documentation**: [Architecture - Istiod](03-architecture.md#control-plane-istiod)
+**Related Documentation**: [Architecture - Istiod](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#control-plane-istiod)
 
 ---
 
@@ -1036,7 +1038,7 @@ spec:
 **Effect**:
 - Fewer imported services can reduce memory and configuration work; measure actual savings.
 
-**Related Documentation**: [Architecture - Sidecar Resource](03-architecture.md#optimization-with-sidecar-resource)
+**Related Documentation**: [Architecture - Sidecar Resource](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#optimization-with-sidecar-resource)
 
 ---
 
@@ -1094,7 +1096,7 @@ spec:
       version: v2
 ```
 
-**Related Documentation**: [DestinationRule - Subset Concept](traffic-management/03-destination-rule.md#subset-concept)
+**Related Documentation**: [DestinationRule - Subset Concept](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/03-destination-rule#subset-concept)
 
 ---
 
@@ -1375,7 +1377,7 @@ Agent bootstraps identity -> Envoy subscribes to ADS resources
 Istiod pushes LDS/CDS/EDS/RDS updates; local agent serves SDS certificates
 ```
 
-**Related Documentation**: [Architecture - xDS API Communication](03-architecture.md#xds-api-communication)
+**Related Documentation**: [Architecture - xDS API Communication](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#xds-api-communication)
 
 ---
 

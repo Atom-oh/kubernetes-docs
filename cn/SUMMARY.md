@@ -347,6 +347,7 @@
   * [ConfigMap 和 Secret 实验](labs/core/05-configuration-secrets-lab.md)
   * [EKS 集群创建实验](labs/eks/01-eks-cluster-creation-lab.md)
 
+  * 端到端可观测性实验
     * [实验系列简介](labs/observability/README.md)
     * [第 1 部分：基础设施设置](labs/observability/01-infrastructure-setup-lab.md)
     * [第 2 部分：可观测性技术栈](labs/observability/02-observability-stack-lab.md)
@@ -522,7 +523,6 @@
   * [cert-manager 测验](quizzes/security/10-cert-manager-quiz.md)
   * [Kubescape 测验](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIRE 测验](quizzes/security/12-spiffe-spire-quiz.md)
-* 容器镜像仓库
 
 * GitOps
   * [ArgoCD 测验](quizzes/gitops/01-argocd-quiz.md)

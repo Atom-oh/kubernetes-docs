@@ -812,7 +812,7 @@ istioctl proxy-config all <caller-pod> -n production -o json
 `payment-service` es crítico y llama API externas de pago. Implemente:
 
 1. **Outlier Detection**: Excluir tras 3 errores consecutivos
-2. **Retry**: Hasta 3 reintentos de 502/503/504 en lecturas verificadas idempotentes; desactivar explícitamente escrituras
+2. **Retry**: Hasta 3 reintentos de 502/503/504 en lecturas verificadas idempotentes; desactivar explícitamente los reintentos de escritura
 3. **Timeout**: 5 segundos por solicitud
 4. **Circuit Breaker**: Explicar por qué «bloquear todo el servicio sobre 50% de errores» no es el breaker de pool de esta API; mostrar límites de concurrencia soportados
 

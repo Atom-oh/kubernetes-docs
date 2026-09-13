@@ -1,52 +1,58 @@
-# ゾーンクラスター運用: トラフィックシフト、アップグレードのロールバック、データレイヤーの AZ アフィニティ
+# ゾーン単位のクラスター運用：トラフィック切り替え、アップグレードのロールバック、データ層の AZ アフィニティ
 
-> **対応バージョン**: Amazon EKS 1.33+, AWS Load Balancer Controller 2.9+, Kafka 2.4+ (KIP-392), Valkey GLIDE 1.x
-> **最終更新**: July 21, 2026
+> **レビュー基準**: EKS のロールバックと ARC のドキュメント、Strimzi 1.2.0、Valkey GLIDE 2.5.2、AWS Advanced JDBC Wrapper 4.4.0
+> **最終レビュー**: September 11, 2026。設定例は確認しましたが、稼働中クラスターの切り替えや障害実験は実施していません。
 
-< [前へ: Tekton Pipelines](14-tekton-pipelines.md) | [目次](./README.md) | [次へ: トラブルシューティングプレイブック](16-troubleshooting-playbook.md) >
+< [前へ：Tekton Pipelines](14-tekton-pipelines.md) | [目次](./README.md) | [次へ：トラブルシューティングプレイブック](16-troubleshooting-playbook.md) >
 
 ***
 
-顧客からの質問で最も多いテーマは「運用」です。繰り返し登場する組み合わせがあります。**障害を分離するためにクラスターをゾーンごとに分割し、ロードバランサーのターゲットグループの重みでトラフィックをシフトし、問題が発生した場合は新しいクラスターを立ち上げるのではなくその場でロールバックする。** 本ガイドでは、この組み合わせを単一の運用戦略としてまとめ、通常は欠けている要素、すなわち **DB/cache/messaging レイヤーの読み取りパスをゾーンに固定すること** を追加します。
+このガイドでは、**ワーカーを AZ 内に配置したクラスター間のトラフィック切り替え、条件付きのバージョンロールバック、AZ を考慮したデータ読み取り**を組み合わせます。ゾーン単位のクラスター群は、すべてのチームにとって標準となるアーキテクチャではありません。セルの容量、ルーティング、デプロイ、データ依存関係を独立して運用できる場合に検討してください。
 
-各要素の詳細な手順は、このリポジトリ内の別の場所にすでにあります。本ドキュメントでは、これらを組み合わせて使用する理由を説明し、これまで存在しなかったデータレイヤーの不足部分を補います。
+ここで「ゾーン単位」とは、**ワーカーとアプリケーションの配置**を指します。[マネージド EKS コントロールプレーン](https://docs.aws.amazon.com/eks/latest/userguide/eks-architecture.html)は引き続き複数の AZ に分散されます。クラスター全体が一つの AZ 内にあるわけではありません。
 
 ## 目次
 
-1. [ゾーン運用を行う理由](#why-zonal-operations)
-2. [トラフィックレイヤー: Target Group + TargetGroupBinding + 重みのシフト](#traffic-layer-target-group--targetgroupbinding--weight-shifting)
-3. [アップグレード: インプレース + ネイティブロールバックが標準になった理由](#upgrades-why-in-place--native-rollback-became-the-default)
-4. [データレイヤー: 読み取りパスをゾーンに固定する](#data-layer-pinning-the-read-path-to-a-zone)
-5. [推奨する組み合わせの概要](#recommended-combination-summary)
+1. [ゾーン単位で運用する理由](#why-zonal-operations)
+2. [トラフィック層：ターゲットグループ + TargetGroupBinding + 重みの切り替え](#traffic-layer-target-group--targetgroupbinding--weight-shifting)
+3. [アップグレード：インプレース更新とネイティブロールバックの条件](#upgrades-conditions-for-in-place-and-native-rollback)
+4. [データ層：同一 AZ からの読み取りを優先](#data-layer-prefer-same-az-reads)
+5. [推奨する組み合わせのまとめ](#recommended-combination-summary)
 
 ***
 
-## ゾーン運用を行う理由
+## ゾーン単位で運用する理由 {#why-zonal-operations}
 
-マルチ AZ の単一クラスターと、AZ ごとに 1 クラスターのフリート（zonal/single-zone）には、それぞれ異なるトレードオフがあります。
+| 観点 | マルチ AZ の単一クラスター | ワーカーをそれぞれ一つの AZ に配置したクラスター群 |
+|--------|------------------------|--------------------------------------|
+| 障害分離 | 正常な AZ のレプリカと余剰容量で復旧に対応 | セル内の全ワーカーを失う可能性がある。共有データベース、ルーティング、リージョンの依存先は他のセルにも影響し得る |
+| クロス AZ コスト | サービスとデータの経路による | ローカルのアプリケーショントラフィックは減らせるが、レプリケーション、共有サービス、LB 転送は引き続き AZ をまたぐ場合がある |
+| アップグレード | バージョンスキューを管理しながらコントロールプレーンとノードを段階的に更新 | セルごとの順次アップグレードには、互換性のあるバージョンと残りのセルの容量が必要 |
+| 運用の複雑さ | 一つのクラスター | 複数のクラスターとルーティングの調整 |
 
-| 観点 | マルチ AZ 単一クラスター | ゾーン（single-zone）クラスター |
-|--------|--------------------------|-------------------------------|
-| 障害分離 | AZ 障害はクラスターの一部に影響する | AZ 障害はそのゾーンクラスターだけに影響し、残りは影響を受けない |
-| クロス AZ コスト | Pod 間トラフィックが AZ 境界をまたぐ（$0.01/GB） | 同一 AZ のトラフィックのみで、AZ 間転送コストなし |
-| アップグレード | ローリングアップデートにより、クラスター全体が一度にバージョン移行する | ゾーンごとに順次アップグレードし、他のゾーンは以前のバージョンに留まる |
-| 運用の複雑さ | 管理するクラスターは 1 つ | 同期を保つ必要がある N 個のクラスターとトラフィックルーティングレイヤー |
+AWS の [Amazon EKS 向けセルベースアーキテクチャのガイダンス](https://aws.amazon.com/solutions/guidance/cell-based-architecture-for-amazon-eks/)を参照してください。セル間の依存を最小化し、正常なセルが障害セルのトラフィックを引き受けられるように容量を設計します。DNS でセルごとの LB を選ぶ方式と、一つの LB の背後にあるターゲットグループに重みを付ける方式は、異なるルーティング設計です。実際のトラフィック経路と各サービスの課金ルールを使ってコストを測定してください。
 
-AWS はこの正確なパターンを [Cell-Based Architecture for Amazon EKS Guidance](https://aws.amazon.com/solutions/guidance/cell-based-architecture-for-amazon-eks/) として提供しています。ここでは、1 つのゾーンクラスターが「cell」、Region 内の cell 群が「supercell」です。cell の前にあるルーティングレイヤー（Route 53 weighted routing と Application Recovery Controller）がフェイルオーバーを処理し、各 cell 内の ALB がその内部でトラフィックを分散します。重要な特性は、トラフィックが cell 境界をまたがないことです。そのため、そもそも AZ 間データ転送コストが発生しません。
-
-ゾーン/blue-green アーキテクチャ自体はすでに [`ops/02-infrastructure-advanced.md`](02-infrastructure-advanced.md#1-bluegreen-architecture-overview) で、Multi-AZ/Cell-Based Architecture の成熟度モデルの観点は [`eks/10-eks-resiliency.md`](../eks/10-eks-resiliency.md) で扱っています。本ガイドでは、その上でトラフィックシフト、アップグレード、データ読み取りを 1 つの運用ループに結び付けます。
+関連ガイド：[高度なインフラストラクチャ](02-infrastructure-advanced.md)、[EKS のレジリエンシー](../eks/10-eks-resiliency.md)。
 
 ***
 
-## トラフィックレイヤー: Target Group + TargetGroupBinding + 重みのシフト
 
-![重み付きトラフィックシフトを伴うゾーン cell アーキテクチャ](../../assets/ops-zonal-traffic-architecture.png)
 
-複数のゾーンクラスター間でトラフィックを移動するための標準パターン:
+## トラフィック層：ターゲットグループ + TargetGroupBinding + 重みの切り替え {#traffic-layer-target-group--targetgroupbinding--weight-shifting}
 
-1. Terraform などの IaC を使用して、クラスターの**外部**に NLB/ALB と Target Groups を作成します（クラスターが置き換えられてもロードバランサーが存続するようにするためです）。
-2. 各ゾーンクラスターの Service を `TargetGroupBinding` CRD でその Target Group にバインドします。
-3. クラスター内部には一切変更を加えず、ロードバランサー上の **Target Group の重み**を調整してクラスター間でトラフィックを移動します。
+![一つのロードバランサーリスナーが新規トラフィックを二つのターゲットグループに分配し、各クラスターの TargetGroupBinding が Pod ターゲットを登録します。](../.gitbook/assets/en-ops-15-zonal-operations-guide-0.png)
+
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-0.html)
+
+二つのクラスターで一つの LB を共有する場合：
+
+1. IaC を使って NLB／ALB とターゲットグループをクラスター外で作成し、クラスターの置き換えによって LB が削除されないようにします。
+2. `TargetGroupBinding` で各クラスターの Service をそれぞれのターゲットグループに関連付けます。
+3. **リスナーの forward アクション**で重みを変更します。TGB 自体に重みのフィールドはありません。ターゲットグループとリスナー設定の管理責任を IaC とコントローラーの間で明確に割り当てます。
+
+TGB の例では、`production` 名前空間、`app-service:80`、対象 VPC 内の IP ターゲットグループ、AWS Load Balancer Controller が既に存在することを前提とします。例の ARN を置き換え、ターゲットの正常性とネットワークアクセスを確認してください。
+
+この例は、**別途インストールした AWS Load Balancer Controller** を使用します。Auto Mode 組み込みの TGB は eks.amazonaws.com/v1 を使用し、[タグとライフサイクルのルール](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html)が異なります。AWS のドキュメントでは、その組み込み TGB またはクラスターを削除するとターゲットグループも削除されると説明しています。この所有権モデルを、ここで使う外部管理のターゲットグループと混同しないでください。
 
 ```yaml
 apiVersion: elbv2.k8s.aws/v1beta1
@@ -63,117 +69,144 @@ spec:
 ```
 
 ```bash
-# Adjust weight between target groups in the ALB listener's forward action
+set -euo pipefail
+# NLB listener whose existing default action forwards to these two groups.
+# Nondefault ALB rules require modify-rule, not this operation.
+: "${LISTENER_ARN:?}" "${ZONE_A_TG_ARN:?}" "${ZONE_C_TG_ARN:?}"
+aws elbv2 describe-listeners \
+  --listener-arns "$LISTENER_ARN" \
+  --query 'Listeners[0].DefaultActions' --output json > current-actions.json
+jq -e --arg a "$ZONE_A_TG_ARN" --arg c "$ZONE_C_TG_ARN" '
+  if $a == $c or length != 1 or .[0].Type != "forward"
+     or ([.[0].ForwardConfig.TargetGroups[].TargetGroupArn] | sort)
+        != ([$a, $c] | sort)
+  then error("Expected one forward action with exactly the two selected groups")
+  else
+    .[0].ForwardConfig.TargetGroups |= map(
+      .Weight = (if .TargetGroupArn == $a then 20 else 80 end))
+  end
+' current-actions.json > proposed-actions.json &&
 aws elbv2 modify-listener \
   --listener-arn "$LISTENER_ARN" \
-  --default-actions '[{
-    "Type": "forward",
-    "ForwardConfig": {
-      "TargetGroups": [
-        {"TargetGroupArn": "'"$ZONE_A_TG_ARN"'", "Weight": 20},
-        {"TargetGroupArn": "'"$ZONE_C_TG_ARN"'", "Weight": 80}
-      ]
-    }
-  }]'
+  --default-actions file://proposed-actions.json
 ```
 
-TargetGroupBinding の基本/高度/マルチポート構成は [`networking/03-aws-lb-controller.md`](../networking/03-aws-lb-controller.md#targetgroupbinding) で、NLB の重み付き Target Group と Route 53 weighted routing の完全な Terraform セットアップは [`ops/02-infrastructure-advanced.md`](02-infrastructure-advanced.md#2-nlb-weighted-target-groups) で扱っています。
+実行前に、この変更と IaC 計画の整合性を取ってください。通常の NLB の重み変更は**新規フロー**に影響しますが、**重みゼロは別途扱う必要があります**。[現在のユーザーガイド](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)では、ゼロに設定してから間もなく、そのグループは新規接続を受け付けなくなり、既存接続も閉じられると説明しています。既存接続が自然に終了するまで維持されるとは考えず、ゼロに切り替える前にアプリケーションのドレイン、再接続、リトライの動作をテストしてください。[公式ガイド](https://aws.amazon.com/blogs/networking-and-content-delivery/network-load-balancers-now-support-weighted-target-groups/)に従って、ノードを変更する前にターゲットグループごとの `NewFlowCount` と `ActiveFlowCount`、正常性、エラー率、接続ドレインを確認します。ターゲットグループのプロトコル／IP バージョンの互換性とクロスゾーン設定も確認してください。ターゲットがそれぞれ異なる AZ に限定される場合、クロスゾーン負荷分散を無効にすると、意図した重みの分配が実現しないことがあります。
 
-**計画的なシフトと障害起点のシフト**: 重みの調整は、アップグレードやデプロイなどの**計画的な**移行に使用します。AZ 障害のような予期しない状況は、[ARC (Application Recovery Controller) Zonal Shift](../eks/10-eks-resiliency.md#arc-zonal-shift) が検出して自動的にシフトします。この 2 つのメカニズムは競合せず、計画的な役割とリアクティブな役割を分担します。
+Route 53 の加重レコードが選択するのは**LB の DNS エンドポイント**であり、ターゲットグループ ARN ではありません。TTL、クライアントキャッシュ、長時間接続があるため、DNS の切り替えも即時には完了しません。周辺の設定は [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md)と[高度なインフラストラクチャ](02-infrastructure-advanced.md)を参照してください。
 
-> **2026 年 7 月の更新**: ARC zonal shift/autoshift は、[EKS Auto Mode クラスターでもサポートされるようになりました](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift)。Auto Mode では設定するフラグも管理する Karpenter バージョンもありません。クラスターで ARC zonal shift を有効にするだけで、シフトが有効になると、障害のある AZ における新規ノードのプロビジョニングと自発的な中断（consolidation/drift）が自動的に停止します。
+**計画的な切り替えと障害対応：** 重みの変更は計画的な移行を支援しますが、自動障害検出は提供しません。[ARC zonal shift](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html)はオペレーターが開始します。**Zonal autoshift** には、別途の有効化、練習、アラーム設定が必要です。EKS リソースのシフトは、そのクラスター内で障害 AZ のエンドポイント／ノードの扱いを変更しますが、別のクラスターのターゲットグループの重みを書き換えるわけではありません。LB リソースのシフトも別途計画してください。
 
-***
-
-## アップグレード: インプレース + ネイティブロールバックが標準になった理由
-
-2026 年 7 月、Amazon EKS は [ネイティブ Kubernetes バージョンロールバックを GA しました](https://aws.amazon.com/blogs/containers/announcing-amazon-eks-rollback-for-safe-and-reliable-management-of-cluster-upgrades/)。アップグレード後に問題が発生した場合、**7 日以内に、一度に 1 マイナーバージョン**ずつ戻すことができ、Rollback Readiness Insights がロールバック前に API 互換性、kubelet のバージョンスキュー、add-on バージョンを自動的に事前確認します。Auto Mode クラスターでは、ロールバックは control plane だけでなく data plane（worker node）も対象です。ただし、次のセクションのように self-managed node group でゾーンクラスターをインプレースアップグレードする場合、この自動 data-plane ロールバックは適用されません。control plane のみが戻るため、node/AMI/add-on の変更は個別に戻す必要があります。いずれの場合も追加料金はかかりません。
-
-この機能が登場する前は、「新しいバージョンに問題がある場合どうするか」への唯一の答えは、切り替え前に検証できる常設 blue/green クラスターフリートでした。現在では、すでにゾーン（single-zone-per-cluster）構成を運用しているチームには、より軽量な選択肢があります。各ゾーンクラスターをゾーンごとにインプレースでアップグレードし、ネイティブロールバックを安全策として使用する方法です。
-
-| アプローチ | 適切なケース |
-|----------|---------------------------|
-| **常設 blue/green クラスターフリート** | 切り替え前に完全に分離されたクラスターで実際の本番トラフィックに対して新バージョンを検証する必要がある場合、または node/AMI/add-on の変更を一括で戻す必要がある場合（ネイティブロールバックは control plane のみを戻します） |
-| **ゾーン型インプレース + ネイティブロールバック** | アップグレードだけでなく可用性の理由からすでにゾーンクラスターを運用しており、常に完全な 2 つのクラスターフリートを運用するコストを避けたく、即時のクラスター単位フェイルバックではなく約 7 日間のロールバック適格期間を許容できる場合 |
-| **Route 53 weighted DNS カットオーバー** | クラスターが完全に異なる Region/account に存在する場合、または NLB レイヤー自体を置き換える必要がある場合 |
-
-実行 runbook（NLB の重みをシフト -> インプレースアップグレード -> 検証 -> 重みを復元、および完全な blue/green フリートが依然として適切なケース）は、すでに [`ops/11-upgrade-operations.md` の「Alternative: Zonal In-Place Upgrade with Native Rollback」](11-upgrade-operations.md) セクションに記載されているため、ここでは繰り返しません。ロールバックが適格となる正確な条件（ターゲットバージョンで作成したクラスターはロールバックできない、すでに再アップグレードしたクラスターはできないなど）は、[`eks/08-eks-upgrades.md` の Rollback Procedure](../eks/08-eks-upgrades.md#rollback-procedure) を参照してください。
+> **EKS Auto Mode のサポート：** [July 2026 のリリース](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift/)以降、クラスターの zonal shift を有効にすると、シフト中の障害 AZ で Auto Mode が新規プロビジョニングと自発的な中断を制限できます。これだけでは autoshift は有効になりません。**ワーカーが存在する唯一の AZ からシフトすると、サービス停止を引き起こす可能性があります。** EKS のシフトには、正常な AZ のレプリカ、CoreDNS、余剰容量が必要です。ワーカーが一つの AZ にあるセルでは、復旧の一部としてセル外部のルーティングが必要です。
 
 ***
 
-## データレイヤー: 読み取りパスをゾーンに固定する
+## アップグレード：インプレース更新とネイティブロールバックの条件 {#upgrades-conditions-for-in-place-and-native-rollback}
 
-ゾーンアーキテクチャを採用するチームでは、トラフィックシフトとアップグレードがすでに導入されていることがほとんどです。見落とされがちなのは **DB/cache/messaging の読み取りパス**です。アプリケーション Pod は 1 つの AZ 内に完全に配置されていても、通信先の DB reader、cache replica、Kafka broker が AZ 間でラウンドロビンに割り当てられ、請求書が届くまで誰にも気付かない AZ 間コストとレイテンシーが発生します。
+July 2026 に導入された [EKS のネイティブバージョンロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)は、**アップグレード完了後七日以内に開始した場合、直前のマイナーバージョンに戻せます**。七日間は利用資格の期間であり、復旧時間の保証ではありません。作成時のバージョン、サポート状態、その後のアップグレード、機能の互換性、Rollback Readiness Insights を確認してください。
 
-基礎となる原則はどこでも同じです。**書き込みは leader/primary に送る必要があるため、いずれにしても AZ をまたぐ可能性があります。一方、読み取りは同一 AZ の replica にルーティングできます。** 読み取りが大半を占めるワークロード（cache、lookup query、consumer）では、それだけで AZ 間コストの大きな割合を削減できます。
+- **Auto Mode：** EKS は Auto Mode ノードを先に、その後コントロールプレーンをロールバックします。PDB と NodePool の中断予算は引き続き適用されます。ロールバックは即時ではありません。
+- **マネージドノードグループ：** `UpdateNodegroupVersion` で別途ロールバックします。セルフマネージドノードと Hybrid ノードはオペレーターが別途準備します。ノードはコントロールプレーンより新しいバージョンで動作してはいけません。
+- **アドオン、データ、アプリケーション：** ロールバックは、アドオンのバージョン、etcd データ、永続ボリュームのデータ、アプリケーションの変更を復元しません。互換性とデータ移行の復旧は独立して計画してください。
+- **`--force`：** readiness insights はバイパスできますが、利用資格の前提条件や Auto Mode の中断制御はバイパスできません。問題を解消してから通常のロールバック手順に従ってください。
 
-![データレイヤーの AZ アフィニティ読み取りパス](../../assets/ops-zonal-data-az-affinity.png)
+ロールバック機能自体に追加料金はありませんが、既存のクラスター、コンピューティング、トラフィックの料金は引き続き発生します。残りのセルの容量と復旧目標を検証したうえで、インプレース更新かブルー／グリーンかを選択してください。
 
-これを実現するには、Pod が自身の AZ を認識している必要があります。Kubernetes Downward API はノードのゾーンラベル（`topology.kubernetes.io/zone`）を Pod に直接注入しないため、次のいずれかが必要です。
+| 方式 | 適する条件 |
+|----------|------------------------|
+| **ブルー／グリーンクラスター** | 別環境で検証し、旧環境へトラフィックを戻せる状態を維持する。共有データの変更には独立した復旧計画が必要 |
+| **ゾーン単位のインプレース更新 + ネイティブロールバック** | 既存セル群がトラフィックを引き受けられ、利用資格、互換性、復旧時間がテスト済み |
+| **Route 53 の加重 DNS 切り替え** | クロスリージョン／アカウント構成などで LB エンドポイントが異なり、DNS キャッシュと正常性の動作を考慮している |
 
-- **EC2 IMDS lookup**: Pod または sidecar が `http://169.254.169.254/latest/meta-data/placement/availability-zone` を直接呼び出す
-- **Admission-time label injection**: Kyverno などの mutating policy がノードの `topology.k8s.aws/zone-id` ラベルを Pod annotation にコピーする。これは AWS が [MSK-on-EKS rack awareness guide](https://aws.amazon.com/blogs/big-data/optimize-traffic-costs-of-amazon-msk-consumers-on-amazon-eks-with-rack-awareness/) で推奨するパターンです。Kyverno policy の記述方法については、このリポジトリの [`security/01-kyverno-policy-management.md`](../security/01-kyverno-policy-management.md) を参照してください
-- **組み込みの operator サポート**: Strimzi のような operator は rack-awareness を第一級の機能として扱うため、init-container がカスタム実装なしでこれを処理する
+運用の順序は、**残りのセルの容量を確認 → 重みを切り替え → 接続ドレインを確認 → アップグレード → 検証 → 重みを復元**です。詳しい手順とノード固有の条件は、[アップグレード運用](11-upgrade-operations.md)と [EKS のアップグレード](../eks/08-eks-upgrades.md)を参照してください。
 
-### Kafka: KIP-392 Follower Fetching
+***
 
-[KIP-392](https://cwiki.apache.org/confluence/display/KAFKA/KIP-392:+Allow+consumers+to+fetch+from+closest+replica)（Kafka 2.4+）により、consumer は常に partition leader にアクセスするのではなく、**自身と同じ rack（AZ）内の follower replica**から直接 fetch できます。
+## データ層：同一 AZ からの読み取りを優先 {#data-layer-prefer-same-az-reads}
 
-![AZ-a の Kafka consumer が AZ-b の leader broker から fetch し、rack-aware hint により同一 AZ の follower replica へリダイレクトされた後、ローカルで再 fetch して AZ 間転送コストを支払わずにデータを受信するシーケンス図。](../../assets/diagrams/rendered/en-ops-15-zonal-operations-guide-0.svg)
+同じ AZ に適切なレプリカがあり、アプリケーションがその整合性の動作を許容できる場合は、ローカル読み取りを優先します。書き込み、レプリケーション、初期メタデータ要求、障害時のフォールバックは引き続き AZ をまたぐことがあります。レプリケーション遅延、エラー、実際の接続先、転送量を併せて測定してください。
 
-- **Broker**: `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector` を設定し、すべての broker に `broker.rack`（AZ ID）を付与します
-- **Consumer**: 上記のゾーン認識方法のいずれかで取得した consumer 自身の AZ ID に、`client.rack` consumer property を設定します
-- **Strimzi を使用する場合**、operator がこれをネイティブにサポートします:
+![アプリケーションは自身の AZ 内にある Kafka、Valkey、Aurora の読み取り先を優先しますが、書き込みと読み取りのフォールバックは AZ 境界をまたぐ場合があります。](../.gitbook/assets/en-ops-15-zonal-operations-guide-1.png)
 
-  ```yaml
-  apiVersion: kafka.strimzi.io/v1beta2
-  kind: Kafka
-  spec:
-    kafka:
-      rack:
-        topologyKey: topology.kubernetes.io/zone
-      config:
-        replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
-  ```
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-1.html)
 
-  `rack.topologyKey` を設定すると、Strimzi は `broker.rack` を自動設定し、init-container 経由で client rack を注入します。
-- さらに知っておくべき点として、[KIP-881](https://cwiki.apache.org/confluence/display/KAFKA/KIP-881%3A+Rack-aware+Partition+Assignment+for+Kafka+Consumers) はこれをさらに進め、consumer group 自体の partition assignment を rack-aware にします。
+まず Pod の AZ を特定してください。Downward API は Pod のフィールドを公開しますが、ノードラベルを直接問い合わせるわけではありません。
 
-EKS 上での Kafka 運用全般については、[`data-on-eks/kafka/`](../data-on-eks/kafka/README.md) を参照してください。
+- **ノードメタデータの注入：** 通常の Pod 作成時のアドミッションはスケジューリング前に行われるため、配置先ノードはまだ不明です。[AWS MSK ガイド](https://aws.amazon.com/blogs/big-data/optimize-traffic-costs-of-amazon-msk-consumers-on-amazon-eks-with-rack-awareness/)では、**`Pod/binding` リクエスト**を処理し、選択されたノードを読み取って AZ ID を注入します。Kyverno の binding リクエストフィルター、ノード読み取り RBAC、Pod 起動前の処理完了を一体として設定してください。
+- **スケジューリング後の参照：** Downward API で `spec.nodeName` を公開し、信頼できる初期化コンポーネントでノードラベルを読み取ります。すべてのアプリケーションに広範なノード読み取り権限を付与しないでください。
+- **EC2 IMDSv2：** EC2 メタデータアクセスを意図的に許可している場合は、配置情報を読む前にトークンを取得します。IMDSv1 の GET が使えると考えたり、メタデータ制限を無差別に外したりしないでください。これは Fargate に直接適用できる方法ではありません。
+- **Operator のサポート：** Strimzi は管理対象ブローカーと対応するクライアントリソースのラックアウェアネスを設定します。無関係のアプリケーション Deployment の `client.rack` を自動設定するわけではありません。
 
-### Redis/Valkey (ElastiCache): AZ アフィニティ読み取り戦略
+**AZ 名と AZ ID を混同しないでください。** Kafka の `broker.rack` と `client.rack` は一致する文字列を使用する必要があります。MSK が AZ ID を使う場合、`ap-northeast-2a` のような名前に置き換えないでください。GLIDE の `client_az` も、サーバーが報告する AZ 値と一致させる必要があります。
 
-[Valkey GLIDE](https://valkey.io/blog/az-affinity-strategy/) client は、`ReadFrom` 設定を通じて 4 つの読み取り戦略をサポートします。
+### Kafka：KIP-392 によるフォロワーからの読み取り
+
+Kafka 2.4 で導入された [KIP-392](https://cwiki.apache.org/confluence/display/KAFKA/KIP-392:+Allow+consumers+to+fetch+from+closest+replica)は、コンシューマーが同じラックのレプリカから読み取ることを可能にします。これは機能が導入されたバージョンであり、現在 Kafka 2.4 をデプロイすることを推奨するものではありません。
+
+![Kafka コンシューマーがリーダーから優先レプリカのヒントを受け取り、同じラックのレプリカから読み取ります。初期リクエストとレプリケーションは引き続き AZ をまたぐ場合があります。](../.gitbook/assets/en-ops-15-zonal-operations-guide-10.png)
+
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-10.html)
+
+- **ブローカー：** `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector` と `broker.rack` を設定します。
+- **コンシューマー：** `client.rack` にコンシューマーのラックを設定します。適切なローカルレプリカがない場合は、リーダーにフォールバックします。
+- **Strimzi 1.2.0：** 以下は**既存の Kafka CR にマージする設定抜粋**であり、完全なデプロイではありません。KafkaNodePool、リスナー、ストレージ、その他の設定も必要です。Strimzi 1.0 以降、CR API は `v1` です。ラックの種類も指定してください。
+
+```yaml
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: my-cluster
+spec:
+  kafka:
+    rack:
+      type: topology-label
+      topologyKey: topology.kubernetes.io/zone
+    config:
+      replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
+```
+
+これによりブローカーの `broker.rack` が設定されます。通常のアプリケーションコンシューマーの `client.rack` は別途設定してください。KafkaConnect、MirrorMaker 2、Bridge には、それぞれ CR のラック設定があります。[Strimzi ドキュメント](https://strimzi.io/docs/operators/1.2.0/configuring.html)に従ってブローカーの配置も分散させてください。フォロワーからの読み取りは、レプリケーション遅延によって読み取りレイテンシーが増加することがあります。
+
+[KIP-881](https://cwiki.apache.org/confluence/display/KAFKA/KIP-881%3A+Rack-aware+Partition+Assignment+for+Kafka+Consumers)はラックを考慮したパーティション割り当てに関するもので、別の仕組みです。コンシューマーのバージョンと assignor のサポートを確認してください。デプロイ方法は [EKS 上の Kafka](../data-on-eks/kafka/README.md)を参照してください。
+
+### Redis／Valkey（ElastiCache）：AZ アフィニティの読み取り戦略
+
+以下は、本章で扱う主要な [Valkey GLIDE](https://valkey.io/blog/az-affinity-strategy/) の `ReadFrom` 選択肢です。GLIDE 2.5.2 には `ALL_NODES` もあり、この表は列挙値の全一覧ではありません。
 
 | 戦略 | 動作 |
 |----------|----------|
-| `PRIMARY` | 常に primary から読み取る（デフォルト、AZ 非依存） |
-| `PREFER_REPLICA` | replica 間でラウンドロビンし、障害時にフォールバックする |
-| `AZ_AFFINITY` | 同一 AZ の replica を優先し、それ以外の場合にフォールバックする |
-| `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | 最初に同一 AZ の replica、次に同一 AZ の primary、最後の手段として他の AZ を使用する |
+| `PRIMARY` | プライマリから読み取る（デフォルト） |
+| `PREFER_REPLICA` | レプリカ間でラウンドロビンし、利用可能なレプリカがなければプライマリを使う |
+| `AZ_AFFINITY` | ローカルレプリカを優先し、その後は他のレプリカまたはプライマリを使う |
+| `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | ローカルレプリカ → ローカルプライマリ → 他の AZ のレプリカまたはプライマリ |
 
-読み取り負荷の高いワークロード（>99% reads）では、コスト削減と可用性のバランスとして `AZ_AFFINITY_REPLICAS_AND_PRIMARY` を推奨します。
+アプリケーションが古いデータを許容できる場合にレプリカ読み取りを検討してください。読み取りの割合だけで戦略は決まりません。サーバーの AZ メタデータのサポート／設定、プライマリ負荷、フォールバックを確認します。**データの最新性や書き込み直後の読み取り**を必要とするリクエストは別途設計し、データモデルに適する場合はプライマリ読み取りを使うなどの方法を検討してください。
+
+この `valkey-glide==2.5.2` の例は、接続を開かずに**クラスターモード用の設定を作成**します。TLS を有効にしており、認証が必要な場合は `credentials` を指定してください。クラスターモードを無効にする場合は、代わりに `GlideClientConfiguration` と `GlideClient` を使用します。
 
 ```python
-from glide import GlideClient, GlideClientConfiguration, ReadFrom
+from glide import GlideClusterClientConfiguration, NodeAddress, ReadFrom
 
-config = GlideClientConfiguration(
-    addresses=[...],
-    read_from=ReadFrom.AZ_AFFINITY_REPLICAS_AND_PRIMARY,
-    client_az="ap-northeast-2a",  # the pod's AZ, obtained via one of the methods above
-)
-client = await GlideClient.create(config)
+
+def cache_config(host: str, client_az: str, credentials=None):
+    if not host or not client_az:
+        raise ValueError("Cache endpoint and client AZ are required")
+    return GlideClusterClientConfiguration(
+        addresses=[NodeAddress(host, 6379)],
+        use_tls=True,
+        credentials=credentials,
+        read_from=ReadFrom.AZ_AFFINITY_REPLICAS_AND_PRIMARY,
+        client_az=client_az,
+    )
 ```
 
-実際の事例として、HotelTrader は Valkey GLIDE の AZ-affinity routing を採用した後、AZ 間データ転送コストを 95% 削減し、平均レイテンシーを 49% 改善しました（AZ awareness がない場合、cache request は AZ 間でランダムに分散され、不必要な転送コストが発生していました）。詳細については、[AWS database blog post](https://aws.amazon.com/blogs/database/how-hoteltrader-cut-inter-az-cost-95-and-latency-by-49-with-valkey-glide-on-amazon-elasticache/) を参照してください。
+[HotelTrader の事例](https://aws.amazon.com/blogs/database/how-hoteltrader-cut-inter-az-cost-95-and-latency-by-49-with-valkey-glide-on-amazon-elasticache/)では、**AZ を考慮したルーティングとリクエストのバッチ処理の両方**を導入した後、クロス AZ 転送コストが 95%、平均レイテンシーが 49% 低下したと報告されています。これは当該 ECS／ElastiCache ワークロードの結果であり、ルーティングオプションだけの効果を保証するものではありません。
 
-### Aurora/RDS: Reader Endpoint の制限と回避策
+### Aurora／RDS：リーダーエンドポイントの制約と代替策
 
-Aurora のデフォルト reader endpoint は、**AZ awareness のないラウンドロビン DNS**です。同じ AZ の replica に優先順位はありません。これは機能の欠落というより現在の実際の制約です。オープンな [aws-advanced-jdbc-wrapper#1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139) issue では、AZ affinity 自体が要望されています。
+Aurora の[デフォルトのリーダーエンドポイント](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Reader.html)は、リードレプリカ間で**接続**を分散します。AZ の優先やクエリ単位の分散は保証しません。レプリカがない場合はライターに接続することがあります。DNS の変更だけでは、プール内の既存接続は別のインスタンスへ移動しません。
 
-回避策は 2 つあります。
-
-1. **AZ ごとの custom endpoint**: 特定の AZ にある replica instance を custom endpoint にグループ化し、その AZ のアプリケーショントラフィックをそこに向けます。
+1. **AZ ごとのカスタムエンドポイント：** AZ とリーダーの役割を確認してから、インスタンス ID を明示的に選択します。この作成例の名前を実際のリソースに置き換えてください。
 
    ```bash
    aws rds create-db-cluster-endpoint \
@@ -183,30 +216,32 @@ Aurora のデフォルト reader endpoint は、**AZ awareness のないラウ�
      --static-members db-instance-az-a-1 db-instance-az-a-2
    ```
 
-2. **AWS Advanced JDBC Wrapper**: read/write splitting と `fastestResponse` reader-selection strategy を提供します。真の AZ affinity ではありませんが、通常は同一 AZ の reader である、最も速く応答する reader を優先します。
+   CLI／API は `READER` エンドポイントをサポートします。ライターに昇格したメンバーは除外され、新しいレプリカは静的リストに自動追加されません。[メンバーシップの動作](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Custom.Considerations.html)を確認し、ローカルリーダーがなくなった場合に備えて、アプリケーションのフォールバック先エンドポイントまたは明確な障害時ポリシーを用意してください。
 
-真の AZ affinity が必要な場合、上記のオープン issue が解決されるまで、option 1（custom endpoint）が唯一信頼できる方法です。
+2. **AWS Advanced JDBC Wrapper 4.4.0：** [`fastestResponse`](https://github.com/aws/aws-advanced-jdbc-wrapper/blob/4.4.0/docs/using-the-jdbc-driver/HostSelectionStrategies.md)は測定した応答時間でホストを選択します。`fastestResponseStrategy` プラグインも読み込んでください。これは AZ ラベルによる制約ではなく、最速のホストがローカルである保証はありません。
 
-### 補完的な Kubernetes Service レイヤーの選択肢
+[Issue #1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139)は、2.5.5 の応答時間機能が要望を満たすという議論を経て、**May 2025 にクローズ**されました。カスタムエンドポイントだけが解決策であることを示す未解決の機能要求ではありません。
 
-アプリケーションレイヤーで Service トラフィック自体を AZ に固定するには、[Topology Aware Routing (GA)](../eks/12-kubernetes-version-roadmap.md) を参照してください。service mesh を実行している場合は、[Istio Zone-Aware Routing](../service-mesh/istio/resilience/03-zone-aware-routing.md) を参照してください。これらを上記のデータレイヤー戦略と組み合わせることで、application から cache/DB/messaging までの読み取りパス全体が AZ 内に留まります。
+### 補完的な Kubernetes Service 層の選択肢
 
-***
-
-## 推奨する組み合わせの概要
-
-| レイヤー | 2026 年時点の推奨 | 代替/フォールバック |
-|-------|--------------------------|------------------------|
-| アーキテクチャ | ゾーン（single-zone）クラスター + Cell-Based Architecture | マルチ AZ 単一クラスター（小規模な ops team） |
-| トラフィックシフト | Target Group + TargetGroupBinding + 重み調整 | Route 53 weighted DNS（異なる Region/account） |
-| 障害対応 | ARC Zonal Shift（自動） | 手動の重み調整 |
-| アップグレード | ゾーン型インプレース + EKS ネイティブロールバック（7 日間） | 常設 blue/green クラスターフリート（完全な事前検証が必要な場合） |
-| Kafka 読み取り | KIP-392（`client.rack` + `RackAwareReplicaSelector`）、または Strimzi の `rack.topologyKey` | Region 全体へのフォールバックを許可する（ローカル follower がない場合は自動） |
-| Cache 読み取り | Valkey GLIDE `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | `PREFER_REPLICA`（AZ awareness が不要な場合） |
-| DB 読み取り | Aurora の AZ ごとの custom endpoint | AWS Advanced JDBC Wrapper `fastestResponse` |
-
-推奨するロールアウト順序は **トラフィックシフトレイヤー -> アップグレード/ロールバック -> データ読み取りレイヤー**です。前のレイヤーが導入されていないと、後のレイヤーの効果（特にコスト削減）を測定することが難しいためです。
+[Topology Aware Routing](https://kubernetes.io/docs/concepts/services-networking/topology-aware-routing/)と [Istio のゾーン対応ルーティング](../service-mesh/istio/resilience/03-zone-aware-routing.md)は、Service エンドポイントの選択を補完します。ローカルエンドポイントの不足、正常性の変化、設定によって、トラフィックが他の AZ に送られる場合があります。外部 DB／キャッシュ／Kafka への接続を自動制御するものではありません。優先設定は、読み取り経路全体が一つの AZ 内に留まることの保証ではありません。
 
 ***
 
-< [前へ: Tekton Pipelines](14-tekton-pipelines.md) | [目次](./README.md) | [次へ: トラブルシューティングプレイブック](16-troubleshooting-playbook.md) >
+## 推奨する組み合わせのまとめ {#recommended-combination-summary}
+
+| 層 | 選択基準 | 代替策／フォールバック |
+|-------|--------------------|----------------------|
+| アーキテクチャ | 独立したセル運用と正常セルの容量 | マルチ AZ の単一クラスターも引き続き有効な選択肢 |
+| トラフィック切り替え | LB の forward アクションの重みと TGB のターゲット登録 | Route 53 は LB エンドポイントを選択 |
+| 障害対応 | 手動の zonal shift／別途有効化する autoshift | 単一 AZ のワーカーセルにはセル外部のルーティングが必要 |
+| アップグレード | テスト済みの利用資格、互換性、復旧時間 | ブルー／グリーン。データ復旧は別途対応 |
+| Kafka 読み取り | ブローカーのセレクターと一致するコンシューマーラック | 適切なローカルレプリカがない場合はリーダー |
+| キャッシュ読み取り | データの最新性と AZ メタデータに合う GLIDE 戦略 | リモートへのフォールバックとプライマリ負荷を確認 |
+| DB 読み取り | 保守されたローカルリーダーリスト、または応答時間による選択 | ローカルリーダーの不在と再接続に対応 |
+
+負荷、コスト、復旧時間の基準値を測定し、本番環境外でトラフィック切り替えとロールバックを練習してください。読み取り経路の最適化は独立して導入することもできます。小さな範囲で整合性、フォールバック、コストを検証してから拡大してください。
+
+***
+
+< [前へ：Tekton Pipelines](14-tekton-pipelines.md) | [目次](./README.md) | [次へ：トラブルシューティングプレイブック](16-troubleshooting-playbook.md) >

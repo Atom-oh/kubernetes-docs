@@ -1,52 +1,58 @@
-# 分区集群运维：流量迁移、升级回滚与数据层 AZ 亲和性
+# 分区集群运维：流量转移、升级回滚与数据层 AZ 亲和性
 
-> **支持的版本**: Amazon EKS 1.33+, AWS Load Balancer Controller 2.9+, Kafka 2.4+ (KIP-392), Valkey GLIDE 1.x
-> **最后更新**: July 21, 2026
+> **审查基线**：EKS 回滚与 ARC 文档、Strimzi 1.2.0、Valkey GLIDE 2.5.2、AWS Advanced JDBC Wrapper 4.4.0
+> **最近审查**：September 11, 2026。已检查配置示例；未进行实际集群切换或故障实验。
 
-< [上一节：Tekton Pipelines](14-tekton-pipelines.md) | [目录](./README.md) | [下一节：故障排查手册](16-troubleshooting-playbook.md) >
+< [上一章：Tekton Pipelines](14-tekton-pipelines.md) | [目录](./README.md) | [下一章：故障排查手册](16-troubleshooting-playbook.md) >
 
 ***
 
-客户问题中最常见的主题就是“运维”。有一种组合不断出现：**按可用区拆分集群以隔离故障，使用负载均衡器 Target Group 权重迁移流量，并且在出现问题时原地回滚，而不是新建集群。** 本指南将这一组合整合为一套运维策略，并补上通常缺失的一环：**将 DB/cache/messaging 层的读取路径固定到某个可用区。**
+本指南结合了**在工作节点位于本地 AZ 的集群之间转移流量、有条件的版本回滚，以及感知 AZ 的数据读取**。分区集群组不是每个团队的默认架构。当您能够独立运维各单元的容量、路由、部署和数据依赖时，可以考虑采用它。
 
-本仓库其他位置已提供每一部分的详细操作步骤。本文说明它们为何需要结合使用，并补全此前缺失的数据层内容。
+这里的分区指**工作节点和应用的放置位置**。[托管 EKS 控制平面](https://docs.aws.amazon.com/eks/latest/userguide/eks-architecture.html)仍然分布在多个 AZ。整个集群并不位于单一 AZ 内。
 
 ## 目录
 
 1. [为什么采用分区运维](#why-zonal-operations)
-2. [流量层：Target Group + TargetGroupBinding + 权重迁移](#traffic-layer-target-group--targetgroupbinding--weight-shifting)
-3. [升级：为何原地升级 + 原生回滚成为默认选择](#upgrades-why-in-place--native-rollback-became-the-default)
-4. [数据层：将读取路径固定到可用区](#data-layer-pinning-the-read-path-to-a-zone)
-5. [推荐组合摘要](#recommended-combination-summary)
+2. [流量层：目标组 + TargetGroupBinding + 权重转移](#traffic-layer-target-group--targetgroupbinding--weight-shifting)
+3. [升级：就地升级与原生回滚的条件](#upgrades-conditions-for-in-place-and-native-rollback)
+4. [数据层：优先在同一 AZ 读取](#data-layer-prefer-same-az-reads)
+5. [推荐组合概览](#recommended-combination-summary)
 
 ***
 
-## 为什么采用分区运维
+## 为什么采用分区运维 {#why-zonal-operations}
 
-多 AZ 单集群与每个 AZ 一个集群（分区/单可用区）的集群组有不同的权衡。
+| 方面 | 跨多个 AZ 的单一集群 | 每个集群的工作节点位于一个 AZ |
+|--------|------------------------|--------------------------------------|
+| 故障隔离 | 健康 AZ 中的副本和备用容量负责恢复 | 一个单元可能失去全部工作节点；共享数据库、路由和区域级依赖可能影响其他单元 |
+| 跨 AZ 成本 | 取决于服务和数据路径 | 本地应用流量可以减少，但复制、共享服务和负载均衡器转发仍可能跨 AZ |
+| 升级 | 控制平面和节点分阶段变更，并管理版本偏差 | 逐单元升级需要兼容的版本，以及其他单元的可用容量 |
+| 运维复杂度 | 一个集群 | 多个集群及协调的路由 |
 
-| 方面 | 多 AZ 单集群 | 分区（单可用区）集群 |
-|--------|--------------------------|-------------------------------|
-| 故障隔离 | 一个 AZ 故障会影响集群的一部分 | 一个 AZ 故障仅影响该分区集群；其余集群不受影响 |
-| 跨 AZ 成本 | Pod 间流量跨越 AZ 边界（$0.01/GB） | 仅有同 AZ 流量，没有跨 AZ 传输成本 |
-| 升级 | 滚动更新，整个集群同时升级版本 | 按可用区依次升级，其他可用区保持在先前版本 |
-| 运维复杂度 | 管理一个集群 | 管理 N 个集群，外加需保持同步的流量路由层 |
+参阅 AWS 的[Amazon EKS 基于单元的架构指南](https://aws.amazon.com/solutions/guidance/cell-based-architecture-for-amazon-eks/)。尽量减少单元之间的依赖，并为健康单元配置足以承接故障单元流量的容量。通过 DNS 选择各单元的负载均衡器，与在一个负载均衡器后对目标组设置权重，是不同的路由设计。应根据实际流量路径和各服务的计费规则测算成本。
 
-AWS 通过 [Cell-Based Architecture for Amazon EKS Guidance](https://aws.amazon.com/solutions/guidance/cell-based-architecture-for-amazon-eks/) 提供了这一确切模式。在此模式中，一个分区集群是一个“cell”，Region 内的一组 cell 是一个“supercell”。cell 前方的路由层（Route 53 加权路由加上 Application Recovery Controller）负责故障切换，而每个 cell 内的 ALB 则在其内部进行流量分配。其关键特性是：流量绝不会跨越 cell 边界，因此从一开始就没有跨 AZ 数据传输成本。
-
-分区/蓝绿架构本身已在 [`ops/02-infrastructure-advanced.md`](02-infrastructure-advanced.md#1-bluegreen-architecture-overview) 中介绍，而 Multi-AZ/Cell-Based Architecture 的成熟度模型视角位于 [`eks/10-eks-resiliency.md`](../eks/10-eks-resiliency.md)。本指南在此基础上，将流量迁移、升级和数据读取连接为一个运维闭环。
+相关指南：[高级基础设施](02-infrastructure-advanced.md)和 [EKS 弹性](../eks/10-eks-resiliency.md)。
 
 ***
 
-## 流量层：Target Group + TargetGroupBinding + 权重迁移
 
-![具有加权流量迁移的分区 cell 架构](../../assets/ops-zonal-traffic-architecture.png)
 
-在多个分区集群之间迁移流量的标准模式：
+## 流量层：目标组 + TargetGroupBinding + 权重转移 {#traffic-layer-target-group--targetgroupbinding--weight-shifting}
 
-1. 使用 Terraform 等 IaC 在集群**外部**创建 NLB/ALB 和 Target Groups（以便即使更换集群，负载均衡器仍能保留）。
-2. 使用 `TargetGroupBinding` CRD 将每个分区集群的 Service 绑定到其 Target Group。
-3. 通过调整负载均衡器上的 **Target Group 权重** 在集群间迁移流量，无需触及集群内部的任何内容。
+![一个负载均衡器侦听器在两个目标组之间分配新流量；各集群中的 TargetGroupBinding 注册其 Pod 目标。](../.gitbook/assets/en-ops-15-zonal-operations-guide-0.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-0.html)
+
+对于共享一个负载均衡器的两个集群：
+
+1. 使用 IaC 在集群外创建 NLB/ALB 和目标组，使替换集群不会删除负载均衡器。
+2. 使用 `TargetGroupBinding` 将每个集群的 Service 绑定到其专属目标组。
+3. 在**侦听器的转发动作**中修改权重。TGB 本身没有权重字段。明确划分 IaC 与控制器对目标组和侦听器配置的管理权。
+
+TGB 示例假定 `production` 命名空间、`app-service:80`、目标 VPC 中的 IP 类型目标组及 AWS Load Balancer Controller 已存在。替换示例 ARN，并验证目标健康状态和网络访问。
+
+本示例使用**单独安装的 AWS Load Balancer Controller**。Auto Mode 内置 TGB 使用 eks.amazonaws.com/v1，并遵循不同的[标签和生命周期规则](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html)。AWS 文档说明，删除该内置 TGB 或集群时会删除目标组；不要将其管理模型与这里由外部管理的目标组混用。
 
 ```yaml
 apiVersion: elbv2.k8s.aws/v1beta1
@@ -63,117 +69,144 @@ spec:
 ```
 
 ```bash
-# Adjust weight between target groups in the ALB listener's forward action
+set -euo pipefail
+# NLB listener whose existing default action forwards to these two groups.
+# Nondefault ALB rules require modify-rule, not this operation.
+: "${LISTENER_ARN:?}" "${ZONE_A_TG_ARN:?}" "${ZONE_C_TG_ARN:?}"
+aws elbv2 describe-listeners \
+  --listener-arns "$LISTENER_ARN" \
+  --query 'Listeners[0].DefaultActions' --output json > current-actions.json
+jq -e --arg a "$ZONE_A_TG_ARN" --arg c "$ZONE_C_TG_ARN" '
+  if $a == $c or length != 1 or .[0].Type != "forward"
+     or ([.[0].ForwardConfig.TargetGroups[].TargetGroupArn] | sort)
+        != ([$a, $c] | sort)
+  then error("Expected one forward action with exactly the two selected groups")
+  else
+    .[0].ForwardConfig.TargetGroups |= map(
+      .Weight = (if .TargetGroupArn == $a then 20 else 80 end))
+  end
+' current-actions.json > proposed-actions.json &&
 aws elbv2 modify-listener \
   --listener-arn "$LISTENER_ARN" \
-  --default-actions '[{
-    "Type": "forward",
-    "ForwardConfig": {
-      "TargetGroups": [
-        {"TargetGroupArn": "'"$ZONE_A_TG_ARN"'", "Weight": 20},
-        {"TargetGroupArn": "'"$ZONE_C_TG_ARN"'", "Weight": 80}
-      ]
-    }
-  }]'
+  --default-actions file://proposed-actions.json
 ```
 
-TargetGroupBinding 的基本/高级/多端口配置见 [`networking/03-aws-lb-controller.md`](../networking/03-aws-lb-controller.md#targetgroupbinding)，NLB 加权 Target Groups 与 Route 53 加权路由的完整 Terraform 设置见 [`ops/02-infrastructure-advanced.md`](02-infrastructure-advanced.md#2-nlb-weighted-target-groups)。
+执行前，应将此变更与 IaC 计划协调一致。普通 NLB 权重变更影响**新流**，但**权重为零需要单独处理**。[当前用户指南](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)指出，设为零后不久，该组将不再接收新连接，现有连接也会关闭。不要假定现有连接会一直保留到自然结束；切换到零之前，测试应用排空、重连和重试行为。更改节点前，遵循[官方指南](https://aws.amazon.com/blogs/networking-and-content-delivery/network-load-balancers-now-support-weighted-target-groups/)，检查各目标组的 `NewFlowCount`、`ActiveFlowCount`、健康状态、错误率及连接排空情况。验证目标组协议/IP 版本兼容性和跨可用区设置。当目标仅位于不同 AZ 时，禁用跨可用区负载均衡可能阻止实现预期的权重分配。
 
-**计划内迁移与故障触发的迁移**：权重调整用于升级和部署等**计划内**转换。AZ 中断等非计划情况由 [ARC (Application Recovery Controller) Zonal Shift](../eks/10-eks-resiliency.md#arc-zonal-shift) 处理，其会自动检测并迁移流量——这两种机制并不冲突，而是分别承担计划内与响应式职责。
+Route 53 加权记录选择的是**负载均衡器 DNS 端点**，而不是目标组 ARN。TTL、客户端缓存和长连接也使 DNS 无法瞬时切换。周边配置参阅 [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) 和[高级基础设施](02-infrastructure-advanced.md)。
 
-> **2026 年 7 月更新**：ARC zonal shift/autoshift [现已支持 EKS Auto Mode 集群](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift)。在 Auto Mode 中，无需设置任何标志，也无需管理 Karpenter 版本——只需在集群上启用 ARC zonal shift；当迁移被激活时，受损 AZ 中的新节点预置和自愿中断（consolidation/drift）会自动暂停。
+**计划内转移与故障响应：** 权重变更支持计划内切换，但不提供自动故障检测。[ARC zonal shift](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html) 由运维人员发起。**Zonal autoshift** 需要单独启用，并配置演练和告警。EKS 资源的分区转移会改变该集群内受损 AZ 的端点/节点处理方式；不会改写另一个集群的目标组权重。负载均衡器资源的转移也需单独规划。
 
-***
-
-## 升级：为何原地升级 + 原生回滚成为默认选择
-
-2026 年 7 月，Amazon EKS [GA 了原生 Kubernetes 版本回滚](https://aws.amazon.com/blogs/containers/announcing-amazon-eks-rollback-for-safe-and-reliable-management-of-cluster-upgrades/)。如果升级后出现问题，您可在 **7 天内每次回退一个次要版本**；在您回滚前，Rollback Readiness Insights 会自动预检查 API 兼容性、kubelet 版本偏差和 add-on 版本。对于 Auto Mode 集群，回滚覆盖数据平面（worker nodes）以及控制平面——但如果您使用 self-managed node groups 原地升级分区集群（如下节所述），则不适用自动数据平面回滚；只有控制平面会回退，因此 node/AMI/add-on 更改需要单独回退。两种情况均不产生额外费用。
-
-在此功能出现之前，“新版本有问题怎么办”的唯一答案是维护一组常驻的蓝绿集群，可在切换前对其进行验证。如今，已运行分区（每个集群对应一个可用区）设置的团队有了更轻量的选择：每次原地升级一个分区集群，并将原生回滚作为安全网。
-
-| 方法 | 适用场景 |
-|----------|---------------------------|
-| **常驻蓝绿集群组** | 您需要在切换前针对完全独立集群上的真实生产流量验证新版本，或者您需要整体回退 node/AMI/add-on 更改（原生回滚仅回退控制平面） |
-| **分区原地升级 + 原生回滚** | 您已因可用性需求（而非仅仅为了升级）运行分区集群，希望避免始终运行两组完整集群的成本，并且可以接受约 7 天的回滚资格窗口而非立即在集群级别故障恢复 |
-| **Route 53 加权 DNS 切换** | 集群位于完全不同的 Regions/accounts，或者您需要替换 NLB 层本身 |
-
-执行 runbook（迁移 NLB 权重 -> 原地升级 -> 验证 -> 恢复权重，以及完整蓝绿集群组仍是正确选择的情形）已记录在 [`ops/11-upgrade-operations.md` 的“Alternative: Zonal In-Place Upgrade with Native Rollback”](11-upgrade-operations.md) 部分，因此本文不再重复。有关回滚具备资格的确切条件（以目标版本创建的集群无法回滚、已再次升级的集群无法回滚等），请参阅 [`eks/08-eks-upgrades.md` 的 Rollback Procedure](../eks/08-eks-upgrades.md#rollback-procedure)。
+> **EKS Auto Mode 支持：** 在 [July 2026 发布](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift/)之后，启用集群 zonal shift 可让 Auto Mode 在转移期间限制受损 AZ 中的新资源预置和自愿中断。这本身并不会启用 autoshift。**从唯一包含工作节点的 AZ 移走流量可能导致服务中断。** EKS 转移需要健康 AZ 中的副本、CoreDNS 和备用容量。工作节点仅位于一个 AZ 的单元，恢复时需要外部单元路由。
 
 ***
 
-## 数据层：将读取路径固定到可用区
+## 升级：就地升级与原生回滚的条件 {#upgrades-conditions-for-in-place-and-native-rollback}
 
-对于采用分区架构的团队，流量迁移和升级通常已经就位。通常被悄然忽视的是 **DB/cache/messaging 的读取路径**——一个应用 Pod 可能完全位于一个 AZ 内，但它所访问的 DB reader、cache replica 或 Kafka broker 却被跨 AZ 轮询分配，从而产生跨 AZ 成本和延迟，往往在账单到来前无人察觉。
+[EKS 原生版本回滚](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)于 July 2026 推出，**在升级完成后七天内发起时，可以返回紧邻的前一个次要版本**。七天是资格窗口，不是恢复时间保证。应检查集群创建版本、支持状态、后续升级、功能兼容性及 Rollback Readiness Insights。
 
-其底层原理在各处都相同：**写入必须发送到 leader/primary，因此无论如何都可能跨 AZ；但读取可以路由到同一 AZ 的 replica。** 对于大部分为读取的工作负载（cache、lookup queries、consumers），仅此一项即可消除大部分跨 AZ 成本。
+- **Auto Mode：** EKS 先回滚 Auto Mode 节点，再回滚控制平面。PDB 和 NodePool 中断预算仍然适用；回滚并非瞬时完成。
+- **托管节点组：** 使用 `UpdateNodegroupVersion` 单独回滚。运维人员需单独准备自管理节点和 Hybrid 节点。节点运行的版本不得高于控制平面。
+- **附加组件、数据和应用：** 回滚不会恢复附加组件版本、etcd 数据、持久卷数据或应用变更。应独立规划兼容性和数据迁移恢复。
+- **`--force`：** 可以绕过就绪性洞察，但不能绕过回滚资格前提或 Auto Mode 中断控制。应先解决问题，再执行正常回滚流程。
 
-![数据层 AZ 亲和性读取路径](../../assets/ops-zonal-data-az-affinity.png)
+回滚功能本身不收取额外费用；现有集群、计算和流量费用仍然适用。验证其他单元的容量和恢复目标后，再选择就地升级或蓝绿方案。
 
-实现这一点需要 Pod 知道自己所在的 AZ。Kubernetes Downward API 不会将节点的可用区标签（`topology.kubernetes.io/zone`）直接注入 Pod，因此需要采用以下方法之一：
+| 方案 | 适用条件 |
+|----------|------------------------|
+| **蓝绿集群** | 在独立环境中验证，并保留将流量切回旧环境的能力；共享数据变更需要自己的恢复计划 |
+| **分区就地升级 + 原生回滚** | 现有单元集群组能够承接流量，且已测试回滚资格、兼容性和恢复时间 |
+| **Route 53 加权 DNS 切换** | 使用不同负载均衡器端点，包括跨区域/账户设计，并考虑 DNS 缓存和健康检查行为 |
 
-- **EC2 IMDS 查询**：Pod 或 sidecar 直接调用 `http://169.254.169.254/latest/meta-data/placement/availability-zone`
-- **准入时标签注入**：Kyverno 等 mutating policy 将节点的 `topology.k8s.aws/zone-id` 标签复制到 Pod annotation——这是 AWS 在其 [MSK-on-EKS rack awareness guide](https://aws.amazon.com/blogs/big-data/optimize-traffic-costs-of-amazon-msk-consumers-on-amazon-eks-with-rack-awareness/) 中推荐的模式；有关如何编写 Kyverno policy，请参阅本仓库中的 [`security/01-kyverno-policy-management.md`](../security/01-kyverno-policy-management.md)
-- **内置 operator 支持**：Strimzi 等 operator 将 rack-awareness 作为一等功能，因此 init-container 可在无需自定义实现的情况下处理它
+运维顺序为**检查其他单元容量 → 转移权重 → 确认连接排空 → 升级 → 验证 → 恢复权重**。详细流程及节点特有条件参阅[升级运维](11-upgrade-operations.md)和 [EKS 升级](../eks/08-eks-upgrades.md)。
 
-### Kafka：KIP-392 Follower Fetching
+***
 
-[KIP-392](https://cwiki.apache.org/confluence/display/KAFKA/KIP-392:+Allow+consumers+to+fetch+from+closest+replica)（Kafka 2.4+）允许 consumer 直接从其**自身 rack（AZ）中的 follower replica** 获取数据，而不再始终访问 partition leader。
+## 数据层：优先在同一 AZ 读取 {#data-layer-prefer-same-az-reads}
 
-![序列图展示 AZ-a 中的 Kafka consumer 从 AZ-b 中的 leader broker 获取数据，通过 rack-aware 提示被重定向至同一 AZ 的 follower replica，然后在本地重新获取数据，从而无需支付跨 AZ 传输成本。](../../assets/diagrams/rendered/en-ops-15-zonal-operations-guide-0.svg)
+同一 AZ 存在合适副本且应用接受其一致性行为时，优先本地读取。写入、复制、初始元数据请求和故障回退仍可能跨 AZ。应一起测量复制延迟、错误、实际连接目标及传输量。
 
-- **Brokers**：设置 `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector`，并为每个 broker 提供 `broker.rack`（AZ ID）
-- **Consumers**：将 `client.rack` consumer property 设置为 consumer 自身的 AZ ID，通过上述某种 zone-awareness 方法获取
-- **使用 Strimzi 时**，operator 原生支持此功能：
+![应用优先使用其所在 AZ 的 Kafka、Valkey 和 Aurora 读取端；写入和读取回退仍可能跨越 AZ 边界。](../.gitbook/assets/en-ops-15-zonal-operations-guide-1.png)
 
-  ```yaml
-  apiVersion: kafka.strimzi.io/v1beta2
-  kind: Kafka
-  spec:
-    kafka:
-      rack:
-        topologyKey: topology.kubernetes.io/zone
-      config:
-        replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
-  ```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-1.html)
 
-  设置 `rack.topologyKey` 会使 Strimzi 自动配置 `broker.rack`，并通过 init-container 注入 client rack。
-- 还值得了解的是：[KIP-881](https://cwiki.apache.org/confluence/display/KAFKA/KIP-881%3A+Rack-aware+Partition+Assignment+for+Kafka+Consumers) 更进一步，使 consumer group 的 partition assignment 本身具备 rack-awareness。
+首先确定 Pod 所在的 AZ。Downward API 暴露 Pod 字段，不会直接查询节点标签。
 
-有关在 EKS 上运行 Kafka 的更广泛内容，请参阅 [`data-on-eks/kafka/`](../data-on-eks/kafka/README.md)。
+- **节点元数据注入：** 普通 Pod 创建准入发生在调度之前，因此尚不知道目标节点。[AWS MSK 指南](https://aws.amazon.com/blogs/big-data/optimize-traffic-costs-of-amazon-msk-consumers-on-amazon-eks-with-rack-awareness/)处理 **`Pod/binding` 请求**，读取选定节点并注入其 AZ ID。应一起配置 Kyverno 的 binding 请求过滤器、节点读取 RBAC，并确保在 Pod 启动前完成。
+- **调度后查询：** 通过 Downward API 暴露 `spec.nodeName`，使用可信的初始化组件读取节点标签。不要向所有应用授予广泛的节点读取权限。
+- **EC2 IMDSv2：** 有意开放 EC2 元数据访问时，应先获取令牌，再读取放置信息。不要假定 IMDSv1 GET 能工作，也不要无差别移除元数据限制。此方法不直接适用于 Fargate。
+- **Operator 支持：** Strimzi 为其管理的 broker 和受支持的客户端资源配置机架感知。它不会自动设置无关应用 Deployment 中的 `client.rack`。
 
-### Redis/Valkey (ElastiCache)：AZ 亲和性读取策略
+**不要混用 AZ 名称和 AZ ID。** Kafka 的 `broker.rack` 与 `client.rack` 必须使用匹配的字符串。如果 MSK 使用 AZ ID，不要替换为 `ap-northeast-2a` 这样的名称。GLIDE 的 `client_az` 同样必须与服务器报告的 AZ 值匹配。
 
-[Valkey GLIDE](https://valkey.io/blog/az-affinity-strategy/) client 通过其 `ReadFrom` 设置支持四种读取策略。
+### Kafka：KIP-392 跟随副本读取
+
+Kafka 2.4 引入的 [KIP-392](https://cwiki.apache.org/confluence/display/KAFKA/KIP-392:+Allow+consumers+to+fetch+from+closest+replica) 允许消费者从同机架副本读取。这是功能的引入版本，不是建议现在部署 Kafka 2.4。
+
+![Kafka 消费者从 leader 收到首选副本提示，然后从同机架副本读取。初始请求和复制仍可能跨 AZ。](../.gitbook/assets/en-ops-15-zonal-operations-guide-10.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-10.html)
+
+- **Broker：** 配置 `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector` 和 `broker.rack`。
+- **消费者：** 将 `client.rack` 设为消费者所在机架。没有合适的本地副本时，选择会回退到 leader。
+- **Strimzi 1.2.0：** 以下是**需合并到现有 Kafka CR 的配置片段**，不是完整部署。还需要 KafkaNodePools、侦听器、存储及其他配置。从 Strimzi 1.0 起，CR API 为 `v1`；还应指定机架类型。
+
+```yaml
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: my-cluster
+spec:
+  kafka:
+    rack:
+      type: topology-label
+      topologyKey: topology.kubernetes.io/zone
+    config:
+      replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
+```
+
+这会配置 broker 的 `broker.rack`。普通应用消费者的 `client.rack` 需单独设置。KafkaConnect、MirrorMaker 2 和 Bridge 有各自的 CR 机架设置。还应遵循 [Strimzi 文档](https://strimzi.io/docs/operators/1.2.0/configuring.html)分散 broker 的放置位置。由于复制延迟，跟随副本读取可能增加读取延迟。
+
+[KIP-881](https://cwiki.apache.org/confluence/display/KAFKA/KIP-881%3A+Rack-aware+Partition+Assignment+for+Kafka+Consumers) 涉及机架感知的分区分配，这是另一种机制。应检查消费者版本和分配器支持。部署指南参阅 [EKS 上的 Kafka](../data-on-eks/kafka/README.md)。
+
+### Redis/Valkey（ElastiCache）：AZ 亲和性读取策略
+
+以下是本章讨论的主要 [Valkey GLIDE](https://valkey.io/blog/az-affinity-strategy/) `ReadFrom` 选项。GLIDE 2.5.2 还提供 `ALL_NODES`；这不是完整的枚举列表。
 
 | 策略 | 行为 |
 |----------|----------|
-| `PRIMARY` | 始终从 primary 读取（默认，不感知 AZ） |
-| `PREFER_REPLICA` | 在 replicas 间轮询，失败时回退 |
-| `AZ_AFFINITY` | 优先选择同一 AZ 的 replica，否则回退 |
-| `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | 先选择同一 AZ 的 replica，然后是同一 AZ 的 primary，最后才将其他 AZ 作为最后手段 |
+| `PRIMARY` | 从主节点读取（默认） |
+| `PREFER_REPLICA` | 在副本间轮询；无可用副本时使用主节点 |
+| `AZ_AFFINITY` | 优先本地副本，然后使用其他副本或主节点 |
+| `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | 本地副本 → 本地主节点 → 其他 AZ 的副本或主节点 |
 
-对于读取密集型工作负载（>99% 读取），`AZ_AFFINITY_REPLICAS_AND_PRIMARY` 是成本节省和可用性之间的推荐平衡方案。
+应用能够容忍陈旧数据时，可以考虑副本读取；读取比例本身不能决定策略。验证服务器对 AZ 元数据的支持/配置、主节点负载及回退行为。需要**数据新鲜度或写后读**的请求应单独设计，例如在适合数据模型的情况下从主节点读取。
+
+这个 `valkey-glide==2.5.2` 示例**为集群模式创建配置**，但不打开连接。它启用 TLS；需要身份验证时应提供 `credentials`。如果禁用集群模式，则改用 `GlideClientConfiguration` 和 `GlideClient`。
 
 ```python
-from glide import GlideClient, GlideClientConfiguration, ReadFrom
+from glide import GlideClusterClientConfiguration, NodeAddress, ReadFrom
 
-config = GlideClientConfiguration(
-    addresses=[...],
-    read_from=ReadFrom.AZ_AFFINITY_REPLICAS_AND_PRIMARY,
-    client_az="ap-northeast-2a",  # the pod's AZ, obtained via one of the methods above
-)
-client = await GlideClient.create(config)
+
+def cache_config(host: str, client_az: str, credentials=None):
+    if not host or not client_az:
+        raise ValueError("Cache endpoint and client AZ are required")
+    return GlideClusterClientConfiguration(
+        addresses=[NodeAddress(host, 6379)],
+        use_tls=True,
+        credentials=credentials,
+        read_from=ReadFrom.AZ_AFFINITY_REPLICAS_AND_PRIMARY,
+        client_az=client_az,
+    )
 ```
 
-作为实际案例，HotelTrader 在采用 Valkey GLIDE 的 AZ-affinity routing 后，将跨 AZ 数据传输成本降低了 95%，平均延迟改善了 49%（在缺乏 AZ awareness 时，cache 请求会在各 AZ 间随机分配，从而产生不必要的传输成本）。详情请参阅 [AWS database blog post](https://aws.amazon.com/blogs/database/how-hoteltrader-cut-inter-az-cost-95-and-latency-by-49-with-valkey-glide-on-amazon-elasticache/)。
+[HotelTrader 案例](https://aws.amazon.com/blogs/database/how-hoteltrader-cut-inter-az-cost-95-and-latency-by-49-with-valkey-glide-on-amazon-elasticache/)报告，在**同时采用 AZ 感知路由和请求批处理**后，AZ 间传输成本降低了 95%，平均延迟降低了 49%。这些是该 ECS/ElastiCache 工作负载的结果，不是单独启用路由选项即可获得的保证。
 
-### Aurora/RDS：Reader Endpoint 的局限与解决方法
+### Aurora/RDS：读取器端点的限制与替代方案
 
-Aurora 的默认 reader endpoint 是**不具备 AZ awareness 的轮询 DNS**——同一 AZ 中的 replica 不会获得优先级。这并非功能缺失，而是当前实际存在的限制；公开的 [aws-advanced-jdbc-wrapper#1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139) issue 正在请求实现 AZ affinity 本身。
+Aurora 的[默认读取器端点](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Reader.html)在只读副本间均衡分配**连接**；不保证 AZ 优先级或逐查询均衡。没有副本时，它可以连接到写入器。仅修改 DNS 不会将现有连接池中的连接迁移到另一个实例。
 
-有两种解决方法：
-
-1. **按 AZ 划分的 custom endpoints**：将给定 AZ 中的 replica instances 分组为一个 custom endpoint，并将该 AZ 的应用流量指向它。
+1. **每 AZ 自定义端点：** 验证实例的 AZ 和读取器角色后，明确选择实例 ID。将此创建示例中的名称替换为真实资源。
 
    ```bash
    aws rds create-db-cluster-endpoint \
@@ -183,30 +216,32 @@ Aurora 的默认 reader endpoint 是**不具备 AZ awareness 的轮询 DNS**—�
      --static-members db-instance-az-a-1 db-instance-az-a-2
    ```
 
-2. **AWS Advanced JDBC Wrapper**：提供读/写拆分和 `fastestResponse` reader-selection 策略。它并非真正的 AZ affinity，但会优先选择响应最快的 reader，通常就是同一 AZ 中的 reader。
+   CLI/API 支持 `READER` 端点。提升为写入器的成员会被排除，新副本不会自动加入静态列表。检查[成员行为](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Custom.Considerations.html)，并在没有本地读取器时提供应用回退端点或明确的失败策略。
 
-如果您需要真正的 AZ affinity，在上述公开 issue 得到解决前，选项 1（custom endpoints）是唯一可靠的方法。
+2. **AWS Advanced JDBC Wrapper 4.4.0：** [`fastestResponse`](https://github.com/aws/aws-advanced-jdbc-wrapper/blob/4.4.0/docs/using-the-jdbc-driver/HostSelectionStrategies.md) 根据实测响应时间选择主机。还需加载 `fastestResponseStrategy` 插件。这不是基于 AZ 标签的约束；响应最快的主机不保证位于本地。
 
-### 补充的 Kubernetes Service 层选项
+[Issue #1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139) 在讨论确认 2.5.5 的响应时间功能满足请求后，已于 **May 2025 关闭**。它不是一个仍开放的功能请求，不能据此证明自定义端点是唯一方案。
 
-若要在应用层将 Service 流量本身固定到一个 AZ，请参阅 [Topology Aware Routing (GA)](../eks/12-kubernetes-version-roadmap.md)；如果您运行 service mesh，请参阅 [Istio Zone-Aware Routing](../service-mesh/istio/resilience/03-zone-aware-routing.md)。结合上述数据层策略，应用到 cache/DB/messaging 的整个读取路径都可保持在 AZ 内。
+### Kubernetes Service 层的补充选项
 
-***
-
-## 推荐组合摘要
-
-| 层 | 截至 2026 年的推荐方案 | 替代方案/回退方案 |
-|-------|--------------------------|------------------------|
-| 架构 | 分区（单可用区）集群 + Cell-Based Architecture | 多 AZ 单集群（较小的运维团队） |
-| 流量迁移 | Target Group + TargetGroupBinding + 权重调整 | Route 53 加权 DNS（不同的 Region/account） |
-| 故障响应 | ARC Zonal Shift（自动） | 手动权重调整 |
-| 升级 | 分区原地升级 + EKS 原生回滚（7 天） | 常驻蓝绿集群组（需要完整预验证时） |
-| Kafka 读取 | KIP-392（`client.rack` + `RackAwareReplicaSelector`），或 Strimzi 的 `rack.topologyKey` | 允许 Region 范围的回退（无本地 follower 时自动发生） |
-| Cache 读取 | Valkey GLIDE `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | `PREFER_REPLICA`（不需要 AZ awareness 时） |
-| DB 读取 | Aurora 按 AZ 划分的 custom endpoints | AWS Advanced JDBC Wrapper `fastestResponse` |
-
-推荐的实施顺序为 **流量迁移层 -> 升级/回滚 -> 数据读取层**，因为若未部署前面的层，就难以衡量后续层带来的收益（尤其是成本节省）。
+[拓扑感知路由](https://kubernetes.io/docs/concepts/services-networking/topology-aware-routing/)和 [Istio 分区感知路由](../service-mesh/istio/resilience/03-zone-aware-routing.md)可补充 Service 端点选择。本地端点不足、健康状态变化和配置都可能使流量转向其他 AZ。它们不会自动控制外部 DB/cache/Kafka 连接。优先选择并不保证整个读取路径都留在一个 AZ。
 
 ***
 
-< [上一节：Tekton Pipelines](14-tekton-pipelines.md) | [目录](./README.md) | [下一节：故障排查手册](16-troubleshooting-playbook.md) >
+## 推荐组合概览 {#recommended-combination-summary}
+
+| 层 | 选择依据 | 替代方案/回退 |
+|-------|--------------------|----------------------|
+| 架构 | 独立单元运维和健康单元容量 | 跨多个 AZ 的单一集群仍是有效选择 |
+| 流量转移 | 负载均衡器转发动作权重与 TGB 目标注册 | Route 53 选择负载均衡器端点 |
+| 故障响应 | 手动 zonal shift / 单独启用的 autoshift | 单 AZ 工作节点单元需要外部单元路由 |
+| 升级 | 已测试的资格、兼容性和恢复时间 | 蓝绿方案，数据恢复单独处理 |
+| Kafka 读取 | Broker 选择器与匹配的消费者机架 | 无合适本地副本时回退到 leader |
+| 缓存读取 | 匹配新鲜度和 AZ 元数据的 GLIDE 策略 | 验证远程回退和主节点负载 |
+| 数据库读取 | 维护本地读取器列表或基于响应时间选择 | 处理本地读取器缺失和重连 |
+
+测量负载、成本和恢复时间基线，然后在生产环境之外演练流量转移和回滚。读取路径优化也可独立引入：先在小范围验证一致性、回退和成本，再扩大应用范围。
+
+***
+
+< [上一章：Tekton Pipelines](14-tekton-pipelines.md) | [目录](./README.md) | [下一章：故障排查手册](16-troubleshooting-playbook.md) >

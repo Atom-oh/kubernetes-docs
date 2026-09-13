@@ -69,7 +69,7 @@ Telemetría e integraciones según el modo:
 Patrones de resiliencia:
 
 - **Circuit breaker**: Límites de pools de conexiones/solicitudes, no garantía contra sobrecarga
-- **Reintentos**: Presupuestos explícitos para operaciones seguras; desactivar escrituras ambiguas
+- **Reintentos**: Presupuestos explícitos para operaciones que se pueden reintentar de forma segura; desactivar los reintentos de escrituras cuyo resultado es incierto
 - **Timeout**: Plazos de solicitudes
 - **Detección de outliers**: Excluir instancias no saludables
 - **Limitación de tasa**: Buckets locales o servicio global configurados

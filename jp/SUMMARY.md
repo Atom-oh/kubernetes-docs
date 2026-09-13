@@ -347,6 +347,7 @@
   * [ConfigMap と Secret ラボ](labs/core/05-configuration-secrets-lab.md)
   * [EKS クラスター作成ラボ](labs/eks/01-eks-cluster-creation-lab.md)
 
+  * オブザーバビリティのエンドツーエンドラボ
     * [ラボシリーズの導入](labs/observability/README.md)
     * [パート 1: インフラストラクチャのセットアップ](labs/observability/01-infrastructure-setup-lab.md)
     * [パート 2: オブザーバビリティスタック](labs/observability/02-observability-stack-lab.md)
@@ -522,7 +523,6 @@
   * [cert-manager クイズ](quizzes/security/10-cert-manager-quiz.md)
   * [Kubescape クイズ](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIRE クイズ](quizzes/security/12-spiffe-spire-quiz.md)
-* コンテナレジストリ
 
 * GitOps
   * [ArgoCD クイズ](quizzes/gitops/01-argocd-quiz.md)
