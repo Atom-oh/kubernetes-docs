@@ -896,7 +896,7 @@ spec:
 
 ### 基于 Tier 的策略
 
-Tier 在所引用的 Calico Open Source 版本中可用，并非仅 Enterprise 可用。当没有规则生效时，选择该 tier 的流量默认为 `Deny`。因此 deny-known-threats tier 显式使用 `defaultAction: Pass`，让无关流量可以到达后续策略。`Pass` 是委派，而不是许可。在部署前填充 application-tier 策略，并验证任何最终 profile/default-tier 行为；创建空 Tier 并不构成完整的应用隔离策略。
+Tier 在所引用的 Calico Open Source 版本中可用，并非仅 Enterprise 可用。当没有规则生效时，选择该 tier 的流量默认为 `Deny`。因此 deny-known-threats tier 显式使用 `defaultAction: Pass`，让无关流量可以到达后续策略。`Pass` 是委派，而不是许可。在部署前填充 application-tier 策略，并验证任何最终 profile/default-tier 行为；创建空 Tier 并不构成完整的应用隔离策略。 `global()` 应放在 `namespaceSelector` 中；另一个标签选择器用于标识 `GlobalNetworkSet`。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -974,7 +974,7 @@ spec:
 
 ### 微分段
 
-此配置允许 frontend→API TCP8080 和 API→database TCP5432 的双向流量，以及 DNS。它有意不允许 Internet egress 或外部 frontend ingress。如有需要，请添加获批的目标 CIDR/port 或经身份验证的 egress gateway 配置；从 0.0.0.0/0 排除 RFC1918 并不是 SaaS allowlist。
+此配置在源端 egress 与目标端 ingress 均允许 frontend→API TCP8080 和 API→database TCP5432 这两类连接，同时允许 DNS。它有意不允许 Internet egress 或外部 frontend ingress。如有需要，请添加获批的目标 CIDR/port 或经身份验证的 egress gateway 配置；从 0.0.0.0/0 排除 RFC1918 并不是 SaaS allowlist。
 
 ```yaml
 apiVersion: networking.k8s.io/v1

@@ -896,7 +896,7 @@ spec:
 
 ### Tier-Based ポリシー
 
-Tier は Enterprise のみではなく、参照している Calico Open Source release でも利用できます。選択する Tier は、ルールが action を実行しない場合、デフォルトで `Deny` になります。そのため deny-known-threats Tier は、無関係なトラフィックが後続のポリシーに到達できるよう、明示的に `defaultAction: Pass` を使用します。`Pass` は delegation であり、許可ではありません。アプリケーション Tier のポリシーを追加し、デプロイ前に最終 profile/default-tier の動作を確認してください。空の Tier を作成しても完全なアプリケーション隔離ポリシーにはなりません。
+Tier は Enterprise のみではなく、参照している Calico Open Source release でも利用できます。選択する Tier は、ルールが action を実行しない場合、デフォルトで `Deny` になります。そのため deny-known-threats Tier は、無関係なトラフィックが後続のポリシーに到達できるよう、明示的に `defaultAction: Pass` を使用します。`Pass` は delegation であり、許可ではありません。アプリケーション Tier のポリシーを追加し、デプロイ前に最終 profile/default-tier の動作を確認してください。空の Tier を作成しても完全なアプリケーション隔離ポリシーにはなりません。 `global()` は `namespaceSelector` に指定し、別のラベルセレクターで `GlobalNetworkSet` を特定します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
