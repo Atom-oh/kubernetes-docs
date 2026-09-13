@@ -1,28 +1,25 @@
 # Prometheus 测验
 
-用于测试你对 Prometheus 理解程度的测验。
+> **最后更新**: September 12, 2026
 
----
+1. Prometheus 的常规指标采集路径是什么？
 
-1. Prometheus 的数据收集方式是什么？
-   - A) Push-based - 应用程序发送指标
-   - B) Pull-based - Prometheus 从目标抓取指标
-   - C) Streaming-based - 实时数据流
-   - D) Batch-based - 定期文件传输
+   - A) 应用程序必须直接推送每个样本
+   - B) Prometheus 通过 HTTP 抓取已配置的目标
+   - C) 仅使用流式事件日志
+   - D) 仅使用定期 CSV 导入
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Pull-based - Prometheus 从目标抓取指标**
+**答案：B**
 
-**解释：**
-Prometheus 是一个 Pull-based 指标收集系统，它会通过 HTTP 定期从目标的 /metrics 端点抓取指标。这种方法的优点是可以集中控制收集目标和间隔，并自动检测目标的可用性。
+常规路径是拉取/抓取。remote write 和可选的批处理集成提供了其他传递路径。up 报告的是抓取成功，而非完整的应用程序可用性。
 
 </details>
 
----
+2. 哪个表达式能给出 Counter 在五分钟内的每秒平均速率？
 
-2. 用于计算过去 5 分钟 HTTP 请求速率的正确 PromQL 查询是什么？
    - A) `rate(http_requests_total, 5m)`
    - B) `rate(http_requests_total[5m])`
    - C) `increase(http_requests_total[5m])`
@@ -31,52 +28,46 @@ Prometheus 是一个 Pull-based 指标收集系统，它会通过 HTTP 定期从
 <details>
 <summary>显示答案</summary>
 
-**答案：B) `rate(http_requests_total[5m])`**
+**答案：B**
 
-**解释：**
-`rate()` 函数计算 Counter 指标的每秒平均增长速率。范围向量使用方括号 `[]` 指定时间。`increase()` 返回总增长量，而 `avg()` 是一个计算平均值的聚合函数。`rate(http_requests_total[5m])` 计算 5 分钟内每秒的请求数。
+rate() 使用范围向量，并处理观察到的重置/外推。increase() 估算总增量，而不是每秒速率。应先应用 rate 再进行聚合，并且不要将其理解为恢复每一次遗漏的增量。
 
 </details>
 
----
+3. 一个可正常工作的 ServiceMonitor 必须描述什么？
 
-3. Prometheus Operator 中的 ServiceMonitor 的作用是什么？
-   - A) 部署 Prometheus 服务器
-   - B) 定义告警规则
-   - C) 定义要监控的服务和抓取配置
-   - D) 创建 Grafana 仪表板
+   - A) 一个 Grafana 仪表板
+   - B) 仅一个 Prometheus 容器镜像
+   - C) 已选择的 Service 和抓取端点，其 selectors/端口名称与 Prometheus 设置匹配
+   - D) 一个完整的应用程序 Deployment
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 定义要监控的服务和抓取配置**
+**答案：C**
 
-**解释：**
-ServiceMonitor 是 Prometheus Operator 的一个 CRD，用于以声明式方式定义监控 Kubernetes 服务的抓取配置。你可以配置目标 Service 选择器、端点、抓取间隔、标签重标记等。PrometheusRule 处理告警规则，而 Prometheus CRD 处理服务器部署。
+Prometheus 首先选择监控器的 namespace 和标签；监控器会选择目标 Service。其端点端口是 Service 端口名称。RBAC、TLS/网络访问以及已埋点的应用程序是额外要求。
 
 </details>
 
----
+4. histogram_quantile() 对经典直方图返回什么？
 
-4. 关于 histogram_quantile 函数，哪个说法是正确的？
-   - A) 它只能与 Summary 指标一起使用
-   - B) 它从 Histogram bucket 计算分位数
-   - C) 它返回精确的分位数值
-   - D) 它计算 Counter 指标的变化速率
+   - A) 精确的 Summary 百分位数
+   - B) 基于桶的分位数估计
+   - C) 独立于桶分辨率的精确百分位数
+   - D) Counter 的请求速率
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 它从 Histogram bucket 计算分位数**
+**答案：B**
 
-**解释：**
-`histogram_quantile()` 从 Histogram bucket 数据计算分位数。例如，`histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))` 计算 p95 延迟。它根据 bucket 边界返回近似值；如需精确分位数，请使用 Summary。
+在保留 le 的同时聚合兼容的经典桶。结果会在桶内进行插值。Summary 分位数同样具有依赖算法/窗口的误差，且无法平均为整个集群的百分位数。
 
 </details>
 
----
+5. 哪个组件不属于 kube-prometheus-stack 软件包？
 
-5. 以下哪个组件未包含在 kube-prometheus-stack Helm chart 中？
    - A) Prometheus Operator
    - B) Grafana
    - C) VictoriaMetrics
@@ -85,99 +76,90 @@ ServiceMonitor 是 Prometheus Operator 的一个 CRD，用于以声明式方式�
 <details>
 <summary>显示答案</summary>
 
-**答案：C) VictoriaMetrics**
+**答案：C**
 
-**解释：**
-kube-prometheus-stack 是一个 Helm chart，其中包括 Prometheus Operator、Prometheus、Alertmanager、Grafana、kube-state-metrics、node-exporter 等。VictoriaMetrics 是一个独立项目，通过 victoria-metrics-k8s-stack chart 安装。
+该 chart 打包了 Prometheus/Alertmanager、Operator、Grafana 和 exporters，具体取决于已启用的 values。VictoriaMetrics 是独立的 Deployment。应固定所检查的 chart 组，而不要混用任意镜像版本。
 
 </details>
 
----
+6. remote write 的用途是什么？
 
-6. Prometheus 中 Remote Write 的主要用途是什么？
-   - A) 提高本地存储性能
-   - B) 将数据发送到长期指标存储
-   - C) 发送实时告警
+   - A) 发送 Alertmanager 通知
+   - B) 将样本异步传递给已配置的外部接收器
+   - C) 保证无限的故障缓冲
    - D) 同步 Grafana 仪表板
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 将数据发送到长期指标存储**
+**答案：B**
 
-**解释：**
-Remote Write 是一项将 Prometheus 收集的指标发送到外部系统（VictoriaMetrics、Mimir、AMP、Cortex 等）的功能。由于 Prometheus 的本地存储在保留期和可扩展性方面存在限制，因此使用 Remote Write 将数据发送到专用存储中进行长期保留。
+接收器包括 AMP、VictoriaMetrics 和 Mimir。每个接收器都有自己的端点、身份、配额和 HA 合约。WAL 缓冲是有限的，本地 Prometheus 保留期本身可配置，而不是普遍限制为 30 天。
 
 </details>
 
----
+7. 告警规则的 for 持续时间控制什么？
 
-7. PrometheusRule CRD 中 `for` 字段的作用是什么？
-   - A) 设置规则评估间隔
-   - B) 设置告警触发前条件持续的时间
-   - C) 设置告警重新发送间隔
-   - D) 设置指标保留期限
+   - A) 指标保留期
+   - B) 相同告警条件/标签集在触发前保持 pending 状态的时长
+   - C) Alertmanager 的重复间隔
+   - D) Prometheus 副本数量
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 设置告警触发前条件持续的时间**
+**答案：B**
 
-**解释：**
-PrometheusRule 中的 `for` 字段设置告警条件满足后、告警实际触发前的等待时间。例如，`for: 5m` 表示该条件必须持续 5 分钟后才会触发告警。这可防止由短暂峰值导致的不必要告警。
+对于该告警身份，条件必须在多次评估期间持续满足。缺失数据或标签变化可能会中断 pending 状态。通知分组和时间安排是独立的 Alertmanager 设置。
 
 </details>
 
----
+8. 应如何解读 predict_linear()？
 
-8. PromQL 中 `predict_linear` 函数的用途是什么？
-   - A) 计算当前值的绝对值
-   - B) 基于线性回归预测未来值
-   - C) 对时间序列数据排序
-   - D) 转换标签值
+   - A) 有保证的磁盘故障截止时间
+   - B) 拟合后外推至未来的 Gauge 趋势
+   - C) 季节性三重指数预测
+   - D) 所有容量测量的替代方案
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 基于线性回归预测未来值**
+**答案：B**
 
-**解释：**
-`predict_linear(v range-vector, t scalar)` 使用线性回归预测未来值。例如，`predict_linear(node_filesystem_avail_bytes[6h], 24*60*60) < 0` 可根据当前趋势预测磁盘空间是否会在 24 小时内耗尽。它适用于容量规划和主动告警。
+它预测观察到的线性趋势。工作负载变化、清理、稀疏数据和非线性行为都可能使其失效。旧的 holt_winters 名称在 Prometheus 3 中被一个明确标记为实验性的双指数平滑函数所替代；它不是季节性模型。
 
 </details>
 
----
+9. AlertmanagerConfig 的 groupBy 有什么作用？
 
-9. Alertmanager 的 `groupBy` 设置的作用是什么？
-   - A) 仅向特定组发送告警
-   - B) 按指定标签对告警分组
-   - C) 设置告警优先级
-   - D) 移除重复告警
+   - A) 自动授权来自每个 namespace 的告警
+   - B) 按选定标签对通知进行分组
+   - C) 定义 Prometheus 的 for 持续时间
+   - D) 使每个匹配的同级路由都运行
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 按指定标签对告警分组**
+**答案：B**
 
-**解释：**
-`groupBy` 按指定标签对告警分组，并将其作为单个通知发送。例如，`groupBy: ['alertname', 'namespace']` 将具有相同 alertname 和 namespace 的告警分组。这可防止告警风暴，并允许将相关告警一同查看。
+groupBy 在原生配置中变为 group_by。除非配置了 continue，否则路由通常会在第一个同级匹配项处停止。抑制需要有意义的资源身份相等标签，以避免抑制无关的 Service/node 警告。
 
 </details>
 
----
+10. TSDB WAL 提供什么？
 
-10. WAL（Write-Ahead Log）在 Prometheus TSDB 中的作用是什么？
-    - A) 查询缓存
-    - B) 预写记录以防止数据丢失
-    - C) 存储告警历史记录
-    - D) 存储仪表板设置
+   - A) 查询结果缓存
+   - B) 支持在持久化为块之前进行崩溃恢复的顺序记录
+   - C) 在丢失卷后仍可存活的备份
+   - D) 无限的 remote-write 传递队列
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 预写记录以防止数据丢失**
+**答案：B**
 
-**解释：**
-WAL（Write-Ahead Log）是一种日志，在数据从内存完全写入磁盘块之前按顺序记录数据。即使 Prometheus 异常终止，也可以通过 WAL 恢复数据，以防止数据丢失。这是一种常用于数据库的持久性机制。
+WAL 重放是一种持久性机制，并不承诺在损坏、卷故障或长期远程中断的情况下零数据丢失。保留期以及 WAL/head/compaction 的磁盘要求是独立的；应保留经过验证的备份和恢复流程。
 
 </details>
+
+[返回指南](../../../observability/metrics/01-prometheus.md)

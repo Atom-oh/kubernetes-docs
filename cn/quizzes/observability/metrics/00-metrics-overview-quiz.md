@@ -1,185 +1,165 @@
-# 指标概述测验
+# 指标概览测验
 
-测试您对基本指标概念和监控解决方案的理解。
+> **最后更新**: September 12, 2026
 
----
+1. 哪种类型表示可能重置的累积计数？
 
-1. 在 Prometheus 指标的四种基本类型中，哪一种类型的值只能增加，并在重启时重置为 0？
    - A) Gauge
    - B) Counter
-   - C) Histogram
-   - D) Summary
+   - C) 预先计算的 p99
+   - D) 抓取时间戳
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Counter**
+**答案：B**
 
-**解释：**
-Counter 是一种跟踪累积值的指标类型，其值只能增加，并在重启时重置为 0。它用于跟踪 HTTP 请求计数、错误计数、已完成任务计数等。Gauge 可以增加和减少，而 Histogram 和 Summary 用于衡量分布。
+Counter 会累积非负增量。当被测量的状态被重新创建时，可能发生重置。rate() 会处理观测到的重置，但无法恢复未观测到的增量。
 
 </details>
 
----
+2. 五种方法、二十个路由和十种状态意味着什么？
 
-2. 以下哪项陈述正确描述了 Cardinality？
-   - A) 它指指标采集间隔
-   - B) 它指唯一时间序列组合的数量
-   - C) 它指指标数据压缩比
-   - D) 它指指标保留期限
+   - A) 每次 Deployment 中恰好存储 1,000 个 series
+   - B) 如果所有组合都可能存在，应用标签组合最多为 1,000 个
+   - C) 每天恰好有 1,000 个样本
+   - D) 对资源使用没有影响
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 它指唯一时间序列组合的数量**
+**答案：B**
 
-**解释：**
-Cardinality 指指标中唯一标签组合的数量。高 Cardinality 会直接影响存储使用量和查询性能。将 user_id 或 request_id 等可无限增长的值作为标签，会导致 Cardinality 急剧增长。
+该乘积是上限。实际组合、target/replica 标签、histogram buckets 和历史变化决定了实际的 series/存储占用。
 
 </details>
 
----
+3. 哪种 Pushgateway 用法是合适的？
 
-3. 关于 Pull 和 Push 模型的哪项陈述不正确？
-   - A) Prometheus 是一个基于 Pull 的系统
-   - B) 在 Pull 模型中，采集目标和采集间隔由中心化方式控制
-   - C) Push 模型适合从短生命周期任务中采集指标
-   - D) Pull 模型可以轻松访问位于 NAT/防火墙之后的目标
+   - A) 为每个短生命周期 Pod 使用一个 HOSTNAME 分组键，并依赖自动过期
+   - B) 将其用于具有稳定分组、成功时间戳和明确退役策略的适当服务级批处理
+   - C) 将 gateway up=1 视为每个批处理均已成功的证明
+   - D) 即使批处理失败也推送成功时间戳
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D) Pull 模型可以轻松访问位于 NAT/防火墙之后的目标**
+**答案：B**
 
-**解释：**
-在 Pull 模型中，监控服务器直接向目标发送 HTTP 请求以采集指标，因此很难访问位于 NAT/防火墙之后的目标。相比之下，Push 模型允许目标直接发送指标，因此在 NAT/防火墙环境中更具优势。使用 Pushgateway 时，Pull 模型也可以采集来自短生命周期任务的指标。
+Pushgateway 并非所有短生命周期任务的默认选择，且分组没有自动 TTL。其抓取健康状态与批处理新鲜度相互独立。使用 honor_labels 进行抓取可保留推送的 job 身份。
 
 </details>
 
----
+4. 关于 Histogram 和 Summary，哪项陈述正确？
 
-4. 以下哪项陈述正确描述了 Histogram 和 Summary 之间的区别？
-   - A) Histogram 在客户端计算分位数
-   - B) Summary 允许跨多个实例进行聚合
-   - C) Histogram 在服务器端（查询时）计算分位数
-   - D) Summary 的存储效率高于 Histogram
+   - A) Summary quantile 始终精确
+   - B) 对 instance p99 值取平均可得到 fleet p99
+   - C) 兼容的 classic histogram buckets 可以合并；Summary 的 sum/count 可以合并以计算均值
+   - D) 任何 Summary 数据都永远无法聚合
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Histogram 在服务器端（查询时）计算分位数**
+**答案：C**
 
-**解释：**
-Histogram 将数据存储在 bucket 中，并在查询时于服务器端计算分位数。Summary 在客户端计算并存储分位数。Histogram 允许跨多个实例进行聚合，但 Summary 不允许。建议将 Histogram 用于 SLO/SLI 测量和分布式系统。
+Classic buckets 由埋点的生产者计数；Prometheus 在查询时计算 quantile。Summary quantile 的误差取决于算法/窗口，无法聚合为 fleet quantile；而非负持续时间的 sum/count rate 可以得出 fleet mean。
 
 </details>
 
----
+5. 以下哪项不是新 Prometheus 应用指标的推荐约定？
 
-5. 以下哪项不是推荐的指标命名约定？
-   - A) 使用 snake_case
-   - B) 将单位作为后缀（_seconds、_bytes）
-   - C) 使用 camelCase
-   - D) 使用应用程序/领域前缀
+   - A) 使用描述性前缀
+   - B) 使用诸如 _seconds 或 _bytes 的单位后缀
+   - C) 相较于通常的基本单位约定，优先使用 camelCase 和毫秒单位
+   - D) 使用 _total 标识累积 Counter
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) 使用 camelCase**
+**答案：C**
 
-**解释：**
-Prometheus 风格的指标命名约定使用 snake_case，而不是 camelCase。像 `http_requests_total`、`http_request_duration_seconds` 这样的良好指标名称使用小写字母和下划线，将单位作为后缀，并使用应用程序/领域前缀。
+应优先使用描述性的下划线分隔名称和基本单位。_total 是 Counter 标记，而不是物理单位。现有 exporter API（例如 node_memory_MemAvailable_bytes）保留其已发布的拼写。
 
 </details>
 
----
+6. 关于 Prometheus 保留期，哪项陈述正确？
 
-6. 以下哪项不是 Prometheus 需要单独的长期存储解决方案的恰当原因？
-   - A) 较低的压缩比会增加磁盘使用量
-   - B) 单节点架构限制了可扩展性
-   - C) PromQL 不支持复杂查询
-   - D) 不支持原生 HA 集群
+   - A) 它绝不能保留超过 30 天
+   - B) 在未显式设置基于时间/大小的保留期时，默认值为 15 天；更长的保留期需要合适的配置和容量
+   - C) 它不会压缩本地数据
+   - D) 没有 Mimir 就不可能使用独立的 collection replica
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) PromQL 不支持复杂查询**
+**答案：B**
 
-**解释：**
-PromQL 是一种非常强大的查询语言，支持复杂查询。Prometheus 不适合长期存储的原因包括相对较低的压缩比、单节点架构的可扩展性限制、缺乏原生 HA 集群，以及长期数据查询速度较慢。
+默认保留期不是最大值。本地 TSDB 不是复制式分布式存储；采集冗余、查询去重、持久性和恢复是独立的设计决策。
 
 </details>
 
----
+7. 哪项产品/存储声明不正确？
 
-7. 以下哪项解决方案对比不正确？
-   - A) VictoriaMetrics 提供比 Prometheus 更高的压缩比
-   - B) CloudWatch 是一项完全托管的服务
-   - C) Mimir 仅支持本地磁盘
-   - D) Datadog 以 SaaS 模式提供
+   - A) VictoriaMetrics 单节点和集群 Deployment 有不同的运维要求
+   - B) 传统 CloudWatch 指标的分辨率会随时间推移而变粗
+   - C) Mimir 对象存储保证无限扩展，并消除了所有本地存储需求
+   - D) Datadog 指标使用查询 rollup，因此保留期并不能保证每个图表中均保有原始分辨率
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Mimir 仅支持本地磁盘**
+**答案：C**
 
-**解释：**
-Grafana Mimir 是一个需要对象存储（S3、GCS、Azure Blob 等）的分布式指标存储。它使用云对象存储而非本地磁盘，以提供无限的可扩展性和长期保留。VictoriaMetrics 同时支持本地磁盘和对象存储。
+对象存储是 Mimir 架构的一部分，而非无限容量的保证。摄取/本地资源、查询限制、复制和运维容量仍然重要。不要将备份目标或特定版本功能与产品的主要存储混为一谈。
 
 </details>
 
----
+8. 哪种方法无法控制指标基数？
 
-8. 以下哪项不是防止高 Cardinality 问题的恰当方法？
-   - A) 不要将用户 ID 用作指标标签
-   - B) 不要将请求 ID 用作指标标签
-   - C) 对 HTTP 状态码进行分组（200 → 2xx）
-   - D) 保持所有标签值唯一
+   - A) 使用规范化的路由模板
+   - B) 避免将用户/会话 ID 作为常规标签
+   - C) 在可以接受丢失细节时对状态码进行分组
+   - D) 为每个请求分配一个新的 request_id 标签值
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D) 保持所有标签值唯一**
+**答案：D**
 
-**解释：**
-为防止高 Cardinality，标签值不应无限增长。用户 ID、请求 ID、会话 ID 等可无限增长的值不应作为标签使用。更好的做法是对 HTTP 状态码进行分组（200 → 2xx），并规范化 URL 路径（/users/123 → /users/{id}）。
+不同的标签值会创建不同的 series，即使这些值经过哈希处理也是如此。需要时，请求特定的上下文应放在受到适当控制的 logs/traces 中。基数和敏感数据暴露都需要审查。
 
 </details>
 
----
+9. 哪个 Kubernetes 指标角色匹配正确？
 
-9. 在 Kubernetes 环境中，以下哪项正确匹配了主要指标来源及其角色？
-   - A) node-exporter - Kubernetes 对象状态指标
-   - B) kube-state-metrics - Node 级硬件指标
-   - C) cAdvisor - 容器级资源指标
-   - D) metrics-server - 长期指标存储
+   - A) node-exporter — Kubernetes API 对象状态
+   - B) kube-state-metrics — 测量到的 container CPU 使用量
+   - C) cAdvisor/kubelet metrics — container 资源测量值
+   - D) metrics-server — 长期 Prometheus TSDB
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) cAdvisor - 容器级资源指标**
+**答案：C**
 
-**解释：**
-cAdvisor（Container Advisor）按容器采集 CPU、内存、I/O 等资源指标。node-exporter 提供 Node 级硬件/OS 指标，kube-state-metrics 提供 Kubernetes API 对象（Pod、Deployment、Node 等）的状态指标，metrics-server 为 HPA/VPA 提供实时资源指标。
+node-exporter 报告主机 OS 指标；kube-state-metrics 暴露 API 对象状态；metrics-server 提供 Resource Metrics API。Prometheus/vmalert/Mimir rules 评估告警，Alertmanager 对其进行路由。vmagent 是采集器/转发器，而不是可查询的 TSDB。
 
 </details>
 
----
+10. 什么能使成本比较可供审查？
 
-10. 选择指标解决方案时，以下哪项不是恰当的考虑因素？
-    - A) 团队的运维能力和规模
-    - B) 多云需求
-    - C) 成本结构和预算
-    - D) 指标名称的长度
+   - A) 仅基于团队规模的产品排名
+   - B) 未包含样本间隔或功能假设的节点数量
+   - C) 已测量的 series/sample 数量、保留期/分辨率、HA/query 要求，以及所选功能的当前定价
+   - D) 假定指标名称/值的长度永远无关紧要
 
 <details>
 <summary>显示答案</summary>
 
-**答案：D) 指标名称的长度**
+**答案：C**
 
-**解释：**
-选择指标解决方案时，应考虑团队的运维能力、多云需求、成本结构、可扩展性需求以及与现有生态系统的集成。指标名称的长度不会影响解决方案选择。相反，Cardinality、数据保留期限和查询性能才是重要的考虑因素。
+在交付筛选/去重之前，以 15 秒间隔运行 30 天的 100 万个实际导出 series 意味着 1,728 亿个样本。基础设施、indexes/WAL、replica、查询工作负载、自定义指标配额和运维人员投入都可能改变成本。这是工作负载计算，而非供应商报价。
 
 </details>
 
----
+[返回指南](../../../observability/metrics/README.md)
