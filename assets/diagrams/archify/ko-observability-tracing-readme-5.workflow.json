@@ -3,19 +3,19 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Tail-based Sampling 흐름",
-    "output": "public/archmaps/ko-observability-tracing-readme-5.html",
+    "output": "ko-observability-tracing-readme-5.html",
     "animation": "trace",
     "quality_profile": "showcase",
     "views": [
       {
         "id": "collect-all",
-        "label": "모든 Span 수집",
+        "label": "수신 스팬 버퍼링",
         "focus": [
           "receive",
           "collect",
           "analyze"
         ],
-        "note": "요청이 끝날 때까지 모든 Span을 임시 저장한 뒤 결과를 보고 판정합니다."
+        "note": "수신 스팬을 제한된 결정 시간 동안 기다립니다. 요청 완료 신호가 보장되는 것은 아닙니다."
       },
       {
         "id": "keep-or-drop",
@@ -25,7 +25,7 @@
           "keep",
           "drop"
         ],
-        "note": "오류나 지연이 있으면 Trace를 보관하고 정상 요청은 삭제합니다."
+        "note": "가용한 데이터로 오류·지연 정책을 적용하고 나머지는 확률적으로 샘플링할 수 있습니다."
       }
     ],
     "legend": {
@@ -55,7 +55,7 @@
     },
     {
       "id": "discard",
-      "label": "정상 요청 삭제",
+      "label": "선택되지 않은 데이터",
       "variant": "exception"
     }
   ],
@@ -90,8 +90,8 @@
       "lane": "trace",
       "col": 0,
       "type": "frontend",
-      "label": "요청 수신",
-      "sublabel": "요청 시작",
+      "label": "스팬 수신",
+      "sublabel": "상류 샘플링 이후",
       "width": 168
     },
     {
@@ -99,8 +99,8 @@
       "lane": "trace",
       "col": 1,
       "type": "messagebus",
-      "label": "모든 Span 수집",
-      "sublabel": "임시 저장",
+      "label": "제한된 버퍼",
+      "sublabel": "TraceID 단위 라우팅 필요",
       "tag": "decision_wait",
       "width": 168
     },
@@ -111,7 +111,7 @@
       "type": "security",
       "label": "분석",
       "sublabel": "오류? 지연?",
-      "tag": "요청 완료 후",
+      "tag": "decision_wait",
       "width": 168
     },
     {
@@ -120,7 +120,7 @@
       "col": 3,
       "type": "database",
       "label": "보관",
-      "sublabel": "Trace 저장",
+      "sublabel": "선택 데이터 내보내기",
       "width": 168
     },
     {
@@ -142,20 +142,20 @@
     {
       "from": "collect",
       "to": "analyze",
-      "label": "요청 완료",
+      "label": "결정 시간",
       "role": "main"
     },
     {
       "from": "analyze",
       "to": "keep",
-      "label": "오류 또는 지연",
+      "label": "정책 선택",
       "variant": "emphasis",
       "role": "main"
     },
     {
       "from": "analyze",
       "to": "drop",
-      "label": "정상",
+      "label": "미선택",
       "variant": "dashed",
       "role": "branch"
     }
@@ -163,20 +163,18 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "보관 정책 (OTEL Collector tail_sampling)",
+      "title": "정책 예시",
       "items": [
-        "status_code가 ERROR인 요청은 모두 수집",
-        "latency threshold_ms 1000을 넘는 느린 요청 수집",
-        "나머지는 probabilistic 10% 샘플링"
+        "수신된 ERROR 스팬 또는 1,000ms 초과 지연 평가",
+        "나머지는 10% 확률로 보관할 수 있어 정상 추적 전체를 삭제하지 않음"
       ]
     },
     {
       "dot": "rose",
-      "title": "트레이드오프",
+      "title": "한계",
       "items": [
-        "중요한 요청(오류, 지연)을 놓치지 않음",
-        "모든 Span을 임시 저장해야 해 메모리 사용량이 높음",
-        "Head-based보다 구현이 복잡함"
+        "상류 샘플링·늦은 스팬·용량 초과·장애로 중요 데이터도 소실 가능",
+        "확장 시 추적 단위 라우팅·용량·장애 상태 설계 필요"
       ]
     }
   ]

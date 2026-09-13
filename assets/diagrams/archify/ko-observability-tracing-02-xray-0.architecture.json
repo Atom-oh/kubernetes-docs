@@ -20,7 +20,7 @@
           "adot",
           "xray"
         ],
-        "note": "X-Ray SDK로 계측한 애플리케이션 Pod가 세그먼트는 X-Ray Daemon으로, OTLP는 ADOT Collector로 보내고 두 경로가 AWS X-Ray에 모인다."
+        "note": "OpenTelemetry 앱은 ADOT, 기존 X-Ray SDK는 daemon을 이용합니다. 기존 exporter 경로는 서명된 HTTPS PutTraceSegments를 호출합니다."
       },
       {
         "id": "auto-instr",
@@ -29,7 +29,7 @@
           "others",
           "xray"
         ],
-        "note": "Lambda, API Gateway, SQS, SNS 같은 관리형 서비스의 트레이스는 자동 계측으로 X-Ray에 바로 모인다."
+        "note": "관리형 서비스 지원은 서로 다릅니다. 지원하는 활성 추적과 컨텍스트 전파를 설정하며 SQS/SNS가 무조건 스팬을 자동 전송하는 것은 아닙니다."
       },
       {
         "id": "analysis",
@@ -49,7 +49,7 @@
       "id": "apps",
       "type": "backend",
       "label": "Service A / B / C",
-      "sublabel": "X-Ray SDK 계측",
+      "sublabel": "OTel 또는 기존 X-Ray SDK",
       "pos": [
         40,
         230
@@ -63,7 +63,7 @@
       "id": "daemon",
       "type": "backend",
       "label": "X-Ray Daemon",
-      "sublabel": "DaemonSet",
+      "sublabel": "기존 방식; Fargate DS 불가",
       "pos": [
         300,
         120
@@ -77,7 +77,7 @@
       "id": "adot",
       "type": "backend",
       "label": "ADOT Collector",
-      "sublabel": "Sidecar / DaemonSet",
+      "sublabel": "환경에 맞는 배포 방식",
       "pos": [
         300,
         340
@@ -184,7 +184,7 @@
       "id": "apps-daemon",
       "from": "apps",
       "to": "daemon",
-      "label": "세그먼트",
+      "label": "UDP 세그먼트",
       "variant": "emphasis"
     },
     {
@@ -197,20 +197,20 @@
       "id": "daemon-xray",
       "from": "daemon",
       "to": "xray",
-      "label": "UDP/TCP",
+      "label": "HTTPS / SigV4",
       "variant": "emphasis"
     },
     {
       "id": "adot-xray",
       "from": "adot",
       "to": "xray",
-      "label": "OTLP"
+      "label": "HTTPS / SigV4"
     },
     {
       "id": "others-xray",
       "from": "others",
       "to": "xray",
-      "label": "자동 계측",
+      "label": "지원되는 통합",
       "variant": "dashed"
     },
     {
@@ -227,6 +227,24 @@
       "id": "xray-insights",
       "from": "xray",
       "to": "insights"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "수명주기",
+      "items": [
+        "X-Ray SDK/daemon 유지보수 단계: 2026-02-25 시작",
+        "백엔드 서비스의 수명주기는 별도"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "프로토콜 경계",
+      "items": [
+        "로컬 UDP/TCP가 X-Ray 서비스까지의 전송 방식은 아님",
+        "기본 OTLP HTTP는 별도 SigV4/Transaction Search 요건이 있음"
+      ]
     }
   ]
 }

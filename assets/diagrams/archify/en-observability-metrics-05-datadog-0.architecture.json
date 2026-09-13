@@ -44,8 +44,8 @@
     {
       "id": "dd-integrations",
       "type": "external",
-      "label": "750+ Integrations",
-      "sublabel": "AWS, Kubernetes, databases",
+      "label": "Integrations",
+      "sublabel": "verify current catalogue",
       "pos": [
         70,
         290
@@ -58,8 +58,8 @@
     {
       "id": "dd-pricing",
       "type": "external",
-      "label": "Per-host Pricing",
-      "sublabel": "High cost predictability",
+      "label": "Product billing",
+      "sublabel": "hosts + usage + retention",
       "pos": [
         70,
         390
@@ -86,8 +86,8 @@
     {
       "id": "cw-pricing",
       "type": "cloud",
-      "label": "Usage Pricing",
-      "sublabel": "Low cost predictability",
+      "label": "Usage billing",
+      "sublabel": "metrics, logs, queries, traces",
       "pos": [
         450,
         190
@@ -114,8 +114,8 @@
     {
       "id": "cw-apm",
       "type": "cloud",
-      "label": "Limited APM",
-      "sublabel": "Separate X-Ray",
+      "label": "Application Signals",
+      "sublabel": "tracing + service telemetry",
       "pos": [
         450,
         390
@@ -128,7 +128,7 @@
     {
       "id": "os-control",
       "type": "backend",
-      "label": "Full Control",
+      "label": "Configuration control",
       "sublabel": "Prometheus + Grafana",
       "pos": [
         830,
@@ -142,8 +142,8 @@
     {
       "id": "os-cost",
       "type": "backend",
-      "label": "Infrastructure Cost",
-      "sublabel": "High cost predictability",
+      "label": "Total operating cost",
+      "sublabel": "compute + storage + people",
       "pos": [
         830,
         190
@@ -170,8 +170,8 @@
     {
       "id": "os-overhead",
       "type": "backend",
-      "label": "Operational Overhead",
-      "sublabel": "High operational burden",
+      "label": "Operator ownership",
+      "sublabel": "upgrades, backup, availability",
       "pos": [
         830,
         390
@@ -214,5 +214,15 @@
       ]
     }
   ],
-  "connections": []
+  "connections": [],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Compare the same workload",
+      "items": [
+        "Features and integrations depend on enabled products and configuration",
+        "No universal ranking of cost predictability or operating effort"
+      ]
+    }
+  ]
 }

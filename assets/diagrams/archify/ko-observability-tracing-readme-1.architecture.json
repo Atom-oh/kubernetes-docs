@@ -15,7 +15,7 @@
           "label": "서비스 Span"
         },
         "external": {
-          "label": "임계 경로 소요 시간"
+          "label": "관측 시간 창"
         }
       }
     },
@@ -34,14 +34,14 @@
       },
       {
         "id": "critical-path",
-        "label": "임계 경로 소요 시간",
+        "label": "포함 시간",
         "focus": [
           "gateway",
           "order",
           "payment",
           "total"
         ],
-        "note": "루트 Span(API Gateway)에서 Order, Payment로 이어지는 가장 긴 호출 사슬이 Trace의 전체 소요 시간 650ms를 결정한다. 형제 Span(User, Notification)은 병렬로 실행되어 총 시간에 더해지지 않는다."
+        "note": "루트 시작 기준의 예시 시작–종료 시간입니다. 부모 시간이 자식 작업을 포함하므로 포함 시간을 합산하지 않습니다."
       }
     ]
   },
@@ -50,7 +50,7 @@
       "id": "gateway",
       "type": "frontend",
       "label": "API Gateway",
-      "sublabel": "150ms",
+      "sublabel": "0–650 ms",
       "pos": [
         40,
         310
@@ -64,7 +64,7 @@
       "id": "user",
       "type": "backend",
       "label": "User Service",
-      "sublabel": "50ms",
+      "sublabel": "20–70 ms",
       "pos": [
         320,
         110
@@ -78,7 +78,7 @@
       "id": "order",
       "type": "backend",
       "label": "Order Service",
-      "sublabel": "200ms",
+      "sublabel": "100–600 ms",
       "pos": [
         320,
         430
@@ -92,7 +92,7 @@
       "id": "payment",
       "type": "backend",
       "label": "Payment Service",
-      "sublabel": "300ms",
+      "sublabel": "250–550 ms",
       "pos": [
         600,
         330
@@ -106,7 +106,7 @@
       "id": "notification",
       "type": "backend",
       "label": "Notification Service",
-      "sublabel": "100ms",
+      "sublabel": "500–600 ms",
       "pos": [
         600,
         530
@@ -119,8 +119,8 @@
     {
       "id": "total",
       "type": "external",
-      "label": "루트 Span 총 소요 시간",
-      "sublabel": "650ms · 임계 경로",
+      "label": "관측 시간 창",
+      "sublabel": "650 ms = 650 − 0",
       "pos": [
         900,
         310
@@ -190,8 +190,19 @@
       "id": "payment-total",
       "from": "payment",
       "to": "total",
-      "label": "임계 경로",
+      "label": "겹치는 작업",
       "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "시간선 예시",
+      "items": [
+        "루트는 650ms이며 포함 시간의 합은 1,600ms",
+        "부모·자식 중첩과 비동기 의존 관계를 고려",
+        "실제 운영 지연 측정값이 아닌 예시"
+      ]
     }
   ]
 }

@@ -20,7 +20,7 @@
           "adot",
           "xray"
         ],
-        "note": "SDK-instrumented pods send segments to the X-Ray daemon and OTLP data to the ADOT collector; both paths converge on AWS X-Ray."
+        "note": "OpenTelemetry apps use ADOT; legacy X-Ray SDKs use a daemon. Classic exporters call signed HTTPS PutTraceSegments."
       },
       {
         "id": "auto-instr",
@@ -29,7 +29,7 @@
           "others",
           "xray"
         ],
-        "note": "Traces from managed services such as Lambda, API Gateway, SQS, and SNS reach X-Ray through auto instrumentation."
+        "note": "Managed-service support varies; enable supported active tracing and propagate context. SQS/SNS are not blanket automatic span exporters."
       },
       {
         "id": "analysis",
@@ -50,7 +50,7 @@
       "id": "apps",
       "type": "backend",
       "label": "Service A / B / C",
-      "sublabel": "X-Ray SDK instrumented",
+      "sublabel": "OTel or legacy X-Ray SDK",
       "pos": [
         40,
         230
@@ -64,7 +64,7 @@
       "id": "daemon",
       "type": "backend",
       "label": "X-Ray Daemon",
-      "sublabel": "DaemonSet",
+      "sublabel": "legacy; no Fargate DaemonSet",
       "pos": [
         300,
         120
@@ -78,7 +78,7 @@
       "id": "adot",
       "type": "backend",
       "label": "ADOT Collector",
-      "sublabel": "Sidecar / DaemonSet",
+      "sublabel": "configured deployment mode",
       "pos": [
         300,
         340
@@ -185,7 +185,7 @@
       "id": "apps-daemon",
       "from": "apps",
       "to": "daemon",
-      "label": "Segments",
+      "label": "UDP segments",
       "variant": "emphasis"
     },
     {
@@ -198,20 +198,20 @@
       "id": "daemon-xray",
       "from": "daemon",
       "to": "xray",
-      "label": "UDP/TCP",
+      "label": "HTTPS / SigV4",
       "variant": "emphasis"
     },
     {
       "id": "adot-xray",
       "from": "adot",
       "to": "xray",
-      "label": "OTLP"
+      "label": "HTTPS / SigV4"
     },
     {
       "id": "others-xray",
       "from": "others",
       "to": "xray",
-      "label": "Auto instrumentation",
+      "label": "supported integration",
       "variant": "dashed"
     },
     {
@@ -228,6 +228,24 @@
       "id": "xray-insights",
       "from": "xray",
       "to": "insights"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Lifecycle",
+      "items": [
+        "X-Ray SDK/daemon maintenance began 2026-02-25",
+        "Backend service lifecycle is separate"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Protocol boundary",
+      "items": [
+        "Local UDP/TCP is not the transport to the X-Ray service",
+        "Native OTLP HTTP has separate SigV4/Transaction Search requirements"
+      ]
     }
   ]
 }

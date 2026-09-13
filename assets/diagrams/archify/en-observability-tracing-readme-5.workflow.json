@@ -4,19 +4,19 @@
   "meta": {
     "title": "Tail-based Sampling Flow",
     "locale": "en",
-    "output": "public/archmaps/en-observability-tracing-readme-5.html",
+    "output": "en-observability-tracing-readme-5.html",
     "animation": "trace",
     "quality_profile": "showcase",
     "views": [
       {
         "id": "collect-all",
-        "label": "Collect every Span",
+        "label": "Buffer received spans",
         "focus": [
           "receive",
           "collect",
           "analyze"
         ],
-        "note": "Every Span is stored temporarily until the request completes, then judged on the actual result."
+        "note": "The collector waits a bounded decision interval over received spans, not a guaranteed request-completion signal."
       },
       {
         "id": "keep-or-drop",
@@ -26,7 +26,7 @@
           "keep",
           "drop"
         ],
-        "note": "Traces with errors or high latency are kept; normal requests are dropped."
+        "note": "Policies use available data: error or slow traces may be retained, with probabilistic sampling of other traces."
       }
     ],
     "legend": {
@@ -56,7 +56,7 @@
     },
     {
       "id": "discard",
-      "label": "Normal requests dropped",
+      "label": "Not selected",
       "variant": "exception"
     }
   ],
@@ -91,8 +91,8 @@
       "lane": "trace",
       "col": 0,
       "type": "frontend",
-      "label": "Request received",
-      "sublabel": "request starts",
+      "label": "Spans received",
+      "sublabel": "after upstream sampling",
       "width": 168
     },
     {
@@ -100,8 +100,8 @@
       "lane": "trace",
       "col": 1,
       "type": "messagebus",
-      "label": "Collect every Span",
-      "sublabel": "buffered in memory",
+      "label": "Bounded buffer",
+      "sublabel": "trace-ID affinity needed",
       "tag": "decision_wait",
       "width": 168
     },
@@ -112,7 +112,7 @@
       "type": "security",
       "label": "Analyze",
       "sublabel": "error? latency?",
-      "tag": "after completion",
+      "tag": "decision_wait",
       "width": 168
     },
     {
@@ -121,7 +121,7 @@
       "col": 3,
       "type": "database",
       "label": "Keep",
-      "sublabel": "trace stored",
+      "sublabel": "export selected data",
       "width": 168
     },
     {
@@ -143,20 +143,20 @@
     {
       "from": "collect",
       "to": "analyze",
-      "label": "request complete",
+      "label": "decision interval",
       "role": "main"
     },
     {
       "from": "analyze",
       "to": "keep",
-      "label": "error or latency",
+      "label": "policy selected",
       "variant": "emphasis",
       "role": "main"
     },
     {
       "from": "analyze",
       "to": "drop",
-      "label": "normal",
+      "label": "not selected",
       "variant": "dashed",
       "role": "branch"
     }
@@ -164,20 +164,18 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "Keep policies (OTEL Collector tail_sampling)",
+      "title": "Example policy",
       "items": [
-        "Collect every request whose status_code is ERROR",
-        "Collect slow requests over latency threshold_ms 1000",
-        "Sample the rest probabilistically at 10%"
+        "Evaluate received ERROR spans or latency above 1,000 ms",
+        "Other traces may be sampled at 10%; not every normal trace is dropped"
       ]
     },
     {
       "dot": "rose",
-      "title": "Trade-offs",
+      "title": "Limits",
       "items": [
-        "Never misses important requests (errors, latency)",
-        "Higher memory usage: every Span must be stored temporarily",
-        "More complex to implement than head-based"
+        "Upstream sampling, late spans, overflow or failure can lose important data",
+        "Scaling needs trace affinity, capacity and failure-state planning"
       ]
     }
   ]

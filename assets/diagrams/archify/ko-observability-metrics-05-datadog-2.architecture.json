@@ -21,7 +21,7 @@
           "m2",
           "m3"
         ],
-        "note": "values.yaml의 ignoreAutoConfig, dogstatsd, containerExcludeMetrics로 수집 메트릭을 줄인다."
+        "note": "메트릭 선별과 태그 조합 제한으로 사용량을 관리합니다. DogStatsD nonLocalTraffic은 수신 범위이며 메트릭 할당량이 아닙니다."
       },
       {
         "id": "view-log",
@@ -45,7 +45,7 @@
           "a2",
           "a3"
         ],
-        "note": "DD_TRACE_SAMPLE_RATE 0.1(10%)과 DD_TRACE_RATE_LIMIT 100으로 트레이스 양을 제한한다."
+        "note": "샘플링·속도 제한의 범위는 SDK/Agent에 따라 다르며 계정 전체 비용 상한이 아닙니다."
       }
     ]
   },
@@ -53,7 +53,7 @@
     {
       "id": "root",
       "type": "cloud",
-      "label": "Datadog 비용 최적화",
+      "label": "제품별 사용량 측정",
       "pos": [
         570,
         30
@@ -62,12 +62,12 @@
         220,
         60
       ],
-      "sublabel": "예시: 100 노드 EKS ~$3,350/월"
+      "sublabel": "고정 월 비용 추정 아님"
     },
     {
       "id": "metric",
       "type": "backend",
-      "label": "메트릭 최적화",
+      "label": "메트릭",
       "pos": [
         30,
         250
@@ -76,12 +76,12 @@
         160,
         56
       ],
-      "sublabel": "인프라 $15/호스트/월"
+      "sublabel": "시계열·태그·수집"
     },
     {
       "id": "log",
       "type": "backend",
-      "label": "로그 최적화",
+      "label": "로그",
       "pos": [
         480,
         250
@@ -90,12 +90,12 @@
         160,
         56
       ],
-      "sublabel": "$0.10/GB"
+      "sublabel": "수집·인덱스·보존"
     },
     {
       "id": "apm",
       "type": "backend",
-      "label": "APM 최적화",
+      "label": "APM",
       "pos": [
         930,
         250
@@ -104,12 +104,12 @@
         160,
         56
       ],
-      "sublabel": "$31/호스트/월"
+      "sublabel": "과금 호스트·스팬"
     },
     {
       "id": "m1",
       "type": "backend",
-      "label": "커스텀 메트릭 제한",
+      "label": "메트릭 선별",
       "pos": [
         230,
         170
@@ -118,12 +118,12 @@
         200,
         50
       ],
-      "sublabel": "dogstatsd.nonLocalTraffic"
+      "sublabel": "체크 출력 검토"
     },
     {
       "id": "m2",
       "type": "backend",
-      "label": "태그 카디널리티 관리",
+      "label": "태그 조합 제한",
       "pos": [
         230,
         250
@@ -132,7 +132,7 @@
         200,
         50
       ],
-      "sublabel": "containerExcludeMetrics"
+      "sublabel": "무제한 ID 태그 제외"
     },
     {
       "id": "m3",
@@ -190,7 +190,7 @@
     {
       "id": "a1",
       "type": "backend",
-      "label": "샘플링 레이트 조정",
+      "label": "샘플링 검토",
       "pos": [
         1130,
         170
@@ -199,7 +199,7 @@
         200,
         50
       ],
-      "sublabel": "DD_TRACE_SAMPLE_RATE"
+      "sublabel": "SDK / Agent 동작"
     },
     {
       "id": "a2",
@@ -332,6 +332,17 @@
       "id": "apm-a3",
       "from": "apm",
       "to": "a3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "변경 전후 측정",
+      "items": [
+        "컨테이너 제외는 일반적인 태그 카디널리티 제한이 아님",
+        "인덱스 제외가 이미 수집한 로그 사용량까지 줄이지 않을 수 있음",
+        "보존·인덱스 스팬·컴퓨팅·운영 비용을 함께 계산"
+      ]
     }
   ]
 }

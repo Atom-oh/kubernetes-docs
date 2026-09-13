@@ -2,342 +2,246 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Grafana Tempo 아키텍처",
-    "output": "ko-observability-tracing-01-tempo-0.html",
+    "title": "Tempo 3 분산 아키텍처",
     "quality_profile": "showcase",
     "animation": "trace",
-    "views": [
-      {
-        "id": "write-path",
-        "label": "쓰기 경로",
-        "focus": [
-          "app",
-          "otel",
-          "dist",
-          "ing",
-          "s3"
-        ],
-        "note": "애플리케이션의 트레이스가 OTEL Collector를 거쳐 Distributor→Ingester로 들어가 S3에 블록으로 저장된다."
-      },
-      {
-        "id": "read-path",
-        "label": "조회 경로",
-        "focus": [
-          "grafana",
-          "qfront",
-          "querier",
-          "s3",
-          "cache"
-        ],
-        "note": "Grafana의 TraceQL 조회를 Query Frontend가 분할하고 Querier가 S3와 캐시에서 검색한다."
-      },
-      {
-        "id": "background",
-        "label": "메트릭·압축",
-        "focus": [
-          "ing",
-          "metrics",
-          "grafana",
-          "compact",
-          "s3"
-        ],
-        "note": "Metrics Generator는 트레이스에서 RED 메트릭을 만들고, Compactor는 저장된 블록을 압축하고 보존 정책을 적용한다."
-      }
-    ]
+    "output": "ko-observability-tracing-01-tempo-0.html"
   },
   "components": [
     {
       "id": "app",
       "type": "external",
-      "label": "애플리케이션",
-      "sublabel": "트레이스 소스",
+      "label": "앱 / Collector",
+      "sublabel": "OTLP",
       "pos": [
         40,
-        90
+        50
       ],
       "size": [
-        120,
-        60
-      ]
-    },
-    {
-      "id": "otel",
-      "type": "backend",
-      "label": "OTEL Collector",
-      "sublabel": "수집·전달",
-      "pos": [
-        270,
-        90
-      ],
-      "size": [
-        140,
-        60
+        210,
+        70
       ]
     },
     {
       "id": "dist",
       "type": "backend",
       "label": "Distributor",
-      "sublabel": "수신·유효성 검사·해싱",
+      "sublabel": "검증 + 커밋",
       "pos": [
-        490,
-        90
+        300,
+        50
       ],
       "size": [
-        140,
-        60
+        210,
+        70
       ]
     },
     {
-      "id": "ing",
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka",
+      "sublabel": "수집 큐",
+      "pos": [
+        560,
+        50
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "live",
       "type": "backend",
-      "label": "Ingester",
-      "sublabel": "버퍼링·블록 생성",
+      "label": "Live-store",
+      "sublabel": "최근 추적",
       "pos": [
-        710,
-        90
+        300,
+        250
       ],
       "size": [
-        140,
-        60
+        210,
+        70
       ]
     },
     {
-      "id": "metrics",
+      "id": "builder",
       "type": "backend",
-      "label": "Metrics Generator",
-      "sublabel": "RED 메트릭 생성",
+      "label": "Block-builder",
+      "sublabel": "Parquet",
       "pos": [
-        490,
-        230
+        560,
+        250
       ],
       "size": [
-        140,
-        60
+        210,
+        70
       ]
     },
     {
-      "id": "compact",
-      "type": "backend",
-      "label": "Compactor",
-      "sublabel": "블록 압축·보존 정책",
-      "pos": [
-        930,
-        230
-      ],
-      "size": [
-        140,
-        60
-      ]
-    },
-    {
-      "id": "qfront",
-      "type": "backend",
-      "label": "Query Frontend",
-      "sublabel": "쿼리 분할·캐싱·대기열",
-      "pos": [
-        710,
-        370
-      ],
-      "size": [
-        140,
-        60
-      ]
-    },
-    {
-      "id": "querier",
-      "type": "backend",
-      "label": "Querier",
-      "sublabel": "저장소에서 트레이스 검색",
-      "pos": [
-        930,
-        370
-      ],
-      "size": [
-        140,
-        60
-      ]
-    },
-    {
-      "id": "s3",
+      "id": "storage",
       "type": "cloud",
-      "label": "S3 / Object Storage",
-      "sublabel": "트레이스 블록",
+      "label": "오브젝트 저장소",
+      "sublabel": "추적 블록",
       "pos": [
-        1150,
-        230
+        820,
+        250
       ],
       "size": [
-        150,
-        60
+        210,
+        70
       ]
     },
     {
-      "id": "cache",
-      "type": "database",
-      "label": "Memcached / Redis",
-      "sublabel": "조회 캐시",
+      "id": "query",
+      "type": "backend",
+      "label": "Frontend / Querier",
+      "sublabel": "TraceQL",
       "pos": [
-        1150,
-        510
+        40,
+        440
       ],
       "size": [
-        150,
-        60
+        210,
+        70
       ]
     },
     {
       "id": "grafana",
       "type": "frontend",
       "label": "Grafana",
-      "sublabel": "TraceQL 조회·대시보드",
+      "sublabel": "조회 클라이언트",
       "pos": [
-        710,
-        510
+        40,
+        250
       ],
       "size": [
-        150,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "데이터 수신",
-      "wraps": [
-        "app",
-        "otel"
+        210,
+        70
       ]
     },
     {
-      "kind": "region",
-      "label": "Tempo 클러스터",
-      "wraps": [
-        "dist",
-        "ing",
-        "metrics",
-        "compact",
-        "qfront",
-        "querier"
+      "id": "metrics",
+      "type": "backend",
+      "label": "Metrics-generator",
+      "sublabel": "선택적 소비자",
+      "pos": [
+        820,
+        50
+      ],
+      "size": [
+        210,
+        70
       ]
     },
     {
-      "kind": "region",
-      "label": "스토리지",
-      "wraps": [
-        "s3",
-        "cache"
+      "id": "prom",
+      "type": "database",
+      "label": "메트릭 백엔드",
+      "sublabel": "remote-write 대상",
+      "pos": [
+        1080,
+        50
+      ],
+      "size": [
+        210,
+        70
       ]
     },
     {
-      "kind": "region",
-      "label": "시각화",
-      "wraps": [
-        "grafana"
+      "id": "backend",
+      "type": "backend",
+      "label": "Scheduler / Worker",
+      "sublabel": "컴팩션 + 보존",
+      "pos": [
+        1080,
+        250
+      ],
+      "size": [
+        210,
+        70
       ]
     }
   ],
   "connections": [
     {
-      "id": "app-otel",
+      "id": "app-dist",
       "from": "app",
-      "to": "otel",
-      "label": "OTLP · Jaeger · Zipkin",
-      "variant": "emphasis",
-      "labelDy": -24
-    },
-    {
-      "id": "otel-dist",
-      "from": "otel",
       "to": "dist",
-      "label": "OTLP",
       "variant": "emphasis"
     },
     {
-      "id": "dist-ing",
+      "id": "dist-kafka",
       "from": "dist",
-      "to": "ing",
-      "label": "해시 기반 분배",
+      "to": "kafka",
       "variant": "emphasis"
     },
     {
-      "id": "ing-s3",
-      "from": "ing",
-      "to": "s3",
-      "label": "블록 저장",
-      "variant": "emphasis"
+      "id": "kafka-live",
+      "from": "kafka",
+      "to": "live"
     },
     {
-      "id": "ing-metrics",
-      "from": "ing",
-      "to": "metrics",
-      "label": "메트릭 생성"
+      "id": "kafka-builder",
+      "from": "kafka",
+      "to": "builder"
     },
     {
-      "id": "metrics-grafana",
+      "id": "builder-storage",
+      "from": "builder",
+      "to": "storage"
+    },
+    {
+      "id": "kafka-metrics",
+      "from": "kafka",
+      "to": "metrics"
+    },
+    {
+      "id": "metrics-prom",
       "from": "metrics",
-      "to": "grafana",
-      "label": "RED 메트릭"
+      "to": "prom",
+      "label": "remote write",
+      "labelAt": [
+        1055,
+        134
+      ]
     },
     {
-      "id": "grafana-qfront",
+      "id": "grafana-query",
       "from": "grafana",
-      "to": "qfront",
-      "label": "TraceQL",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "to": "query"
     },
     {
-      "id": "qfront-querier",
-      "from": "qfront",
-      "to": "querier",
-      "label": "쿼리 분할"
+      "id": "query-live",
+      "from": "query",
+      "to": "live"
     },
     {
-      "id": "querier-s3",
-      "from": "querier",
-      "to": "s3",
-      "label": "검색"
+      "id": "query-storage",
+      "from": "query",
+      "to": "storage"
     },
     {
-      "id": "querier-cache",
-      "from": "querier",
-      "to": "cache",
-      "label": "캐시"
-    },
-    {
-      "id": "compact-s3",
-      "from": "compact",
-      "to": "s3",
-      "label": "압축 / 최적화",
-      "variant": "dashed",
-      "labelDy": 16
+      "id": "backend-storage",
+      "from": "backend",
+      "to": "storage"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "쓰기 경로",
+      "title": "모드 구분",
       "items": [
-        "Distributor: 추적 데이터 수신, 유효성 검사, 해싱 (수평 확장)",
-        "Ingester: 메모리 버퍼링 후 블록을 생성해 S3에 저장 (복제로 수평 확장)"
-      ]
-    },
-    {
-      "dot": "violet",
-      "title": "조회 경로",
-      "items": [
-        "Query Frontend: 쿼리 분할, 캐싱, 대기열 관리 (수평 확장)",
-        "Querier: 저장소와 캐시에서 트레이스 검색 (수평 확장)"
+        "Tempo 3 마이크로서비스는 Kafka 필요, 모놀리식은 불필요",
+        "기존 Tempo 2 ingester/compactor 설치 구조를 대체"
       ]
     },
     {
       "dot": "amber",
-      "title": "백그라운드 컴포넌트",
+      "title": "별도 의존성",
       "items": [
-        "Metrics Generator: 추적에서 RED 메트릭 생성 (수평 확장)",
-        "Compactor: 블록 압축, 보존 정책 적용 (단일 인스턴스)"
+        "Kafka 전송·내구성·광고된 엔드포인트 검증 필요",
+        "Grafana는 메트릭 백엔드를 조회하며 remote-write 저장소가 아님"
       ]
     }
   ]

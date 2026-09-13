@@ -16,7 +16,7 @@
           "label": "Service span"
         },
         "external": {
-          "label": "Critical-path duration"
+          "label": "Observed time window"
         }
       }
     },
@@ -35,14 +35,14 @@
       },
       {
         "id": "critical-path",
-        "label": "Critical-path duration",
+        "label": "Inclusive timing",
         "focus": [
           "gateway",
           "order",
           "payment",
           "total"
         ],
-        "note": "The longest chain — API Gateway → Order → Payment — sets the 650ms trace duration; sibling spans run in parallel and add nothing."
+        "note": "Times are illustrative start–end intervals relative to root start. Parent durations include child work; do not sum inclusive spans."
       }
     ]
   },
@@ -51,7 +51,7 @@
       "id": "gateway",
       "type": "frontend",
       "label": "API Gateway",
-      "sublabel": "150ms",
+      "sublabel": "0–650 ms",
       "pos": [
         40,
         310
@@ -65,7 +65,7 @@
       "id": "user",
       "type": "backend",
       "label": "User Service",
-      "sublabel": "50ms",
+      "sublabel": "20–70 ms",
       "pos": [
         320,
         110
@@ -79,7 +79,7 @@
       "id": "order",
       "type": "backend",
       "label": "Order Service",
-      "sublabel": "200ms",
+      "sublabel": "100–600 ms",
       "pos": [
         320,
         430
@@ -93,7 +93,7 @@
       "id": "payment",
       "type": "backend",
       "label": "Payment Service",
-      "sublabel": "300ms",
+      "sublabel": "250–550 ms",
       "pos": [
         600,
         330
@@ -107,7 +107,7 @@
       "id": "notification",
       "type": "backend",
       "label": "Notification Service",
-      "sublabel": "100ms",
+      "sublabel": "500–600 ms",
       "pos": [
         600,
         530
@@ -120,8 +120,8 @@
     {
       "id": "total",
       "type": "external",
-      "label": "Root span duration",
-      "sublabel": "650ms · critical path",
+      "label": "Observed window",
+      "sublabel": "650 ms = 650 − 0",
       "pos": [
         900,
         310
@@ -191,8 +191,19 @@
       "id": "payment-total",
       "from": "payment",
       "to": "total",
-      "label": "critical path",
+      "label": "overlapping work",
       "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Illustrative timeline",
+      "items": [
+        "The root lasts 650 ms; sum of inclusive spans is 1,600 ms",
+        "Parent/child overlap and asynchronous dependencies matter",
+        "These are examples, not measured production latency"
+      ]
     }
   ]
 }
