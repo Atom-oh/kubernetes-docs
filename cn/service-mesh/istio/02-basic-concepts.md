@@ -15,6 +15,8 @@
 9. [Namespace 与服务网格](02-basic-concepts.md#namespaces-and-service-mesh)
 10. [后续步骤](02-basic-concepts.md#next-steps)
 
+<span id="background-and-history"></span>
+
 ## 背景与历史
 
 ### 服务网格的诞生
@@ -259,6 +261,8 @@ Mixer completely removed (functionality moved to Envoy)
 * 简化运维（管理单一进程）
 * 提高资源效率（降低内存、CPU 使用量）
 
+<span id="why-istio"></span>
+
 ## 为什么选择 Istio？
 
 Kubernetes 提供容器编排功能，但在管理微服务之间的复杂通信方面存在局限。Istio 是用于解决这些问题的服务网格解决方案。
@@ -483,6 +487,8 @@ spec:
 * 需要高级功能和灵活性 → **Istio**
 * 需要简单轻量的网格 → **Linkerd**
 
+<span id="deployment-modes-sidecar-vs-ambient"></span>
+
 ## 部署模式：Sidecar 与 Ambient
 
 Istio 支持两种部署模式：**Sidecar Mode** 和 **Ambient Mode**。
@@ -600,6 +606,8 @@ flowchart TB
 
 **有关详细信息**，请参阅 [进阶：Ambient Mode](advanced/01-ambient-mode.md)文档。
 
+<span id="istio-architecture"></span>
+
 ## Istio 架构
 
 Istio 由两个主要组件组成：**Control Plane** 和 **Data Plane**。
@@ -610,6 +618,8 @@ Istio 由两个主要组件组成：**Control Plane** 和 **Data Plane**。
 | **Data Plane (Envoy Proxy)** | 作为 sidecar 部署在每个 Pod 中，处理实际流量（路由、mTLS、指标）                             |
 
 **有关详细的架构结构、内部工作原理和流量拦截机制**，请参阅[架构文档](03-architecture.md)。
+
+<span id="core-resources"></span>
 
 ## 核心资源
 
@@ -795,6 +805,8 @@ spec:
         methods: ["GET"]
 ```
 
+<span id="traffic-management-concepts"></span>
+
 ## 流量管理概念
 
 ### 流量路由流程
@@ -866,6 +878,8 @@ spec:
       maxEjectionPercent: 50
 ```
 
+<span id="security-concepts"></span>
+
 ## 安全概念
 
 ### mTLS（Mutual TLS）
@@ -934,6 +948,8 @@ spec:
         notRequestPrincipals: ["*"]
 ```
 
+<span id="observability-concepts"></span>
+
 ## 可观测性概念
 
 Istio 自动生成指标、日志和追踪。
@@ -997,6 +1013,8 @@ spec:
         zipkin:
           address: jaeger-collector.istio-system:9411
 ```
+
+<span id="namespaces-and-service-mesh"></span>
 
 ## Namespace 与服务网格
 
@@ -1433,6 +1451,8 @@ flowchart TB
 * **Virtual Machine**：传统应用、数据库、混合环境
 
 所有 Workload 都可获得一致的安全性、流量管理和可观测性功能。
+
+<span id="next-steps"></span>
 
 ## 后续步骤
 

@@ -21,6 +21,8 @@ Flagger es un operador de entrega progresiva para Kubernetes que automatiza la p
 
 ---
 
+<span id="overview-and-learning-objectives"></span>
+
 ## Descripción general y objetivos de aprendizaje
 
 ### Objetivos de aprendizaje
@@ -117,6 +119,8 @@ graph TB
 
 ---
 
+<span id="flagger-architecture"></span>
+
 ## Arquitectura de Flagger
 
 ### Bucle de control
@@ -199,6 +203,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="eks-installation-and-configuration"></span>
 
 ## Instalación y configuración de EKS
 
@@ -427,6 +433,8 @@ spec:
 ```
 
 ---
+
+<span id="canary-deployment-strategy"></span>
 
 ## Estrategia de despliegue Canary
 
@@ -707,6 +715,8 @@ kubectl set image deployment/web-app web-app=myregistry/web-app:v2.0.0 -n produc
 
 ---
 
+<span id="blue-green-deployment-strategy"></span>
+
 ## Estrategia de despliegue Blue-Green
 
 ### Blue-Green Canary CRD
@@ -874,6 +884,8 @@ spec:
 
 ---
 
+<span id="ab-testing-strategy"></span>
+
 ## Estrategia de pruebas A/B
 
 ### Enrutamiento basado en encabezados y cookies
@@ -1007,6 +1019,8 @@ done
 ```
 
 ---
+
+<span id="custom-metrics-and-webhooks"></span>
 
 ## Métricas personalizadas y webhooks
 
@@ -1309,6 +1323,8 @@ webhooks:
 ```
 
 ---
+
+<span id="gitops-integration-flux--flagger"></span>
 
 ## Integración de GitOps (Flux + Flagger)
 
@@ -1648,6 +1664,8 @@ Cuando se envía una nueva imagen (por ejemplo, `v2.0.0`) a ECR:
 
 ---
 
+<span id="observability-and-alerting"></span>
+
 ## Observabilidad y alertas
 
 ### Panel de Grafana (métricas de Flagger)
@@ -1883,6 +1901,8 @@ spec:
 
 ---
 
+<span id="production-best-practices"></span>
+
 ## Prácticas recomendadas para producción
 
 ### Estrategia de adopción incremental
@@ -2099,6 +2119,8 @@ spec:
 8. **Supervise la salud del controlador Flagger.** Configure alertas para reinicios de pod de Flagger, uso elevado de memoria y errores de reconciliación.
 
 ---
+
+<span id="references"></span>
 
 ## Referencias
 

@@ -19,6 +19,8 @@ DestinationRule は、VirtualService がトラフィックを宛先にルーテ�
 9. [ベストプラクティス](#best-practices)
 10. [トラブルシューティング](#troubleshooting)
 
+<span id="what-is-destinationrule"></span>
+
 ## DestinationRule とは？
 
 DestinationRule は**ルーティング後のトラフィックポリシー**を定義します。VirtualService がトラフィックの送信先（「どこに」）を決定するなら、DestinationRule はその処理方法（「どのように」）を決定します。
@@ -68,6 +70,8 @@ flowchart LR
 | **Connection Pool** | コネクションプールの設定 | 最大コネクション数、Timeout |
 | **Circuit Breaker** | 障害の隔離 | Outlier Detection |
 | **TLS 設定** | 暗号化ポリシー | mTLS, SIMPLE TLS |
+
+<span id="virtualservice-vs-destinationrule"></span>
 
 ## VirtualService と DestinationRule
 
@@ -165,6 +169,8 @@ spec:
       loadBalancer:
         simple: ROUND_ROBIN
 ```
+
+<span id="subset-concept"></span>
 
 ## Subset の概念
 
@@ -297,6 +303,8 @@ spec:
       env: staging
 ```
 
+<span id="basic-structure"></span>
+
 ## 基本構造
 
 ### 必須フィールド
@@ -343,6 +351,8 @@ spec:
 spec:
   host: api.external.com
 ```
+
+<span id="defining-subsets"></span>
 
 ## Subset の定義
 
@@ -414,6 +424,8 @@ spec:
       region: us-east
       tier: standard
 ```
+
+<span id="traffic-policy-overview"></span>
 
 ## Traffic Policy の概要
 
@@ -516,6 +528,8 @@ trafficPolicy:
     tls:
       mode: SIMPLE
 ```
+
+<span id="using-with-virtualservice"></span>
 
 ## VirtualService との使用
 
@@ -650,6 +664,8 @@ spec:
         host: api-service
         subset: v1
 ```
+
+<span id="practical-examples"></span>
 
 ## 実践例
 
@@ -861,6 +877,8 @@ spec:
           maxConnections: 100  # More for replicas
 ```
 
+<span id="best-practices"></span>
+
 ## ベストプラクティス
 
 ### 1. Subset の命名規則
@@ -991,6 +1009,8 @@ spec:
   host: payment-service
   # ...
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

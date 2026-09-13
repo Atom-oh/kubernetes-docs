@@ -10,6 +10,8 @@
 4. [监控与可观测性](#monitoring-and-observability)
 5. [生产环境检查清单](#production-checklist)
 
+<span id="performance-optimization"></span>
+
 ## 性能优化
 
 ### 1. Control Plane 资源优化
@@ -139,6 +141,8 @@ spec:
 - 降低内存使用量
 - 加快配置推送
 
+<span id="security-hardening"></span>
+
 ## 安全加固
 
 ### 1. 应用严格 mTLS
@@ -250,6 +254,8 @@ spec:
       values: ["https://auth.example.com"]
 ```
 
+<span id="operations-guide"></span>
+
 ## 运维指南
 
 ### 1. 部署策略
@@ -316,6 +322,8 @@ spec:
 - Authorization Policy
 - 限流
 
+<span id="upgrade-strategy"></span>
+
 ### 2. 升级策略
 
 #### Canary 升级
@@ -371,6 +379,8 @@ kubectl get vs,dr,gw,se,pa,ra,ap -A -o yaml > istio-config-backup.yaml
 kubectl apply -f istio-operator-backup.yaml
 kubectl apply -f istio-config-backup.yaml
 ```
+
+<span id="monitoring-and-observability"></span>
 
 ## 监控与可观测性
 
@@ -459,6 +469,8 @@ groups:
     annotations:
       summary: "Pilot is not ready"
 ```
+
+<span id="production-checklist"></span>
 
 ## 生产环境检查清单
 
@@ -559,6 +571,8 @@ groups:
    Don't deploy to production without checking metrics
    Do require Golden Signals monitoring
    ```
+
+<span id="cost-optimization"></span>
 
 ## 成本优化
 

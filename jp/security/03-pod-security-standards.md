@@ -22,6 +22,8 @@ PSS はポリシーを定義し、PSA はそれを適用する組み込みの ad
 
 ---
 
+<span id="evolution-from-psp-to-pss"></span>
+
 ## PSP から PSS への進化
 
 ### PodSecurityPolicy (PSP) の歴史
@@ -96,6 +98,8 @@ kubectl --context "$PSS_CONTEXT" get --raw /metrics
 実際の admission パスをテストするには、以下の positive/negative Pod dry-run controls を使用してください。Deployment の dry-run が成功しただけでコンプライアンスを推測してはいけません。
 
 ---
+
+<span id="security-levels"></span>
 
 ## セキュリティレベル
 
@@ -265,6 +269,8 @@ spec:
 
 ---
 
+<span id="enforcement-modes"></span>
+
 ## 適用モード
 
 PSA は 3 つの適用モードを提供します。これらのモードは、個別にも組み合わせても使用できます。
@@ -417,6 +423,8 @@ metadata:
 
 ---
 
+<span id="namespace-level-configuration"></span>
+
 ## Namespace レベルの設定
 
 ### 基本的なラベル設定
@@ -508,6 +516,8 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 ```
 
 ---
+
+<span id="migration-from-psp-to-pss"></span>
 
 ## PSP から PSS への移行
 
@@ -697,6 +707,8 @@ subprocess.run(base + [
 
 ---
 
+<span id="eks-defaults-and-configuration"></span>
+
 ## EKS のデフォルトと設定
 
 ### EKS の PSA デフォルト設定
@@ -777,6 +789,8 @@ resource "kubernetes_namespace_v1" "app" {
 ```
 
 ---
+
+<span id="security-profile-details"></span>
 
 ## セキュリティプロファイルの詳細
 
@@ -1009,6 +1023,8 @@ data:
 
 ---
 
+<span id="exemptions-configuration"></span>
+
 ## 例外設定
 
 ### クラスターレベルの例外設定
@@ -1075,6 +1091,8 @@ Kyverno は PSA による拒否を許可へ変更できません。host agent �
 レビュー済みのポリシー API とバージョン/非推奨の制限については、[Kyverno policy management](./01-kyverno-policy-management.md) を参照してください。小文字の `validationFailureAction: enforce` を含む legacy `ClusterPolicy` はコピーしないでください。有効な値ではなく、ClusterPolicy は Kyverno 1.19 で非推奨です。置き換えは通常の workload と例外 workload の両方でテストする必要があります。
 
 ---
+
+<span id="best-practices-for-gradual-adoption"></span>
 
 ## 段階的導入のベストプラクティス
 

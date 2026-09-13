@@ -22,6 +22,8 @@ Los feature flags son una técnica fundamental para la entrega progresiva modern
 
 ---
 
+<span id="overview-and-learning-objectives"></span>
+
 ## Descripción general y objetivos de aprendizaje
 
 ### Objetivos de aprendizaje
@@ -113,6 +115,8 @@ Beneficios principales de OpenFeature:
 - **Compatibilidad multilenguaje**: SDK oficiales para Go, Java, Python, Node.js, .NET, PHP y más
 
 ---
+
+<span id="openfeature-architecture"></span>
 
 ## Arquitectura de OpenFeature
 
@@ -235,6 +239,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="flagd-on-kubernetes"></span>
 
 ## flagd en Kubernetes
 
@@ -621,6 +627,8 @@ Al actualizar un FeatureFlag CR, el operator detecta el cambio mediante la API w
 
 ---
 
+<span id="application-integration"></span>
+
 ## Integración de aplicaciones
 
 ### SDK de Go
@@ -981,6 +989,9 @@ targeting:
 
 ---
 
+<span id="canary-release-and-feature-flag-combination"></span>
+<span id="combinación-de-lanzamiento-canary-y-feature-flags"></span>
+
 ## Combinación de lanzamiento canary y feature flags
 
 Los feature flags y los lanzamientos canary son estrategias complementarias. Los lanzamientos canary controlan el tráfico en el nivel de infraestructura (qué versión del pod sirve una solicitud), mientras que los feature flags controlan el comportamiento en el nivel de aplicación (qué ruta de código se ejecuta). Combinar ambos proporciona el máximo nivel de seguridad para los lanzamientos.
@@ -1193,6 +1204,8 @@ spec:
 
 ---
 
+<span id="gitops-integration"></span>
+
 ## Integración de GitOps
 
 ### Feature flags como código
@@ -1401,6 +1414,8 @@ spec:
 
 ---
 
+<span id="observability"></span>
+
 ## Observabilidad
 
 ### Métricas de evaluación de flags (Prometheus)
@@ -1544,6 +1559,8 @@ spec:
 ```
 
 ---
+
+<span id="production-best-practices"></span>
 
 ## Mejores prácticas de producción
 
@@ -1768,6 +1785,8 @@ resources:
 ```
 
 ---
+
+<span id="references"></span>
 
 ## Referencias
 

@@ -367,7 +367,7 @@
 ### アーキテクチャの詳細
 - **Felix**: [Part 2: Architecture](02-architecture.md) を参照
 - **BGP Configuration**: [Part 4: BGP Deep Dive](04-bgp-deep-dive.md) を参照
-- **Typha Scaling**: [Part 7: Advanced Topics](07-advanced-topics.md#typha-sizing-formula) を参照
+- **Typha Scaling**: [Part 7: Advanced Topics (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/07-advanced-topics#operator-typha-scaling) を参照
 
 ### ネットワークポリシー
 - **Kubernetes NetworkPolicy**: [Part 5: Network Policy](05-network-policy.md) を参照
@@ -375,13 +375,13 @@
 - **Tier-Based Policies**: [Part 5: Network Policy](05-network-policy.md) を参照
 
 ### 運用
-- **Installation Methods**: [Part 9: Operations](09-operations.md#installation-guide) を参照
-- **calicoctl Commands**: [Part 9: Operations](09-operations.md#calicoctl-command-reference) を参照
-- **Troubleshooting**: [Part 9: Operations](09-operations.md#troubleshooting) を参照
+- **Installation Methods**: [Part 9: Operations (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/09-operations#installation-guide) を参照
+- **calicoctl Commands**: [Part 9: Operations (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/09-operations#calicoctl-command-reference) を参照
+- **Troubleshooting**: [Part 9: Operations (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/09-operations#log-analysis-and-troubleshooting) を参照
 
 ### EKS 統合
-- **VPC CNI + Calico**: [Part 8: EKS Integration](08-eks-integration.md#vpc-cni--calico-architecture) を参照
-- **Installation Methods**: [Part 8: EKS Integration](08-eks-integration.md#installation-methods-comparison) を参照
+- **VPC CNI + Calico**: [Part 8: EKS Integration (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/08-eks-integration#vpc-cni-calico-architecture) を参照
+- **Installation Methods**: [Part 8: EKS Integration (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/08-eks-integration#choose-a-policy-engine-and-installation-method) を参照
 
 ---
 

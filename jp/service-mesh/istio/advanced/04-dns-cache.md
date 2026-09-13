@@ -16,6 +16,8 @@ Istio の DNS 管理機能を通じて、外部 Service へのアクセス性能
 7. [トラブルシューティング](#troubleshooting)
 8. [ベストプラクティス](#best-practices)
 
+<span id="dns-proxy-overview"></span>
+
 ## DNS Proxy の概要
 
 Istio DNS Proxy は、Envoy が DNS サーバーとして機能し、アプリケーションの DNS リクエストをインターセプトして処理する機能です。
@@ -85,6 +87,8 @@ flowchart TB
     class API,CoreDNS external;
 ```
 
+<span id="dns-proxy-vs-dns-caching"></span>
+
 ## DNS Proxy と DNS キャッシュの比較
 
 この 2 つの機能は、目的と動作が異なります。
@@ -135,6 +139,8 @@ flowchart LR
     class DNS_Proxy,DNS_Cache envoy;
     class SE,CoreDNS external;
 ```
+
+<span id="dns-proxy-configuration"></span>
 
 ## DNS Proxy の設定
 
@@ -231,6 +237,8 @@ pkts bytes target     prot opt in     out     source               destination
    0     0 REDIRECT   udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:53 redir ports 15053
 ```
 
+<span id="serviceentry-integration"></span>
+
 ## ServiceEntry の統合
 
 DNS Proxy は ServiceEntry と緊密に統合して動作します。
@@ -306,6 +314,8 @@ spec:
   - address: 203.0.113.11
   - address: 203.0.113.12
 ```
+
+<span id="dns-caching-configuration"></span>
 
 ## DNS キャッシュの設定
 
@@ -394,6 +404,8 @@ spec:
         dns_lookup_family: V4_ONLY
 ```
 
+<span id="automatic-address-allocation"></span>
+
 ## 自動アドレス割り当て
 
 DNS Proxy は、ServiceEntry に登録された Service に仮想 IP を自動的に割り当てます。
@@ -473,6 +485,8 @@ istioctl proxy-config clusters <pod-name> -n <namespace> --fqdn api.example.com 
   }
 }
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 
@@ -589,6 +603,8 @@ kubectl cp <pod-name>:/tmp/dns.pcap ./dns.pcap -c istio-proxy
 # Analyze with Wireshark
 wireshark dns.pcap
 ```
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 

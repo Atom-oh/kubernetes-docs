@@ -17,6 +17,8 @@
 - [Prácticas recomendadas](#best-practices)
 - [Solución de problemas](#troubleshooting)
 
+<span id="introduction"></span>
+
 ## Introducción
 
 Grafana Mimir es un almacenamiento de métricas a largo plazo, de código abierto y escalable horizontalmente, desarrollado por Grafana Labs. Como almacenamiento de nivel empresarial para métricas de Prometheus, proporciona multi-tenancy, alta disponibilidad y escalabilidad ilimitada mediante Object Storage.
@@ -73,6 +75,8 @@ flowchart LR
 | Sobrecarga operativa | Baja | Alta | Media |
 | Modificación de Prometheus | No requerida | No requerida | Requiere Sidecar |
 | Multi-tenancy | Nativa | Nativa | Limitada |
+
+<span id="architecture"></span>
 
 ## Arquitectura
 
@@ -161,6 +165,8 @@ flowchart TB
 3. **Procesos en segundo plano**:
    - Compactor combina bloques pequeños en bloques más grandes
    - Aplica políticas de downsampling y retención
+
+<span id="core-components"></span>
 
 ## Componentes principales
 
@@ -389,6 +395,8 @@ flowchart TD
     class B1,B2,B3 storage
 ```
 
+<span id="helm-installation"></span>
+
 ## Instalación con Helm
 
 ### Instalar mimir-distributed
@@ -562,6 +570,8 @@ mimir:
       data_dir: /data/compactor
 ```
 
+<span id="s3-backend-configuration"></span>
+
 ## Configuración del backend S3
 
 ### Configuración de IRSA
@@ -663,6 +673,8 @@ mimir:
 }
 ```
 
+<span id="query-and-data-retention"></span>
+
 ## Consultas y retención de datos
 
 ### Configuración de la política de retención
@@ -738,6 +750,8 @@ flowchart LR
     class R1,M1,C1,S3 storage
 ```
 
+<span id="comparison-with-victoriametrics"></span>
+
 ## Comparación con VictoriaMetrics
 
 ### Comparación detallada
@@ -794,6 +808,8 @@ flowchart TD
 - Prefiera almacenamiento basado en disco local
 - La máxima compresión y el rendimiento sean importantes
 - La eficiencia de costos sea prioritaria
+
+<span id="performance-tuning"></span>
 
 ## Ajuste de rendimiento
 
@@ -858,6 +874,8 @@ querier:
   timeout: 2m
 ```
 
+<span id="best-practices"></span>
+
 ## Prácticas recomendadas
 
 ### Lista de verificación para producción
@@ -918,6 +936,8 @@ limits:
 compactor:
   downsampling_enabled: true
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 

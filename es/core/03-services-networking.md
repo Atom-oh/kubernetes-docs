@@ -69,7 +69,7 @@ kubectl -n networking-demo get svc,pods
 5. [CoreDNS](#coredns)
 6. [Políticas de red](#network-policies)
 7. [Service Mesh](#service-mesh)
-8. [CNI (Container Network Interface)](#cnicontainer-network-interface)
+8. [CNI (Container Network Interface) (English)](https://www.atomai.click/kubernetes-docs/en/core/03-services-networking#cnicontainer-network-interface)
 9. [Cilium](#cilium)
    - [Introducción a Cilium](#introduction-to-cilium)
    - [Tecnología eBPF](#ebpf-technology)
@@ -77,6 +77,8 @@ kubectl -n networking-demo get svc,pods
    - [Políticas de red de Cilium](#cilium-network-policies)
    - [Visibilidad de red con Hubble](#network-visibility-with-hubble)
    - [Configuración de Cilium en Amazon EKS](#configuring-cilium-on-amazon-eks)
+
+<span id="service-types"></span>
 
 ## Tipos de Service
 
@@ -473,6 +475,8 @@ endpoints:
     topology.kubernetes.io/zone: us-west-2a
 ```
 
+<span id="service-discovery"></span>
+
 ## Descubrimiento de servicios
 
 Kubernetes proporciona dos métodos principales de descubrimiento de servicios:
@@ -576,6 +580,8 @@ spec:
       value: "2"
     - name: edns0
 ```
+
+<span id="network-policies"></span>
 
 ## Políticas de red
 
@@ -804,6 +810,8 @@ Este ServiceProfile define rutas y políticas de reintento para el Service `ngin
 
 [Detalles de Cilium](../networking/cilium/README.md)
 
+<span id="introduction-to-cilium"></span>
+
 ### Introducción a Cilium
 
 Cilium es software de código abierto que aprovecha la potente tecnología eBPF del kernel de Linux para proporcionar conectividad de red, seguridad y observabilidad para aplicaciones en contenedores. Está diseñado para proporcionar redes, seguridad y observabilidad para plataformas de orquestación de contenedores como Kubernetes, Docker y Mesos.
@@ -835,6 +843,8 @@ Cilium proporciona varias ventajas únicas en comparación con otras soluciones 
 - **Requisitos de alto rendimiento**: Ruta de datos optimizada
 - **Integración con Service Mesh**: Integración con service meshes como Istio
 
+<span id="ebpf-technology"></span>
+
 ### Tecnología eBPF
 
 eBPF (extended Berkeley Packet Filter) es una tecnología que permite que los programas se ejecuten de forma segura dentro del kernel de Linux. Cilium usa eBPF para implementar características de red, seguridad y observabilidad.
@@ -864,6 +874,8 @@ Cilium usa eBPF de las siguientes maneras:
 | Programabilidad | Alta | Limitada |
 | Observabilidad | Alta | Limitada |
 | Complejidad de implementación | Alta | Media |
+
+<span id="cilium-networking-model"></span>
 
 ### Modelo de red de Cilium
 
@@ -931,6 +943,8 @@ En AWS EKS, Cilium puede aprovechar las AWS Elastic Network Interfaces (ENI) par
 - Redes nativas de VPC sin red overlay
 - Integración con AWS security groups y políticas de red
 - Rendimiento de red mejorado
+
+<span id="cilium-network-policies"></span>
 
 ### Políticas de red de Cilium
 
@@ -1010,6 +1024,8 @@ spec:
 
 Esta política permite tráfico de entrada desde Pods en el namespace `kube-system` hacia todos los Pods.
 
+<span id="network-visibility-with-hubble"></span>
+
 ### Visibilidad de red con Hubble
 
 Hubble es la capa de observabilidad de Cilium que usa eBPF para monitorear flujos de red y solucionar problemas.
@@ -1054,6 +1070,8 @@ hubble observe --pod app=myapp
 # Observe network policy violations
 hubble observe --verdict DROPPED
 ```
+
+<span id="configuring-cilium-on-amazon-eks"></span>
 
 ### Configuración de Cilium en Amazon EKS
 

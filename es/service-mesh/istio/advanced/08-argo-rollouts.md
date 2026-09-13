@@ -18,6 +18,8 @@ Este documento explica en detalle cómo implementar Progressive Delivery mediant
 8. [Solución de problemas](#troubleshooting)
 9. [Mejores prácticas](#best-practices)
 
+<span id="overview"></span>
+
 ## Descripción general
 
 ### ¿Qué es Argo Rollouts?
@@ -72,6 +74,8 @@ flowchart LR
 | **VirtualService** | Reglas de enrutamiento de tráfico | ✅ Ajuste automático del peso de las rutas |
 | **DestinationRule** | Definición de subset | ⚠️ Se requiere creación manual |
 | **Service** | Endpoints Stable/Canary | ⚠️ Se requiere creación manual |
+
+<span id="architecture"></span>
 
 ## Arquitectura
 
@@ -193,6 +197,8 @@ sequenceDiagram
         Rollouts->>VS: setWeight: 0<br/>Auto rollback
     end
 ```
+
+<span id="core-concepts"></span>
 
 ## Conceptos fundamentales
 
@@ -395,6 +401,8 @@ flowchart TD
     class C1,C2,C3,C4,C5 check;
 ```
 
+<span id="setup-and-configuration"></span>
+
 ## Configuración y preparación
 
 ### Creación de recursos necesarios
@@ -591,6 +599,8 @@ kubectl argo rollouts abort test
 kubectl argo rollouts retry rollout test
 ```
 
+<span id="traffic-routing-strategies"></span>
+
 ## Estrategias de enrutamiento de tráfico
 
 ### 1. Canary básico (basado en peso)
@@ -760,6 +770,8 @@ spec:
       steps:
       - setWeight: 10  # Adjusts both routes to 10%
 ```
+
+<span id="analysis-and-metrics"></span>
 
 ## Análisis y métricas
 
@@ -950,6 +962,8 @@ spec:
           value: test
 ```
 
+<span id="advanced-deployment-patterns"></span>
+
 ## Patrones avanzados de despliegue
 
 ### 1. Despliegue Blue/Green
@@ -1089,6 +1103,8 @@ spec:
         startingStep: 1
 ```
 
+<span id="troubleshooting"></span>
+
 ## Solución de problemas
 
 ### 1. VirtualService no se actualiza
@@ -1210,6 +1226,8 @@ kubectl get analysisrun -l rollout=test
 # 7. Rollout Controller logs
 kubectl logs -n argo-rollouts deployment/argo-rollouts
 ```
+
+<span id="best-practices"></span>
 
 ## Mejores prácticas
 

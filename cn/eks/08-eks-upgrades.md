@@ -15,6 +15,8 @@
 7. [升级自动化](#upgrade-automation)
 8. [升级最佳实践](#upgrade-best-practices)
 
+<span id="eks-upgrade-overview"></span>
+
 ## EKS 升级概览
 
 ```mermaid
@@ -96,6 +98,8 @@ EKS cluster 必须一次升级一个次要版本：
 3. Add-on 升级
 4. Node Group 升级
 5. 升级验证
+
+<span id="upgrade-planning-and-preparation"></span>
 
 ## 升级规划和准备
 
@@ -222,6 +226,8 @@ velero backup create pre-upgrade-backup --include-namespaces=default,app-namespa
 - 负责人和联系方式
 - 回滚流程
 - 故障排查指南
+
+<span id="eks-control-plane-upgrade"></span>
 
 ## EKS Control Plane 升级
 
@@ -373,6 +379,8 @@ Control Plane 升级期间可能发生的常见问题：
 2. 查看 CloudTrail logs
 3. 查看 EKS Control Plane logs
 4. 联系 AWS Support
+<span id="node-group-upgrade"></span>
+
 ## Node Group 升级
 
 升级 Control Plane 后，需要升级 Node Groups。Node Group 升级有多种策略，每种策略都有优缺点。
@@ -639,6 +647,8 @@ kubectl get pods --all-namespaces -o wide
 kubectl get pods --all-namespaces -o wide | grep -v Running
 ```
 
+<span id="add-on-upgrade"></span>
+
 ## Add-on 升级
 
 EKS cluster 包含多个 add-ons，这些也需要升级。
@@ -831,6 +841,8 @@ kubectl logs -n kube-system -l k8s-app=aws-node
 ```bash
 kubectl get events -n kube-system --sort-by='.lastTimestamp'
 ```
+<span id="upgrade-validation-and-troubleshooting"></span>
+
 ## 升级验证和故障排查
 
 升级完成后，需要验证 cluster 是否正常运行，并解决可能发生的任何问题。
@@ -1026,6 +1038,8 @@ kubectl describe pods --all-namespaces | grep -A 10 "Events:"
 kubectl api-versions
 ```
 
+<span id="rollback-procedure"></span>
+
 #### 回滚流程
 
 如果无法解决升级问题，请考虑回滚：
@@ -1066,6 +1080,8 @@ aws eks update-addon \
   --addon-version <previous-version> \
   --resolve-conflicts PRESERVE
 ```
+
+<span id="upgrade-automation"></span>
 
 ## 升级自动化
 
@@ -1264,6 +1280,8 @@ EKS 升级自动化的最佳实践：
 3. **Validation Steps**: 在升级后包含自动化验证步骤
 4. **Notifications**: 配置升级成功或失败通知
 5. **Documentation**: 记录自动化过程和步骤
+
+<span id="upgrade-best-practices"></span>
 
 ## 升级最佳实践
 

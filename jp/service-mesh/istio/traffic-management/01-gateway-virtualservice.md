@@ -11,6 +11,8 @@ Gateway と VirtualService は、Istio でトラフィックを管理するた�
 5. [高度なパターン](#advanced-patterns)
 6. [トラブルシューティング](#troubleshooting)
 
+<span id="gateway-overview"></span>
+
 ## Gateway の概要
 
 Gateway は、mesh への外部トラフィックのエントリーポイントを定義します。
@@ -42,6 +44,8 @@ spec:
     - "myapp.example.com"
 ```
 
+<span id="virtualservice-overview"></span>
+
 ## VirtualService の概要
 
 VirtualService は、Gateway 経由で入るトラフィックのルーティング方法を定義します。
@@ -72,6 +76,8 @@ spec:
         port:
           number: 3000
 ```
+
+<span id="basic-configuration"></span>
 
 ## 基本設定
 
@@ -140,6 +146,8 @@ spec:
     hosts:
     - "myapp.example.com"
 ```
+
+<span id="practical-examples"></span>
 
 ## 実践例
 
@@ -277,6 +285,8 @@ spec:
         host: admin-service
 ```
 
+<span id="advanced-patterns"></span>
+
 ## 高度なパターン
 
 ### HTTP から HTTPS へのリダイレクト
@@ -382,6 +392,8 @@ spec:
       uri: "/new-page"
       authority: "newapp.example.com"
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

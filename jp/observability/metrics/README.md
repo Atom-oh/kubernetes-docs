@@ -12,6 +12,8 @@
 - [ソリューション比較](#solution-comparison)
 - [メトリクス収集アーキテクチャ](#metrics-collection-architecture)
 
+<span id="metrics-fundamentals"></span>
+
 ## メトリクスの基礎
 
 メトリクスはシステムの状態と動作を数値で表します。メトリクス名と完全なラベルセットによって時系列が識別され、各サンプルは値とタイムスタンプを追加します。メトリクスは alerting、トラブルシューティング、capacity planning、パフォーマンス分析を支援しますが、サンプリングされた測定値は個々のすべてのイベントを保持するものではありません。
@@ -33,6 +35,8 @@
 新しいメトリクスでは、説明的な prefix、underscore で区切った小文字の語、`_seconds` や `_bytes` などの単位を優先してください。命名規則は exporter の確立済み API の名前変更を許可するものではありません。
 
 以下の `text` block は合成された **Prometheus text exposition** であり、YAML ではありません。query expression は別の `promql` block です。query selector は表示されている scrape-job 名を想定しているため、実際の target ラベルに合わせて調整してください。
+
+<span id="metric-types"></span>
 
 ## メトリクスの種類
 
@@ -156,6 +160,8 @@ traffic がゼロの場合、平均は `NaN` になることがあります。se
 
 <a id="metric-collection-models"></a>
 
+<span id="pull-vs-push-model"></span>
+
 ## Pull モデルと Push モデル
 
 ![Pull 収集では collector がリクエストを開始し、push 収集では producer がリクエストを開始します。](../../.gitbook/assets/en-observability-metrics-readme-0.png)
@@ -264,6 +270,8 @@ time() - max(example_batch_last_success_timestamp_seconds{job="example_batch"})
 
 schedule と想定 runtime に基づいて threshold を選び、series 全体が欠落している場合は別途処理してください。Pushgateway の `up` は gateway scrape だけを表します。
 
+<span id="cardinality-and-metric-design"></span>
+
 ## カーディナリティとメトリクス設計
 
 カーディナリティは、定義された scope における個別 series の数です。label-value count の積は、すべての組み合わせが発生し得る場合の**上限**であり、すべての組み合わせが存在する保証ではありません。
@@ -287,6 +295,8 @@ count(count by (endpoint) (http_requests_total{job="example-app"}))
 ```
 
 メトリクス名と label 名/value の長さも、format limit、storage、backend acceptance に影響します。カーディナリティは重要ですが、唯一の設計制約ではありません。
+
+<span id="long-term-storage-requirements"></span>
 
 ## 長期保存の要件
 
@@ -333,6 +343,8 @@ remote_write:
 
 remote write は asynchronous であり、その WAL buffering には限りがあります。Prometheus tuning guide は、文書化された WAL window（そのガイダンスでは約 2 時間）を超える長時間の outage の後で、未送信 data が失われることを説明しています。これは backup ではなく、delivery が常に成功する保証でもありません。
 
+<span id="solution-comparison"></span>
+
 ## ソリューション比較
 
 ### デプロイと運用の境界
@@ -363,6 +375,8 @@ object storage は無制限の scaling を意味するものでも、すべて�
 同等の ingestion、retention、HA、feature の前提条件を比較してください。以下の公式 pricing page から最新価格を取得し、workload 固有の resource use をテストしてください。「Open source」であっても infrastructure と operation は無料ではありません。
 
 必要な query/解像度、cardinality と churn、failure/recovery goal、tenant/access boundary、integration、測定済みの cost model に基づいてソリューションを選択してください。team size だけで product を選択するアルゴリズムにはなりません。
+
+<span id="metrics-collection-architecture"></span>
 
 ## メトリクス収集アーキテクチャ
 

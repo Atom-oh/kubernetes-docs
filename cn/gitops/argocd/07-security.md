@@ -12,6 +12,8 @@
 - [仓库凭证](#repository-credentials)
 - [GPG 签名验证](#gpg-signature-verification)
 
+<span id="sso-integration"></span>
+
 ## SSO 集成
 
 ArgoCD 支持多个用于身份验证的 SSO 提供商。
@@ -245,6 +247,8 @@ data:
     g, argocd-admins, role:admin
 ```
 
+<span id="secret-management"></span>
+
 ## Secret 管理
 
 ### Sealed Secrets
@@ -451,6 +455,8 @@ data:
   kustomize.buildOptions: --enable-alpha-plugins
 ```
 
+<span id="tls-configuration"></span>
+
 ## TLS 配置
 
 ### 自定义 TLS 证书
@@ -508,6 +514,8 @@ data:
     ...
     -----END CERTIFICATE-----
 ```
+
+<span id="audit-logging"></span>
 
 ## 审计日志
 
@@ -580,6 +588,8 @@ spec:
           configMap:
             name: fluentbit-config
 ```
+
+<span id="network-security"></span>
 
 ## 网络安全
 
@@ -682,6 +692,8 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
+<span id="repository-credentials"></span>
+
 ## 仓库凭证
 
 ### 使用 Personal Access Token 的 HTTPS
@@ -763,6 +775,8 @@ stringData:
   username: admin
   password: secretpassword
 ```
+
+<span id="gpg-signature-verification"></span>
 
 ## GPG 签名验证
 

@@ -15,6 +15,8 @@
 - [故障排除](#troubleshooting)
 - [结论](#conclusion)
 
+<span id="introduction"></span>
+
 ## 简介
 
 KEDA (Kubernetes Event-driven Autoscaling) 是一个开源项目，可为 Kubernetes 应用实现事件驱动的自动扩缩容。KEDA 扩展了 Kubernetes 原生的 Horizontal Pod Autoscaler (HPA)，使工作负载能够基于 CPU 和内存使用率以外的各种事件源和指标进行扩缩容。
@@ -38,6 +40,8 @@ KEDA (Kubernetes Event-driven Autoscaling) 是一个开源项目，可为 Kubern
 | Cloud Neutral | ✅ | ✅ | ❌ |
 | 部署复杂度 | 低 | 非常低 | 中 |
 | Custom Metrics | 简单 | 复杂 | 有限 |
+
+<span id="architecture"></span>
 
 ## 架构
 
@@ -109,6 +113,8 @@ flowchart LR
 3. KEDA Metrics Server 轮询外部指标源以收集指标
 4. HPA 根据 metrics server 提供的指标对工作负载进行扩缩容
 5. 当没有活动时，KEDA 会缩容到 0 个副本（这是 HPA 无法做到的）
+
+<span id="installation-and-configuration"></span>
 
 ## 安装与配置
 
@@ -283,6 +289,8 @@ spec:
       host: rabbitmq
       queueLength: "5"
 ```
+<span id="custom-metric-scaling"></span>
+
 ## 自定义指标扩缩容
 
 除了各种内置 scalers 之外，KEDA 还提供了基于自定义指标进行扩缩容的灵活性。这使你可以实现符合业务需求的独特扩缩容逻辑。
@@ -406,6 +414,8 @@ spec:
       url: "http://custom-metrics-server:8080/metrics"
       valueLocation: "items.0.value"
 ```
+
+<span id="twitter-metric-scaling"></span>
 
 ## Twitter 指标扩缩容
 
@@ -559,6 +569,8 @@ spec:
       url: "http://twitter-metrics-collector/metrics"
       valueLocation: "tweet_count"
 ```
+
+<span id="google-calendar-scaling"></span>
 
 ## Google Calendar 扩缩容
 
@@ -728,6 +740,8 @@ spec:
       url: "http://calendar-metrics-collector/metrics"
       valueLocation: "upcoming_events"
 ```
+<span id="istio-metric-scaling"></span>
+
 ## Istio 指标扩缩容
 
 此示例展示如何基于从 Istio service mesh 收集的指标对应用进行扩缩容。我们将了解如何基于每秒请求数 (RPS) 进行扩缩容。
@@ -886,6 +900,8 @@ spec:
       query: sum(rate(istio_requests_total{destination_service="sample-app.default.svc.cluster.local",response_code=~"5.*"}[1m])) / sum(rate(istio_requests_total{destination_service="sample-app.default.svc.cluster.local"}[1m]))
 ```
 
+<span id="cron-based-scaling"></span>
+
 ## 基于 Cron 的扩缩容
 
 KEDA 支持使用 Cron expressions 进行基于时间的扩缩容。这使你可以根据可预测的流量模式或计划提前扩容应用。
@@ -996,6 +1012,8 @@ spec:
       threshold: "10"
       query: sum(rate(http_requests_total{app="sample-app"}[1m]))
 ```
+
+<span id="integration-with-amazon-eks"></span>
 
 ## 与 Amazon EKS 集成
 
@@ -1110,6 +1128,8 @@ serviceAccount:
     eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/keda-operator-role
 ```
 
+<span id="best-practices"></span>
+
 ## 最佳实践
 
 ### 性能优化
@@ -1187,6 +1207,8 @@ spec:
   - {}
 ```
 
+<span id="troubleshooting"></span>
+
 ## 故障排除
 
 ### 常见问题
@@ -1263,6 +1285,8 @@ kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1/namespaces/<namespace>/
 # Check KEDA logs
 kubectl logs -n keda -l app=keda-operator --tail=100
 ```
+
+<span id="conclusion"></span>
 
 ## 结论
 

@@ -13,6 +13,8 @@
 - [Remote write と AMP](#remote-write-and-amp)
 - [パフォーマンス、HA、トラブルシューティング](#performance-ha-and-troubleshooting)
 
+<span id="introduction-and-versions"></span>
+
 ## 概要とバージョン
 
 Prometheus は、もともと SoundCloud で開発された CNCF の監視ツールキットです。数値の時系列を収集してローカル TSDB に保存し、PromQL と recording/alert ルールを評価して、アラートを Alertmanager に送信します。通常の収集は HTTP スクレイピングを使用し、remote write やオプションのバッチ連携が別の配信経路を追加します。イベントログ、トレースストア、リクエスト単位の正確な課金台帳ではありません。
@@ -38,6 +40,8 @@ Prometheus は、もともと SoundCloud で開発された CNCF の監視ツー
 
 - [7 月 14 日の Kubernetes exporter に関する記事](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/) では、アプリケーションの計装とカスタム exporter について説明されています。HPA で利用するには、適切な metrics API／アダプターも必要です。スクレイピングだけでは任意のメトリクスが HPA に接続されるわけではありません。
 - [7 月 21 日の AMP のアナウンス](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/) では、ワークスペースあたり最大 15 億のアクティブ系列と 200,000 の recording/alerting ルールが説明されています。これらはアナウンスされたスケーリング上限であり、自動的に付与されるデフォルトクォータや承認の保証ではありません。対象のワークスペース／アカウントの現在のクォータを確認してください。
+
+<span id="architecture-and-components"></span>
 
 ## アーキテクチャとコンポーネント
 
@@ -179,6 +183,8 @@ Prometheus 3 では `holt_winters` が `double_exponential_smoothing` に改名�
 
 観測された正常なトラフィックでは 0 になり、すべて 5xx のトラフィックでは 100 になり、分母が 0 の場合は未定義のままです。欠損したテレメトリは欠損したままです。収集の失敗は別に監視してください。
 
+<span id="discovery-and-operator-selectors"></span>
+
 ## ディスカバリと Operator セレクター
 
 ![Operator workload reconciliation and monitor/rule selection.](../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png)
@@ -291,6 +297,8 @@ spec:
 - Service のブラックボックス監視には、インストール済みの exporter、定義済みの probe モジュール、適切なターゲット URL／スキーム、そして `Probe`／スクレイプ設定が必要です。`up` は exporter のスクレイピングを表します。probe の成否は別のシグナルです。
 - ノードのディスカバリが到達するのは kubelet のエンドポイントであり、自動的に node-exporter に到達するわけではありません。サービング証明書、正しい CA、ノードメトリクスの RBAC を検証してください。Kubernetes API の CA は、任意のノード証明書に対する信頼を証明しません。
 - 無制限なノードの `labelmap` ではなく、レビュー済みの namespace／service／team ラベルを使用してください。識別ラベルの削除は集約操作ではありません。
+
+<span id="kube-prometheus-stack-installation"></span>
 
 ## kube-prometheus-stack のインストール
 
@@ -440,6 +448,8 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
 CRD の確立、Operator の健全性、PVC のバインド、実際のターゲットを確認してください。選択したアプリケーションのモニター／ルールは、それらの CRD が確立された後にのみ適用してください。
 
 チャートの CRD アップグレードの扱いはバージョン固有です。すべての CRD 移行が単純な Helm アップグレードでカバーされると想定せず、アップグレードノートを読んでください。チャート 90 では Grafana の依存関係もコミュニティリポジトリに変更されます。アップグレード時は既存の認証／プロビジョニングの values を検証し、データベース／PVC のバックアップを保持してください。
+
+<span id="rules-and-alertmanager"></span>
 
 ## ルールと Alertmanager
 
@@ -623,6 +633,8 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
 
 ネイティブなルーティングの確認では、通知を送信せずにレシーバー名を使用しました。Secret の取得、プロバイダーの認証、実際の通知配信は、依然として管理された検証が必要です。
 
+<span id="remote-write-and-amp"></span>
+
 ## Remote write と AMP
 
 remote write は、設定されたバックエンドへサンプルを非同期に転送します。アラートを配信するものではなく、無制限のバッファリングを保証するものでも、バックアップの代わりになるものでもありません。バックログ、リトライ、レシーバーの上限を監視してください。レビュー済みの集約／破棄ポリシーによってその影響が明確になっていない限り、ヒストグラムの分布は完全な形で保持してください。
@@ -687,6 +699,8 @@ AMP の HA 重複排除は `cluster` と `__replica__` を前提とします。O
 VictoriaMetrics のシングルノードは、一般的に設定された HTTP ポートで `/api/v1/write` を受け付けます。クラスターの vminsert エンドポイントは `/insert/<tenant>/prometheus/api/v1/write` を使用します。vmauth または他の承認されたアクセス層が、意図したルーティング／認証を提供しなければなりません。テナント ID は認証情報ではありません。Mimir やその他のレシーバーには、独自の URL、アイデンティティ、HA の契約があります。
 
 サブ秒のヒストグラムバケットすべてや、コントロールプレーンのレイテンシファミリー全体を破棄する古いルールを、その結果として生じる分位点／SLO の損失を評価せずにコピーしないでください。キューのデフォルト値は出発点であり、計測に基づく本番環境の最適値ではありません。
+
+<span id="performance-ha-and-troubleshooting"></span>
 
 ## パフォーマンス、HA、トラブルシューティング
 

@@ -14,6 +14,8 @@
 - [Experimentos](#experiments)
 - [Notificaciones](#notifications)
 
+<span id="argo-rollouts-overview"></span>
+
 ## Descripción general de Argo Rollouts
 
 Argo Rollouts es un controlador de Kubernetes que proporciona capacidades avanzadas de despliegue, incluidos los despliegues blue-green, los despliegues canary y las funcionalidades de entrega progresiva.
@@ -78,6 +80,8 @@ flowchart TB
     class PROM,DD,NR metrics
 ```
 
+<span id="installation"></span>
+
 ## Instalación
 
 ### Instalar el controlador de Argo Rollouts
@@ -138,6 +142,8 @@ dashboard:
     hosts:
       - rollouts.example.com
 ```
+
+<span id="blue-green-deployments"></span>
 
 ## Despliegues blue-green
 
@@ -271,6 +277,8 @@ strategy:
     autoPromotionSeconds: 60  # Wait 60s before auto-promoting
     previewReplicaCount: 3
 ```
+
+<span id="canary-deployments"></span>
 
 ## Despliegues canary
 
@@ -432,6 +440,8 @@ flowchart TB
     class S1,S2,S3 stable
     class C1 canary
 ```
+
+<span id="analysis-and-verification"></span>
 
 ## Análisis y verificación
 
@@ -626,6 +636,8 @@ spec:
             ))
 ```
 
+<span id="ingress-integration"></span>
+
 ## Integración de Ingress
 
 Argo Rollouts admite más de 10 proveedores de tráfico. Los proveedores sin integración nativa, como Kong, se admiten mediante el **plugin de Gateway API**.
@@ -633,7 +645,7 @@ Argo Rollouts admite más de 10 proveedores de tráfico. Los proveedores sin int
 | Proveedor | Integración | Notas |
 |---|---|---|
 | NGINX Ingress | Nativa (`trafficRouting.nginx`) | Manipula directamente la anotación `canary-weight` |
-| AWS ALB | Nativa (`trafficRouting.alb`) | El puerto de backend de Ingress debe ser `use-annotation`; consulte los [resultados de verificación](#verification-results-on-eks) |
+| AWS ALB | Nativa (`trafficRouting.alb`) | El puerto de backend de Ingress debe ser `use-annotation`; consulte los [resultados de verificación (English)](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/05-traffic-management#verification-results-on-eks) |
 | Istio | Nativa (`trafficRouting.istio`) | Manipula directamente VirtualService/DestinationRule |
 | SMI | Nativa (`trafficRouting.smi`) | El propio proyecto SMI prácticamente no tiene mantenimiento; no se recomienda para nuevas adopciones |
 | Ambassador, Apache APISIX, Traefik, Google Cloud | Nativa | No se incluye en este documento; consulte la [documentación oficial](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) |
@@ -940,7 +952,7 @@ spec:
   controllerName: konghq.com/kic-gateway-controller   # note: different from KIC's IngressClass controller string
 ```
 
-Desde aquí, aplique la misma configuración del [plugin de Gateway API](#gateway-api-plugin-universal) anterior; los archivos YAML de Rollout y HTTPRoute son idénticos.
+Desde aquí, aplique la misma configuración del [plugin de Gateway API (English)](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/05-traffic-management#gateway-api-plugin-httproute) anterior; los archivos YAML de Rollout y HTTPRoute son idénticos.
 
 ### Resultados de verificación en EKS
 
@@ -952,6 +964,8 @@ Validamos los cuatro proveedores en namespaces de prueba aislados en un clúster
 | Istio | Transición del peso de VirtualService 20→50→100% y reversión inmediata a 0% con `abort` | ✅ Confirmado: la proporción de curl coincidió con el peso y el tráfico volvió de inmediato a la versión estable anterior tras abortar |
 | AWS ALB | Transición del peso de reenvío de la regla del listener, contrastada con el estado activo de AWS mediante `aws elbv2 describe-rules` | ✅ Confirmado (pero requiere la salvedad de [`use-annotation`](#aws-alb-ingress) anterior) |
 | Kong (plugin de Gateway API) | Transición de `HTTPRoute.backendRefs[].weight` y tráfico real a través del plano de datos de Kong | ✅ Confirmado, aunque la anotación `gatewayclass-unmanaged` y el `controllerName` exacto son fáciles de configurar erróneamente (consulte arriba) |
+
+<span id="rollback-strategies"></span>
 
 ## Estrategias de rollback
 
@@ -1000,6 +1014,8 @@ spec:
             # Analysis runs continuously
             # Failure at any point triggers rollback
 ```
+
+<span id="experiments"></span>
 
 ## Experimentos
 
@@ -1060,6 +1076,8 @@ spec:
           valueFrom:
             podTemplateHashValue: canary
 ```
+
+<span id="notifications"></span>
 
 ## Notificaciones
 

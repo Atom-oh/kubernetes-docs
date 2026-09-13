@@ -7,8 +7,10 @@ AuthorizationPolicy permite controlar de forma detallada los permisos de acceso 
 1. [Descripción general de la autorización](#authorization-overview)
 2. [Políticas básicas](#basic-policies)
 3. [Políticas avanzadas](#advanced-policies)
-4. [Ejemplos prácticos](#practical-examples)
-5. [Mejores prácticas](#best-practices)
+4. [Ejemplos prácticos (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/03-authorization#practical-examples)
+5. [Mejores prácticas (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/03-authorization#best-practices)
+
+<span id="authorization-overview"></span>
 
 ## Descripción general de la autorización
 
@@ -62,6 +64,8 @@ flowchart TB
     class Deny deny;
 ```
 
+<span id="basic-policies"></span>
+
 ## Políticas básicas
 
 ### Denegación predeterminada (Denegar todo)
@@ -110,6 +114,8 @@ spec:
     - operation:
         methods: ["GET"]  # Allow only GET
 ```
+
+<span id="advanced-policies"></span>
 
 ## Políticas avanzadas
 

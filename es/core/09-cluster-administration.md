@@ -47,6 +47,8 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 curl -sS https://webinstall.dev/k9s | bash
 ```
 
+<span id="cluster-administration-overview"></span>
+
 ## Descripción general de la administración de clústeres
 
 La administración de clústeres de Kubernetes es el proceso de gestionar todo el ciclo de vida de un clúster. Incluye las siguientes áreas principales:
@@ -58,6 +60,8 @@ La administración de clústeres de Kubernetes es el proceso de gestionar todo e
 5. **Copia de seguridad y recuperación**: Copia de seguridad de datos del clúster, planificación de recuperación ante desastres
 
 El siguiente diagrama muestra las áreas principales de la administración de clústeres de Kubernetes y las herramientas relacionadas:
+
+<span id="cluster-component-management"></span>
 
 ## Gestión de componentes del clúster
 
@@ -278,6 +282,8 @@ systemctl status docker  # When using Docker
 systemctl status containerd  # When using containerd
 ```
 
+<span id="resource-management"></span>
+
 ## Gestión de recursos
 
 Gestionar eficazmente los recursos en un clúster de Kubernetes es importante para mantener la estabilidad y el rendimiento del clúster.
@@ -378,6 +384,8 @@ spec:
 ```
 
 En el ejemplo anterior, las solicitudes de CPU y memoria de los pods del Deployment `frontend` se ajustan automáticamente según el uso real de recursos.
+<span id="cluster-networking"></span>
+
 ## Redes del clúster
 
 Las redes del clúster de Kubernetes gestionan la comunicación entre pods, servicios y nodos.
@@ -514,6 +522,8 @@ spec:
 ```
 
 En el ejemplo anterior, los pods con la etiqueta `role=db` solo permiten tráfico entrante TCP por el puerto 3306 desde pods con la etiqueta `role=frontend` y tráfico saliente TCP por el puerto 9090 hacia pods con la etiqueta `role=monitoring`.
+
+<span id="authentication-and-authorization-management"></span>
 
 ## Gestión de autenticación y autorización
 
@@ -716,6 +726,8 @@ spec:
 
 En el ejemplo anterior, el pod se ejecuta con UID 1000 y GID 3000, y el contenedor no puede escalar privilegios, tiene eliminadas todas las capacidades de Linux y tiene el sistema de archivos raíz montado como de solo lectura.
 
+<span id="cluster-upgrades"></span>
+
 ## Actualizaciones del clúster
 
 Las actualizaciones del clúster de Kubernetes son necesarias para aplicar nuevas funciones, mejoras de rendimiento y parches de seguridad.
@@ -806,6 +818,8 @@ kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80
 kubectl get svc nginx
 ```
+<span id="backup-and-recovery"></span>
+
 ## Copia de seguridad y recuperación
 
 La copia de seguridad y recuperación de clústeres de Kubernetes es una parte importante de la planificación de recuperación ante desastres.
@@ -927,6 +941,8 @@ spec:
               claimName: etcd-backup-pvc
 ```
 
+<span id="monitoring-and-logging"></span>
+
 ## Supervisión y registro
 
 La supervisión y el registro eficaces son elementos centrales de la administración de clústeres.
@@ -1042,6 +1058,8 @@ data:
     </match>
 ```
 
+<span id="troubleshooting"></span>
+
 ## Resolución de problemas
 
 La resolución de problemas de clústeres de Kubernetes es una parte importante de la administración de clústeres.
@@ -1137,6 +1155,8 @@ kubectl logs -n kube-system kube-scheduler-<node-name>
 # Check etcd logs
 kubectl logs -n kube-system etcd-<node-name>
 ```
+
+<span id="amazon-eks-cluster-administration"></span>
 
 ## Administración de clústeres de Amazon EKS
 
@@ -1260,6 +1280,8 @@ eksctl utils update-cluster-logging \
   --cluster my-cluster \
   --approve
 ```
+
+<span id="cluster-administration-best-practices"></span>
 
 ## Prácticas recomendadas para la administración de clústeres
 

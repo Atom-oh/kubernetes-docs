@@ -271,7 +271,7 @@ La configuración oficial utiliza authentication.mutual.spire.enabled y, para su
 
 ### Linkerd
 
-No pase JSON de bundle de SPIRE donde Linkerd espera raíces PEM ni copie claves privadas de CA de SPIRE como claves de emisor. Linkerd necesita un certificado/clave de emisor adecuado y raíces de confianza, con renovación y rollover de raíz. Consulte la [ruta revisada de cert-manager/Linkerd](./10-cert-manager.md#linkerd-and-trust-manager). Compartir solamente la confianza de raíz no integra la Workload API ni SDS de SPIFFE.
+No pase JSON de bundle de SPIRE donde Linkerd espera raíces PEM ni copie claves privadas de CA de SPIRE como claves de emisor. Linkerd necesita un certificado/clave de emisor adecuado y raíces de confianza, con renovación y rollover de raíz. Consulte la [ruta revisada de cert-manager/Linkerd (English)](https://www.atomai.click/kubernetes-docs/en/security/10-cert-manager#linkerd-and-trust-manager). Compartir solamente la confianza de raíz no integra la Workload API ni SDS de SPIFFE.
 
 <span id="federation-trust-establishment"></span>
 <span id="configuring-federation"></span>

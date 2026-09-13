@@ -20,6 +20,8 @@
 
 ---
 
+<span id="overview"></span>
+
 ## 概要
 
 ### Crossplane とは？
@@ -64,6 +66,8 @@ Crossplane は Upbound によって作成され、2020 年 6 月に CNCF Sandbox
 
 ---
 
+<span id="learning-objectives"></span>
+
 ## 学習目標
 
 このドキュメントを完了すると、次のことができるようになります。
@@ -78,6 +82,8 @@ Crossplane は Upbound によって作成され、2020 年 6 月に CNCF Sandbox
 8. Monitoring、upgrade strategies、drift detection を備えた Crossplane の本番運用を**行う**
 
 ---
+
+<span id="crossplane-architecture"></span>
 
 ## Crossplane アーキテクチャ
 
@@ -181,6 +187,8 @@ graph LR
 - **Provider Controllers**: インストールされた各 Provider は独自の controller pod(s) を実行し、Managed Resources を監視して cloud API に対して reconcile します
 
 ---
+
+<span id="eks-installation-and-configuration"></span>
 
 ## EKS のインストールと設定
 
@@ -677,6 +685,8 @@ kubectl describe instance.rds.aws.upbound.io my-app-postgres
 
 ---
 
+<span id="compositions-platform-abstraction"></span>
+
 ## Compositions（プラットフォーム抽象化）
 
 Compositions は Crossplane の value proposition の中心です。Platform teams は、cloud-specific complexity を隠蔽する reusable infrastructure blueprints を定義できます。
@@ -1097,6 +1107,8 @@ Transforms は patch される値を変更します。
 
 ---
 
+<span id="claims-self-service"></span>
+
 ## Claims（セルフサービス）
 
 Claims は Crossplane Compositions に対する developer-facing interface です。namespace-scoped であるため、developers は infrastructure をプロビジョニングするために自分の namespace 内の RBAC permissions だけを必要とします。
@@ -1257,6 +1269,8 @@ sequenceDiagram
 
 ---
 
+<span id="ack-vs-crossplane"></span>
+
 ## ACK と Crossplane の比較
 
 [AWS Controllers for Kubernetes (ACK)](./02-ack.md) と Crossplane はどちらも Kubernetes API を通じて AWS resources を管理しますが、目的が異なり、異なる abstraction levels で動作します。
@@ -1310,6 +1324,8 @@ ACK と Crossplane は相互排他的ではありません。Pragmatic なアプ
 3. どちらの tool も state を Kubernetes etcd に保存し、GitOps workflows（ArgoCD、FluxCD）と連携します
 
 ---
+
+<span id="backstage--crossplane-integration"></span>
 
 ## Backstage + Crossplane 統合
 
@@ -1544,6 +1560,8 @@ spec:
 
 ---
 
+<span id="production-operations"></span>
+
 ## 本番運用
 
 ### State Management と Drift Detection
@@ -1767,6 +1785,8 @@ spec:
 
 ---
 
+<span id="best-practices"></span>
+
 ## ベストプラクティス
 
 ### Composition Design Principles
@@ -1920,6 +1940,8 @@ spec:
     ```
 
 ---
+
+<span id="references"></span>
 
 ## 参考資料
 

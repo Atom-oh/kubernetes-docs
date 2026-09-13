@@ -14,6 +14,8 @@
 - [Buenas prácticas de EKS](#eks-best-practices)
 - [Lista de verificación de producción](#production-checklist)
 
+<span id="repository-structure"></span>
+
 ## Estructura del repositorio
 
 ### Patrón de monorepo
@@ -123,6 +125,8 @@ gitops-root/
 | Namespace | `{app}` or `{app}-{env}` | `frontend`, `frontend-prod` |
 | Repositorio | `gitops-{scope}` | `gitops-platform` |
 
+<span id="environment-promotion"></span>
+
 ## Promoción de entornos
 
 ### Estrategia de ramas de Git
@@ -217,6 +221,8 @@ jobs:
           commit-message: "chore: promote ${{ github.event.inputs.version }} to production"
 ```
 
+<span id="resource-management"></span>
+
 ## Gestión de recursos
 
 ### Recursos de componentes de ArgoCD
@@ -298,6 +304,8 @@ spec:
           type: Utilization
           averageUtilization: 80
 ```
+
+<span id="performance-tuning"></span>
 
 ## Ajuste de rendimiento
 
@@ -385,6 +393,8 @@ spec:
       managedFieldsManagers:
         - kube-controller-manager
 ```
+
+<span id="disaster-recovery"></span>
 
 ## Recuperación ante desastres
 
@@ -476,6 +486,8 @@ spec:
       selfHeal: true
 ```
 
+<span id="upgrade-strategies"></span>
+
 ## Estrategias de actualización
 
 ### Lista de verificación previa a la actualización
@@ -521,6 +533,8 @@ kubectl port-forward svc/argocd-server -n argocd-new 8081:443
 kubectl delete namespace argocd
 kubectl rename namespace argocd-new argocd
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 
@@ -629,6 +643,8 @@ argocd app get <app-name> --hard-refresh
 kubectl patch application <app-name> -n argocd -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}' --type merge
 ```
 
+<span id="eks-best-practices"></span>
+
 ## Buenas prácticas de EKS
 
 ### Configuración de IRSA
@@ -690,6 +706,8 @@ Al actualizar clústeres de EKS gestionados por ArgoCD:
 2. **Prueba la conectividad** después de la actualización
 3. **Vuelve a sincronizar las aplicaciones** para verificar la compatibilidad
 4. **Actualiza la versión de Kubernetes** en los manifiestos de Application si está codificada de forma rígida
+
+<span id="production-checklist"></span>
 
 ## Lista de verificación de producción
 

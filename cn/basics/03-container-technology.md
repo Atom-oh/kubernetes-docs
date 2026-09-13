@@ -19,6 +19,8 @@
 * [容器编排](03-container-technology.md#container-orchestration)
 * [AWS 上的容器](03-container-technology.md#containers-on-aws)
 
+<span id="what-is-a-container"></span>
+
 ## 什么是容器？
 
 容器是一个标准化的软件单元，包含运行应用程序所需的一切（代码、运行时、系统工具、系统库、设置）。容器在隔离环境中运行，同时共享主机操作系统的内核。
@@ -41,6 +43,8 @@
 * **2015**：Open Container Initiative (OCI) 成立，推动容器标准化
 * **2017**：containerd 捐赠给 CNCF 项目
 
+<span id="container-vs-virtual-machine"></span>
+
 ## 容器与虚拟机
 
 ### 虚拟机架构 vs 容器架构
@@ -57,6 +61,8 @@
 | 安全性              | 相对较低（共享内核）             | 相对较高（完全隔离）                                      |
 | 资源效率            | 高                               | 中等                                                      |
 | 使用场景            | 微服务、CI/CD、开发/测试         | 旧版应用、多样化 OS 需求、高安全性需求                    |
+
+<span id="technical-foundation-of-containers"></span>
 
 ## 容器的技术基础
 
@@ -180,6 +186,8 @@ Container Runtime 是管理容器生命周期的软件。它运行容器镜像�
 
 Kubernetes 通过 CRI (Container Runtime Interface) 与各种 container runtime 集成。CRI 在 Kubernetes 和 container runtime 之间提供标准化接口。
 
+<span id="container-images"></span>
+
 ## 容器镜像
 
 容器镜像是包含应用程序及其依赖项的不可变模板。镜像由多个层组成，每个层代表文件系统变更。
@@ -281,6 +289,8 @@ CMD ["nginx", "-g", "daemon off;"]
 4. **排除不必要的文件**：使用 .dockerignore 文件
 5. **利用缓存**：将经常变化的层放在后面
 
+<span id="container-networking"></span>
+
 ## 容器网络
 
 容器网络支持容器之间以及容器与外部世界之间的通信。
@@ -309,6 +319,8 @@ docker run -p 8080:80 nginx
 1. **同一网络**：同一网络上的容器可以通过容器名称通信
 2. **Links**：旧版方法，在容器之间建立直接链接
 3. **外部网络**：通过主机端口进行通信
+
+<span id="container-storage"></span>
 
 ## 容器存储
 
@@ -343,6 +355,8 @@ docker run -v /host/path:/container/path:ro nginx
 2. **数据 volume 容器**：创建只包含数据的容器，然后进行共享
 3. **外部存储集成**：使用 AWS EBS、NFS 等外部存储系统
 
+<span id="container-security"></span>
+
 ## 容器安全
 
 必须在多个层面考虑容器安全，包括镜像、container runtime 和主机系统。
@@ -369,6 +383,8 @@ docker run -v /host/path:/container/path:ro nginx
 3. **Secret 管理**：使用 Docker Secrets 或外部 secret 管理工具，而不是环境变量
 4. **资源限制**：限制 CPU、内存和其他资源使用
 5. **监控和日志记录**：监控容器活动并集中管理日志
+
+<span id="container-lifecycle-management"></span>
 
 ## 容器生命周期管理
 
@@ -605,6 +621,8 @@ docker events --filter container=<container-id>
 docker diff <container-id>
 ```
 
+<span id="container-orchestration"></span>
+
 ## 容器编排
 
 容器编排是管理和协调多个容器的过程。关键功能包括部署管理、扩展、网络和服务发现。
@@ -625,6 +643,8 @@ docker diff <container-id>
 5. **配置管理**：应用程序配置和 secret 管理
 6. **存储编排**：持久化存储管理
 7. **批处理执行**：一次性任务和 cron job 执行
+
+<span id="containers-on-aws"></span>
 
 ## AWS 上的容器
 

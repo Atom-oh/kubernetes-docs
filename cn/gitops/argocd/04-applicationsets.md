@@ -11,6 +11,8 @@
 - [多集群模式](#multi-cluster-patterns)
 - [模板补丁](#template-patches)
 
+<span id="applicationset-overview"></span>
+
 ## ApplicationSet 概览
 
 ApplicationSet 是一个 Kubernetes controller，用于支持从模板生成 ArgoCD Application。它能够管理跨集群、环境或仓库中具有相似配置的多个应用程序。
@@ -54,6 +56,8 @@ spec:
         server: '{{url}}'
         namespace: myapp
 ```
+
+<span id="generators"></span>
 
 ## 生成器
 
@@ -653,6 +657,8 @@ spec:
         namespace: '{{namespace}}'
 ```
 
+<span id="go-templating"></span>
+
 ## Go 模板
 
 ApplicationSet 使用 Go 模板进行参数替换。
@@ -712,6 +718,8 @@ spec:
       annotations:
         regions: '{{range $i, $r := .regions}}{{if $i}},{{end}}{{$r}}{{end}}'
 ```
+
+<span id="progressive-sync"></span>
 
 ## 渐进式同步
 
@@ -815,6 +823,8 @@ flowchart TB
     class PAUSE pause
     class P1,P2,P3,P4,P5,P6 prod
 ```
+
+<span id="multi-cluster-patterns"></span>
 
 ## 多集群模式
 
@@ -931,6 +941,8 @@ gitRevision: v1.2.3
 imageTag: v1.2.3
 syncWave: "2"
 ```
+
+<span id="template-patches"></span>
 
 ## 模板补丁
 

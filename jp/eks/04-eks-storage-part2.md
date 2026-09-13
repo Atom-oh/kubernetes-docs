@@ -213,6 +213,8 @@ parameters:
 * データ圧縮によりストレージ効率が向上
 * 複数のノードから同じモデルファイルへ同時アクセス
 
+<span id="amazon-s3-storage-integration"></span>
+
 ## Amazon S3 ストレージ統合
 
 Amazon S3 は、無制限の量のデータを保存および取得できるオブジェクトストレージサービスです。Kubernetes では S3 をボリュームとして直接マウントできませんが、S3 と統合する方法は複数あります。
@@ -371,6 +373,8 @@ Amazon S3 は次のユースケースに適しています。
 4. **ML モデルリポジトリ**: トレーニング済みモデルファイルの保存
 5. **ログおよび監査データ**: ログファイルおよび監査データの保存
 
+<span id="snapshots-and-backups"></span>
+
 ## スナップショットとバックアップ
 
 Kubernetes では、ボリュームスナップショットを使用して PV データをバックアップおよび復元できます。
@@ -479,6 +483,8 @@ velero schedule create daily-backup \
 velero restore create --from-backup daily-backup-20250710010000
 ```
 
+<span id="volume-expansion-and-resizing"></span>
+
 ## ボリュームの拡張とリサイズ
 
 Kubernetes では、PVC サイズを拡張してストレージ容量を増やすことができます。
@@ -544,6 +550,8 @@ xfs_growfs /data
 3. **段階的に拡張**: 必要に応じてボリュームサイズを段階的に拡張する
 4. **ダウンタイムを計画**: 一部のファイルシステム拡張ではダウンタイムが必要になる場合がある
 5. **自動化を検討**: 自動拡張ポリシーを実装する
+
+<span id="volume-cloning"></span>
 
 ## ボリュームクローン
 
@@ -751,6 +759,8 @@ spec:
           claimName: shared-block-pvc
 ```
 
+<span id="mountpoint-for-s3-csi-deep-dive"></span>
+
 ## Mountpoint for S3 CSI の詳細
 
 Mountpoint for Amazon S3 は、ファイルシステム操作を S3 オブジェクト API 呼び出しに変換するファイルクライアントであり、アプリケーションが POSIX に類似したインターフェースを通じて S3 bucket にアクセスできるようにします。Mountpoint for S3 CSI driver はこの機能を Kubernetes と統合します。
@@ -910,6 +920,8 @@ spec:
 * **大規模プリフェッチ**: 50MB のプリフェッチにより読み取りレイテンシーを削減
 * **ローカルキャッシュ**: 頻繁にアクセスするデータ用の 100GB キャッシュ
 * **適切なインスタンスタイプ**: 高ネットワーク帯域幅を備えた GPU インスタンス
+
+<span id="storage-performance-optimization"></span>
 
 ## ストレージパフォーマンスの最適化
 

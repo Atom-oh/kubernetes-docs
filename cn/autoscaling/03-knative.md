@@ -17,6 +17,8 @@
 
 ---
 
+<span id="overview-and-learning-objectives"></span>
+
 ## 概述和学习目标
 
 ### 什么是 Knative？
@@ -77,6 +79,8 @@ Knative 由两个可独立安装的组件组成：
 7. 在生产环境中通过监控、高可用性和垃圾回收策略运维 Knative。
 
 ---
+
+<span id="knative-architecture"></span>
 
 ## Knative 架构
 
@@ -213,6 +217,8 @@ flowchart LR
 | **CloudEvents** | 所有 Knative Eventing 组件使用的 CNCF 标准信封格式（v1.0）。提供跨 sources 和 consumers 的互操作性。 |
 
 ---
+
+<span id="eks-installation-and-configuration"></span>
 
 ## EKS 安装和配置
 
@@ -487,6 +493,8 @@ kubectl wait --for=condition=Ready pods --all -n knative-eventing --timeout=300s
 ```
 
 ---
+
+<span id="knative-serving-deep-dive"></span>
 
 ## Knative Serving 深入解析
 
@@ -838,6 +846,8 @@ data:
 ```
 
 ---
+
+<span id="knative-eventing-deep-dive"></span>
 
 ## Knative Eventing 深入解析
 
@@ -1268,6 +1278,8 @@ spec:
 
 ---
 
+<span id="keda-vs-knative-comparison"></span>
+
 ## KEDA 与 Knative 对比
 
 KEDA 和 Knative 都能在 Kubernetes 上实现事件驱动扩缩容，但它们工作在不同抽象层级，并承担互补角色。
@@ -1380,6 +1392,8 @@ spec:
 ```
 
 ---
+
+<span id="production-operations"></span>
 
 ## 生产环境运维
 
@@ -1747,6 +1761,8 @@ kubectl get ksvc order-api -n production -o jsonpath='{.status.url}'
 
 ---
 
+<span id="best-practices"></span>
+
 ## 最佳实践
 
 ### Service 设计模式
@@ -1855,6 +1871,8 @@ spec:
 - 使用 DCGM Exporter 和 NVIDIA GPU Operator metrics 监控 GPU utilization。
 
 ---
+
+<span id="references"></span>
 
 ## 参考资料
 

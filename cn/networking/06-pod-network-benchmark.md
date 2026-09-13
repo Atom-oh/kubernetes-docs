@@ -432,7 +432,7 @@ EKS Pod 的 `/etc/resolv.conf` 有四个搜索域（`bench-net.svc.cluster.local
 
 - **节点是新建的，但并非完全独占。**Karpenter 为此测试启动三个 m5.xlarge 节点后不久，consolidation 将其他 namespace 中少量小 Pod 移至这些节点（`cli` 节点一个，`srv-b` 节点三个——与基准流量无关的小型内部服务和 controller）。运行期间它们空闲或流量很低，负载被限制为最长 180 s 的突发。`cli` 节点显示 CPU *requests* 为 3901m / 3920m（99 %），这并未说明实际利用率。
 - **单次运行（每个单元 n = 1、仅一天）。**未做重复以估计方差。请将这些数字视为量级锚点，而非 SLA，并基于比例和模式得出结论（RTT 阶梯、5 Gbps 流上限、10 Gbps 实例上限、10 对 2 次查询）。
-- **无法测量 ClusterIP（kube-proxy iptables 跳转）和 `trafficDistribution: PreferClose`。**集群中的每次 Service `kubectl apply` 均被拒绝，错误为 `Internal error occurred: failed calling webhook "mservice.elbv2.k8s.aws": … no endpoints available for service "aws-load-balancer-webhook-service"`。只读诊断结果：`aws-load-balancer-controller` 已持续数周处于 CrashLoopBackOff，因此其后的 `failurePolicy: Fail` webhook 有零个就绪 endpoint——在 controller 恢复之前，集群中任何位置都无法创建 Service。本基准没有绕过该 webhook；装置只使用 Pod IP。症状 → 诊断 → 修复已写入 [Troubleshooting Playbook，第 11 项“无法创建 Service：failed calling webhook”](../ops/16-troubleshooting-playbook.md#11-no-service-can-be-created-failed-calling-webhook)。
+- **无法测量 ClusterIP（kube-proxy iptables 跳转）和 `trafficDistribution: PreferClose`。**集群中的每次 Service `kubectl apply` 均被拒绝，错误为 `Internal error occurred: failed calling webhook "mservice.elbv2.k8s.aws": … no endpoints available for service "aws-load-balancer-webhook-service"`。只读诊断结果：`aws-load-balancer-controller` 已持续数周处于 CrashLoopBackOff，因此其后的 `failurePolicy: Fail` webhook 有零个就绪 endpoint——在 controller 恢复之前，集群中任何位置都无法创建 Service。本基准没有绕过该 webhook；装置只使用 Pod IP。症状 → 诊断 → 修复已写入 [Troubleshooting Playbook，第 11 项“无法创建 Service：failed calling webhook” (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#11-no-service-can-be-created-failed-calling-webhook)。
 - **未收集 ENA allowance 计数器。**`ethtool -S eth0 | grep allowance_exceeded`（`bw_in_allowance_exceeded`、`bw_out_allowance_exceeded`、`pps_allowance_exceeded`、`conntrack_allowance_exceeded`、`linklocal_allowance_exceeded`）需要节点上的 hostNetwork Pod，此处未运行。重传计数是间接信号。
 - **仅是在 180 s 内未观察到突发积分耗尽。**在“Up to”实例上，较长的持续传输可能被限速至基线（1.25 Gbps）。未测试超过 180 s 的情况。
 - **DNS 延迟包含 CoreDNS 缓存效应。**冷首次解析和 20 次预热重复不同（`cache 30` 也会缓存 NXDOMAIN），外部名称经过 VPC resolver。预热值之间的比较有效；绝对值取决于缓存状态。
@@ -443,7 +443,7 @@ EKS Pod 的 `/etc/resolv.conf` 有四个搜索域（`bench-net.svc.cluster.local
 
 - [Amazon VPC CNI](./01-vpc-cni.md) —— 这些测量所基于的数据平面：Pod 直接接收 VPC IP、prefix delegation、ENI/IP warming
 - [Zonal Cluster Operations](../ops/15-zonal-operations-guide.md) —— 减少测量 3 账单的区域对齐放置和 AZ failover 设计
-- [Troubleshooting Playbook，第 11 项 — 无法创建 Service：failed calling webhook](../ops/16-troubleshooting-playbook.md#11-no-service-can-be-created-failed-calling-webhook) —— 使 ClusterIP 未纳入本基准的故障
+- [Troubleshooting Playbook，第 11 项 — 无法创建 Service：failed calling webhook (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#11-no-service-can-be-created-failed-calling-webhook) —— 使 ClusterIP 未纳入本基准的故障
 - [Sidecar vs Ambient Mode Selection Guide](../service-mesh/istio/comparison/03-sidecar-vs-ambient.md) —— 将 sidecar 跳转的 +1.29 ms p50 与此处测得的 +0.21 ms AZ 跳转并列比较
 - [EBS gp2 vs gp3 Measured Benchmark](../storage/01-ebs-gp2-gp3-benchmark.md) —— 同一集群的存储路径测量
 - [Kafka on EKS Measured Benchmark](../data-on-eks/kafka/09-kafka-benchmark.md) —— RF3 复制流量如何遇到本页的 5 Gbps 流上限和跨 AZ 定价

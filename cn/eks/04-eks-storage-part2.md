@@ -213,6 +213,8 @@ parameters:
 * 数据压缩可提高存储效率
 * 多个节点可同时访问相同的模型文件
 
+<span id="amazon-s3-storage-integration"></span>
+
 ## Amazon S3 存储集成
 
 Amazon S3 是一种对象存储服务，可存储和检索无限量的数据。在 Kubernetes 中，S3 无法直接挂载为卷，但可通过多种方式与 S3 集成。
@@ -371,6 +373,8 @@ Amazon S3 适用于以下使用场景：
 4. **ML 模型存储库**：存储已训练的模型文件
 5. **日志和审计数据**：存储日志文件和审计数据
 
+<span id="snapshots-and-backups"></span>
+
 ## 快照和备份
 
 在 Kubernetes 中，您可以使用卷快照备份和恢复 PV 数据。
@@ -479,6 +483,8 @@ velero schedule create daily-backup \
 velero restore create --from-backup daily-backup-20250710010000
 ```
 
+<span id="volume-expansion-and-resizing"></span>
+
 ## 卷扩展和调整大小
 
 在 Kubernetes 中，您可以扩展 PVC 大小以增加存储容量。
@@ -544,6 +550,8 @@ xfs_growfs /data
 3. **逐步扩展**：根据需要逐步扩展卷大小
 4. **规划停机时间**：某些文件系统扩展可能需要停机时间
 5. **考虑自动化**：实施自动扩展策略
+
+<span id="volume-cloning"></span>
 
 ## 卷克隆
 
@@ -751,6 +759,8 @@ spec:
           claimName: shared-block-pvc
 ```
 
+<span id="mountpoint-for-s3-csi-deep-dive"></span>
+
 ## Mountpoint for S3 CSI 深入解析
 
 Mountpoint for Amazon S3 是一种文件客户端，可将文件系统操作转换为 S3 对象 API 调用，使应用程序能够通过类似 POSIX 的接口访问 S3 bucket。Mountpoint for S3 CSI driver 将此功能与 Kubernetes 集成。
@@ -910,6 +920,8 @@ spec:
 * **大规模预取**：50MB 预取可降低读取延迟
 * **本地缓存**：为频繁访问的数据提供 100GB 缓存
 * **合适的实例类型**：具有高网络带宽的 GPU 实例
+
+<span id="storage-performance-optimization"></span>
 
 ## 存储性能优化
 

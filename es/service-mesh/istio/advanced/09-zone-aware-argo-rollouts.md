@@ -14,6 +14,8 @@ Este documento explica cómo configurar despliegues Canary de Argo Rollouts inde
 6. [Solución de problemas](09-zone-aware-argo-rollouts.md#troubleshooting)
 7. [Prácticas recomendadas](09-zone-aware-argo-rollouts.md#best-practices)
 
+<span id="problem-definition"></span>
+
 ## Definición del problema
 
 ### Caso de uso real: gestión de PDB en entornos de Spot Instances
@@ -147,6 +149,8 @@ spec:
 
 **Importante**: Argo Rollouts **gestiona todo el arreglo de destinos** del nombre de ruta especificado. Por lo tanto, si varios Rollouts hacen referencia al mismo nombre de ruta, cada Rollout sobrescribirá la configuración de los demás. Se producen conflictos incluso con configuraciones de subset diferentes.
 
+<span id="architecture-overview"></span>
+
 ## Descripción general de la arquitectura
 
 ### Estructura general
@@ -217,6 +221,8 @@ flowchart TB
 3. **Separación basada en subset**: cada Rollout gestiona pares únicos de subset (stable-a/canary-a, etc.)
 4. **DestinationRule consciente de la localidad**: enrutamiento local a la zona y conmutación por error automáticos
 
+<span id="key-design-decisions"></span>
+
 ## Decisiones clave de diseño
 
 ### 1. Un único VirtualService + separación de rutas específica por zona
@@ -279,6 +285,8 @@ curl http://test.default.svc.cluster.local:8080
 
 # Istio automatically routes to zone-local endpoint
 ```
+
+<span id="implementation-guide"></span>
 
 ## Guía de implementación
 
@@ -732,6 +740,8 @@ spec:
       - pause: {duration: 5m}
 ```
 
+<span id="traffic-flow"></span>
+
 ## Flujo de tráfico
 
 ### Estado normal (tráfico local a la zona)
@@ -832,6 +842,8 @@ sequenceDiagram
     Note over VS: Argo Rollouts<br/>gradually changes weight<br/>10 -> 20 -> 50 -> 80 -> 100
 ```
 
+<span id="troubleshooting"></span>
+
 ## Solución de problemas
 
 ### 1. Error de conflicto de VirtualService
@@ -926,6 +938,8 @@ kubectl exec <pod-name> -c istio-proxy -- curl localhost:15000/clusters | grep o
 # 5. Check Argo Rollouts logs
 kubectl logs -n argo-rollouts deployment/argo-rollouts
 ```
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 

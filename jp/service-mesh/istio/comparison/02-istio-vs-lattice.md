@@ -18,6 +18,8 @@
 10. [ハイブリッドアーキテクチャ](02-istio-vs-lattice.md#hybrid-architecture)
 11. [選定ガイド](02-istio-vs-lattice.md#selection-guide)
 
+<span id="overview-and-key-differences"></span>
+
 ## 概要と主な違い
 
 ### Istio Service Mesh
@@ -58,6 +60,8 @@
 | **コストモデル**           | リソースベース | 使用量ベース          |
 | **学習曲線**               | 急             | 緩やか                |
 | **マルチクラウド**         | 対応           | AWS のみ              |
+
+<span id="architecture-comparison"></span>
 
 ## アーキテクチャの比較
 
@@ -190,6 +194,8 @@ flowchart TB
 | **Data Plane**             | Envoy Proxy              | AWS PrivateLink         |
 | **設定インターフェイス**   | Kubernetes CRD           | AWS API                 |
 | **アップグレード**         | 手動（Canary が可能）    | 自動（AWS 管理）        |
+
+<span id="traffic-management-features"></span>
 
 ## トラフィック管理機能
 
@@ -439,6 +445,8 @@ aws vpc-lattice create-target-group \
 
 **結論**: トラフィック管理において、**Istio は圧倒的に優位**です
 
+<span id="security-model"></span>
+
 ## セキュリティモデル
 
 ### mTLS の設定
@@ -630,6 +638,8 @@ spec:
 
 **結論**: セキュリティにおいて、**Istio はより高精度な制御を提供**し、VPC Lattice は AWS IAM 統合に優れています
 
+<span id="observability-and-monitoring"></span>
+
 ## 可観測性とモニタリング
 
 ### メトリクス収集
@@ -816,6 +826,8 @@ aws vpc-lattice create-access-log-subscription \
 
 **結論**: 可観測性において、**Istio は圧倒的に優位**です
 
+<span id="operational-complexity"></span>
+
 ## 運用の複雑さ
 
 ### Istio 運用における現実的な課題
@@ -983,6 +995,8 @@ Istio のアップグレードは、本番環境において最もリスクが�
 
 **結論**: 運用の複雑さにおいて、**VPC Lattice は圧倒的に優位**です
 
+<span id="cost-analysis"></span>
+
 ## コスト分析
 
 ### Istio コストモデル（詳細）
@@ -1053,6 +1067,8 @@ Istio のアップグレードは、本番環境において最もリスクが�
 
 **結論**: VPC Lattice は、**年間約 $42,000、5 年間で $260,000 低コスト**です
 
+<span id="performance-comparison"></span>
+
 ## パフォーマンス比較
 
 ### レイテンシオーバーヘッド
@@ -1088,6 +1104,8 @@ Istio のアップグレードは、本番環境において最もリスクが�
 | **追加 Pod**           | -            | +100（Sidecar） | 0           |
 
 **結論**: VPC Lattice は **圧倒的に効率的**です
+
+<span id="multi-cloud-strategy"></span>
 
 ## マルチクラウド戦略
 
@@ -1141,6 +1159,8 @@ flowchart TB
 * アプリケーションレベルの統合
 * API Gateway
 
+<span id="hybrid-architecture"></span>
+
 ## ハイブリッドアーキテクチャ
 
 ### Istio と VPC Lattice の併用
@@ -1191,6 +1211,8 @@ flowchart TB
 
 * **Cluster 内**: Istio（豊富な機能）
 * **Cluster 間/外部**: VPC Lattice（シンプルな接続性）
+
+<span id="selection-guide"></span>
 
 ## 選定ガイド
 

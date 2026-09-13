@@ -640,7 +640,7 @@ affinity:
 
 ### CoreDNS Mixed Mode
 
-DNS resiliency のため、CoreDNS は cloud nodes と hybrid nodes の **両方** で実行する必要があります。少なくとも 4 replicas（各側 2 つ）で `topologySpreadConstraints` を使用します。[Network Configuration - CoreDNS Dual-Location Deployment](./02-network-configuration.md#coredns-dual-location-deployment-on-premises--cloud) を参照してください。
+DNS resiliency のため、CoreDNS は cloud nodes と hybrid nodes の **両方** で実行する必要があります。少なくとも 4 replicas（各側 2 つ）で `topologySpreadConstraints` を使用します。[Network Configuration - CoreDNS Dual-Location Deployment (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#coredns-placement-and-locality) を参照してください。
 
 ### EKS Pod Identity Agent
 

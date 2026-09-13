@@ -640,7 +640,7 @@ affinity:
 
 ### CoreDNS 混合模式
 
-CoreDNS 应同时运行在 **cloud** 和 hybrid nodes 上，以提高 DNS 韧性。使用 `topologySpreadConstraints` 并至少配置 4 个 replicas（每侧 2 个）。请参阅 [网络配置 - CoreDNS 双位置部署](./02-network-configuration.md#coredns-dual-location-deployment-on-premises--cloud)。
+CoreDNS 应同时运行在 **cloud** 和 hybrid nodes 上，以提高 DNS 韧性。使用 `topologySpreadConstraints` 并至少配置 4 个 replicas（每侧 2 个）。请参阅 [网络配置 - CoreDNS 双位置部署 (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#coredns-placement-and-locality)。
 
 ### EKS Pod Identity Agent
 

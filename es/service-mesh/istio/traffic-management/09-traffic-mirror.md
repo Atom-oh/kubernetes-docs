@@ -7,8 +7,10 @@ Traffic Mirroring (o Shadow Traffic) es una técnica que replica el tráfico de 
 1. [Descripción general de Traffic Mirroring](#traffic-mirroring-overview)
 2. [Configuración básica](#basic-configuration)
 3. [Duplicación parcial](#partial-mirroring)
-4. [Ejemplos prácticos](#practical-examples)
-5. [Mejores prácticas](#best-practices)
+4. [Ejemplos prácticos (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror#basic-configuration)
+5. [Mejores prácticas (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror#best-practices)
+
+<span id="traffic-mirroring-overview"></span>
 
 ## Descripción general de Traffic Mirroring
 
@@ -40,6 +42,8 @@ flowchart LR
     class V2 shadow;
 ```
 
+<span id="basic-configuration"></span>
+
 ## Configuración básica
 
 ```yaml
@@ -62,6 +66,8 @@ spec:
     mirrorPercentage:
       value: 100  # 100% mirroring
 ```
+
+<span id="partial-mirroring"></span>
 
 ## Duplicación parcial
 

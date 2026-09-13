@@ -213,6 +213,8 @@ Esta configuración proporciona los siguientes beneficios:
 * La compresión de datos mejora la eficiencia de almacenamiento
 * Acceso simultáneo a los mismos archivos de modelo desde varios nodos
 
+<span id="amazon-s3-storage-integration"></span>
+
 ## Integración de almacenamiento de Amazon S3
 
 Amazon S3 es un servicio de almacenamiento de objetos que puede almacenar y recuperar cantidades ilimitadas de datos. En Kubernetes, S3 no se puede montar directamente como volumen, pero hay varias formas de integrarlo con S3.
@@ -371,6 +373,8 @@ Amazon S3 es adecuado para los siguientes casos de uso:
 4. **Repositorio de modelos de ML**: Almacenamiento de archivos de modelos entrenados
 5. **Logs y datos de auditoría**: Almacenamiento de archivos de logs y datos de auditoría
 
+<span id="snapshots-and-backups"></span>
+
 ## Snapshots y copias de seguridad
 
 En Kubernetes, puede usar snapshots de volúmenes para realizar copias de seguridad y restaurar datos de PV.
@@ -479,6 +483,8 @@ velero schedule create daily-backup \
 velero restore create --from-backup daily-backup-20250710010000
 ```
 
+<span id="volume-expansion-and-resizing"></span>
+
 ## Expansión y redimensionamiento de volúmenes
 
 En Kubernetes, puede ampliar el tamaño de un PVC para aumentar la capacidad de almacenamiento.
@@ -544,6 +550,8 @@ xfs_growfs /data
 3. **Expansión gradual**: Amplíe gradualmente el tamaño del volumen según sea necesario
 4. **Planifique el tiempo de inactividad**: Algunas expansiones del sistema de archivos pueden requerir tiempo de inactividad
 5. **Considere la automatización**: Implemente políticas de expansión automática
+
+<span id="volume-cloning"></span>
 
 ## Clonación de volúmenes
 
@@ -649,6 +657,8 @@ spec:
       claimName: postgres-data-test
 ```
 
+<span id="multi-attach-ebs"></span>
+
 ## Multi-Attach de EBS
 
 Multi-Attach permite conectar un único volumen EBS a varias instancias EC2 simultáneamente. Esta característica está disponible para volúmenes io1 e io2 Block Express y es útil para aplicaciones en clúster que requieren almacenamiento compartido con alto rendimiento.
@@ -750,6 +760,8 @@ spec:
         persistentVolumeClaim:
           claimName: shared-block-pvc
 ```
+
+<span id="mountpoint-for-s3-csi-deep-dive"></span>
 
 ## Análisis detallado de Mountpoint for S3 CSI
 
@@ -910,6 +922,8 @@ Optimizaciones clave de este ejemplo:
 * **Prefetch grande**: El prefetch de 50 MB reduce la latencia de lectura
 * **Caché local**: Caché de 100 GB para datos a los que se accede con frecuencia
 * **Tipo de instancia adecuado**: Instancia GPU con alto ancho de banda de red
+
+<span id="storage-performance-optimization"></span>
 
 ## Optimización del rendimiento de almacenamiento
 

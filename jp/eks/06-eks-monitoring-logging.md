@@ -540,7 +540,7 @@ aws eks update-addon \
   --addon-version v5.0.0-eksbuild.1
 ```
 
-Application Signals が opt-in だった add-on version から移行する場合の upgrade guidance については、[release notes](https://aws.amazon.com/about-aws/whats-new/2026/02/application-performance-monitoring-cloudwatch-eks/) (February 26, 2026) を参照してください。Container Insights metric collection の新しい OTel-based evolution については、[CloudWatch Metrics](../observability/metrics/04-cloudwatch-metrics.md#opentelemetry-based-container-insights-preview) を参照してください。
+Application Signals が opt-in だった add-on version から移行する場合の upgrade guidance については、[release notes](https://aws.amazon.com/about-aws/whats-new/2026/02/application-performance-monitoring-cloudwatch-eks/) (February 26, 2026) を参照してください。Container Insights metric collection の新しい OTel-based evolution については、[CloudWatch Metrics (English)](https://www.atomai.click/kubernetes-docs/en/observability/metrics/04-cloudwatch-metrics#otel-migration-and-historical-announcements) を参照してください。
 
 ### EKS Node Monitoring Agent
 

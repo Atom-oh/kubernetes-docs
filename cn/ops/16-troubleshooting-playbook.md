@@ -24,25 +24,29 @@
 
 ***
 
+<span id="30-second-summary-symptom--first-command--most-common-cause"></span>
+
 ## 30 秒摘要：症状 → 首条命令 → 最常见原因
 
 每个症状单元格均链接至下面对应的手册章节。
 
 | 症状（`kubectl get pods`/`nodes` 显示的内容） | 首条命令 | 最常见原因 |
 |---|---|---|
-| [`Pending`](#1-pod-stuck-in-pending) | `kubectl describe pod <pod>` → Events 中的 `FailedScheduling` 消息 | 资源不足（`Insufficient cpu/memory`）、缺少 toleration、nodeSelector 不匹配、PVC 未绑定 |
+| [`Pending` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#1-pod-stuck-in-pending) | `kubectl describe pod <pod>` → Events 中的 `FailedScheduling` 消息 | 资源不足（`Insufficient cpu/memory`）、缺少 toleration、nodeSelector 不匹配、PVC 未绑定 |
 | [`ImagePullBackOff` / `ErrImagePull`](#2-imagepullbackoff--errimagepull) | `kubectl describe pod <pod>` → `Failed to pull image` 行 | tag 拼写错误、私有 registry 认证（imagePullSecrets/node IAM）、ECR 区域/账户不匹配 |
-| [`CrashLoopBackOff`](#3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors) | `kubectl logs <pod> --previous` + 检查 `lastState.terminated` | 应用启动失败（exit 1）、`OOMKilled`（exit 137）、liveness probe 失败、缺少 ConfigMap/Secret |
-| [`Running` 但 READY 为 `0/1`](#4-running-but-not-ready--empty-endpoints) | `kubectl describe pod <pod>` → `Readiness probe failed` | readiness 路径/端口错误、正在等待依赖项、sidecar 未就绪 |
+| [`CrashLoopBackOff` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors) | `kubectl logs <pod> --previous` + 检查 `lastState.terminated` | 应用启动失败（exit 1）、`OOMKilled`（exit 137）、liveness probe 失败、缺少 ConfigMap/Secret |
+| [`Running` 但 READY 为 `0/1` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#4-running-but-not-ready--empty-endpoints) | `kubectl describe pod <pod>` → `Readiness probe failed` | readiness 路径/端口错误、正在等待依赖项、sidecar 未就绪 |
 | [请求始终无法到达 Service](#5-service-is-unreachable) | `kubectl get endpointslices -l kubernetes.io/service-name=<svc>` | selector 标签不匹配、`targetPort` 错误、NetworkPolicy 阻断、CoreDNS 故障 |
-| [节点 `NotReady`](#6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure) | `kubectl describe node <node>` → Conditions | kubelet 停止/网络分区、`DiskPressure`、`MemoryPressure`、`PIDPressure` |
-| [PVC `Pending`](#7-pvc-stuck-in-pending) | `kubectl describe pvc <pvc>` → Events | `WaitForFirstConsumer`（正常等待）、StorageClass 缺失/拼写错误、AZ 不匹配 |
-| [应用日志中出现 `AccessDenied`（AWS API）](#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + Pod `env \| grep AWS` | IRSA（IAM Roles for Service Accounts）annotation/trust policy 错误、缺少 Pod Identity association、Pod 未重启 |
-| [卡在 `ContainerCreating` + `failed to assign an IP address`](#9-eks-enivpc-cni-ip-exhaustion) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | 子网 IP 耗尽、节点 max-pods 已达到、`aws-node` 不健康 |
-| [Karpenter 不启动节点](#10-eks-karpenter-does-not-launch-a-node) | `kubectl get events -A --field-selector reason=FailedScheduling` | NodePool `limits` 已达到、requirements/taint 不匹配、实例类型限制 |
-| [创建 Service 因 `failed calling webhook` 被拒绝](#11-no-service-can-be-created-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | 匹配所有 namespace 且使用 `failurePolicy: Fail` 的 webhook 后端 Webhook Deployment 不健康（CrashLoop） |
+| [节点 `NotReady` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure) | `kubectl describe node <node>` → Conditions | kubelet 停止/网络分区、`DiskPressure`、`MemoryPressure`、`PIDPressure` |
+| [PVC `Pending` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#7-pvc-stuck-in-pending) | `kubectl describe pvc <pvc>` → Events | `WaitForFirstConsumer`（正常等待）、StorageClass 缺失/拼写错误、AZ 不匹配 |
+| [应用日志中出现 `AccessDenied`（AWS API） (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + Pod `env \| grep AWS` | IRSA（IAM Roles for Service Accounts）annotation/trust policy 错误、缺少 Pod Identity association、Pod 未重启 |
+| [卡在 `ContainerCreating` + `failed to assign an IP address` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#9-eks-enivpc-cni-ip-exhaustion) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | 子网 IP 耗尽、节点 max-pods 已达到、`aws-node` 不健康 |
+| [Karpenter 不启动节点 (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#10-eks-karpenter-does-not-launch-a-node) | `kubectl get events -A --field-selector reason=FailedScheduling` | NodePool `limits` 已达到、requirements/taint 不匹配、实例类型限制 |
+| [创建 Service 因 `failed calling webhook` 被拒绝 (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#11-no-service-can-be-created-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | 匹配所有 namespace 且使用 `failurePolicy: Fail` 的 webhook 后端 Webhook Deployment 不健康（CrashLoop） |
 
 ***
+
+<span id="diagnostic-decision-tree"></span>
 
 ## 诊断决策树
 
@@ -61,6 +65,8 @@ kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | t
 ```
 
 ***
+
+<span id="playbook-by-symptom"></span>
 
 ## 按症状分类的手册
 
@@ -87,14 +93,16 @@ Warning  FailedScheduling  default-scheduler  0/15 nodes are available: 1 Insuff
 
 | 消息片段 | 原因 | 修复 |
 |---|---|---|
-| `Insufficient cpu` / `Insufficient memory` | requests 超过剩余节点容量 | 合理调整 requests，检查 autoscaler（→ [10. Karpenter](#10-eks-karpenter-does-not-launch-a-node)），在 `kubectl describe node` 中检查 `Allocated resources` |
-| `Too many pods` | 节点 max-pods 已达到（VPC CNI ENI 限制） | → [9. ENI/IP 耗尽](#9-eks-enivpc-cni-ip-exhaustion) |
+| `Insufficient cpu` / `Insufficient memory` | requests 超过剩余节点容量 | 合理调整 requests，检查 autoscaler（→ [10. Karpenter (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#10-eks-karpenter-does-not-launch-a-node)），在 `kubectl describe node` 中检查 `Allocated resources` |
+| `Too many pods` | 节点 max-pods 已达到（VPC CNI ENI 限制） | → [9. ENI/IP 耗尽 (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#9-eks-enivpc-cni-ip-exhaustion) |
 | `node(s) had untolerated taint(s)` | 没有匹配节点 taint 的 toleration | 使用 `kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints[*].key` 列出 taint，然后添加 toleration 或调整 NodePool |
 | `node(s) didn't match Pod's node affinity/selector` | 没有节点携带 nodeSelector/affinity 标签 | 检查 `kubectl get nodes --show-labels`。使用 Karpenter 时，该 key 必须出现在 NodePool requirements 中，否则不会创建节点 |
-| `pod has unbound immediate PersistentVolumeClaims` | PVC 为 `Pending` | → [7. PVC Pending](#7-pvc-stuck-in-pending) |
+| `pod has unbound immediate PersistentVolumeClaims` | PVC 为 `Pending` | → [7. PVC Pending (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#7-pvc-stuck-in-pending) |
 | `node(s) had volume node affinity conflict` | PV（EBS）所在 AZ 中没有可调度的节点 | 读取 PV 的 `nodeAffinity` zone，并在该 AZ 提供容量 |
 | `node(s) didn't match pod topology spread constraints` / `pod anti-affinity rules` | 没有节点满足 spread constraint | 使用 `whenUnsatisfiable: ScheduleAnyway` 放宽限制，或添加节点 |
 | 完全没有事件 | scheduler 问题，或 `schedulerName` 拼写错误 | 检查 `kubectl get pod <pod> -o jsonpath='{.spec.schedulerName}'` |
+
+<span id="2-imagepullbackoff--errimagepull"></span>
 
 ### 2. `ImagePullBackOff` / `ErrImagePull`
 
@@ -228,6 +236,8 @@ kube-dns-xc4bb   IPv4          53,53,9153   10.0.2.106,10.0.3.14   145d
 | `1/2` Running，只有应用 container Ready | sidecar（istio-proxy 等）未就绪，或 sidecar 在应用后启动且初始连接失败 | 检查 sidecar 日志；将 sidecar 转为 native sidecar（`initContainers` + `restartPolicy: Always`） |
 | Ready，但 EndpointSlice 为空 | Service selector 与 Pod 标签不匹配 | → [5. Service 不可达](#5-service-is-unreachable) |
 
+<span id="5-service-is-unreachable"></span>
+
 ### 5. Service 不可达
 
 **症状**：每个 Pod 都是 `1/1 Running`，但 `curl http://<svc>.<ns>.svc.cluster.local` 超时/被拒绝，或者名称解析失败。
@@ -313,7 +323,7 @@ df -h /var/lib/containerd
 crictl ps -a | head
 ```
 
-从未出现在 `kubectl get nodes` 中的节点（加入失败：IAM role/access entry、子网路由、security group、AMI 不匹配）是另一个主题 → [EKS Advanced Debugging — Node Join Failure Diagnosis](../eks/11-eks-advanced-debugging.md#node-join-failure-diagnosis-8-common-causes)、[EKS Troubleshooting — Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues)。对于 Karpenter 节点，请从[第 10 节](#10-eks-karpenter-does-not-launch-a-node)的 NodeClaim 检查开始。
+从未出现在 `kubectl get nodes` 中的节点（加入失败：IAM role/access entry、子网路由、security group、AMI 不匹配）是另一个主题 → [EKS Advanced Debugging — Node Join Failure Diagnosis (English)](https://www.atomai.click/kubernetes-docs/en/eks/11-eks-advanced-debugging#node-join-failure-diagnosis)、[EKS Troubleshooting — Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues)。对于 Karpenter 节点，请从[第 10 节 (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#10-eks-karpenter-does-not-launch-a-node)的 NodeClaim 检查开始。
 
 ### 7. PVC 卡在 `Pending`
 
@@ -342,7 +352,7 @@ gp3    ebs.csi.aws.com         Delete          WaitForFirstConsumer   true      
 | `FailedBinding: no persistent volumes available for this claim and no storage class is set` | 没有 `storageClassName`，且没有默认 StorageClass | 在 PVC 上设置 `storageClassName: gp3`，或使用 `storageclass.kubernetes.io/is-default-class: "true"` 为一个 SC 添加 annotation |
 | `ProvisioningFailed: storageclass.storage.k8s.io "<name>" not found` | StorageClass 拼写错误，manifest 从其他集群复制而来 | 使用 `kubectl get sc` 中的真实名称 |
 | `ProvisioningFailed: error generating accessibility requirements: no topology key found for node <node>` | EBS CSI node plugin 尚未在 Pod 落到的节点上注册（`CSINode` 中没有 driver） | 检查 `kubectl get csinode <node>` 的 DRIVERS 列；确认 `ebs-csi-node` DaemonSet 在该节点上运行 |
-| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | EBS CSI controller 的 IRSA/Pod Identity 缺少权限 | → [8. IRSA/Pod Identity](#8-eks-irsa--pod-identity-accessdenied) — subject 是 `ebs-csi-controller-sa` |
+| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | EBS CSI controller 的 IRSA/Pod Identity 缺少权限 | → [8. IRSA/Pod Identity (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#8-eks-irsa--pod-identity-accessdenied) — subject 是 `ebs-csi-controller-sa` |
 | Pod 端 `node(s) had volume node affinity conflict` | 现有 PV（EBS）位于 AZ `ap-northeast-2a`，但可调度节点在另一个 AZ | EBS 无法跨 AZ。使用 `kubectl get pv <pv> -o jsonpath='{.spec.nodeAffinity}'` 读取 zone，并在那里提供容量（NodePool zone requirement 或 nodeSelector） |
 | Pod 端 `FailedAttachVolume: Multi-Attach error for volume` | RWO volume 仍附加于之前的节点（节点失败后 StatefulSet 被重新调度） | 使用 `kubectl get volumeattachments` 检查陈旧 attachment。如果节点已消失，等待数分钟以清理 |
 
@@ -484,7 +494,7 @@ FailedScheduling  karpenter  Failed to schedule pod, incompatible with nodepool 
 | Karpenter 日志中出现 `InsufficientInstanceCapacity` | 该 AZ/实例类型没有 EC2 容量（ICE — Insufficient Capacity Error） | 扩大实例类型、AZ 和 capacity-type（spot/on-demand）范围 |
 | 没有 events，Karpenter 日志安静 | Pod 不是 Karpenter candidate（`nodeSelector` 指向 MNG 标签，或调度 constraint 与 Karpenter 无关） | 重新检查 Pod spec 中每一项与节点相关的 constraint |
 
-NodePool/EC2NodeClass 结构和详细故障排查在 [Karpenter — Troubleshooting](../autoscaling/02-karpenter.md#troubleshooting) 和 [EKS Advanced Debugging — Karpenter Provisioning Issues](../eks/11-eks-advanced-debugging.md#karpenter-provisioning-issues) 中。
+NodePool/EC2NodeClass 结构和详细故障排查在 [Karpenter — Troubleshooting](../autoscaling/02-karpenter.md#troubleshooting) 和 [EKS Advanced Debugging — Karpenter Provisioning Issues (English)](https://www.atomai.click/kubernetes-docs/en/eks/11-eks-advanced-debugging#karpenter-provisioning-issues) 中。
 
 ### 11. 无法创建任何 Service：failed calling webhook
 
@@ -536,6 +546,8 @@ kubectl -n kube-system logs deploy/aws-load-balancer-controller --previous
 该故障阻止了 [Pod Network Benchmark](../networking/06-pod-network-benchmark.md) 中的 ClusterIP（kube-proxy）测量 — webhook 并未被绕过；benchmark 仅使用 Pod IP。
 
 ***
+
+<span id="kubectl-diagnostic-cheat-sheet"></span>
 
 ## kubectl 诊断速查表
 
@@ -599,6 +611,8 @@ kubectl rollout history deploy/<name> -n <ns>
 
 ***
 
+<span id="going-deeper-related-documents"></span>
+
 ## 深入了解：相关文档
 
 本手册是决定“接下来去哪里”的入口。缩小原因范围后，请转到下面的文档。
@@ -617,6 +631,8 @@ kubectl rollout history deploy/<name> -n <ns>
 | 事件响应流程、严重性、最初 5 分钟检查清单 | — | [EKS Advanced Debugging — Incident Response Framework](../eks/11-eks-advanced-debugging.md#1-incident-response-framework) |
 
 ***
+
+<span id="references"></span>
 
 ## 参考资料
 

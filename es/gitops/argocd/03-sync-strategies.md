@@ -13,6 +13,8 @@
 - [Políticas de reintento](#retry-policies)
 - [Sincronización selectiva](#selective-sync)
 
+<span id="manual-vs-automated-sync"></span>
+
 ## Sincronización manual frente a automatizada
 
 ArgoCD admite dos modos de sincronización: manual y automatizado.
@@ -109,6 +111,8 @@ flowchart LR
     class RESOURCES cluster
 ```
 
+<span id="auto-sync-policies"></span>
+
 ## Políticas de sincronización automática
 
 ### Prune
@@ -187,6 +191,8 @@ spec:
       selfHeal: true     # Revert manual changes
       allowEmpty: false  # Fail if no resources
 ```
+
+<span id="sync-options"></span>
 
 ## Opciones de sincronización
 
@@ -276,6 +282,8 @@ metadata:
 - Jobs (spec inmutable)
 - Cambiar la clase de almacenamiento de PVC
 - Campos inmutables de ConfigMap/Secret
+
+<span id="sync-waves-and-phases"></span>
 
 ## Oleadas y fases de sincronización
 
@@ -530,6 +538,8 @@ spec:
                   number: 80
 ```
 
+<span id="sync-windows"></span>
+
 ## Ventanas de sincronización
 
 Las ventanas de sincronización restringen cuándo las aplicaciones pueden sincronizarse.
@@ -622,6 +632,8 @@ Para emergencias, la sincronización manual puede anular las ventanas de denegac
 argocd app sync my-app --force
 ```
 
+<span id="diffing-customization"></span>
+
 ## Personalización de diferencias
 
 ### Ignorar diferencias
@@ -708,6 +720,8 @@ resource.compareoptions: |
   ignoreResourceStatusField: crd
 ```
 
+<span id="retry-policies"></span>
+
 ## Políticas de reintento
 
 Configura el reintento automático ante fallos de sincronización.
@@ -786,6 +800,8 @@ spec:
               echo "Prerequisites met"
       restartPolicy: Never
 ```
+
+<span id="selective-sync"></span>
 
 ## Sincronización selectiva
 

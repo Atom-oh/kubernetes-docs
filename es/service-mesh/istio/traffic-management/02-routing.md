@@ -15,6 +15,8 @@ Las funciones avanzadas de enrutamiento de Istio permiten un control detallado d
 9. [Ejemplos prácticos](#practical-examples)
 10. [Solución de problemas](#troubleshooting)
 
+<span id="routing-overview"></span>
+
 ## Resumen del enrutamiento
 
 Las reglas de enrutamiento de VirtualService constan de **condiciones de Match** y **destinos de Route**.
@@ -87,6 +89,8 @@ spec:
         host: web-app
 ```
 
+<span id="match-conditions"></span>
+
 ## Condiciones de Match
 
 ### Tipos de condiciones de Match
@@ -150,6 +154,8 @@ http:
   - destination:
       host: api-service
 ```
+
+<span id="uri-based-routing"></span>
 
 ## Enrutamiento basado en URI
 
@@ -273,6 +279,8 @@ spec:
     - destination:
         host: image-service
 ```
+
+<span id="header-based-routing"></span>
 
 ## Enrutamiento basado en encabezados
 
@@ -400,6 +408,8 @@ spec:
         subset: v1
 ```
 
+<span id="query-parameter-based-routing"></span>
+
 ## Enrutamiento basado en parámetros de consulta
 
 ### Coincidencia básica de parámetros de consulta
@@ -490,6 +500,8 @@ spec:
         subset: production
 ```
 
+<span id="http-method-based-routing"></span>
+
 ## Enrutamiento basado en métodos HTTP
 
 ```yaml
@@ -541,6 +553,8 @@ spec:
     - destination:
         host: api-read-service
 ```
+
+<span id="source-based-routing"></span>
 
 ## Enrutamiento basado en origen
 
@@ -609,6 +623,8 @@ spec:
         host: payment-service
         subset: v1
 ```
+
+<span id="priority-and-fallback"></span>
 
 ## Prioridad y alternativa
 
@@ -692,6 +708,8 @@ spec:
         subset: stable
       weight: 100
 ```
+
+<span id="practical-examples"></span>
 
 ## Ejemplos prácticos
 
@@ -908,6 +926,8 @@ spec:
     - destination:
         host: error-service
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 

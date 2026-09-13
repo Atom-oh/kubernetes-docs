@@ -23,6 +23,8 @@
 7. [xDS API 通信](03-architecture.md#xds-api-communication)
 8. [使用 Sidecar 资源进行优化](03-architecture.md#optimization-with-sidecar-resource)
 
+<span id="istio-architecture-overview"></span>
+
 ## Istio 架构概览
 
 ### 整体结构
@@ -40,6 +42,8 @@
 | **语言**    | Go                                            | C++                       |
 | **负载**        | 低                                           | 高（所有流量）        |
 | **可扩展性** | 水平扩缩容（HA）                       | 自动（每个 Pod 1 个）     |
+
+<span id="control-plane-istiod"></span>
 
 ## 控制平面：Istiod
 
@@ -214,6 +218,8 @@ spec:
 * 内存：2 - 4 GB
 * 可处理数千个 Service 和 Pod
 
+<span id="data-plane-envoy-proxy"></span>
+
 ## 数据平面：Envoy Proxy
 
 ### Envoy 架构
@@ -296,6 +302,8 @@ spec:
 * 新增延迟：< 1ms（P99）
 * 内存：50-100 MB（默认配置）
 * CPU：0.1-0.5 个核心（典型负载）
+
+<span id="sidecar-injection-mechanism"></span>
 
 ## Sidecar 注入机制
 
@@ -395,6 +403,8 @@ kubectl apply -f deployment-injected.yaml
 * 在 CI/CD pipeline 中需要显式控制时
 * 希望检查注入后的 YAML 以进行调试时
 
+<span id="iptables-and-traffic-interception"></span>
+
 ## iptables 与流量拦截
 
 ### istio-init Container
@@ -475,6 +485,8 @@ Istio 支持两种流量拦截方式：
 | **iptables**   | 简单、通用    | 需要 Init Container | 默认设置                  |
 | **eBPF（CNI）** | 无需 Init、速度快 | 需要现代内核  | 高性能、Ambient Mode |
 
+<span id="dns-processing-mechanism"></span>
+
 ## DNS 处理机制
 
 ### Kubernetes DNS 基本工作方式
@@ -527,6 +539,8 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
   -m owner ! --uid-owner 1337 \
   -j REDIRECT --to-port 15053
 ```
+
+<span id="xds-api-communication"></span>
 
 ## xDS API 通信
 
@@ -590,6 +604,8 @@ istioctl proxy-config endpoints <pod-name> -n default
 # Route configuration
 istioctl proxy-config routes <pod-name> -n default
 ```
+
+<span id="optimization-with-sidecar-resource"></span>
 
 ## 使用 Sidecar 资源进行优化
 

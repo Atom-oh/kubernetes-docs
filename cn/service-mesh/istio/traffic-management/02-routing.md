@@ -15,6 +15,8 @@ Istio 的高级路由功能可根据各种请求属性对流量进行精细控�
 9. [实际示例](#practical-examples)
 10. [故障排除](#troubleshooting)
 
+<span id="routing-overview"></span>
+
 ## 路由概览
 
 VirtualService 路由规则由**匹配条件**和**路由目标**组成。
@@ -87,6 +89,8 @@ spec:
         host: web-app
 ```
 
+<span id="match-conditions"></span>
+
 ## 匹配条件
 
 ### 匹配条件类型
@@ -150,6 +154,8 @@ http:
   - destination:
       host: api-service
 ```
+
+<span id="uri-based-routing"></span>
 
 ## 基于 URI 的路由
 
@@ -273,6 +279,8 @@ spec:
     - destination:
         host: image-service
 ```
+
+<span id="header-based-routing"></span>
 
 ## 基于 Header 的路由
 
@@ -400,6 +408,8 @@ spec:
         subset: v1
 ```
 
+<span id="query-parameter-based-routing"></span>
+
 ## 基于查询参数的路由
 
 ### 基本查询参数匹配
@@ -490,6 +500,8 @@ spec:
         subset: production
 ```
 
+<span id="http-method-based-routing"></span>
+
 ## 基于 HTTP 方法的路由
 
 ```yaml
@@ -541,6 +553,8 @@ spec:
     - destination:
         host: api-read-service
 ```
+
+<span id="source-based-routing"></span>
 
 ## 基于来源的路由
 
@@ -609,6 +623,8 @@ spec:
         host: payment-service
         subset: v1
 ```
+
+<span id="priority-and-fallback"></span>
 
 ## 优先级和回退
 
@@ -692,6 +708,8 @@ spec:
         subset: stable
       weight: 100
 ```
+
+<span id="practical-examples"></span>
 
 ## 实际示例
 
@@ -908,6 +926,8 @@ spec:
     - destination:
         host: error-service
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

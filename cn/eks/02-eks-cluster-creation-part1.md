@@ -5,10 +5,12 @@
 ## 目录
 
 1. [前提条件](02-eks-cluster-creation-part1.md#prerequisites)
-2. [使用 eksctl 创建集群](02-eks-cluster-creation-part1.md#creating-a-cluster-using-eksctl)
-3. [使用 AWS Management Console 创建集群](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-management-console)
-4. [使用 AWS CLI 创建集群](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-cli)
-5. [使用 Terraform 创建集群](02-eks-cluster-creation-part1.md#creating-a-cluster-using-terraform)
+2. [使用 eksctl 创建集群 (English)](https://www.atomai.click/kubernetes-docs/en/eks/02-eks-cluster-creation-part2#creating-a-cluster-using-eksctl)
+3. [使用 AWS Management Console 创建集群 (English)](https://www.atomai.click/kubernetes-docs/en/eks/02-eks-cluster-creation-part3#creating-a-cluster-using-aws-management-console)
+4. [使用 AWS CLI 创建集群 (English)](https://www.atomai.click/kubernetes-docs/en/eks/02-eks-cluster-creation-part3#creating-a-cluster-using-aws-cli)
+5. [使用 Terraform 创建集群 (English)](https://www.atomai.click/kubernetes-docs/en/eks/02-eks-cluster-creation-part4#three-layer-terraform-example)
+
+<span id="prerequisites"></span>
 
 ## 前提条件
 

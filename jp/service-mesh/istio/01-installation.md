@@ -15,6 +15,8 @@
 9. [Istio の削除](#istio-removal)
 10. [トラブルシューティング](#troubleshooting)
 
+<span id="prerequisites"></span>
+
 ## 前提条件
 
 Istio をインストールする前に、以下の要件を満たす必要があります。
@@ -47,6 +49,8 @@ kubectl get nodes
 - **Control Plane**: 1 vCPU、1.5GB RAM
 - **Sidecar（Pod ごと）**: 0.1 vCPU、128MB RAM
 
+<span id="choosing-an-installation-method"></span>
+
 ## インストール方法の選択
 
 Istio には主に 3 つのインストール方法があります。
@@ -56,6 +60,8 @@ Istio には主に 3 つのインストール方法があります。
 | **istioctl** | シンプルかつ高速で、検証機能を提供 | 自動化が困難 | 開発・テスト環境 |
 | **Helm** | GitOps に適し、バージョン管理が容易 | 設定が複雑になる場合がある | 本番環境、CI/CD パイプライン |
 | **Istio Operator** | 宣言的な管理、自動アップグレード | 追加リソースが必要 | 大規模な本番環境 |
+
+<span id="installation-using-istioctl"></span>
 
 ## istioctl を使用したインストール
 
@@ -104,6 +110,8 @@ kubectl get all -n istio-system
 # Check istiod logs
 kubectl logs -n istio-system -l app=istiod
 ```
+
+<span id="installation-using-helm"></span>
 
 ## Helm を使用したインストール
 
@@ -191,6 +199,8 @@ helm install istiod istio/istiod \
   --wait
 ```
 
+<span id="installation-using-istio-operator"></span>
+
 ## Istio Operator を使用したインストール
 
 Istio Operator は Istio を宣言的に管理します。
@@ -244,6 +254,8 @@ kubectl apply -f istio-operator.yaml
 kubectl get istiooperator -n istio-system
 ```
 
+<span id="installation-profiles"></span>
+
 ## インストールプロファイル
 
 Istio はさまざまなユースケース向けに複数のプロファイルを提供します。
@@ -292,6 +304,8 @@ istioctl install --set profile=default \
   -y
 ```
 
+<span id="installation-verification"></span>
+
 ## インストールの検証
 
 ### 1. Control Plane の確認
@@ -336,6 +350,8 @@ kubectl get mutatingwebhookconfiguration
 # Check ValidatingWebhookConfiguration
 kubectl get validatingwebhookconfiguration
 ```
+
+<span id="sample-application-deployment"></span>
 
 ## サンプルアプリケーションのデプロイ
 
@@ -404,6 +420,8 @@ echo "http://$GATEWAY_URL/productpage"
 curl -s "http://$GATEWAY_URL/productpage" | grep -o "<title>.*</title>"
 ```
 
+<span id="istio-removal"></span>
+
 ## Istio の削除
 
 ### istioctl を使用した削除
@@ -453,6 +471,8 @@ istioctl operator remove
 kubectl delete namespace istio-system
 kubectl delete namespace istio-operator
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

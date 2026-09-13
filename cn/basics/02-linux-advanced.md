@@ -19,6 +19,8 @@
 
 ***
 
+<span id="1-environment-variables-and-shell-configuration"></span>
+
 ## 1. 环境变量与 Shell 配置
 
 环境变量是在 Linux 和 Kubernetes 中管理配置的核心机制。
@@ -90,6 +92,8 @@ spec:
 
 ***
 
+<span id="2-shell-scripting-basics"></span>
+
 ## 2. Shell 脚本基础
 
 ### 2.1 变量
@@ -156,6 +160,8 @@ spec:
 
 ***
 
+<span id="3-text-processing-tools"></span>
+
 ## 3. 文本处理工具
 
 ### 3.1 grep 与 kubectl
@@ -194,6 +200,8 @@ yq -i '.spec.replicas = 5' deployment.yaml
 
 ***
 
+<span id="4-ssh-and-remote-access"></span>
+
 ## 4. SSH 和远程访问
 
 ### 4.1 SSH 密钥生成
@@ -222,6 +230,8 @@ rsync -avzP ./local/ user@remote:/path/
 ```
 
 ***
+
+<span id="5-performance-monitoring-and-troubleshooting"></span>
 
 ## 5. 性能监控和故障排查
 
@@ -253,6 +263,8 @@ kubectl top pods --sort-by=memory
 ```
 
 ***
+
+<span id="6-storage-management-basics"></span>
 
 ## 6. 存储管理基础
 
@@ -288,6 +300,8 @@ spec:
 
 ***
 
+<span id="7-curl-and-api-calls"></span>
+
 ## 7. curl 和 API 调用
 
 ### 7.1 HTTP 方法
@@ -311,6 +325,8 @@ curl -s -o /dev/null -w "%{http_code}" https://api.example.com/health
 ```
 
 ***
+
+<span id="8-practical-one-liners-collection"></span>
 
 ## 8. 实用单行命令集合
 

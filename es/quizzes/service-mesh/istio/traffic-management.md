@@ -60,7 +60,7 @@ spec:
 **Referencia:**
 
 * [Routing](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [Conceptos de VirtualService](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
+* [Conceptos de VirtualService (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/02-basic-concepts#_1-virtualservice)
 
 </details>
 
@@ -1539,7 +1539,7 @@ spec:
 **Referencia:**
 
 * [Enrutamiento consciente de zona](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
-* [Optimización de costos de AWS EKS](../../../service-mesh/istio/best-practices.md#cost-optimization)
+* [Optimización de costos de AWS EKS (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/best-practices#cost-optimization)
 
 </details>
 

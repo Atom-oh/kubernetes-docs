@@ -13,6 +13,8 @@
 - [高度な設定](#advanced-configuration)
 - [AWS 統合](#aws-integration)
 
+<span id="overview"></span>
+
 ## 概要
 
 ArgoCD Notifications は、ArgoCD Application を監視し、特定の条件が満たされたときに通知を送信するコンポーネントです。複数の通知サービスをサポートし、柔軟なテンプレート機能を提供します。
@@ -26,6 +28,8 @@ ArgoCD Notifications は、ArgoCD Application を監視し、特定の条件が�
 | Go Templates | メッセージ整形のための豊富なテンプレート構文 |
 | サブスクリプションモデル | Application ごとの通知サブスクリプション |
 | 組み込みトリガー | 一般的なイベント向けに事前設定されたトリガー |
+
+<span id="architecture"></span>
 
 ## アーキテクチャ
 
@@ -76,6 +80,8 @@ ArgoCD Notifications は ArgoCD v2.4+ に含まれています。古いバージ
 ```bash
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/notifications_catalog/install.yaml
 ```
+
+<span id="notification-services"></span>
 
 ## 通知サービス
 
@@ -243,6 +249,8 @@ data:
       staging: $pagerduty-key-staging
 ```
 
+<span id="triggers"></span>
+
 ## トリガー
 
 トリガーは、Application の状態に基づいて通知を送信するタイミングを定義します。
@@ -320,6 +328,8 @@ trigger.custom: |
 - `app.status.*` - Application ステータス
 - `app.operation.*` - 現在の操作
 - `time.Now()` - 現在時刻
+
+<span id="templates"></span>
 
 ## テンプレート
 
@@ -545,6 +555,8 @@ data:
 | `indent spaces` | テキストをインデント |
 | `nindent spaces` | 改行してインデント |
 
+<span id="subscriptions"></span>
+
 ## サブスクリプション
 
 ### Application レベルのサブスクリプション
@@ -612,6 +624,8 @@ metadata:
 spec:
   # ...
 ```
+
+<span id="advanced-configuration"></span>
 
 ## 高度な設定
 
@@ -684,6 +698,8 @@ trigger.on-sync-status-change: |
     send: [sync-status-change]
     oncePer: app.status.sync.revision
 ```
+
+<span id="aws-integration"></span>
 
 ## AWS 統合
 

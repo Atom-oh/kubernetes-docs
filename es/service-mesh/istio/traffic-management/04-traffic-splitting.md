@@ -14,6 +14,8 @@ La división de tráfico es una de las funciones más potentes de Istio, que per
 8. [Monitoreo y reversión](#monitoring-and-rollback)
 9. [Solución de problemas](#troubleshooting)
 
+<span id="traffic-splitting-overview"></span>
+
 ## Descripción general de la división de tráfico
 
 La división de tráfico usa el campo `weight` en VirtualService para distribuir el tráfico entre varias versiones de Service por proporción.
@@ -72,6 +74,8 @@ spec:
         subset: v2
       weight: 10  # 10% of traffic
 ```
+
+<span id="canary-deployment"></span>
 
 ## Despliegue Canary
 
@@ -1072,6 +1076,8 @@ spec:
           value: reviews-preview
 ```
 
+<span id="bluegreen-deployment"></span>
+
 ## Despliegue Blue/Green
 
 El despliegue Blue/Green mantiene dos entornos de producción idénticos y cambia el tráfico instantáneamente. El uso de Argo Rollouts con Istio permite un cambio seguro y una reversión automática.
@@ -1474,6 +1480,8 @@ kubectl argo rollouts undo reviews
 kubectl argo rollouts undo reviews --to-revision=3
 ```
 
+<span id="ab-testing"></span>
+
 ## Pruebas A/B
 
 Las pruebas A/B ejecutan dos versiones simultáneamente y clasifican a los usuarios según criterios específicos para medir la efectividad.
@@ -1646,6 +1654,8 @@ spec:
         subset: version-a
 ```
 
+<span id="progressive-rollout"></span>
+
 ## Despliegue progresivo
 
 El despliegue progresivo aumenta automáticamente la proporción de tráfico con el tiempo. El uso de la estrategia Canary de Argo Rollouts permite el despliegue progresivo automatizado.
@@ -1728,6 +1738,8 @@ done
 echo "Progressive rollout completed successfully!"
 ```
 
+<span id="using-with-traffic-mirroring"></span>
+
 ## Uso con Traffic Mirroring
 
 La combinación de división de tráfico con mirroring permite despliegues más seguros.
@@ -1758,6 +1770,8 @@ spec:
     mirrorPercentage:
       value: 100
 ```
+
+<span id="practical-examples"></span>
 
 ## Ejemplos prácticos
 
@@ -1912,6 +1926,8 @@ spec:
         subset: v1
 ```
 
+<span id="monitoring-and-rollback"></span>
+
 ## Monitoreo y reversión
 
 ### Consultas de Prometheus
@@ -1995,6 +2011,8 @@ fi
 
 echo "Canary metrics within acceptable range"
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 

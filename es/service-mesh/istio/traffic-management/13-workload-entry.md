@@ -19,6 +19,8 @@ WorkloadEntry es un recurso para registrar Máquinas Virtuales (VM) o servidores
 10. [Solución de problemas](#troubleshooting)
 11. [Prácticas recomendadas](#best-practices)
 
+<span id="overview"></span>
+
 ## Descripción general
 
 ### ¿Qué es WorkloadEntry?
@@ -80,6 +82,8 @@ flowchart TB
 3. **Integración de bases de datos**: Incluir bases de datos externas en la malla
 4. **Cargas de trabajo de alto rendimiento**: Utilizar hardware especializado, como servidores GPU
 
+<span id="workloadentry-vs-kubernetes-pod"></span>
+
 ## WorkloadEntry frente a Kubernetes Pod
 
 ### Tabla comparativa
@@ -128,6 +132,8 @@ flowchart LR
     class K8sService,K8sPod k8s;
     class ServiceEntry,WorkloadEntry vm;
 ```
+
+<span id="architecture"></span>
 
 ## Arquitectura
 
@@ -178,6 +184,8 @@ flowchart TB
 3. **Envoy Proxy**: Sidecar instalado manualmente en la VM
 4. **istiod**: Implementación de configuración y gestión de certificados
 5. **Service Account**: Autenticación de identidad de VM
+
+<span id="basic-usage"></span>
 
 ## Uso básico
 
@@ -275,6 +283,8 @@ spec:
   ports:
     http: 8080
 ```
+
+<span id="serviceentry-integration"></span>
 
 ## Integración con ServiceEntry
 
@@ -404,6 +414,8 @@ spec:
     role: replica
   weight: 50
 ```
+
+<span id="vm-registration-practical-guide"></span>
 
 ## Guía práctica de registro de VM
 
@@ -583,6 +595,8 @@ kubectl run -it --rm debug \
 # mydb=#
 ```
 
+<span id="security-settings-mtls"></span>
+
 ## Configuración de seguridad (mTLS)
 
 ### Habilitación automática de mTLS
@@ -670,6 +684,8 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
 # listener.0.0.0.0_15006.ssl.connection_error: 0
 # listener.0.0.0.0_15006.ssl.handshake: 1234
 ```
+
+<span id="health-checks-and-monitoring"></span>
 
 ## Comprobaciones de estado y monitorización
 
@@ -760,6 +776,8 @@ histogram_quantile(0.99,
   sum(rate(istio_request_duration_milliseconds_bucket{destination_workload="postgres-vm-1"}[5m])) by (le)
 )
 ```
+
+<span id="advanced-configuration"></span>
 
 ## Configuración avanzada
 
@@ -907,6 +925,8 @@ spec:
     labels:
       version: v2
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 
@@ -1065,6 +1085,8 @@ spec:
     labels:
       app: postgres
 ```
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 
@@ -1268,7 +1290,7 @@ kubectl delete workloadentry legacy-api-vm -n vm-workloads
 - [Instalación de máquina virtual](https://istio.io/latest/docs/setup/install/virtual-machine/)
 
 ### Documentos relacionados
-- [Conceptos básicos: registro de cargas de trabajo de VM](../02-basic-concepts.md#vm-workload-registration)
+- [Conceptos básicos: registro de cargas de trabajo de VM (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/02-basic-concepts#vm-workload-registration)
 - [ServiceEntry](12-service-entry.md)
 - [Control de Egress](11-egress-control.md)
 - [Seguridad: mTLS](../security/01-mtls.md)

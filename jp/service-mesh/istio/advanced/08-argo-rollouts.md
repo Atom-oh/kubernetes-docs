@@ -18,6 +18,8 @@
 8. [トラブルシューティング](#troubleshooting)
 9. [ベストプラクティス](#best-practices)
 
+<span id="overview"></span>
+
 ## 概要
 
 ### Argo Rollouts とは？
@@ -72,6 +74,8 @@ flowchart LR
 | **VirtualService** | トラフィックルーティングルール | ✅ ルートの重みを自動調整 |
 | **DestinationRule** | Subset の定義 | ⚠️ 手動作成が必要 |
 | **Service** | Stable/Canary エンドポイント | ⚠️ 手動作成が必要 |
+
+<span id="architecture"></span>
 
 ## アーキテクチャ
 
@@ -193,6 +197,8 @@ sequenceDiagram
         Rollouts->>VS: setWeight: 0<br/>Auto rollback
     end
 ```
+
+<span id="core-concepts"></span>
 
 ## コアコンセプト
 
@@ -395,6 +401,8 @@ flowchart TD
     class C1,C2,C3,C4,C5 check;
 ```
 
+<span id="setup-and-configuration"></span>
+
 ## セットアップと設定
 
 ### 必要なリソースの作成
@@ -591,6 +599,8 @@ kubectl argo rollouts abort test
 kubectl argo rollouts retry rollout test
 ```
 
+<span id="traffic-routing-strategies"></span>
+
 ## トラフィックルーティング戦略
 
 ### 1. 基本的な Canary（重みベース）
@@ -760,6 +770,8 @@ spec:
       steps:
       - setWeight: 10  # Adjusts both routes to 10%
 ```
+
+<span id="analysis-and-metrics"></span>
 
 ## 分析とメトリクス
 
@@ -950,6 +962,8 @@ spec:
           value: test
 ```
 
+<span id="advanced-deployment-patterns"></span>
+
 ## 高度なデプロイメントパターン
 
 ### 1. Blue/Green デプロイメント
@@ -1089,6 +1103,8 @@ spec:
         startingStep: 1
 ```
 
+<span id="troubleshooting"></span>
+
 ## トラブルシューティング
 
 ### 1. VirtualService が更新されない
@@ -1210,6 +1226,8 @@ kubectl get analysisrun -l rollout=test
 # 7. Rollout Controller logs
 kubectl logs -n argo-rollouts deployment/argo-rollouts
 ```
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 

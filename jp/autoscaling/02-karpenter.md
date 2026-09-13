@@ -7,14 +7,16 @@
 - [概要](#introduction)
 - [アーキテクチャ](#architecture)
 - [インストールと設定](#installation-and-configuration)
-- [Provisioner](#provisioner)
-- [Node Templates](#node-templates)
+- [Provisioner (English)](https://www.atomai.click/kubernetes-docs/en/autoscaling/02-karpenter#nodepool)
+- [Node Templates (English)](https://www.atomai.click/kubernetes-docs/en/autoscaling/02-karpenter#node-classes)
 - [中断処理](#interruption-handling)
 - [統合](#integration)
 - [Amazon EKS との統合](#integration-with-amazon-eks)
 - [ベストプラクティス](#best-practices)
 - [トラブルシューティング](#troubleshooting)
 - [まとめ](#conclusion)
+
+<span id="introduction"></span>
 
 ## 概要
 
@@ -43,6 +45,8 @@ Karpenter は、Kubernetes クラスターの Node プロビジョニングを�
 | 中断処理 | 統合済み | 制限あり | 制限あり |
 
 > **注記**: Karpenter ではなく従来の EKS Managed Node Groups と Cluster Autoscaler を使用し続ける場合、EC2 Auto Scaling Warm Pools（2026 年 4 月以降利用可能）により、コールドスタートなしでスケールアウトできるよう初期化済みインスタンスを待機状態に維持できます。Stopped 状態（低コスト）または Running 状態（より高速な移行）を選択でき、Cluster Autoscaler と自動的に統合されます。ただし、これは Managed Node Group の機能であり、Karpenter が使用するものではありません。
+
+<span id="architecture"></span>
 
 ## アーキテクチャ
 
@@ -145,6 +149,8 @@ sequenceDiagram
 4. クラウドプロバイダー API を呼び出して Node をプロビジョニングします
 5. Node がクラスターに参加した後に Pod をスケジュールします
 6. 不要になった Node は、統合された中断処理によって削除します
+
+<span id="installation-and-configuration"></span>
 
 ## インストールと設定
 
@@ -603,6 +609,8 @@ flowchart LR
     class P1,P2,P3,P4,P5,P6 process
 ```
 
+<span id="interruption-handling"></span>
+
 ## 中断処理
 
 Karpenter は、ワークロードの可用性を確保するために Node の中断を自動的に処理します。
@@ -674,6 +682,8 @@ spec:
     matchLabels:
       app: my-app
 ```
+
+<span id="integration"></span>
 
 ## 統合
 
@@ -820,6 +830,8 @@ spec:
     name: my-launch-template
     version: "1"
 ```
+<span id="integration-with-amazon-eks"></span>
+
 ## Amazon EKS との統合
 
 Karpenter は Amazon EKS とシームレスに統合され、クラスターオートスケーリングを提供します。
@@ -1227,6 +1239,8 @@ spec:
   # Other configuration...
 ```
 
+<span id="best-practices"></span>
+
 ## ベストプラクティス
 
 ```mermaid
@@ -1396,6 +1410,8 @@ spec:
     enabled: true
 ```
 
+<span id="troubleshooting"></span>
+
 ## トラブルシューティング
 
 ### 一般的な問題
@@ -1481,6 +1497,8 @@ kubectl get events --sort-by='.lastTimestamp'
 # Enable debug logs
 kubectl patch configmap -n karpenter karpenter-global-settings --type merge -p '{"data":{"logLevel":"debug"}}'
 ```
+
+<span id="conclusion"></span>
 
 ## まとめ
 

@@ -12,6 +12,8 @@
 - [方案比较](#solution-comparison)
 - [指标采集架构](#metrics-collection-architecture)
 
+<span id="metrics-fundamentals"></span>
+
 ## 指标基础
 
 指标以数值形式描述系统状态和行为。指标名称及其完整标签集合可标识一个时间序列；每个样本会添加一个值和一个时间戳。指标支持告警、故障排查、容量规划和性能分析，但一次采样的测量无法保留每一个单独事件。
@@ -33,6 +35,8 @@
 对于新指标，优先采用描述性前缀、以下划线分隔的小写单词，以及 `_seconds` 或 `_bytes` 等单位。命名约定并不授权重命名 Exporter 已确立的 API。
 
 以下 `text` 块是合成的 **Prometheus 文本暴露格式**，不是 YAML。查询表达式位于单独的 `promql` 块中。查询选择器假定使用所示的抓取 job 名称；请将其调整为实际的目标标签。
+
+<span id="metric-types"></span>
 
 ## 指标类型
 
@@ -156,6 +160,8 @@ sum(rate(rpc_request_duration_seconds_sum{job="example-app"}[5m])) / sum(rate(rp
 
 <a id="metric-collection-models"></a>
 
+<span id="pull-vs-push-model"></span>
+
 ## 拉取与推送模型
 
 ![拉取采集由采集器发起请求；推送采集由生产者发起请求。](../../.gitbook/assets/en-observability-metrics-readme-0.png)
@@ -264,6 +270,8 @@ time() - max(example_batch_last_success_timestamp_seconds{job="example_batch"})
 
 根据计划和预期运行时长选择阈值，并单独处理完全缺失的时间序列。Pushgateway 的 `up` 仅描述网关抓取。
 
+<span id="cardinality-and-metric-design"></span>
+
 ## 基数与指标设计
 
 基数是在定义范围内不同时间序列的数量。标签值计数的乘积是**在每种组合都可能出现时的上限**，而非保证所有组合都存在。
@@ -287,6 +295,8 @@ count(count by (endpoint) (http_requests_total{job="example-app"}))
 ```
 
 指标和标签名称/值的长度仍会影响格式限制、存储和后端接收能力。基数很重要，但它不是唯一的设计约束。
+
+<span id="long-term-storage-requirements"></span>
 
 ## 长期存储要求
 
@@ -333,6 +343,8 @@ remote_write:
 
 Remote write 是异步的，其 WAL 缓冲是有限的。Prometheus 调优指南描述，在超出文档所述 WAL 窗口（该指南约为两小时）的长时间中断后，未发送数据会丢失。它不是备份，也不保证交付总能成功。
 
+<span id="solution-comparison"></span>
+
 ## 方案比较
 
 ### 部署和运维边界
@@ -363,6 +375,8 @@ Remote write 是异步的，其 WAL 缓冲是有限的。Prometheus 调优指南
 比较等效的摄取、保留、HA 和功能假设。从下面的官方定价页面获取当前价格，并测试特定工作负载的资源使用情况。“开源”并不意味着基础设施和运维免费。
 
 应根据所需查询/分辨率、基数和流失、故障/恢复目标、租户/访问边界、集成以及经测量的成本模型来选择方案。团队规模本身不是产品选择算法。
+
+<span id="metrics-collection-architecture"></span>
 
 ## 指标采集架构
 

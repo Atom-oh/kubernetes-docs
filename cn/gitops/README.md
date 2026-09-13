@@ -11,6 +11,8 @@
 - [Amazon EKS 上的 GitOps](#gitops-on-amazon-eks)
 - [快速入门](#getting-started)
 
+<span id="what-is-gitops"></span>
+
 ## 什么是 GitOps？
 
 GitOps 是一个运营框架，将版本控制、协作、合规性和 CI/CD 等用于基础设施自动化的 DevOps 最佳实践应用于基础设施管理。该术语由 Weaveworks 于 2017 年提出，此后已成为 CNCF 认可的云原生应用部署方法论。
@@ -70,6 +72,8 @@ OpenGitOps 项目通过四项原则定义 GitOps：
 3. **自动拉取**：软件代理自动从源拉取期望状态声明
 4. **持续协调**：软件代理持续观察实际系统状态，并尝试应用期望状态
 
+<span id="core-principles"></span>
+
 ## 核心原则
 
 ### 声明式配置
@@ -128,6 +132,8 @@ GitOps 代理持续：
 
 当实际状态偏离期望状态时（手动更改、故障等），GitOps 代理会自动恢复正确状态。
 
+<span id="push-vs-pull-model"></span>
+
 ## Push 与 Pull 模型
 
 GitOps 支持两种部署模型：
@@ -176,6 +182,8 @@ flowchart TB
 - Git 中保留完整审计记录
 - 自动检测并修正偏移
 - 可在防火墙后运行
+
+<span id="gitops-tools-overview"></span>
 
 ## GitOps 工具概览
 
@@ -233,6 +241,8 @@ Jenkins X 为 Kubernetes 上的云原生应用提供 CI/CD。
 | 资源使用量 | 中等 | 低 | 高 |
 | CNCF 状态 | 毕业 | 毕业 | Sandbox |
 
+<span id="tool-selection-guide"></span>
+
 ## 工具选择指南
 
 ### 在以下情况选择 ArgoCD：
@@ -279,6 +289,8 @@ flowchart TD
     class FLUX flux
     class BOTH both
 ```
+
+<span id="gitops-on-amazon-eks"></span>
 
 ## Amazon EKS 上的 GitOps
 
@@ -363,6 +375,8 @@ GitOps 可通过以下方式管理 AWS 资源：
     ├── monitoring/              # Observability stack
     └── security/                # Security policies
 ```
+
+<span id="getting-started"></span>
 
 ## 快速入门
 

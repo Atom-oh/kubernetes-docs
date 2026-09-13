@@ -15,6 +15,8 @@
 9. [Namespace と Service Mesh](02-basic-concepts.md#namespaces-and-service-mesh)
 10. [次のステップ](02-basic-concepts.md#next-steps)
 
+<span id="background-and-history"></span>
+
 ## 背景と歴史
 
 ### Service Mesh の誕生
@@ -259,6 +261,8 @@ Mixer completely removed (functionality moved to Envoy)
 * 運用の簡素化（単一プロセスの管理）
 * リソース効率（メモリ、CPU 使用量の削減）
 
+<span id="why-istio"></span>
+
 ## Istio を使用する理由
 
 Kubernetes はコンテナオーケストレーションを提供しますが、Microservices 間の複雑な通信管理には制限があります。Istio は、これらの問題に対処するための Service Mesh ソリューションです。
@@ -483,6 +487,8 @@ spec:
 * 高度な機能と柔軟性が必要 → **Istio**
 * シンプルで軽量な Mesh が必要 → **Linkerd**
 
+<span id="deployment-modes-sidecar-vs-ambient"></span>
+
 ## デプロイメントモード: Sidecar と Ambient
 
 Istio は、**Sidecar Mode** と **Ambient Mode** の 2 つのデプロイメントモードをサポートします。
@@ -600,6 +606,8 @@ flowchart TB
 
 **詳細**については、[Advanced: Ambient Mode](advanced/01-ambient-mode.md)ドキュメントを参照してください。
 
+<span id="istio-architecture"></span>
+
 ## Istio アーキテクチャ
 
 Istio は、**Control Plane** と **Data Plane** の 2 つの主要コンポーネントで構成されます。
@@ -610,6 +618,8 @@ Istio は、**Control Plane** と **Data Plane** の 2 つの主要コンポー�
 | **Data Plane (Envoy Proxy)** | 各 Pod に Sidecar としてデプロイされ、実際のトラフィック（ルーティング、mTLS、メトリクス）を処理            |
 
 **詳細なアーキテクチャ構造、内部動作原理、トラフィックインターセプトの仕組み**については、[アーキテクチャドキュメント](03-architecture.md)を参照してください。
+
+<span id="core-resources"></span>
 
 ## コアリソース
 
@@ -795,6 +805,8 @@ spec:
         methods: ["GET"]
 ```
 
+<span id="traffic-management-concepts"></span>
+
 ## トラフィック管理の概念
 
 ### トラフィックルーティングフロー
@@ -866,6 +878,8 @@ spec:
       maxEjectionPercent: 50
 ```
 
+<span id="security-concepts"></span>
+
 ## セキュリティの概念
 
 ### mTLS（Mutual TLS）
@@ -934,6 +948,8 @@ spec:
         notRequestPrincipals: ["*"]
 ```
 
+<span id="observability-concepts"></span>
+
 ## オブザーバビリティの概念
 
 Istio は、メトリクス、ログ、トレースを自動的に生成します。
@@ -997,6 +1013,8 @@ spec:
         zipkin:
           address: jaeger-collector.istio-system:9411
 ```
+
+<span id="namespaces-and-service-mesh"></span>
 
 ## Namespace と Service Mesh
 
@@ -1433,6 +1451,8 @@ Istio の柔軟な Workload 登録機能により:
 * **Virtual Machine**: レガシーアプリ、データベース、ハイブリッド環境
 
 すべての Workload は、一貫したセキュリティ、トラフィック管理、オブザーバビリティ機能を利用できます。
+
+<span id="next-steps"></span>
 
 ## 次のステップ
 

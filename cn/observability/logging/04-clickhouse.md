@@ -12,9 +12,11 @@ ClickHouse 是一个列式分析数据库。它适合需要 SQL 筛选、聚合�
 4. [日志摄取管道](#log-ingestion-pipeline)
 5. [SQL 查询](#sql-queries)
 6. [Grafana 集成](#grafana-integration)
-7. [HyperDX](#hyperdx-clickhouse-native-viewer)
+7. [HyperDX (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse#hyperdx-clickhouse-native-viewer)
 8. [性能优化](#performance-optimization)
-9. [S3 归档](#s3-archiving-and-long-term-retention)
+9. [S3 归档 (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse#s3-archiving-and-long-term-retention)
+
+<span id="overview"></span>
 
 ## 概述
 
@@ -45,6 +47,8 @@ ClickHouse 是一个列式分析数据库。它适合需要 SQL 筛选、聚合�
 
 避免对压缩率、查询速度或运维复杂性进行通用排名。每个系统都有多种部署模式和索引/查询选项。请比较相同的数据、查询、副本和保留期。
 
+<span id="architecture"></span>
+
 ## 架构
 
 ### ClickHouse 集群架构
@@ -62,6 +66,8 @@ ClickHouse 是一个列式分析数据库。它适合需要 SQL 筛选、聚合�
 [查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-1.html)
 
 箭头表示数据移动。在 Kafka-engine 变体中，ClickHouse 消费者轮询 Kafka；该图并不意味着 Kafka 会推送插入，或保证恰好一次交付。S3 冷表 part 和独立 Parquet 归档是不同的机制。
+
+<span id="kubernetes-deployment"></span>
 
 ## Kubernetes 部署
 
@@ -157,6 +163,8 @@ kubectl -n clickhouse get chi logs-demo
 kubectl -n clickhouse get pods,pvc,services,endpointslices
 kubectl -n clickhouse get events --sort-by=.metadata.creationTimestamp
 ```
+
+<span id="log-ingestion-pipeline"></span>
 
 ## 日志摄取管道
 
@@ -347,6 +355,8 @@ ClickHouse Kafka 引擎通过 consumer group 消费 topic，而 materialized vie
 
 Kafka-engine 表不支持上面使用的普通默认列。仅在其中定义传入字段，并在目标表/view 中计算默认值/materialized 值。必须一并测试 offset 提交、下游插入确认和重试行为。当需要确认持久处理时，避免使用内存 Buffer 目标；不要将实验性的 Keeper 支持 offset 存储作为无条件的生产默认设置。
 
+<span id="sql-queries"></span>
+
 ## SQL 查询
 
 ### 基础查询
@@ -424,6 +434,8 @@ GROUP BY namespace, pod_name;
 ```
 
 `message_bytes` 统计消息文本字节数，而不是压缩表存储或网络计费。“Back-off”消息匹配统计的是日志事件，而不是权威的容器重启计数；请为此使用 Kubernetes 状态指标。SQL `SELECT` 是快照查询。仪表板通过其刷新间隔定期刷新，而非通过此查询的特殊实时流属性。
+
+<span id="grafana-integration"></span>
 
 ## Grafana 集成
 
@@ -550,6 +562,8 @@ HyperDX 是 ClickStack 中使用的可观测性 UI。它支持基于现有 Click
 | SigNoz | 自己的可观测性摄取/模型和 UI；它也使用 ClickHouse |
 
 比较每个组件的实际摄取 schema、身份验证、查询工作流、支持的发布版本和许可证。现有的 ClickHouse 数据库并不会使每个可观测性 UI 都成为即插即用、可互换的前端。
+
+<span id="performance-optimization"></span>
 
 ## 性能优化
 

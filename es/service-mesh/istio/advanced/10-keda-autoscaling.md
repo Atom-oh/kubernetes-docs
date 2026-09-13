@@ -24,6 +24,8 @@ Este documento cubre **estrategias prácticas de autoescalado usando métricas d
 7. [Solución de problemas](#troubleshooting)
 8. [Referencia: instalación de KEDA](#reference-keda-installation)
 
+<span id="overview"></span>
+
 ## Descripción general
 
 Este documento se centra en **estrategias prácticas de autoescalado usando métricas de Istio**. KEDA amplía Kubernetes HPA para habilitar el escalado basado en consultas de métricas complejas de Prometheus y CloudWatch.
@@ -67,6 +69,8 @@ Patrones prácticos de escalado cubiertos en este documento:
 | **Métricas compuestas** | RPS + latencia + error | Servicios de producción | Escalado estable y preciso |
 | **Basada en Circuit Breaker** | overflow, grupo de conexiones | Servicios con muchas dependencias externas | Prevención de fallos en cascada |
 | **Predicción basada en tiempo** | Cron + métricas | Patrones de tráfico predecibles | Optimización de costos, respuesta proactiva |
+
+<span id="architecture"></span>
 
 ## Arquitectura
 
@@ -136,6 +140,8 @@ spec:
         }[1m]))
       threshold: '1000'    # Threshold: 1000 RPS
 ```
+
+<span id="prometheus-metrics-based-scaling"></span>
 
 ## Escalado basado en métricas de Prometheus
 
@@ -411,6 +417,8 @@ spec:
       threshold: '200'  # P95 > 200ms
 ```
 
+<span id="cloudwatch-metrics-based-scaling"></span>
+
 ## Escalado basado en métricas de CloudWatch
 
 ### Descripción general
@@ -502,6 +510,8 @@ spec:
       awsRegion: us-west-2
       identityOwner: operator
 ```
+
+<span id="practical-scaling-strategies"></span>
 
 ## Estrategias prácticas de escalado
 
@@ -769,6 +779,8 @@ spec:
         })
       threshold: '500'  # 500+ concurrent requests
 ```
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 
@@ -1128,6 +1140,8 @@ spec:
           periodSeconds: 10
 ```
 
+<span id="troubleshooting"></span>
+
 ## Solución de problemas
 
 ### 1. KEDA no obtiene métricas
@@ -1482,6 +1496,8 @@ spec:
         )
       threshold: '150'  # EU allows 150ms
 ```
+
+<span id="reference-keda-installation"></span>
 
 ## Referencia: instalación de KEDA
 

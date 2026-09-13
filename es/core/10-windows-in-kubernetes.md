@@ -19,6 +19,8 @@ Kubernetes se diseñó originalmente para contenedores Linux, pero la compatibil
 11. [Prácticas recomendadas](#best-practices)
 12. [Conclusión](#conclusion)
 
+<span id="windows-container-overview"></span>
+
 ## Descripción general de los contenedores Windows
 
 Los contenedores Windows son contenedores que se ejecutan en el sistema operativo Windows, lo que permite contenerizar e implementar aplicaciones Windows.
@@ -56,6 +58,8 @@ EXPOSE 80
 CMD ["powershell", "-Command", "Start-Service W3SVC; Get-Content -Path 'C:\\inetpub\\logs\\LogFiles\\W3SVC1\\u_ex*' -Wait"]
 ```
 
+<span id="kubernetes-windows-support-architecture"></span>
+
 ## Arquitectura de compatibilidad con Windows en Kubernetes
 
 La compatibilidad con Windows en Kubernetes se basa en un entorno mixto. Los componentes del control plane siempre se ejecutan en Linux, mientras que los nodos worker pueden ser Linux o Windows.
@@ -80,6 +84,8 @@ Componentes de Kubernetes que se ejecutan en nodos Windows:
 2. **kube-proxy**: Administra reglas de red
 3. **CNI Plugin**: Configuración de red
 4. **CSI Plugin**: Administración del almacenamiento
+
+<span id="windows-node-limitations"></span>
 
 ## Limitaciones de los nodos Windows
 
@@ -110,6 +116,8 @@ Los contenedores Windows tienen consideraciones importantes de compatibilidad co
 | Windows Server 2022 | Windows Server 2022 |
 
 El aislamiento de Hyper-V puede relajar estas limitaciones, pero requiere recursos adicionales.
+<span id="windows-node-setup"></span>
+
 ## Configuración de nodos Windows
 
 Exploremos el proceso de agregar nodos Windows a un clúster de Kubernetes.
@@ -198,6 +206,8 @@ Establezca las etiquetas adecuadas en los nodos Windows para controlar la progra
 kubectl label node <windows-node-name> kubernetes.io/os=windows
 kubectl label node <windows-node-name> kubernetes.io/arch=amd64
 ```
+
+<span id="deploying-windows-containers"></span>
 
 ## Implementación de contenedores Windows
 
@@ -297,6 +307,8 @@ spec:
         Get-Content -Path 'C:\inetpub\logs\LogFiles\W3SVC1\u_ex*' -Wait
       }
 ```
+
+<span id="networking"></span>
 
 ## Redes
 
@@ -429,6 +441,8 @@ spec:
     - protocol: TCP
       port: 80
 ```
+
+<span id="storage"></span>
 
 ## Almacenamiento
 
@@ -611,6 +625,8 @@ spec:
     persistentVolumeClaim:
       claimName: windows-pvc
 ```
+<span id="monitoring-and-logging"></span>
+
 ## Monitoreo y registro
 
 Exploremos los métodos de monitoreo y registro para nodos y contenedores Windows.
@@ -720,6 +736,8 @@ spec:
     emptyDir: {}
 ```
 
+<span id="security"></span>
+
 ## Seguridad
 
 Exploremos las consideraciones de seguridad para nodos y contenedores Windows.
@@ -816,6 +834,8 @@ spec:
       whoami
       while ($true) { Start-Sleep -Seconds 10 }
 ```
+
+<span id="windows-support-in-amazon-eks"></span>
 
 ## Compatibilidad con Windows en Amazon EKS
 
@@ -962,6 +982,8 @@ data:
         log_stream_prefix windows-
         auto_create_group true
 ```
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 

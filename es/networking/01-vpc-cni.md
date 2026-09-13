@@ -13,6 +13,8 @@
 - [Solución de problemas](#troubleshooting)
 - [Prácticas recomendadas](#best-practices)
 
+<span id="vpc-cni-overview"></span>
+
 ## Descripción general de VPC CNI
 
 Amazon VPC CNI (Container Network Interface) es el plugin de red predeterminado para Amazon EKS. Asigna direcciones IP reales de las subredes de VPC a cada Pod, lo que permite que los Pods se comuniquen de forma nativa dentro de la red de VPC.
@@ -75,6 +77,8 @@ VPC CNI admite dos modos de asignación de IP:
 | Disponible desde | Versión inicial | v1.9+ |
 | Recomendado para | Clústeres pequeños | Clústeres grandes |
 
+<span id="networking-model"></span>
+
 ## Modelo de red
 
 ### Arquitectura de ENI
@@ -129,6 +133,8 @@ Beneficios de Prefix Delegation:
 - **Mayor densidad de Pods**: 16 IP por prefijo /28 aumentan significativamente los Pods por nodo
 - **Asignación de IP más rápida**: Obtiene 16 IP con una sola llamada a la API
 - **Optimización de instancias Nitro**: Rendimiento óptimo en instancias basadas en Nitro
+
+<span id="installation-and-configuration"></span>
 
 ## Instalación y configuración
 
@@ -210,6 +216,8 @@ kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK
 kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone
 ```
 
+<span id="ip-address-management"></span>
+
 ## Administración de direcciones IP
 
 ### Ajuste de WARM_IP_TARGET
@@ -250,6 +258,8 @@ eksctl create cluster \
   --version 1.28 \
   --ip-family ipv6
 ```
+
+<span id="network-policy-support"></span>
 
 ## Compatibilidad con Network Policy
 
@@ -301,6 +311,8 @@ kubectl get networkpolicy -A
 # Check eBPF policy maps
 kubectl exec -n kube-system ds/aws-node -c aws-node -- ebpf-sdk list-maps
 ```
+
+<span id="advanced-features"></span>
 
 ## Características avanzadas
 
@@ -373,6 +385,8 @@ eksctl create nodegroup \
   --node-ami-family WindowsServer2022FullContainer
 ```
 
+<span id="troubleshooting"></span>
+
 ## Solución de problemas
 
 ### Agotamiento de IP
@@ -432,6 +446,8 @@ kubectl exec -n kube-system ds/aws-node -c aws-node -- curl http://localhost:616
 | `ENI limit reached` | Se superó el número de ENI | Use un tipo de instancia más grande |
 | `Failed to create ENI` | Permisos IAM insuficientes | Agregue permisos de creación de ENI al rol de nodo |
 | `Timeout waiting for pod IP` | Retraso de IPAMD | Reinicie IPAMD y revise los logs |
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 

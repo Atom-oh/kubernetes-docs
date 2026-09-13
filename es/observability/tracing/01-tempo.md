@@ -527,7 +527,7 @@ if not logger.handlers:
 
 Esto preserva las marcas de tiempo UTC, el formato de mensajes y las excepciones, y omite ID no válidos en lugar de fabricar trazas con todos ceros. Configure el handler una vez; propague el contexto OTel a través de límites asíncronos y elimine mensajes/excepciones sensibles en su origen.
 
-Para Java, use el [helper MDC con alcance en la descripción general de tracing](README.md#linking-logs-via-traceid): valide el `SpanContext` actual, establezca los ID para el ámbito de logging y restaure los valores MDC previos en `finally`. El simple hecho de escribir `MDC.put` puede filtrar los ID de una solicitud anterior en hilos reutilizados. Se comprobó el contrato de la API de Java; no se ejecutó ninguna aplicación Java para este capítulo.
+Para Java, use el [helper MDC con alcance en la descripción general de tracing (English)](https://www.atomai.click/kubernetes-docs/en/observability/tracing/#linking-logs-via-traceid): valide el `SpanContext` actual, establezca los ID para el ámbito de logging y restaure los valores MDC previos en `finally`. El simple hecho de escribir `MDC.put` puede filtrar los ID de una solicitud anterior en hilos reutilizados. Se comprobó el contrato de la API de Java; no se ejecutó ninguna aplicación Java para este capítulo.
 
 ## Ajuste de rendimiento
 

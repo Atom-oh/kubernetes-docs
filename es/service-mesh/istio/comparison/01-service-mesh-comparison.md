@@ -16,6 +16,8 @@ Este documento proporciona una comparación integral de las principales solucion
 8. [Análisis de costes](01-service-mesh-comparison.md#cost-analysis)
 9. [Recomendaciones de casos de uso](01-service-mesh-comparison.md#use-case-recommendations)
 
+<span id="overview-and-architecture"></span>
+
 ## Descripción general y arquitectura
 
 ### ¿Qué es un Service Mesh?
@@ -832,6 +834,8 @@ flowchart TB
 * **Consul Client**: Se ejecuta en cada nodo, registro de servicios
 * **Envoy Sidecar**: Proxy de tráfico
 
+<span id="performance-comparison"></span>
+
 ## Comparación de rendimiento
 
 ### Sobrecarga de latencia
@@ -927,6 +931,8 @@ flowchart LR
 * **Linkerd**: Menor sobrecarga, proxy ligero
 * **Istio/Consul**: Sobrecarga ligeramente mayor debido a más funcionalidades
 * **Kong Mesh**: Nivel de rendimiento medio
+
+<span id="feature-comparison"></span>
 
 ## Comparación de funcionalidades
 
@@ -1106,6 +1112,8 @@ Splits = [
 * **Kong Mesh**: Kuma CRD, intuitivo
 * **Consul**: Configuración HCL, integrada con Service Discovery
 
+<span id="security-features"></span>
+
 ## Funcionalidades de seguridad
 
 ### Comparación de configuración de mTLS
@@ -1270,6 +1278,8 @@ Sources = [
 * **Kong Mesh**: Permisos a nivel de Service
 * **Consul**: Basado en Intentions, intuitivo
 
+<span id="observability-features"></span>
+
 ## Funcionalidades de observabilidad
 
 ### Recopilación de métricas
@@ -1363,6 +1373,8 @@ ui_config {
   }
 }
 ```
+
+<span id="multi-cluster-support"></span>
 
 ## Soporte multi-cluster
 
@@ -1497,6 +1509,8 @@ flowchart TB
 | **Requisitos de red**      | Flat o Gateway  | Gateway          | Flat o Gateway  | Gateway   |
 | **Sincronización de políticas** | Sí          | Limitada         | Global CP       | Sí        |
 | **Número máximo de clusters** | Decenas      | \~10            | Decenas         | Decenas   |
+
+<span id="operational-complexity"></span>
 
 ## Complejidad operativa
 
@@ -1641,6 +1655,8 @@ flowchart LR
     class Hard hard;
 ```
 
+<span id="cost-analysis"></span>
+
 ## Análisis de costes
 
 ### Coste de infraestructura
@@ -1682,6 +1698,8 @@ flowchart LR
 * **Kong Mesh Enterprise**: GUI multi-zone, RBAC, soporte 24/7
 * **Consul Enterprise**: Registro de auditoría, Namespaces, zonas de redundancia
 * **Buoyant Enterprise**: Control Plane HA, soporte 24/7, SLA
+
+<span id="use-case-recommendations"></span>
 
 ## Recomendaciones de casos de uso
 

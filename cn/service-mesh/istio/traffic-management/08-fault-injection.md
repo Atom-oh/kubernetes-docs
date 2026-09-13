@@ -14,6 +14,8 @@ Fault Injection（故障注入）是一种通过有意注入故障来测试系�
 8. [测试策略](#testing-strategies)
 9. [最佳实践](#best-practices)
 
+<span id="why-fault-injection"></span>
+
 ## 为什么要进行故障注入？
 
 ### 在生产环境中测试韧性
@@ -94,6 +96,8 @@ flowchart LR
 - 新版本是否能正确处理超时？
 - 依赖服务发生故障时，是否会执行优雅降级？
 - 错误处理逻辑是否正常工作？
+
+<span id="when-to-use-fault-injection"></span>
 
 ## 何时使用故障注入
 
@@ -312,6 +316,8 @@ spec:
 - 在不影响真实用户的情况下安全地进行测试
 - 根据 Beta 测试人员的反馈进行改进
 
+<span id="fault-injection-overview"></span>
+
 ## 故障注入概述
 
 ```mermaid
@@ -341,6 +347,8 @@ flowchart LR
     class Service service;
 ```
 
+<span id="delay-injection"></span>
+
 ## 延迟注入
 
 ```yaml
@@ -362,6 +370,8 @@ spec:
         host: reviews
 ```
 
+<span id="abort-injection"></span>
+
 ## 中止注入
 
 ```yaml
@@ -382,6 +392,8 @@ spec:
     - destination:
         host: reviews
 ```
+
+<span id="practical-examples"></span>
 
 ## 实用示例
 
@@ -568,6 +580,8 @@ spec:
     - destination:
         host: payment-service
 ```
+
+<span id="real-world-scenarios"></span>
 
 ## 真实场景
 
@@ -770,6 +784,8 @@ spec:
 2. Readiness Probe 是否正常工作？
 3. Load Balancer 是否仅将流量路由至健康的 Pod？
 
+<span id="testing-strategies"></span>
+
 ## 测试策略
 
 ### 1. 渐进式 Chaos Engineering
@@ -965,6 +981,8 @@ spec:
 - 错误率
 - 响应时间（P50、P95、P99）
 - 用户体验指标
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 

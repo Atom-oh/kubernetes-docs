@@ -7,8 +7,10 @@
 1. [出口流量概述](#egress-overview)
 2. [ServiceEntry 配置](#serviceentry-configuration)
 3. [Egress Gateway](#egress-gateway)
-4. [TLS 发起](#tls-origination)
-5. [实践示例](#practical-examples)
+4. [TLS 发起 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/11-egress-control#tls-origination)
+5. [实践示例 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/11-egress-control#serviceentry-configuration)
+
+<span id="egress-overview"></span>
 
 ## 出口流量概述
 
@@ -37,6 +39,8 @@ flowchart LR
     class Sidecar,EgressGW mesh;
     class External external;
 ```
+
+<span id="serviceentry-configuration"></span>
 
 ## ServiceEntry 配置
 

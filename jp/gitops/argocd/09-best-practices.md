@@ -14,6 +14,8 @@
 - [EKS ベストプラクティス](#eks-best-practices)
 - [本番環境チェックリスト](#production-checklist)
 
+<span id="repository-structure"></span>
+
 ## リポジトリ構造
 
 ### Monorepo パターン
@@ -123,6 +125,8 @@ gitops-root/
 | Namespace | `{app}` または `{app}-{env}` | `frontend`, `frontend-prod` |
 | リポジトリ | `gitops-{scope}` | `gitops-platform` |
 
+<span id="environment-promotion"></span>
+
 ## 環境昇格
 
 ### Git ブランチ戦略
@@ -217,6 +221,8 @@ jobs:
           commit-message: "chore: promote ${{ github.event.inputs.version }} to production"
 ```
 
+<span id="resource-management"></span>
+
 ## リソース管理
 
 ### ArgoCD コンポーネントのリソース
@@ -298,6 +304,8 @@ spec:
           type: Utilization
           averageUtilization: 80
 ```
+
+<span id="performance-tuning"></span>
 
 ## パフォーマンスチューニング
 
@@ -385,6 +393,8 @@ spec:
       managedFieldsManagers:
         - kube-controller-manager
 ```
+
+<span id="disaster-recovery"></span>
 
 ## 災害復旧
 
@@ -476,6 +486,8 @@ spec:
       selfHeal: true
 ```
 
+<span id="upgrade-strategies"></span>
+
 ## アップグレード戦略
 
 ### アップグレード前チェックリスト
@@ -521,6 +533,8 @@ kubectl port-forward svc/argocd-server -n argocd-new 8081:443
 kubectl delete namespace argocd
 kubectl rename namespace argocd-new argocd
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 
@@ -629,6 +643,8 @@ argocd app get <app-name> --hard-refresh
 kubectl patch application <app-name> -n argocd -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}' --type merge
 ```
 
+<span id="eks-best-practices"></span>
+
 ## EKS ベストプラクティス
 
 ### IRSA 設定
@@ -690,6 +706,8 @@ ArgoCD で管理する EKS クラスターをアップグレードする場合:
 2. アップグレード後に**接続性をテスト**する
 3. **applications を再同期**して互換性を確認する
 4. ハードコードされている場合は、Application manifests の**Kubernetes バージョンを更新**する
+
+<span id="production-checklist"></span>
 
 ## 本番環境チェックリスト
 

@@ -13,6 +13,8 @@
 7. [最佳实践](#best-practices)
 8. [故障排除](#troubleshooting)
 
+<span id="overview"></span>
+
 ## 概述
 
 ### 为什么需要超时和重试？
@@ -20,6 +22,8 @@
 ![未配置超时/重试时，客户端会一直等待无响应的服务并浪费资源；使用 Istio 超时/重试后，它会在 1 秒后停止，重试另一个实例并成功。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-05-retry-timeout-0.html)
+
+<span id="timeout-configuration"></span>
 
 ## 超时配置
 
@@ -78,6 +82,8 @@ spec:
         host: api-service
     timeout: 30s
 ```
+
+<span id="retry-configuration"></span>
 
 ## 重试配置
 
@@ -154,6 +160,8 @@ spec:
       attempts: 0
 ```
 
+<span id="combining-retry-and-timeout"></span>
+
 ## 组合使用重试与超时
 
 ### 分层超时
@@ -217,6 +225,8 @@ spec:
 ```
 
 默认对 POST/PATCH 以及领域定义为写入的任何操作禁用 mesh 重试。不要仅凭 HTTP 方法就推断 PUT 或 DELETE 是安全的：仅当应用程序的实际契约使重复执行安全时，才对它们进行重试。
+
+<span id="practical-examples"></span>
 
 ## 实践示例
 
@@ -367,6 +377,8 @@ spec:
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ```
+
+<span id="important-warnings"></span>
 
 ## 重要警告
 
@@ -606,6 +618,8 @@ spec:
 3. **PUT/DELETE**：仅在保证幂等性时使用 Istio Retry
 4. **关键操作（支付/库存/积分）**：必须具备应用程序级验证 + Idempotency Key
 
+<span id="best-practices"></span>
+
 ## 最佳实践
 
 ### 1. 超时配置指南
@@ -723,6 +737,8 @@ spec:
 
 # Each layer should consider downstream timeout + overhead
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

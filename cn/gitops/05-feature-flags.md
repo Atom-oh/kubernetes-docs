@@ -22,6 +22,8 @@
 
 ---
 
+<span id="overview-and-learning-objectives"></span>
+
 ## 概述和学习目标
 
 ### 学习目标
@@ -113,6 +115,8 @@ OpenFeature 的主要优势：
 - **多语言支持**：提供 Go、Java、Python、Node.js、.NET、PHP 等语言的官方 SDK
 
 ---
+
+<span id="openfeature-architecture"></span>
 
 ## OpenFeature 架构
 
@@ -235,6 +239,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="flagd-on-kubernetes"></span>
 
 ## Kubernetes 上的 flagd
 
@@ -621,6 +627,8 @@ sequenceDiagram
 
 ---
 
+<span id="application-integration"></span>
+
 ## 应用程序集成
 
 ### Go SDK
@@ -981,6 +989,8 @@ targeting:
 
 ---
 
+<span id="canary-release-and-feature-flag-combination"></span>
+
 ## Canary 发布与功能标志组合
 
 功能标志和 Canary 发布是互补策略。Canary 发布在基础设施层控制流量（哪个 Pod 版本为请求提供服务），而功能标志在应用程序层控制行为（执行哪个代码路径）。二者结合可提供最高级别的发布安全性。
@@ -1193,6 +1203,8 @@ spec:
 
 ---
 
+<span id="gitops-integration"></span>
+
 ## GitOps 集成
 
 ### 将功能标志作为代码
@@ -1401,6 +1413,8 @@ spec:
 
 ---
 
+<span id="observability"></span>
+
 ## 可观测性
 
 ### 标志求值指标（Prometheus）
@@ -1544,6 +1558,8 @@ spec:
 ```
 
 ---
+
+<span id="production-best-practices"></span>
 
 ## 生产最佳实践
 
@@ -1768,6 +1784,8 @@ resources:
 ```
 
 ---
+
+<span id="references"></span>
 
 ## 参考资料
 

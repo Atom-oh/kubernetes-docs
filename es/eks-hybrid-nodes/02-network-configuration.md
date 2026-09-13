@@ -207,7 +207,7 @@ On-premises node
 | SSM          | `com.amazonaws.<region>.ssm`         | Sí         | Al usar el proveedor de credenciales de SSM                   |
 | SSM Messages | `com.amazonaws.<region>.ssmmessages` | Sí         | Comunicación de SSM Session Manager                    |
 
-> **Nota**: Los endpoints de S3 Interface no admiten automáticamente `private_dns_enabled`. Si necesita resolución de DNS privado para dominios S3, debe configurar una Private Hosted Zone (PHZ) independiente. Para el patrón de duplicación privada de `hybrid-assets.eks.amazonaws.com`, consulte [Configuración Air-Gap - duplicación privada de hybrid-assets](03-airgap-setup.md#hybrid-assets-private-mirroring-s3--phz-pattern).
+> **Nota**: Los endpoints de S3 Interface no admiten automáticamente `private_dns_enabled`. Si necesita resolución de DNS privado para dominios S3, debe configurar una Private Hosted Zone (PHZ) independiente. Para el patrón de duplicación privada de `hybrid-assets.eks.amazonaws.com`, consulte [Configuración Air-Gap - duplicación privada de hybrid-assets (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/03-airgap-setup#dns-and-private-endpoint-requirements).
 
 ### Creación de VPC Endpoints con Terraform
 
@@ -452,6 +452,8 @@ sudo iptables -A OUTPUT -d 172.20.0.0/16 -j ACCEPT
 
 ***
 
+<span id="dns-configuration"></span>
+
 ## Configuración de DNS
 
 ### Route 53 Resolver Inbound Endpoint
@@ -677,7 +679,7 @@ El servidor de API inicia conexiones directas a Pods de webhook que se ejecutan 
 
 ### Patrón 5: Pod ↔ Pod en nodos híbridos
 
-Los Pods en diferentes nodos híbridos se comunican mediante [encapsulación VXLAN](../networking/cilium/03-networking.md#vxlan-technology-deep-dive) (u otros protocolos overlay similares como Geneve, IP-in-IP). El CNI encapsula el paquete original de Pod a Pod con encabezados externos usando IP de nodo de origen/destino. El CNI del nodo receptor desencapsula y entrega al Pod de destino.
+Los Pods en diferentes nodos híbridos se comunican mediante [encapsulación VXLAN (English)](https://www.atomai.click/kubernetes-docs/en/networking/cilium/03-networking#vxlan-technology-deep-dive) (u otros protocolos overlay similares como Geneve, IP-in-IP). El CNI encapsula el paquete original de Pod a Pod con encabezados externos usando IP de nodo de origen/destino. El CNI del nodo receptor desencapsula y entrega al Pod de destino.
 
 ![Pod a Pod en nodos híbridos](../.gitbook/assets/hybrid-nodes-pod-to-pod.svg)
 
@@ -1053,7 +1055,7 @@ hybrid-node-002     10.80.1.11    10.85.0.128/25
 hybrid-node-003     10.80.1.12    10.85.1.0/25
 ```
 
-> Para la estructura de CiliumNode CR, uso mediante scripts y más detalles, consulte [Cilium IPAM — Consulta de PodCIDR por nodo mediante CiliumNode CR](../networking/cilium/04-ipam-policy.md#querying-per-node-podcidrs-via-ciliumnode-cr).
+> Para la estructura de CiliumNode CR, uso mediante scripts y más detalles, consulte [Cilium IPAM — Consulta de PodCIDR por nodo mediante CiliumNode CR (English)](https://www.atomai.click/kubernetes-docs/en/networking/cilium/04-ipam-policy#querying-per-node-podcidrs-via-ciliumnode-cr).
 
 **Calico**: Los CR `BlockAffinity` realizan un seguimiento de los bloques CIDR por nodo:
 
@@ -1064,7 +1066,7 @@ CIDR:.spec.cidr,\
 NODE:.spec.node'
 ```
 
-> **⚠ Obsolescencia**: Calico ya no es oficialmente compatible con EKS Hybrid Nodes. Use Cilium para nuevas implementaciones. Para consultas detalladas de BlockAffinity, consulte [Temas avanzados de Calico — Consulta de PodCIDR por nodo mediante BlockAffinity](../networking/calico/07-advanced-topics.md#querying-per-node-podcidrs-via-blockaffinity).
+> **⚠ Obsolescencia**: Calico ya no es oficialmente compatible con EKS Hybrid Nodes. Use Cilium para nuevas implementaciones. Para consultas detalladas de BlockAffinity, consulte [Temas avanzados de Calico — Consulta de PodCIDR por nodo mediante BlockAffinity (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/07-advanced-topics#inspect-node-affine-cidr-blocks).
 
 #### Configuración de rutas estáticas
 
@@ -1166,7 +1168,7 @@ ip route add 10.85.1.0/25 via 10.80.1.12
 > **Recomendaciones**:
 >
 > * **PoC / Entornos pequeños** (1–5 nodos): Las rutas estáticas proporcionan un inicio rápido
-> * **Producción / 5+ nodos**: Use [BGP (opción 1)](02-network-configuration.md#option-1-bgp-recommended). Responde automáticamente a cambios de nodo y reduce significativamente la carga operativa
+> * **Producción / 5+ nodos**: Use [BGP (opción 1) (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#option-1-bgp-recommended). Responde automáticamente a cambios de nodo y reduce significativamente la carga operativa
 > * **Entornos donde la política no permite BGP**: Use rutas estáticas con el script de automatización anterior para gestionar cambios de rutas
 
 ### Opción 3: Proxying ARP
@@ -1296,6 +1298,8 @@ spec:
 > **Recomendación**: En entornos híbridos, defina network policies explícitas para evitar tráfico no intencionado entre límites. Los workloads sensibles deben protegerse con policies Ingress/Egress estrictas.
 
 ***
+
+<span id="webhook-configuration"></span>
 
 ## Configuración de webhook
 

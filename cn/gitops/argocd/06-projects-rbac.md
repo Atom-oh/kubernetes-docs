@@ -12,6 +12,8 @@
 - [用于 CI/CD 的 JWT Token](#jwt-tokens-for-cicd)
 - [孤立资源监控](#orphaned-resource-monitoring)
 
+<span id="appproject-overview"></span>
+
 ## AppProject 概览
 
 AppProject 为 Applications 提供逻辑分组，并定义访问控制：可部署哪些资源、可部署到何处以及谁可以管理它们。
@@ -102,6 +104,8 @@ spec:
         name: kube-root-ca.crt
 ```
 
+<span id="default-project"></span>
+
 ## 默认项目
 
 ArgoCD 随附一个 `default` 项目，该项目允许所有源、目标和资源。
@@ -147,6 +151,8 @@ spec:
   sourceRepos: []  # No repos allowed
   destinations: []  # No destinations allowed
 ```
+
+<span id="custom-projects"></span>
 
 ## 自定义项目
 
@@ -322,6 +328,8 @@ spec:
         - myorg:platform-team
 ```
 
+<span id="rbac-configuration"></span>
+
 ## RBAC 配置
 
 ArgoCD RBAC 在 `argocd-rbac-cm` ConfigMap 中配置。
@@ -456,6 +464,8 @@ policy.csv: |
   p, role:operator, applications, update, */*, allow
 ```
 
+<span id="multi-tenancy-patterns"></span>
+
 ## 多租户模式
 
 ### 每个团队一个 Namespace
@@ -575,6 +585,8 @@ spec:
         - '*'
 ```
 
+<span id="jwt-tokens-for-cicd"></span>
+
 ## 用于 CI/CD 的 JWT Token
 
 为自动化创建项目范围的 Token。
@@ -648,6 +660,8 @@ metadata:
 stringData:
   token: <jwt-token>
 ```
+
+<span id="orphaned-resource-monitoring"></span>
 
 ## 孤立资源监控
 

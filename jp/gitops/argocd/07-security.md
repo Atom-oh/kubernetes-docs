@@ -12,6 +12,8 @@
 - [リポジトリ認証情報](#repository-credentials)
 - [GPG 署名検証](#gpg-signature-verification)
 
+<span id="sso-integration"></span>
+
 ## SSO 統合
 
 ArgoCD は認証のために複数の SSO プロバイダーをサポートしています。
@@ -245,6 +247,8 @@ data:
     g, argocd-admins, role:admin
 ```
 
+<span id="secret-management"></span>
+
 ## Secret 管理
 
 ### Sealed Secrets
@@ -451,6 +455,8 @@ data:
   kustomize.buildOptions: --enable-alpha-plugins
 ```
 
+<span id="tls-configuration"></span>
+
 ## TLS 設定
 
 ### カスタム TLS 証明書
@@ -508,6 +514,8 @@ data:
     ...
     -----END CERTIFICATE-----
 ```
+
+<span id="audit-logging"></span>
 
 ## 監査ログ
 
@@ -580,6 +588,8 @@ spec:
           configMap:
             name: fluentbit-config
 ```
+
+<span id="network-security"></span>
 
 ## ネットワークセキュリティ
 
@@ -682,6 +692,8 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
+<span id="repository-credentials"></span>
+
 ## リポジトリ認証情報
 
 ### Personal Access Token を使用する HTTPS
@@ -763,6 +775,8 @@ stringData:
   username: admin
   password: secretpassword
 ```
+
+<span id="gpg-signature-verification"></span>
 
 ## GPG 署名検証
 

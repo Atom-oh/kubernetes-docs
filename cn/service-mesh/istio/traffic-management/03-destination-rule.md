@@ -19,6 +19,8 @@ DestinationRule 是一个核心 Istio 资源，用于定义 VirtualService 将�
 9. [最佳实践](#best-practices)
 10. [故障排除](#troubleshooting)
 
+<span id="what-is-destinationrule"></span>
+
 ## 什么是 DestinationRule？
 
 DestinationRule 定义**路由后的流量策略**。如果 VirtualService 决定将流量发送到“哪里”，DestinationRule 则决定应“如何”处理流量。
@@ -68,6 +70,8 @@ flowchart LR
 | **连接池** | 连接池设置 | 最大连接数、超时 |
 | **熔断器** | 故障隔离 | Outlier Detection |
 | **TLS 设置** | 加密策略 | mTLS、SIMPLE TLS |
+
+<span id="virtualservice-vs-destinationrule"></span>
 
 ## VirtualService 与 DestinationRule
 
@@ -165,6 +169,8 @@ spec:
       loadBalancer:
         simple: ROUND_ROBIN
 ```
+
+<span id="subset-concept"></span>
 
 ## Subset 概念
 
@@ -297,6 +303,8 @@ spec:
       env: staging
 ```
 
+<span id="basic-structure"></span>
+
 ## 基本结构
 
 ### 必填字段
@@ -343,6 +351,8 @@ spec:
 spec:
   host: api.external.com
 ```
+
+<span id="defining-subsets"></span>
 
 ## 定义 Subset
 
@@ -414,6 +424,8 @@ spec:
       region: us-east
       tier: standard
 ```
+
+<span id="traffic-policy-overview"></span>
 
 ## 流量策略概述
 
@@ -516,6 +528,8 @@ trafficPolicy:
     tls:
       mode: SIMPLE
 ```
+
+<span id="using-with-virtualservice"></span>
 
 ## 与 VirtualService 配合使用
 
@@ -650,6 +664,8 @@ spec:
         host: api-service
         subset: v1
 ```
+
+<span id="practical-examples"></span>
 
 ## 实践示例
 
@@ -861,6 +877,8 @@ spec:
           maxConnections: 100  # More for replicas
 ```
 
+<span id="best-practices"></span>
+
 ## 最佳实践
 
 ### 1. Subset 命名约定
@@ -991,6 +1009,8 @@ spec:
   host: payment-service
   # ...
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

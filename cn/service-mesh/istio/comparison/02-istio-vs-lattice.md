@@ -18,6 +18,8 @@
 10. [混合架构](02-istio-vs-lattice.md#hybrid-architecture)
 11. [选型指南](02-istio-vs-lattice.md#selection-guide)
 
+<span id="overview-and-key-differences"></span>
+
 ## 概述与主要差异
 
 ### Istio Service Mesh
@@ -58,6 +60,8 @@
 | **成本模型**               | 基于资源 | 基于使用量           |
 | **学习曲线**           | 陡峭          | 平缓                |
 | **多云**              | 支持      | 仅 AWS              |
+
+<span id="architecture-comparison"></span>
 
 ## 架构对比
 
@@ -190,6 +194,8 @@ flowchart TB
 | **Data Plane**              | Envoy Proxy              | AWS PrivateLink         |
 | **配置接口** | Kubernetes CRD           | AWS API                 |
 | **升级**                | 手动（可 Canary） | 自动（AWS 托管） |
+
+<span id="traffic-management-features"></span>
 
 ## 流量管理功能
 
@@ -439,6 +445,8 @@ aws vpc-lattice create-target-group \
 
 **结论**：在流量管理方面，**Istio 具有压倒性优势**
 
+<span id="security-model"></span>
+
 ## 安全模型
 
 ### mTLS 配置
@@ -630,6 +638,8 @@ spec:
 
 **结论**：在安全性方面，**Istio 提供更精细的控制**，VPC Lattice 在 AWS IAM 集成方面表现出色
 
+<span id="observability-and-monitoring"></span>
+
 ## 可观测性与监控
 
 ### 指标收集
@@ -816,6 +826,8 @@ aws vpc-lattice create-access-log-subscription \
 
 **结论**：在可观测性方面，**Istio 具有压倒性优势**
 
+<span id="operational-complexity"></span>
+
 ## 运维复杂度
 
 ### Istio 运维的实际挑战
@@ -983,6 +995,8 @@ Istio 升级是生产环境中风险最高、最复杂的操作之一。
 
 **结论**：在运维复杂度方面，**VPC Lattice 具有压倒性优势**
 
+<span id="cost-analysis"></span>
+
 ## 成本分析
 
 ### Istio 成本模型（详细）
@@ -1053,6 +1067,8 @@ Istio 升级是生产环境中风险最高、最复杂的操作之一。
 
 **结论**：VPC Lattice **每年约便宜 $42,000，5 年约便宜 $260,000**
 
+<span id="performance-comparison"></span>
+
 ## 性能对比
 
 ### 延迟开销
@@ -1088,6 +1104,8 @@ Istio 升级是生产环境中风险最高、最复杂的操作之一。
 | **额外 Pod**   | -        | +100 (Sidecar) | 0           |
 
 **结论**：VPC Lattice **效率极高**
+
+<span id="multi-cloud-strategy"></span>
 
 ## 多云策略
 
@@ -1141,6 +1159,8 @@ flowchart TB
 * 应用层集成
 * API Gateway
 
+<span id="hybrid-architecture"></span>
+
 ## 混合架构
 
 ### 同时使用 Istio + VPC Lattice
@@ -1191,6 +1211,8 @@ flowchart TB
 
 * **集群内**：Istio（功能丰富）
 * **集群间/外部**：VPC Lattice（连接简单）
+
+<span id="selection-guide"></span>
 
 ## 选型指南
 

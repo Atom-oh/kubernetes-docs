@@ -24,6 +24,8 @@
 7. [トラブルシューティング](#troubleshooting)
 8. [リファレンス: KEDA Installation](#reference-keda-installation)
 
+<span id="overview"></span>
+
 ## 概要
 
 このドキュメントでは、**Istio metrics を使用した実践的な autoscaling 戦略**に焦点を当てます。KEDA は Kubernetes HPA を拡張し、Prometheus および CloudWatch からの複雑な metric query に基づく scaling を可能にします。
@@ -67,6 +69,8 @@ scaling に使用される Istio Envoy proxy が提供する metrics:
 | **Composite Metrics** | RPS + Latency + Error | 本番 service | 安定した正確な scaling |
 | **Circuit Breaker ベース** | overflow、connection pool | 外部 dependency が多い service | cascading failure の防止 |
 | **時間ベースの予測** | Cron + metrics | 予測可能な traffic パターン | cost optimization、プロアクティブな対応 |
+
+<span id="architecture"></span>
 
 ## アーキテクチャ
 
@@ -136,6 +140,8 @@ spec:
         }[1m]))
       threshold: '1000'    # Threshold: 1000 RPS
 ```
+
+<span id="prometheus-metrics-based-scaling"></span>
 
 ## Prometheus Metrics ベースの Scaling
 
@@ -411,6 +417,8 @@ spec:
       threshold: '200'  # P95 > 200ms
 ```
 
+<span id="cloudwatch-metrics-based-scaling"></span>
+
 ## CloudWatch Metrics ベースの Scaling
 
 ### 概要
@@ -502,6 +510,8 @@ spec:
       awsRegion: us-west-2
       identityOwner: operator
 ```
+
+<span id="practical-scaling-strategies"></span>
 
 ## 実践的な Scaling 戦略
 
@@ -769,6 +779,8 @@ spec:
         })
       threshold: '500'  # 500+ concurrent requests
 ```
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 
@@ -1128,6 +1140,8 @@ spec:
           periodSeconds: 10
 ```
 
+<span id="troubleshooting"></span>
+
 ## トラブルシューティング
 
 ### 1. KEDA が Metrics を取得しない
@@ -1482,6 +1496,8 @@ spec:
         )
       threshold: '150'  # EU allows 150ms
 ```
+
+<span id="reference-keda-installation"></span>
 
 ## リファレンス: KEDA Installation
 

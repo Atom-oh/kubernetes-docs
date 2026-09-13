@@ -87,7 +87,7 @@ Ambient は Pod の実トラフィックを HBONE トンネル（TCP 15008）経
 
 > ✅ **判定**: 実トラフィックにより上記の仮説を確認しました。ambient の Workload Pod の network namespace に到達する実際のインバウンドパケットは、アプリケーションポート（8080）ではなく ztunnel HBONE ポート（15008）に到達します。アプリケーションポートのみの NetworkPolicy は ambient に参加している Pod を暗黙に破壊します。sidecar は、パケットがすでにアプリケーションポートに到達した後に Pod 自身の network namespace 内だけで sidecar によるトラフィックキャプチャが行われるため、影響を受けません。
 
-多層防御を推奨します。network level（NetworkPolicy）と identity level（AuthorizationPolicy）の制御を併用してください。sidecar mode における mTLS と NetworkPolicy の競合は [mTLS and NetworkPolicy Conflict](../security/01-mtls.md#7-mtls-and-networkpolicy-conflict) で扱っています。
+多層防御を推奨します。network level（NetworkPolicy）と identity level（AuthorizationPolicy）の制御を併用してください。sidecar mode における mTLS と NetworkPolicy の競合は [mTLS and NetworkPolicy Conflict (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/01-mtls#_7-mtls-and-networkpolicy-conflict) で扱っています。
 
 ## 3. レイテンシー — テスト結果（T5）
 

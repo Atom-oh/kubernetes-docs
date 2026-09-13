@@ -14,6 +14,8 @@ Fault Injection は、システムのレジリエンスをテストするため�
 8. [テスト戦略](#testing-strategies)
 9. [ベストプラクティス](#best-practices)
 
+<span id="why-fault-injection"></span>
+
 ## Fault Injection が必要な理由
 
 ### 本番環境でのレジリエンスのテスト
@@ -94,6 +96,8 @@ flowchart LR
 - 新しいバージョンは Timeout を正しく処理しますか？
 - 依存サービスが失敗したときにグレースフルデグラデーションを実行しますか？
 - エラーハンドリングロジックは正しく機能しますか？
+
+<span id="when-to-use-fault-injection"></span>
 
 ## Fault Injection を使用する場面
 
@@ -312,6 +316,8 @@ spec:
 - 実際のユーザーに影響を与えずに安全にテストする
 - Beta Tester からのフィードバックに基づいて改善する
 
+<span id="fault-injection-overview"></span>
+
 ## Fault Injection の概要
 
 ```mermaid
@@ -382,6 +388,8 @@ spec:
     - destination:
         host: reviews
 ```
+
+<span id="practical-examples"></span>
 
 ## 実践例
 
@@ -568,6 +576,8 @@ spec:
     - destination:
         host: payment-service
 ```
+
+<span id="real-world-scenarios"></span>
 
 ## 実際のシナリオ
 
@@ -770,6 +780,8 @@ spec:
 2. Readiness Probe は正しく機能しますか？
 3. Load Balancer は正常な Pod にのみトラフィックをルーティングしますか？
 
+<span id="testing-strategies"></span>
+
 ## テスト戦略
 
 ### 1. 段階的な Chaos Engineering
@@ -965,6 +977,8 @@ spec:
 - エラー率
 - 応答時間（P50、P95、P99）
 - ユーザーエクスペリエンス指標
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 

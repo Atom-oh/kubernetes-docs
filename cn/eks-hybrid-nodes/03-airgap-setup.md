@@ -474,7 +474,7 @@ aws s3api put-bucket-policy \
 
 ### S3 Interface VPC Endpoint
 
-S3 Interface VPC Endpoint 已在[网络配置文档](./02-network-configuration.md#vpc-private-endpoints-air-gapprivate-environments)中创建。验证 endpoint DNS name：
+S3 Interface VPC Endpoint 已在[网络配置文档 (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#vpc-private-endpoints-air-gap-private-connectivity)中创建。验证 endpoint DNS name：
 
 ```bash
 # Get S3 Interface VPC Endpoint DNS name
@@ -625,7 +625,7 @@ EKS Hybrid Nodes 运行所需的 container images 通过 ECR 提供：
 
 ### 通过 ECR VPC Endpoint 访问 Image
 
-ECR API (`ecr.api`) 和 ECR DKR (`ecr.dkr`) Interface VPC Endpoints 已在[网络配置文档](./02-network-configuration.md#vpc-private-endpoints-air-gapprivate-environments)中创建。即使在 air-gapped 环境中，它们也可以直接从 ECR 拉取 images。
+ECR API (`ecr.api`) 和 ECR DKR (`ecr.dkr`) Interface VPC Endpoints 已在[网络配置文档 (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#vpc-private-endpoints-air-gap-private-connectivity)中创建。即使在 air-gapped 环境中，它们也可以直接从 ECR 拉取 images。
 
 ### ecr-credential-provider 配置
 

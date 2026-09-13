@@ -14,6 +14,8 @@
 - [实验](#experiments)
 - [通知](#notifications)
 
+<span id="argo-rollouts-overview"></span>
+
 ## Argo Rollouts 概述
 
 Argo Rollouts 是一个 Kubernetes 控制器，提供高级部署功能，包括蓝绿部署、金丝雀部署和渐进式交付功能。
@@ -78,6 +80,8 @@ flowchart TB
     class PROM,DD,NR metrics
 ```
 
+<span id="installation"></span>
+
 ## 安装
 
 ### 安装 Argo Rollouts Controller
@@ -138,6 +142,8 @@ dashboard:
     hosts:
       - rollouts.example.com
 ```
+
+<span id="blue-green-deployments"></span>
 
 ## 蓝绿部署
 
@@ -271,6 +277,8 @@ strategy:
     autoPromotionSeconds: 60  # Wait 60s before auto-promoting
     previewReplicaCount: 3
 ```
+
+<span id="canary-deployments"></span>
 
 ## 金丝雀部署
 
@@ -432,6 +440,8 @@ flowchart TB
     class S1,S2,S3 stable
     class C1 canary
 ```
+
+<span id="analysis-and-verification"></span>
 
 ## 分析与验证
 
@@ -626,6 +636,8 @@ spec:
             ))
 ```
 
+<span id="ingress-integration"></span>
+
 ## Ingress 集成
 
 Argo Rollouts 支持超过 10 种流量提供商。对于没有原生集成的提供商（例如 Kong），则通过 **Gateway API plugin** 提供支持。
@@ -633,7 +645,7 @@ Argo Rollouts 支持超过 10 种流量提供商。对于没有原生集成的�
 | 提供商 | 集成 | 说明 |
 |---|---|---|
 | NGINX Ingress | 原生（`trafficRouting.nginx`） | 直接操作 `canary-weight` annotation |
-| AWS ALB | 原生（`trafficRouting.alb`） | Ingress backend port 必须为 `use-annotation` —— 请参阅[验证结果](#verification-results-on-eks) |
+| AWS ALB | 原生（`trafficRouting.alb`） | Ingress backend port 必须为 `use-annotation` —— 请参阅[验证结果 (English)](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/05-traffic-management#verification-results-on-eks) |
 | Istio | 原生（`trafficRouting.istio`） | 直接操作 VirtualService/DestinationRule |
 | SMI | 原生（`trafficRouting.smi`） | SMI 项目本身实际上已无人维护——不建议新项目采用 |
 | Ambassador、Apache APISIX、Traefik、Google Cloud | 原生 | 本文未涵盖——请参阅[官方文档](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) |
@@ -940,7 +952,7 @@ spec:
   controllerName: konghq.com/kic-gateway-controller   # note: different from KIC's IngressClass controller string
 ```
 
-接下来，应用与上述相同的 [Gateway API plugin](#gateway-api-plugin-universal) 配置——Rollout 和 HTTPRoute YAML 完全相同。
+接下来，应用与上述相同的 [Gateway API plugin (English)](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/05-traffic-management#gateway-api-plugin-httproute) 配置——Rollout 和 HTTPRoute YAML 完全相同。
 
 ### EKS 上的验证结果
 
@@ -952,6 +964,8 @@ spec:
 | Istio | VirtualService weight 从 20→50→100% 的转换，以及执行 `abort` 时立即恢复至 0% | ✅ 已确认——curl 比例与 weight 一致，且中止后流量立即回退到此前的稳定版本 |
 | AWS ALB | listener rule forward weight 转换，并通过 `aws elbv2 describe-rules` 与实时 AWS 状态交叉核对 | ✅ 已确认（但需要注意上述 [`use-annotation` 限制](#aws-alb-ingress)） |
 | Kong（Gateway API plugin） | `HTTPRoute.backendRefs[].weight` 转换，以及通过 Kong data plane 的真实流量 | ✅ 已确认——但 `gatewayclass-unmanaged` annotation 和精确的 `controllerName` 很容易配置错误（见上文） |
+
+<span id="rollback-strategies"></span>
 
 ## 回滚策略
 
@@ -1000,6 +1014,8 @@ spec:
             # Analysis runs continuously
             # Failure at any point triggers rollback
 ```
+
+<span id="experiments"></span>
 
 ## 实验
 
@@ -1060,6 +1076,8 @@ spec:
           valueFrom:
             podTemplateHashValue: canary
 ```
+
+<span id="notifications"></span>
 
 ## 通知
 

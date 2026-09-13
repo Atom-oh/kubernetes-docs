@@ -12,6 +12,8 @@
 - [Tokens JWT para CI/CD](#jwt-tokens-for-cicd)
 - [Monitoreo de recursos huérfanos](#orphaned-resource-monitoring)
 
+<span id="appproject-overview"></span>
+
 ## Descripción general de AppProject
 
 Los AppProjects proporcionan una agrupación lógica de Applications y definen controles de acceso para los recursos que se pueden desplegar, dónde se pueden desplegar y quién puede administrarlos.
@@ -102,6 +104,8 @@ spec:
         name: kube-root-ca.crt
 ```
 
+<span id="default-project"></span>
+
 ## Proyecto predeterminado
 
 ArgoCD incluye un proyecto `default` que permite todos los orígenes, destinos y recursos.
@@ -147,6 +151,8 @@ spec:
   sourceRepos: []  # No repos allowed
   destinations: []  # No destinations allowed
 ```
+
+<span id="custom-projects"></span>
 
 ## Proyectos personalizados
 
@@ -322,6 +328,8 @@ spec:
         - myorg:platform-team
 ```
 
+<span id="rbac-configuration"></span>
+
 ## Configuración de RBAC
 
 El RBAC de ArgoCD se configura en el ConfigMap `argocd-rbac-cm`.
@@ -456,6 +464,8 @@ policy.csv: |
   p, role:operator, applications, update, */*, allow
 ```
 
+<span id="multi-tenancy-patterns"></span>
+
 ## Patrones de multi-tenencia
 
 ### Un namespace por equipo
@@ -575,6 +585,8 @@ spec:
         - '*'
 ```
 
+<span id="jwt-tokens-for-cicd"></span>
+
 ## Tokens JWT para CI/CD
 
 Cree tokens con alcance de proyecto para la automatización.
@@ -648,6 +660,8 @@ metadata:
 stringData:
   token: <jwt-token>
 ```
+
+<span id="orphaned-resource-monitoring"></span>
 
 ## Monitoreo de recursos huérfanos
 

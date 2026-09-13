@@ -15,6 +15,8 @@
 7. [监控和日志记录最佳实践](#monitoring-and-logging-best-practices)
 8. [故障排查和调试](#troubleshooting-and-debugging)
 
+<span id="monitoring-and-logging-overview"></span>
+
 ## 监控和日志记录概述
 
 ### 监控和日志记录的重要性
@@ -89,6 +91,8 @@ flowchart TD
 5. **配置 Alerts**: 为重要事件和阈值配置 alerts
 6. **自动化**: 尽可能自动化监控和日志记录流程
 7. **定期审查**: 定期审查并改进监控和日志记录策略
+
+<span id="eks-control-plane-logging"></span>
 
 ## EKS Control Plane 日志记录
 
@@ -178,6 +182,8 @@ EKS Capabilities 在 EKS Control Plane 上将 Argo CD、AWS Controllers for Kube
 - **Workflow state transitions** from kro
 
 为你运行的 capabilities 启用 log delivery，并同时启用标准 Control Plane logging，然后用 CloudWatch Logs Insights 以查询 API server 或 audit logs 相同的方式查询结果。有关当前支持的 capability log types 列表，请参阅 [公告](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-capabilities-logging/)（June 4, 2026）。
+
+<span id="container-logging"></span>
 
 ## Container 日志记录
 
@@ -385,6 +391,8 @@ Fluent Bit 中的 log parsing 配置：
     Time_Format %Y-%m-%dT%H:%M:%S%z
 ```
 
+<span id="cluster-monitoring"></span>
+
 ## Cluster 监控
 
 有效的 cluster 监控对于跟踪 EKS cluster 的状态、性能和资源使用情况至关重要。本节探讨用于监控 EKS clusters 的各种工具和技术。
@@ -540,7 +548,7 @@ aws eks update-addon \
   --addon-version v5.0.0-eksbuild.1
 ```
 
-如果你正在从 Application Signals 仍为 opt-in 的 add-on 版本升级，请参阅 [release notes](https://aws.amazon.com/about-aws/whats-new/2026/02/application-performance-monitoring-cloudwatch-eks/)（February 26, 2026）获取升级指导。有关基于 OTel 的新版 Container Insights metric collection 演进，请参阅 [CloudWatch Metrics](../observability/metrics/04-cloudwatch-metrics.md#opentelemetry-based-container-insights-preview)。
+如果你正在从 Application Signals 仍为 opt-in 的 add-on 版本升级，请参阅 [release notes](https://aws.amazon.com/about-aws/whats-new/2026/02/application-performance-monitoring-cloudwatch-eks/)（February 26, 2026）获取升级指导。有关基于 OTel 的新版 Container Insights metric collection 演进，请参阅 [CloudWatch Metrics (English)](https://www.atomai.click/kubernetes-docs/en/observability/metrics/04-cloudwatch-metrics#otel-migration-and-historical-announcements)。
 
 ### EKS Node Monitoring Agent
 
@@ -881,6 +889,8 @@ spec:
 5. 编写 PromQL query（例如 `rate(app_requests_total[5m])`）
 6. 配置 panel title、description 和 visualization type
 7. 点击 "Save"
+<span id="alerting-and-event-management"></span>
+
 ## 告警和事件管理
 
 有效的告警和事件管理对于快速检测并响应 EKS cluster 中的问题至关重要。本节探讨用于在 EKS clusters 中管理 alerts 和 events 的各种工具与技术。
@@ -1345,6 +1355,8 @@ spec:
 2. **Alert Filtering**: 过滤以仅传递重要 alerts
 3. **Alert Throttling**: 限制重复 alerts 的频率
 4. **Alert Time Windows**: 仅在工作时间传递非业务关键 alerts
+<span id="log-analysis-and-visualization"></span>
+
 ## 日志分析和可视化
 
 日志分析和可视化在诊断并解决 EKS cluster 中发生的问题方面发挥重要作用。本节探讨用于在 EKS clusters 中分析和可视化 logs 的各种工具与技术。
@@ -1721,6 +1733,8 @@ lifecycle-config.json:
   ]
 }
 ```
+<span id="monitoring-and-logging-best-practices"></span>
+
 ## 监控和日志记录最佳实践
 
 让我们探讨在 EKS clusters 中有效实施监控和日志记录的最佳实践。
@@ -1893,6 +1907,8 @@ route:
 1. **Hot Storage**: 最近的 logs 和频繁访问的 logs
 2. **Warm Storage**: 较少访问的 logs
 3. **Cold Storage**: Archived logs
+
+<span id="troubleshooting-and-debugging"></span>
 
 ## 故障排查和调试
 

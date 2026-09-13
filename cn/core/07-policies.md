@@ -134,6 +134,8 @@ spec:
 9. [策略最佳实践](#policy-best-practices)
 10. [结论](#conclusion)
 
+<span id="policy-overview"></span>
+
 ## 策略概述
 
 Kubernetes 策略为集群管理员提供了一种定义集群内资源和工作负载约束的方法。策略用于以下目的：
@@ -144,6 +146,8 @@ Kubernetes 策略为集群管理员提供了一种定义集群内资源和工作
 4. **标准化**：应用一致的配置和部署实践
 
 Kubernetes 可以通过内置资源（例如 NetworkPolicy、ResourceQuota、LimitRange）或第三方策略引擎（例如 OPA Gatekeeper、Kyverno）实施各种类型的策略。
+
+<span id="resource-allocation-policies"></span>
 
 ## 资源分配策略
 
@@ -197,6 +201,8 @@ QoS 类别决定资源短缺时的 Pod 驱逐顺序：
 2. 随后驱逐 Burstable Pod
 3. 最后驱逐 Guaranteed Pod
 
+<span id="pod-security-policies"></span>
+
 ## Pod 安全策略
 
 Pod Security Policy（PSP）从 Kubernetes 1.21 开始弃用，并在 1.25 版本中完全移除。取而代之的是 Pod Security Standards 和 Pod Security Admission。
@@ -232,6 +238,8 @@ metadata:
 - **enforce**：阻止创建违反策略的 Pod
 - **audit**：在审计日志中记录违规行为
 - **warn**：显示违规警告消息
+
+<span id="network-policies"></span>
 
 ## 网络策略
 
@@ -308,6 +316,8 @@ ingress:
       except:
       - 172.17.1.0/24
 ```
+
+<span id="resource-quotas"></span>
 
 ## 资源配额
 
@@ -419,6 +429,8 @@ LimitRange 可以应用于以下资源类型：
 - Container
 - Pod
 - PersistentVolumeClaim
+
+<span id="policy-engines"></span>
 
 ## 策略引擎
 
@@ -542,6 +554,8 @@ spec:
       - owner
 ```
 
+<span id="policy-management-in-amazon-eks"></span>
+
 ## Amazon EKS 中的策略管理
 
 在 Amazon EKS 中，您可以使用 Kubernetes 的默认策略机制以及各种 AWS 服务来管理策略。
@@ -612,6 +626,8 @@ spec:
 
 您可以使用 AWS Firewall Manager 集中管理多个 EKS 集群的网络策略。这使得可以在整个组织中应用一致的安全策略。
 
+<span id="policy-best-practices"></span>
+
 ## 策略最佳实践
 
 以下是在 Kubernetes 集群中有效管理策略的最佳实践。
@@ -640,6 +656,8 @@ spec:
 1. **CI/CD 集成**：将策略验证集成到 CI/CD 管道中，以便在部署前检测策略违规。
 2. **策略测试**：先在测试环境中测试策略，确认无问题后再应用到生产环境。
 3. **策略版本控制**：将策略作为代码进行管理，并使用版本控制系统跟踪变更。
+
+<span id="conclusion"></span>
 
 ## 结论
 

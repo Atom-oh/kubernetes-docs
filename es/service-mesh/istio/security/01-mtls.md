@@ -14,6 +14,8 @@ Mutual TLS (mTLS) es una funcionalidad de seguridad central de Istio que cifra y
 8. [Problemas comunes y soluciones](#common-issues-and-solutions)
 9. [Rendimiento y monitoreo](#performance-and-monitoring)
 
+<span id="mtls-overview"></span>
+
 ## Descripción general de mTLS
 
 <p align="center">
@@ -77,6 +79,8 @@ flowchart LR
     class Istiod control;
 ```
 
+<span id="mtls-modes"></span>
+
 ## Modos de mTLS
 
 ### Modo STRICT (recomendado)
@@ -117,6 +121,8 @@ spec:
   mtls:
     mode: DISABLE  # mTLS disabled
 ```
+
+<span id="certificate-management"></span>
 
 ## Administración de certificados
 
@@ -390,6 +396,8 @@ for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
 done
 ```
 
+<span id="peerauthentication-configuration"></span>
+
 ## Configuración de PeerAuthentication
 
 ### Configuración global
@@ -453,6 +461,8 @@ spec:
     8080:
       mode: DISABLE  # mTLS disabled for port 8080
 ```
+
+<span id="mtls-integration-with-aws-services"></span>
 
 ## Integración de mTLS con servicios de AWS
 
@@ -809,6 +819,8 @@ flowchart TB
 3. **ALB -> Istio Gateway**: TLS + encabezados con información del certificado
 4. **Dentro de Istio Mesh**: mTLS automático (Envoy a Envoy)
 
+<span id="mtls-with-external-services"></span>
+
 ## mTLS con servicios externos
 
 ### Integración con sistemas heredados
@@ -973,6 +985,8 @@ spec:
       caCertificates: /etc/istio/egress-certs/ca.crt
 ```
 
+<span id="migration-strategy"></span>
+
 ## Estrategia de migración
 
 ### Paso 1: Comprobar el estado actual
@@ -1022,6 +1036,8 @@ spec:
   mtls:
     mode: STRICT  # Only mTLS allowed
 ```
+
+<span id="common-issues-and-solutions"></span>
 
 ## Problemas comunes y soluciones
 
@@ -1301,6 +1317,8 @@ spec:
     - protocol: TCP
       port: 15008
 ```
+
+<span id="performance-and-monitoring"></span>
 
 ## Rendimiento y monitoreo
 

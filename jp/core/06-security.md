@@ -88,8 +88,10 @@ EOF
 6. [Secret Management](#secret-management)
 7. [Image Security](#image-security)
 8. [Pod Security Standards](#pod-security-standards)
-9. [Audit Logging](#audit-logging)
-10. [EKS Security のベストプラクティス](#eks-security-best-practices)
+9. [Audit Logging (English)](https://www.atomai.click/kubernetes-docs/en/core/06-security#audit)
+10. [EKS Security のベストプラクティス (English)](https://www.atomai.click/kubernetes-docs/en/core/06-security#amazon-eks-security-enhancement)
+
+<span id="security-overview"></span>
 
 ## Security の概要
 

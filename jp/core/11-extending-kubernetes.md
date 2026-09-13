@@ -20,6 +20,8 @@ Kubernetes は拡張性を念頭に設計されたプラットフォームであ
 12. [ベストプラクティス](#best-practices)
 13. [まとめ](#conclusion)
 
+<span id="kubernetes-extension-overview"></span>
+
 ## Kubernetes 拡張の概要
 
 Kubernetes には、基本機能を拡張およびカスタマイズするためのさまざまな拡張ポイントが用意されています。主な拡張ポイントは次のとおりです。
@@ -201,6 +203,8 @@ spec:
       conversionReviewVersions:
       - v1
 ```
+
+<span id="operator-pattern"></span>
 
 ## Operator パターン
 
@@ -535,6 +539,8 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 3. **Istio**: サービスメッシュのサイドカーインジェクション
 4. **cert-manager**: TLS 証明書管理
 
+<span id="api-server-extensions"></span>
+
 ## API Server の拡張
 
 API Server の拡張は、Kubernetes API server に新しいエンドポイントを追加する方法です。
@@ -632,6 +638,8 @@ Aggregation Layer は、複数の API Server を単一の API Server として�
           |                       |               |                         |
           +-----------------------+               +-------------------------+
 ```
+
+<span id="scheduler-extensions"></span>
 
 ## Scheduler の拡張
 
@@ -1261,6 +1269,8 @@ spec:
 4. **InfiniBand Device Plugin**: InfiniBand デバイス管理
 5. **SR-IOV Network Device Plugin**: SR-IOV ネットワークデバイス管理
 
+<span id="extension-features-in-amazon-eks"></span>
+
 ## Amazon EKS の拡張機能
 
 Amazon EKS は、Kubernetes クラスターの機能を拡張するためのさまざまな拡張機能をサポートしています。
@@ -1386,6 +1396,8 @@ spec:
 EOF
 ```
 
+<span id="best-practices"></span>
+
 ## ベストプラクティス
 
 Kubernetes 拡張機能を実装する際に考慮すべきベストプラクティスを見ていきましょう。
@@ -1429,6 +1441,8 @@ Kubernetes 拡張機能を実装する際に考慮すべきベストプラクテ
 3. **VPC CNI の設定**: ネットワーク要件に従って VPC CNI を設定します
 4. **Security Groups**: 適切な Security Groups を設定します
 5. **コスト最適化**: 適切なインスタンスタイプとサイズを選択します
+
+<span id="conclusion"></span>
 
 ## まとめ
 

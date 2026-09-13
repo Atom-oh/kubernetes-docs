@@ -72,6 +72,8 @@ Service Mesh は、microservice 間の通信を管理する infrastructure layer
 
 Istio を適用すると、各 microservice に Envoy Proxy が sidecar container として自動的にデプロイされ、すべての network traffic を透過的に intercept および制御します。
 
+<span id="do-you-really-need-a-service-mesh"></span>
+
 ## Service Mesh は本当に必要ですか？
 
 Service Mesh は強力なツールですが、すべての状況に適しているわけではありません。導入前に慎重な検討が必要です。

@@ -19,6 +19,8 @@
 - [最佳实践](#best-practices)
 - [故障排除](#troubleshooting)
 
+<span id="introduction"></span>
+
 ## 简介
 
 VictoriaMetrics 是一个高性能、高性价比的时间序列数据库和监控解决方案。它与 Prometheus 完全兼容，同时提供更高的压缩率、查询性能和可扩展性。
@@ -75,6 +77,8 @@ flowchart LR
 | 基数限制 | 约 1000 万个时间序列 | 约 1 亿+ 个时间序列 |
 | 查询语言 | PromQL | MetricsQL（超集） |
 
+<span id="architecture-options"></span>
+
 ## 架构选项
 
 VictoriaMetrics 提供两种部署模式：
@@ -100,6 +104,8 @@ flowchart TD
     class A,B,C,F decision
     class D,E,G solution
 ```
+
+<span id="single-node-mode"></span>
 
 ## 单节点模式
 
@@ -211,6 +217,8 @@ spec:
 | `/api/v1/label/{name}/values` | 标签值列表 |
 | `/vmui` | 内置 UI |
 | `/metrics` | 自身指标 |
+
+<span id="cluster-mode"></span>
 
 ## 集群模式
 
@@ -858,6 +866,8 @@ rate(http_requests_total{status=~"5.."}[5m])
 histogram_share(0.5, http_request_duration_seconds_bucket)  # Ratio below 500ms
 ```
 
+<span id="helm-installation"></span>
+
 ## Helm 安装
 
 ### victoria-metrics-k8s-stack
@@ -1009,6 +1019,8 @@ victoria-metrics-single:
   enabled: false
 ```
 
+<span id="long-term-storage-configuration"></span>
+
 ## 长期存储配置
 
 ### 保留期设置
@@ -1070,6 +1082,8 @@ spec:
           restartPolicy: OnFailure
 ```
 
+<span id="downsampling"></span>
+
 ## 降采样
 
 VictoriaMetrics Enterprise 支持降采样。对于开源版本，请使用记录规则。
@@ -1099,6 +1113,8 @@ groups:
       or
       histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))
 ```
+
+<span id="performance-optimization"></span>
 
 ## 性能优化
 
@@ -1147,6 +1163,8 @@ args:
   # Maximum label value length
   - "--maxLabelValueLen=1024"
 ```
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 
@@ -1201,6 +1219,8 @@ vmctl prometheus --prometheus.snapshot-path=/prometheus/snapshots/xxx \
 # Step 4: Complete transition
 # Remove Prometheus remote_write, change Grafana default data source
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

@@ -17,6 +17,8 @@
 - [ベストプラクティス](#best-practices)
 - [トラブルシューティング](#troubleshooting)
 
+<span id="introduction"></span>
+
 ## 概要
 
 Grafana Mimir は、Grafana Labs が開発したオープンソースの水平スケーリング可能な長期メトリクスストレージです。Prometheus メトリクス向けのエンタープライズグレードストレージとして、オブジェクトストレージを使用してマルチテナンシー、高可用性、無制限のスケーラビリティを提供します。
@@ -73,6 +75,8 @@ flowchart LR
 | 運用オーバーヘッド | 低 | 高 | 中 |
 | Prometheus の変更 | 不要 | 不要 | Sidecar が必要 |
 | マルチテナンシー | ネイティブ | ネイティブ | 限定的 |
+
+<span id="architecture"></span>
 
 ## アーキテクチャ
 
@@ -161,6 +165,8 @@ flowchart TB
 3. **バックグラウンドプロセス**:
    - Compactor は小さなブロックをより大きなブロックにマージします
    - ダウンサンプリングと保持ポリシーを適用します
+
+<span id="core-components"></span>
 
 ## コアコンポーネント
 
@@ -308,6 +314,8 @@ query_frontend:
 - クエリキューを管理
 - リトライを処理
 
+<span id="multi-tenancy"></span>
+
 ## マルチテナンシー
 
 Mimir はネイティブのマルチテナンシーをサポートしており、複数のチームや組織のメトリクスを分離できます。
@@ -388,6 +396,8 @@ flowchart TD
     class D,I mimir
     class B1,B2,B3 storage
 ```
+
+<span id="helm-installation"></span>
 
 ## Helm インストール
 
@@ -562,6 +572,8 @@ mimir:
       data_dir: /data/compactor
 ```
 
+<span id="s3-backend-configuration"></span>
+
 ## S3 バックエンド設定
 
 ### IRSA のセットアップ
@@ -663,6 +675,8 @@ mimir:
 }
 ```
 
+<span id="query-and-data-retention"></span>
+
 ## クエリとデータ保持
 
 ### 保持ポリシー設定
@@ -738,6 +752,8 @@ flowchart LR
     class R1,M1,C1,S3 storage
 ```
 
+<span id="comparison-with-victoriametrics"></span>
+
 ## VictoriaMetrics との比較
 
 ### 詳細比較
@@ -794,6 +810,8 @@ flowchart TD
 - ローカルディスクベースのストレージを好む
 - 最大の圧縮率とパフォーマンスが重要
 - コスト効率を優先する
+
+<span id="performance-tuning"></span>
 
 ## パフォーマンスチューニング
 
@@ -858,6 +876,8 @@ querier:
   timeout: 2m
 ```
 
+<span id="best-practices"></span>
+
 ## ベストプラクティス
 
 ### 本番環境チェックリスト
@@ -918,6 +938,8 @@ limits:
 compactor:
   downsampling_enabled: true
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

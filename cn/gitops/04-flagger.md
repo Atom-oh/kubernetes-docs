@@ -10,8 +10,8 @@ Flagger 是 Kubernetes 的渐进式交付 operator，它使用 service mesh 路�
 - [概述和学习目标](#overview-and-learning-objectives)
 - [Flagger 架构](#flagger-architecture)
 - [EKS 安装和配置](#eks-installation-and-configuration)
-- [金丝雀 Deployment 策略](#canary-deployment-strategy)
-- [蓝绿 Deployment 策略](#blue-green-deployment-strategy)
+- [金丝雀 Deployment 策略 (English)](https://www.atomai.click/kubernetes-docs/en/gitops/04-flagger#canary-deployment-strategy)
+- [蓝绿 Deployment 策略 (English)](https://www.atomai.click/kubernetes-docs/en/gitops/04-flagger#blue-green-deployment-strategy)
 - [A/B 测试策略](#ab-testing-strategy)
 - [自定义指标和 Webhook](#custom-metrics-and-webhooks)
 - [GitOps 集成（Flux + Flagger）](#gitops-integration-flux--flagger)
@@ -20,6 +20,8 @@ Flagger 是 Kubernetes 的渐进式交付 operator，它使用 service mesh 路�
 - [参考资料](#references)
 
 ---
+
+<span id="overview-and-learning-objectives"></span>
 
 ## 概述和学习目标
 
@@ -117,6 +119,8 @@ graph TB
 
 ---
 
+<span id="flagger-architecture"></span>
+
 ## Flagger 架构
 
 ### 控制循环
@@ -199,6 +203,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="eks-installation-and-configuration"></span>
 
 ## EKS 安装和配置
 
@@ -874,6 +880,8 @@ spec:
 
 ---
 
+<span id="ab-testing-strategy"></span>
+
 ## A/B 测试策略
 
 ### 基于 Header 和 Cookie 的路由
@@ -1007,6 +1015,8 @@ done
 ```
 
 ---
+
+<span id="custom-metrics-and-webhooks"></span>
 
 ## 自定义指标和 Webhook
 
@@ -1309,6 +1319,8 @@ webhooks:
 ```
 
 ---
+
+<span id="gitops-integration-flux--flagger"></span>
 
 ## GitOps 集成（Flux + Flagger）
 
@@ -1648,6 +1660,8 @@ spec:
 
 ---
 
+<span id="observability-and-alerting"></span>
+
 ## 可观测性和告警
 
 ### Grafana 仪表板（Flagger 指标）
@@ -1883,6 +1897,8 @@ spec:
 
 ---
 
+<span id="production-best-practices"></span>
+
 ## 生产环境最佳实践
 
 ### 渐进式采用策略
@@ -2099,6 +2115,8 @@ spec:
 8. **监控 Flagger controller 健康状况。** 为 Flagger Pod 重启、高内存使用率和协调错误设置告警。
 
 ---
+
+<span id="references"></span>
 
 ## 参考资料
 

@@ -12,9 +12,11 @@ ClickHouse es una base de datos analítica columnar. Es adecuada para cargas de 
 4. [Pipeline de ingestión de logs](#log-ingestion-pipeline)
 5. [Consultas SQL](#sql-queries)
 6. [Integración con Grafana](#grafana-integration)
-7. [HyperDX](#hyperdx-clickhouse-native-viewer)
+7. [HyperDX (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse#hyperdx-clickhouse-native-viewer)
 8. [Optimización del rendimiento](#performance-optimization)
-9. [Archivado en S3](#s3-archiving-and-long-term-retention)
+9. [Archivado en S3 (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse#s3-archiving-and-long-term-retention)
+
+<span id="overview"></span>
 
 ## Descripción general
 
@@ -45,6 +47,8 @@ Esta guía usa **ClickHouse 26.3.33.24 LTS**, **Altinity Operator 0.27.3**, **Ve
 
 Evita clasificaciones universales de compresión, velocidad de consulta o complejidad operativa. Cada sistema tiene varios modos de despliegue y opciones de indexación/consulta. Compara los mismos datos, consultas, réplicas y retención.
 
+<span id="architecture"></span>
+
 ## Arquitectura
 
 ### Arquitectura del clúster de ClickHouse
@@ -62,6 +66,8 @@ El diagrama resume una topología, no un plan de capacidad probado. Cada réplic
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-1.html)
 
 Las flechas muestran el movimiento de datos. En la variante del motor Kafka, los consumidores de ClickHouse hacen polling de Kafka; la imagen no implica que Kafka envíe inserts ni garantice entrega exactly-once. Las table parts frías de S3 y los archivos Parquet independientes son mecanismos diferentes.
+
+<span id="kubernetes-deployment"></span>
 
 ## Despliegue de Kubernetes
 
@@ -157,6 +163,8 @@ kubectl -n clickhouse get chi logs-demo
 kubectl -n clickhouse get pods,pvc,services,endpointslices
 kubectl -n clickhouse get events --sort-by=.metadata.creationTimestamp
 ```
+
+<span id="log-ingestion-pipeline"></span>
 
 ## Pipeline de ingestión de logs
 
@@ -347,6 +355,8 @@ El motor Kafka de ClickHouse consume un topic mediante un grupo de consumidores,
 
 Las tablas de motor Kafka no admiten las columnas predeterminadas ordinarias usadas arriba. Define allí solo los campos entrantes y calcula valores predeterminados/materializados en el destino/vista. Los commits de offsets, el acknowledgement de insert downstream y el comportamiento de reintentos deben probarse conjuntamente. Evita un destino Buffer en memoria cuando se requiera reconocer procesamiento duradero; no habilites el almacenamiento experimental de offsets respaldado por Keeper como valor predeterminado de producción sin condiciones.
 
+<span id="sql-queries"></span>
+
 ## Consultas SQL
 
 ### Consultas básicas
@@ -424,6 +434,8 @@ GROUP BY namespace, pod_name;
 ```
 
 `message_bytes` cuenta bytes del texto del mensaje, no el almacenamiento comprimido de la tabla ni la facturación de red. La coincidencia de mensajes “Back-off” cuenta eventos de log, no recuentos autoritativos de reinicios de contenedor; usa métricas de estado de Kubernetes para ello. Un `SELECT` SQL es una consulta de snapshot. Un dashboard se actualiza periódicamente mediante su intervalo de actualización, no mediante una propiedad especial de streaming en vivo de esta consulta.
+
+<span id="grafana-integration"></span>
 
 ## Integración con Grafana
 
@@ -550,6 +562,8 @@ No trates una convención de nombres Buffer/Store/Distributed como descubrimient
 | SigNoz | Su propio modelo/UI de observabilidad e ingestión; también usa ClickHouse |
 
 Compara el esquema de ingestión, autenticación, flujo de trabajo de consultas, versión compatible y licencia reales para cada componente. Una base de datos ClickHouse existente no convierte a cada UI de observabilidad en un frontend intercambiable directo.
+
+<span id="performance-optimization"></span>
 
 ## Optimización del rendimiento
 

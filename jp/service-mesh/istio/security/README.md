@@ -9,10 +9,12 @@ Istio は、service mesh 内で堅牢なセキュリティ機能を提供しま�
 
 1. [セキュリティアーキテクチャの概要](#security-architecture-overview)
 2. [主要なセキュリティ機能](#core-security-features)
-3. [セキュリティコンポーネント](#security-components)
-4. [詳細ドキュメント](#detailed-documentation)
+3. [セキュリティコンポーネント (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/#security-components)
+4. [詳細ドキュメント (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/#next-steps)
 5. [セキュリティのベストプラクティス](#security-best-practices)
 6. [セキュリティモニタリング](#security-monitoring)
+
+<span id="security-architecture-overview"></span>
 
 ## セキュリティアーキテクチャの概要
 
@@ -100,6 +102,8 @@ flowchart TB
    - きめ細かなアクセス制御（RBAC）
    - 監査ログのサポート
 
+<span id="core-security-features"></span>
+
 ## 主要なセキュリティ機能
 
 Istio は、以下の主要なセキュリティ機能を提供します。
@@ -181,6 +185,8 @@ spec:
         paths: ["/api/*"]
 ```
 
+<span id="security-best-practices"></span>
+
 ## セキュリティのベストプラクティス
 
 ### 1. 多層防御
@@ -250,6 +256,8 @@ spec:
 - 各サービスには必要最小限の権限のみを付与する
 - ServiceAccount をきめ細かく分離する
 - Namespace の分離を活用する
+
+<span id="security-monitoring"></span>
 
 ### 3. セキュリティモニタリング
 

@@ -10,18 +10,18 @@ Este documento es una guía basada en resultados de pruebas para decidir si adop
 3. Cargas de trabajo sensibles a la latencia
 4. Rollout sin tiempo de inactividad — verificación de la preocupación por los 503 del waypoint ambient
 
-> 💡 Cada cifra de este documento procede de un **clúster EKS dedicado y de un solo tenant** (`mesh-isolated-test`) creado únicamente para este ciclo de pruebas y eliminado después. Consulta la [nota sobre el aislamiento de las pruebas](#a-note-on-test-isolation) al final de §4 para saber por qué fue necesario un clúster dedicado.
+> 💡 Cada cifra de este documento procede de un **clúster EKS dedicado y de un solo tenant** (`mesh-isolated-test`) creado únicamente para este ciclo de pruebas y eliminado después. Consulta la [nota sobre el aislamiento de las pruebas (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/comparison/03-sidecar-vs-ambient#a-note-on-test-isolation) al final de §4 para saber por qué fue necesario un clúster dedicado.
 
 ## Resumen de decisión
 
 | Requisito | Sidecar | Ambient (L4, sin waypoint) | Ambient (L7, waypoint) | Cilium |
 |---|---|---|---|---|
-| mTLS | ✅ STRICT compatible, verificado | ✅ STRICT compatible, verificado | ✅ STRICT compatible, verificado | ⚠️ No medido en este ciclo — documentado como autenticación mutua de identidad más WireGuard/IPsec habilitado por separado, no como un único interruptor equivalente a STRICT (consulta [abajo](#separate-raw-failures-from-failures-hidden-by-retry)) |
+| mTLS | ✅ STRICT compatible, verificado | ✅ STRICT compatible, verificado | ✅ STRICT compatible, verificado | ⚠️ No medido en este ciclo — documentado como autenticación mutua de identidad más WireGuard/IPsec habilitado por separado, no como un único interruptor equivalente a STRICT (consulta [abajo (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/comparison/03-sidecar-vs-ambient#separate-raw-failures-from-failures-hidden-by-retry)) |
 | NetworkPolicy | ✅ Las reglas existentes funcionan sin cambios, verificado | ⚠️ Debe permitir el puerto HBONE (15008), verificado | ⚠️ Debe permitir el puerto HBONE (15008), verificado | ⚠️ No medido en este ciclo — CiliumNetworkPolicy es el mecanismo nativo, no un complemento de K8s NetworkPolicy |
 | Latencia (P50 sobre la referencia sin mesh) | +1.29ms, medido | +0.04ms (insignificante), medido | +1.86ms, medido | No medido en este ciclo |
 | Rollout sin tiempo de inactividad | Se producen 503 (0.5%, medido) | **Cero 503 reales**, reemplazados por 0.3% de restablecimientos TCP | Se producen 503 **2.6%, ~5x sidecar** (medido) | No medido en este ciclo |
 
-> ✅ **Conclusión en una línea**: ambient sin waypoint (solo L4) fue el más estable bajo actividad intensa de rollouts y tuvo una sobrecarga de latencia insignificante. Adjuntar un waypoint (L7) eleva la tasa de 503 por encima de la de sidecar y la latencia aproximadamente al mismo nivel que sidecar. La evidencia está en §3–§4 a continuación. Cilium se incluye para una comparación de seguridad equivalente (consulta [abajo](#separate-raw-failures-from-failures-hidden-by-retry)); no se desplegó en el clúster de pruebas, por lo que su fila solo indica propiedades documentadas, nunca un sustituto de una medición.
+> ✅ **Conclusión en una línea**: ambient sin waypoint (solo L4) fue el más estable bajo actividad intensa de rollouts y tuvo una sobrecarga de latencia insignificante. Adjuntar un waypoint (L7) eleva la tasa de 503 por encima de la de sidecar y la latencia aproximadamente al mismo nivel que sidecar. La evidencia está en §3–§4 a continuación. Cilium se incluye para una comparación de seguridad equivalente (consulta [abajo (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/comparison/03-sidecar-vs-ambient#separate-raw-failures-from-failures-hidden-by-retry)); no se desplegó en el clúster de pruebas, por lo que su fila solo indica propiedades documentadas, nunca un sustituto de una medición.
 
 ## 1. mTLS — Resultados de pruebas (EKS 1.36.2, Istio 1.30.2)
 
@@ -87,7 +87,7 @@ Ambient reenvía el tráfico real de un Pod a ztunnel mediante un túnel HBONE (
 
 > ✅ **Veredicto**: confirma la hipótesis anterior con tráfico real. El paquete entrante real de ambient en el Namespace de red del Pod de carga de trabajo llega al puerto HBONE de ztunnel (15008), no al puerto de la aplicación (8080); una NetworkPolicy limitada al puerto de la aplicación rompe silenciosamente los Pods inscritos en ambient. Sidecar no se ve afectado porque la captura de tráfico de sidecar ocurre por completo dentro del Namespace de red del propio Pod después de que el paquete ya llegó al puerto de la aplicación.
 
-Recomendamos defensa en profundidad: aplica conjuntamente controles a nivel de red (NetworkPolicy) y a nivel de identidad (AuthorizationPolicy). El conflicto del modo sidecar entre mTLS y NetworkPolicy se trata en [mTLS and NetworkPolicy Conflict](../security/01-mtls.md#7-mtls-and-networkpolicy-conflict).
+Recomendamos defensa en profundidad: aplica conjuntamente controles a nivel de red (NetworkPolicy) y a nivel de identidad (AuthorizationPolicy). El conflicto del modo sidecar entre mTLS y NetworkPolicy se trata en [mTLS and NetworkPolicy Conflict (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/01-mtls#_7-mtls-and-networkpolicy-conflict).
 
 ## 3. Latencia — Resultados de pruebas (T5)
 

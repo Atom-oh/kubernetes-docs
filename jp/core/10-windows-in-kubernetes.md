@@ -19,6 +19,8 @@ Kubernetes はもともと Linux コンテナ向けに設計されましたが�
 11. [ベストプラクティス](#best-practices)
 12. [まとめ](#conclusion)
 
+<span id="windows-container-overview"></span>
+
 ## Windows コンテナの概要
 
 Windows コンテナは Windows オペレーティングシステム上で実行されるコンテナであり、Windows アプリケーションをコンテナ化してデプロイできます。
@@ -56,6 +58,8 @@ EXPOSE 80
 CMD ["powershell", "-Command", "Start-Service W3SVC; Get-Content -Path 'C:\\inetpub\\logs\\LogFiles\\W3SVC1\\u_ex*' -Wait"]
 ```
 
+<span id="kubernetes-windows-support-architecture"></span>
+
 ## Kubernetes の Windows サポートアーキテクチャ
 
 Kubernetes の Windows サポートは混在環境に基づいています。Control Plane コンポーネントは常に Linux 上で実行され、Worker Node は Linux または Windows のいずれかにできます。
@@ -80,6 +84,8 @@ Windows Node 上で実行される Kubernetes コンポーネント:
 2. **kube-proxy**: ネットワークルールを管理します
 3. **CNI Plugin**: ネットワーク設定
 4. **CSI Plugin**: ストレージ管理
+
+<span id="windows-node-limitations"></span>
 
 ## Windows Node の制限事項
 
@@ -110,6 +116,8 @@ Windows コンテナでは、ホスト OS のバージョンに関して重要�
 | Windows Server 2022 | Windows Server 2022 |
 
 Hyper-V 分離によりこれらの制限を緩和できますが、追加のリソースが必要になります。
+<span id="windows-node-setup"></span>
+
 ## Windows Node のセットアップ
 
 Kubernetes クラスターに Windows Node を追加する手順を見ていきましょう。
@@ -198,6 +206,8 @@ Start-Service kubelet
 kubectl label node <windows-node-name> kubernetes.io/os=windows
 kubectl label node <windows-node-name> kubernetes.io/arch=amd64
 ```
+
+<span id="deploying-windows-containers"></span>
 
 ## Windows コンテナのデプロイ
 
@@ -297,6 +307,8 @@ spec:
         Get-Content -Path 'C:\inetpub\logs\LogFiles\W3SVC1\u_ex*' -Wait
       }
 ```
+
+<span id="networking"></span>
 
 ## ネットワーキング
 
@@ -429,6 +441,8 @@ spec:
     - protocol: TCP
       port: 80
 ```
+
+<span id="storage"></span>
 
 ## ストレージ
 
@@ -611,6 +625,8 @@ spec:
     persistentVolumeClaim:
       claimName: windows-pvc
 ```
+<span id="monitoring-and-logging"></span>
+
 ## モニタリングとロギング
 
 Windows Node とコンテナのモニタリングおよびロギング方法を見ていきましょう。
@@ -720,6 +736,8 @@ spec:
     emptyDir: {}
 ```
 
+<span id="security"></span>
+
 ## セキュリティ
 
 Windows Node とコンテナに関するセキュリティ上の考慮事項を見ていきましょう。
@@ -816,6 +834,8 @@ spec:
       whoami
       while ($true) { Start-Sleep -Seconds 10 }
 ```
+
+<span id="windows-support-in-amazon-eks"></span>
 
 ## Amazon EKS における Windows サポート
 
@@ -963,6 +983,8 @@ data:
         auto_create_group true
 ```
 
+<span id="best-practices"></span>
+
 ## ベストプラクティス
 
 Kubernetes で Windows ワークロードを実行するためのベストプラクティスを見ていきましょう。
@@ -998,6 +1020,8 @@ Kubernetes で Windows ワークロードを実行するためのベストプラ
 3. **VPC CNI の設定**: ネットワーキング要件に応じて VPC CNI を設定します
 4. **Security Groups**: 適切な Security Group を設定します
 5. **コスト最適化**: 適切なインスタンスタイプとサイズを選択します
+
+<span id="conclusion"></span>
 
 ## まとめ
 

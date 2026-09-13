@@ -69,7 +69,7 @@ kubectl -n storage-demo get pvc,pod
 10. [Block Volume Mode](#block-volume-mode)
 11. [Volume Cloning](#volume-cloning)
 12. [Storage ResourceQuota](#storage-resourcequota)
-13. [Storage Options in EKS](#storage-options-in-eks)
+13. [Storage Options in EKS (English)](https://www.atomai.click/kubernetes-docs/en/core/04-storage#storage-options-in-eks)
 
 ## Volumes
 

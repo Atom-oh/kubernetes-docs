@@ -15,6 +15,8 @@ Amazon CloudWatch Logs gestiona la ingesta, el almacenamiento y el análisis de 
 6. [Filtros de suscripción](#subscription-filters)
 7. [Optimización de costos](#cost-optimization)
 
+<span id="overview"></span>
+
 ## Descripción general
 
 <span id="cloudwatch-logs-features"></span>
@@ -62,6 +64,8 @@ Los filtros de suscripción **no** aceptan como destino el ARN de un bucket S3. 
 | Stream de logs | Una secuencia de eventos de log dentro de un grupo |
 | Evento de log | Marca de tiempo y mensaje, sujetos a los límites del servicio |
 | Retención | Un período de retención discreto admitido o sin vencimiento si no se establece la retención |
+
+<span id="eks-control-plane-logging"></span>
 
 ## Logging del control plane de EKS
 
@@ -269,6 +273,8 @@ Establezca los permisos IAM **antes de la instalación**. En este chart, los Dae
 El add-on/chart compatible tiene rutas para Linux y Windows, pero Application Signals no es compatible con EKS Windows. Fargate usa su enrutador de logs de plataforma, no este DaemonSet manual. Verifique Hybrid Nodes y Auto Mode por separado; no suponga que las rutas host tradicionales de EC2 existen en todas partes.
 
 Los logs de Karpenter, EBS CSI, load-balancer-controller e IPAM administrados por AWS de EKS Auto Mode usan una configuración independiente de **entrega de logs suministrados**. Sus tipos de logs son `AUTO_MODE_COMPUTE_LOGS`, `AUTO_MODE_BLOCK_STORAGE_LOGS`, `AUTO_MODE_LOAD_BALANCING_LOGS` y `AUTO_MODE_IPAM_LOGS`. El flujo documentado `PutDeliverySource` → `PutDeliveryDestination` → `CreateDelivery` puede dirigirse a un grupo de logs, S3 o Firehose. Es distinto de `PutSubscriptionFilter` y de habilitar los cinco tipos de logs del control plane.
+
+<span id="fluentbit-integration"></span>
 
 ## Integración con FluentBit
 
@@ -630,6 +636,8 @@ SOURCE logGroups(accountIdentifier:['111122223333'], namePrefix:['/aws/container
 
 `accountIdentifier` está en singular. Las consultas entre cuentas requieren una configuración y permisos aprobados de cuenta de monitorización/origen; mencionar una segunda cuenta o grupo no crea ese acceso. Omitir la selección de cuenta/prefijo puede ampliar considerablemente una consulta.
 
+<span id="subscription-filters"></span>
+
 ## Filtros de suscripción
 
 Los filtros de suscripción reenvían de forma asíncrona nuevos eventos coincidentes. La entrega es al menos una vez; pueden producirse duplicados. Los fallos de destino reintentables pueden reintentarse hasta 24 horas; los errores no reintentables y los fallos sostenidos pueden perder entregas. Supervise las cuotas, `DeliveryErrors` y `DeliveryThrottling`. Las suscripciones no rellenan todos los logs históricos.
@@ -884,6 +892,8 @@ La alarma es **un recuento de errores**, no una tasa de errores: más de 100 eve
 Para una exportación histórica acotada, use la API independiente de tareas de exportación S3 de CloudWatch y sus permisos de bucket/KMS. La disponibilidad de exportación puede retrasarse hasta 12 horas, no se garantiza el orden y el servicio no recomienda tareas de exportación periódicas para archivado continuo.
 
 Las reglas de ciclo de vida de archivo pertenecen al propietario único de la configuración del bucket. Combine una regla revisada con alcance de prefijo en esa configuración en lugar de reemplazar reglas existentes con un segundo recurso Terraform. Considere el comportamiento de transición de objetos pequeños, las duraciones mínimas de almacenamiento, los costos de recuperación y Object Lock antes de seleccionar los niveles Standard-IA o Glacier.
+
+<span id="cost-optimization"></span>
 
 ## Optimización de costos
 

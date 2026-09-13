@@ -362,7 +362,7 @@ EBS: 20 GiB gp3 (minimal storage needed)
 Las instancias gateway deben:
 1. Estar registradas como Kubernetes nodes en el cluster EKS (cloud nodes estándar con VPC CNI)
 2. Tener el IAM instance profile apropiado (consulta [Configuración de IAM](#iam-configuration))
-3. Estar etiquetadas para la programación del gateway pod (consulta [Instalación](#installation-and-configuration))
+3. Estar etiquetadas para la programación del gateway pod (consulta [Instalación (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/10-hybrid-nodes-gateway#installation-and-configuration))
 
 ### Configuración de Security Group
 
@@ -482,6 +482,8 @@ mtu: 1400  # Conservative value accounting for VXLAN + potential VPN overhead
 ```
 
 ---
+
+<span id="iam-configuration"></span>
 
 ## Configuración de IAM
 
@@ -1275,6 +1277,8 @@ graph TB
     style GW1 fill:#ff9900,color:#000
     style GW2 fill:#ffcc80,color:#000
 ```
+
+<span id="failover-sequence"></span>
 
 ### Secuencia de failover
 

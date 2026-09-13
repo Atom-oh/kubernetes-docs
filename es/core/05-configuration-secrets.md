@@ -73,7 +73,7 @@ kubectl -n config-demo logs config-test-pod
 3. [Variables de entorno](#environment-variables)
 4. [Montaje de configuración mediante volúmenes](#mounting-configuration-through-volumes)
 5. [Prácticas recomendadas de configuración](#configuration-best-practices)
-6. [Herramientas externas de gestión de configuración](#external-configuration-management-tools)
+6. [Herramientas externas de gestión de configuración (English)](https://www.atomai.click/kubernetes-docs/en/core/05-configuration-secrets#eks-configuration-management-tools)
 
 ## ConfigMap
 
@@ -470,6 +470,8 @@ resources:
     - identity: {}
 ```
 
+<span id="environment-variables"></span>
+
 ## Variables de entorno
 
 Las variables de entorno son una forma sencilla de pasar información de configuración a los contenedores. Kubernetes proporciona varias formas de establecer variables de entorno.
@@ -580,6 +582,8 @@ spec:
           resource: requests.cpu
   restartPolicy: Never
 ```
+
+<span id="mounting-configuration-through-volumes"></span>
 
 ## Montaje de configuración mediante volúmenes
 
@@ -703,6 +707,8 @@ spec:
       name: my-config
   restartPolicy: Never
 ```
+
+<span id="configuration-best-practices"></span>
 
 ## Prácticas recomendadas de configuración
 

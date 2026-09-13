@@ -24,25 +24,29 @@ El análisis profundo de la causa raíz (logs del plano de control, consultas de
 
 ***
 
+<span id="30-second-summary-symptom--first-command--most-common-cause"></span>
+
 ## Resumen en 30 segundos: Síntoma → Primer comando → Causa más habitual
 
 Cada celda de síntoma enlaza a su sección del manual más abajo.
 
 | Síntoma (lo que muestra `kubectl get pods`/`nodes`) | Primer comando | Causa más habitual |
 |---|---|---|
-| [`Pending`](#1-pod-stuck-in-pending) | `kubectl describe pod <pod>` → el mensaje `FailedScheduling` en Events | Recursos insuficientes (`Insufficient cpu/memory`), falta toleration, falta de coincidencia en nodeSelector, PVC no vinculado |
+| [`Pending` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#1-pod-stuck-in-pending) | `kubectl describe pod <pod>` → el mensaje `FailedScheduling` en Events | Recursos insuficientes (`Insufficient cpu/memory`), falta toleration, falta de coincidencia en nodeSelector, PVC no vinculado |
 | [`ImagePullBackOff` / `ErrImagePull`](#2-imagepullbackoff--errimagepull) | `kubectl describe pod <pod>` → la línea `Failed to pull image` | Error tipográfico en la etiqueta, autenticación de registry privado (imagePullSecrets/node IAM), discrepancia de región/cuenta de ECR |
-| [`CrashLoopBackOff`](#3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors) | `kubectl logs <pod> --previous` + comprobar `lastState.terminated` | La app falla al inicio (exit 1), `OOMKilled` (exit 137), fallo de liveness probe, falta ConfigMap/Secret |
-| [`Running` pero READY `0/1`](#4-running-but-not-ready--empty-endpoints) | `kubectl describe pod <pod>` → `Readiness probe failed` | Ruta/puerto de readiness incorrecto, espera de una dependencia, sidecar no preparado |
+| [`CrashLoopBackOff` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors) | `kubectl logs <pod> --previous` + comprobar `lastState.terminated` | La app falla al inicio (exit 1), `OOMKilled` (exit 137), fallo de liveness probe, falta ConfigMap/Secret |
+| [`Running` pero READY `0/1` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#4-running-but-not-ready--empty-endpoints) | `kubectl describe pod <pod>` → `Readiness probe failed` | Ruta/puerto de readiness incorrecto, espera de una dependencia, sidecar no preparado |
 | [Las solicitudes nunca llegan al Service](#5-service-is-unreachable) | `kubectl get endpointslices -l kubernetes.io/service-name=<svc>` | Falta de coincidencia en las etiquetas del selector, `targetPort` incorrecto, bloqueo de NetworkPolicy, caída de CoreDNS |
 | Nodo `NotReady`](#6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure) | `kubectl describe node <node>` → Conditions | kubelet detenido/partición de red, `DiskPressure`, `MemoryPressure`, `PIDPressure` |
-| [PVC `Pending`](#7-pvc-stuck-in-pending) | `kubectl describe pvc <pvc>` → Events | `WaitForFirstConsumer` (espera normal), StorageClass ausente o mal escrito, discrepancia de AZ |
-| [`AccessDenied` en los logs de la app (AWS API)](#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + `env \| grep AWS` del Pod | Error de anotación/política de confianza de IRSA (IAM Roles for Service Accounts), falta asociación de Pod Identity, Pods sin reiniciar |
-| [Bloqueado en `ContainerCreating` + `failed to assign an IP address`](#9-eks-enivpc-cni-ip-exhaustion) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | Agotamiento de IP en subnet, máximo de Pods del nodo alcanzado, `aws-node` no saludable |
-| [Karpenter no lanza un nodo](#10-eks-karpenter-does-not-launch-a-node) | `kubectl get events -A --field-selector reason=FailedScheduling` | Se alcanzaron los `limits` de NodePool, discrepancia de requirements/taint, restricción de tipo de instancia |
-| [La creación de Service se rechaza con `failed calling webhook`](#11-no-service-can-be-created-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | Deployment de webhook no saludable (CrashLoop) detrás de un webhook con `failurePolicy: Fail` que coincide con cada namespace |
+| [PVC `Pending` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#7-pvc-stuck-in-pending) | `kubectl describe pvc <pvc>` → Events | `WaitForFirstConsumer` (espera normal), StorageClass ausente o mal escrito, discrepancia de AZ |
+| [`AccessDenied` en los logs de la app (AWS API) (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + `env \| grep AWS` del Pod | Error de anotación/política de confianza de IRSA (IAM Roles for Service Accounts), falta asociación de Pod Identity, Pods sin reiniciar |
+| [Bloqueado en `ContainerCreating` + `failed to assign an IP address` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#9-eks-enivpc-cni-ip-exhaustion) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | Agotamiento de IP en subnet, máximo de Pods del nodo alcanzado, `aws-node` no saludable |
+| [Karpenter no lanza un nodo (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#10-eks-karpenter-does-not-launch-a-node) | `kubectl get events -A --field-selector reason=FailedScheduling` | Se alcanzaron los `limits` de NodePool, discrepancia de requirements/taint, restricción de tipo de instancia |
+| [La creación de Service se rechaza con `failed calling webhook` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#11-no-service-can-be-created-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | Deployment de webhook no saludable (CrashLoop) detrás de un webhook con `failurePolicy: Fail` que coincide con cada namespace |
 
 ***
+
+<span id="diagnostic-decision-tree"></span>
 
 ## Árbol de decisiones de diagnóstico
 
@@ -61,6 +65,8 @@ kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | t
 ```
 
 ***
+
+<span id="playbook-by-symptom"></span>
 
 ## Manual por síntoma
 
@@ -87,14 +93,16 @@ Cómo leerlo: de 15 nodos, 8 se rechazaron por taints, 6 por nodeSelector/affini
 
 | Fragmento del mensaje | Causa | Solución |
 |---|---|---|
-| `Insufficient cpu` / `Insufficient memory` | Las requests superan la capacidad restante del nodo | Ajusta adecuadamente las requests, comprueba el autoscaler (→ [10. Karpenter](#10-eks-karpenter-does-not-launch-a-node)), inspecciona `Allocated resources` en `kubectl describe node` |
-| `Too many pods` | Se alcanzó el máximo de Pods del nodo (límite ENI de VPC CNI) | → [9. Agotamiento de ENI/IP](#9-eks-enivpc-cni-ip-exhaustion) |
+| `Insufficient cpu` / `Insufficient memory` | Las requests superan la capacidad restante del nodo | Ajusta adecuadamente las requests, comprueba el autoscaler (→ [10. Karpenter (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#10-eks-karpenter-does-not-launch-a-node)), inspecciona `Allocated resources` en `kubectl describe node` |
+| `Too many pods` | Se alcanzó el máximo de Pods del nodo (límite ENI de VPC CNI) | → [9. Agotamiento de ENI/IP (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#9-eks-enivpc-cni-ip-exhaustion) |
 | `node(s) had untolerated taint(s)` | No hay toleration para los taints del nodo | Lista los taints con `kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints[*].key`, y después añade una toleration o ajusta el NodePool |
 | `node(s) didn't match Pod's node affinity/selector` | Ningún nodo tiene la etiqueta de nodeSelector/affinity | Comprueba `kubectl get nodes --show-labels`. Con Karpenter, la clave debe aparecer en los requirements de NodePool o no se creará ningún nodo |
-| `pod has unbound immediate PersistentVolumeClaims` | El PVC es `Pending` | → [7. PVC Pending](#7-pvc-stuck-in-pending) |
+| `pod has unbound immediate PersistentVolumeClaims` | El PVC es `Pending` | → [7. PVC Pending (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#7-pvc-stuck-in-pending) |
 | `node(s) had volume node affinity conflict` | No hay un nodo planificable en la AZ donde reside el PV (EBS) | Lee la zona de `nodeAffinity` del PV y proporciona capacidad en esa AZ |
 | `node(s) didn't match pod topology spread constraints` / `pod anti-affinity rules` | Ningún nodo satisface la restricción de distribución | Relaja con `whenUnsatisfiable: ScheduleAnyway` o añade nodos |
 | No hay eventos en absoluto | Problema del scheduler o `schedulerName` mal escrito | Comprueba `kubectl get pod <pod> -o jsonpath='{.spec.schedulerName}'` |
+
+<span id="2-imagepullbackoff--errimagepull"></span>
 
 ### 2. `ImagePullBackOff` / `ErrImagePull`
 
@@ -228,6 +236,8 @@ Una columna ENDPOINTS `<unset>` (o vacía) significa que no hay ningún Pod Read
 | `1/2` Running, solo el contenedor de la app está Ready | El sidecar (istio-proxy, etc.) no está Ready, o el sidecar inició después de la app y fallaron las conexiones iniciales | Comprueba los logs del sidecar; convierte el sidecar en un sidecar nativo (`initContainers` + `restartPolicy: Always`) |
 | Ready, pero EndpointSlice está vacío | El selector del Service no coincide con las etiquetas del Pod | → [5. Service inaccesible](#5-service-is-unreachable) |
 
+<span id="5-service-is-unreachable"></span>
+
 ### 5. Service inaccesible
 
 **Síntoma**: todos los Pods son `1/1 Running`, pero `curl http://<svc>.<ns>.svc.cluster.local` expira/rechaza, o falla la resolución de nombres.
@@ -313,7 +323,7 @@ df -h /var/lib/containerd
 crictl ps -a | head
 ```
 
-Un nodo que **nunca aparece** en `kubectl get nodes` (fallo de unión: rol IAM/access entry, enrutamiento de subnet, security group, discrepancia de AMI) es un tema distinto → [Depuración avanzada de EKS — Diagnóstico de fallo de unión de nodos](../eks/11-eks-advanced-debugging.md#node-join-failure-diagnosis-8-common-causes), [Resolución de problemas de EKS — Problemas de nodos y Pods](../eks/09-eks-troubleshooting.md#node-and-pod-issues). Para nodos Karpenter, comienza con la comprobación de NodeClaim en la [sección 10](#10-eks-karpenter-does-not-launch-a-node).
+Un nodo que **nunca aparece** en `kubectl get nodes` (fallo de unión: rol IAM/access entry, enrutamiento de subnet, security group, discrepancia de AMI) es un tema distinto → [Depuración avanzada de EKS — Diagnóstico de fallo de unión de nodos](../eks/11-eks-advanced-debugging.md#node-join-failure-diagnosis-8-common-causes), [Resolución de problemas de EKS — Problemas de nodos y Pods](../eks/09-eks-troubleshooting.md#node-and-pod-issues). Para nodos Karpenter, comienza con la comprobación de NodeClaim en la [sección 10 (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#10-eks-karpenter-does-not-launch-a-node).
 
 ### 7. PVC bloqueado en `Pending`
 
@@ -342,7 +352,7 @@ gp3    ebs.csi.aws.com         Delete          WaitForFirstConsumer   true      
 | `FailedBinding: no persistent volumes available for this claim and no storage class is set` | No hay `storageClassName` ni StorageClass predeterminado | Establece `storageClassName: gp3` en el PVC o anota un SC con `storageclass.kubernetes.io/is-default-class: "true"` |
 | `ProvisioningFailed: storageclass.storage.k8s.io "<name>" not found` | StorageClass mal escrito, manifiesto copiado de otro clúster | Usa el nombre real de `kubectl get sc` |
 | `ProvisioningFailed: error generating accessibility requirements: no topology key found for node <node>` | El plugin de nodo EBS CSI no se ha registrado en el nodo donde aterrizó el Pod (no hay driver en `CSINode`) | Comprueba la columna DRIVERS de `kubectl get csinode <node>`; confirma que el DaemonSet `ebs-csi-node` se ejecuta en ese nodo |
-| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | La IRSA/Pod Identity del controlador EBS CSI no tiene permiso | → [8. IRSA/Pod Identity](#8-eks-irsa--pod-identity-accessdenied): el sujeto es `ebs-csi-controller-sa` |
+| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | La IRSA/Pod Identity del controlador EBS CSI no tiene permiso | → [8. IRSA/Pod Identity (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#8-eks-irsa--pod-identity-accessdenied): el sujeto es `ebs-csi-controller-sa` |
 | En el lado del Pod, `node(s) had volume node affinity conflict` | El PV existente (EBS) está en la AZ `ap-northeast-2a`, pero los nodos planificables están en otra AZ | EBS no puede cruzar AZ. Lee la zona con `kubectl get pv <pv> -o jsonpath='{.spec.nodeAffinity}'` y proporciona capacidad allí (requisito de zona de NodePool o nodeSelector) |
 | En el lado del Pod, `FailedAttachVolume: Multi-Attach error for volume` | Un volumen RWO sigue adjunto al nodo anterior (StatefulSet replanificado tras fallo de nodo) | Comprueba adjuntos obsoletos con `kubectl get volumeattachments`. Si el nodo desapareció, espera unos minutos para la limpieza |
 
@@ -484,7 +494,7 @@ El estado de NodePool en el mismo momento mostraba `graviton` en `CPU_LIMIT 8 / 
 | `InsufficientInstanceCapacity` en logs de Karpenter | No hay capacidad EC2 para esa AZ/tipo de instancia (ICE — Insufficient Capacity Error) | Amplía los tipos de instancia, AZ y capacity-type (spot/on-demand) |
 | No hay eventos, logs de Karpenter silenciosos | El Pod no es candidato de Karpenter (`nodeSelector` apunta a etiquetas MNG o restricciones de planificación no relacionadas con Karpenter) | Vuelve a comprobar cada restricción relacionada con nodo en la especificación del Pod |
 
-La estructura de NodePool/EC2NodeClass y la resolución detallada de problemas están en [Karpenter — Resolución de problemas](../autoscaling/02-karpenter.md#troubleshooting) y [Depuración avanzada de EKS — Problemas de aprovisionamiento de Karpenter](../eks/11-eks-advanced-debugging.md#karpenter-provisioning-issues).
+La estructura de NodePool/EC2NodeClass y la resolución detallada de problemas están en [Karpenter — Resolución de problemas (English)](https://www.atomai.click/kubernetes-docs/en/autoscaling/02-karpenter#troubleshooting) y [Depuración avanzada de EKS — Problemas de aprovisionamiento de Karpenter](../eks/11-eks-advanced-debugging.md#karpenter-provisioning-issues).
 
 ### 11. No se puede crear ningún Service: failed calling webhook
 
@@ -536,6 +546,8 @@ Qué no hacer: etiquetar un Service con `app.kubernetes.io/name=aws-load-balance
 Esta interrupción es lo que impidió las mediciones de ClusterIP (kube-proxy) en el [Benchmark de red de Pods](../networking/06-pod-network-benchmark.md): el webhook no se omitió; el benchmark solo usó IP de Pod.
 
 ***
+
+<span id="kubectl-diagnostic-cheat-sheet"></span>
 
 ## Guía rápida de diagnóstico de kubectl
 
@@ -599,6 +611,8 @@ Los valores válidos de `--profile` para `kubectl debug` son `legacy`, `general`
 
 ***
 
+<span id="going-deeper-related-documents"></span>
+
 ## Más información: documentos relacionados
 
 Este manual es la puerta de entrada que decide «adónde ir después». Una vez delimitada la causa, pasa a los documentos siguientes.
@@ -617,6 +631,8 @@ Este manual es la puerta de entrada que decide «adónde ir después». Una vez 
 | Proceso de respuesta a incidentes, gravedad, lista de comprobación de los primeros 5 minutos | — | [Depuración avanzada de EKS — Marco de respuesta a incidentes](../eks/11-eks-advanced-debugging.md#1-incident-response-framework) |
 
 ***
+
+<span id="references"></span>
 
 ## Referencias
 

@@ -7,8 +7,10 @@ La afinidad de sesión (o Sticky Session) es una técnica que enruta las solicit
 1. [Descripción general de la afinidad de sesión](#session-affinity-overview)
 2. [Basado en hash consistente](#consistent-hash-based)
 3. [Basado en cookies](#cookie-based)
-4. [Basado en encabezados](#header-based)
-5. [Ejemplos prácticos](#practical-examples)
+4. [Basado en encabezados (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/10-session-affinity#http-header-based)
+5. [Ejemplos prácticos (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/10-session-affinity#consistent-hash-based)
+
+<span id="session-affinity-overview"></span>
 
 ## Descripción general de la afinidad de sesión
 
@@ -40,6 +42,8 @@ flowchart TB
     class Pod1,Pod2,Pod3 pod;
 ```
 
+<span id="consistent-hash-based"></span>
+
 ## Basado en hash consistente
 
 ### Basado en encabezado HTTP
@@ -56,6 +60,8 @@ spec:
       consistentHash:
         httpHeaderName: "x-user-id"
 ```
+
+<span id="cookie-based"></span>
 
 ### Basado en cookies
 

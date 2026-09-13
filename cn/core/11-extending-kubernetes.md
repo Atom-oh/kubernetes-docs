@@ -20,6 +20,8 @@ Kubernetes 是一个以可扩展性为设计理念的平台，使您能够通过
 12. [最佳实践](#best-practices)
 13. [结论](#conclusion)
 
+<span id="kubernetes-extension-overview"></span>
+
 ## Kubernetes 扩展概述
 
 Kubernetes 提供了多种扩展点，可用于扩展和自定义其基本功能。主要扩展点包括：
@@ -49,6 +51,8 @@ Kubernetes 提供了多种扩展点，可用于扩展和自定义其基本功能
 3. **性能影响**：扩展对集群性能的影响
 4. **升级兼容性**：与 Kubernetes 版本升级的兼容性
 5. **社区支持**：扩展方法获得的社区支持程度
+
+<span id="custom-resources"></span>
 
 ## 自定义资源
 
@@ -202,6 +206,8 @@ spec:
       - v1
 ```
 
+<span id="operator-pattern"></span>
+
 ## Operator 模式
 
 Operator 模式通过结合自定义资源和控制器，实现复杂应用程序运维知识的自动化。
@@ -334,6 +340,8 @@ make deploy
 5. **Jaeger Operator**：管理 Jaeger 分布式追踪系统
 6. **Strimzi Kafka Operator**：管理 Apache Kafka 集群
 7. **Istio Operator**：管理 Istio 服务网格
+<span id="admission-controllers"></span>
+
 ## 准入控制器
 
 准入控制器是拦截 Kubernetes API server 请求并对其进行修改或验证的插件。
@@ -535,6 +543,8 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 3. **Istio**：服务网格 Sidecar 注入
 4. **cert-manager**：TLS 证书管理
 
+<span id="api-server-extensions"></span>
+
 ## API Server 扩展
 
 API Server 扩展是一种向 Kubernetes API server 添加新端点的方式。
@@ -632,6 +642,8 @@ func main() {
           |                       |               |                         |
           +-----------------------+               +-------------------------+
 ```
+
+<span id="scheduler-extensions"></span>
 
 ## 调度器扩展
 
@@ -1159,6 +1171,8 @@ Calico CNI 插件安装示例：
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
+<span id="device-plugins"></span>
+
 ## 设备插件
 
 设备插件在 Kubernetes 与特殊硬件之间提供接口。
@@ -1260,6 +1274,8 @@ spec:
 3. **FPGA Device Plugin**：FPGA 设备管理
 4. **InfiniBand Device Plugin**：InfiniBand 设备管理
 5. **SR-IOV Network Device Plugin**：SR-IOV 网络设备管理
+
+<span id="extension-features-in-amazon-eks"></span>
 
 ## Amazon EKS 中的扩展功能
 
@@ -1386,6 +1402,8 @@ spec:
 EOF
 ```
 
+<span id="best-practices"></span>
+
 ## 最佳实践
 
 让我们探讨实现 Kubernetes 扩展功能时应考虑的最佳实践。
@@ -1429,6 +1447,8 @@ EOF
 3. **VPC CNI 配置**：根据网络需求配置 VPC CNI
 4. **安全组**：配置适当的安全组
 5. **成本优化**：选择合适的实例类型和大小
+
+<span id="conclusion"></span>
 
 ## 结论
 

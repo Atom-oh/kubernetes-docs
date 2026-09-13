@@ -12,6 +12,8 @@
 - [CI/CD 用 JWT トークン](#jwt-tokens-for-cicd)
 - [孤立リソースのモニタリング](#orphaned-resource-monitoring)
 
+<span id="appproject-overview"></span>
+
 ## AppProject の概要
 
 AppProject は Application を論理的にグループ化し、デプロイ可能なリソース、デプロイ先、および管理者を制御するアクセス制御を定義します。
@@ -102,6 +104,8 @@ spec:
         name: kube-root-ca.crt
 ```
 
+<span id="default-project"></span>
+
 ## デフォルト Project
 
 ArgoCD には、すべてのソース、宛先、リソースを許可する `default` Project が含まれています。
@@ -147,6 +151,8 @@ spec:
   sourceRepos: []  # No repos allowed
   destinations: []  # No destinations allowed
 ```
+
+<span id="custom-projects"></span>
 
 ## カスタム Project
 
@@ -322,6 +328,8 @@ spec:
         - myorg:platform-team
 ```
 
+<span id="rbac-configuration"></span>
+
 ## RBAC 設定
 
 ArgoCD RBAC は `argocd-rbac-cm` ConfigMap で設定します。
@@ -456,6 +464,8 @@ policy.csv: |
   p, role:operator, applications, update, */*, allow
 ```
 
+<span id="multi-tenancy-patterns"></span>
+
 ## マルチテナンシーのパターン
 
 ### チームごとの Namespace
@@ -575,6 +585,8 @@ spec:
         - '*'
 ```
 
+<span id="jwt-tokens-for-cicd"></span>
+
 ## CI/CD 用 JWT トークン
 
 自動化のために Project スコープのトークンを作成します。
@@ -648,6 +660,8 @@ metadata:
 stringData:
   token: <jwt-token>
 ```
+
+<span id="orphaned-resource-monitoring"></span>
 
 ## 孤立リソースのモニタリング
 

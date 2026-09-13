@@ -1311,6 +1311,8 @@ ACK y Crossplane no son mutuamente excluyentes. Un enfoque pragmático:
 
 ---
 
+<span id="backstage--crossplane-integration"></span>
+
 ## Backstage + Crossplane Integration
 
 Combinar [Backstage](./06-backstage-idp.md) como developer portal con Crossplane como motor de aprovisionamiento de infraestructura crea una potente plataforma self-service. Los desarrolladores seleccionan infraestructura desde un catálogo en Backstage, que genera Crossplane Claims confirmados en Git y desplegados por ArgoCD.

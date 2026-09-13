@@ -23,6 +23,8 @@ Este documento ofrece una visión detallada de la arquitectura interna y los mec
 7. [Comunicación de la API xDS](03-architecture.md#xds-api-communication)
 8. [Optimización con el recurso Sidecar](03-architecture.md#optimization-with-sidecar-resource)
 
+<span id="istio-architecture-overview"></span>
+
 ## Descripción general de la arquitectura de Istio
 
 ### Estructura general
@@ -40,6 +42,8 @@ Este documento ofrece una visión detallada de la arquitectura interna y los mec
 | **Lenguaje**    | Go                                            | C++                       |
 | **Carga**        | Baja                                           | Alta (todo el tráfico)        |
 | **Escalabilidad** | Escalado horizontal (HA)                       | Automático (1 por pod)     |
+
+<span id="control-plane-istiod"></span>
 
 ## Plano de control: Istiod
 
@@ -214,6 +218,8 @@ spec:
 * Memoria: 2 - 4 GB
 * Puede gestionar miles de servicios y pods
 
+<span id="data-plane-envoy-proxy"></span>
+
 ## Plano de datos: Envoy Proxy
 
 ### Arquitectura de Envoy
@@ -296,6 +302,8 @@ spec:
 * Latencia añadida: < 1 ms (P99)
 * Memoria: 50-100 MB (configuración predeterminada)
 * CPU: 0.1-0.5 núcleos (carga típica)
+
+<span id="sidecar-injection-mechanism"></span>
 
 ## Mecanismo de inyección de Sidecar
 
@@ -395,6 +403,8 @@ kubectl apply -f deployment-injected.yaml
 * Cuando se necesita control explícito en pipelines de CI/CD
 * Cuando deseas inspeccionar el YAML inyectado para depuración
 
+<span id="iptables-and-traffic-interception"></span>
+
 ## iptables e interceptación de tráfico
 
 ### Contenedor istio-init
@@ -475,6 +485,8 @@ Istio admite dos métodos de interceptación de tráfico:
 | **iptables**   | Simple, universal    | Requiere Init Container | Configuración predeterminada                  |
 | **eBPF (CNI)** | No necesita Init, rápido | Requiere kernel moderno  | Alto rendimiento, Ambient Mode |
 
+<span id="dns-processing-mechanism"></span>
+
 ## Mecanismo de procesamiento de DNS
 
 ### Funcionamiento básico del DNS de Kubernetes
@@ -527,6 +539,8 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
   -m owner ! --uid-owner 1337 \
   -j REDIRECT --to-port 15053
 ```
+
+<span id="xds-api-communication"></span>
 
 ## Comunicación de la API xDS
 
@@ -590,6 +604,8 @@ istioctl proxy-config endpoints <pod-name> -n default
 # Route configuration
 istioctl proxy-config routes <pod-name> -n default
 ```
+
+<span id="optimization-with-sidecar-resource"></span>
 
 ## Optimización con el recurso Sidecar
 

@@ -16,12 +16,12 @@
 
 | 需求 | Sidecar | Ambient（L4，无 waypoint） | Ambient（L7，waypoint） | Cilium |
 |---|---|---|---|---|
-| mTLS | ✅ 支持并已验证 STRICT | ✅ 支持并已验证 STRICT | ✅ 支持并已验证 STRICT | ⚠️ 本轮未测量——文档描述为身份双向认证，加上单独启用的 WireGuard/IPsec，而非一个等同于 STRICT 的单一开关（见[下文](#separate-raw-failures-from-failures-hidden-by-retry)） |
+| mTLS | ✅ 支持并已验证 STRICT | ✅ 支持并已验证 STRICT | ✅ 支持并已验证 STRICT | ⚠️ 本轮未测量——文档描述为身份双向认证，加上单独启用的 WireGuard/IPsec，而非一个等同于 STRICT 的单一开关（见[下文 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/comparison/03-sidecar-vs-ambient#separate-raw-failures-from-failures-hidden-by-retry)） |
 | NetworkPolicy | ✅ 现有规则无需修改即可工作，已验证 | ⚠️ 必须允许 HBONE 端口（15008），已验证 | ⚠️ 必须允许 HBONE 端口（15008），已验证 | ⚠️ 本轮未测量——CiliumNetworkPolicy 是原生机制，而非 K8s NetworkPolicy 附加组件 |
 | 延迟（相对无 mesh 基线的 P50） | +1.29ms，已测量 | +0.04ms（可忽略），已测量 | +1.86ms，已测量 | 本轮未测量 |
 | 零停机 rollout | 出现 503（0.5%，已测量） | **实际 503 为零**，替代为 0.3% TCP reset | 出现 503，**2.6%，约为 sidecar 的 5 倍**（已测量） | 本轮未测量 |
 
-> ✅ **一句话结论**：不使用 waypoint 的 ambient（仅 L4）在 rollout 频繁变更期间最稳定，且延迟开销可忽略。附加 waypoint（L7）会使 503 率高于 sidecar，且延迟大致达到与 sidecar 相同的水平。证据见下文 §3–§4。纳入 Cilium 是为了进行同类安全性比较（见[下文](#separate-raw-failures-from-failures-hidden-by-retry)）；它未部署在测试集群上，因此其行仅陈述文档化属性——绝不能替代实际测量。
+> ✅ **一句话结论**：不使用 waypoint 的 ambient（仅 L4）在 rollout 频繁变更期间最稳定，且延迟开销可忽略。附加 waypoint（L7）会使 503 率高于 sidecar，且延迟大致达到与 sidecar 相同的水平。证据见下文 §3–§4。纳入 Cilium 是为了进行同类安全性比较（见[下文 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/comparison/03-sidecar-vs-ambient#separate-raw-failures-from-failures-hidden-by-retry)）；它未部署在测试集群上，因此其行仅陈述文档化属性——绝不能替代实际测量。
 
 ## 1. mTLS — 测试结果（EKS 1.36.2，Istio 1.30.2）
 
@@ -87,7 +87,7 @@ Ambient 会通过 HBONE 隧道（TCP 15008）将 Pod 的实际流量转发到 zt
 
 > ✅ **结论**：通过真实流量证实了上述假设。Ambient 在工作负载 Pod 网络 namespace 上的真实入站数据包到达 ztunnel HBONE 端口（15008），而非应用程序端口（8080）；仅限应用端口的 NetworkPolicy 会悄然破坏已加入 ambient 的 Pod。Sidecar 不受影响，因为 sidecar 的流量捕获完全发生在 Pod 自身网络 namespace 内，此时数据包已到达应用程序端口。
 
-我们建议采用纵深防御：同时应用网络层（NetworkPolicy）和身份层（AuthorizationPolicy）控制。Sidecar 模式中 mTLS 与 NetworkPolicy 的冲突请参阅 [mTLS and NetworkPolicy Conflict](../security/01-mtls.md#7-mtls-and-networkpolicy-conflict)。
+我们建议采用纵深防御：同时应用网络层（NetworkPolicy）和身份层（AuthorizationPolicy）控制。Sidecar 模式中 mTLS 与 NetworkPolicy 的冲突请参阅 [mTLS and NetworkPolicy Conflict (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/01-mtls#_7-mtls-and-networkpolicy-conflict)。
 
 ## 3. 延迟 — 测试结果（T5）
 
@@ -211,6 +211,8 @@ mTLS data-plane 选择和 HTTP retry policy 是相互独立的决策。Sidecar E
 | Cilium | 身份双向认证和 WireGuard/IPsec 等传输加密分别选择 | L3/L4 encryption layer 中无 | 需要身份 policy 和网络加密的既有 Cilium data plane |
 
 > **运维规则：**如果唯一要求是 mTLS，请先验证 ambient L4，并仅为需要 L7 policy 或东西向 HTTP routing 的 Service 添加 waypoint。当在禁用写入 retry 的条件下测得 ambient rollout 错误超出工作负载错误预算时，对关键非幂等路径保留 sidecar 作为基线。
+
+<span id="a-note-on-test-isolation"></span>
 
 ### 测试隔离说明
 

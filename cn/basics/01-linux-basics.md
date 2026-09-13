@@ -58,6 +58,8 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 * [常用 Linux 命令](01-linux-basics.md#essential-linux-commands)
 * [容器相关的 Linux 功能](01-linux-basics.md#container-related-linux-features)
 
+<span id="linux-kernel-and-user-space"></span>
+
 ## Linux 内核和用户空间
 
 ### 内核的作用
@@ -96,6 +98,8 @@ Linux 内核是操作系统的核心，充当硬件和软件之间的中介。�
 ![分层的 Linux 内核架构：应用程序和 shell 通过系统库及系统调用接口进入内核，内核子系统则通过设备驱动程序驱动硬件。](../.gitbook/assets/en-basics-01-linux-basics-1.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
+
+<span id="process-management"></span>
 
 ## 进程管理
 
@@ -137,6 +141,8 @@ fg %<job-number>
 bg %<job-number>
 ```
 
+<span id="namespaces"></span>
+
 ## 命名空间
 
 命名空间是 Linux 内核的一项功能，可隔离进程组，使每个组能够独立查看系统资源。这是容器技术的核心要素。
@@ -174,6 +180,8 @@ unshare --user --map-root-user --mount --net bash
 # Using time namespace (Linux 5.6+)
 unshare --time bash
 ```
+
+<span id="cgroups-control-groups"></span>
 
 ## cgroups（控制组）
 
@@ -221,6 +229,8 @@ podman stats  # Monitor container resource usage
 docker run --cpus=0.5 --memory=512m nginx  # Set resource limits
 ```
 
+<span id="file-system"></span>
+
 ## 文件系统
 
 ### 文件系统层级结构
@@ -261,6 +271,8 @@ df -h
 umount <mount-point>
 ```
 
+<span id="networking-basics"></span>
+
 ## 网络基础
 
 ### 网络接口
@@ -300,6 +312,8 @@ ip link add <veth1> type veth peer name <veth2>
 # Connect virtual interface to namespace
 ip link set <veth2> netns <namespace-name>
 ```
+
+<span id="security-context"></span>
 
 ## 安全上下文
 
@@ -353,6 +367,8 @@ aa-status
 aa-enforce /etc/apparmor.d/<profile>
 aa-complain /etc/apparmor.d/<profile>
 ```
+
+<span id="systemd-and-service-management"></span>
 
 ## systemd 和服务管理
 
@@ -445,6 +461,8 @@ systemctl set-property kubelet IOWeight=500
 # Check settings
 systemctl show kubelet | grep -E 'CPUQuota|MemoryLimit|IOWeight'
 ```
+
+<span id="kernel-parameters-and-modules"></span>
 
 ## 内核参数和模块
 
@@ -540,6 +558,8 @@ cat /proc/filesystems  # Supported file systems
 cat /proc/sys/net/ipv4/ip_forward  # IP forwarding status
 ```
 
+<span id="system-resource-limits"></span>
+
 ## 系统资源限制
 
 ### ulimit - 每用户资源限制
@@ -596,6 +616,8 @@ cat /proc/<PID>/limits
 # Check file descriptors for a specific process
 ls -l /proc/<PID>/fd | wc -l
 ```
+
+<span id="log-management"></span>
 
 ## 日志管理
 
@@ -700,6 +722,8 @@ sudo vi /etc/logrotate.d/kubernetes
 sudo logrotate -f /etc/logrotate.d/kubernetes
 ```
 
+<span id="dns-and-network-configuration"></span>
+
 ## DNS 和网络配置
 
 ### DNS 配置
@@ -764,6 +788,8 @@ network:
 # Apply configuration
 sudo netplan apply
 ```
+
+<span id="time-synchronization"></span>
 
 ## 时间同步
 
@@ -857,6 +883,8 @@ sudo timedatectl set-time "2025-11-24 12:00:00"
 # Enable/disable NTP
 sudo timedatectl set-ntp true
 ```
+
+<span id="package-management"></span>
 
 ## 软件包管理
 
@@ -961,6 +989,8 @@ sudo yum versionlock add kubelet kubeadm kubectl
 sudo yum versionlock delete kubelet kubeadm kubectl
 ```
 
+<span id="essential-linux-commands"></span>
+
 ## 常用 Linux 命令
 
 ### 文件和目录管理
@@ -1003,6 +1033,8 @@ systemctl status <service> # Check service status
 systemctl start/stop/restart <service> # Service control
 journalctl -u <service> # View service logs
 ```
+
+<span id="container-related-linux-features"></span>
 
 ## 容器相关的 Linux 功能
 

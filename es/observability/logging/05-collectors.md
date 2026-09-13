@@ -13,7 +13,9 @@ Las líneas base de configuración son **Fluent Bit 5.1.2**, **Alloy 1.19.2** y 
 3. [Promtail](#promtail)
 4. [Grafana Alloy](#grafana-alloy)
 5. [OpenTelemetry Collector](#opentelemetry-collector)
-6. [Comparación y selección](#comparison-and-selection-guide)
+6. [Comparación y selección (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/05-collectors#comparison-and-selection-guide)
+
+<span id="overview"></span>
 
 ## Descripción general
 

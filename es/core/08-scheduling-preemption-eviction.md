@@ -127,6 +127,8 @@ EOF
 15. [Prácticas recomendadas de scheduling](#scheduling-best-practices)
 16. [Conclusión](#conclusion)
 
+<span id="scheduling-overview"></span>
+
 ## Descripción general de scheduling
 
 El scheduler de Kubernetes es un componente del control plane que coloca Pods en nodes adecuados. El scheduler considera varios factores para determinar el node óptimo donde colocar los Pods:
@@ -151,6 +153,8 @@ El proceso de scheduling se divide, en términos generales, en dos fases:
    - Affinity/anti-affinity entre Pods
    - Localidad de los datos
    - Taints/tolerations
+
+<span id="how-the-scheduler-works"></span>
 
 ## Cómo funciona el scheduler
 
@@ -200,6 +204,8 @@ spec:
 
 En el ejemplo anterior, el campo `schedulerName` especifica el scheduler que programará el Pod.
 
+<span id="node-selection"></span>
+
 ## Selección de nodes
 
 Kubernetes proporciona varios mecanismos para colocar Pods en nodes específicos.
@@ -244,6 +250,8 @@ spec:
 ```
 
 En el ejemplo anterior, el Pod se coloca directamente en el node llamado `worker-node-1`.
+
+<span id="pod-affinity-and-anti-affinity"></span>
 
 ## Pod Affinity y Anti-Affinity
 
@@ -452,6 +460,8 @@ Node affinity admite varios operadores:
 - **DoesNotExist**: No existe un label con la clave especificada
 - **Gt**: El valor del label es mayor que el valor especificado
 - **Lt**: El valor del label es menor que el valor especificado
+
+<span id="pod-priority-and-preemption"></span>
 
 ## Prioridad y Preemption de Pods
 
@@ -1030,6 +1040,8 @@ spec:
 > - [Custom Scheduler Parte 2: Implementación](../scheduling/02-custom-scheduler-part2.md)
 > - [Custom Scheduler Parte 3: Funciones avanzadas](../scheduling/03-custom-scheduler-part3.md)
 
+<span id="scheduling-optimization-in-amazon-eks"></span>
+
 ## Optimización de scheduling en Amazon EKS
 
 En Amazon EKS, puede optimizar workloads mediante las funciones de scheduling de Kubernetes.
@@ -1154,6 +1166,8 @@ spec:
   updatePolicy:
     updateMode: "Auto"
 ```
+
+<span id="scheduling-best-practices"></span>
 
 ## Prácticas recomendadas de scheduling
 

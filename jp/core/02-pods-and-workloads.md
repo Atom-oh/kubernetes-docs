@@ -65,12 +65,12 @@ kubectl -n workloads-demo get deployments,pods
 - [StatefulSet](#statefulset)
 - [DaemonSet](#daemonset)
 - [Jobs and CronJobs](#jobs-and-cronjobs)
-- [Resource Management](#resource-management)
-- [Pod Disruption Budget](#pod-disruption-budget)
-- [Horizontal Pod Autoscaling](#horizontal-pod-autoscaling)
-- [Vertical Pod Autoscaling](#vertical-pod-autoscaling)
-- [Workload Best Practices](#workload-best-practices)
-- [Amazon EKS Workload Considerations](#amazon-eks-workload-considerations)
+- [Resource Management (English)](https://www.atomai.click/kubernetes-docs/en/core/07-policies#resource-management)
+- [Pod Disruption Budget (English)](https://www.atomai.click/kubernetes-docs/en/core/08-scheduling-preemption-eviction#pod-disruption-budget-pdb)
+- [Horizontal Pod Autoscaling (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#horizontal-pod-autoscaler-hpa)
+- [Vertical Pod Autoscaling (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#vertical-pod-autoscaler-vpa)
+- [Workload Best Practices (English)](https://www.atomai.click/kubernetes-docs/en/core/02-pods-and-workloads#pod-design-patterns)
+- [Amazon EKS Workload Considerations (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#eks-specific-best-practices)
 
 ## Pod Concepts
 

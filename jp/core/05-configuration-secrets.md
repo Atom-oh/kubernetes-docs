@@ -73,7 +73,7 @@ kubectl -n config-demo logs config-test-pod
 3. [環境変数](#environment-variables)
 4. [Volume を通じた設定のマウント](#mounting-configuration-through-volumes)
 5. [設定のベストプラクティス](#configuration-best-practices)
-6. [外部設定管理ツール](#external-configuration-management-tools)
+6. [外部設定管理ツール (English)](https://www.atomai.click/kubernetes-docs/en/core/05-configuration-secrets#eks-configuration-management-tools)
 
 ## ConfigMap
 
@@ -470,6 +470,8 @@ resources:
     - identity: {}
 ```
 
+<span id="environment-variables"></span>
+
 ## 環境変数
 
 環境変数は、設定情報をコンテナに渡すシンプルな方法です。Kubernetes は環境変数を設定する複数の方法を提供しています。
@@ -580,6 +582,8 @@ spec:
           resource: requests.cpu
   restartPolicy: Never
 ```
+
+<span id="mounting-configuration-through-volumes"></span>
 
 ## Volume を通じた設定のマウント
 
@@ -703,6 +707,8 @@ spec:
       name: my-config
   restartPolicy: Never
 ```
+
+<span id="configuration-best-practices"></span>
 
 ## 設定のベストプラクティス
 

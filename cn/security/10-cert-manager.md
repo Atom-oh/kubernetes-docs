@@ -22,6 +22,8 @@ cert-manager 是适用于 Kubernetes 的强大且可扩展的 X.509 证书控制
 
 ---
 
+<span id="overview"></span>
+
 ## 概述
 
 ### cert-manager 解决的问题
@@ -70,6 +72,8 @@ cert-manager 是一个 **CNCF Graduated 项目**，表明它已达到生产就�
 ```
 
 ---
+
+<span id="architecture"></span>
 
 ## 架构
 
@@ -195,6 +199,8 @@ flowchart LR
 ```
 
 ---
+
+<span id="installation"></span>
 
 ## 安装
 
@@ -333,6 +339,8 @@ cmctl check api
 
 ---
 
+<span id="core-concepts"></span>
+
 ## 核心概念
 
 ### Custom Resource Definitions (CRDs)
@@ -467,6 +475,8 @@ spec:
 ```
 
 ---
+
+<span id="issuer-types"></span>
 
 ## Issuer 类型
 
@@ -824,6 +834,8 @@ spec:
 
 ---
 
+<span id="eks-integration-patterns"></span>
+
 ## EKS 集成模式
 
 ### TLS 终止比较
@@ -988,6 +1000,8 @@ spec:
 
 ---
 
+<span id="aws-native-alternative-acm--ack"></span>
+
 ## AWS 原生替代方案：ACM + ACK
 
 ### 概述
@@ -1049,6 +1063,8 @@ ACK controller 会监视此资源，向 ACM 请求证书，并在签发完成后
 这两种方式并不互斥——例如，公有域名证书可以通过 ACM+ACK 管理，而内部 mTLS 证书继续通过 cert-manager 与 AWS PCA Issuer 管理。
 
 ---
+
+<span id="service-mesh-integration"></span>
 
 ## Service Mesh 集成
 
@@ -1342,6 +1358,8 @@ spec:
 
 ---
 
+<span id="monitoring-and-troubleshooting"></span>
+
 ## 监控与故障排查
 
 ### Prometheus Metrics
@@ -1475,6 +1493,8 @@ cmctl convert -f old-resources.yaml
 ```
 
 ---
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 
@@ -1614,6 +1634,8 @@ spec:
 ```
 
 ---
+
+<span id="summary-and-references"></span>
 
 ## 总结与参考资料
 

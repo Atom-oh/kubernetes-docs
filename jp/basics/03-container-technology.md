@@ -19,6 +19,8 @@
 * [Container Orchestration](03-container-technology.md#container-orchestration)
 * [AWS 上のコンテナ](03-container-technology.md#containers-on-aws)
 
+<span id="what-is-a-container"></span>
+
 ## コンテナとは?
 
 コンテナは、アプリケーションの実行に必要なもの（コード、runtime、システムツール、システムライブラリ、設定）をすべて含む、標準化されたソフトウェア単位です。コンテナは、ホスト OS の kernel を共有しながら、分離された環境で実行されます。
@@ -41,6 +43,8 @@
 * **2015**: Open Container Initiative (OCI) が設立され、コンテナの標準化が進む
 * **2017**: containerd が CNCF プロジェクトに寄贈
 
+<span id="container-vs-virtual-machine"></span>
+
 ## コンテナ vs 仮想マシン
 
 ### 仮想マシンアーキテクチャ vs コンテナアーキテクチャ
@@ -57,6 +61,8 @@
 | セキュリティ        | 比較的低い（kernel を共有）      | 比較的高い（完全な分離）                                  |
 | リソース効率        | 高い                             | 中程度                                                    |
 | ユースケース        | Microservices、CI/CD、dev/test   | Legacy apps、多様な OS 要件、高いセキュリティ要件         |
+
+<span id="technical-foundation-of-containers"></span>
 
 ## コンテナの技術的基盤
 
@@ -180,6 +186,8 @@ Container runtime は、コンテナのライフサイクルを管理するソ�
 
 Kubernetes は CRI (Container Runtime Interface) を通じて、さまざまな container runtime と統合します。CRI は、Kubernetes と container runtime の間に標準化されたインターフェースを提供します。
 
+<span id="container-images"></span>
+
 ## コンテナ Image
 
 コンテナ image は、アプリケーションとその依存関係を含む immutable なテンプレートです。image は複数の layer で構成され、それぞれがファイルシステムの変更を表します。
@@ -281,6 +289,8 @@ CMD ["nginx", "-g", "daemon off;"]
 4. **不要なファイルを除外する**: .dockerignore ファイルを使用します
 5. **Cache を活用する**: 頻繁に変更される layer を後ろに配置します
 
+<span id="container-networking"></span>
+
 ## コンテナ Networking
 
 コンテナ networking は、コンテナ間、およびコンテナと外部世界との通信を可能にします。
@@ -309,6 +319,8 @@ docker run -p 8080:80 nginx
 1. **同じ network**: 同じ network 上のコンテナは、コンテナ名で通信できます
 2. **Links**: 旧来の方式で、コンテナ間に直接 link を設定します
 3. **External network**: ホスト port を通じて通信します
+
+<span id="container-storage"></span>
 
 ## コンテナ Storage
 
@@ -343,6 +355,8 @@ docker run -v /host/path:/container/path:ro nginx
 2. **Data volume container**: データのみを含むコンテナを作成し、それを共有します
 3. **External storage integration**: AWS EBS、NFS などの外部 storage system を使用します
 
+<span id="container-security"></span>
+
 ## コンテナ Security
 
 コンテナ security は、image、container runtime、host system など複数の layer で考慮する必要があります。
@@ -369,6 +383,8 @@ docker run -v /host/path:/container/path:ro nginx
 3. **Secret management**: environment variables の代わりに Docker Secrets や外部 secret management tools を使用します
 4. **Resource limits**: CPU、memory、その他の resource usage を制限します
 5. **Monitoring and logging**: コンテナ activity を監視し、logs を一元化します
+
+<span id="container-lifecycle-management"></span>
 
 ## コンテナ Lifecycle Management
 
@@ -625,6 +641,8 @@ Container orchestration は、複数のコンテナを管理し調整するプ�
 5. **Configuration management**: アプリケーション configuration と secret management
 6. **Storage orchestration**: persistent storage management
 7. **Batch execution**: one-time job と cron job の実行
+
+<span id="containers-on-aws"></span>
 
 ## AWS 上のコンテナ
 

@@ -474,7 +474,7 @@ Refleje los artefactos en un bucket S3 privado y luego use una Private Hosted Zo
 
 ### S3 Interface VPC Endpoint
 
-El S3 Interface VPC Endpoint ya se creó en el [documento de Configuración de red](./02-network-configuration.md#vpc-private-endpoints-air-gapprivate-environments). Verifique el nombre DNS del endpoint:
+El S3 Interface VPC Endpoint ya se creó en el [documento de Configuración de red (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#vpc-private-endpoints-air-gap-private-connectivity). Verifique el nombre DNS del endpoint:
 
 ```bash
 # Get S3 Interface VPC Endpoint DNS name
@@ -625,7 +625,7 @@ Las imágenes de contenedor requeridas para la operación de EKS Hybrid Nodes se
 
 ### Acceso a imágenes mediante ECR VPC Endpoint
 
-Los ECR API (`ecr.api`) y ECR DKR (`ecr.dkr`) Interface VPC Endpoints ya se crearon en el [documento de Configuración de red](./02-network-configuration.md#vpc-private-endpoints-air-gapprivate-environments). Estos permiten extraer imágenes directamente desde ECR incluso en entornos air-gapped.
+Los ECR API (`ecr.api`) y ECR DKR (`ecr.dkr`) Interface VPC Endpoints ya se crearon en el [documento de Configuración de red (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#vpc-private-endpoints-air-gap-private-connectivity). Estos permiten extraer imágenes directamente desde ECR incluso en entornos air-gapped.
 
 ### Configuración de ecr-credential-provider
 

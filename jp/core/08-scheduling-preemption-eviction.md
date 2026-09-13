@@ -127,6 +127,8 @@ EOF
 15. [スケジューリングのベストプラクティス](#scheduling-best-practices)
 16. [まとめ](#conclusion)
 
+<span id="scheduling-overview"></span>
+
 ## スケジューリングの概要
 
 Kubernetes scheduler は、Pod を適切な Node に配置する control plane コンポーネントです。scheduler は、Pod を配置する最適な Node を決定するためにさまざまな要因を考慮します。
@@ -151,6 +153,8 @@ Kubernetes scheduler は、Pod を適切な Node に配置する control plane �
    - Pod 間 Affinity／Anti-Affinity
    - データ局所性
    - Taint／Toleration
+
+<span id="how-the-scheduler-works"></span>
 
 ## Scheduler の仕組み
 
@@ -200,6 +204,8 @@ spec:
 
 上記の例では、`schedulerName` フィールドが Pod をスケジュールする scheduler を指定します。
 
+<span id="node-selection"></span>
+
 ## Node 選択
 
 Kubernetes は、Pod を特定の Node に配置するための複数のメカニズムを提供します。
@@ -244,6 +250,8 @@ spec:
 ```
 
 上記の例では、Pod は `worker-node-1` という名前の Node に直接配置されます。
+
+<span id="pod-affinity-and-anti-affinity"></span>
 
 ## Pod Affinity と Anti-Affinity
 
@@ -452,6 +460,8 @@ Node Affinity はさまざまな演算子をサポートします。
 - **DoesNotExist**: 指定されたキーを持つラベルが存在しない
 - **Gt**: ラベル値が指定された値より大きい
 - **Lt**: ラベル値が指定された値より小さい
+
+<span id="pod-priority-and-preemption"></span>
 
 ## Pod Priority と Preemption
 
@@ -1030,6 +1040,8 @@ spec:
 > - [Custom Scheduler Part 2: 実装](../scheduling/02-custom-scheduler-part2.md)
 > - [Custom Scheduler Part 3: 高度な機能](../scheduling/03-custom-scheduler-part3.md)
 
+<span id="scheduling-optimization-in-amazon-eks"></span>
+
 ## Amazon EKS におけるスケジューリング最適化
 
 Amazon EKS では、Kubernetes のスケジューリング機能を使用してワークロードを最適化できます。
@@ -1155,6 +1167,8 @@ spec:
     updateMode: "Auto"
 ```
 
+<span id="scheduling-best-practices"></span>
+
 ## スケジューリングのベストプラクティス
 
 Kubernetes と EKS におけるスケジューリング最適化のベストプラクティス:
@@ -1188,6 +1202,8 @@ Kubernetes と EKS におけるスケジューリング最適化のベストプ�
    - 専門ワークロード用の専用 Node を設定する
    - メンテナンス中の Node に Taint を適用する
    - 適切な Toleration を設定する
+
+<span id="conclusion"></span>
 
 ## まとめ
 

@@ -13,6 +13,8 @@ Retry と Timeout は、マイクロサービスのレジリエンスを向上�
 7. [ベストプラクティス](#best-practices)
 8. [トラブルシューティング](#troubleshooting)
 
+<span id="overview"></span>
+
 ## 概要
 
 ### Timeout と Retry が必要な理由
@@ -20,6 +22,8 @@ Retry と Timeout は、マイクロサービスのレジリエンスを向上�
 ![timeout/retry がない場合、クライアントは応答しない Service を無期限に待機してリソースを浪費します。Istio の timeout/retry がある場合は、1 秒後に停止して別のインスタンスを再試行し、成功します。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-05-retry-timeout-0.html)
+
+<span id="timeout-configuration"></span>
 
 ## Timeout の設定
 
@@ -78,6 +82,8 @@ spec:
         host: api-service
     timeout: 30s
 ```
+
+<span id="retry-configuration"></span>
 
 ## Retry の設定
 
@@ -155,6 +161,8 @@ spec:
       attempts: 0
 ```
 
+<span id="combining-retry-and-timeout"></span>
+
 ## Retry と Timeout の組み合わせ
 
 ### 階層化された Timeout
@@ -218,6 +226,8 @@ spec:
 ```
 
 POST/PATCH およびドメインで書き込みと定義されるすべての操作では、デフォルトで mesh retry を無効にします。PUT や DELETE が HTTP メソッドであることだけから安全と判断してはいけません。繰り返し実行しても安全であることをアプリケーションの実際の契約が保証する場合にのみ、それらを retry してください。
+
+<span id="practical-examples"></span>
 
 ## 実践例
 
@@ -368,6 +378,8 @@ spec:
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ```
+
+<span id="important-warnings"></span>
 
 ## 重要な警告
 
@@ -607,6 +619,8 @@ spec:
 3. **PUT/DELETE**: 冪等性が保証される場合にのみ Istio Retry を使用
 4. **重要な操作（支払い/在庫/ポイント）**: アプリケーションレベルの検証 + Idempotency Key が必須
 
+<span id="best-practices"></span>
+
 ## ベストプラクティス
 
 ### 1. Timeout 設定ガイド
@@ -724,6 +738,8 @@ spec:
 
 # Each layer should consider downstream timeout + overhead
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

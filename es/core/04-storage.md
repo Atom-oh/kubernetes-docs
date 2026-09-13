@@ -454,6 +454,8 @@ parameters:
   type: gp3
 ```
 
+<span id="dynamic-provisioning"></span>
+
 ## Aprovisionamiento dinámico
 
 El aprovisionamiento dinámico es una función que crea automáticamente PV cuando se crean PVC. Esto permite a los usuarios solicitar almacenamiento cuando lo necesitan sin que los administradores creen previamente los PV.
@@ -509,6 +511,8 @@ spec:
         claimName: myclaim
 ```
 
+<span id="volume-snapshots"></span>
+
 ## Snapshots de Volume
 
 Kubernetes admite snapshots de Volume para crear copias de PV en un momento dado. Esto es útil para escenarios de respaldo y restauración.
@@ -560,6 +564,8 @@ spec:
     requests:
       storage: 10Gi
 ```
+
+<span id="volume-expansion"></span>
 
 ## Expansión de Volume
 
@@ -765,6 +771,8 @@ spec:
                   storage: 50Gi
 ```
 
+<span id="block-volume-mode"></span>
+
 ## Modo Block Volume
 
 Kubernetes admite Volumes de bloques sin procesar además de Volumes de sistema de archivos. Los Volumes de bloques presentan el almacenamiento como un dispositivo de bloques sin procesar sin sistema de archivos, lo cual es útil para las aplicaciones que administran su propia disposición de datos.
@@ -842,6 +850,8 @@ Nota: Los Block Volumes utilizan `volumeDevices` y `devicePath` en lugar de `vol
 2. **Sistemas de archivos personalizados**: Aplicaciones que usan sistemas de archivos especializados como ZFS o LVM
 3. **Almacenamiento de alto rendimiento**: Aplicaciones que requieren I/O directo sin sobrecarga del sistema de archivos
 4. **Virtualización de almacenamiento**: Soluciones de almacenamiento definidas por software
+
+<span id="volume-cloning"></span>
 
 ## Clonación de Volume
 
@@ -936,6 +946,8 @@ spec:
       claimName: test-db-clone
 ```
 
+<span id="storage-resourcequota"></span>
+
 ## ResourceQuota de almacenamiento
 
 ResourceQuota puede limitar el consumo de almacenamiento dentro de un namespace, incluido el número de PVC y la capacidad total de almacenamiento.
@@ -1012,6 +1024,8 @@ Esto garantiza lo siguiente:
 - El tamaño mínimo de PVC es 1Gi
 - El tamaño máximo de PVC es 100Gi
 - El tamaño predeterminado (si no se especifica) es 10Gi
+
+<span id="storage-options-in-eks"></span>
 
 ## Opciones de almacenamiento en EKS
 

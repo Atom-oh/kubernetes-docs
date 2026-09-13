@@ -88,8 +88,10 @@ EOF
 6. [Gestión de secretos](#secret-management)
 7. [Seguridad de imágenes](#image-security)
 8. [Pod Security Standards](#pod-security-standards)
-9. [Registro de auditoría](#audit-logging)
-10. [Prácticas recomendadas de seguridad de EKS](#eks-security-best-practices)
+9. [Registro de auditoría (English)](https://www.atomai.click/kubernetes-docs/en/core/06-security#audit)
+10. [Prácticas recomendadas de seguridad de EKS (English)](https://www.atomai.click/kubernetes-docs/en/core/06-security#amazon-eks-security-enhancement)
+
+<span id="security-overview"></span>
 
 ## Descripción general de seguridad
 
@@ -112,6 +114,8 @@ La seguridad de Kubernetes consta de las siguientes áreas principales:
 3. **Denegar de forma predeterminada**: Denegar todo lo que no esté permitido explícitamente
 4. **Endurecimiento de seguridad**: Aplicar configuraciones de seguridad más estrictas que las predeterminadas
 5. **Monitorización continua**: Detectar y responder a eventos de seguridad
+
+<span id="authentication"></span>
 
 ## Autenticación
 
@@ -205,6 +209,8 @@ Un método que valida tokens a través de un servicio de autenticación externo.
 
 Un método en el que se coloca un proxy de autenticación delante del servidor API para gestionar la autenticación de usuarios. El proxy incluye información del usuario autenticado en encabezados HTTP y la reenvía al servidor API.
 
+<span id="authorization"></span>
+
 ## Autorización
 
 Si la autenticación es el proceso de verificar «quién eres», la autorización es el proceso de determinar «qué puedes hacer». Kubernetes admite varios modos de autorización:
@@ -295,6 +301,8 @@ La autorización de Node es un modo de autorización especial utilizado cuando l
 
 Un método en el que las decisiones de autorización se toman a través de un servicio externo. El servidor API reenvía solicitudes de autorización a un servicio externo, que decide si permite o deniega la solicitud.
 
+<span id="security-context"></span>
+
 ## Contexto de seguridad
 
 El contexto de seguridad define configuraciones de seguridad en el nivel de Pod o contenedor. Esto permite un control detallado de privilegios, control de acceso, capacidades y más.
@@ -354,6 +362,8 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
+<span id="network-policy"></span>
+
 ## Política de red
 
 Las políticas de red proporcionan una forma de controlar la comunicación entre Pods. De forma predeterminada, todos los Pods de un clúster de Kubernetes pueden comunicarse entre sí, pero esto puede restringirse mediante políticas de red.
@@ -400,6 +410,8 @@ En el ejemplo anterior:
 
 Para utilizar políticas de red, el complemento de red del clúster debe admitirlas. Los complementos CNI como Calico, Cilium y Antrea admiten políticas de red.
 
+<span id="secret-management"></span>
+
 ## Gestión de secretos
 
 Los Secrets de Kubernetes se utilizan para almacenar y gestionar información confidencial, como contraseñas, claves de API y certificados. Sin embargo, de forma predeterminada, los secretos solo están codificados en base64, no cifrados. Por lo tanto, se necesitan medidas de seguridad adicionales.
@@ -431,6 +443,8 @@ Para una gestión de secretos más segura, puedes utilizar sistemas externos de 
 - Azure Key Vault
 - Google Secret Manager
 - External Secrets Operator
+
+<span id="image-security"></span>
 
 ## Seguridad de imágenes
 

@@ -13,7 +13,9 @@
 3. [Promtail](#promtail)
 4. [Grafana Alloy](#grafana-alloy)
 5. [OpenTelemetry Collector](#opentelemetry-collector)
-6. [对比与选型](#comparison-and-selection-guide)
+6. [对比与选型 (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/05-collectors#comparison-and-selection-guide)
+
+<span id="overview"></span>
 
 ## 概述
 

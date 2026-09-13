@@ -16,6 +16,8 @@ Optimiza el rendimiento del acceso a servicios externos y controla las búsqueda
 7. [Solución de problemas](#troubleshooting)
 8. [Prácticas recomendadas](#best-practices)
 
+<span id="dns-proxy-overview"></span>
+
 ## Descripción general del Proxy DNS
 
 El Proxy DNS de Istio es una función en la que Envoy actúa como servidor DNS para interceptar y procesar las solicitudes DNS de la aplicación.
@@ -85,6 +87,8 @@ flowchart TB
     class API,CoreDNS external;
 ```
 
+<span id="dns-proxy-vs-dns-caching"></span>
+
 ## Proxy DNS frente a caché DNS
 
 Estas dos funciones tienen propósitos y comportamientos diferentes:
@@ -135,6 +139,8 @@ flowchart LR
     class DNS_Proxy,DNS_Cache envoy;
     class SE,CoreDNS external;
 ```
+
+<span id="dns-proxy-configuration"></span>
 
 ## Configuración del Proxy DNS
 
@@ -231,6 +237,8 @@ pkts bytes target     prot opt in     out     source               destination
    0     0 REDIRECT   udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:53 redir ports 15053
 ```
 
+<span id="serviceentry-integration"></span>
+
 ## Integración de ServiceEntry
 
 El Proxy DNS funciona en estrecha integración con ServiceEntry.
@@ -306,6 +314,8 @@ spec:
   - address: 203.0.113.11
   - address: 203.0.113.12
 ```
+
+<span id="dns-caching-configuration"></span>
 
 ## Configuración de la caché DNS
 
@@ -394,6 +404,8 @@ spec:
         dns_lookup_family: V4_ONLY
 ```
 
+<span id="automatic-address-allocation"></span>
+
 ## Asignación automática de direcciones
 
 El Proxy DNS asigna automáticamente IP virtuales a los servicios registrados en ServiceEntry.
@@ -473,6 +485,8 @@ istioctl proxy-config clusters <pod-name> -n <namespace> --fqdn api.example.com 
   }
 }
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 
@@ -589,6 +603,8 @@ kubectl cp <pod-name>:/tmp/dns.pcap ./dns.pcap -c istio-proxy
 # Analyze with Wireshark
 wireshark dns.pcap
 ```
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 

@@ -69,7 +69,7 @@ kubectl -n networking-demo get svc,pods
 5. [CoreDNS](#coredns)
 6. [NetworkPolicy](#network-policies)
 7. [Service Mesh](#service-mesh)
-8. [CNI (Container Network Interface)](#cnicontainer-network-interface)
+8. [CNI (Container Network Interface) (English)](https://www.atomai.click/kubernetes-docs/en/core/03-services-networking#cnicontainer-network-interface)
 9. [Cilium](#cilium)
    - [Cilium の概要](#introduction-to-cilium)
    - [eBPF テクノロジー](#ebpf-technology)
@@ -77,6 +77,8 @@ kubectl -n networking-demo get svc,pods
    - [Cilium NetworkPolicy](#cilium-network-policies)
    - [Hubble によるネットワークの可視化](#network-visibility-with-hubble)
    - [Amazon EKS での Cilium の設定](#configuring-cilium-on-amazon-eks)
+
+<span id="service-types"></span>
 
 ## Service タイプ
 
@@ -577,6 +579,8 @@ spec:
     - name: edns0
 ```
 
+<span id="network-policies"></span>
+
 ## NetworkPolicy
 
 NetworkPolicy は Pod 間の通信を制御する方法を提供します。NetworkPolicy を使用するには、ネットワークプラグインが対応している必要があります（例: Calico、Cilium、Weave Net）。
@@ -804,6 +808,8 @@ spec:
 
 [Cilium の詳細](../networking/cilium/README.md)
 
+<span id="introduction-to-cilium"></span>
+
 ### Cilium の概要
 
 Cilium は、Linux kernel の強力な eBPF テクノロジーを活用し、コンテナ化されたアプリケーションにネットワーク接続、セキュリティ、可観測性を提供するオープンソースソフトウェアです。Kubernetes、Docker、Mesos などのコンテナオーケストレーションプラットフォームにネットワーキング、セキュリティ、可観測性を提供するよう設計されています。
@@ -835,6 +841,8 @@ Cilium は、他の CNI ソリューションと比較していくつかの独�
 - **高パフォーマンス要件**: 最適化されたデータパス
 - **Service Mesh 統合**: Istio などの Service Mesh との統合
 
+<span id="ebpf-technology"></span>
+
 ### eBPF テクノロジー
 
 eBPF（extended Berkeley Packet Filter）は、Linux kernel 内でプログラムを安全に実行できるようにするテクノロジーです。Cilium は eBPF を使用してネットワーキング、セキュリティ、可観測性の機能を実装します。
@@ -864,6 +872,8 @@ Cilium は以下の方法で eBPF を使用します。
 | プログラム可能性 | 高い | 限定的 |
 | 可観測性 | 高い | 限定的 |
 | 実装の複雑さ | 高い | 中程度 |
+
+<span id="cilium-networking-model"></span>
 
 ### Cilium ネットワーキングモデル
 
@@ -931,6 +941,8 @@ AWS EKS では、Cilium は AWS Elastic Network Interface（ENI）を活用し�
 - overlay ネットワークなしの VPC ネイティブネットワーキング
 - AWS security group および NetworkPolicy との統合
 - ネットワークパフォーマンスの向上
+
+<span id="cilium-network-policies"></span>
 
 ### Cilium NetworkPolicy
 
@@ -1010,6 +1022,8 @@ spec:
 
 この Policy は、`kube-system` namespace 内の Pod からすべての Pod への ingress トラフィックを許可します。
 
+<span id="network-visibility-with-hubble"></span>
+
 ### Hubble によるネットワークの可視化
 
 Hubble は、eBPF を使用してネットワークフローを監視し、問題をトラブルシューティングする Cilium の可観測性レイヤーです。
@@ -1054,6 +1068,8 @@ hubble observe --pod app=myapp
 # Observe network policy violations
 hubble observe --verdict DROPPED
 ```
+
+<span id="configuring-cilium-on-amazon-eks"></span>
 
 ### Amazon EKS での Cilium の設定
 

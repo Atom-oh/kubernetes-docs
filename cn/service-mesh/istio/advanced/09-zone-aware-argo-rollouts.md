@@ -14,6 +14,8 @@
 6. [故障排除](09-zone-aware-argo-rollouts.md#troubleshooting)
 7. [最佳实践](09-zone-aware-argo-rollouts.md#best-practices)
 
+<span id="problem-definition"></span>
+
 ## 问题定义
 
 ### 真实场景用例：Spot Instance 环境中的 PDB 管理
@@ -147,6 +149,8 @@ spec:
 
 **重要**：Argo Rollouts 会**管理指定路由名称的整个 destinations 数组**。因此，如果多个 Rollouts 引用相同的路由名称，每个 Rollout 都会覆盖其他 Rollout 的设置。即使 subset 配置不同，也会发生冲突。
 
+<span id="architecture-overview"></span>
+
 ## 架构概览
 
 ### 整体结构
@@ -217,6 +221,8 @@ flowchart TB
 3. **基于 Subset 的隔离**：每个 Rollout 管理唯一的 subset 对（stable-a/canary-a 等）
 4. **位置感知 DestinationRule**：自动进行 zone 本地路由和故障转移
 
+<span id="key-design-decisions"></span>
+
 ## 关键设计决策
 
 ### 1. 单个 VirtualService + 特定 Zone 路由隔离
@@ -279,6 +285,8 @@ curl http://test.default.svc.cluster.local:8080
 
 # Istio automatically routes to zone-local endpoint
 ```
+
+<span id="implementation-guide"></span>
 
 ## 实施指南
 
@@ -732,6 +740,8 @@ spec:
       - pause: {duration: 5m}
 ```
 
+<span id="traffic-flow"></span>
+
 ## 流量流向
 
 ### 正常状态（Zone 本地流量）
@@ -832,6 +842,8 @@ sequenceDiagram
     Note over VS: Argo Rollouts<br/>gradually changes weight<br/>10 -> 20 -> 50 -> 80 -> 100
 ```
 
+<span id="troubleshooting"></span>
+
 ## 故障排除
 
 ### 1. VirtualService 冲突错误
@@ -926,6 +938,8 @@ kubectl exec <pod-name> -c istio-proxy -- curl localhost:15000/clusters | grep o
 # 5. Check Argo Rollouts logs
 kubectl logs -n argo-rollouts deployment/argo-rollouts
 ```
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 

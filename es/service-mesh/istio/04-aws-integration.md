@@ -9,6 +9,8 @@ Este documento explica cómo integrar Istio con servicios de AWS en un entorno d
 3. [Optimización específica para EKS](04-aws-integration.md#eks-specific-optimization)
 4. [Prácticas recomendadas](04-aws-integration.md#best-practices)
 
+<span id="aws-load-balancer-integration"></span>
+
 ## Integración con AWS Load Balancer
 
 Istio Ingress Gateway puede integrarse con AWS Load Balancer para manejar tráfico externo.
@@ -349,6 +351,8 @@ spec:
 | **gRPC**             | Compatibilidad nativa                  | Requiere HTTP/2                          |
 | **Uso recomendado**  | Alto rendimiento, WebSocket, gRPC      | Enrutamiento HTTP, WAF, autenticación    |
 
+<span id="istio-vs-other-solutions-comparison"></span>
+
 ## Comparación entre Istio y otras soluciones
 
 ### Istio frente a VPC Lattice
@@ -609,6 +613,8 @@ Cilium es una solución de redes y seguridad para Kubernetes que usa eBPF.
 
 * Se puede usar Cilium como CNI e Istio como Service Mesh
 * Sin embargo, se debe considerar la superposición de características y la mayor complejidad
+
+<span id="eks-specific-optimization"></span>
 
 ## Optimización específica para EKS
 
@@ -914,6 +920,8 @@ spec:
     matchLabels:
       app: istio-ingressgateway
 ```
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 

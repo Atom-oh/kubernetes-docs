@@ -72,6 +72,8 @@ Un Service Mesh es una capa de infraestructura que gestiona la comunicación ent
 
 Cuando se aplica Istio, un Envoy Proxy se despliega automáticamente como un contenedor sidecar en cada microservicio, interceptando y controlando de forma transparente todo el tráfico de red.
 
+<span id="do-you-really-need-a-service-mesh"></span>
+
 ## ¿Realmente necesitas un Service Mesh?
 
 Un Service Mesh es una herramienta potente, pero no es adecuado para todas las situaciones. Es necesario considerarlo cuidadosamente antes de adoptarlo.

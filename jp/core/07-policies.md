@@ -134,6 +134,8 @@ spec:
 9. [ポリシーのベストプラクティス](#policy-best-practices)
 10. [まとめ](#conclusion)
 
+<span id="policy-overview"></span>
+
 ## ポリシーの概要
 
 Kubernetes ポリシーは、クラスター管理者がクラスター内のリソースとワークロードに対する制約を定義する方法を提供します。ポリシーは次の目的で使用されます。
@@ -144,6 +146,8 @@ Kubernetes ポリシーは、クラスター管理者がクラスター内のリ
 4. **標準化**: 一貫した設定およびデプロイプラクティスを適用する
 
 Kubernetes では、組み込みリソース（例: NetworkPolicy、ResourceQuota、LimitRange）またはサードパーティのポリシーエンジン（例: OPA Gatekeeper、Kyverno）を通じて、さまざまな種類のポリシーを実装できます。
+
+<span id="resource-allocation-policies"></span>
 
 ## リソース割り当てポリシー
 
@@ -197,6 +201,8 @@ QoS クラスは、リソース不足時の Pod の eviction 順序を決定し�
 2. Burstable Pod が次に eviction される
 3. Guaranteed Pod が最後に eviction される
 
+<span id="pod-security-policies"></span>
+
 ## Pod セキュリティポリシー
 
 Pod Security Policy（PSP）は Kubernetes 1.21 から非推奨となり、バージョン 1.25 で完全に削除されました。代わりに、Pod Security Standards と Pod Security Admission が導入されました。
@@ -232,6 +238,8 @@ metadata:
 - **enforce**: ポリシーに違反する Pod 作成をブロックする
 - **audit**: 違反を監査ログに記録する
 - **warn**: 違反に対する警告メッセージを表示する
+
+<span id="network-policies"></span>
 
 ## ネットワークポリシー
 
@@ -308,6 +316,8 @@ ingress:
       except:
       - 172.17.1.0/24
 ```
+
+<span id="resource-quotas"></span>
 
 ## リソースクォータ
 
@@ -419,6 +429,8 @@ LimitRange は、次のリソースタイプに適用できます。
 - Container
 - Pod
 - PersistentVolumeClaim
+
+<span id="policy-engines"></span>
 
 ## ポリシーエンジン
 
@@ -542,6 +554,8 @@ spec:
       - owner
 ```
 
+<span id="policy-management-in-amazon-eks"></span>
+
 ## Amazon EKS でのポリシー管理
 
 Amazon EKS では、Kubernetes のデフォルトポリシーメカニズムに加えて、さまざまな AWS サービスを使用してポリシーを管理できます。
@@ -612,6 +626,8 @@ AWS Config と AWS Organizations を使用して、EKS クラスターに組織�
 
 AWS Firewall Manager を使用すると、複数の EKS クラスターのネットワークポリシーを一元管理できます。これにより、組織全体で一貫したセキュリティポリシーを適用できます。
 
+<span id="policy-best-practices"></span>
+
 ## ポリシーのベストプラクティス
 
 Kubernetes クラスターでポリシーを効果的に管理するためのベストプラクティスを紹介します。
@@ -640,6 +656,8 @@ Kubernetes クラスターでポリシーを効果的に管理するためのベ
 1. **CI/CD 統合**: デプロイ前にポリシー違反を検出できるよう、CI/CD パイプラインにポリシー検証を統合します。
 2. **ポリシーテスト**: まずテスト環境でポリシーをテストし、問題がない場合に本番環境へ適用します。
 3. **ポリシーのバージョン管理**: ポリシーをコードとして管理し、バージョン管理システムを使用して変更を追跡します。
+
+<span id="conclusion"></span>
 
 ## まとめ
 

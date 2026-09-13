@@ -23,6 +23,8 @@
 7. [xDS API 通信](03-architecture.md#xds-api-communication)
 8. [Sidecar リソースによる最適化](03-architecture.md#optimization-with-sidecar-resource)
 
+<span id="istio-architecture-overview"></span>
+
 ## Istio アーキテクチャの概要
 
 ### 全体構造
@@ -297,6 +299,8 @@ spec:
 * Memory: 50～100 MB（デフォルト設定）
 * CPU: 0.1～0.5 コア（一般的な負荷）
 
+<span id="sidecar-injection-mechanism"></span>
+
 ## Sidecar インジェクションの仕組み
 
 ### インジェクションプロセス
@@ -395,6 +399,8 @@ kubectl apply -f deployment-injected.yaml
 * CI/CD pipeline で明示的な制御が必要な場合
 * デバッグのためにインジェクションされた YAML を確認したい場合
 
+<span id="iptables-and-traffic-interception"></span>
+
 ## iptables とトラフィックのインターセプト
 
 ### istio-init Container
@@ -475,6 +481,8 @@ Istio は 2 つのトラフィックインターセプト方式をサポート�
 | **iptables**   | シンプル、汎用的     | Init Container が必要   | デフォルト設定                 |
 | **eBPF (CNI)** | Init 不要、高速      | モダンな kernel が必要  | 高パフォーマンス、Ambient Mode |
 
+<span id="dns-processing-mechanism"></span>
+
 ## DNS 処理の仕組み
 
 ### Kubernetes DNS の基本動作
@@ -527,6 +535,8 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
   -m owner ! --uid-owner 1337 \
   -j REDIRECT --to-port 15053
 ```
+
+<span id="xds-api-communication"></span>
 
 ## xDS API 通信
 
@@ -590,6 +600,8 @@ istioctl proxy-config endpoints <pod-name> -n default
 # Route configuration
 istioctl proxy-config routes <pod-name> -n default
 ```
+
+<span id="optimization-with-sidecar-resource"></span>
 
 ## Sidecar リソースによる最適化
 

@@ -20,6 +20,8 @@
 
 ---
 
+<span id="1-incident-response-framework"></span>
+
 ## 1. 事件响应框架
 
 ### 前 5 分钟检查清单（初始分诊）
@@ -127,6 +129,8 @@ flowchart TD
 ```
 
 ---
+
+<span id="2-control-plane-debugging"></span>
 
 ## 2. Control Plane 调试
 
@@ -385,6 +389,8 @@ aws eks update-addon \
 
 ---
 
+<span id="3-node-level-troubleshooting"></span>
+
 ## 3. Node 级故障排查
 
 ### Node Join 失败诊断（8 个常见原因）
@@ -618,6 +624,8 @@ data:
 
 ---
 
+<span id="4-workload-debugging"></span>
+
 ## 4. Workload 调试
 
 ### Pod 状态流程图
@@ -845,6 +853,8 @@ spec:
 ```
 
 ---
+
+<span id="5-networking-diagnostics"></span>
 
 ## 5. 网络诊断
 
@@ -1093,6 +1103,8 @@ iperf3 -c <target-ip> -p 5201
 
 ---
 
+<span id="6-storage-troubleshooting"></span>
+
 ## 6. Storage 故障排查
 
 ### EBS CSI Driver 错误模式
@@ -1252,6 +1264,8 @@ ZONE:'{.spec.nodeAffinity}'
 ```
 
 ---
+
+<span id="7-observability-architecture"></span>
 
 ## 7. 可观测性架构
 
@@ -1507,6 +1521,8 @@ spec:
 ```
 
 ---
+
+<span id="8-failure-detection-architecture"></span>
 
 ## 8. 故障检测架构
 
@@ -1801,6 +1817,8 @@ def lambda_handler(event, context):
 
 ---
 
+<span id="9-quick-reference"></span>
+
 ## 9. 快速参考
 
 ### 错误模式查找表
@@ -1911,6 +1929,8 @@ sudo ./eks-log-collector.sh
 - Disk usage
 
 ---
+
+<span id="10-next-steps"></span>
 
 ## 10. 后续步骤
 

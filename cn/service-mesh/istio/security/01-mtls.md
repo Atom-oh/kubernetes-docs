@@ -14,6 +14,8 @@
 8. [常见问题和解决方案](#common-issues-and-solutions)
 9. [性能与监控](#performance-and-monitoring)
 
+<span id="mtls-overview"></span>
+
 ## mTLS 概述
 
 <p align="center">
@@ -77,6 +79,8 @@ flowchart LR
     class Istiod control;
 ```
 
+<span id="mtls-modes"></span>
+
 ## mTLS 模式
 
 ### STRICT 模式（推荐）
@@ -117,6 +121,8 @@ spec:
   mtls:
     mode: DISABLE  # mTLS disabled
 ```
+
+<span id="certificate-management"></span>
 
 ## 证书管理
 
@@ -390,6 +396,8 @@ for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
 done
 ```
 
+<span id="peerauthentication-configuration"></span>
+
 ## PeerAuthentication 配置
 
 ### 全局配置
@@ -453,6 +461,8 @@ spec:
     8080:
       mode: DISABLE  # mTLS disabled for port 8080
 ```
+
+<span id="mtls-integration-with-aws-services"></span>
 
 ## mTLS 与 AWS 服务集成
 
@@ -809,6 +819,8 @@ flowchart TB
 3. **ALB -> Istio Gateway**：TLS + 证书信息标头
 4. **Istio Mesh 内部**：自动 mTLS（Envoy 到 Envoy）
 
+<span id="mtls-with-external-services"></span>
+
 ## 使用 mTLS 连接外部服务
 
 ### 旧版系统集成
@@ -973,6 +985,8 @@ spec:
       caCertificates: /etc/istio/egress-certs/ca.crt
 ```
 
+<span id="migration-strategy"></span>
+
 ## 迁移策略
 
 ### 第 1 步：检查当前状态
@@ -1022,6 +1036,8 @@ spec:
   mtls:
     mode: STRICT  # Only mTLS allowed
 ```
+
+<span id="common-issues-and-solutions"></span>
 
 ## 常见问题和解决方案
 
@@ -1301,6 +1317,8 @@ spec:
     - protocol: TCP
       port: 15008
 ```
+
+<span id="performance-and-monitoring"></span>
 
 ## 性能与监控
 

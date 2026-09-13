@@ -527,7 +527,7 @@ if not logger.handlers:
 
 これは UTC timestamp、message formatting、および exception を保持し、すべてゼロの trace を生成する代わりに無効な ID を省略します。handler は application startup 時に 1 回設定してください。非同期境界をまたいで OTel context を伝播し、機密 message/exception は発生元で redact してください。
 
-Java では、[tracing overview の scoped MDC helper](README.md#linking-logs-via-traceid)を使用します。現在の `SpanContext` を検証し、logging scope に ID を設定して、`finally` で以前の MDC 値を復元します。単に `MDC.put` を書くだけでは、再利用される thread で以前の request の ID が漏洩する可能性があります。Java API contract は確認済みですが、この章では Java application を実行していません。
+Java では、[tracing overview の scoped MDC helper (English)](https://www.atomai.click/kubernetes-docs/en/observability/tracing/#linking-logs-via-traceid)を使用します。現在の `SpanContext` を検証し、logging scope に ID を設定して、`finally` で以前の MDC 値を復元します。単に `MDC.put` を書くだけでは、再利用される thread で以前の request の ID が漏洩する可能性があります。Java API contract は確認済みですが、この章では Java application を実行していません。
 
 ## パフォーマンスチューニング
 

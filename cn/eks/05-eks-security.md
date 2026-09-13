@@ -23,6 +23,8 @@
 14. [EKS 安全最佳实践](#eks-security-best-practices)
 15. [金融服务中的 EKS 安全注意事项](#eks-security-considerations-for-financial-services)
 
+<span id="eks-security-overview"></span>
+
 ## EKS 安全概览
 
 Amazon EKS 结合 AWS 和 Kubernetes 的安全功能，提供多层安全架构。EKS 安全包括以下关键领域：
@@ -55,6 +57,8 @@ flowchart TD
     style AWS fill:#FFCC99,stroke:#FF9900,stroke-width:2px
     style Customer fill:#CCFFCC,stroke:#009900,stroke-width:2px
 ```
+
+<span id="latest-security-trends-2023"></span>
 
 ## 最新安全趋势 (2023)
 
@@ -134,6 +138,8 @@ flowchart LR
 - **AWS Config**: 合规监控
 - **Terraform Sentinel**: IaC policy 强制执行
 - **AWS CloudFormation Guard**: IaC policy 验证
+
+<span id="iam-and-authentication"></span>
 
 ## IAM 和身份验证
 
@@ -310,6 +316,8 @@ spec:
     image: amazonlinux:2
     command: ['sh', '-c', 'aws s3 ls']
 ```
+
+<span id="oidc-provider-deep-dive"></span>
 
 ## OIDC Provider 深入解析
 
@@ -645,6 +653,8 @@ flowchart TD
     style Role2 fill:#3B48CC,stroke:#333,color:white
 ```
 
+<span id="cluster-endpoint-access-control"></span>
+
 ## Cluster Endpoint 访问控制
 
 EKS cluster endpoint 访问控制决定用户和 workloads 如何访问 Kubernetes API server。正确配置对安全至关重要。
@@ -877,6 +887,8 @@ aws eks update-cluster-config \
 }
 ```
 
+<span id="network-security"></span>
+
 ## 网络安全
 
 ### Security Groups
@@ -1042,6 +1054,8 @@ EKS clusters 推荐的 VPC endpoints：
 - com.amazonaws.region.logs
 - com.amazonaws.region.sts
 
+<span id="pod-security"></span>
+
 ## Pod 安全
 
 ### Pod Security Standards (PSS)
@@ -1189,6 +1203,8 @@ spec:
             securityContext:
               privileged: false
 ```
+
+<span id="bottlerocket-and-read-only-os"></span>
 
 ## Bottlerocket 和只读 OS
 
@@ -1685,6 +1701,8 @@ Amazon EKS 新增了 7 个 IAM condition keys，可让你在 cluster 创建和�
 }
 ```
 
+<span id="encryption-and-secrets-management"></span>
+
 ## 加密和 Secrets 管理
 
 ### EKS 加密选项
@@ -1847,6 +1865,8 @@ sops --encrypt --aws-profile default --kms arn:aws:kms:us-west-2:111122223333:ke
 sops --decrypt secrets.enc.yaml
 ```
 
+<span id="compliance-and-auditing"></span>
+
 ## 合规和审计
 
 ### EKS Audit Logging
@@ -1945,6 +1965,8 @@ aws eks update-cluster-config \
 ### AWS Security Hub 集成
 
 你可以使用 AWS Security Hub 集中管理和监控 EKS cluster 的安全态势。Security Hub 会根据 CIS Kubernetes Benchmark 等行业标准检查合规性。
+
+<span id="security-monitoring-and-detection"></span>
 
 ## 安全监控和检测
 
@@ -2053,6 +2075,8 @@ Falco rule 示例：
   priority: WARNING
 ```
 
+<span id="eks-security-best-practices"></span>
+
 ## EKS 安全最佳实践
 
 ### Cluster 安全加固
@@ -2078,6 +2102,8 @@ Falco rule 示例：
 3. **Security Hub 集成**: 使用 AWS Security Hub 进行集中式安全态势管理
 4. **定期安全评估**: 基于 CIS Kubernetes Benchmark 执行定期安全评估
 5. **建立 Incident Response Plan**: 为 EKS cluster 建立并测试 security incident response plan
+
+<span id="eks-security-considerations-for-financial-services"></span>
 
 ## 金融服务中的 EKS 安全注意事项
 
