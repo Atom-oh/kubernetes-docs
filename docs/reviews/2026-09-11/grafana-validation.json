@@ -31,7 +31,7 @@
     "results": [
       {
         "path": "ko/observability/grafana/README.md",
-        "sha256": "1e1db326d40bd5e905cb5c4428123352ca5ee96e1bce5933036be170d8ab04c2",
+        "sha256": "00cbded11e6803336ddeee2c642e8cb8958ad3d018c226457b015e7c2a28583c",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -159,7 +159,7 @@
       },
       {
         "path": "en/observability/grafana/README.md",
-        "sha256": "d1f9e4375251eea54b0b4d3ca413800921c8990b14d41f0a53e994539bd1a92c",
+        "sha256": "a5a0d4a6de2b49da10683b38772eca5146608b8e9d88835c4f00b6d74231d24d",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -332,7 +332,7 @@
     },
     {
       "path": "en/observability/grafana/README.md",
-      "sha256": "d1f9e4375251eea54b0b4d3ca413800921c8990b14d41f0a53e994539bd1a92c"
+      "sha256": "a5a0d4a6de2b49da10683b38772eca5146608b8e9d88835c4f00b6d74231d24d"
     },
     {
       "path": "en/quizzes/observability/grafana/grafana-quiz.md",
@@ -384,7 +384,7 @@
     },
     {
       "path": "ko/observability/grafana/README.md",
-      "sha256": "1e1db326d40bd5e905cb5c4428123352ca5ee96e1bce5933036be170d8ab04c2"
+      "sha256": "00cbded11e6803336ddeee2c642e8cb8958ad3d018c226457b015e7c2a28583c"
     },
     {
       "path": "ko/quizzes/observability/grafana/grafana-quiz.md",
@@ -733,5 +733,6 @@
     "No Kubernetes installation, HA database failover, SSO/IRSA authorization or external notification delivery.",
     "Sidecar/profile changes after native run were re-rendered and RBAC asserted; native runtime provisioning files remained unchanged.",
     "Current unified_alerting.min_interval is valid in 13.2.1; retained after checking pinned defaults."
-  ]
+  ],
+  "credentialFileNote": "Random credentials are written without trailing newline so Secret-backed HTTP Basic Auth bytes match Grafana file-provider values."
 }

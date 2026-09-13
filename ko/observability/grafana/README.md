@@ -53,9 +53,9 @@ cd examples/observability/grafana
 umask 077
 GRAFANA_STATE=$(mktemp -d "$PWD/.grafana-private.XXXXXX")
 printf '%s' admin > "$GRAFANA_STATE/admin-user"
-openssl rand -hex 24 > "$GRAFANA_STATE/admin-password"
-openssl rand -hex 32 > "$GRAFANA_STATE/secret-key"
-openssl rand -hex 24 > "$GRAFANA_STATE/metrics-password"
+python3 -c 'import secrets; print(secrets.token_hex(24), end="")' > "$GRAFANA_STATE/admin-password"
+python3 -c 'import secrets; print(secrets.token_hex(32), end="")' > "$GRAFANA_STATE/secret-key"
+python3 -c 'import secrets; print(secrets.token_hex(24), end="")' > "$GRAFANA_STATE/metrics-password"
 kubectl -n monitoring create secret generic grafana-admin-credentials \
   --from-file=admin-user="$GRAFANA_STATE/admin-user" \
   --from-file=admin-password="$GRAFANA_STATE/admin-password"

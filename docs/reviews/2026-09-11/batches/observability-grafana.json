@@ -3,7 +3,7 @@
     "path": "ko/observability/grafana/README.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "1e1db326d40bd5e905cb5c4428123352ca5ee96e1bce5933036be170d8ab04c2",
+    "reviewedSha256": "00cbded11e6803336ddeee2c642e8cb8958ad3d018c226457b015e7c2a28583c",
     "summary": "Full review; Grafana13.2.1 native13checks, four chartprofiles/RBAC, eightPromQL/4edgecases, 20quizquestions, twofigures/6responsivecases/2SVGexports,22legacyaliases; cloud/HA/SSO not executed.",
     "validationReport": "docs/reviews/2026-09-11/grafana-validation.json"
   },
@@ -19,7 +19,7 @@
     "path": "en/observability/grafana/README.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "d1f9e4375251eea54b0b4d3ca413800921c8990b14d41f0a53e994539bd1a92c",
+    "reviewedSha256": "a5a0d4a6de2b49da10683b38772eca5146608b8e9d88835c4f00b6d74231d24d",
     "summary": "Full review; Grafana13.2.1 native13checks, four chartprofiles/RBAC, eightPromQL/4edgecases, 20quizquestions, twofigures/6responsivecases/2SVGexports,22legacyaliases; cloud/HA/SSO not executed.",
     "validationReport": "docs/reviews/2026-09-11/grafana-validation.json"
   },
