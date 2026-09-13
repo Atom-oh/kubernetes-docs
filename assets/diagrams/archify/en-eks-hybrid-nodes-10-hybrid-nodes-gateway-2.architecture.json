@@ -19,7 +19,7 @@
           "routetable",
           "vxlan"
         ],
-        "note": "The leader holds the Lease, watches Node objects, and writes CiliumVTEPConfig, VPC routes, and hybrid_vxlan0 entries."
+        "note": "Every replica reconciles CiliumNode local state; only the lease holder programs aggregate AWS routes and VTEP endpoints."
       },
       {
         "id": "vtep-path",
@@ -51,8 +51,8 @@
       "id": "gateway",
       "type": "backend",
       "label": "Gateway Pod",
-      "sublabel": "leader controller",
-      "tag": "leader",
+      "sublabel": "Cloud EC2 worker",
+      "tag": "all replicas",
       "pos": [
         300,
         60
@@ -79,8 +79,8 @@
     {
       "id": "nodes",
       "type": "database",
-      "label": "Node Resources",
-      "sublabel": "watched objects",
+      "label": "CiliumNode",
+      "sublabel": "Every replica watches",
       "pos": [
         310,
         250
@@ -94,7 +94,7 @@
       "id": "vtepconfig",
       "type": "database",
       "label": "CiliumVTEPConfig",
-      "sublabel": "vtepIPs",
+      "sublabel": "spec.endpoints",
       "pos": [
         560,
         250
@@ -164,7 +164,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Control plane",
+      "label": "Gateway controller / Kubernetes API state",
       "wraps": [
         "gateway",
         "lease",
@@ -201,7 +201,7 @@
       "id": "update-vtep",
       "from": "gateway",
       "to": "vtepconfig",
-      "label": "update vtepIPs"
+      "label": "leader: endpoints"
     },
     {
       "id": "manage-vxlan",
@@ -214,7 +214,7 @@
       "id": "ec2-api",
       "from": "gateway",
       "to": "routetable",
-      "label": "EC2 API",
+      "label": "leader: EC2 API",
       "variant": "security"
     },
     {
@@ -256,9 +256,9 @@
       "dot": "amber",
       "title": "Leader only",
       "items": [
-        "Creates/updates VPC routes pointing hybrid Pod CIDRs to its ENI",
-        "Creates/updates CiliumVTEPConfig with its EC2 private IP",
-        "Watches Node objects for hybrid nodes joining or leaving"
+        "Creates/replaces configured aggregate Pod-CIDR routes to its ENI",
+        "Then updates endpoints: tunnelEndpoint, cidr and mac",
+        "Runs on cloud EC2 workers, not in the managed control plane"
       ]
     },
     {
@@ -273,9 +273,9 @@
       "dot": "slate",
       "title": "Standby",
       "items": [
-        "Keeps hybrid_vxlan0 programmed",
-        "Does not touch VPC routes or CiliumVTEPConfig",
-        "Retries the Lease every 2s"
+        "Watches CiliumNode and maintains local tunnel entries",
+        "Does not change AWS routes or leader VTEP configuration",
+        "Default Lease retry1s; not an end-to-end recovery guarantee"
       ]
     }
   ]

@@ -1,18 +1,20 @@
 # EKS Hybrid Nodes Gateway 퀴즈
 
+> **마지막 업데이트**: 2026년 9월 13일
+
 1. EKS Hybrid Nodes Gateway가 해결하는 문제는?
    - A) VPN/Direct Connect를 대체하여 컨트롤 플레인 연결을 제공
-   - B) VXLAN 터널을 사용하여 VPC와 하이브리드 노드 간 Pod 네트워킹을 자동화하여 수동 Pod 라우팅을 제거
+   - B) VPC와 Hybrid node 사이의 Gateway 관리 Pod 라우트와 VXLAN forwarding을 자동화
    - C) 하이브리드 노드를 위한 관리형 NAT 게이트웨이 제공
    - D) 클라우드와 온프레미스 간 모든 트래픽을 암호화
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) VXLAN 터널을 사용하여 VPC와 하이브리드 노드 간 Pod 네트워킹을 자동화하여 수동 Pod 라우팅을 제거**
+**정답: B) VPC와 Hybrid node 사이의 Gateway 관리 Pod 라우트와 VXLAN forwarding을 자동화**
 
 **설명:**
-EKS Hybrid Nodes Gateway는 EC2 기반 게이트웨이 노드와 Cilium 기반 하이브리드 노드 간 VXLAN 터널을 생성하고, VPC 라우트 테이블 엔트리를 자동으로 관리합니다. 이를 통해 수동 BGP 설정, 정적 라우트 관리, 온프레미스 Pod 네트워크의 VPC 라우팅 설정이 불필요해집니다. 단, 기본 노드 연결을 위한 VPN/Direct Connect는 여전히 필요합니다.
+Gateway는 aggregate VPC Pod-CIDR 라우트와 로컬 VXLAN forwarding 상태를 관리합니다. 승인된 private 연결에서 Gateway와 Hybrid node IP 사이의 underlay 라우팅은 여전히 필요합니다. Route table 소유권·반환 경로·보안 규칙을 검토해야 하며 모든 수동 네트워크 작업이 없어지는 것은 아닙니다. 제거 시 AWS 라우트가 자동 삭제되지도 않습니다.
 
 </details>
 
@@ -30,7 +32,7 @@ EKS Hybrid Nodes Gateway는 EC2 기반 게이트웨이 노드와 Cilium 기반 �
 **정답: B) Kubernetes Lease 기반 리더 선출을 사용하는 2개 Pod Deployment**
 
 **설명:**
-게이트웨이는 레이블이 지정된 EC2 노드에서 2개 Pod Deployment로 실행됩니다. Kubernetes Lease 기반 리더 선출을 통해 활성 Pod를 결정하며, 리더만 VPC 라우트 테이블 엔트리와 CiliumVTEPConfig CRD를 관리합니다. 리더가 실패하면 대기 Pod로 리더십이 이전되고, VPC 라우트가 새 리더의 ENI를 가리키도록 업데이트됩니다.
+Chart 기본값은 2 replicas이며 필수 host anti-affinity와 선호 AZ anti-affinity를 사용합니다. 두 replica 모두 로컬 터널 엔트리를 유지하고 리더만 VPC 라우트와 CiliumVTEPConfig를 변경합니다. Lease 만료·라우트 교체·Cilium 반영·앱 복구 중 트래픽 중단이 생길 수 있습니다. Standby 증설은 처리량을 분산하지 않으며 PDB가 리더 또는 standby 교체 순서를 보장하지 않습니다.
 
 </details>
 
@@ -48,7 +50,7 @@ EKS Hybrid Nodes Gateway는 EC2 기반 게이트웨이 노드와 Cilium 기반 �
 **정답: B) 게이트웨이 IP를 원격 VTEP로 등록하여 하이브리드 노드의 Cilium이 VPC 방향 트래픽을 게이트웨이의 VXLAN 터널로 전달**
 
 **설명:**
-게이트웨이 리더가 CiliumVTEPConfig 리소스를 생성하면, 각 온프레미스 하이브리드 노드의 Cilium 에이전트가 이를 읽어 게이트웨이 IP를 원격 VTEP(VXLAN Tunnel Endpoint)로 등록합니다. 이를 통해 Cilium은 VPC 방향 트래픽을 직접 라우팅하지 않고 게이트웨이의 VXLAN 터널을 통해 전송하도록 처리합니다.
+Gateway 1.0.2는 cilium.io/v2의 hybrid-gateway 객체를 관리합니다. spec.endpoints entry에는 name·tunnelEndpoint·cidr·mac이 들어가며 현재 리더 node IP와 실제 VXLAN 인터페이스 MAC을 사용합니다. 암호화 key 리소스가 아니며 VNI도 해당 CRD 필드가 아닙니다.
 
 </details>
 
@@ -57,16 +59,16 @@ EKS Hybrid Nodes Gateway는 EC2 기반 게이트웨이 노드와 Cilium 기반 �
 4. Hybrid Nodes Gateway 사용을 위한 CNI 전제 조건은?
    - A) 클라우드와 하이브리드 노드 모두 아무 CNI 가능
    - B) 클라우드 노드에 Cilium, 하이브리드 노드에 VPC CNI
-   - C) 하이브리드 노드에 Cilium(VTEP 활성화), 클라우드 노드에 VPC CNI
+   - C) AWS 유지 관리 Cilium의 VTEP 활성화·L7 비활성화와 cloud node 유형에 맞는 네트워킹
    - D) 클라우드와 하이브리드 노드 모두 VPC CNI
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 하이브리드 노드에 Cilium(VTEP 활성화), 클라우드 노드에 VPC CNI**
+**정답: C) AWS 유지 관리 Cilium의 VTEP 활성화·L7 비활성화와 cloud node 유형에 맞는 네트워킹**
 
 **설명:**
-게이트웨이는 (1) 하이브리드 노드에 VTEP 지원이 활성화된 EKS 버전 Cilium CNI가 필요합니다 (VXLAN 터널링 참여를 위해). (2) 클라우드 노드에는 AWS VPC CNI가 필요합니다 (게이트웨이가 VPC 네이티브 라우팅에 의존하여 VPC와 VXLAN 터널 간 트래픽을 전달하므로). 두 CNI가 게이트웨이를 통해 협력하여 원활한 Pod 간 통신을 가능하게 합니다.
+Gateway VTEP 최소 버전을 충족하는 AWS 유지 관리 Cilium에서 vtep.enabled=true·l7Proxy=false를 사용합니다. Cilium Ingress/Gateway API L7 기능은 동일 구성에 함께 적용할 수 없습니다. aws-node를 사용하는 관리형/자체 관리 cloud node는 Hybrid endpoint로 향하는 ClusterIP 트래픽을 위해 Hybrid Pod CIDR을 SNAT에서 제외해야 합니다. Auto Mode는 내장 네트워킹을 제공하므로 해당 노드용 aws-node DaemonSet을 설치·설정하지 않습니다. 직접 Pod IP 테스트만으로 ClusterIP 동작을 검증할 수 없습니다.
 
 </details>
 
@@ -84,7 +86,7 @@ EKS Hybrid Nodes Gateway는 EC2 기반 게이트웨이 노드와 Cilium 기반 �
 **정답: B) VNI 2, UDP 포트 8472 (Cilium 기본값)**
 
 **설명:**
-게이트웨이는 `hybrid_vxlan0`이라는 VXLAN 인터페이스를 VNI(VXLAN Network Identifier) 2와 UDP 포트 8472(Cilium 기본 VXLAN 포트)로 생성합니다. 각 하이브리드 노드에 대해 FDB(Forwarding Database) 엔트리, ARP 엔트리, 라우트를 프로그래밍하여 터널을 설정합니다. 보안 그룹과 온프레미스 방화벽에서 UDP 8472 양방향 허용이 필요합니다.
+기본 인터페이스는 hybrid_vxlan0, VNI는 2, UDP 포트는 8472입니다. 1.0.2는 이 인터페이스에 IP를 할당하지 않습니다. Hybrid node internal IP와 Pod CIDR을 이용한 결정적 MAC·FDB·neighbor·onlink route를 설치합니다. 양방향 underlay UDP 경로를 허용해야 합니다. VXLAN 캡슐화는 트래픽 암호화를 제공하지 않습니다.
 
 </details>
 
@@ -102,7 +104,7 @@ EKS Hybrid Nodes Gateway는 EC2 기반 게이트웨이 노드와 Cilium 기반 �
 **정답: B) 하이브리드 Pod CIDR을 활성 게이트웨이의 기본 ENI로 가리키는 VPC 라우트 테이블 엔트리를 자동 생성 및 관리**
 
 **설명:**
-게이트웨이의 노드 컨트롤러가 CiliumNode 객체를 감시하며, 하이브리드 노드가 클러스터에 참여하거나 떠날 때 VXLAN 터널을 자동으로 추가/제거합니다. 리더 Pod는 VPC 라우트 테이블 엔트리를 유지하여 각 하이브리드 Pod CIDR을 활성 게이트웨이 인스턴스의 기본 ENI로 라우팅합니다. 이를 위해 IAM 역할에 ec2:DescribeRouteTables, ec2:CreateRoute, ec2:ReplaceRoute 권한이 필요합니다.
+리더 setup은 설정한 aggregate podCIDRs 라우트를 생성/교체한 다음 CiliumVTEPConfig를 갱신합니다. 각 replica는 CiliumNode 이벤트를 별도로 처리하여 노드별 로컬 터널 엔트리를 갱신합니다. Runtime 권한은 DescribeRouteTables·DescribeInstances·CreateRoute·ReplaceRoute이며 DeleteRoute를 호출하지 않습니다. Gateway를 종료한 뒤 운영자가 소유한 라우트만 검토하여 삭제하거나 복구해야 합니다.
 
 </details>
 
@@ -111,16 +113,16 @@ EKS Hybrid Nodes Gateway는 EC2 기반 게이트웨이 노드와 Cilium 기반 �
 7. EKS Hybrid Nodes Gateway의 요금 모델은?
    - A) 처리된 데이터 양 기반 시간당 요금
    - B) EKS Hybrid Nodes 요금에 포함 (하이브리드 노드당 $0.10/시간)
-   - C) 게이트웨이 자체는 추가 요금 없음, 게이트웨이 노드용 EC2 인스턴스 비용 발생
+   - C) Gateway 소프트웨어 추가 요금은 없지만 EC2 등 인프라·트래픽 비용은 별도
    - D) 처음 3개월 무료, 이후 표준 AWS 네트워킹 요금
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 게이트웨이 자체는 추가 요금 없음, 게이트웨이 노드용 EC2 인스턴스 비용 발생**
+**정답: C) Gateway 소프트웨어 추가 요금은 없지만 EC2 등 인프라·트래픽 비용은 별도**
 
 **설명:**
-EKS Hybrid Nodes Gateway는 추가 요금 없이 제공되며 오픈소스(GitHub에서 사용 가능)입니다. 다만 게이트웨이가 VPC 내 EC2 인스턴스에서 실행되므로 게이트웨이 노드에 대한 표준 EC2 인스턴스 비용이 발생합니다. 복잡한 BGP나 정적 라우팅 인프라를 직접 관리하는 것에 비해 비용 효율적인 솔루션입니다.
+Gateway 소프트웨어 자체에 추가 요금은 없습니다. EC2·해당하는 Auto Mode 관리 요금·스토리지·cross-AZ 데이터 전송·private 연결·관측성 비용과 클러스터/Hybrid Nodes 비용은 별도입니다. 전체 비용은 배치와 트래픽에 따라 달라지므로 보편적인 비용 절감 보장은 아닙니다.
 
 </details>
 
@@ -128,16 +130,16 @@ EKS Hybrid Nodes Gateway는 추가 요금 없이 제공되며 오픈소스(GitHu
 
 8. 수동 Pod 라우팅(BGP/정적 라우트) 대신 게이트웨이 방식을 선택해야 하는 경우는?
    - A) 클라우드와 온프레미스 Pod 간 최저 레이턴시가 필요한 경우
-   - B) 운영을 단순화하고 온프레미스 Pod 네트워크를 라우팅 가능하게 만들 필요 없이 Webhook 통신과 AWS 서비스 통합을 활성화하려는 경우
+   - B) AWS Cilium/VTEP 구성과 추가 Gateway hop이 설계에 맞으며 Pod 라우트 관리를 단순화하려는 경우
    - C) 1000개 이상의 하이브리드 노드를 보유한 경우
    - D) 하이브리드 노드에서 Cilium이 아닌 CNI를 사용하는 경우
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 운영을 단순화하고 온프레미스 Pod 네트워크를 라우팅 가능하게 만들 필요 없이 Webhook 통신과 AWS 서비스 통합을 활성화하려는 경우**
+**정답: B) AWS Cilium/VTEP 구성과 추가 Gateway hop이 설계에 맞으며 Pod 라우트 관리를 단순화하려는 경우**
 
 **설명:**
-게이트웨이는 복잡한 네트워크 인프라 변경(BGP 설정, 정적 라우트 관리)을 피하고자 할 때 이상적입니다. 자동으로 (1) 하이브리드 노드의 Webhook에 대한 컨트롤 플레인 통신, (2) 클라우드와 온프레미스 간 Pod-to-Pod 트래픽, (3) AWS 서비스(ALB, NLB, Prometheus)의 하이브리드 Pod 연결을 활성화합니다. 이미 BGP 인프라가 있거나 게이트웨이를 통한 추가 홉을 최소화해야 하는 경우에는 수동 BGP 방식이 더 적합할 수 있습니다.
+필수 AWS Cilium/VTEP 구성과 active-standby 추가 hop이 설계에 맞을 때 Pod 라우트 관리를 단순화할 수 있습니다. Webhook·ALB/NLB target에는 별도 라우팅·반환 경로·remote Pod 설정·health check·보안 규칙이 필요합니다. 수동으로 라우팅 가능한 Pod network도 이 경로를 지원할 수 있습니다. 기존 BGP/static routing 또는 다른 CNI/L7 요구 사항에 따라 다른 방식이 적합할 수 있습니다.
 
 </details>

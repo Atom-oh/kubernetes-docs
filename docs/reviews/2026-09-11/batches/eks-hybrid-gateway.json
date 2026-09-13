@@ -1,0 +1,217 @@
+[
+  {
+    "path": "en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fulltext/native review completed bydomainworker; parentclosed12figurefindingsacross14diagrams,42responsivecases/14SVG/14individualPNG checks andupdatedcaptions; noclouddeployment.",
+    "sources": [
+      "https://github.com/aws/eks-hybrid-nodes-gateway/tree/v1.0.2",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-overview.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-configuration.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cluster-create.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html",
+      "https://aws.amazon.com/blogs/containers/simplify-hybrid-kubernetes-networking-with-amazon-eks-hybrid-nodes-gateway/",
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/crds/application-crd.yaml"
+    ],
+    "findings": [
+      "Candidate:wrongnestedremoteNetworkConfigquery,unverifiedHelm/VTEPCRDfieldsandgateway_*metrics;requiresreleasedsourceverification.",
+      "CNIprofilemustdisableL7proxy;oldcontentrecommendsBPFmasquerade/encryption/L7policieswithoutcompatibilityproof.",
+      "Leader-first/standby-firstrollingorderandsub10sfailoverclaimedwithoutmeasuredproof;hardantiaffinityandsurgecapacityneedreview.",
+      "CostonlyEC2/freeintraVPC,instancecapacityrules,andpublishedtime/throughputtablesneedqualifiedhistoricalscope.",
+      "Somefigureproseasserts5-10sfailover;assetrepairsbelongparent,recordneededexternalrepairsafterfactualreview.",
+      "Corrected cilium.io/v2 endpoints/tunnelEndpoint/cidr/mac and hybrid-gateway identity; separate aggregate AWS routes from per-CiliumNode local state; no interface IP assignment/no automatic AWSroutecleanup.",
+      "Replaced ignored chart values and YAML arrays with actual1.0.2replicas/nodeLabel/CSV/autoMode contracts.",
+      "AWS-maintained Cilium minimum branches and VTEP=true/L7=false; cloud aws-node ClusterIP SNAT exclusions and AutoMode builtin distinction.",
+      "Eight quiz topics retained; removed universal AWS reachability/cost/success guarantees.",
+      "Pending other chapter sections and 14diagram semantic inspection/parent repair manifest.",
+      "Replaced node-role-wide route permission and ignored IRSA chart values with scoped PodIdentity role/route-table/VPC conditions and separate node/cleanup ownership.",
+      "Realmetrics10080Service+ServiceMonitor;leader/readiness notdataplaneacceptance;counter/rate andmissing-series distinctions.",
+      "Privatefail-closeddiagnostics,real-listenerboundedprobe;removedfalseholderIdentityPodname/deletion,sleep-success,BusyBoxiputilsassumptions.",
+      "Helmuninstallleavesroutes;ownertargetchecksandrollbackneeded. Actualreleasepin1.0.2;rolloutnotleader-aware.",
+      "Historicaltiming/price/sizingfiguresretainedasexplicitunverifiedestimates;noCloudorbenchmarkreruns.",
+      "Diagramhandoff:.vitepress/cache/core-audit/eks-hybrid-gateway/diagram-repair-handoff.json"
+    ],
+    "validation": [
+      "Originalfilefullyread;four-filecohort4417originallines.",
+      "120localchecksPASS;3publishedchartlocalrenders;4upstreamhealthtests/4subcases;9diagnostic/probecommand-doublecases;7PromQLcases;2nativeHCLparseswithoutproviders.",
+      "4VitePress/VuecompilesPASS;all211oldrenderedIDsretained;16questions64choicespaired;locallinksresolve.",
+      "NoAWS/Kubernetes mutation,liveforwarding,DB/CA,providerinit/plan/apply,fullsitebuildorfabricatedmeasurements.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-gateway/final-validation.json",
+      "Assetfollowup:.vitepress/cache/core-audit/eks-hybrid-gateway/diagram-repair-handoff.json;12figuresawaitparentsemanticrepair."
+    ],
+    "updatedAt": "2026-09-13T09:25:45.380298+00:00",
+    "reviewedSha256": "c287fb92c55d9a0af8e4d4f558039d7715fd8de0319b9801af6c6c5ed25aaf4c",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-gateway-validation.json",
+    "parentAssetClosure": {
+      "report": "docs/reviews/2026-09-11/eks-hybrid-gateway-validation.json",
+      "figureCount": 14,
+      "responsiveCases": 42
+    }
+  },
+  {
+    "path": "en/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fulltext/native review completed bydomainworker; parentclosed12figurefindingsacross14diagrams,42responsivecases/14SVG/14individualPNG checks andupdatedcaptions; noclouddeployment.",
+    "sources": [
+      "https://github.com/aws/eks-hybrid-nodes-gateway/tree/v1.0.2",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-overview.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-configuration.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cluster-create.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html",
+      "https://aws.amazon.com/blogs/containers/simplify-hybrid-kubernetes-networking-with-amazon-eks-hybrid-nodes-gateway/",
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/crds/application-crd.yaml"
+    ],
+    "findings": [
+      "Question6namesCiliumNodewhereguideclaimsKubernetesNode;resolveactualcontrollerwatchsource.",
+      "L7/VTEPconfigurationandpriceonlyEC2/cost-effectiveclaimsneedqualification.",
+      "Corrected cilium.io/v2 endpoints/tunnelEndpoint/cidr/mac and hybrid-gateway identity; separate aggregate AWS routes from per-CiliumNode local state; no interface IP assignment/no automatic AWSroutecleanup.",
+      "Replaced ignored chart values and YAML arrays with actual1.0.2replicas/nodeLabel/CSV/autoMode contracts.",
+      "AWS-maintained Cilium minimum branches and VTEP=true/L7=false; cloud aws-node ClusterIP SNAT exclusions and AutoMode builtin distinction.",
+      "Eight quiz topics retained; removed universal AWS reachability/cost/success guarantees.",
+      "Pending other chapter sections and 14diagram semantic inspection/parent repair manifest.",
+      "Replaced node-role-wide route permission and ignored IRSA chart values with scoped PodIdentity role/route-table/VPC conditions and separate node/cleanup ownership.",
+      "Realmetrics10080Service+ServiceMonitor;leader/readiness notdataplaneacceptance;counter/rate andmissing-series distinctions.",
+      "Privatefail-closeddiagnostics,real-listenerboundedprobe;removedfalseholderIdentityPodname/deletion,sleep-success,BusyBoxiputilsassumptions.",
+      "Helmuninstallleavesroutes;ownertargetchecksandrollbackneeded. Actualreleasepin1.0.2;rolloutnotleader-aware.",
+      "Historicaltiming/price/sizingfiguresretainedasexplicitunverifiedestimates;noCloudorbenchmarkreruns.",
+      "Diagramhandoff:.vitepress/cache/core-audit/eks-hybrid-gateway/diagram-repair-handoff.json"
+    ],
+    "validation": [
+      "Originalfilefullyread;four-filecohort4417originallines.",
+      "120localchecksPASS;3publishedchartlocalrenders;4upstreamhealthtests/4subcases;9diagnostic/probecommand-doublecases;7PromQLcases;2nativeHCLparseswithoutproviders.",
+      "4VitePress/VuecompilesPASS;all211oldrenderedIDsretained;16questions64choicespaired;locallinksresolve.",
+      "NoAWS/Kubernetes mutation,liveforwarding,DB/CA,providerinit/plan/apply,fullsitebuildorfabricatedmeasurements.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-gateway/final-validation.json"
+    ],
+    "updatedAt": "2026-09-13T09:25:45.380329+00:00",
+    "reviewedSha256": "9ff7bb7ecba6db2ae28f35b5092c7e4f9aabf2fb73c77b1dcc3b1dd7e7cc829e",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-gateway-validation.json",
+    "parentAssetClosure": {
+      "report": "docs/reviews/2026-09-11/eks-hybrid-gateway-validation.json",
+      "figureCount": 14,
+      "responsiveCases": 42
+    }
+  },
+  {
+    "path": "ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fulltext/native review completed bydomainworker; parentclosed12figurefindingsacross14diagrams,42responsivecases/14SVG/14individualPNG checks andupdatedcaptions; noclouddeployment.",
+    "sources": [
+      "https://github.com/aws/eks-hybrid-nodes-gateway/tree/v1.0.2",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-overview.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-configuration.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cluster-create.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html",
+      "https://aws.amazon.com/blogs/containers/simplify-hybrid-kubernetes-networking-with-amazon-eks-hybrid-nodes-gateway/",
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/crds/application-crd.yaml"
+    ],
+    "findings": [
+      "KOandENshowdifferentVTEPCRDfields/metricnames/IAMcredentialmechanisms;verifyactualsourcebeforefixing.",
+      "CNIprofilewrongupstreamchart/tunnelconfigandL7/encryptioncompatibility;AWSprofilemustgovernextensionexamples.",
+      "DiagnosticsmaskerrorsandassumeleaseholderequalsPodname;BusyBoxHTTPtestswithoutserverandothercommand/placementerrors.",
+      "Readyclaims,costonlyEC2/freecrossAZ,NetworkPolicyhostNetworkprotection,manualroutesunsupportedandfailoverdurationclaimsneedcorrection.",
+      "GitOps/Terraform/CIexamplesmissingfiles/ownership/IAM/nodebootstrap;keepconceptsbutclearlybounduntestedproductionassumptions.",
+      "Corrected cilium.io/v2 endpoints/tunnelEndpoint/cidr/mac and hybrid-gateway identity; separate aggregate AWS routes from per-CiliumNode local state; no interface IP assignment/no automatic AWSroutecleanup.",
+      "Replaced ignored chart values and YAML arrays with actual1.0.2replicas/nodeLabel/CSV/autoMode contracts.",
+      "AWS-maintained Cilium minimum branches and VTEP=true/L7=false; cloud aws-node ClusterIP SNAT exclusions and AutoMode builtin distinction.",
+      "Eight quiz topics retained; removed universal AWS reachability/cost/success guarantees.",
+      "Pending other chapter sections and 14diagram semantic inspection/parent repair manifest.",
+      "Replaced node-role-wide route permission and ignored IRSA chart values with scoped PodIdentity role/route-table/VPC conditions and separate node/cleanup ownership.",
+      "Realmetrics10080Service+ServiceMonitor;leader/readiness notdataplaneacceptance;counter/rate andmissing-series distinctions.",
+      "Privatefail-closeddiagnostics,real-listenerboundedprobe;removedfalseholderIdentityPodname/deletion,sleep-success,BusyBoxiputilsassumptions.",
+      "Helmuninstallleavesroutes;ownertargetchecksandrollbackneeded. Actualreleasepin1.0.2;rolloutnotleader-aware.",
+      "Historicaltiming/price/sizingfiguresretainedasexplicitunverifiedestimates;noCloudorbenchmarkreruns.",
+      "Diagramhandoff:.vitepress/cache/core-audit/eks-hybrid-gateway/diagram-repair-handoff.json"
+    ],
+    "validation": [
+      "Originalfilefullyread;four-filecohort4417originallines.",
+      "120localchecksPASS;3publishedchartlocalrenders;4upstreamhealthtests/4subcases;9diagnostic/probecommand-doublecases;7PromQLcases;2nativeHCLparseswithoutproviders.",
+      "4VitePress/VuecompilesPASS;all211oldrenderedIDsretained;16questions64choicespaired;locallinksresolve.",
+      "NoAWS/Kubernetes mutation,liveforwarding,DB/CA,providerinit/plan/apply,fullsitebuildorfabricatedmeasurements.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-gateway/final-validation.json",
+      "Assetfollowup:.vitepress/cache/core-audit/eks-hybrid-gateway/diagram-repair-handoff.json;12figuresawaitparentsemanticrepair."
+    ],
+    "updatedAt": "2026-09-13T09:25:45.380396+00:00",
+    "reviewedSha256": "5d5a87095446bb38b7aa7f1878331d314f497397b80a1e0964967fa4cd2e8b8b",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-gateway-validation.json",
+    "parentAssetClosure": {
+      "report": "docs/reviews/2026-09-11/eks-hybrid-gateway-validation.json",
+      "figureCount": 14,
+      "responsiveCases": 42
+    }
+  },
+  {
+    "path": "ko/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fulltext/native review completed bydomainworker; parentclosed12figurefindingsacross14diagrams,42responsivecases/14SVG/14individualPNG checks andupdatedcaptions; noclouddeployment.",
+    "sources": [
+      "https://github.com/aws/eks-hybrid-nodes-gateway/tree/v1.0.2",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-overview.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-configuration.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cluster-create.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html",
+      "https://aws.amazon.com/blogs/containers/simplify-hybrid-kubernetes-networking-with-amazon-eks-hybrid-nodes-gateway/",
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/crds/application-crd.yaml"
+    ],
+    "findings": [
+      "KOandENshowdifferentVTEPCRDfields/metricnames/IAMcredentialmechanisms;verifyactualsourcebeforefixing.",
+      "CNIprofilewrongupstreamchart/tunnelconfigandL7/encryptioncompatibility;AWSprofilemustgovernextensionexamples.",
+      "DiagnosticsmaskerrorsandassumeleaseholderequalsPodname;BusyBoxHTTPtestswithoutserverandothercommand/placementerrors.",
+      "Readyclaims,costonlyEC2/freecrossAZ,NetworkPolicyhostNetworkprotection,manualroutesunsupportedandfailoverdurationclaimsneedcorrection.",
+      "GitOps/Terraform/CIexamplesmissingfiles/ownership/IAM/nodebootstrap;keepconceptsbutclearlybounduntestedproductionassumptions.",
+      "Corrected cilium.io/v2 endpoints/tunnelEndpoint/cidr/mac and hybrid-gateway identity; separate aggregate AWS routes from per-CiliumNode local state; no interface IP assignment/no automatic AWSroutecleanup.",
+      "Replaced ignored chart values and YAML arrays with actual1.0.2replicas/nodeLabel/CSV/autoMode contracts.",
+      "AWS-maintained Cilium minimum branches and VTEP=true/L7=false; cloud aws-node ClusterIP SNAT exclusions and AutoMode builtin distinction.",
+      "Eight quiz topics retained; removed universal AWS reachability/cost/success guarantees.",
+      "Pending other chapter sections and 14diagram semantic inspection/parent repair manifest.",
+      "Replaced node-role-wide route permission and ignored IRSA chart values with scoped PodIdentity role/route-table/VPC conditions and separate node/cleanup ownership.",
+      "Realmetrics10080Service+ServiceMonitor;leader/readiness notdataplaneacceptance;counter/rate andmissing-series distinctions.",
+      "Privatefail-closeddiagnostics,real-listenerboundedprobe;removedfalseholderIdentityPodname/deletion,sleep-success,BusyBoxiputilsassumptions.",
+      "Helmuninstallleavesroutes;ownertargetchecksandrollbackneeded. Actualreleasepin1.0.2;rolloutnotleader-aware.",
+      "Historicaltiming/price/sizingfiguresretainedasexplicitunverifiedestimates;noCloudorbenchmarkreruns.",
+      "Diagramhandoff:.vitepress/cache/core-audit/eks-hybrid-gateway/diagram-repair-handoff.json"
+    ],
+    "validation": [
+      "Originalfilefullyread;four-filecohort4417originallines.",
+      "120localchecksPASS;3publishedchartlocalrenders;4upstreamhealthtests/4subcases;9diagnostic/probecommand-doublecases;7PromQLcases;2nativeHCLparseswithoutproviders.",
+      "4VitePress/VuecompilesPASS;all211oldrenderedIDsretained;16questions64choicespaired;locallinksresolve.",
+      "NoAWS/Kubernetes mutation,liveforwarding,DB/CA,providerinit/plan/apply,fullsitebuildorfabricatedmeasurements.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-gateway/final-validation.json"
+    ],
+    "updatedAt": "2026-09-13T09:25:45.380421+00:00",
+    "reviewedSha256": "8166a26d467b13c3312285747030b5988b4998821aee3cc930cf168536462902",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-gateway-validation.json",
+    "parentAssetClosure": {
+      "report": "docs/reviews/2026-09-11/eks-hybrid-gateway-validation.json",
+      "figureCount": 14,
+      "responsiveCases": 42
+    }
+  }
+]

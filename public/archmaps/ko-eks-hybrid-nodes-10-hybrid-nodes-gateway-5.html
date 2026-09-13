@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-preset="classic">
+<html lang="ko" data-theme="dark" data-preset="classic">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5068,15 +5071,15 @@
         <text data-detail="context" x="500" y="94" class="t-muted" font-size="9" text-anchor="middle">IP 타겟 모드</text>
         </g>
 
-        <g id="node-amp" data-node-id="amp" data-node-label="Amazon Managed Prometheus" tabindex="0" role="button" aria-label="Focus Amazon Managed Prometheus, 메트릭 수집, AWS 서비스" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="메트릭 수집" data-node-context="AWS 서비스">
-          <title>Amazon Managed Prometheus · 메트릭 수집 · AWS 서비스</title>
+        <g id="node-amp" data-node-id="amp" data-node-label="AMP managed scraper" tabindex="0" role="button" aria-label="Focus AMP managed scraper, 관리형 collector, AWS 서비스" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="관리형 collector" data-node-context="AWS 서비스">
+          <title>AMP managed scraper · 관리형 collector · AWS 서비스</title>
           <rect x="700" y="50" width="200" height="60" rx="6" class="c-mask"/>
           <rect x="700" y="50" width="200" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(706 56) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="800" y="78" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Amazon Managed Prometheus</text>
-        <text data-detail="context" x="800" y="94" class="t-muted" font-size="9" text-anchor="middle">메트릭 수집</text>
+          <text data-node-label="" data-detail-anchor="" x="800" y="78" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">AMP managed scraper</text>
+        <text data-detail="context" x="800" y="94" class="t-muted" font-size="9" text-anchor="middle">관리형 collector</text>
         </g>
 
         <g id="node-rt" data-node-id="rt" data-node-label="VPC 라우트 테이블" tabindex="0" role="button" aria-label="Focus VPC 라우트 테이블, 10.85.0.0/16 → GW ENI, VPC" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="10.85.0.0/16 → GW ENI" data-node-context="VPC">
@@ -5368,7 +5371,17 @@
 
     <!-- Info Cards -->
     <div class="cards">
-
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot amber"></div>
+          <h3>수집 경로의 전제</h3>
+        </div>
+        <ul>
+          <li>&bull; AMP workspace 수신 endpoint와 scraper를 구분</li>
+          <li>&bull; Private cluster endpoint와 실제 metric endpoint 접근 필요</li>
+          <li>&bull; ALB/NLB target 경로도 route·보안·health check 검증 필요</li>
+        </ul>
+      </div>
     </div>
 
   </div>
@@ -7162,7 +7175,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

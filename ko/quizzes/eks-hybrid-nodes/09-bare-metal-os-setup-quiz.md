@@ -1,260 +1,245 @@
-# 베어메탈 서버 OS 설치 퀴즈
+<span id="베어메탈-서버-os-설치-퀴즈"></span>
 
-> **관련 문서**: [베어메탈 서버 OS 설치 및 마이그레이션 가이드](../../eks-hybrid-nodes/09-bare-metal-os-setup.md)
+# 베어메탈 서버 OS 설치 및 마이그레이션 퀴즈
+
+> **마지막 업데이트**: 2026년 9월 13일
+
+> **관련 문서**: [가이드](../../eks-hybrid-nodes/09-bare-metal-os-setup.md)
 
 ## 객관식 문제
 
-### 1. VMware에서 EKS Hybrid Nodes로 전환 시 기대할 수 있는 주요 이점이 아닌 것은?
+<span id="_1-vmware에서-eks-hybrid-nodes로-전환-시-기대할-수-있는-주요-이점이-아닌-것은"></span>
 
-A. VMware 라이선스 비용 절감
-B. 하이퍼바이저 오버헤드 제거로 성능 최적화
-C. 자동으로 모든 워크로드가 컨테이너화됨
-D. 라이선스 관리 단순화
+### 1. Hybrid Nodes에 베어메탈을 검토할 이유가 될 수 있는 것은?
+
+- A) 모든 VM이 자동으로 컨테이너로 변환됨
+- B) 하이퍼바이저 계층 제거 가능성을 총비용·workload 요구와 비교 평가
+- C) AWS 연결 없이 운영 가능
+- D) 모든 소프트웨어 계약 자동 취소
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C. 자동으로 모든 워크로드가 컨테이너화됨**
+**정답: B) 하이퍼바이저 계층 제거 가능성을 총비용·workload 요구와 비교 평가**
 
 **설명:**
-VMware에서 EKS Hybrid Nodes로 전환하면 라이선스 비용 절감, 하이퍼바이저 오버헤드 제거, 라이선스 관리 단순화 등의 이점이 있습니다. 그러나 워크로드 컨테이너화는 자동으로 이루어지지 않습니다. VM 기반 워크로드를 컨테이너로 마이그레이션하는 작업은 별도의 마이그레이션 단계에서 수동으로 수행해야 합니다.
 
-**마이그레이션 단계:**
-- Phase 1: 병행 운영 인프라 구축
-- Phase 2: **워크로드 컨테이너화** (수동 작업 필요)
-- Phase 3: 네트워크 전환
-- Phase 4: VMware 폐기
+하이퍼바이저 제거는 라이선스와 실행 overhead를 바꿀 수 있지만 총비용 절감·성능 향상을 보장하지 않습니다. 컨테이너화, 데이터 이전, 가용성, 지원과 계약 의무는 별도로 검토합니다. 본문에 보존한 미검증 과거 추정치에서 절감률을 도출하지 않습니다.
 
 </details>
 
-### 2. Bottlerocket OS가 지원되는 환경은?
+<span id="_9-pxe-부트-인프라-구성에-필요하지-않은-서버는"></span>
 
-A. 베어메탈 서버만
-B. VMware 환경만
-C. 베어메탈과 VMware 모두
-D. AWS EC2만
+### 2. Legacy PXE boot 설계에서 일반적으로 사용하는 구성 요소는?
+
+- A) DNS와 NFS만
+- B) DHCP/ProxyDHCP boot 정보와 TFTP boot server
+- C) FTP와 SMTP
+- D) LDAP와 Kerberos만
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. VMware 환경만**
+**정답: B) DHCP/ProxyDHCP boot 정보와 TFTP boot server**
 
 **설명:**
-Bottlerocket은 EKS Hybrid Nodes에서 VMware 환경에서만 지원됩니다 (v1.37.0+, x86_64만). 베어메탈 서버에서는 Bottlerocket을 사용할 수 없으며, Ubuntu, RHEL, 또는 Amazon Linux 2023을 사용해야 합니다.
 
-**OS 지원 매트릭스:**
-| OS | 베어메탈 | VMware |
-|----|---------|--------|
-| Ubuntu 22.04/24.04 LTS | O | O |
-| RHEL 8/9 | O | O |
-| Amazon Linux 2023 | O | O |
-| Bottlerocket v1.37.0+ | **X** | O |
+Legacy PXE는 보통 DHCP boot 정보와 TFTP를 사용합니다. Installer 콘텐츠를 HTTP로 전달할 수 있으며 UEFI HTTP/iPXE는 다른 경로를 사용할 수 있습니다. pxelinux.0은 모든 UEFI의 bootloader가 아닙니다. Firmware/loader 신뢰와 provisioning 분리를 확인하고 activation code·key를 공유 비인증 server에 공개하지 않습니다.
 
 </details>
 
-### 3. Ubuntu에서 PXE 자동 설치를 위해 사용하는 설정 도구는?
+<span id="_3-ubuntu에서-pxe-자동-설치를-위해-사용하는-설정-도구는"></span>
 
-A. Kickstart
-B. Autoinstall (cloud-init 기반)
-C. govc (TOML)
-D. preseed
+### 3. OS 자동 설치 방식을 올바르게 연결한 것은?
+
+- A) Ubuntu: Kickstart; RHEL: Autoinstall
+- B) Ubuntu Server: Subiquity Autoinstall YAML; RHEL: Kickstart
+- C) Ubuntu: govc; RHEL: TOML
+- D) 둘 다 installer에서 검증하지 않은 최신 nodeadm 다운로드가 필수
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. Autoinstall (cloud-init 기반)**
+**정답: B) Ubuntu Server: Subiquity Autoinstall YAML; RHEL: Kickstart**
 
 **설명:**
-Ubuntu는 Autoinstall (cloud-init 기반)을 사용하여 PXE 자동 설치를 수행합니다. RHEL은 Kickstart를 사용하고, Bottlerocket은 govc와 TOML 설정 파일을 사용합니다.
 
-```yaml
-#cloud-config
-autoinstall:
-  version: 1
-  locale: en_US.UTF-8
-  keyboard:
-    layout: us
-  storage:
-    layout:
-      name: lvm
-  # ...
-```
+Cloud-init으로 Ubuntu Autoinstall 구성을 전달할 수 있으며 RHEL은 Kickstart를 사용합니다. 선택한 installer 버전과 호스트별 storage/network를 검증합니다. YAML parser·ksvalidator 통과가 대상 disk 삭제의 안전성이나 설치 후 인증 성공을 입증하지는 않습니다.
 
 </details>
 
-### 4. RHEL에서 nodeadm install 명령 실행 시 반드시 사용해야 하는 옵션은?
+<span id="_2-bottlerocket-os가-지원되는-환경은"></span>
 
-A. `--selinux-permissive`
-B. `--containerd-source docker`
-C. `--skip-verification`
-D. `--force`
+### 4. 검토한 AWS 지침에서 EKS Hybrid Nodes에 지원되는 Bottlerocket 배치는?
+
+- A) 모든 bare-metal variant
+- B) 모든 hypervisor와 architecture
+- C) x86_64의 지원되는 VMware variant >=1.37.0
+- D) EC2만
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. `--containerd-source docker`**
+**정답: C) x86_64의 지원되는 VMware variant >=1.37.0**
 
 **설명:**
-RHEL에서는 반드시 `--containerd-source docker` 옵션을 사용해야 합니다. 배포판 기본 소스는 지원되지 않습니다.
 
-```bash
-# 올바른 설치 방법
-sudo nodeadm install 1.31 --credential-provider ssm --containerd-source docker
-
-# 잘못된 설치 방법 (실패함)
-# sudo nodeadm install 1.31 --credential-provider ssm
-```
+이는 EKS Hybrid 지원 범위이며 모든 Bottlerocket 제품 variant에 대한 설명이 아닙니다. Hybrid bare metal은 지원되는 Ubuntu/RHEL 호스트를 검토합니다. AL2023도 온프레미스 가상화 guest 선택지이며 일반 bare-metal 지원 경로가 아닙니다. Kubernetes variant 가용성과 현재 수명주기 조건을 따로 확인합니다.
 
 </details>
 
-### 5. Ubuntu 24.04에서 containerd 관련 문제가 발생할 때 필요한 조치는?
+### 5. Bottlerocket settings와 govc를 어떻게 구분해야 하나요?
 
-A. SELinux를 비활성화
-B. containerd를 v1.7.19+로 업데이트하거나 AppArmor 변경 후 재부팅
-C. firewalld를 중지
-D. systemd를 재시작
+- A) govc가 Bottlerocket TOML parser임
+- B) Bottlerocket은 Ubuntu와 동일한 nodeadm YAML 사용
+- C) Bottlerocket은 settings/bootstrap 입력을 사용하고 govc는 VMware VM 수명주기·user-data 전달을 관리
+- D) settings.hybrid.ssm은 표준 지원 settings namespace
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. containerd를 v1.7.19+로 업데이트하거나 AppArmor 변경 후 재부팅**
+**정답: C) Bottlerocket은 settings/bootstrap 입력을 사용하고 govc는 VMware VM 수명주기·user-data 전달을 관리**
 
 **설명:**
-Ubuntu 24.04에서는 containerd v1.7.19 이상이 필요하거나 AppArmor 프로파일 변경이 필요합니다 (Ubuntu 버그 #2065423). 변경 후에는 반드시 재부팅해야 합니다. 재부팅하지 않으면 Pod가 정상적으로 종료되지 않을 수 있습니다.
 
-```bash
-# containerd 버전 확인
-containerd --version
-
-# 버전이 1.7.19 미만인 경우 AppArmor 프로파일 수정
-sudo aa-remove-unknown
-
-# 변경 적용을 위해 재부팅 필요
-sudo reboot
-```
+버전별 Bottlerocket settings/bootstrap 절차를 사용합니다. 이전 settings.hybrid.* 예제는 유효하지 않았습니다. govc는 VM 복제·구성·전원 제어를 할 수 있지만 OS settings parser가 아닙니다. Guestinfo·user-data를 보호하며 base64를 credential 암호화로 해석하지 않습니다.
 
 </details>
 
-### 6. 에어갭(air-gapped) 환경에서 권장되는 자격 증명 프로바이더는?
+<span id="_6-에어갭-air-gapped-환경에서-권장되는-자격-증명-프로바이더는"></span>
 
-A. SSM Hybrid Activations
-B. IAM Roles Anywhere
-C. EC2 Instance Profile
-D. AWS Access Keys
+### 6. Hybrid credential provider와 연결성에 대한 올바른 설명은?
+
+- A) IAM Roles Anywhere는 AWS 연결 없이 무기한 동작
+- B) 두 방식 모두 필요한 AWS API에 접근해야 하며 private 연결로 public internet을 피할 수 있음
+- C) SSM에는 항상 직접 public internet이 필요
+- D) Kubernetes ServiceAccount가 호스트 Hybrid credential provider를 대체
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. IAM Roles Anywhere**
+**정답: B) 두 방식 모두 필요한 AWS API에 접근해야 하며 private 연결로 public internet을 피할 수 있음**
 
 **설명:**
-에어갭 환경에서는 IAM Roles Anywhere를 사용해야 합니다. SSM Hybrid Activations는 SSM 엔드포인트에 접근이 필요하므로 에어갭 환경에서 사용할 수 없습니다. IAM Roles Anywhere는 로컬 CA와 X.509 인증서를 사용하므로 인터넷 연결 없이도 작동합니다.
 
-| 조건 | 권장 프로바이더 |
-|------|----------------|
-| PKI 인프라 없음 | SSM |
-| 기존 PKI 인프라 있음 | IAM Roles Anywhere |
-| 에어갭(air-gapped) 환경 | **IAM Roles Anywhere** |
-| 간단한 설정, 인터넷 연결 가능 | SSM |
+관리되는 PKI가 없다면 SSM으로 인증서 관리 부담을 줄일 수 있습니다. IAM Roles Anywhere는 X.509 identity를 쓰지만 임시 credential을 얻기 위해 AWS CreateSession을 호출합니다. 어느 쪽이든 지원되는 API/private endpoint 경로, identity 수명주기·EKS 인가가 필요합니다. 완전 단절/DDIL은 EKS Hybrid의 지원 운영 모델이 아닙니다.
 
 </details>
 
-### 7. VMware에서 EKS Hybrid Nodes로 마이그레이션할 때 NSX-T의 대체 솔루션은?
+<span id="_4-rhel에서-nodeadm-install-명령-실행-시-반드시-사용해야-하는-옵션은"></span>
 
-A. AWS Transit Gateway
-B. Cilium BGP
-C. Amazon VPC CNI
-D. Calico Enterprise
+### 7. RHEL에서 문서화된 nodeadm containerd-source 선택지는?
+
+- A) distro만 지원
+- B) docker 또는 containerd를 별도 설치·관리할 때 none
+- C) OS와 무관하게 eks
+- D) 호환성 검토 없이 latest
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. Cilium BGP**
+**정답: B) docker 또는 containerd를 별도 설치·관리할 때 none**
 
 **설명:**
-VMware에서 EKS Hybrid Nodes로 마이그레이션할 때 NSX-T 네트워크 기능은 Cilium BGP로 전환합니다. Phase 3(네트워크 전환)에서 NSX-T에서 Cilium BGP로 전환하고, 로드 밸런서 및 인그레스 설정을 이전합니다.
 
-**마이그레이션 Phase 3:**
-- NSX-T에서 Cilium BGP로 전환
-- 로드 밸런서 및 인그레스 설정 이전
-- DNS 레코드 업데이트
+RHEL은 nodeadm의 distro source를 지원하지 않습니다. docker는 호환되는 Docker 배포 containerd 패키지를 설치하고 none은 설치를 생략하므로 init 전에 별도로 관리한 runtime이 필요합니다. 모든 RHEL 설치에 docker만 필수라고 하면 이 선택지를 누락합니다. AL2023의 source 조건은 다릅니다.
 
 </details>
 
-### 8. OpenShift의 Route는 EKS Hybrid Nodes에서 어떤 리소스로 대체됩니까?
+### 8. 복구 경로를 유지하는 이전 순서는?
 
-A. Service
-B. Ingress / Gateway API
-C. NetworkPolicy
-D. ConfigMap
+- A) 원본부터 폐기
+- B) Pilot 전에 라이선스 취소
+- C) 병행 target 준비, workload·network 이전/검증, 데이터·운영 수락 후 rollback 기간을 거쳐 폐기
+- D) VM disk를 컨테이너에 복사하고 즉시 원본 삭제
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. Ingress / Gateway API**
+**정답: C) 병행 target 준비, workload·network 이전/검증, 데이터·운영 수락 후 rollback 기간을 거쳐 폐기**
 
 **설명:**
-OpenShift에서 EKS Hybrid Nodes로 마이그레이션할 때, OpenShift의 Route는 표준 Kubernetes Ingress 또는 Gateway API로 대체됩니다.
 
-**OpenShift → EKS 개념 매핑:**
-| OpenShift | EKS Hybrid Nodes |
-|-----------|-----------------|
-| **Route** | **Ingress / Gateway API** |
-| SCC | PSS (Pod Security Standards) |
-| OLM | Helm / EKS Add-ons |
-| MachineSet | nodeadm + Ansible |
-| ImageStream | ECR |
-| BuildConfig | External CI/CD |
-| DeploymentConfig | Deployment |
+의존성, backup/restore와 rollback 용량을 준비합니다. 트래픽 전환 전에 데이터 일관성, TLS/DNS, 접근 정책·실제 workload 동작을 검증합니다. VM 컨테이너화나 CSI driver 설치만으로 state가 이전되지 않습니다. 폐기·계약 변경은 합의한 수락·보존 판단을 따릅니다.
 
 </details>
 
-### 9. PXE 부트 인프라 구성에 필요하지 않은 서버는?
+<span id="_8-openshift의-route는-eks-hybrid-nodes에서-어떤-리소스로-대체됩니까"></span>
 
-A. DHCP 서버
-B. TFTP 서버
-C. HTTP 서버
-D. FTP 서버
+### 9. OpenShift Route는 어떻게 이전해야 하나요?
+
+- A) 다른 변경 없이 Service로 이름만 변경
+- B) Ingress/Gateway API 매핑을 설계하고 선택한 controller의 TLS·routing 동작 검증
+- C) 모든 Route를 NetworkPolicy로 교체
+- D) 모든 필드를 Gateway에 그대로 복사
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: D. FTP 서버**
+**정답: B) Ingress/Gateway API 매핑을 설계하고 선택한 controller의 TLS·routing 동작 검증**
 
 **설명:**
-PXE 부트 인프라 구성에는 DHCP 서버, TFTP 서버, HTTP 서버가 필요합니다. FTP 서버는 PXE 부트에 필요하지 않습니다.
 
-**PXE 부트 인프라:**
-- **DHCP 서버**: IP 주소 할당, next-server(TFTP 서버 주소), filename(pxelinux.0) 제공
-- **TFTP 서버**: 부트로더(pxelinux.0), 커널(vmlinuz), 초기 RAM 디스크(initrd.img) 제공
-- **HTTP 서버**: OS 설치 이미지, Autoinstall/Kickstart 설정 파일, nodeadm 바이너리 제공
+Ingress/Gateway API는 routing 후보 인터페이스이며 자동 동등 변환이 아닙니다. 필요한 termination/reencrypt/passthrough, weight·annotation을 보존합니다. SCC와 PSS/PSA, OLM 공급, ImageStream trigger, DeploymentConfig hook도 마찬가지입니다. ECR/Helm/Deployment가 OpenShift 동작을 전부 자동 재현하지 않습니다.
 
 </details>
 
-### 10. 32 vCPU 서버 기준 EKS Hybrid Nodes의 연간 비용 계산에 사용되는 시간당 vCPU 요금은?
+<span id="_5-ubuntu-24-04에서-containerd-관련-문제가-발생할-때-필요한-조치는"></span>
 
-A. $0.001
-B. $0.01
-C. $0.10
-D. $1.00
+### 10. 문서화된 Ubuntu 24.04 AppArmor/컨테이너 종료 문제에 적절한 대응은?
+
+- A) 모든 호스트의 unknown AppArmor profile 제거
+- B) 실제 package/profile 문제를 확인해 지원되는 수정을 적용하고 해당 전환에 필요한 경우 계획된 reboot 수행
+- C) 모든 보안 기능 비활성화
+- D) 모든 stuck Pod는 containerd 1.7.19를 정확히 설치하면 해결된다고 가정
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. $0.01**
+**정답: B) 실제 package/profile 문제를 확인해 지원되는 수정을 적용하고 해당 전환에 필요한 경우 계획된 reboot 수행**
 
 **설명:**
-EKS Hybrid Nodes는 vCPU당 시간당 $0.01로 과금됩니다 (리전별 상이). 32 vCPU 서버의 연간 비용은 다음과 같이 계산됩니다:
 
-```
-32 vCPU × $0.01/시간 × 8,760시간(1년) = $2,803.20/노드/년
-```
+버그 2065423은 수정이 배포되었으며 해당 package/profile 전환의 재시작을 설명합니다. Vendor package/backport와 실제 signal-denial log를 확인합니다. aa-remove-unknown은 /etc/apparmor.d에 없는 로드된 profile을 제거하는 명령이지 특정 editor가 아닙니다. 통제된 drain/reboot/workload 검증을 사용하고 모든 AppArmor 변경을 일괄 reboot 규칙으로 만들지 않습니다.
 
-**규모별 연간 비용 비교 (32 vCPU 서버 기준):**
-| 규모 | VMware vSphere (연간) | OpenShift (연간) | EKS Hybrid Nodes (연간) |
-|------|----------------------|------------------|------------------------|
-| 10 노드 | ~$45,000-85,000 | ~$25,000-50,000 | ~$28,032 |
-| 50 노드 | ~$225,000-425,000 | ~$125,000-250,000 | ~$140,160 |
-| 100 노드 | ~$450,000-850,000 | ~$250,000-500,000 | ~$280,320 |
+</details>
+
+<span id="_10-32-vcpu-서버-기준-eks-hybrid-nodes의-연간-비용-계산에-사용되는-시간당-vcpu-요금은"></span>
+
+### 11. 검토한 EKS Hybrid 요금에 맞는 계산 모델은?
+
+- A) 모든 서비스를 포함한 고정 $0.01/vCPU-hour
+- B) 보고된 vCPU-hours의 월별 구간 요금과 별도 클러스터·기타 비용
+- C) 실행 Pod가 요청한 CPU만 과금
+- D) Workload가 idle이면 노드 요금 없음
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) 보고된 vCPU-hours의 월별 구간 요금과 별도 클러스터·기타 비용**
+
+**설명:**
+
+월 처음 576,000 vCPU-hours에는 $0.020/vCPU-hour를 적용하고 이후 공개된 구간별 요금을 적용합니다. 계정 또는 Organizations 통합 결제 범위의 동일 리전 사용량을 합산합니다. 보고된 vCPU, 월 길이, cluster 지원 tier와 기타 서비스를 포함합니다. 과거 $2,803.20/노드/년은 폐기한 미검증 가정으로 보존하며 현재 TCO가 아닙니다.
+
+</details>
+
+<span id="_7-vmware에서-eks-hybrid-nodes로-마이그레이션할-때-nsx-t의-대체-솔루션은"></span>
+
+### 12. NSX-T 기능을 이전하며 Cilium BGP를 선택한다는 뜻은?
+
+- A) 모든 NSX-T 기능 자동 재현
+- B) BGP는 route 교환을 제공하며 overlay·firewall·load balancing·policy는 별도로 매핑
+- C) 반환 경로 시험 불필요
+- D) 모든 기존 연결이 그대로 유지
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) BGP는 route 교환을 제공하며 overlay·firewall·load balancing·policy는 별도로 매핑**
+
+**설명:**
+
+BGP advertisement가 NSX 플랫폼 전체를 제공하지는 않습니다. Route, overlay, security와 load-balancing 동작을 따로 조사하고 addressing, 반환 경로, TLS/DNS·기존/새 연결을 시험합니다. 지원되는 혼합 CNI 패턴과 rollback을 준비하며 일대일 전체 대체를 주장하지 않습니다.
 
 </details>

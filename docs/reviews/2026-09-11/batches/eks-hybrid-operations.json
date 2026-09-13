@@ -1,0 +1,158 @@
+[
+  {
+    "path": "en/eks-hybrid-nodes/08-operations.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and fixed Harbor scheduling/backup, secret-safe diagnostics, host/GPU metrics, bounded DX evidence, Cilium v2/Service address fields, Pod Identity/CWA configuration and mixed CoreDNS placement; current source-backed guidance and explicit local-only validation.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml",
+      "https://github.com/goharbor/website/blob/main/docs/administration/vulnerability-scanning/schedule-scans.md",
+      "https://github.com/goharbor/website/blob/main/docs/administration/backup-restore/_index.md",
+      "https://prometheus-operator.dev/docs/api-reference/api/",
+      "https://github.com/cilium/cilium/blob/v1.18.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumloadbalancerippools.yaml",
+      "https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/servicemesh/ingress.rst",
+      "https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/servicemesh/gateway-api/gateway-api.rst",
+      "https://github.com/esnet/iperf/blob/3.21/docs/invoking.rst",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html"
+    ],
+    "findings": [
+      "Removedadmin-passwordCron/latest-onlyscanandpartialRedis/Notaryfull-backupclaims;privatefail-closedDBcomponentexample.",
+      "ReplacedkubeletTLSskip/assumedNodeprefixmetrics;addedNodeDiscoverymetadata/actualexporterlabels;GPUused/(used+free)withzerocapacityguard.",
+      "PreservedunmeasuredDXtargetsasillustrations;pingmdevnotUDPjitter;positivecappediperfJSONandfailurehandling.",
+      "CorrectedCiliumv2selectors/nestedservice.addresses/peerbindingandcontrollerownership;positivecloudlabels.",
+      "KeptrealRUN_WITH_IRSA=TrueatAmazonCloudWatchAgent.spec.env;distinguishedHybridhostmetricsandPodIdentityOS-specificversions/paths.",
+      "Qualifiedwebhook/CoreDNSmixed-modeplacementandstrictspreadingavailabilitytradeoff;removedblindreset/restart/TLSbypass.",
+      "Gatewayfollow-up: CiliumIngress/GatewayAPI L7 examples explicitly exclude same-installation HybridNodesGateway profile requiring l7Proxy=false; HTTP application routing remains possible."
+    ],
+    "validation": [
+      "Readoriginaldocumentcompletely;pairedsemanticsandsevenquestionsaligned.",
+      "43localchecks:Prometheus/Cilium/PodSpecschemaandselectorcontracts,4PromQLexpressions/5expectedsamples,11backup/networkcommand-doublecases.",
+      "4VitePress/Vuecompilespassed;all68originalfragmentsretainedwith16explicitaliases;alllocallinksresolve.",
+      "Noactualcloud/cluster/backup/restore/networkload/BGP/exporter/IAMexecution.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-operations/final-validation.json",
+      "2026-09-13follow-up: two changed guides recompiled; all prior IDs/local links preserved. Unchanged quizzes and native proof carried by hash. Evidence:.vitepress/cache/core-audit/eks-hybrid-operations/gateway-compatibility-markdown-validation.json"
+    ],
+    "reviewedSha256": "eef86582b52d515871f3d390c06ea93e021bca2c9529a6c8d3eba0057153b35f",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-operations-validation.json"
+  },
+  {
+    "path": "ko/eks-hybrid-nodes/08-operations.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and fixed Harbor scheduling/backup, secret-safe diagnostics, host/GPU metrics, bounded DX evidence, Cilium v2/Service address fields, Pod Identity/CWA configuration and mixed CoreDNS placement; current source-backed guidance and explicit local-only validation.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml",
+      "https://github.com/goharbor/website/blob/main/docs/administration/vulnerability-scanning/schedule-scans.md",
+      "https://github.com/goharbor/website/blob/main/docs/administration/backup-restore/_index.md",
+      "https://prometheus-operator.dev/docs/api-reference/api/",
+      "https://github.com/cilium/cilium/blob/v1.18.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumloadbalancerippools.yaml",
+      "https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/servicemesh/ingress.rst",
+      "https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/servicemesh/gateway-api/gateway-api.rst",
+      "https://github.com/esnet/iperf/blob/3.21/docs/invoking.rst",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html"
+    ],
+    "findings": [
+      "Removedadmin-passwordCron/latest-onlyscanandpartialRedis/Notaryfull-backupclaims;privatefail-closedDBcomponentexample.",
+      "ReplacedkubeletTLSskip/assumedNodeprefixmetrics;addedNodeDiscoverymetadata/actualexporterlabels;GPUused/(used+free)withzerocapacityguard.",
+      "PreservedunmeasuredDXtargetsasillustrations;pingmdevnotUDPjitter;positivecappediperfJSONandfailurehandling.",
+      "CorrectedCiliumv2selectors/nestedservice.addresses/peerbindingandcontrollerownership;positivecloudlabels.",
+      "KeptrealRUN_WITH_IRSA=TrueatAmazonCloudWatchAgent.spec.env;distinguishedHybridhostmetricsandPodIdentityOS-specificversions/paths.",
+      "Qualifiedwebhook/CoreDNSmixed-modeplacementandstrictspreadingavailabilitytradeoff;removedblindreset/restart/TLSbypass.",
+      "Gatewayfollow-up: CiliumIngress/GatewayAPI L7 examples explicitly exclude same-installation HybridNodesGateway profile requiring l7Proxy=false; HTTP application routing remains possible."
+    ],
+    "validation": [
+      "Readoriginaldocumentcompletely;pairedsemanticsandsevenquestionsaligned.",
+      "43localchecks:Prometheus/Cilium/PodSpecschemaandselectorcontracts,4PromQLexpressions/5expectedsamples,11backup/networkcommand-doublecases.",
+      "4VitePress/Vuecompilespassed;all68originalfragmentsretainedwith16explicitaliases;alllocallinksresolve.",
+      "Noactualcloud/cluster/backup/restore/networkload/BGP/exporter/IAMexecution.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-operations/final-validation.json",
+      "2026-09-13follow-up: two changed guides recompiled; all prior IDs/local links preserved. Unchanged quizzes and native proof carried by hash. Evidence:.vitepress/cache/core-audit/eks-hybrid-operations/gateway-compatibility-markdown-validation.json"
+    ],
+    "reviewedSha256": "bc17686d4d497ecd3b743366c697ffe715efe7f942a77a9b54be445d69fcabdb",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-operations-validation.json"
+  },
+  {
+    "path": "en/quizzes/eks-hybrid-nodes/08-operations-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected seven paired questions: host metrics, certificate ownership, real-host diagnosis, drain/PDB scope, CRI logs, 300-second toleration versus recovery SLO, and controlled Hybrid upgrades.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml",
+      "https://github.com/goharbor/website/blob/main/docs/administration/vulnerability-scanning/schedule-scans.md",
+      "https://github.com/goharbor/website/blob/main/docs/administration/backup-restore/_index.md",
+      "https://prometheus-operator.dev/docs/api-reference/api/",
+      "https://github.com/cilium/cilium/blob/v1.18.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumloadbalancerippools.yaml",
+      "https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/servicemesh/ingress.rst",
+      "https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/servicemesh/gateway-api/gateway-api.rst",
+      "https://github.com/esnet/iperf/blob/3.21/docs/invoking.rst",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
+    ],
+    "findings": [
+      "Removedinvalidpartialcollectorandkubeadm/nodeadmresetguidance;matchedhost/certificate/credentialboundaries.",
+      "ClarifiedPDB/localdataandnodefault5minReadyguarantee;explicit60stolerationisnotrecoverySLO.",
+      "Preservedsevenquestiontopicsandlegacyfragments;noexecutedclusterclaims."
+    ],
+    "validation": [
+      "Readoriginaldocumentcompletely;pairedsemanticsandsevenquestionsaligned.",
+      "43localchecks:Prometheus/Cilium/PodSpecschemaandselectorcontracts,4PromQLexpressions/5expectedsamples,11backup/networkcommand-doublecases.",
+      "4VitePress/Vuecompilespassed;all68originalfragmentsretainedwith16explicitaliases;alllocallinksresolve.",
+      "Noactualcloud/cluster/backup/restore/networkload/BGP/exporter/IAMexecution.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-operations/final-validation.json"
+    ],
+    "reviewedSha256": "5e03c58656d8d80efdea181d1eeb9eac97438f215dd24d83cbf20a6db1e42a1f",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-operations-validation.json"
+  },
+  {
+    "path": "ko/quizzes/eks-hybrid-nodes/08-operations-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected seven paired questions: host metrics, certificate ownership, real-host diagnosis, drain/PDB scope, CRI logs, 300-second toleration versus recovery SLO, and controlled Hybrid upgrades.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml",
+      "https://github.com/goharbor/website/blob/main/docs/administration/vulnerability-scanning/schedule-scans.md",
+      "https://github.com/goharbor/website/blob/main/docs/administration/backup-restore/_index.md",
+      "https://prometheus-operator.dev/docs/api-reference/api/",
+      "https://github.com/cilium/cilium/blob/v1.18.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumloadbalancerippools.yaml",
+      "https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/servicemesh/ingress.rst",
+      "https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/servicemesh/gateway-api/gateway-api.rst",
+      "https://github.com/esnet/iperf/blob/3.21/docs/invoking.rst",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
+    ],
+    "findings": [
+      "Removedinvalidpartialcollectorandkubeadm/nodeadmresetguidance;matchedhost/certificate/credentialboundaries.",
+      "ClarifiedPDB/localdataandnodefault5minReadyguarantee;explicit60stolerationisnotrecoverySLO.",
+      "Preservedsevenquestiontopicsandlegacyfragments;noexecutedclusterclaims."
+    ],
+    "validation": [
+      "Readoriginaldocumentcompletely;pairedsemanticsandsevenquestionsaligned.",
+      "43localchecks:Prometheus/Cilium/PodSpecschemaandselectorcontracts,4PromQLexpressions/5expectedsamples,11backup/networkcommand-doublecases.",
+      "4VitePress/Vuecompilespassed;all68originalfragmentsretainedwith16explicitaliases;alllocallinksresolve.",
+      "Noactualcloud/cluster/backup/restore/networkload/BGP/exporter/IAMexecution.",
+      "Evidence:.vitepress/cache/core-audit/eks-hybrid-operations/final-validation.json"
+    ],
+    "reviewedSha256": "277678b459df3ca340dab26fefdfd733b45b7cee05212d5187049ea73fcc7250",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-operations-validation.json"
+  }
+]

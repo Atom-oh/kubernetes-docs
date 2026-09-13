@@ -1,0 +1,156 @@
+[
+  {
+    "path": "en/eks-hybrid-nodes/09-bare-metal-os-setup.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullread;fixedbare-metalOSsupport,currentAWSmonthlytierpricing,safeinstaller/artifactboundaries,read-onlyacceptance,credentialconnectivityandmigrationcontracts. Historicalestimatespreservedandqualified.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://github.com/aws/eks-hybrid/tree/main/example/packer",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/main/example/packer/hybrid-nodes-template.pkr.hcl",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/cmd/nodeadm/main.go",
+      "https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html",
+      "https://raw.githubusercontent.com/canonical/subiquity/main/autoinstall-schema.json",
+      "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/automatically_installing_rhel/kickstart-commands-and-options-reference_rhel-installer",
+      "https://bugs.launchpad.net/ubuntu/+source/containerd-app/+bug/2065423",
+      "https://manpages.ubuntu.com/manpages/noble/man8/aa-remove-unknown.8.html",
+      "https://docs.aws.amazon.com/linux/al2023/ug/outside-ec2.html",
+      "https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/security_apis/securitycontextconstraints-security-openshift-io-v1",
+      "https://olm.operatorframework.io/docs/"
+    ],
+    "findings": [
+      "AL2023restrictedtoonpremvirtualizedguest;BottlerocketVMwarex86scope;closedREADME/01alreadycorrectandnotchanged.",
+      "Replacedflat$0.01withofficialmarginaltiers/reportedvCPUandseparateclusterfees;oldVMware/OpenShiftfiguresunverifiedandpreserved.",
+      "CorrectedSecureBoot/VT-xassumptions;explicitdiskselection,interactivestoragescope,SELinuxenforcing,properAppArmorworkaround/rebootcontext.",
+      "ActualPackerfilename/variablesandiam→iam-ramapverified;removedunverifiedlatestdownloadsandinvalidBottlerocketsettings.hybrid.*.",
+      "ArtifactSHA/stagedversionchecksandfailurepreservation;postinstall/Ansiblechecksreadonlywithseparatebootstraplifecyclelinks.",
+      "CorrectedDDIL/privateconnectivitydistinctionandNSX/OpenShiftmappingoverclaims;noautomaticcontainerizationorequivalentTCO."
+    ],
+    "validation": [
+      "Readalloriginalcontent:2guides472lineseach,ENquiz219,KOquiz260(total1423).",
+      "50localchecks/12command-doublecases;nativepykickstart3.78RHEL9parserandCanonicalAutoinstallschema;noOS/VM/cloudoperations.",
+      "10Decimalpricingreference/boundaryassertions;currentAWSmodelseparatefrompreservedunverifiedhistoricalquotes.",
+      "4VitePress/Vuecompiles,all112originalfragmentsretainedwith21explicitaliases;12pairedquestionsaligned.",
+      "Proof:.vitepress/cache/core-audit/eks-hybrid-bare-metal/final-validation.json"
+    ],
+    "reviewedSha256": "b23f2affd93501673b228b00de7f6efacf352d6a0b046fc3109420a23a711309",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json"
+  },
+  {
+    "path": "en/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullread;aligned12questionunionpreservingoldEN/KOtopicsandcorrectingAL2023/Bottlerocketscope,offlinecredentials,containerd/AppArmor,pricingandmigrationequivalence.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://github.com/aws/eks-hybrid/tree/main/example/packer",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/main/example/packer/hybrid-nodes-template.pkr.hcl",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/cmd/nodeadm/main.go",
+      "https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html",
+      "https://raw.githubusercontent.com/canonical/subiquity/main/autoinstall-schema.json",
+      "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/automatically_installing_rhel/kickstart-commands-and-options-reference_rhel-installer",
+      "https://bugs.launchpad.net/ubuntu/+source/containerd-app/+bug/2065423",
+      "https://manpages.ubuntu.com/manpages/noble/man8/aa-remove-unknown.8.html",
+      "https://docs.aws.amazon.com/linux/al2023/ug/outside-ec2.html",
+      "https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/security_apis/securitycontextconstraints-security-openshift-io-v1",
+      "https://olm.operatorframework.io/docs/"
+    ],
+    "findings": [
+      "RemovedfalsefullyofflineRolesAnywhereandfixed$0.01pricinganswers.",
+      "ClarifiedPacker/settings/govc,RHELdockerornone,documentedAppArmorfix/rebootratherthanglobalprofiledeletion.",
+      "Preservedoldquestionfragmentswithtopic-awaremapping;BGPisnotwholeNSX,PSS/ECR/Helmare notautomaticOpenShift equivalents."
+    ],
+    "validation": [
+      "Readalloriginalcontent:2guides472lineseach,ENquiz219,KOquiz260(total1423).",
+      "50localchecks/12command-doublecases;nativepykickstart3.78RHEL9parserandCanonicalAutoinstallschema;noOS/VM/cloudoperations.",
+      "10Decimalpricingreference/boundaryassertions;currentAWSmodelseparatefrompreservedunverifiedhistoricalquotes.",
+      "4VitePress/Vuecompiles,all112originalfragmentsretainedwith21explicitaliases;12pairedquestionsaligned.",
+      "Proof:.vitepress/cache/core-audit/eks-hybrid-bare-metal/final-validation.json"
+    ],
+    "reviewedSha256": "885681daff650428b3d58e3df889a8132809e84eeb9007ddcb5168168f5ff503",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json"
+  },
+  {
+    "path": "ko/eks-hybrid-nodes/09-bare-metal-os-setup.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullread;fixedbare-metalOSsupport,currentAWSmonthlytierpricing,safeinstaller/artifactboundaries,read-onlyacceptance,credentialconnectivityandmigrationcontracts. Historicalestimatespreservedandqualified.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://github.com/aws/eks-hybrid/tree/main/example/packer",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/main/example/packer/hybrid-nodes-template.pkr.hcl",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/cmd/nodeadm/main.go",
+      "https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html",
+      "https://raw.githubusercontent.com/canonical/subiquity/main/autoinstall-schema.json",
+      "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/automatically_installing_rhel/kickstart-commands-and-options-reference_rhel-installer",
+      "https://bugs.launchpad.net/ubuntu/+source/containerd-app/+bug/2065423",
+      "https://manpages.ubuntu.com/manpages/noble/man8/aa-remove-unknown.8.html",
+      "https://docs.aws.amazon.com/linux/al2023/ug/outside-ec2.html",
+      "https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/security_apis/securitycontextconstraints-security-openshift-io-v1",
+      "https://olm.operatorframework.io/docs/"
+    ],
+    "findings": [
+      "AL2023restrictedtoonpremvirtualizedguest;BottlerocketVMwarex86scope;closedREADME/01alreadycorrectandnotchanged.",
+      "Replacedflat$0.01withofficialmarginaltiers/reportedvCPUandseparateclusterfees;oldVMware/OpenShiftfiguresunverifiedandpreserved.",
+      "CorrectedSecureBoot/VT-xassumptions;explicitdiskselection,interactivestoragescope,SELinuxenforcing,properAppArmorworkaround/rebootcontext.",
+      "ActualPackerfilename/variablesandiam→iam-ramapverified;removedunverifiedlatestdownloadsandinvalidBottlerocketsettings.hybrid.*.",
+      "ArtifactSHA/stagedversionchecksandfailurepreservation;postinstall/Ansiblechecksreadonlywithseparatebootstraplifecyclelinks.",
+      "CorrectedDDIL/privateconnectivitydistinctionandNSX/OpenShiftmappingoverclaims;noautomaticcontainerizationorequivalentTCO."
+    ],
+    "validation": [
+      "Readalloriginalcontent:2guides472lineseach,ENquiz219,KOquiz260(total1423).",
+      "50localchecks/12command-doublecases;nativepykickstart3.78RHEL9parserandCanonicalAutoinstallschema;noOS/VM/cloudoperations.",
+      "10Decimalpricingreference/boundaryassertions;currentAWSmodelseparatefrompreservedunverifiedhistoricalquotes.",
+      "4VitePress/Vuecompiles,all112originalfragmentsretainedwith21explicitaliases;12pairedquestionsaligned.",
+      "Proof:.vitepress/cache/core-audit/eks-hybrid-bare-metal/final-validation.json"
+    ],
+    "reviewedSha256": "e125d73c63d467d625498727bbcba6ac420d0f56052adb2571deebe6a40a65b6",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json"
+  },
+  {
+    "path": "ko/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullread;aligned12questionunionpreservingoldEN/KOtopicsandcorrectingAL2023/Bottlerocketscope,offlinecredentials,containerd/AppArmor,pricingandmigrationequivalence.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://github.com/aws/eks-hybrid/tree/main/example/packer",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/main/example/packer/hybrid-nodes-template.pkr.hcl",
+      "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/cmd/nodeadm/main.go",
+      "https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html",
+      "https://raw.githubusercontent.com/canonical/subiquity/main/autoinstall-schema.json",
+      "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/automatically_installing_rhel/kickstart-commands-and-options-reference_rhel-installer",
+      "https://bugs.launchpad.net/ubuntu/+source/containerd-app/+bug/2065423",
+      "https://manpages.ubuntu.com/manpages/noble/man8/aa-remove-unknown.8.html",
+      "https://docs.aws.amazon.com/linux/al2023/ug/outside-ec2.html",
+      "https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/security_apis/securitycontextconstraints-security-openshift-io-v1",
+      "https://olm.operatorframework.io/docs/"
+    ],
+    "findings": [
+      "RemovedfalsefullyofflineRolesAnywhereandfixed$0.01pricinganswers.",
+      "ClarifiedPacker/settings/govc,RHELdockerornone,documentedAppArmorfix/rebootratherthanglobalprofiledeletion.",
+      "Preservedoldquestionfragmentswithtopic-awaremapping;BGPisnotwholeNSX,PSS/ECR/Helmare notautomaticOpenShift equivalents."
+    ],
+    "validation": [
+      "Readalloriginalcontent:2guides472lineseach,ENquiz219,KOquiz260(total1423).",
+      "50localchecks/12command-doublecases;nativepykickstart3.78RHEL9parserandCanonicalAutoinstallschema;noOS/VM/cloudoperations.",
+      "10Decimalpricingreference/boundaryassertions;currentAWSmodelseparatefrompreservedunverifiedhistoricalquotes.",
+      "4VitePress/Vuecompiles,all112originalfragmentsretainedwith21explicitaliases;12pairedquestionsaligned.",
+      "Proof:.vitepress/cache/core-audit/eks-hybrid-bare-metal/final-validation.json"
+    ],
+    "reviewedSha256": "0258e8113ba1f2c5e7dbdb1e9ba135ccb8535a99d24e5eaab94c5de8ea4c36f6",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-bare-metal-validation.json"
+  }
+]

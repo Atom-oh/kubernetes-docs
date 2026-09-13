@@ -1,0 +1,110 @@
+{
+  "status": "passed-scoped-audit",
+  "reviewedAt": "2026-09-13T04:42:54.830818+00:00",
+  "files": [
+    {
+      "path": "en/eks-hybrid-nodes/09-bare-metal-os-setup.md",
+      "sha256": "b23f2affd93501673b228b00de7f6efacf352d6a0b046fc3109420a23a711309",
+      "lines": 448,
+      "fullyRead": true
+    },
+    {
+      "path": "en/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md",
+      "sha256": "885681daff650428b3d58e3df889a8132809e84eeb9007ddcb5168168f5ff503",
+      "lines": 243,
+      "fullyRead": true
+    },
+    {
+      "path": "ko/eks-hybrid-nodes/09-bare-metal-os-setup.md",
+      "sha256": "e125d73c63d467d625498727bbcba6ac420d0f56052adb2571deebe6a40a65b6",
+      "lines": 448,
+      "fullyRead": true
+    },
+    {
+      "path": "ko/quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md",
+      "sha256": "0258e8113ba1f2c5e7dbdb1e9ba135ccb8535a99d24e5eaab94c5de8ea4c36f6",
+      "lines": 245,
+      "fullyRead": true
+    }
+  ],
+  "originalFullyReadLines": 1423,
+  "native": {
+    "checks": 50,
+    "mockCases": 12,
+    "kickstart": "pykickstart3.78RHEL9positive/negativeparser",
+    "autoinstall": "Canonicalschema/type+explicitstorage/SSHcontracts;additionalrootkeysallowed",
+    "proof": "native-validation.json"
+  },
+  "pricing": {
+    "assertions": 10,
+    "proof": "pricing-validation.json",
+    "scope": "PublicAWStiers;modeled730hmonths,32reportedvCPU/node;notaninvoiceorbenchmark"
+  },
+  "markdown": {
+    "files": 4,
+    "originalFragmentsPreserved": 112,
+    "aliasesAdded": 21,
+    "quizQuestionsPerLocale": 12,
+    "answerParity": true,
+    "proof": "markdown-validation.json"
+  },
+  "sources": [
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html",
+    "https://aws.amazon.com/eks/pricing/",
+    "https://github.com/aws/eks-hybrid/tree/main/example/packer",
+    "https://raw.githubusercontent.com/aws/eks-hybrid/main/example/packer/hybrid-nodes-template.pkr.hcl",
+    "https://raw.githubusercontent.com/aws/eks-hybrid/v1.0.20/cmd/nodeadm/main.go",
+    "https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html",
+    "https://raw.githubusercontent.com/canonical/subiquity/main/autoinstall-schema.json",
+    "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/automatically_installing_rhel/kickstart-commands-and-options-reference_rhel-installer",
+    "https://bugs.launchpad.net/ubuntu/+source/containerd-app/+bug/2065423",
+    "https://manpages.ubuntu.com/manpages/noble/man8/aa-remove-unknown.8.html",
+    "https://docs.aws.amazon.com/linux/al2023/ug/outside-ec2.html",
+    "https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/security_apis/securitycontextconstraints-security-openshift-io-v1",
+    "https://olm.operatorframework.io/docs/"
+  ],
+  "historicalData": "OriginalVMware/OpenShiftrangesandflat-rateEKSestimatespreservedasexplicitlyunverifiedhistoricalestimates;notcurrentquotes/TCO. CurrentAWSmodelcalculatedseparately.",
+  "externalFollowup": [
+    {
+      "scope": "Environment-specificpublicartifactverification",
+      "finding": "HEADrequeststoofficialhybrid-assets.eks.amazonaws.comreturnedTLSHostnameMismatch;noTLSbypassattempted. Not evidenceofglobaloutage. Guideusesapprovedlocalartifactdelivery+SHA/versionchecks.",
+      "proof": "sources/nodeadm-versioned-url.json",
+      "owner": "ParentglobalURLreviewifneeded"
+    }
+  ],
+  "limits": [
+    "No actual OS install/disk erase/boot/login, Packer build, Ansible SSH, nodeadm, VMware or AWS/Kubernetes API call.",
+    "Nativecommand-doubletestsremapallhostpaths/installtargetstoprivatefixtures.",
+    "Autoinstallschemadoesnotreplaceinstaller/runtimevalidation;Kickstartparserdoesnotverifydevices,credentials,packageavailabilityorboot.",
+    "No real vendor licensingquoteorworkloadbenchmarkwasproduced."
+  ],
+  "validationArtifacts": [
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-bare-metal/native-validation.json",
+      "sha256": "e81a6e9bdaa0dc3d02dff90b30a10cee3be6b8a17c342678c7e1d6d298a9272e"
+    },
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-bare-metal/pricing-validation.json",
+      "sha256": "5f7282a4c048acdffba7907b6f5f438b0f66b275b9ba14f38930e7954874c10e"
+    },
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-bare-metal/markdown-validation.json",
+      "sha256": "36a5128e442769b43aac1e846d696d5d3f3f6c1e55f3c5dbe8be000404337fc3"
+    },
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-bare-metal/kickstart-native-validation.json",
+      "sha256": "8d5fc17c29efa1609da539205708c4f6a58280f648352dfdb95c2c76f83c4c33"
+    },
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-bare-metal/preserved-anchors.json",
+      "sha256": "a2e8878e9f16b1f0a0833e9a622b597a00092e6f5d8a4639be9dae220f6797ab"
+    }
+  ],
+  "evidenceProvenance": {
+    "originalReport": ".vitepress/cache/core-audit/eks-hybrid-bare-metal/final-validation.json",
+    "originalSha256": "b899c8fee952e948bc1c3cb3822687c3b24fc01771b2b8b1ba1805d8ab89ddac",
+    "adoption": "Existingdomainworkerfullread/nativeevidence preserved;current4MDhashesmatchreviewedbatchrows. No new native/cloud execution claimed."
+  }
+}

@@ -1,360 +1,194 @@
 # EKS Hybrid Nodes Operations Quiz
 
+> **Last Updated**: September 13, 2026
+
 > **Related Document**: [Operations](../../eks-hybrid-nodes/08-operations.md)
 
 ## Multiple Choice Questions
 
-### 1. What is the recommended tool combination for node monitoring in Hybrid Nodes environments?
+<span id="_1-what-is-the-recommended-tool-combination-for-node-monitoring-in-hybrid-nodes-environments"></span>
 
-A. Notepad and manual recording
-B. Prometheus + Grafana + Node Exporter
-C. Email notifications only
-D. Manual log file review
+### 1. Which combination can provide host metrics and dashboards for Hybrid Nodes?
+
+- A) Notepad and manual recording
+- B) Prometheus, Grafana and a correctly configured Node Exporter
+- C) Email notifications only
+- D) Manual log review only
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Prometheus + Grafana + Node Exporter**
+**Answer: B) Prometheus, Grafana and a correctly configured Node Exporter**
 
 **Explanation:**
-The standard monitoring stack in Kubernetes environments is the combination of Prometheus, Grafana, and Node Exporter.
 
-```yaml
-# Node Exporter DaemonSet
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: node-exporter
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: node-exporter
-  template:
-    spec:
-      containers:
-      - name: node-exporter
-        image: prom/node-exporter:v1.6.1
-        ports:
-        - containerPort: 9100
-```
+Prometheus collects metrics, Grafana displays them, Node Exporter exposes host metrics, DCGM Exporter exposes supported GPU metrics, and Alertmanager routes alerts. This is one valid stack, not the only supported option. Install reviewed charts/add-ons and verify host mounts, identity, placement, TLS, authentication and actual scrape targets. A partial DaemonSet without matching selectors/template labels is not a working installation. Container Insights does not provide Hybrid host-level metrics through unavailable EC2 IMDS.
 
-**Monitoring Stack Components:**
-- **Prometheus**: Metric collection and storage
-- **Grafana**: Visualization dashboards
-- **Node Exporter**: Node system metrics
-- **DCGM Exporter**: GPU metrics (for GPU nodes)
-- **Alertmanager**: Alert management
+
+</details>
+
+<span id="_2-how-do-you-check-when-kubelet-certificate-renewal-is-needed"></span>
+
+### 2. How should you check the expiration of a configured node or service certificate?
+
+- A) Assume certificates never expire
+- B) Inspect the actual certificate with OpenSSL and identify its issuer/renewal owner
+- C) Wait for Node NotReady
+- D) Renew every certificate manually every day
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) Inspect the actual certificate with OpenSSL and identify its issuer/renewal owner**
+
+**Explanation:**
+
+First distinguish kubelet serving/client certificates, the EKS control-plane CA, Harbor TLS and IAM Roles Anywhere host certificates. Hybrid IAM authentication does not imply a kubelet-client-current.pem file exists. kubeadm renewal commands do not manage the EKS control plane. An expiration check is separate from chain, hostname, revocation and live authentication checks. serverTLSBootstrap alone does not approve serving CSRs or renew an IAM Roles Anywhere certificate.
 
 ```bash
-# Install Prometheus stack (Helm)
-helm install prometheus prometheus-community/kube-prometheus-stack \
-  --namespace monitoring \
-  --create-namespace
+set -euo pipefail
+: "${CERT_PATH:?Set the actual certificate file}"
+openssl x509 -in "$CERT_PATH" -checkend 604800 -noout
 ```
+
+This example warns within seven days; choose the threshold for the certificate lifetime and renewal policy. Missing or invalid files fail.
 
 </details>
 
-### 2. How do you check when kubelet certificate renewal is needed?
+<span id="_3-what-is-the-first-troubleshooting-step-when-kubelet-is-not-responding-on-a-hybrid-node"></span>
 
-A. Certificates are permanent, no check needed
-B. Check certificate expiration date with openssl command
-C. Wait until node becomes NotReady
-D. Renew manually every day
+### 3. What should you inspect first when kubelet stops responding on a Hybrid Node?
+
+- A) Restart the entire cluster
+- B) Inspect the mapped host service status, recent logs and supporting dependencies
+- C) Create a replacement without investigation
+- D) Delete all Pods
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Check certificate expiration date with openssl command**
+**Answer: B) Inspect the mapped host service status, recent logs and supporting dependencies**
 
 **Explanation:**
-kubelet certificates expire after a certain period and must be periodically checked and renewed.
+
+Identify the registered Node and its actual host, then inspect kubelet/containerd status, finite recent journal output, disk/memory and the verified network/credential path. Do not disable TLS, dump registry credentials, or run nodeadm reset: that subcommand is absent from the reviewed Hybrid CLI. A restart or re-registration is a separate recovery decision; preserve diagnostics and follow the lifecycle guide.
 
 ```bash
-# Check kubelet certificate expiration
-sudo openssl x509 -in /var/lib/kubelet/pki/kubelet-client-current.pem \
-  -text -noout | grep -A 2 "Validity"
-
-# Or use kubeadm
-kubeadm certs check-expiration
-
-# Renew certificates (kubeadm cluster)
-kubeadm certs renew all
-```
-
-**Auto-renewal configuration (EKS):**
-```yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  kubelet:
-    config:
-      rotateCertificates: true  # Auto certificate renewal
-      serverTLSBootstrap: true
-```
-
-**Monitoring alert:**
-```yaml
-- alert: KubeletCertExpiringSoon
-  expr: |
-    kubelet_certificate_manager_client_expiration_seconds < 604800
-  for: 1h
-  labels:
-    severity: warning
-  annotations:
-    summary: "kubelet certificate expiring within 7 days"
+# On the verified host, not a hostname guessed from its Kubernetes Node name:
+sudo systemctl status kubelet containerd --no-pager
+sudo journalctl -u kubelet -u containerd --since '10 minutes ago' --no-pager -n 200
 ```
 
 </details>
 
-### 3. What is the first troubleshooting step when kubelet is not responding on a Hybrid Node?
+<span id="_4-what-command-is-used-to-safely-move-workloads-for-node-maintenance"></span>
 
-A. Restart entire cluster
-B. Check kubelet service status and logs
-C. Create new node
-D. Delete all Pods
+### 4. Which command requests workload eviction for planned node maintenance?
+
+- A) kubectl delete node
+- B) kubectl drain
+- C) kubectl cordon alone
+- D) kubectl delete pods --all
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Check kubelet service status and logs**
+**Answer: B) kubectl drain**
 
 **Explanation:**
-Systematic troubleshooting procedure for kubelet issues:
 
-```bash
-# 1. Check kubelet service status
-sudo systemctl status kubelet
+drain marks the Node unschedulable and normally uses the Eviction API, respecting applicable PDBs. Controllers may create replacement Pods; the command does not transfer memory or guarantee application continuity. Check spare capacity, placement, storage and local data before draining. Do not routinely bypass eviction, discard emptyDir data or override every Pod termination period. Uncordon only after successful host/workload validation and only if the Node was originally schedulable.
 
-# 2. Check kubelet logs
-sudo journalctl -u kubelet -f --no-pager | tail -100
+| Command | Scope |
+| --- | --- |
+| cordon | Prevent normal new scheduling |
+| drain | Cordon and request eviction, with exemptions/constraints |
+| uncordon | Restore scheduling; not a health test |
 
-# 3. Check for common error patterns
-sudo journalctl -u kubelet | grep -E "error|failed|unable"
-
-# 4. Check resource status (memory, disk)
-free -h
-df -h
-
-# 5. Test network connectivity
-curl -vk https://<eks-api-endpoint>:443
-
-# 6. Check containerd status
-sudo systemctl status containerd
-
-# 7. Restart kubelet (if needed)
-sudo systemctl restart kubelet
-```
-
-**Common kubelet failure causes:**
-- Out of memory (OOM)
-- Insufficient disk space
-- Certificate expiration
-- Network disconnection
-- containerd failure
+A PDB with minAvailable: 2 permits one voluntary disruption only when three matching healthy replicas are available. A PDB does not prevent node loss or all application errors.
 
 </details>
 
-### 4. What command is used to safely move workloads for node maintenance?
+<span id="_5-what-is-the-recommended-solution-for-centralizing-logs-from-hybrid-nodes"></span>
 
-A. kubectl delete node
-B. kubectl drain
-C. kubectl cordon only
-D. kubectl delete pods --all
+### 5. Which option can centralize Hybrid workload logs?
+
+- A) Copy every log manually
+- B) Use a configured Fluent Bit/Fluentd collector and a protected central backend
+- C) Collect no logs
+- D) Read console output only
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. kubectl drain**
+**Answer: B) Use a configured Fluent Bit/Fluentd collector and a protected central backend**
 
 **Explanation:**
-`kubectl drain` makes the node unschedulable and safely evicts existing Pods.
 
-```bash
-# 1. Drain node (move workloads)
-kubectl drain hybrid-node-1 \
-  --ignore-daemonsets \
-  --delete-emptydir-data \
-  --grace-period=300
+Configure the actual container runtime log path and parser, Kubernetes metadata permissions, buffers/checkpoints, retries and authenticated TLS output. Containerd commonly uses /var/log/containers symlinks into /var/log/pods; do not copy an old Docker-only /var/lib/docker/containers manifest. The collector needs the appropriate read-only host mounts and a deliberate state-storage policy. Collection is not a guarantee of zero log loss.
 
-# 2. Perform maintenance
-# (OS patches, driver updates, etc.)
-
-# 3. Make node schedulable again
-kubectl uncordon hybrid-node-1
-```
-
-**drain vs cordon comparison:**
-
-| Command | Action |
-|---------|--------|
-| `kubectl cordon` | Only prevent new Pod scheduling |
-| `kubectl drain` | cordon + evict existing Pods |
-| `kubectl uncordon` | Allow scheduling again |
-
-```yaml
-# PodDisruptionBudget for safe draining
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: myapp-pdb
-spec:
-  minAvailable: 2
-  selector:
-    matchLabels:
-      app: myapp
+```text
+Hybrid Nodes → configured collectors → CloudWatch Logs / Loki / Elasticsearch
+                       ↓
+              protected buffers and checkpoints
 ```
 
 </details>
 
-### 5. What is the recommended solution for centralizing logs from Hybrid Nodes?
+<span id="_6-what-is-the-default-wait-time-before-automatically-rescheduling-pods-to-other-nodes-when-a-node-fails"></span>
 
-A. Manually copy log files from each node
-B. Log collection and forwarding using Fluent Bit/Fluentd
-C. No log collection
-D. Console output only
+### 6. With the default admission behavior and no explicit override, what NoExecute toleration duration is added for not-ready and unreachable to ordinary Pods?
+
+- A) 0 seconds
+- B) 30 seconds
+- C) 300 seconds
+- D) 1 hour
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Log collection and forwarding using Fluent Bit/Fluentd**
+**Answer: C) 300 seconds**
 
 **Explanation:**
-Fluent Bit or Fluentd collects container logs and forwards them to central log storage.
+
+Kubernetes normally adds tolerationSeconds: 300 for both taints unless explicitly set. This is a taint-toleration duration, not a guarantee that replacement workloads become Ready exactly five minutes after node failure. Detection, tainting, controller behavior, capacity, volumes and startup add constraints. DaemonSet Pods normally tolerate these taints indefinitely. Shortening the duration does not prove the old process has stopped during a partition; stateful writers may require fencing.
 
 ```yaml
-# Fluent Bit DaemonSet
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: fluent-bit
-  namespace: logging
-spec:
-  template:
-    spec:
-      containers:
-      - name: fluent-bit
-        image: fluent/fluent-bit:2.1
-        volumeMounts:
-        - name: varlog
-          mountPath: /var/log
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-      volumes:
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
+# Fragment under Pod spec or a workload's PodTemplate.spec, not a complete Pod:
+tolerations:
+- key: node.kubernetes.io/not-ready
+  operator: Exists
+  effect: NoExecute
+  tolerationSeconds: 60
+- key: node.kubernetes.io/unreachable
+  operator: Exists
+  effect: NoExecute
+  tolerationSeconds: 60
 ```
 
-**Logging Architecture:**
-```
-[Hybrid Nodes]          [Central Log System]
-+-- Node 1              +------------------+
-|   +-- Fluent Bit ---> | Elasticsearch    |
-+-- Node 2              | or               |
-|   +-- Fluent Bit ---> | CloudWatch Logs  |
-+-- Node 3              | or               |
-    +-- Fluent Bit ---> | Loki             |
-                        +------------------+
-```
+The explicit 60-second example requires a tested availability/data-safety decision; it does not define a 60-second recovery SLO.
 
 </details>
 
-### 6. What is the default wait time before automatically rescheduling Pods to other nodes when a node fails?
+<span id="_7-what-is-the-recommended-strategy-for-eks-hybrid-nodes-upgrades"></span>
 
-A. Immediately (0 seconds)
-B. 30 seconds
-C. 5 minutes (300 seconds)
-D. 1 hour
+### 7. Which approach follows the AWS Hybrid Nodes upgrade guidance?
 
-<details>
-<summary>Show Answer</summary>
-
-**Answer: C. 5 minutes (300 seconds)**
-
-**Explanation:**
-The default `pod-eviction-timeout` in Kubernetes is 5 minutes. Pods are evicted 5 minutes after a node becomes NotReady.
-
-```yaml
-# Node Lifecycle Controller settings (kube-controller-manager)
-# --pod-eviction-timeout=5m0s  (default)
-# --node-monitor-grace-period=40s  (NotReady detection)
-```
-
-**Configuration for faster failover:**
-```yaml
-# Add tolerations to Pod
-apiVersion: v1
-kind: Pod
-spec:
-  tolerations:
-  - key: "node.kubernetes.io/not-ready"
-    operator: "Exists"
-    effect: "NoExecute"
-    tolerationSeconds: 60  # Evict after 60 seconds (default 300)
-  - key: "node.kubernetes.io/unreachable"
-    operator: "Exists"
-    effect: "NoExecute"
-    tolerationSeconds: 60
-```
-
-**Node State Transitions:**
-```
-Ready --(40s)--> NotReady --(5min)--> Pod Eviction
-         |                    |
-    node-monitor-        pod-eviction-
-    grace-period         timeout
-```
-
-</details>
-
-### 7. What is the recommended strategy for EKS Hybrid Nodes upgrades?
-
-A. Upgrade all nodes simultaneously
-B. Rolling upgrade (one at a time)
-C. Delete and recreate cluster
-D. No upgrades
+- A) Upgrade every node simultaneously
+- B) Prefer new hosts and a controlled cutover; otherwise use validated in-place steps one node at a time
+- C) Delete the cluster and recreate it for every upgrade
+- D) Never upgrade
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Rolling upgrade (one at a time)**
+**Answer: B) Prefer new hosts and a controlled cutover; otherwise use validated in-place steps one node at a time**
 
 **Explanation:**
-Rolling upgrades sequentially upgrade nodes without service interruption.
 
-```bash
-# Rolling upgrade procedure
+AWS prefers replacement hosts and migration when spare capacity exists. In-place nodeadm upgrade is disruptive and takes a Kubernetes major.minor argument. Follow the lifecycle guide for skew, drain/data review, the actual host operation, Node UID/full version/new Lease and workload checks. A fixed sleep or an old Ready condition is not acceptance evidence. Do not claim a rolling sequence guarantees zero service interruption.
 
-# 1. Drain first node
-kubectl drain hybrid-node-1 --ignore-daemonsets --delete-emptydir-data
-
-# 2. Upgrade nodeadm
-sudo nodeadm upgrade --config-source file://nodeadm-config.yaml
-
-# 3. Check node status
-kubectl get node hybrid-node-1
-
-# 4. Uncordon node
-kubectl uncordon hybrid-node-1
-
-# 5. Wait for workload stabilization
-sleep 60
-
-# 6. Repeat for next node
-kubectl drain hybrid-node-2 ...
-```
-
-**Upgrade Checklist:**
-- [ ] Verify PodDisruptionBudget settings
-- [ ] Sequential node upgrades
-- [ ] Verify status after each step
-- [ ] Prepare rollback plan
-- [ ] Perform backups
+Before each wave, check backups, PDBs, available capacity, version compatibility, credential identity and the recovery plan. Stop on errors and retain evidence; do not automatically uncordon a failed node.
 
 </details>
 
