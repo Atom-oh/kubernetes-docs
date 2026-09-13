@@ -1,6 +1,6 @@
 # 엔터프라이즈 클라우드 거버넌스 개요
 
-> **마지막 업데이트**: 2026년 9월 9일
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 1. 이 섹션이 다루는 문제
 
@@ -11,7 +11,7 @@
 - EKS 클러스터는 팀마다 따로 둬야 하는가, 공용으로 써야 하는가?
 - 이 세 가지 경계(Account/VPC/EKS)와 데이터 경계는 서로 일치해야 하는가?
 
-이 섹션은 실제로 멀티 어카운트·멀티 EKS 환경을 운영 중인 대규모 e-commerce 조직이 AWS Solutions Architect와 진행한 아키텍처 표준화 검토를 기반으로 합니다. 특정 기업의 계정 ID·비용·조직 정보는 전혀 포함하지 않으며, **AWS 공식 문서로 검증된 quota·API 동작·서비스 제약**만 일반화한 원칙으로 정리했습니다. 즉 "이 회사는 이렇게 했다"가 아니라 "AWS 서비스가 실제로 이런 조건에서 막힌다"는 사실 기반 가이드입니다.
+이 섹션은 대규모 멀티 계정·멀티 EKS 환경의 표준화 결정을 다룹니다. 서비스 제약은 연결된 AWS 공식 문서와 대조하고, Hybrid 구성·분리 기준·POC 임계값은 조직이 검증할 설계 제안으로 구분합니다. 특정 기업의 비공개 검토 결과나 운영 성공을 증명하는 자료로 해석하지 마세요.
 
 ## 2. 왜 Account, VPC, EKS, Data 경계를 따로 생각해야 하는가
 
@@ -28,14 +28,16 @@
 
 이렇게 나누면 "이 워크로드는 별도 VPC가 필요 없지만 규제 때문에 전용 Account는 필요하다"처럼 세밀한 판단이 가능해집니다. 다만 대가도 있습니다 — 경계마다 판정 기준을 관리해야 하고, 예외가 늘어날 수 있습니다.
 
-## 3. AWS가 경계를 강제로 묶는 4가지 조건
+<span id="_3-aws가-경계를-강제로-묶는-4가지-조건"></span>
 
-독립 판정 원칙을 세워도, AWS 서비스 자체의 동작 때문에 특정 경계는 강제로 결합됩니다. 이 조건은 선택이 아니라 설계 초기에 확정해야 하는 제약입니다.
+## 3. 경계를 연결할 때 확인할 서비스 제약
 
-1. **EKS 클러스터는 여러 VPC에 걸쳐 존재할 수 없습니다.** 두 클러스터를 서로 다른 장애 도메인으로 나누고 싶다면(예: A/B 클러스터 이중화), 그 두 클러스터는 자동으로 서로 다른 VPC에 있어야 합니다. EKS 경계는 언제나 VPC 경계의 하위 집합입니다.
-2. **EKS Pod Identity role은 클러스터와 같은 Account에만 존재할 수 있습니다.** Kubernetes 워크로드를 별도의 "공유 클러스터 Account"에서 실행하면서 리소스(Lambda, SQS, RDS 등)는 각 워크로드 소유 Account에 두는 패턴을 쓰려면, cross-account 접근은 항상 "association role → target role" 2단 구조가 됩니다. 이건 최적화가 아니라 필수 구조입니다.
-3. **Shared VPC에서도 EKS의 보안 그룹과 IAM role은 participant Account에 위치해야 합니다.** VPC를 공유해도 SG·IAM 경계는 Account 경계를 그대로 따라갑니다.
-4. **데이터 경계는 서비스별로 갈립니다.** RDS처럼 VPC에 직접 배치되는 서비스가 있고, S3처럼 VPC 개념이 없는 서비스가 있습니다. Shared VPC의 subnet에 리소스를 만들 수 있는 서비스 목록은 AWS가 명시적으로 정해두고 있으며([Data·Security 경계](./05-data-security-boundaries.md) 참고), 이 목록 밖의 서비스를 쓰는 워크로드는 Shared VPC 전략에서 예외로 다뤄야 합니다.
+독립 판정은 서비스별 배치·권한 제약을 함께 고려해야 합니다. 제약에서 유일한 조직 구조가 자동으로 도출되지는 않습니다.
+
+1. **EKS 클러스터의 구성 subnet은 하나의 VPC에 속해야 합니다.** 두 독립 클러스터를 같은 VPC에 둘 수 있습니다. VPC까지 분리할지는 공유 route·DNS·IP 공간의 장애 범위를 기준으로 추가 판단합니다.
+2. **Pod Identity association의 기본 IAM role은 클러스터 Account에 있어야 합니다.** target role 기능을 선택하면 association role → target role의 역할 연결을 사용합니다. S3 등 지원 서비스의 resource policy로 source role을 직접 허용하거나, IRSA로 대상 Account role에 직접 연합하는 다른 경로도 있으므로 모든 cross-account 접근에 두 role이 필수인 것은 아닙니다.
+3. **Shared VPC에서 EKS cluster/node IAM role과 관련 SG는 클러스터를 생성하는 participant Account를 기준으로 설계합니다.** 별도 DB·SQS를 소유한 Workload Account와 혼동하지 마세요. 공유 subnet은 네트워크 배치를 공유하며 각 리소스의 소유권을 이전하지 않습니다.
+4. **데이터 경계는 서비스별로 다릅니다.** RDS 인스턴스는 VPC subnet을 사용하지만 S3 bucket은 subnet에 배치되지 않습니다. Shared VPC 지원 목록은 출발점이며 누락 가능성을 명시하므로, 목록에 없다는 이유만으로 미지원으로 판정하지 않습니다([Data·Security 경계](./05-data-security-boundaries.md)).
 
 ## 4. 공유 우선 vs 전용 우선
 
@@ -64,3 +66,8 @@
 | [의사결정 프레임워크와 POC 설계](./06-decision-framework-and-poc.md) | 판정표 설계, 누락되기 쉬운 결정 요소, POC 측정 지표 |
 
 각 문서는 "이렇게 하는 게 좋다"는 의견보다 "AWS 서비스가 이 조건에서 이렇게 동작한다"는 검증된 사실을 우선하고, 조직의 판단이 필요한 부분은 명확히 구분해서 표시합니다.
+
+## 참고 자료
+
+- [EKS networking requirements](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)
+- [EKS multi-account resource-policy patterns](https://docs.aws.amazon.com/eks/latest/best-practices/subnets.html)

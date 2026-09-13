@@ -1,6 +1,6 @@
 # Shared VPC and Connectivity
 
-> **Last Updated**: September 9, 2026
+> **Last Updated**: September 13, 2026
 
 ## 1. Shared VPC Owner/Participant Permissions — A Common Misunderstanding
 
@@ -20,34 +20,38 @@ When adopting a Shared VPC (sharing subnets across Accounts via AWS RAM), the mo
 
 Two practical implications follow from this table.
 
-**Flow Log visibility is asymmetric in both directions.** To control internal VPC traffic via SG/NACL/route/NetworkPolicy + Flow Logs, **the owner needs to own subnet-level flow logs, and creation of individual flow logs by participants should be blocked via SCP.** Otherwise you pay for duplicated logging while still lacking a complete traffic picture in any single Account.
+**Flow Log ownership is asymmetric.** Central owner-managed subnet/VPC logs can coexist with participant ENI logs, with explicit purpose, retention, and cost ownership. AWS does not require an SCP banning all participant logs. Flow Logs observe traffic; they do not block it.
 
-**VPC/subnet tags are not shared with participants.** The AWS Load Balancer Controller's subnet auto-discovery relies on the `kubernetes.io/role/elb` and `kubernetes.io/role/internal-elb` tags, but in a Shared VPC these tags belong to the owner and aren't guaranteed to be visible in the participant Account. **In a Shared VPC + EKS combination, don't rely on subnet auto-discovery — standardize on explicitly annotating subnet IDs on Ingress/Service resources instead.**
+**VPC/subnet tags are not shared with participants.** Test discovery using the actual Load Balancer Controller version, mode, and IAM permissions. Explicit subnet-ID annotations are a predictable option; this does not mean every discovery mode or version must fail.
 
-Security groups only support Allow rules, and rules from multiple SGs are merged — a broad Allow in one SG can't be offset by a more restrictive central SG. Each SG allows 60 rules (inbound/outbound × IPv4/IPv6, each), each ENI allows 5 SGs, and there's a constraint of **"rule count × SGs per ENI ≤ 1,000."** Firewall Manager's common SG policies consume this same budget.
+Security groups only support Allow rules, and rules from multiple SGs are merged — a broad Allow in one SG can't be offset by a more restrictive central SG. The adjustable defaults are 60 rules per SG (inbound/outbound × IPv4/IPv6, each) and 5 SGs per ENI, and there's a constraint of **"rule count × SGs per ENI ≤ 1,000."** Firewall Manager's common SG policies consume this same budget.
 
-Quotas for resources a participant creates (5,000 ENIs per AZ, 2,500 SGs per Region) are **counted against the participant's own Account.** So these two quotas aren't a bottleneck in a Shared VPC. If you're worried about a participant controlling their own SGs too loosely, that's a permissions issue, not a quota issue — detect violations with a Firewall Manager audit policy.
+Participant ENI/SG quotas are counted against that participant Account. The defaults of 5,000 ENIs/AZ and 2,500 SGs/Region can still bottleneck each Account and are adjustable. Assess capacity separately from SG authorization.
 
-## 2. The Real Ceiling on Shared VPC — It's Not the CIDR
+<span id="_2-the-real-ceiling-on-shared-vpc-—-it-s-not-the-cidr"></span>
 
-It's tempting to focus on "how many IPv4 CIDRs can we attach" when designing a Shared VPC, but in reality, **other quotas hit far sooner.** In a typical large-scale hub-and-spoke setup (central Transit Gateway + Shared VPC), the order you'll hit limits looks like this.
+## 2. Calculate Shared VPC Quotas by Their Actual Scope
 
-| Rank | Quota | Default | Adjustable | Why it hits first |
-|---|---|---|---|---|
-| **1** | **Propagated routes per VPC route table** | **100** | **No** | Enabling route propagation from the central TGW hub stops working the moment VPC + on-prem prefixes exceed 100 combined. **The only non-adjustable item, and the real first bottleneck** |
-| 2 | Participant Accounts per VPC | 100 | Yes | Reached early with team × environment combinations |
-| 3 | Subnets an Account can be shared | 100 | Yes | Grows with AZ × trust zone × purpose combinations |
-| 4 | NAU per VPC | 64,000 | Up to 256,000 | EKS Pods aren't ENIs, but their IPs count toward NAU. Reached at high Pod density |
-| 5 | Subnets / route tables per VPC | 200 each | Yes | |
-| 6 | IPv4 CIDRs per VPC | 5 | Up to 50 | In practice, the **last** limit you'll ever hit |
+Bottleneck order depends on the workload. Separate default and applied quotas, and project growth within each scope.
 
-In other words, you'll hit the **100 propagated routes** limit long before running out of CIDR space. A workaround is advertising a default route (`0.0.0.0/0`) or using static routes, but that conflicts with route-based segmentation controls (forcing central inspection paths). **The first thing to measure in a Shared VPC PoC should be "current and projected propagated prefix count 3 years out."**
+| Scope | Default quota | Interpretation |
+|---|---|---|
+| Non-propagated routes per VPC route table | 500 each for IPv4/IPv6; adjustable to 1,000 | Includes static routes targeting a TGW |
+| Propagated routes per VPC route table | 100; fixed | VGW propagation limit, separate from TGW table totals |
+| Combined static+dynamic routes across all TGW tables | 10,000 per TGW | Contact SA/TAM for increases |
+| Participant Accounts per VPC | 100; adjustable | Sharing principals |
+| Shared subnets per receiving Account | 100; adjustable | AZ/purpose combinations |
+| NAU per VPC | 64,000; adjustable to 256,000 | Includes Pod IPs, ENIs, and managed-prefix-list entries |
+| Subnets and route tables per VPC | 200 each; adjustable | Configuration count |
+| IPv4 CIDRs per VPC | 5; adjustable to 50 | Also evaluate address consumption and fragmentation |
+
+**TGW routes do not automatically propagate into VPC route tables.** The VPC owner adds static routes targeting the TGW; attachment propagation is managed in TGW route tables. Thus “more than 100 TGW prefixes stops Shared VPC” is incorrect. Whether a default route preserves or bypasses inspection depends on actual route associations and return paths.
 
 ### Minimal Shared VPC Pool vs. Per-Workload-Group Shared VPCs
 
 When comparing "one minimal configuration that pools all workloads into a single Shared VPC" against "multiple dedicated Shared VPCs, one per workload group," there's a perspective that's easy to miss.
 
-- **A single VPC can have only one TGW attachment (not adjustable).** A single attachment caps throughput at up to 100 Gbps (each direction) / 7,500,000 PPS per AZ.
+- **Only one VPC attachment is allowed for the same TGW–VPC pair.** A VPC can connect to up to 5 TGWs. Default attachment capacity is up to 100 Gbps each direction/7.5 MPPS per AZ; discuss additional capacity with SA/TAM.
 - In the minimal configuration, all workloads' on-prem/external traffic converges onto this single attachment — you share not just blast radius, but **bandwidth and PPS ceilings** too.
 - The per-workload-group configuration gives each VPC its own attachment, splitting that throughput ceiling. **Being able to split the TGW throughput ceiling is the real practical reason to choose "multiple dedicated Shared VPCs."**
 
@@ -62,17 +66,17 @@ Ultimately, the choice between minimal and per-group configurations is better un
 | **TGWs / VPC** | **5** | **No** |
 | TGW route tables / TGW | 20 | Yes |
 | Total routes / TGW | 10,000 | Contact SA/TAM |
-| **VPC attachments per VPC** | **1** | **No** |
+| **Attachments for the same TGW–VPC pair** | **1** | **No** |
 
-**MTU mismatches also need checking.** TGW's MTU is 8,500 bytes, but VPN paths are 1,500 bytes. Moving on-prem VPN connectivity from VPC Peering to TGW can cause asymmetric packet drops in this segment due to the mismatch — you need to change both VPCs simultaneously, and TGW applies MSS clamping to every packet.
+**Check MTU across the complete path.** TGW supports 8,500 bytes for VPC/DX/Connect/peering paths; VPN has separate tunnel limits. When migrating VPC peering to TGW, test both endpoints’ jumbo-frame settings and PMTUD. MSS clamping concerns TCP and does not solve MTU issues for every packet protocol such as UDP.
 
-If using VPC Peering, the Peered NAU limit is 128,000 (up to 512,000), applied **to the sum of all peered VPCs within the same Region** (cross-Region peering isn't included).
+Peered NAU counts a VPC plus its directly peered VPCs in the same Region (default 128,000, maximum 512,000), not every VPC in the organization or a transitive connectivity graph.
 
 ## 3. AZ IDs and Shared VPC
 
 AZ names (`ap-northeast-2a`, etc.) can map to different physical AZs across Accounts. Cross-account resource placement should use **AZ IDs (`apne2-az*`)**, not AZ names.
 
-If you're using VPC CNI custom networking, this isn't merely a best practice — it's a **functional requirement**: `ENIConfig` resources must be built against the AZ ID mapping published by the central networking Account. If you're isolating a PII boundary via a secondary CIDR, you're likely to end up using custom networking as well, so confirm this relationship in advance.
+For VPC CNI custom networking, use AZ IDs to map owner subnets to participant nodes’ physical AZs. ENIConfig names must match the selected node annotation/label. With `ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone`, use the node’s AZ name and put the subnet ID matching that AZ ID in the spec. Blindly naming ENIConfig with an AZ ID can break lookup. A secondary CIDR alone is not a security boundary.
 
 ## 4. Regional NAT Gateway
 
@@ -101,7 +105,7 @@ From AWS's perspective, there's no condition that makes central inspection manda
 
 ## 6. AWS APIs and VPC Endpoints
 
-Endpoint (Gateway/Interface) support and endpoint policy support vary by service, Region, and feature. If you don't specify an endpoint policy, a default full-access policy applies. We recommend maintaining this coverage matrix by periodically dumping `aws ec2 describe-vpc-endpoint-services` and diffing it automatically, rather than manual research.
+Check endpoint and endpoint-policy support by service, Region, and feature. A default full-access endpoint policy does not grant new IAM permissions. Combine describe-vpc-endpoint-services inventory with service documentation, private-DNS checks, and actual allow/deny validation.
 
 ## 7. Route 53 Profiles and Hybrid DNS
 
@@ -124,9 +128,9 @@ These aren't mutually exclusive — they're patterns chosen per edge based on tr
 | Option | Suits | Constraints |
 |---|---|---|
 | VPC Peering | Direct bidirectional connectivity between a small number of VPCs | Peered NAU 128,000 (→512,000) limit, no CIDR overlap, non-transitive |
-| Transit Gateway | Many VPCs, on-prem, central inspection | Propagated routes capped at 100 (fixed), 1 attachment per VPC (fixed), 100 Gbps/7.5M PPS per AZ |
+| Transit Gateway | Many VPCs, on-prem, central inspection | Count TGW table totals, VPC static routes, per-pair attachments, and throughput separately |
 | PrivateLink | Exposing a specific service in one direction | Endpoint cost, ongoing provider/consumer operations |
-| **VPC Lattice** | Application-level service networking/auth, **connecting VPCs with overlapping CIDRs** (no alternative) | See table below |
+| **VPC Lattice** | Application service/resource connectivity, including overlapping CIDR use cases | Compare protocols, auth, and cost with alternatives such as PrivateLink/NAT |
 | Same-VPC local routing | Same trust zone, resources that can share a VPC | Shares route/DNS/IP failure |
 
 ### VPC Lattice constraints
@@ -136,7 +140,7 @@ Lattice is often described more casually than its real constraints warrant.
 | Item | Value | Impact |
 |---|---|---|
 | Service network associations per VPC | **1 only** | Multiple networks require a service-network-type VPC endpoint |
-| **Max connection lifetime for a Lattice service** | **10 minutes** | **Long-lived connections (gRPC streaming, WebSocket, long batch calls) are forcibly cut every 10 minutes** — the application must handle reconnection |
+| **Max connection lifetime for a Lattice service** | **10 minutes** | Test reconnect/retry/idempotency; distinguish resource connections |
 | Lattice service idle timeout | Default 60s (60–600s) | |
 | Lattice resource idle timeout | 350s, no connection lifetime limit | TCP resources have fewer constraints |
 | Bandwidth/RPS per service per AZ | 10 Gbps / 10,000 RPS (increasable) | |
@@ -144,7 +148,7 @@ Lattice is often described more casually than its real constraints warrant.
 | Service networks per Region | 50 | |
 | MTU | 8,500 bytes | |
 
-**Exclude segments using long-lived connections from Lattice.** Conversely, Lattice can be a better fit than Private NAT or CNI custom networking for connecting legacy/acquired environments with overlapping CIDRs (since it operates in link-local address space).
+Assess long-lived traffic separately for services and resources. A service’s 10-minute lifetime differs from a resource’s 350-second idle timeout. HTTP/HTTPS listeners do not natively support WebSockets; TLS listeners or Lattice resources provide alternative paths. Choose after validating protocols, reconnection, SNI, authorization, and load.
 
 ## 9. East-West Inspection Options
 
@@ -155,7 +159,7 @@ Lattice is often described more casually than its real constraints warrant.
 | Central TGW inspection | Inspecting traffic in bulk on the Transit Gateway path |
 | **Hybrid** | Distributed within a trust zone, centralized between trust zones/regulated paths |
 
-If you use a Shared VPC, distributed policy controls also need the "owner owns subnet flow logs + block individual flow log creation by participants via SCP" rule mentioned earlier.
+Document Shared VPC log ownership, access, retention, and duplicate cost. Owner and participant logs can be collected centrally; banning participant logs is not a prerequisite.
 
 ## Next
 
@@ -184,3 +188,6 @@ Once VPC boundaries are settled, the remaining decision is how to draw data and 
 - [Centralized VPC inspection](https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/centralized-network-security-for-vpc-to-vpc-and-on-premises-to-vpc-traffic.html)
 - [Route 53 Profiles](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/profiles.html)
 - [Route 53 Resolver hybrid DNS](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html)
+- [TGW route propagation FAQ](https://aws.amazon.com/transit-gateway/faqs/)
+- [ENIConfig label mapping](https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html)
+- [Lattice listener protocols](https://docs.aws.amazon.com/vpc-lattice/latest/ug/listeners.html)

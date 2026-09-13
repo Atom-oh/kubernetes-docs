@@ -1,6 +1,6 @@
 # Account Structure and IAM Boundaries
 
-> **Last Updated**: September 9, 2026
+> **Last Updated**: September 13, 2026
 
 ## 1. Account Partitioning: What Should the Basis Be?
 
@@ -17,7 +17,7 @@ In practice, starting with a Hybrid portfolio and deciding shared vs. dedicated 
 
 Treat brand as metadata if only cost separation is needed, and promote it to an Account axis only when there's a strong boundary — regulatory, independent quota, permissions, or carve-out potential. A workload that aggregates data across domains and serves it via API can be a candidate for its own Workload Account if it has independent SLO, quota, data access, and lifecycle. **A separate Account doesn't necessarily mean a separate EKS cluster.**
 
-> **A must-check item if carve-out is a real possibility**: RAM (Resource Access Manager)-based subnet sharing only works **within the same Organization**. If a particular organizational unit might realistically be carved out (spun off), a structure that keeps a Shared VPC while only splitting the Account can't handle that — the Shared VPC relationship breaks first at the moment of carve-out. In this case a dedicated VPC is effectively mandatory.
+> **Carve-out planning**: Subnet sharing is supported within one Organization. Prepare an independent network migration before leaving. Existing resources may continue after unsharing, but new creation and managed-service replacement/scaling can be affected. Unsharing does not immediately delete or stop every resource.
 
 ## 2. Account and EKS Runtime Relationship
 
@@ -28,7 +28,7 @@ Once Account partitioning is decided, you need to decide which Account's EKS clu
 | Dedicated EKS per Workload Account | Each Workload Account owns its own EKS cluster | Account and runtime ownership/blast radius align | Even small workloads need a cluster, increasing the number of clusters to manage and idle capacity |
 | **Workload Account + Shared Cluster Account** | Resources like Lambda/SQS/DB live in each Workload Account, while Kubernetes workloads run on shared EKS in a separate Cluster Account | Account boundaries and the number of EKS clusters to manage can be decided independently | Cross-account identity, networking, and cluster ownership become more complex |
 
-No AWS constraint blocks the second pattern, but as explained in the [overview](./00-governance-overview.md), the constraint that **an EKS Pod Identity role can only exist in the same Account as the cluster means cross-account resource access is mandatory default structure for every workload, not an option.** The Shared Cluster's security groups and IAM roles always live in the participant Account (the workload's own Account holding the resources).
+In the second pattern, distinguish cluster-account IAM roles from access to another Account’s data. With Shared VPC, the participant creating EKS is the **Cluster Account**, which may differ from the Workload Account owning only a database or queue. Select Pod Identity target-role chaining, service resource policies, or IRSA as appropriate.
 
 ### EKS-related quotas — where there's headroom, and where you'll actually hit a wall
 
@@ -43,7 +43,7 @@ No AWS constraint blocks the second pattern, but as explained in the [overview](
 
 Most EKS quotas have headroom, but the **3,000 access-entries-per-cluster limit (not adjustable)** is a real ceiling you'll approach quickly if you issue individual CI/CD roles per workload × environment across dozens of teams. We recommend consolidating access paths into Permission Sets or team-level roles, and grouping access entries by principal type.
 
-**30 managed node groups** may in practice be hit even sooner than access entries. A per-tenant node group isolation strategy hits its ceiling at 30 tenants. Consider Karpenter with taints/tolerations and NodePool-based isolation as an alternative (Karpenter's [ARC zonal shift integration](./03-eks-multi-account-multi-cluster.md) requires version 1.12 or later).
+Thirty managed node groups is an adjustable default, not a fixed 30-tenant ceiling. Karpenter NodePools and taints/tolerations control placement and are not strong security boundaries by themselves. Assess applied quotas, permissions, shared kernels, and node-agent privileges together.
 
 ## 3. Human Access to AWS (Workforce IAM)
 
@@ -61,15 +61,15 @@ We recommend excluding per-Account IAM users from the general option set entirel
 |---|---|---|
 | Total permission sets | 3,500 | Yes |
 | Provisioned permission sets per Account | 500 | Yes |
-| Managed policies per permission set | 25 (though IAM's "10 managed policies per role" is the effective ceiling) | — |
-| Inline policy size per permission set | 32,768 bytes | No |
-| **Groups assignable to a permission set per Account** | **100** | **No** |
-| Configurable Accounts | 7,000 | — |
-| Overall API throttle | 20 TPS | — |
+| Managed policies per permission set | 25; the separate IAM-role default of 10 must be increased as needed | Permission-set limit: no |
+| Inline policy per permission set | 32,768 bytes; 10,240 non-whitespace bytes | No |
+| **Groups assigned to one permission set in one Account** | **100** | **No** |
+| Configurable Accounts | 7,000 | Yes |
+| Identity Center API throttle | Collective 20 TPS; read increases via support | Check additional API-specific limits |
 
-Of these, **"100 groups assignable per Account (not adjustable)" is the actual ceiling on pure RBAC scaling.** If you assign groups representing dozens of team × role combinations to a single Account accessed by many teams (e.g., a Shared Cluster Account, a central DB Account), you'll hit that limit.
+The 100-group limit applies to a **specific permission-set/Account combination**, not all groups in an Account. Do not add groups across different permission sets and treat 100 as the Account-wide RBAC ceiling.
 
-> **Recommended decision rule**: Because of this constraint, "RBAC + limited ABAC" should be treated as **mandatory (not optional) for any Account accessed by multiple teams.** Add an "estimated number of groups accessing this Account" column to your decision matrix, and use 50 (half the limit) as the threshold for triggering either ABAC adoption or Account splitting.
+> **Design proposal**: Measure assignments per permission set and policy duplication before comparing RBAC simplification, ABAC, and Account separation. A warning at 50 is an optional local threshold, not an AWS requirement or mandatory ABAC trigger.
 
 ## 4. Workload (Application/Automation) Access to AWS
 
@@ -80,11 +80,11 @@ The items below aren't mutually exclusive options — they're patterns you combi
 | Runtime role | Attach an IAM role to an execution environment (EC2/Lambda/ECS, etc.) | Non-EKS workloads |
 | **EKS Pod Identity** | Link a Pod to an IAM role via a Pod Identity association | Supported EKS workloads (recommended direction) |
 | IRSA | Kubernetes service account tokens + an IAM OIDC provider | Existing clusters/toolchains requiring compatibility |
-| **Cross-account target role** | The source role from any of the three above assumes a target role in the resource's Account | Any case requiring cross-account resource access |
+| **Cross-account target role** | Source role assumes a target-account role | Paths that need to execute with target-role permissions |
 
 Allow static access keys only as an exception for legacy integrations that don't support roles or federation, with explicit purpose, owner, expiration, and rotation documented.
 
-As emphasized earlier, **a Pod Identity role can only exist in the same Account as the cluster.** With a Shared Cluster Account pattern, cross-account resource access is always a two-hop structure — "association role → target role (AssumeRole)." That means each workload needs 2 roles and 2 trust policies, and this structure scales linearly with the number of workloads — plan for this alongside the access-entry quota.
+The primary Pod Identity association role is in the cluster Account. Setting targetRoleArn chains two roles, while supported resource policies can instead authorize that source role directly. IRSA can also federate directly to a target-account OIDC provider/role. Role reuse and session tag/policy design determine role counts; “exactly two per workload” is not universal. Workload roles for AWS APIs are counted separately from Access Entries for Kubernetes API access.
 
 ## 5. Kubernetes API Access
 
@@ -93,7 +93,7 @@ As emphasized earlier, **a Pod Identity role can only exist in the same Account 
 | **EKS Access Entries** | Manage cluster access per IAM principal via Access Entries, using either an Access Policy or a Kubernetes group mapping for RBAC | Recommended direction |
 | aws-auth ConfigMap | Manage IAM principal-to-Kubernetes identity mapping via the cluster's `aws-auth` ConfigMap | Keep only as an exception during legacy cluster migration |
 
-**Important constraint**: if you use both an Access Policy and Kubernetes RBAC (group mapping) on an Access Entry, **the permissions from both paths are combined, and neither can restrict the other.** In other words, "designate a single primary grant path per principal, and automatically detect duplicate grants between the Access Policy and RBAC paths" isn't optional — it's mandatory control. Without automating it, permission creep will inevitably accumulate over time.
+**Permission union**: Access Policies and Kubernetes RBAC grants combine; neither restricts the other. Record each principal’s primary path and intentional additional grants, and review overlaps. Automated checks are useful implementation choices, not prerequisites for using the API.
 
 ## Next
 
@@ -110,3 +110,6 @@ Once Account and IAM boundaries are settled, the next decision is how many EKS c
 - [IAM Roles for Service Accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
 - [EKS multi-account strategy](https://docs.aws.amazon.com/eks/latest/best-practices/multi-account-strategy.html)
 - [EKS quotas](https://docs.aws.amazon.com/general/latest/gr/eks.html#limits_eks)
+- [EKS shared subnet requirements](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)
+- [Unsharing subnets](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-share-subnet-working-with.html)
+- [EKS resource-policy patterns](https://docs.aws.amazon.com/eks/latest/best-practices/subnets.html)

@@ -1,6 +1,6 @@
 # Landing Zone, OUs, and Organizational Control
 
-> **Last Updated**: September 9, 2026
+> **Last Updated**: September 13, 2026
 
 ## 1. Control Tower Landing Zone 4.0's Baseline Dependency Chain
 
@@ -18,27 +18,29 @@ CentralConfigBaseline
 
 To use `IdentityCenterBaseline` (Identity Center integration), `CentralSecurityRolesBaseline` must already be active, which in turn requires `CentralConfigBaseline` (AWS Config). **Deactivation must happen in reverse order** — you must turn off all three on the right (IdentityCenter/BackupAdmin/BackupCentralVault) before you can turn off SecurityRoles, and only then can you turn off Config.
 
-> **Why this matters**: A design that defers Config as an independent decision — "we'll adopt Identity Center now but decide on Config later after comparing CNAPP tools" — doesn't hold. **Whether Config is enabled directly determines whether the Identity Center baseline can be used.**
+> **Scope**: This chain applies to the IdentityCenterBaseline managed by Control Tower 4.0. IAM Identity Center itself does not require AWS Config. Distinguish independently managed Identity Center from its Control Tower integration.
 
-Landing Zone-level Config integration only deploys central resources into the service integration Account. To deploy a Config Recorder to a general member Account, you still need to enable the Config baseline per OU — but **if you disable Config integration at the Landing Zone level, you can't turn on the OU baseline either.** If you want "Config is owned by the internal platform pipeline," Landing Zone-level integration must stay on, with only the OU baseline applied selectively.
+Landing-zone Config integration deploys Config resources into service-integration Accounts. Member Accounts need the OU-level AWSControlTowerBaseline or ConfigBaseline; these two are mutually exclusive on an OU. This managed path requires landing-zone Config integration. For independently deployed Config, separately design ownership, conflict handling, and detective-control coverage.
 
-### The Security OU is no longer freely designable
+<span id="the-security-ou-is-no-longer-freely-designable"></span>
 
-In Control Tower 3.x, administrators manually created a designated Security OU. **In 4.0, the OU containing the service integration Accounts is automatically designated as the Security OU.** Three constraints follow from this.
+### Security OU placement and baseline scope
+
+Earlier landing zones included Control Tower-managed Security OU creation. **Version 4.0 no longer manages that creation; the common parent OU containing service-integration Accounts is designated as the Security OU.** Check these baseline-scope constraints.
 
 1. `AWSControlTowerBaseline` and the Config Baseline cannot be applied to this OU (shown as `Not Applicable`, which is normal). `BackupBaseline` can be applied.
 2. If a non-service-integration Account is placed in this OU, it won't receive baseline resources.
 3. Control Tower only auto-creates Identity Center permission sets for the Logging Account and SecurityRoles Account. **You must create the permission sets for the Config Account and Backup Account yourself.**
 
-Also, **moving a general Account into the Security OU family puts that OU's enabled controls into a drift state**, regardless of the auto-enrollment setting. Don't place a `Transitional` OU (used for inspecting inherited/migrated Accounts) under the Security OU family.
+Moving a general Account into the same OU as service-integration Accounts can drift enabled controls, independently of auto-enrollment. This constraint concerns that OU. Consider a separate managed OU for general security tools and Accounts awaiting migration.
 
-> **Design recommendation**: Separate `Security` (reserved exclusively for 4.0's service integration Accounts — never place a general Account there) from `SecurityOperations` (general Accounts your security team actually uses, e.g., SIEM/CNAPP integration accounts). Merging these two into one OU will always require rework later.
+> **Design proposal**: Separate service-integration Accounts from general security-operations Accounts to clarify baseline scope. AWS does not mandate particular OU names.
 
 ### CentralizedLogging deactivation behavior changed
 
 In Control Tower 3.3 and earlier, disabling CentralizedLogging integration only turned off the Organization CloudTrail and kept already-deployed resources. **In 4.0, disabling it actually deletes the Config Recorder, Delivery Channel, and CloudTrail-related stack instances in the logging Account.** After that, Control Tower no longer manages that Account.
 
-During a phased migration, you cannot use "disable now, re-enable later" as a rollback mechanism — this is a teardown, not a toggle.
+Before disabling, inventory affected stacks, recording gaps, and retained S3 logs separately. Management can be restored by re-enabling the integration or moving the Account to a managed OU, but recovery of collection gaps requires validation. This behavior does not establish that every historical log is deleted.
 
 ### Splitting responsibility between Control Tower and the internal pipeline
 
@@ -46,15 +48,15 @@ Based on which service integrations and OU baselines you activate, you need to d
 
 | Direction | Configuration | Trade-offs |
 |---|---|---|
-| A. Maximize Control Tower | Enable all of Config/CloudTrail/SecurityRoles/Backup integration + per-OU Config baseline | Identity Center baseline usable. Config costs apply organization-wide |
-| B. Minimize | Enable only Config integration, apply the OU baseline selectively, manage Identity Center directly via the internal pipeline | Config cost is controllable per OU, but you must operate Permission Set lifecycle yourself |
+| A. Control Tower managed | Enable required integrations in dependency order; select baselines per OU | Central operations, with recording scope and cost managed together |
+| B. Explicit ownership split | Define independently managed Identity Center/Config and Control Tower scopes | Internal lifecycle, conflict, and coverage validation |
 
 ## 2. Auto-Enrollment
 
-With Landing Zone 3.1+, moving an Account into a registered OU automatically applies that OU's baselines and controls (auto-enrollment). Still, there are things it doesn't do for you.
+With Landing Zone 3.1+, enable auto-enrollment through landing-zone settings/API before moving an Account into a registered OU to automatically apply that OU’s baselines and controls. Still, there are things it doesn't do for you.
 
 - **It doesn't resolve pre-existing configuration conflicts or failure recovery automatically.** Pre-checks (Config, CloudTrail, SCP, IAM conflicts) need to be done separately.
-- **Unenrollment automatically deletes baseline resources.** If you unenroll an Account because it's slated for decommissioning, the baseline resources kept as audit evidence disappear with it. It's safer to **keep decommissioned Accounts enrolled and block changes with a Deny-focused SCP** instead.
+- Unenrollment can remove managed baseline resources. Verify retention of existing logs and evidence separately. Keeping governance while restricting changes is an operational option for retiring Accounts, not an AWS requirement that every OU remain enrolled.
 - Enrollment follows an eventually-consistent model, so it can take anywhere from minutes to hours depending on how many Accounts are moved.
 - **Auto-enrollment does not create, modify, or terminate Service Catalog provisioned products.** If you unenroll an Account created via Account Factory, its provisioned product becomes an orphan in the management Account.
 
@@ -83,13 +85,13 @@ The key fact is that **inherited policies don't consume the per-entity attachmen
 | Fully-specified per-OU direct attachment | Attach every SCP each OU needs directly, minimizing dependency on parent OUs | Doesn't use inheritance, so a single OU can consume the entire 10-attachment limit — at the limit, policies must be merged |
 | **Layered bundle** | Root carries only a minimal, exception-free SCP; the rest is versioned per-OU policy bundles + expiring exceptions | Actively leverages inheritance to conserve the direct-attach limit per OU — **the most scalable option from a quota perspective** |
 
-Organizations itself has no policy versioning feature, so to run "versioned policy bundles" you need to embed a version string directly in the policy document's `Sid` and build your own tooling to determine which version applied from effective policy simulation results.
+Version policy documents and attachment inventories through Git revisions, deployment manifests, and CloudTrail changes. A version in Sid is optional. Inherited SCPs/RCPs, resource policies, and permission boundaries have distinct evaluation scopes; one simulation does not establish complete effective authorization.
 
 A few more confirmed constraints:
 
 - **If an entity has any SCP enabled, the last remaining SCP cannot be removed.** A design of "the exception OU has no controls at all" doesn't hold — even exception OUs need a minimal baseline SCP.
 - OU nesting goes up to **5 levels** below Root, and the org can have up to **2,000 OUs** total. Flat or shallow-functional-hybrid structures aren't affected by this ceiling.
-- **RCP only has 4 usable slots and its document size is half that of SCP (5,120 chars)**. You don't have room for a layered-bundle-style strategy with RCP. It's better reserved for a small number of absolute organization-wide rules (fully blocking external principal access to S3/KMS, confused-deputy defense via enforcing `aws:SourceOrgID`), leaving fine-grained control to SCPs and individual resource policies. In particular, reserving RCP as the **last line of defense for PII storage** is an effective strategy.
+- RCPFullAWSAccess consumes one of five RCP attachments per entity. Four available direct attachments do not prohibit inheritance. Place controls across Root, OU, and Account levels while checking supported services, service-principal exceptions, and explicit denies. RCPs can protect sensitive-data paths but do not replace IAM, KMS, or resource policies.
 - Organizations also has a **Security Hub policy type** — a means of centrally deploying Security Hub configuration as an org policy, worth reviewing alongside SCP/RCP/declarative policy/Tag Policy.
 
 ### Role separation by policy type (confirmed facts)
@@ -97,7 +99,7 @@ A few more confirmed constraints:
 | Policy type | Role |
 |---|---|
 | SCP | Limits a principal's maximum permissions (doesn't grant permissions) |
-| RCP | Limits the maximum scope a supported resource's resource policy can grant (doesn't directly grant permissions) |
+| RCP | Limits maximum permissions available for supported resources in member Accounts (does not grant permissions) |
 | Declarative policy | Maintains org-wide common baseline settings for supported services |
 | Tag Policy | Checks and enforces tag standard compliance |
 | Control Tower control | Preventive/proactive/detective control at the OU level |
@@ -111,7 +113,7 @@ One SCP evaluation principle worth keeping in mind: an allow-list approach requi
 | Allow-list-centric | Sandbox, regulated zones where the set of usable services can be pre-restricted | Every new service/API must be explicitly allowed before use |
 | **Deny-list-centric** | General Workload OU (default) | Requires ongoing detection of new service/API risk and maintaining a Deny catalog |
 
-For information that changes constantly, such as whether a new service supports VPC endpoints, we recommend periodically dumping `aws ec2 describe-vpc-endpoint-services` and diffing it automatically instead of relying on manual research.
+Compare regional describe-vpc-endpoint-services results with service documentation. The API inventory alone does not establish complete endpoint-policy, feature, or private-DNS support.
 
 ## 5. OU Design Options
 
@@ -119,9 +121,9 @@ For information that changes constantly, such as whether a new service supports 
 |---|---|---|---|
 | Deep hierarchical | Multiple nested levels below Root, parent controls inherited by children | Easy to represent classification and shared controls in the hierarchy | A Deny at a higher level has broad blast radius. Real ceiling is 5 levels |
 | Flat under Root | Most OUs sit directly under Root, controls attached directly | Easy to reason about the blast radius of each OU | Risk of duplicated/missing shared policies; consumes the 10-attachment limit without inheritance |
-| **Shallow functional hybrid** | Combine rarely-changing functional OUs (`Security`, `Infrastructure`) with lifecycle/procedural OUs (`Workloads/Production`, `Workloads/Non-production`, `Sandbox`, `PolicyStaging`, `Transitional`, `Suspended`) shallowly | Reduces the blast radius of org-chart changes while still expressing operational state | Functional classification, lifecycle, inheritance, and policy bundles must all be validated together. Because of the Security OU 4.0 constraint above, `Security` and `SecurityOperations` must be separated |
+| **Shallow functional hybrid** | Combine rarely-changing functional OUs (`Security`, `Infrastructure`) with lifecycle/procedural OUs (`Workloads/Production`, `Workloads/Non-production`, `Sandbox`, `PolicyStaging`, `Transitional`, `Suspended`) shallowly | Reduces the blast radius of org-chart changes while still expressing operational state | Functional classification, lifecycle, inheritance, and policy bundles must all be validated together. Because of the Security OU 4.0 constraint above, consider separate placement for service-integration and general operations Accounts |
 
-`Transitional` is a temporary staging spot for inspecting acquired/migrated Accounts before placing them in a standard OU; `Suspended` blocks general changes to Accounts slated for decommissioning. Both must **stay enrolled** (see Section 2). A `Quarantine` OU for suspected breach Accounts should only be split out separately when its investigation authority, evidence preservation, and recovery process genuinely differ from `Suspended`.
+`Transitional` can stage Accounts for migration checks; `Suspended` can restrict changes before retirement. Decide enrollment, evidence retention, and recovery access per lifecycle. Use a separate `Quarantine` when incident-investigation procedures differ.
 
 It's worth distinguishing a persistent `Production-Exception` OU from time-boxed exception policies. If a particular API or policy only needs to be allowed for a limited window, handle it as an approval-scoped, expiring exception inside the standard Production OU; only create a separate OU when an Account needs a fundamentally different, long-term control set that's technically incompatible with the standard baseline.
 

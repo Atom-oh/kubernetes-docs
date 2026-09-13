@@ -4,19 +4,19 @@
 
 ---
 
-1. What is the primary reason an A/B EKS Runtime (splitting the blast radius across two clusters) provides real availability improvement?
-   - A) To defend against AZ failures, because the EKS managed control plane isn't multi-AZ
-   - B) To contain failures the organization itself creates, like failed cluster upgrades, add-on regressions, and bad cluster-wide policy rollouts
-   - C) Because it's an officially recommended standard AWS pattern
-   - D) To reduce cost
+1. What is a valid validation objective for two-cluster A/B EKS?
+   - A) Fixing a single-AZ EKS control plane
+   - B) Testing containment of upgrade/add-on/webhook failures to one cluster
+   - C) Automatically covering every Region outage
+   - D) Guaranteeing lower cost
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) To contain failures the organization itself creates, like failed cluster upgrades, add-on regressions, and bad cluster-wide policy rollouts**
+**Answer: B) Testing containment of upgrade/add-on/webhook failures to one cluster**
 
 **Explanation:**
-The EKS managed control plane is already multi-AZ, and ARC zonal shift/autoshift only acts on the data plane. The value of an A/B EKS Runtime is protection against failures the organization itself creates — this is not an official AWS-recommended pattern, but a working hypothesis the organization must validate itself.
+Cluster-specific failure containment can justify the design. Shared VPC, DNS, Account, and data dependencies require separate analysis.
 
 </details>
 
@@ -34,42 +34,42 @@ The EKS managed control plane is already multi-AZ, and ARC zonal shift/autoshift
 **Answer: B) If a workload's endpoints exist only in the impaired AZ, EKS keeps sending traffic to that AZ anyway**
 
 **Explanation:**
-This is the fail-safe behavior — a workload deployed to only a single AZ is not protected by zonal shift. This is why it's recommended to formalize the rule that clusters targeted by ARC zonal autoshift must not host single-AZ workloads.
+This is the fail-safe behavior — a workload deployed to only a single AZ is not protected by zonal shift. Test N-1 load and single-AZ exceptions; this does not mean a practice run always stops that workload.
 
 </details>
 
 ---
 
-3. What's true about the packet rate limit from a single ENI to Route 53 Resolver?
-   - A) It's 1,024 packets/sec (not adjustable), and can be the root cause of CoreDNS failures on high-pod-density nodes
-   - B) There's no limit at all
-   - C) It's capped at 100 Gbps per AZ
-   - D) It's not counted toward NAU (Network Address Usage)
+3. What does the EC2 link-local 1,024 packet/sec allowance imply?
+   - A) Check combined DNS/IMDS/NTP traffic and actual DNS metrics
+   - B) Unlimited capacity reserved exclusively for DNS
+   - C) A 100 Gbps-per-AZ limit
+   - D) Proof that CoreDNS is the most common failure
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) It's 1,024 packets/sec (not adjustable), and can be the root cause of CoreDNS failures on high-pod-density nodes**
+**Answer: A) Check combined DNS/IMDS/NTP traffic and actual DNS metrics**
 
 **Explanation:**
-This limit is not adjustable, and CoreDNS is the most common single point of failure across both A/B setups and AZ redundancy. On high-pod-density nodes, this packet limit can become the actual root cause of DNS failures, making NodeLocal DNS worth adopting.
+Review the shared link-local allowance and VPC DNS ENI limit. Verify linklocal_allowance_exceeded and DNS latency instead of inferring cause from Pod density alone.
 
 </details>
 
 ---
 
-4. What's the risk of disabling ALB target group cross-zone load balancing?
-   - A) It actually increases cost
-   - B) Sticky sessions and Lambda targets can't be used, and if any AZ has zero healthy targets, all requests landing in that AZ get 503s
-   - C) The EKS cluster restarts automatically
-   - D) NAT Gateway quota is exceeded
+4. What should be checked when disabling ALB target-group cross-zone balancing?
+   - A) Guaranteed ALB cross-zone transfer savings
+   - B) Per-AZ capacity, distinguishing empty-AZ 503 from unhealthy-target failover
+   - C) Automatic cluster restarts
+   - D) All targets become healthy
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Sticky sessions and Lambda targets can't be used, and if any AZ has zero healthy targets, all requests landing in that AZ get 503s**
+**Answer: B) Per-AZ capacity, distinguishing empty-AZ 503 from unhealthy-target failover**
 
 **Explanation:**
-Disabling cross-zone load balancing reduces cross-AZ cost, but with significant trade-offs. AWS recommends keeping the default (enabled) unless you can guarantee per-AZ capacity.
+Target stickiness and Lambda targets have restrictions; empty and unhealthy targets differ. ALB cross-zone regional data transfer has no additional transfer charge.
 
 </details>
