@@ -1,14 +1,14 @@
 # Kubeflow Pipelines クイズ
 
-このクイズでは、Kubeflow Pipelines のアーキテクチャ、KFP v2 IR YAML コンパイルモデル、主要概念（Pipeline、Component、Run、Experiment、Artifact、MLMD）、EKS での Artifact ストレージに関する考慮事項、およびキャッシュ動作についての理解を確認します。
+このクイズでは、Kubeflow Pipelines のアーキテクチャ、KFP v2 IR YAML コンパイルモデル、コア概念（Pipeline、Component、Run、Experiment、Artifact、MLMD）、EKS における Artifact ストレージの考慮事項、およびキャッシュの動作に関する理解を確認します。
 
-## 選択式問題
+## 多肢選択問題
 
-1. Kubeflow Pipelines backend は、pipeline のステップに対する Pods のスケジューリングと実行を実際に行うために、内部でどの workflow engine を使用しますか？
+1. ここで使用するオープンソース KFP 2.16.1 バックエンドで、ワークフローの順序付けと Pod 作成を管理するエンジンはどれですか？
    - A) Apache Airflow
    - B) Argo Workflows
    - C) Tekton Pipelines
-   - D) 基盤となる workflow engine を使わず、直接 Kubernetes CronJobs を使用する
+   - D) 基盤となるワークフローエンジンを使用せず、Kubernetes CronJobs が直接管理する
 
 <details>
 
@@ -17,12 +17,12 @@
 **回答: B) Argo Workflows**
 
 **解説:**
-KFP の backend は Argo Workflows 上に構築されています。コンパイル済み pipeline が KFP API server に到達すると、Argo `Workflow` resource に変換され、Argo の controller が Pods を作成して順序付けます。KFP はその上に Python SDK、UI、Experiment/Run の追跡、MLMD store を重ねています。
+このバックエンドは、Run 用の IR を Argo Workflow リソースに変換します。Argo が順序と Pod 作成を管理し、Kubernetes scheduler が Pod をノードに配置します。Pipeline をアップロードするだけでは Run は作成されません。
 </details>
 
-2. KFP v1 SDK compiler と KFP v2 SDK compiler の主要なアーキテクチャ上の違いは何ですか？
-   - A) v1 は IR YAML にコンパイルし、v2 は直接 Argo Workflow YAML にコンパイルする
-   - B) v1 は直接 Argo Workflow YAML にコンパイルし、v2 は backend 非依存の Intermediate Representation (IR) YAML にコンパイルする
+2. KFP v1 SDK compiler と KFP v2 SDK compiler の主なアーキテクチャ上の違いは何ですか？
+   - A) v1 は IR YAML にコンパイルし、v2 は Argo Workflow YAML に直接コンパイルする
+   - B) v1 は Argo Workflow YAML に直接コンパイルし、v2 はバックエンドに依存しない Intermediate Representation (IR) YAML にコンパイルする
    - C) 違いはない — 両方とも同一の出力を生成する
    - D) v2 ではコンパイルが完全に不要になった
 
@@ -30,16 +30,16 @@ KFP の backend は Argo Workflows 上に構築されています。コンパイ
 
 <summary>回答を表示</summary>
 
-**回答: B) v1 は直接 Argo Workflow YAML にコンパイルし、v2 は backend 非依存の Intermediate Representation (IR) YAML にコンパイルする**
+**回答: B) v1 は Argo Workflow YAML に直接コンパイルし、v2 はバックエンドに依存しない Intermediate Representation (IR) YAML にコンパイルする**
 
 **解説:**
-v1 SDK の `dsl-compile` は、Argo 固有の `Workflow` YAML manifest を直接生成しました。v2 SDK は、DAG、components、型付き artifacts を記述する backend 非依存の IR YAML（`PipelineSpec`）にコンパイルします。KFP backend は submission 時にその IR を Argo `Workflow` に変換します。
+v1 SDK の `dsl-compile` は、Argo 固有の `Workflow` YAML manifest を直接生成しました。v2 SDK は、DAG、Component、型付けされた Artifact を記述するバックエンドに依存しない IR YAML（`PipelineSpec`）にコンパイルします。このバックエンドは、バックエンドのバージョンおよびプラットフォーム拡張との互換性を前提に、Run 作成時に IR を変換します。
 </details>
 
-3. 各 Component の実行、その inputs/outputs、および使用した artifacts をすべて記録し、KFP UI での lineage tracing を可能にする Kubeflow Pipelines の component はどれですか？
+3. 登録済みの実行とその入力／出力 Artifact の関係を記録し、KFP UI でのリネージ追跡を可能にする Kubeflow Pipelines Component はどれですか？
    - A) Argo Workflow Controller
    - B) ML Metadata (MLMD) store
-   - C) MinIO artifact store
+   - C) MinIO Artifact store
    - D) KFP SDK Compiler
 
 <details>
@@ -49,13 +49,13 @@ v1 SDK の `dsl-compile` は、Argo 固有の `Workflow` YAML manifest を直接
 **回答: B) ML Metadata (MLMD) store**
 
 **解説:**
-MLMD（通常は MySQL-backed）は、各 Component の実行を、その inputs、outputs、使用した artifacts とともに記録します。これにより、KFP UI は、学習済み model を、実行をまたいでそれを生成した正確な dataset と code までさかのぼって追跡できます。
+MLMD は、すべての外部副作用やファイルのバイト列の完全性ではなく、登録済みの実行／Artifact 関係を保存します。再現性のために、コード／データのリビジョンとハッシュを記録してください。
 </details>
 
-4. KFP v2 SDK では、downstream components が利用する `Dataset` 種別の型付き artifact を生成することを Component が宣言するには、どのようにしますか？
-   - A) 単純な Python dictionary を返す
+4. KFP v2 SDK では、Component が下流の Component で使用するために `Dataset` 種別の型付き Artifact を生成することを、どのように宣言しますか？
+   - A) 通常の Python dictionary を返す
    - B) `Output[Dataset]` 型の parameter を宣言する
-   - C) 型を宣言せずにハードコードされた `/tmp/dataset.csv` path に書き込む
+   - C) 型宣言なしで、ハードコードされた `/tmp/dataset.csv` パスに書き込む
    - D) `DATASET` という名前の environment variable を設定する
 
 <details>
@@ -65,102 +65,104 @@ MLMD（通常は MySQL-backed）は、各 Component の実行を、その inputs
 **回答: B) `Output[Dataset]` 型の parameter を宣言する**
 
 **解説:**
-KFP v2 では artifacts にファーストクラスの型（`Dataset`、`Model`、`Metrics` など）が与えられます。`Output[Dataset]` 型の Component parameter は、storage path を用意し、その artifact を一致する `Input[Dataset]` parameter を宣言する任意の downstream Component に接続するよう SDK に指示します。
+KFP v2 では、Artifact は第一級の型（`Dataset`、`Model`、`Metrics` など）として扱われます。`Output[Dataset]` 型の Component parameter は型と接続を宣言します。runtime はパスを準備し、一致する `Input[Dataset]` parameter を宣言した任意の下流 Component にその Artifact を渡します。
 </details>
 
-5. 何も再設定しなかった場合の KFP のデフォルト artifact storage backend は何ですか？また、`awslabs/kubeflow-manifests` project の S3 パターンはそれをどのように変更しますか？
-   - A) デフォルトは S3 であり、パターンは MinIO に切り替える
-   - B) デフォルトは in-cluster MinIO deployment であり、パターンは代わりに S3 を使用するよう pipeline root と artifact store credentials を再設定する
-   - C) デフォルトの artifact store は存在しない — 常に手動で設定する必要がある
-   - D) デフォルトは EFS であり、パターンは EBS に切り替える
+5. 確認したデフォルトのインストールで、MinIO ではなく S3 を使用するために必要なものは何ですか？
+   - A) デフォルトは S3 であり、このパターンでは MinIO に切り替える
+   - B) バンドルされた MinIO ではなく S3 用に pipeline root、provider、credential chain を設定する
+   - C) デフォルトの Artifact store はないため、常に手動で設定する必要がある
+   - D) デフォルトは EFS であり、このパターンでは EBS に切り替える
 
 <details>
 
 <summary>回答を表示</summary>
 
-**回答: B) デフォルトは in-cluster MinIO deployment であり、パターンは代わりに S3 を使用するよう pipeline root と artifact store credentials を再設定する**
+**回答: B) バンドルされた MinIO ではなく S3 用に pipeline root、provider、credential chain を設定する**
 
 **解説:**
-KFP には、デフォルト artifact store として in-cluster MinIO deployment が含まれています。EKS では、これは S3 がすでに提供している機能を重複して提供する、追加の stateful service を実行することを意味します。`awslabs/kubeflow-manifests` は、Components が S3 に直接 read/write できるように pipeline root と artifact credentials を再設定する方法を説明しています。
+デフォルトの bundle には MinIO が含まれていますが、ほかのインストールやインポートされた Artifact URI は異なる場合があります。最新の KFP object-store guide を使用してください。S3 には storage/request/transfer の料金がかかります。レガシーな AWS distribution guide は、検証済みの現行バージョン用インストール手順ではありません。
 </details>
 
-6. KFP の artifact store が in-cluster MinIO ではなく S3 を指すようになると、KFP pipeline pods（たとえば `pipeline-runner` ServiceAccount）にとって直接関係する identity mechanism は何ですか？
-   - A) なし — AWS identity configuration がなくても S3 access は機能する
-   - B) IRSA または EKS Pod Identity。これにより ServiceAccount に S3 bucket に対する permissions を付与する
-   - C) 各 Component の container image にハードコードされた AWS access key
-   - D) S3 access には Kubernetes RBAC だけで十分である
+6. KFP の Artifact store をクラスター内の MinIO ではなく S3 に向けた場合、実際の Run 実行 ServiceAccount および Artifact にアクセスする Component に対して、どの identity mechanism が直接関係しますか？
+   - A) なし — AWS identity の設定なしで S3 アクセスは機能する
+   - B) SDK、trust、runtime support、およびスコープを限定した S3 permissions を検証した IRSA または Pod Identity
+   - C) すべての Component の container image にハードコードした AWS access key
+   - D) S3 アクセスには Kubernetes RBAC だけで十分である
 
 <details>
 
 <summary>回答を表示</summary>
 
-**回答: B) IRSA または EKS Pod Identity。これにより ServiceAccount に S3 bucket に対する permissions を付与する**
+**回答: B) SDK、trust、runtime support、およびスコープを限定した S3 permissions を検証した IRSA または Pod Identity**
 
 **解説:**
-artifact の read/write が in-cluster MinIO endpoint ではなく直接 AWS に対して行われるようになると、KFP pipeline pods が使用する ServiceAccount には、その S3 bucket に対する permissions を持つ IRSA role または EKS Pod Identity association が必要です。
+Artifact の読み取り／書き込みがクラスター内の MinIO endpoint ではなく AWS に直接行われるようになると、KFP pipeline Pod が使用する ServiceAccount には、その S3 bucket に対する permissions を持つ IRSA role または EKS Pod Identity association が必要です。
 </details>
 
-7. 2 ステップ pipeline の例（`prepare_data` -> `train_model`）では、`Dataset` artifact は最初の Component から 2 番目の Component にどのように渡されますか？
-   - A) 両方の Components で共有される global variable に書き込む
-   - B) `train_model(input_dataset=prep_task.outputs["output_dataset"])` を介して、最初の Component の宣言済み output を 2 番目の型付き input に接続する
-   - C) environment variable に保存する
-   - D) 2 つの Components は data を共有できないため、1 つの Component に統合する必要がある
+7. 2 ステップの Pipeline 例（`prepare_data` -> `train_model`）では、`Dataset` Artifact は最初の Component から 2 番目の Component にどのように渡されますか？
+   - A) 両方の Component で共有される global variable に書き込む
+   - B) `train_model(input_dataset=prep_task.outputs["output_dataset"])` により、最初の Component が宣言した出力を 2 番目の Component の型付き入力に接続する
+   - C) environment variable に格納する
+   - D) 2 つの Component でデータを共有することはできないため、1 つの Component に統合する必要がある
 
 <details>
 
 <summary>回答を表示</summary>
 
-**回答: B) `train_model(input_dataset=prep_task.outputs["output_dataset"])` を介して、最初の Component の宣言済み output を 2 番目の型付き input に接続する**
+**回答: B) `train_model(input_dataset=prep_task.outputs["output_dataset"])` により、最初の Component が宣言した出力を 2 番目の Component の型付き入力に接続する**
 
 **解説:**
-`@dsl.pipeline` decorator を付与した function 内で、`prep_task.outputs["output_dataset"]` は `prepare_data` の宣言済み `Output[Dataset]` parameter を参照します。これを `train_model` の `input_dataset: Input[Dataset]` parameter に渡すことで、SDK は独立して実行される 2 つの Pods 間の artifact dependency を接続します。
+`@dsl.pipeline` でデコレートされた関数内では、`prep_task.outputs["output_dataset"]` は `prepare_data` が宣言した `Output[Dataset]` parameter を参照します。これを `train_model` の `input_dataset: Input[Dataset]` parameter に渡すことで、独立して実行される 2 つの Pod 間の Artifact dependency を SDK が接続します。
 </details>
 
-8. KFP は、Component を再実行するのではなくキャッシュされた result を再利用するかどうかをどのように決定しますか？
-   - A) inputs に関係なく常にすべての Components を再実行する
-   - B) Component の inputs（parameter values、input artifact content、および Component 自身の定義）を hash 化し、過去に成功した実行で一致する hash があれば cached outputs を再利用する
-   - C) pipeline name が変更された場合にのみ Components を再実行する
-   - D) caching は前回の実行からの wall-clock time のみに基づく
+8. KFP は、Component を再実行する代わりにキャッシュ済みの結果を再利用するかどうかを、どのように判断しますか？
+   - A) 入力に関係なく、常にすべての Component を再実行する
+   - B) Component の入力（parameter 値、入力 Artifact 名／ID、container image／command、出力仕様および関連設定）をハッシュ化し、過去に成功した実行の一致するハッシュからキャッシュ済み出力を再利用する
+   - C) Pipeline 名が変更された場合にのみ Component を再実行する
+   - D) キャッシュは、前回の Run からの経過時間のみに基づく
 
 <details>
 
 <summary>回答を表示</summary>
 
-**回答: B) Component の inputs（parameter values、input artifact content、および Component 自身の定義）を hash 化し、過去に成功した実行で一致する hash があれば cached outputs を再利用する**
+**回答: B) Component の入力（parameter 値、入力 Artifact 名／ID、container image／command、出力仕様および関連設定）をハッシュ化し、過去に成功した実行の一致するハッシュからキャッシュ済み出力を再利用する**
 
 **解説:**
-KFP は Component の実行を、その inputs を hash 化することでキャッシュします。一致する input hash を持つ Component を後続の Run で submission すると、再実行をスキップして以前にキャッシュされた outputs を再利用します。
+2.16.1 の key は、ファイルのバイト列に対する新しいハッシュではなく、parameter 値、Artifact ID、container／出力設定を使用します。バイト列や image tag を変更しても、key が変わらない可能性があります。lookup は Pipeline 名および namespace の範囲に限定されます。
+
+ファイルの内容、変更可能な image tag、外部 state によって key が自動的に無効化されることはありません。データバージョン／ハッシュを明示的な入力として記録するか、キャッシュを無効にしてください。
 </details>
 
-## 短答問題
+## 短答式問題
 
-9. この章で説明した KFP の caching behavior を無効化する 2 つの方法を挙げてください。
+9. この章で説明した、KFP のキャッシュ動作を無効にする 2 つの方法を挙げてください。
 
 <details>
 
 <summary>回答を表示</summary>
 
-**回答: Component ごとに、task に対する `set_caching_options(enable_caching=False)` を使用する。Run ごとに、KFP UI の Run submission dialog にある caching toggle を使用する。**
+**回答: Component ごとに、task 上で `set_caching_options(enable_caching=False)` を使用する方法。Run ごとに、`enable_caching=False` を指定した認証済み client submission を使用する方法。**
 
 **解説:**
-`prep_task.set_caching_options(enable_caching=False)` は、pipeline function 内の 1 つの特定の Component task の caching を無効化します。あるいは、Component ごとではなく Run submission 時に、pipeline submission 全体の caching を無効化できます。
+`prep_task.set_caching_options(enable_caching=False)` は、Pipeline 関数内の特定の Component task 1 つに対してキャッシュを無効にします。代わりに、Component ごとではなく Run-submission 時に Pipeline 全体の submission のキャッシュを無効にすることもできます。
 </details>
 
-10. KFP SDK の compilation step は実際には何を生成し、その output が KFP API server に到達した後はどうなりますか？
+10. KFP SDK のコンパイルステップは実際には何を生成し、その出力が KFP API server に到達すると何が起こりますか？
 
 <details>
 
 <summary>回答を表示</summary>
 
-**回答: Intermediate Representation (IR) YAML、すなわち backend 非依存の `PipelineSpec` を生成します。API server に到達すると、backend はその IR YAML を Argo `Workflow` に変換し、Argo の controller がそれを Pods としてスケジュールします。**
+**回答: Intermediate Representation (IR) YAML、すなわちバックエンドに依存しない `PipelineSpec` を生成します。アップロードと Run 作成の後、このバックエンドは IR YAML を Argo `Workflow` に変換し、その Pod 作成は Argo が、ノード配置は Kubernetes が管理します。**
 
 **解説:**
-KFP SDK の役割は IR YAML の生成で終わります。API server 以降のすべて、すなわち Argo Workflow への変換と Pod のスケジューリングは backend の責任です。これにより、IR YAML は原則として backend 非依存になります。
+コンパイルにより IR が生成されます。package は client API と Python runtime support も提供します。Run 作成によりバックエンドのワークフロー処理が開始されます。バックエンド IR バージョンとプラットフォーム拡張には互換性が必要です。
 </details>
 
 ## ハンズオン問題
 
-11. `Output[Dataset]` parameter を 1 つ宣言し、pandas DataFrame を CSV としてそこに書き込む、`prepare_data` という名前の `@dsl.component` function を作成してください。
+11. `prepare_data` という名前の `@dsl.component` 関数を作成してください。この関数では 1 つの `Output[Dataset]` parameter を宣言し、pandas DataFrame を CSV としてそこに書き込みます。
 
 <details>
 
@@ -171,7 +173,7 @@ KFP SDK の役割は IR YAML の生成で終わります。API server 以降の�
 from kfp import dsl
 from kfp.dsl import Dataset, Output
 
-@dsl.component(base_image="python:3.11-slim")
+@dsl.component(base_image="python:3.12-slim", packages_to_install=["pandas==2.3.3"])
 def prepare_data(output_dataset: Output[Dataset]):
     import pandas as pd
 
@@ -180,10 +182,10 @@ def prepare_data(output_dataset: Output[Dataset]):
 ```
 
 **解説:**
-`output_dataset: Output[Dataset]` は型付き artifact output を宣言します。SDK は Component が書き込む storage location として `output_dataset.path` を用意し、downstream components はそれを `Input[Dataset]` として宣言できます。
+`output_dataset: Output[Dataset]` は型付き Artifact 出力を宣言します。runtime は Component が書き込む storage location として `output_dataset.path` を準備し、下流の Component はそれを `Input[Dataset]` として宣言できます。
 </details>
 
-12. `prepare_data` の output を `train_model` Component の `input_dataset` parameter に接続する `@dsl.pipeline` function を作成してください。
+12. `prepare_data` の出力を `train_model` Component の `input_dataset` parameter に接続する `@dsl.pipeline` 関数を作成してください。
 
 <details>
 
@@ -200,10 +202,10 @@ def data_prep_train_pipeline():
 ```
 
 **解説:**
-`prep_task.outputs["output_dataset"]` は、`prepare_data` の `Output[Dataset]` parameter（`output_dataset` という名前）が生成する artifact を参照します。これを `train_model` の `input_dataset` argument として渡すと、2 つの Components 間に DAG edge が作成されます。
+`prep_task.outputs["output_dataset"]` は、`prepare_data` の `Output[Dataset]` parameter（`output_dataset` という名前）が生成する Artifact を参照します。これを `train_model` の `input_dataset` argument として渡すと、2 つの Component 間に DAG edge が作成されます。
 </details>
 
-13. `prep_task` という名前の単一 pipeline task の caching を無効化する code を記述してください。
+13. `prep_task` という名前の単一 Pipeline task でキャッシュを無効にするコードを記述してください。
 
 <details>
 
@@ -215,7 +217,7 @@ prep_task.set_caching_options(enable_caching=False)
 ```
 
 **解説:**
-pipeline function 内で task object に対して `set_caching_options(enable_caching=False)` を呼び出すと、その特定の Component の実行に対する caching が無効化され、以前の Run に一致する cached result が存在しても強制的に再実行されます。
+Pipeline 関数内で task object に対して `set_caching_options(enable_caching=False)` を呼び出すと、そのコンパイル済み task のキャッシュが無効になります。Run submission 時の明示的な enable_caching 値はこれを上書きできます。コンパイル済みの設定を保持するには、その option を None のままにしてください。
 </details>
 
 ---

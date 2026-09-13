@@ -1,97 +1,91 @@
-# パート3: Kubeflow Notebooks
+# パート 3: Kubeflow Notebooks
 
-> **サポート対象バージョン**: Kubeflow Community Distribution 26.03, Kubernetes 1.34+
-> **最終更新**: August 19, 2026
+> **サポート対象バージョン**: Kubeflow Notebooks 1.11.0; Community Distribution 26.03.1
+> **最終更新**: September 12, 2026
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例に沿って進めるには、以下のツールと環境が必要です。
-
-### 必要なツール
-
-* Kubeflow がインストールされたクラスターを対象とする kubectl v1.34 以降（パート1を参照）
-* ノートブックサーバーを起動するための、Kubeflow Central Dashboard 内のユーザー Profile（namespace）へのアクセス
-* GPU 対応ノートブックを起動する予定がある場合は、[Karpenter](../../autoscaling/02-karpenter.md) 経由で構成された GPU 対応 `NodePool`/`EC2NodeClass` のペア
-* カスタムノートブックイメージをビルドして参照する予定がある場合は、コンテナレジストリ（例: Amazon ECR）へのプッシュアクセス
+互換性のある Kubernetes cluster、Notebooks 1.11.0 controller/web app、namespace 権限、storage、および認証済みアクセスパスを使用します。ディストリビューションの互換性については、[パート 1](01-architecture-installation.md)を参照してください。GPU workload には、サポートされる driver/device plugin と適切な node capacity が必要です。Karpenter は capacity provisioner の一つであり、notebook の前提条件ではありません。
 
 ## Kubeflow Notebooks とは？
 
-Kubeflow Notebooks を使用すると、データサイエンティストは、Deployment マニフェストや Dockerfile を自分で書くことなく、完全に構成された対話型開発環境（JupyterLab、RStudio、または code-server（ブラウザ上の VS Code））を、クラスター内で実行される Pod として起動できます。コントローラーは、目的のノートブック（イメージ、CPU/メモリ/GPU リクエスト、ストレージ）を記述するカスタムリソースを監視し、通常の Kubernetes オブジェクトへとリコンサイルします。また、Istio の namespace 単位ルーティングにより、生成されたサーバーは、Kubeflow の他の部分で使用されるものと同じ Central Dashboard を通じて公開されます。
+Notebooks web app は、image/resource/volume 設定を含む `Notebook` を作成します。その controller は StatefulSet、Service、および設定されている場合は Istio VirtualService を管理します。StatefulSet controller が Pod を作成し、Kubernetes がそれらをスケジュールします。dashboard は web-app のエントリポイントであり、Pod creator や汎用 traffic proxy ではありません。
 
-共有 JupyterHub Deployment や一回限りの `kubectl run` ではなく、この方法でノートブックを実行する利点は、各ユーザーの環境がクラスターの通常の運用モデルに完全に参加できることです。同じスケジューラーによってスケジュールされるため、他のワークロードと同様に GPU node pool を競合利用し、そのメリットを受けます。同じ namespace スコープの RBAC およびネットワークポリシーの対象になります。また、プラットフォームチームが他のすべての用途ですでに使用している `kubectl`/GitOps ツールで、一時停止、リサイズ、または削除できます。
+namespace スコープの Notebook resource には PodSpec が含まれ、GitOps または Kubernetes API 経由で管理することもできます。管理対象の StatefulSet を直接編集すると、reconciliation によって元に戻される可能性があります。
 
-## バージョンの背景: Notebooks v1 と今後の v2
+## バージョンのコンテキスト: Notebooks v1 と Workspaces
 
-Kubeflow Community Distribution 26.03 時点で、Kubeflow Notebooks は長年の **v1** 設計で動作しています。これは Kubernetes `StatefulSet`/Pod spec を比較的薄くラップした `Notebook` カスタムリソースであり、Central Dashboard のノートブック UI から起動されます。本ドキュメントの残りで詳しく説明するのはこのアーキテクチャであり、現在 26.03 をデプロイすると利用するものです。
+この章では、ディストリビューション 26.03.1 における **Notebooks v1.11.0** とその `Notebook` API を確認します。Workspaces は `Workspace` と `WorkspaceKind` を使用する別個の v2 design であり、CRD の drop-in replacement ではありません。
 
-このプロジェクトでは、2 つの新しいカスタムリソース `Workspace` と `WorkspaceKind` を中心とする **v2 リリースに向けて積極的に取り組んでいます**。これらは、「ノートブック環境の外観」（管理者が定義・バージョン管理する `WorkspaceKind` テンプレート）と、「特定のユーザーが実行している環境」（kind を参照する `Workspace`）を分離します。26.03 ベースディストリビューション時点では、v2（`Workspaces`）はテスト用の alpha マニフェストを提供していました。26.03.1 パッチで **beta** に移行しましたが、**まだ一般提供には達していません**。v2 が本番利用可能になれば、v1 の `Notebook` CRD はメンテナンス専用の状態に移行すると予想されています。v2 は計画に値する将来を見据えた文脈として扱ってください。いずれかの API による本番プラットフォーム設計を確定する前に、現在の GA ステータスについて [Kubeflow Notebooks docs](https://www.kubeflow.org/docs/components/notebooks/) を確認してください。
+26.03.1 のリリース説明では Workspaces は beta とされていますが、tag 付きの controller/backend/frontend manifest は **v2.0.0-alpha.3** image を参照しています。リリースの表現とデプロイ済み image tag を区別してください。この確認では、v2 GA や v1 のサポート終了日を確定するものではありません。導入前に、実際の release、API、および migration support を検証してください。
 
-## マルチテナンシーモデル: ノートブック境界としての Profile
+## マルチテナンシーモデル: Profile と分離された Isolation Policy
 
-すべての Kubeflow Notebooks ユーザーは **Profile** 内で操作します。これは Kubeflow の他の部分で使用される、ユーザーごとに namespace を割り当てる構成と同じです（パート1で説明）。Profile を作成すると、以下がプロビジョニングされます。
+完全な Kubeflow UI は、選択した Profile namespace に notebook を作成します。Profile は team member 間で共有でき、Notebook CRD 自体はすべての namespace に Profile があることを必須としていません。standalone installation と full-platform access model も異なります。
 
-* そのユーザー（またはチーム）専用の Kubernetes namespace。
-* Profile Controller を通じて、ユーザーの権限を自身の namespace に限定する RBAC バインディング。
-* namespace 内のサービス（ノートブック Pod を含む）に到達できるアイデンティティを制限する Istio `AuthorizationPolicy`。これにより、デフォルトでは、あるユーザーのノートブックは他ユーザーのワークロードから到達できず、また他ユーザーのワークロードに到達することもできません。
-
-ノートブックサーバーは常に Profile namespace 内に作成され、共有 namespace には決して作成されません。これにより、プラットフォームチームは、各ユーザーの Pod が相互に到達可能になることなく、セルフサービスでのノートブック作成を提供できます。分離境界は、pipeline 実行、KServe エンドポイント、クラスター内のその他すべてのユーザー単位リソースで使用されるものと同じです。
+Profile の ownership/membership、RBAC、および Istio AuthorizationPolicy は access control の一部を提供します。これらは無関係な RBAC grant を取り消すものでも、すべての Pod traffic、storage access、AWS access を自動的に block するものでもありません。NetworkPolicy enforcement、Pod privilege、volume permission、workload IAM、および application authorization を個別に評価してください。
 
 ### 永続ストレージ
 
-Central Dashboard の spawner では、ユーザーは 1 つ以上の PersistentVolumeClaim をノートブック Pod にアタッチできます。通常はノートブックサーバーのホームディレクトリにマウントされます（例: upstream の Jupyter Docker Stacks の規約に従う、Jupyter ベースイメージの `/home/jovyan`）。永続オブジェクトは Pod ではなく claim であるため、ユーザーのファイル、インストール済みパッケージ、Jupyter 設定は、Pod の再起動、ノードの置換、またはノートブック自体を意図的に停止・再開するサイクルを経ても保持されます。EKS では、この PVC は通常、単一 Pod の ReadWriteOnce アクセス向けには Amazon EBS CSI driver によって、チームが同じ作業ディレクトリを複数のノートブックまたは pipeline Pod 間で読み書き共有したい場合には、その CSI driver 経由の Amazon EFS によってバックアップされます。
+デフォルトの UI は通常、workspace PVC を `/home/jovyan` に mount します。**その volume に保存されたデータのみ**が Pod replacement をまたいで永続化されます。`/opt/conda`、system directory、または container writable layer にインストールされた package と、in-memory kernel state は、その PVC では保持されません。home directory 内の user package は永続化される場合がありますが、新しい image と互換性がなくなる可能性があります。
 
-### アイドル状態の削減
+PVC/volume lifecycle、backup、および reclaim policy を確認してください。EBS ReadWriteOnce は、一つの **node** からの read/write mount を意味し、一つの Pod による排他的使用を意味するものではありません。Single-Pod enforcement には、CSI ReadWriteOncePod などの別個の support が必要です。EBS には AZ/attachment constraint があります。shared EFS storage には POSIX permission と concurrent-access design が必要です。
 
-実行中のノートブック Pod は、誰かが実際に使用しているかどうかにかかわらず、存在する限りリクエストした CPU、メモリ、そして最もコストのかかる GPU 割り当てを保持します。そのため、Kubeflow Notebooks には、設定された期間アイドル状態にあるノートブックを停止（削除ではない）できるカリングメカニズムが含まれています。カリングにより、アイドル状態のノートブックが占有していたノード容量が解放されます。特に GPU 対応ノートブックでは重要であり、ユーザーが離席した後もアイドル状態のサーバーが高価な GPU インスタンスを何時間も占有し続けることを防ぎます。カリングでは基盤となる PVC には一切触れないため、カリングされたノートブックの環境とファイルは、次回起動時にユーザーが残した状態そのままです。
+### Idle Culling
 
-## ノートブックのリコンサイルフロー
+確認した v1.11.0 のデフォルトは、`ENABLE_CULLING=false`、`CULL_IDLE_TIME=1440`、および `IDLENESS_CHECK_PERIOD=1` です。時間の単位は分です。installation だけでは culling は有効になりません。
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant Dash as Central Dashboard
-    participant CRD as Notebook CR (in Profile namespace)
-    participant Ctrl as Notebook Controller
-    participant K8s as StatefulSet / Pod
-    participant Istio as Istio Sidecar
+culler は Jupyter の `/api/kernels` と last activity を使用します。browser の終了や shell process 内の GPU work を包括的に検出するものではありません。RStudio/code-server が同じ API を公開するとは想定しないでください。request の失敗または空の kernel list では last-activity value が変更されないため、古い値でも stop につながる可能性があります。有効化前に、実際の image と access policy で検出を検証してください。
 
-    User->>Dash: Choose image, CPU/mem, GPU count, PVC
-    Dash->>CRD: Create Notebook custom resource
-    Ctrl->>CRD: Watch for create/update events
-    Ctrl->>K8s: Reconcile into StatefulSet + Pod spec
-    K8s->>K8s: Mount PVC at home directory
-    K8s->>K8s: Request nvidia.com/gpu (if selected)
-    K8s->>Istio: Inject sidecar for namespace-scoped routing
-    Istio->>User: Expose notebook UI through Dashboard proxy
+culling は stop annotation を追加し、PVC を削除せずに StatefulSet replica を zero に減らします。Pod request を解放しても、必ずしも EC2 node が終了するわけではありません。ほかの workload、PDB、および Karpenter policy/budget も影響します。node が終了するまで instance charge は継続する可能性があります。
+
+## Notebook Reconciliation Flow
+
+![Notebook web app が CR を作成し、controller が StatefulSet、Service、および routing を reconciliation する一方、Kubernetes が Pod を作成して配置します。](../../.gitbook/assets/en-ai-ml-kubeflow-03-notebooks-0.png)
+
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-03-notebooks-0.html)
+
+Notebook v1.11.0 には `spec.replicas` field がありません。controller は `kubeflow-resource-stopped` が**存在する**場合に StatefulSet replica を zero にし、存在しない場合に one にします。値が `"false"` であっても stop します。resume するには annotation の値を変更するのではなく、annotation を削除してください。
+
+```bash
+# Stop the selected notebook: active kernels/processes terminate.
+kubectl annotate notebook -n team-a analysis \
+  kubeflow-resource-stopped="2026-09-12T00:00:00Z" --overwrite
+# Resume by removing the annotation.
+kubectl annotate notebook -n team-a analysis kubeflow-resource-stopped-
 ```
 
-コントローラーのリコンサイルループは、Kubernetes の他の場所で使用されるものと同じパターンです。ダッシュボードでの操作ごとに Pod を直接作成するのではなく、ライブの `StatefulSet` を `Notebook` カスタムリソースが現在宣言している状態へ継続的にリコンサイルします。たとえばダッシュボード主導の停止では、命令型の Pod delete を発行する代わりに、カスタムリソースの望ましい状態をレプリカ 0 に更新します。そのため、ノートブック Pod を実行すべきかどうかについての唯一の信頼できる情報源は、ダッシュボード UI ではなくコントローラーです。
+この timestamp は annotation format の例です。これらの command を実行する前に、実際の namespace/notebook に置き換え、作業を保存してください。Istio sidecar injection は、Notebook controller が直接実行するのではなく、設定された admission webhook によって実行されます。
 
-## EKS 上の Notebooks 向け GPU スケジューリング
+## EKS における Notebook の GPU Scheduling
 
-アクセラレーターへのアクセスが必要なノートブック Pod は、クラスター内の他の Pod と同じ方法でリクエストします。`Notebook` カスタムリソースにある spawner の GPU フィールドが、基盤となる Pod spec の `resources.limits."nvidia.com/gpu"` エントリに変換され、GPU ノード上で実行される NVIDIA device plugin が、`nvidia.com/gpu` をスケジューラーに対する割り当て可能リソースとしてアドバタイズします。
+GPU request は、`resources.limits["nvidia.com/gpu"]` などの標準 extended resource を使用します。Device plugin、driver、node capacity、taint/toleration、および affinity は一致している必要があります。GPU resource を宣言するだけでは、適切な node が出現することは保証されません。
 
-つまり、ノートブックの GPU スケジューリングは、クラスターの他の GPU 容量とは別のサブシステムではありません。トレーニングジョブ、KServe エンドポイント、その他すべての GPU ワークロードを支えるものと同じ GPU 対応 node pool を競合利用し、そのリソースによって処理されます。EKS では、この容量は一般に Karpenter によって動的にプロビジョニングされます。Karpenter は、ノートブック Pod の `nvidia.com/gpu` リクエストを既存容量で満たせない場合に GPU `NodePool` をスケールアップし、ノートブックがカリングまたは停止されると再びスケールダウンできます。GPU 対応 Karpenter NodePool の設定、インスタンスタイプの選択、アクセラレーターノード向けの taint/toleration の仕組みについては、[Karpenter for Autoscaling](../../autoscaling/02-karpenter.md) で詳しく説明しています。ここで覚えておくべきノートブック固有のポイントは、アイドル状態の GPU ノートブックが、GPU node pool がゼロまでスケールダウンできない最も一般的な原因の 1 つであることです。まさにそれを防ぐために、前述のカリング動作が存在します。
+Karpenter は、EC2 capacity、quota、limit、networking、および bootstrap 成功を条件として、eligible Pending Pod と一致する NodePool に対して provision できます。Notebook の stop と EC2 scale-down は別個の operation です。配置と disruption の条件については、[Karpenter](../../autoscaling/02-karpenter.md)を参照してください。
 
-## カスタムノートブックイメージ
+## Custom Notebook Image
 
-Kubeflow spawner に付属する標準ノートブックイメージは、一般的な JupyterLab/RStudio/code-server のベースラインをカバーしています。しかし、本番環境でノートブックを実行するほとんどのチームは、実行中のコンテナ内で手作業で依存関係を `pip install` するのではなく、すべてのデータサイエンティストが同一で再現可能な環境から開始できるよう、独自のカスタムイメージをビルドして参照します。
+確認した spawner のデフォルトでは、`allowCustomImage` は `true` です。Notebook API を直接呼び出せる user に対しては、UI dropdown の制限だけで image selection を強制することはできません。必要な constraint は RBAC と admission を通じても適用してください。
 
-一般的なパターンは以下のとおりです。
+image は server port、`/notebook/<namespace>/<name>/` prefix または rewrite configuration、UID/GID、writable home、probe、および runtime dependency を満たす必要があります。Jupyter Docker Stacks image が、すべての Kubeflow convention や SDK を自動的に含むわけではありません。pinned dependency を build し、ECR または別の registry の image digest を参照し、CPU architecture と GPU driver の互換性を検証してください。
 
-1. **ノートブックサーバー、Kubeflow SDK 統合、および spawner が想定する UID/作業ディレクトリの規約がすでに含まれている、upstream の Kubeflow（または Jupyter Docker Stacks）ベースイメージから開始します。**
-2. **チームで実際に必要な依存関係をレイヤーとして追加します。** 固定された Python/R パッケージセット、内部ライブラリ、GPU フレームワークのバージョン（対象 node pool の CUDA driver と一致するもの）、およびチームで標準化する認証情報不要のツールが含まれます。
-3. **クラスターが pull 可能なレジストリへイメージをビルドしてプッシュします。** EKS では通常 Amazon ECR を使用し、他の本番イメージと同様にイメージスキャンおよびライフサイクルポリシーを適用します。
-4. **spawner からイメージを参照します。** Central Dashboard の spawner UI はイメージフィールドで任意のイメージ参照を受け付けます（管理者が構成した allow-list の対象となります）。したがって、カスタムイメージはエンドユーザーの観点では標準イメージとまったく同じように動作し、選択できる別のオプションにすぎません。
+同一の tag が同一の bytes を保証するわけではありません。同一の digest であっても、PVC の user package/setting、startup script、または runtime installation が異なる場合、environment が同一になるわけではありません。
 
-これらのイメージを、他のアプリケーションイメージと同じ CI パイプラインでバージョン管理および再ビルドすることにより、チーム全体でノートブック環境を再現可能にします。同じイメージタグを選択した 2 人のデータサイエンティストは、各ユーザーのカーネルが時間の経過とともに手動インストールでずれていくのではなく、バイト単位で同一のパッケージセットを取得できます。
+## 検証とソース
+
+26.03.1 の notebook-controller overlay は Kustomize を使用してローカルで render しました。v1.11.0 の CRD、stop handling、culling、および spawner configuration を確認しました。実際の notebook、GPU execution、PVC recovery、idle detection、および EKS provisioning は実行していません。
+
+- [v1.11.0 Notebook controller](https://github.com/kubeflow/notebooks/blob/v1.11.0/components/notebook-controller/controllers/notebook_controller.go)
+- [v1.11.0 culling implementation](https://github.com/kubeflow/notebooks/blob/v1.11.0/components/notebook-controller/controllers/culling_controller.go)
+- [v1.11.0 spawner defaults](https://github.com/kubeflow/notebooks/blob/v1.11.0/components/crud-web-apps/jupyter/manifests/base/configs/spawner_ui_config.yaml)
+- [26.03.1 Workspaces image tag](https://github.com/kubeflow/community-distribution/blob/26.03.1/applications/workspaces/upstream/controller/base/manager/kustomization.yaml)
 
 ## 次のステップ
 
-このドキュメントでは、Kubeflow Notebooks の機能、各ユーザーのノートブックを分離する Profile ベースのマルチテナンシーモデル、永続ストレージとアイドル状態のカリング、ノートブックコントローラーのリコンサイルフロー、EKS での GPU スケジューリング、そして再現可能な環境のためにカスタムノートブックイメージをビルドする実践について説明しました。パート4では、ここで導入した Profile およびカスタムリソースのパターンを基盤として、Katib とハイパーパラメータチューニングに進みます。
+[パート 4: Katib](04-katib.md)で experiment と hyperparameter tuning を続けます。
 
 [メインページに戻る](./README.md)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[トピッククイズ](../../quizzes/ai-ml/kubeflow/03-notebooks-quiz.md) に挑戦してください。
+この章で学んだ内容を確認するには、[トピッククイズ](../../quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)に挑戦してください。

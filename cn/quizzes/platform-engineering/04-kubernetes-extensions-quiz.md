@@ -1,251 +1,150 @@
 # Kubernetes 扩展机制测验
 
-> **相关文档**: [Kubernetes 扩展机制](../../platform-engineering/04-kubernetes-extensions.md)
+[Kubernetes extensions](../../platform-engineering/04-kubernetes-extensions.md)
 
-## 选择题
+最初的 20 个问题主题已根据当前 API 和行为进行了审查。
 
-### 1. CRD (Custom Resource Definition) 的主要目的是什么？
-
-- A) 修改现有的 Kubernetes 资源
-- B) 使用自定义资源类型扩展 Kubernetes API
-- C) 配置 pod 网络
-- D) 预置存储卷
+## 1. CRD 的用途是什么？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 使用自定义资源类型扩展 Kubernetes API**
-
-**解释:**
-CRD 允许你通过定义像原生 Kubernetes 资源一样工作的自定义资源类型来扩展 Kubernetes API。
+在 Kubernetes API 中注册自定义资源类型和输入 schema。CRD 本身并不实现工作负载行为。
 
 </details>
 
-### 2. custom controller 的 reconciliation loop 主要执行什么任务？
-
-- A) 立即删除资源
-- B) 调和当前状态与期望状态之间的差异
-- C) 向 API server 注册新的 API
-- D) 应用网络策略
+## 2. 调谐循环的作用是什么？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 调和当前状态与期望状态之间的差异**
-
-**解释:**
-custom controller 的 reconciliation loop 会观察资源的当前状态，将其与期望状态 (spec) 进行比较，并在存在差异时采取操作以达到期望状态。
+在处理重复事件、重启和冲突的同时，调谐观测状态与期望状态。当状态已经一致时，应避免不必要的更新。
 
 </details>
 
-### 3. Operator pattern 的核心组件是什么？
-
-- A) Deployment 和 Service
-- B) CRD 和 Custom Controller
-- C) ConfigMap 和 Secret
-- D) Ingress 和 NetworkPolicy
+## 3. Operator 的定义是什么，其限制有哪些？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) CRD 和 Custom Controller**
-
-**解释:**
-Operator pattern 使用 CRD 定义应用配置，并使用 custom controller 自动化部署、升级和恢复等运维知识。
+Operator 使用自定义 API 和 controller 实现领域知识。仅仅创建它们并不能让备份、故障转移或升级变得安全。
 
 </details>
 
-### 4. MutatingAdmissionWebhook 的主要用途是什么？
-
-- A) 拒绝 API 请求
-- B) 修改 API 请求
-- C) 记录 API 响应
-- D) 升级 API 版本
+## 4. 变更 webhook 可以返回什么？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 修改 API 请求**
-
-**解释:**
-MutatingAdmissionWebhook 可以在 API 请求被持久化之前修改这些请求。常见用途包括：sidecar container 注入、设置默认值等。
+允许或拒绝请求的 AdmissionReview 响应，并可选地携带 JSONPatch。保留请求 UID/version；patch 字节采用 Base64 编码。
 
 </details>
 
-### 5. scheduler framework 中 Filter plugin 的作用是什么？
-
-- A) 为 node 分配分数
-- B) 排除无法运行 pod 的 node
-- C) 将 pod 绑定到 node
-- D) 预留 node 资源
+## 5. Filter plugin 的作用是什么？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 排除无法运行 pod 的 node**
-
-**解释:**
-Filter plugin 会过滤掉不满足 pod 要求的 node，将它们从候选范围中排除。
+排除无法满足 Pod 要求的节点。通过过滤并不意味着已完成绑定或执行。
 
 </details>
 
-### 6. Aggregated API Server 和 CRD 之间有什么区别？
-
-- A) 没有区别，它们是相同的
-- B) Aggregated API 提供更多控制能力，但需要运行单独的 server
-- C) CRD 提供的功能比 Aggregated API 更多
-- D) Aggregated API 已弃用
+## 6. 聚合与 CRD 有何不同？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) Aggregated API 提供更多控制能力，但需要运行单独的 server**
-
-**解释:**
-Aggregated API Server 提供对 API 行为、自定义存储后端和高级功能的完全控制，但需要部署和维护单独的 API server。CRD 更简单，但存在限制。
+CRD 使用现有 API server 的自定义资源存储和验证。聚合将请求委托给独立的 server，后者需要 TLS、身份验证、授权、发现和存储操作。
 
 </details>
 
-### 7. Kubernetes 中 Finalizer 的目的是什么？
-
-- A) 加快资源删除
-- B) 在清理完成前阻止资源删除
-- C) 自动重启失败的 pod
-- D) 验证资源创建
+## 7. finalizer 提供什么能力？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 在清理完成前阻止资源删除**
-
-**解释:**
-Finalizer 会阻塞资源删除，直到 controller 执行必要的清理操作（例如删除外部资源）并移除 finalizer。
+它让 controller 有机会在删除完成前完成清理。该字符串本身不会执行任何清理；未经调查就将其移除可能会遗留外部资源。
 
 </details>
 
-### 8. 哪个 scheduler extension point 在 pod 已绑定到 node 后运行？
-
-- A) PreFilter
-- B) PostBind
-- C) Reserve
-- D) Score
+## 8. PostBind 在何时运行？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) PostBind**
-
-**解释:**
-PostBind plugin 会在 pod 成功绑定到 node 后被调用。它们用于信息通知，并用于清理或通知。
+它是在成功绑定后执行的信息性阶段，而非通用错误恢复机制。应为失败或取消的预留实现诸如 Unreserve 的路径。
 
 </details>
 
-### 9. 在 Istio 中，通过 admission webhook 注入 sidecar 使用哪个 annotation？
-
-- A) istio.io/inject
-- B) sidecar.istio.io/inject
-- C) istio-injection
-- D) auto-inject.istio.io
+## 9. 当前 Istio 的每 Pod 注入如何控制？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) sidecar.istio.io/inject**
-
-**解释:**
-`sidecar.istio.io/inject` annotation 控制 Istio 的 mutating webhook 是否将 Envoy sidecar 注入到 pod 中。Namespace 级别的控制使用 `istio-injection` label。
+在 Pod 或工作负载的 Pod-template labels 中设置 sidecar.istio.io/inject。检查 namespace 注入/revision labels 及其优先级，而不是将旧 annotations 用作默认值。
 
 </details>
 
-### 10. scheduler framework 中 Score plugin 的目的是什么？
-
-- A) 过滤掉不合适的 node
-- B) 对 node 排名并选择最佳 node
-- C) 将 pod 绑定到选定的 node
-- D) 验证 pod 规范
+## 10. Score 结果如何使用？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: B) 对 node 排名并选择最佳 node**
-
-**解释:**
-Score plugin 会为通过过滤的 node 分配分数。scheduler 会从所有 Score plugin 的综合分数中选择得分最高的 node。
+对可行节点进行排序，并结合归一化和 plugin 权重。平局选择和失败处理也是 scheduler 的行为。
 
 </details>
 
-## 简答题
-
-### 1. CRD 中用于 schema 验证的标准是什么？
+## 11. CRD schema 和必填字段应定义在哪里？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: OpenAPI v3 Schema (openAPIV3Schema)**
-
-**解释:**
-CRD 使用 `spec.versions[].schema.openAPIV3Schema` 中的 OpenAPI v3 schema 来定义自定义资源的结构和验证规则。
+定义在 spec.versions[].schema.openAPIV3Schema 下。顶层的 required: [spec] 与 spec 内的 required: [image] 强制执行不同的条件。
 
 </details>
 
-### 2. Kubernetes controller 中 Owner Reference 的作用是什么？
+## 12. 对 ownerReferences 必须检查什么？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: 定义资源之间的所有权关系，并管理垃圾回收和事件传播**
-
-**解释:**
-Owner Reference 定义父子关系，并在父资源通过 Kubernetes 垃圾回收被删除时自动删除子资源。
+检查 owner UID、namespace/scope 以及现有的 controller 所有权。GC 依赖传播策略/finalizers；名称匹配并不授权接管另一个工作负载。
 
 </details>
 
-### 3. ValidatingAdmissionPolicy 和 ValidatingAdmissionWebhook 之间有什么区别？
+## 13. VAP 与验证 webhook 有何不同？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: ValidatingAdmissionPolicy 使用 CEL 表达式并在进程内运行，而 ValidatingAdmissionWebhook 调用外部 HTTP endpoint。**
-
-**解释:**
-ValidatingAdmissionPolicy（在 1.26 中引入）提供更好的性能，并且不需要外部 webhook 基础设施，但灵活性低于 webhook。
+ValidatingAdmissionPolicy 自 1.30 起已稳定，并在进程内执行 CEL。webhook 需要远程调用、TLS 和可用性管理。VAP 还需要 binding 来定义 scope 和 validationActions。
 
 </details>
 
-### 4. controller-runtime 库是什么，为什么常用它？
+## 14. controller-runtime 提供什么？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: controller-runtime 是一个提供构建 Kubernetes controller 常用模式的库，包括 client 缓存、leader election 和 reconciliation loop 管理。**
-
-**解释:**
-controller-runtime 是 Kubebuilder 项目的一部分，它抽象了样板代码和最佳实践，使构建可靠的 operator 更容易。
+Managers、clients/caches、调谐设置和 leader election。它不提供自定义 API types、schemes、RBAC 或领域逻辑；应对齐 library 与 Kubernetes Go module 的版本。
 
 </details>
 
-### 5. CRD 中 conversion webhook 的目的是什么？
+## 15. conversion webhook 的用途是什么？
 
 <details>
 <summary>显示答案</summary>
 
-**答案: conversion webhook 在同一 CRD 的不同 API 版本之间转换资源。**
-
-**解释:**
-当 CRD 有多个版本（例如 v1alpha1、v1beta1、v1）时，conversion webhook 会处理版本之间的转换，以支持 API 演进。
+在 CRD 的 API versions 之间转换表示形式。审查 served/storage versions、storedVersions 和语义保留。并非每个 CRD 都需要 conversion webhook。
 
 </details>
 
-## 实践题
-
-### 1. 编写一个满足以下要求的 CRD：
-
-- Name: WebApp
-- Group: apps.example.com
-- Fields: replicas（integer，最小值 1）、image（string，必填）
+## 16. 编写一个要求 image 且 replicas 介于 1 到 5 的 WebApp CRD。
 
 <details>
 <summary>显示答案</summary>
+
+这还要求 spec 本身存在，并分离 status/scale 路径。controller 必须填充实际的 status.replicas 和 selector。
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -258,8 +157,7 @@ spec:
     kind: WebApp
     plural: webapps
     singular: webapp
-    shortNames:
-      - wa
+    shortNames: [wa]
   scope: Namespaced
   versions:
     - name: v1
@@ -268,385 +166,79 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
+          required: [spec]
           properties:
             spec:
               type: object
-              required: ["image"]
+              required: [image]
               properties:
                 replicas:
                   type: integer
-                  minimum: 1
                   default: 1
+                  minimum: 1
+                  maximum: 5
                 image:
                   type: string
+                  minLength: 1
+                port:
+                  type: integer
+                  default: 8080
+                  minimum: 1
+                  maximum: 65535
             status:
               type: object
-              properties:
-                availableReplicas:
-                  type: integer
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                      status:
-                        type: string
-                      lastTransitionTime:
-                        type: string
-                        format: date-time
-      subresources:
-        status: {}
-      additionalPrinterColumns:
-        - name: Replicas
-          type: integer
-          jsonPath: .spec.replicas
-        - name: Available
-          type: integer
-          jsonPath: .status.availableReplicas
-        - name: Age
-          type: date
-          jsonPath: .metadata.creationTimestamp
-```
-
-</details>
-
-### 2. 编写一个 ValidatingAdmissionWebhook 配置，用于验证 "production" namespace 中的所有 Deployment。
-
-<details>
-<summary>显示答案</summary>
-
-```yaml
-apiVersion: admissionregistration.k8s.io/v1
-kind: ValidatingWebhookConfiguration
-metadata:
-  name: deployment-validator
-webhooks:
-  - name: validate-deployment.example.com
-    clientConfig:
-      service:
-        name: webhook-service
-        namespace: webhook-system
-        path: /validate-deployment
-      caBundle: <base64-encoded-ca-cert>
-    rules:
-      - apiGroups: ["apps"]
-        apiVersions: ["v1"]
-        operations: ["CREATE", "UPDATE"]
-        resources: ["deployments"]
-        scope: Namespaced
-    namespaceSelector:
-      matchLabels:
-        environment: production
-    failurePolicy: Fail
-    sideEffects: None
-    admissionReviewVersions: ["v1"]
-    timeoutSeconds: 10
-```
-
-**解释:**
-- `namespaceSelector` 将 webhook 限制到带有 `environment: production` label 的 namespace
-- `failurePolicy: Fail` 会在 webhook 不可用时拒绝请求
-- `sideEffects: None` 表示 webhook 没有副作用
-
-</details>
-
-### 3. 为 custom controller 编写一个简单的 reconciliation loop 伪代码。
-
-<details>
-<summary>显示答案</summary>
-
-```go
-func (r *WebAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
-
-    // 1. Fetch the WebApp resource
-    var webapp appsv1.WebApp
-    if err := r.Get(ctx, req.NamespacedName, &webapp); err != nil {
-        if errors.IsNotFound(err) {
-            // Resource deleted, nothing to do
-            return ctrl.Result{}, nil
-        }
-        return ctrl.Result{}, err
-    }
-
-    // 2. Check if being deleted (handle finalizers)
-    if !webapp.DeletionTimestamp.IsZero() {
-        if containsFinalizer(webapp, finalizerName) {
-            // Perform cleanup
-            if err := r.cleanupExternalResources(&webapp); err != nil {
-                return ctrl.Result{}, err
-            }
-            // Remove finalizer
-            removeFinalizer(&webapp, finalizerName)
-            if err := r.Update(ctx, &webapp); err != nil {
-                return ctrl.Result{}, err
-            }
-        }
-        return ctrl.Result{}, nil
-    }
-
-    // 3. Add finalizer if not present
-    if !containsFinalizer(webapp, finalizerName) {
-        addFinalizer(&webapp, finalizerName)
-        if err := r.Update(ctx, &webapp); err != nil {
-            return ctrl.Result{}, err
-        }
-    }
-
-    // 4. Create or update Deployment
-    deployment := r.constructDeployment(&webapp)
-    if err := controllerutil.SetControllerReference(&webapp, deployment, r.Scheme); err != nil {
-        return ctrl.Result{}, err
-    }
-    
-    if err := r.CreateOrUpdate(ctx, deployment); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // 5. Create or update Service
-    service := r.constructService(&webapp)
-    if err := controllerutil.SetControllerReference(&webapp, service, r.Scheme); err != nil {
-        return ctrl.Result{}, err
-    }
-    
-    if err := r.CreateOrUpdate(ctx, service); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // 6. Update status
-    webapp.Status.AvailableReplicas = deployment.Status.AvailableReplicas
-    if err := r.Status().Update(ctx, &webapp); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // 7. Requeue after interval for periodic reconciliation
-    return ctrl.Result{RequeueAfter: time.Minute * 5}, nil
-}
-```
-
-**要点:**
-- 始终处理资源未找到的情况（可能已被删除）
-- 使用 finalizer 清理外部资源
-- 为垃圾回收设置 owner reference
-- 单独更新 status subresource
-- 考虑为定期检查设置 requeue interval
-
-</details>
-
-## 进阶题
-
-### 1. 为复杂的分布式系统设计一个 Kubernetes Operator。
-
-<details>
-<summary>显示答案</summary>
-
-**CRD 设计:**
-```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: postgresclusters.database.example.com
-spec:
-  group: database.example.com
-  names:
-    kind: PostgresCluster
-    plural: postgresclusters
-    shortNames:
-      - pg
-  scope: Namespaced
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              required: ["replicas", "version"]
               properties:
                 replicas:
                   type: integer
-                  minimum: 1
-                  maximum: 10
-                version:
+                availableReplicas:
+                  type: integer
+                selector:
                   type: string
-                  enum: ["14", "15", "16"]
-                storage:
-                  type: object
-                  properties:
-                    size:
-                      type: string
-                      default: "10Gi"
-                    storageClass:
-                      type: string
-                backup:
-                  type: object
-                  properties:
-                    enabled:
-                      type: boolean
-                      default: true
-                    schedule:
-                      type: string
-                      default: "0 2 * * *"
-                    retention:
-                      type: integer
-                      default: 7
-            status:
-              type: object
-              properties:
-                phase:
-                  type: string
-                  enum: ["Creating", "Running", "Upgrading", "Failed", "Deleting"]
-                primaryEndpoint:
-                  type: string
-                replicaEndpoints:
-                  type: array
-                  items:
-                    type: string
-                currentVersion:
-                  type: string
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                      status:
-                        type: string
-                      reason:
-                        type: string
-                      message:
-                        type: string
-                      lastTransitionTime:
-                        type: string
-                        format: date-time
+                observedGeneration:
+                  type: integer
+                  format: int64
       subresources:
         status: {}
         scale:
           specReplicasPath: .spec.replicas
-          statusReplicasPath: .status.readyReplicas
-```
-
-**Controller 核心逻辑:**
-- **基于阶段的状态管理**（Creating、Running、Upgrading、Failed）
-- **自动故障恢复**（Primary 失败时进行 Failover）
-- **滚动升级策略**（先升级 replica，然后升级 primary）
-- **Backup 管理**（用于定时 backup 的 CronJob）
-
-**架构:**
-```
-PostgresCluster CR
-       |
-       v
-   Controller
-       |
-       +---> StatefulSet (PostgreSQL pods)
-       +---> Service (Primary endpoint)
-       +---> Service (Replica endpoint)
-       +---> Secret (Credentials)
-       +---> ConfigMap (PostgreSQL config)
-       +---> CronJob (Backups)
-       +---> PodDisruptionBudget
+          statusReplicasPath: .status.replicas
+          labelSelectorPath: .status.selector
 ```
 
 </details>
 
-### 2. 解释如何使用 scheduler framework 实现 custom scheduler。
+## 17. 应如何将 Deployment 验证 webhook 限定到 production？
 
 <details>
 <summary>显示答案</summary>
 
-**Scheduler Plugin 实现:**
+匹配 apps/v1 deployments 的 CREATE/UPDATE，并选择 kubernetes.io/metadata.name: production。配置实际的验证 server/Service/path、CA bundle、failurePolicy、timeoutSeconds、sideEffects 和 admissionReviewVersions。指南中的 /mutate handler 不是 Deployment validator。若仅限制 replica，请使用其 VAP/binding 示例，并同时匹配 `deployments` 和 `deployments/scale`，以避免 HPA 和 `kubectl scale` 更新绕过限制。
 
-```go
-// Plugin implementing multiple extension points
-type CustomSchedulerPlugin struct {
-    handle framework.Handle
-}
+</details>
 
-// Implement PreFilter - check pod requirements
-func (p *CustomSchedulerPlugin) PreFilter(ctx context.Context, state *framework.CycleState, pod *v1.Pod) (*framework.PreFilterResult, *framework.Status) {
-    // Validate pod has required annotations
-    if _, ok := pod.Annotations["custom-scheduler/zone"]; !ok {
-        return nil, framework.NewStatus(framework.Unschedulable, "missing zone annotation")
-    }
-    return nil, framework.NewStatus(framework.Success, "")
-}
+## 18. 描述一个健壮的调谐序列。
 
-// Implement Filter - exclude unsuitable nodes
-func (p *CustomSchedulerPlugin) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
-    requiredZone := pod.Annotations["custom-scheduler/zone"]
-    nodeZone := nodeInfo.Node().Labels["topology.kubernetes.io/zone"]
-    
-    if requiredZone != nodeZone {
-        return framework.NewStatus(framework.Unschedulable, "zone mismatch")
-    }
-    return framework.NewStatus(framework.Success, "")
-}
+<details>
+<summary>显示答案</summary>
 
-// Implement Score - rank suitable nodes
-func (p *CustomSchedulerPlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-    nodeInfo, err := p.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
-    if err != nil {
-        return 0, framework.NewStatus(framework.Error, err.Error())
-    }
-    
-    // Score based on available resources
-    allocatable := nodeInfo.Node().Status.Allocatable
-    requested := nodeInfo.Requested
-    
-    cpuScore := calculateResourceScore(allocatable.Cpu(), requested.Cpu)
-    memScore := calculateResourceScore(allocatable.Memory(), requested.Memory)
-    
-    return (cpuScore + memScore) / 2, framework.NewStatus(framework.Success, "")
-}
+将 NotFound 视为成功完成。删除期间，应在仅移除自己的 finalizer 前完成幂等清理。创建外部资源前先持久化 finalizer，检查子资源所有权并调谐受管理字段。重试冲突并 patch 已变更的观测 status。不要将伪代码标注为可运行的 controller。
 
-// Register the plugin
-func New(_ runtime.Object, h framework.Handle) (framework.Plugin, error) {
-    return &CustomSchedulerPlugin{handle: h}, nil
-}
-```
+</details>
 
-**Scheduler 配置:**
+## 19. 设计分布式数据库 Operator 时需要什么？
 
-```yaml
-apiVersion: kubescheduler.config.k8s.io/v1
-kind: KubeSchedulerConfiguration
-profiles:
-  - schedulerName: custom-scheduler
-    plugins:
-      preFilter:
-        enabled:
-          - name: CustomSchedulerPlugin
-      filter:
-        enabled:
-          - name: CustomSchedulerPlugin
-      score:
-        enabled:
-          - name: CustomSchedulerPlugin
-        disabled:
-          - name: NodeResourcesBalancedAllocation
-```
+<details>
+<summary>显示答案</summary>
 
-**Extension Point 摘要:**
+除 schema 和工作负载创建外，还应设计主节点隔离、quorum、副本同步、备份/WAL 恢复测试、存储生命周期、迁移兼容性和故障处理。创建 Services、StatefulSets 和 CronJobs 并不能建立数据安全性。
 
-| Extension Point | 目的 | 运行时机 |
-|----------------|---------|-----------|
-| PreFilter | Pod 级检查 | 过滤前 |
-| Filter | Node 排除 | 对每个 node |
-| PostFilter | 处理不可调度情况 | 没有合适的 node 时 |
-| PreScore | 为打分做准备 | 打分前 |
-| Score | Node 排名 | 对过滤后的 node |
-| NormalizeScore | 分数归一化 | 所有分数计算后 |
-| Reserve | 资源预留 | node 选择后 |
-| Permit | 最终批准 | 绑定前 |
-| PreBind | 绑定前操作 | API 绑定前 |
-| Bind | 实际绑定 | API server 更新 |
-| PostBind | 绑定后清理 | 绑定后 |
+</details>
+
+## 20. 应如何实现和验证自定义 scheduler？
+
+<details>
+<summary>显示答案</summary>
+
+针对对应 Kubernetes minor 版本的精确 framework interfaces 编译/注册 plugins。对齐 profile names 和 Pod schedulerName；测试 Filter/Score 以及预留、permit 和绑定失败。仅靠 YAML 无法安装 plugin。对于简单的 zone 要求，先考虑 node affinity。
 
 </details>

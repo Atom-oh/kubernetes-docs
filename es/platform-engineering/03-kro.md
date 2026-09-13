@@ -1,504 +1,272 @@
-# Kubernetes Resource Operator (KRO)
+# Kube Resource Orchestrator (kro)
 
-> **Versiones compatibles**: Kubernetes 1.31, 1.32, 1.33
-> **Última actualización**: February 21, 2026
+> **Última actualización**: September 12, 2026 · **Referencia**: kro 0.9.4
 
-## Overview
+## Conceptos y alcance
 
-Kubernetes Resource Operator (KRO) es un framework para definir y gestionar de forma declarativa las relaciones entre recursos de Kubernetes. Al ir más allá de las limitaciones de los charts de Helm tradicionales, KRO modela grafos de recursos mediante ResourceGraphDefinition (RGD) y permite desplegar aplicaciones complejas como un único Custom Resource (recurso personalizado).
+El nombre oficial es Kube Resource Orchestrator, un subproyecto de Kubernetes SIG Cloud Provider. Una ResourceGraphDefinition (RGD) define esquemas de entrada, relaciones y estado entre recursos de Kubernetes. Tras la validación y compilación, kro reconcilia dinámicamente instancias del CRD generado.
 
-## KRO Core Concepts
+Una RGD define una API y un grafo de recursos; no es una instancia de aplicación. El spec de la instancia proporciona entradas y las plantillas de spec.resources crean objetos como Deployments y Services. Los CRDs existentes, como los recursos ACK, pueden participar, pero kro no proporciona sus controllers ni permisos de AWS IAM.
 
-### What is Kubernetes Resource Operator?
+Las expresiones `${...}` dentro de YAML usan CEL. Los ejemplos anteriores de .parent, .children, childResources, resourceKind, statusMappings y Go-template no pertenecen a esta API. No cree de forma independiente el mismo CRD de aplicación ni compita con la RGD por la propiedad.
 
-Kubernetes Resource Operator (KRO) es un framework para definir y gestionar de forma declarativa las relaciones entre recursos de Kubernetes. KRO se basa en los siguientes conceptos principales:
+## Comparación con Helm, Kustomize y Operators
 
-1. **Relaciones declarativas entre recursos**: Expresa estructuras de aplicaciones complejas definiendo explícitamente las relaciones entre recursos.
-2. **Reconciliación basada en el estado**: Reconcilia continuamente las diferencias entre los estados deseado y real.
-3. **Grafo de recursos**: Modela dependencias y relaciones entre recursos en forma de grafo.
-4. **Gestión automatizada del ciclo de vida**: Gestiona automáticamente la creación, actualización y eliminación de recursos.
+| Herramienta | Función y límite principales |
+| --- | --- |
+| Helm | Renderiza charts de Go-template y administra el historial de releases. Las dependencias de charts v2 se declaran en Chart.yaml. |
+| Kustomize | Transforma manifiestos mediante bases y patches; no es un controller de tiempo de ejecución. |
+| Custom operator | Puede implementar en código recuperación, migraciones y backups específicos del dominio. |
+| kro | Infiere un grafo de recursos a partir de referencias CEL y reconcilia instancias; no genera algoritmos de recuperación de bases de datos. |
 
-### ResourceGraphDefinition (RGD)
+Un chart de Helm puede instalar kro mientras GitOps administra RGDs e instancias. Estas herramientas pueden trabajar juntas. Migrar de Helm a kro no mejora automáticamente la seguridad, la recuperación ni las operaciones. Los controllers de Kubernetes Deployment también siguen administrando los Deployments creados originalmente por Helm.
 
-ResourceGraphDefinition (RGD) es un componente central de KRO que define relaciones entre recursos personalizados y sus recursos nativos de Kubernetes dependientes. RGD ofrece las siguientes capacidades:
+## Instalación y permisos
 
-1. **Definición de relación padre-hijo**: Define la estructura jerárquica entre recursos padre e hijo.
-2. **Creación de recursos basada en plantillas**: Crea dinámicamente recursos hijo en función de las propiedades del recurso padre.
-3. **Propagación de estado**: Propaga los estados de los recursos hijo a los recursos padre para comprender el estado general de la aplicación.
-4. **Gestión de dependencias**: Define dependencias entre recursos hijo para garantizar el orden correcto de creación y actualización.
-
-### KRO vs Traditional Approaches
-
-KRO tiene los siguientes diferenciadores en comparación con los enfoques tradicionales de gestión de recursos de Kubernetes:
-
-| Feature | KRO | Helm | Operator SDK | Kustomize |
-|---------|-----|------|--------------|-----------|
-| **Resource Relationship Modeling** | Explicit graph | Implicit | Code-based | None |
-| **State Propagation** | Automatic | Manual | Code-based | None |
-| **Dependency Management** | Declarative | Implicit | Code-based | None |
-| **Extensibility** | High | Medium | High | Low |
-| **Learning Curve** | Medium | Low | High | Low |
-| **GitOps Friendliness** | High | Medium | Medium | High |
-
-### KRO Architecture
-
-KRO consta de los siguientes componentes:
-
-1. **KRO Controller**: Observa ResourceGraphDefinitions y gestiona grafos de recursos.
-2. **Resource Graph Engine**: Procesa relaciones y dependencias entre recursos.
-3. **State Manager**: Realiza seguimiento de los estados de los recursos y los propaga.
-4. **Reconciliation Loop**: Reconcilia las diferencias entre los estados deseado y real.
-
-```
-+-------------------+     +-------------------+     +-------------------+
-|  Custom Resource  |     | ResourceGraph     |     | Kubernetes        |
-|  (CR)             |<--->| Definition        |<--->| Native Resources  |
-+-------------------+     +-------------------+     +-------------------+
-         ^                        ^                         ^
-         |                        |                         |
-         v                        v                         v
-+-----------------------------------------------------------------------+
-|                          KRO Controller                                |
-|                                                                       |
-|  +----------------+  +----------------+  +----------------+           |
-|  | Resource Graph |  | State Manager  |  | Reconciliation |           |
-|  |     Engine     |  |                |  |     Loop       |           |
-|  +----------------+  +----------------+  +----------------+           |
-+-----------------------------------------------------------------------+
-```
-
-## The Origins and Evolution of KRO
-
-### Challenges in Kubernetes Resource Management
-
-A medida que las aplicaciones de Kubernetes crecieron en complejidad, los enfoques de gestión de recursos evolucionaron:
-
-1. **Gestión directa con kubectl**: Aplicación manual de archivos YAML individuales — difícil de gestionar las relaciones y el orden entre recursos
-2. **Helm**: Simplificó el despliegue mediante empaquetado basado en plantillas, pero está limitado por la complejidad de las plantillas de Go y la gestión del estado de release
-3. **Operator SDK**: Permite el desarrollo completo de controllers personalizados, pero requiere conocimientos de programación en Go y altos costes de desarrollo/mantenimiento
-4. **KRO**: ResourceGraphDefinition declarativo define grafos de recursos sin codificación — combina la potencia de Operator con la simplicidad de Helm
-
-### Problems KRO Solves
-
-| Existing Limitation | KRO's Solution |
-|---------------------|----------------|
-| Helm template complexity | Pure YAML + resource reference syntax |
-| Operator development cost | RGD declaration auto-generates CRD + controller |
-| No inter-resource state propagation | statusMappings for automatic child→parent state propagation |
-| Manual dependency ordering | Automatic dependency resolution in resource graph |
-
-## Lab Environment Setup
-
-Para seguir los ejemplos de este documento, necesitarás las siguientes herramientas y entorno:
-
-### Required Tools
-- kubectl v1.31 o superior
-- Helm v3.10 o superior
-- kro CLI v0.5.0 o superior
-- Un cluster de Kubernetes funcional (EKS, minikube, kind, etc.)
-
-### Installing KRO
+El repositorio oficial es kubernetes-sigs/kro; las rutas antiguas de kro-run podrían redirigir. Esta es una **inspección sin conexión** de un chart OCI fijado. No use las antiguas URL de descarga de kro-project ni una instalación de CLI inventada. Esta release no distribuye un binario de CLI independiente; use kubectl y Helm.
 
 ```bash
-# Install KRO controller
-kubectl apply -f https://github.com/kro-project/kro/releases/download/v0.5.0/kro-controller.yaml
-
-# Install KRO CLI
-curl -L https://github.com/kro-project/kro/releases/download/v0.5.0/kro-cli-$(uname -s)-$(uname -m) -o kro
-chmod +x kro
-sudo mv kro /usr/local/bin/
-
-# Verify installation
-kubectl get pods -n kro-system
+helm template kro oci://registry.k8s.io/kro/charts/kro \
+  --version 0.9.4 --namespace kro-system \
+  --set rbac.mode=aggregation --include-crds
 ```
 
-## Helm and KRO Comparison
+Antes de la instalación, verifique una versión de Kubernetes compatible, las políticas de admisión, los namespaces y los CRDs/controllers existentes. La anterior lista 1.31–1.33 no se presenta como compatibilidad actual. Helm upgrade no actualiza automáticamente crds/; revise la release 0.9.4 y los cambios de CRD mediante un proceso independiente.
 
-### Helm
-
-Helm es una herramienta ampliamente utilizada para empaquetar y desplegar aplicaciones de Kubernetes. Helm tiene las siguientes características:
-
-- **Basado en plantillas**: Usa el lenguaje de plantillas de Go para generar manifests de Kubernetes
-- **Concepto de Chart**: Unidad para empaquetar aplicaciones
-- **Gestión de releases**: Gestión de versiones de las aplicaciones desplegadas
-- **Repositorio central**: Repositorio para compartir y reutilizar charts
-
-### Kubernetes Resource Operator (KRO)
-
-KRO es un enfoque para gestionar aplicaciones usando recursos personalizados de Kubernetes:
-
-- **API declarativa**: Definición de recursos nativa de Kubernetes
-- **Basado en el estado**: Declara el estado deseado y el controller reconcilia el estado real
-- **Compatible con GitOps**: Integración sencilla con sistemas de control de versiones
-- **Extensibilidad**: Extensión mediante Custom Resource Definitions (CRDs)
-
-### Comparison Table
-
-| Feature | Helm | KRO |
-|---------|------|-----|
-| **Packaging Method** | Chart (tgz archive) | Custom Resource |
-| **Template Engine** | Go templates | None (pure YAML) |
-| **Version Management** | Release history | Git-based |
-| **Rollback Mechanism** | helm rollback | GitOps-based rollback |
-| **Dependency Management** | requirements.yaml | ResourceGraphDefinition |
-| **Customization** | values.yaml | CR spec |
-| **Installation Method** | helm install | kubectl apply |
-| **Upgrade Method** | helm upgrade | kubectl apply |
-| **Deletion Method** | helm uninstall | kubectl delete |
-| **Hooks** | Install/upgrade/delete hooks | Kubernetes event-based |
-
-## Reasons to Migrate from Helm to KRO
-
-1. **Enfoque nativo de Kubernetes**: KRO sigue el modelo de API declarativa de Kubernetes para una experiencia más coherente
-2. **Gestión de versiones mejorada**: Capacidad para rastrear los cambios de cada recurso de forma individual
-3. **Control detallado**: Control más detallado a nivel de recurso individual
-4. **Gestión de dependencias simplificada**: Gestión más sencilla de relaciones complejas con declaraciones explícitas de dependencias
-5. **Seguridad reforzada**: Capacidad de conceder solo los permisos necesarios siguiendo el principio de mínimo privilegio
-6. **Gestión de estado mejorada**: Propaga y agrega automáticamente los estados de los recursos
-7. **Integración con flujos de trabajo GitOps**: Integración sencilla con herramientas GitOps mediante un enfoque declarativo
-
-## Practical Example: Migrating Nginx Helm Chart to KRO
-
-### Existing Helm Chart (values.yaml)
+El valor predeterminado rbac.mode=unrestricted concede acceso amplio al clúster. El ejemplo renderiza el modo aggregation, que aún incluye permisos básicos para CRDs, RGDs, GraphRevisions y ConfigMaps. Añada permisos para la API de aplicación generada y los recursos secundarios. Este ClusterRole permite los tipos de recursos del ejemplo y puede conceder acceso en todo el clúster. Los administradores de plataforma de confianza deben controlar las RGDs y las etiquetas de agregación.
 
 ```yaml
-# Nginx Helm chart values.yaml
-replicaCount: 2
-
-image:
-  repository: nginx
-  tag: 1.21.0
-  pullPolicy: IfNotPresent
-
-service:
-  type: ClusterIP
-  port: 80
-
-ingress:
-  enabled: true
-  hosts:
-    - host: example.com
-      paths:
-        - path: /
-          pathType: Prefix
-
-resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
-  requests:
-    cpu: 50m
-    memory: 64Mi
-```
-
-### KRO Custom Resource Definition
-
-```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
 metadata:
-  name: nginxapps.kro.example.com
-spec:
-  group: kro.example.com
-  names:
-    kind: NginxApp
-    listKind: NginxAppList
-    plural: nginxapps
-    singular: nginxapp
-  scope: Namespaced
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              properties:
-                replicas:
-                  type: integer
-                  default: 1
-                image:
-                  type: object
-                  properties:
-                    repository:
-                      type: string
-                    tag:
-                      type: string
-                    pullPolicy:
-                      type: string
-                      enum: [Always, IfNotPresent, Never]
-                service:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                      enum: [ClusterIP, NodePort, LoadBalancer]
-                    port:
-                      type: integer
-                ingress:
-                  type: object
-                  properties:
-                    enabled:
-                      type: boolean
-                    hosts:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          host:
-                            type: string
-                          paths:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                path:
-                                  type: string
-                                pathType:
-                                  type: string
-                resources:
-                  type: object
-                  properties:
-                    limits:
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
-                    requests:
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
+  name: kro:controller:reviewed-nginxapps
+  labels:
+    rbac.kro.run/aggregate-to-controller: "true"
+rules:
+  - apiGroups: [platform.example.com]
+    resources: [nginxapps]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [platform.example.com]
+    resources: [nginxapps/status, nginxapps/finalizers]
+    verbs: [get, update, patch]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [services]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    verbs: [get, list, watch, create, update, patch, delete]
 ```
 
-### Creating ResourceGraphDefinition
+## Ejemplo completo de NginxApp
+
+Los archivos RGD, de instancia y RBAC también están en examples/platform/kro. Ingress está deshabilitado de forma predeterminada. Antes de habilitarlo, prepare un IngressClass/controller aprobado, el DNS del host y un TLS Secret en el mismo namespace. La cadena className=internal por sí sola no configura un balanceador de carga interno.
+
+La imagen utiliza la misma etiqueta nginx-unprivileged que el ejemplo de Helm. Se configuran un UID no root, una raíz de solo lectura y un volumen /tmp, pero la ejecución de la imagen no se probó. Verifique los digests, la arquitectura y las políticas para el despliegue.
+
+### ResourceGraphDefinition
 
 ```yaml
 apiVersion: kro.run/v1alpha1
 kind: ResourceGraphDefinition
 metadata:
-  name: nginxapp-graph
+  name: reviewed-nginxapps
 spec:
-  resourceKind:
-    group: kro.example.com
+  schema:
+    apiVersion: v1alpha1
+    group: platform.example.com
     kind: NginxApp
-    version: v1
-  childResources:
-    - apiVersion: apps/v1
-      kind: Deployment
-      nameTemplate: "{{.parent.metadata.name}}"
-      template: |
+    scope: Namespaced
+    spec:
+      replicas: integer | default=2 minimum=1 maximum=5
+      image: string | default="nginxinc/nginx-unprivileged:1.30.4-alpine"
+      ingress:
+        enabled: boolean | default=false
+        className: string | default="internal"
+        host: string | default="app.example.com"
+        tlsSecret: string | default="app-tls"
+    status:
+      availableReplicas: ${deployment.status.availableReplicas}
+      serviceIP: ${service.spec.clusterIP}
+  resources:
+    - id: deployment
+      readyWhen:
+        - ${deployment.status.availableReplicas >= deployment.spec.replicas}
+        - ${deployment.status.observedGeneration >= deployment.metadata.generation}
+      template:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+          labels:
+            app.kubernetes.io/name: ${schema.metadata.name}
         spec:
-          replicas: {{.parent.spec.replicas}}
+          replicas: ${schema.spec.replicas}
           selector:
             matchLabels:
-              app: {{.parent.metadata.name}}
+              app.kubernetes.io/name: ${schema.metadata.name}
           template:
             metadata:
               labels:
-                app: {{.parent.metadata.name}}
+                app.kubernetes.io/name: ${schema.metadata.name}
             spec:
+              automountServiceAccountToken: false
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 101
+                runAsGroup: 101
+                fsGroup: 101
+                seccompProfile:
+                  type: RuntimeDefault
               containers:
-              - name: nginx
-                image: {{.parent.spec.image.repository}}:{{.parent.spec.image.tag}}
-                imagePullPolicy: {{.parent.spec.image.pullPolicy}}
-                ports:
-                - containerPort: {{.parent.spec.service.port}}
-                resources:
-                  {{- if .parent.spec.resources }}
-                  limits:
-                    {{- if .parent.spec.resources.limits.cpu }}
-                    cpu: {{.parent.spec.resources.limits.cpu}}
-                    {{- end }}
-                    {{- if .parent.spec.resources.limits.memory }}
-                    memory: {{.parent.spec.resources.limits.memory}}
-                    {{- end }}
-                  requests:
-                    {{- if .parent.spec.resources.requests.cpu }}
-                    cpu: {{.parent.spec.resources.requests.cpu}}
-                    {{- end }}
-                    {{- if .parent.spec.resources.requests.memory }}
-                    memory: {{.parent.spec.resources.requests.memory}}
-                    {{- end }}
-                  {{- end }}
-
-    - apiVersion: v1
-      kind: Service
-      nameTemplate: "{{.parent.metadata.name}}"
-      template: |
-        spec:
-          selector:
-            app: {{.parent.metadata.name}}
-          ports:
-          - port: {{.parent.spec.service.port}}
-            targetPort: {{.parent.spec.service.port}}
-          type: {{.parent.spec.service.type}}
-
-    - apiVersion: networking.k8s.io/v1
-      kind: Ingress
-      nameTemplate: "{{.parent.metadata.name}}"
-      condition: "{{.parent.spec.ingress.enabled}}"
-      template: |
-        spec:
-          rules:
-          {{- range .parent.spec.ingress.hosts }}
-          - host: {{.host}}
-            http:
-              paths:
-              {{- range .paths }}
-              - path: {{.path}}
-                pathType: {{.pathType}}
-                backend:
-                  service:
-                    name: {{$.parent.metadata.name}}
-                    port:
-                      number: {{$.parent.spec.service.port}}
-              {{- end }}
-          {{- end }}
-
-  statusMappings:
-    - childResource:
-        kind: Deployment
-        name: "{{.parent.metadata.name}}"
-      conditions:
-        - type: Available
-          mapping:
-            type: Ready
-      fieldMappings:
-        - child: "status.availableReplicas"
-          parent: "status.availableReplicas"
-        - child: "status.readyReplicas"
-          parent: "status.readyReplicas"
-
-    - childResource:
+                - name: web
+                  image: ${schema.spec.image}
+                  ports:
+                    - name: http
+                      containerPort: 8080
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    readOnlyRootFilesystem: true
+                    capabilities:
+                      drop: [ALL]
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 64Mi
+                    limits:
+                      cpu: 500m
+                      memory: 128Mi
+                  readinessProbe:
+                    httpGet:
+                      path: /
+                      port: http
+                  volumeMounts:
+                    - name: tmp
+                      mountPath: /tmp
+              volumes:
+                - name: tmp
+                  emptyDir:
+                    sizeLimit: 64Mi
+    - id: service
+      template:
+        apiVersion: v1
         kind: Service
-        name: "{{.parent.metadata.name}}"
-      fieldMappings:
-        - child: "spec.clusterIP"
-          parent: "status.serviceIP"
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+          labels:
+            app.kubernetes.io/name: ${schema.metadata.name}
+        spec:
+          type: ClusterIP
+          selector: ${deployment.spec.selector.matchLabels}
+          ports:
+            - name: http
+              port: 8080
+              targetPort: http
+    - id: ingress
+      includeWhen:
+        - ${schema.spec.ingress.enabled}
+      template:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+          labels:
+            app.kubernetes.io/name: ${schema.metadata.name}
+        spec:
+          ingressClassName: ${schema.spec.ingress.className}
+          tls:
+            - hosts:
+                - ${schema.spec.ingress.host}
+              secretName: ${schema.spec.ingress.tlsSecret}
+          rules:
+            - host: ${schema.spec.ingress.host}
+              http:
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: ${service.metadata.name}
+                        port:
+                          number: 8080
 ```
 
-### KRO Custom Resource Instance
+### Instancia
 
 ```yaml
-apiVersion: kro.example.com/v1
+apiVersion: platform.example.com/v1alpha1
 kind: NginxApp
 metadata:
-  name: my-nginx
+  name: reviewed-web
+  namespace: example
 spec:
   replicas: 2
-  image:
-    repository: nginx
-    tag: 1.21.0
-    pullPolicy: IfNotPresent
-  service:
-    type: ClusterIP
-    port: 80
+  image: nginxinc/nginx-unprivileged:1.30.4-alpine
   ingress:
-    enabled: true
-    hosts:
-      - host: example.com
-        paths:
-          - path: /
-            pathType: Prefix
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 50m
-      memory: 64Mi
+    enabled: false
+    className: internal
+    host: app.example.com
+    tlsSecret: app-tls
 ```
 
-### Deployment and Verification
+SimpleSchema en schema.spec describe los tipos, los valores predeterminados y los límites; kro lo convierte en el esquema OpenAPI del CRD generado. CEL schema.metadata/spec se refiere a la instancia, mientras que deployment/service se refiere a IDs de recursos. Defina el estado proyectado bajo schema.status.
+
+El readyWhen de este ejemplo comprueba los propios availableReplicas y observedGeneration del Deployment. Sin condiciones de preparación, la existencia y las referencias resolubles pueden bastar para avanzar. readyWhen debe devolver valores Boolean y referirse únicamente a su propio ID de recurso. Los SLO de la aplicación y las comprobaciones de bases de datos permanecen separados.
+
+El Service hace referencia al selector del Deployment y el Ingress al nombre del Service, lo que crea dependencias. Los recursos independientes pueden compartir una wave; se rechazan los ciclos. includeWhen controla la inclusión condicional y puede añadir o eliminar recursos cuando cambian las condiciones. Un externalRef a un recurso existente es diferente de asumir la propiedad para crearlo o eliminarlo.
+
+### Orden de aplicación e inspección
+
+En un clúster aprobado, aplique el RBAC revisado y la RGD, verifique que la RGD esté Active y que el CRD generado nginxapps.platform.example.com esté Established, y después aplique la instancia. Un kubectl apply exitoso no prueba la compilación del grafo ni la preparación de la aplicación.
 
 ```bash
-# Apply CRD and RGD
-kubectl apply -f nginxapp-crd.yaml
-kubectl apply -f nginxapp-rgd.yaml
-
-# Apply custom resource instance
-kubectl apply -f my-nginx.yaml
-
-# Verify created resources
-kubectl get deployments,services,ingress -l app=my-nginx
-
-# Check custom resource status
-kubectl get nginxapp my-nginx -o yaml
+kubectl get rgd reviewed-nginxapps -o yaml
+kubectl get graphrevisions \
+  -l internal.kro.run/resource-graph-definition-name=reviewed-nginxapps
+kubectl get crd nginxapps.platform.example.com -o yaml
+kubectl get nginxapps.platform.example.com reviewed-web -n example -o yaml
+kubectl get deployments,services,ingresses -n example \
+  -l app.kubernetes.io/name=reviewed-web
 ```
 
-## KRO Use Cases
+## GraphRevisions y cambios
 
-### 1. Microservices Application Management
+La versión 0.9.4 registra y compila GraphRevisions inmutables cuando cambian los specs de RGD. Una revisión reciente fallida no vuelve automáticamente a la anterior; el progreso de la instancia puede detenerse. Inspeccione GraphAccepted, GraphVerified, GraphRevisionsResolved y los mensajes de error, y después aplique un spec válido.
 
-KRO es ideal para gestionar aplicaciones de microservices compuestas por varios componentes. Cada microservice puede estar compuesto por los siguientes recursos:
+GraphRevision es una API internal.kro.run. Úsela para inspección y diagnóstico sin asumir contratos estables de herramientas externas. Revertir un spec de Git sigue requiriendo validación en una nueva revisión y no revierte transaccionalmente los datos de la base de datos ni los efectos externos.
 
-- Deployment o StatefulSet
-- Service
-- ConfigMap
-- Secret
-- HorizontalPodAutoscaler
-- PodDisruptionBudget
+Group, kind, apiVersion y scope son inmutables dentro de una RGD. Distinga la evolución de esquema compatible de la migración a una nueva API y revise las instancias existentes y los datos almacenados. No suponga que los webhooks de conversión se generan automáticamente.
 
-Con KRO, puedes definir explícitamente las relaciones entre estos recursos y gestionar todo el microservice mediante un único recurso personalizado.
+## Eliminación y propiedad
 
-### 2. Database Cluster Management
+Cuando se elimina una instancia, kro usa el inventario ApplySet y waves de eliminación para eliminar primero los dependientes, y conserva su finalizer hasta que desaparecen los recursos administrados. Los finalizers secundarios pueden bloquear las waves posteriores. Las referencias externas son de solo lectura y kro nunca las elimina.
 
-Los clusters de bases de datos (por ejemplo, PostgreSQL, MySQL) requieren varios componentes y configuraciones complejas. KRO puede gestionar los siguientes recursos:
+Es inexacto afirmar que todos los secundarios se recolectan inmediatamente mediante garbage collection. Inspeccione ResourcesReady=Unknown/UnderDeletion, el inventario y los finalizers secundarios. Planifique la limpieza y retención de instancias, RGDs, CRDs y datos antes de eliminar controllers. La eliminación del CRD también afecta los datos de instancia.
 
-- StatefulSets master y replica
-- Endpoints de Service
-- Persistent volume claims
-- Trabajos de backup y restore
-- Configuración de monitoreo
+## Migración y operaciones
 
-### 3. Multi-Cluster Application Deployment
+Revise los nombres, selectores, propiedad, field managers y controllers de GitOps para que Helm y kro no compitan por un objeto. Elija un grafo validado con nombre nuevo y cambio de tráfico, o un proceso revisado de transferencia de propiedad. No migre desinstalando de manera informal una release que posee StatefulSets, PVCs o bases de datos.
 
-KRO también se puede usar para gestionar aplicaciones que abarcan varios clusters de Kubernetes. Esto admite escenarios como:
+Use el mismo contrato de API y los digests de imagen revisados en todos los entornos, con instancias separadas para namespaces, réplicas, ingress y políticas. Las herramientas de flota como ApplicationSet requieren kro, RGDs y permisos en cada clúster de destino. kro no se conecta automáticamente a clústeres remotos arbitrarios.
 
-- Despliegues regionales
-- Despliegue coherente en entornos de desarrollo, staging y producción
-- Gestión de aplicaciones en entornos de cloud híbrida
+Las aplicaciones con estado aún necesitan comportamiento de backup, restauración, failover y migración de un database-operator o un servicio administrado. La reconciliación de recursos por sí sola no es recuperación de datos. Limite el tamaño y los permisos del grafo, defina unidades reutilizables y exponga solo estado útil. No copie el contenido de Secret en estado, etiquetas ni logs.
 
-## KRO Best Practices
+## Verificación y referencias
 
-### 1. Resource Graph Design
+Se revisaron tanto las guías originales de 504 líneas como los cuestionarios de 423 líneas, incluidos 16 bloques de código únicos y 20 temas de preguntas por idioma. El chart oficial de kro 0.9.4 se renderizó en modo aggregation y se comprobó la estructura de RGD. Su dependencia cel-go 0.31.0 compiló y evaluó las 14 expresiones publicadas únicas. Cuatro casos sintéticos cubrieron Ingress activado/desactivado, réplicas insuficientes y observedGeneration obsoleto.
 
-- **Principio de responsabilidad única**: Cada recurso personalizado debe tener una única responsabilidad clara.
-- **Nivel de abstracción adecuado**: Elige un nivel de abstracción adecuado que no sea ni demasiado detallado ni demasiado abstracto.
-- **Límites claros**: Define claramente los límites y responsabilidades entre recursos.
-- **Reutilización**: Identifica patrones comunes y extráelos en componentes reutilizables.
+Estas son comprobaciones CEL con entradas sintéticas dinámicas, no validación mediante el compilador completo de grafos de kro, el descubrimiento de API de Kubernetes, la admisión del CRD generado ni un controller en ejecución. No se ejecutaron Containers, Ingress/TLS, bases de datos ni recursos de clúster.
 
-### 2. State Management
+- [kro 0.9.4](https://github.com/kubernetes-sigs/kro/releases/tag/v0.9.4)
+- [API versionada y código fuente](https://github.com/kubernetes-sigs/kro/tree/v0.9.4)
+- [Esquema de RGD](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/concepts/rgd/01-schema.md)
+- [Control de acceso](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/01-access-control.md)
+- [Revisiones de grafo](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/05-graph-revisions.md)
+- [Eliminación de instancias](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/06-instance-deletion.md)
 
-- **Estado significativo**: Proporciona información de estado significativa a los usuarios.
-- **Agregación de estado**: Agrega adecuadamente los estados de varios recursos hijo.
-- **Definición de condiciones**: Define tipos de condición y estados claros.
-- **Información de diagnóstico**: Incluye información de diagnóstico útil para la resolución de problemas.
-
-### 3. Version Management
-
-- **Gestión de versiones de API**: Gestiona correctamente las versiones de API de los recursos personalizados.
-- **Conversion Webhooks**: Implementa webhooks para la conversión de versiones.
-- **Compatibilidad hacia atrás**: Mantén la compatibilidad hacia atrás siempre que sea posible.
-- **Migración gradual**: Introduce cambios grandes de forma gradual.
-
-### 4. Security
-
-- **Mínimo privilegio**: Concede solo los permisos mínimos necesarios a los controllers.
-- **Políticas RBAC**: Define políticas RBAC adecuadas para controlar el acceso.
-- **Gestión de Secret**: Gestiona la información sensible como Secrets.
-- **Validation Webhooks**: Implementa webhooks para la validación de entradas.
-
-## Conclusion
-
-La migración de Helm a KRO es un paso importante hacia la transición a un enfoque nativo de Kubernetes. Esto permite una gestión de aplicaciones más declarativa, extensible y compatible con GitOps. Especialmente para aplicaciones complejas, KRO proporciona un control más detallado y una gestión de versiones mejorada.
-
-ResourceGraphDefinition (RGD) es un concepto central de KRO, que proporciona mecanismos para definir explícitamente las relaciones entre recursos y propagar estados. Esto permite modelar y gestionar con mayor facilidad estructuras de aplicaciones complejas.
-
-El proceso de migración requiere trabajo inicial adicional, pero proporciona beneficios significativos en términos de mantenimiento y operaciones a largo plazo. Mediante un enfoque de migración gradual, puedes minimizar el riesgo mientras aprovechas los beneficios de KRO.
-
-Aunque KRO sigue siendo una tecnología en evolución, representa un enfoque importante que muestra la dirección futura del ecosistema Kubernetes. Conceptos como las APIs declarativas, el modelado de relaciones entre recursos y la propagación de estado se están convirtiendo en principios fundamentales de la gestión de aplicaciones cloud-native.
-
-## Quiz
-
-Para comprobar lo que has aprendido en este capítulo, intenta el [KRO Quiz](../quizzes/platform-engineering/03-kro-quiz.md).
+[kro quiz](../quizzes/platform-engineering/03-kro-quiz.md)

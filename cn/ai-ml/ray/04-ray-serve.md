@@ -1,85 +1,121 @@
 # 第 4 部分：Ray Serve
 
-> **支持的版本**：Ray 2.57.0
-> **最后更新**：August 20, 2026
+> **审查基线**：Ray 2.58.0 · KubeRay 1.7.0 · 2026-09-12
 
-## 实验环境设置
+## 环境与验证范围
 
-要跟随本文档中的示例，您需要以下工具和环境：
+已使用 Python 3.12 和 `ray[serve]==2.58.0` 检查了一个小型 CPU 响应示例。在此环境中，尽管额外安装未提供 Jinja2，HAProxy 模块仍导入了 Jinja2；显式添加 `Jinja2==3.1.6` 修复了导入问题。其他环境可能已通过其他依赖项包含它。
 
-### 必需工具
+`ray[llm]` extra 会添加 vLLM 等大型推理依赖项。这里未安装它，且未运行模型权重、GPU 或 EKS 工作负载。以下验证涵盖 Serve 配置、HTTP 响应和 DeploymentHandle 调用。
 
-* Python 3.10+
-* 用于常规 Ray Serve 部署，请执行 `pip install "ray[serve]"`；如果您计划学习下面的 Ray Serve LLM 部分，请改为执行 `pip install "ray[llm]"`——它会引入 `ray[serve]` 不包含的 vLLM 和相关依赖项
-* 如果您计划测试 RayService 路径，则需要 kubectl v1.34 或更高版本，并将其指向正常工作的 Amazon EKS 集群
-* 如果您计划提供 GPU 支持的模型，则需要通过 Karpenter 配置一个支持 GPU 的 `NodePool`/`EC2NodeClass` 对
+## Deployment、Application 与请求路径
 
-## Ray Serve 是什么
+一个 Serve **Deployment** 管理 actor 副本；它不同于 Kubernetes Deployment。多个副本 actor 可以容纳在一个 Ray Pod 中，因此副本数量与 Pod 数量不可互换。
 
-[第 1 部分](01-architecture.md)介绍了 actor，它是 Ray 用于有状态、可寻址 Python 对象的基本构件，这些对象会在调用之间将状态保留在内存中。Ray Serve 是直接构建在这一基本构件上的模型服务库：一个 Serve Deployment 由一个 Ray actor 或一组 actor 副本实现，Ray Serve 会将传入的 HTTP 或 gRPC 请求路由到这些副本。只要将模型加载到副本内存中一次，它随后便可以响应许多请求而无需重新加载，这正是 actor 的设计模式。
+一个 **Application** 包含一个或多个 deployment 和一个 ingress deployment。DeploymentHandle 可以连接预处理与推理，而无需让每个内部调用都经过 HTTP，也无需为每个 deployment 创建 Kubernetes Service。
 
-单个 Deployment 只需在 Ray Serve 的请求路由器后添加更多 actor 副本，即可实现水平扩缩容，与 Ray 中任何由 actor 支持的服务的扩缩容方式相同。更值得关注的是，Ray Serve 允许将多个 Deployment 组合为一个服务管道，称为 application。常见示例是两步管道：一个 Deployment 负责预处理（tokenization、图像调整大小、特征提取），并将其输出交给第二个执行实际模型推理的 Deployment。该管道中的每个 Deployment 都可以独立扩缩容、版本化和配置资源，因为其底层仍然只是一组 actor 副本。
+Controller 管理 Serve 控制状态和 actor 生命周期。Proxy 接收 HTTP/gRPC 流量并将其转发至 deployment。2.58.0 的默认 proxy 位置是**承载副本的节点上的 `EveryNode`**。可以显式选择 `HeadOnly` 和 `Disabled`。较旧架构页面中的仅 head 节点默认值不应覆盖当前 API 契约。
 
-```mermaid
-graph LR
-    C[Client] -->|HTTP / gRPC| ING[Ray Serve<br/>Ingress]
-    ING --> D1
+应区分 proxy/handle 上的调用方队列与分配给副本的进行中请求。审查 Application 中的同步/异步 handler、阻塞工作、超时和取消行为。
 
-    subgraph APP["Application"]
-        D1["Deployment: Preprocess<br/>(actor replicas)"] --> D2["Deployment: Model Inference<br/>(actor replicas)"]
-    end
+## 小型本地 HTTP/Handle 示例
 
-    D2 --> RESP[Response]
+此示例验证响应 API，而非模型推理。实际检查使用了一个可用的私有 loopback 端口，并确认 HTTP 200 以及 `double(4) == 8`。
 
-    SA["Ray Serve Autoscaler<br/>(per-deployment replica count)"] -.watches queue depth /<br/>ongoing requests.-> D1
-    SA -.-> D2
+```python
+import requests
+import ray
+from ray import serve
 
-    RA["Ray / KubeRay Autoscaler<br/>(worker Pod count)"] -.watches pending<br/>actor placement.-> SA
-    KP["Karpenter<br/>(node count)"] -.provisions nodes for<br/>pending worker Pods.-> RA
+try:
+    ray.init(address="local", num_cpus=2, include_dashboard=False,
+             object_store_memory=80 * 1024 * 1024)
+    serve.start(proxy_location="HeadOnly",
+                http_options={"host": "127.0.0.1", "port": 18080})
 
-    style D1 fill:#4fc3f7
-    style D2 fill:#ce93d8
-    style SA fill:#ffb74d
-    style RA fill:#ffb74d
-    style KP fill:#81c784
+    @serve.deployment(num_replicas=1,
+                      ray_actor_options={"num_cpus": 1},
+                      max_ongoing_requests=2, max_queued_requests=4)
+    class Echo:
+        async def __call__(self, request):
+            return {"echo": request.query_params.get("value", "")}
+        def double(self, value):
+            return value * 2
+
+    handle = serve.run(Echo.bind(), name="echo", route_prefix="/echo")
+    response = requests.get("http://127.0.0.1:18080/echo",
+                            params={"value": "fixture"}, timeout=15)
+    assert response.status_code == 200
+    assert response.json() == {"echo": "fixture"}
+    assert handle.double.remote(4).result(timeout_s=15) == 8
+finally:
+    serve.shutdown()
+    ray.shutdown()
 ```
 
-## Ray Serve LLM
+请在端口 18080 可用的独立练习进程中运行。Ray 逻辑资源和 object store 大小并非整个进程的 OS 内存/CPU 限制。`serve.shutdown()` 会停止已连接的 Serve 实例；请勿将此示例的清理操作用于共享的生产集群。
 
-大语言模型服务具有足够独特的模式——连续批处理、token 流式传输、兼容 OpenAI 的请求格式——因此 Ray 为其提供了一套专用构件：`ray.serve.llm` 模块。与其手动组装一个自行管理 vLLM engine 实例的 Deployment，`ray.serve.llm` 提供了专为 LLM 服务设计的更高级构件，它们构建于上述 Ray Serve 通用 Deployment 模型之上。
+## 副本、Autoscaling 与 Backpressure
 
-`ray.serve.llm` 将 vLLM 记录为其支持的推理 engine，其兼容 OpenAI 的 API 旨在与 vLLM 自身兼容 OpenAI 的 server 紧密匹配，因此大多数可用于普通 `vllm serve` 调用的 `engine_kwargs` 也可以沿用。在实践中，这意味着相同的生产级 Ray Serve 功能——autoscaling、多模型服务以及 Ray 常用的分布式 actor placement——同样适用于 LLM 服务；而 LLM 特有的配置工作（加载和配置 vLLM engine、公开兼容 OpenAI 的 endpoint）则由 `ray.serve.llm` 处理，而无需您手动构建。在依赖特定字段名之前，请查阅当前的 `docs.ray.io/en/latest/serve/llm/` 文档以了解准确的配置范围，因为这是 Ray Serve 中演进较为活跃的领域之一。
+区分以下已验证的 2.58.0 默认值：
 
-## 对 Serve Deployment 进行自动扩缩容
+| 配置 | 值或含义 |
+|---|---|
+| 默认 deployment | 一个副本，未配置 autoscaling |
+| `num_replicas="auto"` | 应用最小值 1、最大值 100、目标进行中请求数 2 |
+| 直接使用 `AutoscalingConfig()` | 最小值 1，**最大值 1**；省略最大值会限制扩容 |
+| `max_ongoing_requests` | 发送至副本但尚未获得响应的请求；默认值为 5 |
+| `max_queued_requests` | **每个调用方**（proxy/handle）上的队列上限；默认值为 -1，即无限制 |
+| 扩缩容延迟 | 默认扩容 30 秒/缩容 600 秒；并非实际就绪延迟 |
 
-Ray Serve Deployment 拥有自己的 autoscaling 层，与[第 2 部分](02-kuberay-operator.md)所介绍的集群级 autoscaling 相互独立。Ray/KubeRay autoscaler 决定一个 RayCluster 需要多少 worker Pod，而 Ray Serve 的 autoscaler 在更上层回答了一个范围更窄的问题：根据它实际观察到的请求负载，*这个特定 Deployment* 现在需要多少 actor 副本？Ray Serve 会将每个副本正在处理的请求数——包括排队和传输中的请求——与目标值进行比较，并在配置的最小和最大副本数范围内上调或下调副本数量，使实际负载保持接近该目标值。
+Autoscaling 目标会观察请求负载；它不同于最大进行中请求数和全局队列上限。超过队列限制时，handle 可能引发 BackPressureError，或默认返回 HTTP 503。Backpressure 配置可以自定义 HTTP 响应。
 
-这为运行在 EKS 上的 Serve application 提供了本文档站点现已熟悉的三级 autoscaling 图景：
+请一并调整最小值/最大值、测量窗口/延迟、冷启动、模型加载、batching 和实际处理时间。使用 `min_replicas=0` 缩容至零并不会消除重启延迟。期望的副本数量并不能保证所有副本都已就绪。
 
-1. **Ray Serve 的 autoscaler** 根据请求负载决定一个 Deployment 需要多少 actor 副本。
-2. **Ray/KubeRay autoscaler**（在[第 2 部分](02-kuberay-operator.md)中介绍）根据待处理的 actor placement 决定底层 RayCluster 需要多少 Ray worker Pod——包括 Ray Serve autoscaler 刚刚请求的副本。
-3. **Karpenter** 决定实际运行这些 worker Pod 所需的 EC2 node 数量，其机制与 [Karpenter](../../autoscaling/02-karpenter.md) 中所述相同。
+## EKS 上的控制层
 
-每一层只能看到其正下方的一层。Ray Serve 的 autoscaler 并不知道新副本会落在现有 node 上还是触发新 node；它只会请求更多副本。该请求是否会变成新的 EC2 node——以及需要多长时间——是更下一层 Karpenter 的问题。
+1. Serve 根据请求负载和策略调整 deployment 副本目标。
+2. Ray 放置 actor/bundle；启用的 Ray autoscaling 和 KubeRay 可以调整 worker Pod 容量。
+3. Kubernetes 放置 Pod，并在需要时由 Karpenter 等 provisioner 提供节点容量。
 
-## GPU 推理
+**一个 pending actor 不会自动变成一个 Pending Pod 或一个 EC2 节点。**现有 Ray Pod 可能获得空闲容量，或者 group 上限、放置和 quota 可能阻止进展。请在每一层检查需求和就绪状态。
 
-需要 GPU 的模型推理 Deployment 会像其他任何 Ray workload 一样请求 GPU：通过 Ray 常规的每 actor 资源请求，即[第 3 部分](03-ray-train-tune.md)中介绍的 Ray Train 和 Ray Tune worker 所使用的同一机制。Ray Serve 会将该 Deployment 的 actor 副本调度到能够满足所请求 GPU 数量的 worker 上；而且——如[第 2 部分](02-kuberay-operator.md)所述——worker group 的 Pod spec 才是最初向 Ray scheduler 声明 GPU 容量的部分。
+![HTTP/Handle 请求会到达 Serve proxy 和 deployment 副本。Actor 目标、Ray Pod 容量和 Kubernetes 节点预配是彼此独立的层，不存在 actor/Pod/node 的一一映射。](../../.gitbook/assets/en-ai-ml-ray-04-ray-serve-0.png)
 
-这也是 Ray Serve 的 autoscaling 与 Karpenter 的 node provisioning 前置时间以与本站其他 GPU workload 完全相同的方式相互作用的地方：当 Ray Serve autoscaler 决定一个推理 Deployment 需要另一个副本、且现有 GPU worker Pod 都没有可用空间时，该副本请求会变成待处理的 Pod，Karpenter 必须配置新的 GPU 支持 EC2 node，副本才能真正开始提供流量服务。积极扩缩 GPU 副本数量的服务 application 应考虑该配置前置时间；请参阅 [Karpenter](../../autoscaling/02-karpenter.md)，以更深入了解 GPU instance type 的 node provisioning 延迟机制。
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-04-ray-serve-0.html)
 
-## 生产环境中的 RayService
+## GPU 推理与 Ray Serve LLM
 
-在 Kubernetes 之外单独运行 Serve application 适合本地开发，但 EKS 上的生产部署使用[第 2 部分](02-kuberay-operator.md)介绍的 `RayService` CRD。RayService 会将底层 RayCluster 及其上部署的 Serve application 作为一个整体进行管理，并且它专门支持推出新的 application 版本或变更后的 RayCluster spec，同时旨在避免丢弃传输中的请求；请查看当前的 KubeRay release notes，以了解此升级路径的成熟度和前提条件。本文档不会再次解释 RayService 的 CRD 机制；请参阅第 2 部分。
+普通 GPU 副本使用 `ray_actor_options` 等 Ray 资源设置。请对齐设备、driver、Pod limit 以及 Ray 的 structured-resource/rayStartParams 优先级。如[第 2 部分](02-kuberay-operator.md)所述，Pod limit 并不总是唯一配置的值。
 
-在实践中，这意味着本文档前面描述的 Deployment 拓扑——由一个或多个 Deployment 组成的 application，且每个 Deployment 均可对其 actor 副本数进行 autoscaling——正是 `RayService` object 在真实 EKS 集群上管理其生命周期的对象；而 Ray/KubeRay 和 Karpenter autoscaling 层则会在其底层继续运行，其方式与任何其他 RayCluster 完全相同。
+`LLMConfig` 和 `build_openai_app` 等 API 提供了独立的 LLM 配置层。2.58.0 文档和软件包显示支持 **vLLM 和 SGLang backend**。已验证的 `ray[llm]` 依赖包括 `vllm[audio]==0.26.0` 和 NIXL 软件包；这并不意味着同时安装了所有 SGLang 依赖。
 
-## 后续步骤
+请区分 `model_loading_config`、`deployment_config`、`engine_kwargs` 和 `server_cls`。检查 engine 特定字段和支持的组合，而不要假设每个 `vllm serve` CLI 选项都能原样迁移。不同 backend 的 tensor-parallel 选项名称和 worker 放置方式可能不同。部分 API 仍处于 beta 阶段，较旧的 LLMServer/LLMRouter 路径带有弃用通知。
 
-至此，四部分组成的 Ray 系列已结束。[第 1 部分](01-architecture.md)介绍了 Ray 的核心基本构件——task、actor 和 object store。[第 2 部分](02-kuberay-operator.md)介绍了如何通过 KubeRay 的 `RayCluster`、`RayJob` 和 `RayService` CRD 在 Kubernetes 上以声明方式运行 Ray 集群，以及 Ray/KubeRay 与 Karpenter 之间的 autoscaling 分工。[第 3 部分](03-ray-train-tune.md)介绍了在该集群之上进行分布式训练和 hyperparameter tuning。本部分通过 Ray Serve 完成了整个闭环：基于第 1 部分 actor 基本构件的 Deployment，被组合为 application，依据自身请求负载指标进行 autoscaling，并且——在生产环境中——通过第 2 部分的 RayService CRD 实现端到端管理。
+请分别验证模型访问、revision、权重下载、engine/CUDA/driver 兼容性、KV cache 以及 tensor/pipeline-parallel 资源。与 OpenAI 兼容的请求格式并不能确保已建立 authentication、安全性或相同的功能覆盖范围。CPU Echo 检查不能证明 LLM 性能或兼容性。
 
-[返回主页](./README.md)
+## RayService 与运维更新
 
-## 测验
+RayService 是在 EKS 上对 Serve Application 和 RayCluster 进行声明式生命周期管理的一种选择，并非每个生产 deployment 的通用必需条件。请区分 Application 配置变更和集群变更，以及 `NewCluster` 和基于 Gateway 的增量升级策略。
 
-要检验您在本章中学到的内容，请尝试完成[主题测验](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)。
+KubeRay 1.7 已启用的增量 feature gate 仍需要 Gateway API/实现、备用容量、就绪状态和 draining 条件。请针对 shutdown 边界测试 streaming 和长时间运行的请求。不要将每次升级都描述为保证零请求丢失。
+
+HTTP 选项等集群范围的启动设置存在动态更新限制。Deployment 变更可以是轻量级重新配置，也可以是 actor 替换。重启/替换的副本会付出模型初始化和状态恢复的成本。
+
+## 访问控制与限制
+
+请分别限制 API/dashboard/client 入口、模型 artifact 访问和 Application 用户访问。Ray 集群 token 和 ClusterIP 不会自动为每个 Serve endpoint 实现 authentication/authorization。审查敏感输入、响应、prompt 和日志，并配置队列、超时和资源边界。
+
+此处的检查涵盖原生配置/decorator 以及一个微型单节点 HTTP/Handle Application。未执行 autoscaling 负载测试、GPU/LLM 运行、多节点故障转移和 RayService rollout。
+
+## 主要来源
+
+- [Serve 2.58.0](https://docs.ray.io/en/releases-2.58.0/serve/index.html)
+- [Autoscaling](https://docs.ray.io/en/releases-2.58.0/serve/autoscaling-guide.html)
+- [Serve LLM](https://docs.ray.io/en/releases-2.58.0/serve/llm/index.html)
+- [Serve API 和 proxy 默认值](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/api.py)
+- [Serve 配置](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/config.py)
+- [副本/队列配置](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/_private/config.py)
+- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+
+[主页](README.md) · [测验](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)

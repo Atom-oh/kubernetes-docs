@@ -1,163 +1,135 @@
 # Cuestionario de Ray Serve
 
-Este cuestionario evalúa tu comprensión del modelo de Deployment de Ray Serve, Ray Serve LLM, el autoescalado a nivel de Serve, la inferencia con GPU y cómo RayService gestiona una aplicación de Serve en producción en EKS.
-
 ## Preguntas de opción múltiple
 
-1. ¿Cómo se implementa un Deployment de Ray Serve por debajo de la capa de enrutamiento de Ray Serve?
-   - A) Como un contenedor independiente sin relación con las primitivas principales de Ray
-   - B) Como un actor de Ray, o un grupo de réplicas de actores, al que Ray Serve enruta solicitudes HTTP/gRPC
-   - C) Como un Kubernetes CronJob que se ejecuta según un calendario fijo
-   - D) Como una única tarea de Ray que se vuelve a ejecutar para cada solicitud entrante
+1. ¿Cómo se relaciona un Serve Deployment con un Kubernetes Deployment?
+   - A) Son idénticos
+   - B) Es una unidad lógica de actor-réplica, no se corresponde uno a uno con Pods
+   - C) Cada réplica requiere un nodo EC2
+   - D) Serve no utiliza actores
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un actor de Ray, o un grupo de réplicas de actores, al que Ray Serve enruta solicitudes HTTP/gRPC**
+**Respuesta: B**
 
-**Explicación:**
-Ray Serve se basa directamente en la primitiva de actor de Ray. Un Deployment es un actor o un grupo de réplicas de actores, y Ray Serve enruta las solicitudes HTTP/gRPC entrantes a esas réplicas; por eso un modelo cargado una vez en la memoria de una réplica puede responder a muchas solicitudes sin volver a cargarse.
+Un Ray Pod puede alojar varios actores de réplica.
 </details>
 
-2. ¿Qué es una "aplicación" en la terminología de Ray Serve?
-   - A) Un único Deployment sin capacidad de escalar
-   - B) Uno o más Deployments compuestos — por ejemplo, un Deployment de preprocesamiento que alimenta a un Deployment de inferencia de modelos — que forman una canalización de servicio
-   - C) Un RayJob que se ejecuta una vez y luego se desmonta
-   - D) El namespace de Kubernetes en el que se ejecuta un RayCluster
+2. ¿Cuál es la ubicación predeterminada del proxy en 2.58.0?
+   - A) Siempre uno en el head
+   - B) EveryNode en los nodos que alojan réplicas
+   - C) Cada nodo EC2 incondicionalmente
+   - D) Siempre Disabled
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Uno o más Deployments compuestos — por ejemplo, un Deployment de preprocesamiento que alimenta a un Deployment de inferencia de modelos — que forman una canalización de servicio**
+**Respuesta: B**
 
-**Explicación:**
-Ray Serve permite que varios Deployments se compongan en una canalización de servicio denominada aplicación, como un paso de preprocesamiento que alimenta su salida a un paso de inferencia de modelos. Cada Deployment de esa canalización aún puede escalar, versionarse y recibir recursos de forma independiente.
+HeadOnly y Disabled son opciones explícitas. Distinga la documentación de arquitectura desactualizada de la API actual.
 </details>
 
-3. ¿Qué es `ray.serve.llm` y qué motor de inferencia documenta como su motor compatible?
-   - A) Un módulo genérico de procesamiento por lotes sin relación con los LLM; admite cualquier motor
-   - B) Un conjunto dedicado de componentes para servir LLM, construido sobre el modelo general de Deployment de Ray Serve, que documenta vLLM como su motor de inferencia compatible
-   - C) Un reemplazo de Ray Serve que no utiliza actores
-   - D) Un módulo exclusivo para entrenar LLM, no para servirlos
+3. ¿En qué se diferencia el Deployment predeterminado de num_replicas="auto"?
+   - A) Ambos inician inmediatamente 100 réplicas
+   - B) Predeterminado fijo en 1; auto aplica mínimo 1/máximo 100/objetivo 2
+   - C) Predeterminado GPU 1; auto GPU 100
+   - D) Ninguno admite autoscaling
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un conjunto dedicado de componentes para servir LLM, construido sobre el modelo general de Deployment de Ray Serve, que documenta vLLM como su motor de inferencia compatible**
+**Respuesta: B**
 
-**Explicación:**
-`ray.serve.llm` proporciona construcciones de nivel superior adaptadas a patrones de servicio de LLM, superpuestas sobre el modelo general de Deployment de Ray Serve. Documenta vLLM como su motor de inferencia compatible y ofrece una API compatible con OpenAI diseñada para alinearse estrechamente con el propio servidor compatible con OpenAI de vLLM.
+Un AutoscalingConfig construido directamente establece el máximo predeterminado en 1, así que especifique el límite previsto.
 </details>
 
-4. ¿Qué decide el propio autoescalador de Ray Serve y qué compara para tomar esa decisión?
-   - A) Cuántos nodos EC2 debe aprovisionar Karpenter, según datos de facturación
-   - B) Cuántas réplicas de actores necesita un Deployment específico, comparando las solicitudes en curso por réplica (en cola y en proceso) con un valor objetivo
-   - C) Cuántos Pods de worker necesita un RayCluster, según la colocación de tareas pendientes
-   - D) En qué región de AWS implementar el RayCluster
+4. ¿Cuál es el alcance de max_queued_requests?
+   - A) Una cola global para todo el cluster
+   - B) Cada llamador, como un proxy o handle
+   - C) Capacidad de KV-cache de GPU
+   - D) Cantidad de RayCluster Pods
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cuántas réplicas de actores necesita un Deployment específico, comparando las solicitudes en curso por réplica (en cola y en proceso) con un valor objetivo**
+**Respuesta: B**
 
-**Explicación:**
-El autoescalador de Ray Serve es una capa independiente del autoescalado a nivel de clúster. Compara las solicitudes en curso por réplica con un objetivo y aumenta o reduce el número de réplicas de ese Deployment dentro de un mínimo y un máximo configurados.
+El valor predeterminado -1 es ilimitado; exceder un límite configurado puede rechazar solicitudes HTTP o generar un handle BackPressureError.
 </details>
 
-5. En el esquema de autoescalado de tres niveles para una aplicación de Ray Serve en EKS, ¿qué capa se encuentra directamente por encima de Karpenter?
-   - A) El AWS Load Balancer Controller
-   - B) El autoescalador de Ray/KubeRay, que decide el número de Pods de worker según la colocación de actores pendientes
-   - C) Un Kubernetes Horizontal Pod Autoscaler independiente que supervisa el uso de CPU
-   - D) La aplicación cliente que realiza solicitudes
+5. ¿Un actor de réplica pendiente siempre crea un nuevo Pod y nodo EC2?
+   - A) Siempre uno a uno
+   - B) No; importan la capacidad existente, los límites de grupo, la colocación y la habilitación del autoscaler
+   - C) Se convierte automáticamente en un modelo de CPU
+   - D) Serve crea directamente nodos EC2
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El autoescalador de Ray/KubeRay, que decide el número de Pods de worker según la colocación de actores pendientes**
+**Respuesta: B**
 
-**Explicación:**
-Los tres niveles son: el autoescalador de Ray Serve decide el número de réplicas, el autoescalador de Ray/KubeRay decide el número de Pods de worker según la colocación de actores pendientes (incluidas las réplicas solicitadas por el autoescalador de Serve) y Karpenter decide el número de nodos para ejecutar esos Pods.
+Inspeccione por separado la colocación de actores, el tamaño del Pod y el aprovisionamiento de nodos.
 </details>
 
-6. ¿Cómo solicita una GPU un Deployment de Ray Serve respaldado por GPU?
-   - A) Mediante una API de reserva de GPU independiente y exclusiva de Ray Serve
-   - B) Mediante el mecanismo normal de solicitud de recursos por actor de Ray, el mismo que usan los workers de Ray Train y Ray Tune
-   - C) Conectándose manualmente mediante SSH a un nodo worker y configurando una variable de entorno
-   - D) Los Deployments de Ray Serve no pueden solicitar GPU en absoluto
+6. ¿Qué se verificó sobre los backends de LLM en 2.58.0?
+   - A) Solo existe vLLM
+   - B) Existen los backends vLLM y SGLang; compruebe sus dependencias/configuración por separado
+   - C) Cada kwarg de motor es idéntico entre los distintos motores
+   - D) ray[serve] incluye todos los pesos de los modelos LLM
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Mediante el mecanismo normal de solicitud de recursos por actor de Ray, el mismo que usan los workers de Ray Train y Ray Tune**
+**Respuesta: B**
 
-**Explicación:**
-Un Deployment de inferencia de modelos que necesita una GPU solicita una mediante el mismo mecanismo de solicitud de recursos a nivel de actor que utilizan Ray Train y Ray Tune, y la especificación del Pod del grupo de workers es la que anuncia la capacidad de GPU al planificador de Ray.
+Las dependencias de inferencia y el acceso/descarga de modelos son independientes. Las comprobaciones de CPU no validaron la ejecución de LLM.
 </details>
 
-7. ¿Qué sucede cuando el autoescalador de Ray Serve solicita una nueva réplica de GPU pero ningún Pod de worker con GPU existente tiene espacio para ella?
-   - A) La solicitud se descarta silenciosamente y nunca se crea una nueva réplica
-   - B) La solicitud de réplica se convierte en un Pod pendiente, y Karpenter debe aprovisionar un nuevo nodo EC2 respaldado por GPU antes de que esa réplica pueda comenzar a atender tráfico
-   - C) Ray Serve recurre automáticamente a ejecutar el modelo en CPU
-   - D) El autoescalador de Ray omite completamente Karpenter y crea por sí mismo la instancia EC2
+7. ¿Qué afirmación sobre la actualización de RayService es precisa?
+   - A) Es obligatoria para cada Deployment de EKS con garantía de ausencia de tiempo de inactividad
+   - B) Es una ruta de ciclo de vida opcional; valide la estrategia, Gateway, capacidad, preparación y draining
+   - C) Siempre solo edita la imagen de un Pod existente
+   - D) Todas las transmisiones largas siempre se preservan
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) La solicitud de réplica se convierte en un Pod pendiente, y Karpenter debe aprovisionar un nuevo nodo EC2 respaldado por GPU antes de que esa réplica pueda comenzar a atender tráfico**
+**Respuesta: B**
 
-**Explicación:**
-El autoescalado de Ray Serve y el tiempo de aprovisionamiento de nodos de Karpenter interactúan de la misma manera que para otras cargas de trabajo de GPU: un Pod pendiente hace que Karpenter aprovisione un nodo coincidente, y una aplicación de servicio que escale de forma agresiva las réplicas de GPU debe tener en cuenta ese tiempo de espera.
+Distinga los cambios de aplicación, las transiciones de cluster y la reconfiguración de actores.
 </details>
 
-8. ¿Qué gestiona el CRD RayService en producción y qué capacidad admite específicamente?
-   - A) Solo la aplicación de Serve, sin relación con el RayCluster subyacente
-   - B) El RayCluster subyacente y la aplicación de Serve implementada sobre él de forma conjunta, admitiendo actualizaciones graduales sin tiempo de inactividad
-   - C) Solo trabajos por lotes que se ejecutan una vez y se desmontan, sin capacidad de servicio
-   - D) Una instantánea estática e inmutable de un clúster de Ray que no se puede actualizar
+8. ¿Qué verificó la prueba local de Echo?
+   - A) Rendimiento de GPU
+   - B) Calidad de LLM
+   - C) HTTP 200 y llamadas a DeploymentHandle
+   - D) Autoscaling multinodo
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El RayCluster subyacente y la aplicación de Serve implementada sobre él de forma conjunta, admitiendo actualizaciones graduales sin tiempo de inactividad**
+**Respuesta: C**
 
-**Explicación:**
-RayService gestiona un RayCluster junto con su aplicación de Serve como una unidad y es el recurso que admite actualizaciones graduales sin tiempo de inactividad para implementar una nueva versión de la aplicación o una especificación de RayCluster sin interrumpir las solicitudes en proceso -- consulta las notas de la versión actual de KubeRay para conocer la madurez de esa ruta de actualización antes de depender de ella en producción.
+Fue una pequeña prueba de CPU de un solo nodo sin un modelo, LLM, GPU ni Deployment en la nube.
 </details>
 
 ## Preguntas de respuesta corta
 
-9. Explica por qué el autoescalador de Ray Serve y el autoescalador de Ray/KubeRay se describen como capas independientes que "solo ven la capa inmediatamente inferior".
+9. ¿Por qué distinguir entre el máximo de solicitudes en curso, el objetivo de autoscaling y el límite de cola del llamador?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-El autoescalador de Ray Serve solo decide cuántas réplicas de actores necesita un Deployment específico según la carga de solicitudes; no tiene visibilidad sobre si una nueva réplica se ubica en un Pod de worker existente o requiere uno nuevo. El autoescalador de Ray/KubeRay, una capa más abajo, solo reacciona a la colocación de actores pendientes (incluidas las réplicas solicitadas por el autoescalador de Serve) para decidir el número de Pods de worker, sin saber nada acerca de las métricas a nivel de solicitud. Karpenter, otra capa más abajo, solo reacciona a Pods pendientes para decidir el número de nodos.
-
-**Explicación:**
-Cada bucle de control responde a una pregunta más acotada que la capa superior, y las capas se comunican solo de forma indirecta — mediante el estado normal que produce cada capa (las solicitudes de réplicas se convierten en Pods pendientes, los Pods pendientes se convierten en nodos pendientes) — no mediante coordinación directa.
+Controlan aspectos diferentes: solicitudes asignadas a réplicas, carga objetivo para el escalado y solicitudes en espera por llamador. Una configuración no establece todos los demás límites ni garantías de latencia.
 </details>
 
-10. Un equipo está implementando en producción en EKS una aplicación de Ray Serve de dos pasos (preprocesamiento y luego inferencia de modelos respaldada por GPU). Describe cómo encajan la topología de implementación, el autoescalado y la gestión del ciclo de vida descritos en este documento para esa aplicación.
+10. ¿Por qué los tokens de cluster o ClusterIP no completan la seguridad de la aplicación?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-La aplicación se compone de dos Deployments — un Deployment de preprocesamiento y un Deployment de inferencia de modelos — cada uno implementado como réplicas de actores, donde la salida del Deployment de preprocesamiento alimenta al Deployment de inferencia. Cada Deployment autoescala su propio número de réplicas de forma independiente mediante el autoescalador de Ray Serve, según su propia carga de solicitudes. Las réplicas de actores del Deployment de inferencia solicitan GPU mediante el mecanismo normal de recursos por actor de Ray, y si el autoescalador de Ray Serve necesita más réplicas de GPU de las que los Pods de worker existentes pueden alojar, el autoescalador de Ray/KubeRay solicita más Pods de worker y Karpenter aprovisiona nodos EC2 coincidentes respaldados por GPU. En producción, un objeto `RayService` gestiona conjuntamente el RayCluster y la implementación de Serve de toda la aplicación, incluidas las actualizaciones sin tiempo de inactividad cuando cambia la aplicación o la especificación del clúster.
-
-**Explicación:**
-Esto reúne todos los conceptos del documento: el modelo de Deployment/aplicación basado en actores, la propia capa de autoescalado de Serve, la división del autoescalado en tres niveles con Ray/KubeRay y Karpenter, las solicitudes de recursos de GPU y RayService como gestor del ciclo de vida de producción para todo ello.
+Verifique por separado TLS, la autenticación/autorización de cada punto de entrada, los permisos de artefactos de modelo, el manejo de solicitudes/registros sensibles y las políticas de recursos/cola/timeout.
 </details>
 
 ---

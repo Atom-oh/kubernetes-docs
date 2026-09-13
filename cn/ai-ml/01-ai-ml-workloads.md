@@ -1,215 +1,117 @@
 # AI/ML 工作负载
 
-> **支持的版本**: Kubernetes 1.31, 1.32, 1.33
-> **最后更新**: February 23, 2026
+> **审查基线**: GPU Operator 26.7.0 / NVIDIA device plugin 0.20.0 / FSx CSI 1.10.0
+> **最后更新**: September 12, 2026
 
-Kubernetes 是运行 AI/ML 工作负载的强大平台。在本章中，我们将学习如何在 EKS 上运行 AI/ML 工作负载，并探索最佳实践。
+Kubernetes 是运行 AI/ML 工作负载的强大平台。本章将学习如何在 EKS 上运行 AI/ML 工作负载并了解最佳实践。
 
 ## AI/ML 工作负载的特征
 
-与典型应用程序工作负载相比，AI/ML 工作负载具有不同的特征：
+AI/ML 工作负载与典型应用程序工作负载相比具有不同的特征：
 
-```mermaid
-flowchart TD
-    subgraph AIML [AI/ML Workload Characteristics]
-        Resource[Resource Intensive]
-        Data[Data Intensive]
-        Distributed[Distributed Processing]
-        Diversity[Workload Diversity]
-        Processing[Batch and Real-time Processing]
-    end
+![AI/ML 工作负载的各阶段对 GPU、CPU、内存和网络有不同要求。](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-0.png)
 
-    subgraph ResourceDetails [Resource Requirements]
-        GPU[GPU Acceleration]
-        Memory[Large Memory]
-        CPU[High-Performance CPU]
-        Network[High-Speed Network]
-    end
-
-    subgraph WorkloadTypes [Workload Types]
-        Training[Model Training]
-        Inference[Model Inference]
-        DataPrep[Data Preprocessing]
-        HPO[Hyperparameter Optimization]
-    end
-
-    Resource --> ResourceDetails
-    Diversity --> WorkloadTypes
-
-    classDef aimlFeature fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef resourceDetail fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef workloadType fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Resource,Data,Distributed,Diversity,Processing aimlFeature;
-    class GPU,Memory,CPU,Network resourceDetail;
-    class Training,Inference,DataPrep,HPO workloadType;
-    class AIML,ResourceDetails,WorkloadTypes default;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-0.html)
 
 1. **资源密集型**：需要大量计算资源，包括 GPU、高性能 CPU 和大容量内存。
-2. **数据密集型**：需要快速访问大规模数据集。
-3. **分布式处理**：对于大规模模型训练，需要跨多个 Node（节点）进行分布式处理。
+2. **数据密集型**：需要快速访问大型数据集。
+3. **分布式处理**：大规模模型训练需要跨多个节点进行分布式处理。
 4. **工作负载多样性**：包括训练、推理和数据预处理等多种类型的工作负载。
 
-## 最新 AI/ML 趋势 (2025)
+## AI/ML 设计的区别
 
-在 Kubernetes 上运行 AI/ML 工作负载的最新趋势包括：
+根据所选框架、镜像、设备和 Kubernetes 版本验证支持情况：
 
 ### 1. 大语言模型 (LLM) 部署
 
 大语言模型 (LLM) 是近期 AI 领域最突出的技术之一。在 Kubernetes 上高效部署 LLM 的关键考虑事项：
 
 - **模型分片**：将大型模型分布到多个 GPU 上
-- **量化**：通过降低模型精度（INT8、FP16 等）来减少内存使用量
-- **推理优化**：使用 vLLM、TensorRT、ONNX Runtime 等提升推理性能
-- **扩展策略**：通过水平扩展提升吞吐量
+- **精度选择**：区分 FP16/BF16 计算与 INT8/INT4 量化，并验证准确性/设备支持
+- **推理优化**：使用 vLLM、TensorRT、ONNX Runtime 等提高推理性能
+- **扩缩容策略**：通过水平扩缩容提高吞吐量
 
 ### 2. AI 编排框架
 
 用于在 Kubernetes 上管理 AI/ML 工作负载的专用编排框架：
 
-- **Kubeflow**：用于机器学习工作流的综合平台
+- **Kubeflow**：机器学习工作流的综合平台
 - **Ray on Kubernetes**：分布式计算框架
-- **KServe**：Serverless 推理服务
-- **Seldon Core**：模型服务与监控
+- **KServe**：通过 Knative/Standard 及其他路径进行推理管理
+- **Seldon Core**：模型服务和监控
 
-### 3. GPU 共享与优化
+### 3. GPU 共享和优化
 
 用于高效利用 GPU 资源的技术：
 
-- **MIG (Multi-Instance GPU)**：NVIDIA A100/H100 GPU 的分区
-- **Time-Sharing Scheduling**：NVIDIA MPS、GPU 时间切片
-- **Dynamic Allocation**：按需动态分配 GPU 资源
-- **GPU Operator**：在 Kubernetes 中自动化 GPU 管理
+- **MIG (Multi-Instance GPU)**：对 NVIDIA A100/H100 GPU 进行分区
+- **共享方法**：MPS 和 time-slicing 在隔离性/支持方面彼此不同，也不同于 MIG
+- **动态分配**：按需动态分配 GPU 资源
+- **GPU Operator**：自动化 Kubernetes 中的 GPU 管理
 
-### 4. MLOps 与 GitOps 集成
+### 4. MLOps 和 GitOps 集成
 
 将 DevOps 原则应用于 AI/ML 生命周期管理：
 
-- **Model Version Control**：与 Git 集成的模型版本管理
-- **CI/CD Pipelines**：自动化模型训练与部署
-- **A/B Testing**：新模型版本的渐进式发布
-- **Monitoring and Feedback Loops**：模型性能监控与重新训练
+- **模型版本控制**：与 Git 集成的模型版本管理
+- **CI/CD 管道**：自动化模型训练和部署
+- **A/B 测试和金丝雀发布**：实验性比较与逐步发布具有不同目标/指标
+- **监控和反馈循环**：模型性能监控和再训练
 
 ### 5. 向量数据库集成
 
-用于 embeddings 和语义搜索的向量数据库集成：
+用于嵌入和语义搜索的向量数据库集成：
 
 - **Pinecone**：托管式向量搜索
 - **Milvus**：开源向量数据库
-- **Faiss**：Facebook AI 的高效相似度搜索库
+- **Faiss**：Facebook AI 的高效相似性搜索库
 - **OpenSearch**：具备向量搜索功能的搜索引擎
-5. **批处理和实时处理**：需要同时支持批处理和实时推理。
+
+批量推理和在线推理具有不同的延迟/吞吐量目标。
 
 ## EKS 中的 AI/ML 基础设施配置
 
-```mermaid
-flowchart TD
-    subgraph AWS [AWS Cloud]
-        subgraph EKS [Amazon EKS]
-            subgraph NodeGroups [Node Groups]
-                subgraph Training [Training Node Group]
-                    P4d[p4d.24xlarge]
-                    P3[p3.16xlarge]
-                    G5[g5.48xlarge]
-                end
+![示意性的 EKS 节点以及显式配置的存储、网络和 AWS 集成。](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-1.png)
 
-                subgraph Inference [Inference Node Group]
-                    G4dn[g4dn.xlarge]
-                    Inf1[inf1.24xlarge]
-                    Trn1[trn1.32xlarge]
-                end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-1.html)
 
-                subgraph CPU [CPU Node Group]
-                    C6i[c6i.32xlarge]
-                    R6i[r6i.32xlarge]
-                end
-            end
+### 节点类型选择
 
-            subgraph Storage [Storage]
-                EBS[Amazon EBS]
-                EFS[Amazon EFS]
-                FSx[FSx for Lustre]
-                S3[Amazon S3]
-            end
-
-            subgraph Networking [Networking]
-                VPC[VPC CNI]
-                ENA[ENA/EFA]
-                PlacementGroup[Placement Group]
-            end
-        end
-
-        subgraph Services [AWS Services]
-            SageMaker[Amazon SageMaker]
-            ECR[Amazon ECR]
-            CloudWatch[CloudWatch]
-        end
-    end
-
-    Training --> Storage
-    Inference --> Storage
-    CPU --> Storage
-
-    Training --> Networking
-    Inference --> Networking
-    CPU --> Networking
-
-    EKS --> Services
-
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef trainingNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef inferenceNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef cpuNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class SageMaker,ECR,CloudWatch,EBS,EFS,FSx,S3 awsService;
-    class EKS,NodeGroups,Storage,Networking,VPC,ENA,PlacementGroup k8sComponent;
-    class P4d,P3,G5,Training trainingNode;
-    class G4dn,Inf1,Trn1,Inference inferenceNode;
-    class C6i,R6i,CPU cpuNode;
-    class AWS,Services default;
-```
-
-### Node 类型选择
-
-适用于 AI/ML 工作负载的 EC2 实例类型包括：
+这些是容量示例，并非完整的当前目录或排名。请检查区域可用性、配额、CPU 架构、GPU 内存和软件兼容性：
 
 1. **GPU 实例**：
-   - p4d.24xlarge: 8x NVIDIA A100 GPU，320GB GPU 内存
-   - p3.16xlarge: 8x NVIDIA V100 GPU，128GB GPU 内存
+   - p4d.24xlarge: 8x NVIDIA A100 GPU, 320GB GPU 内存
+   - p3.16xlarge: 8x NVIDIA V100 GPU, 128GB GPU 内存
    - g5.xlarge~g5.48xlarge: NVIDIA A10G GPU，最多 8 个 GPU
-   - g4dn.xlarge~g4dn.16xlarge: NVIDIA T4 GPU，最多 4 个 GPU
+   - g4dn.12xlarge: 4 个 T4 GPU；g4dn.16xlarge: 1 个 T4 GPU — 实例大小和 GPU 数量并非单调增加
 
-2. **CPU 优化型实例**：
-   - c6i.32xlarge: 128 vCPU，256GB 内存
-   - c7g.16xlarge: 64 vCPU (AWS Graviton3)，128GB 内存
+2. **CPU 优化实例**：
+   - c6i.32xlarge: 128 vCPU, 256GB 内存
+   - c7g.16xlarge: 64 vCPU (AWS Graviton3), 128GB 内存
 
-3. **内存优化型实例**：
-   - r6i.32xlarge: 128 vCPU，1024GB 内存
-   - x2gd.16xlarge: 64 vCPU，1024GB 内存
+3. **内存优化实例**：
+   - r6i.32xlarge: 128 vCPU, 1024GB 内存
+   - x2gd.16xlarge: 64 vCPU, 1024GB 内存
 
 4. **Inferentia 实例**：
-   - inf1.24xlarge: 16 个 AWS Inferentia 芯片，96 vCPU，192GB 内存
+   - inf1.24xlarge: 16 个 AWS Inferentia 芯片, 96 vCPU, 192GB 内存
 
 5. **Trainium 实例**：
-   - trn1.32xlarge: 16 个 AWS Trainium 芯片，128 vCPU，512GB 内存
+   - trn1.32xlarge: 16 个 AWS Trainium 芯片, 128 vCPU, 512GB 内存
 
 ### 存储配置
 
 AI/ML 工作负载需要高性能存储：
 
 1. **Amazon EBS**：
-   - gp3: 默认通用型 SSD 存储
-   - io2: 高性能 SSD 存储
-   - st1: 吞吐量优化型 HDD 存储
+   - gp3：默认的通用 SSD 存储
+   - io2：高性能 SSD 存储
+   - st1：吞吐量优化的 HDD 存储
 
 2. **Amazon EFS**：
-   - 当多个 Node 需要访问共享数据时非常有用
-   - 性能模式：General purpose 或 Max I/O
-   - 吞吐量模式：Bursting 或 Provisioned throughput
+   - 当多个节点需要访问共享数据时很有用
+   - 性能模式：建议使用 General Purpose；上一代 Max I/O 与 Elastic 吞吐量不兼容
+   - 吞吐量模式：Elastic、Provisioned 和 Bursting — 比较工作负载需求、定价和限制
 
 3. **Amazon FSx for Lustre**：
    - 高性能并行文件系统
@@ -218,719 +120,220 @@ AI/ML 工作负载需要高性能存储：
 
 4. **Amazon S3**：
    - 存储大型数据集
-   - 存储训练数据和模型产物
+   - 存储训练数据和模型构件
 
 ### 网络配置
 
 用于分布式训练的网络配置：
 
-1. **Cluster Placement Groups**：
-   - 最大限度降低 Node 之间的延迟
-   - 将 Node 放置在同一个可用区内
+1. **集群置放组**：
+   - 最小化节点之间的延迟
+   - 将节点置于同一可用区内
 
-2. **Enhanced Networking**：
+2. **增强型网络**：
    - Elastic Network Adapter (ENA)
    - ENA Express
    - Elastic Fabric Adapter (EFA)
 
 3. **VPC CNI 配置**：
-   - 用于大规模 Pod 部署的 IP 地址管理
-   - 辅助 IP 地址范围配置
+   - 大规模 Pod 部署的 IP 地址管理
+   - 次要 IP 地址范围配置
 
 ## AI/ML 工作负载部署
 
-```mermaid
-flowchart TD
-    subgraph EKS [Amazon EKS]
-        subgraph Components [Key Components]
-            NVIDIA[NVIDIA GPU Operator]
-            Kubeflow[Kubeflow]
-            MPIOperator[MPI Operator]
-            KServe[KServe]
-        end
+![AMI 提供的 GPU 层、Operator 管理的功能以及训练/服务组件。](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-2.png)
 
-        subgraph GPUOperator [NVIDIA GPU Operator]
-            Driver[NVIDIA Driver]
-            Toolkit[NVIDIA Container Toolkit]
-            DevicePlugin[NVIDIA Device Plugin]
-            DCGM[NVIDIA DCGM Exporter]
-        end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-2.html)
 
-        subgraph KubeflowComponents [Kubeflow Components]
-            Notebooks[Jupyter Notebooks]
-            Training[TF/PyTorch Training Jobs]
-            Serving[KFServing]
-            Pipelines[Pipelines]
-            Katib[Katib]
-        end
+### NVIDIA GPU Operator 和设备分配 {#nvidia-gpu-operator-and-device-allocation}
 
-        subgraph ModelServing [Model Serving Options]
-            KServeComponent[KServe]
-            TorchServe[TorchServe]
-            Triton[Triton Inference Server]
-        end
-    end
+EKS AL2023 NVIDIA AMI 已包含驱动程序和 Container Toolkit，因此请通过 GPU Operator 禁用其安装。它们不包含 device plugin/DRA driver，后者需要配置。Bottlerocket NVIDIA AMI 包含 device plugin。避免安装重复的管理方。
 
-    NVIDIA --> GPUOperator
-    Kubeflow --> KubeflowComponents
-    KServe --> ModelServing
-
-    classDef eksComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nvidiaComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef kubeflowComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef servingComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class EKS,Components eksComponent;
-    class NVIDIA,Driver,Toolkit,DevicePlugin,DCGM,GPUOperator nvidiaComponent;
-    class Kubeflow,Notebooks,Training,Serving,Pipelines,Katib,KubeflowComponents kubeflowComponent;
-    class KServe,KServeComponent,TorchServe,Triton,ModelServing servingComponent;
-```
-
-### NVIDIA GPU Operator
-
-NVIDIA GPU Operator 是用于在 Kubernetes 集群中管理 NVIDIA GPU 的工具：
+此命令在本地**渲染**已审查的 Operator chart。部署前请检查 ClusterPolicy/RBAC 和实际安装要求。
 
 ```bash
-# Installation using Helm
+# AL2023 NVIDIA AMI profile: host driver/toolkit are already installed.
 helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-helm repo update
-
-helm install --wait --generate-name \
-  -n gpu-operator --create-namespace \
-  nvidia/gpu-operator
+helm repo update nvidia
+helm template gpu-operator nvidia/gpu-operator \
+  --version v26.7.0 --namespace gpu-operator \
+  --set driver.enabled=false --set toolkit.enabled=false \
+  > gpu-operator.rendered.yaml
 ```
 
-GPU Operator 会部署以下组件：
-
-1. **NVIDIA Driver**：自动安装 GPU 驱动
-2. **NVIDIA Container Toolkit**：使容器能够使用 GPU
-3. **NVIDIA Device Plugin**：向 Kubernetes 暴露 GPU 资源
-4. **NVIDIA DCGM Exporter**：提供 GPU 监控指标
-
-### Kubeflow
-
-Kubeflow 是用于在 Kubernetes 上运行 ML 工作流的平台：
-
-```bash
-# Kubeflow installation
-kustomize build https://github.com/kubeflow/manifests/tree/master/example | kubectl apply -f -
-```
-
-Kubeflow 提供以下组件：
-
-1. **Jupyter Notebooks**：交互式开发环境
-2. **TensorFlow/PyTorch Training Jobs**：运行分布式训练任务
-3. **KFServing**：模型服务
-4. **Pipelines**：端到端 ML 工作流
-5. **Katib**：超参数调优
-
-### 分布式训练
-
-用于分布式训练的 Kubernetes 资源：
-
-```mermaid
-flowchart TD
-    subgraph DistributedTraining [Distributed Training Architecture]
-        subgraph MPIJob [MPI Job]
-            Launcher[Launcher Pod]
-            Worker1[Worker Pod 1]
-            Worker2[Worker Pod 2]
-            Worker3[Worker Pod 3]
-            Worker4[Worker Pod 4]
-        end
-
-        subgraph Communication [Communication Layer]
-            NCCL[NVIDIA NCCL]
-            MPI[MPI]
-            EFA[Elastic Fabric Adapter]
-        end
-
-        subgraph Storage [Shared Storage]
-            FSxLustre[FSx for Lustre]
-            S3[Amazon S3]
-            Checkpoints[Checkpoint Storage]
-        end
-    end
-
-    Launcher --> Worker1
-    Launcher --> Worker2
-    Launcher --> Worker3
-    Launcher --> Worker4
-
-    Worker1 <--> NCCL
-    Worker2 <--> NCCL
-    Worker3 <--> NCCL
-    Worker4 <--> NCCL
-
-    NCCL --> MPI
-    MPI --> EFA
-
-    Worker1 --> FSxLustre
-    Worker2 --> FSxLustre
-    Worker3 --> FSxLustre
-    Worker4 --> FSxLustre
-
-    FSxLustre --> S3
-    FSxLustre --> Checkpoints
-
-    classDef podComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef communicationComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Launcher,Worker1,Worker2,Worker3,Worker4,MPIJob podComponent;
-    class NCCL,MPI,EFA,Communication communicationComponent;
-    class FSxLustre,S3,Checkpoints,Storage storageComponent;
-    class DistributedTraining default;
-```
-
-1. **MPI Operator**：
+NVIDIA 扩展资源是 `nvidia.com/gpu`。整数 limits 表示相等的 request；如果二者都指定，则必须匹配。`0.5` 不是有效的 GPU 分配。此 CUDA 12.8 镜像仅作说明；部署前请验证主机驱动程序/架构兼容性并固定镜像 digest。本次审查未执行 GPU 操作。
 
 ```yaml
-apiVersion: kubeflow.org/v1
-kind: MPIJob
+apiVersion: v1
+kind: Pod
 metadata:
-  name: tensorflow-benchmarks
+  name: gpu-allocation-check
 spec:
-  slotsPerWorker: 8
-  cleanPodPolicy: Running
-  mpiReplicaSpecs:
-    Launcher:
-      replicas: 1
-      template:
-        spec:
-          containers:
-          - image: mpioperator/tensorflow-benchmarks:latest
-            name: tensorflow-benchmarks
-            command:
-            - mpirun
-            - --allow-run-as-root
-            - -np
-            - "16"
-            - -bind-to
-            - none
-            - -map-by
-            - slot
-            - -x
-            - NCCL_DEBUG=INFO
-            - python
-            - scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py
-            - --model=resnet50
-            - --batch_size=64
-            - --variable_update=horovod
-    Worker:
-      replicas: 2
-      template:
-        spec:
-          containers:
-          - image: mpioperator/tensorflow-benchmarks:latest
-            name: tensorflow-benchmarks
-            resources:
-              limits:
-                nvidia.com/gpu: 8
-```
-
-2. **PyTorch Elastic**：
-
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: pytorch-elastic-job
-spec:
-  completions: 1
-  parallelism: 1
-  template:
-    spec:
-      containers:
-      - name: pytorch-elastic
-        image: pytorch/pytorch:1.9.0-cuda10.2-cudnn7-runtime
-        command:
-        - torchrun
-        - --nnodes=2
-        - --nproc_per_node=8
-        - --rdzv_id=job1
-        - --rdzv_backend=c10d
-        - --rdzv_endpoint=$(MASTER_ADDR):$(MASTER_PORT)
-        - train.py
-        env:
-        - name: MASTER_ADDR
-          value: pytorch-elastic-job-0
-        - name: MASTER_PORT
-          value: "29500"
-        resources:
-          limits:
-            nvidia.com/gpu: 8
-      restartPolicy: Never
-```
-
-### 模型服务
-
-模型服务的选项：
-
-```mermaid
-flowchart TD
-    subgraph ModelServing [Model Serving Architecture]
-        subgraph InferenceServices [Inference Services]
-            KServe[KServe]
-            TorchServe[TorchServe]
-            Triton[Triton Inference Server]
-        end
-
-        subgraph ScalingOptions [Scaling Options]
-            HPA[HorizontalPodAutoscaler]
-            KEDA[KEDA]
-            VPA[VerticalPodAutoscaler]
-        end
-
-        subgraph NetworkingOptions [Networking Options]
-            Ingress[Ingress]
-            ALB[AWS ALB]
-            APIGateway[API Gateway]
-        end
-
-        subgraph ModelStorage [Model Storage]
-            S3[Amazon S3]
-            ECR[Amazon ECR]
-            EFS[Amazon EFS]
-        end
-    end
-
-    Client([Client]) --> NetworkingOptions
-    NetworkingOptions --> InferenceServices
-    InferenceServices --> ModelStorage
-    ScalingOptions --> InferenceServices
-
-    classDef serviceComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef scalingComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef networkingComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class KServe,TorchServe,Triton,InferenceServices serviceComponent;
-    class HPA,KEDA,VPA,ScalingOptions scalingComponent;
-    class Ingress,ALB,APIGateway,NetworkingOptions networkingComponent;
-    class S3,ECR,EFS,ModelStorage storageComponent;
-    class ModelServing,Client default;
-```
-
-1. **KServe**：
-
-```yaml
-apiVersion: serving.kserve.io/v1beta1
-kind: InferenceService
-metadata:
-  name: bert-model
-spec:
-  predictor:
-    model:
-      modelFormat:
-        name: pytorch
-      storageUri: s3://my-bucket/bert-model
+  restartPolicy: Never
+  containers:
+    - name: check
+      image: nvidia/cuda:12.8.1-base-ubuntu22.04
+      command: ["nvidia-smi", "-L"]
       resources:
+        requests:
+          cpu: "100m"
+          memory: 128Mi
         limits:
+          memory: 256Mi
           nvidia.com/gpu: 1
 ```
 
-2. **TorchServe**：
+### Kubeflow 和分布式训练 {#kubeflow-and-distributed-training}
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: torchserve
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: torchserve
-  template:
-    metadata:
-      labels:
-        app: torchserve
-    spec:
-      containers:
-      - name: torchserve
-        image: pytorch/torchserve:latest
-        ports:
-        - containerPort: 8080
-        - containerPort: 8081
-        volumeMounts:
-        - name: model-store
-          mountPath: /home/model-server/model-store
-        resources:
-          limits:
-            nvidia.com/gpu: 1
-      volumes:
-      - name: model-store
-        persistentVolumeClaim:
-          claimName: model-store-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: torchserve
-spec:
-  selector:
-    app: torchserve
-  ports:
-  - port: 8080
-    targetPort: 8080
-    name: inference
-  - port: 8081
-    targetPort: 8081
-    name: management
-  type: LoadBalancer
-```
+请使用固定版本的 [26.03.1 安装指南](kubeflow/01-architecture-installation.md) 来配置依赖项、身份和存储，而不是使用 master 分支的一行安装方式。服务项目是 KServe；KFServing 是其历史名称。
 
-3. **Triton Inference Server**：
+分布式执行可使用 [Trainer](kubeflow/05-training-operator.md)、旧版 TFJob/PyTorchJob 或独立的 MPI Operator。根据已安装的 CRD/版本，区分 MPI Operator API 与旧版 Training Operator。Job controller 创建 Pod；MPI launcher 或 torchrun 启动进程。
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: triton-server
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: triton-server
-  template:
-    metadata:
-      labels:
-        app: triton-server
-    spec:
-      containers:
-      - name: triton-server
-        image: nvcr.io/nvidia/tritonserver:21.08-py3
-        command:
-        - tritonserver
-        - --model-repository=/models
-        ports:
-        - containerPort: 8000
-        - containerPort: 8001
-        - containerPort: 8002
-        volumeMounts:
-        - name: model-repository
-          mountPath: /models
-        resources:
-          limits:
-            nvidia.com/gpu: 1
-      volumes:
-      - name: model-repository
-        persistentVolumeClaim:
-          claimName: model-repository-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: triton-server
-spec:
-  selector:
-    app: triton-server
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: http
-  - port: 8001
-    targetPort: 8001
-    name: grpc
-  - port: 8002
-    targetPort: 8002
-    name: metrics
-  type: LoadBalancer
-```
+单个 Pod 无法满足 torchrun --nnodes=2，虚构的 Pod DNS 名称也无法提供 rendezvous。请提供实际的训练代码/镜像、worker 数量、Service/DNS、rank/backend、数据分片以及 checkpoint/timeout/retry 行为。Gang scheduling 需要独立的策略/scheduler 支持。
+
+![Pod 创建和进程启动与 NCCL、AWS OFI NCCL、libfabric、EFA 通信及已配置的 checkpoint 导出相互独立。](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-3.png)
+
+[🔍 交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-3.html)
+
+对于基于 EFA 的 NCCL，路径为 AWS OFI NCCL plugin → libfabric → EFA。MPI 可以启动进程，而不是 NCCL 的强制传输层。请分别验证 ENA/EFA、GPUDirect、安全组、AMI 和库。仅使用 Multus/SR-IOV 或设备 hostPath 挂载并不能在 EKS 上配置 EFA/GPUDirect。
+
+### 模型服务
+
+检查 [KServe](kubeflow/06-kserve.md) Knative/Standard 模式、runtime/model format、URI 访问、协议和 GPU 设备配置。仅请求 GPU 并不会启用 GPU 推理。Triton 还需要模型仓库、backend 配置和 readiness 验证。
+
+TorchServe 宣布不再进行积极维护，也没有计划中的安全修复，因此它不是新部署的受维护默认选择。不要通过未经身份验证的 LoadBalancer 同时公开 inference、management 和 metrics 端口。请配置经过身份验证的 ingress 和适当的内部 management 访问。
+
+![经过身份验证的请求路径、模型/镜像访问以及独立的副本数/资源调整。](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-4.png)
+
+[🔍 交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-4.html)
 
 ## AI/ML 工作负载优化
 
-```mermaid
-flowchart TD
-    subgraph Optimization [AI/ML Workload Optimization]
-        subgraph GPUOptimization [GPU Optimization]
-            MemoryOvercommit[GPU Memory Overcommit]
-            GPUSharing[GPU Sharing]
-            MPS[NVIDIA MPS]
-        end
+![GPU、训练、存储和成本优化需要在实际工作负载上进行测量。](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-5.png)
 
-        subgraph TrainingOptimization [Training Optimization]
-            NodeAffinity[Node Affinity]
-            TopologyAware[Topology-Aware Scheduling]
-            PlacementGroups[Placement Groups]
-        end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-5.html)
 
-        subgraph StorageOptimization [Storage Optimization]
-            LustreConfig[FSx for Lustre Configuration]
-            DataCaching[Data Caching]
-            S3Integration[S3 Integration]
-        end
+### GPU 共享和内存
 
-        subgraph CostOptimization [Cost Optimization]
-            SpotInstances[Spot Instances]
-            AutoScaling[Auto Scaling]
-            HybridNodes[Hybrid Nodes]
-        end
-    end
+Time-slicing 暴露共享 GPU 访问，但不提供内存/故障隔离或按比例的性能保证。MPS 使用独立的 control daemon；已审查的 plugin 文档将支持标为实验性，并排除启用 MIG 的设备。RuntimeClass 加上特权 MPS Pod 并不能配置节点范围的共享。
 
-    GPUOptimization --> Performance([Performance Improvement])
-    TrainingOptimization --> Performance
-    StorageOptimization --> Performance
-    CostOptimization --> CostReduction([Cost Reduction])
-
-    classDef gpuOptComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef trainingOptComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef storageOptComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef costOptComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef resultComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class MemoryOvercommit,GPUSharing,MPS,GPUOptimization gpuOptComponent;
-    class NodeAffinity,TopologyAware,PlacementGroups,TrainingOptimization trainingOptComponent;
-    class LustreConfig,DataCaching,S3Integration,StorageOptimization storageOptComponent;
-    class SpotInstances,AutoScaling,HybridNodes,CostOptimization costOptComponent;
-    class Performance,CostReduction resultComponent;
-    class Optimization default;
-```
-
-### GPU 内存优化
-
-1. **GPU Memory Overcommit**：
+这是独立的 device-plugin 配置。如果 GPU Operator 管理该 plugin，请改用该管理方的配置路径。
 
 ```yaml
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: nvidia-mps
-handler: nvidia-container-runtime
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: cuda-mps
-spec:
-  runtimeClassName: nvidia-mps
-  containers:
-  - name: cuda-mps
-    image: nvidia/cuda:11.6.0-base-ubuntu20.04
-    command: ["nvidia-cuda-mps-control", "-d"]
-    securityContext:
-      privileged: true
+# device-plugin-sharing.yaml: NVIDIA device plugin configuration, not a Pod.
+version: v1
+sharing:
+  timeSlicing:
+    renameByDefault: true
+    failRequestsGreaterThanOne: true
     resources:
-      limits:
-        nvidia.com/gpu: 1
+      - name: nvidia.com/gpu
+        replicas: 2
 ```
 
-2. **GPU Sharing**：
+```bash
+# Alternative to an operator-owned plugin; do not install a second owner.
+helm repo add nvdp https://nvidia.github.io/k8s-device-plugin
+helm repo update nvdp
+helm template nvdp nvdp/nvidia-device-plugin \
+  --version 0.20.0 --namespace nvidia-device-plugin \
+  --set config.default=shared \
+  --set-file config.map.shared=device-plugin-sharing.yaml \
+  > device-plugin.rendered.yaml
+```
+
+这会暴露 nvidia.com/gpu.shared；Pod 请求 1 个该资源单位（整数 1）。replicas=2 并不保证获得一半的 GPU 内存。请在真实 GPU 硬件上验证所选节点、分配和争用。
+
+### 放置和拓扑 {#placement-and-topology}
+
+区域/region 注释不会控制 Pod 放置。请根据实际节点标签使用 nodeSelector/affinity；anti-affinity/spread selector 也必须匹配 Pod 标签。请将以下实际 AZ 替换进去。同一 AZ 放置、跨节点分散和 gang admission 是不同的约束。
 
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: gpu-pod-1
+  name: placement-check
+  labels:
+    app: placement-check
 spec:
-  containers:
-  - name: gpu-container
-    image: nvidia/cuda:11.6.0-base-ubuntu20.04
-    resources:
-      limits:
-        nvidia.com/gpu: 0.5
-```
-
-### 分布式训练优化
-
-1. **Node Affinity**：
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: gpu-pod
-spec:
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: node.kubernetes.io/instance-type
-            operator: In
-            values:
-            - p3.16xlarge
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app
-            operator: In
-            values:
-            - gpu-intensive
-        topologyKey: kubernetes.io/hostname
-  containers:
-  - name: gpu-container
-    image: nvidia/cuda:11.6.0-base-ubuntu20.04
-    resources:
-      limits:
-        nvidia.com/gpu: 8
-```
-
-2. **Topology-Aware Scheduling**：
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: gpu-pod
-  annotations:
-    topology.kubernetes.io/region: us-west-2
+  restartPolicy: Never
+  nodeSelector:
     topology.kubernetes.io/zone: us-west-2a
-spec:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app: placement-check
+            topologyKey: kubernetes.io/hostname
   containers:
-  - name: gpu-container
-    image: nvidia/cuda:11.6.0-base-ubuntu20.04
-    resources:
-      limits:
-        nvidia.com/gpu: 8
+    - name: check
+      image: python:3.12-slim
+      command: ["python", "-c", "print('placement check')"]
+      resources:
+        requests:
+          cpu: "100m"
+          memory: 64Mi
+        limits:
+          cpu: "1"
+          memory: 128Mi
 ```
 
-### 存储优化
+### 存储和缓存 {#storage-and-caching}
 
-1. **FSx for Lustre Configuration**：
+静态 FSx CSI 供应将**现有文件系统**连接到 PV/PVC。请将文件系统 ID、DNS、挂载名称、容量和 namespace 替换为实际值。Retain 会避免自动删除文件系统；费用仍会持续，直到另行清理。
 
 ```yaml
-apiVersion: fsx.aws.k8s.io/v1beta1
-kind: Lustre
+apiVersion: v1
+kind: PersistentVolume
 metadata:
-  name: lustre-fs
+  name: ml-fsx-existing
 spec:
-  deploymentType: SCRATCH_2
-  storageCapacity: 1200
-  subnetIds:
-    - subnet-0123456789abcdef0
-  securityGroupIds:
-    - sg-0123456789abcdef0
-  perUnitStorageThroughput: 200
----
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fsx-lustre
-provisioner: fsx.csi.aws.com
-parameters:
-  fileSystemId: fs-0123456789abcdef0
-  mountName: lustre-fs
+  capacity:
+    storage: 1200Gi
+  volumeMode: Filesystem
+  accessModes: [ReadWriteMany]
+  storageClassName: ""
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions: [flock]
+  csi:
+    driver: fsx.csi.aws.com
+    volumeHandle: fs-0123456789abcdef0
+    volumeAttributes:
+      dnsname: fs-0123456789abcdef0.fsx.us-west-2.amazonaws.com
+      mountname: replace-with-actual-mount-name
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: lustre-pvc
+  name: ml-dataset
+  namespace: ml-workloads
 spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: fsx-lustre
+  accessModes: [ReadWriteMany]
+  storageClassName: ""
+  volumeName: ml-fsx-existing
   resources:
     requests:
       storage: 1200Gi
 ```
 
-2. **Data Caching**：
+动态供应从 StorageClass/PVC 创建文件系统。不要将静态 volumeHandle/DNS 设置放入 StorageClass，也不要混入未定义的 fsx.aws.k8s.io/Lustre 资源。请使用 [driver 的动态示例](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.10.0/examples/kubernetes/dynamic_provisioning)，并检查特定部署类型的吞吐量/备份规则；SCRATCH_2 不能使用仅适用于 persistent 的选项。
 
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: alluxio-worker
-spec:
-  selector:
-    matchLabels:
-      app: alluxio-worker
-  template:
-    metadata:
-      labels:
-        app: alluxio-worker
-    spec:
-      containers:
-      - name: alluxio-worker
-        image: alluxio/alluxio:2.7.3
-        resources:
-          limits:
-            memory: 8Gi
-        volumeMounts:
-        - name: alluxio-domain
-          mountPath: /opt/domain
-      volumes:
-      - name: alluxio-domain
-        hostPath:
-          path: /mnt/alluxio
-          type: DirectoryOrCreate
-```
+仅使用 Alluxio worker DaemonSet 并不是完整的缓存部署。请设计 master/worker 角色、路径、内存、网络、一致性和保留策略。在实际挂载的 PVC 上对独立测试路径进行基准测试；针对未挂载的 /data 执行 FIO 并不能测量 FSx 性能。
 
-## 监控与日志记录
+## 监控和日志
 
-```mermaid
-flowchart TD
-    subgraph Monitoring [Monitoring and Logging Architecture]
-        subgraph MetricsCollection [Metrics Collection]
-            DCGMExporter[NVIDIA DCGM Exporter]
-            NodeExporter[Node Exporter]
-            KubeStateMetrics[Kube State Metrics]
-        end
+![Prometheus 指标、Alertmanager 通知、Grafana 查询和已配置的 Fluent Bit 日志输出。](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-6.png)
 
-        subgraph MonitoringStack [Monitoring Stack]
-            Prometheus[(Prometheus)]
-            AlertManager[Alert Manager]
-            Grafana[Grafana]
-        end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-6.html)
 
-        subgraph LoggingStack [Logging Stack]
-            Fluentd[Fluentd]
-            CloudWatch[CloudWatch Logs]
-            ElasticSearch[(ElasticSearch)]
-            Kibana[Kibana]
-        end
+### Prometheus 和 Grafana {#prometheus-and-grafana}
 
-        subgraph Dashboards [Dashboards]
-            GPUDashboard[GPU Dashboard]
-            TrainingDashboard[Training Dashboard]
-            InferenceDashboard[Inference Dashboard]
-            CostDashboard[Cost Dashboard]
-        end
+DCGM Exporter 提供 GPU 指标，这与 device-plugin 的可分配容量不同。避免使用另一个 DaemonSet 重复部署由 Operator 管理的 exporter。containerd 设置不需要 Docker-socket 挂载。
 
-        subgraph Alerts [Alerts]
-            GPUAlerts[GPU Alerts]
-            PerformanceAlerts[Performance Alerts]
-            CostAlerts[Cost Alerts]
-        end
-    end
-
-    DCGMExporter --> Prometheus
-    NodeExporter --> Prometheus
-    KubeStateMetrics --> Prometheus
-
-    Prometheus --> AlertManager
-    Prometheus --> Grafana
-
-    Fluentd --> CloudWatch
-    Fluentd --> ElasticSearch
-    ElasticSearch --> Kibana
-
-    Grafana --> Dashboards
-    AlertManager --> Alerts
-
-    classDef metricsComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoringComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef loggingComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef dashboardComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef alertComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class DCGMExporter,NodeExporter,KubeStateMetrics,MetricsCollection metricsComponent;
-    class Prometheus,AlertManager,Grafana,MonitoringStack monitoringComponent;
-    class Fluentd,CloudWatch,ElasticSearch,Kibana,LoggingStack loggingComponent;
-    class GPUDashboard,TrainingDashboard,InferenceDashboard,CostDashboard,Dashboards dashboardComponent;
-    class GPUAlerts,PerformanceAlerts,CostAlerts,Alerts alertComponent;
-    class Monitoring default;
-```
-
-### Prometheus 和 Grafana
+ServiceMonitor 选择的是 **Service 标签和命名端口**，而非直接选择 Pod 标签。请将这些值与已安装的 exporter Service 匹配，并确保 Prometheus 也会选择 ServiceMonitor namespace/标签。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -939,246 +342,40 @@ metadata:
   name: gpu-metrics
   namespace: monitoring
 spec:
+  namespaceSelector:
+    matchNames: [gpu-operator]
   selector:
     matchLabels:
-      app: dcgm-exporter
+      app: nvidia-dcgm-exporter
   endpoints:
-  - port: metrics
-    interval: 15s
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: gpu-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "1"
-data:
-  gpu-dashboard.json: |
-    {
-      "annotations": {
-        "list": [
-          {
-            "builtIn": 1,
-            "datasource": "-- Grafana --",
-            "enable": true,
-            "hide": true,
-            "iconColor": "rgba(0, 211, 255, 1)",
-            "name": "Annotations & Alerts",
-            "type": "dashboard"
-          }
-        ]
-      },
-      "editable": true,
-      "gnetId": null,
-      "graphTooltip": 0,
-      "id": 1,
-      "links": [],
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 0
-          },
-          "hiddenSeries": false,
-          "id": 2,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.0",
-          "pointradius": 2,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "DCGM_FI_DEV_GPU_UTIL",
-              "interval": "",
-              "legendFormat": "GPU {{gpu}}",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "GPU Utilization",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "percent",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        }
-      ],
-      "schemaVersion": 26,
-      "style": "dark",
-      "tags": [],
-      "templating": {
-        "list": []
-      },
-      "time": {
-        "from": "now-6h",
-        "to": "now"
-      },
-      "timepicker": {},
-      "timezone": "",
-      "title": "GPU Dashboard",
-      "uid": "gpu-dashboard",
-      "version": 1
-    }
+    - port: gpu-metrics
+      interval: 15s
 ```
+
+监测 GPU 利用率/内存/错误以及应用程序请求、错误和延迟直方图。准确性需要带有真实标签的评估路径；增加副本不会提高模型质量。将旧的 Grafana graph/flot JSON 替换为当前 time-series/gauge 格式和实际 datasource UID，然后验证导入。
 
 ### 日志收集
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluentd-config
-  namespace: logging
-data:
-  fluent.conf: |
-    <source>
-      @type tail
-      path /var/log/containers/*.log
-      pos_file /var/log/fluentd-containers.log.pos
-      tag kubernetes.*
-      read_from_head true
-      <parse>
-        @type json
-        time_format %Y-%m-%dT%H:%M:%S.%NZ
-      </parse>
-    </source>
-
-    <filter kubernetes.**>
-      @type kubernetes_metadata
-      @id filter_kube_metadata
-    </filter>
-
-    <match kubernetes.var.log.containers.**>
-      @type cloudwatch_logs
-      log_group_name /eks/ml-cluster/pods
-      log_stream_name_key $.kubernetes.pod_name
-      remove_log_stream_name_key true
-      auto_create_stream true
-      region us-west-2
-    </match>
-```
+containerd CRI 日志帧和应用程序 JSON 是不同层次。请配置 Fluent Bit CRI/multiline 解析、路径、位置数据库/轮转以及 Kubernetes 元数据 RBAC。不要复制已移除的 Elasticsearch/OpenSearch 文档类型或未定义的 parser 名称。CloudWatch/output 集成需要镜像 plugin、工作负载 IAM 和网络访问。管理敏感模型负载和 retry-buffer 增长。请参阅[可观测性指南](../observability/README.md)中选择的收集路径。
 
 ## 成本优化
 
-### 利用 Spot Instances
+### Spot 和节点供应 {#spot-and-node-provisioning}
 
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-spot
-spec:
-  template:
-    spec:
-      requirements:
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        - g4dn.xlarge
-        - g4dn.2xlarge
-        - g4dn.4xlarge
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values:
-        - spot
-      - key: kubernetes.io/arch
-        operator: In
-        values:
-        - amd64
-      nodeClassRef:
-        name: gpu-spot-class
-  limits:
-    nvidia.com/gpu: 10
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 30s
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: gpu-spot-class
-spec:
-  subnetSelector:
-    karpenter.sh/discovery: gpu-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: gpu-cluster
-```
+Spot 中断/容量短缺需要外部 checkpoint、retry/idempotency 和恢复时间验证。请使用 [Karpenter 指南](../autoscaling/02-karpenter.md)中的当前 NodePool/EC2NodeClass 配置，包括镜像/AMI 修订版、taint/toleration、limits 和中断处理。混合 CPU/GPU node group 与 EKS Hybrid Nodes 产品不同。
 
-### Auto Scaling
+### HPA 和指标 {#hpa-and-metrics}
+
+对于由 metrics-server 提供的 CPU/内存，请使用 HPA Resource 指标。nvidia.com/gpu 分配不是 GPU 利用率 Resource 指标。GPU/请求信号需要 exporter 和 custom/external metrics adapter。
+
+此示例使用 adapter 按 namespace/Pod 暴露的 RPS。目标 Deployment 和 adapter 需要单独安装；100 RPS 是一个说明性目标，应通过测量进行校准。应指定一个扩缩容管理方，而不是让多个 HPA/KEDA controller 控制同一副本数。
 
 ```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: inference-service
+  name: inference-hpa
+  namespace: ml-workloads
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -1187,67 +384,32 @@ spec:
   minReplicas: 1
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: nvidia.com/gpu
-      target:
-        type: Utilization
-        averageUtilization: 80
-  - type: Pods
-    pods:
-      metric:
-        name: inference_requests_per_second
-      target:
-        type: AverageValue
-        averageValue: 100
+    - type: Pods
+      pods:
+        metric:
+          name: inference_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "100"
 ```
 
-### 利用 Hybrid Nodes
+不正确的聚合/标签分组可能会阻止 adapter 返回按 Pod 划分的值。直方图百分位数或模型准确性并不自动适合作为成比例的 HPA 信号。请同时测量负载/队列/延迟/利用率和实际吞吐量。减少 Pod 后，EC2 费用会持续到节点终止；仅靠一天中的时间并不会降低 On-Demand 费率。
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: training-pod
-spec:
-  nodeSelector:
-    node.kubernetes.io/instance-type: p3.16xlarge
-  containers:
-  - name: training-container
-    image: tensorflow/tensorflow:latest-gpu
-    resources:
-      limits:
-        nvidia.com/gpu: 8
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: inference-pod
-spec:
-  nodeSelector:
-    node.kubernetes.io/instance-type: g4dn.xlarge
-  containers:
-  - name: inference-container
-    image: tensorflow/tensorflow:latest-gpu
-    resources:
-      limits:
-        nvidia.com/gpu: 1
-```
+### 数据和模型访问 {#data-and-model-access}
 
-## 结论
+Kubernetes RBAC 管理 API 访问；S3/KMS 权限使用工作负载 IAM。请使用对象存储、加密和基于文件的凭证，而非大型模型 Secret 或环境变量中的解密密钥。Secret base64 不是加密。同一个 peer 中的 NetworkPolicy namespaceSelector 和 podSelector 是 AND；单独的条目是 OR。也请允许实际的 DNS/存储/指标方向。
 
-在 EKS 上运行 AI/ML 工作负载可提供强大的基础设施、灵活的扩展能力以及多种优化选项。选择合适的 Node 类型、存储配置和网络设置，利用 Kubeflow 等工具管理 ML 工作流，并优化 GPU 内存和分布式训练非常重要。此外，你还可以通过监控和日志记录跟踪工作负载性能，并通过利用 Spot instances 和 auto scaling 优化成本。
+## 验证和参考资料
 
-## 参考资料
+本章根据官方 GPU Operator/device-plugin Helm 渲染以及 manifest/配置审查进行了修正。未执行实际的 GPU、FSx 创建/挂载、分布式训练、服务或自动扩缩容。请在目标环境中验证组件版本和节点要求。
 
-- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - 用于在 EKS 上部署 AI/ML 工作负载的 AWS 指南和示例
+- [EKS 加速 AMI](https://docs.aws.amazon.com/eks/latest/userguide/ml-eks-optimized-ami.html)
+- [Kubernetes GPU 调度](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/)
+- [NVIDIA device plugin 0.20.0](https://github.com/NVIDIA/k8s-device-plugin/tree/v0.20.0)
+- [FSx CSI 1.10.0](https://github.com/kubernetes-sigs/aws-fsx-csi-driver/tree/v1.10.0)
+- [EFS 性能模式](https://docs.aws.amazon.com/efs/latest/ug/performance.html)
+- [Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
 
 ## 测验
 
-要测试你在本章中学到的内容，请尝试完成[主题测验](../quizzes/ai-ml/03-ai-ml-workloads-quiz.md)。
+要测试您在本章中所学的内容，请尝试[主题测验](../quizzes/ai-ml/03-ai-ml-workloads-quiz.md)。

@@ -1,108 +1,81 @@
-# Part 6: KServe — Kubernetes でのモデルサービング
+# パート6: KServe — Kubernetes 上のモデルサービング
 
-> **対応バージョン**: KServe（Kubeflow Community Distribution 26.03 に同梱の web app v0.16.1）
-> **最終更新**: August 19, 2026
+> **レビュー基準**: KServe 0.18.0 / Models Web Application 0.18.0 / Community Distribution 26.03.1
+> **最終更新**: September 12, 2026
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例に沿って進めるには、以下のツールと環境が必要です。
+互換性のある Kubernetes、KServe controller/CRD、ServingRuntime、ストレージアクセス、および認証済みのネットワーク経路を使用します。完全な Kubeflow は必須ではなく、web app は任意です。Knative モードには Knative Serving/networking が必要であり、Standard の KEDA パスには KEDA とメトリクスプロバイダーが必要です。GPU はワークロードに依存します。
 
-### 必要なツール
+## KServe と Kubeflow
 
-* kubectl v1.34 以降、および動作する EKS クラスター
-* Kubeflow（Part 1）がインストール済みで、Central Dashboard に KServe web app が表示されていること
-* GPU 対応モデルをサービングする予定がある場合は、GPU 対応の `NodePool`/`EC2NodeClass` ペアを備えた [Karpenter](../../autoscaling/02-karpenter.md)
-* KServe の Serverless デプロイモードを使用する予定がある場合は、クラスターにインストール済みの Knative Serving
+KServe は KFServing から発展し、独立したサービングプロジェクトになりました。この章では、Community Distribution 26.03.1 にバンドルされた **KServe および Models Web Application 0.18.0** を取り上げます。確認した最新の公開 KServe リリースは **0.20.0（2026年8月6日）** ですが、distribution の 0.18.0 基準とは異なります。
 
-## KServe とは何か、また Kubeflow とどう関係するのか？
+Controller、CRD、web app はそれぞれ別の成果物であり、互換性の確認が必要です。これらのバージョン番号は常に一致するとも、常に異なるとも限りません。実際の image、CRD schema、および web-app revision を記録してください。
 
-Parts 1〜5 では、Kubeflow の全体アーキテクチャ、Pipelines、Notebooks、Katib、Kubeflow Trainer、すなわち EKS 上でモデルを*トレーニング*するために必要なすべてを扱いました。この最後のパートでは、トレーニング後に起こること、すなわちそのモデルを **KServe** によりスケーラブルで本番グレードの推論エンドポイントとしてサービングする方法を扱います。
+ここで扱うサービング API は `InferenceService` であり、KServe アーキテクチャ全体ではありません。ServingRuntime/ClusterServingRuntime、ModelMesh、および別個の LLMInferenceService API には、それぞれ異なる依存関係と運用モデルがあります。
 
-KServe は独立したプロジェクトとして始まったわけではありません。トレーニング済みモデルを稼働中の推論エンドポイントに変換する役割を担う **KFServing** として Kubeflow 内で始まりました。プロジェクトの成熟に伴い、独自のトップレベルのスタンドアロンリポジトリへ分離されて **KServe** に改名されました。現在は Kubeflow 専用のサブコンポーネントではなく、Kubeflow がまったく存在しない任意の Kubernetes クラスターにもインストールして運用できます。
+## InferenceService: Predictor、Transformer、Explainer
 
-一方、Kubeflow は引き続き KServe をデフォルトのモデルサービングレイヤーとして同梱しています。Central Dashboard のモデルサービング web app は KServe CRD 上の薄い UI であり、Kubeflow Community Distribution はその配布版の他コンポーネントとともに、その web app の特定バージョンを固定しています。
+InferenceService には必須の predictor と、任意の transformer/explainer があります。Predictor はモデルサーバーを設定し、transformer は前処理/後処理を提供し、explainer は説明リクエストを処理します。説明はすべての予測に自動的に付加されるわけではなく、runtime/protocol のサポートが重要です。
 
-この分離が重要な実用上の理由が一つあります。**KServe controller/CRD のバージョンと Kubeflow web-app UI のバージョンは同じ番号ではなく、連動して移行するわけでもありません。** KServe には、Kubeflow Community Distribution のカレンダーバージョン方式のリリース系列とは別に、独自のメンテナーとロードマップにより決まる独立したリリースサイクルがあります（このドキュメントのバージョン行にある `26.03` は KServe 自体ではなく、Distribution を指します）。Kubeflow Community Distribution 26.03 のリリースには KServe web application **v0.16.1** が同梱されていますが、この番号が示すのは dashboard との統合であり、特定のクラスターで実行される基盤の KServe controller と CRD のバージョンとは限りません。プラットフォームチームは、KServe controller を、それと通信する Kubeflow web app とは独立してアップグレードできますし、実際によくそうします。`InferenceService` をトラブルシューティングする際は、Kubeflow dashboard に表示されるバージョンと一致すると仮定せず、クラスターにインストールされている controller/CRD のバージョンを直接確認してください（例: KServe controller manager の image tag）。
+modelFormat、ServingRuntime、ファイルレイアウト/library version、URI/認証情報、port/probe、およびリクエスト protocol を一致させてください。URI だけでは、すべてのモデルを提供可能にはできません。Custom container も、client contract と KServe の routing/health-check 要件を満たす必要があります。
 
-インストールされているバージョンにかかわらず、KServe が公開する中核の抽象化は **`InferenceService`** custom resource です。これはモデル、サービング方法、スケーリング方法を記述する単一の Kubernetes オブジェクトです。
+公式の runtime-config chart は、デフォルトではリソースを出力しません。`kserve.servingruntime.enabled=true` を使用してレンダリングすると、12 個の ClusterServingRuntime が生成されます。catalog に存在することは、image の最新性、security support、またはモデル互換性を保証するものではありません。
 
-## InferenceService の構成: Predictor、Transformer、Explainer
+TorchServe の [project notice](https://github.com/pytorch/serve) では、新機能、bug fix、security patch は今後予定されていないとされています。古い runtime catalog に含まれていても、新しい本番用途において保守されているデフォルトになるわけではありません。モデル形式と GPU 要件に対応する、保守された runtime を検証してください。
 
-`InferenceService` は最大で 3 つの論理コンポーネントから構築され、そのうち必須なのは 1 つだけです。
+## Deployment モード: Knative と Standard
 
-* **Predictor**（必須）— モデルサーバー自体です。実際にモデル artifact をロードし、推論リクエストに応答するコンポーネントです。KServe には一般的なフレームワーク向けの組み込み Predictor サポートがあり、代表例として SKLearn、XGBoost、PyTorch（TorchServe 経由）、NVIDIA Triton Inference Server があります。そのため、これらのフレームワークの Predictor spec ではモデル artifact の場所を指定するだけで、サービングコードを書かずに動作するサーバーを得られます。これらの組み込みサーバー以外の場合、Predictor は KServe の推論プロトコルを自ら実装する **custom container** を実行することもできます。
-* **Transformer**（任意）— Predictor の前に置かれる前処理/後処理ステップです。Transformer は通常、リクエストがモデルに到達する前に入力 feature engineering を処理し、またはモデルの生出力を下流コンシューマーが期待する形式に整形します。これを Predictor から分離することで、モデルサーバー自体を汎用的に保ち、異なるクライアント契約間で再利用できます。
-* **Explainer**（任意）— 単なる予測とともに、またはその代わりにモデルの説明（例: feature-importance や counterfactual explanation）を生成するコンポーネントです。消費側アプリケーションがモデル出力を受け取るだけでなく、その根拠を示す必要がある場合に有用です。
+0.18.0 での名称は **Knative** と **Standard** です。Serverless と RawDeployment の annotation 値は、これらの名称に正規化される非推奨の alias です。serving.kserve.io/deploymentMode と、インストール済みの inferenceservice-config を確認してください。コードの fallback は Standard ですが、ダウンロードした OCI resource chart のデフォルトは Knative です。用語だけからインストール時のデフォルトを推測しないでください。
 
-必須なのは Predictor だけです。多くの本番 `InferenceService` オブジェクトは Predictor のみで構成され、ユースケースで前処理/後処理や説明可能性が特に必要な場合にのみ Transformer または Explainer を追加します。
-
-## デプロイモード: Serverless と Raw Deployment
-
-KServe は、`InferenceService` の Pod が実際にどのようにクラスター上で作成・管理されるかについて、2 つの異なるデプロイモードをサポートします。EKS 上で KServe を実行する際、両者の選択は最も重要な決定の一つです。
-
-### Serverless モード（Knative ベース）
-
-Serverless モードでは、KServe は Pod ライフサイクル管理を **Knative Serving** に委任します。Knative は `InferenceService` と基盤の Deployment の間に位置し、リクエストトラフィックを監視して Predictor（および任意の Transformer/Explainer）の Pod をスケールアップ・スケールダウンします。トラフィックがまったくない場合は、**ゼロ Pod** までスケールダウンできます。これが Serverless モードの中心的な機能です。断続的にリクエストを受けるモデルでは、アイドル時に Pod、ひいては GPU を稼働させ続ける必要がありません。
-
-そのトレードオフは **コールドスタートレイテンシー** です。現在ゼロまでスケールダウンしているモデルにリクエストが到着すると、Knative は新しい Pod をスケジュールし、container の起動を待ち、モデルサーバーがモデル artifact をメモリにロードするのを待ってから、最初のリクエストに応答します。GPU 対応インスタンス上の大規模モデルでは、このコールドスタートは大きくなる可能性があります。Pod がサービング可能になる前に、モデル artifact のダウンロードと GPU driver/runtime の初期化の両方が実際の時間を追加するためです。
-
-### Raw Deployment モード
-
-Raw Deployment モードでは、KServe が通常の Kubernetes **Deployment**、**Service**、および（任意で）**HorizontalPodAutoscaler** を直接管理します。Knative への依存はまったくありません。このモードは運用上よりシンプルであり（クラスターにインストール、アップグレード、理解すべきシステムが一つ減ります）、Deployment で構成した最小 replica 数を下回ってスケールしないため、Knative のコールドスタート動作を完全に回避します。その代償として、Raw Deployment モードには **scale-to-zero** がありません。トラフィックの有無にかかわらず、少なくとも最小数の Predictor Pod（および存在する場合はその GPU）が常に稼働します。
-
-### 選択方法
-
-| 考慮事項 | Serverless（Knative） | Raw Deployment |
+| 項目 | Knative | Standard |
 | --- | --- | --- |
-| Scale-to-zero | はい | いいえ |
-| ゼロからのスケールアップ時のコールドスタートレイテンシー | 発生する。大規模/GPU モデルでは大きくなる可能性がある | 該当なし |
-| 追加のクラスター依存関係 | Knative Serving のインストールが必要 | なし |
-| 最適な用途 | アイドル時の GPU コストが重要な、スパイク状、断続的、または低トラフィックの推論ワークロード | warm Pod が常に利用可能でなければならない、レイテンシーに敏感なワークロードまたは安定したトラフィックのワークロード |
+| Workload リソース | Knative Service/Revision パス | Deployment/Service と選択した autoscaler |
+| スケールダウン | KPA/policy のサポートと minReplicas=0 によりゼロが可能 | デフォルトの HPA パスでは少なくとも 1 つを維持する。KEDA は適切な外部アクティベーションシグナルによりゼロをサポートできる |
+| デフォルトの minReplicas | KServe のデフォルトは 1。Knative を選択するだけではゼロは有効にならない | HPA は要求されたゼロを少なくとも 1 に制限する |
+| 依存関係 | Knative Serving/networking と選択した autoscaler | 選択した ingress/gateway、HPA metrics または KEDA など |
+| 起動レイテンシー | ゼロから起動する際の scheduling/image/model loading | warm replica があっても、restart、rollout、scale-out では起動レイテンシーが発生する |
 
-実用的な経験則は次のとおりです。リクエスト間でアイドル状態にあるモデルの GPU コストが実際の予算上の懸念であり、ワークロードが時折のコールドスタート遅延を許容できるなら、Serverless モードの scale-to-zero は Knative 依存を追加する価値があります。ワークロードが各リクエストで一貫して低いレイテンシーを必要とする場合、または Pod がアイドルになることがほとんどないほどトラフィックがすでに安定している場合は、Raw Deployment モードのシンプルさと warm Pod の保証が通常より適しています。
+どちらのモードも、利用可能な replica やレイテンシー SLA を保証しません。model loading、readiness、capacity、timeout、および recovery を検証してください。KEDA のゼロからのスケールには、実行中の Pod がなくても観測可能なシグナルと再アクティベーション経路が必要です。CPU/memory metrics だけでは、リクエスト駆動のアクティベーションを意味しません。
 
-```mermaid
-flowchart TB
-    A[Client request] --> B[InferenceService]
-    B --> C{Predictor spec}
-    C --> D[Optional: Transformer<br/>pre/post-processing]
-    C --> E[Optional: Explainer]
-    D --> F{Deployment mode}
-    E --> F
-    C --> F
-    F -->|Serverless| G[Knative-managed pod<br/>scale-to-zero capable]
-    F -->|Raw Deployment| H[Plain Deployment/Service<br/>+ HPA, no scale-to-zero]
-    G --> I[Model server loads<br/>artifact, runs inference]
-    H --> I
-    I --> J[Response to client]
-```
+![InferenceService の reconciliation は、実行中のモデルサーバーへのリクエストとは別です。Knative と Standard のパスは、条件付きの autoscaling 動作を示しています。](../../.gitbook/assets/en-ai-ml-kubeflow-06-kserve-0.png)
 
-## Autoscaling: Knative Concurrency/RPS と HPA
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-06-kserve-0.html)
 
-2 つのデプロイモードの違いは、ゼロまでスケールできるかどうかだけではありません。ワークロードが稼働している間に使用する autoscaling の仕組みも根本的に異なります。
+## Autoscaling と Metrics
 
-* **Serverless モード** は **Knative 独自の autoscaler** を使用します。これはリソース使用率ではなく、リクエストレベルのシグナル、通常は **concurrency**（Pod が同時に処理しているリクエスト数）または **requests per second (RPS)** に基づいて Pod をスケールします。遅いモデルは CPU が飽和するはるか前に同時リクエストで飽和する場合があり、CPU ベースのシグナルよりもリクエストレベルのシグナルでスケールする方がトラフィックバーストへの反応が速いため、これは推論ワークロードにより直接的に適合します。
-* **Raw Deployment モード** は標準の Kubernetes **HorizontalPodAutoscaler** に依存し、CPU/メモリ使用率または custom metrics（例: metrics adapter を介して公開される GPU 使用率メトリクス）に基づいてスケールします。これは、クラスター上の他の Kubernetes Deployment と同じ autoscaling モデルです。
+Knative KPA は concurrency/RPS をサポートしますが、Knative の HPA class は別のパスです。Standard は serving.kserve.io/autoscalerClass を通じて hpa、keda、または external/none を選択します。すべての Standard Deployment が HPA を作成するわけではありません。
 
-どちらの仕組みも普遍的に「優れている」わけではありません。適切な選択は、上記の「デプロイモード: Serverless と Raw Deployment」と同じデプロイモードの判断に従います。concurrency/RPS ベースのスケーリングは、リクエストレベルの backpressure が真のボトルネックとなるバースト性の高い推論トラフィックに適しています。HPA ベースのスケーリングは、CPU/GPU 使用率がすでに負荷の信頼できる代替指標となっており、チームがリクエストレベルのシグナルを得るためだけに Knative を導入したくないワークロードに適しています。
+CPU、external、またはサポートされる Pod metrics には、実際の metrics-server/adapter/provider の依存関係が必要です。GPU request は GPU metrics を自動的に作成しません。レスポンス速度は観測間隔、stabilization、およびモデルの動作に依存します。concurrency metrics が常に高速であるわけではありません。
 
-## 段階的なモデル更新のための Canary Rollout
+## 段階的更新と Canary Traffic
 
-新しいモデルバージョンを安全に rollout すること、つまり完全にコミットする前に実トラフィックの一部で検証することは、サービングにおける中核的な関心事であり、KServe にはこのための組み込みの仕組みがあります。`InferenceService` を更新して新しいモデル revision を参照させることができ、KServe は構成された割合に従って、以前の（stable）revision と新しい（canary）revision の間でライブトラフィックを分割します。その後、信頼性が高まるにつれてトラフィックを新しい revision へ徐々に増やすことも、新しい revision に問題がある場合はトラフィック分割を戻すだけで以前の revision に rollback することもできます。
+このバージョンの canaryTrafficPercent は、**Knative Revision の traffic-splitting パス**で確認されました。KServe は、直前に rollout された revision と新しい revision を Knative Service の traffic target として設定し、Knative networking がリクエストを分散します。KServe controller は、すべての inference call の proxy ではありません。
 
-これは、このドキュメントサイトの他の場所で扱う Istio および Argo Rollouts ベースの traffic-splitting パターン（[Istio traffic management](../../service-mesh/istio/traffic-management/04-traffic-splitting.md) および [Argo Rollouts](../../service-mesh/istio/advanced/08-argo-rollouts.md) の資料を参照）とは異なる仕組みです。KServe の canary rollout は、service mesh の traffic-splitting プリミティブや汎用の progressive-delivery controller を介するのではなく、KServe control plane 自体に組み込まれ、特に `InferenceService` revision のレベルで動作します。ほかのすべてのワークロードの canary release で Istio または Argo Rollouts をすでに標準化しているプラットフォームチームは、KServe 独自の仕組みが別のモデルサービング固有の経路であることを認識しておく必要があります。置換を必須とするものではありませんが、対象ワークロードが特に `InferenceService` の場合に知っておく価値のある別個のツールです。
+Standard Deployment の rolling update を、その revision-percentage routing と同一視しないでください。Standard での weighted routing には、別途設計された service/gateway/mesh または rollout tooling と、明確な所有権が必要です。[Istio traffic management](../../service-mesh/istio/traffic-management/04-traffic-splitting.md) または [Argo Rollouts](../../service-mesh/istio/advanced/08-argo-rollouts.md) を使用する場合は、KServe 管理 object との所有権の競合を避けてください。
 
-## EKS 上の GPU 推論
+割合だけでは品質の検証や promotion/rollback の自動化はできません。比較 metrics、error/latency、保持された revision/model artifact、および route readiness を確認してください。
 
-GPU 上でモデルをサービングするには、Predictor spec が GPU device plugin により公開されるリソース（例: NVIDIA GPU resource type）に対して、container の resource requests/limits を通じ、他の Kubernetes Pod と同じ方法で GPU リソースを要求します。PyTorch や Triton などのフレームワーク向け KServe 組み込み Predictor サーバーは、最初から GPU に対応しています。そのため、Predictor spec が GPU を要求すれば、基盤のモデルサーバーは追加の KServe 固有設定なしに推論でそれを使用します。
+## EKS での GPU Inference
 
-この要求の node provisioning 側では、このサイトの autoscaling 資料で扱う [Karpenter の GPU node pool](../../autoscaling/02-karpenter.md) が直接関係します。既存のどの node でも満たせない GPU リソースを要求する `InferenceService` Predictor Pod があると、Karpenter は一致する GPU 対応 EC2 instance を provision します。Pod がその容量を必要としなくなると、Karpenter の consolidation 動作によりその容量の right-size または回収が行われます。特に Serverless モードでは、ゼロにスケールした Predictor の背後の GPU node は、無期限に予約されたままになるのではなく、consolidation の候補になります。KServe 独自のスケーリング決定（上記の「Autoscaling: Knative Concurrency/RPS と HPA」を参照）と、それに対する Karpenter の node レベルの応答との相互作用は、EKS 上の他の autoscale されたワークロードに対してこのドキュメントの他の場所で使用する一般的な 2 層 autoscaling パターンに従います。すなわち、一方の control loop が必要な Pod 数を決定し、別個で独立した control loop がそれを実行するのに必要な node 数を決定します。
+Pod の nvidia.com/gpu request は scheduling/device allocation を有効にします。実際の GPU inference には、互換性のある CUDA/driver、server image、model backend、および device configuration が必要です。Triton model configuration または framework の device selection を確認してください。GPU request により、CPU モデルが自動的に GPU へ移行するわけではありません。
+
+Karpenter は、条件を満たす Pending Pod、NodePool、quota、および利用可能な capacity に対して provisioning を行います。KServe/Knative/HPA/KEDA の Pod scaling と、EC2 の provisioning/reclamation は別のループです。model Pod がゼロであっても、他の workload や disruption policy により node とコストが稼働し続ける場合があります。
+
+## 検証とソース
+
+公式の 0.18.0 OCI CRD/resource/runtime-config chart をローカルで pull および render して、schema/config を確認しました。mode aliasing、HPA minimum、KEDA ScaledObject、および Knative traffic のコードをレビューしました。モデルの download/serving、GPU、cluster autoscaling、または実際の canary request は実行していません。
+
+- [0.18.0 のモード名とデフォルト](https://github.com/kserve/kserve/blob/v0.18.0/pkg/constants/constants.go)
+- [HPA の最小 replica 処理](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/hpa/hpa_reconciler.go)
+- [KEDA ScaledObject 処理](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/keda/keda_reconciler.go)
+- [Knative traffic 処理](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/knative/ksvc_reconciler.go)
+- [0.20.0 リリース](https://github.com/kserve/kserve/releases/tag/v0.20.0)
 
 ## 次のステップ
 
-KServe は、必須の Predictor と任意の Transformer/Explainer コンポーネントを中心に構築された単一の `InferenceService` resource を通じて、トレーニング済みモデルを Kubernetes ネイティブな推論エンドポイントへ変換します。最も重要な運用上の判断は、Serverless（Knative ベース、scale-to-zero、concurrency/RPS autoscaling、コールドスタートリスク）と Raw Deployment（通常の Deployment/HPA、常時 warm、Knative 依存なし）のどちらを選ぶかです。この判断は、特定モデルのトラフィックパターンにおいて、アイドル時の GPU コストと一貫した低レイテンシーのどちらがより重要かによって行う必要があります。組み込みの canary rollout は、プラットフォームの他の場所で使用される Istio/Argo Rollouts の仕組みとは異なる、KServe 独自のモデル固有 progressive-delivery 経路を提供します。また、GPU 対応 Predictor は Karpenter の GPU node pool と直接組み合わせて、EKS 上で適切にサイズ調整された推論容量を実現します。
-
-これで EKS 上の Kubeflow 全 6 部シリーズを締めくくります。アーキテクチャとインストール（Part 1）、Pipelines（Part 2）、Notebooks（Part 3）、Katib（Part 4）、Kubeflow Trainer（Part 5）、そしてこのパートの KServe によるモデルサービングレイヤーです。
+このサービングパスを、[Kubeflow series](README.md) の architecture、Pipelines、Notebooks、Katib、および Trainer の各章につなげつつ、model-artifact deployment と検証は別個のステップとして扱ってください。
 
 ---
 

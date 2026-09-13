@@ -1,36 +1,42 @@
 # EKS 上的 MLflow 深度解析
 
-> **支持的版本**: MLflow 3.15.1
-> **最后更新**: August 19, 2026
+> **审查基线**：MLflow 3.16.0
+> **审查的文档**：2026 年 9 月 12 日
 
 ## 概述
 
-MLflow 是一个用于管理机器学习生命周期的开源平台——包括实验跟踪、模型打包与版本控制，以及（自 MLflow 3 起）GenAI/LLM 可观测性——通过一个任何训练脚本或 agent 都可以经由简单 API 记录数据的跟踪服务器实现。不同于捆绑一整套 Kubernetes 原生控制器平台的 Kubeflow，MLflow 是一项单独的服务（一个跟踪服务器及其后端/制品存储），团队通常将其与 Kubeflow、自定义训练配置一起运行，或完全独立运行。
+MLflow 提供实验跟踪、模型日志记录与注册、版本管理、GenAI 评估和追踪功能。追踪功能于 2.14.0 引入；3.x 扩展了 `LoggedModel`、评估和 UI 集成。3.16.0 版本于 2026-09-04 发布。
 
-## 组件图
+你可以通过 SDK 和 SQLite 在本地使用它，也可以运行一个 HTTP tracking service，并使用独立的 SQL 元数据存储和 artifact store。一个逻辑服务不一定对应一个 Pod 或存储系统。本系列涵盖 Tracking、Registry 和 EKS 部署；并不验证每项 MLflow 功能或成功的 GPU 训练。
 
-| 概念 | 它解决的问题 | 深度解析 |
+## 组件图谱
+
+| 概念 | 解决的问题 | 深度解析 |
 |---------|--------------------|-----------|
-| **跟踪** | 记录和查询实验参数、指标、制品、模型及 GenAI 追踪信息 | [第 1 部分](01-tracking.md) |
-| **模型注册表** | 为模型提供独立于任何单次训练运行的稳定、版本化身份 | [第 2 部分](02-model-registry.md) |
-| **EKS 部署** | 在 EKS 上运行跟踪服务器、后端存储和制品存储 | [第 3 部分](03-eks-deployment.md) |
+| **Tracking** | 记录并查询实验参数、指标、artifacts、模型和 GenAI traces | [第 1 部分](01-tracking.md) |
+| **Model Registry** | 为模型提供独立于任一训练运行的稳定且有版本的身份标识 | [第 2 部分](02-model-registry.md) |
+| **EKS Deployment** | 在 EKS 上运行 tracking server、backend store 和 artifact store | [第 3 部分](03-eks-deployment.md) |
 
-```mermaid
-graph LR
-    T[Tracking<br/>Experiments, Runs, Traces] --> R[Model Registry<br/>Registered Models, Aliases]
-    R -->|resolved by| S[Serving<br/>out of scope for this series]
+![展示三阶段管道的图表：MLflow Tracking（实验、运行、traces）流向 Model Registry（已注册模型、aliases），随后由不在本文档系列范围内的 Serving 阶段进行解析。](../../.gitbook/assets/en-ai-ml-mlflow-readme-0.png)
 
-    style T fill:#4fc3f7
-    style R fill:#81c784
-    style S fill:#e0e0e0,stroke-dasharray: 5 5
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-readme-0.html)
 
-## 为什么在 EKS 上运行此服务
+## 为什么在 EKS 上运行
 
-这里的权衡与本文档站点其他数据/ML 章节所述相同：已经运行 EKS 的团队可以将相同的部署、IAM（IRSA/Pod Identity）和可观测性模式用于 MLflow 的跟踪服务器，就像用于集群中的其他所有工作负载一样；相应地，需要直接运维跟踪服务器、其后端数据库和制品存储，而非使用托管替代方案。
+这种权衡与本文档站点其他数据/ML 部分所述的相同：已经运行 EKS 的团队可以将其相同的 deployment、IAM（IRSA/Pod Identity）和可观测性模式复用于 MLflow 的 tracking server，就像复用于集群中的其他所有内容一样；代价是直接运行 tracking server、其 backend database 和 artifact store，而非使用托管替代方案。
+
+[SageMaker AI 指南](../sagemaker-ai/README.md)描述了一个 Qwen 对比设计。该示例具有独立的历史版本固定，并且由于其 DLC 已停止修补程序支持，目前阻止 GPU 执行。本系列对 MLflow 3.16.0 的本地检查并非对该示例的端到端验证。
+
+Model Registry 注册是一个可选的生命周期步骤。Serving systems 通过单独的配置使用模型 URI 或 aliases；注册或 alias 变更不会自动部署模型。
 
 ## 当前涵盖内容
 
-1. [第 1 部分：MLflow 跟踪](01-tracking.md) — 实验、运行、自动记录、MLflow 3 的 `LoggedModel` 转变，以及 GenAI 追踪
-2. [第 2 部分：MLflow 模型注册表](02-model-registry.md) — Registered Models、Model Versions、别名和血缘
-3. [第 3 部分：在 EKS 上部署 MLflow](03-eks-deployment.md) — 跟踪服务器、PostgreSQL 后端存储、S3 制品存储和 IAM 访问
+1. [第 1 部分：MLflow Tracking](01-tracking.md) — 实验、运行、autologging、MLflow 3 的 `LoggedModel` 转变以及 GenAI tracing
+2. [第 2 部分：MLflow Model Registry](02-model-registry.md) — Registered Models、Model Versions、aliases 和 lineage
+3. [第 3 部分：在 EKS 上部署 MLflow](03-eks-deployment.md) — tracking server、PostgreSQL backend store、S3 artifact store 和 IAM 访问
+
+## 主要来源
+
+- [MLflow 3.16.0 发布版本](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
+- [MLflow 2.14.0 中引入的 Tracing](https://github.com/mlflow/mlflow/releases/tag/v2.14.0)
+- [Backend store](https://mlflow.org/docs/3.16.0/self-hosting/architecture/backend-store/)

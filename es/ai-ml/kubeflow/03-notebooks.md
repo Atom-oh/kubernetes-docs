@@ -1,97 +1,91 @@
 # Parte 3: Kubeflow Notebooks
 
-> **Versiones compatibles**: Kubeflow Community Distribution 26.03, Kubernetes 1.34+
-> **Última actualización**: August 19, 2026
+> **Versiones compatibles**: Kubeflow Notebooks 1.11.0; Community Distribution 26.03.1
+> **Última actualización**: September 12, 2026
 
 ## Configuración del entorno de laboratorio
 
-Para seguir los ejemplos de este documento, necesitará las siguientes herramientas y entorno:
-
-### Herramientas necesarias
-
-* kubectl v1.34 o posterior, configurado para un clúster con Kubeflow instalado (consulte la Parte 1)
-* Acceso a un Profile de usuario (namespace) en Kubeflow Central Dashboard, para iniciar servidores de notebooks
-* Un par de `NodePool`/`EC2NodeClass` con GPU configurado mediante [Karpenter](../../autoscaling/02-karpenter.md), si planea iniciar notebooks respaldados por GPU
-* Permiso de envío a un registro de contenedores (por ejemplo, Amazon ECR), si planea crear y referenciar una imagen de notebook personalizada
+Utilice un clúster de Kubernetes compatible, el controlador y la aplicación web de Notebooks 1.11.0, permisos de namespace, almacenamiento y una ruta de acceso autenticada. Consulte la [Parte 1](01-architecture-installation.md) para la compatibilidad entre distribuciones. Las cargas de trabajo con GPU necesitan drivers y device plugins compatibles, además de capacidad de nodos adecuada; Karpenter es un aprovisionador de capacidad, no un requisito previo de los notebooks.
 
 ## ¿Qué es Kubeflow Notebooks?
 
-Kubeflow Notebooks permite a un científico de datos iniciar un entorno de desarrollo interactivo completamente configurado — JupyterLab, RStudio o code-server (VS Code en el navegador) — como un pod que se ejecuta dentro del clúster, sin tener que escribir por sí mismo un manifiesto de Deployment ni un Dockerfile. Un controlador observa un recurso personalizado que describe el notebook deseado (imagen, solicitudes de CPU/memoria/GPU y almacenamiento), lo reconcilia en objetos de Kubernetes convencionales, y el enrutamiento por namespace de Istio expone el servidor resultante mediante el mismo Central Dashboard que utiliza el resto de Kubeflow.
+La aplicación web de Notebooks crea un `Notebook` con la configuración de imagen, recursos y volúmenes. Su controlador gestiona un StatefulSet, un Service y, cuando está configurado, un VirtualService de Istio. El controlador de StatefulSet crea los Pods y Kubernetes los programa. El dashboard es el punto de entrada de la aplicación web, no el creador de Pods ni un proxy de tráfico universal.
 
-El objetivo de ejecutar notebooks de esta forma, en lugar de como una implementación compartida de JupyterHub o un `kubectl run` puntual, es que el entorno de cada usuario participe plenamente en el modelo operativo normal del clúster. El mismo scheduler lo programa, por lo que compite por y se beneficia de los node pools de GPU como cualquier otra carga de trabajo. Está sujeto a las mismas RBAC y políticas de red con ámbito de namespace. Además, puede pausarse, redimensionarse o desmontarse con las mismas herramientas de `kubectl`/GitOps que un equipo de plataforma ya utiliza para todo lo demás.
+El recurso Notebook, que pertenece a un namespace, contiene un PodSpec y también puede gestionarse mediante GitOps o la API de Kubernetes. Editar directamente el StatefulSet que gestiona puede revertirse por la reconciliación.
 
-## Contexto de versión: Notebooks v1 y la próxima v2
+## Contexto de versiones: Notebooks v1 y Workspaces
 
-A partir de Kubeflow Community Distribution 26.03, Kubeflow Notebooks funciona con su diseño **v1** de larga data: un recurso personalizado `Notebook` que es un envoltorio relativamente ligero en torno a una especificación de `StatefulSet`/pod de Kubernetes, iniciado mediante la interfaz de notebooks de Central Dashboard. Esta es la arquitectura que el resto de este documento describe en detalle y la que encontrará al implementar 26.03 hoy.
+Este capítulo revisa **Notebooks v1.11.0** y su API `Notebook` en la distribución 26.03.1. Workspaces es un diseño v2 independiente que usa `Workspace` y `WorkspaceKind`; no es un reemplazo directo del CRD.
 
-El proyecto **está trabajando activamente hacia una versión v2** basada en dos nuevos recursos personalizados, `Workspace` y `WorkspaceKind`, que separan «cómo es un entorno de notebook» (una plantilla `WorkspaceKind` que un administrador define y versiona) de «cuál está ejecutando un usuario determinado» (un `Workspace` que hace referencia a un tipo). A partir de la distribución base 26.03, v2 (`Workspaces`) había incluido manifiestos alpha para pruebas; el parche 26.03.1 lo pasó a **beta**, aunque **todavía no ha alcanzado la disponibilidad general**. Se espera que el CRD `Notebook` de v1 pase a un estado de mantenimiento exclusivo una vez que v2 esté lista para uso en producción. Considere v2 como un contexto de futuro por el que vale la pena planificar: consulte la [documentación de Kubeflow Notebooks](https://www.kubeflow.org/docs/components/notebooks/) para conocer el estado actual de GA antes de comprometer el diseño de una plataforma de producción con cualquiera de las dos API.
+La descripción de la versión 26.03.1 califica Workspaces como beta, mientras que los manifiestos etiquetados del controlador, backend y frontend referencian imágenes **v2.0.0-alpha.3**. Distinga entre el texto de la release y las etiquetas de imagen desplegadas. Esta revisión no establece la disponibilidad general (GA) de v2 ni una fecha de fin de soporte de v1. Verifique las releases reales, las APIs y el soporte de migración antes de adoptarlo.
 
-## Modelo de multitenencia: Profiles como límite de notebooks
+## Modelo de multi-tenancy: Profiles y políticas de aislamiento independientes
 
-Cada usuario de Kubeflow Notebooks opera dentro de un **Profile**: la misma construcción de un namespace por usuario que se utiliza en el resto de Kubeflow (tratada en la Parte 1). Crear un Profile aprovisiona:
+La interfaz completa de Kubeflow crea notebooks en el namespace del Profile seleccionado. Un Profile puede compartirse entre los miembros de un equipo, y el propio CRD Notebook no exige que cada namespace tenga un Profile. Los modelos de acceso de la instalación independiente y de la plataforma completa también difieren.
 
-* Un namespace de Kubernetes dedicado para ese usuario (o equipo).
-* Enlaces RBAC que delimitan los permisos del usuario a su propio namespace mediante Profile Controller.
-* Una `AuthorizationPolicy` de Istio que restringe qué identidades pueden acceder a los servicios (incluidos los pods de notebooks) dentro de ese namespace, de modo que el notebook de un usuario no pueda ser accedido ni pueda acceder, de forma predeterminada, a las cargas de trabajo de otro usuario.
-
-Un servidor de notebooks siempre se crea dentro de un namespace de Profile, nunca en un namespace compartido. Esto es lo que permite a un equipo de plataforma ofrecer la creación de notebooks de autoservicio sin que los pods de todos los usuarios puedan comunicarse mutuamente: el límite de aislamiento es el mismo que se usa para ejecuciones de pipelines, endpoints de KServe y cualquier otro recurso por usuario en el clúster.
+La propiedad y pertenencia a un Profile, RBAC y la AuthorizationPolicy de Istio proporcionan partes del control de acceso. No revocan concesiones de RBAC no relacionadas ni bloquean automáticamente todo el tráfico de los Pods, el acceso al almacenamiento o el acceso a AWS. Evalúe por separado la aplicación de NetworkPolicy, los privilegios de los Pods, los permisos de volúmenes, el IAM de las cargas de trabajo y la autorización de la aplicación.
 
 ### Almacenamiento persistente
 
-El iniciador de Central Dashboard permite a un usuario adjuntar una o más PersistentVolumeClaims al pod de notebooks, normalmente montadas en el directorio de inicio del servidor de notebooks (por ejemplo, `/home/jovyan` para las imágenes basadas en Jupyter, siguiendo la convención ascendente de Jupyter Docker Stacks). Puesto que el claim — no el pod — es el objeto persistente, los archivos de un usuario, los paquetes instalados y la configuración de Jupyter sobreviven al reinicio de un pod, al reemplazo de un nodo o a un ciclo intencional de detención/inicio del propio notebook. En EKS, este PVC suele estar respaldado por el controlador Amazon EBS CSI para acceso ReadWriteOnce de un único pod, o por Amazon EFS mediante su controlador CSI cuando un equipo desea que el mismo directorio de trabajo se comparta con lectura y escritura entre varios pods de notebooks o pipelines.
+La interfaz por defecto normalmente monta un PVC de workspace en `/home/jovyan`. **Solo los datos almacenados en ese volumen** persisten cuando se reemplaza el Pod. Los paquetes instalados en `/opt/conda`, en directorios del sistema o en la capa escribible del contenedor, así como el estado del kernel en memoria, no se conservan mediante ese PVC. Los paquetes de usuario en el directorio home pueden persistir, pero pueden volverse incompatibles con una nueva imagen.
 
-### Terminación por inactividad
+Revise el ciclo de vida del PVC y del volumen, las copias de seguridad y la política de reclamación (reclaim policy). ReadWriteOnce en EBS significa montaje de lectura/escritura desde un **nodo**, no uso exclusivo por un único Pod. Restringirlo a un solo Pod requiere soporte adicional, como CSI ReadWriteOncePod. EBS tiene restricciones de zona de disponibilidad (AZ) y de adjuntado; el almacenamiento compartido con EFS requiere permisos POSIX y un diseño de acceso concurrente.
 
-Dado que un pod de notebooks en ejecución mantiene su asignación solicitada de CPU, memoria y —lo más costoso— GPU durante todo el tiempo que existe, independientemente de si alguien lo utiliza activamente, Kubeflow Notebooks incluye un mecanismo de terminación que puede detener (no eliminar) notebooks que han permanecido inactivos durante un período configurado. La terminación libera la capacidad del nodo que retenía el notebook inactivo, lo que es especialmente importante para notebooks respaldados por GPU, donde un servidor inactivo puede ocupar una instancia GPU costosa durante horas después de que un usuario se haya alejado. El PVC subyacente no se modifica mediante la terminación, por lo que el entorno y los archivos de un notebook terminado quedan exactamente como los dejó el usuario la próxima vez que se inicie.
+### Idle culling
 
-## Flujo de reconciliación de notebooks
+Los valores por defecto revisados en v1.11.0 son `ENABLE_CULLING=false`, `CULL_IDLE_TIME=1440` e `IDLENESS_CHECK_PERIOD=1`; los tiempos están en minutos. La instalación por sí sola no activa el culling.
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant Dash as Central Dashboard
-    participant CRD as Notebook CR (in Profile namespace)
-    participant Ctrl as Notebook Controller
-    participant K8s as StatefulSet / Pod
-    participant Istio as Istio Sidecar
+El culler utiliza el endpoint `/api/kernels` de Jupyter y la última actividad. No detecta de forma exhaustiva el cierre del navegador ni el trabajo con GPU en procesos de shell. No dé por supuesto que RStudio o code-server expongan la misma API. Una solicitud fallida o una lista de kernels vacía deja el valor de última actividad sin cambios, por lo que un valor antiguo puede llevar igualmente a la detención. Valide la detección con las imágenes y políticas de acceso reales antes de habilitarlo.
 
-    User->>Dash: Choose image, CPU/mem, GPU count, PVC
-    Dash->>CRD: Create Notebook custom resource
-    Ctrl->>CRD: Watch for create/update events
-    Ctrl->>K8s: Reconcile into StatefulSet + Pod spec
-    K8s->>K8s: Mount PVC at home directory
-    K8s->>K8s: Request nvidia.com/gpu (if selected)
-    K8s->>Istio: Inject sidecar for namespace-scoped routing
-    Istio->>User: Expose notebook UI through Dashboard proxy
+El culling añade una anotación de parada, reduciendo a cero las réplicas del StatefulSet sin eliminar los PVC. Liberar las solicitudes de los Pods no necesariamente termina un nodo EC2: otras cargas de trabajo, los PDB y las políticas y presupuestos de Karpenter siguen influyendo. Los cargos de la instancia pueden continuar hasta que el nodo se termine.
+
+## Flujo de reconciliación de Notebook
+
+![La aplicación web de notebooks crea un CR; los controladores reconcilian el StatefulSet, el Service y el enrutamiento, mientras Kubernetes crea y ubica los Pods.](../../.gitbook/assets/en-ai-ml-kubeflow-03-notebooks-0.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-03-notebooks-0.html)
+
+Notebook v1.11.0 no tiene un campo `spec.replicas`. El controlador genera cero réplicas del StatefulSet cuando `kubeflow-resource-stopped` está **presente**, y una cuando está ausente. Incluso un valor de `"false"` lo detiene. Para reanudarlo, elimine la anotación en lugar de cambiar su valor.
+
+```bash
+# Stop the selected notebook: active kernels/processes terminate.
+kubectl annotate notebook -n team-a analysis \
+  kubeflow-resource-stopped="2026-09-12T00:00:00Z" --overwrite
+# Resume by removing the annotation.
+kubectl annotate notebook -n team-a analysis kubeflow-resource-stopped-
 ```
 
-El bucle de reconciliación del controlador sigue el mismo patrón que se usa en otras partes de Kubernetes: no crea el pod directamente en cada interacción con el dashboard; reconcilia continuamente el `StatefulSet` en ejecución con lo que el recurso personalizado `Notebook` declara actualmente. Por ejemplo, una detención iniciada desde el dashboard actualiza el estado deseado del recurso personalizado a cero réplicas en lugar de emitir una eliminación imperativa del pod, de modo que el controlador —no la interfaz de dashboard— es la única fuente de verdad sobre si un pod de notebooks debería estar ejecutándose.
+La marca de tiempo ilustra el formato de la anotación. Sustituya el namespace y el notebook reales, y guarde su trabajo antes de ejecutar estos comandos. La inyección del sidecar de Istio la realizan los admission webhooks configurados, no directamente el controlador de Notebook.
 
 ## Programación de GPU para notebooks en EKS
 
-Un pod de notebooks que necesita acceso a aceleradores lo solicita de la misma manera que cualquier otro pod del clúster: el campo GPU del iniciador en el recurso personalizado `Notebook` se traduce en una entrada `resources.limits."nvidia.com/gpu"` en la especificación del pod subyacente, y el plugin de dispositivos NVIDIA que se ejecuta en los nodos GPU anuncia `nvidia.com/gpu` como un recurso asignable para el scheduler.
+Las solicitudes de GPU utilizan recursos extendidos estándar como `resources.limits["nvidia.com/gpu"]`. El device plugin, el driver, la capacidad de los nodos, los taints/tolerations y la afinidad deben ser coherentes entre sí. Declarar un recurso de GPU por sí solo no garantiza que aparezca un nodo adecuado.
 
-Esto significa que la programación de GPU para notebooks no es un subsistema separado de la capacidad GPU del resto del clúster: compite por y es atendida por los mismos node pools con capacidad GPU que respaldan trabajos de entrenamiento, endpoints de KServe y cualquier otra carga de trabajo GPU. En EKS, esa capacidad suele aprovisionarse dinámicamente mediante Karpenter, que puede escalar un `NodePool` GPU cuando la solicitud `nvidia.com/gpu` de un pod de notebooks no puede satisfacerse con la capacidad existente, y reducirlo de nuevo una vez que el notebook se termina por inactividad o se detiene. Los mecanismos para configurar NodePools de Karpenter conscientes de GPU, la selección de tipos de instancia y los taints/tolerations para nodos aceleradores se tratan en profundidad en [Karpenter for Autoscaling](../../autoscaling/02-karpenter.md). El detalle específico de notebooks que conviene recordar aquí es simplemente que un notebook GPU inactivo es una de las causas más comunes de que un node pool GPU se niegue a escalar a cero, que es exactamente lo que busca evitar el comportamiento de terminación por inactividad descrito arriba.
+Karpenter puede aprovisionar para Pods en estado Pending que cumplan los requisitos y NodePools coincidentes, sujeto a la capacidad de EC2, las cuotas, los límites, la red y el éxito del bootstrap. Detener un notebook y reducir la escala de EC2 son operaciones distintas. Consulte [Karpenter](../../autoscaling/02-karpenter.md) para conocer las condiciones de ubicación y disrupción.
 
-## Imágenes de notebooks personalizadas
+## Imágenes de notebook personalizadas
 
-Las imágenes de notebooks estándar que incluye el iniciador de Kubeflow cubren una base general de JupyterLab/RStudio/code-server, pero la mayoría de los equipos que ejecutan notebooks en producción crean y referencian sus propias imágenes personalizadas para que cada científico de datos parta de un entorno idéntico y reproducible, en lugar de ejecutar `pip install` manualmente para instalar dependencias dentro de un contenedor en ejecución.
+El spawner revisado establece `allowCustomImage` en `true` por defecto. Una restricción en el desplegable de la interfaz no puede, por sí sola, imponer la selección de imagen a los usuarios que pueden llamar directamente a la API de Notebook. Aplique las restricciones necesarias también mediante RBAC y admission.
 
-El patrón habitual es:
+Las imágenes deben cumplir con el puerto del servidor, el prefijo `/notebook/<namespace>/<name>/` o la configuración de reescritura, el UID/GID, un home escribible, las probes y las dependencias de ejecución. Una imagen de Jupyter Docker Stacks no incluye automáticamente todas las convenciones ni los SDK de Kubeflow. Compile con dependencias fijadas, referencie el digest de la imagen desde ECR u otro registro, y verifique la arquitectura de CPU y la compatibilidad con el driver de GPU.
 
-1. **Partir de una imagen base ascendente de Kubeflow (o Jupyter Docker Stacks)** que ya incluya el servidor de notebooks, las integraciones de Kubeflow SDK y las convenciones esperadas de UID/directorio de trabajo que el iniciador requiere.
-2. **Incorporar las dependencias reales del equipo**: un conjunto fijo de paquetes de Python/R, bibliotecas internas, versiones de frameworks de GPU (que coincidan con el controlador CUDA en el node pool de destino) y cualquier herramienta sin credenciales que el equipo haya estandarizado.
-3. **Crear y enviar la imagen a un registro desde el que el clúster pueda descargarla**: en EKS, normalmente Amazon ECR, con el escaneo de imágenes y las políticas de ciclo de vida aplicadas de la misma manera que a cualquier otra imagen de producción.
-4. **Referenciar la imagen desde el iniciador.** La interfaz de iniciador de Central Dashboard acepta una referencia de imagen arbitraria en su campo de imagen (sujeta a la lista de permitidos que haya configurado un administrador), por lo que una imagen personalizada se comporta de forma idéntica a una estándar desde el punto de vista del usuario final: es simplemente otra opción para elegir.
+Una etiqueta idéntica no garantiza bytes idénticos. Incluso un digest idéntico no hace que los entornos sean idénticos cuando difieren los paquetes o ajustes de usuario del PVC, los scripts de arranque o la instalación en tiempo de ejecución.
 
-Mantener estas imágenes versionadas y recompiladas mediante el mismo pipeline de CI que cualquier otra imagen de aplicación es lo que hace que los entornos de notebooks sean reproducibles en un equipo: dos científicos de datos que eligen la misma etiqueta de imagen obtienen conjuntos de paquetes idénticos byte a byte, en vez de que el kernel de cada usuario se desvíe con el tiempo debido a instalaciones manuales.
+## Validación y fuentes
+
+El overlay de notebook-controller de 26.03.1 se renderizó localmente con Kustomize. Se inspeccionaron el CRD de v1.11.0, el manejo de la parada, el culling y la configuración del spawner. No se ejecutaron notebooks reales, ejecución en GPU, recuperación de PVC, detección de inactividad ni aprovisionamiento en EKS.
+
+- [v1.11.0 Notebook controller](https://github.com/kubeflow/notebooks/blob/v1.11.0/components/notebook-controller/controllers/notebook_controller.go)
+- [v1.11.0 culling implementation](https://github.com/kubeflow/notebooks/blob/v1.11.0/components/notebook-controller/controllers/culling_controller.go)
+- [v1.11.0 spawner defaults](https://github.com/kubeflow/notebooks/blob/v1.11.0/components/crud-web-apps/jupyter/manifests/base/configs/spawner_ui_config.yaml)
+- [26.03.1 Workspaces image tag](https://github.com/kubeflow/community-distribution/blob/26.03.1/applications/workspaces/upstream/controller/base/manager/kustomization.yaml)
 
 ## Próximos pasos
 
-Este documento trató qué hace Kubeflow Notebooks, el modelo de multitenencia basado en Profile que aísla el notebook de cada usuario, el almacenamiento persistente y la terminación por inactividad, el flujo de reconciliación del controlador de notebooks, la programación de GPU en EKS y la práctica de crear imágenes de notebooks personalizadas para entornos reproducibles. La Parte 4 continúa con Katib y el ajuste de hiperparámetros, basándose en los mismos patrones de Profile y recursos personalizados introducidos aquí.
+Continúe con los experimentos y el ajuste de hiperparámetros en la [Parte 4: Katib](04-katib.md).
 
 [Volver a la página principal](./README.md)
 
 ## Cuestionario
 
-Para poner a prueba lo que ha aprendido en este capítulo, pruebe el [cuestionario del tema](../../quizzes/ai-ml/kubeflow/03-notebooks-quiz.md).
+Para comprobar lo que ha aprendido en este capítulo, pruebe el [cuestionario del tema](../../quizzes/ai-ml/kubeflow/03-notebooks-quiz.md).

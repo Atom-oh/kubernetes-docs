@@ -1,85 +1,121 @@
-# 第4部: Ray Serve
+# パート 4: Ray Serve
 
-> **対応バージョン**: Ray 2.57.0
-> **最終更新**: August 20, 2026
+> **検証基準**: Ray 2.58.0 · KubeRay 1.7.0 · 2026-09-12
 
-## ラボ環境のセットアップ
+## 環境と検証範囲
 
-このドキュメントの例を実行するには、次のツールと環境が必要です。
+小規模な CPU 応答例を、Python 3.12 と `ray[serve]==2.58.0` で確認しました。この環境では、追加インストールで提供されていなかったにもかかわらず HAProxy モジュールが Jinja2 を import しました。`Jinja2==3.1.6` を明示的に追加すると import が修正されました。別の環境では、他の依存関係を通じて既に含まれている場合があります。
 
-### 必要なツール
+`ray[llm]` extra は vLLM などの大規模な推論依存関係を追加します。ここではインストールせず、モデルの重み、GPU、EKS workload も実行していません。以下の検証対象は Serve 設定、HTTP 応答、および DeploymentHandle 呼び出しです。
 
-* Python 3.10+
-* 一般的な Ray Serve Deployment には `pip install "ray[serve]"`、または下記の Ray Serve LLM セクションを実行する場合は `pip install "ray[llm]"`。後者は、`ray[serve]` に含まれない vLLM と関連依存関係を導入します
-* RayService の手順をテストする場合は、稼働中の Amazon EKS cluster を対象に設定した kubectl v1.34 以降
-* GPU 対応モデルを提供する場合は、Karpenter 経由でプロビジョニングされた GPU 対応 `NodePool`/`EC2NodeClass` ペア
+## Deployment、Application、リクエストパス
 
-## Ray Serve とは
+Serve の **Deployment** は actor replica を管理し、Kubernetes Deployment とは異なります。複数の replica actor が 1 つの Ray Pod に収まる場合があるため、replica 数と Pod 数を同一視することはできません。
 
-[第1部](01-architecture.md)では、呼び出しの間もメモリ内の状態を保持する、stateful かつアドレス指定可能な Python object のための Ray のプリミティブである actor を紹介しました。Ray Serve はこのプリミティブ上に直接構築されたモデル提供ライブラリです。Serve Deployment は Ray actor、または actor replica のグループとして実装され、Ray Serve は受信した HTTP または gRPC request をそれらの replica にルーティングします。replica のメモリに一度ロードされたモデルは、再ロードすることなく多数の request に応答できます。これはまさに actor が設計されたパターンです。
+**Application** は 1 つ以上の deployment と ingress deployment を含みます。DeploymentHandle は、すべての内部呼び出しを HTTP 経由にしたり、deployment ごとに Kubernetes Service を作成したりせずに、前処理と推論を接続できます。
 
-1 つの Deployment は、Ray Serve の request router の背後に actor replica を追加するだけで水平方向にスケールします。これは Ray における任意の actor ベースの service と同じスケーリング方法です。さらに重要なのは、Ray Serve により複数の Deployment を application と呼ばれる 1 つの serving pipeline に組み合わせられることです。一般的な例は 2 段階の pipeline です。1 つ目の Deployment が前処理（tokenization、image resizing、feature extraction）を処理し、その出力を実際のモデル inference を実行する 2 つ目の Deployment に渡します。基盤ではそれぞれが actor replica のグループであるため、この pipeline 内の各 Deployment は個別にスケール、バージョン管理、リソース設定できます。
+Controller は Serve の control state と actor lifecycle を管理します。Proxy は HTTP/gRPC traffic を受信して deployment に転送します。2.58.0 のデフォルトの proxy location は、**replica をホストする node 上の `EveryNode`** です。`HeadOnly` と `Disabled` は明示的に選択できます。旧来のアーキテクチャページにある head-only のデフォルトで、現在の API contract を上書きすべきではありません。
 
-```mermaid
-graph LR
-    C[Client] -->|HTTP / gRPC| ING[Ray Serve<br/>Ingress]
-    ING --> D1
+proxy/handle 上の caller queue と、replica に割り当てられた進行中のリクエストを区別してください。Application 内の同期/asynchronous handler、blocking work、timeout、cancellation behavior を確認します。
 
-    subgraph APP["Application"]
-        D1["Deployment: Preprocess<br/>(actor replicas)"] --> D2["Deployment: Model Inference<br/>(actor replicas)"]
-    end
+## 小規模なローカル HTTP/Handle の例
 
-    D2 --> RESP[Response]
+これはモデル推論ではなく、response API を検証します。実際の確認では利用可能な private-loopback port を使用し、HTTP 200 と `double(4) == 8` を確認しました。
 
-    SA["Ray Serve Autoscaler<br/>(per-deployment replica count)"] -.watches queue depth /<br/>ongoing requests.-> D1
-    SA -.-> D2
+```python
+import requests
+import ray
+from ray import serve
 
-    RA["Ray / KubeRay Autoscaler<br/>(worker Pod count)"] -.watches pending<br/>actor placement.-> SA
-    KP["Karpenter<br/>(node count)"] -.provisions nodes for<br/>pending worker Pods.-> RA
+try:
+    ray.init(address="local", num_cpus=2, include_dashboard=False,
+             object_store_memory=80 * 1024 * 1024)
+    serve.start(proxy_location="HeadOnly",
+                http_options={"host": "127.0.0.1", "port": 18080})
 
-    style D1 fill:#4fc3f7
-    style D2 fill:#ce93d8
-    style SA fill:#ffb74d
-    style RA fill:#ffb74d
-    style KP fill:#81c784
+    @serve.deployment(num_replicas=1,
+                      ray_actor_options={"num_cpus": 1},
+                      max_ongoing_requests=2, max_queued_requests=4)
+    class Echo:
+        async def __call__(self, request):
+            return {"echo": request.query_params.get("value", "")}
+        def double(self, value):
+            return value * 2
+
+    handle = serve.run(Echo.bind(), name="echo", route_prefix="/echo")
+    response = requests.get("http://127.0.0.1:18080/echo",
+                            params={"value": "fixture"}, timeout=15)
+    assert response.status_code == 200
+    assert response.json() == {"echo": "fixture"}
+    assert handle.double.remote(4).result(timeout_s=15) == 8
+finally:
+    serve.shutdown()
+    ray.shutdown()
 ```
 
-## Ray Serve LLM
+port 18080 を利用可能にした別の exercise process で実行してください。Ray logical resource と object-store size は、プロセス全体の OS memory/CPU limit ではありません。`serve.shutdown()` は接続中の Serve instance を停止します。この例の cleanup を共有 production cluster に対して使用しないでください。
 
-大規模言語モデルの提供には、continuous batching、token streaming、OpenAI 互換 request 形式という十分に異なるパターンがあります。そのため Ray は専用の構成要素セットである `ray.serve.llm` module を提供しています。vLLM engine instance 自体を管理する Deployment を手作業で組み立てるのではなく、`ray.serve.llm` は、上記の Ray Serve の一般的な Deployment model 上に重ねた、LLM 提供に特化した高水準の構成要素を提供します。
+## Replica、Autoscaling、Backpressure
 
-`ray.serve.llm` は vLLM を対応 inference engine として文書化しており、その OpenAI 互換 API は vLLM 自体の OpenAI 互換 server と密接に対応するよう設計されています。そのため、通常の `vllm serve` invocation で機能するほとんどの `engine_kwargs` を引き継げます。実際には、autoscaling、multi-model serving、Ray の通常の distributed-actor placement といった本番向け Ray Serve 機能が LLM の提供にも適用される一方、LLM 固有の処理（vLLM engine のロードと設定、OpenAI 互換 endpoint の公開）は手作業で構築するものではなく `ray.serve.llm` が処理します。これは Ray Serve の中でも特に活発に進化している領域の 1 つであるため、特定の field name に依存する前に、正確な設定項目について現在の `docs.ray.io/en/latest/serve/llm/` documentation を確認してください。
+以下の検証済みの 2.58.0 デフォルトを区別してください。
 
-## Serve Deployment の Autoscaling
+| 設定 | 値または意味 |
+|---|---|
+| デフォルトの deployment | replica は 1 つ、autoscaling は未設定 |
+| `num_replicas="auto"` | min 1、max 100、target ongoing 2 を適用 |
+| 直接の `AutoscalingConfig()` | min 1、**max 1**。max を省略すると拡張が制限される |
+| `max_ongoing_requests` | 応答がないまま replica に送信されたリクエスト。デフォルトは 5 |
+| `max_queued_requests` | **各 caller**（proxy/handle）における queue bound。デフォルトは -1、無制限 |
+| Scaling delay | デフォルトは upscale 30 秒/downscale 600 秒。実際の readiness latency ではない |
 
-Ray Serve Deployment には、[第2部](02-kuberay-operator.md)で扱った cluster レベルの autoscaling とは別の autoscaling layer があります。Ray/KubeRay autoscaler が RayCluster に必要な worker Pod 数を決定するのに対し、Ray Serve の autoscaler はその 1 層上で、より限定的な問いに答えます。実際に受信している request load に基づき、*この特定の Deployment* には現在いくつの actor replica が必要か、という問いです。Ray Serve は、キュー待ちと処理中を合わせた replica あたりの進行中 request 数を target value と比較し、設定済みの最小・最大 replica 数の範囲内で、実際の load をその target に近づけるよう replica を増減します。
+Autoscaling target は request load を観測します。これは max ongoing や global queue bound とは異なります。queue limit を超過すると、handle では BackPressureError が発生するか、デフォルトで HTTP 503 が返される可能性があります。Backpressure 設定では HTTP response をカスタマイズできます。
 
-これにより、この documentation site でおなじみとなった、EKS 上で動作する Serve application の 3 層 autoscaling 構成が得られます。
+min/max、measurement window/delay、cold start、model loading、batching、実際の processing time をまとめて調整してください。`min_replicas=0` で zero に scaling しても restart latency はなくなりません。目標 replica 数が、すべての replica の readiness を保証するわけではありません。
 
-1. **Ray Serve の autoscaler** は、request load に基づいて Deployment に必要な actor replica 数を決定します。
-2. **Ray/KubeRay autoscaler**（[第2部](02-kuberay-operator.md)で扱う）は、Ray Serve の autoscaler が要求した replica を含む pending actor placement に基づき、基盤となる RayCluster に必要な Ray worker Pod 数を決定します。
-3. **Karpenter** は、これらの worker Pod を実際に実行するために必要な EC2 node 数を決定します。これは [Karpenter](../../autoscaling/02-karpenter.md)で説明したものと同じメカニズムです。
+## EKS 上の制御レイヤー
 
-各 layer は、その直下の layer しか見ません。Ray Serve の autoscaler は、新しい replica が既存の node に配置されるのか、新しい node を必要とするのかを認識しません。必要な replica を要求するだけです。その要求が新しい EC2 node になるかどうか、またそれに要する時間は、さらに 1 層下にある Karpenter の役割です。
+1. Serve は request load と policy に基づいて deployment replica target を調整します。
+2. Ray は actor/bundle を配置します。有効化された Ray autoscaling と KubeRay は worker Pod capacity を調整できます。
+3. Kubernetes は Pod を配置し、Karpenter などの provisioner が必要に応じて node capacity を提供します。
 
-## GPU Inference
+**pending actor が自動的に 1 つの Pending Pod または 1 つの EC2 node になるわけではありません。** 既存の Ray Pod に空き capacity が生じる場合もあれば、group bound、placement、quota により進行が妨げられる場合もあります。各レイヤーで demand と readiness を確認してください。
 
-GPU を必要とする model-inference Deployment は、ほかの Ray workload と同じ方法で GPU を要求します。すなわち、Ray Train および Ray Tune worker に対して[第3部](03-ray-train-tune.md)で扱ったものと同じ、Ray の通常の actor 単位 resource request を使用します。Ray Serve は、要求された GPU 数を満たせる worker にこの Deployment の actor replica をスケジュールします。また、[第2部](02-kuberay-operator.md)で扱ったように、Ray scheduler に GPU capacity を実際に通知するのは、そもそも worker group の Pod spec です。
+![HTTP/Handle リクエストは Serve proxy と deployment replica に到達します。Actor target、Ray Pod capacity、Kubernetes node provisioning は、それぞれ actor/Pod/node の一対一対応がない独立したレイヤーです。](../../.gitbook/assets/en-ai-ml-ray-04-ray-serve-0.png)
 
-ここでは、Ray Serve の autoscaling と Karpenter の node-provisioning lead time が、この site におけるほかの GPU workload とまったく同じように相互作用します。Ray Serve の autoscaler が inference Deployment に別の replica が必要だと判断し、既存の GPU worker Pod のどれにも空きがない場合、その replica request は pending Pod になります。そして、replica が実際に traffic の提供を開始するには、Karpenter が新しい GPU 対応 EC2 node をプロビジョニングする必要があります。GPU replica 数を積極的にスケールする serving application では、この provisioning lead time を考慮する必要があります。GPU instance type の node provisioning latency の仕組みについては、[Karpenter](../../autoscaling/02-karpenter.md)を参照してください。
+[インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-04-ray-serve-0.html)
 
-## 本番環境の RayService
+## GPU 推論と Ray Serve LLM
 
-Kubernetes の外部で Serve application 単体を実行することはローカル開発には適していますが、EKS 上の本番 Deployment では、[第2部](02-kuberay-operator.md)で紹介した `RayService` CRD を使用します。RayService は、基盤となる RayCluster と、その上に Deployment された Serve application を 1 つの unit として管理します。また、in-flight request を落とさないことを目指して新しい application version や変更された RayCluster spec を rollout することをサポートする resource です。この upgrade path の成熟度と前提条件については、現在の KubeRay release note を確認してください。このドキュメントでは RayService の CRD mechanics を改めて説明しません。詳細は第2部を参照してください。
+通常の GPU replica は、`ray_actor_options` などの Ray resource setting を使用します。device、driver、Pod limit、Ray の structured-resource/rayStartParams precedence を整合させてください。[パート 2](02-kuberay-operator.md) で説明されているように、Pod limit が常に唯一の設定値とは限りません。
 
-実際には、先にこのドキュメントで説明した Deployment topology、すなわち 1 つ以上の Deployment で構成され、それぞれが自らの actor replica 数を autoscaling する application の lifecycle を、実際の EKS cluster では `RayService` object が管理します。その下では、Ray/KubeRay と Karpenter の autoscaling tier が、ほかのすべての RayCluster とまったく同じように動作し続けます。
+`LLMConfig` や `build_openai_app` などの API は、別個の LLM configuration layer を提供します。2.58.0 の documentation と package は、**vLLM および SGLang backend** を示しています。検証済みの `ray[llm]` dependency には `vllm[audio]==0.26.0` と NIXL package が含まれますが、すべての SGLang dependency もインストールされることを意味するわけではありません。
 
-## 次のステップ
+`model_loading_config`、`deployment_config`、`engine_kwargs`、`server_cls` を区別してください。すべての `vllm serve` CLI option がそのまま移行されると想定するのではなく、engine 固有の field とサポートされる組み合わせを確認してください。backend により tensor-parallel option 名と worker placement は異なる場合があります。一部の API は beta であり、旧来の LLMServer/LLMRouter path には deprecation notice があります。
 
-これで 4 部構成の Ray series は終了です。[第1部](01-architecture.md)では、Ray の core primitive、すなわち task、actor、object store を扱いました。[第2部](02-kuberay-operator.md)では、KubeRay の `RayCluster`、`RayJob`、`RayService` CRD を通じて Kubernetes 上で Ray cluster を declarative に実行する方法、および Ray/KubeRay と Karpenter による autoscaling の分担を扱いました。[第3部](03-ray-train-tune.md)では、その cluster 上での distributed training と hyperparameter tuning を扱いました。この部では Ray Serve で締めくくりました。第1部の actor primitive 上に構築され、application に組み合わされ、それぞれの request-load metric によって autoscaling され、本番環境では第2部の RayService CRD を通じて end to end で管理される Deployment です。
+model access、revision、weight download、engine/CUDA/driver compatibility、KV cache、tensor/pipeline-parallel resource を個別に検証してください。OpenAI-compatible request format は authentication、security、または同一の feature coverage を保証しません。CPU Echo の確認は LLM performance や compatibility を証明するものではありません。
 
-[メインページに戻る](./README.md)
+## RayService と運用上の更新
 
-## クイズ
+RayService は、Serve Application と EKS 上の RayCluster の declarative lifecycle management の選択肢であり、すべての production deployment に必須ではありません。Application configuration change と cluster change、そして `NewCluster` と Gateway ベースの incremental upgrade strategy を区別してください。
 
-この章で学んだ内容を確認するには、[トピッククイズ](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)に挑戦してください。
+KubeRay 1.7 の有効化された incremental feature gate には、依然として Gateway API/implementation、spare capacity、readiness、draining condition が必要です。streaming と long-running request を shutdown bound に対してテストしてください。すべての upgrade を request loss がゼロであることが保証されるものとして説明しないでください。
+
+HTTP option などの cluster-scoped startup setting には dynamic-update limit があります。Deployment change は軽量な reconfiguration の場合も actor replacement の場合もあります。restart/replacement された replica には model initialization と state-recovery の cost が発生します。
+
+## アクセス制御と制限
+
+API/dashboard/client entry point、model-artifact access、application-user access をそれぞれ個別に制限してください。Ray cluster token と ClusterIP は、すべての Serve endpoint に対する authentication/authorization を自動的に実装するわけではありません。sensitive input、response、prompt、log を確認し、queue、timeout、resource bound を設定してください。
+
+ここでの確認対象は、native configuration/decorator と小規模な single-node HTTP/Handle Application です。Autoscaling load test、GPU/LLM execution、multi-node failover、RayService rollout は実施していません。
+
+## 主な情報源
+
+- [Serve 2.58.0](https://docs.ray.io/en/releases-2.58.0/serve/index.html)
+- [Autoscaling](https://docs.ray.io/en/releases-2.58.0/serve/autoscaling-guide.html)
+- [Serve LLM](https://docs.ray.io/en/releases-2.58.0/serve/llm/index.html)
+- [Serve API と proxy のデフォルト](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/api.py)
+- [Serve 設定](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/config.py)
+- [Replica/queue 設定](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/_private/config.py)
+- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+
+[メインページ](README.md) · [クイズ](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)

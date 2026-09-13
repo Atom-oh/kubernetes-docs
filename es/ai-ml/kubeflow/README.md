@@ -1,48 +1,46 @@
-# Análisis profundo de Kubeflow en EKS
+# Kubeflow en EKS: análisis en profundidad
 
-> **Versiones compatibles**: Kubeflow Community Distribution 26.03
-> **Última actualización**: August 19, 2026
+> **Línea base de revisión**: Kubeflow Community Distribution 26.03.1
+> **Última revisión**: September 12, 2026
 
 ## Descripción general
 
-Kubeflow es una plataforma de machine learning de código abierto para Kubernetes que reúne los componentes que un equipo necesita para ejecutar cargas de trabajo de ML de extremo a extremo — orquestación de pipelines, notebooks, ajuste de hiperparámetros, entrenamiento distribuido y servicio de modelos — como un conjunto de controllers y CRD nativos de Kubernetes, en lugar de una única aplicación monolítica. El 17 de agosto de 2026, la CNCF anunció la graduación de Kubeflow (que se unió como proyecto incubado en 2023), tras una auditoría de seguridad independiente y la formación de un comité directivo formal, una señal sólida de la madurez del proyecto para producción.
+Kubeflow proporciona herramientas basadas en Kubernetes para pipelines de ML, notebooks, ajuste (tuning), entrenamiento y serving. La Community Distribution reúne revisiones de componentes, servicios compartidos y un dashboard; los proyectos individuales también tienen sus propias versiones y requisitos de instalación.
+
+La CNCF [anunció la graduación de Kubeflow el 17 de agosto de 2026](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/). Esto reconoce la madurez y el gobierno del proyecto, incluida una auditoría de seguridad independiente. No certifica la seguridad ni el cumplimiento normativo de un despliegue concreto en EKS.
 
 ## Mapa de componentes
 
-| Componente | Problema que resuelve | CRD / Concepto principal | Análisis profundo |
-|-----------|--------------------|---------------------|-----------|
-| **Central Dashboard & Profiles** | Acceso multiinquilino, aislamiento de namespace por usuario | Profile (namespace) | [Parte 1](01-architecture-installation.md) |
-| **Kubeflow Pipelines** | Orquesta flujos de trabajo de ML de varios pasos como DAGs | `Pipeline`, `Run`, `Experiment` | [Parte 2](02-pipelines.md) |
-| **Kubeflow Notebooks** | Entornos administrados de Jupyter/RStudio/VS Code por usuario | `Notebook` | [Parte 3](03-notebooks.md) |
-| **Katib** | Ajuste de hiperparámetros y AutoML | `Experiment`, `Trial`, `Suggestion` | [Parte 4](04-katib.md) |
-| **Kubeflow Trainer** | Entrenamiento distribuido de modelos entre frameworks | `TrainJob`, `ClusterTrainingRuntime` | [Parte 5](05-training-operator.md) |
-| **KServe** | Servicio de modelos e inferencia | `InferenceService` | [Parte 6](06-kserve.md) |
+| Componente | Propósito | API o concepto | Guía |
+| --- | --- | --- | --- |
+| Dashboard, Profiles, gestión de acceso | Navegación de la UI, propiedad y pertenencia de namespaces | `Profile` de ámbito de clúster; cuota opcional | [Parte 1](01-architecture-installation.md) |
+| Pipelines | Compilar y ejecutar workflows; hacer seguimiento de ejecuciones y artefactos | APIs de Pipeline/Run/Experiment; el modo opcional Kubernetes Native API añade los CRDs `Pipeline`/`PipelineVersion` | [Parte 2](02-pipelines.md) |
+| Notebooks | Cargas de trabajo de notebooks de usuario | `Notebook`; configuración de imagen y PVC | [Parte 3](03-notebooks.md) |
+| Katib | Búsqueda de hiperparámetros y trials | CRDs `Experiment`, `Trial`, `Suggestion` | [Parte 4](04-katib.md) |
+| Trainer | Entrenamiento distribuido con runtimes configurados | `TrainJob`, `TrainingRuntime`, `ClusterTrainingRuntime` | [Parte 5](05-training-operator.md) |
+| KServe | Servicios de inferencia de modelos | `InferenceService`; dependencias específicas de cada modo | [Parte 6](06-kserve.md) |
 
-```mermaid
-graph LR
-    D[Central Dashboard] --> N[Notebooks]
-    D --> P[Pipelines]
-    D --> K[Katib]
-    P -->|templates trials as| T[Kubeflow Trainer]
-    K -->|tunes via| T
-    T -->|trained model| S[KServe]
+Este mapa cubre el alcance de la guía, no la distribución completa. La versión 26.03.1 también incluye Hub/registro de modelos y Spark Operator. Un Experiment de KFP no es el CRD Experiment de Katib.
 
-    style D fill:#4fc3f7
-    style P fill:#81c784
-    style K fill:#ffb74d
-    style T fill:#ce93d8
-    style S fill:#e57373
-```
+![Mapa de componentes de Kubeflow que separa la navegación del dashboard de las integraciones configuradas explícitamente para pipelines, ajuste, entrenamiento y despliegue de modelos.](../../.gitbook/assets/en-ai-ml-kubeflow-readme-0.png)
 
-## Por qué ejecutar esto en EKS
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-readme-0.html)
 
-Los componentes de Kubeflow están diseñados para ejecutarse en cualquier clúster de Kubernetes conforme, lo que significa que las prácticas operativas que este sitio de documentación ya cubre para EKS — escalado automático impulsado por Karpenter (incluidos los node pools de GPU), IRSA/Pod Identity para el acceso a servicios de AWS, integración de almacenamiento EBS/S3 y observabilidad con Prometheus/Grafana — se aplican directamente a las cargas de trabajo de ML, en lugar de requerir una plataforma independiente específica de ML. La contrapartida frente a alternativas totalmente administradas (p. ej., Amazon SageMaker) es la misma que se aborda en [Datos en EKS](../../data-on-eks/README.md): mayor responsabilidad operativa (actualizaciones de Operator, configuración de almacenamiento/identidad) a cambio de un único modelo de deployment/observabilidad compartido por todas las cargas de trabajo del clúster, y la capacidad de ejecutar cualquiera de los componentes de Kubeflow de forma independiente en lugar de adoptar toda la plataforma de una vez.
+El dashboard enlaza las UIs de los componentes. Pipelines y Katib usan Trainer solo cuando su implementación envía explícitamente un recurso de entrenamiento compatible. Conectar un artefacto entrenado con KServe requiere un paso de despliegue independiente; el diagrama no implica una promoción automática del modelo.
+
+## Por qué ejecutarlo en EKS
+
+Una plataforma EKS existente puede compartir con las cargas de trabajo de ML la gestión de capacidad, la integración de almacenamiento, la identidad de cargas de trabajo (workload identity) y la monitorización. La compatibilidad sigue dependiendo de la versión de Kubernetes, la arquitectura de CPU, las imágenes, la red, los drivers de almacenamiento y la autenticación. La conformidad con Kubernetes por sí sola no es suficiente; la documentación de la versión indica que la cobertura de imágenes ARM64 es incompleta.
+
+El equipo sigue siendo responsable de las actualizaciones de componentes/CRDs, la autorización de tenants, los datos persistentes, las credenciales y la recuperación. [Amazon SageMaker AI](../sagemaker-ai/README.md) reduce algunas responsabilidades de infraestructura, mientras que el acceso a datos, la corrección de la aplicación, la calidad del modelo y el control de costes siguen necesitando responsables. Elija en función de las interfaces necesarias, la capacidad operativa y las restricciones de la carga de trabajo.
 
 ## Contenido cubierto actualmente
 
-1. [Parte 1: Arquitectura e instalación de Kubeflow en EKS](01-architecture-installation.md) — arquitectura de componentes, contexto de la graduación de la CNCF, instalación mediante `awslabs/kubeflow-manifests` en EKS
-2. [Parte 2: Kubeflow Pipelines](02-pipelines.md) — KFP SDK v2, compilación de pipelines basada en IR, almacenamiento de artefactos respaldado por S3
-3. [Parte 3: Kubeflow Notebooks](03-notebooks.md) — servidores de notebooks por usuario, multiinquilinato basado en Profile, programación de GPU
-4. [Parte 4: Katib — Ajuste de hiperparámetros y AutoML](04-katib.md) — modelo Experiment/Trial/Suggestion, algoritmos de búsqueda, detención anticipada
-5. [Parte 5: Kubeflow Trainer y entrenamiento distribuido](05-training-operator.md) — la transición de Training Operator v1 a Kubeflow Trainer v2, TrainJob/TrainingRuntime
-6. [Parte 6: KServe — Servicio de modelos en Kubernetes](06-kserve.md) — InferenceService, modo Serverless frente a Raw Deployment, despliegues canary
+1. [Parte 1: Arquitectura e instalación en EKS](01-architecture-installation.md) — versión actual de la comunidad, limitaciones de la antigua distribución de AWS, Profiles, identidad y renderizado de manifests.
+2. [Parte 2: Pipelines](02-pipelines.md) — SDK v2, compilación, ejecución y almacenamiento de artefactos.
+3. [Parte 3: Notebooks](03-notebooks.md) — cargas de trabajo, Profiles, almacenamiento y ubicación de GPU.
+4. [Parte 4: Katib](04-katib.md) — experiments, trials, búsqueda y parada temprana (early stopping).
+5. [Parte 5: Trainer](05-training-operator.md) — APIs del antiguo Training Operator y de Trainer v2.
+6. [Parte 6: KServe](06-kserve.md) — recursos de inferencia, modos de despliegue y rollouts.
+
+Utilice la línea base de componentes de cada capítulo. Consulte la [versión 26.03.1](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1) y el [inventario fijado](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md) antes de seleccionar una instalación.

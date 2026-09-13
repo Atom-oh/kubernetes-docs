@@ -1,626 +1,276 @@
-# vLLM のデプロイと最適化
+# vLLM デプロイと最適化
 
-> **対応バージョン**: Kubernetes 1.31, 1.32, 1.33  
-> **最終更新**: September 4, 2026
+> **レビュー基準**: vLLM 0.29.0、CUDA 12.9 イメージバリアント。過去の 0.6.4.post1 ベンチマークは分離
+> **最終更新**: September 12, 2026
 
-vLLM は、大規模言語モデル（LLM）向けに最も広く採用されている、オープンソースの高性能推論エンジンです。本章では、vLLM の最新機能とアーキテクチャを確認し、EKS 上で本番規模にデプロイして最適化する方法を学びます。
+vLLM は、生成モデルおよびサポート対象のマルチモーダル／pooling ワークロード向けのオープンソース推論エンジンです。「Vector Language Model」と展開してはいけません。この章では、普遍的な高速化やモデルサポートを保証することなく、特定のリリースと EKS の運用境界を確認します。
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例を実行するには、以下のツールと環境が必要です。
+基準バージョンは、2026 年 9 月 9 日にリリースされた [v0.29.0](https://github.com/vllm-project/vllm/releases/tag/v0.29.0) です。デフォルトの PyPI/Docker パスは CUDA 13.0 を使用し、別途 v0.29.0-cu129 イメージがあります。一部のタグ付きインストール文書では CUDA 12.9 をデフォルトとしていますが、実際のイメージバリアント／digest を確認してください。
 
-### 必要なツールとリソース
-- kubectl v1.31 以降
-- Helm v3.10 以降
-- NVIDIA GPU を搭載した EKS クラスター（最小推奨: g5.2xlarge インスタンス）
-- NVIDIA ドライバーおよび NVIDIA Device Plugin がインストール済み
-- 少なくとも 50GB のディスク容量
+PyPI には Python >=3.10, <3.15 が必要ですが、タグ付き GPU ガイドでは 3.10～3.13 が記載されています。これはすべての Python/PyTorch/CUDA の組み合わせを保証するものではありません。NVIDIA パスには compute capability 7.5 以降が必要であり、V100 (7.0) は対象外です。Kernel、dtype、quantization によっては、追加のデバイス要件が課されることがあります。
 
-### GPU ノードのセットアップ
+[AI/ML workloads](01-ai-ml-workloads.md) にある AMI/driver/device-plugin の条件に従ってください。CUDA イメージは Trainium/Inferentia のそのまま使えるデプロイではありません。Neuron またはその他のプラットフォーム plugin は個別に検証してください。g5.2xlarge や 50GB を普遍的な最小値と見なすのではなく、モデル／cache／同時実行数に応じて GPU、RAM、disk を見積もってください。
 
-```bash
-# Install NVIDIA Device Plugin
-kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.14.0/nvidia-device-plugin.yml
+## vLLM の概要
 
-# Verify GPU nodes
-kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
-```
+vLLM は、次の特徴を持つ LLM 推論エンジンです。
 
-## vLLM の紹介
+![条件付きのパフォーマンス上の利点を備えた、API リクエスト、scheduler、model loader、engine、KV cache の役割。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-0.png)
 
-vLLM は、以下の特性を備えた LLM 推論エンジンです。
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-0.html)
 
-![vLLM の主要機能、その内部コンポーネントのパイプライン、メモリ効率や高スループットなどの利点をまとめた図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-0.svg)
+### 機能とサポート境界
 
-### vLLM の主要機能
+| 機能 | 意味と条件 |
+| --- | --- |
+| PagedAttention / KV cache | token block を管理して無駄を削減します。kernel/cache layout はモデル／backend に依存します |
+| Continuous batching | scheduler が各ステップで処理を調整します。即時受付、キュー待ちがないこと、一定の高速化を保証するものではありません |
+| TP / PP / DP / EP | Tensor、pipeline、data、expert parallelism は異なる軸であり、モデル／backend／network のサポートが必要です |
+| Precision / quantization | FP16/BF16 dtype と FP8/INT8/INT4/AWQ format、および weight quantization と KV-cache quantization を区別してください |
+| Prefix caching / chunked prefill | サポート対象モデルのデフォルトと override を確認してください。完全なレスポンス caching や精度向上ではありません |
+| Structured outputs | response_format または structured_outputs は format を制約します。真実性と業務上の有効性には別途チェックが必要です |
+| Tool calling | モデル／chat template／parser と client execution loop が必要です。server が自動的に tool を実行することはありません |
+| LoRA | モデルサポートと adapter registration が必要です。リクエストの model だけを変更しても adapter は load されません |
 
-1. **PagedAttention**:
-   - KV cache を効率的に管理するメモリ管理技術
-   - オペレーティングシステムの仮想メモリ管理から着想
-   - 同時リクエスト処理を最大 10 倍に増加
+0.29.0 では Model Runner V2 がデフォルトの runner になります。これは OpenAI-compatible API のバージョンでも、別個の「vLLM Engine V2」でもありません。model-family 名はすべてのサイズ、quantization、vision バリアントを保証しません。architecture、artifact/tokenizer、chat template、kernel を確認してください。
 
-2. **Continuous Batching**:
-   - GPU 使用率を最大化するためにリクエストを動的にバッチ処理
-   - 新規リクエストを到着後すぐに処理開始
-   - スループットを最大 2 倍改善
+### 現行 CLI 機能の設定
 
-3. **Distributed Inference**:
-   - tensor parallelization によって大規模モデルをサポート
-   - 複数 GPU 間でのモデルシャーディング
-   - 175B+ パラメータモデルをサポート
-
-4. **Quantization**:
-   - INT8、FP16 を含むさまざまな精度をサポート
-   - メモリ使用量を削減し、推論速度を向上
-   - 精度低下を最小限に抑えつつ、メモリ効率を最大 2 倍改善
-
-## 対応モデル
-
-vLLM は以下のモデルをサポートしています。
-
-| モデルファミリー | 対応モデル | Quantization オプション |
-|-------------|-----------------|---------------------|
-| **LLaMA 3 / 3.1 / 3.2 / 3.3** | 1B, 3B, 8B, 70B, 405B | FP16, BF16, FP8, INT8, INT4, AWQ, GPTQ |
-| **DeepSeek V3 / R1** | 7B, 67B, 671B (MoE) | FP16, BF16, FP8, AWQ, GPTQ |
-| **Qwen 2 / 2.5 / QwQ** | 0.5B ~ 72B | FP16, BF16, FP8, INT8, AWQ, GPTQ |
-| **Mistral / Mixtral** | 7B, 8x7B, 8x22B, Large 2 | FP16, BF16, FP8, AWQ, GPTQ |
-| **Gemma 2 / 3** | 2B, 9B, 27B | FP16, BF16, INT8 |
-| **Phi-3 / Phi-4** | 3.8B, 7B, 14B | FP16, BF16, INT8, AWQ |
-| **Command R / R+** | 35B, 104B | FP16, BF16 |
-| **DBRX** | 132B (MoE) | FP16, BF16 |
-| **StarCoder 2** | 3B, 7B, 15B | FP16, BF16 |
-| **Vision Models (VLM)** | LLaVA, Pixtral, Qwen2-VL, InternVL | FP16, BF16 |
-
-1. **PagedAttention**: 長いシーケンスの処理時にメモリ使用量を最適化する、メモリ効率の高い attention メカニズム。
-2. **Continuous Batching**: スループットを向上させるためにリクエストを動的にバッチ処理します。
-3. **Distributed Inference**: 大規模モデルを処理するために、複数の GPU とノードにモデルを分散します。
-4. **Quantization**: メモリ使用量を削減し、スループットを向上させる INT8/INT4 quantization をサポートします。
-5. **OpenAI Compatible API**: OpenAI API と互換性のあるインターフェースを提供します。
-
-### v0.6 系で追加された vLLM の機能
-
-vLLM は急速に進化しており、最近のリリースでは重要な新機能が追加されています。
-
-#### Speculative Decoding
-
-小さなドラフトモデルを使用して複数の候補トークンを生成し、大きなモデルがそれらを 1 回のパスで検証することで、推論速度を 2～3 倍向上させます。
+非推奨の python -m vllm.entrypoints.openai.api_server ではなく vllm serve を使用してください。以前の --speculative-model/--num-speculative-tokens オプションは、現行 CLI では --speculative-config に置き換えられています。
 
 ```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model meta-llama/Llama-3.1-70B-Instruct \
-  --speculative-model meta-llama/Llama-3.1-8B-Instruct \
-  --num-speculative-tokens 5
+# Syntax when compatible target/draft models and sufficient memory are prepared.
+vllm serve /models/target \
+  --speculative-config '{"model":"/models/draft","method":"draft_model","num_speculative_tokens":5}'
 ```
 
-#### Prefix Caching
+これは syntax を示すものであり、これらのモデルファイルを提供したり高速化を確立したりするものではありません。draft acceptance、追加メモリ、通信コストにより、得られる効果が相殺されることがあります。
 
-同じ system prompt またはコンテキストを共有するリクエスト間で KV cache を自動的に再利用し、TTFT（Time to First Token）を大幅に削減します。
-
-```bash
---enable-prefix-caching
-```
-
-#### Chunked Prefill
-
-長い prompt の prefill を decode ステップと交互に実行する小さなチャンクに分割し、長いコンテキストを持つリクエストが他のリクエストのレイテンシに与える影響を軽減します。
-
-```bash
---enable-chunked-prefill --max-num-batched-tokens 2048
-```
-
-#### 動的 LoRA Adapter ロード
-
-複数の LoRA adapter をランタイムで動的にロード/アンロードし、単一のベースモデルから多くのカスタマイズ済みモデルを提供します。
-
-```bash
---enable-lora --max-loras 4 --max-lora-rank 64
-```
-
-```python
-# Specify LoRA model in API request
-response = client.chat.completions.create(
-    model="my-custom-lora-adapter",
-    messages=[{"role": "user", "content": "Hello!"}]
-)
-```
-
-#### Structured Output
-
-JSON Schema、regex パターン、CFG（Context-Free Grammar）を介した制約付き出力生成をサポートし、信頼性の高い構造化データ生成を実現します。
-
-```python
-from openai import OpenAI
-client = OpenAI(base_url="http://vllm-service:8000/v1")
-
-response = client.chat.completions.create(
-    model="meta-llama/Llama-3.1-8B-Instruct",
-    messages=[{"role": "user", "content": "Return user information as JSON"}],
-    response_format={
-        "type": "json_schema",
-        "json_schema": {
-            "name": "user_info",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string"},
-                    "age": {"type": "integer"},
-                    "email": {"type": "string"}
-                },
-                "required": ["name", "age", "email"]
-            }
-        }
-    }
-)
-```
-
-#### Tool Calling
-
-agent ワークフローとの統合に向けて、OpenAI 互換の Tool/Function Calling をサポートします。
-
-```python
-response = client.chat.completions.create(
-    model="meta-llama/Llama-3.1-8B-Instruct",
-    messages=[{"role": "user", "content": "What's the weather in Seoul?"}],
-    tools=[{
-        "type": "function",
-        "function": {
-            "name": "get_weather",
-            "description": "Get the current weather for a specified location",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {"type": "string", "description": "City name"}
-                },
-                "required": ["location"]
-            }
-        }
-    }]
-)
-```
-
-#### FP8 Quantization
-
-Hopper（H100）および Ada Lovelace（L4、L40S）GPU で FP8 quantization をサポートし、ほぼ同一の精度を維持しながらメモリ使用量を半減します。
-
-```bash
---quantization fp8 --kv-cache-dtype fp8
-```
-
-#### Vision-Language Model（VLM）Serving
-
-画像とテキストを同時に処理するマルチモーダルモデルをサポートします。
-
-```python
-response = client.chat.completions.create(
-    model="llava-hf/llava-v1.6-mistral-7b-hf",
-    messages=[{
-        "role": "user",
-        "content": [
-            {"type": "text", "text": "Describe this image"},
-            {"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}
-        ]
-    }]
-)
-```
+起動時 LoRA は --enable-lora --lora-modules adapter=/models/adapter で登録します。runtime load/unload には、別途 VLLM_ALLOW_RUNTIME_LORA_UPDATING の opt-in と制限された operator path が必要です。--enable-auto-tool-choice には適切な --tool-call-parser が必要です。multimodal URL にも、SSRF control、許可 domain、download/decode limit が必要です。
 
 ## システム要件
 
-EKS 上に vLLM をデプロイするためのシステム要件は以下のとおりです。
+EKS 上で vLLM をデプロイするためのシステム要件：
 
-![vLLM のハードウェアおよびソフトウェアの前提条件と、GPU メモリによってサポートされるモデルサイズの層を示した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-1.svg)
+![weight と architecture を考慮した KV memory、追加の overhead、device capability、明示的な CUDA artifact 要件。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-1.png)
 
-1. **ハードウェア**:
-   - NVIDIA GPU（Volta、Turing、Ampere、Hopper アーキテクチャ）
-   - 最小 GPU メモリ: モデルサイズによって異なる
-     - 7B モデル: 最低 16GB の GPU メモリ
-     - 13B モデル: 最低 24GB の GPU メモリ
-     - 70B モデル: 最低 80GB の GPU メモリ（または複数 GPU に分散）
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-1.html)
 
-2. **ソフトウェア**:
-   - CUDA 12.1 以降（FP8 には CUDA 12.4 を推奨）
-   - Python 3.9 以降
-   - PyTorch 2.4.0 以降
+weight memory の見積もりは、parameter count × 保存バイト数から始めます。70B の FP16/BF16 weight のみでは約 140GB となるため、80GB は普遍的な 70B の要件ではありません。KV cache、activation、CUDA graph/workspace、communication buffer を追加し、quantization metadata と複製された tensor を考慮してください。
 
-3. **EKS ノードタイプ**:
-   - p5.48xlarge: NVIDIA H100 GPU 8 基、各 80GB（最高性能）
-   - p4d.24xlarge: NVIDIA A100 GPU 8 基、各 40GB または 80GB
-   - g6.12xlarge: NVIDIA L4 GPU 4 基、各 24GB（コスト効率が高い）
-   - g5.12xlarge: NVIDIA A10G GPU 4 基、各 24GB
-   - g6e.12xlarge: NVIDIA L40S GPU 4 基、各 48GB
-   - trn1.32xlarge: AWS Trainium 16 基、各 32GB（AWS シリコン）
+一般的な dense-attention KV の推定値を以下に示します。MHA 専用の式から hidden size を代用するのではなく、GQA/MQA には KV-head count を使用してください。
+
+```text
+KV bytes ≈ 2 × layers × KV_heads × head_dim × cached_tokens × bytes_per_element
+```
+
+cached_tokens は、同時リクエスト間で保持される token の合計です。TP sharding/replication、sliding window、MLA、hybrid architecture は個別に扱う必要があります。現行の Qwen2.5-7B config は 28 layer、4 KV head、head dimension 128 です。element あたり 2 byte とすると約 56KiB/token、1 つの 4096-token sequence では 224MiB です。これは集約された推定値であり、GPU あたりまたはモデル全体の実測 memory ではありません。
+
+p4d.24xlarge は 40GB A100 を使用します。80GB A100 の p4de instance と区別してください。p5/g6/g6e およびその他の選択肢は、リージョンの capacity、driver、ワークロード要件と照らして比較してください。GPU あたり CPU 4 core、または weight の 2 倍の RAM といった固定ルールは、計測の代わりにはなりません。
 
 ## EKS インフラストラクチャ設定
 
-![vLLM を実行する Amazon EKS クラスターのアーキテクチャ図。control plane、GPU および CPU node group、ストレージとネットワーキングのリソース、補助的な AWS サービスを含みます。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-2.svg)
+![ワークロード用に選択された、例示的な EKS node、model-storage、image、permission path。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-2.png)
 
-## ストレージ設定
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-2.html)
 
-vLLM は大規模なモデル weights をロードする必要があるため、高性能なストレージを必要とします。
+## Storage とモデルの準備
 
-### FSx for Lustre のセットアップ
+FSx for Lustre は選択肢の 1 つであり、必須でも普遍的に最適でもありません。local NVMe/EBS、再利用可能な cache、object storage、shared filesystem を、load 時間、コスト、同時実行性で比較してください。emptyDir は container restart 後も残存できますが、Pod の削除／再作成後は残存しません。
 
-FSx for Lustre は、大規模なモデル weights を迅速にロードするのに適した高性能並列ファイルシステムです。
+[static FSx PV/PVC and dynamic provisioning](01-ai-ml-workloads.md#storage-and-caching) を区別してください。Hugging Face snapshot_download は S3 からではなく Hugging Face から download します。repository revision、integrity、license、access permission を記録してください。gated model の場合は token を file として mount し、その file を読み取る download stage を使用してください。実行可能な remote code をデフォルトで trust してはいけません。
 
-```yaml
-apiVersion: fsx.aws.k8s.io/v1beta1
-kind: Lustre
-metadata:
-  name: vllm-models
-spec:
-  deploymentType: SCRATCH_2
-  storageCapacity: 1200
-  subnetIds:
-    - subnet-0123456789abcdef0
-  securityGroupIds:
-    - sg-0123456789abcdef0
-  perUnitStorageThroughput: 200
----
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fsx-lustre-sc
-provisioner: fsx.csi.aws.com
-parameters:
-  fileSystemId: fs-0123456789abcdef0
-  mountName: vllm-models
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: vllm-models-pvc
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: fsx-lustre-sc
-  resources:
-    requests:
-      storage: 1200Gi
-```
+以下の例では、token を使用せず、public Qwen3-0.6B の検証済み revision を使用します。その emptyDir cache は Pod 再作成後に再度 download されます。multi-node worker では、同じモデル revision/path が必要です。
 
-### S3 からのモデルのダウンロード
+## vLLM デプロイ
 
-Hugging Face モデルを S3 に保存し、FSx for Lustre にダウンロードする Job:
+### Deployment アーキテクチャ
 
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: model-download
-spec:
-  template:
-    spec:
-      containers:
-      - name: model-download
-        image: huggingface/transformers:latest
-        command:
-        - python
-        - -c
-        - |
-          from huggingface_hub import snapshot_download
-          import os
+次の図は、EKS 上に vLLM をデプロイするための 2 つの主要なアーキテクチャを示しています。
 
-          model_id = "meta-llama/Llama-3.1-70B-Instruct"
-          dest_dir = "/models/llama-3.1-70b"
+![Single-GPU serving と、API entry point、worker、model path を分離した sharded multi-node group。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-3.png)
 
-          os.makedirs(dest_dir, exist_ok=True)
-          snapshot_download(repo_id=model_id, local_dir=dest_dir, token=os.environ["HF_TOKEN"])
-        env:
-        - name: HF_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: huggingface-token
-              key: token
-        volumeMounts:
-        - name: models-volume
-          mountPath: /models
-      restartPolicy: Never
-      volumes:
-      - name: models-volume
-        persistentVolumeClaim:
-          claimName: vllm-models-pvc
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-3.html)
 
-## vLLM のデプロイ
+### Single-GPU 設定例
 
-### デプロイアーキテクチャ
+これは **GPU 実行前にレビューするための template** です。namespace と GPU driver/plugin を準備してください。digest は v0.29.0-cu129 amd64 artifact を識別し、model revision は検査した public Qwen3-0.6B snapshot を識別します。この audit では image pull、non-root 実行、kernel compilation、inference は実行されていないため、環境での検証が必要です。
 
-次の図は、EKS 上で vLLM をデプロイするための 2 つの主要アーキテクチャを示しています。
-
-![load balancer から入力を受け、FSx/S3 をバックエンドにしたストレージを共有する、単一ノードの vLLM Pod デプロイとマルチノードの NCCL 同期デプロイを比較した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-3.svg)
-
-### 単一ノードデプロイ
-
-単一 GPU、または単一ノード上の複数 GPU で vLLM を実行する Deployment:
+Recreate は追加の GPU replica を必要としない一方、更新時の downtime が発生します。startupProbe は起動に約 15 分を許容します。readiness は SLA ではありません。Service は ClusterIP であり、public ingress を作成しません。
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vllm-inference
+  name: vllm-demo
+  namespace: ml-inference
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      app: vllm-inference
+      app: vllm-demo
   template:
     metadata:
       labels:
-        app: vllm-inference
+        app: vllm-demo
     spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: vllm-server
-        image: vllm/vllm-openai:latest
-        command:
-        - python
-        - -m
-        - vllm.entrypoints.openai.api_server
-        - --model=/models/llama-3.1-70b
-        - --tensor-parallel-size=8
-        - --gpu-memory-utilization=0.95
-        - --max-num-batched-tokens=16384
-        - --enable-prefix-caching
-        - --enable-chunked-prefill
-        - --port=8000
-        ports:
-        - containerPort: 8000
-        resources:
-          limits:
-            nvidia.com/gpu: 8
-        volumeMounts:
-        - name: models-volume
-          mountPath: /models
-        env:
-        - name: CUDA_VISIBLE_DEVICES
-          value: "0,1,2,3,4,5,6,7"
+        - name: vllm
+          image: vllm/vllm-openai@sha256:3e10e8189823e0f7ae4620c271bcdaaf64127ec7d0edc351591a508498b7684a
+          command: ["vllm", "serve"]
+          args:
+            - Qwen/Qwen3-0.6B
+            - --revision=c1899de289a04d12100db370d81485cdf75e47ca
+            - --served-model-name=qwen3-demo
+            - --dtype=float16
+            - --max-model-len=2048
+            - --max-num-seqs=8
+            - --gpu-memory-utilization=0.80
+            - --host=0.0.0.0
+            - --port=8000
+          env:
+            - name: HF_HOME
+              value: /cache/huggingface
+            - name: XDG_CACHE_HOME
+              value: /cache
+            - name: XDG_CONFIG_HOME
+              value: /cache/config
+            - name: VLLM_NO_USAGE_STATS
+              value: "1"
+            - name: VLLM_CACHE_ROOT
+              value: /cache/vllm
+            - name: TORCHINDUCTOR_CACHE_DIR
+              value: /cache/torchinductor
+            - name: TRITON_CACHE_DIR
+              value: /cache/triton
+          ports:
+            - name: http
+              containerPort: 8000
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              ephemeral-storage: 4Gi
+            limits:
+              cpu: "4"
+              memory: 12Gi
+              ephemeral-storage: 12Gi
+              nvidia.com/gpu: 1
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          volumeMounts:
+            - name: cache
+              mountPath: /cache
+            - name: tmp
+              mountPath: /tmp
+            - name: shm
+              mountPath: /dev/shm
       volumes:
-      - name: models-volume
-        persistentVolumeClaim:
-          claimName: vllm-models-pvc
+        - name: cache
+          emptyDir:
+            sizeLimit: 8Gi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: vllm-inference
+  name: vllm-demo
+  namespace: ml-inference
+  labels:
+    app: vllm-demo
 spec:
+  type: ClusterIP
   selector:
-    app: vllm-inference
+    app: vllm-demo
   ports:
-  - port: 8000
-    targetPort: 8000
-  type: LoadBalancer
+    - name: http
+      port: 8000
+      targetPort: http
 ```
 
-### マルチノード分散デプロイ
+### Multi-Node Sharding と独立した Replica の比較
 
-大規模モデルを複数ノードに分散する方法:
+1 つの model replica を sharding するには、TP/PP と Ray または multiprocessing の coordination が必要です。独立した API-server replica はそれぞれモデルを load して horizontal scaling を提供します。これらは異なる設計です。
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vllm-config
-data:
-  hostfile: |
-    vllm-inference-0 slots=8
-    vllm-inference-1 slots=8
-  run_server.sh: |
-    #!/bin/bash
+0.29.0 は multiprocessing の --nnodes、--node-rank、--master-addr、--master-port をサポートしています。古い --rank、--tensor-parallel-rank、--distributed-init-method の例は、これらの CLI オプションではありません。各 8 GPU を提供する準備済みの 2 node では、command の形は次のとおりです。
 
-    RANK=$HOSTNAME
-    if [[ $HOSTNAME == "vllm-inference-0" ]]; then
-      RANK=0
-    elif [[ $HOSTNAME == "vllm-inference-1" ]]; then
-      RANK=1
-    fi
-
-    python -m vllm.entrypoints.openai.api_server \
-      --model=/models/llama-3.1-70b \
-      --tensor-parallel-size=16 \
-      --pipeline-parallel-size=1 \
-      --max-num-batched-tokens=8192 \
-      --port=8000 \
-      --host=0.0.0.0 \
-      --master-addr=vllm-inference-0 \
-      --master-port=29500 \
-      --rank=$RANK
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: vllm-inference
-spec:
-  serviceName: "vllm-inference"
-  replicas: 2
-  selector:
-    matchLabels:
-      app: vllm-inference
-  template:
-    metadata:
-      labels:
-        app: vllm-inference
-    spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - vllm-inference
-            topologyKey: kubernetes.io/hostname
-      containers:
-      - name: vllm-server
-        image: vllm/vllm-openai:latest
-        command:
-        - bash
-        - /config/run_server.sh
-        ports:
-        - containerPort: 8000
-        - containerPort: 29500
-        resources:
-          limits:
-            nvidia.com/gpu: 8
-        volumeMounts:
-        - name: models-volume
-          mountPath: /models
-        - name: config-volume
-          mountPath: /config
-        env:
-        - name: CUDA_VISIBLE_DEVICES
-          value: "0,1,2,3,4,5,6,7"
-        - name: NCCL_DEBUG
-          value: "INFO"
-        - name: NCCL_IB_DISABLE
-          value: "0"
-        - name: NCCL_IB_GID_INDEX
-          value: "3"
-        - name: NCCL_NET_GDR_LEVEL
-          value: "5"
-      volumes:
-      - name: models-volume
-        persistentVolumeClaim:
-          claimName: vllm-models-pvc
-      - name: config-volume
-        configMap:
-          name: vllm-config
-          defaultMode: 0755
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-inference
-spec:
-  selector:
-    app: vllm-inference
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: api
-  - port: 29500
-    targetPort: 29500
-    name: nccl
-  clusterIP: None
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-inference-lb
-spec:
-  selector:
-    app: vllm-inference
-    statefulset.kubernetes.io/pod-name: vllm-inference-0
-  ports:
-  - port: 8000
-    targetPort: 8000
-  type: LoadBalancer
+```bash
+# node0: substitute an actual trusted head IP and identical prepared model path.
+vllm serve /models/model --distributed-executor-backend mp \
+  --tensor-parallel-size 8 --pipeline-parallel-size 2 \
+  --nnodes 2 --node-rank 0 --master-addr 10.0.0.10 --master-port 29500
+# node1: the worker does not start a duplicate API server.
+vllm serve /models/model --distributed-executor-backend mp \
+  --tensor-parallel-size 8 --pipeline-parallel-size 2 \
+  --nnodes 2 --node-rank 1 --master-addr 10.0.0.10 --master-port 29500 --headless
 ```
+
+これらの command は node、model file、connectivity を作成しません。Kubernetes には適切な concurrent worker creation、readiness 前の DNS、Pod ごとの VLLM_HOST_IP、internal connectivity、shared memory が必要です。Ray では、1 つの API entry point を --distributed-executor-backend ray で起動する前に、動作する cluster と互換性のある Ray dependency が必要です。[Ray](ray/README.md) を参照してください。internal communication port は private に保ってください。
 
 ## パフォーマンス最適化
 
-![GPU メモリ、スループット、ネットワークの最適化手法と各設定フラグが、全体的なパフォーマンス向上に集約されることを示した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-4.svg)
+![現行の memory、offload、scheduler、communication の tuning にはワークロード計測が必要です。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-4.png)
 
-### GPU メモリの最適化
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-4.html)
 
-vLLM の GPU メモリ使用量を最適化する方法:
+### Memory、Scheduler、Communication オプション
 
-1. **GPU メモリ使用率の調整**:
+0.29.0 の CacheConfig は gpu_memory_utilization のデフォルトを 0.92 としていますが、これはすべての process VRAM に対する hard cap ではありません。例では明示的に 0.80 を選択しています。--kv-cache-memory-bytes は自動 KV-cache sizing を override するため、option precedence を確認してください。
 
-```bash
---gpu-memory-utilization=0.9
-```
+--swap-space は現行 CLI にはありません。weight CPU offload と KV offload は別個の capability/configuration であり、host RAM が GPU 制限を解決する保証ではありません。prefix caching はサポート対象モデルではデフォルトで有効になることがあります。chunked prefill もモデル依存です。queue limit、token budget、max-num-seqs、max-model-len は異なる control です。
 
-2. **Quantization の適用**:
+EFA には、サポートされる EC2 device、AMI/plugin/network、AWS OFI NCCL/libfabric が必要です。作り物の NCCL_IB_ENABLE_RDMA flag や任意の mlx5/GID 設定を、普遍的なデフォルトとしてコピーしないでください。現行の NVIDIA/PyTorch variable と実際の backend log を確認してください。single-node の NCCL test は multi-node EFA のパフォーマンスを証明しません。
 
-```bash
---quantization awq
-```
+## 過去の計測: Single L4 GPU 上の Qwen2.5-7B
 
-3. **Swap Space の活用**:
+これらは、[2026 年 9 月 4 日の repository commit](https://github.com/Atom-oh/kubernetes-docs/commit/8622d388cb684dc4f68083af7be6d91f80b79106) で報告された過去の計測です。この audit では raw request result/server log または完全な client artifact は見つからず、実験を再実行していません。報告された数値は保持されており、現行 0.29.0 のパフォーマンスや独立して再現された結果として再分類していません。
 
-```bash
---swap-space=16
-```
+![raw log と独立再現に関する制限を示す過去の L4 benchmark report。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
 
-### スループットの最適化
-
-vLLM のスループットを最適化する方法:
-
-1. **バッチサイズの調整**:
-
-```bash
---max-num-batched-tokens=8192
-```
-
-2. **KV Cache の最適化**:
-
-```bash
---block-size=16
-```
-
-3. **Tensor Parallel 処理の調整**:
-
-```bash
---tensor-parallel-size=8
-```
-
-### ネットワークの最適化
-
-分散デプロイにおけるネットワークパフォーマンスを最適化する方法:
-
-1. **EFA（Elastic Fabric Adapter）の活用**:
-
-```yaml
-resources:
-  limits:
-    nvidia.com/gpu: 8
-    vpc.amazonaws.com/efa: 1
-```
-
-2. **NCCL 設定の最適化**:
-
-```yaml
-env:
-- name: NCCL_DEBUG
-  value: "INFO"
-- name: NCCL_MIN_NCHANNELS
-  value: "4"
-- name: NCCL_SOCKET_IFNAME
-  value: "^lo,docker"
-- name: NCCL_ASYNC_ERROR_HANDLING
-  value: "1"
-```
-
-3. **ノード配置の最適化**:
-
-```yaml
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values:
-          - us-west-2a
-```
-
-## 測定ベンチマーク: 単一 L4 GPU 上の Qwen2.5-7B
-
-ここまでのこのページ上の数値はすべて、一般的な vLLM プロジェクトの主張または設定フラグの説明です。このセクションは異なります。実際の vLLM server に対する 1 回の測定であり、「continuous batching がスループットを向上させる」とは具体的にどのようなものかを、1 つのモデルと GPU で確認できます。
-
-![client Job が ClusterIP Service 経由で vLLM server に到達し、単一の NVIDIA L4 GPU 上でリクエストをバッチ処理する様子と、測定されたスループット、レイテンシ、compute ではなくメモリ帯域幅が制約となった理由を示した図。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
-
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-6.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-6.html)
 
 ### セットアップ
 
-- **クラスター**: 専用 Karpenter NodePool（`bench-gpu`、オンデマンド `g6.2xlarge` — NVIDIA L4 1 基、GPU メモリ 24GB、8 vCPU、RAM 32 GiB）。`nvidia.com/gpu=true:NoSchedule` で taint され、既存の `nvidia-device-plugin` daemonset に参加するようラベル付けされ、実行直後に削除されました。
-- **Server**: `vllm/vllm-openai:v0.6.4.post1`（2024-11-15 リリース — vLLM プロジェクトはその後、prefix caching がデフォルトで有効な V1 engine をリリースしているため、これは現行の vLLM ではなく、そのリリース系列のスナップショットとして扱ってください）、モデル `Qwen/Qwen2.5-7B-Instruct`、`--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`。quantization、speculative decoding、prefix caching を使用しない 1 つの精度（bf16、モデルのネイティブ dtype）であり、このページの他の箇所で説明している通常のデフォルトです。
-- **Client**: クラスター**内**（別の非 GPU ノード）で Job として実行される Python `ThreadPoolExecutor`。`vllm-server` ClusterIP Service 経由で `/v1/chat/completions` にアクセスします。non-streaming、`temperature=0`、`max_tokens=128`、短い prompt を 8 個ローテーション（Kubernetes の概念について 1～2 文の回答を求める質問）。実際には、すべての応答が 1～2 文で停止するのではなく、128 トークン上限に近い値で実行されました（3 つすべての同時実行バッチで一貫して平均約 102 トークン）。これは同時実行レベル間でスループットを公平に比較するのに有用ですが、レイテンシの数値を「短い質問に答えるまでの時間」として読む前に知っておくべき点です。
-- **コールドスタート**: vLLM engine の起動ログから `/health` endpoint が `200` を返すまで約 4.5 分。Hugging Face から Qwen2.5-7B-Instruct の約 15 GB の weights を Pod の ephemeral cache にダウンロードする時間が大部分を占めます。image pull 時間は含まれず、個別には測定していません。
+- **Cluster**: 専用の Karpenter NodePool（`bench-gpu`、オンデマンドの `g6.2xlarge` — 1x NVIDIA L4、24GB GPU memory、8 vCPU、32 GiB RAM）。`nvidia.com/gpu=true:NoSchedule` の taint があり、既存の `nvidia-device-plugin` daemonset に参加する label が設定され、実行直後に削除されました。
+- **Server**: `vllm/vllm-openai:v0.6.4.post1`（2024-11-15 リリース — vLLM project はその後、prefix caching がデフォルトで有効な V1 engine をリリースしているため、現行 vLLM ではなく、この release line の snapshot として扱ってください）、モデル `Qwen/Qwen2.5-7B-Instruct`、`--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`。quantization、speculative decoding、prefix caching なしの 1 precision（bf16、モデルの native dtype）— このページの別箇所で説明した通常のデフォルトです。
+- **Client**: cluster **内部**（別の非 GPU node）の Job として実行された Python `ThreadPoolExecutor`。`vllm-server` ClusterIP Service を通じて `/v1/chat/completions` にアクセスしました。non-streaming、`temperature=0`、`max_tokens=128`、8 個の短い prompt を順番に使用（1～2 文の回答を求める Kubernetes concept question）。実際には、すべての response は 1～2 文で止まるのではなく、128-token cap に近い値で実行されました（3 つすべての concurrent batch で一貫して平均約 102 token）。これは concurrency level 間の throughput を同条件で比較するのに有用ですが、latency 数値を「短い質問への回答時間」として読む前に留意してください。
+- **Cold start**: vLLM engine の startup log から `/health` endpoint が `200` を返すまで約 4.5 分 — 主に Hugging Face から Pod の ephemeral cache へ Qwen2.5-7B-Instruct weight 約 15 GB を download した時間です。image pull 時間は含まれていません。個別には計測されませんでした。
 
-### 再現方法
+### 再現
 
 ```yaml
 # NodePool (Karpenter) - dedicated, deleted after the run — nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
@@ -670,394 +320,117 @@ spec:
   ports: [{ port: 8000, targetPort: 8000 }]
 ```
 
-client は、`urllib` + `concurrent.futures.ThreadPoolExecutor` を使って `http://vllm-server:8000/v1/chat/completions` に N 個のリクエストを送信し、それぞれの所要時間を測定するシンプルな Python script です。同じ namespace 内で `batch/v1` Job として実行してください。重要な注意点として、上記の `nvidia.com/device-plugin.config: default` ノードラベルは必須です。これがないと、共有の `nvidia-device-plugin` DaemonSet は新しいノードにスケジュールされず、taint と toleration が正しく一致していても `nvidia.com/gpu` は割り当て可能リソースとして登録されません。
+manifest は報告された環境の一部を示します。namespace の作成、既存の EC2NodeClass、完全な client script は省略されているため、完全な再現を確立するものではありません。nvidia.com/device-plugin.config:default は、その shared DaemonSet 設定の条件であり、普遍的な scheduling label 要件ではありません。報告されたオンデマンドの主張にも、実際の過去の configuration が必要です。
 
 ### 結果
 
-| 同時実行数 | リクエスト数 | 経過時間 | Client レイテンシ p50 / p90 | Client 合計スループット | Server 報告のピーク生成スループット | GPU KV cache 使用率 |
+| Concurrency | Requests | Wall time | Client latency p50 / p90 | Client aggregate throughput | Server-reported peak generation throughput | GPU KV cache usage |
 |---|---|---|---|---|---|---|
-| 1（直列） | 10 | ~53.2 s（リクエストレイテンシの合計） | 5.65 s / 7.43 s | リクエストあたり ~17-18 tokens/s | ~17 tokens/s | 0.1-0.2% |
+| 1 (serial) | 10 | ~53.2 s (リクエスト latency の合計) | 5.65 s / 7.43 s | リクエストあたり ~17-18 tokens/s | ~17 tokens/s | 0.1-0.2% |
 | 4 | 16 | 27.78 s | 6.99 s / 7.88 s | 58.67 tokens/s | 65-66 tokens/s | 0.4-0.7% |
 | 8 | 32 | 30.02 s | 7.18 s / 8.15 s | 109.04 tokens/s | 123-129 tokens/s | 0.8-1.4% |
 | 16 | 64 | 31.35 s | 7.52 s / 8.74 s | 208.08 tokens/s | 最大 243 tokens/s | 1.5-2.6% |
 
-「Client 合計スループット」は、Pod 外部から測定した、そのバッチ内のすべてのリクエストの completion tokens 合計を経過時間で割った値です。「Server 報告」は、`Running: <concurrency>` 時の vLLM 自身の定期的な `Avg generation throughput` ログ行です。HTTP/JSON のオーバーヘッドを除外し、測定間隔中の平均だけでなく真のピークを捉えるため、Client の数値よりやや高くなります。GPU メモリ使用量（実行後に `nvidia-smi` で測定）は、このインスタンスでドライバーが合計として報告する 23.0 GiB のうち 19.2 GiB でした。`gpu-memory-utilization=0.90` は、weights と KV cache blocks のためにその大部分を事前割り当てするよう vLLM に指示します。そのため、以下の KV cache の割合は、実際の空き VRAM ではなく、確保済みプールの使用率を表します。
+Client aggregate throughput は、completion-token count を計測された wall time で割ったものです。Server Avg generation throughput は interval average です。最大の log 値は瞬間的な「真の peak」ではありません。time window、token accounting、HTTP boundary は異なるため、直接交換可能な metric ではありません。
 
-### 分析
+### 解釈
 
-- **リクエストあたりのレイテンシはほとんど変化しません。** 同じ約 100～128 トークンの応答について、同時リクエスト数を 1 から 16 に増やしても、p50 レイテンシは 5.65 s から 7.52 s（+33%）にしか上がりません。これは continuous batching が意図どおりに機能していることを示しています。新しいリクエストは、その後ろでキューイングされるのではなく、実行中のバッチに参加します。
-- **合計スループットはほぼ線形にスケールします。** 同時リクエスト数を 4 → 8 → 16 と増やすと、合計スループットは毎回ほぼ 2 倍になります（58.67 → 109.04 → 208.08 tokens/s）。
-- **これは compute-bound ではなく bandwidth-bound の decode であり、まさにそのためバッチ処理が有効です。** バッチ 1 では、トークンごとに約 15.2 GB の bf16 weights を GDDR6 メモリからストリーミングする必要があります。この L4 の約 300 GB/s のメモリ帯域幅では、単一リクエストの decode はおよそ 20 tokens/s に制限され、測定された約 17～18 と一致します。compute はまったく異なる状況を示します。最も多忙だった測定点（合計 208 tokens/s）でも、GPU の処理量は約 3 TFLOP/s で、L4 の dense bf16 compute 約 121 TFLOPS に対して数パーセントにすぎません。KV cache 容量も制約にはなりませんでした（実行全体を通して 3% 未満）。continuous batching は、まさにこの種の bandwidth-bound decode に対する解決策です。あるリクエストのために weights がすでにメモリから読み込まれていれば、同じ weight read で 16 リクエストに応答するコストはほぼゼロです。これが、レイテンシがほとんど増えない一方でスループットがほぼ線形にスケールする理由です。
+報告された p50 は 5.65s から 7.52s へ、約 33.1% 増加しました。concurrency 4→8→16 での aggregate throughput は 58.67→109.04→208.08tokens/s でした。この batching の観測と、根本的な bottleneck の因果的証明を区別してください。
+
+約 300GB/s の bandwidth を 15.2GB の weight で割ると、理想化した roofline は約 20 tokens/s となります。この audit には bandwidth または FLOP execution を直接計測する profiler evidence がないため、「確実に memory-bound」や「追加リクエストはほぼ無料」とは結論付けられません。KV-cache occupancy と総 VRAM 使用量は異なる量です。
 
 ### 注意事項
 
-これは、1 つのモデル、1 つの精度（bf16）、1 種類の GPU、1 つのコンテキスト長における単一実行（n=1）です。一般的な vLLM/L4 のパフォーマンス主張ではなく、校正された 1 つのデータポイントとして扱ってください。client はクラスター内（別の非 GPU ノード）で実行されたため、ネットワークレイテンシは外部 caller ではなくクラスター内の hop を反映しています。ここでのレイテンシは、time-to-first-token（TTFT）ではなく、完全な end-to-end HTTP 応答時間です。streaming はテストしていません。prefix caching、speculative decoding、FP8、およびマルチ GPU tensor parallelism（すべてこのページの前半で説明）は実施していません。上記の manifest を使用して再現してください。これらの数値を異なるモデルサイズ、GPU、または prompt 長に外挿しないでください。
+これは 1 model、1 precision（bf16）、1 GPU type、1 context length での single run（n=1）です。一般的な vLLM/L4 パフォーマンスの主張ではなく、校正済みの 1 data point として扱ってください。client は cluster 内部（別の非 GPU node）で実行されたため、network latency は外部 caller ではなく intra-cluster hop を反映します。ここでの latency は最初の token までの時間（TTFT）ではなく、完全な end-to-end HTTP response time です。streaming はテストされていません。prefix caching、speculative decoding、FP8、multi-GPU tensor parallelism（いずれも本ページの前半で説明）は実施されていません。完全な再現には不足している execution artifact と環境詳細が必要です。これらの数値を異なる model size、GPU、prompt length に外挿しないでください。
 
-## モニタリングとログ記録
+## Monitoring と Logging
 
-![vLLM、GPU、Kubernetes のメトリクスが Prometheus/Grafana のモニタリングスタックに流れ、ダッシュボードとアラートを生成する様子と、独立した logging stack を示した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-5.svg)
+![API port 8000 上の実際の metric と、分離された logging/access boundary。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-5.png)
 
-### Prometheus メトリクス
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-5.html)
 
-vLLM server から Prometheus メトリクスを収集する方法:
+### Metrics と Logs
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-metrics
-  labels:
-    app: vllm-inference
-spec:
-  selector:
-    app: vllm-inference
-  ports:
-  - port: 8001
-    targetPort: 8001
-    name: metrics
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: vllm-metrics
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: vllm-inference
-  endpoints:
-  - port: metrics
-    interval: 15s
+デフォルトの /metrics endpoint は API の port 8000 を使用します。別の 8001 port や --enable-metrics=true を作り出してはいけません。ServiceMonitor では Service label、named port、namespace selection を一致させてください。
+
+```promql
+# End-to-end p95 by model
+histogram_quantile(0.95, sum by (le, model_name) (rate(vllm:e2e_request_latency_seconds_bucket[5m])))
+# Generation-token throughput
+sum by (model_name) (rate(vllm:generation_tokens_total[5m]))
+# Queued requests
+sum by (model_name) (vllm:num_requests_waiting)
 ```
 
-### ログ収集
+vllm:kv_cache_usage_perc は、1 が 100% を意味する ratio であり、総 GPU-memory byte ではありません。gateway error/cancellation を success counter とともに観測し、healthy な idle period を low-throughput outage と呼ばないでください。実際の endpoint name/label を確認してください。CRI framing と application log を区別し、prompt/output/token の無差別な logging は避けてください。
 
-vLLM server のログを CloudWatch に収集する方法:
+## Autoscaling
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluentd-config
-  namespace: logging
-data:
-  fluent.conf: |
-    <source>
-      @type tail
-      path /var/log/containers/vllm-*.log
-      pos_file /var/log/fluentd-vllm.log.pos
-      tag kubernetes.vllm.*
-      read_from_head true
-      <parse>
-        @type json
-        time_format %Y-%m-%dT%H:%M:%S.%NZ
-      </parse>
-    </source>
+![検証済み metric、1 つの Pod scaling owner、独立した replica、分離された node capacity owner。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-10.png)
 
-    <filter kubernetes.vllm.**>
-      @type kubernetes_metadata
-      @id filter_kube_metadata
-    </filter>
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-10.html)
 
-    <match kubernetes.vllm.**>
-      @type cloudwatch_logs
-      log_group_name /eks/vllm/logs
-      log_stream_name_key $.kubernetes.pod_name
-      remove_log_stream_name_key true
-      auto_create_stream true
-      region us-west-2
-    </match>
-```
+### Autoscaling と可用性
 
-## オートスケーリング
+HPA/KEDA による独立した replica の scaling は、sharded model の worker group の scaling とは異なります。StatefulSet replica を増やしても、TP/PP が自動的に再設定されるわけではありません。adapter request/queue signal を検証し、CPU request なしに CPU-utilization HPA を使用しないでください。同じ capacity に対して Karpenter/Cluster Autoscaler の owner が競合しないようにしてください。
 
-![CPU、GPU、リクエストレート、キュー長のシグナルが Pod レベルのオートスケーリングを駆動し、それが GPU ノードのオートスケーリングと Spot capacity を駆動する様子を示した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-6.svg)
-
-### HPA（Horizontal Pod Autoscaler）
-
-リクエスト量に基づいて vLLM server を自動的にスケールする方法:
-
-```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: vllm-inference-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: vllm-inference
-  minReplicas: 1
-  maxReplicas: 5
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Pods
-    pods:
-      metric:
-        name: requests_per_second
-      target:
-        type: AverageValue
-        averageValue: 100
-```
-
-### Karpenter を使用したノードのオートスケーリング
-
-GPU ノードを自動的にプロビジョニングする方法:
-
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: vllm-gpu
-spec:
-  template:
-    spec:
-      requirements:
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        - p3.16xlarge
-        - g5.12xlarge
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values:
-        - on-demand
-      - key: kubernetes.io/arch
-        operator: In
-        values:
-        - amd64
-      - key: vpc.amazonaws.com/efa
-        operator: In
-        values:
-        - "true"
-      nodeClassRef:
-        name: vllm-gpu-class
-  limits:
-    nvidia.com/gpu: 32
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: vllm-gpu-class
-spec:
-  subnetSelector:
-    karpenter.sh/discovery: vllm-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: vllm-cluster
-  ttlSecondsAfterEmpty: 30
-```
+PDB は一部の voluntary eviction を制約しますが、すべての failure を制約するわけではありません。独立した replica は AZ をまたいで配置できます。communication-heavy な TP/PP group を AZ 間に配置する場合は、別途 latency/cost への影響があります。interruption-free update を主張する前に、model loading、warmup、draining、in-flight stream、spare GPU を検証してください。
 
 ## セキュリティ設定
 
-### Network Policy
+--api-key はすべての endpoint を保護しません。このバージョンの middleware は /v1、/v2、/inference、/cohere prefix を保護します。/invocations、/metrics、一部の operational endpoint には追加の保護が必要です。認証済み gateway は必要な path/method のみを許可する必要があります。distributed communication は信頼できる network に制限してください。CORS は authentication ではありません。
 
-vLLM server へのネットワークアクセスを制限する方法:
+runtime LoRA、remote model code、multimodal URL はそれぞれ trust/permission/SSRF boundary を導入します。「ignore instructions」を regex で block しても、すべての prompt injection を防いだり PII の削除を保証したりすることはできません。tool/data permission は model output とは独立して強制してください。
 
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: vllm-network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: vllm-inference
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: api-gateway
-    ports:
-    - protocol: TCP
-      port: 8000
-  - from:
-    - podSelector:
-        matchLabels:
-          app: vllm-inference
-    ports:
-    - protocol: TCP
-      port: 29500
-  egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: vllm-inference
-    ports:
-    - protocol: TCP
-      port: 29500
-  - to:
-    ports:
-    - protocol: TCP
-      port: 443
-```
-
-### Security Context
-
-コンテナの security context を設定する方法:
-
-```yaml
-securityContext:
-  runAsUser: 1000
-  runAsGroup: 1000
-  fsGroup: 1000
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-    - ALL
-```
+secret は file として提供し、Pod/container securityContext field を正しく配置してください。NetworkPolicy selector、DNS、scrape direction、internal traffic を実際の configuration と一致させてください。Pod annotation では API-server auditing を有効にできません。Secret RequestResponse body を log に記録しないでください。EKS control-plane audit と application access log は別物です。
 
 ## Client 統合
 
-![client SDK が API gateway を経由し、認証と rate limiting のためのセキュリティ層を通って、load-balanced なバックエンド Service に到達する様子を示した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-7.svg)
+![認証済み gateway の allowlist と分離された operator access が internal vLLM endpoint を保護します。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-7.png)
 
-### API Gateway
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-7.html)
 
-vLLM server の前段に API gateway をデプロイする方法:
+### Client リクエスト
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-gateway
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: api-gateway
-  template:
-    metadata:
-      labels:
-        app: api-gateway
-    spec:
-      containers:
-      - name: api-gateway
-        image: nginx:latest
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: nginx-config
-          mountPath: /etc/nginx/conf.d
-      volumes:
-      - name: nginx-config
-        configMap:
-          name: nginx-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nginx-config
-data:
-  default.conf: |
-    server {
-      listen 80;
-
-      location /v1/ {
-        proxy_pass http://vllm-inference:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-      }
-    }
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-gateway
-spec:
-  selector:
-    app: api-gateway
-  ports:
-  - port: 80
-    targetPort: 80
-  type: LoadBalancer
-```
-
-### Client の例
-
-Python client を使用して vLLM server にリクエストを送信する方法:
+deployment/readiness の検証後、認可された developer は kubectl port-forward -n ml-inference service/vllm-demo 8000:8000 を使用できます。デフォルトの localhost binding を維持してください。この local の例は production gateway authentication の代替ではありません。
 
 ```python
-import requests
 import json
-
-url = "http://api-gateway/v1/completions"
+import urllib.request
 
 payload = {
-    "model": "llama-3.1-70b",
-    "prompt": "Once upon a time",
-    "max_tokens": 100,
-    "temperature": 0.7
+    "model": "qwen3-demo",
+    "messages": [{"role": "user", "content": "Explain a Kubernetes Pod briefly."}],
+    "max_tokens": 64,
+    "temperature": 0,
+    "chat_template_kwargs": {"enable_thinking": False},
 }
-
-headers = {
-    "Content-Type": "application/json"
-}
-
-response = requests.post(url, headers=headers, data=json.dumps(payload))
-
-print(response.json())
+request = urllib.request.Request(
+    "http://127.0.0.1:8000/v1/chat/completions",
+    data=json.dumps(payload).encode(),
+    headers={"Content-Type": "application/json"},
+    method="POST",
+)
+with urllib.request.urlopen(request, timeout=60) as response:
+    result = json.load(response)
+print(result["choices"][0]["message"]["content"])
 ```
 
-## ベストプラクティス
+リクエストの model は served-model-name または /v1/models と一致する必要があります。production client には、file ベースの gateway credential に加え、timeout/error/stream 処理が必要です。JSON body の model field は HTTP model header ではないため、header routing が自動的にそれを検査することはありません。
 
-### リソース管理
+## 検証範囲
 
-1. **メモリオーバーヘッドを考慮する**:
-   - GPU メモリに加えて、十分な CPU メモリを割り当てます。
-   - CPU メモリはモデルサイズのおよそ 2 倍を割り当てることを推奨します。
-
-2. **CPU コアの割り当て**:
-   - GPU ごとに少なくとも 4 CPU コアを割り当てます。
-   - tensor parallelization を使用する場合は、より多くの CPU コアが必要になることがあります。
-
-3. **ノードの選択**:
-   - モデルサイズに基づいて適切なノードタイプを選択します。
-   - メモリ帯域幅の高いノードを選択します。
-
-### 高可用性
-
-1. **複数 Availability Zone へのデプロイ**:
-   - 複数の Availability Zone に vLLM server をデプロイします。
-   - 各 Availability Zone に十分な capacity を確保します。
-
-2. **負荷分散**:
-   - 複数の vLLM server インスタンスにリクエストを分散します。
-   - 同じユーザーからのリクエストが同じ server にルーティングされるよう、session affinity を設定します。
-
-3. **障害復旧**:
-   - 失敗した server を検出する health check を設定します。
-   - 自動復旧メカニズムを実装します。
-
-### コスト最適化
-
-1. **Spot インスタンスを活用する**:
-   - コスト削減のために Spot インスタンスを使用します。
-   - 中断耐性のあるワークロードに適しています。
-
-2. **モデルの Quantization**:
-   - メモリ使用量を削減するために INT8 または INT4 quantization を適用します。
-   - 精度とパフォーマンスのバランスを検討します。
-
-3. **オートスケーリング**:
-   - リクエスト量に基づいて server を自動的にスケールします。
-   - アイドル時に server をスケールダウンしてコストを削減します。
-
-## まとめ
-
-vLLM は最も活発に開発されているオープンソース LLM 推論エンジンであり、Speculative Decoding、Prefix Caching、動的 LoRA ロード、Structured Output、Tool Calling など、本番環境で不可欠な機能を包括的にサポートしています。適切な GPU インスタンスの選定、高性能ストレージ、ネットワーク最適化、EKS 上でのオートスケーリングを組み合わせることで、コスト効率が高くスケーラブルな LLM serving プラットフォームを構築できます。SGLang や TGI などの他フレームワークとの比較については、[推論フレームワーク](./04-inference-frameworks.md)の章を参照してください。
+CLI argument、metric、authentication、artifact metadata について、固定された source を検査しました。Kubernetes schema/local HTTP fixture は、実際の vLLM parser/kernel/GPU 実行を検証しません。この audit では model weight を download したり、GPU server/cloud resource を作成したりしていません。
 
 ## 参考資料
 
-- [vLLM 公式ドキュメント](https://docs.vllm.ai/) - vLLM の公式ドキュメントおよび最新機能ガイド
-- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - EKS 上に AI/ML ワークロードをデプロイするための AWS ガイドと例
+- [vLLM 0.29.0 release](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)
+- [Parallelism and scaling](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/serving/parallelism_scaling.md)
+- [Security boundaries](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/security.md)
+- [Production metrics](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/metrics.md)
+- [Structured outputs](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/features/structured_outputs.md)
+- [LoRA adapters](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/features/lora.md)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[トピッククイズ](../quizzes/ai-ml/04-vllm-deployment-quiz.md)に挑戦してください。
+この章で学んだ内容を確認するには、[Topic Quiz](../quizzes/ai-ml/04-vllm-deployment-quiz.md) に取り組んでください。

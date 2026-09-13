@@ -1,102 +1,106 @@
 # Parte 2: MLflow Model Registry
 
-> **Versiones compatibles**: MLflow 3.15.1
-> **Última actualización**: August 19, 2026
+> **Base de revisión**: MLflow 3.16.0 · 2026-09-12
 
 ## Configuración del entorno de laboratorio
 
-Para seguir los ejemplos de este documento, necesitarás las siguientes herramientas y el siguiente entorno:
-
-### Herramientas y recursos necesarios
-- Python 3.10 o superior
-- `pip install mlflow`
-- Acceso a un servidor de tracking de MLflow en ejecución con acceso al registro (consulta [Part 1: MLflow Tracking](01-tracking.md) para saber cómo configurarlo, o [Part 3: Deploying MLflow on EKS](03-eks-deployment.md) para un servidor alojado en un clúster)
+Use Python 3.10 o posterior y `mlflow==3.16.0`. Las API del Registry también funcionan con SQLite local; no es obligatorio contar con un servidor HTTP independiente. Consulte la [Parte 3](03-eks-deployment.md) para el despliegue en equipo y la [Parte 1](01-tracking.md) para la configuración de Tracking. Este capítulo describe MLflow OSS. Los Registry administrados, como Databricks Unity Catalog, pueden tener comportamientos distintos en cuanto a permisos, copia y retención.
 
 ## Qué es el Model Registry
 
-[Part 1](01-tracking.md) cubrió Tracking: el registro de parámetros, métricas, artefactos y entidades `LoggedModel` en Runs y Experiments. Un Run es el registro de un intento de entrenamiento. No es un buen identificador para «el modelo que desplegamos», porque la identidad de un Run está vinculada a cuándo y cómo ocurrió, no a lo que significa para el negocio.
-
-El Model Registry resuelve esto al introducir los **Registered Models**: colecciones con nombre y versionadas de versiones de modelos que proporcionan a un modelo una identidad estable e independiente de cualquier entrenamiento o experimento individual. En vez de preguntar «qué Run produjo el modelo que está actualmente en producción», un equipo puede preguntar «qué es `fraud-detector` ahora mismo» y obtener una respuesta coherente sin importar cuántos experimentos se hayan ejecutado desde entonces.
-
-El registro existe para gestionar el ciclo de vida de un modelo desde el desarrollo hasta la producción: registro, revisión, promoción y retirada final, todo ello asociado a un único nombre duradero.
+El Registry administra nombres lógicos de modelos, versiones numeradas, alias y metadatos. Registrar candidatos, aprobar una promoción y desplegar un endpoint son operaciones independientes. Contar con un Registry no implementa automáticamente el comportamiento de aprobación o serving.
 
 ## Conceptos principales
 
-### Registered Model
-
-Un Registered Model es un nombre; por ejemplo, `fraud-detector`. Es la entidad de nivel superior del registro. Todas las versiones, aliases, tags y descripciones asociados a un modelo se acumulan bajo este único nombre durante toda la vida del modelo.
+| Entidad | Significado y límite de mutación |
+|---|---|
+| Registered Model | colección de versiones bajo un nombre lógico, como `fraud-detector` |
+| Model Version | registro numerado con información de origen; las descripciones, etiquetas y relaciones de stage/alias pueden cambiar |
+| Alias | nombre mutable que apunta a una versión; varios alias pueden apuntar a la misma versión |
+| LoggedModel | entidad de modelo de Tracking independiente; distinta de Registered Models y Model Versions |
 
 ### Model Version
 
-Una Model Version es una versión inmutable y numerada registrada bajo el nombre de un Registered Model (la versión 1, versión 2, etc. de `fraud-detector`). Cada versión se crea una vez y nunca cambia después; un nuevo resultado de entrenamiento se convierte en una nueva versión, no en una edición de una anterior.
+Los nuevos resultados de modelos normalmente deben convertirse en nuevas versiones. Sin embargo, **no todos los campos de una versión ni todos los bytes de los artefactos son inmutables**. `update_model_version` cambia las descripciones; las etiquetas de versión también son mutables. Alguien con acceso de escritura puede cambiar archivos en una URI `source` externa. Un número de versión del Registry no impone inmutabilidad de objetos ni un hash de contenido.
 
-Cada Model Version apunta al `LoggedModel` subyacente (o al Run que lo produjo) del que procede. Esto es lo que conecta el registro con Tracking: la versión es un puntero a un punto específico del historial de un Run, no una copia que se ha alejado de su origen.
+`run_id` y `model_id` son opcionales en `create_model_version`. El registro desde una URI de origen directa puede no tener un vínculo con la ejecución de entrenamiento. Que el registro sea un puntero, copie artefactos o use otra ubicación de almacenamiento depende del backend y de la operación del Registry; verifique el comportamiento real.
 
-### Aliases
+### Alias
 
-Un alias es un puntero mutable con nombre a una Model Version específica; por ejemplo, `champion` o `challenger`. A diferencia de un número de versión, un alias puede moverse: hoy `champion` puede apuntar a la versión 4 y, tras una evaluación satisfactoria, un equipo puede reasignarlo a la versión 7 sin modificar nada que consuma el alias.
+`models:/fraud-detector@champion` encuentra la versión del alias **cuando ocurre la resolución/carga**. `models:/fraud-detector/7` es una referencia explícita de versión. Mover un alias no reemplaza automáticamente un modelo ya cargado en memoria o en una caché. Implemente por separado las políticas de despliegue, recarga y caché del controlador de serving, y registre la versión que realmente atiende las solicitudes.
 
-Los aliases son el mecanismo principal y actual para representar el rol o la etapa del ciclo de vida de un modelo en el registro. Un sistema de serving o un trabajo posterior puede escribirse una vez para resolver `models:/fraud-detector@champion`, y siempre cargará la versión que actualmente tenga ese alias, sin que se requiera ningún cambio de código cuando cambie la versión subyacente.
+`champion` y `challenger` son nombres definidos por el equipo. No configuran porcentajes de tráfico en vivo/sombra ni ejecutan una evaluación por sí mismos. Una actualización de alias no es evidencia de aprobación de calidad o seguridad.
 
-### El modelo de etapas heredado (solo como referencia)
+### El modelo de stage heredado
 
-Las implementaciones antiguas de MLflow utilizaban un mecanismo diferente: cada Model Version tenía una **stage**, una de `Staging`, `Production` o `Archived`, y avanzar un modelo implicaba cambiar su etapa. Este modelo ha sido sustituido por aliases combinados con tags, que son más flexibles porque una sola versión puede tener varios aliases (o ninguno), y el nombre de un alias no está limitado a un conjunto fijo de etiquetas de ciclo de vida. El trabajo nuevo debe usar aliases y tags en lugar de stages. Los lectores que encuentren una implementación antigua de MLflow que use transiciones de etapas estarán viendo este enfoque heredado.
+Los stages heredados son `None`, `Staging`, `Production` y `Archived`. `transition_model_version_stage` está **obsoleto desde la versión 2.9.0** y permanece en la API 3.16.0. No lo describa como eliminado de todas las versiones actuales. Los nuevos flujos de trabajo pueden combinar alias y etiquetas con Registered Models específicos por entorno y permisos explícitos. Un nombre de stage o una etiqueta no constituye control de acceso.
 
 ## Registro de un modelo
 
-Una Model Version se crea de una de dos maneras, ambas basadas en lo que cubre la Parte 1.
+Después de registrar un modelo de flavor real, llame a `mlflow.register_model(model_uri, name)` o pase `registered_model_name` a la llamada `log_model` del flavor. La API de nivel inferior `MlflowClient.create_model_version` puede especificar directamente un origen. El registro y la reasignación de alias son operaciones independientes.
 
-**Registrar después del logging.** Después de que un entrenamiento registre un modelo como artefacto (o como un `LoggedModel`, según la Parte 1), puede registrarse por separado llamando a `mlflow.register_model(model_uri, name)`, donde `model_uri` apunta al modelo ya registrado y `name` es el Registered Model bajo el que se registrará. Es una buena opción cuando la decisión de registrar un modelo está separada del propio paso de entrenamiento; por ejemplo, un paso de revisión que solo registra modelos que cumplen un umbral de evaluación.
+Este **ejercicio de metadatos del Registry** no crea un modelo capaz de realizar inferencia. Se verificó con Python 3.12, MLflow 3.16.0 y SQLite.
 
-**Registrar en el momento del logging.** Como alternativa, el parámetro `registered_model_name` en una llamada a `log_model` específica de un flavor (por ejemplo, `mlflow.sklearn.log_model(..., registered_model_name="fraud-detector")`) registra el modelo como una nueva Model Version en la misma llamada que lo registra. Es una buena opción cuando cada ejecución de un script de entrenamiento determinado debe producir automáticamente una versión candidata.
+```python
+from pathlib import Path
+import mlflow
+from mlflow import MlflowClient
 
-Cualquiera de las dos vías crea una nueva Model Version inmutable bajo el Registered Model indicado. Ninguna de las dos vías mueve un alias; esa es una acción independiente y deliberada que se describe a continuación.
+root = Path(".registry-demo").resolve()
+root.mkdir(exist_ok=True)
+mlflow.set_tracking_uri(f"sqlite:///{root / 'registry.db'}")
+client = MlflowClient()
+name = "registry-contract-demo"
+# Run once in a fresh demo DB. Inspect the existing name before repeating.
+client.create_registered_model(name)
+versions = []
+for number in (1, 2):
+    source = root / f"candidate-{number}"
+    source.mkdir(exist_ok=True)
+    (source / "metadata.json").write_text('{"fixture": true}')
+    versions.append(client.create_model_version(name, source=source.as_uri()))
 
-## Gobernanza y el flujo de trabajo de transferencia
-
-El principal valor organizativo del registro es servir como punto de transferencia entre dos aspectos distintos: producir un modelo candidato y decidir qué candidato es lo suficientemente fiable como para ponerlo en serving.
-
-Un flujo de trabajo típico es el siguiente:
-
-1. Un equipo de ciencia de datos entrena modelos y registra cada resultado prometedor como una nueva Model Version bajo un nombre compartido de Registered Model, usando cualquiera de las vías de registro anteriores.
-2. Un proceso de evaluación o aprobación —automatizado en CI/CD, manual o ambos— revisa una versión candidata comparándola con datos de prueba, comprobaciones de equidad o métricas de negocio.
-3. Solo después de que una versión supere esos controles, algo mueve el alias `champion` para que apunte a ella, normalmente mediante la API de cliente (`set_registered_model_alias`) desde un pipeline automatizado en lugar de hacerlo manualmente.
-4. La infraestructura de serving, que queda fuera del alcance de esta parte, se escribe una vez para resolver `models:/fraud-detector@champion` y nunca necesita codificar de forma fija un número de versión. Cuando `champion` se mueve, la siguiente resolución simplemente obtiene la nueva versión.
-
-Esta separación significa que las personas o sistemas que producen modelos candidatos nunca necesitan control directo sobre lo que sirve en producción, y los sistemas que consumen un modelo nunca necesitan rastrear números de versión manualmente. Un alias `challenger` se usa habitualmente junto con `champion` para marcar una versión que está siendo evaluada para su promoción, sin alterar lo que está sirviendo actualmente.
-
-```mermaid
-flowchart LR
-    subgraph Registry["Registered Model: fraud-detector"]
-        V1[Version 1]
-        V2[Version 2]
-        V3[Version 3]
-        V4[Version 4]
-    end
-
-    CH((champion alias)) -.-> V2
-    CG((challenger alias)) -.-> V4
-
-    S[Serving system] -->|resolves models:/fraud-detector@champion| CH
-    S -.->|evaluates via models:/fraud-detector@challenger| CG
-
-    style CH fill:#81c784
-    style CG fill:#fff176
-    style S fill:#4fc3f7
+first, second = versions
+assert first.run_id is None
+client.update_model_version(name, first.version, description="metadata fixture")
+client.set_model_version_tag(name, first.version, "review_state", "demo-only")
+client.set_registered_model_alias(name, "champion", first.version)
+snapshot = client.get_model_version_by_alias(name, "champion")
+client.set_registered_model_alias(name, "champion", second.version)
+assert snapshot.version == first.version
+assert client.get_model_version_by_alias(name, "champion").version == second.version
 ```
+
+`READY` es un estado de registro. Como se muestra arriba, se puede registrar un fixture de metadatos sin un flavor de modelo ni pesos; pruebe por separado la compatibilidad de inferencia y los criterios de evaluación. El ejercicio deja su DB local y sus fixtures en `.registry-demo`.
+
+## Gobernanza y el flujo de trabajo de traspaso
+
+1. Registre los artefactos de origen reales, hashes de modelo/código/datos, dependencias y referencias de ejecución/modelo.
+2. Evalúe criterios de calidad, seguridad y negocio; conserve la evidencia de aprobación.
+3. Un actor autorizado llama a `set_registered_model_alias`. Completar el entrenamiento no constituye una aprobación automática.
+4. Los sistemas de serving resuelven la nueva referencia y realizan la recarga o el despliegue. Fije los números de versión y los hashes de artefactos cuando sea necesario para la reproducibilidad y el rollback.
+
+Separar la creación de candidatos de la promoción requiere autenticación, autorización y un pipeline operativo. Una etiqueta como `review_state=approved` por sí sola no restringe el acceso de escritura ni hace que la evidencia de aprobación sea resistente a manipulaciones. Coordine las actualizaciones simultáneas de alias de varios trabajos de despliegue.
+
+![Un consumidor resuelve los alias champion y challenger en referencias de Model Version. La resolución de alias no enruta tráfico ni reemplaza automáticamente un modelo ya cargado.](../../.gitbook/assets/en-ai-ml-mlflow-02-model-registry-0.png)
+
+[Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-02-model-registry-0.html)
 
 ## Linaje y reproducibilidad
 
-Como cada Model Version conserva su vínculo con el Run (y, a través de él, con los parámetros, el código y las referencias de conjuntos de datos de la Parte 1) que la produjo, un equipo siempre puede responder una pregunta de auditoría como «qué código y datos exactos produjeron el modelo que actualmente sirve como `champion`». La cadena es: alias, Model Version, Run y los parámetros y artefactos registrados de ese Run.
+El linaje solo está tan completo como la información registrada y conservada. El Registry no puede reconstruir posteriormente `run_id`, `model_id`, revisiones de código o hashes de conjuntos de datos faltantes. Los archivos de origen modificados, Runs/Model Versions eliminados y la limpieza de artefactos también pueden dejar enlaces incompletos.
 
-Las Model Versions también admiten sus propios tags y descripciones, independientes de los tags del Run subyacente. Esto es útil para registrar contexto específico del registro; por ejemplo, quién aprobó una versión para su promoción o un enlace al informe de evaluación que justificó mover un alias, sin mezclar esa información con los metadatos propios del entrenamiento.
+Una auditoría necesita la ID de versión/modelo que realmente atiende, hashes y ubicaciones de artefactos, commit de origen, snapshot del conjunto de datos, dependencias y registros de evaluación/aprobación. Opere conjuntamente las copias de seguridad y la retención de la DB de metadatos y del almacenamiento de artefactos. Un alias no es un registro de auditoría permanente de todos los cambios.
 
 ## Próximos pasos
 
-La Parte 2 cubrió el propio registro: Registered Models, Model Versions, aliases como mecanismo actual del ciclo de vida y cómo el registro se conecta con [Part 1: MLflow Tracking](01-tracking.md). Cargar un modelo registrado en un endpoint de inferencia real es un aspecto independiente y queda fuera del alcance de esta serie; en cambio, [Part 3: Deploying MLflow on EKS](03-eks-deployment.md) cubre la configuración del servidor de tracking y los almacenes de respaldo de los que dependen tanto Tracking como el Model Registry.
+[Parte 3: despliegue de EKS](03-eks-deployment.md) cubre los límites de permisos de servidor, base de datos y artefactos.
 
-[Volver a la página principal](./README.md)
+## Fuentes principales
 
-## Cuestionario
+- [Model Registry](https://mlflow.org/docs/3.16.0/ml/model-registry/)
+- [API de cliente del Registry 3.16.0](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/tracking/client.py)
+- [Campos de ModelVersion](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/entities/model_registry/model_version.py)
+- [Implementación del Registry SQL de OSS](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/store/model_registry/sqlalchemy_store.py)
 
-Comprueba tus conocimientos con el [cuestionario de Model Registry](../../quizzes/ai-ml/mlflow/02-model-registry-quiz.md).
+[Página principal](README.md) · [Cuestionario](../../quizzes/ai-ml/mlflow/02-model-registry-quiz.md)

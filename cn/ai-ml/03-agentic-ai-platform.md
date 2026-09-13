@@ -1,51 +1,26 @@
 # 在 EKS 上构建 Agentic AI 平台
 
-> **支持版本**: EKS 1.31+, vLLM 0.6+, Karpenter 1.0+
-> **最后更新**: February 23, 2026
+> **审查基线**：Kagent 0.10.1 / Gateway Inference Extension 1.6.1 / LangGraph 1.2.11 / Langfuse SDK 4.15.2
+> **最后更新**：September 12, 2026
 
-Agentic AI（智能体 AI）不止于简单的问答，它能够自主制定计划、使用工具，并通过迭代实现目标。本章介绍如何在 EKS 上构建生产级 Agentic AI 平台。
+Agentic AI 超越了简单的问答，能够自主制定计划、使用工具并迭代实现目标。本章介绍如何在 EKS 上设计 Agentic AI 平台及其运行边界。
 
 ## 1. Agentic AI 平台概述
 
 ### 什么是 Agentic AI？
 
-Agentic AI 是一种具备以下特征的自主 AI 系统：
+Agentic AI 是一种具有以下特征的自主 AI 系统：
 
-```mermaid
-flowchart TD
-    subgraph AgenticAI [Agentic AI Characteristics]
-        Planning[Autonomous Planning]
-        Execution[Tool-based Execution]
-        Iteration[Iterative Improvement]
-        Memory[State and Memory Management]
-    end
+![带有授权、证据和重试预算的目标、规划、执行和评估，最终得到结果或选择弃答。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-0.png)
 
-    subgraph Workflow [Workflow]
-        Goal[Goal Setting] --> Plan[Planning]
-        Plan --> Execute[Execution]
-        Execute --> Evaluate[Evaluation]
-        Evaluate --> |Improvement Needed| Plan
-        Evaluate --> |Complete| Result[Return Result]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-0.html)
 
-    Planning --> Plan
-    Execution --> Execute
-    Iteration --> Evaluate
-    Memory --> Execute
-
-    classDef agentNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef workflowNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Planning,Execution,Iteration,Memory agentNode;
-    class Goal,Plan,Execute,Evaluate,Result workflowNode;
-```
-
-1. **自主规划**：将复杂任务拆解为子任务，并确定执行顺序。
+1. **自主规划**：将复杂任务分解为子任务，并确定执行顺序。
 2. **基于工具的执行**：使用包括外部 API、数据库和代码执行器在内的多种工具。
-3. **迭代式改进**：评估执行结果，并根据需要修改计划。
+3. **迭代改进**：评估执行结果，并按需修改计划。
 4. **状态管理**：为长时间运行的任务维护状态和记忆。
 
-### 为什么需要 Kubernetes
+### 何时选择 Kubernetes
 
 Kubernetes 为 Agentic AI 平台提供以下核心能力：
 
@@ -53,283 +28,30 @@ Kubernetes 为 Agentic AI 平台提供以下核心能力：
 |-------------|---------------------|
 | GPU 编排 | Device Plugin, GPU Operator, MIG |
 | 自动扩缩容 | HPA, VPA, Karpenter |
-| 多租户隔离 | Namespace, NetworkPolicy, ResourceQuota |
-| 高可用性 | ReplicaSet, PodDisruptionBudget |
-| Service Mesh | Istio, Gateway API |
-| 成本优化 | Spot instances, Node consolidation |
+| 多租户隔离 | RBAC, Namespace, 强制执行的 NetworkPolicy, workload identity |
+| 高可用性 | replicas, probes, 放置和恢复测试 |
+| Service Mesh | 已配置的 gateway/mesh 实现 |
+| 成本优化 | Spot 实例, Node 整合 |
 
-### 四个关键技术挑战
+### 四项关键技术挑战
 
 构建 Agentic AI 平台时需要解决的关键挑战：
 
-```mermaid
-flowchart LR
-    subgraph Challenges [Key Technical Challenges]
-        GPU[1. GPU Resource Management]
-        LLM[2. Multi-LLM Integration]
-        Workflow[3. Workflow Orchestration]
-        Cost[4. Real-time Cost Optimization]
-    end
+![GPU 放置、provider 集成、独立的 LangGraph 和 Kagent ADK runtime，以及具有强制预算的成本测量。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-1.png)
 
-    GPU --> |Fragmentation, Sharing, Scheduling| GPUSolution[MIG, Time-Slicing, Karpenter]
-    LLM --> |Routing, Fallback, Load Balancing| LLMSolution[LiteLLM, Inference Gateway]
-    Workflow --> |State Management, Branching, Error Handling| WorkflowSolution[LangGraph, Kagent]
-    Cost --> |Caching, Batching, Tiering| CostSolution[Langfuse, Prompt Cache]
-
-    classDef challenge fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef solution fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class GPU,LLM,Workflow,Cost challenge;
-    class GPUSolution,LLMSolution,WorkflowSolution,CostSolution solution;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-1.html)
 
 ---
 
-## 2. GPU 基础设施配置
+## 2. GPU 和成本基线
 
-### GPU 实例类型比较
+使用外部模型 API 的 Agent 不一定需要 GPU。自托管推理需要根据权重/精度、KV cache、并发量、CPU 架构和 driver 兼容性选择设备。请使用经审查的 [GPU 指南](01-ai-ml-workloads.md)，并避免在 AL2023 NVIDIA AMI 上重复安装 driver/toolkit。
 
-AWS 上可用的主要 GPU 实例类型：
+MIG 对支持的 GPU 进行分区。在单个 MIG 实例内进行 time-slicing，不会在其共享 workload 之间增加内存/故障隔离；它不是软件安全边界。同样，80 GB 通常无法容纳 70B FP16 权重。
 
-| 实例 | GPU | GPU 内存 | 用例 | 每小时成本（按需） |
-|----------|-----|------------|----------|------------------------|
-| **p5.48xlarge** | 8x H100 | 640GB | 大规模训练、超大模型推理 | ~$98.32 |
-| **p4d.24xlarge** | 8x A100 | 320GB | 分布式训练、70B+ 模型推理 | ~$32.77 |
-| **g5.xlarge** | 1x A10G | 24GB | 中小型模型推理 | ~$1.01 |
-| **g5.48xlarge** | 8x A10G | 192GB | 多模型服务 | ~$16.29 |
-| **g6.xlarge** | 1x L4 | 24GB | 高性价比推理 | ~$0.80 |
-| **g6.48xlarge** | 8x L4 | 192GB | 大规模推理集群 | ~$13.35 |
-| **inf2.xlarge** | 1x Inferentia2 | 32GB | AWS 优化推理 | ~$0.76 |
+GPU Operator Helm values 与 ConfigMap/HelmRelease 资源不同。将 Flux HelmRelease 作为 helm --values 传递不会应用预期设置。MIG manager ConfigMap 引用、profile Node label 和 plugin strategy 必须保持一致。device-plugin.config label 选择的是配置键，而不是 ConfigMap 名称。MIG 重新配置可能中断 workload，本次审计未执行该操作。
 
-### Multi-Instance GPU (MIG) 配置
-
-NVIDIA A100/H100 GPU 可以通过 MIG 进行物理分区，以隔离多个工作负载。
-
-#### MIG 配置文件（A100 80GB 参考）
-
-| 配置文件 | GPU 内存 | SM 数量 | 用例 |
-|---------|-----------|----------|----------|
-| 1g.10gb | 10GB | 14 | 小模型推理、开发 |
-| 2g.20gb | 20GB | 28 | 7B 模型推理 |
-| 3g.40gb | 40GB | 42 | 13B 模型推理 |
-| 4g.40gb | 40GB | 56 | 大批量推理 |
-| 7g.80gb | 80GB | 98 | 70B 模型、训练 |
-
-#### NVIDIA GPU Operator 部署
-
-```yaml
-# gpu-operator-values.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: gpu-operator-config
-  namespace: gpu-operator
-data:
-  mig.strategy: "mixed"  # single or mixed
----
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: gpu-operator
-  namespace: gpu-operator
-spec:
-  interval: 10m
-  chart:
-    spec:
-      chart: gpu-operator
-      version: "v24.9.0"
-      sourceRef:
-        kind: HelmRepository
-        name: nvidia
-        namespace: flux-system
-  values:
-    operator:
-      defaultRuntime: containerd
-    mig:
-      strategy: mixed
-    devicePlugin:
-      enabled: true
-      config:
-        name: time-slicing-config
-        default: any
-    gfd:
-      enabled: true
-    dcgmExporter:
-      enabled: true
-      serviceMonitor:
-        enabled: true
-```
-
-```bash
-# GPU Operator installation
-helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-helm repo update
-
-helm install gpu-operator nvidia/gpu-operator \
-  --namespace gpu-operator \
-  --create-namespace \
-  --values gpu-operator-values.yaml
-
-# Check MIG configuration
-kubectl get nodes -l nvidia.com/mig.capable=true \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.status.allocatable}{"\n"}{end}'
-```
-
-#### MIG 分区配置
-
-```yaml
-# mig-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mig-parted-config
-  namespace: gpu-operator
-data:
-  config.yaml: |
-    version: v1
-    mig-configs:
-      # Development environment: Small partitions for many users
-      development:
-        - devices: [0]
-          mig-enabled: true
-          mig-devices:
-            "1g.10gb": 7
-
-      # Production: Medium-sized partitions
-      production-inference:
-        - devices: [0]
-          mig-enabled: true
-          mig-devices:
-            "2g.20gb": 3
-            "1g.10gb": 1
-
-      # Large models: Full GPU usage
-      large-model:
-        - devices: [0]
-          mig-enabled: true
-          mig-devices:
-            "7g.80gb": 1
-```
-
-### Time-Slicing 配置
-
-对于不支持 MIG 的 GPU（A10G、L4 等），Time-Slicing 允许共享 GPU。
-
-```yaml
-# time-slicing-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: time-slicing-config
-  namespace: gpu-operator
-data:
-  any: |
-    version: v1
-    flags:
-      migStrategy: none
-    sharing:
-      timeSlicing:
-        renameByDefault: false
-        failRequestsGreaterThanOne: false
-        resources:
-          - name: nvidia.com/gpu
-            replicas: 4  # Split one GPU into 4
----
-# Apply Time-Slicing to node
-apiVersion: v1
-kind: Node
-metadata:
-  name: gpu-node-1
-  labels:
-    nvidia.com/device-plugin.config: time-slicing-config
-```
-
-#### MIG 与 Time-Slicing 比较
-
-| 特性 | MIG | Time-Slicing |
-|----------------|-----|--------------|
-| **隔离级别** | 硬件隔离（内存、SM） | 软件隔离（时间分片） |
-| **支持的 GPU** | A100, H100 | 所有 NVIDIA GPU |
-| **内存保证** | 有保证 | 共享（可能发生争用） |
-| **开销** | 低 | 上下文切换开销 |
-| **灵活性** | 需要重新配置 | 可动态调整 |
-| **用例** | 生产、多租户 | 开发、批处理 |
-
-### Karpenter NodePool 配置
-
-```yaml
-# gpu-nodepool.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-inference
-spec:
-  template:
-    metadata:
-      labels:
-        workload-type: inference
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand", "spot"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - g5.xlarge
-            - g5.2xlarge
-            - g5.4xlarge
-            - g6.xlarge
-            - g6.2xlarge
-        - key: "karpenter.k8s.aws/instance-gpu-count"
-          operator: Gt
-          values: ["0"]
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: gpu-nodes
-      taints:
-        - key: nvidia.com/gpu
-          value: "true"
-          effect: NoSchedule
-  limits:
-    nvidia.com/gpu: 100
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 5m
-    budgets:
-      - nodes: "20%"
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: gpu-nodes
-spec:
-  amiFamily: AL2023
-  role: KarpenterNodeRole-${CLUSTER_NAME}
-  subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: ${CLUSTER_NAME}
-  securityGroupSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: ${CLUSTER_NAME}
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        volumeSize: 200Gi
-        volumeType: gp3
-        iops: 10000
-        throughput: 500
-        deleteOnTermination: true
-  tags:
-    Environment: production
-    Workload: ai-inference
-```
-
----
+价格需要包含 region/OS/购买模式/日期及 quota 上下文。此前没有来源支撑的小时价格表和固定节省百分比并非当前定价证据。应将自托管的 GPU 总空闲时间、存储/传输、运维和恢复成本，与测得的成功吞吐量进行比较。
 
 ## 3. 模型服务（vLLM）
 
@@ -337,1762 +59,307 @@ spec:
 
 vLLM 通过以下核心技术提供高性能 LLM 推理：
 
-```mermaid
-flowchart TD
-    subgraph vLLM [vLLM Core Technologies]
-        PagedAttention[PagedAttention]
-        ContinuousBatching[Continuous Batching]
-        PrefixCaching[Prefix Caching]
-        ChunkedPrefill[Chunked Prefill]
-    end
+![PagedAttention、continuous batching、prefix caching 和 chunked prefill，以及依赖 workload 的内存、吞吐量和延迟测量。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-2.png)
 
-    subgraph Benefits [Performance Benefits]
-        Memory[Memory Efficiency 95%+]
-        Throughput[Throughput 24x Improvement]
-        Latency[Latency Minimization]
-        Context[Long Context Support]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-2.html)
 
-    PagedAttention --> Memory
-    ContinuousBatching --> Throughput
-    PrefixCaching --> Latency
-    ChunkedPrefill --> Context
+### 经审查的服务路径
 
-    classDef techNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef benefitNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+请使用[当前 vLLM 指南](02-vllm-deployment.md)了解 0.29.0 image/model revision、startup probe、私有 Service 和实际 CLI 选项。单 GPU NodePool 无法放置原先的四 GPU/200Gi Pod。应区分 TP/PP group 与独立 replica，并计算内存需求。
 
-    class PagedAttention,ContinuousBatching,PrefixCaching,ChunkedPrefill techNode;
-    class Memory,Throughput,Latency,Context benefitNode;
-```
+Prefix cache 会重用受支持的 KV prefix，而不是完整响应。GPU memory utilization 并非仅是 KV-cache 占比，且当前 CLI 中没有 swap-space。llm-d 解耦并不是带有 role 参数的两个虚构 prefill/decode image；应验证其实际 release 的 model server、KV connector、scheduler、gateway 以及硬件/网络组合。
 
-### vLLM Deployment 配置
+## 4. 推理网关
 
-```yaml
-# vllm-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vllm-llama3-70b
-  namespace: ai-inference
-  labels:
-    app: vllm
-    model: llama3-70b
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: vllm
-      model: llama3-70b
-  template:
-    metadata:
-      labels:
-        app: vllm
-        model: llama3-70b
-    spec:
-      nodeSelector:
-        workload-type: inference
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Equal
-          value: "true"
-          effect: NoSchedule
-      containers:
-        - name: vllm
-          image: vllm/vllm-openai:v0.6.4
-          ports:
-            - containerPort: 8000
-              name: http
-          env:
-            - name: HUGGING_FACE_HUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: huggingface-token
-                  key: token
-            - name: VLLM_ATTENTION_BACKEND
-              value: "FLASH_ATTN"
-          args:
-            - "--model"
-            - "meta-llama/Meta-Llama-3-70B-Instruct"
-            - "--tensor-parallel-size"
-            - "4"
-            - "--gpu-memory-utilization"
-            - "0.95"
-            - "--max-model-len"
-            - "8192"
-            - "--enable-prefix-caching"
-            - "--enable-chunked-prefill"
-            - "--max-num-batched-tokens"
-            - "32768"
-            - "--trust-remote-code"
-          resources:
-            requests:
-              nvidia.com/gpu: 4
-              memory: "200Gi"
-              cpu: "32"
-            limits:
-              nvidia.com/gpu: 4
-              memory: "250Gi"
-              cpu: "48"
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 300
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 600
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 3
-          volumeMounts:
-            - name: model-cache
-              mountPath: /root/.cache/huggingface
-            - name: shm
-              mountPath: /dev/shm
-      volumes:
-        - name: model-cache
-          persistentVolumeClaim:
-            claimName: model-cache-pvc
-        - name: shm
-          emptyDir:
-            medium: Memory
-            sizeLimit: 64Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-llama3-70b
-  namespace: ai-inference
-spec:
-  selector:
-    app: vllm
-    model: llama3-70b
-  ports:
-    - port: 8000
-      targetPort: 8000
-      name: http
-  type: ClusterIP
-```
+### 基于 Gateway API 的 AI Workload 路由
 
-### 性能优化设置
-
-#### Tensor Parallelism
-
-将大型模型分布到多个 GPU 上：
-
-```yaml
-# Recommended settings by model size
-# 7B model: 1 GPU
-# 13B model: 1-2 GPU
-# 70B model: 4 GPU (A100) or 8 GPU (A10G)
-# 405B model: 8 GPU (H100)
-
-args:
-  - "--tensor-parallel-size"
-  - "4"  # Adjust to match GPU count
-```
-
-#### KV Cache 管理
-
-```yaml
-args:
-  # Allocate 95% of GPU memory to KV cache
-  - "--gpu-memory-utilization"
-  - "0.95"
-
-  # Block size setting (default: 16)
-  - "--block-size"
-  - "16"
-
-  # Swap space setting (CPU memory)
-  - "--swap-space"
-  - "32"  # In GB
-```
-
-#### Prefix Caching
-
-针对重复系统提示词的缓存：
-
-```yaml
-args:
-  - "--enable-prefix-caching"
-
-# Effect: Reduces Time To First Token (TTFT) by 50-80%
-# for requests using identical system prompts
-```
-
-#### Chunked Prefill
-
-长上下文处理优化：
-
-```yaml
-args:
-  - "--enable-chunked-prefill"
-  - "--max-num-batched-tokens"
-  - "32768"
-
-# Effect: Stabilizes response latency for workloads
-# with mixed long and short prompts
-```
-
-### 模型服务模式
-
-#### 单模型 Pod
-
-```yaml
-# Simplest pattern: One Pod serving one model
-spec:
-  containers:
-    - name: vllm
-      args:
-        - "--model"
-        - "meta-llama/Meta-Llama-3-8B-Instruct"
-```
-
-#### 使用 llm-d 的解耦服务
-
-分离 Prefill 和 Decode 以进行优化：
-
-```yaml
-# llm-d-prefill.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: llm-d-prefill
-spec:
-  replicas: 2
-  template:
-    spec:
-      containers:
-        - name: llm-d
-          image: llm-d/prefill:latest
-          args:
-            - "--role"
-            - "prefill"
-            - "--model"
-            - "meta-llama/Meta-Llama-3-70B-Instruct"
-          resources:
-            requests:
-              nvidia.com/gpu: 4
----
-# llm-d-decode.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: llm-d-decode
-spec:
-  replicas: 4
-  template:
-    spec:
-      containers:
-        - name: llm-d
-          image: llm-d/decode:latest
-          args:
-            - "--role"
-            - "decode"
-            - "--prefill-endpoint"
-            - "http://llm-d-prefill:8000"
-          resources:
-            requests:
-              nvidia.com/gpu: 2
-```
-
----
-
-## 4. Inference Gateway
-
-### 基于 Gateway API 的 AI 工作负载路由
-
-扩展 Kubernetes Gateway API，以高效路由 AI 推理工作负载。
+扩展 Kubernetes Gateway API，以高效路由 AI 推理 workload。
 
 ### Kgateway + InferencePool 架构
 
-```mermaid
-flowchart TD
-    Client[Client] --> Gateway[Gateway]
-    Gateway --> HTTPRoute[HTTPRoute]
-    HTTPRoute --> InferencePool[InferencePool]
+![HTTPRoute 引用 InferencePool；gateway 使用 EPP selection 代理至模型 Pod。配置资源与代理 hop 是不同的概念。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png)
 
-    subgraph Pool [InferencePool]
-        EP1[vLLM Pod 1]
-        EP2[vLLM Pod 2]
-        EP3[vLLM Pod 3]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-3.html)
 
-    InferencePool --> EndpointPicker[Endpoint Picker]
-    EndpointPicker --> |least-loaded| EP1
-    EndpointPicker --> |prefix-aware| EP2
+#### InferencePool v1
 
-    classDef gatewayNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef poolNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+Gateway API 和 Gateway API Inference Extension 是不同的 API。Extension 1.6.1 使用带有 targetPorts 和 endpointPickerRef 的 inference.networking.k8s.io/v1。先前虚构的 EndpointPicker CRD/endpointPickerConfig 并非此 schema。
 
-    class Gateway,HTTPRoute gatewayNode;
-    class EP1,EP2,EP3,InferencePool poolNode;
-```
-
-#### InferencePool CRD
+这个通过 schema 检查的示例需要位于 9002 的 EPP Service、模型 Pod 和支持的 gateway controller。InferencePool 本身不会配置 authentication、rate limit 或 prefix-aware 选择算法。
 
 ```yaml
-# inferencepool.yaml
-apiVersion: inference.networking.x-k8s.io/v1alpha1
+apiVersion: inference.networking.k8s.io/v1
 kind: InferencePool
 metadata:
-  name: llama3-pool
+  name: model-pool
   namespace: ai-inference
 spec:
-  targetPortNumber: 8000
   selector:
     matchLabels:
-      app: vllm
-      model: llama3-70b
-  endpointPickerConfig:
-    # Load balancing strategy
-    extensionRef:
-      name: prefix-aware-picker
-      group: inference.networking.x-k8s.io
-      kind: EndpointPicker
----
-apiVersion: inference.networking.x-k8s.io/v1alpha1
-kind: EndpointPicker
-metadata:
-  name: prefix-aware-picker
-  namespace: ai-inference
-spec:
-  type: PrefixAware
-  config:
-    # Prefix cache hit rate optimization
-    prefixHashBuckets: 1024
-    fallbackStrategy: LeastLoaded
-    loadMetric: pending_requests
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: llama3-route
-  namespace: ai-inference
-spec:
-  parentRefs:
-    - name: ai-gateway
-      namespace: ai-inference
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /v1/chat/completions
-          headers:
-            - name: x-model
-              value: llama3-70b
-      backendRefs:
-        - group: inference.networking.x-k8s.io
-          kind: InferencePool
-          name: llama3-pool
-          port: 8000
+      app: vllm-demo
+  targetPorts:
+    - number: 8000
+  endpointPickerRef:
+    name: model-epp
+    kind: Service
+    group: ""
+    port:
+      number: 9002
+    failureMode: FailClose
 ```
 
-### LiteLLM 集成网关
+selector 仅匹配同一 Namespace 中的 Pod。EndpointPickerRef 默认是 Service 引用和 FailClose。应一并验证 HTTPRoute、EPP 配置/version 支持、TLS 和 gateway status。API 定义或 Kgateway 安装并不会启用每项 plugin capability。
 
-LiteLLM 将多种 LLM 提供商统一到单一 API 之下。
+### LiteLLM 1.100.1 Provider Gateway
+
+LiteLLM provider adaptation 和 InferencePool endpoint selection 属于不同层。Provider API 在 path、authentication、payload、response 和 streaming 方面各不相同；将 OpenAI JSON 原样转发至 Anthropic endpoint 并不是有效的 adapter。
+
+下面是当前 Router fallback 形式。将 proxy command/args 连接到实际 config file，并在需要时单独提供 Redis/database、credentials 和 callback。
 
 ```yaml
-# litellm-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: litellm-gateway
-  namespace: ai-gateway
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: litellm
-  template:
-    metadata:
-      labels:
-        app: litellm
-    spec:
-      containers:
-        - name: litellm
-          image: ghcr.io/berriai/litellm:main-v1.55.0
-          ports:
-            - containerPort: 4000
-          env:
-            - name: LITELLM_MASTER_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: litellm-secrets
-                  key: master-key
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: litellm-secrets
-                  key: database-url
-          volumeMounts:
-            - name: config
-              mountPath: /app/config.yaml
-              subPath: config.yaml
-          resources:
-            requests:
-              cpu: "2"
-              memory: "4Gi"
-            limits:
-              cpu: "4"
-              memory: "8Gi"
-      volumes:
-        - name: config
-          configMap:
-            name: litellm-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: litellm-config
-  namespace: ai-gateway
-data:
-  config.yaml: |
-    model_list:
-      # Internal vLLM endpoints
-      - model_name: llama3-70b
-        litellm_params:
-          model: openai/meta-llama/Meta-Llama-3-70B-Instruct
-          api_base: http://vllm-llama3-70b.ai-inference:8000/v1
-          api_key: dummy
-        model_info:
-          max_tokens: 8192
-          input_cost_per_token: 0.0000001
-          output_cost_per_token: 0.0000003
-
-      - model_name: llama3-8b
-        litellm_params:
-          model: openai/meta-llama/Meta-Llama-3-8B-Instruct
-          api_base: http://vllm-llama3-8b.ai-inference:8000/v1
-          api_key: dummy
-        model_info:
-          max_tokens: 8192
-          input_cost_per_token: 0.00000005
-          output_cost_per_token: 0.00000015
-
-      # External providers (for fallback)
-      - model_name: gpt-4o
-        litellm_params:
-          model: gpt-4o
-          api_key: os.environ/OPENAI_API_KEY
-        model_info:
-          max_tokens: 128000
-          input_cost_per_token: 0.000005
-          output_cost_per_token: 0.000015
-
-      - model_name: claude-3-5-sonnet
-        litellm_params:
-          model: anthropic/claude-3-5-sonnet-20241022
-          api_key: os.environ/ANTHROPIC_API_KEY
-        model_info:
-          max_tokens: 200000
-          input_cost_per_token: 0.000003
-          output_cost_per_token: 0.000015
-
-    # Routing settings
-    router_settings:
-      routing_strategy: usage-based-routing-v2
-      enable_pre_call_checks: true
-      redis_host: redis.ai-gateway
-      redis_port: 6379
-
-    # Fallback settings
-    litellm_settings:
-      fallbacks:
-        - model: llama3-70b
-          fallback_models:
-            - gpt-4o
-            - claude-3-5-sonnet
-
-      # Retry settings
-      num_retries: 3
-      request_timeout: 300
-
-      # Cost tracking
-      success_callback: ["langfuse"]
-      failure_callback: ["langfuse"]
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: litellm-gateway
-  namespace: ai-gateway
-spec:
-  selector:
-    app: litellm
-  ports:
-    - port: 4000
-      targetPort: 4000
-  type: ClusterIP
+model_list:
+  - model_name: local-primary
+    litellm_params:
+      model: openai/qwen3-demo
+      api_base: http://vllm-demo.ml-inference:8000/v1
+  - model_name: local-fallback
+    litellm_params:
+      model: openai/qwen3-demo
+      api_base: http://vllm-secondary.ml-inference:8000/v1
+router_settings:
+  fallbacks:
+    - local-primary: [local-fallback]
+  num_retries: 0
 ```
 
-#### LiteLLM 使用示例
+这说明了配置方式，前提是 endpoint 和 authentication 已准备就绪。应向应用 client 提供 scoped credentials，而不是 master key。外部 fallback 是数据外流路径：在路由前应强制执行租户的 provider/data policy。由模型选择的名称或 client header 不得绕过此政策。
 
-```python
-# litellm_client.py
-from openai import OpenAI
 
-# Using LiteLLM gateway
-client = OpenAI(
-    api_key="sk-litellm-master-key",
-    base_url="http://litellm-gateway.ai-gateway:4000/v1"
-)
+## 5. RAG 数据和检索边界
 
-# Call internal model (automatic routing)
-response = client.chat.completions.create(
-    model="llama3-70b",
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Explain Kubernetes in simple terms."}
-    ],
-    max_tokens=500
-)
+最新检查的 Milvus release 是 3.0.1；另行审查的 Operator 1.3.9 默认使用 Milvus 2.6.11。它们不是同一个版本，宽泛的 compatibility table 不能证明已测试的 3.x upgrade。Operator repository 为 https://zilliztech.github.io/milvus-operator/，与普通 Milvus chart repository 分开。
 
-print(response.choices[0].message.content)
+Vector dimension 必须与实际 embedding output 匹配。应为 ingestion 和 query 记录 revision、dimension options、tokenizer、normalization 和 distance metric。Index parameter 各不相同；不能简单将 HNSW M/efConstruction 用于 GPU_IVF_FLAT。GPU indexing 需要兼容的 image、version、device 和 component role；在 indexNode 上请求 GPU 并不等同于自动加速。
 
-# Automatic fallback to external providers if needed
-# (llama3-70b failure -> gpt-4o -> claude-3-5-sonnet in order)
-```
+仅有 tenant_id field 不会强制隔离。应从经过 authentication 的 identity 派生 scope，应用服务端 retrieval filter，并验证返回的 document。还要管理 document deletion/change 和 embedding-version lifecycle。
 
----
+### 分块和混合搜索
 
-## 5. RAG 数据层
+当前 splitter import 使用 langchain_text_splitters。RecursiveCharacterTextSplitter 的 chunk_size 默认单位是字符，而不是 token。Token splitting 必须与 embedding model 的 tokenizer 和实际 input limit 匹配。Semantic chunking 会增加 embedding call/成本，且不保证质量更好。
 
-### Milvus 向量数据库
+Hybrid search 需要 RRF 或校准后的 score 等 fusion，而不只是两次搜索，并且应使用相同的 authorization filter。评估 recall、precision 和 latency。应限制重试次数，并在没有证据时弃答，而不是在重试耗尽后始终生成结果。
 
-Milvus 是用于大规模向量搜索的开源数据库。
-
-#### Milvus Operator 部署
-
-```bash
-# Install Milvus Operator
-helm repo add milvus https://zilliztech.github.io/milvus-helm
-helm repo update
-
-helm install milvus-operator milvus/milvus-operator \
-  --namespace milvus-system \
-  --create-namespace
-```
-
-```yaml
-# milvus-cluster.yaml
-apiVersion: milvus.io/v1beta1
-kind: Milvus
-metadata:
-  name: milvus-cluster
-  namespace: ai-data
-spec:
-  mode: cluster
-  dependencies:
-    etcd:
-      inCluster:
-        values:
-          replicaCount: 3
-          persistence:
-            enabled: true
-            size: 50Gi
-    pulsar:
-      inCluster:
-        values:
-          components:
-            autorecovery: false
-          proxy:
-            replicaCount: 2
-          broker:
-            replicaCount: 2
-    storage:
-      inCluster:
-        values:
-          mode: distributed
-          fullnameOverride: milvus-minio
-          persistence:
-            enabled: true
-            size: 500Gi
-  components:
-    # Query Node - Vector search processing
-    queryNode:
-      replicas: 3
-      resources:
-        requests:
-          cpu: "4"
-          memory: "16Gi"
-        limits:
-          cpu: "8"
-          memory: "32Gi"
-
-    # Index Node - Index building (GPU accelerated)
-    indexNode:
-      replicas: 2
-      resources:
-        requests:
-          cpu: "4"
-          memory: "16Gi"
-          nvidia.com/gpu: 1
-        limits:
-          cpu: "8"
-          memory: "32Gi"
-          nvidia.com/gpu: 1
-
-    # Data Node - Data processing
-    dataNode:
-      replicas: 2
-      resources:
-        requests:
-          cpu: "2"
-          memory: "8Gi"
-        limits:
-          cpu: "4"
-          memory: "16Gi"
-
-    # Proxy - API gateway
-    proxy:
-      replicas: 2
-      serviceType: ClusterIP
-      resources:
-        requests:
-          cpu: "2"
-          memory: "4Gi"
-        limits:
-          cpu: "4"
-          memory: "8Gi"
-  config:
-    common:
-      gracefulTime: 30000
-    queryNode:
-      gracefulTime: 30000
-```
-
-#### Collection Schema 设计
-
-```python
-# milvus_schema.py
-from pymilvus import (
-    connections, Collection, FieldSchema,
-    CollectionSchema, DataType, utility
-)
-
-# Connect to Milvus
-connections.connect(
-    alias="default",
-    host="milvus-cluster-proxy.ai-data",
-    port="19530"
-)
-
-# Document collection schema
-fields = [
-    FieldSchema(name="id", dtype=DataType.VARCHAR, max_length=64, is_primary=True),
-    FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
-    FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=1536),
-    FieldSchema(name="metadata", dtype=DataType.JSON),
-    FieldSchema(name="created_at", dtype=DataType.INT64),
-]
-
-schema = CollectionSchema(
-    fields=fields,
-    description="Document embeddings for RAG"
-)
-
-# Create collection
-collection = Collection(
-    name="documents",
-    schema=schema,
-    using="default"
-)
-
-# Create index
-index_params = {
-    "metric_type": "COSINE",
-    "index_type": "HNSW",  # Or GPU_IVF_FLAT for GPU acceleration
-    "params": {
-        "M": 16,
-        "efConstruction": 256
-    }
-}
-
-collection.create_index(
-    field_name="embedding",
-    index_params=index_params
-)
-
-# Load collection
-collection.load()
-```
-
-#### 索引类型比较
-
-| 索引类型 | 特性 | 内存使用 | 搜索速度 | 用例 |
-|-----------|----------------|--------------|--------------|----------|
-| **FLAT** | 精确搜索 | 高 | 慢 | 小规模、准确性优先 |
-| **IVF_FLAT** | 基于聚类 | 中 | 快 | 通用用途 |
-| **HNSW** | 基于图 | 高 | 非常快 | 大规模、速度优先 |
-| **GPU_IVF_FLAT** | GPU 加速 | 中 | 非常快 | 超大规模、GPU 使用 |
-| **SCANN** | 基于量化 | 低 | 快 | 内存受限环境 |
-
-### 文档摄取流水线
-
-```yaml
-# document-ingestion-job.yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: document-ingestion
-  namespace: ai-data
-spec:
-  template:
-    spec:
-      containers:
-        - name: ingestion
-          image: ai-platform/document-ingestion:latest
-          env:
-            - name: S3_BUCKET
-              value: "my-documents-bucket"
-            - name: MILVUS_HOST
-              value: "milvus-cluster-proxy.ai-data"
-            - name: EMBEDDING_MODEL
-              value: "text-embedding-3-large"
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openai-credentials
-                  key: api-key
-          resources:
-            requests:
-              cpu: "4"
-              memory: "16Gi"
-            limits:
-              cpu: "8"
-              memory: "32Gi"
-          volumeMounts:
-            - name: temp-storage
-              mountPath: /tmp/documents
-      volumes:
-        - name: temp-storage
-          emptyDir:
-            sizeLimit: 100Gi
-      restartPolicy: OnFailure
-```
-
-#### 分块策略实现
-
-```python
-# chunking_strategies.py
-from langchain.text_splitter import (
-    RecursiveCharacterTextSplitter,
-    TokenTextSplitter
-)
-from langchain_experimental.text_splitter import SemanticChunker
-from langchain_openai import OpenAIEmbeddings
-
-# 1. Fixed-size chunking
-def fixed_chunking(text: str, chunk_size: int = 1000, overlap: int = 200):
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=overlap,
-        separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""]
-    )
-    return splitter.split_text(text)
-
-# 2. Token-based chunking (LLM context window optimization)
-def token_chunking(text: str, chunk_size: int = 512, overlap: int = 50):
-    splitter = TokenTextSplitter(
-        encoding_name="cl100k_base",  # GPT-4 tokenizer
-        chunk_size=chunk_size,
-        chunk_overlap=overlap
-    )
-    return splitter.split_text(text)
-
-# 3. Semantic chunking (context preservation optimization)
-def semantic_chunking(text: str):
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    splitter = SemanticChunker(
-        embeddings=embeddings,
-        breakpoint_threshold_type="percentile",
-        breakpoint_threshold_amount=95
-    )
-    return splitter.split_text(text)
-
-# Recommendation: Choose strategy by document type
-CHUNKING_STRATEGIES = {
-    "code": {"strategy": "fixed", "chunk_size": 2000, "overlap": 400},
-    "documentation": {"strategy": "semantic"},
-    "chat_logs": {"strategy": "fixed", "chunk_size": 500, "overlap": 100},
-    "default": {"strategy": "token", "chunk_size": 512, "overlap": 50}
-}
-```
-
-### RAG 工作流
-
-```python
-# rag_workflow.py
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_milvus import Milvus
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
-
-# Vector store connection
-embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
-vectorstore = Milvus(
-    embedding_function=embeddings,
-    collection_name="documents",
-    connection_args={
-        "host": "milvus-cluster-proxy.ai-data",
-        "port": "19530"
-    }
-)
-
-# RAG prompt template
-RAG_PROMPT = PromptTemplate(
-    template="""Answer the question using the following context.
-If you cannot find the answer in the context, say "No information available."
-
-Context:
-{context}
-
-Question: {question}
-
-Answer:""",
-    input_variables=["context", "question"]
-)
-
-# LLM setup (using LiteLLM gateway)
-llm = ChatOpenAI(
-    model="llama3-70b",
-    openai_api_base="http://litellm-gateway.ai-gateway:4000/v1",
-    openai_api_key="sk-litellm-master-key",
-    temperature=0.1
-)
-
-# RAG chain configuration
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    chain_type="stuff",
-    retriever=vectorstore.as_retriever(
-        search_type="mmr",
-        search_kwargs={"k": 5, "fetch_k": 20}
-    ),
-    chain_type_kwargs={"prompt": RAG_PROMPT},
-    return_source_documents=True
-)
-
-# Execute query
-result = qa_chain.invoke({"query": "How does Pod scheduling work in Kubernetes?"})
-print(result["result"])
-```
-
----
 
 ## 6. AI Agent 部署（Kagent）
 
 ### Kagent 概述
 
-Kagent 是一种 Kubernetes-native 的 AI Agent 生命周期管理工具。
+Kagent 是 Kubernetes-native 的 AI agent lifecycle management 工具。
 
-```mermaid
-flowchart TD
-    subgraph Kagent [Kagent Architecture]
-        Controller[Kagent Controller]
-        CRD[Agent CRD]
-        Runtime[Agent Runtime]
-    end
+![Kagent controller 协调 v1alpha2 Agent 资源，并管理一个使用已批准 ModelConfig、MCP tool 和已配置 session storage 的 ADK runtime。](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png)
 
-    subgraph Agent [AI Agent]
-        LLM[LLM Backend]
-        Tools[Tool Set]
-        Memory[Memory Store]
-        State[State Management]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-4.html)
 
-    Controller --> CRD
-    CRD --> Runtime
-    Runtime --> Agent
+### Kagent 0.10.1 Agent API
 
-    LLM --> |Inference| Runtime
-    Tools --> |Execution| Runtime
-    Memory --> |Store/Query| Runtime
-    State --> |Management| Runtime
+Kagent 不限于自动执行 kubectl。Declarative agent 使用 Go/Python ADK runtime；BYO 托管用户提供的 A2A agent。LangGraph 是一个独立集成的 workflow framework，并非与 Kagent 相同的 runtime。
 
-    classDef kagentNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef agentNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Controller,CRD,Runtime kagentNode;
-    class LLM,Tools,Memory,State agentNode;
-```
-
-### Agent CRD 定义
+此 Agent 引用单独批准/配置的同 Namespace ModelConfig 和 RemoteMCPServer 资源。应提供实际的 MCP service/search_documents tool、authentication、TLS 和数据权限。它既不会创建该 tool，也不会授予 Kubernetes write access。
 
 ```yaml
-# agent-crd.yaml
-apiVersion: kagent.dev/v1alpha1
+apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: research-agent
   namespace: ai-agents
 spec:
-  # LLM backend settings
-  llm:
-    provider: litellm
-    model: llama3-70b
-    endpoint: http://litellm-gateway.ai-gateway:4000/v1
-    temperature: 0.7
-    maxTokens: 4096
+  type: Declarative
+  description: Retrieves authorized documents and cites their sources
+  declarative:
+    runtime: go
+    modelConfig: approved-internal-model
+    systemMessage: 'Use approved document tools. Cite retrieved sources.
 
-  # Agent system prompt
-  systemPrompt: |
-    You are a research assistant that helps users find and analyze information.
-    You have access to the following tools:
-    - web_search: Search the web for information
-    - document_search: Search internal documents
-    - calculator: Perform calculations
+      If evidence is missing, say so. Do not execute arbitrary code.
 
-    Always cite your sources and provide accurate information.
-
-  # Tool definitions
-  tools:
-    - name: web_search
-      type: http
-      spec:
-        url: http://search-api.tools:8080/search
-        method: POST
-        headers:
-          Content-Type: application/json
-
-    - name: document_search
-      type: milvus
-      spec:
-        host: milvus-cluster-proxy.ai-data
-        port: 19530
-        collection: documents
-        topK: 5
-
-    - name: calculator
-      type: python
-      spec:
-        code: |
-          def calculate(expression: str) -> str:
-              return str(eval(expression))
-
-  # Memory settings
-  memory:
-    type: redis
-    config:
-      host: redis.ai-agents
-      port: 6379
-      ttl: 3600
-
-  # Resource limits
-  resources:
-    requests:
-      cpu: "500m"
-      memory: "512Mi"
-    limits:
-      cpu: "2"
-      memory: "2Gi"
-
-  # Scaling settings
-  replicas: 2
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 10
-    targetCPUUtilization: 70
+      '
+    tools:
+    - type: McpServer
+      mcpServer:
+        apiGroup: kagent.dev
+        kind: RemoteMCPServer
+        name: document-tools
+        toolNames:
+        - search_documents
+    deployment:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 250m
+          memory: 256Mi
+        limits:
+          cpu: '1'
+          memory: 1Gi
 ```
 
-### LangGraph 工作流编排
+ModelConfig.apiKeySecret 不意味着 file delivery。检查的 OpenAI translator 会创建一个 OPENAI_API_KEY SecretKeyRef environment variable。在禁止 secret environment 的 policy 下，应使用经过验证的 file-credential BYO/runtime 或 authentication gateway path。未进行 token-delegation/audience 设计而启用 apiKeyPassthrough 并非替代方案。
 
-使用 LangGraph 实现复杂 AI 工作流。
+使用 eval() 的 calculator 和虚构的 permissions field 不是安全边界。应在实际 tool server 中实施 least privilege、input validation、resource limit、approval 和 idempotency。Agent replica 不会自动使共享 memory/session store 高可用。
+
+### 可执行的 LangGraph 控制流
+
+此本地示例使用实际 SDK 和明确的 retrieve/rewrite/generate callback。其 demo 不调用 LLM 或 vector DB。它保留原始问题，将 rewrite 限制为两次，并在没有 document 时弃答。SQLite context manager 使用正确，并且在重新打开后检查了持久化 state。
 
 ```python
-# langgraph_workflow.py
-from typing import TypedDict, Annotated, Sequence
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-from langchain_openai import ChatOpenAI
-from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolExecutor
-import operator
+from typing import Callable, TypedDict
+from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.sqlite import SqliteSaver
 
-# State definition
-class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], operator.add]
-    current_step: str
-    iteration: int
-    max_iterations: int
-    tools_output: dict
 
-# LLM setup
-llm = ChatOpenAI(
-    model="llama3-70b",
-    openai_api_base="http://litellm-gateway.ai-gateway:4000/v1",
-    openai_api_key="sk-litellm-master-key"
-)
+class QAState(TypedDict):
+    question: str
+    search_query: str
+    documents: list[str]
+    answer: str
+    retries: int
 
-# Node functions
-def planner(state: AgentState) -> AgentState:
-    """Node that creates task plans"""
-    messages = state["messages"]
 
-    planning_prompt = """Based on the user's request, create a step-by-step plan.
-    Format your response as a numbered list of steps."""
+def build_graph(retrieve: Callable[[str], list[str]],
+                rewrite: Callable[[str], str],
+                generate: Callable[[str, list[str]], str]):
+    def search(state: QAState):
+        return {"documents": retrieve(state["search_query"])}
 
-    response = llm.invoke(messages + [HumanMessage(content=planning_prompt)])
+    def route(state: QAState):
+        if state["documents"]:
+            return "answer"
+        return "rewrite" if state["retries"] < 2 else "abstain"
 
-    return {
-        "messages": [response],
-        "current_step": "execute",
-        "iteration": state["iteration"]
-    }
+    def rewrite_query(state: QAState):
+        return {"search_query": rewrite(state["search_query"]),
+                "retries": state["retries"] + 1}
 
-def executor(state: AgentState) -> AgentState:
-    """Node that executes plans"""
-    messages = state["messages"]
+    def answer(state: QAState):
+        return {"answer": generate(state["question"], state["documents"])}
 
-    execution_prompt = """Execute the current step of the plan.
-    If you need to use a tool, specify the tool and parameters."""
+    def abstain(state: QAState):
+        return {"answer": "No supporting documents were found."}
 
-    response = llm.invoke(messages + [HumanMessage(content=execution_prompt)])
+    graph = StateGraph(QAState)
+    graph.add_node("retrieve", search)
+    graph.add_node("rewrite", rewrite_query)
+    graph.add_node("answer", answer)
+    graph.add_node("abstain", abstain)
+    graph.add_edge(START, "retrieve")
+    graph.add_conditional_edges("retrieve", route,
+                               {"answer": "answer", "rewrite": "rewrite", "abstain": "abstain"})
+    graph.add_edge("rewrite", "retrieve")
+    graph.add_edge("answer", END)
+    graph.add_edge("abstain", END)
+    return graph
 
-    return {
-        "messages": [response],
-        "current_step": "evaluate",
-        "iteration": state["iteration"]
-    }
 
-def evaluator(state: AgentState) -> AgentState:
-    """Node that evaluates results"""
-    messages = state["messages"]
-
-    evaluation_prompt = """Evaluate the execution result.
-    Respond with either:
-    - COMPLETE: if the task is fully done
-    - CONTINUE: if more steps are needed
-    - RETRY: if the current step needs to be retried"""
-
-    response = llm.invoke(messages + [HumanMessage(content=evaluation_prompt)])
-
-    return {
-        "messages": [response],
-        "current_step": "route",
-        "iteration": state["iteration"] + 1
-    }
-
-def router(state: AgentState) -> str:
-    """Router that determines next step"""
-    last_message = state["messages"][-1].content.upper()
-
-    if state["iteration"] >= state["max_iterations"]:
-        return "end"
-
-    if "COMPLETE" in last_message:
-        return "end"
-    elif "RETRY" in last_message:
-        return "execute"
-    else:
-        return "plan"
-
-# Graph construction
-workflow = StateGraph(AgentState)
-
-# Add nodes
-workflow.add_node("plan", planner)
-workflow.add_node("execute", executor)
-workflow.add_node("evaluate", evaluator)
-
-# Add edges
-workflow.set_entry_point("plan")
-workflow.add_edge("plan", "execute")
-workflow.add_edge("execute", "evaluate")
-workflow.add_conditional_edges(
-    "evaluate",
-    router,
-    {
-        "plan": "plan",
-        "execute": "execute",
-        "end": END
-    }
-)
-
-# Compile graph
-app = workflow.compile()
-
-# Execute
-initial_state = {
-    "messages": [HumanMessage(content="Research the latest trends in Kubernetes security")],
-    "current_step": "plan",
-    "iteration": 0,
-    "max_iterations": 5,
-    "tools_output": {}
-}
-
-result = app.invoke(initial_state)
+if __name__ == "__main__":
+    # Deterministic local fixtures, not a vector database or LLM quality test.
+    graph = build_graph(
+        retrieve=lambda query: ["A Pod groups containers."] if query == "pod" else [],
+        rewrite=lambda query: "pod",
+        generate=lambda question, documents: documents[0],
+    )
+    initial = {"question": "What is a Pod?", "search_query": "unknown",
+               "documents": [], "answer": "", "retries": 0}
+    # Server-derived authorized tenant/session identity is required in a real app.
+    config = {"configurable": {"thread_id": "tenant-a/session-1"}, "recursion_limit": 12}
+    with SqliteSaver.from_conn_string("agent-state.sqlite") as saver:
+        app = graph.compile(checkpointer=saver)
+        print(app.invoke(initial, config)["answer"])
+        print(app.get_state(config).values["retries"])
 ```
 
-### 多 Agent 协作模式
+生产环境的 thread_id 必须绑定到经 authentication 的 tenant/session identity，并具备 DB authorization、encryption、concurrency 和 retention control。:memory: 无法在进程退出后保留。SqliteSaver 不能使用 PostgreSQL DSN；请使用相应的 Postgres saver。仅读取 get_state_history() 不会恢复执行——应使用 checkpoint configuration 和实际的 resume/replay semantics。
 
-#### Supervisor 模式
+应针对 allowed enum 验证 supervisor output，并处理未知值/budget exhaustion。子字符串 COMPLETE 不得将 INCOMPLETE 视为成功。要求模型使用 tool 本身并不会执行或验证该 tool。
+
+## 7. Langfuse 和运营可观测性
+
+Langfuse SDK 4.15.2 使用 start_as_current_observation()、create_score() 及相关方法替代旧的 trace()/generation() API。本次审计使用 in-memory exporter 在一个 trace 中验证了三个 retrieval/generation/parent span，而非真实 server ingestion/storage/authentication。
 
 ```python
-# supervisor_pattern.py
-from langgraph.graph import StateGraph, END
-from typing import TypedDict, Literal
-
-class SupervisorState(TypedDict):
-    messages: list
-    next_agent: str
-    task_status: dict
-
-def supervisor(state: SupervisorState) -> SupervisorState:
-    """Supervisor that delegates tasks to appropriate agents"""
-
-    supervisor_prompt = """You are a supervisor managing a team of agents:
-    - researcher: Finds and analyzes information
-    - coder: Writes and reviews code
-    - writer: Creates documentation and reports
-
-    Based on the current task, decide which agent should handle it next.
-    Respond with the agent name or 'FINISH' if the task is complete."""
-
-    response = llm.invoke(state["messages"] + [HumanMessage(content=supervisor_prompt)])
-    next_agent = response.content.strip().lower()
-
-    return {
-        "messages": state["messages"] + [response],
-        "next_agent": next_agent
-    }
-
-def researcher(state: SupervisorState) -> SupervisorState:
-    """Information gathering agent"""
-    research_response = llm.invoke(
-        state["messages"] +
-        [HumanMessage(content="Research the topic and provide findings.")]
-    )
-    return {"messages": state["messages"] + [research_response]}
-
-def coder(state: SupervisorState) -> SupervisorState:
-    """Coding agent"""
-    code_response = llm.invoke(
-        state["messages"] +
-        [HumanMessage(content="Write or review code for the task.")]
-    )
-    return {"messages": state["messages"] + [code_response]}
-
-def writer(state: SupervisorState) -> SupervisorState:
-    """Documentation agent"""
-    write_response = llm.invoke(
-        state["messages"] +
-        [HumanMessage(content="Create documentation or a report.")]
-    )
-    return {"messages": state["messages"] + [write_response]}
-
-def route_to_agent(state: SupervisorState) -> Literal["researcher", "coder", "writer", "end"]:
-    next_agent = state["next_agent"]
-    if next_agent == "finish":
-        return "end"
-    return next_agent
-
-# Graph construction
-supervisor_graph = StateGraph(SupervisorState)
-
-supervisor_graph.add_node("supervisor", supervisor)
-supervisor_graph.add_node("researcher", researcher)
-supervisor_graph.add_node("coder", coder)
-supervisor_graph.add_node("writer", writer)
-
-supervisor_graph.set_entry_point("supervisor")
-
-supervisor_graph.add_conditional_edges(
-    "supervisor",
-    route_to_agent,
-    {
-        "researcher": "researcher",
-        "coder": "coder",
-        "writer": "writer",
-        "end": END
-    }
-)
-
-# Return to supervisor after each agent completes
-for agent in ["researcher", "coder", "writer"]:
-    supervisor_graph.add_edge(agent, "supervisor")
-
-multi_agent_app = supervisor_graph.compile()
-```
-
----
-
-## 7. 监控与运维
-
-### Langfuse GenAI 可观测性
-
-Langfuse 是面向 LLM 应用的可观测性平台。
-
-```yaml
-# langfuse-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: langfuse
-  namespace: ai-monitoring
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: langfuse
-  template:
-    metadata:
-      labels:
-        app: langfuse
-    spec:
-      containers:
-        - name: langfuse
-          image: langfuse/langfuse:latest
-          ports:
-            - containerPort: 3000
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: langfuse-secrets
-                  key: database-url
-            - name: NEXTAUTH_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: langfuse-secrets
-                  key: nextauth-secret
-            - name: NEXTAUTH_URL
-              value: "https://langfuse.example.com"
-            - name: SALT
-              valueFrom:
-                secretKeyRef:
-                  name: langfuse-secrets
-                  key: salt
-          resources:
-            requests:
-              cpu: "1"
-              memory: "2Gi"
-            limits:
-              cpu: "2"
-              memory: "4Gi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: langfuse
-  namespace: ai-monitoring
-spec:
-  selector:
-    app: langfuse
-  ports:
-    - port: 3000
-      targetPort: 3000
-  type: ClusterIP
-```
-
-#### Langfuse 集成代码
-
-```python
-# langfuse_integration.py
+from pathlib import Path
 from langfuse import Langfuse
-from langfuse.decorators import observe, langfuse_context
-from openai import OpenAI
 
-# Initialize Langfuse client
-langfuse = Langfuse(
-    public_key="pk-lf-xxx",
-    secret_key="sk-lf-xxx",
-    host="http://langfuse.ai-monitoring:3000"
+# Read existing Secret-volume files; do not put credentials in source.
+client = Langfuse(
+    public_key=Path("/run/secrets/langfuse/public-key").read_text().strip(),
+    secret_key=Path("/run/secrets/langfuse/secret-key").read_text().strip(),
+    base_url="https://langfuse.example.internal",
 )
-
-client = OpenAI(
-    api_key="sk-litellm-master-key",
-    base_url="http://litellm-gateway.ai-gateway:4000/v1"
-)
-
-@observe()
-def rag_query(user_query: str, user_id: str = None) -> str:
-    """Track RAG queries with Langfuse"""
-
-    # Set user ID
-    langfuse_context.update_current_trace(
-        user_id=user_id,
-        tags=["rag", "production"]
-    )
-
-    # Document retrieval (tracked as separate span)
-    with langfuse_context.observe(name="document_retrieval") as span:
-        documents = search_documents(user_query)
-        span.update(
-            input={"query": user_query},
-            output={"doc_count": len(documents)},
-            metadata={"retrieval_method": "mmr"}
-        )
-
-    # LLM call
-    with langfuse_context.observe(name="llm_generation") as span:
-        response = client.chat.completions.create(
-            model="llama3-70b",
-            messages=[
-                {"role": "system", "content": "Answer based on the context."},
-                {"role": "user", "content": f"Context: {documents}\n\nQuestion: {user_query}"}
-            ],
-            max_tokens=1000
-        )
-
-        answer = response.choices[0].message.content
-
-        # Track token usage and cost
-        span.update(
-            input={"messages": messages},
-            output={"response": answer},
-            usage={
-                "input": response.usage.prompt_tokens,
-                "output": response.usage.completion_tokens,
-                "total": response.usage.total_tokens
-            },
-            metadata={
-                "model": "llama3-70b",
-                "temperature": 0.7
-            }
-        )
-
-    return answer
-
-# Collect feedback
-def collect_feedback(trace_id: str, score: float, comment: str = None):
-    """Record user feedback to Langfuse"""
-    langfuse.score(
-        trace_id=trace_id,
-        name="user_feedback",
-        value=score,
-        comment=comment
-    )
+with client.start_as_current_observation(name="rag", as_type="span"):
+    with client.start_as_current_observation(name="retrieve", as_type="span") as span:
+        span.update(metadata={"document_count": 2})
+    with client.start_as_current_observation(name="generate", as_type="generation",
+                                           model="prepared-model-alias") as generation:
+        # Supply actual provider usage; these values only illustrate the shape.
+        generation.update(usage_details={"input": 10, "output": 5})
+client.flush()
+client.shutdown()
 ```
 
-### GPU 监控（DCGM）
+Langfuse chart 2.1.0 引用 app 4.24.0，与最新检查的 server 4.35.0 不同。需要 Web/worker、PostgreSQL、Redis/Valkey、object storage 和 ClickHouse。该 chart 会检查 ClickHouse Operator/cert-manager prerequisite。离线渲染提供的是模拟的 API capability 信息，而不是已部署的 operator。默认 chart 包含 secret environment delivery，尚未获批用于仅文件凭据部署。
 
-```yaml
-# dcgm-exporter.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: dcgm-exporter
-  namespace: gpu-monitoring
-spec:
-  selector:
-    matchLabels:
-      app: dcgm-exporter
-  template:
-    metadata:
-      labels:
-        app: dcgm-exporter
-    spec:
-      nodeSelector:
-        nvidia.com/gpu.present: "true"
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
-      containers:
-        - name: dcgm-exporter
-          image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.5-3.4.0-ubuntu22.04
-          ports:
-            - containerPort: 9400
-              name: metrics
-          env:
-            - name: DCGM_EXPORTER_LISTEN
-              value: ":9400"
-            - name: DCGM_EXPORTER_KUBERNETES
-              value: "true"
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: pod-resources
-              mountPath: /var/lib/kubelet/pod-resources
-      volumes:
-        - name: pod-resources
-          hostPath:
-            path: /var/lib/kubelet/pod-resources
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dcgm-exporter
-  namespace: gpu-monitoring
-  labels:
-    app: dcgm-exporter
-spec:
-  selector:
-    app: dcgm-exporter
-  ports:
-    - port: 9400
-      targetPort: 9400
-      name: metrics
-  clusterIP: None
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: dcgm-exporter
-  namespace: gpu-monitoring
-spec:
-  selector:
-    matchLabels:
-      app: dcgm-exporter
-  endpoints:
-    - port: metrics
-      interval: 15s
-```
+DCGM FB_USED 是一个数量而非百分比；请验证单位和总内存。GPU utilization80% 或 temperature85C 不是通用 health threshold。应一并观测 latency/queue/error/throttling 和实际 device limit。
 
-#### 关键 GPU 指标
+### 响应缓存和成本
 
-| 指标 | 描述 | 阈值 |
-|--------|-------------|-----------|
-| `DCGM_FI_DEV_GPU_UTIL` | GPU 利用率 | > 80% 正常 |
-| `DCGM_FI_DEV_MEM_COPY_UTIL` | 内存带宽利用率 | > 70% 警惕 |
-| `DCGM_FI_DEV_FB_USED` | 帧缓冲使用量 | 建议 < 95% |
-| `DCGM_FI_DEV_GPU_TEMP` | GPU 温度 | 建议 < 85C |
-| `DCGM_FI_DEV_POWER_USAGE` | 功耗 | 低于 TDP 的 90% |
-| `DCGM_FI_DEV_SM_CLOCK` | SM 时钟速度 | 保持默认 |
+Cache key 必须包含 tenant/authorization scope、model/prompt/retrieved-data revision、generation setting 和相关 tool state。共享的 model+prompt key 可能重用其他用户的结果。对于私有或会变化的外部 state，应禁用 caching 或定义明确的 expiry/invalidation。
 
-### 成本优化策略
+Token-price estimate 不是 invoice。应包含 cache read/write、batch、retry、routing call 和 self-hosted fixed cost。拒绝违反 budget、quality 或 provider policy 的 cheapest-model fallback。KEDA cron trigger 不会对其他 trigger 施加更低的 nighttime cap。应定义 CronJob timezone、concurrency/deadline/retry 和持久化结果。
 
-#### 1. Prompt Caching
 
-```python
-# prompt_caching.py
-import hashlib
-import redis
+## 8. 评估和质量管理
 
-redis_client = redis.Redis(host="redis.ai-cache", port=6379)
+Ragas 0.4.3 无法针对解析出的 langchain-community 0.4.2 导入，因为它导入了已移除的 vertexai module。在一个单独环境中固定 langchain 0.3.27、core 0.3.79、community 0.3.31 和 openai integration 0.3.35 后，import 以及 SingleTurnSample/EvaluationDataset 构建均通过。不要假设这与当前 LangGraph 共享同一 dependency stack。
 
-def get_cached_response(prompt: str, model: str) -> str | None:
-    """Retrieve cached response"""
-    cache_key = hashlib.sha256(f"{model}:{prompt}".encode()).hexdigest()
-    cached = redis_client.get(cache_key)
-    return cached.decode() if cached else None
+Faithfulness/AnswerRelevancy 等当前 collection API 需要显式 LLM/embedding adapter；旧的 ragas.metrics singleton import 会发出 deprecation warning。评估需要处理 model-call cost/failure、dataset/judge/prompt revision 和 missing/NaN。此处仅测试了 metric import/schema；未测量 0.92 等 quality score。
 
-def cache_response(prompt: str, model: str, response: str, ttl: int = 3600):
-    """Cache response"""
-    cache_key = hashlib.sha256(f"{model}:{prompt}".encode()).hexdigest()
-    redis_client.setex(cache_key, ttl, response)
+仅有 A/B ConfigMap 不会路由流量。应实现其真实 consumer/controller、稳定 assignment、等效 authorization/data context、足够的 sample 和 guardrail metric。任意 model quality/pricing table 都无法证明可节省 30–50%。
 
-def query_with_cache(prompt: str, model: str = "llama3-70b") -> str:
-    """Query with caching"""
-    # Check cache
-    cached = get_cached_response(prompt, model)
-    if cached:
-        return cached
+金融示例中的 compliance_check function 并不能证明满足 regulatory compliance。应设计经过 authentication 的 account scope、单调的 sensitive/approval condition（不要随后用 false 覆盖 true）、side-effect idempotency、audit 和 human handoff criteria。
 
-    # LLM call
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    result = response.choices[0].message.content
 
-    # Cache result
-    cache_response(prompt, model, result)
-    return result
-```
+## 9. 审查基线和验证范围
 
-#### 2. 分层模型选择
+| 组件 | 基线 | 已验证范围 |
+| --- | --- | --- |
+| Kagent |0.10.1 / v1alpha2 | 官方 Helm/CRD 以及 Agent/ModelConfig/RemoteMCPServer schema |
+| Inference Extension |1.6.1 / v1 | InferencePool schema；没有 live EPP/gateway |
+| LiteLLM |1.100.1 | Router fallback 配置；没有 provider call |
+| Milvus | server/SDK3.0.1; Operator 1.3.9 | Operator Helm/合成 vector schema；没有 database |
+| LangGraph |1.2.11 + sqlite saver 3.1.1 | 有界 retrieval、弃答和 state recovery |
+| Langfuse | SDK 4.15.2 / chart 2.1.0 | 本地 trace/span 和离线 chart 检查 |
+| Ragas |0.4.3 | 兼容的隔离 import/schema；没有 evaluator model call |
 
-```python
-# tiered_model_selection.py
-from enum import Enum
-
-class TaskComplexity(Enum):
-    SIMPLE = "simple"      # Classification, extraction, simple QA
-    MODERATE = "moderate"  # Summarization, translation, general conversation
-    COMPLEX = "complex"    # Analysis, reasoning, code generation
-
-MODEL_TIERS = {
-    TaskComplexity.SIMPLE: {
-        "model": "llama3-8b",
-        "cost_per_1k_tokens": 0.0001
-    },
-    TaskComplexity.MODERATE: {
-        "model": "llama3-70b",
-        "cost_per_1k_tokens": 0.0005
-    },
-    TaskComplexity.COMPLEX: {
-        "model": "gpt-4o",
-        "cost_per_1k_tokens": 0.01
-    }
-}
-
-def classify_task_complexity(task: str) -> TaskComplexity:
-    """Classify task complexity (using lightweight model)"""
-    classification_prompt = f"""Classify the complexity of this task as SIMPLE, MODERATE, or COMPLEX:
-    Task: {task}
-
-    SIMPLE: Classification, extraction, simple QA
-    MODERATE: Summarization, translation, general conversation
-    COMPLEX: Analysis, reasoning, code generation
-
-    Respond with only the classification."""
-
-    response = client.chat.completions.create(
-        model="llama3-8b",  # Use small model for classification
-        messages=[{"role": "user", "content": classification_prompt}],
-        max_tokens=10
-    )
-
-    classification = response.choices[0].message.content.strip().upper()
-    return TaskComplexity[classification]
-
-def execute_with_optimal_model(task: str) -> str:
-    """Execute task with optimal model"""
-    complexity = classify_task_complexity(task)
-    model_config = MODEL_TIERS[complexity]
-
-    response = client.chat.completions.create(
-        model=model_config["model"],
-        messages=[{"role": "user", "content": task}]
-    )
-
-    return response.choices[0].message.content
-```
-
-#### 3. 批处理
-
-```yaml
-# batch-processing-job.yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: batch-inference
-  namespace: ai-batch
-spec:
-  schedule: "0 2 * * *"  # Daily at 2 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: batch-processor
-              image: ai-platform/batch-processor:latest
-              env:
-                - name: BATCH_SIZE
-                  value: "100"
-                - name: MODEL
-                  value: "llama3-70b"
-                - name: QUEUE_URL
-                  value: "redis://redis.ai-batch:6379/0"
-              resources:
-                requests:
-                  cpu: "4"
-                  memory: "8Gi"
-          restartPolicy: OnFailure
-```
-
-#### 4. Spot Instance 使用
-
-```yaml
-# spot-nodepool.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-spot
-spec:
-  template:
-    spec:
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - g5.xlarge
-            - g5.2xlarge
-            - g6.xlarge
-      taints:
-        - key: spot-instance
-          value: "true"
-          effect: NoSchedule
-  limits:
-    nvidia.com/gpu: 50
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 1m
-```
-
----
-
-## 8. 评估与质量管理
-
-### Ragas 框架
-
-Ragas 是用于评估 RAG 系统质量的框架。
-
-```python
-# ragas_evaluation.py
-from ragas import evaluate
-from ragas.metrics import (
-    faithfulness,
-    answer_relevancy,
-    context_precision,
-    context_recall,
-    answer_correctness
-)
-from datasets import Dataset
-
-# Construct evaluation dataset
-eval_data = {
-    "question": [
-        "What is a Kubernetes Pod?",
-        "How does HPA work?"
-    ],
-    "answer": [
-        "A Pod is the smallest deployable computing unit in Kubernetes.",
-        "HPA automatically adjusts the number of Pods based on CPU utilization."
-    ],
-    "contexts": [
-        ["A Pod is a group of one or more containers.", "Pods have shared storage and network."],
-        ["HPA monitors metrics.", "It scales based on configured thresholds."]
-    ],
-    "ground_truth": [
-        "A Pod is the smallest deployable computing unit that can be created and managed in Kubernetes.",
-        "HPA automatically adjusts the number of workload replicas based on observed metrics (CPU, memory, etc.)."
-    ]
-}
-
-dataset = Dataset.from_dict(eval_data)
-
-# Run evaluation
-results = evaluate(
-    dataset,
-    metrics=[
-        faithfulness,        # Is the answer faithful to context
-        answer_relevancy,    # Is the answer relevant to question
-        context_precision,   # Is retrieved context precise
-        context_recall,      # Was all necessary context retrieved
-        answer_correctness   # Does answer match ground truth
-    ]
-)
-
-print(results)
-# {'faithfulness': 0.92, 'answer_relevancy': 0.88, 'context_precision': 0.85, ...}
-```
-
-#### 自动化评估流水线
-
-```yaml
-# ragas-evaluation-cronjob.yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: ragas-evaluation
-  namespace: ai-qa
-spec:
-  schedule: "0 6 * * *"  # Daily at 6 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: evaluator
-              image: ai-platform/ragas-evaluator:latest
-              env:
-                - name: EVAL_DATASET_PATH
-                  value: "s3://ai-datasets/eval/golden-set.json"
-                - name: RAG_ENDPOINT
-                  value: "http://rag-api.ai-inference:8000"
-                - name: LANGFUSE_HOST
-                  value: "http://langfuse.ai-monitoring:3000"
-                - name: MIN_FAITHFULNESS
-                  value: "0.85"
-                - name: MIN_RELEVANCY
-                  value: "0.80"
-              resources:
-                requests:
-                  cpu: "2"
-                  memory: "4Gi"
-          restartPolicy: OnFailure
-```
-
-### A/B 测试
-
-```yaml
-# ab-testing-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ab-testing-config
-  namespace: ai-inference
-data:
-  config.yaml: |
-    experiments:
-      - name: llama3-70b-vs-gpt4o
-        traffic_split:
-          variant_a:
-            model: llama3-70b
-            weight: 80
-          variant_b:
-            model: gpt-4o
-            weight: 20
-        metrics:
-          - latency_p99
-          - user_satisfaction
-          - cost_per_query
-        duration_days: 14
-
-      - name: chunk-size-experiment
-        traffic_split:
-          variant_a:
-            chunk_size: 512
-            weight: 50
-          variant_b:
-            chunk_size: 1024
-            weight: 50
-        metrics:
-          - context_precision
-          - answer_relevancy
-        duration_days: 7
-```
-
----
-
-## 9. 核心技术栈摘要
-
-| 技术 | 用途 | 关键特性 |
-|-----------|---------|--------------|
-| **Kagent** | AI Agent 生命周期 | 基于 CRD 的 Agent 管理、自动扩缩容 |
-| **Kgateway** | Inference Gateway | InferencePool、Prefix-aware 路由 |
-| **Milvus** | 向量数据库 | 大规模向量搜索、GPU 加速索引 |
-| **Ragas** | RAG 评估 | 忠实度、相关性、准确性指标 |
-| **LiteLLM** | LLM 集成网关 | Provider 抽象、fallback、成本跟踪 |
-| **LangGraph** | 工作流编排 | 状态管理、条件分支、错误处理 |
-| **Langfuse** | GenAI 可观测性 | 请求追踪、成本分析、反馈收集 |
-| **vLLM** | 高性能推理 | PagedAttention、连续批处理、prefix caching |
-| **Karpenter** | Node 供应 | GPU Node 自动扩缩容、Spot 管理 |
-| **DCGM** | GPU 监控 | 利用率、温度、功耗指标 |
-
----
+Schema、Helm 和本地 SDK 检查不能证明完整平台部署、authentication、HA 或 GPU performance。未使用 cloud resource 或付费 model call。
 
 ## 10. 后续步骤
 
 ### 练习测验
 
-要验证你对 Agentic AI 平台的理解，请完成以下测验：
+为验证您对 Agentic AI 平台的理解，请完成以下测验：
 - [Agentic AI 平台测验](../quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 
 ### 相关文档
 
-- [vLLM Deployment 详细指南](./02-vllm-deployment.md) - 详细的 vLLM 安装与优化
-- [AI/ML 工作负载](./01-ai-ml-workloads.md) - Kubernetes 中的 AI/ML 工作负载管理
+- [vLLM 部署详细指南](./02-vllm-deployment.md) - vLLM 安装与优化详情
+- [AI/ML Workload](./01-ai-ml-workloads.md) - Kubernetes 中的 AI/ML workload 管理
 
 ### 参考资料
 
-- [EKS 上的 AI](https://awslabs.github.io/ai-on-eks/) - 在 EKS 上部署 AI/ML 工作负载的 AWS 指南与示例
-- [vLLM 官方文档](https://docs.vllm.ai/)
-- [LangGraph 文档](https://langchain-ai.github.io/langgraph/)
-- [Milvus 文档](https://milvus.io/docs)
-- [Langfuse 文档](https://langfuse.com/docs)
-- [NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/)
-- [AI 的 Gateway API](https://gateway-api.sigs.k8s.io/)
+- [Kagent 0.10.1](https://github.com/kagent-dev/kagent/tree/v0.10.1)
+- [InferencePool v1 API](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/v1.6.1/api/v1/inferencepool_types.go)
+- [Milvus Operator 1.3.9](https://github.com/zilliztech/milvus-operator/tree/milvus-operator-1.3.9)
+- [Langfuse SDK 4.15.2](https://github.com/langfuse/langfuse-python/tree/v4.15.2)
+- [Langfuse Helm2.1.0](https://github.com/langfuse/langfuse-k8s/releases/tag/langfuse-2.1.0)
+- [LangGraph 持久化](https://docs.langchain.com/oss/python/langgraph/persistence)
+- [LiteLLM Router](https://docs.litellm.ai/docs/routing)
+- [Ragas 0.4.3](https://pypi.org/project/ragas/0.4.3/)
