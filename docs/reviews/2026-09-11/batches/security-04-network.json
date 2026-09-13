@@ -52,7 +52,12 @@
     "originalSHA256": "f0242aa8348701e3909500bd3220b0f2e72a2942fad7c4f9da06ed4c3278f08b",
     "updatedAt": "2026-09-13T12:47:13.343493+00:00",
     "validationReport": "docs/reviews/2026-09-11/security-04-network-validation.json",
-    "reviewedSha256": "fcf4dd6e2e6e44058cd2fd436e2424bca4dcca19fd1b20975b5bb69a921d26c5"
+    "reviewedSha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8",
+    "integrationFollowup": {
+      "baseCommit": "d8ca37dc523ce26f6b64324daf74fe5c4d356065",
+      "previousReviewedSha256": "fcf4dd6e2e6e44058cd2fd436e2424bca4dcca19fd1b20975b5bb69a921d26c5",
+      "scope": "Explicit heading IDs and authored TOC targets; legacy native anchors retained. All fenced examples, quiz answers, diagrams and source-contract test artifacts unchanged."
+    }
   },
   {
     "path": "en/quizzes/security/04-network-policies-quiz.md",
@@ -162,7 +167,12 @@
     "originalSHA256": "50f5e89ffcc944423197519782d31753b3f558dfe054a22d2a486ef80fac7e31",
     "updatedAt": "2026-09-13T12:47:13.343493+00:00",
     "validationReport": "docs/reviews/2026-09-11/security-04-network-validation.json",
-    "reviewedSha256": "674c661bb009897bfaf890eb45b7211d8882bb02663ee4681db113fdbcdcf806"
+    "reviewedSha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d",
+    "integrationFollowup": {
+      "baseCommit": "d8ca37dc523ce26f6b64324daf74fe5c4d356065",
+      "previousReviewedSha256": "674c661bb009897bfaf890eb45b7211d8882bb02663ee4681db113fdbcdcf806",
+      "scope": "Explicit heading IDs and authored TOC targets; legacy native anchors retained. All fenced examples, quiz answers, diagrams and source-contract test artifacts unchanged."
+    }
   },
   {
     "path": "ko/quizzes/security/04-network-policies-quiz.md",

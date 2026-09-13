@@ -20,7 +20,7 @@ Kubernetes Network Policies are firewall rules that control traffic between Pods
 
 ---
 
-## Network Policy Overview
+## Network Policy Overview {#network-policy-overview}
 
 ### What is a Network Policy?
 
@@ -78,7 +78,7 @@ Kubernetes NetworkPolicy selects Pods in its own namespace and controls supporte
 
 ---
 
-## Kubernetes NetworkPolicy Spec
+## Kubernetes NetworkPolicy Spec {#kubernetes-networkpolicy-spec}
 
 ### Basic Structure
 
@@ -293,7 +293,7 @@ spec:
 
 ---
 
-## Default Deny Policies
+## Default Deny Policies {#default-deny-policies}
 
 An empty baseline contributes no allows; other selecting policies can still allow traffic. Existing-connection behavior after a policy change depends on the implementation and must be tested separately.
 
@@ -457,7 +457,7 @@ spec:
       port: 8080
 ```
 
-## Policy Order and Evaluation
+## Policy Order and Evaluation {#policy-order-and-evaluation}
 
 ### Policy Evaluation Rules
 
@@ -571,7 +571,7 @@ The Kubernetes NetworkPolicy API has no priority or explicit deny rule. Its allo
 
 ---
 
-## Cilium Network Policy Extensions
+## Cilium Network Policy Extensions {#cilium-network-policy-extensions}
 
 These examples use the released Cilium 1.20.1 policy schema, not an instruction to upgrade every cluster. HTTP rules need a supported L7 proxy path. AWS VPC CNI chaining has documented advanced-feature limitations, including L7 policies; do not assume these HTTP examples work in that mode. A numeric Cilium security identity is an allocation for a label set, not a permanent application ID.
 
@@ -761,7 +761,7 @@ spec:
         protocol: TCP
 ```
 
-## Calico Network Policy Extensions
+## Calico Network Policy Extensions {#calico-network-policy-extensions}
 
 The policy/Tier examples follow Calico Open Source3.32.2 resources. `projectcalico.org/v3` requires the supported Calico API server or matching `calicoctl` workflow; it is not the raw Kubernetes `crd.projectcalico.org/v1` storage API. Verify the installed datastore/API before applying. Ordered Calico actions and tier delegation differ from the additive Kubernetes NetworkPolicy API.
 
@@ -968,7 +968,7 @@ spec:
       - 53
 ```
 
-## Design Patterns
+## Design Patterns {#design-patterns}
 
 These are **alternative policy profiles**, not a bundle to apply together. Reusing `production` does not make unrelated examples compatible: their allow rules would accumulate. Prepare namespaces, workload labels, listening ports and the real DNS profile first. The examples were schema/intent checked locally, not exercised on a cluster.
 
@@ -1384,7 +1384,7 @@ spec:
 
 ---
 
-## Testing Network Policies
+## Testing Network Policies {#testing-network-policies}
 
 ### Testing with netshoot
 
@@ -1460,7 +1460,7 @@ case "$denied" in
 esac
 ```
 
-## EKS Considerations
+## EKS Considerations {#eks-considerations}
 
 ### Amazon VPC CNI and NetworkPolicy
 
@@ -1656,7 +1656,7 @@ helm template cilium cilium/cilium --version 1.20.1 \
 
 [AWS VPC CNI chaining — Cilium 1.20.1](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
 
-## Visualization Tools
+## Visualization Tools {#visualization-tools}
 
 ### Cilium Network Policy Editor
 

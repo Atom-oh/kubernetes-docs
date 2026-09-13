@@ -75,7 +75,7 @@
   "artifacts": [
     {
       "path": "en/security/04-network-policies.md",
-      "sha256": "fcf4dd6e2e6e44058cd2fd436e2424bca4dcca19fd1b20975b5bb69a921d26c5",
+      "sha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8",
       "lines": 1842
     },
     {
@@ -85,7 +85,7 @@
     },
     {
       "path": "ko/security/04-network-policies.md",
-      "sha256": "674c661bb009897bfaf890eb45b7211d8882bb02663ee4681db113fdbcdcf806",
+      "sha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d",
       "lines": 1851
     },
     {
@@ -1035,7 +1035,7 @@
       "artifacts": [
         {
           "path": "en/security/04-network-policies.md",
-          "sha256": "fcf4dd6e2e6e44058cd2fd436e2424bca4dcca19fd1b20975b5bb69a921d26c5"
+          "sha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8"
         },
         {
           "path": "en/quizzes/security/04-network-policies-quiz.md",
@@ -1043,7 +1043,7 @@
         },
         {
           "path": "ko/security/04-network-policies.md",
-          "sha256": "674c661bb009897bfaf890eb45b7211d8882bb02663ee4681db113fdbcdcf806"
+          "sha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d"
         },
         {
           "path": "ko/quizzes/security/04-network-policies-quiz.md",
@@ -1591,7 +1591,7 @@
       "rows": [
         {
           "path": "en/security/04-network-policies.md",
-          "sha256": "fcf4dd6e2e6e44058cd2fd436e2424bca4dcca19fd1b20975b5bb69a921d26c5",
+          "sha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8",
           "originalIds": 64,
           "currentIds": 64,
           "missingAnchors": [],
@@ -1632,7 +1632,7 @@
         },
         {
           "path": "ko/security/04-network-policies.md",
-          "sha256": "674c661bb009897bfaf890eb45b7211d8882bb02663ee4681db113fdbcdcf806",
+          "sha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d",
           "originalIds": 64,
           "currentIds": 64,
           "missingAnchors": [],
@@ -1691,5 +1691,220 @@
     "No full local site build,provider login,GPU/model download,commit,push or foreign-language edit."
   ],
   "neededScopeExternalRepairs": [],
-  "privateEvidenceDirectory": ".vitepress/cache/core-audit/security-04-network"
+  "privateEvidenceDirectory": ".vitepress/cache/core-audit/security-04-network",
+  "integrationFollowup": {
+    "baseCommit": "d8ca37dc523ce26f6b64324daf74fe5c4d356065",
+    "checkedAt": "2026-09-13T13:20:36.563234+00:00",
+    "changes": [
+      {
+        "path": "en/security/04-network-policies.md",
+        "previousSha256": "fcf4dd6e2e6e44058cd2fd436e2424bca4dcca19fd1b20975b5bb69a921d26c5",
+        "sha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8"
+      },
+      {
+        "path": "ko/security/04-network-policies.md",
+        "previousSha256": "674c661bb009897bfaf890eb45b7211d8882bb02663ee4681db113fdbcdcf806",
+        "sha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d"
+      }
+    ],
+    "scope": "Explicit heading IDs and authored TOC targets; legacy native anchors retained. All fenced examples, quiz answers, diagrams and source-contract test artifacts unchanged.",
+    "documentValidation": {
+      "status": "passed",
+      "method": "Fresh native VitePress render against pre-repair commit; all legacy IDs, authored TOC targets, exact fenced code and original quiz answer parity.",
+      "files": [
+        {
+          "path": "en/security/04-network-policies.md",
+          "previousIds": 64,
+          "currentIds": 64,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "en/quizzes/security/04-network-policies-quiz.md",
+          "previousIds": 15,
+          "currentIds": 15,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "answersAfter": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "pass": true
+        },
+        {
+          "path": "en/observability/tracing/03-opentelemetry.md",
+          "previousIds": 38,
+          "currentIds": 38,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "en/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+          "previousIds": 1,
+          "currentIds": 1,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "B",
+            "C",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B"
+          ],
+          "answersAfter": [
+            "B",
+            "C",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B"
+          ],
+          "pass": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "previousIds": 64,
+          "currentIds": 74,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "ko/quizzes/security/04-network-policies-quiz.md",
+          "previousIds": 15,
+          "currentIds": 15,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "answersAfter": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "pass": true
+        },
+        {
+          "path": "ko/observability/tracing/03-opentelemetry.md",
+          "previousIds": 38,
+          "currentIds": 38,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+          "previousIds": 1,
+          "currentIds": 1,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "B",
+            "C",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B"
+          ],
+          "answersAfter": [
+            "B",
+            "C",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B"
+          ],
+          "pass": true
+        }
+      ]
+    }
+  }
 }

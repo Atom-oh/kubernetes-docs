@@ -9,20 +9,22 @@ Kubernetes 네트워크 정책은 Pod 간 트래픽을 제어하는 방화벽 �
 
 ## 목차
 
-1. [네트워크 정책 개요](#네트워크-정책-개요)
-2. [Kubernetes NetworkPolicy 스펙](#kubernetes-networkpolicy-스펙)
-3. [기본 거부 정책](#기본-거부-정책)
-4. [정책 순서 및 평가](#정책-순서-및-평가)
-5. [Cilium 네트워크 정책 확장](#cilium-네트워크-정책-확장)
-6. [Calico 네트워크 정책 확장](#calico-네트워크-정책-확장)
-7. [설계 패턴](#설계-패턴)
-8. [네트워크 정책 테스트](#네트워크-정책-테스트)
-9. [EKS 고려사항](#eks-고려사항)
-10. [시각화 도구](#시각화-도구)
+1. [네트워크 정책 개요](#network-policy-overview)
+2. [Kubernetes NetworkPolicy 스펙](#kubernetes-networkpolicy-spec)
+3. [기본 거부 정책](#default-deny-policies)
+4. [정책 순서 및 평가](#policy-order-and-evaluation)
+5. [Cilium 네트워크 정책 확장](#cilium-network-policy-extensions)
+6. [Calico 네트워크 정책 확장](#calico-network-policy-extensions)
+7. [설계 패턴](#design-patterns)
+8. [네트워크 정책 테스트](#testing-network-policies)
+9. [EKS 고려사항](#eks-considerations)
+10. [시각화 도구](#visualization-tools)
 
 ---
 
-## 네트워크 정책 개요
+<span id="네트워크-정책-개요"></span>
+
+## 네트워크 정책 개요 {#network-policy-overview}
 
 ### 네트워크 정책이란?
 
@@ -81,7 +83,9 @@ Kubernetes NetworkPolicy는 자신의 네임스페이스에 있는 Pod를 선택
 
 ---
 
-## Kubernetes NetworkPolicy 스펙
+<span id="kubernetes-networkpolicy-스펙"></span>
+
+## Kubernetes NetworkPolicy 스펙 {#kubernetes-networkpolicy-spec}
 
 ### 기본 구조
 
@@ -300,7 +304,9 @@ spec:
 
 ---
 
-## 기본 거부 정책
+<span id="기본-거부-정책"></span>
+
+## 기본 거부 정책 {#default-deny-policies}
 
 빈 기준선은 허용 규칙을 제공하지 않지만 다른 선택 정책은 트래픽을 허용할 수 있습니다. 정책 변경 시 이미 연결된 세션 처리도 구현별로 달라 별도 시험이 필요합니다.
 
@@ -464,7 +470,9 @@ spec:
       port: 8080
 ```
 
-## 정책 순서 및 평가
+<span id="정책-순서-및-평가"></span>
+
+## 정책 순서 및 평가 {#policy-order-and-evaluation}
 
 다음 흐름은 엔드포인트·방향별 **Kubernetes NetworkPolicy** 허용 규칙에 한정됩니다. 출발지 egress와 목적지 ingress 및 다른 네트워크 제어를 함께 확인합니다. Ingress 전용 정책은 egress를 격리하지 않습니다. 합집합 규칙을 Calico tier, Cilium deny, AWS 관리 정책에 일반화하지 않습니다.
 
@@ -580,7 +588,9 @@ NetworkPolicy에는 우선순위 개념이 없습니다. 모든 정책은 동등
 
 ---
 
-## Cilium 네트워크 정책 확장
+<span id="cilium-네트워크-정책-확장"></span>
+
+## Cilium 네트워크 정책 확장 {#cilium-network-policy-extensions}
 
 예제는 릴리스된 Cilium 1.20.1 정책 스키마 기준이며 모든 클러스터의 업그레이드 지시가 아닙니다. HTTP 규칙에는 지원되는 L7 proxy 경로가 필요합니다. AWS VPC CNI chaining에는 L7 정책 등 고급 기능의 제한이 문서화되어 있으므로 이 HTTP 예제가 그대로 동작한다고 가정하지 않습니다. 숫자 security identity는 레이블 집합에 할당된 값이며 영구 앱 ID가 아닙니다.
 
@@ -770,7 +780,9 @@ spec:
         protocol: TCP
 ```
 
-## Calico 네트워크 정책 확장
+<span id="calico-네트워크-정책-확장"></span>
+
+## Calico 네트워크 정책 확장 {#calico-network-policy-extensions}
 
 정책·Tier 예제는 Calico Open Source3.32.2 리소스 기준입니다. `projectcalico.org/v3`는 지원 Calico API server 또는 일치하는 `calicoctl` 절차가 필요하며 Kubernetes의 원시 저장 CRD `crd.projectcalico.org/v1`과 구분합니다. 적용 전 설치된 datastore·API를 확인합니다. Calico의 순서 있는 action·tier 위임은 Kubernetes NetworkPolicy의 허용 합집합과 다릅니다.
 
@@ -977,7 +989,9 @@ spec:
       - 53
 ```
 
-## 설계 패턴
+<span id="설계-패턴"></span>
+
+## 설계 패턴 {#design-patterns}
 
 각 예제는 **서로 다른 정책 프로파일**이며 한꺼번에 적용할 묶음이 아닙니다. 같은 `production`을 사용해도 별도 예제의 허용 규칙은 누적됩니다. 네임스페이스·워크로드 레이블·실제 수신 포트·DNS 프로파일을 먼저 준비합니다. 로컬 스키마·정책 의도만 확인했으며 실제 클러스터 연결 시험은 수행하지 않았습니다.
 
@@ -1393,7 +1407,9 @@ spec:
 
 ---
 
-## 네트워크 정책 테스트
+<span id="네트워크-정책-테스트"></span>
+
+## 네트워크 정책 테스트 {#testing-network-policies}
 
 ### netshoot을 사용한 테스트
 
@@ -1469,7 +1485,9 @@ case "$denied" in
 esac
 ```
 
-## EKS 고려사항
+<span id="eks-고려사항"></span>
+
+## EKS 고려사항 {#eks-considerations}
 
 ### Amazon VPC CNI와 NetworkPolicy
 
@@ -1665,7 +1683,9 @@ helm template cilium cilium/cilium --version 1.20.1 \
 
 [AWS VPC CNI chaining — Cilium 1.20.1](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
 
-## 시각화 도구
+<span id="시각화-도구"></span>
+
+## 시각화 도구 {#visualization-tools}
 
 ### Cilium Network Policy Editor
 
