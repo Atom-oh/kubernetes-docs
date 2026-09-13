@@ -1191,7 +1191,7 @@ Client 실행 중 observer를 reset하지 마세요. 전후 collector Pod UID와
 ## 참고 자료와 검증 경계
 
 - [Istio 1.30.2 릴리스](https://github.com/istio/istio/releases/tag/1.30.2), [릴리스 의존성](https://github.com/istio/istio/blob/1.30.2/go.mod), [프록시 종료 구현](https://github.com/istio/istio/blob/1.30.2/pkg/envoy/agent.go)
-- [Istio 1.30 ambient L7 기능 상태](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/l7-features/index.md)와 [트래픽 관리](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/manage-traffic/index.md)
+- [Istio 1.30 ambient L7 기능 상태](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/l7-features/index.md)와 [트래픽 관리](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/traffic-distribution/index.md)
 - [Kubernetes 컨테이너 lifecycle hook](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/)과 [native sidecar](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
 - [Amazon EKS NetworkPolicy](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)와 [설정·시작 모드](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
 - [Cilium 정책 지원](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/index.rst)

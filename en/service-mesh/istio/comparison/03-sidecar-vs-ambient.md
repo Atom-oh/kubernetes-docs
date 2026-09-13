@@ -1191,7 +1191,7 @@ Do not reset the observer while a client is running. Compare collector Pod UIDs 
 ## References and verification boundaries
 
 - [Istio 1.30.2 release](https://github.com/istio/istio/releases/tag/1.30.2), [released dependencies](https://github.com/istio/istio/blob/1.30.2/go.mod), and [proxy shutdown implementation](https://github.com/istio/istio/blob/1.30.2/pkg/envoy/agent.go)
-- [Istio 1.30 ambient L7 feature status](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/l7-features/index.md) and [traffic management](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/manage-traffic/index.md)
+- [Istio 1.30 ambient L7 feature status](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/l7-features/index.md) and [traffic management](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/traffic-distribution/index.md)
 - [Kubernetes container lifecycle hooks](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/) and [native sidecar containers](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
 - [Amazon EKS NetworkPolicy](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html) and [configuration/startup modes](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
 - [Cilium policy support](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/index.rst)

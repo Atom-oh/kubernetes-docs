@@ -1147,7 +1147,7 @@ resources:
 
 7. **Cost allocation:** use Cost Explorer and configured allocation reports/tools. Kubernetes labels do not automatically become activated AWS cost-allocation tags. Include control plane, Auto Mode fees where applicable, storage, load balancers, NAT, transfer and logging costs.
 
-References: [CA on EKS](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html), [CA chart](https://github.com/kubernetes/autoscaler/tree/master/charts/cluster-autoscaler), [CA 1.36.1](https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.36.1), [Spot pricing](https://aws.amazon.com/ec2/spot/), [Fargate pricing](https://aws.amazon.com/fargate/pricing/), [Graviton](https://aws.amazon.com/ec2/graviton/), [Savings Plans](https://aws.amazon.com/savingsplans/).
+References: [CA on EKS](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html), [CA chart](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/charts/cluster-autoscaler), [CA 1.36.1](https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.36.1), [Spot pricing](https://aws.amazon.com/ec2/spot/), [Fargate pricing](https://aws.amazon.com/fargate/pricing/), [Graviton](https://aws.amazon.com/ec2/graviton/), [Savings Plans](https://aws.amazon.com/savingsplans/).
 
 </details>
 
