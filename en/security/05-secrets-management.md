@@ -675,14 +675,6 @@ the key name must end in `.agekey`. The Kustomization below references that
 Secret and an already configured GitRepository. Kubernetes/RBAC and Flux
 decryption privileges remain security boundaries.
 
-### AWS KMS with SOPS
-
-Use valid KMS key ARNs and a constrained identity/key policy. Multiple recipients
-normally offer alternative decryptors, not an automatic requirement that all
-keys authorize decryption; threshold key groups are a separate feature.
-`sops updatekeys` changes recipients, while `sops rotate` rotates the file's data
-key. Neither changes the application/database credential stored in the file.
-
 ```yaml
 # Create flux-system/sops-age from a private age.agekey file separately.
 # Never put an actual AGE-SECRET-KEY value in a tracked manifest.
@@ -703,6 +695,15 @@ spec:
     secretRef:
       name: sops-age
 ```
+
+### AWS KMS with SOPS
+
+Use valid KMS key ARNs and a constrained identity/key policy. Multiple recipients
+normally offer alternative decryptors, not an automatic requirement that all
+keys authorize decryption; threshold key groups are a separate feature.
+`sops updatekeys` changes recipients, while `sops rotate` rotates the file's data
+key. Neither changes the application/database credential stored in the file.
+
 
 ## EKS Pod Identity and IRSA
 

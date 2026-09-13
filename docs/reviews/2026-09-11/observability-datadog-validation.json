@@ -28,11 +28,12 @@
     }
   },
   "checks": {
+    "passed": true,
     "files": [
       {
         "path": "en/observability/metrics/05-datadog.md",
-        "sha256": "ddfebff63323889b61980059dd6af351ad46025f76ace5cf8b47d151cf5a6ad3",
-        "lines": 911,
+        "sha256": "fd65d463083c8ea6ddab036ed34d24833997a82e7ee3d0ecf3fe47cf03ebe65d",
+        "lines": 996,
         "codeBlocks": {
           "bash": 2,
           "yaml": 5,
@@ -55,8 +56,8 @@
       },
       {
         "path": "ko/observability/metrics/05-datadog.md",
-        "sha256": "fdbec6feddf3e922df838ab06f8a87330905faf87bf2ef2bc05ef7afc652deaa",
-        "lines": 888,
+        "sha256": "d5f8e0fff427f12c6322e7f81d53ba99d59055123fa1a875a343580d3fbc9e03",
+        "lines": 971,
         "codeBlocks": {
           "bash": 2,
           "yaml": 5,
@@ -78,1100 +79,60 @@
         "quizQuestions": 10
       }
     ],
-    "passed": true,
-    "links": [
-      {
-        "source": "en/observability/metrics/05-datadog.md",
-        "target": "en/.gitbook/assets/en-observability-metrics-05-datadog-1.png",
-        "passed": true
-      },
-      {
-        "source": "en/observability/metrics/05-datadog.md",
-        "target": "public/archmaps/en-observability-metrics-05-datadog-1.html",
-        "passed": true
-      },
-      {
-        "source": "en/observability/metrics/05-datadog.md",
-        "target": "en/quizzes/observability/metrics/05-datadog-quiz.md",
-        "passed": true
-      },
-      {
-        "source": "en/quizzes/observability/metrics/05-datadog-quiz.md",
-        "target": "en/observability/metrics/05-datadog.md",
-        "passed": true
-      },
-      {
-        "source": "ko/observability/metrics/05-datadog.md",
-        "target": "ko/.gitbook/assets/ko-observability-metrics-05-datadog-1.png",
-        "passed": true
-      },
-      {
-        "source": "ko/observability/metrics/05-datadog.md",
-        "target": "public/archmaps/ko-observability-metrics-05-datadog-1.html",
-        "passed": true
-      },
-      {
-        "source": "ko/observability/metrics/05-datadog.md",
-        "target": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
-        "passed": true
-      },
-      {
-        "source": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
-        "target": "ko/observability/metrics/05-datadog.md",
-        "passed": true
-      }
-    ],
-    "bilingualCodeAndAnswerParity": true,
-    "fixtureCodeMatchesPublished": true,
-    "native": {
-      "initial-chart-validation.json": {
-        "chart": "3.244.0",
-        "agent": "7.83.1",
-        "objects": 25,
-        "stderr": "",
-        "workloads": [
-          {
-            "kind": "DaemonSet",
-            "name": "datadog",
-            "containers": [
-              "agent",
-              "trace-agent"
-            ]
-          },
-          {
-            "kind": "Deployment",
-            "name": "datadog-cluster-agent",
-            "containers": [
-              "cluster-agent"
-            ]
-          }
-        ],
-        "scope": "OfflineHelmrenderonly;noKubernetesdeployment"
-      },
-      "dogstatsd-validation.json": {
-        "datadogPython": "0.53.0",
-        "python": "3.12.13",
-        "sourceSha256": "aa16bb6a28cec046834605e7f0740fc23aa9ec204d13e13f60ab8d085307b683",
-        "cases": [
-          {
-            "total": 100,
-            "errors": 5,
-            "countPackets": 3,
-            "passed": true
-          },
-          {
-            "total": 100,
-            "errors": 0,
-            "countPackets": 3,
-            "passed": true
-          },
-          {
-            "total": 100,
-            "errors": 100,
-            "countPackets": 3,
-            "passed": true
-          },
-          {
-            "total": 0,
-            "errors": 0,
-            "countPackets": 3,
-            "passed": true
-          }
-        ],
-        "invalidInputsRejected": 4,
-        "scope": "LocalUnixdatagrams;origin detectiondisabledonlyinfixture;telemetrydisabled;noAgent/SaaS"
-      },
-      "tracing-validation.json": {
-        "ddtrace": "4.14.0",
-        "python": "3.12.13",
-        "sourceSha256": "8c887514dfd44760d82b33953a3a5b40ca4d3dcf407be05d8fa9d7fc9f4f1e14",
-        "cases": [
-          "successresultandboundedtag",
-          "handlerexceptionpreservedandspanerror",
-          "activecontextcleared"
-        ],
-        "passed": true,
-        "socketConnectCalls": [],
-        "scope": "Manualin-processspanswithtracingexport/telemetry/remoteconfig/profiler/appsec/crashtrackingdisabled;noAgent/SaaScall"
-      },
-      "java-validation.json": {
-        "jdk": "Corretto21.0.12",
-        "releaseTarget": 17,
-        "api": "dd-trace-api1.66.0",
-        "slf4j": "2.0.17JUL",
-        "checks": [
-          {
-            "stage": "compile",
-            "passed": true,
-            "output": ""
-          },
-          {
-            "stage": "run",
-            "passed": true,
-            "output": "PASS: old-clear reproducer; caller/error/empty context; handler result"
-          }
-        ],
-        "scope": "Localcompile/MDC/handlerchecks;noJavaAgentorAPMexport"
-      },
-      "api-model-validation.json": {
-        "apiClient": "2.60.0",
-        "python": "3.12.13",
-        "sourceHashes": {
-          "dashboard_example.py": "04545dc58633262840a8c72c1014be83f7d6b093bd294205f884d55c4621bf79",
-          "slo_example.py": "91880ab202b46c5e646aa4a242adb2a6c65c3328bc3b69abd6ea323e6211ed7f",
-          "logs-pipeline.json": "8f508e8f82fb4df93d5c5f019448a339a8dc6964d3c29c740d25289333ec9536",
-          "monitors.tf": "3e8c85628d7e6a49bdf30eeee8e754d0d9b6e9e41b60accfc9e215e5eb1249a7"
-        },
-        "cases": [
-          {
-            "case": "dashboard-template-variables-units",
-            "passed": true,
-            "request": {
-              "template_variables": [
-                {
-                  "default": "my-eks-cluster",
-                  "prefix": "kube_cluster_name",
-                  "name": "cluster"
-                },
-                {
-                  "default": "*",
-                  "prefix": "kube_namespace",
-                  "name": "namespace"
-                }
-              ],
-              "layout_type": "ordered",
-              "title": "EKS observability example",
-              "widgets": [
-                {
-                  "definition": {
-                    "title": "CPU idle by host (%)",
-                    "requests": [
-                      {
-                        "display_type": "line",
-                        "q": "avg:system.cpu.idle{$cluster} by {host}"
-                      }
-                    ],
-                    "type": "timeseries"
-                  }
-                },
-                {
-                  "definition": {
-                    "title": "Top 10 pod memory series by mean (bytes)",
-                    "requests": [
-                      {
-                        "q": "top(sum:kubernetes.memory.usage{$cluster,$namespace} by {pod_name,kube_namespace}, 10, 'mean', 'desc')"
-                      }
-                    ],
-                    "type": "toplist"
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "case": "slo-count-request",
-            "passed": true,
-            "request": {
-              "description": "Successful requests divided by all reported requests",
-              "query": {
-                "denominator": "sum:my_app.requests.total{env:demo,service:orders}.as_count()",
-                "numerator": "sum:my_app.requests.good{env:demo,service:orders}.as_count()"
-              },
-              "tags": [
-                "env:demo",
-                "service:orders"
-              ],
-              "name": "Orders successful-request SLO",
-              "thresholds": [
-                {
-                  "warning": 99.95,
-                  "target": 99.9,
-                  "timeframe": "30d"
-                }
-              ],
-              "type": "metric"
-            }
-          },
-          {
-            "case": "logs-pipeline-current-api-schema",
-            "passed": true,
-            "request": {
-              "filter": {
-                "query": "source:java service:orders"
-              },
-              "is_enabled": true,
-              "processors": [
-                {
-                  "source": "message",
-                  "is_enabled": true,
-                  "name": "Parse the documented Java line format",
-                  "samples": [
-                    "2026-09-13 12:00:00,123 INFO [main] example.Service - completed"
-                  ],
-                  "grok": {
-                    "support_rules": "",
-                    "match_rules": "java_log %{date(\"yyyy-MM-dd HH:mm:ss,SSS\"):timestamp} %{word:level} \\[%{notSpace:thread}\\] %{notSpace:logger} - %{data:message}"
-                  },
-                  "type": "grok-parser"
-                },
-                {
-                  "is_enabled": true,
-                  "name": "Use level as status",
-                  "sources": [
-                    "level"
-                  ],
-                  "type": "status-remapper"
-                },
-                {
-                  "is_enabled": true,
-                  "name": "Use parsed timestamp",
-                  "sources": [
-                    "timestamp"
-                  ],
-                  "type": "date-remapper"
-                }
-              ],
-              "name": "Java application logs"
-            }
-          },
-          {
-            "case": "old-grok-camelcase-rejected",
-            "passed": true
-          },
-          {
-            "case": "monitor-input-low_cpu_idle",
-            "passed": true,
-            "request": {
-              "message": "CPU idle on {{host.name}} is {{value}}%. Inspect the host and collection health.",
-              "name": "Low CPU idle on EKS nodes",
-              "options": {
-                "notify_no_data": false,
-                "require_full_window": false,
-                "thresholds": {
-                  "critical": 20.0,
-                  "warning": 30.0
-                }
-              },
-              "tags": [
-                "env:demo",
-                "team:platform"
-              ],
-              "query": "avg(last_5m):avg:system.cpu.idle{kube_cluster_name:my-eks-cluster} by {host} < 20",
-              "type": "metric alert"
-            }
-          },
-          {
-            "case": "monitor-input-restart_total",
-            "passed": true,
-            "request": {
-              "message": "Inspect {{pod_name.name}} / {{kube_container_name.name}}. This is a restart total, not a count of new restarts in five minutes.",
-              "name": "Container restart total exceeds example threshold",
-              "options": {
-                "notify_no_data": false,
-                "require_full_window": false,
-                "thresholds": {
-                  "critical": 3.0,
-                  "warning": 2.0
-                }
-              },
-              "tags": [
-                "env:demo",
-                "team:platform"
-              ],
-              "query": "max(last_5m):max:kubernetes_state.container.restarts{kube_cluster_name:my-eks-cluster} by {pod_name,kube_namespace,kube_container_name} > 3",
-              "type": "metric alert"
-            }
-          },
-          {
-            "case": "monitor-input-request_error_rate",
-            "passed": true,
-            "request": {
-              "message": "Error ratio for {{service.name}} is {{value}}%. Check traffic volume and the reporting path.",
-              "name": "High request error ratio",
-              "options": {
-                "notify_no_data": false,
-                "require_full_window": false,
-                "thresholds": {
-                  "critical": 5.0,
-                  "warning": 2.0
-                }
-              },
-              "tags": [
-                "env:demo",
-                "type:application"
-              ],
-              "query": "sum(last_5m):sum:my_app.requests.error{env:demo} by {service}.as_count() / sum:my_app.requests.total{env:demo} by {service}.as_count() * 100 > 5",
-              "type": "metric alert"
-            }
-          },
-          {
-            "case": "monitor-input-watchdog_events",
-            "passed": true,
-            "request": {
-              "message": "Review the matching Watchdog event and affected services. Add an approved notification destination.",
-              "name": "Review matching Watchdog events",
-              "options": {},
-              "tags": [
-                "env:demo",
-                "type:watchdog"
-              ],
-              "query": "events(\"source:watchdog\").rollup(\"count\").last(\"5m\") > 0",
-              "type": "event-v2 alert"
-            }
-          }
-        ],
-        "limits": "Actualvendorrequestmodels/serializationandHCLsyntaxonly;noAPIclientrequest,tenantmutation,queryengineorGrokexecution."
-      },
-      "browser-validation.json": {
-        "head": null,
-        "cases": [
-          {
-            "path": "public/archmaps/en-observability-metrics-05-datadog-1.html",
-            "width": 375,
-            "sourceSha256": "33d4dfca981e7483c6ec0d11ed97a293b4c5551580dc1820f68cfc4160bd28d7",
-            "scrollWidth": 375,
-            "svg": 2,
-            "toolbar": {
-              "x": 16,
-              "y": 16,
-              "width": 343,
-              "height": 96,
-              "top": 16,
-              "right": 359,
-              "bottom": 112,
-              "left": 16
-            },
-            "nodeIds": [
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors",
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors"
-            ],
-            "nodeIdsPresent": true,
-            "themeChanged": true,
-            "exportMenuOpened": true,
-            "views": [],
-            "svgDownloaded": null,
-            "errors": [],
-            "failures": [],
-            "passed": true
-          },
-          {
-            "path": "public/archmaps/en-observability-metrics-05-datadog-1.html",
-            "width": 768,
-            "sourceSha256": "33d4dfca981e7483c6ec0d11ed97a293b4c5551580dc1820f68cfc4160bd28d7",
-            "scrollWidth": 768,
-            "svg": 2,
-            "toolbar": {
-              "x": 32,
-              "y": 32,
-              "width": 704,
-              "height": 44,
-              "top": 32,
-              "right": 736,
-              "bottom": 76,
-              "left": 32
-            },
-            "nodeIds": [
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors",
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors"
-            ],
-            "nodeIdsPresent": true,
-            "themeChanged": true,
-            "exportMenuOpened": true,
-            "views": [],
-            "svgDownloaded": null,
-            "errors": [],
-            "failures": [],
-            "passed": true
-          },
-          {
-            "path": "public/archmaps/en-observability-metrics-05-datadog-1.html",
-            "width": 1920,
-            "sourceSha256": "33d4dfca981e7483c6ec0d11ed97a293b4c5551580dc1820f68cfc4160bd28d7",
-            "scrollWidth": 1920,
-            "svg": 2,
-            "toolbar": {
-              "x": 1417,
-              "y": 16,
-              "width": 487,
-              "height": 44,
-              "top": 16,
-              "right": 1904,
-              "bottom": 60,
-              "left": 1417
-            },
-            "nodeIds": [
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors",
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors"
-            ],
-            "nodeIdsPresent": true,
-            "themeChanged": true,
-            "exportMenuOpened": true,
-            "views": [
-              {
-                "id": "collect",
-                "pressed": "true"
-              },
-              {
-                "id": "visualize",
-                "pressed": "true"
-              },
-              {
-                "id": "alert",
-                "pressed": "true"
-              }
-            ],
-            "svgDownloaded": true,
-            "errors": [],
-            "failures": [],
-            "passed": true
-          },
-          {
-            "path": "public/archmaps/ko-observability-metrics-05-datadog-1.html",
-            "width": 375,
-            "sourceSha256": "1b96f601af5d198b6a77946f7b1a8b4f719b07094c9d6eec6ab54b669c2bc436",
-            "scrollWidth": 375,
-            "svg": 2,
-            "toolbar": {
-              "x": 16,
-              "y": 16,
-              "width": 343,
-              "height": 96,
-              "top": 16,
-              "right": 359,
-              "bottom": 112,
-              "left": 16
-            },
-            "nodeIds": [
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors",
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors"
-            ],
-            "nodeIdsPresent": true,
-            "themeChanged": true,
-            "exportMenuOpened": true,
-            "views": [],
-            "svgDownloaded": null,
-            "errors": [],
-            "failures": [],
-            "passed": true
-          },
-          {
-            "path": "public/archmaps/ko-observability-metrics-05-datadog-1.html",
-            "width": 768,
-            "sourceSha256": "1b96f601af5d198b6a77946f7b1a8b4f719b07094c9d6eec6ab54b669c2bc436",
-            "scrollWidth": 768,
-            "svg": 2,
-            "toolbar": {
-              "x": 32,
-              "y": 32,
-              "width": 704,
-              "height": 44,
-              "top": 32,
-              "right": 736,
-              "bottom": 76,
-              "left": 32
-            },
-            "nodeIds": [
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors",
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors"
-            ],
-            "nodeIdsPresent": true,
-            "themeChanged": true,
-            "exportMenuOpened": true,
-            "views": [],
-            "svgDownloaded": null,
-            "errors": [],
-            "failures": [],
-            "passed": true
-          },
-          {
-            "path": "public/archmaps/ko-observability-metrics-05-datadog-1.html",
-            "width": 1920,
-            "sourceSha256": "1b96f601af5d198b6a77946f7b1a8b4f719b07094c9d6eec6ab54b669c2bc436",
-            "scrollWidth": 1920,
-            "svg": 2,
-            "toolbar": {
-              "x": 1417,
-              "y": 16,
-              "width": 487,
-              "height": 44,
-              "top": 16,
-              "right": 1904,
-              "bottom": 60,
-              "left": 1417
-            },
-            "nodeIds": [
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors",
-              "cca",
-              "agent",
-              "app",
-              "metrics",
-              "logs",
-              "apm",
-              "prof",
-              "dash",
-              "watchdog",
-              "monitors"
-            ],
-            "nodeIdsPresent": true,
-            "themeChanged": true,
-            "exportMenuOpened": true,
-            "views": [
-              {
-                "id": "collect",
-                "pressed": "true"
-              },
-              {
-                "id": "visualize",
-                "pressed": "true"
-              },
-              {
-                "id": "alert",
-                "pressed": "true"
-              }
-            ],
-            "svgDownloaded": true,
-            "errors": [],
-            "failures": [],
-            "passed": true
-          }
-        ],
-        "passed": true,
-        "scope": "Sequential native Playwright file://, unchanged production font/responsive normalization, Node and browser JS heap512MiB, GPU disabled; no VitePress server/build."
-      },
-      "metadata-validation.json": {
-        "results": [
-          {
-            "path": "en/observability/metrics/05-datadog.md",
-            "lastUpdated": "2026-09-13",
-            "passed": true
-          },
-          {
-            "path": "ko/observability/metrics/05-datadog.md",
-            "lastUpdated": "2026-09-13",
-            "passed": true
-          },
-          {
-            "path": "en/quizzes/observability/metrics/05-datadog-quiz.md",
-            "lastUpdated": "2026-09-13",
-            "passed": true
-          },
-          {
-            "path": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
-            "lastUpdated": "2026-09-13",
-            "passed": true
-          }
-        ]
-      }
+    "profile": {
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "test_all_rendered_pod_templates_including_jobs_avoid_secret_environments (__main__.Profiles.test_all_rendered_pod_templates_including_jobs_avoid_secret_environments) ... ok\ntest_csi_source_is_aws_file_only_and_matches_grafana_mount (__main__.Profiles.test_csi_source_is_aws_file_only_and_matches_grafana_mount) ... ok\ntest_datadog_resolves_identical_handles_in_each_consumer (__main__.Profiles.test_datadog_resolves_identical_handles_in_each_consumer) ... ok\ntest_grafana_keeps_file_expression_not_password_in_environment (__main__.Profiles.test_grafana_keeps_file_expression_not_password_in_environment) ... ok\ntest_helm_invokes_the_executable_postrenderer (__main__.Profiles.test_helm_invokes_the_executable_postrenderer) ... ok\ntest_invalid_input_produces_no_partial_manifest_or_secret_diagnostic (__main__.Profiles.test_invalid_input_produces_no_partial_manifest_or_secret_diagnostic) ... ok\ntest_rejects_chart_image_and_identity_drift (__main__.Profiles.test_rejects_chart_image_and_identity_drift) ... ok\ntest_rejects_missing_backend_static_aws_credentials_or_imds_fallback (__main__.Profiles.test_rejects_missing_backend_static_aws_credentials_or_imds_fallback) ... ok\ntest_rejects_missing_or_duplicate_credential_and_wrong_secret (__main__.Profiles.test_rejects_missing_or_duplicate_credential_and_wrong_secret) ... ok\ntest_rejects_other_secret_environment_sources_and_new_consumers (__main__.Profiles.test_rejects_other_secret_environment_sources_and_new_consumers) ... ok\ntest_sidecar_startup_and_provisioning_do_not_require_admin_credentials (__main__.Profiles.test_sidecar_startup_and_provisioning_do_not_require_admin_credentials) ... ok\ntest_unprocessed_datadog_has_the_original_seven_unsafe_references (__main__.Profiles.test_unprocessed_datadog_has_the_original_seven_unsafe_references) ... ok\n\n----------------------------------------------------------------------\nRan 12 tests in 4.147s\n\nOK\n",
+      "scope": "ExistingbaseprofiletestsagainstactualpinnedHelmarchives,mandatoryexecutablepostrenderer,sevendatadogconsumersandnegativecases;noAWS/credentials/runtime"
     },
-    "sourceLinkKeys": [
-      "a64ab983ba7d",
-      "19a46cda5811",
-      "7ec8c11b4349",
-      "06ad7801794e",
-      "0c2181d4ca0b",
-      "6110b7f501ee",
-      "0b7c99d6836f",
-      "20ddbc91c9d1",
-      "0f3708c900cd",
-      "fe93eff6f7b5",
-      "874f88f7f2fa",
-      "c67c696a8a8d",
-      "f631f84ee4a4",
-      "2070276f9670",
-      "e56b5f0246f0",
-      "78bf9e324ce7",
-      "8ef2fdb00e66",
-      "728b166f2bdc",
-      "7f4e8a35a591"
-    ],
-    "scopedDiffCheck": true,
-    "limits": [
-      "No Datadog tenant/API call, EKS install/admission, provider plan/apply, actual SaaS ingestion or billing measurement.",
-      "Query strings checked against primary metric/aggregation references and API request types; no Datadog query engine/Grok execution.",
-      "Java17-target compilation/MDC behavior; no Java agent instrumentation. ddtrace manual spans have export/telemetry disabled.",
-      "DogStatsD UDS wire checks disable origin detection only in fixtures to avoid host IDs; no receiving Agent was run.",
-      "Go helper source/API review only; Go compiler unavailable. No Go compilation claim.",
-      "Six original PNGs viewed. Two architecture figures retained with explicit scope and6browserchecks;fourcomparison/costreferences replaced withtables/prose. Shared/foreign backfill remains parent followup."
-    ]
+    "currentInlineProfileBinding": {
+      "status": "passed",
+      "results": [
+        {
+          "path": "en/observability/metrics/05-datadog.md",
+          "sha256": "fd65d463083c8ea6ddab036ed34d24833997a82e7ee3d0ecf3fe47cf03ebe65d",
+          "inlineValuesMatchBaseProfile": true,
+          "templateAndUpgradeRequirePostrenderer": true
+        },
+        {
+          "path": "ko/observability/metrics/05-datadog.md",
+          "sha256": "d5f8e0fff427f12c6322e7f81d53ba99d59055123fa1a875a343580d3fbc9e03",
+          "inlineValuesMatchBaseProfile": true,
+          "templateAndUpgradeRequirePostrenderer": true
+        }
+      ],
+      "profileSha256": "b9fd6fd73e6f5a0280adfa263447ee10031c3590fd1423c33804f594c02621b7"
+    },
+    "inheritedNonCredentialEvidence": "HistoricalSDK/DogStatsD/Java/API-modelandquerychecksremainapplicabletounchangednoncredentialexamples;notrerunforprofile/anchorrepair."
   },
   "markdownVue": {
-    "nodeHeapMiB": 512,
-    "scope": "Explicit documents only; no site build",
-    "results": [
+    "status": "passed",
+    "rows": [
       {
         "path": "en/observability/metrics/05-datadog.md",
-        "sha256": "ddfebff63323889b61980059dd6af351ad46025f76ace5cf8b47d151cf5a6ad3",
-        "passed": true,
+        "sha256": "fd65d463083c8ea6ddab036ed34d24833997a82e7ee3d0ecf3fe47cf03ebe65d",
         "errors": [],
-        "oneH1": true,
-        "headings": [
-          {
-            "tag": "h1",
-            "id": "datadog"
-          },
-          {
-            "tag": "h2",
-            "id": "introduction"
-          },
-          {
-            "tag": "h2",
-            "id": "eks-integration-architecture"
-          },
-          {
-            "tag": "h2",
-            "id": "datadog-agent-installation"
-          },
-          {
-            "tag": "h3",
-            "id": "credentials-and-installation-ownership"
-          },
-          {
-            "tag": "h3",
-            "id": "reviewed-values"
-          },
-          {
-            "tag": "h3",
-            "id": "aws-account-integration-is-a-separate-path"
-          },
-          {
-            "tag": "h2",
-            "id": "infrastructure-monitoring"
-          },
-          {
-            "tag": "h3",
-            "id": "check-the-metric-s-collector-unit-and-tags"
-          },
-          {
-            "tag": "h3",
-            "id": "openmetrics-autodiscovery"
-          },
-          {
-            "tag": "h3",
-            "id": "dogstatsd-use-an-endpoint-reachable-from-the-application"
-          },
-          {
-            "tag": "h3",
-            "id": "file-based-autodiscovery-configuration"
-          },
-          {
-            "tag": "h2",
-            "id": "apm-and-distributed-tracing"
-          },
-          {
-            "tag": "h3",
-            "id": "local-sdk-injection-and-ssi-are-explicit-choices"
-          },
-          {
-            "tag": "h3",
-            "id": "manual-java-instrumentation"
-          },
-          {
-            "tag": "h3",
-            "id": "manual-python-instrumentation"
-          },
-          {
-            "tag": "h2",
-            "id": "log-management"
-          },
-          {
-            "tag": "h3",
-            "id": "select-collection-and-parsing-deliberately"
-          },
-          {
-            "tag": "h3",
-            "id": "pipeline-request-structure"
-          },
-          {
-            "tag": "h3",
-            "id": "trace-log-correlation-and-mdc-ownership"
-          },
-          {
-            "tag": "h2",
-            "id": "dashboards-and-alerts"
-          },
-          {
-            "tag": "h3",
-            "id": "dashboard-request-construction"
-          },
-          {
-            "tag": "h3",
-            "id": "monitor-queries-and-units"
-          },
-          {
-            "tag": "h3",
-            "id": "watchdog-and-notification-delivery"
-          },
-          {
-            "tag": "h3",
-            "id": "slo-request-construction"
-          },
-          {
-            "tag": "h2",
-            "id": "cost-structure"
-          },
-          {
-            "tag": "h3",
-            "id": "use-the-actual-product-and-contract-units"
-          },
-          {
-            "tag": "h3",
-            "id": "metrics-logs-and-trace-controls-do-different-things"
-          },
-          {
-            "tag": "h2",
-            "id": "best-practices"
-          },
-          {
-            "tag": "h2",
-            "id": "troubleshooting"
-          },
-          {
-            "tag": "h2",
-            "id": "validation-scope"
-          },
-          {
-            "tag": "h2",
-            "id": "references"
-          }
-        ],
-        "renderedIds": [
-          "datadog",
-          "introduction",
-          "eks-integration-architecture",
-          "datadog-agent-installation",
-          "credentials-and-installation-ownership",
-          "reviewed-values",
-          "aws-account-integration-is-a-separate-path",
-          "infrastructure-monitoring",
-          "check-the-metric-s-collector-unit-and-tags",
-          "openmetrics-autodiscovery",
-          "dogstatsd-use-an-endpoint-reachable-from-the-application",
-          "file-based-autodiscovery-configuration",
-          "apm-and-distributed-tracing",
-          "local-sdk-injection-and-ssi-are-explicit-choices",
-          "manual-java-instrumentation",
-          "manual-python-instrumentation",
-          "log-management",
-          "select-collection-and-parsing-deliberately",
-          "pipeline-request-structure",
-          "trace-log-correlation-and-mdc-ownership",
-          "dashboards-and-alerts",
-          "dashboard-request-construction",
-          "monitor-queries-and-units",
-          "watchdog-and-notification-delivery",
-          "slo-request-construction",
-          "cost-structure",
-          "use-the-actual-product-and-contract-units",
-          "metrics-logs-and-trace-controls-do-different-things",
-          "best-practices",
-          "troubleshooting",
-          "validation-scope",
-          "references"
-        ]
+        "missingAnchors": [],
+        "missingFragments": [],
+        "originalIds": 43,
+        "images": 1,
+        "lastUpdated": "2026-09-13",
+        "pass": true
       },
       {
         "path": "ko/observability/metrics/05-datadog.md",
-        "sha256": "fdbec6feddf3e922df838ab06f8a87330905faf87bf2ef2bc05ef7afc652deaa",
-        "passed": true,
+        "sha256": "d5f8e0fff427f12c6322e7f81d53ba99d59055123fa1a875a343580d3fbc9e03",
         "errors": [],
-        "oneH1": true,
-        "headings": [
-          {
-            "tag": "h1",
-            "id": "datadog"
-          },
-          {
-            "tag": "h2",
-            "id": "소개"
-          },
-          {
-            "tag": "h2",
-            "id": "eks-통합-아키텍처"
-          },
-          {
-            "tag": "h2",
-            "id": "datadog-agent-설치"
-          },
-          {
-            "tag": "h3",
-            "id": "credential과-설치-소유권"
-          },
-          {
-            "tag": "h3",
-            "id": "검토한-values"
-          },
-          {
-            "tag": "h3",
-            "id": "aws-계정-integration은-별도-경로"
-          },
-          {
-            "tag": "h2",
-            "id": "인프라-모니터링"
-          },
-          {
-            "tag": "h3",
-            "id": "collector·단위·tag-확인"
-          },
-          {
-            "tag": "h3",
-            "id": "openmetrics-autodiscovery"
-          },
-          {
-            "tag": "h3",
-            "id": "dogstatsd-application에서-접근-가능한-endpoint"
-          },
-          {
-            "tag": "h3",
-            "id": "파일-기반-autodiscovery-설정"
-          },
-          {
-            "tag": "h2",
-            "id": "apm-및-분산-트레이싱"
-          },
-          {
-            "tag": "h3",
-            "id": "local-sdk-injection과-ssi를-명시적으로-선택"
-          },
-          {
-            "tag": "h3",
-            "id": "수동-java-계측"
-          },
-          {
-            "tag": "h3",
-            "id": "수동-python-계측"
-          },
-          {
-            "tag": "h2",
-            "id": "로그-관리"
-          },
-          {
-            "tag": "h3",
-            "id": "수집과-parsing을-명시적으로-선택"
-          },
-          {
-            "tag": "h3",
-            "id": "pipeline-요청-구조"
-          },
-          {
-            "tag": "h3",
-            "id": "trace-log-연결과-mdc-소유권"
-          },
-          {
-            "tag": "h2",
-            "id": "대시보드-및-알림"
-          },
-          {
-            "tag": "h3",
-            "id": "dashboard-요청-생성"
-          },
-          {
-            "tag": "h3",
-            "id": "monitor-query와-단위"
-          },
-          {
-            "tag": "h3",
-            "id": "watchdog과-알림-전달"
-          },
-          {
-            "tag": "h3",
-            "id": "slo-요청-생성"
-          },
-          {
-            "tag": "h2",
-            "id": "비용-구조"
-          },
-          {
-            "tag": "h3",
-            "id": "실제-상품·계약-단위로-계산"
-          },
-          {
-            "tag": "h3",
-            "id": "metric·log·trace-제어는-역할이-다름"
-          },
-          {
-            "tag": "h2",
-            "id": "모범-사례"
-          },
-          {
-            "tag": "h2",
-            "id": "문제-해결"
-          },
-          {
-            "tag": "h2",
-            "id": "검증-범위"
-          },
-          {
-            "tag": "h2",
-            "id": "참고-자료"
-          }
-        ],
-        "renderedIds": [
-          "datadog",
-          "소개",
-          "eks-통합-아키텍처",
-          "datadog-agent-설치",
-          "credential과-설치-소유권",
-          "검토한-values",
-          "aws-계정-integration은-별도-경로",
-          "인프라-모니터링",
-          "collector·단위·tag-확인",
-          "openmetrics-autodiscovery",
-          "dogstatsd-application에서-접근-가능한-endpoint",
-          "파일-기반-autodiscovery-설정",
-          "apm-및-분산-트레이싱",
-          "local-sdk-injection과-ssi를-명시적으로-선택",
-          "수동-java-계측",
-          "수동-python-계측",
-          "로그-관리",
-          "수집과-parsing을-명시적으로-선택",
-          "pipeline-요청-구조",
-          "trace-log-연결과-mdc-소유권",
-          "대시보드-및-알림",
-          "dashboard-요청-생성",
-          "monitor-query와-단위",
-          "watchdog과-알림-전달",
-          "slo-요청-생성",
-          "비용-구조",
-          "실제-상품·계약-단위로-계산",
-          "metric·log·trace-제어는-역할이-다름",
-          "모범-사례",
-          "문제-해결",
-          "검증-범위",
-          "참고-자료"
-        ]
-      },
-      {
-        "path": "en/quizzes/observability/metrics/05-datadog-quiz.md",
-        "sha256": "a8f7d73c574547a03397a17753ca450aa3a59245cf4fb00fbfd4e1f2ca673619",
-        "passed": true,
-        "errors": [],
-        "oneH1": true,
-        "headings": [
-          {
-            "tag": "h1",
-            "id": "datadog-quiz"
-          }
-        ],
-        "renderedIds": [
-          "datadog-quiz"
-        ]
-      },
-      {
-        "path": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
-        "sha256": "52a12856590bff42bbdb66d8d969de565a0479b7dfe9f3081e0f228941474b94",
-        "passed": true,
-        "errors": [],
-        "oneH1": true,
-        "headings": [
-          {
-            "tag": "h1",
-            "id": "datadog-퀴즈"
-          }
-        ],
-        "renderedIds": [
-          "datadog-퀴즈"
-        ]
+        "missingAnchors": [],
+        "missingFragments": [],
+        "originalIds": 43,
+        "images": 1,
+        "lastUpdated": "2026-09-13",
+        "pass": true
       }
-    ]
+    ],
+    "scope": "Actual VitePress/Vue compilation and original rendered anchor preservation, without a site build."
   },
   "primarySources": [
     {
@@ -1480,20 +441,9 @@
     }
   ],
   "findings": [
-    "ReplacedSaaSzerooperations/APMincluded/costpredictabilityrankings withproduct/site/collector/identity/usageboundaries;alloriginaltopicsretainedorcorrected.",
-    "PinnedHelm3.244.0 andmatchedAgent/ClusterAgent7.83.1verifiedmultiarchindexdigests;chartdefault7.82.3distinguished. Rendered25objects withagent+trace-agentandClusterAgent,actualSAnamesdatadog/datadog-cluster-agent.",
-    "Disabledunrequestedworkloadautoscaling/Operator/discoverynetworkstats explicitly afteractualrenderexposedhiddenSystemProbeandnullHelmconditionwarning. DatadogOperatorremainscurrentrecommendedalternative;nodeHelmownershipexplicit.",
-    "Repairedsecretcreationunquotedplaceholderredirects;protectedfile/SecretAPIkeyreference,optionalAPPkeyforAPImetricsfeatures;removedbroadunconditionalAWSIAMandfalseIRSA-as-SaaSintegration. Crossaccountrole/externalIDandactualworkloadidentityseparated.",
-    "Retainedvaliddatadog.profiling.enabledwithlibrary/ClusterAgentrequirements;deprecatedprocessAgent.enabledandmanualpasswdduplicationcorrected;top-levelkubeStateMetricsEnabled/prometheusarenottheactualnestedsettings.",
-    "CorrectedCPUusageinnanocoresversuspercent,KubeletversusStateCorecatalogues,cluster_nameversuskube_cluster_name. Kubeletpods.running/containers.restartsarevalidandwerepreservedafterprimaryverification.",
-    "OpenMetricscheck/endpointandcontainerannotationmatchingcorrected;confdmountingandAgent-versus-applicationsecretresolutionexplained. DogStatsDUDSreplaceswronglocalhostassumption;explicitzeroerror/goodcounters,transportlossandhistogram/distributionboundaries.",
-    "CurrentJava1.66API/Pythonddtrace4.14examplesseparatedfromdependencyfiles;label-onlyconnectionvsSDKinjection,7.73namespaceexclusions,verifiedJavaInitimage,actualruntime/instrumentationlimits. Removedunneededcustomer/orderIDtags.",
-    "FixedGrokAPIcamelCase tomatch_rules/support_rules;keptvalidnestedDashboard/SLOdictmodelsaftervendor2.60confirmedthem. ModelvalidationnotliveGrok/queryproof.",
-    "ReplacedbrokenServlet/MDC.clearfragmentwithsynchronouscontext-restoringhelper;Java17compileandJULMDCsuccess/error/empty-contextchecks. ActualtracecorrelationnotclaimedwithoutloadedJavaAgent.",
-    "Dashboardtemplatevariablesnowused;hostidlepercentandpodmemoryunitscorrect. Restartsmonitorstatecoretotalnotmisleadingwindowincrement;as_countsum-before-divisionandexplicitmissing/zerotrafficconditions. Watchdogeventfilterassumptionandroutingnotautomaticnotifications.",
-    "CorrectedAPMservicecountversusbillablehostcostexample andomittedindex/span/retentiondimensions;keptold3350onlyasexplainedinvalidestimate,notmeasuredhistoricalbill. Receiver/filter/cardinality/samplingcontrolsnotuniversalbudgetlimits.",
-    "Diagnosticsnowuseactualselectors/containersandenvnamesonly;removedDD_envvaluedumpandimplicitflareupload. Updatedall20quizanswers andrecognizedLastUpdated/마지막업데이트headers.",
-    "All6originalPNGspersonallyviewed;validarchitecture1perlocaleretainedwithoptionalscopecaptionand6nativebrowserchecks. Incorrectcomparison/cost0,2referencesremovedfromownedMarkdownandreplacedwithtables/formula;shared/foreignassetsunchanged."
+    "Preservedactualmainaws.secretsprofile,scopedIRSAfortwoServiceAccounts,literalENChandlesforallsevenconsumers,mandatorypostrendererandcoordinatedrestartrotation.",
+    "Preservedall43actualbaseDatadogIDsperlanguagewith36relevantsectionaliases;currentMDcompilesandfragmentlinksPASS.",
+    "Retainednoncredentialmetrics,SDK,API,query,costandimagecorrections;historicalinitialauditdetailsretainedunderhistoricalValidationBeforeBasePreservation."
   ],
   "figures": {
     "original": [
@@ -1898,5 +848,1378 @@
     "status": "passed",
     "report": "docs/reviews/2026-09-11/tracing-datadog-shared-assets-validation.json",
     "note": "Historicalnative/textreviewevidenceandoriginalassetlimitationsarepreservedabove;thislaterclosureupdatesthe17retiredsharedassets."
+  },
+  "historicalValidationBeforeBasePreservation": {
+    "checks": {
+      "files": [
+        {
+          "path": "en/observability/metrics/05-datadog.md",
+          "sha256": "ddfebff63323889b61980059dd6af351ad46025f76ace5cf8b47d151cf5a6ad3",
+          "lines": 911,
+          "codeBlocks": {
+            "bash": 2,
+            "yaml": 5,
+            "python": 4,
+            "go": 1,
+            "xml": 1,
+            "java": 2,
+            "text": 2,
+            "json": 1,
+            "hcl": 2
+          },
+          "quizQuestions": 0
+        },
+        {
+          "path": "en/quizzes/observability/metrics/05-datadog-quiz.md",
+          "sha256": "a8f7d73c574547a03397a17753ca450aa3a59245cf4fb00fbfd4e1f2ca673619",
+          "lines": 167,
+          "codeBlocks": {},
+          "quizQuestions": 10
+        },
+        {
+          "path": "ko/observability/metrics/05-datadog.md",
+          "sha256": "fdbec6feddf3e922df838ab06f8a87330905faf87bf2ef2bc05ef7afc652deaa",
+          "lines": 888,
+          "codeBlocks": {
+            "bash": 2,
+            "yaml": 5,
+            "python": 4,
+            "go": 1,
+            "xml": 1,
+            "java": 2,
+            "text": 2,
+            "json": 1,
+            "hcl": 2
+          },
+          "quizQuestions": 0
+        },
+        {
+          "path": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
+          "sha256": "52a12856590bff42bbdb66d8d969de565a0479b7dfe9f3081e0f228941474b94",
+          "lines": 167,
+          "codeBlocks": {},
+          "quizQuestions": 10
+        }
+      ],
+      "passed": true,
+      "links": [
+        {
+          "source": "en/observability/metrics/05-datadog.md",
+          "target": "en/.gitbook/assets/en-observability-metrics-05-datadog-1.png",
+          "passed": true
+        },
+        {
+          "source": "en/observability/metrics/05-datadog.md",
+          "target": "public/archmaps/en-observability-metrics-05-datadog-1.html",
+          "passed": true
+        },
+        {
+          "source": "en/observability/metrics/05-datadog.md",
+          "target": "en/quizzes/observability/metrics/05-datadog-quiz.md",
+          "passed": true
+        },
+        {
+          "source": "en/quizzes/observability/metrics/05-datadog-quiz.md",
+          "target": "en/observability/metrics/05-datadog.md",
+          "passed": true
+        },
+        {
+          "source": "ko/observability/metrics/05-datadog.md",
+          "target": "ko/.gitbook/assets/ko-observability-metrics-05-datadog-1.png",
+          "passed": true
+        },
+        {
+          "source": "ko/observability/metrics/05-datadog.md",
+          "target": "public/archmaps/ko-observability-metrics-05-datadog-1.html",
+          "passed": true
+        },
+        {
+          "source": "ko/observability/metrics/05-datadog.md",
+          "target": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
+          "passed": true
+        },
+        {
+          "source": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
+          "target": "ko/observability/metrics/05-datadog.md",
+          "passed": true
+        }
+      ],
+      "bilingualCodeAndAnswerParity": true,
+      "fixtureCodeMatchesPublished": true,
+      "native": {
+        "initial-chart-validation.json": {
+          "chart": "3.244.0",
+          "agent": "7.83.1",
+          "objects": 25,
+          "stderr": "",
+          "workloads": [
+            {
+              "kind": "DaemonSet",
+              "name": "datadog",
+              "containers": [
+                "agent",
+                "trace-agent"
+              ]
+            },
+            {
+              "kind": "Deployment",
+              "name": "datadog-cluster-agent",
+              "containers": [
+                "cluster-agent"
+              ]
+            }
+          ],
+          "scope": "OfflineHelmrenderonly;noKubernetesdeployment"
+        },
+        "dogstatsd-validation.json": {
+          "datadogPython": "0.53.0",
+          "python": "3.12.13",
+          "sourceSha256": "aa16bb6a28cec046834605e7f0740fc23aa9ec204d13e13f60ab8d085307b683",
+          "cases": [
+            {
+              "total": 100,
+              "errors": 5,
+              "countPackets": 3,
+              "passed": true
+            },
+            {
+              "total": 100,
+              "errors": 0,
+              "countPackets": 3,
+              "passed": true
+            },
+            {
+              "total": 100,
+              "errors": 100,
+              "countPackets": 3,
+              "passed": true
+            },
+            {
+              "total": 0,
+              "errors": 0,
+              "countPackets": 3,
+              "passed": true
+            }
+          ],
+          "invalidInputsRejected": 4,
+          "scope": "LocalUnixdatagrams;origin detectiondisabledonlyinfixture;telemetrydisabled;noAgent/SaaS"
+        },
+        "tracing-validation.json": {
+          "ddtrace": "4.14.0",
+          "python": "3.12.13",
+          "sourceSha256": "8c887514dfd44760d82b33953a3a5b40ca4d3dcf407be05d8fa9d7fc9f4f1e14",
+          "cases": [
+            "successresultandboundedtag",
+            "handlerexceptionpreservedandspanerror",
+            "activecontextcleared"
+          ],
+          "passed": true,
+          "socketConnectCalls": [],
+          "scope": "Manualin-processspanswithtracingexport/telemetry/remoteconfig/profiler/appsec/crashtrackingdisabled;noAgent/SaaScall"
+        },
+        "java-validation.json": {
+          "jdk": "Corretto21.0.12",
+          "releaseTarget": 17,
+          "api": "dd-trace-api1.66.0",
+          "slf4j": "2.0.17JUL",
+          "checks": [
+            {
+              "stage": "compile",
+              "passed": true,
+              "output": ""
+            },
+            {
+              "stage": "run",
+              "passed": true,
+              "output": "PASS: old-clear reproducer; caller/error/empty context; handler result"
+            }
+          ],
+          "scope": "Localcompile/MDC/handlerchecks;noJavaAgentorAPMexport"
+        },
+        "api-model-validation.json": {
+          "apiClient": "2.60.0",
+          "python": "3.12.13",
+          "sourceHashes": {
+            "dashboard_example.py": "04545dc58633262840a8c72c1014be83f7d6b093bd294205f884d55c4621bf79",
+            "slo_example.py": "91880ab202b46c5e646aa4a242adb2a6c65c3328bc3b69abd6ea323e6211ed7f",
+            "logs-pipeline.json": "8f508e8f82fb4df93d5c5f019448a339a8dc6964d3c29c740d25289333ec9536",
+            "monitors.tf": "3e8c85628d7e6a49bdf30eeee8e754d0d9b6e9e41b60accfc9e215e5eb1249a7"
+          },
+          "cases": [
+            {
+              "case": "dashboard-template-variables-units",
+              "passed": true,
+              "request": {
+                "template_variables": [
+                  {
+                    "default": "my-eks-cluster",
+                    "prefix": "kube_cluster_name",
+                    "name": "cluster"
+                  },
+                  {
+                    "default": "*",
+                    "prefix": "kube_namespace",
+                    "name": "namespace"
+                  }
+                ],
+                "layout_type": "ordered",
+                "title": "EKS observability example",
+                "widgets": [
+                  {
+                    "definition": {
+                      "title": "CPU idle by host (%)",
+                      "requests": [
+                        {
+                          "display_type": "line",
+                          "q": "avg:system.cpu.idle{$cluster} by {host}"
+                        }
+                      ],
+                      "type": "timeseries"
+                    }
+                  },
+                  {
+                    "definition": {
+                      "title": "Top 10 pod memory series by mean (bytes)",
+                      "requests": [
+                        {
+                          "q": "top(sum:kubernetes.memory.usage{$cluster,$namespace} by {pod_name,kube_namespace}, 10, 'mean', 'desc')"
+                        }
+                      ],
+                      "type": "toplist"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "case": "slo-count-request",
+              "passed": true,
+              "request": {
+                "description": "Successful requests divided by all reported requests",
+                "query": {
+                  "denominator": "sum:my_app.requests.total{env:demo,service:orders}.as_count()",
+                  "numerator": "sum:my_app.requests.good{env:demo,service:orders}.as_count()"
+                },
+                "tags": [
+                  "env:demo",
+                  "service:orders"
+                ],
+                "name": "Orders successful-request SLO",
+                "thresholds": [
+                  {
+                    "warning": 99.95,
+                    "target": 99.9,
+                    "timeframe": "30d"
+                  }
+                ],
+                "type": "metric"
+              }
+            },
+            {
+              "case": "logs-pipeline-current-api-schema",
+              "passed": true,
+              "request": {
+                "filter": {
+                  "query": "source:java service:orders"
+                },
+                "is_enabled": true,
+                "processors": [
+                  {
+                    "source": "message",
+                    "is_enabled": true,
+                    "name": "Parse the documented Java line format",
+                    "samples": [
+                      "2026-09-13 12:00:00,123 INFO [main] example.Service - completed"
+                    ],
+                    "grok": {
+                      "support_rules": "",
+                      "match_rules": "java_log %{date(\"yyyy-MM-dd HH:mm:ss,SSS\"):timestamp} %{word:level} \\[%{notSpace:thread}\\] %{notSpace:logger} - %{data:message}"
+                    },
+                    "type": "grok-parser"
+                  },
+                  {
+                    "is_enabled": true,
+                    "name": "Use level as status",
+                    "sources": [
+                      "level"
+                    ],
+                    "type": "status-remapper"
+                  },
+                  {
+                    "is_enabled": true,
+                    "name": "Use parsed timestamp",
+                    "sources": [
+                      "timestamp"
+                    ],
+                    "type": "date-remapper"
+                  }
+                ],
+                "name": "Java application logs"
+              }
+            },
+            {
+              "case": "old-grok-camelcase-rejected",
+              "passed": true
+            },
+            {
+              "case": "monitor-input-low_cpu_idle",
+              "passed": true,
+              "request": {
+                "message": "CPU idle on {{host.name}} is {{value}}%. Inspect the host and collection health.",
+                "name": "Low CPU idle on EKS nodes",
+                "options": {
+                  "notify_no_data": false,
+                  "require_full_window": false,
+                  "thresholds": {
+                    "critical": 20.0,
+                    "warning": 30.0
+                  }
+                },
+                "tags": [
+                  "env:demo",
+                  "team:platform"
+                ],
+                "query": "avg(last_5m):avg:system.cpu.idle{kube_cluster_name:my-eks-cluster} by {host} < 20",
+                "type": "metric alert"
+              }
+            },
+            {
+              "case": "monitor-input-restart_total",
+              "passed": true,
+              "request": {
+                "message": "Inspect {{pod_name.name}} / {{kube_container_name.name}}. This is a restart total, not a count of new restarts in five minutes.",
+                "name": "Container restart total exceeds example threshold",
+                "options": {
+                  "notify_no_data": false,
+                  "require_full_window": false,
+                  "thresholds": {
+                    "critical": 3.0,
+                    "warning": 2.0
+                  }
+                },
+                "tags": [
+                  "env:demo",
+                  "team:platform"
+                ],
+                "query": "max(last_5m):max:kubernetes_state.container.restarts{kube_cluster_name:my-eks-cluster} by {pod_name,kube_namespace,kube_container_name} > 3",
+                "type": "metric alert"
+              }
+            },
+            {
+              "case": "monitor-input-request_error_rate",
+              "passed": true,
+              "request": {
+                "message": "Error ratio for {{service.name}} is {{value}}%. Check traffic volume and the reporting path.",
+                "name": "High request error ratio",
+                "options": {
+                  "notify_no_data": false,
+                  "require_full_window": false,
+                  "thresholds": {
+                    "critical": 5.0,
+                    "warning": 2.0
+                  }
+                },
+                "tags": [
+                  "env:demo",
+                  "type:application"
+                ],
+                "query": "sum(last_5m):sum:my_app.requests.error{env:demo} by {service}.as_count() / sum:my_app.requests.total{env:demo} by {service}.as_count() * 100 > 5",
+                "type": "metric alert"
+              }
+            },
+            {
+              "case": "monitor-input-watchdog_events",
+              "passed": true,
+              "request": {
+                "message": "Review the matching Watchdog event and affected services. Add an approved notification destination.",
+                "name": "Review matching Watchdog events",
+                "options": {},
+                "tags": [
+                  "env:demo",
+                  "type:watchdog"
+                ],
+                "query": "events(\"source:watchdog\").rollup(\"count\").last(\"5m\") > 0",
+                "type": "event-v2 alert"
+              }
+            }
+          ],
+          "limits": "Actualvendorrequestmodels/serializationandHCLsyntaxonly;noAPIclientrequest,tenantmutation,queryengineorGrokexecution."
+        },
+        "browser-validation.json": {
+          "head": null,
+          "cases": [
+            {
+              "path": "public/archmaps/en-observability-metrics-05-datadog-1.html",
+              "width": 375,
+              "sourceSha256": "33d4dfca981e7483c6ec0d11ed97a293b4c5551580dc1820f68cfc4160bd28d7",
+              "scrollWidth": 375,
+              "svg": 2,
+              "toolbar": {
+                "x": 16,
+                "y": 16,
+                "width": 343,
+                "height": 96,
+                "top": 16,
+                "right": 359,
+                "bottom": 112,
+                "left": 16
+              },
+              "nodeIds": [
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors",
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors"
+              ],
+              "nodeIdsPresent": true,
+              "themeChanged": true,
+              "exportMenuOpened": true,
+              "views": [],
+              "svgDownloaded": null,
+              "errors": [],
+              "failures": [],
+              "passed": true
+            },
+            {
+              "path": "public/archmaps/en-observability-metrics-05-datadog-1.html",
+              "width": 768,
+              "sourceSha256": "33d4dfca981e7483c6ec0d11ed97a293b4c5551580dc1820f68cfc4160bd28d7",
+              "scrollWidth": 768,
+              "svg": 2,
+              "toolbar": {
+                "x": 32,
+                "y": 32,
+                "width": 704,
+                "height": 44,
+                "top": 32,
+                "right": 736,
+                "bottom": 76,
+                "left": 32
+              },
+              "nodeIds": [
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors",
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors"
+              ],
+              "nodeIdsPresent": true,
+              "themeChanged": true,
+              "exportMenuOpened": true,
+              "views": [],
+              "svgDownloaded": null,
+              "errors": [],
+              "failures": [],
+              "passed": true
+            },
+            {
+              "path": "public/archmaps/en-observability-metrics-05-datadog-1.html",
+              "width": 1920,
+              "sourceSha256": "33d4dfca981e7483c6ec0d11ed97a293b4c5551580dc1820f68cfc4160bd28d7",
+              "scrollWidth": 1920,
+              "svg": 2,
+              "toolbar": {
+                "x": 1417,
+                "y": 16,
+                "width": 487,
+                "height": 44,
+                "top": 16,
+                "right": 1904,
+                "bottom": 60,
+                "left": 1417
+              },
+              "nodeIds": [
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors",
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors"
+              ],
+              "nodeIdsPresent": true,
+              "themeChanged": true,
+              "exportMenuOpened": true,
+              "views": [
+                {
+                  "id": "collect",
+                  "pressed": "true"
+                },
+                {
+                  "id": "visualize",
+                  "pressed": "true"
+                },
+                {
+                  "id": "alert",
+                  "pressed": "true"
+                }
+              ],
+              "svgDownloaded": true,
+              "errors": [],
+              "failures": [],
+              "passed": true
+            },
+            {
+              "path": "public/archmaps/ko-observability-metrics-05-datadog-1.html",
+              "width": 375,
+              "sourceSha256": "1b96f601af5d198b6a77946f7b1a8b4f719b07094c9d6eec6ab54b669c2bc436",
+              "scrollWidth": 375,
+              "svg": 2,
+              "toolbar": {
+                "x": 16,
+                "y": 16,
+                "width": 343,
+                "height": 96,
+                "top": 16,
+                "right": 359,
+                "bottom": 112,
+                "left": 16
+              },
+              "nodeIds": [
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors",
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors"
+              ],
+              "nodeIdsPresent": true,
+              "themeChanged": true,
+              "exportMenuOpened": true,
+              "views": [],
+              "svgDownloaded": null,
+              "errors": [],
+              "failures": [],
+              "passed": true
+            },
+            {
+              "path": "public/archmaps/ko-observability-metrics-05-datadog-1.html",
+              "width": 768,
+              "sourceSha256": "1b96f601af5d198b6a77946f7b1a8b4f719b07094c9d6eec6ab54b669c2bc436",
+              "scrollWidth": 768,
+              "svg": 2,
+              "toolbar": {
+                "x": 32,
+                "y": 32,
+                "width": 704,
+                "height": 44,
+                "top": 32,
+                "right": 736,
+                "bottom": 76,
+                "left": 32
+              },
+              "nodeIds": [
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors",
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors"
+              ],
+              "nodeIdsPresent": true,
+              "themeChanged": true,
+              "exportMenuOpened": true,
+              "views": [],
+              "svgDownloaded": null,
+              "errors": [],
+              "failures": [],
+              "passed": true
+            },
+            {
+              "path": "public/archmaps/ko-observability-metrics-05-datadog-1.html",
+              "width": 1920,
+              "sourceSha256": "1b96f601af5d198b6a77946f7b1a8b4f719b07094c9d6eec6ab54b669c2bc436",
+              "scrollWidth": 1920,
+              "svg": 2,
+              "toolbar": {
+                "x": 1417,
+                "y": 16,
+                "width": 487,
+                "height": 44,
+                "top": 16,
+                "right": 1904,
+                "bottom": 60,
+                "left": 1417
+              },
+              "nodeIds": [
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors",
+                "cca",
+                "agent",
+                "app",
+                "metrics",
+                "logs",
+                "apm",
+                "prof",
+                "dash",
+                "watchdog",
+                "monitors"
+              ],
+              "nodeIdsPresent": true,
+              "themeChanged": true,
+              "exportMenuOpened": true,
+              "views": [
+                {
+                  "id": "collect",
+                  "pressed": "true"
+                },
+                {
+                  "id": "visualize",
+                  "pressed": "true"
+                },
+                {
+                  "id": "alert",
+                  "pressed": "true"
+                }
+              ],
+              "svgDownloaded": true,
+              "errors": [],
+              "failures": [],
+              "passed": true
+            }
+          ],
+          "passed": true,
+          "scope": "Sequential native Playwright file://, unchanged production font/responsive normalization, Node and browser JS heap512MiB, GPU disabled; no VitePress server/build."
+        },
+        "metadata-validation.json": {
+          "results": [
+            {
+              "path": "en/observability/metrics/05-datadog.md",
+              "lastUpdated": "2026-09-13",
+              "passed": true
+            },
+            {
+              "path": "ko/observability/metrics/05-datadog.md",
+              "lastUpdated": "2026-09-13",
+              "passed": true
+            },
+            {
+              "path": "en/quizzes/observability/metrics/05-datadog-quiz.md",
+              "lastUpdated": "2026-09-13",
+              "passed": true
+            },
+            {
+              "path": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
+              "lastUpdated": "2026-09-13",
+              "passed": true
+            }
+          ]
+        }
+      },
+      "sourceLinkKeys": [
+        "a64ab983ba7d",
+        "19a46cda5811",
+        "7ec8c11b4349",
+        "06ad7801794e",
+        "0c2181d4ca0b",
+        "6110b7f501ee",
+        "0b7c99d6836f",
+        "20ddbc91c9d1",
+        "0f3708c900cd",
+        "fe93eff6f7b5",
+        "874f88f7f2fa",
+        "c67c696a8a8d",
+        "f631f84ee4a4",
+        "2070276f9670",
+        "e56b5f0246f0",
+        "78bf9e324ce7",
+        "8ef2fdb00e66",
+        "728b166f2bdc",
+        "7f4e8a35a591"
+      ],
+      "scopedDiffCheck": true,
+      "limits": [
+        "No Datadog tenant/API call, EKS install/admission, provider plan/apply, actual SaaS ingestion or billing measurement.",
+        "Query strings checked against primary metric/aggregation references and API request types; no Datadog query engine/Grok execution.",
+        "Java17-target compilation/MDC behavior; no Java agent instrumentation. ddtrace manual spans have export/telemetry disabled.",
+        "DogStatsD UDS wire checks disable origin detection only in fixtures to avoid host IDs; no receiving Agent was run.",
+        "Go helper source/API review only; Go compiler unavailable. No Go compilation claim.",
+        "Six original PNGs viewed. Two architecture figures retained with explicit scope and6browserchecks;fourcomparison/costreferences replaced withtables/prose. Shared/foreign backfill remains parent followup."
+      ]
+    },
+    "markdownVue": {
+      "nodeHeapMiB": 512,
+      "scope": "Explicit documents only; no site build",
+      "results": [
+        {
+          "path": "en/observability/metrics/05-datadog.md",
+          "sha256": "ddfebff63323889b61980059dd6af351ad46025f76ace5cf8b47d151cf5a6ad3",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "datadog"
+            },
+            {
+              "tag": "h2",
+              "id": "introduction"
+            },
+            {
+              "tag": "h2",
+              "id": "eks-integration-architecture"
+            },
+            {
+              "tag": "h2",
+              "id": "datadog-agent-installation"
+            },
+            {
+              "tag": "h3",
+              "id": "credentials-and-installation-ownership"
+            },
+            {
+              "tag": "h3",
+              "id": "reviewed-values"
+            },
+            {
+              "tag": "h3",
+              "id": "aws-account-integration-is-a-separate-path"
+            },
+            {
+              "tag": "h2",
+              "id": "infrastructure-monitoring"
+            },
+            {
+              "tag": "h3",
+              "id": "check-the-metric-s-collector-unit-and-tags"
+            },
+            {
+              "tag": "h3",
+              "id": "openmetrics-autodiscovery"
+            },
+            {
+              "tag": "h3",
+              "id": "dogstatsd-use-an-endpoint-reachable-from-the-application"
+            },
+            {
+              "tag": "h3",
+              "id": "file-based-autodiscovery-configuration"
+            },
+            {
+              "tag": "h2",
+              "id": "apm-and-distributed-tracing"
+            },
+            {
+              "tag": "h3",
+              "id": "local-sdk-injection-and-ssi-are-explicit-choices"
+            },
+            {
+              "tag": "h3",
+              "id": "manual-java-instrumentation"
+            },
+            {
+              "tag": "h3",
+              "id": "manual-python-instrumentation"
+            },
+            {
+              "tag": "h2",
+              "id": "log-management"
+            },
+            {
+              "tag": "h3",
+              "id": "select-collection-and-parsing-deliberately"
+            },
+            {
+              "tag": "h3",
+              "id": "pipeline-request-structure"
+            },
+            {
+              "tag": "h3",
+              "id": "trace-log-correlation-and-mdc-ownership"
+            },
+            {
+              "tag": "h2",
+              "id": "dashboards-and-alerts"
+            },
+            {
+              "tag": "h3",
+              "id": "dashboard-request-construction"
+            },
+            {
+              "tag": "h3",
+              "id": "monitor-queries-and-units"
+            },
+            {
+              "tag": "h3",
+              "id": "watchdog-and-notification-delivery"
+            },
+            {
+              "tag": "h3",
+              "id": "slo-request-construction"
+            },
+            {
+              "tag": "h2",
+              "id": "cost-structure"
+            },
+            {
+              "tag": "h3",
+              "id": "use-the-actual-product-and-contract-units"
+            },
+            {
+              "tag": "h3",
+              "id": "metrics-logs-and-trace-controls-do-different-things"
+            },
+            {
+              "tag": "h2",
+              "id": "best-practices"
+            },
+            {
+              "tag": "h2",
+              "id": "troubleshooting"
+            },
+            {
+              "tag": "h2",
+              "id": "validation-scope"
+            },
+            {
+              "tag": "h2",
+              "id": "references"
+            }
+          ],
+          "renderedIds": [
+            "datadog",
+            "introduction",
+            "eks-integration-architecture",
+            "datadog-agent-installation",
+            "credentials-and-installation-ownership",
+            "reviewed-values",
+            "aws-account-integration-is-a-separate-path",
+            "infrastructure-monitoring",
+            "check-the-metric-s-collector-unit-and-tags",
+            "openmetrics-autodiscovery",
+            "dogstatsd-use-an-endpoint-reachable-from-the-application",
+            "file-based-autodiscovery-configuration",
+            "apm-and-distributed-tracing",
+            "local-sdk-injection-and-ssi-are-explicit-choices",
+            "manual-java-instrumentation",
+            "manual-python-instrumentation",
+            "log-management",
+            "select-collection-and-parsing-deliberately",
+            "pipeline-request-structure",
+            "trace-log-correlation-and-mdc-ownership",
+            "dashboards-and-alerts",
+            "dashboard-request-construction",
+            "monitor-queries-and-units",
+            "watchdog-and-notification-delivery",
+            "slo-request-construction",
+            "cost-structure",
+            "use-the-actual-product-and-contract-units",
+            "metrics-logs-and-trace-controls-do-different-things",
+            "best-practices",
+            "troubleshooting",
+            "validation-scope",
+            "references"
+          ]
+        },
+        {
+          "path": "ko/observability/metrics/05-datadog.md",
+          "sha256": "fdbec6feddf3e922df838ab06f8a87330905faf87bf2ef2bc05ef7afc652deaa",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "datadog"
+            },
+            {
+              "tag": "h2",
+              "id": "소개"
+            },
+            {
+              "tag": "h2",
+              "id": "eks-통합-아키텍처"
+            },
+            {
+              "tag": "h2",
+              "id": "datadog-agent-설치"
+            },
+            {
+              "tag": "h3",
+              "id": "credential과-설치-소유권"
+            },
+            {
+              "tag": "h3",
+              "id": "검토한-values"
+            },
+            {
+              "tag": "h3",
+              "id": "aws-계정-integration은-별도-경로"
+            },
+            {
+              "tag": "h2",
+              "id": "인프라-모니터링"
+            },
+            {
+              "tag": "h3",
+              "id": "collector·단위·tag-확인"
+            },
+            {
+              "tag": "h3",
+              "id": "openmetrics-autodiscovery"
+            },
+            {
+              "tag": "h3",
+              "id": "dogstatsd-application에서-접근-가능한-endpoint"
+            },
+            {
+              "tag": "h3",
+              "id": "파일-기반-autodiscovery-설정"
+            },
+            {
+              "tag": "h2",
+              "id": "apm-및-분산-트레이싱"
+            },
+            {
+              "tag": "h3",
+              "id": "local-sdk-injection과-ssi를-명시적으로-선택"
+            },
+            {
+              "tag": "h3",
+              "id": "수동-java-계측"
+            },
+            {
+              "tag": "h3",
+              "id": "수동-python-계측"
+            },
+            {
+              "tag": "h2",
+              "id": "로그-관리"
+            },
+            {
+              "tag": "h3",
+              "id": "수집과-parsing을-명시적으로-선택"
+            },
+            {
+              "tag": "h3",
+              "id": "pipeline-요청-구조"
+            },
+            {
+              "tag": "h3",
+              "id": "trace-log-연결과-mdc-소유권"
+            },
+            {
+              "tag": "h2",
+              "id": "대시보드-및-알림"
+            },
+            {
+              "tag": "h3",
+              "id": "dashboard-요청-생성"
+            },
+            {
+              "tag": "h3",
+              "id": "monitor-query와-단위"
+            },
+            {
+              "tag": "h3",
+              "id": "watchdog과-알림-전달"
+            },
+            {
+              "tag": "h3",
+              "id": "slo-요청-생성"
+            },
+            {
+              "tag": "h2",
+              "id": "비용-구조"
+            },
+            {
+              "tag": "h3",
+              "id": "실제-상품·계약-단위로-계산"
+            },
+            {
+              "tag": "h3",
+              "id": "metric·log·trace-제어는-역할이-다름"
+            },
+            {
+              "tag": "h2",
+              "id": "모범-사례"
+            },
+            {
+              "tag": "h2",
+              "id": "문제-해결"
+            },
+            {
+              "tag": "h2",
+              "id": "검증-범위"
+            },
+            {
+              "tag": "h2",
+              "id": "참고-자료"
+            }
+          ],
+          "renderedIds": [
+            "datadog",
+            "소개",
+            "eks-통합-아키텍처",
+            "datadog-agent-설치",
+            "credential과-설치-소유권",
+            "검토한-values",
+            "aws-계정-integration은-별도-경로",
+            "인프라-모니터링",
+            "collector·단위·tag-확인",
+            "openmetrics-autodiscovery",
+            "dogstatsd-application에서-접근-가능한-endpoint",
+            "파일-기반-autodiscovery-설정",
+            "apm-및-분산-트레이싱",
+            "local-sdk-injection과-ssi를-명시적으로-선택",
+            "수동-java-계측",
+            "수동-python-계측",
+            "로그-관리",
+            "수집과-parsing을-명시적으로-선택",
+            "pipeline-요청-구조",
+            "trace-log-연결과-mdc-소유권",
+            "대시보드-및-알림",
+            "dashboard-요청-생성",
+            "monitor-query와-단위",
+            "watchdog과-알림-전달",
+            "slo-요청-생성",
+            "비용-구조",
+            "실제-상품·계약-단위로-계산",
+            "metric·log·trace-제어는-역할이-다름",
+            "모범-사례",
+            "문제-해결",
+            "검증-범위",
+            "참고-자료"
+          ]
+        },
+        {
+          "path": "en/quizzes/observability/metrics/05-datadog-quiz.md",
+          "sha256": "a8f7d73c574547a03397a17753ca450aa3a59245cf4fb00fbfd4e1f2ca673619",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "datadog-quiz"
+            }
+          ],
+          "renderedIds": [
+            "datadog-quiz"
+          ]
+        },
+        {
+          "path": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
+          "sha256": "52a12856590bff42bbdb66d8d969de565a0479b7dfe9f3081e0f228941474b94",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "datadog-퀴즈"
+            }
+          ],
+          "renderedIds": [
+            "datadog-퀴즈"
+          ]
+        }
+      ]
+    },
+    "findings": [
+      "ReplacedSaaSzerooperations/APMincluded/costpredictabilityrankings withproduct/site/collector/identity/usageboundaries;alloriginaltopicsretainedorcorrected.",
+      "PinnedHelm3.244.0 andmatchedAgent/ClusterAgent7.83.1verifiedmultiarchindexdigests;chartdefault7.82.3distinguished. Rendered25objects withagent+trace-agentandClusterAgent,actualSAnamesdatadog/datadog-cluster-agent.",
+      "Disabledunrequestedworkloadautoscaling/Operator/discoverynetworkstats explicitly afteractualrenderexposedhiddenSystemProbeandnullHelmconditionwarning. DatadogOperatorremainscurrentrecommendedalternative;nodeHelmownershipexplicit.",
+      "Repairedsecretcreationunquotedplaceholderredirects;protectedfile/SecretAPIkeyreference,optionalAPPkeyforAPImetricsfeatures;removedbroadunconditionalAWSIAMandfalseIRSA-as-SaaSintegration. Crossaccountrole/externalIDandactualworkloadidentityseparated.",
+      "Retainedvaliddatadog.profiling.enabledwithlibrary/ClusterAgentrequirements;deprecatedprocessAgent.enabledandmanualpasswdduplicationcorrected;top-levelkubeStateMetricsEnabled/prometheusarenottheactualnestedsettings.",
+      "CorrectedCPUusageinnanocoresversuspercent,KubeletversusStateCorecatalogues,cluster_nameversuskube_cluster_name. Kubeletpods.running/containers.restartsarevalidandwerepreservedafterprimaryverification.",
+      "OpenMetricscheck/endpointandcontainerannotationmatchingcorrected;confdmountingandAgent-versus-applicationsecretresolutionexplained. DogStatsDUDSreplaceswronglocalhostassumption;explicitzeroerror/goodcounters,transportlossandhistogram/distributionboundaries.",
+      "CurrentJava1.66API/Pythonddtrace4.14examplesseparatedfromdependencyfiles;label-onlyconnectionvsSDKinjection,7.73namespaceexclusions,verifiedJavaInitimage,actualruntime/instrumentationlimits. Removedunneededcustomer/orderIDtags.",
+      "FixedGrokAPIcamelCase tomatch_rules/support_rules;keptvalidnestedDashboard/SLOdictmodelsaftervendor2.60confirmedthem. ModelvalidationnotliveGrok/queryproof.",
+      "ReplacedbrokenServlet/MDC.clearfragmentwithsynchronouscontext-restoringhelper;Java17compileandJULMDCsuccess/error/empty-contextchecks. ActualtracecorrelationnotclaimedwithoutloadedJavaAgent.",
+      "Dashboardtemplatevariablesnowused;hostidlepercentandpodmemoryunitscorrect. Restartsmonitorstatecoretotalnotmisleadingwindowincrement;as_countsum-before-divisionandexplicitmissing/zerotrafficconditions. Watchdogeventfilterassumptionandroutingnotautomaticnotifications.",
+      "CorrectedAPMservicecountversusbillablehostcostexample andomittedindex/span/retentiondimensions;keptold3350onlyasexplainedinvalidestimate,notmeasuredhistoricalbill. Receiver/filter/cardinality/samplingcontrolsnotuniversalbudgetlimits.",
+      "Diagnosticsnowuseactualselectors/containersandenvnamesonly;removedDD_envvaluedumpandimplicitflareupload. Updatedall20quizanswers andrecognizedLastUpdated/마지막업데이트headers.",
+      "All6originalPNGspersonallyviewed;validarchitecture1perlocaleretainedwithoptionalscopecaptionand6nativebrowserchecks. Incorrectcomparison/cost0,2referencesremovedfromownedMarkdownandreplacedwithtables/formula;shared/foreignassetsunchanged."
+    ],
+    "note": "Thisearlierroot-sourceauditprecedesactualPRbaseprofilechanges;itscredentialprofile/fixturebindingisnotcurrentdeliveryproof."
+  },
+  "basePreservation": {
+    "base": "26fb0a6238e8c58d56c5817e99dad5df9c5aa5c7",
+    "fixedAt": "2026-09-13T12:16:23.747948+00:00",
+    "findings": [
+      "TRACING-DD-R1-001",
+      "TRACING-DD-R1-002"
+    ],
+    "restoredSections": [
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "base": "26fb0a6238e8c58d56c5817e99dad5df9c5aa5c7",
+        "restoredSectionSha256": "5c1b96219ccd61c8ed43dcac4cb6fe8be1f894ec4f86f82ee15a86055faac29b",
+        "outsideSectionUnchanged": true
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "base": "26fb0a6238e8c58d56c5817e99dad5df9c5aa5c7",
+        "restoredSectionSha256": "26789be0d81641b97400a89ceab2ddd87ddd9abbee3c45aa3fbcde6e535d55a2",
+        "outsideSectionUnchanged": true
+      }
+    ],
+    "note": "Bothactualbaseinstallationsectionsfullyreadandrestored;laterchangesonlyadd36basealiasesandaligntroubleshootingwithnativebackendhandles.",
+    "anchorAliases": [
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "dashboard-creation-api",
+        "target": "### Dashboard request construction"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "monitor-alert-configuration",
+        "target": "### Monitor queries and units"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "watchdog-ai",
+        "target": "### Watchdog and notification delivery"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "pricing-overview",
+        "target": "### Use the actual product and contract units"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "cost-calculation-example",
+        "target": "For the old 100-node example,"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "cost-optimization-strategies",
+        "target": "### Metrics, logs and trace controls do different things"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "_1-metric-optimization",
+        "target": "- `dogstatsd.nonLocalTraffic`"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "_2-log-optimization",
+        "target": "- Source-side log exclusion"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "_3-apm-sampling",
+        "target": "- Sampling and indexing/retention"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "_1-tagging-strategy",
+        "target": "Use consistent service/env/version labels"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "_2-alert-layering",
+        "target": "Agree on alert severity"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "_3-slo-configuration",
+        "target": "### SLO request construction"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "common-issues",
+        "target": "## Troubleshooting"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "_1-agent-not-sending-metrics",
+        "target": "Start with the installation owner"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "_2-missing-apm-traces",
+        "target": "For traces, verify"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "_3-logs-not-collected",
+        "target": "For logs, inspect"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "debugging-commands",
+        "target": "```bash\nkubectl get pods -n datadog"
+      },
+      {
+        "path": "en/observability/metrics/05-datadog.md",
+        "id": "quiz",
+        "target": "[Quiz]("
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "대시보드-생성-api",
+        "target": "### Dashboard 요청 생성"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "모니터-알림-설정",
+        "target": "### Monitor query와 단위"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "watchdog-ai",
+        "target": "### Watchdog과 알림 전달"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "요금제-개요",
+        "target": "### 실제 상품·계약 단위로 계산"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "비용-계산-예시",
+        "target": "기존 100-node 예제에서"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "비용-최적화-전략",
+        "target": "### Metric·log·trace 제어는 역할이 다름"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "_1-메트릭-최적화",
+        "target": "- `dogstatsd.nonLocalTraffic`"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "_2-로그-최적화",
+        "target": "- Source log exclude"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "_3-apm-샘플링",
+        "target": "- Sampling과 indexing/retention"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "_1-태깅-전략",
+        "target": "Service/env/version label과"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "_2-알림-계층화",
+        "target": "운영팀과 severity"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "_3-slo-설정",
+        "target": "### SLO 요청 생성"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "일반적인-문제",
+        "target": "## 문제 해결"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "_1-agent가-메트릭을-전송하지-않음",
+        "target": "설치 소유자·실제 Pod"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "_2-apm-트레이스-누락",
+        "target": "Trace는 실제 library"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "_3-로그-수집-안됨",
+        "target": "Log는 실제 annotation"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "디버깅-명령어",
+        "target": "```bash\nkubectl get pods -n datadog"
+      },
+      {
+        "path": "ko/observability/metrics/05-datadog.md",
+        "id": "퀴즈",
+        "target": "[퀴즈]("
+      }
+    ],
+    "nativeConsumers": 7,
+    "nativeProfileTests": 12,
+    "limits": "NoSecretsManager/IAMruntimeorDatadogingestiontest;nativeproofispinnedHelm/postrenderercontract."
   }
 }
