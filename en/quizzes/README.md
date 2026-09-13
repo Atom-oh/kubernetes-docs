@@ -20,6 +20,7 @@ For exercises, check the guide’s versions, prerequisites and validation scope 
 - [AI Infrastructure on EKS Quiz](./ai-ml/06-ai-infrastructure-quiz.md)
 - [AI/ML Best Practices Quiz](./ai-ml/07-ai-ml-best-practices-quiz.md)
 - [Agentic AI Platform on EKS Quiz](./ai-ml/08-agentic-ai-platform-quiz.md)
+- [LLM Gateway Quiz](./ai-ml/08-llm-gateway-quiz.md)
 - [Kubeflow Architecture and Installation on EKS Quiz](./ai-ml/kubeflow/01-architecture-installation-quiz.md)
 - [Kubeflow Pipelines Quiz](./ai-ml/kubeflow/02-pipelines-quiz.md)
 - [Kubeflow Notebooks Quiz](./ai-ml/kubeflow/03-notebooks-quiz.md)

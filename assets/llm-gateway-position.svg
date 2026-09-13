@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="670" viewBox="0 0 1200 670" font-family="'Segoe UI', Helvetica, Arial, 'Noto Sans', sans-serif" font-size="14" role="img" aria-labelledby="diagram-title diagram-description">
+<title id="diagram-title">Proposed design: LLM gateway position: clients, data plane, control plane, providers</title>
+<desc id="diagram-description">Proposed composite gateway design, not a product feature guarantee. The accompanying Korean and English chapters explain policy, compatibility and failure limits.</desc><defs>
+<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151" /></marker>
+<marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b91c1c" /></marker>
+<marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#15803d" /></marker>
+<marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8" /></marker>
+</defs>
+<rect width="1200" height="670" fill="#ffffff" />
+<text x="600" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#111827">LLM / Inference Gateway — where it sits and what it owns</text>
+<rect x="30" y="70" width="250" height="570" rx="14" fill="#f3f4f6" fill-opacity="0.45" stroke="#6b7280" stroke-width="1.4" stroke-dasharray="8 5" />
+<text x="44" y="92" font-size="15" font-weight="700" fill="#6b7280">Consumers</text>
+<rect x="50" y="110" width="210" height="74" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.6" />
+<text x="155.0" y="132" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Coding agents</text>
+<text x="155.0" y="152" text-anchor="middle" font-size="12.5" fill="#374151">Claude Code · OpenCode · Codex</text>
+<rect x="50" y="200" width="210" height="74" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.6" />
+<text x="155.0" y="222" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Applications</text>
+<text x="155.0" y="242" text-anchor="middle" font-size="12.5" fill="#374151">RAG apps · chat UIs · batch jobs</text>
+<rect x="50" y="290" width="210" height="74" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.6" />
+<text x="155.0" y="312" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Agents / MCP servers</text>
+<text x="155.0" y="332" text-anchor="middle" font-size="12.5" fill="#374151">tool loops, multi-step plans</text>
+<rect x="50" y="400" width="210" height="150" rx="10" fill="#ffffff" stroke="#9ca3af" stroke-width="1.6" stroke-dasharray="6 4" />
+<text x="155.0" y="422" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Only sees:</text>
+<text x="155.0" y="442" text-anchor="middle" font-size="12.5" fill="#374151">virtual key  ik_…</text>
+<text x="155.0" y="459" text-anchor="middle" font-size="12.5" fill="#374151">one stable endpoint</text>
+<text x="155.0" y="476" text-anchor="middle" font-size="12.5" fill="#374151">model name (may be substituted)</text>
+<text x="155.0" y="493" text-anchor="middle" font-size="12.5" fill="#374151">never the provider key</text>
+<rect x="330" y="70" width="420" height="320" rx="14" fill="#dbeafe" fill-opacity="0.45" stroke="#1d4ed8" stroke-width="1.4" stroke-dasharray="8 5" />
+<text x="344" y="92" font-size="15" font-weight="700" fill="#1d4ed8">Data plane (in the request path)</text>
+<rect x="350" y="110" width="380" height="60" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
+<text x="540.0" y="132" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Protocol ingress</text>
+<text x="540.0" y="152" text-anchor="middle" font-size="12.5" fill="#374151">Messages · Responses · Chat · explicit Bedrock adapter</text>
+<rect x="350" y="182" width="180" height="60" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
+<text x="440.0" y="204" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">AuthN / RBAC</text>
+<text x="440.0" y="224" text-anchor="middle" font-size="12.5" fill="#374151">virtual key → principal</text>
+<rect x="550" y="182" width="180" height="60" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
+<text x="640.0" y="204" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Governance</text>
+<text x="640.0" y="224" text-anchor="middle" font-size="12.5" fill="#374151">rate · quota · budget</text>
+<rect x="350" y="254" width="180" height="60" rx="10" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.6" />
+<text x="440.0" y="276" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Guards / filters</text>
+<text x="440.0" y="296" text-anchor="middle" font-size="12.5" fill="#374151">PII · injection · policy prompt</text>
+<rect x="550" y="254" width="180" height="60" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6" />
+<text x="640.0" y="276" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Router</text>
+<text x="640.0" y="296" text-anchor="middle" font-size="12.5" fill="#374151">fallback · tiers · breaker</text>
+<rect x="350" y="326" width="380" height="50" rx="10" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.6" />
+<text x="540.0" y="356.0" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Audit + metrics + cost (integer µUSD)</text>
+<rect x="330" y="450" width="420" height="190" rx="14" fill="#ede9fe" fill-opacity="0.45" stroke="#6d28d9" stroke-width="1.4" stroke-dasharray="8 5" />
+<text x="344" y="472" font-size="15" font-weight="700" fill="#6d28d9">Control plane (never in the request path)</text>
+<rect x="350" y="485" width="180" height="60" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.6" />
+<text x="440.0" y="507" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Policy source</text>
+<text x="440.0" y="527" text-anchor="middle" font-size="12.5" fill="#374151">GovernancePolicy CRD / files</text>
+<rect x="550" y="485" width="180" height="60" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.6" />
+<text x="640.0" y="507" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Budget ledger</text>
+<text x="640.0" y="527" text-anchor="middle" font-size="12.5" fill="#374151">leases per team / window</text>
+<rect x="350" y="555" width="380" height="44" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.6" />
+<text x="540.0" y="582.0" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Usage telemetry · pricing · console · SSO</text>
+<text x="540" y="626" text-anchor="middle" font-size="12" font-weight="normal" fill="#6d28d9" font-style="italic">Outage: bounded-age policy only; required sync and expired leases fail closed</text>
+<rect x="800" y="70" width="370" height="570" rx="14" fill="#dcfce7" fill-opacity="0.45" stroke="#15803d" stroke-width="1.4" stroke-dasharray="8 5" />
+<text x="814" y="92" font-size="15" font-weight="700" fill="#15803d">Providers</text>
+<rect x="820" y="110" width="330" height="64" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6" />
+<text x="985.0" y="132" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Anthropic API</text>
+<text x="985.0" y="152" text-anchor="middle" font-size="12.5" fill="#374151">Messages protocol · prompt cache</text>
+<rect x="820" y="190" width="330" height="64" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6" />
+<text x="985.0" y="212" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Amazon Bedrock</text>
+<text x="985.0" y="232" text-anchor="middle" font-size="12.5" fill="#374151">InvokeModel / Converse · Guardrails</text>
+<rect x="820" y="270" width="330" height="64" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6" />
+<text x="985.0" y="292" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Self-hosted vLLM / Ollama</text>
+<text x="985.0" y="312" text-anchor="middle" font-size="12.5" fill="#374151">OpenAI-compatible · prefix cache</text>
+<rect x="820" y="350" width="330" height="64" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6" />
+<text x="985.0" y="372" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Other OpenAI-compatible</text>
+<text x="985.0" y="392" text-anchor="middle" font-size="12.5" fill="#374151">GLM · GPT · Gemma …</text>
+<rect x="820" y="440" width="330" height="130" rx="10" fill="#ffffff" stroke="#9ca3af" stroke-width="1.6" stroke-dasharray="6 4" />
+<text x="985.0" y="462" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Gateway owns the credential:</text>
+<text x="985.0" y="482" text-anchor="middle" font-size="12.5" fill="#374151">upstream API key / IAM role / STS</text>
+<text x="985.0" y="499" text-anchor="middle" font-size="12.5" fill="#374151">client key is never forwarded</text>
+<text x="985.0" y="516" text-anchor="middle" font-size="12.5" fill="#374151">approved processing/storage destinations</text>
+<text x="985.0" y="533" text-anchor="middle" font-size="12.5" fill="#374151">guardrail applied on the SDK call</text>
+<line x1="262" y1="147" x2="348" y2="140" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<text x="300" y="128" text-anchor="middle" font-size="12" font-weight="normal" fill="#374151">HTTPS + ik_ key</text>
+<line x1="262" y1="237" x2="348" y2="150" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<line x1="262" y1="327" x2="348" y2="160" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" />
+<line x1="732" y1="142" x2="818" y2="142" stroke="#15803d" stroke-width="1.8" marker-end="url(#arr-green)" />
+<text x="775.0" y="136.0" text-anchor="middle" font-size="12" fill="#15803d">provider key</text>
+<line x1="732" y1="222" x2="818" y2="222" stroke="#15803d" stroke-width="1.8" marker-end="url(#arr-green)" />
+<text x="775.0" y="216.0" text-anchor="middle" font-size="12" fill="#15803d">IAM / STS</text>
+<line x1="732" y1="302" x2="818" y2="302" stroke="#15803d" stroke-width="1.8" marker-end="url(#arr-green)" />
+<text x="775.0" y="296.0" text-anchor="middle" font-size="12" fill="#15803d">inspected body</text>
+<line x1="732" y1="382" x2="818" y2="382" stroke="#15803d" stroke-width="1.8" marker-end="url(#arr-green)" />
+<line x1="400" y1="448" x2="400" y2="380" stroke="#6d28d9" stroke-width="1.8" marker-end="url(#arr)" stroke-dasharray="6 4" />
+<text x="412" y="418" text-anchor="start" font-size="12" font-weight="normal" fill="#6d28d9">policy + leases (pull)</text>
+<line x1="680" y1="380" x2="680" y2="448" stroke="#6d28d9" stroke-width="1.8" marker-end="url(#arr)" stroke-dasharray="6 4" />
+<text x="668" y="418" text-anchor="end" font-size="12" font-weight="normal" fill="#6d28d9">usage (push)</text>
+</svg>
