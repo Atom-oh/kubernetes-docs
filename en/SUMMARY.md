@@ -17,6 +17,13 @@
 * [Container Technology](basics/03-container-technology.md)
 * [eBPF Fundamentals and Practical Applications](basics/05-ebpf-fundamentals.md)
 
+## Linux Kernel
+
+* [Linux Kernel Overview](kernel/README.md)
+* [Kernel Features Behind Containers](kernel/01-container-primitives.md)
+* [Kernel Networking Stack](kernel/02-network-stack.md)
+* [EKS Node Kernel Tuning](kernel/03-eks-node-tuning.md)
+
 ## Kubernetes Core Concepts
 
 * [Introduction to Kubernetes](basics/04-kubernetes-introduction.md)
@@ -191,6 +198,14 @@
   * [Observability](service-mesh/cilium-service-mesh/04-observability.md)
   * [Ingress & Gateway](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [Best Practices](service-mesh/cilium-service-mesh/06-best-practices.md)
+* [VPC Lattice Deep Dive](service-mesh/vpc-lattice/README.md)
+  * [App Mesh vs VPC Lattice Architecture](service-mesh/vpc-lattice/01-appmesh-vs-lattice.md)
+  * [Latency Impact Analysis](service-mesh/vpc-lattice/02-latency.md)
+  * [IAM Authentication Flow](service-mesh/vpc-lattice/03-auth-flow.md)
+  * [Foundations — Link-Local and SNI](service-mesh/vpc-lattice/04-networking-basics.md)
+  * [Workload Identity Migration](service-mesh/vpc-lattice/05-spiffe-to-iam.md)
+  * [Constraints and Decision Points](service-mesh/vpc-lattice/06-constraints.md)
+  * [Kernel Datapath](service-mesh/vpc-lattice/07-kernel-datapath.md)
 
 ## Storage
 
@@ -201,6 +216,14 @@
 
 * [Databases on Kubernetes Overview](database/README.md)
 * [ClickHouse on EKS Measured Benchmark](database/01-clickhouse-on-eks.md)
+
+## Blockchain
+
+* [Blockchain Overview](blockchain/README.md)
+* [Blockchain Fundamentals](blockchain/01-fundamentals.md)
+* [Running Blockchain Nodes on EKS](blockchain/02-nodes-on-eks.md)
+* [Amazon Managed Blockchain](blockchain/03-managed-blockchain.md)
+* [Financial Services Perspective](blockchain/04-financial-services.md)
 
 ## Data Pipeline
 
@@ -413,6 +436,15 @@
   * [Container Technology Quiz](quizzes/basics/03-container-technology-quiz.md)
   * [Introduction to Kubernetes Quiz](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF Fundamentals and Practical Applications Quiz](quizzes/basics/05-ebpf-fundamentals-quiz.md)
+  * Linux Kernel
+    * [Kernel Features Behind Containers Quiz](quizzes/kernel/01-container-primitives-quiz.md)
+    * [Kernel Networking Stack Quiz](quizzes/kernel/02-network-stack-quiz.md)
+    * [EKS Node Kernel Tuning Quiz](quizzes/kernel/03-eks-node-tuning-quiz.md)
+  * Blockchain
+    * [Blockchain Fundamentals Quiz](quizzes/blockchain/01-fundamentals-quiz.md)
+    * [Running Blockchain Nodes on EKS Quiz](quizzes/blockchain/02-nodes-on-eks-quiz.md)
+    * [Amazon Managed Blockchain Quiz](quizzes/blockchain/03-managed-blockchain-quiz.md)
+    * [Financial Services Perspective Quiz](quizzes/blockchain/04-financial-services-quiz.md)
   * [Network Fundamentals Part 1 Quiz](quizzes/basics/06-network-fundamentals-part1-quiz.md)
   * [Network Fundamentals Part 2 Quiz](quizzes/basics/06-network-fundamentals-part2-quiz.md)
   * [Network Fundamentals Part 3 Quiz](quizzes/basics/06-network-fundamentals-part3-quiz.md)
@@ -583,6 +615,14 @@
     * [Security Quiz](quizzes/service-mesh/cilium-service-mesh/security.md)
     * [Observability Quiz](quizzes/service-mesh/cilium-service-mesh/observability.md)
     * [Ingress Gateway Quiz](quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
+  * VPC Lattice Deep Dive Quiz
+    * [Architecture Comparison Quiz](quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
+    * [Latency Impact Analysis Quiz](quizzes/service-mesh/vpc-lattice/02-latency-quiz.md)
+    * [IAM Authentication Flow Quiz](quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md)
+    * [Link-Local and SNI Quiz](quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+    * [Workload Identity Migration Quiz](quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
+    * [Constraints and Decision Points Quiz](quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md)
+    * [Kernel Datapath Quiz](quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
 * Storage
   * [EBS gp2 vs gp3 Measured Benchmark Quiz](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
 * Database

@@ -1,0 +1,117 @@
+# IAM Authentication Flow Quiz
+
+This quiz tests your understanding of the four-stage Lattice IAM Auth flow, SigV4 signing pitfalls, and 403 diagnosis.
+
+## Multiple Choice Questions
+
+1. Which service name is used when signing VPC Lattice data plane requests with SigV4?
+   - A) `vpc-lattice`
+   - B) `vpc-lattice-svcs`
+   - C) `lattice`
+   - D) `execute-api`
+
+<details>
+
+<summary>Show Answer</summary>
+
+**Answer: B) `vpc-lattice-svcs`**
+
+**Explanation:**
+`vpc-lattice-svcs` is the signing service name for data plane requests. It is easy to confuse with `vpc-lattice`, which is the service name for the Lattice control plane API (creating services, listeners, and so on). The service name is an input to signing key derivation (secret key → date → region → service name → terminating string, four chained HMAC-SHA256 operations), so getting it wrong means the signature will not verify. It is consistent with the service DNS name itself, which takes the form `...vpc-lattice-svcs.<region>.on.aws`.
+</details>
+
+2. What is the most common cause of a 403 under Lattice IAM Auth?
+   - A) The principal is missing from the Lattice service's auth policy
+   - B) The calling IAM Role's identity-based policy lacks `vpc-lattice-svcs:Invoke`
+   - C) The node Security Group does not allow the Lattice prefix list
+   - D) The Target Group health check is failing
+
+<details>
+
+<summary>Show Answer</summary>
+
+**Answer: B) The calling IAM Role's identity-based policy lacks `vpc-lattice-svcs:Invoke`**
+
+**Explanation:**
+It is natural to think "the service's auth policy allows this Role, so we're done," but the calling Role itself also needs Invoke permission — a resource policy alone does not get you through. The actual error message ends with `because no identity-based policy allows the vpc-lattice-svcs:Invoke action`, telling you the cause, so read that clause first when you hit a 403. Note that C would manifest as a connection failure or timeout, not a 403.
+</details>
+
+3. If 403s begin right after introducing a custom domain, what should you check first?
+   - A) The Target Group's protocol setting
+   - B) The `Host` header — in SigV4 the Host header is always signed, so the Host used when signing must match the actual request's Host header
+   - C) Whether Lattice quotas were exceeded
+   - D) The VPC's DNS resolution settings
+
+<details>
+
+<summary>Show Answer</summary>
+
+**Answer: B) The `Host` header — in SigV4 the Host header is always signed, so the Host used when signing must match the actual request's Host header**
+
+**Explanation:**
+SigV4 always includes the `Host` header in the signature. When you attach a custom domain, clients send requests to that domain and must sign with that value — if the signing logic still uses the Lattice-generated domain, the signature does not match. This problem surfaces at the moment you attach the custom domain rather than at the start of migration, which is why it is easy to miss. Introducing a custom domain requires settling SNI control, the signed Host value, and certificate management together.
+</details>
+
+4. If "only Pods on one particular node get intermittent 403s," what is the most likely cause?
+   - A) A Security Group misconfiguration on that node
+   - B) Clock synchronization on that node — `x-amz-date` is signed and SigV4's tolerance is about 5 minutes
+   - C) The Gateway API Controller is not running on that node
+   - D) That node's kubelet version is too old
+
+<details>
+
+<summary>Show Answer</summary>
+
+**Answer: B) Clock synchronization on that node — `x-amz-date` is signed and SigV4's tolerance is about 5 minutes**
+
+**Explanation:**
+AWS’s general SigV4 guidance says most requests must arrive within five minutes of their timestamp. Check the actual service error and UTC clock; do not treat this as a separately measured Lattice-specific guarantee.
+</details>
+
+5. What must be checked between signing and Lattice verification?
+   - A) Multiple proxies increase latency
+   - B) Changing canonical signed fields can break verification; Lattice requires UNSIGNED-PAYLOAD, so body integrity also needs TLS/application controls
+   - C) A proxy cannot cache credentials
+   - D) An IAM Role can only be attached to one proxy
+
+<details>
+
+<summary>Show Answer</summary>
+
+**Answer: B) Changing canonical signed fields can break verification; Lattice requires UNSIGNED-PAYLOAD, so body integrity also needs TLS/application controls**
+
+**Explanation:**
+The signed Host/path/query values must match the request. Canonical sorting means equivalent query ordering is not necessarily a change. Lattice does not support payload signing; require the x-amz-content-sha256: UNSIGNED-PAYLOAD header.
+</details>
+
+6. Why might an auth policy not take effect for traffic inside the cluster?
+   - A) Auth policies do not support IPv6 traffic
+   - B) If the client calls the Kubernetes Service DNS directly, it bypasses Lattice and the auth policy is never evaluated
+   - C) Auth policies apply only to cross-account calls
+   - D) The Gateway API Controller has not yet reconciled the policy
+
+<details>
+
+<summary>Show Answer</summary>
+
+**Answer: B) If the client calls the Kubernetes Service DNS directly, it bypasses Lattice and the auth policy is never evaluated**
+
+**Explanation:**
+The AWS Gateway API Controller documentation states this explicitly: `IAMAuthPolicy` performs authorization only for traffic traveling through Gateways, HTTPRoutes, and GRPCRoutes. Sending to `http://svc.ns.svc.cluster.local` bypasses Lattice, so no policy is evaluated. During migration, when both paths coexist, there are simultaneously paths where authorization applies and paths where it does not — compensating controls such as NetworkPolicy are needed. Another common cause is authType being `NONE` instead of `AWS_IAM`.
+</details>
+
+7. How do the "scope" and "directionality" of authentication change from AS-IS (App Mesh + SPIRE mTLS) to TO-BE (Lattice IAM Auth)?
+   - A) Connection-scoped bidirectional → request-scoped bidirectional
+   - B) Connection-scoped bidirectional mutual authentication → request-scoped unidirectional (client proof) plus a TLS server certificate
+   - C) Request-scoped unidirectional → connection-scoped bidirectional
+   - D) Neither scope nor directionality changes
+
+<details>
+
+<summary>Show Answer</summary>
+
+**Answer: B) Connection-scoped bidirectional mutual authentication → request-scoped unidirectional (client proof) plus a TLS server certificate**
+
+**Explanation:**
+mTLS authenticates both peers using their SVIDs when the connection is established. Lattice IAM Auth verifies the caller's SigV4 signature for each request and can apply path/method/header policy conditions. SigV4 protects the canonical signed fields; Lattice requires `UNSIGNED-PAYLOAD` and does not support payload signing. Protect the body with TLS and assess credential theft, request freshness and replay separately rather than claiming that request signing universally blocks connection hijacking. In the HTTPS-listener design, server authentication uses the TLS server certificate rather than the peer's SPIFFE identity.
+</details>

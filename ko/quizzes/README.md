@@ -322,6 +322,27 @@
 - [Linkerd 보안 퀴즈](./service-mesh/linkerd/security.md)
 - [Linkerd 트래픽 관리 퀴즈](./service-mesh/linkerd/traffic-management.md)
 
+- [App Mesh와 VPC Lattice 아키텍처 대비 퀴즈](./service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
+- [레이턴시 영향 분석 퀴즈](./service-mesh/vpc-lattice/02-latency-quiz.md)
+- [IAM 인증 절차 상세 퀴즈](./service-mesh/vpc-lattice/03-auth-flow-quiz.md)
+- [기반 개념 — link-local과 SNI 퀴즈](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+- [워크로드 신원 모델 전환 퀴즈](./service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
+- [제약사항과 의사결정 포인트 퀴즈](./service-mesh/vpc-lattice/06-constraints-quiz.md)
+- [커널 데이터패스 퀴즈](./service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
+
 ### 스토리지
 
 - [EBS gp2 vs gp3 실측 벤치마크 퀴즈](./storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+### 블록체인
+
+- [블록체인 기초 개념 퀴즈](./blockchain/01-fundamentals-quiz.md)
+- [EKS에서 블록체인 노드 운영 퀴즈](./blockchain/02-nodes-on-eks-quiz.md)
+- [Amazon Managed Blockchain 퀴즈](./blockchain/03-managed-blockchain-quiz.md)
+- [금융권 관점 퀴즈](./blockchain/04-financial-services-quiz.md)
+
+### Linux 커널
+
+- [컨테이너를 지탱하는 커널 기능 퀴즈](./kernel/01-container-primitives-quiz.md)
+- [커널 네트워킹 스택 퀴즈](./kernel/02-network-stack-quiz.md)
+- [EKS 노드 커널 튜닝 퀴즈](./kernel/03-eks-node-tuning-quiz.md)

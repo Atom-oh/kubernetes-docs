@@ -322,6 +322,27 @@ For exercises, check the guide’s versions, prerequisites and validation scope 
 - [Linkerd Security Quiz](./service-mesh/linkerd/security.md)
 - [Linkerd Traffic Management Quiz](./service-mesh/linkerd/traffic-management.md)
 
+- [App Mesh vs VPC Lattice Architecture Quiz](./service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
+- [Latency Impact Analysis Quiz](./service-mesh/vpc-lattice/02-latency-quiz.md)
+- [IAM Authentication Flow Quiz](./service-mesh/vpc-lattice/03-auth-flow-quiz.md)
+- [Foundations — Link-Local and SNI Quiz](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+- [Workload Identity Migration Quiz](./service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
+- [Constraints and Decision Points Quiz](./service-mesh/vpc-lattice/06-constraints-quiz.md)
+- [Kernel Datapath Quiz](./service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
+
 ### Storage
 
 - [EBS gp2 vs gp3 Measured Benchmark Quiz](./storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+### Blockchain
+
+- [Blockchain Fundamentals Quiz](./blockchain/01-fundamentals-quiz.md)
+- [Running Blockchain Nodes on EKS Quiz](./blockchain/02-nodes-on-eks-quiz.md)
+- [Amazon Managed Blockchain Quiz](./blockchain/03-managed-blockchain-quiz.md)
+- [Financial Services Perspective Quiz](./blockchain/04-financial-services-quiz.md)
+
+### Linux Kernel
+
+- [Kernel Features Behind Containers Quiz](./kernel/01-container-primitives-quiz.md)
+- [Kernel Networking Stack Quiz](./kernel/02-network-stack-quiz.md)
+- [EKS Node Kernel Tuning Quiz](./kernel/03-eks-node-tuning-quiz.md)
