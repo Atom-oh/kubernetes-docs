@@ -29,7 +29,7 @@
           "metric",
           "exemplar"
         ],
-        "note": "p99 지연 그래프 위의 다이아몬드(◇) 마커가 Exemplar이며, 마우스를 올리면 해당 요청의 TraceID가 표시됩니다."
+        "note": "Exemplar는 대표 관측값입니다. 정확한 p99 경계 요청이라고 단정하지 않습니다."
       },
       {
         "id": "trace",
@@ -38,7 +38,7 @@
           "exemplar",
           "trace"
         ],
-        "note": "Exemplar 마커를 클릭하면 집계된 메트릭에서 개별 요청의 Tempo 트레이스로 바로 이동합니다."
+        "note": "sampling과 보존 기간 안에 trace가 존재하는지 확인합니다."
       },
       {
         "id": "logs",
@@ -146,10 +146,11 @@
     },
     {
       "dot": "cyan",
-      "title": "Prometheus 사전 조건",
+      "title": "수집·저장·연결 검증",
       "items": [
-        "enableFeatures에 exemplar-storage 추가",
-        "exemplars.maxSize로 저장 개수 제한 (예: 100000)"
+        "exemplar 생성 → exporter → 저장 확인",
+        "실제 Prometheus/chart 설정 확인",
+        "trace ID·datasource UID·보존 기간 일치"
       ]
     }
   ]

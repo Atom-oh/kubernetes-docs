@@ -11,6 +11,26 @@ export function normalizeArchmapMotion(html) {
   )
 }
 
+// A generated mobile toolbar can overflow to the left while the document's
+// scrollWidth still fits the viewport. Wrap its controls so every button remains
+// reachable by pointer and keyboard. Match only the generated mobile rule.
+export function normalizeArchmapResponsive(html) {
+  if (!html.includes('id="archify-i18n-data"')) return html
+  return html.replaceAll(
+    `.toolbar {
+        position: relative;
+        justify-content: flex-end;
+        width: max-content;`,
+    `.toolbar {
+        position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        width: max-content;`
+  )
+}
+
 export async function normalizeArchmapMotionInDirectory(directory) {
   let entries
   try {
@@ -24,7 +44,7 @@ export async function normalizeArchmapMotionInDirectory(directory) {
     if (!entry.isFile() || !entry.name.endsWith('.html') || entry.name.includes('.visual-check.')) continue
     const file = path.join(directory, entry.name)
     const original = await readFile(file, 'utf8')
-    const normalized = normalizeArchmapMotion(original)
+    const normalized = normalizeArchmapResponsive(normalizeArchmapMotion(original))
     if (normalized === original) continue
     await writeFile(file, normalized)
     changed += 1

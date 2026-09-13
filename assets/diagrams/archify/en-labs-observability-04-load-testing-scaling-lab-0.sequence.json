@@ -29,12 +29,12 @@
       "id": "msa",
       "type": "backend",
       "label": "MSA Pod",
-      "sublabel": "Deployment"
+      "sublabel": "API + queue consumer"
     },
     {
       "id": "keda",
       "type": "backend",
-      "label": "KEDA",
+      "label": "KEDA / HPA",
       "sublabel": "Pod scaling"
     },
     {
@@ -54,22 +54,22 @@
     {
       "from": 162,
       "to": 275,
-      "label": "Phase 1 · Ramp-up (5 min, 10→100 VUs)"
+      "label": "Ramp · 30s → 5 VUs"
     },
     {
       "from": 295,
       "to": 410,
-      "label": "Phase 2 · Sustained (10 min, 100 VUs)"
+      "label": "Steady · 60s at 5 VUs"
     },
     {
       "from": 430,
       "to": 545,
-      "label": "Phase 3 · Spike (7 min, 100→500 VUs)"
+      "label": "Spike · 15s → 20, hold 30s"
     },
     {
       "from": 565,
       "to": 715,
-      "label": "Phase 4 · Cool-down (8 min, 500→0 VUs)"
+      "label": "Recovery · 15s → 5, 30s → 0"
     }
   ],
   "messages": [
@@ -86,14 +86,14 @@
       "from": "apigw",
       "to": "msa",
       "y": 225,
-      "label": "Order requests → SQS queue builds up"
+      "label": "Orders and queue consumer path"
     },
     {
       "id": "ramp-metrics",
       "from": "apigw",
       "to": "grafana",
       "y": 260,
-      "label": "Request rate metrics rise",
+      "label": "Observe collected request rate",
       "variant": "dashed"
     },
     {
@@ -101,7 +101,7 @@
       "from": "keda",
       "to": "msa",
       "y": 322,
-      "label": "SQS depth high → 8 Pods",
+      "label": "Queue metric → consumer replicas",
       "variant": "emphasis"
     },
     {
@@ -109,7 +109,7 @@
       "from": "msa",
       "to": "karpenter",
       "y": 358,
-      "label": "Pending Pods appear",
+      "label": "Observe unschedulable Pods",
       "variant": "dashed"
     },
     {
@@ -117,7 +117,7 @@
       "from": "karpenter",
       "to": "msa",
       "y": 394,
-      "label": "Provision new nodes, then schedule Pods",
+      "label": "Provision compatible node capacity",
       "variant": "return"
     },
     {
@@ -133,7 +133,7 @@
       "from": "keda",
       "to": "msa",
       "y": 493,
-      "label": "Aggressive scale-out (→ 30 Pods)",
+      "label": "Adjust replicas within HPA bounds",
       "variant": "emphasis"
     },
     {
@@ -141,7 +141,7 @@
       "from": "karpenter",
       "to": "msa",
       "y": 529,
-      "label": "Add nodes (→ 8+)",
+      "label": "Create NodeClaims if needed",
       "variant": "return"
     },
     {
@@ -157,7 +157,7 @@
       "from": "keda",
       "to": "msa",
       "y": 628,
-      "label": "Scale in (HPA cooldown)",
+      "label": "HPA lookback / KEDA scale to zero",
       "variant": "dashed"
     },
     {
@@ -165,7 +165,7 @@
       "from": "karpenter",
       "to": "msa",
       "y": 664,
-      "label": "Consolidate / terminate empty nodes (→ 3)",
+      "label": "Respect delays, PDBs and budgets",
       "variant": "dashed"
     },
     {
@@ -173,7 +173,7 @@
       "from": "msa",
       "to": "grafana",
       "y": 700,
-      "label": "Confirm Pod/Node counts and SQS depth recover",
+      "label": "Record actual requests, queue, Pods, nodes",
       "variant": "dashed"
     }
   ],

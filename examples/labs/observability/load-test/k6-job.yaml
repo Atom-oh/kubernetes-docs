@@ -1,0 +1,63 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: obs-lab-k6-smoke
+  namespace: msa
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 120
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 12345
+        runAsGroup: 12345
+        fsGroup: 12345
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: k6
+        image: grafana/k6:2.2.0
+        args: ["run", "--no-usage-report", "/scripts/k6-scenario.js"]
+        env:
+        - name: BASE_URL
+          value: http://api-gateway.msa.svc.cluster.local:8080
+        - name: LOAD_PROFILE
+          value: smoke
+        - name: SUMMARY_PATH
+          value: /results/k6-summary.json
+        - name: K6_NO_USAGE_REPORT
+          value: "true"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+        - name: results
+          mountPath: /results
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: scripts
+        configMap:
+          name: obs-lab-k6
+      - name: results
+        emptyDir:
+          sizeLimit: 20Mi
+      - name: tmp
+        emptyDir:
+          sizeLimit: 20Mi

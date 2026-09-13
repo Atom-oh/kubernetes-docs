@@ -57,7 +57,7 @@
     {
       "from": 470,
       "to": 590,
-      "label": "Logs → root cause: missing index"
+      "label": "Logs → validate a hypothesis"
     }
   ],
   "messages": [
@@ -111,7 +111,7 @@
       "from": "operator",
       "to": "grafana",
       "y": 410,
-      "label": "Identify slow span (DB query 800ms)"
+      "label": "Inspect slow spans and overlapping time"
     },
     {
       "id": "span-to-logs",
@@ -135,7 +135,7 @@
       "y": 555,
       "label": "Show correlated error / slow-query logs",
       "variant": "return",
-      "note": "Operator identifies root cause — missing index"
+      "note": "Compare query plans, locks and pool metrics"
     }
   ],
   "activations": [

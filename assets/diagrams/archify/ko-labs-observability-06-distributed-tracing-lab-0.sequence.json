@@ -70,7 +70,7 @@
     {
       "from": 470,
       "to": 590,
-      "label": "로그 → 근본 원인: missing index"
+      "label": "로그 → 가설 검증"
     }
   ],
   "messages": [
@@ -124,7 +124,7 @@
       "from": "operator",
       "to": "grafana",
       "y": 410,
-      "label": "느린 Span 식별 (DB query 800ms)"
+      "label": "느린 span과 겹친 시간 확인"
     },
     {
       "id": "span-to-logs",
@@ -148,7 +148,7 @@
       "y": 555,
       "label": "관련 에러/슬로우 쿼리 로그 표시",
       "variant": "return",
-      "note": "운영자가 근본 원인 식별 — missing index"
+      "note": "query plan·lock·pool 지표와 대조"
     }
   ],
   "activations": [
