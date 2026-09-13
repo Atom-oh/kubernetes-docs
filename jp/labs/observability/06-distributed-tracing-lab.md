@@ -1,550 +1,158 @@
 # パート 6: 分散トレーシング分析
 
-> **難易度**: 上級
-> **推定所要時間**: 45 分
-> **最終更新**: February 22, 2026
+<span id="cleanup-steps-table"></span>
+<span id="drill-down-analysis-workflow"></span>
+<span id="exercise-1-traceql-trace-search"></span>
+<span id="exercise-2-service-graph-visualization"></span>
+<span id="exercise-3-latency-identification-workflow"></span>
+<span id="exercise-4-loki-tempo-correlation"></span>
+<span id="exercise-5-exemplar-usage"></span>
+<span id="exercise-6-comprehensive-dashboard-setup"></span>
+<span id="final-verification-checklist"></span>
+<span id="full-cleanup-script"></span>
+<span id="key-takeaways"></span>
+<span id="learning-objectives"></span>
+<span id="next-steps"></span>
+<span id="prerequisites"></span>
+<span id="references"></span>
+<span id="steps"></span>
+<span id="steps-1"></span>
+<span id="steps-2"></span>
+<span id="steps-3"></span>
+<span id="steps-4"></span>
+<span id="steps-5"></span>
+<span id="summary"></span>
+<span id="traceql-query-reference"></span>
+<span id="verification"></span>
 
-## 学習目標
+> **難易度**: 上級 · **推定所要時間**: 45 分
+> **最終更新**: September 13, 2026
 
-- Tempo と Grafana を使用してエンドツーエンドのトレース分析を実行する
-- Service のボトルネックとパフォーマンス上の問題を特定する
-- ログとトレースをリンクするための Loki-Tempo 相関を設定する
-- メトリクスからトレースへドリルダウンするために Exemplars を使用する
-- 包括的なオブザーバビリティダッシュボードを構築する
+1 件の実際のリクエストを、メトリクスから exemplar を経てトレースとログまで追跡し、観測結果と因果関係の仮説を切り分けます。これには [パート 2](./02-observability-stack-lab.md) の取り込み経路と [パート 3](./03-msa-deployment-lab.md) のコンテキスト伝播が必要です。以下の TraceQL は実際の Tempo **3.0.3** パーサーで検証済みで、現行の OTel 属性を使用しています。
 
-## 前提条件
+![メトリクスからトレースとログへ調査する](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-0.png)
 
-- [ ] [パート 5: アラートと AIOps](./05-alerting-aiops-lab.md) を完了している
-- [ ] OTel instrumentation を使用した MSA Service が稼働している
-- [ ] Tempo がトレースを受信している
-- [ ] Loki が traceId を含むログを受信している
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-0.html)
 
----
-
-## ドリルダウン分析ワークフロー
-
-```mermaid
-sequenceDiagram
-    participant Op as Operator
-    participant G as Grafana
-    participant P as Prometheus
-    participant T as Tempo
-    participant L as Loki
-
-    Op->>G: Notice error spike in dashboard
-    G->>P: Query error rate metrics
-    P-->>G: Return metrics with exemplars
-
-    Op->>G: Click exemplar point
-    G->>T: Query trace by traceID
-    T-->>G: Return full trace
-
-    Op->>G: Identify slow span
-    G->>T: Get span details
-
-    Op->>G: Click "Logs for this trace"
-    G->>L: Query logs with traceID filter
-    L-->>G: Return correlated logs
-
-    Op->>Op: Identify root cause from logs
-    Note over Op,L: Complete drill-down:<br/>Metric → Trace → Logs
-```
-
----
-
-## 演習 1: TraceQL トレース検索
-
-### 手順
-
-**ステップ 1.1: Tempo を使用して Grafana Explore にアクセスする**
-
-```bash
-GRAFANA_URL=$(kubectl -n monitoring get svc grafana \
-  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-
-echo "Open: http://$GRAFANA_URL/explore"
-echo "Select data source: Tempo"
-```
-
-**ステップ 1.2: サーバーエラー（5xx）を検索する**
+## 1. TraceQL 検索 {#traceql}
 
 ```traceql
-{ status = error } | select(span.http.status_code, resource.service.name, duration)
+{ resource.service.name = "order-service" && span:duration > 1s }
+
+{ trace:duration > 2s && resource.service.name = "order-service" }
+
+{ span:kind = server && span.http.response.status_code >= 500 }
+
+{ span.db.system.name = "postgresql" && span:duration > 100ms }
+
+{ span.messaging.system = "aws_sqs" && span.messaging.operation.type = "send" }
+
+{ resource.service.name = "api-gateway" } >> { resource.service.name = "order-service" }
+
+{ resource.service.name = "order-service" } >> { span.db.system.name = "postgresql" }
+
+{ span:status = error } | select(resource.service.name, span.http.response.status_code, span:duration)
 ```
 
-**ステップ 1.3: 遅いリクエスト（1 秒超）を検索する**
+`span:duration` は個々の span を測定し、`trace:duration` はトレース全体を測定します。明示的な intrinsic には `span:` を、属性には `span.`/`resource.` を使用します。`>>` は左辺の span の子孫にあたる右辺の span を検索します。DB span の子孫を検索することは、あるサービス配下の DB 処理を見つけることとは異なります。
 
-```traceql
-{ duration > 1s && span.http.method = "POST" } | select(resource.service.name, name, duration)
-```
+`sort(duration)`、SQL の `order by`、`| limit 20`、`{ duration > p99 }` はこの検索構文ではありません。結果のソート、検索件数の上限、時間範囲は Grafana で設定し、実測した p99 は `800ms` のような duration リテラルに置き換えてください。`select()` は表示する属性を要求するものであり、そもそも保存されていない span を復元することはできません。
 
-**ステップ 1.4: データベースの遅いクエリを検索する**
+古い SDK は `http.status_code`、`http.method`、`db.system`、`db.statement`、`messaging.operation` を出力する場合があります。現行の `http.response.status_code`、`http.request.method`、`db.system.name`、`db.query.text`、`messaging.operation.type` を使用する前に、実際の span と SDK バージョンを確認してください。クエリ属性の名称変更は、収集済みのデータを変換するものではありません。クエリ本文の取得は明示的なサニタイズポリシーの下でのみ行い、パスワード、SQL リテラル、顧客データは除外してください。
 
-```traceql
-{ span.db.system = "postgresql" && duration > 100ms }
-```
+## 2. Service graph の前提条件 {#service-graph}
 
-**ステップ 1.5: SQS 発行の遅延を検索する**
-
-```traceql
-{ span.messaging.system = "sqs" && span.messaging.operation = "publish" && duration > 500ms }
-```
-
-**ステップ 1.6: 複雑なクエリ - 特定の Service を含むエラートレース**
-
-```traceql
-{ resource.service.name = "order-service" && status = error }
-| select(span.http.status_code, span.http.route, duration, span.error.message)
-| order by duration desc
-| limit 20
-```
-
-### TraceQL クエリリファレンス
-
-| ユースケース | TraceQL クエリ |
-|----------|---------------|
-| すべてのエラー | `{ status = error }` |
-| 遅いトレース | `{ duration > 1s }` |
-| 特定の Service | `{ resource.service.name = "order-service" }` |
-| HTTP 500 | `{ span.http.status_code >= 500 }` |
-| データベースクエリ | `{ span.db.statement =~ "SELECT.*" }` |
-| クロス Service | `{ resource.service.name = "api-gateway" } >> { resource.service.name = "order-service" }` |
-
----
-
-## 演習 2: Service Graph の可視化
-
-### 手順
-
-**ステップ 2.1: Grafana で Service Graph を有効化する**
-
-```bash
-# Service Graph is auto-generated from trace data
-# Access: Grafana > Explore > Tempo > Service Graph tab
-```
-
-**ステップ 2.2: Service の依存関係を分析する**
-
-Service Graph には次の内容が表示されます:
-- Service ノード（円）
-- リクエストフロー（矢印）
-- リクエストレート（矢印の太さ）
-- エラーレート（赤色の濃さ）
-- レイテンシー（ホバー時に表示）
-
-**ステップ 2.3: ボトルネックとなる Service を特定する**
-
-次の項目を確認します:
-1. 高いレイテンシーを持つ Service（応答が遅い）
-2. 高いエラーレートを持つ Service（赤いノード）
-3. 多数の着信接続を持つ Service（ホットスポットの可能性）
-4. ファンアウトパターンを持つ Service（複数のダウンストリーム呼び出し）
-
----
-
-## 演習 3: レイテンシー特定ワークフロー
-
-### 手順
-
-**ステップ 3.1: レイテンシー分析ワークフロー表**
-
-| ステップ | 操作 | ツール | 確認する項目 |
-|------|--------|------|------------------|
-| 1 | P99 レイテンシーの傾向を確認する | Prometheus/Grafana | 急激なスパイクまたは緩やかな増加 |
-| 2 | 影響を受けた Service を特定する | Service Graph | 赤い／遅いノード |
-| 3 | 遅いトレースを検索する | TraceQL | `{ duration > p99 }` |
-| 4 | トレースのウォーターフォールを分析する | Tempo | 長い span、span 間のギャップ |
-| 5 | span の詳細を確認する | Tempo | db.statement、http.url、エラーメッセージ |
-| 6 | ログと関連付ける | Loki | 同じタイムスタンプ付近のエラー |
-| 7 | リソースメトリクスを確認する | Prometheus | CPU、メモリ、接続プール |
-
-**ステップ 3.2: 実践的なレイテンシー分析**
-
-```bash
-# Step 1: Find P99 latency
-# In Grafana Explore with Prometheus:
-histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{service="order-service"}[5m])) by (le))
-
-# Step 2: Find traces above P99
-# In Grafana Explore with Tempo:
-{ resource.service.name = "order-service" && duration > 800ms }
-
-# Step 3: Analyze a specific trace
-# Click on a trace to see the waterfall view
-
-# Step 4: Identify the slowest span
-# Look for spans with longest duration relative to parent
-```
-
-**ステップ 3.3: 一般的なレイテンシーパターン**
-
-| パターン | 症状 | 考えられる原因 |
-|---------|---------|--------------|
-| 単一の遅い span | 1 つの span がトレース時間の 90% を占める | データベースクエリ、外部 API |
-| 連続する span | 複数の span が連続している | 並列化の不足 |
-| span 間のギャップ | 時間が未計上になっている | GC 一時停止、スレッド競合 |
-| ファンアウト遅延 | 多数の並列呼び出しのうち 1 つが遅い | 1 つのダウンストリーム Service の劣化 |
-| 一貫して高いレイテンシー | すべてのリクエストが遅い | リソース枯渇 |
-
----
-
-## 演習 4: Loki-Tempo 相関
-
-### 手順
-
-**ステップ 4.1: 双方向リンクを設定する**
-
-パート 2 で設定した Grafana datasource には、すでに相関が設定されています。確認してください:
-
-```bash
-# Check Tempo datasource config
-kubectl get configmap -n monitoring grafana -o yaml | grep -A20 "Tempo"
-```
-
-**ステップ 4.2: トレースからログへ（Tempo → Loki）**
-
-1. Grafana Explore（Tempo）でトレースを開く
-2. span をクリックする
-3. 「Logs for this span」ボタンをクリックする
-4. Grafana が traceId を使用して Loki をクエリする
-
-**ステップ 4.3: ログからトレースへ（Loki → Tempo）**
-
-1. Grafana Explore で Loki を選択する
-2. ログクエリを実行する:
-   ```logql
-   {namespace="msa"} | json | level="ERROR"
-   ```
-3. traceId を含むログ行を見つける
-4. traceId リンクをクリックして Tempo に移動する
-
-**ステップ 4.4: 相関が機能することを確認する**
-
-```bash
-# Generate a test request and find it in both systems
-curl -X POST "http://$API_URL:8080/api/v1/orders" \
-  -H "Content-Type: application/json" \
-  -d '{"customer_id":"TEST-001","product_id":"PROD-001","quantity":1}'
-
-# Note the response and search in Tempo:
-# { resource.service.name = "api-gateway" && span.http.route = "/api/v1/orders" }
-
-# Find the traceId and search in Loki:
-# {namespace="msa"} |= "traceId" | json | traceId = "<your-trace-id>"
-```
-
----
-
-## 演習 5: Exemplar の使用
-
-### 手順
-
-**ステップ 5.1: Exemplars を理解する**
-
-Exemplars はメトリクスデータポイントを特定のトレースにリンクし、異常なメトリクスから実際のリクエストへドリルダウンできるようにします。
-
-```mermaid
-flowchart LR
-    M[Metric Point<br/>latency=1.2s]
-    E[Exemplar<br/>traceId=abc123]
-    T[Trace<br/>Full request path]
-
-    M -->|contains| E
-    E -->|links to| T
-```
-
-**ステップ 5.2: Grafana で Exemplars を表示する**
-
-1. Grafana > Explore > Prometheus を開く
-2. Exemplars を有効にしてクエリする:
-   ```promql
-   histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{service="order-service"}[5m])) by (le))
-   ```
-3. グラフでひし形のマーカー（exemplars）を探す
-4. ひし形にホバーして traceId を確認する
-5. クリックして Tempo に移動する
-
-**ステップ 5.3: Exemplar の表示を設定する**
-
-```bash
-# Ensure Prometheus is recording exemplars
-kubectl get configmap -n monitoring kube-prometheus-stack-prometheus -o yaml | grep exemplar
-```
-
-**ステップ 5.4: Grafana の Exemplar クエリ**
+Tempo でトレースを受信するだけでは Grafana の service graph は完成しません。metrics-generator の service-graphs プロセッサを有効化し、そのメトリクスを実際のメトリクスバックエンドに送信し、Grafana の Tempo データソースの serviceMap UID をそのバックエンドに紐付けてください。client/server もしくは producer/consumer の span はコンテキストを共有していなければなりません。サンプリング、span の欠落、span kind の誤りは、生成されるエッジに影響します。
 
 ```promql
-# Show request duration with exemplars
-http_server_request_duration_seconds_bucket{service="order-service"}
+sum by (client, server) (rate(traces_service_graph_request_total[5m]))
 
-# In Query Options, enable "Exemplars"
+(
+  sum by (client, server) (rate(traces_service_graph_request_failed_total[5m]))
+  or on (client, server)
+  (0 * sum by (client, server) (rate(traces_service_graph_request_total[5m])))
+)
+/ on (client, server)
+(sum by (client, server) (rate(traces_service_graph_request_total[5m])) > 0)
+
+sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum[5m]))
+/
+sum by (client, server) (rate(traces_service_graph_request_server_seconds_count[5m]))
 ```
 
----
+失敗カウンターは最初の失敗が発生するまで系列が存在しない場合があります。欠落している分子を、対応する request-total 系列から得たゼロで埋め、さらに分母が正であることを要求することで、健全な 0% と、トラフィックがない状態や取り込みが欠落している状態を区別します。
 
-## 演習 6: 包括的なダッシュボードのセットアップ
+最後のクエリはサーバー側の平均所要時間を測定します。クライアント側の所要時間には `traces_service_graph_request_client_seconds_*` を使用し、存在しない `traces_service_graph_request_duration_seconds_*` ファミリーをクエリしないでください。トラフィックがない区間は証拠が欠落しているものとして扱ってください。色やエッジの太さは Grafana/ダッシュボードの設定に依存します。1%/5% といった固定の色分けルールを前提とせず、request/error/duration の値を確認してください。
 
-### 手順
+## 3. Waterfall からボトルネックの仮説を立てる {#waterfall}
 
-**ステップ 6.1: RED ダッシュボード（Rate、Errors、Duration）**
+| 観測結果 | 追加確認 |
+|---|---|
+| 遅い DB span | クエリプラン、ロック、コネクションプール、DB メトリクスを確認する |
+| 長い client span | DNS/TLS/ネットワーク/サーバー待機/リトライの各区間を比較する |
+| 親と子の間のギャップ | 未計装の処理、キュー、GC、スケジューリングを確認する |
+| 並列な子 span | 所要時間を合算せず、重なりとクリティカルパスを分析する |
+| メッセージングの遅延 | send/receive/process の所要時間を、キュー待ち時間や再配信と切り分ける |
 
-```bash
-cat > /tmp/red-dashboard.json << 'EOF'
-{
-  "dashboard": {
-    "title": "MSA RED Dashboard",
-    "tags": ["obs-lab", "red", "sre"],
-    "panels": [
-      {
-        "title": "Request Rate by Service",
-        "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
-        "targets": [{
-          "expr": "sum(rate(http_server_request_count{namespace=\"msa\"}[5m])) by (service)",
-          "legendFormat": "{{service}}"
-        }]
-      },
-      {
-        "title": "Error Rate by Service",
-        "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
-        "targets": [{
-          "expr": "sum(rate(http_server_request_count{namespace=\"msa\",http_status_code=~\"5..\"}[5m])) by (service) / sum(rate(http_server_request_count{namespace=\"msa\"}[5m])) by (service)",
-          "legendFormat": "{{service}}"
-        }],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "percentunit",
-            "thresholds": {
-              "steps": [
-                {"value": 0, "color": "green"},
-                {"value": 0.01, "color": "yellow"},
-                {"value": 0.05, "color": "red"}
-              ]
-            }
-          }
-        }
-      },
-      {
-        "title": "P99 Latency by Service",
-        "type": "timeseries",
-        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0},
-        "targets": [{
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{namespace=\"msa\"}[5m])) by (le, service))",
-          "legendFormat": "{{service}}"
-        }],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s"
-          }
-        }
-      }
-    ]
-  }
-}
-EOF
+親の所要時間には子の所要時間が含まれるため、すべての span を合算すると時間を二重計上します。1.8 秒の DB span だけではインデックスの欠落は証明できません。仮説を採用する前に、同一のリリース、トラフィック、時間範囲でログとメトリクスを比較してください。
 
-curl -X POST -H "Content-Type: application/json" \
-  -u admin:ObsLab2026! \
-  -d @/tmp/red-dashboard.json \
-  "http://$GRAFANA_URL/api/dashboards/db"
+## 4. ログとトレースを紐付ける {#correlation}
+
+```logql
+{service_name="order-service"} | json | level="ERROR"
+
+{service_name="order-service"} | json | trace_id="0123456789abcdef0123456789abcdef"
 ```
 
-**ステップ 6.2: SLI/SLO ダッシュボード**
+これらのクエリは、実際に `service_name` ストリームラベルと JSON の `trace_id` フィールドが存在することを前提としています。32 文字のサンプルトレース ID は実際のリクエスト ID に置き換えてください。`traceID`、`traceId`、`trace_id` は別々のフィールドです。トレース ID は一意なストリームラベルではなく、ログのフィールドや structured metadata に保持してください。時間範囲は Grafana/HTTP パラメータで指定し、LogQL に `timestamp >= 2025-...` を付け足さないでください。
 
-| SLI | 目標（SLO） | クエリ |
-|-----|--------------|-------|
-| 可用性 | 99.9% | `1 - (sum(rate(http_server_request_count{status_code=~"5.."}[30d])) / sum(rate(http_server_request_count[30d])))` |
-| レイテンシー P99 | < 500ms | `histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket[5m])) by (le)) < 0.5` |
-| スループット | > 100 RPS | `sum(rate(http_server_request_count[5m])) > 100` |
+Loki の derived field はトレース ID を抽出し、Tempo データソースの UID へリンクします。Grafana のプロビジョニング YAML では、内部リンクの式を `$${__value.raw}` としてエスケープしてください。ダブルクォートで囲んだ正規表現や広範囲に及ぶシェルの envsubst は、バックスラッシュや Grafana の変数を変えてしまう可能性があります。適切なシングルクォートと、範囲を絞った置換を使用してください。
 
-**ステップ 6.3: インフラストラクチャダッシュボード**
+Tempo の `tracesToLogsV2` には、Loki の UID、実際のリソースからログラベルへのマッピング、時間のパディング、トレース ID によるフィルタリングを設定します。「Logs for this span」をクリックした後に生成された LogQL を確認してください。リンクが存在することと、同一リクエストを実際に取得できることは別個の確認項目です。
 
-| パネル | メトリクス | 目的 |
-|-------|--------|---------|
-| Node CPU | `node_cpu_seconds_total` | Node のリソース使用状況 |
-| Node Memory | `node_memory_MemAvailable_bytes` | メモリプレッシャー |
-| Pod CPU | `container_cpu_usage_seconds_total` | Pod のリソース使用状況 |
-| Pod Memory | `container_memory_working_set_bytes` | Container メモリ |
-| PVC 使用量 | `kubelet_volume_stats_used_bytes` | ストレージ消費量 |
+## 5. Exemplar の意味と検証 {#exemplars}
 
-**ステップ 6.4: トレーシングダッシュボード**
+![代表的な exemplar からトレースとログへたどる](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-1.png)
 
-| パネル | データソース | 目的 |
-|-------|-------------|---------|
-| トレース数 | Tempo メトリクス | トレース量 |
-| span Duration ヒートマップ | Tempo | Duration 分布 |
-| Service Graph | Tempo | 依存関係の可視化 |
-| エラートレーステーブル | Tempo | 直近のエラー |
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-06-distributed-tracing-lab-1.html)
 
----
+exemplar は集計値に付随する **代表的な観測値** です。p99 のグラフ上の点をクリックしても、そのリクエストが厳密なパーセンタイル境界を決定したことの証明にはなりません。exemplar の生成、exporter/remote-write での保持、Prometheus での保存、Grafana データソースの紐付けがすべて機能している必要があります。サンプリングや保持期間によって、トレースが参照できない exemplar ID が残ることもあります。
 
-## クリーンアップ
+実際の Prometheus exemplar API の結果を確認し、返された `trace_id` で Tempo をクエリしてください。Grafana の表示オプションを有効にすることや、存在しない Prometheus ConfigMap を検索することは、取り込みの検証にはなりません。exemplar 保存の設定は、インストール済みの Prometheus/チャートのバージョンと、レンダリングされた Prometheus リソース/ランタイム引数に照らして確認してください。
 
-> **重要**: 継続的な AWS コストを回避するため、このクリーンアップセクションを完了してください。
+## 6. RED および SLI/SLO ダッシュボード {#slo}
 
-### クリーンアップ手順表
+RED パネルは、実際のメトリクス名、ラベル、ヒストグラムの単位に基づいて構築します。リクエストレート、失敗率、所要時間の分布は、同一のサービス/ルートの範囲で比較してください。可用性を算出する前に、対象となるリクエストと成功の定義を定め、4xx レスポンス、ヘルスチェック、リトライの扱いを明示してください。
 
-| リソース | コマンド | 注記 |
-|----------|---------|-------|
-| MSA Applications | `kubectl delete namespace msa` | すべての MSA Pod/Service を削除します |
-| Observability Stack | `helm uninstall kube-prometheus-stack -n monitoring` | Prometheus、Alertmanager |
-| Loki | `helm uninstall loki -n logging` | ログストレージ |
-| Tempo | `helm uninstall tempo -n tracing` | トレースストレージ |
-| Grafana | `helm uninstall grafana -n monitoring` | ダッシュボード |
-| OTel Collector | `kubectl delete namespace opentelemetry` | テレメトリパイプライン |
-| ArgoCD | `helm uninstall argocd -n argocd` | GitOps |
-| KEDA | `helm uninstall keda -n keda` | Autoscaler |
-| Locust | `kubectl delete deployment locust-master locust-worker -n msa` | 負荷テスト |
+30 日の SLO には、その期間にわたる実際の保持期間と観測データが必要です。作りたてのラボ環境における `[30d]` のクエリは、30 日分の証拠を生み出しません。トラフィックがない状態、系列の欠落、カウンターのリセットに対処し、低ボリュームにおけるパーセンタイルの限界を明示してください。エラーバジェットは、同一のウィンドウにおける許容失敗数と観測された失敗数から算出します。「99.9% 達成」といった固定の主張ではなく、期間、分母、値を記録してください。
 
-### 完全クリーンアップスクリプト
+## 7. フローを検証してからクリーンアップする {#cleanup}
 
-```bash
-#!/bin/bash
-set -e
+クリーンアップの前に、exemplar ID、Tempo のトレース ID、ログのトレース ID が一致する 1 件のリクエストを記録し、実際の service graph の依存関係とアラート配信を検証してください。結果を見積もりで埋めるのではなく、実測値、タイムスタンプ、設定のバージョンを残してください。
 
-echo "Starting cleanup..."
+| 順序 | 作業と完了条件 |
+|---|---|
+| 1 | k6/Locust、障害注入、AI 分析トリガーを停止し、結果を保存する |
+| 2 | GitOps の ApplicationSet/親による再作成を停止し、実際のアプリケーションをカスケード削除する |
+| 3 | サービスクラスターの LoadBalancer/Ingress、ワークロード、PVC を削除し、外部 LB/ボリュームのクリーンアップを検証する |
+| 4 | オペレーターをアンインストールする前に、実際のリリース名/Namespace 名を使ってテレメトリのカスタムリソースを削除する |
+| 5 | コントローラーを削除する前に Karpenter の NodeClaim をドレイン/削除する。依存関係が存在する間は API/LB/ストレージのコントローラーを残す |
+| 6 | 同一の IaC ステートを使って destroy プランをレビューする。手動作成した AWS リソースには記録済みの正確な ID/ARN を使用する |
+| 7 | 依存関係のクリーンアップ後に EKS/VPC を削除し、その後マネージドサービスの削除と残存リソースを検証する |
 
-# 1. Delete MSA applications
-echo "Deleting MSA namespace..."
-kubectl delete namespace msa --ignore-not-found
+共有 Namespace やクラスター全体の CRD は削除しないでください。`latest` のインストーラー URL ではなく、記録済みのインストール時のリリース/Namespace/バージョンを使用してください。バージョニングが有効な S3 では、現行オブジェクトに加えて過去のバージョンと削除マーカーも確認する必要があります。Aurora のスナップショットポリシー、MWAA/DAG バケット、AMG、AMP、OpenSearch、SNS/SQS/DLQ、Lambda/API Gateway、IAM のアタッチメント、EBS/LB、ロググループ、アラームを、自身のインベントリと突き合わせて整合させてください。削除リクエストが受理されたことは、削除の完了ではありません。
 
-# 2. Delete observability stack (Managed Cluster)
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-managed)
+未確認のまま自動承認で destroy を実行したり、すべてのエラーを抑制したり、作業ディレクトリ全体を削除するのではなく、リソースの所有権をレビューし、証拠とステートを保全してください。
 
-echo "Uninstalling Helm releases..."
-helm uninstall grafana -n monitoring --ignore-not-found || true
-helm uninstall kube-prometheus-stack -n monitoring --ignore-not-found || true
-helm uninstall victoria-metrics -n monitoring --ignore-not-found || true
-helm uninstall mimir -n monitoring --ignore-not-found || true
-helm uninstall loki -n logging --ignore-not-found || true
-helm uninstall tempo -n tracing --ignore-not-found || true
-helm uninstall fluent-bit -n logging --ignore-not-found || true
-helm uninstall argocd -n argocd --ignore-not-found || true
-helm uninstall grafana-oncall -n monitoring --ignore-not-found || true
+## 検証の範囲と参考資料
 
-# 3. Delete namespaces
-echo "Deleting namespaces..."
-kubectl delete namespace monitoring logging tracing opentelemetry argocd --ignore-not-found
+現行の Tempo パーサーは、受理された 12 個のクエリを検証し、以前の誤ったクエリ 3 個を拒否しました。一時的なローカルの Loki 3.7.7 が合成ログ行 2 行を受信し、2 つの LogQL クエリはいずれも期待どおりのトレース ID を正確に取得しました。実サービスでの Tempo 検索、Loki の収集、Grafana でのデータ連携、クラウドリソースの削除は実行していません。
 
-# 4. Delete Service Cluster resources
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-service)
-helm uninstall keda -n keda --ignore-not-found || true
-helm uninstall argo-rollouts -n argo-rollouts --ignore-not-found || true
-kubectl delete namespace keda argo-rollouts msa opentelemetry --ignore-not-found
-
-# 5. Delete EKS clusters
-echo "Deleting EKS clusters (this takes 15-20 minutes)..."
-eksctl delete cluster -f ~/obs-lab/managed-cluster.yaml --wait || true
-eksctl delete cluster -f ~/obs-lab/service-cluster.yaml --wait || true
-
-# 6. Delete AWS resources
-echo "Deleting AWS resources..."
-
-# Aurora
-aws rds delete-db-instance --db-instance-identifier obs-lab-aurora-1 --skip-final-snapshot --region $AWS_REGION || true
-sleep 60
-aws rds delete-db-cluster --db-cluster-identifier obs-lab-aurora --skip-final-snapshot --region $AWS_REGION || true
-
-# OpenSearch
-aws opensearch delete-domain --domain-name obs-lab-logs --region $AWS_REGION || true
-
-# AMP
-AMP_WORKSPACE_ID=$(aws amp list-workspaces --alias obs-lab-prometheus --query "workspaces[0].workspaceId" --output text --region $AWS_REGION)
-aws amp delete-workspace --workspace-id $AMP_WORKSPACE_ID --region $AWS_REGION || true
-
-# SQS/SNS
-SQS_QUEUE_URL=$(aws sqs get-queue-url --queue-name obs-lab-orders --query QueueUrl --output text --region $AWS_REGION 2>/dev/null)
-aws sqs delete-queue --queue-url $SQS_QUEUE_URL --region $AWS_REGION || true
-
-SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, 'obs-lab-alerts')].TopicArn" --output text --region $AWS_REGION)
-aws sns delete-topic --topic-arn $SNS_TOPIC_ARN --region $AWS_REGION || true
-
-# S3 buckets
-aws s3 rb s3://obs-lab-loki-${ACCOUNT_ID} --force --region $AWS_REGION || true
-aws s3 rb s3://obs-lab-tempo-${ACCOUNT_ID} --force --region $AWS_REGION || true
-aws s3 rb s3://obs-lab-mimir-${ACCOUNT_ID} --force --region $AWS_REGION || true
-aws s3 rb s3://obs-lab-mwaa-${ACCOUNT_ID}-${AWS_REGION} --force --region $AWS_REGION || true
-
-# Lambda and API Gateway
-aws lambda delete-function --function-name obs-lab-aiops-agent --region $AWS_REGION || true
-
-# IAM policies
-aws iam delete-policy --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/obs-lab-amp-access || true
-aws iam delete-policy --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/obs-lab-logging-access || true
-
-# CloudWatch Alarms
-aws cloudwatch delete-alarms --alarm-names obs-lab-aurora-cpu-high obs-lab-sqs-message-age obs-lab-opensearch-health obs-lab-critical-composite --region $AWS_REGION || true
-
-# 7. Cleanup local files
-echo "Cleaning up local files..."
-rm -rf ~/obs-lab
-
-echo "Cleanup complete!"
-echo "Note: Some resources may take additional time to fully delete."
-echo "Verify in AWS Console that all resources are removed."
-```
-
-### 検証
-
-```bash
-# Verify EKS clusters deleted
-eksctl get cluster --region $AWS_REGION
-
-# Verify AWS resources deleted
-aws rds describe-db-clusters --query "DBClusters[?DBClusterIdentifier=='obs-lab-aurora']" --region $AWS_REGION
-aws opensearch describe-domain --domain-name obs-lab-logs --region $AWS_REGION 2>&1 | grep -q "ResourceNotFoundException" && echo "OpenSearch deleted"
-aws amp list-workspaces --alias obs-lab-prometheus --region $AWS_REGION
-```
-
----
-
-## まとめ
-
-このラボシリーズでは、完全なオブザーバビリティプラットフォームを構築しました:
-
-| パート | 対象トピック | 主なスキル |
-|------|---------------|------------|
-| 1 | インフラストラクチャ | EKS、AWS Service、ArgoCD マルチクラスター |
-| 2 | Observability Stack | OTel、Prometheus、Loki、Tempo、Grafana |
-| 3 | MSA Deployment | ArgoCD、Argo Rollouts、OTel instrumentation |
-| 4 | 負荷テスト | k6、KEDA、Karpenter autoscaling |
-| 5 | アラートと AIOps | Alertmanager、OnCall、Bedrock Claude |
-| 6 | トレーシング分析 | TraceQL、相関、exemplars |
-
-### 主なポイント
-
-1. **3 つの柱の統合**: メトリクス、ログ、トレースを組み合わせることで完全なオブザーバビリティを実現する
-2. **OTel の標準化**: OpenTelemetry はベンダー中立の instrumentation を提供する
-3. **マルチバックエンド戦略**: 冗長性と柔軟性のために複数のバックエンドへファンアウトする
-4. **オブザーバビリティ駆動の Deployment**: 自動分析を伴う Canary リリース
-5. **AIOps 自動化**: AI を活用したインシデント分析により MTTR を短縮する
-6. **相関が鍵**: TraceID リンクによりエンドツーエンドのデバッグが可能になる
-
-## 最終検証チェックリスト
-
-- [ ] 完全なメトリクス→exemplar→トレース→ログのドリルダウンが機能する
-- [ ] Service Graph にすべての MSA 依存関係が表示される
-- [ ] Canary rollout が意思決定にオブザーバビリティメトリクスを使用する
-- [ ] アラートが発火し、通知チャネルに届く
-- [ ] AIOps agent が有用な分析を提供する
-- [ ] コストを回避するため、すべてのリソースがクリーンアップされている
-
-## 次のステップ
-
-このラボシリーズの完了後:
-
-1. **本番 Deployment**: これらのパターンを本番ワークロードに適用する
-2. **カスタム instrumentation**: ビジネス固有のメトリクスとトレースを追加する
-3. **SLO 実装**: エラーバジェットを使用して SLO を定義および追跡する
-4. **Chaos Engineering**: オブザーバビリティをテストするために制御された障害を導入する
-5. **コスト最適化**: サンプリングおよび保持ポリシーを実装する
-
-## 参考資料
-
-- [Tempo ドキュメント](../../observability/tracing/01-tempo.md)
-- [OpenTelemetry ドキュメント](../../observability/tracing/03-opentelemetry.md)
-- [Loki ドキュメント](../../observability/logging/01-loki.md)
-- [Prometheus ドキュメント](../../observability/metrics/01-prometheus.md)
-- [Grafana ドキュメント](../../observability/grafana/README.md)
-- [TraceQL ドキュメント](https://grafana.com/docs/tempo/latest/traceql/)
+- [TraceQL](https://grafana.com/docs/tempo/latest/traceql/)
+- [Service graph メトリクス](https://grafana.com/docs/tempo/latest/metrics-from-traces/service_graphs/)
+- [OTel HTTP span](https://opentelemetry.io/docs/specs/semconv/http/http-spans/)
+- [OTel データベース span](https://opentelemetry.io/docs/specs/semconv/database/database-spans/)
+- [Loki derived fields](https://grafana.com/docs/grafana/latest/datasources/loki/configure-loki-data-source/)
+- [Tempo ガイド](../../observability/tracing/01-tempo.md)
+- [Loki ガイド](../../observability/logging/01-loki.md)
+- [シリーズ一覧](./README.md)
